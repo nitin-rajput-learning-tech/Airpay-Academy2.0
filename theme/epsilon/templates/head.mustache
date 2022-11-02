@@ -1,0 +1,66 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    Page header.
+}}
+{{{ output.doctype }}}
+<html {{{ output.htmlattributes }}}>
+<head>
+    <title>{{{ output.page_title }}}</title>
+    <link rel="shortcut icon" href="{{{ output.favicon }}}" />
+    {{{ output.standard_head_html }}}
+
+    <style media="screen">
+        :root {
+            --primarycolor:{{{ output.get_primarycolor}}};
+            --secondarycolor:{{{ output.get_secondarycolor}}};
+            --hovercolor:{{{ output.get_hovercolor}}};
+            --sitehighlight: var(--primarycolor);
+            --buttonbgcolor: var(--primarycolor);
+            --btntextcolor: #ffffff;
+            --btnhoverbgcolor: var(--hovercolor);
+            --btnhovertextcolor: #ffffff;
+            --btnbordercolor: var(--primarycolor);
+            --linkcolor: var(--primarycolor);
+            --linkhovercolor: var(--hovercolor);
+
+            --sidebarbgstartcolor: var(--secondarycolor);
+            --sidebarbgendcolor:  var(--secondarycolor);
+            --blockheaderstartbg: var(--secondarycolor);
+            --blockheaderendbg:  var(--secondarycolor);
+            --blocktextcolor: #333333;
+            --headerbgcolor: #fff;
+            --bodybgcolor: #f5f4f1;
+            --tblhdstartbg: var(--secondarycolor);
+            --tblhdendbg: var(--secondarycolor);
+            --tbltextcolor: #fff;
+            --gradientcolor: #fff;
+            --coursecontainerbg: #d6e5ec;
+            --usernavhvrbg: #ffffff;
+            --usernavhvrlink: var(--secondarycolor);
+
+           --iconbgcolor: var(--sitehighlight);
+
+            --lightbuttonbgcolor : lighten(var(--buttonbgcolor), 30%);
+            --lightblockhdrstart : lighten(var(--blockheaderstartbg), 30%);
+            --lightblockheaderend : lighten(var(--blockheaderendbg), 15%);
+        }
+    </style>
+    <link rel="stylesheet" href="{{config.wwwroot}}/theme/epsilon/style/site_color.css">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>

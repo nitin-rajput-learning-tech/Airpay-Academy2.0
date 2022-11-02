@@ -1,0 +1,48 @@
+<div class="col-12 col-md-6 col-lg-3 pull-left mb-3">
+    <div class="w-100 pull-left report_container {{# report_name_class}}largename{{/report_name_class}} p-10">
+        <!-- <span class="report_icon">
+            {{# classroom_report}}
+                <span class="classroom_icon_wrap"></span>
+            {{/ classroom_report}}
+            
+            {{# user_report}}
+             <i class="fa fa-user-plus" aria-hidden="true"></i>
+            {{/ user_report}}
+
+            {{# course_report}}
+             <i class="fa fa-book" aria-hidden="true"></i>
+            {{/ course_report}}
+
+            {{# certification_report}}
+             <i class="fa fa-graduation-cap" aria-hidden="true"></i>
+            {{/ certification_report}}
+
+            {{# test_report}}
+             <i class="fa fa-desktop" aria-hidden="true"></i>
+            {{/ test_report}}
+
+            {{# lp_report}}
+             <i class="fa fa-map" aria-hidden="true"></i>
+            {{/ lp_report}}
+
+            {{# costcenter_report}}
+             <i class="fa fa-sitemap" aria-hidden="true"></i>
+            {{/ costcenter_report}}
+
+            {{# feedback_report}}
+             <i class="fa fa-clipboard" aria-hidden="true"></i>
+            {{/ feedback_report}}
+
+
+            {{# program_report}}
+                <span class="program_icon_wrap"></span>
+            {{/ program_report}}
+        </span> -->
+        <div class="w-100 pull-left">
+            <a href="{{config.wwwroot}}/blocks/learnerscript/viewreport.php?id={{report_id}}" class="report_title" title="{{reportfullname}}">{{report_name}}</a>
+        </div>
+        <!-- <div class="w-100 pull-left">This is report</div> -->
+        <div class="w-100 pull-left mt-3 report_actions">{{{actions}}}</div>
+    </div>
+</div>
+         

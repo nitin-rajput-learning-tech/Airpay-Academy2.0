@@ -1,0 +1,310 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="costcenter_container row">
+    <div class="col-12 pull-left costcenter_content p-0">
+        <div class="col-12 col-xl-3 pull-left orgimg_container">
+            <div class="content_left"><!-- <i class="fas dept_img fa-university"></i> -->
+                <h3 class="org_name">{{ orgname }}</h3>
+                <div class="pull-right showoptions{{{ recordid }}} actionicons ">
+                    <span  class="pull-right showoptions" data-action="showoptions{{{ recordid }}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{recordid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{recordid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
+                    </span>
+                    <ul class="col-12 p-0 options_container" id="showoptions{{{recordid}}}">
+                        {{# delete}}
+                        <li>
+                            <a href="javascript:void(0)" title ="{{# str}} delete {{/str}}" onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ recordid }}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ delete_message }}}' }) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i></a>
+                        </li>
+                        {{/ delete}}
+                      <!--   {{# hide}}
+                        <li>
+                            <a href="javascript:void(0)" title ="{{# str}} inactive {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye"></i></a>
+                        </li>
+                        {{/ hide}} 
+                       {{# show}}
+                        <li>
+                            <a href="javascript:void(0)" title ="{{# str}} active {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye-slash"></i></a>
+                        </li>
+                        {{/ show}}   -->
+                        {{# edit}}
+                        <li>
+                            <a href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({ contextid:1, id:{{ recordid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i></a>
+                        </li>
+                        {{/ edit}}
+                    </ul>
+                </div>
+                {{# showsubdept_content}}
+                    <div class="left_info text-xl-center">
+                        <span class="lable_align dept_string">{{# str}} sub_departments, local_costcenter {{/str}}</span>
+                        <span class="dept_count">{{totalsubdepts}}</span>
+                    </div>
+                {{/ showsubdept_content}}
+                {{^ showsubdept_content}}
+                    <div class="left_info text-xl-center">
+                        <span class="lable_align dept_string">{{# str}} pluginname, local_costcenter {{/str}}</span>
+                        <span class="dept_count">
+                            {{#dept_count_link}}
+                                <a href="{{dept_count_link}}">{{deptcount}}</a>
+                            {{/dept_count_link}}
+                            {{^dept_count_link}}
+                                {{deptcount}}
+                            {{/dept_count_link}}
+                        </span>
+                    </div>
+                {{/ showsubdept_content}}
+                <!-- <div class="left_info text-center">
+                    <span class="lable_align dept_string">{{# str}} sub_departments, local_costcenter {{/str}}</span>
+                    <span class="dept_count">{{subdeptcount}}</span>
+                </div> -->
+            </div>
+        </div>
+        <div class="col-12 col-xl-9 pull-left content_right p-0">
+            <!-- <div class="col-md-12 pl-0 content_right_top pr-0 pt-15 pb-15"> -->
+                <!--Users Data -->
+                <div class="org_detail col-12 col-sm-6 col-md-4 pull-left pt-15 pb-15">
+                    <div class="details_content org_users">
+                        <span class="org_icon_container">
+                            <i class="fa fa-user-plus" aria-hidden="true"></i>
+                        </span>
+                        <div class="details_topcontent">
+                            <div class="col-10 col-sm-10 col-md-9 pull-left pl-6 details_topleft">{{# str}} users {{/str}}</div>
+                            <div class="col-2 col-sm-2 col-md-3 pull-right p-0 text-right details_topright">
+
+                    <a href="{{viewlink_url}}" class='viewlink' title= "{{#str}} totalusers, local_costcenter {{/str}}">
+                    {{ totalusers }}
+                </a>
+               </div>
+                        </div>
+                        <div class="details_btmcontent">
+                            <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                <span class="org_label">
+                                    <i class="fa fa-user-o pr-1 activeicon" aria-hidden="true"></i>
+                                    <span>{{# str}} active {{/str}}</span>
+                                    <span class="mx-1">:</span>
+                                </span>
+                                <span> <a href="{{count_activelink_url}}" class='' title= "{{#str}} activeusers, local_costcenter {{/str}}">{{ activeusercount }}</a></span>
+                            </div>
+                            <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                <span class="org_label">
+                                    <i class="fa fa-user-times pr-1 inactiveicon" aria-hidden="true"></i>
+                                    <span>{{# str}} inactive {{/str}}</span>
+                                    <span class="mx-1">:</span>
+                                </span>
+                                <span><a href="{{count_inactivelink_url}}" class='' title= "{{#str}} inactiveusers, local_costcenter {{/str}}">{{ inactiveusercount }}</a></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Courses Data -->
+                <div class="org_detail col-12 col-sm-6 col-md-4 pull-left pt-15 pb-15 pl-0">
+                    <div class="details_content org_courses">
+                        <span class="org_icon_container">
+                            <i class="fa fa-book" aria-hidden="true"></i>
+                        </span>
+                        <div class="details_topcontent">
+                            <div class="col-10 col-sm-10 col-md-9 pull-left pl-6 details_topleft">{{# str}} courses, local_costcenter {{/str}}</div>
+                            <div class="col-2 col-sm-2 col-md-3 pull-right p-0 text-right details_topright"><a href="{{viewcourselink_url}}" class='viewlink' title= "{{#str}} coursecount, local_costcenter {{/str}}">{{ coursecount }}</a></div>
+                        </div>
+                        <div class="details_btmcontent">
+                            <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                <span class="org_label">
+                                    <i class="fa fa-user-o pr-1 activeicon" aria-hidden="true"></i>
+                                    <span>{{# str}} active {{/str}}</span>
+                                    <span class="mx-1">:</span>
+                                </span>
+                                <span><a href="{{count_courseactivelink_url}}" class='' title= "{{#str}} activecoursecount, local_costcenter {{/str}}">{{ activecoursecount }}</a></span>
+                            </div>
+                            <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                <span class="org_label">
+                                    <i class="fa fa-user-times pr-1 inactiveicon" aria-hidden="true"></i>
+                                    <span>{{# str}} inactive {{/str}}</span>
+                                    <span class="mx-1">:</span>
+                                </span>
+                                <span><a href="{{count_courseinactivelink_url}}" class='' title= "{{#str}} inactivecoursecount, local_costcenter {{/str}}">{{ inactivecoursecount }}</a></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Learning Plans Data -->
+                {{# lp_plugin_exist}}
+                    <div class="org_detail col-12 col-sm-6 col-md-4 pull-left pt-15 pb-15 pl-0">
+                        <div class="details_content org_learningplans">
+                            <span class="org_icon_container">
+                                <i class="fa fa-map" aria-hidden="true"></i>
+                            </span>
+                            <div class="details_topcontent">
+                                <div class="col-10 col-sm-10 col-md-9 pull-left pl-6 details_topleft">{{#str}}pluginname, local_learningplan{{/str}}</div>
+                                <div class="col-2 col-sm-2 col-md-3 pull-right p-0 text-right details_topright"><a href="{{viewlplink_url}}" class='viewlink' title= "{{#str}} alllearningplans, local_costcenter {{/str}}">{{ alllearningplans }}</a></div>
+                            </div>
+                            <div class="details_btmcontent">
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-user-o pr-1 activeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} active {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span><a href="{{count_lpactivelink_url}}" class='' title= "{{#str}} activelearningplans, local_costcenter {{/str}}">{{ activelearningplans }}</a></span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-user-times pr-1 inactiveicon" aria-hidden="true"></i>
+                                        <span>{{# str}} inactive {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span><a href="{{count_lpinactivelink_url}}" class='' title= "{{#str}} inactivelearningplans, local_costcenter {{/str}}">{{ inactivelearningplans }}</a></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {{/ lp_plugin_exist}}
+                <!-- <div class="col-md-12 content_right_bottom pl-0 pr-0 pb-15"> -->
+                <!--Classrooms Data -->
+                {{# classroom_plugin_exist }}
+                    <div class="org_detail col-12 col-sm-6 col-md-4 pull-left pb-15">
+                        <div class="details_content org_classrooms">
+                            <span class="org_icon_container">
+                                <!-- <i class="fa fa-map" aria-hidden="true" aria-label=""></i> -->
+                                <span class="classroom_icon_wrap"></span>
+                            </span>
+                            <div class="details_topcontent">
+                                <div class="col-10 col-sm-10 col-md-9 pull-left pl-6 details_topleft">{{# str}} classrooms, local_costcenter {{/str}}</div>
+                                <div class="col-2 col-sm-2 col-md-3 pull-right p-0 text-right details_topright">{{ allclassroomcount }}</div>
+                            </div>
+                            <div class="details_btmcontent">
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                        <span class="org_label">
+                                            <i class="fa fa-list-ul pr-1 newicon" aria-hidden="true"></i>
+                                            <span>{{# str}} new, local_costcenter {{/str}}</span>
+                                            <span class="mx-1">:</span>
+                                        </span>
+                                        <span>{{ newclassroomcount }}</span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-lock pr-1 inactiveicon" aria-hidden="true"></i>
+                                        <span>{{# str}} cancelled {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span>{{ cancelledclassroomcount }}</span>
+                                </div>
+                                 <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-bullhorn pr-1 activeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} active {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span>{{ activeclassroomcount }}</span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-flag-o pr-1 completeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} completed, local_costcenter {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span>{{ completedclassroomcount }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {{/ classroom_plugin_exist }}
+
+                <!-- Programs Data-->
+                {{# program_plugin_exist}}
+                    <div class="org_detail col-12 col-sm-6 col-md-4 pull-left pb-15 pl-0">
+                        <div class="details_content org_programs">
+                            <span class="org_icon_container">
+                                <!-- <i class="fa fa-map" aria-hidden="true"></i> -->
+                                <span class="bootcamp_icon_wrap"></span>
+                            </span>
+                            <div class="details_topcontent">
+                                <div class="col-10 col-sm-10 col-md-9 pull-left pl-6 details_topleft">{{# str}} programs, local_costcenter {{/str}}</div>
+                                <div class="col-2 col-sm-2 col-md-3 pull-right p-0 text-right details_topright"><a href="{{viewprogramlink_url}}" class='viewlink' title= "{{#str}} allprogramcount, local_costcenter {{/str}}">{{ allprogramcount }}</a></div>
+                            </div>
+                            <div class="details_btmcontent">
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-bullhorn pr-1 activeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} active {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span><a href="{{count_programactivelink_url}}" class='viewlink' title= "{{#str}} activeprogramcount, local_costcenter {{/str}}">{{ activeprogramcount }}</a></span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-flag-o pr-1 completeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} inactive {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span><a href="{{count_programinactivelink_url}}" class='viewlink' title= "{{#str}} inactiveprogramcount, local_costcenter {{/str}}">{{ inactiveprogramcount }}</a></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {{/ program_plugin_exist}}
+
+                <!-- Certification Data -->
+                {{# certification_plugin_exist}}
+                    <div class="org_detail col-12 col-sm-6 col-md-4 pull-left pb-15 pl-0">
+                        <div class="details_content org_certifications">
+                            <span class="org_icon_container">
+                                <i class="fa fa-graduation-cap" aria-hidden="true"></i>
+                            </span>
+                            <div class="details_topcontent">
+                                <div class="col-10 col-sm-10 col-md-9 pull-left pl-6 details_topleft">{{# str}} certifications, local_costcenter {{/str}}</div>
+                                <div class="col-2 col-sm-2 col-md-3 pull-right p-0 text-right details_topright">{{ allcertificationcount }}</div>
+                            </div>
+                            <div class="details_btmcontent">
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-list-ul pr-1 newicon" aria-hidden="true"></i>
+                                        <span>{{# str}} new, local_costcenter {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span>{{ newcertificationcount }}</span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-lock pr-1 inactiveicon" aria-hidden="true"></i>
+                                        <span>{{# str}} cancelled {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span>{{ cancelledcertificationcount }}</span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-bullhorn pr-1 activeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} active {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span>{{ activecertificationcount }}</span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-flag-o pr-1 completeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} completed, local_costcenter {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span>{{ completedcertificationcount }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {{/ certification_plugin_exist}}
+            <!-- </div> -->
+        </div>
+    </div>
+</div>

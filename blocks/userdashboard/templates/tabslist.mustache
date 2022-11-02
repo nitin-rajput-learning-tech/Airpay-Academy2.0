@@ -1,0 +1,115 @@
+{{# mobile_view}}
+	<div class="dropdown w-100 pull-right m-1 text-right">
+		<button class="btn btn-default dropdown-toggle" type="button" id="dropdownMenu1" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+			<i class="icon fa fa-th fa-fw " aria-hidden="true"></i>
+			<span class="drop-down-text">{{# str}}elearning, block_userdashboard{{/ str}}</span>
+			<span class="caret"></span>
+		</button>
+		<ul class="userdashboard_mv dropdown-menu" aria-labelledby="dropdownMenu1">
+			{{# coures_plugin_exist}}
+			<li><a href="javascript:void(0)" data-value="elearning_courses" id="elearning_courses" class="dropdown-item active">{{# str}}elearning, block_userdashboard{{/ str}}</a></li>
+			{{/ coures_plugin_exist}}
+
+			{{# classroom_plugin_exist}}
+			<li><a href="javascript:void(0)" data-value="classroom_courses" id="classroom_courses" class="dropdown-item">{{# str}}classroomtrainings, block_userdashboard{{/ str}}</a></li>
+			{{/ classroom_plugin_exist}}
+
+			{{# program_plugin_exist}}
+			<li><a href="javascript:void(0)" data-value="xseed" id="xseed" class="dropdown-item">{{# str}}bootcamp, block_userdashboard{{/ str}}</a></li>
+			{{/ program_plugin_exist}}
+
+			{{# certification_plugin_exist}}
+			<li><a href="javascript:void(0)" data-value="certification_courses" id="certification_courses" class="dropdown-item">{{# str}}certificationtrainings, block_userdashboard{{/ str}}</a></li>
+			{{/ certification_plugin_exist}}
+
+			{{# learningplan_plugin_exist}}
+			<li><a href="javascript:void(0)" data-value="learningplan_courses" id="learningplan_courses" class="dropdown-item">{{# str}}learningpaths, block_userdashboard{{/ str}}</a></li>
+			{{/ learningplan_plugin_exist}}
+
+			{{# evaluation_plugin_exist}}
+			<li><a href="javascript:void(0)" data-value="evaluation_courses" id="evaluation_courses" class="dropdown-item">{{# str}}feedbacks, block_userdashboard{{/ str}}</a></li>
+			{{/ evaluation_plugin_exist}}
+
+			{{# onlinetests_plugin_exist}}
+			<li><a href="javascript:void(0)" data-value="onlinetest_courses" id="onlinetest_courses" class="dropdown-item">{{# str}}onlineexams, block_userdashboard{{/ str}}</a></li>
+			{{/ onlinetests_plugin_exist}}
+		</ul>
+	</div>
+{{/ mobile_view}}
+{{# desktop_view}}
+	<ul class="block_dashboard_tabslist col-md-3 col-12 pull-left">
+		{{# coures_plugin_exist}}
+		<li class="block_dashboard_tabslistitem">
+			<div class="dashboard-stat active_main_tab">
+				<a id="elearning_courses"  data-methodname = 'local_courses' data-tabname='inprogress' data-status='inprogress' class="userdashboard_menu_link more">
+					<i class="fa fa-book"></i>{{# str}}elearning, block_userdashboard{{/ str}}</a>
+			</div>
+		</li>
+		{{/ coures_plugin_exist}}
+
+		{{# classroom_plugin_exist}}
+		<li class="block_dashboard_tabslistitem">
+			<div class="dashboard-stat">
+				<a id="classroom_courses" class="more">
+					<i class="fa fa-desktop" aria-hidden="true"></i>{{# str}}classroomtrainings, block_userdashboard{{/ str}}</a>
+			</div>
+		</li>
+		{{/ classroom_plugin_exist}}
+
+		{{# program_plugin_exist}}
+		<li class="block_dashboard_tabslistitem">
+			<div class="dashboard-stat">
+				<a id="xseed" class="more">
+					<span class="bootcamp_icon_wrap"></span>{{# str}}bootcamp, block_userdashboard{{/ str}}</a>
+			</div>
+		</li>
+		{{/ program_plugin_exist}}
+
+		{{# certification_plugin_exist}}
+		<li class="block_dashboard_tabslistitem">
+			<div class="dashboard-stat">
+				<a id="certification_courses" class="more">
+					<i class="fa fa-graduation-cap"></i>{{# str}}certificationtrainings, block_userdashboard{{/ str}}</a>
+			</div>
+		</li>
+		{{/ certification_plugin_exist}}
+
+		{{# learningplan_plugin_exist}}
+		<li class="block_dashboard_tabslistitem">
+			<div class="dashboard-stat">
+				<a id="learningplan_courses" class="more">
+					<i class="fa fa-map"></i>{{# str}}learningpaths, block_userdashboard{{/ str}}</a>
+			</div>
+		</li>
+		{{/ learningplan_plugin_exist}}
+
+		{{# evaluation_plugin_exist}}
+		<li class="block_dashboard_tabslistitem">
+			<div class="dashboard-stat">
+				<a id="evaluation_courses" class="more">
+					<i class="fa fa-clipboard"></i>{{# str}}feedbacks, block_userdashboard{{/ str}}</a>
+			</div>
+		</li>
+		{{/ evaluation_plugin_exist}}
+
+		{{# onlinetests_plugin_exist}}
+		<li class="block_dashboard_tabslistitem">
+			<div class="dashboard-stat">
+				<a id="onlinetest_courses" class="more">
+					<i class="fa fa-desktop"></i>{{# str}}onlineexams, block_userdashboard{{/ str}}
+				</a>
+			</div>
+		</li>
+		{{/ onlinetests_plugin_exist}}
+	</ul>
+{{/ desktop_view}}
+			 			
+
+{{#js}}
+	$(".userdashboard_mv.dropdown-menu li a").click(function(){
+		$(this).parents(".dropdown").find(".drop-down-text").html($(this).text() + " <span class='caret'></span>");
+		$(this).parents(".dropdown").find(".drop-down-text").val($(this).data("value"));
+		$(".dropdown-menu li a").removeClass("active");
+		$(this).addClass("active");
+	});
+{{/js}}

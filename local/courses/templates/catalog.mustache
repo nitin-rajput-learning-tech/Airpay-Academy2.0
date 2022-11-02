@@ -1,0 +1,159 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_courses/catalog
+
+    This template renders the courses content for the courses plugin.
+
+    Example context (json):
+    {}
+}}
+{{#response}}
+    {{! card view }}
+    {{#viewtypeCard}}
+        <div class="d-block clearfix">
+            {{#records}}
+                {{# hascourses}}
+                        <div class="{{cardClass}} pull-left d-inline catcourses_list {{course_class}} ">
+                            <div class="col-12 pull-left course_container">
+                                <div class="courseimg_container col-12 col-md-4 pull-left">
+                                    <div style="background-image: url('{{{ courseimage }}}');" alt="{{ coursename }}" class="courseimg courseimg_bg" ></div>
+                                </div>
+                                <div class="coursecontent col-12 col-md-8 pull-left">
+                                    <div class="d-inline-block pull-left mt-2">
+                                        {{^ coursenameCut}}
+                                            <p class="course_name m-0" ><a href="{{ courseurl }}" title="{{ coursename }}">{{ coursename }}</a></p>
+                                        {{/ coursenameCut}}
+                                        {{# coursenameCut}}
+                                            <p class="course_name m-0" ><a href="{{ courseurl }}" title="{{ coursename }}">{{ coursenameCut }}</a></p>
+                                        {{/ coursenameCut}}
+                                    </div>
+                                    {{#actions}}
+                                    <div class="pull-right mt-2">
+                                        <div class="w-fullpull-right showoptions{{courseid}} actionicons">
+                                            <span  class="pull-right showoptions" data-action="showoptions{{courseid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{courseid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{courseid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i></span>
+                                            <ul class="col-md-12 col-sm-12 col-12 p-0 options_container" id="showoptions{{courseid}}">
+                                            
+                                          {{#deleteaction}}<li>{{{ deleteaction }}}</li>{{/deleteaction}}
+                                            
+                                            
+                                            {{#enrol}}
+                                            <li>
+                                                <a href="{{ enrollusers }}" title= "{{#str}}userenrolments, local_courses{{/str}}" ><i class="fa fa-user" aria-hidden="true"></i></a>
+                                            </li>
+                                            {{/enrol}}
+                                            {{#update}}
+                                            {{#auto_enrol}}
+                                            <li>
+                                               <a href="{{ auto_enrol }}" title= "{{#str}}auto_enrol, local_courses{{/str}}"><i class="fa fa-user-circle-o" aria-hidden="true"></i></a>
+                                            </li>
+                                            {{/auto_enrol}}
+                                            {{/update}}
+                                            {{#update}}
+                                            {{# editcourse}}
+                                             <li>
+                                              {{{ editcourse }}}
+                                              </li>
+                                            {{/ editcourse}}
+                                            {{# update_status}}
+                                              <li>
+                                                  {{{update_status}}}
+                                              </li>
+                                            {{/ update_status}}
+                                            {{/update}}
+                                            {{#grade_view}}
+                                            <li>
+                                               <a href="{{ grader }}" title= "{{#str}}grader, local_courses{{/str}}"><i class="fa fa-pie-chart" aria-hidden="true"></i></a>
+                                            </li>
+                                            {{/grade_view}}
+                                            {{#request_view}}
+                                           <li>
+                                            <a href="{{ requestlink }}" title= "{{#str}}requestforenroll, local_classroom{{/str}}"><i class="fa fa-share-square" aria-hidden="true"></i></a>
+                                           </li>
+                                           {{/request_view}}
+                                           
+                                        </ul>
+                                    </div>
+                                    </div>
+                                    {{/actions}}
+                                    <div class="w-full pull-left">
+                                        <div class="coursedesc">
+                                            {{# coursesummary }}
+                                                <p class="desc" title = "Course Descripton" >{{ coursesummary }}</p>
+                                            {{/ coursesummary }}
+                                            {{^ coursesummary }}
+                                                <p class="alert alert-info text-center mt-1">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+                                            {{/ coursesummary }}
+                                        </div>
+                                        <div class="w-full pull-left cat_btm">
+                                            <div class="col-lg-7 col-12 p-0 pull-left">
+                                                <span class="text-muted pull-left catbtm_colon">{{#str}}category, local_courses{{/str}} <span class="colon_align">:</span> </span><span class="catbtm_info" title="{{catname}}">{{catnamestring}}</span>
+                                            </div>
+                                            <div class="col-lg-5 col-12 p-0 pull-left">
+                                                <span class="text-muted lable_align">{{#str}}enrolled, local_courses{{/str}} <span class="colon_align">:</span> </span><span class="catbtm_info">
+                                                {{# enrolled_count }} {{enrolled_count}} {{/ enrolled_count }} 
+                                                {{^ enrolled_count }} N/A {{/ enrolled_count }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="w-full pull-left cat_btm">
+                                            <div class="col-lg-7 col-12 p-0 pull-left">
+                                                    <span class="text-muted pull-left catbtm_colon">{{#str}}points, local_courses{{/str}} <span class="colon_align">:</span> </span><span class="catbtm_info">{{points}}</span>
+                                                </div>
+                                            <div class="col-lg-5 col-12 p-0 pull-left">
+                                                <span class="text-muted lable_align">{{#str}}completed, local_courses{{/str}} <span class="colon_align">:</span> </span><span class="catbtm_info">{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</span>
+                                            </div> 
+                                        </div>
+                                        <div class="w-full pull-left cat_btm">
+                                            <div class="col-lg-7 col-12 p-0 pull-left">
+                                                <span class="text-muted pull-left catbtm_colon">{{#str}}open_skillcourse, local_courses{{/str}} <span class="colon_align">:</span> </span>
+                                                <span class="catbtm_info">{{skillname}}</span>
+                                            </div>
+                                            {{# ratingenable}}
+                                            <div class="col-lg-5 col-12 p-0 pull-left">
+                                                <span class="text-muted lable_align">{{#str}}pluginname, local_ratings{{/str}} <span class="colon_align">:</span> </span> 
+                                                <span class="catbtm_info">{{ratings_value}}</span>
+                                            </div> 
+                                            {{/ ratingenable}}
+                                        </div>
+                                    </div>
+                                    {{# tagenable}}
+                                    <div class="col-lg-12 col-12 p-0 pull-left">
+                                        <span class="text-muted pull-left catbtm_colon">
+                                            Tags
+                                        <span class="colon_align">:</span></span>
+                                        <span class="catbtm_info" title = '{{tag_title}}'>{{{tagstring}}}</span>
+                                    </div>
+                                    {{/ tagenable}}
+                                </div>
+                                
+                                <div class="col-12 pull-left coursetype">
+                                    <span class="text-muted">{{# str}}type, local_courses{{/ str}} :</span>
+                                    {{{coursetype}}}
+                                </div>
+                            </div>
+                        </div>
+                {{/ hascourses}}
+                <div class="col-md-12">{{{ pagination }}}</div>
+                {{# nocourses}}
+                  <div class='w-full pull-left text-center alert alert-info'>No courses available.</div>
+                {{/ nocourses}}
+            {{/records}}
+        </div>
+    {{/viewtypeCard}}
+{{/response}}
+
+

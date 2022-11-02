@@ -1,0 +1,51 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{#response}}
+    {{#viewtypeCard}}
+        <table id ="displaysyncerrors" class="generaltable">
+        <thead>
+            <tr>
+                <th>{{#str}}new_users_count, local_users{{/str}}</th>
+                <th>{{#str}}updated_userscount, local_users{{/str}}</th>
+                <th>{{#str}}errorscount, local_users{{/str}}</th>
+                <th>{{#str}}warningscount, local_users{{/str}}</th>
+                <th>{{#str}}sup_warningscount, local_users{{/str}}</th>
+                <th>{{#str}}uploaded_by, local_users{{/str}}</th>
+                <th>{{#str}}uploaded_on, local_users{{/str}}</th>
+                <th>{{#str}}delete{{/str}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#records}}
+                <tr>
+                    <td>{{newuserscount}}</td>
+                    <td>{{updateduserscount}}</td>
+                    <td>{{errorscount}}</td>
+                    <td>{{warningscount}}</td>
+                    <td>{{supervisorwarningscount}}</td>
+                    <td>{{usercreated}}</td>
+                    <td>{{createddate}}</td>
+                    <td><input type="checkbox" name="checkbox_id[]" class="delete_user" value={{checkbox}} ></td>
+                </tr>
+            {{/records}}
+        </tbody>
+        </table>
+
+        <button type="button" id ="btn_delete" style="float: right;margin: 3px 10px 0px 0px;" onclick="(function(e){ require('local_users/datatablesamd').deletesyncStatistics({ action: 'delete_syncstatics',contextid:1}) })(event)">{{#str}}delete{{/str}}</button>
+
+    {{/viewtypeCard}}
+{{/response}}

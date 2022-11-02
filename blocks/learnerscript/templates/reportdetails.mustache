@@ -1,0 +1,110 @@
+ {{# createreport}}
+ <div class="pull-right course_extended_menu_itemlink">
+     <a href="{{config.wwwroot}}/blocks/learnerscript/editreport.php" title="Add Report">
+                    <i class="icon fa fa-plus"></i>
+            </a>
+ </div>
+ {{/ createreport}}
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }}user{{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#user}}
+            {{> block_learnerscript/reportscontent}}
+         {{/user}} 
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->
+    </div>
+</div>
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }}course{{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#course}}
+            {{> block_learnerscript/reportscontent}}
+        {{/course}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->     
+    </div> 
+</div>
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }} classroom_nameforreports, block_learnerscript {{/ str }}</h4>
+    <div class="w-100 pull-left classroom_report">
+        {{#local_classroom}}
+            {{> block_learnerscript/reportscontent}}
+        {{/local_classroom}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->
+    </div>
+</div>
+<!-- <div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }} certification_nameforreports, block_learnerscript {{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#local_certification}}
+            {{> block_learnerscript/reportscontent}}
+        {{/local_certification}} -->
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->    
+   <!--  </div> 
+</div> -->
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }} program_nameforreports, block_learnerscript {{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#local_program}}
+            {{> block_learnerscript/reportscontent}}
+        {{/local_program}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>--> 
+    </div>  
+</div>
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }} onlinetest_nameforreports, block_learnerscript {{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#local_onlinetests}}
+            {{> block_learnerscript/reportscontent}}
+        {{/local_onlinetests}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->
+    </div> 
+</div>
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }} learningplan_nameforreports, block_learnerscript {{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#local_learningplan}}
+            {{> block_learnerscript/reportscontent}}
+        {{/local_learningplan}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>--> 
+    </div> 
+</div>
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }}feedback{{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#local_evaluations}}
+            {{> block_learnerscript/reportscontent}}
+        {{/local_evaluations}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->
+    </div>
+</div>
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }}enduser,block_learnerscript{{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#enduser}}
+            {{> block_learnerscript/reportscontent}}
+        {{/enduser}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->
+    </div>
+</div>
+       
+       
+
+

@@ -1,0 +1,165 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 dept_content_container">
+
+    <div class="count_list dept_view_container">
+        <div class="dept_content">
+            <h3 class="org_name">{{ orgname }}</h3>
+
+            <div class="pull-right showoptions{{{ recordid }}} actionicons ">
+                <span  class="pull-right showoptions" data-action="showoptions{{{ recordid }}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{recordid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{recordid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
+                </span>
+                <ul class="col-md-12 col-sm-12 col-xs-12 p-0 options_container" id = "showoptions{{{ recordid }}}">
+                {{# delete}}
+                <li>
+                    <a href="{{ hideurl }}" title ="{{# str}} delete {{/str}}"  onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ recordid }}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ delete_message }}}' }) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" title="" aria-label="Delete"></i></a>
+                </li>
+                {{/ delete}}
+                {{# hide}}
+                <li>
+                    <a href="{{ hideurl }}" title ="{{# str}} inactive {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye"></i></a>
+                </li>
+                {{/ hide}}
+                {{# show}}
+                <li>
+                    <a href="{{ showurl }}" title ="{{# str}} active {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye-slash"></i></a>
+                </li>
+                {{/ show}}
+                {{# edit}}
+                <li>
+
+                <a href="{{ hideurl }}" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({selector:'createcostcentermodal', contextid:1, costcenterid:{{ recordid }}, parentid:{{ parentid }} }) })(event)"><i class="fa fa-pencil fa-fw" title=""></i></a>
+                    <!--<img src="{{ editicon }}" title="{{# str}} edit {{/str}}" data-action= "createcostcentermodal" class="createcostcentermodal icon" data-value="{{ recordid }}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({selector:'createcostcentermodal', contextid:1, costcenterid:{{ recordid }}, parentid:{{ parentid }} }) })(event)">-->
+                </li>
+                {{/ edit}}
+                </ul>
+            </div>
+
+        </div>
+            <div class="col-md-4 col-sm-6 col-xs-12 dept_view_content details_count_info pull-left dept_info">
+                <div><span class="details_string pr-15">{{# str}} pluginname, local_costcenter {{/str}}</span><span class="details_count"><a href="{{dept_count_link}}">{{deptcount}}</a></span></div>
+                <div><span class="details_string pr-15">{{# str}} sub_departments, local_costcenter {{/str}}</span><span class="details_count">{{subdeptcount}}</span></div>
+            </div>
+            
+            <div class="col-md-4 col-sm-6 col-xs-12 dept_view_content mdlcontent">
+                <div class="details_count_info pull-left pl-5 pr-5">
+                    <div>
+                            <div class="div_users">{{# str}} users {{/str}}</div>
+                            <div class= "col-md-5 col-sm-12 useract_inact">
+                                <!--<span class="details_string ttl">total</span>-->
+                                <span class="usercnt details_count">{{ totalusers }}</span>
+                            </div>
+                            <div class= "col-md-7 col-sm-12 lp_inact">
+                                <div class="pull-left w-full pl-0 pr-0">
+                                    <i class="fa fa-user pr-15 pull-left" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} active {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ activeusercount }}</span>
+                                </div>
+                                <div class="pull-left pl-0 pr-0 pt-0">
+                                    <i class="fa fa-user-times pr-15 pull-left" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} inactive {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ inactiveusercount }}</span>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 col-sm-6 col-xs-12 count_list dept_view_content small_desk">
+                <div class="details_count_info pull-left pl-5 pr-5">
+                    <div class="div_users">{{# str}} courses, local_costcenter {{/str}}</div>
+                    <div class= "col-md-5 col-sm-12 useract_inact">
+                        <!--<span class="details_string ttl">total</span>-->
+                        <span class="coursecnt details_count">{{ coursecount }}</span>
+                    </div>
+                    <div class= "col-md-7 col-sm-12 lp_inact">
+                        <div class="pull-left w-full pl-0 pr-0">
+                            <i class="fa fa-user pr-15 pull-left" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} active {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ activecoursecount }}</span>
+                        </div>
+                        <div class="pull-left pl-0 pr-0 pt-0">
+                            <i class="fa fa-user-times pr-15 pull-left" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} inactive {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ inactivecoursecount }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{# classroom_plugin_exist }}
+            <div class="col-md-4 col-sm-6 col-xs-12 count_list dept_view_content">
+                <div class="details_count_info pull-left pl-5 pr-5 box_classrooms">
+                    <div class="div_users">{{# str}} classrooms, local_costcenter {{/str}}</div>
+                    <div class= "col-md-5 col-sm-12 useract_inact">
+                        <!--<span class="details_string ttl">total</span>--><span class="clscnt details_count">{{ allclassroomcount }}</span>
+                    </div>
+                    <div class= "col-md-7 col-sm-12 lp_inact">
+                        <div class="pull-left w-full pl-0 pr-0">
+                            <i class="fa fa-list-ul w-full pr-15 pull-left" aria-hidden="true" style="color:#1177d1"></i><span class="lable_name pull-left">{{# str}} new, local_costcenter {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ newclassroomcount }}</span>
+                        </div>
+                        <div class="pull-left pl-0 pr-0 pt-0">
+                            <i class="fa fa-bullhorn pr-15 pull-left" aria-hidden="true" style="color:#0b9444;"></i><span class="lable_name pull-left">{{# str}} active {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ activeclassroomcount }}</span>
+                        </div>
+                        <div class="pull-left w-full pl-0 pr-0">
+                            <i class="fa fa-lock w-full pr-15 pull-left" aria-hidden="true" style="color:#ec1b23"></i><span class="lable_name pull-left">{{# str}} cancelled {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ cancelledclassroomcount }}</span>
+                        </div>
+                        <div class="pull-left pl-0 pr-0 pt-0">
+                            <i class="fa fa-flag-o pr-15 pull-left" aria-hidden="true" style="color:#ed008c"></i><span class="lable_name pull-left">{{# str}} completed, local_costcenter {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ completedclassroomcount }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/ classroom_plugin_exist}}
+            {{# lp_plugin_exist}}
+            <div class="col-md-4 col-sm-6 col-xs-12 count_list dept_view_content mdlcontent mdlcontent_btm small_desk">
+                <div class="details_count_info pull-left pl-5 pr-5 box_learningplan">
+                    <div class="div_users">{{# str}} learning_plan, local_costcenter {{/str}}</div>
+                    <div class= "col-md-5 col-sm-12 useract_inact">
+                        <!--<span class="details_string ttl">total</span>--><span class="lrpcnt details_count">{{ alllearningplans }}</span>
+                    </div>
+                    <div class= "col-md-7 col-sm-12 lp_inact">
+                        <div class="pull-left w-full pl-0 pr-0">
+                            <i class="fa fa-user pr-15 pull-left" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} active {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ activelearningplans }}</span>
+                        </div>
+                        <div class="pull-left pl-0 pr-0 pt-0">
+                            <i class="fa fa-user-times pr-15 pull-left" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} inactive {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ inactivelearningplans }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/ lp_plugin_exist}}
+            {{# program_plugin_exist}}
+            <div class="col-md-4 col-sm-6 col-xs-12 count_list dept_view_content">
+                <div class="details_count_info pull-left pl-5 pr-5 box_programs">
+                    <div class="div_users">{{# str}} programs, local_costcenter {{/str}}</div>
+                    <div class= "col-md-5 col-sm-12 useract_inact">
+                        <!--<span class="details_string ttl">total</span>--><span class="alprgcnt details_count">{{ allprogramcount }}</span>
+                    </div>
+                    <div class= "col-md-7 col-sm-12 lp_inact">
+                        <div class="pull-left w-full pl-0 pr-0">
+                            <i class="fa fa-list-ul w-full pr-15 pull-left" aria-hidden="true" style="color:#1177d1"></i><span class="lable_name pull-left">{{# str}} new, local_costcenter {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ newprogramcount }}</span>
+                        </div>
+                        <div class="pull-left pl-0 pr-0 pt-0">
+                            <i class="fa fa-bullhorn pr-15 pull-left" aria-hidden="true" style="color:#0b9444;"></i><span class="lable_name pull-left">{{# str}} active{{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ activeprogramcount }}</span>
+                        </div>
+                        <div class="pull-left w-full pl-0 pr-0 pt-10">
+                            <i class="fa fa-lock w-full pr-15 pull-left" aria-hidden="true" style="color:#ec1b23"></i><span class="lable_name pull-left">{{# str}} cancelled {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ cancelledprogramcount }}</span>
+                        </div>
+                        <div class="pull-left pl-0 pr-0 pt-0">
+                            <i class="fa fa-flag-o pr-15 pull-left" aria-hidden="true" style="color:#ed008c"></i><span class="lable_name pull-left">{{# str}} completed, local_costcenter {{/str}}<span class="label_colon pull-right mr-5">:</span></span><span class="pull-left">{{ completedprogramcount }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/ program_plugin_exist}}
+    </div>
+
+    <div class="image_container"><i class="fas dept_img fa-university"></i></div>
+
+</div>

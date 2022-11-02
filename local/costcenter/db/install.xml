@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/costcenter/db" VERSION="20150323" COMMENT="XMLDB file for Moodle local/costcenter"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_costcenter" COMMENT="List of costcenters assigned" NEXT="local_costcenter_permissions">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="fullname"/>
+        <FIELD NAME="fullname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="shortname"/>
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" PREVIOUS="fullname" NEXT="parentid"/>
+        <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" PREVIOUS="shortname" NEXT="description"/>
+        <FIELD NAME="description" TYPE="text" LENGTH="big"  SEQUENCE="false" PREVIOUS="parentid" NEXT="visible"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="description" NEXT="timecreated" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="visible" NEXT="timemodified" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="usermodified" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timemodified" NEXT="path" />
+        <FIELD NAME="path" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="usermodified" NEXT="depth"/>
+        <FIELD NAME="depth" TYPE="int" LENGTH="20" NOTNULL="false" UNSIGNED="false" SEQUENCE="false" PREVIOUS="path" NEXT="sortorder"/>
+        <FIELD NAME="sortorder" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="depth" NEXT="childpermission"/>
+        <FIELD NAME="childpermission" TYPE="int" LENGTH="2" DEFAULT="0" NOTNULL="false" SEQUENCE="false" PREVIOUS="sortorder" NEXT="theme" />
+         <FIELD NAME="theme" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false" PREVIOUS="childpermission"/>
+
+         <FIELD NAME="shell" TYPE="char" LENGTH="255"  NOTNULL="false" SEQUENCE="false"/>
+
+        <FIELD NAME="costcenter_logo" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME ="category" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" PREVIOUS="theme" />
+        <FIELD NAME ="multipleorg" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" PREVIOUS="category" />
+
+        <FIELD NAME ="button_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="brand_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME ="hover_color" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" />
+        
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+       <INDEXES>
+        <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_costcenter_permissions" COMMENT="Assigned managers for cost center">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="userid"/>
+        <FIELD NAME="userid" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" PREVIOUS="id" NEXT="costcenterid"/>
+        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" PREVIOUS="userid" NEXT="role"/>
+        <FIELD NAME="roleid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="costcenterid" NEXT="programid"/>
+        <FIELD NAME="value" TYPE="int" LENGTH="2" NOTNULL="true" UNSIGNED="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="costcenterid" NEXT="timecreated" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="value" NEXT="timemodified" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="usermodified" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="timemodified"  />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+       <INDEXES>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+        <INDEX NAME="roleid" UNIQUE="false" FIELDS="roleid"/>
+       </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_coursedetails" COMMENT="Course Details" NEXT="course">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+				<FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
+				<FIELD NAME="costcenterid" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+				<FIELD NAME="credits" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+				<FIELD NAME="cost" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" />
+				<FIELD NAME="enrollstartdate" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true"  SEQUENCE="false"/>
+				<FIELD NAME="enrollenddate" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+				<FIELD NAME="coursecompletiondays" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+				<FIELD NAME="coursecreator" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false"/>
+				<FIELD NAME="duration" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+				<FIELD NAME="identifiedas" TYPE="char" LENGTH="255" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+				<FIELD NAME="requestcourseid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+				<FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+				<FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"  />
+				<FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"   />
+				<FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"   />
+				<FIELD NAME="proficiencylevel" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false"/>
+				<FIELD NAME="skill" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+				<FIELD NAME="prerequisite_courses" TYPE="text" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+       <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+       <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_moduleconfig" COMMENT="Course Module Configuration" NEXT="course">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+        <FIELD NAME="moduleid" TYPE="int" LENGTH="10"  NOTNULL="true" UNSIGNED="true" SEQUENCE="false" />
+        <FIELD NAME="costcenters" TYPE="text" NOTNULL="false" UNSIGNED="false" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="0" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" UNSIGNED="true" SEQUENCE="false"  />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="moduleid" UNIQUE="false" FIELDS="moduleid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_filters" COMMENT="Filters for plugins">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"/>
+        <FIELD NAME="plugins" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="filters" TYPE="char" LENGTH="225" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"/>
+        <FIELD NAME="plugins_to" TYPE="char" LENGTH="225" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="local_certificate" COMMENT="Stores each certificate template">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="costcenter" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="department" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="subdepartment" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="code" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+  </FIELDS>
+    <KEYS>
+      <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for certificate"/>
+   </KEYS>
+  </TABLE>
+  </TABLES>
+</XMLDB>

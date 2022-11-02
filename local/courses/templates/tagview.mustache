@@ -1,0 +1,21 @@
+<div class="tagdetails">
+    <div class="span12">
+        {{# manage}}
+        <div class="span4">
+            <p><span><b>{{#str}}enrolled, local_courses{{/str}}</b>:</span> <span>{{enrolled}}</span>
+            <span><b>{{#str}}completed, local_courses{{/str}}</b>:</span> <span>{{completed}}</span>
+            <span><b>{{#str}}type, local_courses{{/str}}</b>:</span> <span>{{type}}</span>
+            </p>            
+        </div>
+        {{/ manage}}
+
+        {{^ manage}}
+        <div class="span4">
+            <p><span><b>{{#str}}enrolled, local_courses{{/str}}</b>:</span> <span>{{{enrolled}}}</span>
+            <span><b>{{#str}}completed, local_courses{{/str}}</b>:</span> <span>{{completed}}</span>
+            <span><b>{{#str}}status, local_courses{{/str}}</b>:</span> <span>{{status}}</span>
+            </p>            
+        </div>
+        {{/ manage}}
+    </div>
+</div>

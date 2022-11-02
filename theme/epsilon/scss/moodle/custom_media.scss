@@ -1,0 +1,590 @@
+/*custom media queries for the responsive fixes for TheOpenLMS*/
+@media(min-width: 2000px){
+	#page{max-width: 1800px;}
+}
+@media only screen and (max-width: 1600px) and (min-width: 1200px)  {
+    aside#block-region-layerone_two{
+        padding-left:0px;
+    }
+
+    aside#block-region-layertwo_one, aside#block-region-layertwo_three, aside#block-region-layerthree_one {
+        padding-right:0px;
+    }
+}
+@media(max-width: 1440px) {
+    
+}
+@media (min-width: 1400px) {
+    .modal.openLMStransition .modal-lg {
+        /*max-width: 1200px;*/ /*commented by Raghuvaran for jira 2980*/
+        max-width: 100%;
+    }
+    .modal.openLMStransition.local_evaluation .modal-lg {
+        max-width: 100%;
+    }
+}
+
+@media(min-width: 1200px) and (max-width: 1399px){
+    body#page-my-index .openLMStransition.local_users .modal-body .col-md-3{
+        width: 24%;
+        padding: 0px;
+    }
+    body#page-my-index .openLMStransition.local_users .modal-body .col-md-9{
+        width: 73%;
+    }
+    .modal.openLMStransition{
+        max-width: 1000px;
+    }
+    .modal.openLMStransition .modal-lg {
+        max-width: 1200px;
+    }
+}
+@media (max-width: 1274px){
+    .bootstrap-duallistbox-container .box3.col-md-2 #user_unassign_all, 
+    .bootstrap-duallistbox-container .box3.col-md-2 #user_assign_all {white-space: initial;}
+     #filters_form .mform .autocomplete input {
+        position: relative;
+    }
+    #filters_form .mform .autocomplete .form-autocomplete-downarrow {
+        position: absolute;
+        top: 8px;
+        left: 195px;
+    }
+    #filters_form .mform .autocomplete input {
+        min-width: 206px !important; /*added for filter on windows system*/
+    }
+}
+@media (min-width:1200px){
+    body#page-my-index .openLMStransition.local_users .modal-body .form-group>div.col-md-3 {
+        padding: 0px;
+    }
+    body#page-my-index .openLMStransition.local_users .modal-body .form-group > div.col-md-9 .fm-empty-container {
+        padding-top: 66px;
+    }
+    /*
+    skipping modules
+    mod/book
+    mod/quiz
+    */
+    .path-course.pagelayout-incourse #page-content #region-main-settings-menu{width: inherit;}
+    .path-course.pagelayout-incourse #page-content #region-main{max-width: inherit;margin-bottom: 15px;}
+    .path-mod-assign,
+    .path-mod-certificate,
+    .path-mod-chat,
+    .path-mod-choice,
+    .path-mod-data,
+    .path-mod-lti,
+    .path-mod-feedback,
+    .path-mod-forum,
+    .path-mod-glossary,
+    .path-mod-lesson,
+    .path-mod-scorm,
+    .path-mod-survey,
+    .path-mod-wiki,
+    .path-mod-workshop,
+    .path-mod-resource,
+    .path-mod-folder,
+    .path-mod-imscp,
+    .path-mod-label,
+    .path-mod-page,
+    .path-mod-url{
+        #page-content.incourse_region-main #region-main-settings-menu{width: inherit;}
+        #page-content.incourse_region-main #region-main{/*max-width: inherit;*/margin-bottom: 15px;}
+    }
+}
+@media (max-width:1200px){
+    .path-course .course_extended_menu_list, .path-course-view .course_extended_menu_list, .pagelayout-report .course_extended_menu_list, .pagelayout-incourse .course_extended_menu_list{
+        position: static;
+        top: inherit;
+        right: inherit;
+    }
+    body#page-course-view-tabtopics.yui3-skin-sam #sections .yui3-tabview-list {
+        display: list-item;
+        position: static;
+    }
+    body#page-course-view-tabtopics.yui3-skin-sam #sections .yui3-tab {
+        display: inline-block;
+    }
+    body#page-course-view-tabtopics .course-content .yui3-tabview-panel {
+        margin-top: 0px;
+    }
+}
+@media (max-width: 1059px){
+    #filters_form .mform .autocomplete input {
+        position: relative;
+    }
+    #filters_form .mform .autocomplete .form-autocomplete-downarrow {
+        position: absolute;
+        top: 11px;
+
+    }
+}
+@media (min-width:1024px) {
+    body .yui3-panel {
+        max-width: 600px;
+        left: 26% !important;
+        width: 600px !important;
+        margin: 30px auto !important;
+        outline: 0;
+    }    
+}
+@media (max-width:1023px) {
+    body .yui3-panel {
+        max-width: 80%;
+        left: 10% !important;
+        width: 80% !important;
+        margin: 30px auto !important;
+        outline: 0;
+    }
+    .d-none-1023{display: none;}
+    .d-block-1023{
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+@media(max-width: 991px){
+    .modal.openLMStransition{width: 100%;right: 100% !important;}
+    .modal.openLMStransition.show{right: 0% !important;}
+    .modal.openLMStransition .modal-dialog{max-width: inherit;}
+    .openLMStransition .form_status .form_status_list{width: 100% !important;padding: 0px 15px;}
+    .course_extended_menu_itemlink .icon, .course_extended_menu_list .dropdown-toggle .icon {font-size: 18px;padding: 5px;width: 22px;height: 22px;line-height: 22px;}
+    body.path-local-classroom .course_extended_menu_itemlink .icon {padding: 5px;}
+}
+@media (min-width: 992px) and (max-width: 1099px){
+    .bootstrap-duallistbox-container .custom_btn.buttons .btn {
+        padding-left: 0.5rem;padding-right: 0.5rem;width: 50%;}
+}
+@media (min-width: 768px) and (max-width: 991px){
+   .bootstrap-duallistbox-container .buttons button.custom_btn {
+        font-size: 12px;
+        padding: 1rem .5rem;
+        width: 46%;
+    }
+    .bootstrap-duallistbox-container .buttons button.custom_btn.remove,
+    .bootstrap-duallistbox-container .buttons button.custom_btn.btn.move {
+        width: 54%;
+    }
+    section.layertwo aside#block-region-layertwo_three, section.layertwo aside#block-region-layertwo_four {
+        width: 100%;
+        max-width: 100%;
+    }
+    #filters_form #fgroup_id_buttonar .felement.col-md-9 {flex-wrap: nowrap;} /*jira 2889 */
+}
+/*@media(min-width:914px) and (max-width: 1217px){
+    #filters_form #mform1 .autocomplete .form-autocomplete-downarrow {
+        left: 90%;
+    }
+}*/
+@media(max-width: 980px){
+    .leftmenu_navigator{max-width: inherit;}
+    .customLeftMemubtn{
+        display:block;
+        margin-top: 18px;
+    }
+    #nav-drawer {
+        display: none;
+    }  
+    .left_sidebar {
+        display: none;
+    }
+    body.drawer-open-left #nav-drawer {
+        display: block !important;
+        width: 100%;
+    }
+    body {
+        margin-left: 0px !important;
+    }
+    #region-main .card-paginate_wrap {
+        min-height: 350px;
+    }
+    #nav-drawer .leftmenu_navigator {
+        display: none;
+    }
+}
+/*@media (max-width: 913px){
+    #filters_form #mform1 .autocomplete input {
+        position: relative;
+    }
+    #filters_form #mform1 .autocomplete .form-autocomplete-downarrow {
+        position: absolute;
+        left: 80%;
+        top: 11px;
+    }
+}*/
+@media (min-width: 768px) and (max-width:818px){
+    a#prev-activity-link, a#next-activity-link{
+        font-size: 12px;
+    }
+}
+@media (min-width: 768px){
+    .path-local-forum #region-main.col-md-9 {
+        float: left;
+        width: 75%;
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    .path-local-forum .inblock.col-md-3 {
+        float: left;
+        width: 25%;
+        padding-right: 0px;
+    }
+    .dataTables_filter input[type=search]{min-width: inherit;}
+    #region-main .card-paginate_wrap {
+        min-height: 350px;
+    }
+}
+@media (min-width: 576px){
+    .choosercontainer #chooseform .option label[for=item_scorm], .choosercontainer #chooseform .option label[for=item_imscp] {
+        display: inline-flex;
+        align-items: center;
+    }
+    #region-main {
+        padding: 1.25rem;
+    }
+}
+@media(width: 768px){
+    #filters_form #fgroup_id_buttonar .col-md-9.felement {
+        padding-right: 0px;
+    }    
+}
+@media(max-width: 767px){
+    #filters_form {
+        width: 100%;
+        float: left; 
+    }
+    #fitem_id_attachment{width: 100%;}
+    body .course_extended_menu_list{position: static;top: inherit;right: inherit;/*min-width: 320px;*/}
+    .course_extended_menu_list li{margin-bottom: 5px;}
+    .course_extended_menu_itemlink .icon,
+    .course_extended_menu_list .dropdown-toggle .icon{
+        font-size: 20px;
+        padding: 5px;
+        width: 25px;
+        height: 25px;
+    }
+    .modal.openLMStransition{
+        width: 100%;
+    }
+    #sidepre-blocks {
+        width: 100%;
+        right: -100%;
+    }
+    .drawer-open-right #sidepre-blocks{padding-top: 60px;}
+    .drawer-open-right #sidepreopen-control{
+        right: 10px;
+        z-index: 2000;
+        top: 90px;
+    }
+    body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-child(odd) {
+        float: left;
+    }
+    body#page-my-index .openLMStransition.local_users .modal-body .form-group {
+        width: 100%;
+        float: left;
+        margin-left: 1%;
+        margin-right: 0px;
+        min-height: 70px;
+    }
+    .mform .form-inline input[type=text].form-control{max-width: 200px;min-width: 200px;}
+    .mform .form-inline select.custom-select{max-width: 200px;min-width: 200px;}
+    .fdate_time_selector select.custom-select {min-width: initial !important;}
+    #filters_form_inner  form .form-group.fitem{
+        display: inherit;
+    }
+    #filters_form .mform .form-inline input[type=text].form-control{
+        min-width: inherit;
+    }
+    #filters_form .mform .form-inline .form-control{
+        min-width: inherit;
+    }
+	body#page-mod-quiz-attempt #region-main div[role='main']+.m-t-2.m-b-1 {
+		display: inline-block;
+		width: 100%;
+	}
+    .path-mod-quiz .mod-quiz-edit-content .mod-indent-outer {
+        display: block;
+    }
+    body#page-course-view-tabtopics span.instancename{line-height: 40px;}
+    body#page-course-view-tabtopics img.activityicon{padding: 5px;height: 40px;width: 40px;}
+    body#page-course-view-tabtopics.yui3-skin-sam #sections .yui3-tab {min-width: 110px;max-width: 110px;}
+    body#page-course-view-tabtopics.yui3-skin-sam #sections .yui3-tab .yui3-tab-label{padding: 6px;}
+    .modal.openLMStransition.local_evaluation .modal-lg .fdate_time_selector label.form-check {
+        width: inherit;
+    }
+    body#page-mod-quiz-attempt .que {
+        margin-bottom: 0px;
+    }
+    #page-mod-quiz-attempt .submitbtns {
+        padding-top: 0px;
+    }
+    [data-region="blocks-column"] {
+        background-color: #fff; /*for quiz related pages*/
+    }
+    body .openLMStransition .form_status .form_status_listitem .form_status_listitem_link {
+        padding: 5px;
+        min-height: 28px;
+        font-size: 12px;
+        margin-right: 12px;
+        margin-left: 10px;
+    }
+    body .openLMStransition .form_status .form_status_listitem_link:before {
+        height: 28px;
+        border-top: 14px solid #ddd;
+        border-right: 10px solid #ddd;
+        border-left: 10px solid transparent;
+        border-bottom: 14px solid #ddd;
+        position: absolute;
+        left: -10px;
+        top: 0;
+    }
+    body .openLMStransition .form_status .form_status_listitem_link:before {
+        height: 27px;
+        vertical-align: middle;
+        content: "";
+        border-top: 14px solid #ddd;
+        border-right: 10px solid #ddd;
+        border-left: 10px solid transparent;
+        border-bottom: 14px solid #ddd;
+        position: absolute;
+        left: -10px;
+        top: 0;
+    }
+    body .openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link:before {
+        border: none;
+    }
+    body .openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link:after {
+        border-left-width: 10px;
+    }
+    body .openLMStransition .form_status .form_status_listitem_link:after {
+        height: 24px;
+        vertical-align: middle;
+        content: "";
+        border-top: 14px solid transparent;
+        border-right: 9px solid transparent;
+        border-left: 10px solid #ddd;
+        border-bottom: 14px solid transparent;
+        position: absolute;
+        right: -7px;
+        top: 0px;
+    }
+    body .openLMStransition .form_status .form_status_listitem_link:before {
+        height: 28px !important;
+    }
+    #page-header #page-navbar {
+        display: none;
+    }
+    header#page-header .card {
+        margin-bottom: .5rem !important;
+    }
+    .navbar-brand.has-logo {
+        margin-right: .5rem;
+    }
+}
+@media (max-width: 645px){
+    .que .content {
+        width: 100%;
+        float: left;
+        margin-left: 0;
+    }
+	.que .info {
+		width: 100%;
+	}
+}
+@media(max-width: 575px){
+    #page-mod-quiz-edit .maxgrade input[type="submit"] {
+        margin: 8px 0px 5px;
+    }
+    .pagination{
+        display: inherit;
+    }
+    .pagination .page-item {
+        float: left;
+    }
+    .modal.openLMStransition.catalog_popup .modal-dialog {
+        height: auto;
+    }
+}
+@media (min-width: 545px) and (max-width: 767px){
+    body#page-my-index .openLMStransition.local_users .modal-body .form-group>div.col-md-3 {
+        width: 27%;
+    }
+    #filters_form .mform .form-group {
+        width: 50%; 
+    }
+}
+@media (max-width:544px){
+    #filters_form .mform .form-group {
+        width: 100%; 
+    }
+    body#page-my-index .openLMStransition.local_users .modal-body .form-group > div {
+        float: left;
+        width: 100%;
+    }
+	body#page-course-view-toggletop .ctopics.topics .section .activity .contentwithoutlink .no-overflow iframe {
+		width: 100%;
+		height: 100%;
+	}
+    nav.fixed-top.navbar-expand > .container-fluid{flex-wrap: wrap;}
+}
+@media(max-width: 543px){
+    .bootstrap-duallistbox-container .custom_btn.buttons {
+        display: inherit;
+    }
+   .openLMStransition .fdate_time_selector .form-group.fitem {
+        width: initial;
+        float: left;
+        margin-right: 7px;
+    }
+	body .openLMStransition .form_status .form_status_listitem.active:first-child .form_status_listitem_link:before {
+		border-right: 0px;
+	}
+	.navbar .popover-region .popover-region-container {
+		z-index: 2;
+	}
+    .course-content ul.topics li.section, .course-content ul.weeks li.section {font-size: 14px;}
+    body#page-course-view-tabtopics span.instancename {
+        line-height: 35px;
+        font-size: 14px;
+    }
+    body#page-course-view-tabtopics img.activityicon {
+        padding: 5px;
+        height: 35px;
+        width: 35px;
+    }
+    .editing .section .activity .contentwithoutlink, .editing .section .activity .activityinstance {
+        padding-right: 160px;
+        width: 100%;
+        float: left;
+        padding: 0px;
+        clear: both;
+        margin-bottom: .2em;
+    }
+    .editing .section .activity .mod-indent-outer {
+        padding-left: 1.5rem;
+        width: 100%;
+    }
+    body#page-course-view-tabtopics .section li.activity .activityinstance .icon {
+        margin-top: 9px!important;
+        margin-right: .2rem;
+        margin-left: .3rem;
+    }
+    .section .activity .actions {
+        clear: both;
+        position: static;
+        width: 100%;
+    }
+    body #dndupload-status {
+        width: 98%;
+        margin: auto 1%;
+    }
+}
+@media(max-width: 480px){
+    .page-context-header .page-header-headings h3 {
+        font-size: 20px;
+    }
+    .breadcrumb {
+        font-size: 13px;
+    }
+    .breadcrumb-item + .breadcrumb-item::before {
+        padding-right: .2rem;
+        padding-left: .2rem;
+    }
+    .course_extended_menu_list li {margin-bottom: 2px;}
+    .course_extended_menu_list li{margin: 0px 2px;}
+    .course_extended_menu_itemlink .icon, .course_extended_menu_list .dropdown-toggle .icon {
+        font-size: 16px;
+        padding: 3px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+    }
+    header#page-header .d-flex.pull-right {
+        flex-flow: column wrap;
+    }
+    .path-grade .initialbar.firstinitial, .path-grade .initialbar.lastinitial, 
+    .path-grade .initialbar.firstinitial .initialbargroups, 
+    .path-grade .initialbar.lastinitial .initialbargroups {
+        justify-content: flex-start !important;
+    }
+    .openLMStransition .form_status .form_status_listitem .form_status_listitem_link {
+        /*padding: 10px 4px;*/
+        margin-bottom: 1px;
+        /*font-size: 12px;
+        min-height: 40px;*/
+    }
+   
+}
+@media (max-width: 424px){
+    /*.dropdown-menu-right {
+        right: -90px;
+    }*/
+    .course_extended_menu_itemlink .icon{  
+        width: 20px;
+    }
+    .editor_atto_content {
+        min-width: inherit !important;
+    }
+    body.path-mod .moodle-dialogue-confirm .confirmation-buttons input[type=button] {
+        margin-left: 3px;
+        font-size: 12px;
+        padding: .34rem .3rem;
+    }
+    .path-question #fgroup_id_updatebuttonar, .path-question #fgroup_id_buttonar {
+        margin-left: 0px;
+        margin-right: 0px;
+    }
+    .path-question #fgroup_id_updatebuttonar .btn, .path-question #fgroup_id_buttonar .btn {
+        font-size: 14px;
+    }
+}
+@media (max-width: 520px){
+    body nav.fixed-top {position: static;max-height: inherit;}
+    body #page {margin-top: 10px;}
+    body .logo{display: block;text-align: center;}
+    nav.navbar .action-menu .userpicture{width: 50px;height: 50px;}
+    body.drawer-open-left #nav-drawer,
+    .drawer-open-left .nav-drawer-overlay{top: 85px;/*top: 150px;*/}
+}
+@media(max-width: 425px){
+    body #page.container-fluid{padding: 0px 0px;}
+    nav.navbar .navbar-nav .nav-link {
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+    .filepicker-filelist .filepicker-container, .filemanager.fm-noitems .fm-empty-container {
+        padding-top: 70px;
+    }
+    nav.navbar .action-menu .userpicture {
+        width: 40px;
+        height: 40px;
+        margin-left: .4rem;
+    }
+}
+
+@media  (max-width: 360px){
+    .navbar-expand .navbar-nav .dropdown-menu-right a.dropdown-item {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+}
+@media(min-width: 320px) and (max-width: 360px){
+    /*header#page-header .card{margin: 0 0rem 2rem !important;}*/
+    header#page-header .card{margin: 0 0rem 1rem !important;}
+}
+@media(max-width: 337px){
+    .navbar-expand .navbar-nav .dropdown-menu-right {
+        /*right: -44px;*/
+        right: 0px;
+    }
+}
+@media (max-width: 327px){
+    #page-mod-quiz-attempt .submitbtns input[value="Finish attempt ..."] {
+        float: left;
+        margin-top: 5px;
+    }
+}
+@media (max-width: 320px){
+    nav.navbar-light{
+        max-width: 320px;
+    }
+}

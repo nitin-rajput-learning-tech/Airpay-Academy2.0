@@ -1,0 +1,178 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_userdashboard/inner_tab
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "choices": [
+            { "value": "1", "text": "One" },
+            { "value": "2", "text": "Two" }
+        ],
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+    }
+}}
+
+
+
+{{#inprogress_elearning_available}} 
+    <div class="userdashboard_content {{{course_count_view}}}">
+
+        {{# enableslider }}
+            {{> block_userdashboard/userdashboard_enable_slider}}  
+        {{/ enableslider }}    
+        
+        <!--<table class = "generaltable userdashboard_table_content{{table_class}}">
+        <thead>
+        <tr>
+            <th>{{#str}} name, block_userdashboard{{/str}}</th>
+            <th class = "center">{{#str}} maxgrade, block_userdashboard{{/str}}</th>
+            <th class = "center">{{#str}} passgrade, block_userdashboard{{/str}}</th>
+            <th class = "center">{{#str}} grade, block_userdashboard{{/str}}</th>
+            <th class = "center">{{#str}} attempts, block_userdashboard{{/str}}</th>
+            <th class = "center">{{#str}} enrolledon, block_userdashboard{{/str}}</th>
+            {{# sub_tab}}
+                <th class = "center">{{#str}} completedon, block_userdashboard{{/str}}</th>
+            {{/ sub_tab}}
+            <th class = "center">{{#str}} actions, block_userdashboard{{/str}}</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{# inprogress_elearning}}
+            <tr>
+                <td>{{name}}</td>
+                <td class = "center" >{{maxgrade}}</td>
+                <td class = "center">{{passgrade}}</td>
+                <td class = "center">{{grade}}</td>
+                <td class = "center">{{attempts}}</td>
+                <td class = "center">{{enrolledon}}</td>
+                {{# sub_tab}}
+                    <td class = "center">{{completedon}}</td>
+                {{/ sub_tab}}
+                <td class = "center">{{{actions}}}</td>
+            </tr>
+
+        {{/ inprogress_elearning}}
+        </tbody>
+        </table>-->
+        {{# inprogress_elearning}}
+        <div class="col-sm-6 col-12 pull-left courses_inprogress_slide {{{subtab}}} ctype_onlinetests">
+            <div class="w-full pull-left ont_container">
+                <div class="w-full pull-left pl-15 pr-15 ont_content">
+                    <div class="w-full pull-left mt-1">
+                        <div class="w-full pull-left">
+                            <span class="testsicon pull-left pt-10"></span>
+                            <a href="{{starttest_url}}" class="testname pt-10" title="{{testfullname}}">{{ name }}</a>
+                                 <ul class="course_extended_menu_li " style = "float:right; list-style-type:none;">
+            {{# certificate_exists }}
+            {{# certificate_download }}
+                <li>
+                    <a class="course_extended_menu_itemlink" title="{{#str}} download_certificate, local_courses {{/ str}}" class="course_extended_menu_itemlink" href="{{configpath}}/local/certificates/view.php?ctid={{certificateid}}&mtype=onlinetest&mid={{id}}"><i class="icon fa fa-download" aria-hidden="true"></i>
+                    </a>
+                </li>
+            {{/ certificate_download }}
+            {{^ certificate_download }}
+                    <li>
+                        <a class="course_extended_menu_itemlink" title="{{# str}} unableto_download_msg, local_onlinetests, Learning path {{/str}}" class="course_extended_menu_itemlink" href="javascript: void(0)"><i class="icon fa fa-download" aria-hidden="true"></i>
+                        </a>
+                    </li>
+            {{/ certificate_download }}
+            {{/ certificate_exists }}
+             </ul>
+                            <!--<div class="mt-5 pull-right actionicons">{{{actions}}}</div>-->
+                        </div>
+                        <div class="grades_container text-left">
+                            <div class="w-full pull-left">
+                                <!--<p class="w-half pull-left mb-10"><span class="pull-left ot_label"><span class="">{{# str }} maxgrade, local_onlinetests {{/ str }}<span class="ot_colon">:</span></span><span class="ot_value"><>{{ maxgrade }}</span></p>-->
+                                
+                                <p class="w-half pull-left mb-1"><span class="pull-left ot_label">{{# str }} maxgrade, local_onlinetests {{/ str }}<span class="ot_colon">:</span></span><span class="ot_value"><span class="">{{ maxgrade }}</span></span></p>
+
+                                <p class="w-half pull-left mb-1"><span class="pull-left ot_label_right">{{# str }} gradepass, local_onlinetests {{/ str }}<span class="ot_colon">:</span></span><span class="ot_value"><span class="">{{ passgrade }}</span></span></p>
+                                
+                                <p class="w-half pull-left mb-1"><span class="pull-left ot_label" title="{{# str }} achievedgrade, local_onlinetests {{/ str }}">
+                                    {{# str }} ach_grade, block_userdashboard {{/ str }}<span class="ot_colon">:</span></span><span class="ot_value">{{ mygrade }}</span></p></span>
+
+                                <p class="w-half pull-left mb-1"><span class="pull-left ot_label_right">{{# str }} attempts, local_onlinetests {{/ str }}<span class="ot_colon">:</span></span><span class="ot_value">{{# userattemptid}}<a href="{{ configpath }}/mod/quiz/review.php?attempt={{userattemptid}}&amp;sesskey={{sesskey}}">{{ attempts }}</a>{{/ userattemptid}}{{^ userattemptid}}{{ attempts }}{{/userattemptid}}</span></p>
+                            
+                                <p class="w-half pull-left mb-1"><span class="pull-left ot_label">{{# str }} enrolledon, local_onlinetests {{/ str }}<span class="ot_colon">:</span></span><span><span class="">{{ enrolledon }}</span></span></p>
+
+                                <p class="w-half pull-left mb-1"><span class="pull-left ot_label_right">{{# str }} completedon, local_onlinetests {{/ str }}<span class="ot_colon">:</span></span><span><span>{{ completedon }}</span></span></p>
+
+                                <p class="w-full pull-left mb-1"><span class="pull-left ot_label status_ot_label">{{# str }} status, local_onlinetests {{/ str }}<span class="ot_colon">:</span></span><span><span>{{ status }}</span></span></p>
+
+                                <p class="w-full pull-left m-0">
+                                    <span class="schedule">
+                                        <span class="schedule-ficon"><i class="fa fa-calendar mr-1" aria-hidden="true"></i>
+                                {{# str }} schedule, block_userdashboard {{/ str }}
+                                </span>
+                                        <span class="schedule-colon">:</span>
+                                    </span>
+                                     <span class="ot_value">{{ dates }}</span>
+                                </p>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full pull-left ont_btm">
+                    {{# canreview}}
+                    <div class="w-full pull-left test text-center startquiz_btn"><a href="{{ starttest_url }}">{{# str }} reviewtest, local_onlinetests {{/ str }}</a></div>
+                    {{/ canreview}}
+                    {{^ canreview}}
+                    {{# can_start_test}}
+                    <div class="w-full pull-left test text-center startquiz_btn"><a href="{{ starttest_url }}">{{# str }} starttest, local_onlinetests {{/ str }}</a></div>
+                    {{/ can_start_test}}
+                    {{^ can_start_test}}
+                    <div class="w-full pull-left test text-center startquiz_btn">{{# str }} closed, local_onlinetests {{/ str }}</div>
+                    {{/ can_start_test}}
+                    {{/ canreview}}
+                </div>
+            </div>
+        </div>
+       
+                        <!--<span class="">
+                            <span class="ot_label">{{# str }} achievedgrade, local_onlinetests {{/ str }}</span>
+                            <span class="ot_colon">:</span>
+                        </span>
+                        <span class="ml-15">
+                            <span class="">{{ mygrade }}</span>
+                        </span>-->
+                    
+        {{/ inprogress_elearning}}
+
+    </div>          
+{{/inprogress_elearning_available}}
+
+{{^inprogress_elearning_available}}
+    {{> block_userdashboard/userdashboard_nodata_text}}  
+{{/inprogress_elearning_available}}

@@ -1,0 +1,57 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    @copyright 2018 eAbyas Info Solutons Pvt Ltd, India
+    @author    eAbyas  <info@eAbyas.in>
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template theme_waxed/socialicons
+
+    StageTwo Social Icons display.
+
+    Context variables required for this template:
+    * hassocialnetworks
+    * hasfacebook
+    * hastwitter
+    * haslinkedin
+    * hasyoutube
+    * hasinstagram
+    * socialicons
+}}
+
+
+{{#hassocialnetworks}}
+        <div class="social_icons d-inline-block">
+            {{#socialicons}}
+                {{# facebook}}
+                    <a target='_blank' href='{{ facebook }}' class = 'social social-facebook fa fa-facebook' title='Facebook'></a>
+                {{/ facebook }}
+                {{# twitter }}
+                    <a target="_blank" href='{{ twitter }}' class = 'social social-twitter fa fa-twitter' title="Twitter"></a>
+                {{/ twitter }}
+                {{# linkedin }}
+                    <a target="_blank" href='{{ linkedin }}' class = 'social social-linkedin fa fa-linkedin' title="Linkedin"></a>
+                {{/ linkedin }}
+                {{# youtube }}
+                    <a target="_blank" href='{{ youtube }}' class = 'social social-youtube fa fa-youtube' title="Youtube"></a>
+                {{/ youtube }}
+                {{# instagram }}
+                    <a target="_blank" href='{{ instagram }}' class = 'social social-instagram fa fa-instagram' title="Instagram"></a>
+                {{/ instagram }}
+            {{/socialicons}}
+        </div>
+{{/hassocialnetworks}}
+

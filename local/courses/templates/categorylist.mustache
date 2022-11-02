@@ -1,0 +1,113 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_templates/catalog
+
+    This template renders the courses content for the courses plugin.
+
+    Example context (json):
+    {}
+}}
+{{#response}}
+    {{! card view }}
+    {{#viewtypeCard}}
+        {{#records}}
+            <div class="{{cardClass}} pull-left p-2">
+                <div class=" catlist_container">
+                    <div class="col-12 col-md-12 py-2 d-inline-block cattop_content">
+                        <h6 class="pull-left m-0 catname" title="{{result }}">{{# str}}category {{/ str}}: {{parentname_str}}</h6>
+
+                        <p><h6 class="pull-left m-0 catnaming" title="{{ categoryidnumber }}">{{# str}}categorycode, local_courses{{/ str}}:
+                         {{categoryidnumber_idnumber}}</h6></p>
+
+                        <!--<div class="pull-right pl-5 pr-5 text-right actions">{{{actions}}}</div>-->
+                        <div class="pull-right p-0 showoptions{{catgoryid}} actionicons">
+                            {{# actions }}
+                                 <span class="pull-right showoptions" data-action="showoptions{{catgoryid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{catgoryid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{catgoryid}}' }) })(event)">
+                                        <i class="fa fa-ellipsis-h options"></i>
+                                </span>
+                                <ul class="col-md-12 col-sm-12 col-12 p-0 options_container" id="showoptions{{catgoryid}}">
+                                {{# delete_enable}}
+                                    <li>
+                                        <a href="javascript:void(0)" data-action = "deletecategorymodal{{catgoryid}}" data-value = "{{ catgoryid }}" class="deletecategorymodal" title = "{{# str}} delete {{/ str}}" onclick="(function(e){require('local_courses/deletecategory').init({contextid:{{ contextid }}, categoryid:{{ catgoryid }}, })})(event)">
+                                        <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Edit"></i></a>
+                                    </li>
+                                {{/ delete_enable}}
+                                {{^ delete_enable}}
+                                    <li>
+                                        <a href="javascript:void(0)" class="deletecategorymodal" title = "{{# str}} delete {{/ str}}" onclick="(function(e){require('local_courses/deletecategory').reasonfor_unabletodelete({reason: '{{unabletodelete_reason}}' })})(event)">
+                                        <i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>
+                                    </li>
+                                {{/ delete_enable}}
+                                <li>
+                                     <a href="javascript:void(0)" data-action = "createcategorymodal" data-value = "{{ catgoryid }}" class="createcategorymodal" title = "{{# str}} edit {{/ str}}" onclick="(function(e){require('local_courses/newcategory').init({contextid:{{ contextid }}, categoryid:{{ catgoryid }}, })})(event)">
+                                    <i class="fa fa-pencil fa-fw" aria-hidden="true" aria-label="Edit"></i></a>
+                                </li>
+                                    {{# show }}
+                                 <!--    <li>
+                                        <a href="index.php?categoryid={{catgoryid}}&visible={{visible_value}}&sesskey={{sesskey}}" title = "{{# str}} makeinactive,local_courses  {{/ str}}"
+                                        onclick="(function(e){require('local_courses/newcategory').init({contextid:{{ contextid }}, categoryid:{{ catgoryid }},visible:-1,status:'enable'})})(event)">
+                                        <i class="fa fa-eye" aria-hidden="true" aria-label="Edit"></i></a>
+                                    </li> -->
+                                     <li class="quick_actions_list_item">
+                                                   <a href="javascript:void(0)" title="{{# str}} makeinactive,local_courses{{/ str}}" onclick="(function(e){require('local_courses/deletecategory').suspendonlinetest({ id:{{catgoryid}},visible:0,status:'enable'}) })(event)">
+                                                <i class="fa fa-eye"></i></a>
+                                                </li>
+                                    {{/ show }}
+                                    {{^ show }}
+                                    <!--<li>
+                                       <a href="index.php?categoryid={{catgoryid}}&visible={{visible_value}}&sesskey={{sesskey}}" title = "{{# str}} makeactive,local_courses {{/ str}}"
+                                        onclick="(function(e){require('local_courses/newcategory').init({contextid:{{ contextid }}, categoryid:{{ catgoryid }},visible:1,status:'disable' })})(event)">
+                                        <i class="icon fa fa-eye-slash" aria-hidden="true" title="" aria-label="Edit"></i></a> -->
+                                        <li class="quick_actions_list_item">
+                                                <a href="javascript:void(0)" title="{{# str}} makeactive,local_courses{{/ str}}" onclick="(function(e){ require('local_courses/deletecategory').suspendonlinetest({ id:{{catgoryid}},visible:1,status:'disable'}) })(event)">
+                                                <i class="fa fa-eye-slash"></i></a>
+                                      </li>
+                                    {{/ show }}
+                                </ul>
+                            {{/ actions }}
+                        </div>
+                    </div>
+                    
+                    <div class="catbottom_content py-2 w-full">
+
+                           <!--  <div><h6 class="pull-left m-0 catnames" title="{{ }}">Sub Categories: {{ categoryname_str }}</h6></div> -->
+                            {{# showsubcategory}}
+                            <div>
+                             <span class="catlisticon"><i class="fa fa-folder-open"></i></span>
+                              <span class="catcounts mt-2">
+                                <span class="catnames">{{# str}} categories, local_courses{{/ str }}
+                            </span> {{{ categoryname_str }}}</span>
+                                </div>
+                             {{/ showsubcategory}}
+                    </div>
+
+                        <div class="col-12 col-md-6 d-inline">
+                            <!--<div style="background-image: url('{{ catlisticon }}');" alt="{{ categoryname }}" title = "{{ categoryname }}"class="catlistimg" ></div>-->
+                          <span class="catlisticons"><i class="fa fa-book secbook"></i></span>
+                        <!-- </div>
+                        <div class="col-12 col-md-6 d-inline"> -->
+                            <span class="catcounts mt-2">
+                            <span class="courses_str">{{# str}}courses, local_courses{{/ str }}
+                            </span> {{{ catcount }}}</span>
+                        </div>
+
+                </div>
+            </div>
+        {{/records}}
+    {{/viewtypeCard}}
+{{/response}}

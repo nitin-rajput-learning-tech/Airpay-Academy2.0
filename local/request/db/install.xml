@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/request/db" VERSION="20060905" COMMENT="XMLDB file for Moodle mod/label"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+
+<TABLE NAME="local_request_comments" COMMENT="local_request_comments table retrofitted from MySQL" NEXT="local_request_config">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"  NEXT="instanceid"/>
+        <FIELD NAME="instanceid" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false"  PREVIOUS="id" NEXT="createdbyid"/>
+        <FIELD NAME="createdbyid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false"  PREVIOUS="instanceid" NEXT="dt"/>
+        <FIELD NAME="dt" TYPE="datetime" NOTNULL="false" SEQUENCE="false"  PREVIOUS="createdbyid" NEXT="message"/>
+        <FIELD NAME="message" TYPE="text" LENGTH="medium" NOTNULL="false" SEQUENCE="false"  PREVIOUS="dt"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="instanceid" UNIQUE="false" FIELDS="instanceid"/>
+        <INDEX NAME="createdbyid" UNIQUE="false" FIELDS="createdbyid"/>
+      </INDEXES>
+    </TABLE>
+
+
+ <TABLE NAME="local_request_config" COMMENT="local_request_config table retrofitted from MySQL" PREVIOUS="local_request_comments" NEXT="local_request_formfields">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true"  NEXT="varname"/>
+        <FIELD NAME="varname" TYPE="char" LENGTH="200" NOTNULL="true" SEQUENCE="false"  PREVIOUS="id" NEXT="value"/>
+        <FIELD NAME="value" TYPE="text" LENGTH="medium" NOTNULL="true" SEQUENCE="false"  PREVIOUS="varname"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+
+
+<TABLE NAME="local_request_records" COMMENT="local_request_records table retrofitted from MySQL" PREVIOUS="local_request_form_data">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" />
+        <FIELD NAME="createdbyid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false"  />
+        <FIELD NAME="compname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="compcode" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"  />  
+		    <FIELD NAME="compkey" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="module_id" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="componentid" TYPE="int" LENGTH="20" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="status" TYPE="char" LENGTH="50" NOTNULL="true" SEQUENCE="false"  />
+        <FIELD NAME="req_type" TYPE="char" LENGTH="200" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="req_values" TYPE="char" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+       <FIELD NAME="responder" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+       <FIELD NAME="respondeddate" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="20" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="c1" TYPE="char" LENGTH="300" NOTNULL="false" SEQUENCE="false"  />
+        <FIELD NAME="c2" TYPE="char" LENGTH="300" NOTNULL="false" SEQUENCE="false" />
+        <FIELD NAME="c3" TYPE="char" LENGTH="300" NOTNULL="false" SEQUENCE="false" />
+        
+       
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="module_id" UNIQUE="false" FIELDS="module_id"/>
+        <INDEX NAME="componentid" UNIQUE="false" FIELDS="componentid"/>
+    </INDEXES>
+    </TABLE>
+
+
+  </TABLES>
+  
+</XMLDB>
+

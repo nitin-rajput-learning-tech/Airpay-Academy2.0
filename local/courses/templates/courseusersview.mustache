@@ -1,0 +1,30 @@
+<div>
+    <ul class="course_extended_menu_list">
+            <li>
+                <div class="coursebackup course_extended_menu_itemcontainer">
+                    <a title="{{# str}} mass_enroll,local_courses {{/ str}}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/courses/mass_enroll.php?id={{courseid}}"><i class="icon fa fa-users fa-fw " aria-hidden="true"></i></a>
+                </div>
+            </li>
+            <li>
+                <div class="coursebackup course_extended_menu_itemcontainer">
+                    <a title="{{# str}} userenrolments,local_courses {{/ str}}" class="course_extended_menu_itemlink" href="{{config.wwwroot}}/local/courses/courseenrol.php?id={{courseid}}&enrolid={{enrolid}}"><i class="icon fa fa-user-plus fa-fw " aria-hidden="true"></i></a>
+                </div>
+            </li>
+    </ul>
+    <table class='generaltable' id='course_users'>
+        <thead>
+            <tr>
+                <th>{{# str}} employeename, local_courses{{/ str}}</th>
+                <th>{{# str}} empnumber, local_courses{{/ str}}</th>
+                <th>{{# str}} email, local_courses{{/ str}}</th>
+                <th>{{# str}} completionstatus, local_courses{{/ str}}</th>
+                <th>{{# str}} completiondate, local_courses{{/ str}}</th>
+                <th>{{# str}} enrolmethod, local_courses{{/ str}}</th>
+                <th>{{# str}} actions,local_courses{{/ str}}</th>
+                {{# added_certificate}}
+                    <th>{{# str}} certificate, local_courses{{/ str}}</th>
+                {{/ added_certificate}}
+            </tr>
+        </thead>
+    </table>
+</div>

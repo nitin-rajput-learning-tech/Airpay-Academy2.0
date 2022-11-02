@@ -1,0 +1,61 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div class="departments_view_wrapper d-inline-blocks">
+
+    {{> local_costcenter/costcenter_view}}
+
+    <!-- Departments View -->
+    <div class="dept_container {{deptclass}}">
+        <div class="col-md-6 col-sm-12 col-12 p-0 pull-left evendepts">
+            
+            {{# departments_content}}
+                {{# even }}
+                    {{> local_costcenter/departments_content}}
+                {{/ even }}
+            {{/ departments_content}}
+            </div>
+
+        <div class="col-md-6 col-sm-12 col-12 pull-left p-0 odddepts">
+            
+            {{# departments_content}}
+                {{# odd }}
+                    {{> local_costcenter/departments_content}}
+                {{/ odd }}
+            {{/ departments_content}}
+            
+        </div>
+    </div>
+
+</div>
+
+{{#js }}
+    var accItem = document.getElementsByClassName('dept_content');
+    var accHD = document.getElementsByClassName('deptimg_container');
+    for (i = 0; i < accHD.length; i++) {
+        accHD[i].addEventListener('click', toggleItem, false);
+    }
+    function toggleItem() {
+        var itemClass = this.parentNode.className;
+        for (i = 0; i < accItem.length; i++) {
+            accItem[i].className = 'col-md-12 col-sm-12 col-12 pull-left dept_content';
+        }
+        if (itemClass == 'col-md-12 col-sm-12 col-12 pull-left dept_content') {
+            this.parentNode.className = 'col-md-12 col-sm-12 col-12 pull-left dept_content detailsopen';
+        }
+    }
+{{/ js}}

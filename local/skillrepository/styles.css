@@ -1,0 +1,236 @@
+#page-local-skillrepository-index #fitem_id_category .felement.fselect,
+#page-local-skillrepository-index #fitem_id_sub_category .felement.fselect {
+    display: inline !important;
+    float: left;
+    width:20% !important;
+    margin-left: 3.5% !important;
+}
+.add_category {
+    margin-left: 1%;
+    cursor: pointer;
+}
+#popup_submit {
+    margin-left: 30%;
+}
+#page-local-skillrepository-index .ui-button-text {
+    display: none !important;
+}
+body.path-local-skillrepository .ui-dialog .ui-dialog-titlebar-close span {
+    margin-left:-9px !important;
+    margin-top:-8px !important;
+}
+.ui-dialog #nameError, #shortnameError {
+    display: inline-block;
+    border: 1px solid #eed3d7;
+    border-radius: 4px;
+    background-color: #f2dede;
+    padding: 4px;
+    margin-bottom: 4px;
+    color: #b94a48;
+}
+span.ui-button-text{
+    float: left !important;
+    width: 100% !important;
+    font-size: 10px !important;
+}
+#costcenter-form_caption {
+    float: right;
+}
+#page-local-skillrepository-index div[role="main"] {
+    position: relative;
+}
+#page-local-skillrepository-index #costcenter-form_caption a {
+    position: absolute;
+    top: 28px;
+    /*color: #fff !important;*/
+    font-size: 20px;
+    right: 5px;
+}
+#skill_repository_wrapper{
+    width: 100%;
+    float: left;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+#page-local-skillrepository-index .collapsibleregion.collapsed {
+    height:25px !important;
+}
+/*.collapsibleregion {
+    height: auto !important;
+}*/
+#page-local-skillrepository-index #costcenter-form_caption a img{
+    display: none !important;
+}
+#costcenter-form_caption a img.add_img {
+    display: -webkit-inline-box;
+    display: initial !important;
+    padding-right: 10px;
+}
+body.path-local-skillrepository span.ui-button-icon-primary.ui-icon.ui-icon-closethick {
+    background-image: url([[pix:theme|/images/ui-icons_228ef1_256x240]]) !important;
+}
+.ui-dialog-titlebar {
+    border-radius: 0px !important;
+    padding-left: 0px;
+    padding-right: 0px;
+    border-left-width: 0px;
+    border-right-width: 0px;
+    border-top-width: 0px;
+    border-bottom-width: 0px;
+}
+.ui-dialog {
+    padding: 0px 0px 0px 0px !important;
+    margin: 0px 0px 0px 0px !important;
+    border-radius: 0px !important;
+}
+/*changed by anil*/
+#page-local-skillrepository-index .ftoggler {
+    display: none;
+}
+#page-local-skillrepository-index .ui-widget-content {
+    border:0px !important;
+}
+#page-local-skillrepository-index .bulkupload {
+    float: right;
+    position: relative;
+    right: 163px;
+    top: -37px;   
+}
+.bulkupload a {
+    color: white !important;
+}
+#dialog-confirm {
+    height: auto !important;
+}
+.ui-button-text-only .ui-button-text {
+    padding: .4em 1em .4em .2em !important;
+}
+#dialog_box div.fdescription.required{
+    margin-left: 20px !important;
+}
+.active .add_category {
+    margin-left: 8%;
+}
+/*code added by Raghuvaran starts here*/
+#page-local-skillrepository-skill_category div[role="main"] {
+    position: relative;
+}
+/*code added by Raghuvaran starts here*/
+
+/*css added by Shashank --- starts here*/
+#page-local-skillrepository-skill_category #skillcategory-form_caption a {
+    /*position: absolute;*/
+    /*top: 26px;*/
+    /*color: #fff !important;*/
+    /*font-size: 20px;*/
+    /*right: 10px;*/
+}
+/*css added by Shashank --- ends here*/
+#page-local-skillrepository-skill_category #skillcategory-form_caption a>img{
+    /*display: none;*/
+}
+#page-local-skillrepository-skill_category .ftoggler {
+    display: none;
+}
+body.path-local-skillrepository table#skill_categories th{
+    /*color: #336799;*/
+}
+
+table#institutes th{
+    color: #336799;
+}
+
+#page-local-skillrepository-skillinfo .emptymsg{
+    text-align: center;
+    padding: 12px 0;
+    box-shadow: 0 0 11px 0 #d8e3ff inset;
+}
+#page-local-skillrepository-skillinfo #skilldetails{
+    width: 100%;
+}
+#page-local-skillrepository-skillinfo .skill_descr{
+    margin-top: 15px;
+    margin-left: 15px;
+}
+#page-local-skillrepository-skillinfo .skill_addinfo{
+    background-color: #d8e3ff;
+    width: 100%;
+    padding: 7px;
+}
+#page-local-skillrepository-skillinfo #additionalinfo{
+    margin-top: 30px;
+}
+#page-local-skillrepository-skillinfo .skillcourses{
+    margin-top: 20px;
+}
+#page-local-skillrepository-skillinfo .noskillcoursesmsg{
+    margin-left: 15px;
+}
+#page-local-skillrepository-index .generaltable.dataTable.no-footer. thead tr{
+    background-color: #2b2f3b;
+    color:white;
+}
+#page-local-skillrepository-index table.dataTable thead .sorting{
+    background-color: #2b2f3b;
+    color: white;
+}
+#page-local-skillrepository-index .generaltable.dataTable.no-footer td img.iconsmall{
+    padding:0 10px;
+    cursor: pointer;
+}
+#page-local-skillrepository-index .dataTables_length{
+    display:none;
+}
+#page-local-skillrepository-index #skill_repository_filter{
+    float:right;
+    clear:both;
+}
+#skill_page_buttons .btn-primary a{
+    color:white;
+}
+body.path-local-skillrepository #region-main .card.card-block {
+    overflow-x: visible;
+}
+body.path-local-skillrepository .course_extended_menu_list {
+    top: -40px;
+}
+body#page-local-skillrepository-level #region-main .card.card-block {
+    overflow-x: visible;
+}
+body#page-local-skillrepository-level .course_extended_menu_list {
+    top: -16px;
+    right: 20px;
+}
+.openLMStransition.local_skillrepository .modal-footer .btn {
+    margin-right: 5px;
+}
+#skill_repository_wrapper .dt-buttons i.icon {
+    margin-right: 0px;
+}
+#page-local-skillrepository-level #all_levels_display_table_wrapper {
+    overflow: auto;
+}
+#page-local-skillrepository-skill_category .course_extended_menu_list {
+    right: 0px;
+}
+@media(max-width: 767px){
+    #page-local-skillrepository-skill_category .course_extended_menu_list,
+    #page-local-skillrepository-level .course_extended_menu_list{position: absolute;}
+}
+@media(max-width: 640px){
+    #skill_repository_wrapper .dt-buttons {
+        text-align: left;
+    }
+}
+@media(max-width: 375px){
+    #page-local-skillrepository-level .course_extended_menu_list {
+        top: -16px !important;
+        right: 30px;
+    }
+}
+#manage_skills {
+    width: 100%;
+    float: left;
+    overflow: auto;
+    margin-top: 15px;
+}

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/tags/db" VERSION="20190805" COMMENT="XMLDB file for Moodle local/tags"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_tags" COMMENT="local tags" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>        
+        <FIELD NAME="tagid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="taginstanceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="open_costcenterid" TYPE="int"  LENGTH="10"  NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="open_departmentid" TYPE="int"  LENGTH="10"  NOTNULL="false"  SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" COMMENT="used to store updated time"  NOTNULL="true" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tagid" UNIQUE="false" FIELDS="tagid"/>
+        <INDEX NAME="taginstanceid" UNIQUE="false" FIELDS="taginstanceid"/>
+        <INDEX NAME="open_costcenterid" UNIQUE="false" FIELDS="open_costcenterid"/>
+        <INDEX NAME="open_departmentid" UNIQUE="false" FIELDS="open_departmentid"/>
+     </INDEXES>
+    </TABLE>
+     <TABLE NAME="local_tag_mapping" COMMENT="tags mapping" >
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>        
+        <FIELD NAME="tagid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="tagitemid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
+        <FIELD NAME="usercreated" TYPE="int"  LENGTH="10"  NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int"  LENGTH="10"  NOTNULL="true"  SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int"  LENGTH="10"  NOTNULL="false"  SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int"  LENGTH="10"  NOTNULL="false"  SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tagid" UNIQUE="false" FIELDS="tagid"/>
+     </INDEXES>
+    </TABLE>
+    
+  </TABLES>
+</XMLDB>

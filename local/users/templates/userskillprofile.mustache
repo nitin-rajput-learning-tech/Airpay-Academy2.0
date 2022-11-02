@@ -1,0 +1,46 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    
+    @author eabyas  <info@eabyas.in>
+}}
+{{#response}}
+{{#viewtypeCard}}
+<div class="Comcourses_tab_content" id="courses_tab_content">
+    <table class="w-full generaltable Comcourses_table" id = profile_course_content>
+        <thead class="hidden">
+            <tr>
+                <th></th><th></th>
+            </tr>
+        </thead>
+
+            <tbody>
+                {{#records}}
+                <tr>
+                    <td>{{{ comp_name }}}</td>
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar" role="progressbar" style="width: {{percentage}}%;" aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100" title="{{skillnames}}">{{percentage}}%</div>
+                        </div>
+                    </td>
+                </tr>
+                {{/ records}}
+            </tbody>
+    </table>
+
+    {{^ records }}
+        <p class="w-full pull-left alert alert-info text-center">{{# str}}team_nodata, local_users {{/ str}}</p>
+    {{/ records }}
+</div>
+{{/viewtypeCard}}
+{{/response}}

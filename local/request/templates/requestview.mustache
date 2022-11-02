@@ -1,0 +1,148 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_request/requestview
+
+    Select an action to execute.
+
+    Classes required for JS:
+    * none
+
+    Data attibutes required for JS:
+    * none
+
+    Context variables required for this template:
+    * message - The message to explain why we ask user to select an action
+    * choices - List of possible actions
+    * confirm - Text for button confirms
+    * cancel -  Text for button cancel
+
+    Example context (json):
+    {
+        "message": "Message",
+        "requests": [
+            { "status": "1",
+             "compname": "One",
+             "requestedby":
+             "requesteddate"
+              }
+
+        ],
+
+    }
+}}
+
+
+{{#response}}
+    {{! card view }}
+    {{#viewtypeCard}}
+    {{#records}}
+    <div class="{{cardClass}} pull-left">
+        <div class="requests_container  mt-2">
+            <div class='col-md-12 col-sm-12 col-xs-12 p-0  request_name'>
+                <div class='col-md-12 col-sm-12  col-xs-12'>
+                    {{# customimage_required}}
+                        <span class="{{compname}} req_component_icon"></span>
+                    {{/ customimage_required}}
+                    {{^ customimage_required}}
+                    <span class="E-Learning req_component_icon">
+                        <i class="{{componenticonclass}}" aria-hidden="true" aria-label=""></i>
+                    </span>
+                    {{/ customimage_required}}
+                    <span class="req_component_name">{{{componentname}}}</span>
+                </div>   
+            </div>
+            <div class='w-100 component_name text-center'>
+                <div class="text-center font-weight-bold value_align days_count">
+                    {{daysdone}} Days
+                </div>
+                <div class="col-md-6 reqdt pull-left">
+                    <span class=' w-full text-center'>
+                        <span class=" d-block value_align ticket_raise_date"> &nbsp {{# str}} requesteddate,local_request {{/ str}} 
+                            <span class="d-block font-weight-bold">{{{requesteddate}}}</span>  </span>
+                    </span>
+                        
+                </div>
+                <div class="col-md-6 resdt pull-left">
+                    <span class=' w-full text-center'>
+                        <span class=" d-block value_align ticket_raise_date"> &nbsp {{# str}} respondeddate,local_request {{/ str}}  <span class=" d-block font-weight-bold">{{{respondeddate}}}</span></span>
+
+                    </span>
+                </div>
+                
+                <span class=" w-full text-center {{#approvestatus}} status_approved {{/approvestatus}} {{#rejectstatus}} status_rejected {{/rejectstatus}} status_display value_align">{{{ status }}}</span>
+                
+               </div>
+                       
+                <div class='col-md-12 col-sm-12 col-xs-12 p-0 mt-2 requests_content'>
+                    <div class='col-md-12 col-sm-12 col-xs-12 pull-left databox'>
+                        <div class='w-full pull-left mt-2 mb-2'>
+                            <span class='pull-left'>
+                                <span class='lable_align'>
+                                    {{#str}}responder,local_request{{/str}}
+                                <b><span class='colon_align'> :</span></b></span>
+                            </span>
+                            <span class="value_align"><b>{{{responder}}}</b></span>
+                        </div>
+                            
+                        <div class='w-full mt-2 '>
+                            <span class='pull-left'> 
+                                <span class="value_align mt-2 "><b>{{{requesteduser}}}</b> {{# str}} has_requested_for_enrolling_to,local_request {{/ str}}<b> {{{compname}}}.</b></span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class='col-md-12 col-sm-12 col-xs-12 pull-left'>
+                    <div class='mt-4 text-center'>            
+                    {{# enablebutton}}
+                    {{#approve_capability}}                
+                        <span class="text-center req_status">
+                            <a href="javascript:void(0)" class="status_approve_link req_status_link " {{^responded}} id="status_approve_link_dummy" onclick='(function(e){ require("local_request/requestconfirm").init({ componentid:{{{componentid}}}, component:"{{{compname}}}", componentname:"{{{componentname}}}", id:{{{id}}}, action:"approve",  requesteduser: "{{{requesteduser}}}" })})(event)'  
+                                        {{/responded}} >
+                                         
+                                      
+                                {{#str}}approve,local_request{{/str}} 
+                            </a>
+                        </span>               
+                    {{/approve_capability}}
+
+                    {{#deny_capability}}
+                        <span class="text-center req_status">
+                        <a href="javascript:void(0)" class="status_reject_link req_status_link" {{^responded}}
+                                 id="status_reject_link_dummy"onclick='(function(e){ require("local_request/requestconfirm").init({ componentid:{{{componentid}}}, component:"{{{compname}}}", componentname:"{{{componentname}}}", id:{{{id}}}, action: "deny", requesteduser:"{{{requesteduser}}}" })})(event)' {{/responded}}>
+                                        {{#str}}deny,local_request{{/str}} </a>
+                        </span>
+                    {{/deny_capability}}
+                    {{/ enablebutton}}
+
+                    </div>
+                </div>           
+        </div>
+    </div>
+    {{/records}}
+{{/viewtypeCard}}
+{{/response}}
+{{! end of table tag}}
+
+{{# js}}
+    require(['local_request/requestconfirm'], function(requestconfirm) {
+    });
+{{/ js}}
+
+
+
+
