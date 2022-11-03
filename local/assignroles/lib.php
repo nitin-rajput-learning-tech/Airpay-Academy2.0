@@ -78,7 +78,7 @@ function local_assignroles_output_fragment_roleusers_display($args)
     $rolename = $DB->get_field('role', 'shortname', array('id' => $roleid));
     $rolefullname = $DB->get_field('role', 'name', array('id' => $roleid));
   
-    $context = (new \local_costcenter\accesslib())::get_module_context($costcenterid = null,$USER->id);
+    $context = (new \local_assignroles\lib\accesslib())::get_module_context();
     
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)) {
         $sql = "SELECT ra.* FROM {role_assignments} AS ra JOIN {user} AS u on u.id=ra.userid 
@@ -161,7 +161,7 @@ function local_assignroles_leftmenunode()
 
     global $USER, $DB;
 
-    $context = (new \local_costcenter\accesslib())::get_module_context($costcenterid = null,$USER->id);
+    $context = (new \local_assignroles\lib\accesslib())::get_module_context();
     $assignrolesnode = '';
     $userid =  $USER->id;
 

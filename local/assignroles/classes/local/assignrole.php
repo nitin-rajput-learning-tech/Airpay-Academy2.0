@@ -28,7 +28,8 @@
 namespace local_assignroles\local;
 require_once($CFG->dirroot . '/local/lib.php');
 	    
-class assignrole extends \local_costcenter\accesslib {
+class assignrole{
+
 	/**
 	 * Function to assign roles to multiple users at once
 	 * @param [array] $users array of user ids
@@ -69,7 +70,7 @@ class assignrole extends \local_costcenter\accesslib {
 	    $params = array();
 	    $extrafields = '';
 
-		$context = (new \local_costcenter\accesslib())::get_module_context($costcenterid = null,$USER->id);	
+		$context = (new \local_costcenter\lib\accesslib())::get_module_context();	
 		
 	    if ($withusercounts) {
 	        $extrafields = ", (SELECT count(u.id)

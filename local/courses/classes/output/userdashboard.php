@@ -31,7 +31,7 @@ use block_userdashboard\includes\generic_content;
 
 
 
-class userdashboard implements renderable, templatable {
+class userdashboard implements renderable {
 
     //-----hold the courselist inprogress or completed 
     private $courseslist;

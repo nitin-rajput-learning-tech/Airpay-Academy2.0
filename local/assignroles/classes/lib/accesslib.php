@@ -23,9 +23,16 @@
  * @subpackage local_costcenter
  */
 
-defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2022101300.05;          // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2017050505;        // Requires this Moodle version
-$plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'local_costcenter';
-$plugin->release = '3.3.3+ (Build: 20171116)'; // Human-friendly version name
+namespace local_assignroles\lib;
+
+/**
+ * get access lib functions
+ */
+class accesslib extends \local_costcenter\lib\accesslib{
+
+    public static function get_module_context($costcenterid = null,$moduleid=null,$moduletype=null){
+
+        return parent::get_module_context($costcenterid = null,$moduleid=null,$moduletype=null);
+
+    }
+}

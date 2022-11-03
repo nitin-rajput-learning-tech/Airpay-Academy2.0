@@ -36,7 +36,7 @@ class local_assignroles_external extends external_api {
         $params = self::validate_parameters(self::submit_assignrole_form_parameters(),
                                     ['contextid' => $contextid, 'roleid'=>$roleid,'jsonformdata' => $jsonformdata]);
         // $context = $params['contextid'];
-        $context = context_system::instance();
+        $context = (new \local_assignroles\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
         $serialiseddata = json_decode($params['jsonformdata']);
@@ -100,7 +100,7 @@ class local_assignroles_external extends external_api {
         $params = self::validate_parameters(self::local_unassign_role_parameters(),
                                     ['contextid' => $contextid, 'roleid'=>$roleid,'userid' => $userid]);
         require_once($CFG->dirroot . '/lib/accesslib.php');
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_assignroles\lib\accesslib())::get_module_context();
         try{
             role_unassign($roleid, $userid, $contextid, '');
             return true;
@@ -173,7 +173,7 @@ class local_assignroles_external extends external_api {
             switch($action){
                 case 'role_users':
                 
-                    $context = (new \local_costcenter\accesslib())::get_module_context($costcenterid = null,$USER->id);
+                    $context = (new \local_assignroles\lib\accesslib())::get_module_context();
 
                     if(is_siteadmin()){
                       $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname 

@@ -27,14 +27,14 @@
  */
 namespace local_assignroles\output;
 class renderer extends \plugin_renderer_base{
+
 	/**
 	 * function to display the site level roles in table format
 	 * returns HTML data of table
 	 */
-	public function display_roles(\context $context){
+	public function display_roles($context){
 		
 		$assignrole = new \local_assignroles\local\assignrole();
-		$systemcontext = \context_system::instance();
 		list($assignableroles, $assigncounts, $nameswithcounts) = $assignrole->get_assignable_roles($context, ROLENAME_BOTH, true);
 		$templatedata = array();
 		

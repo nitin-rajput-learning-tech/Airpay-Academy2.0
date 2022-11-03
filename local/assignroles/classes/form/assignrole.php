@@ -35,7 +35,8 @@ class assignrole extends moodleform {
     public function definition() {
         global $USER,$DB;
 
-		$context = (new \local_costcenter\accesslib())::get_module_context($costcenterid = null,$USER->id); 		
+		$context = (new \local_assignroles\lib\accesslib())::get_module_context(); 		
+
 		$mform = & $this->_form;
 		$roleid = $this->_customdata['roleid'];
 		$costcenterid = $this->_customdata['costcenterid'];

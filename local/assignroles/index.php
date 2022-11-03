@@ -30,7 +30,8 @@ require_once($CFG->libdir.'/adminlib.php');
 global $PAGE,$USER;
 
 
-$context =  (new \local_costcenter\accesslib())::get_module_context($costcenterid = null,$USER->id);
+
+$context =  (new \local_assignroles\lib\accesslib())::get_module_context();
 require_login();
 
 // admin_externalpage_setup('assignroles', '', array('contextid' => $contextid, 'roleid' => $roleid));
@@ -51,5 +52,9 @@ if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganization
 echo $OUTPUT->header();
 
 $PAGE->requires->js_call_amd('local_assignroles/popup', 'init',array(array('contextid' => $context->id, 'selector' => '.rolesuserpopup')));
-echo $PAGE->get_renderer('local_assignroles')->display_roles($context);
+
+$assignrolesclass=$PAGE->get_renderer('local_assignroles');
+
+echo $assignrolesclass->display_roles($context);
+
 echo $OUTPUT->footer();
