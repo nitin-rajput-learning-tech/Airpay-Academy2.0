@@ -1,0 +1,40 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    
+    @author Maheshchandra  <maheshchandra@eabyas.in>
+}}
+<div class="role">
+    {{# enable}}
+        <table class="generaltable">
+            <thead>
+                <tr>
+                    <th>{{# str}}role, local_assignroles{{/ str}}</th>
+                    <th>{{# str}}count, local_assignroles{{/ str}}</th>
+                    <th>{{# str}}actions, local_assignroles{{/ str}}</th>
+                </tr>
+            </thead>
+            <tbody>
+        {{# rolerow}}
+            <tr>
+                <td>{{ rolename }}</td>
+                <td><a class="rolesuserpopup" style="margin-left:40px" href="javascript:void(0)" data-roleid={{roleid}} data-rolename="{{rolename}}" data-action="popupmodal{{roleid}}" data-value={{rolecount}}>{{ rolecount }}</a></td>
+                <td><a href='javascript:void(0)' style='cursor:pointer' data-action='createassignrolemodal' data-value='0' onclick ='(function(e){ require("local_assignroles/newassignrole").init({selector:"createassignrolemodal", contextid:{{contextid}}, roleid:{{roleid}}, rolename:"{{rolename}}"}) })(event)'>{{# str}}assign,local_assignroles{{/ str}}</a></td>
+            </tr>
+        {{/ rolerow}}
+            </tbody>
+        </table>
+    {{/ enable}}
+    {{^ enable}}
+    {{/ enable}}
+</div>

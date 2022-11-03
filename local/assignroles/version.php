@@ -1,5 +1,4 @@
 <?php
-
 /**
  * This file is part of eAbyas
  *
@@ -20,12 +19,13 @@
  *
  * @author eabyas  <info@eabyas.in>
  * @package BizLMS
- * @subpackage local_costcenter
+ * @subpackage local_assignroles
  */
 
 defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2022101300.05;          // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2017050505;        // Requires this Moodle version
+
+$plugin->version = 2022101400;          // The current plugin version (Date: YYYYMMDDXX)
+$plugin->requires  = 2016051900;        // Requires this Moodle version
 $plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'local_costcenter';
-$plugin->release = '3.3.3+ (Build: 20171116)'; // Human-friendly version name
+$plugin->release = 2.7;
+$plugin->component = 'local_assignroles';
