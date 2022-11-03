@@ -77,13 +77,14 @@ class local_courses_observer extends \core\event\course_viewed {
      *
      * @param \core\event\course_category_viewed $event
      */
-    public static function course_category_viewed(\core\event\course_category_viewed $event) {
-        global $CFG;
-        if (!is_siteadmin() ) {
-            redirect($CFG->wwwroot.'/local/courses/index.php');
-            die;
-        }
-    }
+    // public static function course_category_viewed(\core\event\course_category_viewed $event) {
+    //     global $CFG;
+   
+    //     if (!is_siteadmin() ) {
+    //         redirect($CFG->wwwroot.'/local/courses/index.php');
+    //         die;
+    //     }
+    // }
     public static function course_completed_notification(\core\event\course_completed $event){
         global $DB;
         $coursedetails = $DB->get_record('course',  array('id' => $event->courseid));
