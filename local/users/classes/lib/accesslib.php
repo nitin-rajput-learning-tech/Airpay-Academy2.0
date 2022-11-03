@@ -30,9 +30,9 @@ namespace local_users\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($costcenterid = null,$moduleid=null,$moduletype=null){
+    public static function get_module_context($costcenterid = null){
 
-        return parent::get_module_context($costcenterid,$moduleid,$moduletype);
+        return parent::get_module_context($costcenterid);
 
     }
 }

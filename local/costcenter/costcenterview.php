@@ -41,7 +41,7 @@ if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
 }
 if($depart->parentid){
 
-    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($depart->parentid,$id,'local_costcenter');
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($depart->parentid);
 
 }else{
 

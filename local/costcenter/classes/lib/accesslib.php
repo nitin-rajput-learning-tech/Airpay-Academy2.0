@@ -30,20 +30,21 @@ namespace local_costcenter\lib;
  */
 class accesslib
 {
-    public static function get_module_context($costcenterid = null,$moduleid=null,$moduletype=null){
+    public static function get_module_context($costcenterid = null){
 
         global $DB,$USER;
 
     
-        if($costcenterid = null){
+        if($costcenterid == null || $costcenterid == 0){
 
             $costcenterid=$USER->open_costcenterid ? $USER->open_costcenterid : 0;
 
-            $cachekey = "{$userid}_userid_costcenter_context";
+            if($costcenterid == 0){
 
-        }else{
+                $context = \context_system::instance();
 
-            $cachekey = "{$moduleid}_{$moduletype}_costcenter_context";
+                return $context;
+            }
 
         }
 
@@ -55,7 +56,11 @@ class accesslib
 
             // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
 
+            $cachekey = "costcenter_context_$costcenterid";
+
             $context = $cache->get($cachekey);
+
+            var_dump($context);exit;
 
             if ($context === false) {
 
@@ -69,7 +74,7 @@ class accesslib
 
                     if($costcenter->parentid){
 
-                        return self::get_module_context($costcenter->parentid,$moduleid,$moduletype);
+                        return self::get_module_context($costcenter->parentid);
 
                     }else{
 
