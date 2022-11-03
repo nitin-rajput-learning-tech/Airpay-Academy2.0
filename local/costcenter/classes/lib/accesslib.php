@@ -59,13 +59,23 @@ class accesslib
 
             if ($context === false) {
 
-                $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+                $sql = "SELECT cc.category,cc.parentid FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
 
-                $categoryid = $DB->get_field_sql($sql, array('costcenterid' => $costcenterid)); 
+                $costcenter = $DB->get_record_sql($sql, array('costcenterid' => $costcenterid)); 
 
-                if($categoryid){
+                $costcenter =self::get_parent_costcenter($costcenterid);
 
-                    $context = \context_coursecat::instance($categoryid);
+                if($costcenter){
+
+                    if($costcenter->parentid){
+
+                        return self::get_module_context($costcenter->parentid,$moduleid,$moduletype);
+
+                    }else{
+
+                        $context = \context_coursecat::instance($costcenter->category);
+
+                    }
 
                 }else{
 
@@ -84,6 +94,18 @@ class accesslib
         }
             
         return $context;
+
+    }
+
+    public static function get_parent_costcenter($costcenterid){
+
+        global $DB,$USER;
+
+        $sql = "SELECT cc.id,cc.category,cc.parentid FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+
+        $parentcostcenter = $DB->get_record_sql($sql, array('costcenterid' => $costcenterid)); 
+
+        return $parentcostcenter;
 
     }
 }
