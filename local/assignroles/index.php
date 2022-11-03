@@ -32,6 +32,7 @@ global $PAGE,$USER;
 
 
 $context =  (new \local_assignroles\lib\accesslib())::get_module_context();
+
 require_login();
 
 // admin_externalpage_setup('assignroles', '', array('contextid' => $contextid, 'roleid' => $roleid));

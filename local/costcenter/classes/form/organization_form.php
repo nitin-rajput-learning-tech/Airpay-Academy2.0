@@ -48,7 +48,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $formtype = $this->_customdata['formtype'];
         $headstring = $this->_customdata['headstring'];
 
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
        
         if($formtype != 'organization'){
             if($formtype == 'department'){

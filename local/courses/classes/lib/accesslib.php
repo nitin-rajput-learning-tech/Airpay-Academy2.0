@@ -20,10 +20,10 @@
  *
  * @author eabyas  <info@eabyas.in>
  * @package BizLMS
- * @subpackage local_assignroles
+ * @subpackage local_courses
  */
 
-namespace local_assignroles\lib;
+namespace local_courses\lib;
 
 /**
  * get access lib functions

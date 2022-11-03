@@ -47,40 +47,41 @@ class accesslib
 
         }
 
-        if(!is_siteadmin() && $costcenterid){
+   
+         try{
 
-             try{
+            // Get a cache instance
+            $cache = \cache::make('local_costcenter','costcentercontextdata');
 
-                // Get a cache instance
-                $cache = \cache::make('local_costcenter','costcentercontextdata');
+            // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
 
-                // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+            $context = $cache->get($cachekey);
 
-                $context = $cache->get($cachekey);
+            if ($context === false) {
 
-                if ($context === false) {
+                $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
 
-                    $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+                $categoryid = $DB->get_field_sql($sql, array('costcenterid' => $costcenterid)); 
 
-                    $categoryid = $DB->get_field_sql($sql, array('costcenterid' => $costcenterid));   
+                if($categoryid){
 
                     $context = \context_coursecat::instance($categoryid);
 
-                    $cache->set($cachekey, $context);
-                }
+                }else{
+
+                    $context = \context_system::instance();
+
+                }  
+
+                $cache->set($cachekey, $context);
             }
-
-            catch(dml_exception $e){
-
-                print_r($e->debuginfo);
-
-            }
-
-        }else{
-
-            $context = \context_system::instance();
         }
-        
+
+        catch(dml_exception $e){
+
+            print_r($e->debuginfo);
+
+        }
             
         return $context;
 

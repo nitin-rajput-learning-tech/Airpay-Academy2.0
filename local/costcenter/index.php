@@ -33,7 +33,7 @@ $PAGE->requires->js_call_amd('local_costcenter/costcenterdatatables', 'costcente
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 require_login();
 
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 if(!has_capability('local/costcenter:view', $systemcontext)) {
     print_error('nopermissiontoviewpage');
 }

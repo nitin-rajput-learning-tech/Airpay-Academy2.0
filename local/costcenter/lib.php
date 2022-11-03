@@ -350,7 +350,7 @@ function local_costcenter_output_fragment_new_costcenterform($args){
  */
 function organizations_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage=25){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $organizationlist = array();
     $data = data_submitted();
     $costcenterid = optional_param('costcenterid', '', PARAM_INT);
@@ -409,7 +409,7 @@ function organizations_filter($mform,$query='',$searchanywhere=false, $page=0, $
  */
 function departments_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage=25){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $departmentslist=array();
     $data=data_submitted();
     $departmentid = optional_param('departmentid', '', PARAM_INT);
@@ -469,7 +469,7 @@ function departments_filter($mform,$query='',$searchanywhere=false, $page=0, $pe
  */
 function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage=25){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $subdepartmentslist=array();
     $data=data_submitted();
     $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
@@ -527,7 +527,7 @@ function costcenter_insert_instance($costcenter){
         global $DB, $CFG, $USER;
        // require_once("$CFG->libdir/coursecatlib.php");
          
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
         if ($costcenter->parentid == 0) {
             $costcenter->depth = 1;
             $costcenter->path = '';
@@ -584,7 +584,7 @@ function costcenter_insert_instance($costcenter){
  */
 function costcenter_edit_instance($costcenterid, $newcostcenter){
     global $DB,$CFG;
-    $systemcontext = context_system::instance();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $oldcostcenter = $DB->get_record('local_costcenter', array('id' => $costcenterid));
     $category = $DB->get_field('local_costcenter','category',array('id' => $newcostcenter->id));
     /* ---check if the parentid is the same as that of new parentid--- */
@@ -620,7 +620,7 @@ function costcenter_edit_instance($costcenterid, $newcostcenter){
 function costcenter_items(){
     global $DB, $USER;
     $assigned_costcenters = '';
-    $systemcontext = context_system::instance();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
                    $sql="SELECT * from {local_costcenter} where visible=1 AND depth <3 ORDER by sortorder,fullname ";
         $assigned_costcenters = $DB->get_records_sql($sql);
@@ -637,7 +637,7 @@ function costcenter_items(){
 */
 function local_costcenter_leftmenunode(){
     global $USER;
-    $systemcontext = context_system::instance();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $costcenternode = '';
     if(has_capability('local/costcenter:view', $systemcontext) || is_siteadmin()) {     
         $costcenternode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_departments', 'class'=>'pull-left user_nav_div departments'));

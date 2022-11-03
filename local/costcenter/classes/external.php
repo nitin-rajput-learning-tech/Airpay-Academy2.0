@@ -55,7 +55,7 @@ class local_costcenter_external extends external_api {
         // We always must pass webservice params through validate_parameters.
 		$params = self::validate_parameters(self::submit_costcenterform_form_parameters(),
                                     ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
-		$context = context_system::instance();
+		$context = (new \local_costcenter\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
 		self::validate_context($context);
 		$serialiseddata = json_decode($params['jsonformdata']);
@@ -267,7 +267,10 @@ class local_costcenter_external extends external_api {
         $serialiseddata = json_decode($params['jsonformdata']);
         $data = array();
         parse_str($serialiseddata, $data);
-        $PAGE->set_context(\context_system::instance());
+        
+        $systemcontext =(new \local_costcenter\lib\accesslib())::get_module_context();
+
+        $PAGE->set_context($systemcontext);
         $mform = new \local_costcenter\functions\costcenter(null, array(), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
         $formdata = data_submitted();
@@ -659,7 +662,7 @@ class local_costcenter_external extends external_api {
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::department_create_parameters(),
                                 ['orgcode' => $orgcode, 'fullname' => $fullname,'departmentcode' => $departmentcode]);
-        $context = context_system::instance();
+        $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         $departmentcode = preg_replace('/\s+/','',$departmentcode);
         $data = array();
