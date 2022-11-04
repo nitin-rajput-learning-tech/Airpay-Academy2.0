@@ -44,7 +44,7 @@ class tagareashowstandard extends \core\output\inplace_editable {
      * @param \stdClass $tagarea
      */
     public function __construct($tagarea) {
-        $editable = has_capability('moodle/tag:manage', context_system::instance());
+        $editable = has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $edithint = new lang_string('editisstandard', 'local_tags');
         $value = $tagarea->showstandard;
         $areaname = local_tags_area::display_name($tagarea->component, $tagarea->itemtype);
@@ -70,7 +70,7 @@ class tagareashowstandard extends \core\output\inplace_editable {
      */
     public static function update($itemid, $newvalue) {
         global $DB;
-        require_capability('moodle/tag:manage', context_system::instance());
+        require_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $tagarea = $DB->get_record('tag_area', array('id' => $itemid), '*', MUST_EXIST);
         $newvalue = clean_param($newvalue, PARAM_INT);
         $data = array('showstandard' => $newvalue);

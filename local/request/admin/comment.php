@@ -28,7 +28,7 @@ require_once($formPath);
 require_login();
 
 $PAGE->set_url('/blocks/request/admin/comment.php');
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context((new \local_request\lib\accesslib())::get_module_context());
 /** Navigation Bar **/
 $PAGE->navbar->ignore_active();
 $PAGE->navbar->add(get_string('requestDisplay', 'block_request'), new moodle_url('/blocks/request/request_admin.php'));
@@ -37,7 +37,8 @@ $PAGE->set_heading(get_string('pluginname', 'block_request'));
 $PAGE->set_title(get_string('pluginname', 'block_request'));
 echo $OUTPUT->header();
 
-$context = context_system::instance();
+//$context = context_system::instance();
+$context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:addcomment',$context)) {
 } else {
   print_error(get_string('cannotcomment', 'block_request'));

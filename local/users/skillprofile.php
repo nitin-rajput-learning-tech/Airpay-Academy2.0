@@ -30,7 +30,8 @@ $PAGE->requires->jquery();
 $id = optional_param('id', $USER->id, PARAM_INT);
 
 $PAGE->set_url('/local/users/skillprofile.php', array('id' => $id));
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+// $systemcontext = context_system::instance();
 $PAGE->set_context($systemcontext);
 $PAGE->requires->js_call_amd('local_users/newuser', 'load', array());
 $PAGE->requires->js_call_amd('local_users/datatablesamd', 'load', array());

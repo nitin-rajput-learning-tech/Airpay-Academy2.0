@@ -29,9 +29,10 @@ require_once($CFG->libdir.'/adminlib.php');
 defined('MOODLE_INTERNAL') || die();
 function request_filter($mform){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
+    //$systemcontext = context_system::instance();
+    $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
     // $sql = "SELECT id, name FROM {local_classroom} WHERE id > 1";
-if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
+if ((has_capability('local/request:approverecord', (new \local_request\lib\accesslib())::get_module_context()) || is_siteadmin())) {
         // $requestlist = $DB->get_records_sql_menu("SELECT id, compname FROM {local_request_records} GROUP BY compname");
         $requestlist = $DB->get_records_sql_menu("SELECT distinct(compname), id FROM {local_request_records}");
         $requestlist = array_flip($requestlist);
@@ -58,7 +59,8 @@ if ((has_capability('local/request:approverecord', context_system::instance()) |
 }
 function sorting_filter($mform){
 	global $DB, $USER;
-	$systemcontext = context_system::instance();
+	//$systemcontext = context_system::instance();
+    $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
 	$sortinglist = array(false => get_string('firstrequestedfirst', 'local_request'), true => get_string('latestfirst', 'local_request'));
 	$select = $mform->addElement('autocomplete', 'sorting', '', $sortinglist, array('placeholder' => get_string('sorting', 'local_request')));
     
@@ -66,7 +68,8 @@ function sorting_filter($mform){
 }
 function requeststatus_filter($mform){
     global $DB, $USER;
-    $systemcontext = context_system::instance();
+    $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
 
     $statuslist = $DB->get_records_sql_menu("SELECT distinct(status), id FROM {local_request_records}");
          $statuslist = array_flip($statuslist);
@@ -92,9 +95,10 @@ function requeststatus_filter($mform){
 * @return  [type] string  link for the leftmenu
 */
 function local_request_leftmenunode(){
-    $systemcontext = context_system::instance();
+    $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
     $requestnode = '';
-    if((has_capability('local/request:approverecord', context_system::instance())) || (is_siteadmin())) {
+    if((has_capability('local/request:approverecord', (new \local_request\lib\accesslib())::get_module_context())) || (is_siteadmin())) {
         $requestnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browserequests', 'class'=>'pull-left user_nav_div browserequests'));
             $requests_url = new moodle_url('/local/request/index.php');
             $requests = html_writer::link($requests_url, '<i class="fa fa-share-square"></i><span class="user_navigation_link_text">'.get_string('left_menu_requests','local_request').'</span>',array('class'=>'user_navigation_link'));

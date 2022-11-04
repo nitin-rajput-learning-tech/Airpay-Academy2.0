@@ -34,7 +34,8 @@ require_login();
 $corecomponent = new core_component();
 
 // systemcontest defining
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+//$systemcontext = context_system::instance();
 $PAGE->set_context($systemcontext);
 
 // amd js calling

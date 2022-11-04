@@ -64,7 +64,7 @@ class taglist implements templatable {
      */
     public function __construct($tags, $label = null, $classes = '', $limit = 10, $pagecontext = null) {
         global $PAGE;
-        $canmanagetags = has_capability('moodle/tag:manage', \context_system::instance());
+        $canmanagetags = has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
 
         $this->label = ($label === null) ? get_string('tags') : $label;
         $this->classes = $classes;

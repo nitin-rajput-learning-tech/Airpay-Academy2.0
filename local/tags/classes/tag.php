@@ -455,7 +455,8 @@ class local_tags_tag {
 
         // We can not fire an event with 'null' as the contextid.
         if (is_null($taginstance->contextid)) {
-            $taginstance->contextid = context_system::instance()->id;
+           // $taginstance->contextid = context_system::instance()->id;
+           $taginstance->contextid = (new \local_tags\lib\accesslib())::get_module_context()->id;
         }
 
         // Trigger tag removed event.
@@ -519,7 +520,9 @@ class local_tags_tag {
         // Now remove all the tag instances.
         $DB->delete_records_list('tag_instance', 'id', $taginstanceids);
         // Save the system context in case the 'contextid' column in the 'tag_instance' table is null.
-        $syscontextid = context_system::instance()->id;
+       // $syscontextid = context_system::instance()->id;
+        $syscontextid = (new \local_tags\lib\accesslib())::get_module_context()->id;
+
         // Loop through the tag instances and fire an 'tag_removed' event.
         foreach ($taginstances as $taginstance) {
             // We can not fire an event with 'null' as the contextid.
@@ -884,7 +887,8 @@ class local_tags_tag {
      * @param int $tiuserid tag instance user id, only needed for tag areas with user tagging (such as core/course)
      */
     public static function remove_all_item_tags($component, $itemtype, $itemid, $tiuserid = 0) {
-        $context = context_system::instance(); // Context will not be used.
+      //  $context = context_system::instance(); // Context will not be used.
+        $context = (new \local_tags\lib\accesslib())::get_module_context();
         static::set_item_tags($component, $itemtype, $itemid, $context, null, $tiuserid);
     }
 
@@ -1114,7 +1118,8 @@ class local_tags_tag {
         $event = \core\event\tag_updated::create(array(
             'objectid' => $this->id,
             'relateduserid' => $this->userid,
-            'context' => context_system::instance(),
+            //'context' => context_system::instance(),
+            'context' => (new \local_tags\lib\accesslib())::get_module_context(),
             'other' => array(
                 'name' => $this->name,
                 'rawname' => $this->rawname
@@ -1145,7 +1150,8 @@ class local_tags_tag {
         $event = \core\event\tag_flagged::create(array(
             'objectid' => $this->id,
             'relateduserid' => $this->userid,
-            'context' => context_system::instance(),
+              //'context' => context_system::instance(),
+              'context' => (new \local_tags\lib\accesslib())::get_module_context(),
             'other' => array(
                 'name' => $this->name,
                 'rawname' => $this->rawname
@@ -1176,7 +1182,8 @@ class local_tags_tag {
         $event = \core\event\tag_unflagged::create(array(
             'objectid' => $this->id,
             'relateduserid' => $this->userid,
-            'context' => context_system::instance(),
+              //'context' => context_system::instance(),
+              'context' => (new \local_tags\lib\accesslib())::get_module_context(),
             'other' => array(
                 'name' => $this->name,
                 'rawname' => $this->rawname
@@ -1194,7 +1201,8 @@ class local_tags_tag {
      * @param array $tagnames
      */
     public function set_related_tags($tagnames) {
-        $context = context_system::instance();
+          $context = (new \local_tags\lib\accesslib())::get_module_context();
+        //$context = context_system::instance();
         $tagobjects = $tagnames ? static::create_if_missing($this->tagcollid, $tagnames) : array();
         unset($tagobjects[$this->name]); // Never link to itself.
 
@@ -1233,7 +1241,8 @@ class local_tags_tag {
      * @param array $tagnames
      */
     public function add_related_tags($tagnames) {
-        $context = context_system::instance();
+        //$context = context_system::instance();
+        $context = (new \local_tags\lib\accesslib())::get_module_context();
         $tagobjects = static::create_if_missing($this->tagcollid, $tagnames);
 
         $currenttags = static::get_item_tags('local_tags', 'tag', $this->id);
@@ -1475,7 +1484,7 @@ class local_tags_tag {
         $options = empty($options) ? array() : (array)$options;
         $options += array('para' => false, 'overflowdiv' => true);
         $description = file_rewrite_pluginfile_urls($this->description, 'pluginfile.php',
-                context_system::instance()->id, 'tag', 'description', $this->id);
+        (new \local_tags\lib\accesslib())::get_module_context()->id, 'tag', 'description', $this->id);
         return format_text($description, $this->descriptionformat, $options);
     }
 
@@ -1493,8 +1502,8 @@ class local_tags_tag {
         }
 
         $tagname = $this->get_display_name();
-        $systemcontext = context_system::instance();
-
+        //$systemcontext = context_system::instance();
+        $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
         // Add a link for users to add/remove this from their interests.
         if (static::is_enabled('core', 'user') && local_tags_area::get_collection('core', 'user') == $this->tagcollid) {
             if (static::is_item_tagged_with('core', 'user', $USER->id, $this->name)) {
@@ -1574,7 +1583,9 @@ class local_tags_tag {
         // Fire an event that these items were untagged.
         if ($taginstances) {
             // Save the system context in case the 'contextid' column in the 'tag_instance' table is null.
-            $syscontextid = context_system::instance()->id;
+           // $syscontextid = context_system::instance()->id;
+         $syscontextid =(new \local_tags\lib\accesslib())::get_module_context()->id;
+
             // Loop through the tag instances and fire a 'tag_removed'' event.
             foreach ($taginstances as $taginstance) {
                 // We can not fire an event with 'null' as the contextid.
@@ -1591,7 +1602,9 @@ class local_tags_tag {
 
         // Fire an event that these tags were deleted.
         if ($tags) {
-            $context = context_system::instance();
+            //$context = context_system::instance();
+            $context =(new \local_tags\lib\accesslib())::get_module_context();
+
             foreach ($tags as $tag) {
                 // Delete all files associated with this tag.
                 $fs = get_file_storage();

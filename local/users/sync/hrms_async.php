@@ -36,7 +36,8 @@ $errorstr = get_string('error');
 $stryes = get_string('yes');
 $strno = get_string('no');
 $stryesnooptions = array(0 => $strno, 1 => $stryes);
-$systemcontext = context_system::instance();
+//$systemcontext = context_system::instance();
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 
 $PAGE->set_pagelayout('standard');

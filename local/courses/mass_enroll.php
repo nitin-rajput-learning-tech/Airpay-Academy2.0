@@ -42,7 +42,8 @@ if (!$course = $DB->get_record('course', array('id' => $id))) {
 // Security and access check
 require_login();
 
-$context =  context_system::instance();
+//$context =  context_system::instance();
+$context = (new \local_courses\lib\accesslib())::get_module_context();
  if(!has_capability('local/courses:enrol', $context)){
  redirect($CFG->wwwroot . '/local/courses/error.php?id=1');
  }

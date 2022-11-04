@@ -31,7 +31,8 @@ class user {
         $returnobj->count = 1;
         $returnobj->usersexist = 1;
 
-        $systemcontext = \context_system::instance();
+        // $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
 
         /*user roles*/
@@ -105,7 +106,8 @@ class user {
         require_once($CFG->dirroot.'/course/renderer.php');
         require_once($CFG->libdir . '/badgeslib.php');
         $returnobj = new \stdClass();
-        $systemcontext = \context_system::instance();
+        // $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         //added by sowmya for tabs dispalying
         $corecomponent = new \core_component();

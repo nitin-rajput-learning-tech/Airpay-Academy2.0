@@ -34,7 +34,8 @@ class local_users_renderer extends plugin_renderer_base {
         require_once($CFG->libdir . '/badgeslib.php');
 
         $corecomponent = new core_component();
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         /*user image*/
         $user_image = $OUTPUT->user_picture($userrecord, array('size' => 80, 'link' => false));
@@ -180,7 +181,8 @@ class local_users_renderer extends plugin_renderer_base {
      */
     public function user_page_top_action_buttons() {
         global $CFG;
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        //$systemcontext = context_system::instance();
         return $this->render_from_template('local_users/usertopactions', array('contextid' => $systemcontext->id));
     }
     /**
@@ -206,7 +208,8 @@ class local_users_renderer extends plugin_renderer_base {
         $costcenterid = optional_param('costcenterid', '', PARAM_INT);
         $departmentid = optional_param('departmentid', '', PARAM_INT);
         $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        //$systemcontext = context_system::instance();
         $templateName = 'local_users/users_view';
         $cardClass = 'col-md-6 col-12';
         $perpage = 10;
@@ -249,7 +252,8 @@ class local_users_renderer extends plugin_renderer_base {
     public function display_sync_errors($filter = false) {
         global $USER;
 
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        //$systemcontext = context_system::instance();
 
         $options = array('targetID' => 'display_sync', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
         $options['methodName'] = 'local_users_syncerrors_view';
@@ -281,7 +285,8 @@ class local_users_renderer extends plugin_renderer_base {
     public function display_sync_statics($filter = false) {
         global $USER;
 
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        //$systemcontext = context_system::instance();
         $options = array('targetID' => 'display_syncstatics', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
         $options['methodName'] = 'local_users_syncstatics_view';
         $options['templateName'] = 'local_users/syncstatistics';
@@ -305,7 +310,8 @@ class local_users_renderer extends plugin_renderer_base {
 
      public function employees_skill_profile_view($id) {
         global $CFG, $OUTPUT, $DB, $PAGE, $USER;        
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         $corecomponent = new \core_component();
         $positionpluginexists = $corecomponent::get_plugin_directory('local', 'positions');

@@ -42,7 +42,7 @@ class tagisstandard extends \core\output\inplace_editable {
      * @param \stdClass|local_tags_tag $tag
      */
     public function __construct($tag) {
-        $editable = has_capability('moodle/tag:manage', context_system::instance());
+        $editable = has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $value = (int)(bool)$tag->isstandard;
 
         parent::__construct('local_tags', 'tagisstandard', $tag->id, $editable, $value, $value);
@@ -75,7 +75,7 @@ class tagisstandard extends \core\output\inplace_editable {
      * @return \self
      */
     public static function update($itemid, $newvalue) {
-        require_capability('moodle/tag:manage', context_system::instance());
+        require_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $tag = local_tags_tag::get($itemid, '*', MUST_EXIST);
         $newvalue = (int)clean_param($newvalue, PARAM_BOOL);
         $tag->update(array('isstandard' => $newvalue));

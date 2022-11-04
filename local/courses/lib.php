@@ -98,7 +98,9 @@ function mass_enroll($cir, $course, $context, $data) {
         $fieldcontcat=$string.$fields[0];
         /******The below code is for the AH checking condtion if AH any user can be enrolled else if OH only his costcenter users enrol*****/
         // $id=$DB->get_field('course','open_costcenterid',array('id'=>$course->id));
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+
         // if(!is_siteadmin()  && has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)){
         //     $sql=" ";
         // }else{
@@ -912,7 +914,8 @@ function local_courses_output_fragment_coursestatus_display($args){
 */
 function courses_filter($mform){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
+    //$systemcontext = context_system::instance();
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
     $sql = "SELECT id, fullname FROM {course} WHERE id > 1";
     $sql2 = " AND open_costcenterid = ?";
     $sql3 = " AND open_departmentid = ?";
@@ -940,8 +943,9 @@ function status_filter($mform){
 */
 function elearning_filter($mform){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
-    if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
+    if ((has_capability('local/request:approverecord', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())) {
         $courseslist = $DB->get_records_sql_menu("SELECT id, fullname FROM {course} WHERE visible = 1");
     }
     $select = $mform->addElement('autocomplete', 'elearning', '', $courseslist, array('placeholder' => get_string('course_name', 'local_courses')));
@@ -956,7 +960,8 @@ function elearning_filter($mform){
 */
 function categories_filter($mform){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
     $catslib = new local_courses\catslib();
     if(is_siteadmin()){
         $categorylist = $DB->get_records_sql_menu("SELECT id, name FROM {course_categories} ");
@@ -1014,7 +1019,8 @@ function print_filterform(){
 function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, $offset=-1, $perpage=-1, $lastitem=0){
 
     global $DB, $USER;
-    $context = context_system::instance();
+	$context = (new \local_courses\lib\accesslib())::get_module_context();
+   // $context = context_system::instance();
     $course = $DB->get_record('course', array('id' => $course_id));
  
     $params['suspended'] = 0;
@@ -1110,7 +1116,8 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
 */
 function local_courses_leftmenunode(){
     global $DB, $USER;
-    $systemcontext = context_system::instance();
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
     $coursecatnodes = '';
     if(has_capability('moodle/category:manage', $systemcontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_categories', 'class'=>'pull-left user_nav_div categories usernavdep'));
@@ -1138,7 +1145,8 @@ function local_courses_leftmenunode(){
 
 function local_courses_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;
-    $systemcontext = context_system::instance();
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
     $content = '';
     if (has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext) || is_siteadmin()){
         //local courses content
@@ -1247,7 +1255,8 @@ function get_listof_courses($stable, $filterdata) {
     if(!empty($autoenroll_plugin_exist)){
       require_once($CFG->dirroot . '/enrol/auto/lib.php');
     }
-    $systemcontext = context_system::instance();
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
     $statustype=$stable->status;
     $totalcostcentercount=$stable->costcenterid;
     $totaldepartmentcount=$stable->departmentid;
@@ -1500,7 +1509,7 @@ function get_listof_courses($stable, $filterdata) {
             $courseslist[$count]["coursetype"] = $displayed_names;
             $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
             $courseslist[$count]["grade_view"] = ((has_capability('local/courses:grade_view',
-        context_system::instance()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false;
+            (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false;
             $courseslist[$count]["request_view"] = ((has_capability('local/request:approverecord', $systemcontext)) || is_siteadmin()) ? true : false;
             
             $coursesummary = \local_costcenter\lib::strip_tags_custom($chelper->get_course_formatted_summary($course_in_list,
@@ -1623,7 +1632,7 @@ function get_listof_courses($stable, $filterdata) {
              }   
 
            
-            if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
+            if ((has_capability('local/request:approverecord', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())) {
                 $courseslist[$count]["requestlink"] = $CFG->wwwroot."/local/request/index.php?courseid=".$course->id;
             }
 
@@ -1668,18 +1677,18 @@ function get_listof_courses($stable, $filterdata) {
         "totalcourses" => $totalcourses,
         "length" => count($courseslist),
         "actions"=>(((has_capability('local/courses:enrol',
-        context_system::instance())|| has_capability('local/courses:update',
-        context_system::instance())||has_capability('local/courses:delete',
-        context_system::instance()) || has_capability('local/courses:grade_view',
-        context_system::instance())|| has_capability('local/courses:report_view',
-        context_system::instance())) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        (new \local_courses\lib\accesslib())::get_module_context())|| has_capability('local/courses:update',
+        (new \local_courses\lib\accesslib())::get_module_context())||has_capability('local/courses:delete',
+        (new \local_courses\lib\accesslib())::get_module_context()) || has_capability('local/courses:grade_view',
+        (new \local_courses\lib\accesslib())::get_module_context())|| has_capability('local/courses:report_view',
+        (new \local_courses\lib\accesslib())::get_module_context())) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
         "enrol"=>((has_capability('local/courses:enrol',
-        context_system::instance())  || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        (new \local_courses\lib\accesslib())::get_module_context())  || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
         "update"=>((has_capability('local/courses:update',
-        context_system::instance()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
         "delete"=>((has_capability('local/courses:delete',
-        context_system::instance()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
-        "report_view"=>((has_capability('local/courses:report_view', context_system::instance()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false 
+        (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        "report_view"=>((has_capability('local/courses:report_view', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false 
     );
 
     return $coursesContext;
@@ -1707,7 +1716,8 @@ function get_listof_categories($stable, $filterdata) {
     $table->id = 'category_tbl';
     $table->head = array('','','','');
 
-    $systemcontext = context_system::instance();
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    //$systemcontext = context_system::instance();
     $countsql = "select count(c.id) ";
     $sql = "SELECT c.id, c.name, c.parent, c.visible, c.coursecount, c.idnumber ";
     $fromsql = "FROM {course_categories} as  c WHERE id > 1 ";
@@ -1916,7 +1926,8 @@ function local_courses_get_tagged_courses($tag, $exclusivemode = false, $fromctx
 
 function get_course_details($courseid) {
     global $USER, $DB, $PAGE;
-    $context = context_system::instance();
+	$context = (new \local_courses\lib\accesslib())::get_module_context();
+    //$context = context_system::instance();
     $PAGE->requires->js_call_amd('local_courses/courses','load', array());
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
     $details = array();
@@ -2010,8 +2021,9 @@ function get_enrolledusers($courseid){
     $params = array();
     $params['courseid'] = $courseid;
 
-    $systemcontext = \context_system::instance();
-
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    //$systemcontext = \context_system::instance();
+    
     if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
         $sql .= " AND c.open_costcenterid = :costcenterid ";
         $params['costcenterid'] = $USER->open_costcenterid;

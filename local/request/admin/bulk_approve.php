@@ -26,7 +26,7 @@ global $CFG; $DB;
 require_once("$CFG->libdir/formslib.php");
 require_login();
 /** Navigation Bar **/
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context((new \local_request\lib\accesslib())::get_module_context());
 $PAGE->navbar->ignore_active();
 $PAGE->navbar->add(get_string('requestDisplay', 'block_request'), new moodle_url('/blocks/request/request_admin.php'));
 $PAGE->navbar->add(get_string('bulkapprove', 'block_request'));
@@ -35,7 +35,8 @@ $PAGE->set_url('/blocks/request/admin/bulk_approve.php');
 $PAGE->set_title(get_string('pluginname', 'block_request'));
 
 
-$context = context_system::instance();
+//$context = context_system::instance();
+$context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:approverecord',$context)) {
 } else {
   print_error(get_string('cannotapproverecord', 'block_request'));

@@ -54,7 +54,7 @@ class tagareacollection extends \core\output\inplace_editable {
 
         $tagcollections = \local_tags_collection::get_collections_menu(true);
         $editable = (count($tagcollections) > 1) &&
-                has_capability('moodle/tag:manage', context_system::instance());
+                has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $areaname = local_tags_area::display_name($tagarea->component, $tagarea->itemtype);
         $edithint = new lang_string('edittagcollection', 'local_tags');
         $editlabel = new lang_string('changetagcoll', 'local_tags', $areaname);
@@ -74,7 +74,7 @@ class tagareacollection extends \core\output\inplace_editable {
      */
     public static function update($itemid, $newvalue) {
         global $DB;
-        require_capability('moodle/tag:manage', \context_system::instance());
+        require_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $tagarea = $DB->get_record('tag_area', array('id' => $itemid), '*', MUST_EXIST);
         $newvalue = clean_param($newvalue, PARAM_INT);
         $tagcollections = \local_tags_collection::get_collections_menu(true);

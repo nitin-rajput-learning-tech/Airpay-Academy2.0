@@ -60,7 +60,7 @@ class accesslib
 
             $context = $cache->get($cachekey);
 
-            var_dump($context);exit;
+           // var_dump($context);exit;
 
             if ($context === false) {
 
