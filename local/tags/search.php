@@ -25,7 +25,7 @@
 require_once("../../config.php");
 global $DB, $OUTPUT, $USER, $CFG;
 require_login();
-//$context = context_system::instance();
+
 $context =(new \local_tags\lib\accesslib())::get_module_context();
 if (empty($CFG->usetags)) {
     print_error('tagsaredisabled', 'tag');

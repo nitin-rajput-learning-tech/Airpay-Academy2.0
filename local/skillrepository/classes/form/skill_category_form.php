@@ -46,7 +46,7 @@ class skill_category_form extends moodleform {
 
         //$parentid = $this->_customdata['parentid']; 
         
-        //$context = context_system::instance();
+        
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
             $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
@@ -85,7 +85,6 @@ class skill_category_form extends moodleform {
            }
             
         } else {
-           // $systemcontext = context_system::instance();
 		    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
             $costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
             /*$skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter  ORDER BY name ASC");*/

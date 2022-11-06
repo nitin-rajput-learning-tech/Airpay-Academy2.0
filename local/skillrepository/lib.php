@@ -146,7 +146,7 @@ function local_skillrepository_output_fragment_skill_category_form($args){
 * @return  [type] string  link for the leftmenu
 */
 function local_skillrepository_leftmenunode(){
-    //$systemcontext = context_system::instance();
+    
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $skillreponode = '';
     if(has_capability('local/costcenter:manage', $systemcontext) || is_siteadmin()) {
@@ -194,7 +194,7 @@ function local_skillrepository_output_fragment_level_form($args){
 //////For display on index page//////////
 function skill_details($tablelimits, $filtervalues){
         global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-        //$systemcontext = context_system::instance();
+        
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
         $countsql = "SELECT count(sk.id) FROM {local_skill} AS sk WHERE 1=1 ";
         $selectsql = "SELECT * 

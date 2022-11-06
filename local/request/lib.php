@@ -29,7 +29,7 @@ require_once($CFG->libdir.'/adminlib.php');
 defined('MOODLE_INTERNAL') || die();
 function request_filter($mform){
     global $DB,$USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
     // $sql = "SELECT id, name FROM {local_classroom} WHERE id > 1";
 if ((has_capability('local/request:approverecord', (new \local_request\lib\accesslib())::get_module_context()) || is_siteadmin())) {
@@ -59,7 +59,7 @@ if ((has_capability('local/request:approverecord', (new \local_request\lib\acces
 }
 function sorting_filter($mform){
 	global $DB, $USER;
-	//$systemcontext = context_system::instance();
+	
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
 	$sortinglist = array(false => get_string('firstrequestedfirst', 'local_request'), true => get_string('latestfirst', 'local_request'));
 	$select = $mform->addElement('autocomplete', 'sorting', '', $sortinglist, array('placeholder' => get_string('sorting', 'local_request')));
@@ -69,7 +69,7 @@ function sorting_filter($mform){
 function requeststatus_filter($mform){
     global $DB, $USER;
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
+    
 
     $statuslist = $DB->get_records_sql_menu("SELECT distinct(status), id FROM {local_request_records}");
          $statuslist = array_flip($statuslist);
@@ -96,7 +96,7 @@ function requeststatus_filter($mform){
 */
 function local_request_leftmenunode(){
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
+    
     $requestnode = '';
     if((has_capability('local/request:approverecord', (new \local_request\lib\accesslib())::get_module_context())) || (is_siteadmin())) {
         $requestnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browserequests', 'class'=>'pull-left user_nav_div browserequests'));

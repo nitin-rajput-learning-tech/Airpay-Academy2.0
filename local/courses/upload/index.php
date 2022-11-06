@@ -30,7 +30,7 @@ require_once($CFG->libdir . '/adminlib.php');
 require_once($CFG->libdir . '/csvlib.class.php');
 require_once($CFG->dirroot . '/local/courses/upload/uploadforms.php');
 require_once($CFG->dirroot . '/local/courses/upload/processor.php');
-//$context = context_system::instance();
+
 $context = (new \local_courses\lib\accesslib())::get_module_context();
 $PAGE->set_context($context);
 $PAGE->set_url(new moodle_url('/local/courses/upload/index.php'));
@@ -86,7 +86,7 @@ if (!empty($form1data)) {
         $data["options[$key]"] = $value;
     }
 }
-//$context = context_system::instance();
+
 $context = (new \local_courses\lib\accesslib())::get_module_context();
 $mform2 = new local_uploadcourse_step2_form(null, array('contextid' => $context->id, 'columns' => $cir->get_columns(),
     'data' => $data, 'importid' => $importid,));

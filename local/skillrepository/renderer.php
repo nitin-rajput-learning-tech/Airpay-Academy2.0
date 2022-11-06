@@ -33,7 +33,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
     public function display_table() {
         global $DB, $CFG, $OUTPUT,$USER, $PAGE;
         $repository = new local_skillrepository\event\insertrepository();
-			 //$systemcontext = context_system::instance();
+			 
 			 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		if(is_siteadmin() /*|| has_capability('local/costcenter:manage_multiorganizations',$systemcontext)*/){
 			$skill = $repository->skillrepository_opertaions('local_skill', 'fetch-multiple','','','');
@@ -106,7 +106,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
     public function manageskills_content($filter = false){
         global $USER;
 
-        //$systemcontext = context_system::instance();
+        
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
         $options = array('targetID' => 'manage_skills','perPage' => 5, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
         
@@ -187,7 +187,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
  */
 	public function view_skill_categories(){
 		global $DB, $OUTPUT,$USER;
-		//$systemcontext = context_system::instance();
+		
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		if(!is_siteadmin()){
             $skill_categories = $DB->get_records_sql("select * from {local_skill_categories} where costcenterid={$USER->open_costcenterid} order by id desc");
@@ -314,7 +314,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 	}
 	public function get_top_action_buttons_skills(){
 		global $CFG;
-		//$systemcontext = context_system::instance();
+		
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		$data =  "<ul class='course_extended_menu_list'>
                 <li>
@@ -353,7 +353,6 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 			$actions = '';
 			$canedit = $querylib->can_edit_level($level->id);
 			if($canedit){
-				//$systemcontext = \context_system::instance();
 				$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 				//$editurl = $CFG->wwwroot."/local/skillrepository/pix/edit.svg";
 				//$iconname = get_string('edit_title', 'local_skillrepository');

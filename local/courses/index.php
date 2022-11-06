@@ -48,7 +48,6 @@ if ($formattype == 'card') {
     $display_icon = get_string('cardicon','local_courses');
 }
 $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-//$systemcontext = $context = context_system::instance();
 
 
 if($categoryid > 0 && $visible != -1){

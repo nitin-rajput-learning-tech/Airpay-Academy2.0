@@ -24,7 +24,7 @@ require_once(dirname(__FILE__) . '/../../../config.php');
 
 global $DB, $PAGE, $CFG, $OUTPUT;
 
-//$systemcontext = context_system::instance();
+
 $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url('/local/users/sync/sync_errors.php');

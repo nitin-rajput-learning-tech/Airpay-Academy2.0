@@ -42,7 +42,7 @@ $tagcollid   = optional_param('tc', 0, PARAM_INT);
 $tagareaid   = optional_param('ta', null, PARAM_INT);
 $filter      = optional_param('filter', '', PARAM_NOTAGS);
 
-//$context = context_system::instance();
+
 $context =(new \local_tags\lib\accesslib())::get_module_context();
 $PAGE->set_context($context);
 $url = new moodle_url('/local/tags/manage.php',array('tc'=>$tagcollid));

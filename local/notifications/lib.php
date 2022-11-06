@@ -396,7 +396,7 @@ class notifications {
 	function insert_update_record($table, $action, $dataobject){
         global $DB;
         if($action == 'insert'){
-            //$systemcontext = context_system::instance();
+            
             $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
             $str=$dataobject->body;
             $keywords = preg_split("/[\s,]+/", $dataobject->body);
@@ -405,7 +405,6 @@ class notifications {
             file_save_draft_area_files($pieces[8], $systemcontext->id, 'local', 'notifications',$pieces[8], array('maxfiles' => 5));
             $result = $DB->insert_record("$table", $dataobject);
         } elseif($action == 'update') {
-            // $systemcontext = context_system::instance();
             $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
             $str=$dataobject->body;
             $keywords = preg_split("/[\s,]+/", $dataobject->body);
@@ -693,7 +692,7 @@ function replace_strings($dataobject, $data){
 * @return  [type] string  link for the leftmenu
 */
 function local_notifications_leftmenunode(){
-    //$systemcontext = context_system::instance();
+    
     $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
     $notificationsnode = '';
     // if(has_capability('local/notifications:view',$systemcontext) || is_siteadmin()){
@@ -713,7 +712,7 @@ function local_notifications_leftmenunode(){
 //////For display on index page//////////
 function notification_details($tablelimits, $filtervalues){
         global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-        //$systemcontext = context_system::instance();
+        
         $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
         $countsql = "SELECT count(ni.id)
                 FROM {local_notification_info} AS ni
@@ -782,7 +781,7 @@ function notification_details($tablelimits, $filtervalues){
 
 function notifications_filter($mform){
     global $DB,$USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
     // $sql = "SELECT id, name FROM {local_classroom} WHERE id > 1";
     if ((has_capability('local/notifications:view', (new \local_notifications\lib\accesslib())::get_module_context()) || is_siteadmin())) {

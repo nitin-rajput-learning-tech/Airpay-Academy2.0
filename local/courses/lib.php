@@ -98,7 +98,6 @@ function mass_enroll($cir, $course, $context, $data) {
         $fieldcontcat=$string.$fields[0];
         /******The below code is for the AH checking condtion if AH any user can be enrolled else if OH only his costcenter users enrol*****/
         // $id=$DB->get_field('course','open_costcenterid',array('id'=>$course->id));
-        //$systemcontext = context_system::instance();
 		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 
         // if(!is_siteadmin()  && has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)){
@@ -914,7 +913,6 @@ function local_courses_output_fragment_coursestatus_display($args){
 */
 function courses_filter($mform){
     global $DB,$USER;
-    //$systemcontext = context_system::instance();
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
     $sql = "SELECT id, fullname FROM {course} WHERE id > 1";
     $sql2 = " AND open_costcenterid = ?";
@@ -944,7 +942,6 @@ function status_filter($mform){
 function elearning_filter($mform){
     global $DB,$USER;
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
     if ((has_capability('local/request:approverecord', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())) {
         $courseslist = $DB->get_records_sql_menu("SELECT id, fullname FROM {course} WHERE visible = 1");
     }
@@ -961,7 +958,6 @@ function elearning_filter($mform){
 function categories_filter($mform){
     global $DB,$USER;
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
     $catslib = new local_courses\catslib();
     if(is_siteadmin()){
         $categorylist = $DB->get_records_sql_menu("SELECT id, name FROM {course_categories} ");
@@ -1020,7 +1016,6 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
 
     global $DB, $USER;
 	$context = (new \local_courses\lib\accesslib())::get_module_context();
-   // $context = context_system::instance();
     $course = $DB->get_record('course', array('id' => $course_id));
  
     $params['suspended'] = 0;
@@ -1117,7 +1112,6 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
 function local_courses_leftmenunode(){
     global $DB, $USER;
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
     $coursecatnodes = '';
     if(has_capability('moodle/category:manage', $systemcontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_categories', 'class'=>'pull-left user_nav_div categories usernavdep'));
@@ -1146,7 +1140,6 @@ function local_courses_leftmenunode(){
 function local_courses_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
     $content = '';
     if (has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext) || is_siteadmin()){
         //local courses content
@@ -1256,7 +1249,6 @@ function get_listof_courses($stable, $filterdata) {
       require_once($CFG->dirroot . '/enrol/auto/lib.php');
     }
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
     $statustype=$stable->status;
     $totalcostcentercount=$stable->costcenterid;
     $totaldepartmentcount=$stable->departmentid;
@@ -1717,7 +1709,7 @@ function get_listof_categories($stable, $filterdata) {
     $table->head = array('','','','');
 
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    //$systemcontext = context_system::instance();
+    
     $countsql = "select count(c.id) ";
     $sql = "SELECT c.id, c.name, c.parent, c.visible, c.coursecount, c.idnumber ";
     $fromsql = "FROM {course_categories} as  c WHERE id > 1 ";
@@ -1927,7 +1919,7 @@ function local_courses_get_tagged_courses($tag, $exclusivemode = false, $fromctx
 function get_course_details($courseid) {
     global $USER, $DB, $PAGE;
 	$context = (new \local_courses\lib\accesslib())::get_module_context();
-    //$context = context_system::instance();
+    
     $PAGE->requires->js_call_amd('local_courses/courses','load', array());
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
     $details = array();
@@ -2022,7 +2014,6 @@ function get_enrolledusers($courseid){
     $params['courseid'] = $courseid;
 
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    //$systemcontext = \context_system::instance();
     
     if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
         $sql .= " AND c.open_costcenterid = :costcenterid ";

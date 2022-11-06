@@ -29,7 +29,7 @@ class insertcategory{
 	
 	public function create_skill_category($data) {
 	    global $DB, $CFG, $USER;
-		//$systemcontext = context_system::instance();
+		
 		$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		$costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
 		$data = (object)$data;

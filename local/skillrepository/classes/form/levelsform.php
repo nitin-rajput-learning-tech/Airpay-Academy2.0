@@ -33,7 +33,7 @@ class levelsform extends \moodleform {
 		$mform = $this->_form;
 		$id = $this->_customdata['id'];
 
-		//$context = context_system::instance();
+		
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
 
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {

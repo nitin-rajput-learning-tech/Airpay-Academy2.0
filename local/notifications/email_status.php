@@ -30,7 +30,6 @@ $id = optional_param('id', 0, PARAM_INT);
 $deleteid = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
 $sitecontext =(new \local_notifications\lib\accesslib())::get_module_context();
-//$sitecontext = context_system::instance();
 require_login();
 $PAGE->set_url('/local/notifications/email_status.php', array());
 $PAGE->set_context($sitecontext);

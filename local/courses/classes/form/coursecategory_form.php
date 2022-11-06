@@ -40,7 +40,7 @@ class coursecategory_form extends moodleform {
         $mform = $this->_form;
         $categoryid = $this->_customdata['categoryid'];
         $parent = $this->_customdata['parent'];
-        //$context = context_system::instance();
+        
         $context = (new \local_courses\lib\accesslib())::get_module_context(); 		
         // Get list of categories to use as parents, with site as the first one.
         $options = array();
@@ -114,7 +114,6 @@ class coursecategory_form extends moodleform {
         
         $context = $this->_customdata['context'];
         if(empty($context)){
-            //$context =  context_system::instance();
             $context = (new \local_courses\lib\accesslib())::get_module_context(); 		
 
         }

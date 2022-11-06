@@ -62,7 +62,6 @@ class custom_course_form extends moodleform {
         $returnto = $this->_customdata['returnto'];
         $returnurl = $this->_customdata['returnurl'];
         $costcenterid = $this->_customdata['costcenterid'];
-        //$systemcontext   = context_system::instance();
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context(); 		
         $formheaders = array_keys($this->formstatus);
         $formheader = $formheaders[$formstatus];
@@ -114,7 +113,7 @@ class custom_course_form extends moodleform {
 
         $mform->addElement('hidden', 'id', $courseid);
         $mform->setType('id', PARAM_INT);
-		//$systemcontext = context_system::instance();
+		
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context(); 		
         $core_component = new core_component();
         if($formstatus == 0){

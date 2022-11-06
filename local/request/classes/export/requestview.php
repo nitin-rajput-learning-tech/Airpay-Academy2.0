@@ -153,7 +153,6 @@ class requestview {
 
     public  function get_capabilitycheck_list(){
         global $USER;
-        //$usercontext = context_system::instance();
         $usercontext =(new \local_request\lib\accesslib())::get_module_context();
         $viewrecord_capability=0;
             if(has_capability('local/request:viewrecord',$usercontext)){

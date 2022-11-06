@@ -42,7 +42,7 @@ require_login();
 if (!has_capability('local/users:manage', $systemcontext) ) {
     throw new moodle_exception('You dont have a permission to view this page.');
 }
-//$context = context_system::instance();
+
 $context = (new \local_users\lib\accesslib())::get_module_context();
 $extracolumns = get_extra_user_fields($context);
 $columns = array_merge(array('firstname', 'lastname'), $extracolumns,

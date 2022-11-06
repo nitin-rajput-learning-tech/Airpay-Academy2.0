@@ -49,7 +49,6 @@ $PAGE->requires->js_call_amd('local_request/requestconfirm', 'load', array());
 $output = $PAGE->get_renderer('local_request');
 echo $OUTPUT->header();
 
-    //$usercontext = context_system::instance();
     $usercontext =(new \local_request\lib\accesslib())::get_module_context();
     $return = '';
 	$courses = $DB->get_records('local_request_records', array('compname' =>'elearning','componentid'=>$courseid));

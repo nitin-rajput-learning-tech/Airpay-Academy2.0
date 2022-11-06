@@ -44,7 +44,7 @@ echo $OUTPUT->header();
 </SCRIPT>
 <?php
 
-//$context = context_system::instance();
+
 $context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:denyrecord',$context)) {
 } else {

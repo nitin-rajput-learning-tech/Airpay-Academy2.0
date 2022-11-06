@@ -36,7 +36,6 @@ class form_status implements renderable, templatable {
      */
     public function __construct($formstatus) {
 		$this->context =(new \local_notifications\lib\accesslib())::get_module_context();
-        //$this->context = context_system::instance();
         $this->plugintype = 'local';
         $this->plugin_name = 'notifications';
         $this->formstatus = $formstatus;

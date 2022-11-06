@@ -45,7 +45,7 @@ $renderer = $PAGE->get_renderer('local_skillrepository');
 
 $PAGE->set_heading(get_string('levels', 'local_skillrepository'));
 echo $OUTPUT->header();
-//$systemcontext = context_system::instance();
+
 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 echo "<ul class='course_extended_menu_list'>
 		<li>

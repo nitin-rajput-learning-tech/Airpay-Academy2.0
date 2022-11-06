@@ -31,7 +31,6 @@ $delete = optional_param('delete',0,PARAM_INT);
 $userid = optional_param('ue',0,PARAM_INT);
 require_login();
 
-//$systemcontext = context_system::instance();
 $systemcontext =(new \local_courses\lib\accesslib())::get_module_context();
 $PAGE->set_pagelayout('standard');
 

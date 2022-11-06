@@ -76,7 +76,7 @@ function local_tags_inplace_editable($itemtype, $itemid, $newvalue) {
 * @return  [type] string  link for the leftmenu
 */
 function local_tags_leftmenunode(){
-    //$systemcontext = context_system::instance();
+    
     $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
     $tagnode = '';
     if(has_capability('local/tags:view',$systemcontext) || is_siteadmin()){

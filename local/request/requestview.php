@@ -39,7 +39,6 @@ $title = get_string('viewrequest', 'local_request');
 // Set up the page.
 $url = new moodle_url("/local/request/requestview.php");
 $sitecontext = (new \local_request\lib\accesslib())::get_module_context();
-//$sitecontext = context_system::instance();
 $PAGE->set_context($sitecontext);
 
 $PAGE->set_pagelayout('standard');
@@ -54,7 +53,6 @@ $output = $PAGE->get_renderer('local_request');
 echo $output->header();
     $list_comp = array();
     $sorting = false;
-    //$usercontext = context_system::instance();
     $usercontext = (new \local_request\lib\accesslib())::get_module_context();
     if(has_capability('local/request:viewrecord',$usercontext) || is_siteadmin()){    
     $mform = new filters_form($CFG->wwwroot . '/local/request/index.php', array('filterlist'=>array('request')));

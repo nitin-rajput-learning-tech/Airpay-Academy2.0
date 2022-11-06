@@ -460,7 +460,7 @@ class local_courses_external extends external_api {
 
             $categorylib = new local_courses\catslib();
             $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-            //$systemcontext = context_system::instance();
+            
             if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganizations',$systemcontext)){
                 $orgcategories = $categorylib->get_categories($orgid);
                 $orgcategoryids = implode(',',$orgcategories);

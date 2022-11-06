@@ -30,7 +30,7 @@ global $CFG, $USER, $PAGE, $OUTPUT, $DB;
 require_once($CFG->dirroot . '/local/users/lib.php');
 $filtervalues = json_decode($_REQUEST['formdata']);
 $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-//$systemcontext = context_system::instance();
+
 require_login();
 $totalusers = manage_users_count($stable, $filtervalues);
 $table = new html_table();

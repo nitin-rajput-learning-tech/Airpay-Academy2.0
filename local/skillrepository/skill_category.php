@@ -26,7 +26,7 @@ require_once($CFG->dirroot . '/local/skillrepository/lib.php');
 
 global $CFG, $PAGE;
 
-//$systemcontext = context_system::instance();
+
 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 $id = optional_param('id', -1, PARAM_INT);
 $delete = optional_param('delete', 0, PARAM_INT);

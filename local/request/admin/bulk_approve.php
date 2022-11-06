@@ -35,7 +35,7 @@ $PAGE->set_url('/blocks/request/admin/bulk_approve.php');
 $PAGE->set_title(get_string('pluginname', 'block_request'));
 
 
-//$context = context_system::instance();
+
 $context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:approverecord',$context)) {
 } else {

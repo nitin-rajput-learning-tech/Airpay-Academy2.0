@@ -55,7 +55,6 @@ class renderer extends mainbase  {
           global $DB, $OUTPUT, $PAGE,$USER;
           $lib = new notifications();
           $costcenter = new \costcenter();
-          //$systemcontext = \context_system::instance();
           $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
          
        if(is_siteadmin()){
@@ -141,7 +140,7 @@ class renderer extends mainbase  {
         global $USER;
 
           $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
-          //$systemcontext = context_system::instance();
+          
 
         $options = array('targetID' => 'manage_notifications','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
         

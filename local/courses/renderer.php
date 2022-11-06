@@ -56,7 +56,6 @@ class local_courses_renderer extends plugin_renderer_base {
      */
     public function get_catalog_courses($filter = false,$view_type='card') {
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-       // $systemcontext = context_system::instance();
         $status = optional_param('status', '', PARAM_RAW);
         $costcenterid = optional_param('costcenterid', '', PARAM_INT);
         $departmentid = optional_param('departmentid', '', PARAM_INT);
@@ -103,7 +102,7 @@ class local_courses_renderer extends plugin_renderer_base {
     public function get_categories_list($filter = false,$view_type= 'card') {
         $id = optional_param('id', 0, PARAM_INT);
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-        //$systemcontext = context_system::instance();
+        
         // change the display according to moodle 3.6
         // $stable = new stdClass();
         // $stable->thead = true;
@@ -155,7 +154,6 @@ class local_courses_renderer extends plugin_renderer_base {
      */
     public function tagged_courses($tagid, $exclusivemode = true, $ctx = 0, $rec = true, $displayoptions = null, $count = 0, $sort='') {
         global $CFG, $DB,$USER;
-       // $systemcontext = context_system::instance();
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
         $userorg = array();
         $userdep = array();
@@ -255,7 +253,6 @@ class local_courses_renderer extends plugin_renderer_base {
         $data['subcategory_count'] = $DB->count_records('course_categories', array('parent' => $categoryid)); 
         // $actions = False;
         // if(has_capability('moodle/category:manage', $systemcontext)){
-        // $systemcontext = \context_system::instance();
         //     $actions = True;
         //     if(!empty($category->visible)){
         //         $visible_value = 0;
@@ -273,7 +270,6 @@ class local_courses_renderer extends plugin_renderer_base {
   
     $certificate_plugin_exist = \core_component::get_plugin_directory('tool', 'certificate');
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-       // $systemcontext = \context_system::instance();
     if(is_siteadmin() || has_capability('enrol/manual:manage', $systemcontext)) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
                 $userenrollment = true;
@@ -319,7 +315,6 @@ class local_courses_renderer extends plugin_renderer_base {
     $params['courseid'] = $dataobj->courseid;
 
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-        //$systemcontext = \context_system::instance();
 
     if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
       $sql .= " AND c.open_costcenterid = :costcenterid ";
@@ -456,7 +451,7 @@ class local_courses_renderer extends plugin_renderer_base {
   }
     public function get_userdashboard_courses($tab, $filter = false,$view_type = 'card') {
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-        //$systemcontext = context_system::instance();
+        
         
         $templateName = 'local_courses/userdashboard_paginated';
         $cardClass = 'col-md-6 col-12';

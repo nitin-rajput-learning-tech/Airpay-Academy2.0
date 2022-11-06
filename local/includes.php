@@ -144,7 +144,7 @@ class user_course_details {
 	function get_training_at_values($training_locations, $organizationids){
 		global $DB, $USER;
 		
-		$systemcontext = context_system::instance();
+		$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 		$training_at = null;
 		
 		if(sizeof($training_locations)>0){
@@ -185,7 +185,7 @@ class user_course_details {
 	function get_band_values($selectedbands, $organizationids){
 		global $DB, $USER;
 		
-		$systemcontext = context_system::instance();
+		$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 		$band = null;
 		
 		if(sizeof($selectedbands)>0){
@@ -306,7 +306,7 @@ class has_user_permission{
 	 public function access_user_permission($userid){
          global $DB, $USER;
 		 
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
          //------userid and courseid validation-------------------    
          if (empty($userid)) {
              return false;               

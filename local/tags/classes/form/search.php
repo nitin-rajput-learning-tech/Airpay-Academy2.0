@@ -36,7 +36,6 @@ use moodleform;
 class search extends moodleform {
     public function definition() {
         global $CFG, $DB, $USER;
-       // $context = \context_system::instance();
         $context = (new \local_tags\lib\accesslib())::get_module_context();
         $mform    =& $this->_form;
         $taglist = array(null=>'');

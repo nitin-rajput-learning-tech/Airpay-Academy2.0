@@ -37,7 +37,7 @@ $PAGE->set_heading(get_string('pluginname', 'block_request'));
 $PAGE->set_title(get_string('pluginname', 'block_request'));
 echo $OUTPUT->header();
 
-//$context = context_system::instance();
+
 $context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:addcomment',$context)) {
 } else {

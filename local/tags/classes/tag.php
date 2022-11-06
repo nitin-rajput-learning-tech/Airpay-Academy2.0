@@ -887,7 +887,6 @@ class local_tags_tag {
      * @param int $tiuserid tag instance user id, only needed for tag areas with user tagging (such as core/course)
      */
     public static function remove_all_item_tags($component, $itemtype, $itemid, $tiuserid = 0) {
-      //  $context = context_system::instance(); // Context will not be used.
         $context = (new \local_tags\lib\accesslib())::get_module_context();
         static::set_item_tags($component, $itemtype, $itemid, $context, null, $tiuserid);
     }
@@ -1202,7 +1201,7 @@ class local_tags_tag {
      */
     public function set_related_tags($tagnames) {
           $context = (new \local_tags\lib\accesslib())::get_module_context();
-        //$context = context_system::instance();
+        
         $tagobjects = $tagnames ? static::create_if_missing($this->tagcollid, $tagnames) : array();
         unset($tagobjects[$this->name]); // Never link to itself.
 
@@ -1241,7 +1240,7 @@ class local_tags_tag {
      * @param array $tagnames
      */
     public function add_related_tags($tagnames) {
-        //$context = context_system::instance();
+        
         $context = (new \local_tags\lib\accesslib())::get_module_context();
         $tagobjects = static::create_if_missing($this->tagcollid, $tagnames);
 
@@ -1502,7 +1501,7 @@ class local_tags_tag {
         }
 
         $tagname = $this->get_display_name();
-        //$systemcontext = context_system::instance();
+        
         $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
         // Add a link for users to add/remove this from their interests.
         if (static::is_enabled('core', 'user') && local_tags_area::get_collection('core', 'user') == $this->tagcollid) {
@@ -1602,7 +1601,7 @@ class local_tags_tag {
 
         // Fire an event that these tags were deleted.
         if ($tags) {
-            //$context = context_system::instance();
+            
             $context =(new \local_tags\lib\accesslib())::get_module_context();
 
             foreach ($tags as $tag) {

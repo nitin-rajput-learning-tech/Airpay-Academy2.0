@@ -68,7 +68,7 @@ use core_user;
       }
       // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
       $notification = new \local_request\notification();
-      //$context = context_system::instance();
+      
       $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
       $record = new stdClass();
       $record->compname = $component;
@@ -174,7 +174,7 @@ use core_user;
     require_once($CFG->dirroot . '/local/lib.php'); 
     // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
     $notification = new \local_request\notification();
-    //$context = context_system::instance();
+    
     $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $updated_recordid =0;
     $type = 'request_approve';
@@ -294,7 +294,7 @@ use core_user;
     // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
     $notification = new \local_request\notification(); 
     $previousrecord = new stdclass();
-    //$context = context_system::instance(); 
+     
     $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $updated_recordid =0;
     $type = 'request_deny';

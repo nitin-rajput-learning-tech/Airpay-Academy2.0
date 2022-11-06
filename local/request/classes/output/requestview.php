@@ -59,7 +59,7 @@ class requestview implements renderable, templatable {
     public function __construct($list=null, $component=null,$sorting=false,$tab=false,$componentid=false) {
         global $USER, $DB;
         // if(empty($list)){
-            $systemcontext = context_system::instance();
+            $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
 
             if(has_capability('local/request:viewrecord',$systemcontext) && !has_capability('local/request:approverecord',$systemcontext)){
                 $this->requestlist = $DB->get_records('local_request_records', array('createdbyid' =>$USER->id));
@@ -83,7 +83,7 @@ class requestview implements renderable, templatable {
    public function get_specific_costcenter_requests($component=null, $sorting=false, $componentid=false){
       global $USER, $DB;
         $requestlist = array();
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
 
         $fields = " req.id, req.createdbyid, req.compname, req.compcode, req.compkey, req.componentid, req.status, req.responder, req.respondeddate, req.usermodified, req.timecreated, req.timemodified ";
 
@@ -152,7 +152,7 @@ class requestview implements renderable, templatable {
 
         $params=array();
 
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
         $plugins = get_plugin_list('local');
         $subquery = array();
         foreach($plugins AS $plugin){
@@ -517,7 +517,7 @@ class requestview implements renderable, templatable {
 
    /* public static function get_capabilitycheck_list(){
         global $USER;
-        $usercontext = context_system::instance();
+        $usercontext =(new \local_request\lib\accesslib())::get_module_context();
         $viewrecord_capability=0;
             if(has_capability('local/request:viewrecord',$usercontext)){
               $viewrecord_capability=1;

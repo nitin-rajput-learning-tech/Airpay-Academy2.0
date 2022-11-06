@@ -84,7 +84,7 @@ class local_tags_renderer extends plugin_renderer_base {
 
         $tagname = $tag->get_display_name();
         $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
-        //$systemcontext = context_system::instance();
+        
 
         $tagname = '<b>Tag: </b><span class="flagged-tag">' . $tagname . '</span><hr>';
         

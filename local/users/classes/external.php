@@ -995,7 +995,6 @@ class local_users_external extends external_api {
             if (!calendar_view_event_allowed($legacyevent)) {
                 // We can't return a warning in this case because the event is not optional.
                 // We don't know the context for the event and it's not worth loading it.
-                //$syscontext = context_system::instance();
                 $syscontext = (new \local_users\lib\accesslib())::get_module_context();
                 throw new \required_capability_exception($syscontext, 'moodle/course:view', 'nopermission', '');
             }
@@ -1222,7 +1221,7 @@ class local_users_external extends external_api {
             $userid = $USER->id;
         }
 
-        //$systemcontext = context_system::instance();
+        
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         
         self::validate_context($systemcontext);

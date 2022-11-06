@@ -103,7 +103,6 @@ function local_users_output_fragment_new_create_user($args) {
 function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
 
-   // $systemcontext = context_system::instance();
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = array();
     $data = data_submitted();
@@ -167,7 +166,7 @@ function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpa
  */
 function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = array();
     $data = data_submitted();
@@ -230,7 +229,7 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
  */
 function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = array();
     $data = data_submitted();
@@ -288,7 +287,6 @@ function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $
 function designation_filter($mform) {
     global $DB, $USER;
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-    // $systemcontext = context_system::instance();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
         $userslist_sql = "SELECT id, open_designation FROM {user} WHERE id > :adminuserid
@@ -317,7 +315,7 @@ function designation_filter($mform) {
  */
 function location_filter($mform) {
     global $DB, $USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
@@ -349,7 +347,6 @@ function location_filter($mform) {
  */
 function hrmsrole_filter($mform) {
     global $DB, $USER;
-   // $systemcontext = context_system::instance();
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
@@ -381,7 +378,7 @@ function hrmsrole_filter($mform) {
  */
 function band_filter($mform) {
     global $DB, $USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
@@ -409,7 +406,7 @@ function band_filter($mform) {
  */
 function username_filter($mform) {
     global $DB, $USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
@@ -437,7 +434,7 @@ function username_filter($mform) {
  */
 function custom_filter($mform) {
     global $DB, $USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $filterv = $DB->get_field('local_filters', 'filters', array('plugins' => 'users'));
     $filterv = explode(',', $filterv);
@@ -475,7 +472,7 @@ function custom_filter($mform) {
 function globaltargetaudience_elementlist($mform, $elementlist) {
     global $CFG, $DB, $USER;
 
-    //$context = context_system::instance();
+    
     $context = (new \local_users\lib\accesslib())::get_module_context();
     $params = array();
     $params['deleted'] = 0;
@@ -578,7 +575,7 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
 */
 function local_users_leftmenunode() {
     global $USER, $DB;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $usersnode = '';
     $key = '';
@@ -598,7 +595,7 @@ function local_users_leftmenunode() {
 
 function local_users_quicklink_node() {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $local_users = '';
     if (is_siteadmin() || has_capability('local/users:view', $systemcontext)) {
@@ -761,7 +758,7 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
 */
 function manage_users_count($stable, $filterdata) {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
      $statustype = $stable->status;
      $totalcostcentercount = $stable->costcenterid;
@@ -870,7 +867,7 @@ function manage_users_count($stable, $filterdata) {
 */
 function manage_users_content($stable, $users/*,$filterdata*/) {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = $users['users'];
     $data = array();
@@ -958,7 +955,6 @@ function users_filters_form($filterparams) {
 
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
 
-   // $systemcontext = context_system::instance();
     $systemcontext=(new \local_users\lib\accesslib())::get_module_context();
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
         $mform = new filters_form(null, array('filterlist' => array('organizations', 'departments',
@@ -987,7 +983,7 @@ function users_filters_form($filterparams) {
 */
 function manage_syncerrors_count($stable, $filterdata) {
     global $DB, $USER;
-    //$systemcontext = context_system::instance();
+    
     $systemcontext =(new \local_users\lib\accesslib())::get_module_context();
     $params = array();
     $countsql = " SELECT count(id) ";
@@ -1046,7 +1042,6 @@ function manage_syncerrors_content($stable, $filterdata) {
 */
 function manage_syncstatistics_count($stable, $filterdata) {
     global $DB, $USER;
-   // $systemcontext = context_system::instance();
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $params = array();
     $countsql = " SELECT count(id) ";

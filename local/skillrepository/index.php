@@ -51,7 +51,7 @@ $PAGE->navbar->add(get_string('manage_skills', 'local_skillrepository'));
 
 $PAGE->requires->js_call_amd('local_skillrepository/newrepository', 'load', array());
 //$PAGE->requires->js_call_amd('local_skillrepository/newcategory', 'load', array());
-//$systemcontext = context_system::instance();
+
 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 
 $id = 1; 

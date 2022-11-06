@@ -47,7 +47,6 @@ if ($formattype == 'card') {
 
 require_login();
 
-//$systemcontext = context_system::instance();
 $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(!has_capability('local/courses:view', $systemcontext) && !has_capability('local/courses:manage', $systemcontext) ){
     print_error("You don't have permissions to view this page.");

@@ -410,7 +410,6 @@ class local_uploadcourse_course {
     public function prepare() {
         global $DB, $SITE,$USER;
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-       // $systemcontext = context_system::instance();
         $this->prepared = true;
         // Validate the shortname.
         if (!empty($this->shortname) || is_numeric($this->shortname)) {

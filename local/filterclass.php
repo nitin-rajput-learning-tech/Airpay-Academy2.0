@@ -481,7 +481,7 @@ public function get_designation(){
 	 
 	public function get_category_list($costcenter){
 		 global $DB, $CFG, $USER;
-		 $systemcontext = context_system::instance();
+		 $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 		// $sql="select id from {local_costcenter} where shortname='ACD'";
 		 //$depts1=$DB->get_record_sql($sql);
 		 	if (!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)){

@@ -30,7 +30,7 @@ $PAGE->requires->js('/local/skillrepository/js/script.js');
     
 $id = required_param('id', PARAM_INT);
 $PAGE->set_pagelayout('standard');
-//$systemcontext = context_system::instance();
+
 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url('/local/skillrepository/skillinfo.php');

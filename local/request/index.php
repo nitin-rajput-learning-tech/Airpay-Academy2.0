@@ -38,7 +38,6 @@ $title = get_string('viewrequest', 'local_request');
 
 // Set up the page.
 $url = new moodle_url("/local/request/index.php");
-//$sitecontext = context_system::instance();
 $sitecontext =(new \local_request\lib\accesslib())::get_module_context();
 $PAGE->set_context($sitecontext);
 
@@ -67,7 +66,6 @@ echo $output->header();
 
     $list_params = array();
     // $sorting = false;
-   // $systemcontext = context_system::instance();
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
     if(has_capability('local/request:viewrecord',$systemcontext) || is_siteadmin()){
         $componentarray = array('elearning', 'classroom', 'learningplan', 'program');

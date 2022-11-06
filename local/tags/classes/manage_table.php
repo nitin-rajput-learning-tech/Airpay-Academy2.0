@@ -157,7 +157,7 @@ class local_tags_manage_table extends table_sql {
 
         $allusernames = get_all_user_name_fields(true, 'u');
         // for openlms
-        //$context = context_system::instance();
+        
         $context =(new \local_tags\lib\accesslib())::get_module_context();
         $joinparams = array();
         $join =" JOIN {local_tags} lt ON lt.tagid = tg.id AND lt.taginstanceid = ti.id ";
