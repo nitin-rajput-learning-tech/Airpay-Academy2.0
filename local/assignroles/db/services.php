@@ -49,5 +49,13 @@ $functions = array(
 		'type' => 'Read',
 		'ajax' => true,	
 	),
+	'local_assignroles_submit_assigncostcenterrole_form' => array(
+		'classname' => 'local_assignroles_external',
+		'methodname' => 'submit_assigncostcenterrole_form',
+		'classpath' => 'local/assignroles/classes/external.php',
+		'description' => 'Submit form',
+		'type' => 'write',
+		'ajax' => true,
+	),
 	
 );

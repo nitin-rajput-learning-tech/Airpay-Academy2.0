@@ -32,7 +32,6 @@ require_login();
 
 $PAGE->set_url('/blocks/request/admin/approve_course_new.php');
 $PAGE->set_context((new \local_request\lib\accesslib())::get_module_context());
-//$PAGE->set_context(context_system::instance());
 $PAGE->set_title(get_string('pluginname', 'block_request'));
 
 

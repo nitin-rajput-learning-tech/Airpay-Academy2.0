@@ -50,7 +50,10 @@ function local_tags_page_type_list($pagetype, $parentcontext, $currentcontext) {
  * @return \core\output\inplace_editable
  */
 function local_tags_inplace_editable($itemtype, $itemid, $newvalue) {
-    \external_api::validate_context(context_system::instance());
+
+    $context = (new \local_tags\lib\accesslib())::get_module_context();
+    
+    \external_api::validate_context($context);
     if ($itemtype === 'tagname') {
         return \local_tags\output\tagname::update($itemid, $newvalue);
     } else if ($itemtype === 'tagareaenable') {

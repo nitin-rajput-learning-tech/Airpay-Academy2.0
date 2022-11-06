@@ -455,7 +455,6 @@ class local_tags_tag {
 
         // We can not fire an event with 'null' as the contextid.
         if (is_null($taginstance->contextid)) {
-           // $taginstance->contextid = context_system::instance()->id;
            $taginstance->contextid = (new \local_tags\lib\accesslib())::get_module_context()->id;
         }
 
@@ -520,7 +519,6 @@ class local_tags_tag {
         // Now remove all the tag instances.
         $DB->delete_records_list('tag_instance', 'id', $taginstanceids);
         // Save the system context in case the 'contextid' column in the 'tag_instance' table is null.
-       // $syscontextid = context_system::instance()->id;
         $syscontextid = (new \local_tags\lib\accesslib())::get_module_context()->id;
 
         // Loop through the tag instances and fire an 'tag_removed' event.
@@ -1117,7 +1115,6 @@ class local_tags_tag {
         $event = \core\event\tag_updated::create(array(
             'objectid' => $this->id,
             'relateduserid' => $this->userid,
-            //'context' => context_system::instance(),
             'context' => (new \local_tags\lib\accesslib())::get_module_context(),
             'other' => array(
                 'name' => $this->name,
@@ -1149,7 +1146,6 @@ class local_tags_tag {
         $event = \core\event\tag_flagged::create(array(
             'objectid' => $this->id,
             'relateduserid' => $this->userid,
-              //'context' => context_system::instance(),
               'context' => (new \local_tags\lib\accesslib())::get_module_context(),
             'other' => array(
                 'name' => $this->name,
@@ -1181,7 +1177,6 @@ class local_tags_tag {
         $event = \core\event\tag_unflagged::create(array(
             'objectid' => $this->id,
             'relateduserid' => $this->userid,
-              //'context' => context_system::instance(),
               'context' => (new \local_tags\lib\accesslib())::get_module_context(),
             'other' => array(
                 'name' => $this->name,
@@ -1582,7 +1577,6 @@ class local_tags_tag {
         // Fire an event that these items were untagged.
         if ($taginstances) {
             // Save the system context in case the 'contextid' column in the 'tag_instance' table is null.
-           // $syscontextid = context_system::instance()->id;
          $syscontextid =(new \local_tags\lib\accesslib())::get_module_context()->id;
 
             // Loop through the tag instances and fire a 'tag_removed'' event.

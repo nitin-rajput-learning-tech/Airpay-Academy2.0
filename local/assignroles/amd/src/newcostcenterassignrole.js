@@ -153,8 +153,8 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         var formData = this.modal.getRoot().find('form').serialize();
       
         Ajax.call([{
-            methodname: 'local_assignroles_submit_assignrole_form',
-            args: {contextid: this.contextid, costcenterid:this.costcenterid, jsonformdata: JSON.stringify(formData)},
+            methodname: 'local_assignroles_submit_assigncostcenterrole_form',
+            args: {contextid: this.contextid, costcenterid:this.costcenterid,formtype:this.formtype, jsonformdata: JSON.stringify(formData)},
             done: this.handleFormSubmissionResponse.bind(this, formData),
             fail: this.handleFormSubmissionFailure.bind(this, formData)
         }]);

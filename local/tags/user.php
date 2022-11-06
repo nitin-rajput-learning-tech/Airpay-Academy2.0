@@ -43,7 +43,10 @@ switch ($action) {
         break;
 
     case 'flaginappropriate':
-        require_capability('moodle/tag:flag', context_system::instance());
+
+        $context =(new \local_tags\lib\accesslib())::get_module_context();
+
+        require_capability('moodle/tag:flag', $context);
         $id = required_param('id', PARAM_INT);
         $tagobject = local_tags_tag::get($id, '*', MUST_EXIST);
         $tagobject->flag();

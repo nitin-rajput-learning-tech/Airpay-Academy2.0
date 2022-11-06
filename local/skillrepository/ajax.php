@@ -36,7 +36,6 @@ $q = optional_param('q', '', PARAM_RAW);
 require_login();
 $PAGE->set_url('/local/skillrepository/ajax.php');
 $PAGE->set_context((new \local_skillrepository\lib\accesslib())::get_module_context());
-//$PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('standard');
 
 $record = new stdClass();

@@ -34,7 +34,6 @@ $notificationid = required_param('notificationid', PARAM_INT);
 $costcenterid = optional_param('costcenterid', 0, PARAM_INT);
 $page = required_param('page', PARAM_INT);
 $PAGE->set_context((new \local_notifications\lib\accesslib())::get_module_context());
-//$PAGE->set_context(context_system::instance());
 require_login();
 $lib = new \notifications();
 $notif_type = $DB->get_field('local_notification_type', 'shortname', array('id'=>$notificationid));

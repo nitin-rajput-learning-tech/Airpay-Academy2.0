@@ -171,6 +171,19 @@ class local_assignroles_external extends external_api {
         }
         if ($action) {
             switch($action){
+                case 'role_ids':
+                
+                     $sql = "SELECT r.id, r.name as fullname
+                            FROM {role} r
+                            JOIN {role_context_levels} rcl ON (rcl.contextlevel =10 AND r.id = rcl.roleid)
+                            LEFT JOIN {role_names} rn ON (rn.contextid =1 AND rn.roleid = r.id)
+                         WHERE r.name !=''
+                          ORDER BY r.sortorder ASC";
+
+                    $return = $DB->get_records_sql($sql, $params);
+
+                    break;
+
                 case 'role_users':
                 
                     $context = (new \local_assignroles\lib\accesslib())::get_module_context();
@@ -202,8 +215,11 @@ class local_assignroles_external extends external_api {
                         $params['logincostcenter'] = $USER->open_costcenterid;
                     }
                     $return = $DB->get_records_sql($userssql, $params, $page, $perpage);
-                break;
+
+                    break;
+
                 case 'costcenter_organisation_selector':
+
                     $fields = array("fullname"/*, "shortname"*/);
                     $sqlparams['parentid'] = 0;
                     $likesql = array();
@@ -239,6 +255,7 @@ class local_assignroles_external extends external_api {
                         }
                     }
                     $return = $accounts;
+
                     break;
             }
             return json_encode($return);
@@ -252,5 +269,69 @@ class local_assignroles_external extends external_api {
     public static function assignrole_form_option_selector_returns(){
         return new external_value(PARAM_RAW, 'data');
     }
-    
+
+    /**
+     * Describes the parameters for submit_create_group_form webservice.
+     * @return external_function_parameters
+     */
+    public static function submit_assigncostcenterrole_form_parameters() {
+        return new external_function_parameters(
+            array(
+                'contextid' => new external_value(PARAM_INT, 'The context id for the evaluation'),
+                'costcenterid' => new external_value(PARAM_INT, 'The costcenter id for the evaluation'),
+                'formtype' => new external_value(PARAM_RAW, 'The formtype for the evaluation'),
+                'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
+
+            )
+        );
+    }
+    /**
+     * form submission of role name and returns instance of this object
+     *
+     * @param int $contextid
+     * @param [string] $jsonformdata
+     * @return assignrole form submits
+     */
+    public function submit_assigncostcenterrole_form($contextid, $costcenterid, $formtype,$jsonformdata){
+        global $PAGE,$CFG, $USER,$DB;
+
+        require_once($CFG->dirroot . '/local/assignroles/lib.php');
+        // We always must pass webservice params through validate_parameters.
+        $params = self::validate_parameters(self::submit_assigncostcenterrole_form_parameters(),
+                                    ['contextid' => $contextid, 'costcenterid'=>$costcenterid, 'formtype'=>$formtype,'jsonformdata' => $jsonformdata]);
+        // $context = $params['contextid'];
+        $context = (new \local_assignroles\lib\accesslib())::get_module_context();
+        // We always must call validate_context in a webservice.
+        self::validate_context($context);
+        $serialiseddata = json_decode($params['jsonformdata']);
+        // throw new moodle_exception('Error in creation');
+        // die;
+        $data = array();
+
+        parse_str($serialiseddata, $data);
+        $warnings = array();
+         $mform = new local_assignroles\form\assigncostcenterrole(null, array('costcenterid'=>$costcenterid,'formtype' => $formtype), 'post', '', null, true, $data);
+        $roles  = new local_assignroles\local\assignrole();
+        $valdata = $mform->get_data();
+       
+        if($valdata){
+            $categorysql = $DB->get_record('local_costcenter', array('id' => $costcenterid), $fields = 'category', $strictness = IGNORE_MISSING);
+            $categoryid = $categorysql->category;
+            $categorycontext = context_coursecat::instance($categoryid);
+            $roles->rolesassign($valdata->users,$valdata->roles, $categorycontext->id);
+            
+        } else {
+            // Generate a warning.
+            throw new moodle_exception('Error in creation');
+        }
+    }
+    /**
+     * Returns description of method result value.
+     *
+     * @return external_description
+     * @since Moodle 3.0
+     */
+    public static function submit_assigncostcenterrole_form_returns() {
+        return new external_value(PARAM_INT, 'role id');
+    }
 }
