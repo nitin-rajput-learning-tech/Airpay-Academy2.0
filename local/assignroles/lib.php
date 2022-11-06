@@ -65,6 +65,38 @@ function local_assignroles_output_fragment_new_assignrole($args)
     return $o;
 }
 /**
+ * Function to display the assign role form in popup
+ * returns data of the popup 
+ */
+function local_assignroles_output_fragment_new_costcenterassignrole($args)
+{
+    global $CFG, $DB, $USER;
+
+    $args = (object) $args;
+    $context = $args->context;
+    $costcenterid = $args->costcenterid;
+    $formtype = $args->formtype;
+    $o = '';
+    $formdata = [];
+    if (!empty($args->jsonformdata)) {
+        $serialiseddata = json_decode($args->jsonformdata);
+        parse_str($serialiseddata, $formdata);
+    }
+    $users = array();
+   
+    $mform = new local_assignroles\form\assigncostcenterrole(null, array('costcenterid' => $costcenterid,'formtype' => $formtype), 'post', '', null, true, $formdata);
+    $mform->set_data($formdata);
+    if (!empty($formdata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
+}
+/**
  * Function to display the role users in popup
  * returns data of the popup 
  */

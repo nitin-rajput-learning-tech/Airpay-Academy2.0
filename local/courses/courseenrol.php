@@ -47,9 +47,6 @@ $add = optional_param('add',array(), PARAM_RAW);
 $remove=optional_param('remove',array(), PARAM_RAW);
 $sesskey=sesskey();
 $context = context_course::instance($course->id, MUST_EXIST);
-
-$systemcontext = (new \local_courses\lib\accesslib())::get_module_context($course->open_costcenterid);
-
 $systemcontext = context_system::instance();
 require_login();
 
