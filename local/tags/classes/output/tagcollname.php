@@ -45,7 +45,7 @@ class tagcollname extends \core\output\inplace_editable {
      * @param \stdClass $tagcoll
      */
     public function __construct($tagcoll) {
-        $editable = has_capability('moodle/tag:manage', context_system::instance());
+        $editable = has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $edithint = new lang_string('editcollname', 'local_tags');
         $value = $tagcoll->name;
         $name = \local_tags_collection::display_name($tagcoll);

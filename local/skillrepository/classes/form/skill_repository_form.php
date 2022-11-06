@@ -39,7 +39,8 @@ class skill_repository_form extends moodleform {
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
         
-        $context = context_system::instance();
+        //$context = context_system::instance();
+		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
             $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
             $costcenters = $DB->get_records_sql($sql);
@@ -93,7 +94,8 @@ class skill_repository_form extends moodleform {
                 $repos[$rl->id] = $rl->name;
             }
         }
-        $context = context_system::instance();
+        //$context = context_system::instance();
+		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         $options = array(
             'ajax' => 'local_skillrepository/form-repository-selector',
             'multiple' => false,

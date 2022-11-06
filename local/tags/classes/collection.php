@@ -132,7 +132,8 @@ class local_tags_collection {
      * @return string
      */
     public static function display_name($record) {
-        $syscontext = context_system::instance();
+        //$syscontext = context_system::instance();
+        $syscontext = (new \local_tags\lib\accesslib())::get_module_context();
         if (!empty($record->component)) {
             $identifier = 'tagcollection_' .
                     clean_param($record->name, PARAM_STRINGID);

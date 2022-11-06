@@ -115,7 +115,7 @@ class local_courses_external extends external_api {
 
             $formheaders = array_keys($mform->formstatus);
             $category_id=$data['category'];
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',context_system::instance()) || has_capability('local/costcenter:manage_ownorganization',context_system::instance())){
+            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',(new \local_courses\lib\accesslib())::get_module_context()) || has_capability('local/costcenter:manage_ownorganization',(new \local_courses\lib\accesslib())::get_module_context())){
               $open_departmentid = implode(',',$data['open_departmentid']);
             }else {
               $open_departmentid = $data['open_departmentid'];
@@ -459,7 +459,8 @@ class local_courses_external extends external_api {
             $levelslist = $DB->get_records_sql_menu($sql);
 
             $categorylib = new local_courses\catslib();
-            $systemcontext = context_system::instance();
+            $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+            //$systemcontext = context_system::instance();
             if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganizations',$systemcontext)){
                 $orgcategories = $categorylib->get_categories($orgid);
                 $orgcategoryids = implode(',',$orgcategories);
@@ -1039,7 +1040,7 @@ class local_courses_external extends external_api {
         global $DB;
         $params = self::validate_parameters(self::course_update_status_parameters(),
                                     ['contextid' => $contextid,'id' => $id, 'params' => $params]);
-        $context = \context_system::instance();
+        $context = (new \local_courses\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
         $course = $DB->get_record('course', array('id' => $id), 'id, visible');
@@ -1166,8 +1167,7 @@ class local_courses_external extends external_api {
             'filter_offset' => $filter_offset,
             'filter_limit' => $filter_limit
         ));
-
-        $PAGE->set_context(\context_system::instance());
+        $PAGE->set_context((new \local_courses\lib\accesslib())::get_module_context());
         $renderable = new local_courses\output\userdashboard($params['filter'], $params['filter_text'], $params['filter_offset'], $params['filter_limit']);
         $output = $PAGE->get_renderer('local_courses');
         $data= $renderable->export_for_template($output);

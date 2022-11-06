@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 /**
  * This file is part of eAbyas
  *
@@ -19,27 +20,19 @@
  *
  * @author eabyas  <info@eabyas.in>
  * @package BizLMS
- * @subpackage local_request
+ * @subpackage local_users
  */
-require_once("../../../config.php");
-global $CFG, $DB;
-$formPath = "$CFG->libdir/formslib.php";
-require_once($formPath);
-require_login();
 
-require_once('../lib/displayLists.php');
+namespace local_notifications\lib;
 
-//$context = context_system::instance();
-$context =(new \local_request\lib\accesslib())::get_module_context();
-if (has_capability('block/request:viewrecord',$context)) {
-} else {
-  print_error(get_string('cannotviewrecord', 'block_request'));
+/**
+ * get access lib functions
+ */
+class accesslib extends \local_costcenter\lib\accesslib{
+
+    public static function get_module_context($costcenterid = null){
+
+        return parent::get_module_context($costcenterid);
+
+    }
 }
-
-$mid = required_param('id', PARAM_INT);
-
-$rec = $DB->get_recordset_select('block_request_records', 'id = ' . $mid);
-$displayModHTML = block_request_display_admin_list($rec, false, false, false, '');
-echo '<div style="font-family: Arial,Verdana,Helvetica,sans-serif">';
-echo $displayModHTML;
-echo '</div>';

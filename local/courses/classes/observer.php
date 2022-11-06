@@ -35,7 +35,8 @@ class local_courses_observer extends \core\event\course_viewed {
      */
     public static function course_viewed(\core\event\course_viewed $event) {
         global $DB, $CFG, $USER, $COURSE;
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+		$systemcontext =(new \local_courses\lib\accesslib())::get_module_context();
         if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$systemcontext))) {
             $enroltypeslist  = $DB->get_records_sql_menu("select id, id as enrolid from {enrol} where courseid = $COURSE->id AND status = 0");
 			$enroltypes = implode(',', $enroltypeslist);
@@ -77,13 +78,13 @@ class local_courses_observer extends \core\event\course_viewed {
      *
      * @param \core\event\course_category_viewed $event
      */
-    public static function course_category_viewed(\core\event\course_category_viewed $event) {
-        global $CFG;
-        if (!is_siteadmin() ) {
-            redirect($CFG->wwwroot.'/local/courses/index.php');
-            die;
-        }
-    }
+    // public static function course_category_viewed(\core\event\course_category_viewed $event) {
+    //     global $CFG;
+    //     if (!is_siteadmin() ) {
+    //         redirect($CFG->wwwroot.'/local/courses/index.php');
+    //         die;
+    //     }
+    // }
     public static function course_completed_notification(\core\event\course_completed $event){
         global $DB;
         $coursedetails = $DB->get_record('course',  array('id' => $event->courseid));
@@ -95,7 +96,8 @@ class local_courses_observer extends \core\event\course_viewed {
     }
     public static function grade_report_viewed(\core\event\grade_report_viewed $event) {
         global $DB,$USER,$CFG;
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+		$systemcontext =(new \local_courses\lib\accesslib())::get_module_context();
         if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$systemcontext))) {
             $enroltypeslist  = $DB->get_records_sql_menu("select id, id as enrolid from {enrol} where courseid = $event->courseid AND status = 0");
             $enroltypes = implode(',', $enroltypeslist);
@@ -121,7 +123,8 @@ class local_courses_observer extends \core\event\course_viewed {
      */
     public static function module_viewed(\core\event\course_module_viewed $event) {
         global $DB, $CFG, $USER, $COURSE;
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+		$systemcontext =(new \local_courses\lib\accesslib())::get_module_context();
         if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$systemcontext))) {
             $sql = "select id, id as enrolid 
                     FROM {enrol} 

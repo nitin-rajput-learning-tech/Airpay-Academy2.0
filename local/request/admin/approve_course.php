@@ -34,12 +34,13 @@ $PAGE->navbar->add(get_string('approvecourse', 'block_request'));
 require_login();
 
 $PAGE->set_url('/blocks/request/admin/approve_course.php');
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context((new \local_request\lib\accesslib())::get_module_context());
 $PAGE->set_heading(get_string('pluginname', 'block_request'));
 $PAGE->set_title(get_string('pluginname', 'block_request'));
 echo $OUTPUT->header();
 
-$context = context_system::instance();
+//$context = context_system::instance();
+$context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:approverecord',$context)) {
 } else {
   print_error(get_string('cannotapproverecord', 'block_request'));

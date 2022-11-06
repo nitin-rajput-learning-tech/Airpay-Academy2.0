@@ -27,7 +27,8 @@ class local_users_observer extends \core\event\user_profile_viewed {
     public static function user_profile_viewed(\core\event\user_profile_viewed $event) {
         global $DB, $CFG, $USER, $COURSE;
         $related_userid  = $event->data['relateduserid'];
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         if (($related_userid != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations'
             , $systemcontext)))) {
             if ((has_capability('local/users:create', $systemcontext))) {
@@ -48,7 +49,8 @@ class local_users_observer extends \core\event\user_profile_viewed {
         global $DB, $CFG, $USER;
 
         $related_userid  = $event->data['objectid'];
-        $systemcontext = context_system::instance();
+        //$systemcontext = context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $today = \local_costcenter\lib::get_userdate('d.m.Y');
         $ystart = strtotime($today);
         $presentday = \local_costcenter\lib::get_userdate('j', $ystart);

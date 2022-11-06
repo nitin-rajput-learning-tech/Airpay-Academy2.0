@@ -22,7 +22,6 @@ namespace local_skillrepository\event;
  * @package BizLMS
  * @subpackage local_skillrepository
  */
-
 use context_system;
 use stdClass;
 require_once($CFG->dirroot.'/local/costcenter/lib.php');
@@ -30,7 +29,8 @@ class insertcategory{
 	
 	public function create_skill_category($data) {
 	    global $DB, $CFG, $USER;
-		$systemcontext = context_system::instance();
+		//$systemcontext = context_system::instance();
+		$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		$costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
 		$data = (object)$data;
 		$newskill_category = new stdClass();

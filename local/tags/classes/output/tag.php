@@ -84,7 +84,7 @@ class tag implements renderable, templatable {
         $r->name = clean_param($this->record->name, PARAM_TAG);
         $format = clean_param($this->record->descriptionformat, PARAM_INT);
         list($r->description, $r->descriptionformat) = external_format_text($this->record->description,
-            $format, \context_system::instance()->id, 'core', 'tag', $r->id);
+            $format, (new \local_tags\lib\accesslib())::get_module_context()->id, 'core', 'tag', $r->id);
         $r->flag = clean_param($this->record->flag, PARAM_INT);
         if (isset($this->record->isstandard)) {
             $r->isstandard = clean_param($this->record->isstandard, PARAM_INT) ? 1 : 0;

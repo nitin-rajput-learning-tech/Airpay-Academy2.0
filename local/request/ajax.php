@@ -6,7 +6,8 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 global $DB, $PAGE,$CFG,$USER;
 require_login();
-$systemcontext = context_system::instance();
+//$systemcontext = context_system::instance();
+$systemcontext =(new \local_request\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $componentid = required_param('componentid',PARAM_INT);
 $component = required_param('component',PARAM_TEXT);

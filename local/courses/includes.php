@@ -103,7 +103,8 @@ class has_user_permission{
 	 public function access_user_permission($userid){
          global $DB, $USER;
 		 
-        $systemcontext = context_system::instance();
+		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        //$systemcontext = context_system::instance();
          //------userid and courseid validation-------------------    
          if (empty($userid)) {
              return false;               

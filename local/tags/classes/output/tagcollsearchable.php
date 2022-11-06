@@ -45,7 +45,7 @@ class tagcollsearchable extends \core\output\inplace_editable {
     public function __construct($tagcoll) {
         $defaultid = local_tags_collection::get_default();
         $editable = $tagcoll->id != $defaultid &&
-                has_capability('moodle/tag:manage', context_system::instance());
+                has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $edithint = new lang_string('editsearchable', 'local_tags');
         $value = $tagcoll->searchable ? 1 : 0;
 
@@ -78,7 +78,7 @@ class tagcollsearchable extends \core\output\inplace_editable {
      */
     public static function update($itemid, $newvalue) {
         global $DB;
-        require_capability('moodle/tag:manage', context_system::instance());
+        require_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $tagcoll = $DB->get_record('tag_coll', array('id' => $itemid), '*', MUST_EXIST);
         local_tags_collection::update($tagcoll, array('searchable' => $newvalue));
         return new self($tagcoll);

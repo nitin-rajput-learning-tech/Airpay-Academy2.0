@@ -64,7 +64,8 @@ class syncfunctionality {
     }// end of constructor
     public function main_hrms_frontendform_method($cir, $filecolumns, $formdata) {
         global $DB, $USER, $CFG;
-        $systemcontext = \context_system::instance();
+        // $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $inserted = 0;
         $updated = 0;
         $linenum = 1;

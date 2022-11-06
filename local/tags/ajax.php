@@ -35,7 +35,8 @@ if($requestData['action'] == 'gettagsdata'){
     $action = $requestData['action'];
 }
 
-$context = context_system::instance();
+//$context = context_system::instance();
+$context =(new \local_tags\lib\accesslib())::get_module_context();
 require_login();
 $PAGE->set_context($context);
 $return = false;
