@@ -22,7 +22,7 @@
  * @subpackage local_skillrepository
  */
 defined('MOODLE_INTERNAL') || die;
-$plugin->version =  2022101800;        // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version =  2022101800.01;        // The current plugin version (Date: YYYYMMDDXX)
 $plugin->component = 'local_skillrepository'; // Full name of the plugin (used for diagnostics)
 
 

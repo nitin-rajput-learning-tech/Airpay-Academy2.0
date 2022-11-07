@@ -41,7 +41,9 @@ class create_user extends moodleform {
     }
     public function definition() {
         global $USER, $CFG, $DB, $PAGE;
+
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+
         $costcenter = new costcenter();
         $mform = $this->_form;
         $form_status = $this->_customdata['form_status'];
