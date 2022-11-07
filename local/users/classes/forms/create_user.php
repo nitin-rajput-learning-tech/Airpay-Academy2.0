@@ -44,8 +44,6 @@ class create_user extends moodleform {
 
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
 
-        //var_dump($systemcontext);
-
         $costcenter = new costcenter();
         $mform = $this->_form;
         $form_status = $this->_customdata['form_status'];

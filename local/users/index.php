@@ -67,6 +67,8 @@ if ($formattype == 'card') {
 $heading = get_string('manage_users', 'local_users');
 $PAGE->set_heading($heading);
 $PAGE->navbar->add($heading);
+
+
 echo $OUTPUT->header();
 
 // user has capibilaty for manage users

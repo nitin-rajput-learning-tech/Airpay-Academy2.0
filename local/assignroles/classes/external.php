@@ -81,7 +81,7 @@ class local_assignroles_external extends external_api {
             array(
                 'contextid' => new external_value(PARAM_INT, 'The context id for role unassigning'),
                 'roleid' => new external_value(PARAM_INT, 'The role id for role unassigning'),
-                'open_costcenterid' => new external_value(PARAM_INT, 'The costcenter id for role unassigning'),
+                // 'open_costcenterid' => new external_value(PARAM_INT, 'The costcenter id for role unassigning'),
                 'userid' => new external_value(PARAM_RAW, 'The user id for unassigning role'),
 
             )

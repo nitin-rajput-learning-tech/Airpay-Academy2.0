@@ -80,6 +80,6 @@ echo $content;
 $eventparams = array('context' => $PAGE->context, 'objectid' => $categoryid);
 $event = \core\event\course_category_viewed::create($eventparams);
 $event->trigger();
-exit;
+
  
 echo $OUTPUT->footer();

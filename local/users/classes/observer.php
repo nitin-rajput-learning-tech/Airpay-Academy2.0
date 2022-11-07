@@ -19,31 +19,7 @@
  * Event observer for local_users. Dont let other user to view unauthorized users
  */
 class local_users_observer extends \core\event\user_profile_viewed {
-    /**
-     * Triggered via user_profile_viewed event.
-     *
-     * @param \core\event\user_profile_viewed $event
-     */
-    public static function user_profile_viewed(\core\event\user_profile_viewed $event) {
-        global $DB, $CFG, $USER, $COURSE;
-        $related_userid  = $event->data['relateduserid'];
-        
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-        if (($related_userid != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations'
-            , $systemcontext)))) {
-            if ((has_capability('local/users:create', $systemcontext))) {
-                echo $user_costcenter = $DB->get_field('user', 'open_costcenterid', array('id' => $related_userid));
-                echo $manager_costcenter = $DB->get_field('user', 'open_costcenterid', array('id' => $USER->id));
-                if ($user_costcenter != $manager_costcenter) {
-                    redirect($CFG->wwwroot.'/local/users/index.php');
-                    die;
-                }
-            } else {
-                redirect($CFG->wwwroot.'/local/users/index.php');
-                die;
-            }
-        }
-    }
+
 
     public static function user_loggedin(\core\event\user_loggedin $event) {
         global $DB, $CFG, $USER;
