@@ -120,11 +120,11 @@ class assignrole{
 	              $assignrestriction 
 				  LEFT JOIN {role_names} rn ON (rn.contextid = :coursecontext AND rn.roleid = r.id)
 	             ";
-		if(!is_siteadmin()){
+		// if(!is_siteadmin()){
 	        $sql .= "  JOIN {role_context_levels} rcl ON (rcl.contextlevel = :contextlevel AND r.id = rcl.roleid)";
-		}
+		// }
 	         
-	    $sql .= " WHERE r.shortname IN ('dh', 'oh') ORDER BY r.sortorder ASC";
+	    $sql .= " WHERE 1=1 ORDER BY r.sortorder ASC";
 		
 	    $roles = $DB->get_records_sql($sql, $params);
 	    $rolenames = role_fix_names($roles, $coursecontext, $rolenamedisplay, true);
