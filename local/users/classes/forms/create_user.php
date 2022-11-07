@@ -44,6 +44,8 @@ class create_user extends moodleform {
 
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
 
+        //var_dump($systemcontext);
+
         $costcenter = new costcenter();
         $mform = $this->_form;
         $form_status = $this->_customdata['form_status'];
@@ -54,6 +56,8 @@ class create_user extends moodleform {
         $open_positionid = $this->_customdata['open_positionid'];
         $open_domainid = $this->_customdata['open_domainid'];
         if ($form_status == 0) {
+
+            
 
             if (is_siteadmin($USER->id) || has_capability('local/users:manage', $systemcontext)) {
                 $sql = "select id,fullname from {local_costcenter} where visible =
@@ -70,9 +74,7 @@ class create_user extends moodleform {
                  $organizationlist);
                 $mform->addRule('open_costcenterid', get_string('errororganization', 'local_users'), 'required',
                  null, 'client');
-            } else if (has_capability('local/costcenter:
-                manage_ownorganization', $systemcontext)|| has_capability(
-                'local/costcenter:manage_owndepartments', $systemcontext)) {
+            } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext) || has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
                 $user_dept = $DB->get_field('user', 'open_costcenterid', array('id' => $USER->id));
                 $mform->addElement('hidden', 'open_costcenterid', null);
                 $mform->setType('open_costcenterid', PARAM_ALPHANUM);
