@@ -51,92 +51,75 @@
 {{> theme_epsilon/head }}
 
 <body {{{ bodyattributes }}}>
-{{> core/local/toast/wrapper}}
 
-<div id="page-wrapper" class="d-print-block">
+<div id="page-wrapper">
 
     {{{ output.standard_top_of_body_html }}}
 
-    {{> theme_epsilon/navbar }}
+    {{>theme_epsilon/navbar}}
 
-    <div id="page" class="container-fluid d-print-block">
+    <div id="page" class="container-fluid">
         {{{ output.full_header }}}
-            {{#secondarymoremenu}}
-                <div class="secondary-navigation">
-                    {{> core/moremenu}}
-                </div>
-            {{/secondarymoremenu}}
-        <div id="page-content" class="row pb-3 d-print-block">
+
+        <div id="page-content" class="row">
             <div id="region-main-box" class="col-12">
                 {{#hasregionmainsettingsmenu}}
-                <div id="region-main-settings-menu" class="d-print-none {{#hasblocks}}has-blocks{{/hasblocks}}">
-                    <div> {{{ regionmainsettingsmenu }}} </div>
+                <div id="region-main-settings-menu" class="d-print-none {{#hasblocks}}has-blockss{{/hasblocks}}">
+                    <div> {{{ output.region_main_settings_menu }}} </div>
                 </div>
                 {{/hasregionmainsettingsmenu}}
-                <section id="region-main" {{#hasblocks}}class="has-blocks mb-3"{{/hasblocks}} aria-label="{{#str}}content{{/str}}">
-
+                {{#has_coursepre_blocks}}
+                <section class="d-print-none col-md-4 pl-0 pull-left" aria-label="{{#str}}blocks{{/str}}">
+                    {{{ coursepre_blockshtml }}}
+                </section>
+                {{/has_coursepre_blocks}}
+                <section id="region-main" class="{{#has_coursepre_blocks}}col-md-8{{/has_coursepre_blocks}}">
                     {{#hasregionmainsettingsmenu}}
                         <div class="region_main_settings_menu_proxy"></div>
                     {{/hasregionmainsettingsmenu}}
                     {{{ output.course_content_header }}}
-                    {{#headercontent}}
-                        {{> core/activity_header }}
-                    {{/headercontent}}
-                    {{#overflow}}
-                        {{> core/url_select}}
-                    {{/overflow}}
                     {{{ output.main_content }}}
                     {{{ output.activity_navigation }}}
                     {{{ output.course_content_footer }}}
                 </section>
 
-                <section class="layerone mb-15 row">
-                    {{{layerone_detail_full}}}
-                </section>
-                <section class="layerone middle-blocks-row row">
-                    {{{ layerone_detail_one }}}
-                    {{{ layerone_detail_two }}}
-                </section>
-                <div class="row">
-                    <section class="layertwo part_one bottom-blocks-row col-md-6 p-0">
-                        {{{ layertwo_detail_one }}}
-                    </section>
-                    <section class="layertwo part_two bottom-blocks-row col-md-6 p-0">
-                        {{{ layertwo_detail_two }}}
-                    </section>
-                </div>
-                <div class="row">
-                    <section class="layertwo part_one bottom-blocks-row col-md-6 p-0">
-                        {{{ layerone_bottom_one }}}
-                    </section>
-                    <section class="layertwo part_two bottom-blocks-row col-md-6 p-0">
-                        {{{ layertwo_detail_three }}}
-                        {{{ layertwo_detail_four }}}
-                    </section>
-                </div>
-
                 {{#hasblocks}}
-                <section data-region="blocks-column" class="d-print-none" aria-label="{{#str}}blocks{{/str}}">
-                    {{{ addblockbutton }}}
-                    {{{ sidepreblocks }}}
-                </section>
+                    <i id="sidepreopen-control"
+                        class="fa fa-list"
+                        title="{{#str}} showhideblocks, theme_epsilon {{/str}}">
+                    </i>
+
+                    <section id="sidepre-blocks" data-region="blocks-column" class="d-print-none">
+                        {{{ sidepreblocks }}}
+                    </section>
                 {{/hasblocks}}
             </div>
         </div>
     </div>
     {{{ output.standard_after_main_region_html }}}
-    {{# isloggedin }}
-        <!-- {{> theme_epsilon/nav-drawer }} -->
-    {{/ isloggedin }}
-    {{> theme_epsilon/footer }}
+    {{> theme_epsilon/footer}}
+    {{{ output.get_quickLinks }}}
+    {{> theme_epsilon/quickinfo}}
+    
 </div>
+
 
 </body>
 </html>
 {{#js}}
-M.util.js_pending('theme_epsilon/loader');
-require(['theme_epsilon/loader', 'theme_epsilon/drawer'], function(Loader, Drawer) {
-    Drawer.init();
-    M.util.js_complete('theme_epsilon/loader');
+require(['theme_epsilon/loader']);
+require(['theme_epsilon/drawer'], function(mod) {
+    mod.init();
 });
+
+var body = document.getElementsByTagName('body');
+var element = document.getElementById('sidepreopen-control');
+var sidepre = document.getElementById('sidepre-blocks');
+
+if(element != null){
+    element.onclick = function(){
+        body[0].classList.toggle("drawer-open-right");
+    };
+}
+
 {{/js}}
