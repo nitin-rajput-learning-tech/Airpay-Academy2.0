@@ -24,7 +24,7 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 require_login();
 global $CFG, $DB;
-$systemcontext = get_context_instance(CONTEXT_SYSTEM);
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url('/local/user/help.php');
 $PAGE->set_pagelayout('standard');

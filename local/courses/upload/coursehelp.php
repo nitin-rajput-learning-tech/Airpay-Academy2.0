@@ -25,7 +25,7 @@
 
 require_once(dirname(__FILE__) . '/../../../config.php');
 global $CFG, $DB;
-$systemcontext = get_context_instance(CONTEXT_SYSTEM);
+$systemcontext =  (new \local_courses\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url('/local/courses/upload/coursehelp.php');
 $PAGE->set_pagelayout('standard');

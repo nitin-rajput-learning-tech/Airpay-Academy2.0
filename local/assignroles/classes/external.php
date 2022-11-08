@@ -62,7 +62,6 @@ class local_assignroles_external extends external_api {
         }
     }
 
-
     /**
      * Returns description of method result value.
      *
