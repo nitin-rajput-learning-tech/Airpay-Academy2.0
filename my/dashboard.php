@@ -33,7 +33,7 @@ if ($CFG->forcelogin) {
 }
 
 $heading = $site->fullname;
-if ($context->id != CONTEXT_SYSTEM) {
+if ($context->id != CONTEXT_SYSTEM && !is_siteadmin($USER)) {
     $categoryid=$DB->get_field('context', 'instanceid', array('id' => $context->id));
     $category = core_course_category::get($categoryid); // This will validate access.
     $PAGE->set_category_by_id($categoryid);
@@ -41,7 +41,6 @@ if ($context->id != CONTEXT_SYSTEM) {
     $PAGE->set_pagetype('course-index-category');
     $heading = $category->get_formatted_name();
 } else if ($category = core_course_category::user_top()) {
- 
     // Check if there is only one top-level category, if so use that.
     $categoryid = $category->id;
     $PAGE->set_url('/my/dashboard.php');
@@ -69,11 +68,9 @@ $PAGE->add_body_class('limitedwidth');
 $courserenderer = $PAGE->get_renderer('core', 'course');
 $PAGE->set_heading($heading);
 $content = $courserenderer->course_category($categoryid);
-
 $PAGE->set_secondary_active_tab('categorymain');
 echo $OUTPUT->header(); 
 echo $OUTPUT->skip_link_target();
-
 echo $content;
 // Trigger event, course category viewed.
 $eventparams = array('context' => $PAGE->context, 'objectid' => $categoryid);
