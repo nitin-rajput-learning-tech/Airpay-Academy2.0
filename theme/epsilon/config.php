@@ -48,10 +48,10 @@ $THEME->layouts = [
         'regions' => array('side-pre'),
         'defaultregion' => 'side-pre',
     ),
-   // Main course page.
-   'course' => array(
-        'file' => 'course.php',
-        'regions' => array('side-pre', 'course-pre'),
+    // Main course page.
+    'course' => array(
+        'file' => 'drawers.php',
+        'regions' => array('side-pre'),
         'defaultregion' => 'side-pre',
         'options' => array('langmenu' => true),
     ),

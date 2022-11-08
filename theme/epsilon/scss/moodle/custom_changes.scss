@@ -700,7 +700,7 @@ body#page-my-index aside#block-region-layertwo_one .block .content {
     display: none;
 }
 .pagination, .dataTables_wrapper .dataTables_paginate{
-    float: none;
+    float: right;
     margin-top: 5px;
     padding-top: 0px;
 }
@@ -878,20 +878,13 @@ body#page-team-dashboard .teamlayout .course_extended_menu_list{
 }
 .navbar {
     .popover-region, .nav.pull-xs-right.mr-10, .hdr_search_filter {
-        margin-top: 0px;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        border-radius: 50%;
-        background-color: #F6F6F6;
-        margin-right: 15px;
+        margin-top: 5px;
     }
     .hdr_search_filter {
         float: right;
     }
     .usermenu {
-        margin-top: 0px;
+        margin-top: 5px;
     }
     .action-menu .userpicture {
         height: 60px;
@@ -2162,7 +2155,6 @@ table.dataTable tr.odd td.sorting_1, table.dataTable tr.odd td.sorting_2, table.
 #page-local-costcenter-costcenterview input#id_shell_square{
     height:20px;
     width: 20px;
-    appearance: none;
     -webkit-appearance: none;
     border: 2px solid #959595;
     background-color: #ddd;
@@ -2172,7 +2164,6 @@ table.dataTable tr.odd td.sorting_1, table.dataTable tr.odd td.sorting_2, table.
 #page-local-costcenter-costcenterview input#id_shell_square:checked{
     height:20px;
     width: 20px;
-    appearance: checkbox;
     -webkit-appearance: checkbox;
     background: url([[pix:theme|fp/check]]) center no-repeat cover;
 
@@ -2181,7 +2172,6 @@ table.dataTable tr.odd td.sorting_1, table.dataTable tr.odd td.sorting_2, table.
 #page-local-costcenter-costcenterview input#id_shell_circle{
     height: 20px;
     width: 20px;
-    appearance: none;
     -webkit-appearance:none;
     border: 2px solid #959595;
     border-radius: 50%;
@@ -2192,7 +2182,6 @@ table.dataTable tr.odd td.sorting_1, table.dataTable tr.odd td.sorting_2, table.
 #page-local-costcenter-costcenterview input#id_shell_circle:checked{
     height:20px;
     width: 20px;
-    appearance: checkbox;
     -webkit-appearance: checkbox;
     background: url([[pix:theme|fp/check]]) center no-repeat cover;
 
@@ -2201,7 +2190,6 @@ table.dataTable tr.odd td.sorting_1, table.dataTable tr.odd td.sorting_2, table.
 #page-local-costcenter-costcenterview input#id_shell_rounded{
     height: 20px;
     width: 20px;
-    appearance: none;
     -webkit-appearance:none;
     background-color:#ddd;
     border: 2px solid #959595;
@@ -2212,7 +2200,6 @@ table.dataTable tr.odd td.sorting_1, table.dataTable tr.odd td.sorting_2, table.
 #page-local-costcenter-costcenterview input#id_shell_rounded:checked{
     height:20px;
     width: 20px;
-    appearance: checkbox;
     -webkit-appearance: checkbox;
     background: url([[pix:theme|fp/check]]) center no-repeat cover;
 }
@@ -2600,6 +2587,9 @@ body .que .info>div {
 .quickaccess-toggle .icon.fa-times{
     font-size: 22px;
 }
+.quickaccess-toggle{
+    margin-top: 1rem;
+}
 .quickpop_over_ul {
     list-style-type: none;
     width: 100%;
@@ -2684,29 +2674,4 @@ body .que .info>div {
 }
 #block-region-side-pre .block_settings .card-body .card-text #settingsnav{
     padding-top: 0px!important;
-}
-#usernavigation{
-    align-items: center;
-}
-#quickaccess-popover-container{
-    margin-top: -5px;
-}
-#page-local-courses-index .secondary-navigation{
-    display: none;
-}
-.pagelayout-mydashboard .page-header-headings,.pagelayout-mydashboard h2{
-    display: none;
-}
-#page-header .singlebutton{
-    margin: 15px 0;
-}
-/*  navbar icons */
-#usernavigation .navbarmenu_icon{
-    background-image: url([[pix:theme_epsilon|newicons/menu]]);
-    width: 20px;
-    height: 20px;
-    display: inline-block;
-    background-size: cover;
-    background-size: 100%;
-    background-repeat: no-repeat;
 }

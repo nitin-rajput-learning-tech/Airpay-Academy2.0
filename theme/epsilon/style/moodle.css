@@ -21685,7 +21685,7 @@ div.editor_atto_toolbar button .icon {
 
 .secondary-navigation {
   max-width: 830px;
-  /* margin: 0 auto; */
+  margin: 0 auto;
   padding-bottom: 15px; }
   .secondary-navigation .navigation {
     border-top: 1px solid #dee2e6;
