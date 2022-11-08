@@ -45,14 +45,14 @@
 
 
 {{# card_view}}
-<i class="fa fa-angle-left fa-2x course-prev icon hidden" onclick='(function(e){ require("block_userdashboard/userdashboardnav").usernavrev_slider("{{{subtab}}}",{{{index}}}) })(event)'></i>
-<i class="fa fa-angle-right fa-2x course-next icon" onclick='(function(e){ require("block_userdashboard/userdashboardnav").usernav_slider("{{{subtab}}}", {{{index}}}, {{{viewMoreCard}}}) })(event)'></i>
+<i class="fa fa-angle-left fa-2x course-prev userdashbard_slider_navs icon hidden" onclick='(function(e){ require("block_userdashboard/userdashboardnav").usernavrev_slider("{{{subtab}}}",{{{index}}}) })(event)'></i>
+<i class="fa fa-angle-right fa-2x course-next userdashbard_slider_navs icon" onclick='(function(e){ require("block_userdashboard/userdashboardnav").usernav_slider("{{{subtab}}}", {{{index}}}, {{{viewMoreCard}}}) })(event)'></i>
 
-<span class="view_more_container">
+<!-- <span class="view_more_container">
     <span class="view_more_content">
         <a id ="userdashboard_viewbtn" class="viewbtn" href ="{{{view_more_url}}}" >{{# str}} more,block_userdashboard{{/ str}}</a>
     </span>
-</span>
+</span> -->
 {{/ card_view}}
 
 

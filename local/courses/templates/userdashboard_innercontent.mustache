@@ -17,7 +17,7 @@
 {{# courses_view_count}}
 <div  class="userdashboard_content" >
     <div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
-    <div class="userdashboard_content userdashboard_ctype_elearning d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap">
+    <div class="userdashboard_content userdashboard_ctype_elearning row d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap">
         {{# moduledetails}}
             <div class="col-sm-6 col-12 pull-left tabs_cmn_class courses_inprogress_slide {{{subtab}}} {{indexClass}} ctype_elearning d-flex" data-index="{{index}}">
                 <div class="course_container pull-left w-100">
@@ -74,9 +74,9 @@
 
         {{/ moduledetails}}
         {{# viewMoreCard}}
-            <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_elearning d-flex justify-content-center align-items-center">
+            <!-- <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_elearning d-flex justify-content-center align-items-center">
                 <a class="center_elemet" href="{{{view_more_url}}}">View More</a>
-            </div>
+            </div> -->
         {{/ viewMoreCard}}
     </div>
     </div>

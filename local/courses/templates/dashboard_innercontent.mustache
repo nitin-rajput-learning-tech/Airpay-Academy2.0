@@ -18,76 +18,50 @@
 {{# card_view}}
 <div  class="userdashboard_content" >
     <div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
-    <div class="userdashboard_content userdashboard_ctype_elearning d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap">
+    <div class="userdashboard_content userdashboard_ctype_elearning row d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap">
         {{# moduledetails}}
-            <div class="col-sm-4 col-12 pull-left tabs_cmn_class courses_inprogress_slide {{{subtab}}} {{indexClass}} ctype_elearning d-flex" data-index="{{index}}">
-                <div class="course_container pull-left w-100">
-                    <div class="courseimg_container col-md-5 col-12 pull-left">
+            <div class="col-sm-4 col-12 tabs_cmn_class courses_inprogress_slide {{{subtab}}} {{indexClass}} ctype_elearning d-flex" data-index="{{index}}">
+                <div class="course_container d-flex w-100">
+                    <div class="courseimg_container col-md-5 col-12">
                         <div alt="{{course_fullname}}" class="courseimg courseimg_bg" style="background-image:url('{{course_image_url}}')">
-                            <!-- <div class="w-full pull-left progress">
-                                    <div class="progress-bar" role="progressbar" style="width: {{progress}}%" aria-valuenow="{{{progress}}}" aria-valuemin="0" aria-valuemax="100">{{progress}}%</div>
-                            </div> -->
-                            <div class="p-1">
-                                <div class="course_status_progress">
-                                    <span class="pei_chart"></span><span class="course_progress_percent">Completed <b class="percentage_count">{{progress}}%</b></span>
+                                <div class="course_progress_container d-flex align-items-center">
+                                    <div class="progress_circular" style="background-image: conic-gradient(white {{progress}}%, transparent 0%);"> </div>
+                                    <div class="progress_status">Completed</div>
+                                    <div class="progress_percentage">{{progress}}%</div>
                                 </div>
-                            </div>
                          </div>
 
                     </div>
-                    <div class="col-md-7 col-12 pull-left coursecontent">
-                        <div class="course_name">
-                            <a href="{{course_url}}" title="{{{course_fullname}}}"> {{course_fullname}}</a>
-                        </div>
-                        {{# coursesummary}} 
+                    <div class="col-md-7 col-12 coursecontent d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex mt-2">
+                                <div class="course_name  flex-grow-1">
+                                    <a href="{{course_url}}" title="{{{course_fullname}}}"> {{course_fullname}}</a>
+                                </div>
+                                <div class="rating_container">
+                                    <i class="fa fa-star"></i> 4.4
+                                </div>
+                            </div>
+                            {{# coursesummary}} 
                             <div class="desc coursedesc">{{{coursesummary}}}</div>
-                         {{/ coursesummary}} 
-                        <!-- {{^ summary}}
-                            <div class="alert lert-info">no description provided</div>
-                        {{/ summary}} -->
-
-                        <!--<div class="w-full pull-left progress-container">-->
-                            <div class="w-full pull-left progress">
-                                <div class="progress-bar" role="progressbar" style="width: {{progress}}%" aria-valuenow="{{{progress}}}" aria-valuemin="0" aria-valuemax="100">{{progress}}%</div>
-                            </div>
-                        <!--</div>-->
-                        <div class="w-full pull-left mt-10 {{#rating_element}}w-full d-flex align-items-end justify-content-between flex-row flex-wrap{{/rating_element}}">
-                            <div class="pull-left text-right launch_container">
-                                  {{#course_completedon}}
-                                <div class="pull-right mt-10">
-                                    <a href="{{{course_url}}}">
-                                         <button class="btn btn-primary launch_btn">{{#str}}completed_course, block_userdashboard{{/str}}</button>
-                                    </a>
-                                </div>
-                                 {{/course_completedon}}
-                                  {{^course_completedon}}
-                                <div class="pull-right mt-10">
-                                    <a href="{{{course_url}}}">
-                                         <button class="btn btn-primary launch_btn">{{label_name}}</button>
-                                    </a>
-                                </div>
-                                 {{/course_completedon}}
-                                <div class="clearboth pull-right mt-1">{{#str}}lastaccess, local_users{{/str}}
-                                    {{{lastaccessdate}}}
-                                </div>
-                            </div>
-                            <div class="pull-left">{{{rating_element}}}
-                                {{# element_tags}}
-                                <a href="javascript:void(0);" class="w-full text-left pl-md-1 mt-2 show_suggested_modules" title="{{#str}}suggcourses, block_userdashboard{{/str}}" data-moduletype = "local_courses" data-show_suggestions = 0 data-tags = '{{element_tags}}' >{{#str}}sugcourses, block_userdashboard{{/str}}</a>
-                                {{/ element_tags}}
-                                
-                            </div>
-                            
+                            {{/ coursesummary}} 
                         </div>
+                        <div>
+                            <div class="lastopend_label my-2">Last opened : <strong>{{{lastaccessdate}}}</strong></div>
+                            <a href="{{{course_url}}}" class="">
+                                <button class="btn btn-primary my-2 launch_btn">{{label_name}}</button>
+                            </a>
+                        </div>
+                        
                     </div>
                 </div>    
             </div>
 
         {{/ moduledetails}}
         {{# viewMoreCard}}
-            <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_elearning d-flex justify-content-center align-items-center">
+            <!-- <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_elearning d-flex justify-content-center align-items-center">
                 <a class="center_elemet" href="{{{view_more_url}}}">View More</a>
-            </div>
+            </div> -->
         {{/ viewMoreCard}}
     </div>
     </div>
