@@ -66,6 +66,8 @@ $PAGE->requires->jquery('ui-css');
 $PAGE->requires->js_call_amd('local_costcenter/costcenterdatatables', 'costcenterDatatable', array());
 $PAGE->requires->js_call_amd('local_assignroles/newcostcenterassignrole', 'load', array());
 
+$PAGE->requires->js_call_amd('local_assignroles/popup', 'init',array(array('contextid' => $systemcontext->id, 'selector' => '.rolesuserpopup')));
+
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $PAGE->requires->js_call_amd('local_costcenter/newsubdept', 'load', array());
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');

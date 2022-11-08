@@ -41,10 +41,40 @@ define(['jquery', 'core/ajax', 'core/templates'], function ($, Ajax, Templates) 
         transport: function (selector, query, success, failure) {
             var promise;
             action = $(selector).data('action');
+
             formoptions = $(selector).data('options');
-            if (action === 'costcenter_organisation_selector') {
+
+            $('#id_roleid').on('change', function() {
+                
+                $('#id_users').empty();
+                $('#fitem_id_users .form-autocomplete-selection').empty();
+                
+            });
+
+            if (action === 'role_costcenterusers') {
+
+                formoptions.organisationid = formoptions.costcenterid;
+
+                if (formoptions.roleid){
+
+                    formoptions.roleid = formoptions.roleid;
+
+                }else{
+
+                    formoptions.roleid = $("#id_roleid").val();
+                }
+
+                if (formoptions.formtype){
+
+                    formoptions.formtype = formoptions.formtype;
+                    
+                }else{
+
+                    formoptions.formtype = $("#id_formtype").val();
+                }
 
             }
+
             if (action === 'role_users') {
                 formoptions.roleid = formoptions.roleid;
                 if (formoptions.costcenterid)

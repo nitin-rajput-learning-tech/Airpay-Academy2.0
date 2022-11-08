@@ -28,13 +28,16 @@ require_once(dirname(__FILE__) . '/../../config.php');
 global $CFG, $USER, $PAGE, $OUTPUT;
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
+$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+
+
 $PAGE->requires->css('/local/costcenter/css/jquery.dataTables.min.css');
 $PAGE->requires->js_call_amd('local_costcenter/costcenterdatatables', 'costcenterDatatable', array());
 $PAGE->requires->js_call_amd('local_assignroles/newcostcenterassignrole', 'load', array());
+$PAGE->requires->js_call_amd('local_assignroles/popup', 'init',array(array('contextid' => $systemcontext->id, 'selector' => '.rolesuserpopup')));
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 require_login();
 
-$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 if(!has_capability('local/costcenter:view', $systemcontext)) {
     print_error('nopermissiontoviewpage');
 }

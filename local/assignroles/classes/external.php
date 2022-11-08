@@ -14,7 +14,6 @@ class local_assignroles_external extends external_api {
             array(
                 'contextid' => new external_value(PARAM_INT, 'The context id for the evaluation'),
                 'roleid' => new external_value(PARAM_INT, 'The role id for the evaluation'),
-                //'open_costcenterid' => new external_value(PARAM_INT, 'The costcenter id for role assigning'),
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
 
             )
@@ -174,12 +173,116 @@ class local_assignroles_external extends external_api {
                 
                      $sql = "SELECT r.id, r.name as fullname
                             FROM {role} r
-                            JOIN {role_context_levels} rcl ON (rcl.contextlevel =10 AND r.id = rcl.roleid)
-                            LEFT JOIN {role_names} rn ON (rn.contextid =1 AND rn.roleid = r.id)
-                         WHERE r.name !=''
-                          ORDER BY r.sortorder ASC";
+                            JOIN {role_context_levels} rcl ON (rcl.contextlevel =:contextlevel AND r.id = rcl.roleid)
+                         WHERE r.name !='' ";
+
+                    if ($formoptions->formtype) {
+
+                        switch ($formoptions->formtype) {
+                            case 'organization':
+
+                                $sql .=" AND r.shortname NOT IN ('dh') ";
+
+                                break;
+
+                            case 'department':
+
+                                $sql .=" AND r.shortname NOT IN ('oh') ";
+
+                                break;
+
+                            case 'subdepartment':
+
+                                $sql .=" AND r.shortname NOT IN ('oh') ";
+
+                                break;
+                            
+                            default:
+                                // code...
+                                break;
+                        }
+
+
+                    }
+
+                    $params = array('contextlevel' => CONTEXT_COURSECAT);
+                    if(!empty($query)){ 
+                        if ($searchanywhere) {
+                            $sql .=" AND r.name LIKE :query ";
+                            $params['query'] = "%$query%";
+                        } else {
+                            $sql .=" AND r.name LIKE :query ";
+                            $params['query'] = "$query%";
+                        }
+                    }
+
+                    $sql .=" ORDER BY r.sortorder ASC";
 
                     $return = $DB->get_records_sql($sql, $params);
+
+                    break;
+
+                case 'role_costcenterusers':
+
+                
+                    $context = (new \local_assignroles\lib\accesslib())::get_module_context($formoptions->organisationid);
+
+                    if(is_siteadmin()){
+                      $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname 
+                        FROM {user} AS u 
+                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser   AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE roleid=:roleid)";  
+                    }else{
+
+                        $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname 
+                        FROM {user} AS u 
+                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid)";  
+
+                    }
+
+                    if ($formoptions->formtype) {
+
+                        switch ($formoptions->formtype) {
+                            case 'organization':
+
+                                $userssql .=" AND u.open_costcenterid = :organisationid ";
+
+                                break;
+
+                            case 'department':
+
+                                $userssql .=" AND u.open_departmentid = :organisationid ";
+
+                                break;
+
+                            case 'subdepartment':
+
+                                $userssql .=" AND u.open_subdepartment = :organisationid ";
+
+                                break;
+                            
+                            default:
+                                // code...
+                                break;
+                        }
+
+
+                    }
+                    
+                    $params = array('loginuser' =>$USER->id, 'context' => $context->id, 'roleid' => $formoptions->roleid, 'organisationid' => $formoptions->organisationid);
+                    if(!empty($query)){ 
+                        if ($searchanywhere) {
+                            $userssql .=" AND CONCAT(u.firstname,' ',u.lastname) LIKE :query ";
+                            $params['query'] = "%$query%";
+                        } else {
+                            $userssql .=" AND CONCAT(u.firstname,' ',u.lastname) LIKE :query ";
+                            $params['query'] = "$query%";
+                        }
+                    }
+                    if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context))){
+                        $userssql .= " AND u.open_costcenterid=:logincostcenter";
+                        $params['logincostcenter'] = $USER->open_costcenterid;
+                    }
+                    $return = $DB->get_records_sql($userssql, $params, $page, $perpage);
 
                     break;
 
@@ -312,12 +415,12 @@ class local_assignroles_external extends external_api {
          $mform = new local_assignroles\form\assigncostcenterrole(null, array('costcenterid'=>$costcenterid,'formtype' => $formtype), 'post', '', null, true, $data);
         $roles  = new local_assignroles\local\assignrole();
         $valdata = $mform->get_data();
-       
+
         if($valdata){
             $categorysql = $DB->get_record('local_costcenter', array('id' => $costcenterid), $fields = 'category', $strictness = IGNORE_MISSING);
             $categoryid = $categorysql->category;
             $categorycontext = context_coursecat::instance($categoryid);
-            $roles->rolesassign($valdata->users,$valdata->roles, $categorycontext->id);
+            $roles->rolesassign($valdata->users,$valdata->roleid, $categorycontext->id);
             
         } else {
             // Generate a warning.
