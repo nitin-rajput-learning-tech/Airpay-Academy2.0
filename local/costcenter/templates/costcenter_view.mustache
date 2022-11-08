@@ -48,11 +48,7 @@
                             <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-circle"></i></a>
 
                         </li>
-                        <li>
-                            
-                            <a href='javascript:void(0)' style='cursor:pointer' data-action='createassignrolemodal' data-value='0' onclick ='(function(e){ require("local_assignroles/newassignrole").init({selector:"createassignrolemodal", contextid:{{contextid}}, roleid:{{roleid}}, rolename:"{{rolename}}"}) })(event)'>{{# str}}assign,local_assignroles{{/ str}}</a>
-
-                         </li>
+   
                         {{/ assignroles}}
                     </ul>
                 </div>
