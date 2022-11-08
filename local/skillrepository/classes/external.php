@@ -47,7 +47,8 @@ class local_skillrepository_external extends external_api {
 		$params = self::validate_parameters(self::submit_skill_repository_form_form_parameters(),
                                     ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
 		
-		$context = context_system::instance();
+		
+		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
 		self::validate_context($context);
 		$data = array();       
@@ -106,7 +107,8 @@ class local_skillrepository_external extends external_api {
         $params = self::validate_parameters(self::submit_skill_category_parameters(),
                                     ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
         
-        $context = context_system::instance();
+        
+		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);        
         
@@ -220,7 +222,8 @@ class local_skillrepository_external extends external_api {
         $params = self::validate_parameters(self::submit_level_form_parameters(),
                                     ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
         
-        $context = context_system::instance();
+        
+		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
         

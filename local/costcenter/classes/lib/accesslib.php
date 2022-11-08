@@ -34,21 +34,24 @@ class accesslib
 
         global $DB,$USER;
 
-    
-        if($costcenterid == null || $costcenterid == 0){
+        if(is_siteadmin()){
+
+            $context = \context_system::instance();
+
+            return $context;
+
+        }elseif($costcenterid == null || $costcenterid == 0){
 
             $costcenterid=$USER->open_costcenterid ? $USER->open_costcenterid : 0;
 
             if($costcenterid == 0){
 
-                $context = \context_system::instance();
+                $context = \context_user::instance($USER->id);
 
                 return $context;
             }
 
         }
-
-   
          try{
 
             // Get a cache instance
@@ -60,33 +63,20 @@ class accesslib
 
             $context = $cache->get($cachekey);
 
-            var_dump($context);exit;
-
             if ($context === false) {
 
-                $sql = "SELECT cc.category,cc.parentid FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+                $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
 
-                $costcenter = $DB->get_record_sql($sql, array('costcenterid' => $costcenterid)); 
+                $costcentercategory = $DB->get_field_sql($sql, array('costcenterid' => $costcenterid)); 
 
-                $costcenter =self::get_parent_costcenter($costcenterid);
+                if($costcentercategory){
 
-                if($costcenter){
-
-                    if($costcenter->parentid){
-
-                        return self::get_module_context($costcenter->parentid);
-
-                    }else{
-
-                        $context = \context_coursecat::instance($costcenter->category);
-
-                    }
+                    $context = \context_coursecat::instance($costcentercategory);
 
                 }else{
 
-                    $context = \context_system::instance();
-
-                }  
+                    $context = \context_user::instance($USER->id);
+                }
 
                 $cache->set($cachekey, $context);
             }
@@ -101,7 +91,6 @@ class accesslib
         return $context;
 
     }
-
     public static function get_parent_costcenter($costcenterid){
 
         global $DB,$USER;

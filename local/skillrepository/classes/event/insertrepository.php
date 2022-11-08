@@ -29,7 +29,8 @@ class insertrepository{
 
 	function skillrepository_opertaions($table, $operation, $object, $column, $value) {
 		global $DB, $CFG, $OUTPUT, $USER,$PAGE;
-		$systemcontext = context_system::instance();
+		
+		$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 	    if (!is_siteadmin()){
 			$costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
 		} else {

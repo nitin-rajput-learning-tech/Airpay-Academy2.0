@@ -50,7 +50,10 @@ function local_tags_page_type_list($pagetype, $parentcontext, $currentcontext) {
  * @return \core\output\inplace_editable
  */
 function local_tags_inplace_editable($itemtype, $itemid, $newvalue) {
-    \external_api::validate_context(context_system::instance());
+
+    $context = (new \local_tags\lib\accesslib())::get_module_context();
+    
+    \external_api::validate_context($context);
     if ($itemtype === 'tagname') {
         return \local_tags\output\tagname::update($itemid, $newvalue);
     } else if ($itemtype === 'tagareaenable') {
@@ -76,7 +79,8 @@ function local_tags_inplace_editable($itemtype, $itemid, $newvalue) {
 * @return  [type] string  link for the leftmenu
 */
 function local_tags_leftmenunode(){
-    $systemcontext = context_system::instance();
+    
+    $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
     $tagnode = '';
     if(has_capability('local/tags:view',$systemcontext) || is_siteadmin()){
         $tagnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsetags', 'class'=>'pull-left user_nav_div browsetags'));

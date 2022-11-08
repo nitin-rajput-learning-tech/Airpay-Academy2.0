@@ -26,7 +26,8 @@ require_once($CFG->dirroot . '/local/skillrepository/lib.php');
 
 global $CFG, $PAGE;
 
-$systemcontext = context_system::instance();
+
+$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 $id = optional_param('id', -1, PARAM_INT);
 $delete = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
@@ -43,7 +44,7 @@ $PAGE->set_context($systemcontext);
 $PAGE->set_url('/local/skillrepository/skill_category.php');
 require_login();
 
-if (!has_capability('local/skillrepository:create_skill', context_system::instance()) && !is_siteadmin()) {
+if (!has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
 	print_error('Sorry, You are not accessable to this page');
 }
 

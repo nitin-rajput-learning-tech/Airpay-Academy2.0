@@ -25,7 +25,7 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require_login();
 global $DB, $PAGE, $CFG;
 $PAGE->set_url('/local/skillrepository/index.php');
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context((new \local_skillrepository\lib\accesslib())::get_module_context());
 // Optional Params
 $name = optional_param('name', '', PARAM_RAW);
 $shortname = optional_param('shortname', '', PARAM_RAW);

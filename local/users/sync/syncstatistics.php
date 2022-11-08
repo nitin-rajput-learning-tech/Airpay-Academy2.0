@@ -24,7 +24,8 @@ require_once(dirname(__FILE__) . '/../../../config.php');
 global $DB, $PAGE, $CFG, $OUTPUT;
 
 $PAGE->requires->js_call_amd('local_users/datatablesamd', 'load', array());
-$systemcontext = context_system::instance();
+
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 
 $PAGE->set_url('/local/users/sync/syncstatistics.php');

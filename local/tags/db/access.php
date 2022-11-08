@@ -29,7 +29,7 @@ $capabilities = array(
     'local/tags:manage' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
@@ -37,7 +37,7 @@ $capabilities = array(
     'local/tags:view' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW,
             'student' => CAP_ALLOW,

@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 use renderable;
 class notifications implements renderable {
      public function __construct($id=null) {
-        $systemcontext = \context_system::instance();
+        $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
         $this->id = $id;
         $this->context = $systemcontext;
      }

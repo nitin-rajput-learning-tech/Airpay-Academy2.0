@@ -392,7 +392,7 @@ class cronfunctionality {
      */
     private function costcenter_validation($excel) {
         global $DB, $USER;
-        $systemcontext = \context_system::instance();
+       $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
          //------username validation-------------------
         if ( $this->costcenter_shortname) {
                 $costcenter_shortname = $this->costcenter_shortname;
@@ -707,7 +707,7 @@ class cronfunctionality {
      */
     private function domain_validation($excel) {
         global $DB, $USER;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
          //------username validation-------------------
         if ($excel->domain) {
             $costcenter_shortname = $this->costcenter_shortname;
@@ -767,7 +767,7 @@ class cronfunctionality {
      */
     private function position_validation($excel) {
          global $DB, $USER;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
          //------position validation-------------------
         if ($excel->position) {
             $costcenter_shortname = $this->costcenter_shortname;

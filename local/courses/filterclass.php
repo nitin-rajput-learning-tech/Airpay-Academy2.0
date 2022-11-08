@@ -418,7 +418,7 @@ Class custom_filter extends moodleform{
 	 
 	public function get_category_list($costcenter){
 		global $DB, $CFG, $USER;
-		$systemcontext = context_system::instance();
+		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 		if (!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)){
 
 		$catid= $DB->get_field('local_costcenter','category',array('shortname'=>'ACD'));

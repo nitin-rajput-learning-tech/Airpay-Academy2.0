@@ -68,7 +68,8 @@ use core_user;
       }
       // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
       $notification = new \local_request\notification();
-      $context = context_system::instance();
+      
+      $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
       $record = new stdClass();
       $record->compname = $component;
       $record->componentid  = $componentid;
@@ -103,7 +104,7 @@ use core_user;
                             false);  
           // Trigger request created event.
           $params = array(
-              'context' => context_system::instance(),
+              'context' => (new \local_skillrepository\lib\accesslib())::get_module_context(),
               'objectid' => $newrecordid,
               'other'=>array('component'=>$component,
                   'componentid'=>$componentid)
@@ -114,7 +115,7 @@ use core_user;
           $event->add_record_snapshot('local_request_records', $requests);
           $event->trigger();
           $requesteduser = \core_user::get_user($requests->createdbyid);
-          $systemcontext = \context_system::instance();
+          $systemcontext = (new \local_skillrepository\lib\accesslib())::get_module_context();
           $org_id = $requesteduser->open_costcenterid;
           $departmentid = $requesteduser->open_departmentid;
           foreach($lpcreated_id as $created_id){
@@ -154,7 +155,7 @@ use core_user;
       if($exists){ 
         // Trigger request deleted event.
         $params = array(
-              'context' => context_system::instance(),
+              'context' => (new \local_skillrepository\lib\accesslib())::get_module_context(),
               'objectid' => $id,
               'other'=>array('component'=>$beforedeleteinfo->compname,
                   'componentid'=>$beforedeleteinfo->componentid)
@@ -173,7 +174,8 @@ use core_user;
     require_once($CFG->dirroot . '/local/lib.php'); 
     // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
     $notification = new \local_request\notification();
-    $context = context_system::instance();
+    
+    $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $updated_recordid =0;
     $type = 'request_approve';
     $dataobj = $id;
@@ -207,7 +209,7 @@ use core_user;
         //                     false);
         // Trigger request approved event.
         $params = array(
-              'context' => context_system::instance(),
+              'context' => (new \local_skillrepository\lib\accesslib())::get_module_context(),
               'objectid' => $updaterecord->id,
               'other'=>array('component'=>$component,
                   'componentid'=>$componentid)
@@ -292,7 +294,8 @@ use core_user;
     // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
     $notification = new \local_request\notification(); 
     $previousrecord = new stdclass();
-    $context = context_system::instance(); 
+     
+    $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $updated_recordid =0;
     $type = 'request_deny';
     $dataobj = $id;
@@ -330,7 +333,7 @@ use core_user;
         //                     false);
         // Trigger request approved event.
         $params = array(
-              'context' => context_system::instance(),
+              'context' => (new \local_skillrepository\lib\accesslib())::get_module_context(),
               'objectid' => $updaterecord->id,
               'other'=>array('component'=>$component,
                   'componentid'=>$componentid)

@@ -25,8 +25,8 @@
 require_once("../../config.php");
 global $DB, $OUTPUT, $USER, $CFG;
 require_login();
-$context = context_system::instance();
 
+$context =(new \local_tags\lib\accesslib())::get_module_context();
 if (empty($CFG->usetags)) {
     print_error('tagsaredisabled', 'tag');
 }
@@ -44,14 +44,16 @@ if ($tagcollid) {
 }
 
 $PAGE->set_url(new moodle_url('/tag/search.php', $params));
-$PAGE->set_context(context_system::instance());
+
+$PAGE->set_context($context);
+
 $PAGE->set_pagelayout('standard');
 
 $PAGE->set_title(get_string('tags', 'tag'));
 $PAGE->set_heading($SITE->fullname);
 
 $buttons = '';
-if (has_capability('moodle/tag:manage', context_system::instance())) {
+if (has_capability('moodle/tag:manage', $context)) {
     $buttons .= $OUTPUT->single_button(new moodle_url('/tag/manage.php'),
             get_string('managetags', 'tag'), 'GET');
 }

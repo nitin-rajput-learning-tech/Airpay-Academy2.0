@@ -53,8 +53,7 @@ class local_tags_edit_form extends moodleform {
         $mform->addElement('hidden', 'returnurl');
         $mform->setType('returnurl', PARAM_LOCALURL);
 
-        $systemcontext   = context_system::instance();
-
+        $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
         if (has_capability('moodle/tag:manage', $systemcontext)) {
             $mform->addElement('text', 'rawname', get_string('name', 'tag'),
                     'maxlength="'.TAG_MAX_LENGTH.'" size="'.TAG_MAX_LENGTH.'"');

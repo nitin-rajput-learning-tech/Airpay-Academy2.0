@@ -48,9 +48,9 @@ $remove=optional_param('remove',array(), PARAM_RAW);
 $sesskey=sesskey();
 $context = context_course::instance($course->id, MUST_EXIST);
 
+
 $systemcontext = (new \local_courses\lib\accesslib())::get_module_context($course->open_costcenterid);
 
-$systemcontext = context_system::instance();
 require_login();
 
 if($view == 'ajax'){
@@ -129,8 +129,7 @@ $PAGE->set_heading($course->fullname);
 }
 
 navigation_node::override_active_url(new moodle_url('/local/mass_enroll/mass_enroll.php', array('id'=>$course->id)));
-$systemcontext = context_system::instance();
- 
+$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(is_siteadmin()){
   $costcenter="";
 }else{

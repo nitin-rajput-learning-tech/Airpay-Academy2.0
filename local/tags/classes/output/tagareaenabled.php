@@ -41,7 +41,7 @@ class tagareaenabled extends \core\output\inplace_editable {
      * @param \stdClass $tagarea
      */
     public function __construct($tagarea) {
-        $editable = has_capability('moodle/tag:manage', context_system::instance());
+        $editable = has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $value = $tagarea->enabled ? 1 : 0;
 
         parent::__construct('local_tags', 'tagareaenable', $tagarea->id, $editable, '', $value);
@@ -75,7 +75,7 @@ class tagareaenabled extends \core\output\inplace_editable {
      */
     public static function update($itemid, $newvalue) {
         global $DB;
-        require_capability('moodle/tag:manage', context_system::instance());
+        require_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $tagarea = $DB->get_record('tag_area', array('id' => $itemid), '*', MUST_EXIST);
         $newvalue = $newvalue ? 1 : 0;
         $data = array('enabled' => $newvalue);

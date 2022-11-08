@@ -81,7 +81,8 @@ if ($tagname) {
 // unset($tagid);
 
 
-$context = context_system::instance();
+
+$context =(new \local_tags\lib\accesslib())::get_module_context();
 $PAGE->set_url('/local/tags/index.php');
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('standard');

@@ -180,7 +180,7 @@ class users {
 
     public function get_different_actions($plugin, $page, $id, $visible) {
         global $DB, $USER, $OUTPUT;
-        $context = context_system::instance();
+        $context = (new \local_users\lib\accesslib())::get_module_context();
         $role = $this->get_rolename($id);
         if ($id == $USER->id) {
             return html_writer::link('javascript:void(0)', '<i class="fa fa-pencil fa-fw" title=""></i>',
@@ -241,7 +241,8 @@ class users {
     public function get_costcenternames($user) {
         global $DB;
         $role = $this->get_rolename($user->id);
-        $systemcontext = context_system::instance();
+        
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         if (is_siteadmin($user->id) || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
             return get_string('all');
         }

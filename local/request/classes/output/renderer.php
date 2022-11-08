@@ -52,7 +52,7 @@ class renderer extends plugin_renderer_base {
     // }
     public function render_requestview($filter, $courseid=null,$component=null){
         global $USER;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
         $options = array('targetID' => 'request_view','perPage' => 12, 'cardClass' => 'col-lg-3 col-md-4 col-sm-6 col-12', 'viewType' => 'card');
 
         $options['methodName']='local_request_manage_view';

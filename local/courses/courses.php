@@ -47,7 +47,7 @@ if ($formattype == 'card') {
 
 require_login();
 
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(!has_capability('local/courses:view', $systemcontext) && !has_capability('local/courses:manage', $systemcontext) ){
     print_error("You don't have permissions to view this page.");
 }
@@ -70,7 +70,7 @@ if($deleteid && $confirm && confirm_sesskey()){
     $course=$DB->get_record('course',array('id'=>$deleteid));
     delete_course($course, false);
     if($course){
-        $custom_delete = new local_courses\action\delete();
+        $custom_delete = new \local_courses\action\delete();
         $delete = $custom_delete->delete_coursedetails($deleteid);
      }
 
@@ -122,7 +122,7 @@ $extended_menu_links .= "<li>
         </div>
     </li>";
 }
-if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
+if ((has_capability('local/request:approverecord', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())) {
     $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                             <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('request', 'local_request').'" href = '.$CFG->wwwroot.'/local/request/index.php?component=elearning>
                                 <i class="icon fa fa-share-square" aria-hidden="true"></i>

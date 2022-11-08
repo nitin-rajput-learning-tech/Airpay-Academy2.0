@@ -36,7 +36,7 @@ if ($formattype == 'card') {
     $display_icon = get_string('cardicon','local_courses');
 }
 
-$systemcontext = context_system::instance();
+$systemcontext =  (new \local_courses\lib\accesslib())::get_module_context();
 $pageurl = new moodle_url('/local/courses/userdashboard.php',array('tab' => $tab));
 $PAGE->set_url($pageurl);
 $PAGE->set_pagelayout('standard');
