@@ -741,9 +741,11 @@ body .dataTables_wrapper .dataTable{
 }
 .openLMStransition .modal-header .modal-title{font-weight: 400;}
 .openLMStransition .form_status {
-    float: left;
+    display: flex;
     width: 100%;
     clear: both;
+    align-items: center;
+    justify-content: center;
     margin-bottom: 30px;
     .form_status_list {
         padding: 0px;
@@ -755,7 +757,6 @@ body .dataTables_wrapper .dataTable{
     }
     .form_status_listitem_link {
         padding: 10px;
-        float: left;
         background-color: #ddd;
         color: #333;
     }
@@ -967,13 +968,14 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     list-style: none;
     text-align: center;
 }
-.openLMStransition .form_status .form_status_listitem{float: left;position: relative;margin-bottom: 1px;}
+.openLMStransition .form_status .form_status_listitem{position: relative;margin-bottom: 1px;}
 .openLMStransition .form_status .form_status_listitem .form_status_listitem_link{
-    margin-right: 22px;
+    margin-right: 24px;
     margin-left: 20px;
     cursor: default;
     text-decoration: none;
-    min-height: 41px;
+    min-height: 100%;
+    display: flex;
 }
 .openLMStransition .form_status .form_status_listitem:first-child .form_status_listitem_link{
     margin-left: 0px;
@@ -982,7 +984,7 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     margin-right: 0px;
 }
 .openLMStransition .form_status .form_status_listitem_link:before {
-    display: inline-block;
+    display: inline-flex;
     width: 0;
     height: 0;
     vertical-align: middle;
@@ -993,11 +995,11 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     border-bottom: 20px solid #ddd;
     position: absolute;
     left: -20px;
-    height: 41px;
+    height: 100%;
     top: 0px;
 }
 .openLMStransition .form_status .form_status_listitem_link:after{
-    display: inline-block;
+    display: inline-flex;
     width: 0;
     height: 0;
     vertical-align: middle;
@@ -1007,8 +1009,8 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     border-left: 20px solid #ddd;
     border-bottom: 20px solid transparent;
     position: absolute;
-    right: -18px;
-    height: 41px;
+    right: -16px;
+    height: 100%;
     top: 0px;
 }
 // .openLMStransition .form_status .form_status_list {
@@ -2709,4 +2711,46 @@ body .que .info>div {
     background-size: cover;
     background-size: 100%;
     background-repeat: no-repeat;
+}
+#usernavigation .popover-region[data-region="popover-region-messages"] a .icon::before,
+#usernavigation .popover-region-notifications .icon::before{
+   content: "";
+}
+#usernavigation .popover-region[data-region="popover-region-messages"] a .icon{
+    background-image: url([[pix:theme_epsilon|newicons/message]]);
+    width: 21px;
+    height: 21px;
+    display: block;
+    background-size: 100%;
+    background-repeat: no-repeat;
+}
+#usernavigation .popover-region-notifications .icon{
+    background-image: url([[pix:theme_epsilon|newicons/notification]]);
+    width: 21px;
+    height: 21px;
+    display: inline-block;
+    background-size: 100%;
+    background-repeat: no-repeat;
+}
+
+.navbar .popover-region{
+    align-items: center;
+    justify-content:center;
+}
+#usernavigation .popover-region-notifications .popover-region-toggle{
+    padding: 0 !important;
+    width: 20px;
+    height: 20px;
+}
+#usernavigation .popover-region[data-region="popover-region-messages"] a{
+    padding: 0 !important;
+    margin: 0;
+}
+.modal-dialog-scrollable .modal-content{
+    max-height: calc(100vh - 0rem) !important;
+}
+.usermenu .dropdown-menu-left{
+    right: 0;
+    left: auto;
+    margin-top: 10px;
 }

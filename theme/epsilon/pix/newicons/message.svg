@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="30" height="30" viewBox="0 0 30 30">
+  <defs>
+    <clipPath id="clip-notification1">
+      <rect width="30" height="30"/>
+    </clipPath>
+  </defs>
+  <g id="notification1" clip-path="url(#clip-notification1)">
+    <g id="Group_21453" data-name="Group 21453" transform="translate(-1414 -44)">
+      <g id="Layer_2" data-name="Layer 2" transform="translate(1419 49)">
+        <g id="icons_Q2" data-name="icons Q2" transform="translate(0 0)">
+          <path id="Path_373" data-name="Path 373" d="M21.33,5.926V17.479H8.621l-.578.53L5.926,20.03V5.926h15.4M22.293,4H4.963A.963.963,0,0,0,4,4.963v17.33a.953.953,0,0,0,1.637.674L9.392,19.4h12.9a.963.963,0,0,0,.963-.963V4.963A.963.963,0,0,0,22.293,4Z" transform="translate(-4 -4)" fill="#2b354b"/>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
