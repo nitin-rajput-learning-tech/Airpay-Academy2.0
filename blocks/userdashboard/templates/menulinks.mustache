@@ -16,18 +16,27 @@
 }}
 {{# desktop_view}}
     <div class='userdashboard_block p-0 flex-row flex-nowrap '>
-        <ul class="block_dashboard_tabslist pull-left row">
-        {{# links}}
-            <li class="block_dashboard_tabslistitem col-md-2">
-                <div class="dashboard-stat {{active_class}}">
-                    <a id="{{id}}" data-templatename='{{templatename}}' data-pluginname = '{{pluginname}}' data-tabname='{{tabname}}' data-status='{{status}}' class="{{class}} more">
-                        <i class="{{iconclass}}"></i>{{label}}
-                    </a>
-                </div>
-            </li>
-        {{/ links}}
-        </ul>
-        <div class='userdashboard_module_content pull-left col-sm p-0 justify-content-end'></div>
+        <div class="menulinks_container">
+            <div>
+                <ul class="block_dashboard_tabslist row">
+                {{# links}}
+                    <li class="block_dashboard_tabslistitem col-md-2">
+                        <div class="dashboard-stat {{active_class}}">
+                            <a id="{{id}}" data-templatename='{{templatename}}' data-pluginname = '{{pluginname}}' data-tabname='{{tabname}}' data-status='{{status}}' class="{{class}} more">
+                                <i class="{{iconclass}}"></i>{{label}}
+                            </a>
+                        </div>
+                    </li>
+                {{/ links}}
+                </ul>
+            </div>
+        </div>
+        <div class="userdashboardcontent_container">
+            <div>
+                <div class='userdashboard_module_content'></div>
+            </div>
+        </div>
+        
     </div>
 {{/ desktop_view}}
 {{# mobile_view}}
