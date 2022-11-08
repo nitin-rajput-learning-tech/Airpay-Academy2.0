@@ -39,6 +39,7 @@ body::-webkit-scrollbar {
     width: 10px;
 }
 body::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
     -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.5);
 }
 body::-webkit-scrollbar-thumb {
@@ -259,12 +260,11 @@ a[data-toggle="popover"].btn.btn-link.p-a-0{
 #page-local-certification-view .course_extended_menu_list li button {
     color: var(--iconbgcolor);
 }
-.openLMStransition .form_status {
-    .form_status_listitem.active .form_status_listitem_link{
-        background-color: var(--iconbgcolor);
-        cursor: pointer;
-    }
+.openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link {
+    background-color: var(--iconbgcolor);
+    cursor: pointer;
 }
+
 .page-context-header .page-header-headings h3:after {
     border-bottom: 3px solid var(--iconbgcolor);
 }
@@ -327,20 +327,16 @@ body#page-course-view-tabtopics .course_stat_label{color: var(--btntextcolor);}*
 
 .block_userdashboard .view_more_data_card .center_elemet {background-color: var(--sitehighlight);}
 .block_userdashboard .center_elemet:after {background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));}
-.block.block_userdashboard .block_dashboard_tabslist{
+.block.block_userdashboard .block_dashboard_tabslist , .block.block_userdashboard .menulinks_container {
     background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));
     color: var(--gradientcolor);
 }
 .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab {
     background-color: var(--sitehighlight);
     border-right: 1px solid var(--sitehighlight);
-    opacity: 0.8;
 }
 .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab:after{
     border-left: 25px solid var(--sitehighlight);
-}
-.block.block_userdashboard .block_dashboard_tabslist .dashboard-stat .more{
-    font-weight: 100;
 }
 .block.block_userdashboard .course_container, 
 #page-blocks-userdashboard-userdashboard_courses .course_container{
@@ -365,7 +361,7 @@ body#page-course-view-tabtopics .course_stat_label{color: var(--btntextcolor);}*
 }
 .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab:after{border-left-color: transparent;}
 /*.block.block_userdashboard .portlet.light.shadow{border-color: var(--buttonbgcolor);}*/
-.block.block_userdashboard .userdashboard_module_content {border-color: var(--buttonbgcolor);border: none;}
+/* .block.block_userdashboard .userdashboard_module_content {border-color: var(--buttonbgcolor);border: none;} */
 .block.block_userdashboard .titleinfo .count_info_container{background-color: var(--buttonbgcolor);color: var(--btntextcolor);}
 .block.block_userdashboard .titleinfo .count_info_container .count_string{color: #fff;}
 .userdashboard_content .lp_container{border-color: var(--sitehighlight);}
@@ -373,7 +369,6 @@ body#page-course-view-tabtopics .course_stat_label{color: var(--btntextcolor);}*
 .userdashboard_content .evalicon{color: var(--sitehighlight);}
 .userdashboard_content .evalactions{background: var(--sitehighlight);}
 
-.userdashboard_content .classroom_container .ub_classroomname{background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));}
 .userdashboard_content .evalactions {background: linear-gradient(45deg, var(--sidebarbgstartcolor), var(--sidebarbgendcolor));}
 .userdashboard_content .program_container .programicon{color: var(--sitehighlight);}
 .userdashboard_content .program_view_more_container{background: var(--sitehighlight);}
@@ -519,9 +514,9 @@ body#page-local-users-index #manage_users1 .userscontainer .userpic{border-color
  * @plugin sub-type courses ====> starts here
  * 
 */
-#page-local-courses-courses .course_container{
+/* #page-local-courses-courses .course_container{
     background-color: var(--coursecontainerbg);
-}
+} */
 .crname_head:after{
     border-bottom: 3px solid var(--iconbgcolor);
 }
@@ -848,3 +843,9 @@ body#page-local-courses-index .catlisticons i {
     border-bottom: 10px solid var(--primarycolor);
 }
 
+.drawer-toggles .drawer-toggler .btn{
+    background-color: var(--primarycolor);
+}
+.btn.btn-icon:hover, .btn.btn-icon:focus{
+    background-color: var(--sitehighlight);
+}
