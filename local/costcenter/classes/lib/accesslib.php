@@ -102,4 +102,18 @@ class accesslib
         return $parentcostcenter;
 
     }
+    public static function get_user_roles_in_catgeorycontexts($userid = null){
+        global $DB, $USER;
+        if(is_null($userid)){
+            $userid = $USER->id;
+        }
+        $assignedsql = "SELECT ra.id, cc.name as categoryname, r.id as roleid, r.name AS rolename, r.shortname as rolecode, ra.contextid
+        FROM {role_assignments} AS ra 
+        JOIN {role} AS r ON r.id =  ra.roleid
+        JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
+        JOIN {course_categories} AS cc ON cc.id = c.instanceid 
+        WHERE ra.userid = :userid ORDER BY ra.id DESC ";
+        $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid]);
+        return $assignedroles;
+    }
 }

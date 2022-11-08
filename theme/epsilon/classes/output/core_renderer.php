@@ -1065,7 +1065,8 @@ class core_renderer extends \core_renderer {
 
         /*Start of the role Switch */
         $systemcontext = context_system::instance();
-        $roles = get_user_roles($systemcontext, $USER->id);
+        // $roles = get_user_roles($systemcontext, $USER->id);
+        $roles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
 
         if (is_array($roles) && (count($roles) > 0)) {
             
@@ -1078,16 +1079,20 @@ class core_renderer extends \core_renderer {
 
             $rolename = get_string('employee','theme_epsilon');
             
-            $user_ra_array = $USER->access['ra']['/1'];
+            // $user_ra_array = $USER->access['ra']['/1'];
+
+            $user_ra_array = array_values(array_map(function($role){
+                            return $role->roleid;
+                        }, $roles));
             
             if(is_array($user_ra_array)){
-                $highest_roleid = max(array_keys($user_ra_array));
+                $highest_roleid = max($user_ra_array);
             }else{
                 $highest_roleid = 0;
             }
 
-            $current_roleid = isset($USER->access['rsw']['/1']) ? $USER->access['rsw']['/1'] : $highest_roleid;
-
+            $current_roleid = isset($USER->access['rsw']['currentroleinfo']) ? $USER->access['rsw']['currentroleinfo']['roleid'] : $highest_roleid;
+            // var_dump($USER->access['rsw']);exit;
             if(!empty($learnerroleid)){
                 if($learnerroleid->id == $current_roleid){
                     $disabled_role = 'user_role active_role';
@@ -1103,10 +1108,10 @@ class core_renderer extends \core_renderer {
              }
              
             foreach($roles as $role){   /*Get all the roles assigned to the user for display */
-                if(empty($role->name)){
-                    $rolename = $role->shortname;
+                if(empty($role->rolename)){
+                    $rolename = $role->categoryname .' - '. $role->rolecode;
                 }else{
-                    $rolename = $role->name;
+                    $rolename = $role->categoryname .' - '. $role->rolename;
                 }
 
                 $switchrole = new stdClass();
@@ -1116,7 +1121,7 @@ class core_renderer extends \core_renderer {
                     $switchrole->url = new moodle_url('javascript:void(0)');
                     $disabled_role = 'user_role active_role';
                 }else{
-                    $switchrole->url = new moodle_url('/my/switchrole.php', array('sesskey' => sesskey(),'confirm' => 1,'switchrole' => $role->roleid));
+                    $switchrole->url = new moodle_url('/my/switchrole.php', array('sesskey' => sesskey(),'confirm' => 1,'switchrole' => $role->roleid, 'contextid' => $role->contextid));
                     $disabled_role = 'user_role';
                 }
                 $switchrole->pix = "i/switchrole";
@@ -1310,7 +1315,7 @@ class core_renderer extends \core_renderer {
      * @param stdClass $context usually site context.
      * @return string HTML.
      */
-    function role_switch_basedon_userroles($roleid, $purge){
+    function role_switch_basedon_userroles($roleid, $purge, $contextid = 1){
         global $DB, $CFG, $USER;
 
         if(is_siteadmin($USER->id) || ($roleid <= 0) || $purge){
@@ -1321,8 +1326,8 @@ class core_renderer extends \core_renderer {
         if(!$role){
             print_error('nopermission');
         }
-        $systemcontext = context_system::instance();
-        $roles = get_user_roles($systemcontext, $USER->id);
+        $context = \context::instance_by_id($contextid);
+        $roles = get_user_roles($context, $USER->id);
         $userroles = array();
 
         foreach($roles as $r){
@@ -1330,11 +1335,64 @@ class core_renderer extends \core_renderer {
         }
 
         $accessdata = get_empty_accessdata();
-        if($this->roleswitch($roleid, $systemcontext, $accessdata)){
+        if($this->roleswitch($roleid, $context, $accessdata)){
             return true;
         }else{
             return false;
         }
+    }
+    /**
+     * sitelevel roleswitch as buttons.
+     *
+     * @param int $courseid A course object.
+     * @param stdClass $context usually site context.
+     * @return string HTML.
+     */
+    function roleswitch($roleid, $context, &$accessdata){
+
+        global $DB, $ACCESSLIB_PRIVATE, $USER;
+        $USER->access['rsw'][$context->path] = $roleid;
+        $USER->access['rsw']['currentroleinfo'] = ['roleid' => $roleid, 'context' => $context];
+       /* Get the relevant rolecaps into rdef
+        * - relevant role caps
+        *   - at ctx and above
+        *   - below this ctx
+        */
+
+        if (empty($context->path)) {
+            // weird, this should not happen
+            return;
+        }
+
+        list($parentsaself, $params) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'pc_');
+        $params['roleid'] = $roleid;
+        $params['childpath'] = $context->path.'/%';
+
+        $sql = "SELECT ctx.path, rc.capability, rc.permission
+                  FROM {role_capabilities} rc
+                  JOIN {context} ctx ON (rc.contextid = ctx.id)
+                 WHERE rc.roleid = :roleid AND (ctx.id $parentsaself OR ctx.path LIKE :childpath)
+              ORDER BY rc.capability"; // fixed capability order is necessary for rdef dedupe
+        $rs = $DB->get_recordset_sql($sql, $params);
+
+        $newrdefs = array();
+        foreach ($rs as $rd) {
+            $k = $rd->path.':'.$roleid;
+            if (isset($accessdata['rdef'][$k])) {
+                continue;
+            }
+            $newrdefs[$k][$rd->capability] = (int)$rd->permission;
+        }
+        $rs->close();
+
+        // share new role definitions
+        foreach ($newrdefs as $k=>$unused) {
+            if (!isset($ACCESSLIB_PRIVATE->rolepermissions[$k])) {
+                $ACCESSLIB_PRIVATE->rolepermissions[$k] = $newrdefs[$k];
+            }
+            $accessdata['rdef'][$k] =& $ACCESSLIB_PRIVATE->rolepermissions[$k];
+        }
+        return true;
     }
     public function quickaccess_links() {
         global $DB, $CFG, $USER, $PAGE;
