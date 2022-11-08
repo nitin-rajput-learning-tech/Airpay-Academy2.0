@@ -186,7 +186,7 @@ class userlibfunctions{
         }else{
             $pluginname = 'local_course';
         }
-	    $systemcontext = \context_system::instance();
+	    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     	if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$systemcontext)) {
                 $organisation_select = [null => get_string('selectorg','local_courses')];
                 if($id || $mformajax['costcenterid']){

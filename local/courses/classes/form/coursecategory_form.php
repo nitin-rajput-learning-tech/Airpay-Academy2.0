@@ -40,10 +40,11 @@ class coursecategory_form extends moodleform {
         $mform = $this->_form;
         $categoryid = $this->_customdata['categoryid'];
         $parent = $this->_customdata['parent'];
-        $context = context_system::instance();
+        
+        $context = (new \local_courses\lib\accesslib())::get_module_context(); 		
         // Get list of categories to use as parents, with site as the first one.
         $options = array();
-        if (has_capability('moodle/category:manage', context_system::instance()) || $parent == 0) {
+        if (has_capability('moodle/category:manage', (new \local_courses\lib\accesslib())::get_module_context()) || $parent == 0) {
             $option[0] = get_string('top');
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context)){            
@@ -113,7 +114,8 @@ class coursecategory_form extends moodleform {
         
         $context = $this->_customdata['context'];
         if(empty($context)){
-            $context =  context_system::instance();
+            $context = (new \local_courses\lib\accesslib())::get_module_context(); 		
+
         }
         $itemid = $this->_customdata['itemid'];
         return array(

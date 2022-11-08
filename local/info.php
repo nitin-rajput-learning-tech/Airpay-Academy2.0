@@ -26,7 +26,7 @@
 global $DB,$OUTPUT,$USER,$CFG,$PAGE;
 require('../../config.php');
 require_login();
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 $id        = optional_param('id', 0, PARAM_INT);
 $PAGE->set_context($systemcontext);
 $pageurl = new moodle_url('/local/courses/info.php');

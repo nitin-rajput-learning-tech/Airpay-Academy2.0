@@ -34,7 +34,8 @@ require_login();
 $corecomponent = new core_component();
 
 // systemcontest defining
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+
 $PAGE->set_context($systemcontext);
 
 // amd js calling
@@ -66,6 +67,8 @@ if ($formattype == 'card') {
 $heading = get_string('manage_users', 'local_users');
 $PAGE->set_heading($heading);
 $PAGE->navbar->add($heading);
+
+
 echo $OUTPUT->header();
 
 // user has capibilaty for manage users

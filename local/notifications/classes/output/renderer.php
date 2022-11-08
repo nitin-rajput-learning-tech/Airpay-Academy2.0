@@ -55,7 +55,7 @@ class renderer extends mainbase  {
           global $DB, $OUTPUT, $PAGE,$USER;
           $lib = new notifications();
           $costcenter = new \costcenter();
-          $systemcontext = \context_system::instance();
+          $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
          
        if(is_siteadmin()){
             $sql = "SELECT ni.id, nt.name, nt.shortname, ni.subject, costcenterid, lc.fullname as deptname, ni.active
@@ -139,7 +139,8 @@ class renderer extends mainbase  {
     public function managenotifications_content($filter = false){
         global $USER;
 
-        $systemcontext = context_system::instance();
+          $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
+          
 
         $options = array('targetID' => 'manage_notifications','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
         
@@ -187,7 +188,7 @@ class renderer extends mainbase  {
             //------Adding Custom Search Filters --------//
             $output.= "<table class='email-filter-table'>
                  <tr>";
-                 if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', context_system::instance())){
+                 if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', (new \local_notifications\lib\accesslib())::get_module_context())){
             $output.= "<td class='d-xs-block'>
               <select class='custom_noti_filter custom-select form-control-danger' id='1'>
                        <option value=''>".get_string('select_organization', 'local_notifications')."</option>";

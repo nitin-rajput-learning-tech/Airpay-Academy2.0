@@ -57,7 +57,8 @@ $select_query = "SELECT le.id,le.notification_infoid,le.from_userid,le.to_userid
 	JOIN {local_costcenter} as lc ON lc.id = ni.costcenterid
 	WHERE 1=1";
 
-$systemcontext = context_system::instance();
+
+$systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
 $params = array();
 if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
 	$cond_query .= " AND ni.costcenterid = :userorgid ";

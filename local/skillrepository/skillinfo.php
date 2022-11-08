@@ -30,13 +30,14 @@ $PAGE->requires->js('/local/skillrepository/js/script.js');
     
 $id = required_param('id', PARAM_INT);
 $PAGE->set_pagelayout('standard');
-$systemcontext = context_system::instance();
+
+$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url('/local/skillrepository/skillinfo.php');
 
 $skill = $DB->get_record('local_skill', array('id' => $id));
 
-if (!has_capability('local/skillrepository:create_skill', context_system::instance()) && !is_siteadmin()) {
+if (!has_capability('local/skillrepository:create_skill',(new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
 	print_error('Sorry, You are not accessable to this page');
 }
 
@@ -45,7 +46,7 @@ print_object($USER->open_costcenterid);
 die();*/
 
 
-if (!has_capability('local/costcenter:manage_multiorganizations', context_system::instance())) {
+if (!has_capability('local/costcenter:manage_multiorganizations', (new \local_skillrepository\lib\accesslib())::get_module_context())) {
         if($skill->costcenterid!=$USER->open_costcenterid){
          print_error('Sorry, You are not accessable to this page');
         }     

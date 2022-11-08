@@ -35,7 +35,7 @@ $PAGE->navbar->add(get_string('cmanagerDisplay', 'block_cmanager'), new moodle_u
 $PAGE->navbar->add(get_string('viewsummary', 'block_cmanager'));
 
 $PAGE->set_url('/blocks/cmanager/view_summary.php');
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context((new \local_request\lib\accesslib())::get_module_context());
 $PAGE->set_heading(get_string('pluginname', 'block_cmanager'));
 $PAGE->set_title(get_string('pluginname', 'block_cmanager'));
 echo $OUTPUT->header();

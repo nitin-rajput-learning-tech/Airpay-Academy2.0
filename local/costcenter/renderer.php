@@ -35,7 +35,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
      */
     public function departments_view() {
         global $DB, $CFG, $OUTPUT, $USER,$PAGE;
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
         $costcenter_instance = new costcenter;
         
@@ -85,7 +85,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         require_once($CFG->dirroot.'/local/costcenter/lib.php');
         $core_component = new \core_component();
         
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
         $sql="SELECT id, id as id_val from {local_costcenter} where parentid=?";
         $orgs = $DB->get_records_sql_menu($sql, [$record->id]);
@@ -204,7 +204,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
      */
     public function get_dept_view_btns($id = false) {
         global $PAGE, $USER, $DB;
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
         if ((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && $PAGE->pagetype == 'local-costcenter-index'){
             $create_organisation = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '".get_string('create_organization','local_costcenter')."' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$systemcontext->id, id:0, formtype:\"organization\", headstring:\"adnewcostcenter\"}) })(event)'><span class='createicon'><i class='fa fa-sitemap icon' aria-hidden='true'></i><i class='createiconchild fa fa-plus' aria-hidden='true'></i></span></a>";
         }else{
@@ -250,7 +250,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $create_sub_department = false;
         }
 
-        // $systemcontext = context_system::instance();
+        // $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
         // if ((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && 
         //     $PAGE->pagetype == 'local-costcenter-index'){
         //     $createdeptpopup = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = 'Create Organization/Department' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$systemcontext->id, costcenterid:0, parentid:0}) })(event)' ><span class='createicon'><i class='fa fa-sitemap icon' aria-hidden='true'></i><i class='createiconchild fa fa-plus' aria-hidden='true'></i></span></a>";

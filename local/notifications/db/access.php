@@ -29,7 +29,7 @@ $capabilities = array(
     'local/notifications:manage' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
@@ -37,7 +37,7 @@ $capabilities = array(
     'local/notifications:view' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
@@ -45,7 +45,7 @@ $capabilities = array(
     'local/notifications:create' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
@@ -53,7 +53,7 @@ $capabilities = array(
     'local/notifications:delete' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
@@ -61,7 +61,7 @@ $capabilities = array(
     'local/notifications:update' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
@@ -69,7 +69,7 @@ $capabilities = array(
     'local/notifications:visible' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )

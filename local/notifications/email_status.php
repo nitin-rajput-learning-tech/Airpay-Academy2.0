@@ -29,7 +29,7 @@ global $CFG, $USER, $PAGE, $OUTPUT;
 $id = optional_param('id', 0, PARAM_INT);
 $deleteid = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
-$sitecontext = context_system::instance();
+$sitecontext =(new \local_notifications\lib\accesslib())::get_module_context();
 require_login();
 $PAGE->set_url('/local/notifications/email_status.php', array());
 $PAGE->set_context($sitecontext);

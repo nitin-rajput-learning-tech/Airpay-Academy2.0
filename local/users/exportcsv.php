@@ -29,7 +29,8 @@ require_once(dirname(__FILE__) . '/../../config.php');
 global $CFG, $USER, $PAGE, $OUTPUT, $DB;
 require_once($CFG->dirroot . '/local/users/lib.php');
 $filtervalues = json_decode($_REQUEST['formdata']);
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+
 require_login();
 $totalusers = manage_users_count($stable, $filtervalues);
 $table = new html_table();

@@ -29,7 +29,8 @@ require_login();
 
 require_once('../lib/displayLists.php');
 
-$context = context_system::instance();
+
+$context =(new \local_request\lib\accesslib())::get_module_context();
 if (has_capability('block/request:viewrecord',$context)) {
 } else {
   print_error(get_string('cannotviewrecord', 'block_request'));

@@ -44,7 +44,7 @@ class tagname extends \core\output\inplace_editable {
      * @param \stdClass|local_tags_tag $tag
      */
     public function __construct($tag) {
-        $editable = has_capability('moodle/tag:manage', context_system::instance());
+        $editable = has_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $edithint = new lang_string('editname', 'local_tags');
         $editlabel = new lang_string('newnamefor', 'local_tags', $tag->rawname);
         $value = $tag->rawname;
@@ -61,7 +61,7 @@ class tagname extends \core\output\inplace_editable {
      * @return \self
      */
     public static function update($itemid, $newvalue) {
-        require_capability('moodle/tag:manage', context_system::instance());
+        require_capability('moodle/tag:manage', (new \local_tags\lib\accesslib())::get_module_context());
         $tag = local_tags_tag::get($itemid, '*', MUST_EXIST);
         $tag->update(array('rawname' => $newvalue));
         return new self($tag);

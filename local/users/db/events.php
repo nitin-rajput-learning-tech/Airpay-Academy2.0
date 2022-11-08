@@ -26,11 +26,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $observers = array(
-
-    array(
-        'eventname'   => '\core\event\user_profile_viewed',
-        'callback'    => 'local_users_observer::user_profile_viewed',
-    ),
     array(
         'eventname'   => '\core\event\user_loggedin',
         'callback'    => 'local_users_observer::user_loggedin',

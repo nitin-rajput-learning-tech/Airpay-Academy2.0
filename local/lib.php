@@ -34,7 +34,7 @@ function is_organisation_head(){
 
 function get_mydepartments($withoutselect = 0) {
 	global $DB, $USER;
-    $context = context_system::instance();
+    $context = (new \local_costcenter\lib\accesslib())::get_module_context();
     $select = array(null=>get_string('all'));
     $costcenters = array();
     if ( has_capability('local/costcenter:manage_multiorganizations', $context) ) {
@@ -90,7 +90,7 @@ function get_mydepartment() {
 }
 
 function get_filterslist() {
-	$context = context_system::instance();
+	$context = (new \local_costcenter\lib\accesslib())::get_module_context();
 	if (is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations', $context )) {
 		$filterlist = array('organizations', 'departments','idnumber', 'email', 'groups','users', 'location', 'hrmsrole');
 	}

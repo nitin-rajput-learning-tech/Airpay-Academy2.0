@@ -31,7 +31,7 @@ $id = optional_param('id', 0, PARAM_INT);
 require_login();
 $pageurl = new moodle_url('/local/skillrepository/level.php');
 $PAGE->set_url('/local/skillrepository/level.php');
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context((new \local_skillrepository\lib\accesslib())::get_module_context());
 $PAGE->set_pagelayout('standard');
 
 $PAGE->set_title(get_string('levelpluginname', 'local_skillrepository'));
@@ -45,7 +45,8 @@ $renderer = $PAGE->get_renderer('local_skillrepository');
 
 $PAGE->set_heading(get_string('levels', 'local_skillrepository'));
 echo $OUTPUT->header();
-$systemcontext = context_system::instance();
+
+$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 echo "<ul class='course_extended_menu_list'>
 		<li>
           	<div class='coursebackup course_extended_menu_itemcontainer'>

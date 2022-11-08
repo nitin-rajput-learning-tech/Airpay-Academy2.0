@@ -951,8 +951,8 @@ class local_users_external extends external_api {
         // Parameter validation.
         $params = self::validate_parameters(self::pending_activities_parameters(), array('events' => $events,
          'options' => $options));
-        $funcparam = array('courses' => array());
-        $hassystemcap = has_capability('moodle/calendar:manageentries', context_system::instance());
+        $funcparam = array('courses' => array()); 
+        $hassystemcap = has_capability('moodle/calendar:manageentries', (new \local_users\lib\accesslib())::get_module_context());
         $warnings = array();
         $mycourses = \local_courses\local\user::enrol_get_users_courses($USER->id, false, false, 0, 5, true);
         $mycourseids = array_keys($mycourses['data']);
@@ -995,7 +995,7 @@ class local_users_external extends external_api {
             if (!calendar_view_event_allowed($legacyevent)) {
                 // We can't return a warning in this case because the event is not optional.
                 // We don't know the context for the event and it's not worth loading it.
-                $syscontext = context_system::instance();
+                $syscontext = (new \local_users\lib\accesslib())::get_module_context();
                 throw new \required_capability_exception($syscontext, 'moodle/course:view', 'nopermission', '');
             }
 
@@ -1221,7 +1221,9 @@ class local_users_external extends external_api {
             $userid = $USER->id;
         }
 
-        $systemcontext = context_system::instance();
+        
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        
         self::validate_context($systemcontext);
 
         if ($USER->id != $userid) {
@@ -1233,8 +1235,8 @@ class local_users_external extends external_api {
 
         // We need the site course, and course context.
         $course = get_course(SITEID);
-        $context = context_course::instance($course->id);
-
+        //$context = context_course::instance($course->id);
+        $context = (new \local_users\lib\accesslib())::get_module_context();
         // Force a regrade if required.
         grade_regrade_final_grades_if_required($course);
         // Get the course final grades now.

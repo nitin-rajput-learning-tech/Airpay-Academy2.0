@@ -36,7 +36,7 @@ $capabilities = array(
     'local/users:manage' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW,
         )
@@ -44,14 +44,14 @@ $capabilities = array(
   'local/users:create' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
     ),
     'local/users:view' => array(
         'captype'       => 'write',
-        'contextlevel'  => CONTEXT_SYSTEM,
+        'contextlevel'  => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW,
         )
@@ -59,14 +59,14 @@ $capabilities = array(
 
    'local/users:edit' => array(
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
              'manager' => CAP_ALLOW,
         )
     ),
       'local/users:delete' => array(
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
              'manager' => CAP_ALLOW,
         )

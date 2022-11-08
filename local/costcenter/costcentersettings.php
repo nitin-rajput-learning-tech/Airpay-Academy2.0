@@ -28,7 +28,7 @@ global $USER, $DB,$PAGE,$CFG, $OUTPUT;
 require_once('../../config.php');
 
 $depth = required_param('depth', PARAM_INT);
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 require_login();
 
 $PAGE->set_pagelayout('standard');

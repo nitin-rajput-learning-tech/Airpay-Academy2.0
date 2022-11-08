@@ -83,7 +83,8 @@ class local_tags_renderer extends plugin_renderer_base {
         $this->page->requires->js_call_amd('local_tags/tag', 'initTagindexPage');
 
         $tagname = $tag->get_display_name();
-        $systemcontext = context_system::instance();
+        $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
+        
 
         $tagname = '<b>Tag: </b><span class="flagged-tag">' . $tagname . '</span><hr>';
         

@@ -43,8 +43,7 @@ class notification_form extends moodleform {
         $form_status = $this->_customdata['form_status'];
         $org = $this->_customdata['org'];
         $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
-        $context = \context_system::instance();
-		
+		$context =(new \local_notifications\lib\accesslib())::get_module_context();
 		$moduleid = $this->_customdata['moduleid'];
 		$notificationid = $this->_customdata['notificationid'];
 		if($id){

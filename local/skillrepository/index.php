@@ -42,7 +42,7 @@ $submitbutton = optional_param('submitbutton', '', PARAM_RAW);
 
 require_login();
 $PAGE->set_url('/local/skillrepository/index.php');
-$PAGE->set_context(context_system::instance());
+$PAGE->set_context((new \local_skillrepository\lib\accesslib())::get_module_context());
 $PAGE->set_pagelayout('standard');
 
 $PAGE->set_title(get_string('pluginname', 'local_skillrepository'));
@@ -50,10 +50,12 @@ $PAGE->navbar->add(get_string('manage_skills', 'local_skillrepository'));
 
 $PAGE->requires->js_call_amd('local_skillrepository/newrepository', 'load', array());
 //$PAGE->requires->js_call_amd('local_skillrepository/newcategory', 'load', array());
-$systemcontext = context_system::instance();
+
+$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+
 $id = 1; 
 
-if (!has_capability('local/skillrepository:create_skill', context_system::instance()) && !is_siteadmin()) {
+if (!has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
 	print_error('Sorry, You are not accessable to this page');
 }
 $renderer = $PAGE->get_renderer('local_skillrepository'); 

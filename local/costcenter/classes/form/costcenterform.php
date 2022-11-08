@@ -47,7 +47,7 @@ class costcenterform extends moodleform { /*costcenter creation form*/
         $parentid = $this->_customdata['parentid']; 
         $formtype = $this->_customdata['formtype'];
 
-        $systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
         if($formtype == 'createdeptmodal'){
             if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){

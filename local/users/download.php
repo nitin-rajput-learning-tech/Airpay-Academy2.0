@@ -37,12 +37,13 @@ $params = json_decode($params, true);
 global $CFG, $USER;
 $myuser = new local_users\functions\users();
 $costcenter = new costcenter();
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
 require_login();
 if (!has_capability('local/users:manage', $systemcontext) ) {
     throw new moodle_exception('You dont have a permission to view this page.');
 }
-$context = context_system::instance();
+
+$context = (new \local_users\lib\accesslib())::get_module_context();
 $extracolumns = get_extra_user_fields($context);
 $columns = array_merge(array('firstname', 'lastname'), $extracolumns,
     array('username', 'idnumber', 'costcenter', 'role', 'lastaccess'));

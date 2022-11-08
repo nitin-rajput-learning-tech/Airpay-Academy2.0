@@ -132,7 +132,7 @@ class local_tags_collection {
      * @return string
      */
     public static function display_name($record) {
-        $syscontext = context_system::instance();
+        $syscontext = (new \local_tags\lib\accesslib())::get_module_context();
         if (!empty($record->component)) {
             $identifier = 'tagcollection_' .
                     clean_param($record->name, PARAM_STRINGID);
@@ -366,7 +366,7 @@ class local_tags_collection {
         if ($isstandard) {
             $whereclause .= ' AND tg.isstandard = 1';
         }
-        $context = $ctx ? context::instance_by_id($ctx) : context_system::instance();
+        $context = $ctx ? context::instance_by_id($ctx) : (new \local_tags\lib\accesslib())::get_module_context();;
         if ($rec && $context->contextlevel != CONTEXT_SYSTEM) {
             $fromclause .= ' JOIN {context} ctx ON ctx.id = ti.contextid ';
             $whereclause .= ' AND ctx.path LIKE ?';

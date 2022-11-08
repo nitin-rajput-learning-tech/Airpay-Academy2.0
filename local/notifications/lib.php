@@ -396,7 +396,8 @@ class notifications {
 	function insert_update_record($table, $action, $dataobject){
         global $DB;
         if($action == 'insert'){
-            $systemcontext = context_system::instance();
+            
+            $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
             $str=$dataobject->body;
             $keywords = preg_split("/[\s,]+/", $dataobject->body);
             $keywords2 = preg_split("/[\s,]+/", $keywords[1]);
@@ -404,7 +405,7 @@ class notifications {
             file_save_draft_area_files($pieces[8], $systemcontext->id, 'local', 'notifications',$pieces[8], array('maxfiles' => 5));
             $result = $DB->insert_record("$table", $dataobject);
         } elseif($action == 'update') {
-             $systemcontext = context_system::instance();
+            $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
             $str=$dataobject->body;
             $keywords = preg_split("/[\s,]+/", $dataobject->body);
             $keywords2 = preg_split("/[\s,]+/", $keywords[1]);
@@ -691,7 +692,8 @@ function replace_strings($dataobject, $data){
 * @return  [type] string  link for the leftmenu
 */
 function local_notifications_leftmenunode(){
-    $systemcontext = context_system::instance();
+    
+    $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
     $notificationsnode = '';
     // if(has_capability('local/notifications:view',$systemcontext) || is_siteadmin()){
     if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
@@ -710,8 +712,8 @@ function local_notifications_leftmenunode(){
 //////For display on index page//////////
 function notification_details($tablelimits, $filtervalues){
         global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-        $systemcontext = context_system::instance();
-
+        
+        $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
         $countsql = "SELECT count(ni.id)
                 FROM {local_notification_info} AS ni
                 JOIN {local_notification_type} AS nt ON ni.notificationid = nt.id
@@ -779,9 +781,10 @@ function notification_details($tablelimits, $filtervalues){
 
 function notifications_filter($mform){
     global $DB,$USER;
-    $systemcontext = context_system::instance();
+    
+    $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
     // $sql = "SELECT id, name FROM {local_classroom} WHERE id > 1";
-    if ((has_capability('local/notifications:view', context_system::instance()) || is_siteadmin())) {
+    if ((has_capability('local/notifications:view', (new \local_notifications\lib\accesslib())::get_module_context()) || is_siteadmin())) {
         // $requestlist = $DB->get_records_sql_menu("SELECT id, compname FROM {local_request_records} GROUP BY compname");
         // $customrequestlist = array();
         // $trainer_user = ((has_capability('local/classroom:manageclassroom',$systemcontext)||
