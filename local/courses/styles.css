@@ -129,7 +129,7 @@ body#page-local-courses-courseenrol img#image.content-img {
     color: #000;
     min-height: 215px !important;
     box-shadow: 0px 0px 8px #ddd;
-    padding: 25px 10px;
+   /* padding: 25px 10px;*/
     margin: 15px 0;
 }
 
@@ -860,4 +860,69 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
     position: relative;
     padding: 0.75rem 1.25rem;
     margin-bottom: 1rem;
+}
+
+/*hema   local course view file code*/
+
+#page-local-courses-courses .course_container .coursetype{
+    top: 0px!important;
+    left: 15px;
+}
+#page-local-courses-courses .course_container .coursetype .elearning{
+    padding-left: 0!important;
+}
+#page-local-courses-courses .courseimg_bg{
+    padding: 10px!important;
+}
+#page-local-courses-courses .course_container{
+    padding: 20px 0 20px 8px!important;
+}
+/*progress bar code*/
+#page-local-courses-courses .course_progress_container  .progress_circular {
+    width: 28px;
+    height: 28px;
+    background-color: transparent;
+    background-image: conic-gradient(white 100%, transparent 0%);
+    border-radius: 50%;
+    flex-grow: 0;
+    flex-shrink: 0;
+    border: 1px solid #fff;
+}
+#page-local-courses-courses .course_progress_container{
+    color: #fff;
+    gap: 4px;
+    padding: 3px;
+    border: 2px solid #fff;
+    border-radius: 20px;
+    transition:  width .4s;
+    width: 38px;
+}
+ #page-local-courses-courses .course_container.course_progress_container .progress_percentage{
+    font-weight: bold;
+    margin-left: 5px;
+}
+#page-local-courses-courses .course_container:hover .course_progress_container .progress_percentage{
+  
+    margin-left: 0px;
+}
+#page-local-courses-courses .course_container .course_progress_container .progress_status{
+    display: none;
+}
+#page-local-courses-courses .course_container:hover .course_progress_container{
+    background-color: #2E64BA;
+    padding: 5px;
+    border: 0px solid #fff;
+    width: 100%;
+}
+#page-local-courses-courses  .progress_percentage {
+    margin-left: 6px !important;
+}
+#page-local-courses-courses .course_container:hover .course_progress_container .progress_status{
+    display: flex;
+}
+#page-local-courses-courses .alert-info{
+    border: none!important;
+}
+#page-local-courses-courses #region-main{
+    background-color: transparent;
 }
