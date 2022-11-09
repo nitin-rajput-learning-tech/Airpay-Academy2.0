@@ -81,16 +81,26 @@ class local_costcenter_renderer extends plugin_renderer_base {
      * @return string
      */
     public function display_department_item($record, $indicate_depth = true) {
+
         global $OUTPUT, $DB, $CFG, $PAGE;
         require_once($CFG->dirroot.'/local/costcenter/lib.php');
         $core_component = new \core_component();
         
         $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
-        $sql="SELECT id, id as id_val from {local_costcenter} where parentid=?";
+        $contextid =  $systemcontext->id;
+   
+     $query1 = $DB->get_records_sql("SELECT ra.roleid FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.ID  AND ct.id = '$contextid'");
+ 
+
+ $rolescount = count($query1);
+
+         $sql="SELECT id from {local_costcenter} where parentid=?";
         $orgs = $DB->get_records_sql_menu($sql, [$record->id]);
 
         $departmentcount = count($orgs);
+
+
 
         if($departmentcount > 0){
             $dept_count_link = new moodle_url("/local/costcenter/costcenterview.php?id=".$record->id."");
@@ -170,6 +180,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "coursefileurl" => $OUTPUT->image_url('/course_images/courseimg', 'local_costcenter'),
             "orgname" => format_string($record->fullname),
             "dept_count_link" => $dept_count_link,
+            "role_count" => $rolescount,
             "deptcount" => $departmentcount,
             "subdeptcount" => $subdepartmentcount,
             "editicon" => $OUTPUT->image_url('t/edit'),
@@ -188,10 +199,13 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "recordid" => $record->id,
             "parentid" => $record->parentid,
             "headstring" => 'editcostcen',
-            "formtype" => 'organization'
+            "formtype" => 'organization',
+            "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
 
+
         $viewdeptContext = $viewdeptContext+$pluginnavs;
+
 
         return $this->render_from_template('local_costcenter/costcenter_view', $viewdeptContext);
     }
@@ -303,6 +317,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
         if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
             print_error('invalidschoolid');
         }
+ 
+
         $edit = false;
         $delete = false;
         if (has_capability('local/costcenter:manage', $systemcontext)) {
@@ -426,6 +442,25 @@ class local_costcenter_renderer extends plugin_renderer_base {
                 // $deptdelete = true;
                 // $deptdel_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$dept->fullname);
             }
+
+           $contextid =  $systemcontext->id;
+
+                 $query1 = $DB->get_records_sql("SELECT ra.roleid FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.ID  AND ct.id = '$contextid'");
+ 
+ $rolescount = count($query1);
+
+
+ foreach($query1 as $a)
+ {
+ 
+    $rowdata[] = $a->roleid;
+    
+ }
+
+   $roleidstring = implode(',',$rowdata);
+ 
+//$rowdata['roleid'] = $roleid;
+
           
             $departments_array['subdept'] = $subdept;
             $departments_array['enablesubdepartment_link'] = true;
@@ -452,8 +487,10 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $costcenter_view_content = [
             "deptcount" => $dept_count_link,
+             "role_count" => $rolescount,
             "subdeptcount" => $subdepartment,
             "deptclass" => $deptclass, 
+            "roleid" => $roleidstring,
             "coursefileurl" => $OUTPUT->image_url('/course_images/courseimg', 'local_costcenter'),
             "orgname" => $depart->fullname,
             "edit" => $edit,
@@ -467,8 +504,11 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "delete_message" => $del_confirmationmsg,
             "departments_content" => $departments_content,
             "headstring" => 'editcostcen',
-            "formtype" => 'organization'
+            "formtype" => 'organization',
+            "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
+
+ 
         $pluginnavs = local_costcenter_plugins_count($id);
         $costcenter_view_content = $costcenter_view_content+$pluginnavs;
         return $OUTPUT->render_from_template('local_costcenter/departments_view', $costcenter_view_content);
@@ -647,7 +687,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "delete_message" => $del_confirmationmsg,
             "departments_content" => $departments_content,
             "headstring" => 'update_costcenter',
-            "formtype" => 'department'
+            "formtype" => 'department',
+            "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
         $pluginnavs = local_costcenter_plugins_count($organisationid, $id);
         $costcenter_view_content = $costcenter_view_content+$pluginnavs;

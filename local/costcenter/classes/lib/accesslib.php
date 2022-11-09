@@ -42,6 +42,7 @@ class accesslib
 
         }elseif($costcenterid == null || $costcenterid == 0){
 
+
             $costcenterid=$USER->open_costcenterid ? $USER->open_costcenterid : 0;
 
             if($costcenterid == 0){
