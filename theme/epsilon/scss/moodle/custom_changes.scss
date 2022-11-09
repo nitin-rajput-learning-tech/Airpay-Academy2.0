@@ -974,7 +974,8 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     margin-left: 20px;
     cursor: default;
     text-decoration: none;
-    min-height: 100%;
+    min-height: 41px;
+    height: 41px;
     display: flex;
 }
 .openLMStransition .form_status .form_status_listitem:first-child .form_status_listitem_link{
@@ -995,7 +996,7 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     border-bottom: 20px solid #ddd;
     position: absolute;
     left: -20px;
-    height: 100%;
+    height: 41px;
     top: 0px;
 }
 .openLMStransition .form_status .form_status_listitem_link:after{
@@ -1010,7 +1011,7 @@ body#page-my-index .openLMStransition.local_users .modal-body .form-group:nth-ch
     border-bottom: 20px solid transparent;
     position: absolute;
     right: -16px;
-    height: 100%;
+    height: 41px;
     top: 0px;
 }
 // .openLMStransition .form_status .form_status_list {
@@ -2713,7 +2714,7 @@ body .que .info>div {
     background-repeat: no-repeat;
 }
 #usernavigation .popover-region[data-region="popover-region-messages"] a .icon::before,
-#usernavigation .popover-region-notifications .icon::before{
+#usernavigation .popover-region-notifications .icon.icon.fa.fa-bell-o::before{
    content: "";
 }
 #usernavigation .popover-region[data-region="popover-region-messages"] a .icon{
@@ -2724,7 +2725,7 @@ body .que .info>div {
     background-size: 100%;
     background-repeat: no-repeat;
 }
-#usernavigation .popover-region-notifications .icon{
+#usernavigation .popover-region-notifications>div .icon.fa.fa-bell-o{
     background-image: url([[pix:theme_epsilon|newicons/notification]]);
     width: 21px;
     height: 21px;

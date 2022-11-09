@@ -31,7 +31,6 @@ body#page-login-index #page {
 body#page-login-index .social_icons a.social{
     border-radius: 50%;
     display: inline-block;
-    float: left;
     background-color: #fff;
     -webkit-box-shadow: 0 1px 8px rgba(0,0,0,.3);
     -webkit-box-shadow: 0 1px 8px rgba(0,0,0,.6);
@@ -84,7 +83,7 @@ body#page-login-index .form-control {
     /*width: 250px;*/
     color: #333;
     margin: auto;
-    /*border: 1px solid #f1efef;*/
+    border: 1px solid #c7c7c7;
     /*box-shadow: 0 0 5px rgba(197, 196, 195, 0.68) inset;
     border: 1px solid rgba(197, 196, 195, 0.68) inset;*/
 }

@@ -31,7 +31,14 @@
                         <div class="{{cardClass}} pull-left d-inline catcourses_list {{course_class}} ">
                             <div class="col-12 pull-left course_container">
                                 <div class="courseimg_container col-12 col-md-4 pull-left">
-                                    <div style="background-image: url('{{{ courseimage }}}');" alt="{{ coursename }}" class="courseimg courseimg_bg" ></div>
+                                    <div style="background-image: url('{{{ courseimage }}}');" alt="{{ coursename }}" class="courseimg courseimg_bg" >
+                                        <div class="course_progress_container d-flex align-items-center">
+                                            <div class="progress_circular" style="background-image:conic-gradient(white 0%,transparent 0%);"> 
+                                            </div>
+                                            <div class="progress_status">Completed</div>
+                                            <div class="progress_percentage">0%</div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="coursecontent col-12 col-md-8 pull-left">
                                     <div class="d-inline-block pull-left mt-2">
@@ -112,7 +119,7 @@
                                         <div class="w-full pull-left cat_btm">
                                             <div class="col-lg-7 col-12 p-0 pull-left">
                                                     <span class="text-muted pull-left catbtm_colon">{{#str}}points, local_courses{{/str}} <span class="colon_align">:</span> </span><span class="catbtm_info">{{points}}</span>
-                                                </div>
+                                            </div>
                                             <div class="col-lg-5 col-12 p-0 pull-left">
                                                 <span class="text-muted lable_align">{{#str}}completed, local_courses{{/str}} <span class="colon_align">:</span> </span><span class="catbtm_info">{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</span>
                                             </div> 
@@ -140,8 +147,9 @@
                                     {{/ tagenable}}
                                 </div>
                                 
-                                <div class="col-12 pull-left coursetype">
-                                    <span class="text-muted">{{# str}}type, local_courses{{/ str}} :</span>
+                                <div class="col-12  coursetype">
+                                    <span class="text-muted pull-left catbtm_colon">Types
+                                    <span class="colon_align">:</span></span>
                                     {{{coursetype}}}
                                 </div>
                             </div>
