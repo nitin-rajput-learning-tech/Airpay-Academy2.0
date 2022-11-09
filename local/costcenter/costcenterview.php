@@ -39,14 +39,10 @@ require_login();
 if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
     print_error('invalidschoolid');
 }
-if($depart->parentid){
 
-    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($depart->parentid);
 
-}else{
+$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($id);
 
-    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
-}
 
 if(!has_capability('local/costcenter:view', $systemcontext)) {
     print_error('nopermissiontoviewpage');
@@ -69,6 +65,8 @@ $PAGE->requires->jquery('ui-css');
 
 $PAGE->requires->js_call_amd('local_costcenter/costcenterdatatables', 'costcenterDatatable', array());
 $PAGE->requires->js_call_amd('local_assignroles/newcostcenterassignrole', 'load', array());
+
+$PAGE->requires->js_call_amd('local_assignroles/popup', 'init',array(array('contextid' => $systemcontext->id, 'selector' => '.rolesuserpopup')));
 
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $PAGE->requires->js_call_amd('local_costcenter/newsubdept', 'load', array());

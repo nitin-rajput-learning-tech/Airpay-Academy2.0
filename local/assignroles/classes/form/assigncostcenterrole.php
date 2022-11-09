@@ -49,21 +49,20 @@ class assigncostcenterrole extends moodleform {
 	
 		$options = array(
             'ajax' => 'local_assignroles/form-options-selector',
-            'multiple' => true,
             'data-action' => 'role_ids',
-            'data-options' => json_encode(array('id' => 0,'costcenterid' => $costcenterid)),
+            'data-options' => json_encode(array('id' => 0,'costcenterid' => $costcenterid,'formtype' => $formtype)),
         );
 		$roles =array();
-        $mform->addElement('autocomplete', 'roles', get_string('roles', 'local_assignroles'), $roles, $options);
-        $mform->setType('roles', PARAM_RAW);
-		$mform->addRule('roles',  get_string('pleaseselectroles', 'local_assignroles'), 'required', null, 'client');
+        $mform->addElement('autocomplete', 'roleid', get_string('roles', 'local_assignroles'), $roles, $options);
+        $mform->setType('roleid', PARAM_RAW);
+		$mform->addRule('roleid',  get_string('pleaseselectroles', 'local_assignroles'), 'required', null, 'client');
 
 
 		$options = array(
             'ajax' => 'local_assignroles/form-options-selector',
             'multiple' => true,
-            'data-action' => 'role_users',
-            'data-options' => json_encode(array('id' => 0, 'costcenterid' => $costcenterid)),
+            'data-action' => 'role_costcenterusers',
+            'data-options' => json_encode(array('id' => 0, 'costcenterid' => $costcenterid,'formtype' => $formtype)),
         );
 		$users =array();
         $mform->addElement('autocomplete', 'users', get_string('employees', 'local_users'), $users, $options);

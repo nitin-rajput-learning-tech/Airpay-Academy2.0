@@ -21,7 +21,7 @@
                 <tr>
                     <th>{{# str}}role, local_assignroles{{/ str}}</th>
                     <th>{{# str}}count, local_assignroles{{/ str}}</th>
-                    <th>{{# str}}actions, local_assignroles{{/ str}}</th>
+                    <!--<th>{{# str}}actions, local_assignroles{{/ str}}</th>-->
                 </tr>
             </thead>
             <tbody>
@@ -29,7 +29,7 @@
             <tr>
                 <td>{{ rolename }}</td>
                 <td><a class="rolesuserpopup" style="margin-left:40px" href="javascript:void(0)" data-roleid={{roleid}} data-rolename="{{rolename}}" data-action="popupmodal{{roleid}}" data-value={{rolecount}}>{{ rolecount }}</a></td>
-                <td><a href='javascript:void(0)' style='cursor:pointer' data-action='createassignrolemodal' data-value='0' onclick ='(function(e){ require("local_assignroles/newassignrole").init({selector:"createassignrolemodal", contextid:{{contextid}}, roleid:{{roleid}}, rolename:"{{rolename}}"}) })(event)'>{{# str}}assign,local_assignroles{{/ str}}</a></td>
+                <!--<td><a href='javascript:void(0)' style='cursor:pointer' data-action='createassignrolemodal' data-value='0' onclick ='(function(e){ require("local_assignroles/newassignrole").init({selector:"createassignrolemodal", contextid:{{contextid}}, roleid:{{roleid}}, rolename:"{{rolename}}"}) })(event)'>{{# str}}assign,local_assignroles{{/ str}}</a></td>-->
             </tr>
         {{/ rolerow}}
             </tbody>

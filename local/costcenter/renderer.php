@@ -188,7 +188,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "recordid" => $record->id,
             "parentid" => $record->parentid,
             "headstring" => 'editcostcen',
-            "formtype" => 'organization'
+            "formtype" => 'organization',
+            "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
 
         $viewdeptContext = $viewdeptContext+$pluginnavs;
@@ -467,7 +468,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "delete_message" => $del_confirmationmsg,
             "departments_content" => $departments_content,
             "headstring" => 'editcostcen',
-            "formtype" => 'organization'
+            "formtype" => 'organization',
+            "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
         $pluginnavs = local_costcenter_plugins_count($id);
         $costcenter_view_content = $costcenter_view_content+$pluginnavs;
@@ -647,7 +649,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "delete_message" => $del_confirmationmsg,
             "departments_content" => $departments_content,
             "headstring" => 'update_costcenter',
-            "formtype" => 'department'
+            "formtype" => 'department',
+            "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
         $pluginnavs = local_costcenter_plugins_count($organisationid, $id);
         $costcenter_view_content = $costcenter_view_content+$pluginnavs;

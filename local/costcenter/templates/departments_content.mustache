@@ -54,6 +54,12 @@
                             <a href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({selector:'createcostcentermodal', contextid:1, id:{{ deptid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i></a>
                             </li>
                             {{/ deptedit}}
+                            {{# assignroles}}
+                                <li>
+                                    <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{deptid}},costcentername:'{{departmentfullname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-circle"></i></a>
+
+                                </li>
+                            {{/ assignroles}}
                             </ul>
                         </div>
                     </div>

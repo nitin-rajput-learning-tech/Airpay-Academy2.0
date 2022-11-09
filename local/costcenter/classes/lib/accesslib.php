@@ -34,72 +34,83 @@ class accesslib
 
         global $DB,$USER;
 
-        if(is_siteadmin()){
+        if (!empty($USER->id)){
 
-            $context = \context_system::instance();
+            if(is_siteadmin()){
 
-            return $context;
-
-        }elseif($costcenterid == null || $costcenterid == 0){
-
-            $costcenterid=$USER->open_costcenterid ? $USER->open_costcenterid : 0;
-
-            if($costcenterid == 0){
-
-                $context = \context_user::instance($USER->id);
+                $context = \context_system::instance();
 
                 return $context;
-            }
 
-        }
-         try{
+            }else{
 
-            // Get a cache instance
-            $cache = \cache::make('local_costcenter','costcentercontextdata');
 
-            // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+                if( (isset($USER->access['rsw']) && !empty($USER->access['rsw'])) ){
 
-            $cachekey = "costcenter_context_$costcenterid";
 
-            $context = $cache->get($cachekey);
+                     $contextpath=array_values(array_flip($USER->access['rsw']));
 
-            if ($context === false) {
+                     $extractcontextpath=array_filter(explode('/',$contextpath[0]));
 
-                $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+                     $endpathvalue=end($extractcontextpath);
 
-                $costcentercategory = $DB->get_field_sql($sql, array('costcenterid' => $costcenterid)); 
+                     $pathcontext =\context::instance_by_id($endpathvalue);
 
-                if($costcentercategory){
+    
 
-                    $context = \context_coursecat::instance($costcentercategory);
+                     if($pathcontext->contextlevel == CONTEXT_COURSECAT){
+
+                        try{
+
+                            $sql = "SELECT cc.id FROM {local_costcenter} AS cc WHERE cc.category= :category ";
+
+                            $costcenterid = $DB->get_field_sql($sql, array('category' =>$pathcontext->instanceid)); 
+
+                            if($costcenterid){
+
+                                // Get a cache instance
+                                $cache = \cache::make('local_costcenter','costcentercontextdata');
+
+                                // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+
+                                $cachekey = "costcenter_context_$costcenterid";
+
+                                $context = $cache->get($cachekey);
+
+
+                                if ($context === false) {
+
+                                    $context = $pathcontext;
+
+                                    $cache->set($cachekey, $pathcontext);
+                                }
+                            }else{
+
+                                $context = \context_user::instance($USER->id);
+                            }
+
+                        }catch(dml_exception $e){
+
+                            print_r($e->debuginfo);
+
+                        }
+                     }
 
                 }else{
 
                     $context = \context_user::instance($USER->id);
-                }
-
-                $cache->set($cachekey, $context);
+                } 
             }
+      
+            return $context;
+
+        }else{
+
+            $context = \context_system::instance();
+
+            return $context;
         }
 
-        catch(dml_exception $e){
-
-            print_r($e->debuginfo);
-
-        }
-            
-        return $context;
-
-    }
-    public static function get_parent_costcenter($costcenterid){
-
-        global $DB,$USER;
-
-        $sql = "SELECT cc.id,cc.category,cc.parentid FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
-
-        $parentcostcenter = $DB->get_record_sql($sql, array('costcenterid' => $costcenterid)); 
-
-        return $parentcostcenter;
 
     }
     public static function get_user_roles_in_catgeorycontexts($userid = null){
@@ -116,4 +127,5 @@ class accesslib
         $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid]);
         return $assignedroles;
     }
+
 }

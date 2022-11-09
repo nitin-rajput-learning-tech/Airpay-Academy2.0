@@ -122,7 +122,7 @@ class external extends external_api {
         ));
       /*  $competency = api::read_competency($params['competencyid']);
         self::validate_context($competency->get_context()); */
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\elearning_courses($params['filter'], $params['filter_text'], $params['filter_offset'], $params['filter_limit']);
         $output = $PAGE->get_renderer('block_userdashboard');
        // echo $renderable->export_for_template($renderer);
@@ -199,7 +199,7 @@ class external extends external_api {
         ));
       /*  $competency = api::read_competency($params['competencyid']);
         self::validate_context($competency->get_context()); */
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\classroom_courses($params['filter'],$params['filter_text']);
         $output = $PAGE->get_renderer('block_userdashboard');
        // echo $renderable->export_for_template($renderer);
@@ -270,7 +270,7 @@ class external extends external_api {
             'filter_text' => $filter_text,
         ));
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\program_courses($params['filter'],$params['filter_text']);
         $output = $PAGE->get_renderer('block_userdashboard');
 
@@ -331,7 +331,7 @@ class external extends external_api {
             'filter_text' => $filter_text,
         ));
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\certification_courses($params['filter'],$params['filter_text']);
         $output = $PAGE->get_renderer('block_userdashboard');
 
@@ -393,7 +393,7 @@ class external extends external_api {
             'filter_text' => $filter_text,
         ));
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\xseed($params['filter'],$params['filter_text']);
         $output = $PAGE->get_renderer('block_userdashboard');
 
@@ -455,7 +455,7 @@ class external extends external_api {
             'filter_text' => $filter_text,
         ));
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\learningplan_courses($params['filter'],$params['filter_text']);
         $output = $PAGE->get_renderer('block_userdashboard');
 
@@ -516,7 +516,7 @@ class external extends external_api {
             'filter_text' => $filter_text,
         ));
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\evaluation_courses($params['filter'],$params['filter_text']);
         $output = $PAGE->get_renderer('block_userdashboard');
 
@@ -578,7 +578,7 @@ class external extends external_api {
             )
         );
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context((new \local_costcenter\lib\accesslib())::get_module_context());
         $renderable = new output\onlinetests_courses($params['filter'],$params['filter_text']);
         $output = $PAGE->get_renderer('block_userdashboard');
 
