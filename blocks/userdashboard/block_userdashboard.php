@@ -40,8 +40,8 @@ class block_userdashboard extends block_base {
 		if ($this->content !== null) {
 			return $this->content;
 		}
-
-		$systemcontext = context_system::instance();
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+		//$systemcontext = context_system::instance();
 		if (is_siteadmin() || !(has_capability('block/userdashboard:view', $systemcontext))) {
 			return '';
 		}

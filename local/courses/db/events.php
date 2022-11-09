@@ -27,6 +27,14 @@
 $observers = array(
 
     array(
+        'eventname'   => '\core\event\course_viewed',
+        'callback'    => 'local_courses_observer::course_viewed',
+    ),
+    // array(
+    //     'eventname'   => '\core\event\course_category_viewed',
+    //     'callback'    => 'local_courses_observer::course_category_viewed',
+    // ),
+    array(
         'eventname'   => '\core\event\course_completed',
         'callback'    => 'local_courses_observer::course_completed_notification',
     )
