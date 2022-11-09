@@ -34,149 +34,84 @@ class accesslib
 
         global $DB,$USER;
 
-        if(is_siteadmin()){
+        if (!empty($USER->id)){
 
-            $context = \context_system::instance();
+            if(is_siteadmin()){
 
-            return $context;
-
-        }elseif($costcenterid == null || $costcenterid == 0){
-
-            print_object($USER->access['rsw']);
-
-        
-            $userraarray = array_values($USER->access['ra']);
-
-            $fisrtrolearray = array_values($userraarray[2]);
-
-            $fisrtroleid=$fisrtrolearray[0];
-
-            if(isset($fisrtroleid)){
-
-                $contextid=$DB->get_field('role_assignments','contextid',  array('roleid'=>$fisrtroleid,'userid'=>$USER->id));
-
-                $context =\context::instance_by_id($contextid);
-
-                if( (isset($USER->access['rsw']) && empty($USER->access['rsw'])) ){
-
-                    $accessdata = get_empty_accessdata();
-
-                    if(self::roleswitch($fisrtroleid, $context, $accessdata)){
-
-                        return $context;
-
-                    }else{
-
-                        $context = \context_user::instance($USER->id);
-                    }
-
-                }
-
-            } 
-
-            $costcenterid=$USER->open_costcenterid ? $USER->open_costcenterid : 0;
-
-
-            if($costcenterid == 0){
-
-                $context = \context_user::instance($USER->id);
+                $context = \context_system::instance();
 
                 return $context;
-            }
 
-        }
-         try{
-
-            // Get a cache instance
-            $cache = \cache::make('local_costcenter','costcentercontextdata');
-
-            // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
-
-            $cachekey = "costcenter_context_$costcenterid";
-
-            $context = $cache->get($cachekey);
+            }else{
 
 
-            if ($context === false) {
+                if( (isset($USER->access['rsw']) && !empty($USER->access['rsw'])) ){
 
-                $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
 
-                $costcentercategory = $DB->get_field_sql($sql, array('costcenterid' => $costcenterid)); 
+                     $contextpath=array_values(array_flip($USER->access['rsw']));
 
-                if($costcentercategory){
+                     $extractcontextpath=array_filter(explode('/',$contextpath[0]));
 
-                    $context = \context_coursecat::instance($costcentercategory);
+                     $endpathvalue=end($extractcontextpath);
 
-                    $cache->set($cachekey, $context);
+                     $pathcontext =\context::instance_by_id($endpathvalue);
+
+    
+
+                     if($pathcontext->contextlevel == CONTEXT_COURSECAT){
+
+                        try{
+
+                            $sql = "SELECT cc.id FROM {local_costcenter} AS cc WHERE cc.category= :category ";
+
+                            $costcenterid = $DB->get_field_sql($sql, array('category' =>$pathcontext->instanceid)); 
+
+                            if($costcenterid){
+
+                                // Get a cache instance
+                                $cache = \cache::make('local_costcenter','costcentercontextdata');
+
+                                // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+
+                                $cachekey = "costcenter_context_$costcenterid";
+
+                                $context = $cache->get($cachekey);
+
+
+                                if ($context === false) {
+
+                                    $context = $pathcontext;
+
+                                    $cache->set($cachekey, $pathcontext);
+                                }
+                            }else{
+
+                                $context = \context_user::instance($USER->id);
+                            }
+
+                        }catch(dml_exception $e){
+
+                            print_r($e->debuginfo);
+
+                        }
+                     }
 
                 }else{
 
                     $context = \context_user::instance($USER->id);
-                }
-
+                } 
             }
+      
+            return $context;
+
+        }else{
+
+            $context = \context_system::instance();
+
+            return $context;
         }
 
-        catch(dml_exception $e){
 
-            print_r($e->debuginfo);
-
-        }
-            
-        return $context;
-
-    }
-    /**
-     * sitelevel roleswitch as buttons.
-     *
-     * @param int $courseid A course object.
-     * @param stdClass $context usually site context.
-     * @return string HTML.
-     */
-    public static function roleswitch($roleid, $context, &$accessdata){
-
-        global $DB, $ACCESSLIB_PRIVATE, $USER;
-        $USER->access['rsw'][$context->path] = $roleid;
-       /* Get the relevant rolecaps into rdef
-        * - relevant role caps
-        *   - at ctx and above
-        *   - below this ctx
-        */
-
-        if (empty($context->path)) {
-            // weird, this should not happen
-            return;
-        }
-
-        list($parentsaself, $params) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'pc_');
-        $params['roleid'] = $roleid;
-        $params['childpath'] = $context->path.'/%';
-
-        $sql = "SELECT ctx.path, rc.capability, rc.permission
-                  FROM {role_capabilities} rc
-                  JOIN {context} ctx ON (rc.contextid = ctx.id)
-                 WHERE rc.roleid = :roleid AND (ctx.id $parentsaself OR ctx.path LIKE :childpath)
-              ORDER BY rc.capability"; // fixed capability order is necessary for rdef dedupe
-        $rs = $DB->get_recordset_sql($sql, $params);
-
-        $newrdefs = array();
-        foreach ($rs as $rd) {
-            $k = $rd->path.':'.$roleid;
-            if (isset($accessdata['rdef'][$k])) {
-                continue;
-            }
-            $newrdefs[$k][$rd->capability] = (int)$rd->permission;
-        }
-        $rs->close();
-
-        // share new role definitions
-        foreach ($newrdefs as $k=>$unused) {
-            if (!isset($ACCESSLIB_PRIVATE->rolepermissions[$k])) {
-                $ACCESSLIB_PRIVATE->rolepermissions[$k] = $newrdefs[$k];
-            }
-            $accessdata['rdef'][$k] =& $ACCESSLIB_PRIVATE->rolepermissions[$k];
-        }
-        return true;
     }
     public static function get_user_roles_in_catgeorycontexts($userid = null){
         global $DB, $USER;
@@ -192,4 +127,5 @@ class accesslib
         $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid]);
         return $assignedroles;
     }
+
 }
