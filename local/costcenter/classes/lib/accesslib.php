@@ -42,8 +42,40 @@ class accesslib
 
         }elseif($costcenterid == null || $costcenterid == 0){
 
+            print_object($USER->access['rsw']);
+
+        
+            $userraarray = array_values($USER->access['ra']);
+
+            $fisrtrolearray = array_values($userraarray[2]);
+
+            $fisrtroleid=$fisrtrolearray[0];
+
+            if(isset($fisrtroleid)){
+
+                $contextid=$DB->get_field('role_assignments','contextid',  array('roleid'=>$fisrtroleid,'userid'=>$USER->id));
+
+                $context =\context::instance_by_id($contextid);
+
+                if( (isset($USER->access['rsw']) && empty($USER->access['rsw'])) ){
+
+                    $accessdata = get_empty_accessdata();
+
+                    if(self::roleswitch($fisrtroleid, $context, $accessdata)){
+
+                        return $context;
+
+                    }else{
+
+                        $context = \context_user::instance($USER->id);
+                    }
+
+                }
+
+            } 
 
             $costcenterid=$USER->open_costcenterid ? $USER->open_costcenterid : 0;
+
 
             if($costcenterid == 0){
 
@@ -64,6 +96,7 @@ class accesslib
 
             $context = $cache->get($cachekey);
 
+
             if ($context === false) {
 
                 $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
@@ -74,12 +107,13 @@ class accesslib
 
                     $context = \context_coursecat::instance($costcentercategory);
 
+                    $cache->set($cachekey, $context);
+
                 }else{
 
                     $context = \context_user::instance($USER->id);
                 }
 
-                $cache->set($cachekey, $context);
             }
         }
 
@@ -92,15 +126,56 @@ class accesslib
         return $context;
 
     }
-    public static function get_parent_costcenter($costcenterid){
+    /**
+     * sitelevel roleswitch as buttons.
+     *
+     * @param int $courseid A course object.
+     * @param stdClass $context usually site context.
+     * @return string HTML.
+     */
+    public static function roleswitch($roleid, $context, &$accessdata){
 
-        global $DB,$USER;
+        global $DB, $ACCESSLIB_PRIVATE, $USER;
+        $USER->access['rsw'][$context->path] = $roleid;
+       /* Get the relevant rolecaps into rdef
+        * - relevant role caps
+        *   - at ctx and above
+        *   - below this ctx
+        */
 
-        $sql = "SELECT cc.id,cc.category,cc.parentid FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+        if (empty($context->path)) {
+            // weird, this should not happen
+            return;
+        }
 
-        $parentcostcenter = $DB->get_record_sql($sql, array('costcenterid' => $costcenterid)); 
+        list($parentsaself, $params) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'pc_');
+        $params['roleid'] = $roleid;
+        $params['childpath'] = $context->path.'/%';
 
-        return $parentcostcenter;
+        $sql = "SELECT ctx.path, rc.capability, rc.permission
+                  FROM {role_capabilities} rc
+                  JOIN {context} ctx ON (rc.contextid = ctx.id)
+                 WHERE rc.roleid = :roleid AND (ctx.id $parentsaself OR ctx.path LIKE :childpath)
+              ORDER BY rc.capability"; // fixed capability order is necessary for rdef dedupe
+        $rs = $DB->get_recordset_sql($sql, $params);
 
+        $newrdefs = array();
+        foreach ($rs as $rd) {
+            $k = $rd->path.':'.$roleid;
+            if (isset($accessdata['rdef'][$k])) {
+                continue;
+            }
+            $newrdefs[$k][$rd->capability] = (int)$rd->permission;
+        }
+        $rs->close();
+
+        // share new role definitions
+        foreach ($newrdefs as $k=>$unused) {
+            if (!isset($ACCESSLIB_PRIVATE->rolepermissions[$k])) {
+                $ACCESSLIB_PRIVATE->rolepermissions[$k] = $newrdefs[$k];
+            }
+            $accessdata['rdef'][$k] =& $ACCESSLIB_PRIVATE->rolepermissions[$k];
+        }
+        return true;
     }
 }
