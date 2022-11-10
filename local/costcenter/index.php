@@ -35,6 +35,8 @@ $PAGE->requires->css('/local/costcenter/css/jquery.dataTables.min.css');
 $PAGE->requires->js_call_amd('local_costcenter/costcenterdatatables', 'costcenterDatatable', array());
 $PAGE->requires->js_call_amd('local_assignroles/newcostcenterassignrole', 'load', array());
 $PAGE->requires->js_call_amd('local_assignroles/rolespopup', 'init',array(array('contextid' => $systemcontext->id, 'selector' => '.rolescostcenterpopup')));
+$PAGE->requires->js_call_amd('local_assignroles/popup', 'Datatable', array());
+
  
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 require_login();

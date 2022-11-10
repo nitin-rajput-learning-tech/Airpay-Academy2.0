@@ -49,10 +49,10 @@ define(['local_assignroles/jquery.dataTables', 'jquery', 'core/str', 'core/modal
         var self = this;
         // Fetch the title string.
         $(selector).click(function(){
-            self.roleid = $(this).data('roleid');
-            self.rolename = $(this).data('rolename');
+            self.costcenterid = $(this).data('costcenterid');
+            self.costcentername = $(this).data('costcentername');
 
-            Str.get_string('assignrole', 'local_assignroles', self).then(function(title) {
+            Str.get_string('costcenterassignedrole', 'local_costcenter', self).then(function(title) {
             
                 ModalFactory.create({
                     type: ModalFactory.types.CANCEL,
@@ -82,7 +82,7 @@ define(['local_assignroles/jquery.dataTables', 'jquery', 'core/str', 'core/modal
                     self.modal.show();
 
                     self.modal.getRoot().on(ModalEvents.bodyRendered, function() {
-                         self.dataTableshow(self.roleid);
+                         self.dataTableshow(self.costcenterid);
                     }.bind(this));                                    
                                   
                 });    
@@ -91,7 +91,7 @@ define(['local_assignroles/jquery.dataTables', 'jquery', 'core/str', 'core/modal
         });
                     
     };
-    NewPopup.prototype.dataTableshow = function(roleid){
+    NewPopup.prototype.dataTableshow = function(costcenterid){
 		Str.get_strings([{
             key: 'nodata_available',
             component: 'local_assignroles',
@@ -101,7 +101,7 @@ define(['local_assignroles/jquery.dataTables', 'jquery', 'core/str', 'core/modal
             component: 'local_assignroles',
         }
 		]).then(function(s) {
-            $('#popup_user'+roleid).DataTable({
+            $('#popup_user'+costcenterid).DataTable({
                 'bPaginate': true,
                 'bFilter': true,
                 'bLengthChange': true,
@@ -139,14 +139,14 @@ define(['local_assignroles/jquery.dataTables', 'jquery', 'core/str', 'core/modal
         }
         
         // Get the content of the modal.
-        if(typeof this.roleid != 'undefined'){
-            var params = {roleid:this.roleid, jsonformdata: JSON.stringify(formdata)};
+        if(typeof this.costcenterid != 'undefined'){
+            var params = {costcenterid:this.costcenterid, jsonformdata: JSON.stringify(formdata)};
         }else{
             var params = {};
         }
         // console.log(params);
         // alert(params);
-        return Fragment.loadFragment('local_assignroles', 'roleusers_display', this.contextid, params);
+        return Fragment.loadFragment('local_assignroles', 'costcenterroleusers_display', this.contextid, params);
     };
     var unassignuser = function(args){
         return Str.get_strings([{

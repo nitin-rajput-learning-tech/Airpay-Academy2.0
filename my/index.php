@@ -88,7 +88,6 @@ if (isguestuser()) {  // Force them to see system default, no editing allowed
 if (!$currentpage = my_get_page($userid, MY_PAGE_PRIVATE)) {
     print_error('mymoodlesetup');
 }
-
 // Start setting up the page
 $params = array();
 $PAGE->set_context($context);
