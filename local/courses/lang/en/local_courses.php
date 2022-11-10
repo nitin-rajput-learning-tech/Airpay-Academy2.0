@@ -368,9 +368,5 @@ $string['approvalreqdcourse_help'] = 'Select.
 * No - If you would like user to self enroll to course without an approval from manager or organization head';
 $string['coursedescription'] = 'Description';
 $string['exportcourses'] = 'Export Courses to Excel';
-
-
-
-
-
-
+$string['make_inactive'] = 'Make Inactive';
+$string['make_active'] = 'Make Active';

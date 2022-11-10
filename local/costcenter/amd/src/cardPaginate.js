@@ -280,10 +280,12 @@ define(
                     if(str.indexOf('[]') != -1){
                         field.name = str.substring(0, str.length - 2);
                     }
-                    if(field.name in filterdatavalue){
-                        filterdatavalue[field.name] = filterdatavalue[field.name]+','+field.value;
-                    }else{  
-                        filterdatavalue[field.name] = field.value;
+                    if(field.value != '_qf__force_multiselect_submission'){
+                        if(field.name in filterdatavalue){
+                            filterdatavalue[field.name] = filterdatavalue[field.name]+','+field.value;
+                        }else{  
+                            filterdatavalue[field.name] = field.value;
+                        }
                     }
                 }
 
