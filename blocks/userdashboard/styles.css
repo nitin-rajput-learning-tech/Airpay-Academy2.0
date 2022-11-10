@@ -162,7 +162,7 @@
 }
 
 .block.block_userdashboard .nav-tabs .nav-link.active {
-    font-weight: 600;
+    font-weight: 700;
     border-bottom: 0;
     border-radius: .5rem .5rem 0 0
 }
@@ -1691,7 +1691,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 }
 .block.block_userdashboard .count_info_list .enrolled_counts .count_value{
     font-size: 18px;
-    background-color: #ffba00;
+    background-color: #FFBA00;
     border-radius: 50%;
     padding: 2px 11px;
     display: flex;
@@ -1735,7 +1735,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     right: 1rem;
 }
 .block.block_userdashboard .count_info_container .enrolled_counts .count_string{
-	color: #ffba00!important;
+	color: #C6940D !important;
 	padding: 0px 8px;
     text-transform: uppercase;
     font-weight: 600;
@@ -1784,7 +1784,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 	border-radius: 18px;
 }
 .block.block_userdashboard .nav-tabs {
-    border-bottom: 1px solid #fff;
+    border-bottom: 1px solid #ffffffa3;
     padding-bottom: 3px;
 }
 .block.block_userdashboard .desc {
@@ -1800,7 +1800,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 	background-image: url("[[pix:block_userdashboard|userdashboardbg]]");
 	background-repeat: no-repeat;
     background-size: cover;
-    min-height: 380px;
+    min-height: 435px;
     background-position: center;
     padding-top: 20px;
     padding: 20px 15px;

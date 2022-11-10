@@ -515,15 +515,9 @@ body#page-local-courses-upload-index h2+.mform {
     body#page-local-courses-courses .coursedesc {
         min-height: 50px
     }
-    .course_container .coursetype {
-        top: -2px !important
-    }
 }
 
 @media(max-width:1217px) {
-    .course_container .coursetype {
-        min-height: 44px
-    }
 }
 
 @media (min-width:768px) {
@@ -628,11 +622,6 @@ body#page-local-courses-upload-index h2+.mform {
     }
     body#page-local-courses-courses .coursedesc {
         min-height: 50px
-    }
-    .course_container .coursetype {
-        top: -2px !important;
-        display: inline-block;
-        width: 100%
     }
     #page-local-courses-courses .course_container .coursecontent {
         margin-bottom: 5px
@@ -789,11 +778,6 @@ body#page-local-courses-courses .actionicons a .icon {
 
 #page-report-log-index form.logselecform {
     margin-top: 15px
-}
-
-.course_container .coursetype {
-    position: relative;
-    top: -9px
 }
 
 .course_container .coursetype .classroom {

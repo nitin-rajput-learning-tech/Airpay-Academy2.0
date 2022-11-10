@@ -449,6 +449,30 @@ class core_renderer extends \core_renderer {
 		
 		return $return;
     }
+    /*
+     * Returns logo url to be displayed throughout the site
+     * @author Rizwana
+     *
+     * @return logo url
+    */
+    public function get_custom_logo() {
+        global $USER, $DB;
+        if(!empty($USER->open_costcenterid)){
+             $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$USER->open_costcenterid));
+         }
+         if(!empty($costcenterid)){
+             $logopath = costcenter_logo($costcenterid);
+         }
+         
+         if(empty($logopath)) {
+             $logopath = $this->get_compact_logo_url();
+            //  if(empty($logopath)){
+            //      $default_logo = $this->image_url('default_logo', 'theme_epsilon');
+            //      $logopath = $default_logo;
+            //  }
+         }
+         return $logopath;
+     }
     /**
      * returns the login logo url if uploaded in theme settings else returns false
      *
