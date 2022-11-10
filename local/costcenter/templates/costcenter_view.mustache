@@ -53,6 +53,11 @@
                             <a class="rolescostcenterpopup"  href="javascript:void(0)" data-costcenterid="{{recordid}}"  data-costcentername="{{orgname}}" data-action="popupmodal{{recordid}}"  data-value={{role_count}}><i class="fa fa-user-plus"></i></a>
 
                         </li>
+
+                        <li>
+                            <a class="rolescostcenterpopup"  href="{{cfg.wwwroot}}/my/dashboard.php?orgid={{recordid}}">{{# str}}addblocks,local_costcenter{{/ str}}</a>
+
+                        </li>
    
                         {{/ assignroles}}
                     </ul>
