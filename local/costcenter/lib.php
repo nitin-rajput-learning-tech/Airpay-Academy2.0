@@ -719,3 +719,33 @@ function local_costcenter_output_fragment_departmentview($args){
     ob_end_clean();
     return $o;
 }
+
+
+function local_costcenter_output_fragment_roleusers_display($args)
+{
+
+    global $DB, $CFG, $PAGE, $OUTPUT, $USER;
+
+         $rolestring = $args['roleid'];
+
+      $templatedata =  array();
+      $rowdata = array();
+   
+  $query1 = $DB->get_records_sql("SELECT ro.shortname,us.firstname,us.email,cat.name FROM mdl_role_assignments as ra JOIN mdl_context as cc ON cc.id=ra.contextid JOIN mdl_user as us ON us.id=ra.userid join mdl_role as ro on ro.id=ra.roleid JOIN mdl_course_categories as cat on cat.id= cc.instanceid WHERE ro.id IN ($rolestring)");
+ 
+ $templatedata['enabletable'] = true;
+          foreach($query1 as $a)
+          { 
+
+             $rowdata['fullname'] = $a->firstname;
+             $rowdata['employeeid'] = $a->shortname;
+             $rowdata['email'] =  $a->email;
+             $rowdata['orgname'] = $a->name;
+             $templatedata['rowdata'][] = $rowdata;
+          }
+ 
+ 
+    $output = $OUTPUT->render_from_template('local_costcenter/popupcontent', $templatedata);
+
+    return $output;
+}
