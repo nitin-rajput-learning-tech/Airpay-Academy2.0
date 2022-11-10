@@ -116,6 +116,14 @@ function xmldb_local_courses_upgrade($oldversion) {
 
      upgrade_plugin_savepoint(true, 2022101800, 'local', 'courses');
    }
-
+   if($oldversion < 2022101800.03){
+    $table = new xmldb_table('local_emaillogs');
+    $field1 = new xmldb_field('status');
+    $field1->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+    if (!$dbman->field_exists($table, $field1)) {
+        $dbman->add_field($table, $field1);
+    }
+    upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'local_emaillogs');
+}
     return true;
 }
