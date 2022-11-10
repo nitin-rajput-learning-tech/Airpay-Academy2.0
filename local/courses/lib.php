@@ -1394,7 +1394,18 @@ function get_listof_courses($stable, $filterdata) {
             $subdepartmentcount = count(array_filter(explode(',',$course->open_subdepartment)));
           
             $params = array('courseid'=>$course->id);
-            
+            if(is_siteadmin()){
+                $conditionsql = " ";
+            } elseif(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+                $conditionsql = " AND u.open_costcenterid = :costcenterid ";
+                $params['costcenterid'] = $USER->open_costcenterid;
+            } elseif(has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+                $conditionsql = " AND u.open_departmentid = :departmentid ";
+                $params['departmentid'] = $USER->open_departmentid;
+            } else {
+                $conditionsql = " AND u.open_subdepartment = :subdepartment ";
+                $params['subdepartment'] = $USER->open_subdepartment;
+            }
             $enrolledusersssql = " SELECT COUNT(DISTINCT(ue.id)) as ccount
                                 FROM {course} c
                                 JOIN {course_categories} cat ON cat.id = c.category
@@ -1406,7 +1417,7 @@ function get_listof_courses($stable, $filterdata) {
                                 JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
                                 JOIN {role_assignments} as ra ON ra.userid = u.id
                                 JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
-                                WHERE c.id = :courseid";
+                                WHERE c.id = :courseid {$conditionsql} ";
 
             $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
 
@@ -1424,7 +1435,7 @@ function get_listof_courses($stable, $filterdata) {
                                 JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                                 JOIN {course_completions} as cc 
                                         ON cc.course = c.id AND u.id = cc.userid
-                                WHERE c.id = :courseid AND cc.timecompleted IS NOT NULL ";
+                                WHERE c.id = :courseid AND cc.timecompleted IS NOT NULL {$conditionsql} ";
 
             $completed_count = $DB->count_records_sql($completedusersssql,$params);
 
