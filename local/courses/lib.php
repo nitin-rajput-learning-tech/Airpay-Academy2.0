@@ -1381,7 +1381,8 @@ function get_listof_courses($stable, $filterdata) {
     $totalcourses = $DB->count_records_sql($countsql.$formsql, $params);
     $formsql .=" ORDER BY c.id DESC";
     $courses = $DB->get_records_sql($selectsql.$formsql, $params, $stable->start,$stable->length);
-
+    // var_dump($selectsql.$formsql);
+    // var_dump($params);exit;
     $ratings_plugin_exist = $core_component::get_plugin_directory('local', 'ratings');
     $courseslist = array();
     if(!empty($courses)){
@@ -1885,8 +1886,8 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
     $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
     $action = isset($filterparams['action']) ? $filterparams['action'] : '';
-    $renderer = $PAGE->get_renderer('local_courses');
-    $filterparams = $renderer->get_catalog_courses(true,$formattype);
+    // $renderer = $PAGE->get_renderer('local_courses');
+    // $filterparams = $renderer->get_catalog_courses(true,$formattype);
     if(is_siteadmin()){
         $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'status');
     }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){

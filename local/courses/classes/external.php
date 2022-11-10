@@ -728,19 +728,22 @@ class local_courses_external extends external_api {
     $decodedata = json_decode($params['dataoptions']);
     $filtervalues = json_decode($filterdata);
 
-    //for filtering courses we are providing form
-    $data = array();
-    parse_str($filtervalues, $data);
-    $renderer = $PAGE->get_renderer('local_courses');
-    $filterparams = $renderer->get_catalog_courses(true);
-    
-    
-    $mform = courses_filters_form($filterparams, $data);
-    $mform->set_data($data);
-   
-    $submitteddata = $mform->get_data();
-    $submitteddata->search_query = $filtervalues->search_query;
 
+    // $data = array();
+    // // parse_str($filtervalues, $data);
+    // $data = is_object($filtervalues) ? (array)$filtervalues : parse_str($filtervalues, $data);
+    // // var_dump($data);
+    // $renderer = $PAGE->get_renderer('local_courses');
+    // $filterparams = $renderer->get_catalog_courses(true);
+    
+    
+    // $mform = courses_filters_form($filterparams, $data);
+    // $mform->set_data($data);
+    
+    // $submitteddata = (object)$mform->thisform->exportValues();
+    // var_dump($filtervalues);
+    // $submitteddata = $mform->get_data();
+    // $submitteddata->search_query = $filtervalues->search_query;
     $stable = new \stdClass();
     $stable->thead = false;
     $stable->start = $offset;
@@ -748,7 +751,7 @@ class local_courses_external extends external_api {
     $stable->status = $decodedata->status;
     $stable->costcenterid = $decodedata->costcenterid;
     $stable->departmentid = $decodedata->departmentid;
-    $data = get_listof_courses($stable, $submitteddata);
+    $data = get_listof_courses($stable, $filtervalues);
     $totalcount = $data['totalcourses'];
     return [
         'totalcount' => $totalcount,

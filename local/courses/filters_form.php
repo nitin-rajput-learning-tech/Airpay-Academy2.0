@@ -6,17 +6,18 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->libdir.'/formslib.php');
 class filters_form extends moodleform {
-
+    public $thisform;
     function definition() {
         global $CFG;
+        $this->thisform = $this->_form;
 
         $mform    = $this->_form;
         $filterlist        = $this->_customdata['filterlist'];// this contains the data of this form
-        $filterparams      = isset($this->_customdata['filterparams']);
-        $action            = isset($this->_customdata['action']);
-        $options           = isset($filterparams['options']);
-        $dataoptions       = isset($filterparams['dataoptions']);
-        $submit            = isset($this->_customdata['submitid']);
+        $filterparams      = isset($this->_customdata['filterparams']) ? $this->_customdata['filterparams'] : null;
+        $action            = isset($this->_customdata['action']) ? $this->_customdata['action'] : null;
+        $options           = isset($filterparams['options']) ? $filterparams['options'] : null;
+        $dataoptions       = isset($filterparams['dataoptions']) ? $filterparams['dataoptions'] :null;
+        $submit            = isset($this->_customdata['submitid']) ? $this->_customdata['submitid']: null;
         $submitid          = $submit ? $submit : 'filteringform';
        // $submitid =  $this->_customdata['submitid'] ? $this->_customdata['submitid'] : 'filteringform';
 

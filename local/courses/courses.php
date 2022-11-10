@@ -157,6 +157,7 @@ echo $extended_menu_links;
 
 $filterparams = $renderer->get_catalog_courses(true,$formattype);
 
+
 // if(is_siteadmin()){
 //     $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'status');
 // }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
