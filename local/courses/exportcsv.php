@@ -74,6 +74,7 @@ $table->data = $data;
     if (!empty($table->data)) {
         foreach ($table->data as $rkey => $row) {
             foreach ($row as $key => $item) {
+                $item = is_array($item) ? implode(',', $item) : $item;
                 $matrix[$rkey + 1][$key] = str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item))));
             }
         }
