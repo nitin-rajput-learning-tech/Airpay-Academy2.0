@@ -864,10 +864,7 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
 
 /*hema   local course view file code*/
 
-#page-local-courses-courses .course_container .coursetype{
-    top: 0px!important;
-    left: 15px;
-}
+
 #page-local-courses-courses .course_container .coursetype .elearning{
     padding-left: 0!important;
 }
@@ -925,4 +922,7 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
 }
 #page-local-courses-courses #region-main{
     background-color: transparent;
+}
+#page-local-courses-courses #filters_form{
+    background-color: #fff;
 }
