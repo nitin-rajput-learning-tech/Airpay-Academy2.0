@@ -358,7 +358,9 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             }
 
-           $contextid =  $systemcontext->id;
+           $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->id);
+
+           $contextid =  $context->id;
 
 
             $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
@@ -381,12 +383,13 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;
             $departments_array['headstring'] = 'update_costcenter';
             $departments_array['formtype'] = 'department';
+
+            $departments_array['role_count'] = $rolescount;
             $departments_content[] = $departments_array+$deparray;
         }
 
         $costcenter_view_content = [
             "deptcount" => $dept_count_link,
-             "role_count" => $rolescount,
             "subdeptcount" => $subdepartment,
             "deptclass" => $deptclass, 
             "roleid" => 'test role',
@@ -501,6 +504,12 @@ class local_costcenter_renderer extends plugin_renderer_base {
                 }
                 
             }
+
+            $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->id);
+
+            $contextid =  $context->id;
+
+            $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
           
             $departments_array['subdept'] = $subdept;
             $departments_array['enablesubdepartment_link'] = false;
@@ -525,6 +534,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['hide_certification'] = TRUE;
             $departments_array['headstring'] = 'update_subdept';
             $departments_array['formtype'] = 'subdepartment';
+            $departments_array['role_count'] = $rolescount;
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;
             $departments_content[] = $departments_array+$deparray;
         }
