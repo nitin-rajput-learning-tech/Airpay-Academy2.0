@@ -30,88 +30,117 @@ namespace local_costcenter\lib;
  */
 class accesslib
 {
-    public static function get_module_context($costcenterid = null){
+    public static function get_module_context($costcenterparamid = null){
 
-        global $DB,$USER;
+        global $DB,$USER,$OUTPUT;
 
-        if (!empty($USER->id)){
-
-            if(is_siteadmin()){
-
-                $context = \context_system::instance();
-
-                return $context;
-
-            }else{
-
-
-                if( (isset($USER->access['rsw']) && !empty($USER->access['rsw'])) ){
-
-
-                     $contextpath=array_values(array_flip($USER->access['rsw']));
-
-                     $extractcontextpath=array_filter(explode('/',$contextpath[0]));
-
-                     $endpathvalue=end($extractcontextpath);
-
-                     $pathcontext =\context::instance_by_id($endpathvalue);
-
-    
-
-                     if($pathcontext->contextlevel == CONTEXT_COURSECAT){
-
-                        try{
-
-                            $sql = "SELECT cc.id FROM {local_costcenter} AS cc WHERE cc.category= :category ";
-
-                            $costcenterid = $DB->get_field_sql($sql, array('category' =>$pathcontext->instanceid)); 
-
-                            if($costcenterid){
-
-                                // Get a cache instance
-                                $cache = \cache::make('local_costcenter','costcentercontextdata');
-
-                                // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
-
-                                $cachekey = "costcenter_context_$costcenterid";
-
-                                $context = $cache->get($cachekey);
-
-
-                                if ($context === false) {
-
-                                    $context = $pathcontext;
-
-                                    $cache->set($cachekey, $pathcontext);
-                                }
-                            }else{
-
-                                $context = \context_user::instance($USER->id);
-                            }
-
-                        }catch(dml_exception $e){
-
-                            print_r($e->debuginfo);
-
-                        }
-                     }
-
-                }else{
-
-                    $context = \context_user::instance($USER->id);
-                } 
-            }
-      
-            return $context;
-
-        }else{
+        if(empty($USER->id) || is_siteadmin()){
 
             $context = \context_system::instance();
 
             return $context;
+
+        }else{                
+
+            if(($costcenterparamid == null || $costcenterparamid == 0)){
+
+                if(isset($USER->access['rsw']) && !empty($USER->access['rsw'])){
+
+                    if(!empty($USER->access['rsw']['currentroleinfo']['context'])){
+
+                        $context =$USER->access['rsw']['currentroleinfo']['context'];
+
+
+                    }else{
+
+                        $contextpath=array_values(array_flip($USER->access['rsw']));
+
+                        $extractcontextpath=array_filter(explode('/',$contextpath[0]));
+
+                        $endpathvalue=end($extractcontextpath);
+
+                        $context =\context::instance_by_id($endpathvalue);
+
+                    
+                    }
+
+                }else{
+
+                     $highestroleinfo = self::get_user_highestrole_in_catgeorycontext($USER->id);
+
+                     if ($highestroleinfo) {
+
+                        $accessdata = get_empty_accessdata();
+
+                        $context =\context::instance_by_id($highestroleinfo->contextid);
+        
+                        $OUTPUT->roleswitch($highestroleinfo->roleid, $context, $accessdata);
+
+
+                    }else{
+
+                        $context = \context_system::instance();
+
+                    }
+                }
+
+            }elseif($costcenterparamid > 0){
+
+                 try{
+
+                    // Get a cache instance
+                    $cache = \cache::make('local_costcenter','costcentercontextdata');
+
+                    // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+
+                    $cachekey = "costcenter_context_$costcenterparamid";
+
+                    $context = $cache->get($cachekey);
+
+
+                    if ($context === false) {
+
+                        $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+
+                        $costcentercategory = $DB->get_field_sql($sql, array('costcenterid' => $costcenterparamid)); 
+
+                        if($costcentercategory){
+
+                            $context = \context_coursecat::instance($costcentercategory);
+
+                            $cache->set($cachekey, $context);
+
+                        }else{
+
+                            $context = \context_system::instance();
+                        }
+
+                    }
+                }catch(dml_exception $e){
+
+                    print_r($e->debuginfo);
+
+                }
+
+            }
+
+            return $context;
+
         }
-
-
+    }
+    public static function get_user_highestrole_in_catgeorycontext($userid = null){
+        global $DB, $USER;
+        if(is_null($userid)){
+            $userid = $USER->id;
+        }
+        $assignedsql = "SELECT ra.id, cc.id as categoryid, r.id as roleid, ra.contextid
+        FROM {role_assignments} AS ra 
+        JOIN {role} AS r ON r.id =  ra.roleid
+        JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
+        JOIN {course_categories} AS cc ON cc.id = c.instanceid 
+        WHERE ra.userid = :userid ORDER BY ra.id DESC ";
+        $assignedroles = $DB->get_record_sql($assignedsql, ['userid' => $userid]);
+        return $assignedroles;
     }
     public static function get_user_roles_in_catgeorycontexts($userid = null){
         global $DB, $USER;
