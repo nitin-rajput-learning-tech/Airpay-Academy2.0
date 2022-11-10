@@ -183,6 +183,71 @@ function local_assignroles_output_fragment_roleusers_display($args)
 
     return $output;
 }
+/**
+ * Function to display the role users in popup
+ * returns data of the popup 
+ */
+function local_assignroles_output_fragment_costcenterroleusers_display($args)
+{
+    global $DB, $CFG, $PAGE, $OUTPUT, $USER;
+
+    $args = (object) $args;
+    $context = $args->context;
+    $costcenterid = $args->costcenterid;
+   
+  
+    $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterid);
+    
+
+    $sql = "SELECT u.id,u.firstname,u.lastname,u.email,u.open_employeeid,ra.roleid,ra.contextid FROM {role_assignments} AS ra JOIN {user} AS u on u.id=ra.userid 
+            WHERE  ra.contextid=:contextid ";
+    $users = $DB->get_records_sql($sql, array('contextid' => $context->id));
+    
+
+    $templatedata = array();
+    //print_object($users);
+    if ($users) {
+        $templatedata['enabletable'] = true;
+        foreach ($users as $user) {
+            $rowdata = array();
+         
+            $rolefullname = $DB->get_field('role', 'name', array('id' => $user->roleid));
+
+            $fullname = $user->firstname . ' ' . $user->lastname;
+
+            $rowdata['fullname'] = $fullname;
+            $rowdata['fullname'] = $fullname;
+            $rowdata['employeeid'] = $user->open_employeeid;
+            $rowdata['email'] = $user->email;
+            $rowdata['rolefullname'] = $rolefullname;
+            $rowdata['userid'] = $user->id;
+            $rowdata['username'] = $fullname;
+            $rowdata['roleid'] = $user->roleid;
+
+            if (is_siteadmin()) {
+          
+                $sql = "SELECT instanceid FROM {context} WHERE id = :id ";
+                $categoryid = $DB->get_field_sql($sql, array('id' => $user->contextid));
+
+                if ($categoryid == 0) {
+                    $usercontext = \context_system::instance();
+                } else {
+                    $usercontext = \context_coursecat::instance($categoryid);
+                }
+                $rowdata['contextid'] = $usercontext->id;
+            } else {
+                $rowdata['contextid'] = $context->id;
+            }
+            $templatedata['rowdata'][] = $rowdata;
+        }
+    } else {
+        $templatedata['enabletable'] = false;
+    }
+
+    $output = $OUTPUT->render_from_template('local_assignroles/costcenterpopupcontent', $templatedata);
+
+    return $output;
+}
 /*
 * Author Rizwana
 * Displays a node in left side menu
