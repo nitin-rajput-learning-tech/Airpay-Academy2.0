@@ -100,9 +100,12 @@ table.generaltable thead > tr > th a{
      box-shadow: 0 0 5px var(--lightbuttonbgcolor) inset;
      border: 1px solid var(--lightbuttonbgcolor) inset;
 }
- #page-login-index .form-control:focus {
+#page-login-index .form-control:focus {
      box-shadow: 0 0 5px var(--buttonbgcolor) inset;
      border: 1px solid var(--buttonbgcolor) inset;
+}
+#page-login-index .form-control {
+    box-shadow: 0 0 5px 0 #0000001f;;
 }
 .block_userdashboard .view_more_container {
      background-color: var(--buttonbgcolor);
