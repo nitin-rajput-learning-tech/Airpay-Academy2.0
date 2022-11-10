@@ -97,12 +97,21 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $mform->addElement('text', 'fullname', get_string('costcentername', 'local_costcenter'), array());
         $mform->setType('fullname', PARAM_TEXT);
         $mform->addRule('fullname', get_string('missingcostcentername', 'local_costcenter'), 'required', null, 'client');
-        
-        $mform->addElement('text', 'shortname', get_string('shortname','local_costcenter'), 'maxlength="100" size="20"');
+        if(!empty($id)){
+        $mform->addElement('static', 'shortname', get_string('shortname','local_costcenter'), 'maxlength="100" size="20"');
         
         $mform->addRule('shortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');
             
         $mform->setType('shortname', PARAM_TEXT);
+        }
+        else{
+            $mform->addElement('text', 'shortname', get_string('shortname','local_costcenter'), 'maxlength="100" size="20"');
+        
+            $mform->addRule('shortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');
+                
+            $mform->setType('shortname', PARAM_TEXT); 
+        }
+
         $attributes = array('rows' => '8', 'cols' => '40');
 
         $mform->addElement('hidden', 'id', $id);
