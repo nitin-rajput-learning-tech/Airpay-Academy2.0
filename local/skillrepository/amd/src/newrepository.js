@@ -207,7 +207,8 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
 
         },
         deleteskill: function(args) {
-            console.log(args);
+           
+           
             return Str.get_strings([{
                 key: 'confirm'
             },
@@ -222,7 +223,9 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 ModalFactory.create({
                     title: s[0],
                     type: ModalFactory.types.CONFIRM,
-                    body: s[1]
+                    body: s[1],
+                     footer: '<button type="button" class="btn btn-primary" data-action="save">Yes! Delete</button>&nbsp;' +
+            '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'
                 })/*.done(function(modal) {
                     this.modal = modal;
                     modal.setSaveButtonText(s[2]);
@@ -240,37 +243,59 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                     }.bind(this));
                     modal.show();
                 }.bind(this));*/
-                .done(function(modal) {
-                    this.modal = modal;
-                    //modal.setSaveButtonText("Yes");
+                // .done(function(modal) {
+                //     this.modal = modal;
+                //     //modal.setSaveButtonText("Yes");
 
-                   modal.setSaveButtonText(Str.get_string('yes_delete', 'local_skillrepository'));
+                //    modal.setSaveButtonText(Str.get_string('yes_delete', 'local_skillrepository'));
 
 
-                //For cancel button string changed//
-                var value=Str.get_string('cancel', 'local_skillrepository');
-                var button = this.modal.getFooter().find('[data-action="cancel"]');
-                this.modal.asyncSet(value, button.text.bind(button));
+                // //For cancel button string changed//
+                // var value=Str.get_string('cancel', 'local_skillrepository');
+                // var button = this.modal.getFooter().find('[data-action="cancel"]');
+                // this.modal.asyncSet(value, button.text.bind(button));
 
-                    modal.getRoot().on(ModalEvents.yes, function(e) {
-                        e.preventDefault();
-                        args.confirm = true;
-                        console.log(args);
-                        var params = {};
-                        params.id = args.skillid;
-                        params.contextid = args.contextid;
+                //     modal.getRoot().on(ModalEvents.yes, function(e) {
+                //         e.preventDefault();
+                //         args.confirm = true;
+                //         console.log(args);
+                //         var params = {};
+                //         params.id = args.skillid;
+                //         params.contextid = args.contextid;
                     
-                        var promise = Ajax.call([{
-                            methodname: 'local_skillrepository_delete_skill',
-                            args: params
-                        }]);
-                        promise[0].done(function(resp) {
-                            window.location.href = window.location.href;
-                        }).fail(function(ex) {
-                            // do something with the exception
-                             console.log(ex);
+                //         var promise = Ajax.call([{
+                //             methodname: 'local_skillrepository_delete_skill',
+                //             args: params
+                //         }]);
+                //         promise[0].done(function(resp) {
+                //             window.location.href = window.location.href;
+                //         }).fail(function(ex) {
+                //             // do something with the exception
+                //              console.log(ex);
+                //         });
+                //     }.bind(this));
+                //     modal.show();
+                // }.bind(this));
+
+                 .done(function(modal) {
+                    this.modal = modal;
+
+                    modal.getRoot().find('[data-action="save"]').on('click', function() {
+                        args.confirm = true;
+                        $.ajax({
+                            method: "POST",
+                            dataType: "json",
+                            url: M.cfg.wwwroot + "/local/skillrepository/ajax.php?action="+args.selector+"&skillid="+args.skillid,
+                            success: function(data){
+                                window.location.reload();
+                            }
                         });
+ 
                     }.bind(this));
+                    modal.getFooter().find('[data-action="cancel"]').on('click', function() {
+                        modal.setBody('');
+                        modal.hide();
+                    });
                     modal.show();
                 }.bind(this));
             }.bind(this));

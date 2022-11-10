@@ -210,9 +210,12 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 				
 				$deleteurl = "javascript:void(0)";
 				$deleteiconurl = $OUTPUT->image_url('i/trash');
+				
 				$deleteicon = html_writer:: empty_tag('img', array('src'=>$deleteiconurl));
 				$actions .= ' ';
+
 				$actions .= html_writer:: link($deleteurl, $deleteicon, array('title'=>get_string('delete','local_skillrepository'),'onclick' => '(function(e){ require("local_skillrepository/newcategory").deletecategory({selector:"deletecategory", contextid:'.$systemcontext->id.', categoryid:'.$skill_category->id.', name:"'.$skill_category->name.'"}) })(event)'));
+
 				$row[] =  $actions;
 				
 				$data[] = $row;

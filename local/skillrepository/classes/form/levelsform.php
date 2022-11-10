@@ -37,13 +37,31 @@ class levelsform extends \moodleform {
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
 
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-            $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
-            $costcenters = $DB->get_records_sql($sql);
-            $organizationlist=array(null=>'--Select Organization--');
-            foreach ($costcenters as $scl) {
-                $organizationlist[$scl->id]=$scl->fullname;
-            }
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $organizationlist);
+
+
+            // $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
+            // $costcenters = $DB->get_records_sql($sql);
+            // $organizationlist=array(null=>'--Select Organization--');
+            // foreach ($costcenters as $scl) {
+            //     $organizationlist[$scl->id]=$scl->fullname;
+            // }
+
+            // $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $organizationlist);
+
+                       $options = array(
+                'ajax' => 'local_courses/form-options-selector',
+                'multiple' => true,
+                'data-action' => 'organizations',
+                'data-options' => json_encode(array('id' => 0)),
+                'placeholder' => get_string('organisations','local_costcenter')
+            );
+           $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
+            $costcenters = $DB->get_records_sql_menu($sql);
+
+            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $costcenters,$options);
+
+
+
             $mform->addRule('costcenterid', null, 'required', null, 'client');
             $mform->setType('costcenterid', PARAM_INT);
         } else {

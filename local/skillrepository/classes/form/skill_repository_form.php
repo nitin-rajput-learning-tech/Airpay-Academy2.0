@@ -42,13 +42,29 @@ class skill_repository_form extends moodleform {
         
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-            $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
-            $costcenters = $DB->get_records_sql($sql);
-            $organizationlist=array(null=>'--Select Organization--');
-            foreach ($costcenters as $scl) {
-                $organizationlist[$scl->id]=$scl->fullname;
-            }
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $organizationlist);
+
+
+            // $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
+            // $costcenters = $DB->get_records_sql($sql);
+            // $organizationlist=array(null=>'--Select Organization--');
+            // foreach ($costcenters as $scl) {
+            //     $organizationlist[$scl->id]=$scl->fullname;
+            // }
+            // $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $organizationlist);
+
+           $options = array(
+                'ajax' => 'local_courses/form-options-selector',
+                'multiple' => true,
+                'data-action' => 'organizations',
+                'data-options' => json_encode(array('id' => 0)),
+                'placeholder' => get_string('organisations','local_costcenter')
+            );
+
+           $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
+            $costcenters = $DB->get_records_sql_menu($sql);
+
+            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $costcenters,$options);
+
             $mform->addRule('costcenterid', null, 'required', null, 'client');
             $mform->setType('costcenterid', PARAM_INT);
         } else {
@@ -67,9 +83,13 @@ class skill_repository_form extends moodleform {
             $skills= $DB->get_records_sql($sql);
         }
 
+
+
         $repository = isset($this->_ajaxformdata['repository']);
         $repos = array(0=>'Select');
         if (!empty($repository)) {
+
+            
             $repository = implode(',', $repository);
             $repos_sql = "SELECT sc.id, sc.name
                             FROM {local_skill_categories} AS sc
@@ -80,29 +100,42 @@ class skill_repository_form extends moodleform {
                 $repos[$rl->id] = $rl->name;
             }
         } else if ($id > 0) {
-            $repos_sql = "SELECT sc.id, sc.name
-                            FROM {local_skill_categories} AS sc 
-                            JOIN {local_skill} AS s ON s.category = sc.id
-                            WHERE s.id = $id";
-            $reposlist = $DB->get_records_sql($repos_sql);
-            foreach($reposlist as $rl) {
-                $repos[$rl->id] = $rl->name;
+
+            // $repos_sql = "SELECT sc.id, sc.name
+            //                 FROM {local_skill_categories} AS sc 
+            //                 JOIN {local_skill} AS s ON s.category = sc.id
+            //                 WHERE s.id = $id";
+            // $reposlist = $DB->get_records_sql($repos_sql);
+            // foreach($reposlist as $rl) {
+            //     $repos[$rl->id] = $rl->name;
+
+            // }
+
+
+                        foreach($skills as $rl){
+                $repos[$rl->id] = $rl;
             }
-        // print_object($repos);exit;
+        
         } else {
+
             foreach($skills as $rl){
-                $repos[$rl->id] = $rl->name;
+                $repos[$rl->id] = $rl;
             }
         }
+ 
         
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
-        $options = array(
+
+        $options1 = array(
             'ajax' => 'local_skillrepository/form-repository-selector',
             'multiple' => false,
             'data-contextid' => $context->id,
             'data-includes' => 'all',
         );
-        $mform->addElement('autocomplete', 'category', get_string('category', 'local_skillrepository'), $repos, $options);
+
+        $mform->addElement('autocomplete', 'category', get_string('category', 'local_skillrepository'), $repos, $options1);
+
+
         $mform->addRule('category', null, 'required', null, 'client');
 
         $mform->addElement('text', 'name', get_string('name', 'local_skillrepository'));

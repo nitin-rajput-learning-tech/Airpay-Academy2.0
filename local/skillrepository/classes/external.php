@@ -54,18 +54,22 @@ class local_skillrepository_external extends external_api {
 		$data = array();       
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
+
+
 		 $mform = new local_skillrepository\form\skill_repository_form(null, array(), 'post', '', null, true, $data);
 		
         $repositoryinsert  = new local_skillrepository\event\insertrepository();        
         $valdata = $mform->get_data();    
+
         $valdata->description=$valdata->description['text'];
-       // print_object($valdata);
-   
+
+
         if($valdata){
+
             if($valdata->id>0){
                 $repositoryinsert->skillrepository_opertaions('local_skill', 'update', $valdata,'','');
             } else{
-				$repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');
+            	$repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');
 			}
 		} else {
 			// Generate a warning.
@@ -121,7 +125,8 @@ class local_skillrepository_external extends external_api {
         $repositoryinsert  = new local_skillrepository\event\insertcategory();
         
         $valdata = $mform->get_data();
-        
+       
+
         if($valdata){
             if($valdata->id>0){
                 $repositoryinsert->create_skill_category($valdata);
@@ -167,6 +172,7 @@ class local_skillrepository_external extends external_api {
 
     public static function repository_selector($query, $context, $includes = 'parents' /*, $limitfrom = 0, $limitnum = 25*/) {
         global $CFG, $DB;
+
         $params = self::validate_parameters(self::repository_selector_parameters(), array(
             'query' => $query,
             'context' => $context,
@@ -237,6 +243,8 @@ class local_skillrepository_external extends external_api {
         $querylib  = new \local_skillrepository\local\querylib();
         
         $valdata = $mform->get_data();
+
+
         if($valdata){
             $levelid = $querylib->insert_update_level($valdata);
         } else {
@@ -339,6 +347,7 @@ class local_skillrepository_external extends external_api {
         $stable->start = $offset;
         $stable->length = $limit;
         $result_skill = skill_details($stable,$filtervalues);
+
         $totalcount = $result_skill['count'];
         $data=$result_skill['data'];
         

@@ -141,7 +141,7 @@ define([
         Newlevel.prototype.submitFormAjax = function(e) {
             // We don't want to do a real form submission.
             e.preventDefault();
-     
+    
             // Convert all the form elements values to a serialised string.
             var formData = this.modal.getRoot().find('form').serialize();
             
@@ -181,6 +181,7 @@ define([
             $("#all_levels_display_table").css('width', '100%');
 		},
 		deletelevel: function(args){
+
 			return Str.get_strings([{
                 key: 'confirm'
             },
@@ -195,20 +196,13 @@ define([
                 ModalFactory.create({
                     title: s[0],
                     type: ModalFactory.types.CONFIRM,
-                    body: s[1]
+                    body: s[1],
+                     footer: '<button type="button" class="btn btn-primary" data-action="save">Yes! Delete</button>&nbsp;' +
+            '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'
                 }).done(function(modal) {
                     this.modal = modal;
-                    //modal.setSaveButtonText(s[2]);
-                    modal.setSaveButtonText(Str.get_string('yes_delete', 'local_skillrepository'));
 
-
-                    //For cancel button string changed//
-                    var value=Str.get_string('cancel', 'local_skillrepository');
-                    var button = this.modal.getFooter().find('[data-action="cancel"]');
-                    this.modal.asyncSet(value, button.text.bind(button));
-                    
-                    modal.getRoot().on(ModalEvents.yes, function(e) {
-                        e.preventDefault();
+                    modal.getRoot().find('[data-action="save"]').on('click', function() {
                         args.confirm = true;
                         $.ajax({
                             method: "POST",
@@ -218,9 +212,42 @@ define([
                                 window.location.reload();
                             }
                         });
+ 
                     }.bind(this));
+                    modal.getFooter().find('[data-action="cancel"]').on('click', function() {
+                        modal.setBody('');
+                        modal.hide();
+                    });
                     modal.show();
                 }.bind(this));
+
+
+                // done(function(modal) {
+                //     this.modal = modal;
+                //     //modal.setSaveButtonText(s[2]);
+                //     modal.setSaveButtonText(Str.get_string('yes_delete', 'local_skillrepository'));
+
+
+                //     //For cancel button string changed//
+                //     var value=Str.get_string('cancel', 'local_skillrepository');
+                //     var button = this.modal.getFooter().find('[data-action="cancel"]');
+                //     this.modal.asyncSet(value, button.text.bind(button));
+                    
+                //     modal.getRoot().on(ModalEvents.yes, function(e) {
+                //         e.preventDefault();
+                //         args.confirm = true;
+                //         $.ajax({
+                //             method: "POST",
+                //             dataType: "json",
+                //             url: M.cfg.wwwroot + "/local/skillrepository/ajax.php?action=deletelevel&levelid="+args.levelid,
+                //             success: function(data){
+                //                 window.location.reload();
+                //             }
+                //         });
+                //     }.bind(this));
+                //     modal.show();
+                // }.bind(this));
+
             }.bind(this));
 
 		},
