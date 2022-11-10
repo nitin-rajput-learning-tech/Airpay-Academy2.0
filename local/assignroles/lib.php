@@ -270,5 +270,5 @@ function local_assignroles_leftmenunode()
         $assignrolesnode .= $users;
         $assignrolesnode .= html_writer::end_tag('li');
     }
-    return array('4' => $assignrolesnode);
+    //return array('4' => $assignrolesnode);
 }
