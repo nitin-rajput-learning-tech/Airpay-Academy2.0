@@ -157,19 +157,20 @@ echo $extended_menu_links;
 
 $filterparams = $renderer->get_catalog_courses(true,$formattype);
 
-if(is_siteadmin()){
-    $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'status');
-}else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
-    $thisfilters = array('courses', 'categories', 'departments', 'subdepartment', 'status');
-}else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-    $thisfilters = array('subdepartment', 'courses', 'categories', 'status');
-}else {
-    $thisfilters = array('courses', 'categories', 'status');
-}
-$thisfilters[] = 'hrmsrole';
-$thisfilters[] = 'location';
+// if(is_siteadmin()){
+//     $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'status');
+// }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+//     $thisfilters = array('courses', 'categories', 'departments', 'subdepartment', 'status');
+// }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+//     $thisfilters = array('subdepartment', 'courses', 'categories', 'status');
+// }else {
+//     $thisfilters = array('courses', 'categories', 'status');
+// }
+// $thisfilters[] = 'hrmsrole';
+// $thisfilters[] = 'location';
 
-$mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams));
+// $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams));
+$mform = courses_filters_form($filterparams);
      
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/courses/courses.php');

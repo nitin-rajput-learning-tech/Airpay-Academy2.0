@@ -1580,12 +1580,12 @@ function get_listof_courses($stable, $filterdata) {
                 $courseslist[$count]["editcourse"] = $courseedit;
                 if($course->visible){
                     $icon = 't/hide';
-                    $string = get_string('le_active','local_evaluation');
-                    $title = get_string('le_inactive','local_evaluation');
+                    $string = get_string('make_active','local_courses');
+                    $title = get_string('make_inactive','local_courses');
                 }else{
                     $icon = 't/show';
-                    $string = get_string('le_inactive','local_evaluation');
-                    $title = get_string('le_active','local_evaluation');
+                    $string = get_string('make_inactive','local_courses');
+                    $title = get_string('make_active','local_courses');
                 }
                 $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => ''));
                 $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
@@ -1880,7 +1880,28 @@ function get_listof_categories($stable, $filterdata) {
     }
     return array('totalrecords' => $categoriescount,'records' => $data);
 }
+function courses_filters_form($filterparams, $ajaxformdata = null){
+    global $CFG, $PAGE;
+    require_once($CFG->dirroot . '/local/courses/filters_form.php');
+    $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $action = isset($filterparams['action']) ? $filterparams['action'] : '';
+    $renderer = $PAGE->get_renderer('local_courses');
+    $filterparams = $renderer->get_catalog_courses(true,$formattype);
+    if(is_siteadmin()){
+        $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'status');
+    }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+        $thisfilters = array('courses', 'categories', 'departments', 'subdepartment', 'status');
+    }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+        $thisfilters = array('subdepartment', 'courses', 'categories', 'status');
+    }else {
+        $thisfilters = array('courses', 'categories', 'status');
+    }
+    $thisfilters[] = 'hrmsrole';
+    $thisfilters[] = 'location';
 
+    $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
+    return $mform;
+}
 /*
 * Author sarath
 * @return true for reports under category
