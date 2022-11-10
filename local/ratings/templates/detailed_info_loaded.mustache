@@ -1,0 +1,15 @@
+<div class="col-md-12 pull-left">
+    {{# rows}}
+        <div class="side">
+            <div>{{rateheader}}</div>
+        </div>
+        <div class="middle">
+            <div class="bar-container">
+                <div class="{{bar_class}}" style="width:{{rating_perc}}%"></div>
+            </div>
+        </div>
+        <div class="side right">
+            <div>{{ratedusers_count}}</div>
+        </div>
+    {{/ rows}}
+</div>
