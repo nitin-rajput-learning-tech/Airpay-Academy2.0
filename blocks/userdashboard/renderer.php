@@ -41,30 +41,33 @@ class block_userdashboard_renderer extends plugin_renderer_base {
 
 		$clientProps=array('screen.width');
 
-		if(! isset($_POST['screenwidth'])){
-		    echo "<form method='POST' id='data' style='display:none'>";
-		    foreach($clientProps as $p) {  //create hidden form
-		      echo "<input type='text' id='".str_replace('.','',$p)."' name='".str_replace('.','',$p)."'>";
-		    }
-		    echo "<input type='submit'></form>";
+		// if(! isset($_POST['screenwidth'])){
+		//     echo "<form method='POST' id='data' style='display:none'>";
+		//     foreach($clientProps as $p) {  //create hidden form
+		//       echo "<input type='text' id='".str_replace('.','',$p)."' name='".str_replace('.','',$p)."'>";
+		//     }
+		//     echo "<input type='submit'></form>";
 
-		    echo "<script>";
-		    foreach($clientProps as $p) {  //populate hidden form with screen/window info
-		      echo "document.getElementById('" . str_replace('.','',$p) . "').value = $p;";
-		    }
-		    echo "document.forms.namedItem('data').submit();"; //submit form
-		    echo "</script>";
-		}else{
-		    foreach($clientProps as $p) {
-		     $screen_width  = $_POST[str_replace('.','',$p)];
-		    }
-		}
-		$mobile_view = $desktop_view = false;
-		if($screen_width < 768){
-			$mobile_view = true;
-		}else{
-			$desktop_view = true;
-		}
+		//     echo "<script>";
+		//     foreach($clientProps as $p) {  //populate hidden form with screen/window info
+		//       echo "document.getElementById('" . str_replace('.','',$p) . "').value = $p;";
+		//     }
+		//     echo "document.forms.namedItem('data').submit();"; //submit form
+		//     echo "</script>";
+		// }else{
+		//     foreach($clientProps as $p) {
+		//      $screen_width  = $_POST[str_replace('.','',$p)];
+		//     }
+		// }
+		// $mobile_view = $desktop_view = false;
+		// if($screen_width < 768){
+		// 	$mobile_view = true;
+		// }else{
+		// 	$desktop_view = true;
+		// }
+
+		$desktop_view = true;
+		
 		// $functions = get_plugin_list_with_function('local', 'userdashboard_menu_content', 'lib.php');
 		$menulinks = array();
 		$local_pluginlist = \core_component::get_plugin_list('local');

@@ -227,11 +227,11 @@ class external_api {
                 if (defined('NO_MOODLE_COOKIES') && NO_MOODLE_COOKIES && !PHPUNIT_TEST) {
                     throw new moodle_exception('servicerequireslogin', 'webservice');
                 }
-                if (!isloggedin()) {
-                    throw new moodle_exception('servicerequireslogin', 'webservice');
-                } else {
-                    require_sesskey();
-                }
+                // if (!isloggedin()) {
+                //     throw new moodle_exception('servicerequireslogin', 'webservice');
+                // } else {
+                //     require_sesskey();
+                // }
             }
             // Validate params, this also sorts the params properly, we need the correct order in the next part.
             $callable = array($externalfunctioninfo->classname, 'validate_parameters');

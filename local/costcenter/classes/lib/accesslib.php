@@ -34,7 +34,7 @@ class accesslib
 
         global $DB,$USER,$OUTPUT;
 
-        if(empty($USER->id) || is_siteadmin()){
+        if((empty($USER->id) || is_siteadmin()) && $costcenterparamid == null){
 
             $context = \context_system::instance();
 
@@ -42,7 +42,9 @@ class accesslib
 
         }else{                
 
+
             if(($costcenterparamid == null || $costcenterparamid == 0)){
+
 
                 if(isset($USER->access['rsw']) && !empty($USER->access['rsw'])){
 
