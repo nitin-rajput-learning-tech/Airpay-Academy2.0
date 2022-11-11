@@ -40,7 +40,7 @@ if ($context->id != CONTEXT_SYSTEM && !is_siteadmin($USER)) {
  } 
 else if($orgid)
 {
-    $categoryid=$orgid;
+    $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
     $category = core_course_category::get($categoryid); // This will validate access.
     $PAGE->set_category_by_id($categoryid);
     $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $categoryid)));

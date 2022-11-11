@@ -176,6 +176,7 @@ class local_costcenter_external extends external_api {
             }
             $costcenterdelete = $DB->delete_records('local_costcenter', array('id' => $id));
             $costcenterdelete .= $DB->delete_records('local_costcenter_permissions', array('costcenterid' => $id));
+            $costcenterdelete = $DB->delete_records('course_categories', array('id' => $costcentercategory));
             return true;
         }else {
             throw new moodle_exception('Error in deleting');
