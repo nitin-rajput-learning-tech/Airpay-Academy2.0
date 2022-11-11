@@ -151,7 +151,7 @@ class notification{
         $dataobject->courseid = $datamailobj->courseid;
         
         if($logid = $this->check_pending_mail_exists($user, $fromuser, $datamailobj)){
-        	$dataobject->id = $logid;
+	$dataobject->id = $logid;
         	$dataobject->timemodified = time();
             $dataobject->usermodified = $this->user->id;
 			$logid = $this->db->update_record('local_emaillogs', $dataobject);

@@ -172,7 +172,7 @@ function xmldb_local_courses_install(){
 
         $table->add_field('sent_date', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
         $table->add_field('sent_by', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        
+        $table->add_field('status', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('notificationid'));
