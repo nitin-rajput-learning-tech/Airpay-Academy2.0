@@ -135,7 +135,7 @@ class create_user extends moodleform {
             $mform->setType('lastname', PARAM_RAW);
 
             $mform->addElement('text', 'email', get_string('email', 'local_users'));
-            $mform->addRule('email', get_string('emailerror', 'local_users'), 'email', null, 'client');
+            $mform->addRule('email', get_string('emailerror', 'local_users'), 'required', null, 'client');
             $mform->setType('email', PARAM_RAW);
 
             if (is_siteadmin() || has_capability('local/costcenter:manage_ownorganization',

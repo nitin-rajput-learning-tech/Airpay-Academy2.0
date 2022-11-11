@@ -1,4 +1,5 @@
 <?php
+namespace local_users\cron;
 //
 // This file is part of eAbyas
 //
@@ -25,7 +26,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-namespace local_users\cron;
+
 require_once($CFG->dirroot.'/user/lib.php');
 require_once($CFG->dirroot.'/local/costcenter/lib.php');
 use costcenter;
