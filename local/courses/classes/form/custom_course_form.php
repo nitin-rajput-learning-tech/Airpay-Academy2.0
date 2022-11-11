@@ -400,11 +400,12 @@ class custom_course_form extends moodleform {
                 $mform->hideIf('open_certificateid', 'map_certificate', 'neq', 1);
             }
             
-            $mform->addElement('hidden', 'mincompletiondays', 0);
-            $mform->setType('mincompletiondays', PARAM_INT);
+            // $mform->addElement('hidden', 'mincompletiondays', 0);
+            // $mform->setType('mincompletiondays', PARAM_INT);
 
             $mform->addElement('text', 'open_coursecompletiondays', get_string('coursecompday','local_courses'));
-            $mform->setType('open_coursecompletiondays', PARAM_INT);
+            $mform->setType('open_coursecompletiondays', PARAM_TEXT);
+            $mform->addRule('open_coursecompletiondays', get_string('numeric','local_users'), 'numeric', 'numeric', 'client');
             // $mform->addRule('open_coursecompletiondays', null, 'required', null, 'client');
             // $mform->addRule(array('open_coursecompletiondays', 'mincompletiondays'), 
             //     get_string('coursecompletiondays_positive', 'local_courses'), 
