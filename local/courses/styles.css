@@ -234,6 +234,8 @@ body#page-local-courses-courseenrol img#image.content-img {
     background-position: center center;
     background-color: #fff;
     border-radius: 12px;
+    box-shadow: 0 0 6px 0 #0000003b;
+    border: 1px solid #eee;
 }
 
 #page-local-courses-index .dataTables_length {

@@ -1544,7 +1544,10 @@ class core_renderer extends \core_renderer {
         }
         return $hovercolor;
     }
-
+    public function getsitecolors_link(){
+        global $CFG;
+        return $CFG->wwwroot."/theme/epsilon/style/site_color.css?v=".date('Ymdhis');
+    }
 
 
 }
