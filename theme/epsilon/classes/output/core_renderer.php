@@ -1112,7 +1112,7 @@ class core_renderer extends \core_renderer {
             if(is_array($user_ra_array)){
                 $highest_roleinfo = max($user_ra_array);
             }else{
-                $highest_roleinfo = (object)['roleid' => 0, 'contextid' => 1];
+                $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];
             }
             $current_roleid = isset($USER->access['rsw']['currentroleinfo']) ? $USER->access['rsw']['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
             
