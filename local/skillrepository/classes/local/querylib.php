@@ -17,7 +17,10 @@ class querylib {
 			$formdata->timemodified = time();
 			$this->db->update_record('local_course_levels', $formdata);
 		}else{
+ 
+	   $formdata->costcenterid = $formdata->id;
 			$formdata->usercreated = $this->user->id;
+			$formdata->costcenterid = $formdata->costcenterid[0];
 			$formdata->timecreated = time();
 			$this->db->insert_record('local_course_levels', $formdata);
 		}

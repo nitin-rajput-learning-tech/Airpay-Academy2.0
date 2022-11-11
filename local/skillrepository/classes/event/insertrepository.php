@@ -28,14 +28,18 @@ require_once($CFG->dirroot.'/local/costcenter/lib.php');
 class insertrepository{
 
 	function skillrepository_opertaions($table, $operation, $object, $column, $value) {
+
+
 		global $DB, $CFG, $OUTPUT, $USER,$PAGE;
 		
 		$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 	    if (!is_siteadmin()){
+	    	 
 			$costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
 		} else {
 			$costcenter = isset($object->costcenterid);
 		}
+ 
 		switch($operation){
 			case 'insert':
 				$object->usercreated = $USER->id;

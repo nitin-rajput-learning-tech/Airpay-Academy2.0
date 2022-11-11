@@ -25,8 +25,10 @@ define('AJAX_SCRIPT', true);
 global $PAGE, $USER, $CFG;
 require_once(dirname(__FILE__).'/../../config.php');
 require_once('lib.php');
-$action = required_param('action', PARAM_TEXT);
-$id = optional_param('id', 0, PARAM_INT);
+  $action = required_param('action', PARAM_TEXT);
+ 
+  $id = optional_param('id', 0, PARAM_INT);
+ 
 $name = optional_param('name', '', PARAM_TEXT);
 $shortname = optional_param('shortname', '', PARAM_TEXT);
 $table = optional_param('table', '', PARAM_RAW);
@@ -82,6 +84,7 @@ switch($action) {
 		$return = $terms_data;
 	break;
 	case 'deletecategory':
+ 
 		$categoryid = required_param('categoryid', PARAM_INT);
 		$return = $DB->delete_records('local_skill_categories',  array('id' => $categoryid));
 		// echo json_encode($return);
@@ -113,7 +116,8 @@ switch($action) {
     	// echo json_encode($deleted);
     break;
     case 'deleteskill':
-		//$skillid = required_param('categoryid', PARAM_INT);
+
+		$skillid = required_param('skillid', PARAM_INT);
 		$skillid = required_param('skillid',PARAM_INT);
 		$return = $DB->delete_records('local_skill',  array('id' => $skillid));
 		/*print_object($return);

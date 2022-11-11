@@ -61,16 +61,22 @@ class insertcategory{
 		
 		if($data->id > 0){
 			$newskill_category->id = $data->id;
-			$newskill_category->costcenterid=$costcenter;
+			$newskill_category->costcenterid=$costcenter[0];
 			$newskill_category->timemodified = time();
 			$newskill_category->usermodified = $USER->id;
 			$DB->update_record('local_skill_categories', $newskill_category);
 			$perform = $newskill_category->id;
 		}else{
-			$newskill_category->costcenterid=$costcenter;
+
+			$newskill_category->costcenterid=$costcenter[0];
 			$newskill_category->timecreated = time();
 			$newskill_category->usercreated = $USER->id;
+
+ 
+
 			$perform = $DB->insert_record('local_skill_categories', $newskill_category);
+
+
 		}
 		
 		// Update path (only possible after we know the category id.
