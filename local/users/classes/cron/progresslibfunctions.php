@@ -47,7 +47,7 @@ class progresslibfunctions {
         if (count($columns) < 2) {
             $cir->close();
             $cir->cleanup();
-            throw new moodle_exception()('csvfewcolumns', 'error', $returnurl);
+            throw new moodle_exception('csvfewcolumns', 'error', $returnurl);
         }
 
         // test columns
@@ -71,12 +71,12 @@ class progresslibfunctions {
             } else {
                 $cir->close();
                 $cir->cleanup();
-                throw new moodle_exception()('invalidfieldname', 'error', $returnurl, $field);
+                throw new moodle_exception('invalidfieldname', 'error', $returnurl, $field);
             }
             if (in_array($newfield, $processed)) {
                 $cir->close();
                 $cir->cleanup();
-                throw new moodle_exception()('duplicatefieldname', 'error', $returnurl, $newfield);
+                throw new moodle_exception('duplicatefieldname', 'error', $returnurl, $newfield);
             }
             $processed[$key] = $newfield;
 
