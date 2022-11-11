@@ -36,14 +36,14 @@ $heading = $site->fullname;
 if ($context->id != CONTEXT_SYSTEM && !is_siteadmin($USER)) {
     $categoryid=$DB->get_field('context', 'instanceid', array('id' => $context->id));
     $PAGE->set_category_by_id($categoryid);
-    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $categoryid))); 
+    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid))); 
  } 
 else if($orgid)
 {
     $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
     $category = core_course_category::get($categoryid); // This will validate access.
     $PAGE->set_category_by_id($categoryid);
-    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $categoryid)));
+    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid)));
 }
  else if ($category = core_course_category::user_top()) {
     // Check if there is only one top-level category, if so use that.
