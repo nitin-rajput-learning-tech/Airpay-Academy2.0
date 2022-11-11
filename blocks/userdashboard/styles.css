@@ -271,7 +271,7 @@ body#page-blocks-userdashboard-userdashboard_courses .evalinfo_container p.fdb {
     display: -ms-flexbox;
     display: flex
 }
-.block.block_userdashboard .userdashboard_content>div .alert-info{
+.block.block_userdashboard .userdashboard_content .alert-info{
    border: none;
    background-color: #1d212570;
     color: #fff;
@@ -1771,8 +1771,9 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 	position: relative;
 	border-radius: 10px;
     top: 0;
-	box-shadow: none;
+    box-shadow: 0 0 6px 0 #0000003b;
     padding: 8px;
+    border: 1px solid #eee;
 }
 .block.block_userdashboard  .ctype_elearning .course_container .coursedesc span{
     border: none;
@@ -2021,7 +2022,8 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     justify-content: center;
     background-color: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 3px 1px #00000030;
+    box-shadow: 0 0 3px 1px #0000004d;
+    border: 1px solid;
     
 }
 .block.block_userdashboard .userdashbard_slider_navs.course-next {
