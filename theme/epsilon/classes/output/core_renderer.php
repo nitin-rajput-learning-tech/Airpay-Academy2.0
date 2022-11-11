@@ -1106,16 +1106,16 @@ class core_renderer extends \core_renderer {
             // $user_ra_array = $USER->access['ra']['/1'];
 
             $user_ra_array = array_values(array_map(function($role){
-                            return $role->roleid;
+                            return $role;
                         }, $roles));
             
             if(is_array($user_ra_array)){
-                $highest_roleid = max($user_ra_array);
+                $highest_roleinfo = max($user_ra_array);
             }else{
-                $highest_roleid = 0;
+                $highest_roleinfo = (object)['roleid' => 0, 'contextid' => 1];
             }
-
-            $current_roleid = isset($USER->access['rsw']['currentroleinfo']) ? $USER->access['rsw']['currentroleinfo']['roleid'] : $highest_roleid;
+            $current_roleid = isset($USER->access['rsw']['currentroleinfo']) ? $USER->access['rsw']['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
+            
             // var_dump($USER->access['rsw']);exit;
             if(!empty($learnerroleid)){
                 if($learnerroleid->id == $current_roleid){
@@ -1156,9 +1156,12 @@ class core_renderer extends \core_renderer {
             }
         }
         $highest_roleid = '';
-        if((isset($USER->access['rsw']) && empty($USER->access['rsw'])) ){
-            if($highest_roleid)
-                $this->role_switch_basedon_userroles($highest_roleid, false);
+        if((isset($USER->access['rsw']['currentroleinfo']) && empty($USER->access['rsw']['currentroleinfo'])) ){
+            if($highest_roleinfo->roleid){
+                $highest_roleid = $highest_roleinfo->roleid;
+                $contextid = $highest_roleinfo->contextid;
+                $this->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+            }
         }elseif((isset($USER->access['rsw']) && $USER->access['rsw']) ){
             $highest_roleid = current($USER->access['rsw']);
         }
