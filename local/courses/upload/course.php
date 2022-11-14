@@ -34,7 +34,8 @@ require_once($CFG->dirroot . '/local/courses/upload/processor.php');
  * @copyright  eAbyas <www.eabyas.in>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_uploadcourse_course {
+class local_uploadcourse_course
+{
 
     /** Outcome of the process: creating the course */
     const DO_CREATE = 1;
@@ -97,20 +98,26 @@ class local_uploadcourse_course {
     protected $updatemode;
 
     /** @var array fields allowed as course data. */
-    static protected $validfields = array('fullname', 'course-code', 'idnumber', 'category', 'visible', 'startdate', 'enddate','open_points','coursetype','open_identifiedas','open_costcenterid','open_cost','open_requestcourseid','open_coursecreator','open_coursecompletiondays','open_departmentid','open_subdepartment','file',
+    static protected $validfields = array(
+        'fullname', 'course-code', 'idnumber', 'category', 'visible', 'startdate', 'enddate', 'open_points', 'coursetype', 'open_identifiedas', 'open_costcenterid', 'open_cost', 'open_requestcourseid', 'open_coursecreator', 'open_coursecompletiondays', 'open_departmentid', 'open_subdepartment', 'file',
         'summary', 'format', 'theme', 'lang', 'newsitems', 'showgrades', 'showreports', 'legacyfiles', 'maxbytes',
-        'groupmode', 'groupmodeforce', 'enablecompletion', 'completiondays');
+        'groupmode', 'groupmodeforce', 'enablecompletion', 'completiondays'
+    );
 
     /** @var array fields required on course creation. */
-    static protected $mandatoryfields = array('fullname', 'category','coursetype');
+    static protected $mandatoryfields = array('fullname', 'category', 'coursetype');
 
     /** @var array fields which are considered as options. */
-    static protected $optionfields = array('delete' => false, 'rename' => null, 'backupfile' => null,
-        'templatecourse' => null, 'reset' => false);
+    static protected $optionfields = array(
+        'delete' => false, 'rename' => null, 'backupfile' => null,
+        'templatecourse' => null, 'reset' => false
+    );
 
     /** @var array options determining what can or cannot be done at an import level. */
-    static protected $importoptionsdefaults = array('canrename' => false, 'candelete' => false, 'canreset' => false,
-        'reset' => false, 'restoredir' => null, 'shortnametemplate' => null);
+    static protected $importoptionsdefaults = array(
+        'canrename' => false, 'candelete' => false, 'canreset' => false,
+        'reset' => false, 'restoredir' => null, 'shortnametemplate' => null
+    );
 
     /**
      * Constructor
@@ -121,17 +128,22 @@ class local_uploadcourse_course {
      * @param array $defaults default course data.
      * @param array $importoptions import options.
      */
-    public function __construct($mode, $updatemode, $rawdata, $defaults = array(), $importoptions = array()) {
+    public function __construct($mode, $updatemode, $rawdata, $defaults = array(), $importoptions = array())
+    {
 
-        if ($mode !== tool_uploadcourse_processor::MODE_CREATE_NEW &&
-                $mode !== tool_uploadcourse_processor::MODE_CREATE_ALL &&
-                $mode !== tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE &&
-                $mode !== tool_uploadcourse_processor::MODE_UPDATE_ONLY) {
+        if (
+            $mode !== tool_uploadcourse_processor::MODE_CREATE_NEW &&
+            $mode !== tool_uploadcourse_processor::MODE_CREATE_ALL &&
+            $mode !== tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE &&
+            $mode !== tool_uploadcourse_processor::MODE_UPDATE_ONLY
+        ) {
             throw new coding_exception('Incorrect mode.');
-        } else if ($updatemode !== tool_uploadcourse_processor::UPDATE_NOTHING &&
-                $updatemode !== tool_uploadcourse_processor::UPDATE_ALL_WITH_DATA_ONLY &&
-                $updatemode !== tool_uploadcourse_processor::UPDATE_ALL_WITH_DATA_OR_DEFAUTLS &&
-                $updatemode !== tool_uploadcourse_processor::UPDATE_MISSING_WITH_DATA_OR_DEFAUTLS) {
+        } else if (
+            $updatemode !== tool_uploadcourse_processor::UPDATE_NOTHING &&
+            $updatemode !== tool_uploadcourse_processor::UPDATE_ALL_WITH_DATA_ONLY &&
+            $updatemode !== tool_uploadcourse_processor::UPDATE_ALL_WITH_DATA_OR_DEFAUTLS &&
+            $updatemode !== tool_uploadcourse_processor::UPDATE_MISSING_WITH_DATA_OR_DEFAUTLS
+        ) {
             throw new coding_exception('Incorrect update mode.');
         }
 
@@ -161,10 +173,15 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    public function can_create() {
-        return in_array($this->mode, array(tool_uploadcourse_processor::MODE_CREATE_ALL,
-            tool_uploadcourse_processor::MODE_CREATE_NEW,
-            tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE)
+    public function can_create()
+    {
+        return in_array(
+            $this->mode,
+            array(
+                tool_uploadcourse_processor::MODE_CREATE_ALL,
+                tool_uploadcourse_processor::MODE_CREATE_NEW,
+                tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE
+            )
         );
     }
 
@@ -173,7 +190,8 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    public function can_delete() {
+    public function can_delete()
+    {
         return $this->importoptions['candelete'];
     }
 
@@ -182,9 +200,12 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    public function can_only_create() {
-        return in_array($this->mode, array(tool_uploadcourse_processor::MODE_CREATE_ALL,
-            tool_uploadcourse_processor::MODE_CREATE_NEW));
+    public function can_only_create()
+    {
+        return in_array($this->mode, array(
+            tool_uploadcourse_processor::MODE_CREATE_ALL,
+            tool_uploadcourse_processor::MODE_CREATE_NEW
+        ));
     }
 
     /**
@@ -192,7 +213,8 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    public function can_rename() {
+    public function can_rename()
+    {
         return $this->importoptions['canrename'];
     }
 
@@ -201,7 +223,8 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    public function can_reset() {
+    public function can_reset()
+    {
         return $this->importoptions['canreset'];
     }
 
@@ -210,12 +233,15 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    public function can_update() {
-        return in_array($this->mode,
-                array(
-                    tool_uploadcourse_processor::MODE_UPDATE_ONLY,
-                    tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE)
-                ) && $this->updatemode != tool_uploadcourse_processor::UPDATE_NOTHING;
+    public function can_update()
+    {
+        return in_array(
+            $this->mode,
+            array(
+                tool_uploadcourse_processor::MODE_UPDATE_ONLY,
+                tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE
+            )
+        ) && $this->updatemode != tool_uploadcourse_processor::UPDATE_NOTHING;
     }
 
     /**
@@ -223,9 +249,12 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    public function can_use_defaults() {
-        return in_array($this->updatemode, array(tool_uploadcourse_processor::UPDATE_MISSING_WITH_DATA_OR_DEFAUTLS,
-            tool_uploadcourse_processor::UPDATE_ALL_WITH_DATA_OR_DEFAUTLS));
+    public function can_use_defaults()
+    {
+        return in_array($this->updatemode, array(
+            tool_uploadcourse_processor::UPDATE_MISSING_WITH_DATA_OR_DEFAUTLS,
+            tool_uploadcourse_processor::UPDATE_ALL_WITH_DATA_OR_DEFAUTLS
+        ));
     }
 
     /**
@@ -233,10 +262,16 @@ class local_uploadcourse_course {
      *
      * @return bool
      */
-    protected function delete() {
+    protected function delete()
+    {
         global $DB;
-        $this->id = $DB->get_field_select('course', 'id', 'shortname = :shortname',
-            array('shortname' => $this->shortname), MUST_EXIST);
+        $this->id = $DB->get_field_select(
+            'course',
+            'id',
+            'shortname = :shortname',
+            array('shortname' => $this->shortname),
+            MUST_EXIST
+        );
         return delete_course($this->id, false);
     }
 
@@ -247,7 +282,8 @@ class local_uploadcourse_course {
      * @param lang_string $message error message.
      * @return void
      */
-    protected function error($code, lang_string $message) {
+    protected function error($code, lang_string $message)
+    {
         if (array_key_exists($code, $this->errors)) {
             throw new coding_exception('Error code already defined');
         }
@@ -260,7 +296,8 @@ class local_uploadcourse_course {
      * @param string $shortname the shortname to use to check if the course exists. Falls back on $this->shortname if empty.
      * @return bool
      */
-    protected function exists($shortname = null) {
+    protected function exists($shortname = null)
+    {
         global $DB;
         if (is_null($shortname)) {
             $shortname = $this->shortname;
@@ -276,7 +313,8 @@ class local_uploadcourse_course {
      *
      * @return null|array
      */
-    public function get_data() {
+    public function get_data()
+    {
         return $this->data;
     }
 
@@ -285,7 +323,8 @@ class local_uploadcourse_course {
      *
      * @return array
      */
-    public function get_errors() {
+    public function get_errors()
+    {
         return $this->errors;
     }
 
@@ -297,7 +336,8 @@ class local_uploadcourse_course {
      * @param array $data current data.
      * @return array
      */
-    protected function get_final_create_data($data) {
+    protected function get_final_create_data($data)
+    {
         foreach (self::$validfields as $field) {
             if (!isset($data[$field]) && isset($this->defaults[$field])) {
                 $data[$field] = $this->defaults[$field];
@@ -317,7 +357,8 @@ class local_uploadcourse_course {
      * @param bool $missingonly ignore fields which are already set.
      * @return array
      */
-    protected function get_final_update_data($data, $usedefaults = false, $missingonly = false) {
+    protected function get_final_update_data($data, $usedefaults = false, $missingonly = false)
+    {
         global $DB;
         $newdata = array();
         $existingdata = $DB->get_record('course', array('shortname' => $this->shortname));
@@ -342,7 +383,8 @@ class local_uploadcourse_course {
      *
      * @return int|null
      */
-    public function get_id() {
+    public function get_id()
+    {
         if (!$this->processstarted) {
             throw new coding_exception('The course has not been processed yet!');
         }
@@ -355,7 +397,8 @@ class local_uploadcourse_course {
      * @return string|false|null subdirectory in $CFG->tempdir/backup/..., false when an error occured
      *                           and null when there is simply nothing.
      */
-    protected function get_restore_content_dir() {
+    protected function get_restore_content_dir()
+    {
         $backupfile = null;
         $shortname = null;
 
@@ -389,7 +432,8 @@ class local_uploadcourse_course {
      *
      * @return array
      */
-    public function get_statuses() {
+    public function get_statuses()
+    {
         return $this->statuses;
     }
 
@@ -398,7 +442,8 @@ class local_uploadcourse_course {
      *
      * @return boolean
      */
-    public function has_errors() {
+    public function has_errors()
+    {
         return !empty($this->errors);
     }
 
@@ -407,8 +452,9 @@ class local_uploadcourse_course {
      *
      * @return bool false is any error occured.
      */
-    public function prepare() {
-        global $DB, $SITE,$USER;
+    public function prepare()
+    {
+        global $DB, $SITE, $USER;
         $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
         $this->prepared = true;
         // Validate the shortname.
@@ -438,8 +484,10 @@ class local_uploadcourse_course {
         // Can we create/update the course under those conditions?
         if ($exists) {
             if ($this->mode === tool_uploadcourse_processor::MODE_CREATE_NEW) {
-                $this->error('courseexistsanduploadnotallowed',
-                    new lang_string('courseexistsanduploadnotallowed', 'tool_uploadcourse'));
+                $this->error(
+                    'courseexistsanduploadnotallowed',
+                    new lang_string('courseexistsanduploadnotallowed', 'tool_uploadcourse')
+                );
                 return false;
             } else if ($this->can_update()) {
                 // We can never allow for any front page changes!
@@ -450,8 +498,10 @@ class local_uploadcourse_course {
             }
         } else {
             if (!$this->can_create()) {
-                $this->error('coursedoesnotexistandcreatenotallowed',
-                    new lang_string('coursedoesnotexistandcreatenotallowed', 'tool_uploadcourse'));
+                $this->error(
+                    'coursedoesnotexistandcreatenotallowed',
+                    new lang_string('coursedoesnotexistandcreatenotallowed', 'tool_uploadcourse')
+                );
                 return false;
             }
         }
@@ -474,25 +524,25 @@ class local_uploadcourse_course {
 
         // Resolve the category, and fail if not found.
         $errors = array();
-        $categories = explode('/',$this->rawdata['category_path']);
+        $categories = explode('/', $this->rawdata['category_path']);
         $this->rawdata['category_idnumber'] = $this->rawdata['category_code'];
-        $this->rawdata['categoryname'] = $DB->get_field('course_categories','name',array('idnumber'=> $this->rawdata['category_idnumber'] ));
+        $this->rawdata['categoryname'] = $DB->get_field('course_categories', 'name', array('idnumber' => $this->rawdata['category_idnumber']));
 
         // $this->rawdata['categoryname'] = $this->rawdata['category']; 
         // $this->rawdata['category'] = $DB->get_field('course_categories', 'id',  array('name' => $this->rawdata['category']));
-        
+
         $catid = tool_uploadcourse_helper::resolve_category($this->rawdata, $errors);
         $this->rawdata['category'] = $catid;
-        if(isset($this->rawdata['open_coursecompletiondays'])){
+        if (isset($this->rawdata['open_coursecompletiondays'])) {
             $this->rawdata['completiondays'] = $this->rawdata['open_coursecompletiondays'];
         }
-        if(!empty($this->rawdata['completiondays'] || $this->rawdata['completiondays'] < 0)){
-            if(!((int)$this->rawdata['completiondays'] == $this->rawdata['completiondays'] && (int)$this->rawdata['completiondays'] > 0)){
+        if (!empty($this->rawdata['completiondays'] || $this->rawdata['completiondays'] < 0)) {
+            if (!((int)$this->rawdata['completiondays'] == $this->rawdata['completiondays'] && (int)$this->rawdata['completiondays'] > 0)) {
                 $this->error('completiondayscannotbeletter', new lang_string('completiondayscannotbeletter', 'local_courses', $this->rawdata['completiondays']));
-                return false; 
+                return false;
             }
         }
-		/*else{
+        /*else{
             $this->error('completiondayscannotbeempty', new lang_string('completiondayscannotbeempty', 'local_courses', $this->rawdata['completiondays']));
             return false;
         }*/
@@ -514,61 +564,64 @@ class local_uploadcourse_course {
             $errors = array();
             foreach (self::$mandatoryfields as $field) {
                 if ((!isset($coursedata[$field]) || $coursedata[$field] === '') &&
-                        (!isset($this->defaults[$field]) || $this->defaults[$field] === '')) {
+                    (!isset($this->defaults[$field]) || $this->defaults[$field] === '')
+                ) {
                     $errors[] = $field;
                 }
             }
             if (!empty($errors)) {
-                $this->error('missingmandatoryfields', new lang_string('missingmandatoryfields', 'tool_uploadcourse',
-                    implode(', ', $errors)));
+                $this->error('missingmandatoryfields', new lang_string(
+                    'missingmandatoryfields',
+                    'tool_uploadcourse',
+                    implode(', ', $errors)
+                ));
                 return false;
             }
         }
         $categorylib = new local_courses\catslib();
-        if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization',$systemcontext) && !isset($this->rawdata['department']) && isset($this->rawdata['category'])){
+        if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && !isset($this->rawdata['department']) && isset($this->rawdata['category'])) {
             $categories = $categorylib->get_categories($USER->open_costcenterid);
-            if(!in_array($this->rawdata['category'], $categories)){
+            if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-
-        } else if(isset($this->defaults['open_costcenterid']) && !is_siteadmin() && has_capability('local/costcenter:manage_ownorganization',$systemcontext) && isset($this->rawdata['department']) && isset($this->rawdata['category'])){
+        } else if (isset($this->defaults['open_costcenterid']) && !is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && !empty($this->rawdata['department']) && isset($this->rawdata['category'])) {
             $departmentid = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['department']));
             $categories = $categorylib->get_categories($departmentid);
-            if(!in_array($this->rawdata['category'], $categories)){
+            if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization',$systemcontext)  && isset($this->rawdata['category'])){
+        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)  && isset($this->rawdata['category'])) {
             $categories = $categorylib->get_categories($USER->open_costcenterid);
-            if(!in_array($this->rawdata['category'], $categories)){
+            if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && isset($this->rawdata['category'])){
+        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && isset($this->rawdata['category'])) {
             $categories = $categorylib->get_categories($USER->open_departmentid);
-            if(!in_array($this->rawdata['category'], $categories)){
+            if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
         } else {
-			if(!is_siteadmin()){
-            return false;
-			}
+            if (!is_siteadmin()) {
+                return false;
+            }
         }
         if (empty($this->rawdata['coursetype'])) {
             $this->error('cannotemptycoursetype', new lang_string('cannotemptycoursetype', 'local_courses', $this->rawdata['coursetype']));
-              return false;
+            return false;
         }
 
         if ($this->rawdata['coursetype']) {
             $this->rawdata['coursetype'] = explode(",", $this->rawdata['coursetype']);
-            if(is_array($this->rawdata['coursetype'])){
-                if(!in_array('elearning',$this->rawdata['coursetype']) && !in_array('classroom',$this->rawdata['coursetype'])&& !in_array('learningpath',$this->rawdata['coursetype'])&& !in_array('program',$this->rawdata['coursetype'])&& !in_array('certification',$this->rawdata['coursetype']) ){
+            if (is_array($this->rawdata['coursetype'])) {
+                if (!in_array('elearning', $this->rawdata['coursetype']) && !in_array('classroom', $this->rawdata['coursetype']) && !in_array('learningpath', $this->rawdata['coursetype']) && !in_array('program', $this->rawdata['coursetype']) && !in_array('certification', $this->rawdata['coursetype'])) {
                     $this->error('cannotcreateorupdatecourse', new lang_string('cannotcreateorupdatecourse', 'local_courses', $this->rawdata['coursetype']));
-                    return false;  
+                    return false;
                 }
-            }else if($this->rawdata['coursetype'] != 'elearning' && $this->rawdata['coursetype'] != 'classroom' && $this->rawdata['coursetype'] != 'learningpath' && $this->rawdata['coursetype'] != 'certification'&& $this->rawdata['coursetype'] != 'program'){
+            } else if ($this->rawdata['coursetype'] != 'elearning' && $this->rawdata['coursetype'] != 'classroom' && $this->rawdata['coursetype'] != 'learningpath' && $this->rawdata['coursetype'] != 'certification' && $this->rawdata['coursetype'] != 'program') {
                 $this->error('cannotcreateorupdatecourse', new lang_string('cannotcreateorupdatecourse', 'local_courses', $this->rawdata['coursetype']));
                 return false;
             }
@@ -579,44 +632,41 @@ class local_uploadcourse_course {
             $departmentid = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['department']));
             $this->data['department'] = $departmentid;
         } else {
-            if (!is_siteadmin() AND has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+            if (!is_siteadmin() and has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
                 $this->data['department'] = $USER->open_departmentid;
-            }            
+            }
         }
-        if(empty($this->rawdata['department']) && !empty($this->rawdata['subdepartment'])){
-			$this->error('cannotuploadcoursewithlob', new lang_string('cannotuploadcoursewithlob', 'local_courses', $this->rawdata['coursetype']));
-			return false;
-        }
-		else if(!empty($this->rawdata['department']) && empty($this->rawdata['subdepartment'])){
-			if($this->rawdata['department'] != $this->rawdata['category_idnumber']){
-			$this->error('categorycodeshouldbedepcode', new lang_string('categorycodeshouldbedepcode', 'local_courses', $this->rawdata['department']));
-			return false; 
-			}
-		}
-		else if(!empty($this->rawdata['department']) && !empty($this->rawdata['subdepartment'])){
-			if($this->rawdata['subdepartment'] != $this->rawdata['category_idnumber']){
-			$this->error('categorycodeshouldbesubdepcode', new lang_string('categorycodeshouldbesubdepcode', 'local_courses', $this->rawdata['subdepartment']));
-			return false; 
-			}
-		}
-		else{
-			$subdepartment = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['subdepartment']));
+        if (empty($this->rawdata['department']) && !empty($this->rawdata['subdepartment'])) {
+            $this->error('cannotuploadcoursewithlob', new lang_string('cannotuploadcoursewithlob', 'local_courses', $this->rawdata['coursetype']));
+            return false;
+        } else if (!empty($this->rawdata['department']) && empty($this->rawdata['subdepartment'])) {
+            if ($this->rawdata['department'] != $this->rawdata['category_idnumber']) {
+                $this->error('categorycodeshouldbedepcode', new lang_string('categorycodeshouldbedepcode', 'local_courses', $this->rawdata['department']));
+                return false;
+            }
+        } else if (!empty($this->rawdata['department']) && !empty($this->rawdata['subdepartment'])) {
+            if ($this->rawdata['subdepartment'] != $this->rawdata['category_idnumber']) {
+                $this->error('categorycodeshouldbesubdepcode', new lang_string('categorycodeshouldbesubdepcode', 'local_courses', $this->rawdata['subdepartment']));
+                return false;
+            }
+        } else {
+            $subdepartment = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['subdepartment']));
             $this->data['subdepartment'] = $subdepartment;
-		}
-      
-        if(!empty($this->rawdata['cost'])){
-            if(!is_numeric($this->rawdata['cost'])){
+        }
+
+        if (!empty($this->rawdata['cost'])) {
+            if (!is_numeric($this->rawdata['cost'])) {
                 $this->error('costcannotbenonnumericwithargs', new lang_string('costcannotbenonnumericwithargs', 'local_courses', $this->rawdata['cost']));
-                return false;   
+                return false;
             }
         }
-        if(!empty($this->rawdata['points'])){
-            if(!is_numeric($this->rawdata['points'])){
-                $this->error('pointscannotbenonnumericwithargs', new lang_string('pointscannotbenonnumericwithargs', 'local_courses', $this->rawdata['points']));
-                return false;   
+        if (!empty($this->rawdata['open_points'])) {
+            if (!is_numeric($this->rawdata['open_points'])) {
+                $this->error('pointscannotbenonnumericwithargs', new lang_string('pointscannotbenonnumericwithargs', 'local_courses', $this->rawdata['open_points']));
+                return false;
             }
         }
-        
+
         // Should the course be renamed?
         if (!empty($this->options['rename']) || is_numeric($this->options['rename'])) {
             if (!$this->can_update()) {
@@ -632,18 +682,28 @@ class local_uploadcourse_course {
                 $this->error('invalidshortname', new lang_string('invalidshortname', 'tool_uploadcourse'));
                 return false;
             } else if ($this->exists($this->options['rename'])) {
-                $this->error('cannotrenameshortnamealreadyinuse',
-                    new lang_string('cannotrenameshortnamealreadyinuse', 'tool_uploadcourse'));
+                $this->error(
+                    'cannotrenameshortnamealreadyinuse',
+                    new lang_string('cannotrenameshortnamealreadyinuse', 'tool_uploadcourse')
+                );
                 return false;
-            } else if (isset($coursedata['idnumber']) &&
-                    $DB->count_records_select('course', 'idnumber = :idn AND shortname != :sn',
-                    array('idn' => $coursedata['idnumber'], 'sn' => $this->shortname)) > 0) {
+            } else if (
+                isset($coursedata['idnumber']) &&
+                $DB->count_records_select(
+                    'course',
+                    'idnumber = :idn AND shortname != :sn',
+                    array('idn' => $coursedata['idnumber'], 'sn' => $this->shortname)
+                ) > 0
+            ) {
                 $this->error('cannotrenameidnumberconflict', new lang_string('cannotrenameidnumberconflict', 'tool_uploadcourse'));
                 return false;
             }
             $coursedata['shortname'] = $this->options['rename'];
-            $this->status('courserenamed', new lang_string('courserenamed', 'tool_uploadcourse',
-                array('from' => $this->shortname, 'to' => $coursedata['shortname'])));
+            $this->status('courserenamed', new lang_string(
+                'courserenamed',
+                'tool_uploadcourse',
+                array('from' => $this->shortname, 'to' => $coursedata['shortname'])
+            ));
         }
 
         // Should we generate a shortname?
@@ -652,25 +712,34 @@ class local_uploadcourse_course {
                 $this->error('missingshortnamenotemplate', new lang_string('missingshortnamenotemplate', 'tool_uploadcourse'));
                 return false;
             } else if (!$this->can_only_create()) {
-                $this->error('cannotgenerateshortnameupdatemode',
-                    new lang_string('cannotgenerateshortnameupdatemode', 'tool_uploadcourse'));
+                $this->error(
+                    'cannotgenerateshortnameupdatemode',
+                    new lang_string('cannotgenerateshortnameupdatemode', 'tool_uploadcourse')
+                );
                 return false;
             } else {
-                $newshortname = tool_uploadcourse_helper::generate_shortname($coursedata,
-                    $this->importoptions['shortnametemplate']);
+                $newshortname = tool_uploadcourse_helper::generate_shortname(
+                    $coursedata,
+                    $this->importoptions['shortnametemplate']
+                );
                 if (is_null($newshortname)) {
                     $this->error('generatedshortnameinvalid', new lang_string('generatedshortnameinvalid', 'tool_uploadcourse'));
                     return false;
                 } else if ($this->exists($newshortname)) {
                     if ($mode === tool_uploadcourse_processor::MODE_CREATE_NEW) {
-                        $this->error('generatedshortnamealreadyinuse',
-                            new lang_string('generatedshortnamealreadyinuse', 'tool_uploadcourse'));
+                        $this->error(
+                            'generatedshortnamealreadyinuse',
+                            new lang_string('generatedshortnamealreadyinuse', 'tool_uploadcourse')
+                        );
                         return false;
                     }
                     $exists = true;
                 }
-                $this->status('courseshortnamegenerated', new lang_string('courseshortnamegenerated', 'tool_uploadcourse',
-                    $newshortname));
+                $this->status('courseshortnamegenerated', new lang_string(
+                    'courseshortnamegenerated',
+                    'tool_uploadcourse',
+                    $newshortname
+                ));
                 $this->shortname = $newshortname;
             }
         }
@@ -681,14 +750,20 @@ class local_uploadcourse_course {
             $this->shortname = tool_uploadcourse_helper::increment_shortname($this->shortname);
             $exists = false;
             if ($this->shortname != $original) {
-                $this->status('courseshortnameincremented', new lang_string('courseshortnameincremented', 'tool_uploadcourse',
-                    array('from' => $original, 'to' => $this->shortname)));
+                $this->status('courseshortnameincremented', new lang_string(
+                    'courseshortnameincremented',
+                    'tool_uploadcourse',
+                    array('from' => $original, 'to' => $this->shortname)
+                ));
                 if (isset($coursedata['idnumber'])) {
                     $originalidn = $coursedata['idnumber'];
                     $coursedata['idnumber'] = tool_uploadcourse_helper::increment_idnumber($coursedata['idnumber']);
                     if ($originalidn != $coursedata['idnumber']) {
-                        $this->status('courseidnumberincremented', new lang_string('courseidnumberincremented', 'tool_uploadcourse',
-                            array('from' => $originalidn, 'to' => $coursedata['idnumber'])));
+                        $this->status('courseidnumberincremented', new lang_string(
+                            'courseidnumberincremented',
+                            'tool_uploadcourse',
+                            array('from' => $originalidn, 'to' => $coursedata['idnumber'])
+                        ));
                     }
                 }
             }
@@ -717,23 +792,29 @@ class local_uploadcourse_course {
             case tool_uploadcourse_processor::MODE_CREATE_NEW:
             case tool_uploadcourse_processor::MODE_CREATE_ALL:
                 if ($exists) {
-                    $this->error('courseexistsanduploadnotallowed',
-                        new lang_string('courseexistsanduploadnotallowed', 'tool_uploadcourse'));
+                    $this->error(
+                        'courseexistsanduploadnotallowed',
+                        new lang_string('courseexistsanduploadnotallowed', 'tool_uploadcourse')
+                    );
                     return false;
                 }
                 break;
             case tool_uploadcourse_processor::MODE_UPDATE_ONLY:
                 if (!$exists) {
-                    $this->error('coursedoesnotexistandcreatenotallowed',
-                        new lang_string('coursedoesnotexistandcreatenotallowed', 'tool_uploadcourse'));
+                    $this->error(
+                        'coursedoesnotexistandcreatenotallowed',
+                        new lang_string('coursedoesnotexistandcreatenotallowed', 'tool_uploadcourse')
+                    );
                     return false;
                 }
                 // No break!
             case tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE:
                 if ($exists) {
                     if ($updatemode === tool_uploadcourse_processor::UPDATE_NOTHING) {
-                        $this->error('updatemodedoessettonothing',
-                            new lang_string('updatemodedoessettonothing', 'tool_uploadcourse'));
+                        $this->error(
+                            'updatemodedoessettonothing',
+                            new lang_string('updatemodedoessettonothing', 'tool_uploadcourse')
+                        );
                         return false;
                     }
                 }
@@ -826,8 +907,10 @@ class local_uploadcourse_course {
         // We can only reset courses when allowed and we are updating the course.
         if ($this->importoptions['reset'] || $this->options['reset']) {
             if ($this->do !== self::DO_UPDATE) {
-                $this->error('canonlyresetcourseinupdatemode',
-                    new lang_string('canonlyresetcourseinupdatemode', 'tool_uploadcourse'));
+                $this->error(
+                    'canonlyresetcourseinupdatemode',
+                    new lang_string('canonlyresetcourseinupdatemode', 'tool_uploadcourse')
+                );
                 return false;
             } else if (!$this->can_reset()) {
                 $this->error('courseresetnotallowed', new lang_string('courseresetnotallowed', 'tool_uploadcourse'));
@@ -843,8 +926,9 @@ class local_uploadcourse_course {
      *
      * @return void
      */
-    public function proceed() {
-        global $CFG, $USER,$DB;
+    public function proceed()
+    {
+        global $CFG, $USER, $DB;
         $insertlib = new local_courses\action\insert();
         if (!$this->prepared) {
             throw new coding_exception('The course has not been prepared.');
@@ -865,34 +949,34 @@ class local_uploadcourse_course {
         } else if ($this->do === self::DO_CREATE) {
             $this->data['coursetype'] = explode(",", $this->data['coursetype']);
             $coursetype = array();
-            if(is_array($this->data['coursetype'])){
-                if(in_array('elearning',$this->data['coursetype'])){
+            if (is_array($this->data['coursetype'])) {
+                if (in_array('elearning', $this->data['coursetype'])) {
                     $coursetype[] = 3;
                 }
-                if(in_array('classroom',$this->data['coursetype'])){
-                    $coursetype[] = 2; 
+                if (in_array('classroom', $this->data['coursetype'])) {
+                    $coursetype[] = 2;
                 }
-                if(in_array('learningpath',$this->data['coursetype'])){
-                    $coursetype[] = 4; 
+                if (in_array('learningpath', $this->data['coursetype'])) {
+                    $coursetype[] = 4;
                 }
-                if(in_array('program',$this->data['coursetype'])){
-                    $coursetype[] = 5; 
+                if (in_array('program', $this->data['coursetype'])) {
+                    $coursetype[] = 5;
                 }
-                if(in_array('certification',$this->data['coursetype'])){
-                    $coursetype[] = 6; 
+                if (in_array('certification', $this->data['coursetype'])) {
+                    $coursetype[] = 6;
                 }
-                $this->data['open_identifiedas'] = implode(',',$coursetype);
+                $this->data['open_identifiedas'] = implode(',', $coursetype);
             }
 
             $course = create_course((object) $this->data);
-            $coursedata = $DB->get_record('course',array('id' => $course->id));
+            $coursedata = $DB->get_record('course', array('id' => $course->id));
             $insertlib->add_enrol_method_tocourse($coursedata);
             $this->id = $course->id;
             $this->status('coursecreated', new lang_string('coursecreated', 'tool_uploadcourse'));
         } else if ($this->do === self::DO_UPDATE) {
             $course = (object) $this->data;
             update_course($course);
-            $coursedata = $DB->get_record('course',array('id' => $course->id));
+            $coursedata = $DB->get_record('course', array('id' => $course->id));
             $insertlib->add_enrol_method_tocourse($coursedata);
             $this->id = $course->id;
             $this->status('courseupdated', new lang_string('courseupdated', 'tool_uploadcourse'));
@@ -903,8 +987,14 @@ class local_uploadcourse_course {
 
         // Restore a course.
         if (!empty($this->restoredata)) {
-            $rc = new restore_controller($this->restoredata, $course->id, backup::INTERACTIVE_NO,
-                backup::MODE_IMPORT, $USER->id, backup::TARGET_CURRENT_ADDING);
+            $rc = new restore_controller(
+                $this->restoredata,
+                $course->id,
+                backup::INTERACTIVE_NO,
+                backup::MODE_IMPORT,
+                $USER->id,
+                backup::TARGET_CURRENT_ADDING
+            );
 
             // Check if the format conversion must happen first.
             if ($rc->get_status() == backup::STATUS_REQUIRE_CONV) {
@@ -941,7 +1031,8 @@ class local_uploadcourse_course {
      * @param object $course course record.
      * @return void
      */
-    protected function process_enrolment_data($course) {
+    protected function process_enrolment_data($course)
+    {
         global $DB;
 
         $enrolmentdata = $this->enrolmentdata;
@@ -1008,7 +1099,7 @@ class local_uploadcourse_course {
                 $instance->enrolenddate = (isset($method['enddate']) ? strtotime($method['enddate']) : 0);
 
                 // Is the enrolment period set?
-                if (isset($method['enrolperiod']) && ! empty($method['enrolperiod'])) {
+                if (isset($method['enrolperiod']) && !empty($method['enrolperiod'])) {
                     if (preg_match('/^\d+$/', $method['enrolperiod'])) {
                         $method['enrolperiod'] = (int) $method['enrolperiod'];
                     } else {
@@ -1049,7 +1140,8 @@ class local_uploadcourse_course {
      * @param stdClass $course the course object of the course to reset.
      * @return array status array of array component, item, error.
      */
-    protected function reset($course) {
+    protected function reset($course)
+    {
         global $DB;
 
         $resetdata = new stdClass();
@@ -1094,7 +1186,8 @@ class local_uploadcourse_course {
      * @param lang_string $message status message.
      * @return void
      */
-    protected function status($code, lang_string $message) {
+    protected function status($code, lang_string $message)
+    {
         if (array_key_exists($code, $this->statuses)) {
             throw new coding_exception('Status code already defined');
         }

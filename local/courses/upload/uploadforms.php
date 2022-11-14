@@ -104,9 +104,9 @@ class local_uploadcourse_step2_form extends tool_uploadcourse_base_form {
         
         if(is_siteadmin($USER)){
             $displaylist = $DB->get_records_menu('local_costcenter',  array('parentid' => 0),  $sort='',  $fields='id,fullname');
-            $options[null] = 'select costcenter';
+            $options[null] = 'select organization';
             $data = $options+$displaylist;
-            $mform->addElement('select', 'defaults[open_costcenterid]', get_string('open_costcenterid', 'local_courses'), $data);
+            $mform->addElement('select', 'defaults[open_costcenterid]', get_string('organization', 'local_courses'), $data);
             $mform->addRule('defaults[open_costcenterid]', null, 'required');
             $mform->addHelpButton('defaults[open_costcenterid]', 'coursecategory');
         } else {
