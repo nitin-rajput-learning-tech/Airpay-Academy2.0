@@ -35,7 +35,7 @@ class catslib {
     public function get_categories($costcenter = null){
         global $DB, $USER;
 
-        if (is_null($costcenter)) {
+        if (is_null($costcenter) || empty($costcenter)) {
             $category = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_costcenterid));
         } else {
             $category = $DB->get_field('local_costcenter', 'category', array('id' => $costcenter));
