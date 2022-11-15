@@ -58,7 +58,7 @@ defined('MOODLE_INTERNAL') || die;
  */
 class core_renderer extends \core_renderer {
 
-    
+
 
     /**
      * Returns HTML to display a "Turn editing on/off" button in a form.
@@ -314,13 +314,13 @@ class core_renderer extends \core_renderer {
         $block_pluginlist = $core_component::get_plugin_list('block');
 
         $block_content .= html_writer::start_tag('ul', array('class'=>'pull-left row-fluid user_navigation_ul'));
-            //======= Dasboard link ========//  
+            //======= Dasboard link ========//
             $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_dashboard', 'class'=>'pull-left user_nav_div dashboard'));
-                $button1 = html_writer::link($CFG->wwwroot, '<i class="fa fa-home" aria-hidden="true"></i><span class="user_navigation_link_text">'.get_string('leftmenu_dashboard', 'theme_epsilon').'</span>', array('class'=>'user_navigation_link'));
+                $button1 = html_writer::link($CFG->wwwroot.'/my/dashboard.php', '<i class="fa fa-home" aria-hidden="true"></i><span class="user_navigation_link_text">'.get_string('leftmenu_dashboard', 'theme_epsilon').'</span>', array('class'=>'user_navigation_link'));
                 $block_content .= $button1;
             $block_content .= html_writer::end_tag('li');
 
-            //=======Leader Dasboard link ========// 
+            //=======Leader Dasboard link ========//
 //             $gamificationb_plugin_exist = $core_component::get_plugin_directory('block', 'gamification');
 //             $gamificationl_plugin_exist = $core_component::get_plugin_directory('local', 'gamification');
 //             if($gamificationl_plugin_exist && $gamificationb_plugin_exist && (has_capability('local/gamification:view
@@ -383,13 +383,13 @@ class core_renderer extends \core_renderer {
                 }
             }
 
-            ksort($pluginnavs);   
+            ksort($pluginnavs);
             foreach($pluginnavs as $pluginnav){
                 foreach($pluginnav  as $key => $value){
                         $data = $value;
                         $block_content .= $data;
                 }
-            }         
+            }
             /*Site Administration Link*/
             if(is_siteadmin()){
                 $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_adminstration', 'class'=>'pull-left user_nav_div adminstration'));
@@ -399,7 +399,7 @@ class core_renderer extends \core_renderer {
                 $block_content .= html_writer::end_tag('li');
             }
         $block_content .= html_writer::end_tag('ul');
-        
+
         return $block_content;
     }
     /**
@@ -428,7 +428,7 @@ class core_renderer extends \core_renderer {
 	 /**
 	     * returns the scheme names for theme and costcenter
 	     *
-	     * @return string 
+	     * @return string
 	     */
 	    function get_my_scheme(){
 		global $PAGE, $CFG;
@@ -446,7 +446,7 @@ class core_renderer extends \core_renderer {
 		        $return .= ' organization_'.$costcenter_schemename;
 		    }
 		}
-		
+
 		return $return;
     }
     /*
@@ -463,7 +463,7 @@ class core_renderer extends \core_renderer {
          if(!empty($costcenterid)){
              $logopath = costcenter_logo($costcenterid);
          }
-         
+
          if(empty($logopath)) {
              $logopath = $this->get_compact_logo_url();
             //  if(empty($logopath)){
@@ -504,7 +504,7 @@ class core_renderer extends \core_renderer {
         if (strlen($logintext) > 600) {
                 //truncate string
                 $stringCut = substr($logintext, 0, 600);
-                $logintext = $stringCut.'...'; 
+                $logintext = $stringCut.'...';
             }
         return $logintext;
     }
@@ -518,10 +518,10 @@ class core_renderer extends \core_renderer {
         }
         return $loginordering;
     }
-    /* 
+    /*
      * returns the images slider for the login page.
      * @author Raghuvaran Komati.
-     * 
+     *
      * @return URL
     */
     public function loginslider(){
@@ -531,7 +531,7 @@ class core_renderer extends \core_renderer {
         }
         $loginslider = '';
         $loginslider .='<script> function loginpopup(test) {
-                            $("#div_loginpopup_"+test).toggleClass("open");        
+                            $("#div_loginpopup_"+test).toggleClass("open");
                             }
                             function closeonclick(test){
                                 $("#div_loginpopup_"+test).toggleClass("open");
@@ -585,13 +585,13 @@ class core_renderer extends \core_renderer {
         if (strlen($welcometext) > 15) {
                 //truncate string
                 $stringCut = substr($welcometext, 0, 15);
-                $welcometext = $stringCut.' '; 
+                $welcometext = $stringCut.' ';
             }
 
         return $welcometext;
     }
 
-    
+
     function captiontext(){
 
         $captiontext = $this->page->theme->settings->logocaption;
@@ -602,7 +602,7 @@ class core_renderer extends \core_renderer {
         if (strlen($captiontext) > 80) {
                 //truncate string
                 $stringCut = substr($captiontext, 0, 80);
-                $captiontext = $stringCut.'...'; 
+                $captiontext = $stringCut.'...';
             }
         return $captiontext;
     }
@@ -684,7 +684,7 @@ class core_renderer extends \core_renderer {
         $socialcontext = [
 
             // If any of the above social networks are true, sets this to true.
-            'hassocialnetworks' => ($hasfacebook || $hastwitter 
+            'hassocialnetworks' => ($hasfacebook || $hastwitter
                  || $haslinkedin  || $hasyoutube ||  $hasinstagram
                  ) ? true : false,
 
@@ -714,7 +714,7 @@ class core_renderer extends \core_renderer {
         $quickinfo5 = (empty($this->page->theme->settings->quickinfo5)) ? false : $this->page->theme->settings->quickinfo5;
         $quickInfo = [
             'quicklinksEnable' => ($this->page->theme->settings->quickinfo == 'no') ? false : true,
-            'hasquicklinks' => ($quickinfo1 || $quickinfo2 
+            'hasquicklinks' => ($quickinfo1 || $quickinfo2
                  || $quickinfo3  || $quickinfo4 ||  $quickinfo4
                  ) ? true : false,
             'quicklinks' => array(
@@ -771,10 +771,10 @@ class core_renderer extends \core_renderer {
     public function custom_secured_redirection(){
         global $USER, $CFG, $DB, $COURSE;
         $return = new stdClass();
-        if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') 
-            $pageurl = "https"; 
+        if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+            $pageurl = "https";
         else
-            $pageurl = "http";  
+            $pageurl = "http";
         $pageurl .= "://";
         $pageurl .= $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
         $string = strpos($pageurl, '?');
@@ -818,12 +818,12 @@ class core_renderer extends \core_renderer {
                         $cmid = $_GET['cmid'];
                     else
                         $cmid = $_GET['id'];
-                            
+
                     $quizmoduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
                     $onlinetest_sql = "SELECT lo.* FROM {local_onlinetests} AS lo
                         JOIN {course_modules} AS cm ON cm.instance=lo.quizid AND cm.module = {$quizmoduleid}
                         WHERE cm.id = :cmid";
-                        // JOIN {quiz} AS q ON q.id=lo.quizid 
+                        // JOIN {quiz} AS q ON q.id=lo.quizid
                     $onlinetest = $DB->get_record_sql($onlinetest_sql, array('cmid' => $cmid));
                     if($onlinetest){
                         $return->hideheader = TRUE;
@@ -836,7 +836,7 @@ class core_renderer extends \core_renderer {
                         $return->hideheader = FALSE;
                     }
                 }
-            }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/ 
+            }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/
                 if($COURSE->id == 1){
                     $attempt = $_GET['attempt'];
                     $onlinetest_sql = "SELECT lo.id, lo.costcenterid, lo.departmentid FROM {local_onlinetests} AS lo
@@ -913,7 +913,7 @@ class core_renderer extends \core_renderer {
         // Links: Dashboard.
         $myhome = new stdClass();
         $myhome->itemtype = 'link';
-        $myhome->url = new moodle_url('/my/');
+        $myhome->url = new moodle_url('/my/dashboard.php');
         $myhome->title = get_string('mymoodle', 'admin');
         $myhome->titleidentifier = 'mymoodle,admin';
         // $myhome->pix = "i/dashboard";
@@ -1093,29 +1093,29 @@ class core_renderer extends \core_renderer {
         $roles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
 
         if (is_array($roles) && (count($roles) > 0)) {
-            
+
             $switchrole = new stdClass(); /*Role for the Learner i.e user role */
             $switchrole->itemtype = 'link';
-            $learner_record_sql = "SELECT id, name, shortname 
-                                    FROM {role} 
+            $learner_record_sql = "SELECT id, name, shortname
+                                    FROM {role}
                                     WHERE shortname = 'employee' AND archetype = 'student' ";
             $learnerroleid = $DB->get_record_sql($learner_record_sql);
 
             $rolename = get_string('employee','theme_epsilon');
-            
+
             // $user_ra_array = $USER->access['ra']['/1'];
 
             $user_ra_array = array_values(array_map(function($role){
                             return $role;
                         }, $roles));
-            
+
             if(is_array($user_ra_array)){
                 $highest_roleinfo = max($user_ra_array);
             }else{
                 $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];
             }
             $current_roleid = isset($USER->access['rsw']['currentroleinfo']) ? $USER->access['rsw']['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
-            
+
             // var_dump($USER->access['rsw']);exit;
             if(!empty($learnerroleid)){
                 if($learnerroleid->id == $current_roleid){
@@ -1130,7 +1130,7 @@ class core_renderer extends \core_renderer {
                  $switchrole->class = $disabled_role;
                  $opts->navitems[] = $switchrole;
              }
-             
+
             foreach($roles as $role){   /*Get all the roles assigned to the user for display */
                 if(empty($role->rolename)){
                     $rolename = $role->categoryname .' - '. $role->rolecode;
@@ -1140,7 +1140,7 @@ class core_renderer extends \core_renderer {
 
                 $switchrole = new stdClass();
                 $switchrole->itemtype = 'link';
-                
+
                 if($role->roleid == $current_roleid){
                     $switchrole->url = new moodle_url('javascript:void(0)');
                     $disabled_role = 'user_role active_role';
@@ -1260,7 +1260,7 @@ class core_renderer extends \core_renderer {
 
                     case 'link':
                         // Process this as a link item.
-                        
+
                         $pix = null;
                         if (isset($value->pix) && !empty($value->pix)) {
                             $pix = new pix_icon($value->pix, $value->title, null, array('class' => 'iconsmall'));
@@ -1430,13 +1430,13 @@ class core_renderer extends \core_renderer {
         $block_pluginlist = $core_component::get_plugin_list('block');
 
         $block_content .= html_writer::start_tag('ul', array('class'=>'quickpop_over_ul'));
-            //======= Dasboard link ========//  
+            //======= Dasboard link ========//
             // $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_dashboard', 'class'=>'pull-left user_nav_div dashboard'));
             //     $button1 = html_writer::link($CFG->wwwroot, '<i class="fa fa-home" aria-hidden="true"></i><span class="user_navigation_link_text">'.get_string('leftmenu_dashboard', 'theme_epsilon').'</span>', array('class'=>'user_navigation_link'));
             //     $block_content .= $button1;
             // $block_content .= html_writer::end_tag('li');
 
-            //=======Leader Dasboard link ========// 
+            //=======Leader Dasboard link ========//
 //             $gamificationb_plugin_exist = $core_component::get_plugin_directory('block', 'gamification');
 //             $gamificationl_plugin_exist = $core_component::get_plugin_directory('local', 'gamification');
 //             if($gamificationl_plugin_exist && $gamificationb_plugin_exist && (has_capability('local/gamification:view
@@ -1448,7 +1448,7 @@ class core_renderer extends \core_renderer {
 //                 $block_content .= html_writer::end_tag('li');
 //             }
             $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_home', 'class'=>'pull-left user_nav_div adminstration'));
-                    $admin_url = new moodle_url('/my');
+                    $admin_url = new moodle_url('/my/dashboard.php');
                     $admin = html_writer::link($admin_url, '<i class="fa fa-home" aria-hidden="true"></i><span class="user_navigation_link_text">'.get_string('home','theme_epsilon').'</span>',array('class'=>'user_navigation_link'));
                     $block_content .= $admin;
                 $block_content .= html_writer::end_tag('li');
@@ -1487,13 +1487,13 @@ class core_renderer extends \core_renderer {
                     }
                 }
             }
-            ksort($pluginnavs);   
+            ksort($pluginnavs);
             foreach($pluginnavs as $pluginnav){
                 foreach($pluginnav  as $key => $value){
                         $data = $value;
                         $block_content .= $data;
                 }
-            }         
+            }
             /*Site Administration Link*/
             if(is_siteadmin()){
                 // $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_adminstration', 'class'=>'pull-left user_nav_div adminstration'));
@@ -1509,7 +1509,7 @@ class core_renderer extends \core_renderer {
 
             }
         $block_content .= html_writer::end_tag('ul');
-        
+
         return $block_content;
     }
 // theme related setting
