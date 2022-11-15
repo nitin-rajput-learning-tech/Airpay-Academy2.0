@@ -40,13 +40,13 @@ class block_quick_navigation extends block_base {
 		return true;
 	}
 	function get_content() {
-		
+
 		if ($this->content !== NULL) {
 			return $this->content;
 		}
 
 		$this->content = new stdClass();
-		$systemcontext = context_system::instance();
+		$systemcontext = \local_costcenter\lib\accesslib::get_module_context();
 		if(is_siteadmin() || has_capability('block/quick_navigation:viewquicknavigation', $systemcontext)){
 			$this->page->requires->js_call_amd('block_quick_navigation/blocklist_count', 'init', array());
 			$quick_links = new quick_links();
