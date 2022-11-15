@@ -124,7 +124,8 @@ class local_courses_external extends external_api {
             $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
             if ($validateddata->id <= 0) {
-                $validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
+                //$validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
+                $validateddata->open_identifiedas = $validateddata->open_identifiedas;
                 $validateddata->category = $category_id;
                 $validateddata->open_departmentid = $open_departmentid;
                 $validateddata->open_subdepartment = $open_subdepartment;
@@ -146,7 +147,8 @@ class local_courses_external extends external_api {
                 insert::add_enrol_method_tocourse($coursedata,$enrol_status);
 
             } elseif($validateddata->id > 0) {
-                $validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
+               // $validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
+                $validateddata->open_identifiedas = $validateddata->open_identifiedas;
                 if($form_status == 0){
                      $courseid =new stdClass();
                       $courseid->id=$data['id'];
