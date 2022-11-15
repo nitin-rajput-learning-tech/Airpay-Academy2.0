@@ -26,7 +26,6 @@
 require_once("../config.php");
 require_once($CFG->dirroot. '/course/lib.php');
 $orgid  = optional_param('orgid', 0, PARAM_INT);
-//echo $orgid;exit;
 $context =(new \local_costcenter\lib\accesslib())::get_module_context();
 $site = get_site();
 if ($CFG->forcelogin) {
@@ -36,51 +35,30 @@ if ($CFG->forcelogin) {
 $heading = $site->fullname;
 if ($context->id != CONTEXT_SYSTEM && !is_siteadmin($USER)) {
     $categoryid=$DB->get_field('context', 'instanceid', array('id' => $context->id));
-    $category = core_course_category::get($categoryid); // This will validate access.
     $PAGE->set_category_by_id($categoryid);
-    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $categoryid)));
-    //$PAGE->set_pagetype('course-index-category');
-    $heading = $category->get_formatted_name();
+    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid))); 
  } 
 else if($orgid)
 {
-    $categoryid=$orgid;
+    $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
     $category = core_course_category::get($categoryid); // This will validate access.
     $PAGE->set_category_by_id($categoryid);
-    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $categoryid)));
-    //$PAGE->set_pagetype('course-index-category');
-    $heading = $category->get_formatted_name();
+    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid)));
 }
  else if ($category = core_course_category::user_top()) {
     // Check if there is only one top-level category, if so use that.
     $categoryid = $category->id;
     $PAGE->set_url('/my/dashboard.php');
-
-    if ($category->is_uservisible() && $categoryid) {
-        
-        $PAGE->set_category_by_id($categoryid);
-        $PAGE->set_context($category->get_context());
-        if (!core_course_category::is_simple_site()) {
-            $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $categoryid)));
-            $heading = $category->get_formatted_name();
-        }
-    } else {
-      
-        $PAGE->set_context(context_system::instance());
-    }
     $PAGE->set_pagetype('course-index-category');
 } else {
     throw new moodle_exception('cannotviewcategory');
 }
 
-//$PAGE->set_pagelayout('coursecategory');
 $PAGE->set_pagelayout('mydashboard');
 $PAGE->set_primary_active_tab('home');
 $PAGE->add_body_class('limitedwidth');
 $courserenderer = $PAGE->get_renderer('core', 'course');
 $PAGE->set_heading($heading);
-$content = $courserenderer->course_category($categoryid);
-//$PAGE->set_secondary_active_tab('categorymain');
 echo $OUTPUT->header(); 
 echo $OUTPUT->skip_link_target();
 echo $content;

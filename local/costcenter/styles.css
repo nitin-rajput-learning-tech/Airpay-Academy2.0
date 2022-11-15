@@ -10,3 +10,8 @@
 #page-local-costcenter-index #department-index{
     margin-top: 25px;
 }
+#page-local-costcenter-index .costcenter_container .department_action_btns{
+    background-color: #fff6;
+    padding: 8px;
+    border-radius: 8px;
+}

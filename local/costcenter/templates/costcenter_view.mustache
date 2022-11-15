@@ -96,6 +96,14 @@
                     <span class="lable_align dept_string">{{# str}} sub_departments, local_costcenter {{/str}}</span>
                     <span class="dept_count">{{subdeptcount}}</span>
                 </div> -->
+                <div class="department_action_btns">
+                    <div class="row">
+                        <div class="col-12">
+                            <button class="btn btn-primary btn-sm mr-1 my-1" data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}'}) })(event)">{{# str}}assignroleusers,local_assignroles{{/ str}}</button>
+                            <a href="{{cfg.wwwroot}}/my/dashboard.php?orgid={{recordid}}"><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}addblocks,local_costcenter{{/ str}}</button></a>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="col-12 col-xl-9 pull-left content_right p-0">
