@@ -1,4 +1,5 @@
 <?php
+
 namespace local_users\cron;
 //
 // This file is part of eAbyas
@@ -27,8 +28,9 @@ namespace local_users\cron;
 defined('MOODLE_INTERNAL') || die;
 
 
-require_once($CFG->dirroot.'/user/lib.php');
-require_once($CFG->dirroot.'/local/costcenter/lib.php');
+require_once($CFG->dirroot . '/user/lib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
+
 use costcenter;
 use core_text;
 use core_user;
@@ -41,7 +43,8 @@ define('LDAP_ENROLL', 2);
 define('SAML2', 3);
 define('ADWEBSERVICE', 4);
 define('ADD_UPDATE', 3);
-class syncfunctionality {
+class syncfunctionality
+{
     private $data;
     private $errors = array();
     private $mfields = array();
@@ -59,11 +62,14 @@ class syncfunctionality {
     private $employeeid_exist;
     private $mobileno;
 
-    public function __construct($data=null) {
+    public function __construct($data = null)
+    {
+        global $CFG;
         $this->data = $data;
         $this->timezones = \core_date::get_list_of_timezones($CFG->forcetimezone);
-    }// end of constructor
-    public function main_hrms_frontendform_method($cir, $filecolumns, $formdata) {
+    } // end of constructor
+    public function main_hrms_frontendform_method($cir, $filecolumns, $formdata)
+    {
         global $DB, $USER, $CFG;
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $inserted = 0;
@@ -80,7 +86,7 @@ class syncfunctionality {
             $this->positionlist = $this->get_positionlist();
         }
         $this->allusers = $this->get_allusers();
-
+        $categorylib = new \local_courses\catslib();
         while ($line = $cir->next()) {
             $linenum++;
             $user = new \stdClass();
@@ -97,11 +103,23 @@ class syncfunctionality {
             $this->mfields = array();
             $this->wmfields = array();
             $this->excel_line_number = $linenum;
-            $mandatory_fields = ['first_name', 'last_name', 'username', 'organization', 'employee_id', 'department',
-             'employee_status', 'location'];
+            $mandatory_fields = [
+                'first_name', 'last_name', 'username', 'email', 'organization', 'employee_id', 'department',
+                'employee_status', 'location'
+            ];
+
             foreach ($mandatory_fields as $field) {
                 // Mandatory field validation.
                 $this->mandatory_field_validation($user, $field);
+            }
+            if (!empty($user->organization)) {
+                $this->categoryvalidations($user);
+            }
+            if (!empty($user->country)) {
+                $this->countryvalidations($user);
+            }
+            if (!empty($user->timezone)) {
+                $this->timezonevalidations($user);
             }
             // To check for existing user record.
             $sql = "SELECT u.id,u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.username LIKE :username
@@ -133,7 +151,7 @@ class syncfunctionality {
             if (!empty($user->email)) {
                 $this->emailid_validation($user);
             }
-            if (!empty($user->open_employeeid)) {
+            if (!empty($user->employee_id)) {
                 $this->empid_validation($user);
             }
             if (!empty($user->force_password_change)) {
@@ -144,7 +162,7 @@ class syncfunctionality {
                 $strings->errormessage = $errmsg;
                 $strings->linenumber = $this->excel_line_number;
                 $this->errors[] = get_string('password_upload_error', 'local_users', $strings);
-                echo '<div class=local_users_sync_error>'.get_string('password_upload_error', 'local_users', $strings).'</div>';
+                echo '<div class=local_users_sync_error>' . get_string('password_upload_error', 'local_users', $strings) . '</div>';
                 $this->errorcount++;
             }
             $userobject = $this->preparing_users_object($user, $formdata);
@@ -159,27 +177,42 @@ class syncfunctionality {
                 }
             }
         }
-        if (count($this->warnings) > 0 ) {
+        if (count($this->warnings) > 0) {
             $this->write_warnings_db($excel);
             $this->updatesupervisor_warningscount = count($this->warnings);
         }
         if ($this->data) {
             $upload_info = '<div class="critera_error1"><h3 style="text-decoration: underline;">'
-            .get_string('empfile_syncstatus', 'local_users').'</h3>';
-            $upload_info .= '<div class=local_users_sync_success>'.get_string('addedusers_msg', 'local_users',
-             $this->insertedcount).'</div>';
-            $upload_info .= '<div class=local_users_sync_success>'.get_string('updatedusers_msg', 'local_users',
-             $this->updatedcount).'</div>';
-            $upload_info .= '<div class=local_users_sync_error>'.get_string('errorscount_msg', 'local_users',
-             $this->errorcount).'</div>
+                . get_string('empfile_syncstatus', 'local_users') . '</h3>';
+            $upload_info .= '<div class=local_users_sync_success>' . get_string(
+                'addedusers_msg',
+                'local_users',
+                $this->insertedcount
+            ) . '</div>';
+            $upload_info .= '<div class=local_users_sync_success>' . get_string(
+                'updatedusers_msg',
+                'local_users',
+                $this->updatedcount
+            ) . '</div>';
+            $upload_info .= '<div class=local_users_sync_error>' . get_string(
+                'errorscount_msg',
+                'local_users',
+                $this->errorcount
+            ) . '</div>
             </div>';
-            $upload_info .= '<div class=local_users_sync_warning>'.get_string('warningscount_msg', 'local_users',
-             $this->warningscount).'</div>';
-            $upload_info .= '<div class=local_users_sync_warning>'.get_string('superwarnings_msg', 'local_users',
-             $this->updatesupervisor_warningscount).'</div>';
+            $upload_info .= '<div class=local_users_sync_warning>' . get_string(
+                'warningscount_msg',
+                'local_users',
+                $this->warningscount
+            ) . '</div>';
+            $upload_info .= '<div class=local_users_sync_warning>' . get_string(
+                'superwarnings_msg',
+                'local_users',
+                $this->updatesupervisor_warningscount
+            ) . '</div>';
             $button = html_writer::tag('button', get_string('button', 'local_users'), array('class' => 'btn btn-primary'));
-            $link = html_writer::tag('a', $button, array('href' => $CFG->wwwroot. '/local/users/index.php'));
-            $upload_info .= '<div class="w-full pull-left text-xs-center">'.$link.'</div>';
+            $link = html_writer::tag('a', $button, array('href' => $CFG->wwwroot . '/local/users/index.php'));
+            $upload_info .= '<div class="w-full pull-left text-xs-center">' . $link . '</div>';
             mtrace($upload_info);
             $sync_data = new \stdClass();
             $sync_data->newuserscount = $this->insertedcount;
@@ -193,18 +226,77 @@ class syncfunctionality {
             $sync_data->timemodified = time();
             $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
         } else {
-            echo'<div class="critera_error">'.get_string('filenotavailable', 'local_users').'</div>';
+            echo '<div class="critera_error">' . get_string('filenotavailable', 'local_users') . '</div>';
         }
-    }//end of main_hrms_frontendform_method
+    } //end of main_hrms_frontendform_method
 
-    public function get_organizations() {
+    public function get_organizations()
+    {
         global $DB;
         $sql = "SELECT shortname, id, parentid FROM {local_costcenter}";
         $costcenterslist = $DB->get_records_sql($sql);
         return $costcenterslist;
     }
 
-    public function get_org_hierarchyid($fieldvalue, $parent) {
+    public function categoryvalidations($excel)
+    {
+        global $DB, $USER;
+        $strings = new stdClass;
+        $strings->org = $excel->organization;
+        $strings->dept = $excel->department;
+        $strings->subdept = $excel->subdepartment;
+        $strings->employee_id = $excel->employee_id;
+        $strings->excel_line_number = $this->excel_line_number;
+        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorylib = new \local_courses\catslib();
+        if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && isset($excel->department) && empty($excel->subdepartment)) {
+            $categories = $categorylib->get_categories($USER->open_costcenterid);
+            $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
+            if (!in_array($departmentcostcenterid, $categories)) {
+                echo '<div class=local_users_sync_error>' . get_string('canonlycreateuserincategoryofsameorganisationwithargsdept', 'local_users', $strings) . '</div>';
+                $this->errors[] = get_string('canonlycreateuserincategoryofsameorganisationwithargsdept', 'local_users', $strings);
+                $this->mfields[] = 'usercategory';
+                $this->errorcount++;
+            }
+        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && isset($excel->department) && !empty($excel->subdepartment)) {
+            $categories = $categorylib->get_categories($USER->open_costcenterid);
+            $subdepartmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->subdepartment));
+            if (!in_array($subdepartmentcostcenterid, $categories)) {
+                echo '<div class=local_users_sync_error>' . get_string('canonlycreateuserincategoryofsameorganisationwithargssubdept', 'local_users', $strings) . '</div>';
+                $this->errors[] = get_string('canonlycreateuserincategoryofsameorganisationwithargssubdept', 'local_users', $strings);
+                $this->mfields[] = 'usercategory';
+                $this->errorcount++;
+            }
+        }
+    }
+
+    public function countryvalidations($excel)
+    {
+        $strings = new stdClass;
+        $strings->employee_id = $excel->employee_id;
+        $strings->excel_line_number = $this->excel_line_number;
+        $country = get_string_manager()->get_list_of_countries();
+        if (!array_key_exists($excel->country, $country)) {
+            echo '<div class=local_users_sync_error>' . get_string('invalidcountrycode', 'local_users', $strings) . '</div>';
+            $this->errors[] = get_string('invalidcountrycode', 'local_users', $strings);
+            $this->mfields[] = 'usercategory';
+            $this->errorcount++;
+        }
+    }
+    public function timezonevalidations($excel)
+    {
+        $strings = new stdClass;
+        $strings->employee_id = $excel->employee_id;
+        $strings->excel_line_number = $this->excel_line_number;
+        if (!array_key_exists($excel->timezone, $this->timezones)) {
+            echo '<div class=local_users_sync_error>' . get_string('invalidtimezone', 'local_users', $strings) . '</div>';
+            $this->errors[] = get_string('invalidtimezone', 'local_users', $strings);
+            $this->mfields[] = 'usercategory';
+            $this->errorcount++;
+        }
+    }
+    public function get_org_hierarchyid($fieldvalue, $parent)
+    {
         global $DB;
         $datalist = $this->organizations;
         $datal = $datalist[$fieldvalue];
@@ -223,26 +315,28 @@ class syncfunctionality {
             }
             $strings->identifier = $identifier;
             $strings->line = $this->excel_line_number;
-            echo '<div class=local_users_sync_error>'.get_string('noorganizationidfound', 'local_users', $strings).'</div>';
+            echo '<div class=local_users_sync_error>' . get_string('noorganizationidfound', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('noorganizationidfound', 'local_users', $strings);
             $this->mfields[] = $fieldvalue;
             $this->errorcount++;
         }
-    }//end of get_org_hierarchyid method
+    } //end of get_org_hierarchyid method
 
-    public function mandatory_field_validation($user, $field) {
-         //validation for mandatory missing fields
+    public function mandatory_field_validation($user, $field)
+    {
+        //validation for mandatory missing fields
         if (empty(trim($user->$field))) {
-              $strings = new stdClass;
-              $strings->field = $field;
-              $strings->linenumber = $this->excel_line_number;
-            echo '<div class=local_users_sync_error>'.get_string('missing', 'local_users', $strings).'</div>';
+            $strings = new stdClass;
+            $strings->field = $field;
+            $strings->linenumber = $this->excel_line_number;
+            echo '<div class=local_users_sync_error>' . get_string('missing', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('missing', 'local_users', $strings);
             $this->mfields[] = $field;
             $this->errorcount++;
         }
-    }//end of mandatory_field_validation
-    public function employee_status_validation($excel) {
+    } //end of mandatory_field_validation
+    public function employee_status_validation($excel)
+    {
         //validation for employee status
         $strings = new stdClass;
         $strings->employee_id = $excel->employee_id;
@@ -252,39 +346,54 @@ class syncfunctionality {
         if (array_key_exists('employee_status', $excel)) {
             if (strtolower($excel->employee_status) == 'active') {
                 $this->activestatus = 0;
-            } else if ( strtolower($excel->employee_status) == 'inactive' ) {
+            } else if (strtolower($excel->employee_status) == 'inactive') {
                 $this->activestatus = 1;
-            } else if ( strtolower($excel->employee_status) == 'delete' ) {
+            } else if (strtolower($excel->employee_status) == 'delete') {
                 $this->deletestatus = 1;
             } else {
                 $strings = new stdClass;
                 $strings->line = $this->excel_line_number;
-                echo '<div class=local_users_sync_error>'.get_string('statusvalidation', 'local_users', $strings).'</div>';
+                echo '<div class=local_users_sync_error>' . get_string('statusvalidation', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('statusvalidation', 'local_users', $strings);
                 $this->mfields[] = $excel->employee_status;
                 $this->errorcount++;
             }
         } else {
             echo '<div class=local_users_sync_error>Error in arrangement of columns in uploaded excelsheet at line
-             '.$this->excel_line_number.'</div>';
+             ' . $this->excel_line_number . '</div>';
             $this->errormessage = get_string('columnsarragement_error', 'local_users', $excel);
             $this->errorcount++;
         }
     } // end of  employee_status_validation method
 
-    public function empid_validation($excel) {
+    public function empid_validation($excel)
+    {
         global $DB;
         $strings = new stdClass();
         $strings->employee_id = $excel->employee_id;
         $strings->excel_line_number = $this->excel_line_number;
         $this->employee_id = $excel->employee_id;
+
+        if (preg_match('/[^a-z0-9 ]+/i', $excel->employee_id)) {
+            echo '<div class="local_users_sync_error">' . get_string(
+                'employeeid_nospecialcharacters',
+                'local_users',
+                $strings
+            ) . '</div>';
+            $this->errors[] = get_string('employeeid_nospecialcharacters', 'local_users', $strings);
+            $this->mfields[] = "useremployeeid";
+            $this->errorcount++;
+        }
         if ($user = $DB->record_exists('user', array('open_employeeid' => $excel->employee_id))) {
             if ($user = $DB->get_record('user', array('open_employeeid' => $excel->employee_id, 'open_costcenterid' =>
-                $this->costcenterid))) {
+            $this->costcenterid))) {
                 if ($user->open_costcenterid == $this->costcenterid) {
                     if (!isset($userid) || $user->id != $userid) {
-                        echo '<div class="local_users_sync_error">'.get_string('employeeid_alreadyexists', 'local_users',
-                         $strings).'</div>';
+                        echo '<div class="local_users_sync_error">' . get_string(
+                            'employeeid_alreadyexists',
+                            'local_users',
+                            $strings
+                        ) . '</div>';
                         $this->errors[] = get_string('employeeid_alreadyexists', 'local_users', $strings);
                         $this->mfields[] = "useremployeeid";
                         $this->errorcount++;
@@ -294,7 +403,8 @@ class syncfunctionality {
         }
     }
 
-    private function write_error_in_db($excel) {
+    private function write_error_in_db($excel)
+    {
         global $DB, $USER;
         //condition to hold the sync errors
         $syncerrors = new \stdclass();
@@ -315,13 +425,14 @@ class syncfunctionality {
         } else {
             $syncerrors->idnumber = $excel->employee_id;
         }
-            $syncerrors->firstname = $excel->first_name;
-            $syncerrors->lastname = $excel->first_name;
-            $syncerrors->sync_file_name = "Employee";
-            $DB->insert_record('local_syncerrors', $syncerrors);
+        $syncerrors->firstname = $excel->first_name;
+        $syncerrors->lastname = $excel->first_name;
+        $syncerrors->sync_file_name = "Employee";
+        $DB->insert_record('local_syncerrors', $syncerrors);
     } // end of write_error_db method
 
-    public function get_super_userid($reportinguserid, $orgid) {
+    public function get_super_userid($reportinguserid, $orgid)
+    {
         $userslist = $this->allusers;
         $user = $userslist[$reportinguserid];
         if ($user) {
@@ -334,13 +445,14 @@ class syncfunctionality {
             $strings->line = $this->excel_line_number;
             $warningmessage = get_string('nosupervisorempidfound', 'local_users', $strings);
             $this->errormessage = $warningmessage;
-            echo '<div class=local_users_sync_warning>'.$warningmessage.'</div>';
+            echo '<div class=local_users_sync_warning>' . $warningmessage . '</div>';
             $this->warningscount++;
         }
 
     }
 
-    public function get_subdepartmentid($subdepartmentid, $parentid) {
+    public function get_subdepartmentid($subdepartmentid, $parentid)
+    {
         global $DB;
         $datalist = $this->organizations;
         $datal = $datalist[$subdepartmentid];
@@ -354,12 +466,13 @@ class syncfunctionality {
             $strings->line = $this->excel_line_number;
             $warningmessage = get_string('noorsubdepartmentfound', 'local_users', $strings);
             $this->errormessage = $warningmessage;
-             echo '<div class=local_users_sync_warning>'.$warningmessage.'</div>';
+            echo '<div class=local_users_sync_warning>' . $warningmessage . '</div>';
             $this->warningscount++;
         }
     }
 
-    public function preparing_users_object($excel, $formdata=null) {
+    public function preparing_users_object($excel, $formdata = null)
+    {
         global $USER, $DB, $CFG;
         $user = new \stdclass();
         $user->auth = "manual"; //by default accepts manual
@@ -406,15 +519,16 @@ class syncfunctionality {
         }
         if ($this->deletestatus == 1) {
             $user->deleted = 0;
-            $user->username = time().$user->username;
-            $user->email = time().$user->email;
-            $user->open_employeeid = time().$user->open_employeeid;
+            $user->username = time() . $user->username;
+            $user->email = time() . $user->email;
+            $user->open_employeeid = time() . $user->open_employeeid;
         }
         $user->force_password_change = (empty($excel->force_password_change)) ? 0 : $excel->force_password_change;
         return $user;
     } // end of  preparing_users_object method
 
-    public function add_row($userobject, $formdata) {
+    public function add_row($userobject, $formdata)
+    {
         global $DB, $USER, $CFG;
         $insertnewuserfromcsv = user_create_user($userobject, false);
         $userobject = (object)$userobject;
@@ -429,10 +543,11 @@ class syncfunctionality {
             unset_user_preference('create_password', $usernew);
             set_user_preference('auth_forcepasswordchange', 1, $usernew);
         }
-            $this->insertedcount++;
+        $this->insertedcount++;
     } // end of add_row method
 
-    public function update_row($excel, $user, $formdata) {
+    public function update_row($excel, $user, $formdata)
+    {
         global $USER, $DB, $CFG;
         // Condition to get the userid to update the data.
         $userid = $this->existing_user->id;
@@ -464,13 +579,13 @@ class syncfunctionality {
             if (!empty($excel->password)) {
                 $user->password = hash_internal_user_password($excel->password);
             } else {
-                 unset($user->password);
+                unset($user->password);
             }
             if ($this->deletestatus == 1) {
                 $user->deleted = 0;
-                $user->username = time().$user->username;
-                $user->email = time().$user->email;
-                $user->open_employeeid = time().$user->open_employeeid;
+                $user->username = time() . $user->username;
+                $user->email = time() . $user->email;
+                $user->open_employeeid = time() . $user->open_employeeid;
             }
             user_update_user($user, false);
             if ($formdata->createpassword) {
@@ -486,7 +601,8 @@ class syncfunctionality {
         }
     } // end of  update_row method
 
-    public function write_warnings_db($excel) {
+    public function write_warnings_db($excel)
+    {
         global $DB, $USER;
         if (!empty($this->warnings) && !empty($this->wmfields)) {
             $syncwarnings = new \stdclass();
@@ -514,32 +630,34 @@ class syncfunctionality {
         }
     } // end of write_warning_db method
 
-    public function mobilenumber_validation($excel) {
+    public function mobilenumber_validation($excel)
+    {
         $strings = new StdClass();
         $strings->employee_id = $excel->employee_id;
         $strings->excel_line_number = $this->excel_line_number;
         $this->mobileno = $excel->mobileno;
         if (!is_numeric($this->mobileno)) {
-            echo '<div class=local_users_sync_error>'.get_string('mobileno_error', 'local_users', $strings).'</div>';
+            echo '<div class=local_users_sync_error>' . get_string('mobileno_error', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('mobileno_error', 'local_users', $strings);
             $this->mfields[] = 'mobileno';
             $this->errorcount++;
         } else if (($this->mobileno < 999999999 || $this->mobileno > 10000000000)) {
-            echo '<div class=local_users_sync_error>'.get_string('validmobileno_error', 'local_users', $strings).'</div>';
+            echo '<div class=local_users_sync_error>' . get_string('validmobileno_error', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('validmobileno_error', 'local_users', $strings);
             $this->mfields[] = 'mobileno';
             $this->errorcount++;
         }
     } //end of mobilenumber_validation method
 
-    public function emailid_validation($excel) {
+    public function emailid_validation($excel)
+    {
         global $DB;
         $strings = new StdClass();
         $strings->employee_id = $excel->employee_id;
         $strings->excel_line_number = $this->excel_line_number;
         $this->email = $excel->email;
         if (!validate_email($excel->email)) {
-            echo '<div class="local_users_sync_error">'.get_string('invalidemail_msg', 'local_users', $strings).'</div>';
+            echo '<div class="local_users_sync_error">' . get_string('invalidemail_msg', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('invalidemail_msg', 'local_users', $strings);
             $this->mfields[] = 'email';
             $this->errorcount++;
@@ -550,31 +668,35 @@ class syncfunctionality {
      * [force_password_change_validation description]
      * @param  [type] $excel [description]
      */
-    private function force_password_change_validation($excel) {
+    private function force_password_change_validation($excel)
+    {
         $this->force_password_change = $excel->force_password_change;
         if (!is_numeric($this->force_password_change) || !(($this->force_password_change == 1) ||
-         ($this->force_password_change == 0))) {
+            ($this->force_password_change == 0))) {
             echo '<div class=local_users_sync_error>force_password_change column should have value as 0 or 1 at line
-             '.$this->excel_line_number.'</div>';
-            $this->errors[] = 'force_password_change column should value as 0 or 1 at line '.$this->excel_line_number.'';
+             ' . $this->excel_line_number . '</div>';
+            $this->errors[] = 'force_password_change column should value as 0 or 1 at line ' . $this->excel_line_number . '';
             $this->mfields[] = 'force_password_change';
             $this->errorcount++;
         }
     }
-    public function get_domainlist() {
+    public function get_domainlist()
+    {
         global $DB;
         $sql = " SELECT code, id, costcenter FROM {local_domains}";
         $domainlist = $DB->get_records_sql($sql);
         return $domainlist;
     }
 
-    public function get_positionlist() {
+    public function get_positionlist()
+    {
         global $DB;
         $sql = " SELECT code, id, domain FROM {local_positions}";
         $positionlist = $DB->get_records_sql($sql);
         return $positionlist;
     }
-    public function get_domainid($costcenterid, $domain) {
+    public function get_domainid($costcenterid, $domain)
+    {
         $domainlist = $this->domainlist;
         $datal = $domainlist[$domain];
         if ($datal) {
@@ -588,11 +710,12 @@ class syncfunctionality {
             $strings->line = $this->excel_line_number;
             $warningmessage = get_string('nodomainfound', 'local_users', $strings);
             $this->errormessage = $warningmessage;
-            echo '<div class=local_users_sync_warning>'.$warningmessage.'</div>';
+            echo '<div class=local_users_sync_warning>' . $warningmessage . '</div>';
             $this->warningscount++;
         }
     }
-    public function get_positionid($domainid, $positiond) {
+    public function get_positionid($domainid, $positiond)
+    {
         $positionlist = $this->positionlist;
         $data = $positionlist[$positiond];
         if ($data) {
@@ -605,12 +728,13 @@ class syncfunctionality {
             $strings->line = $this->excel_line_number;
             $warningmessage = get_string('nopositionfound', 'local_users', $strings);
             $this->errormessage = $warningmessage;
-            echo '<div class=local_users_sync_warning>'.$warningmessage.'</div>';
+            echo '<div class=local_users_sync_warning>' . $warningmessage . '</div>';
             $this->warningscount++;
         }
     }
 
-    public function get_allusers() {
+    public function get_allusers()
+    {
         global $DB;
         $usersql = " SELECT open_employeeid, open_costcenterid, id FROM {user}";
         $users = $DB->get_records_sql($usersql);
