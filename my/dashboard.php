@@ -31,35 +31,30 @@ $site = get_site();
 if ($CFG->forcelogin) {
     require_login();
 }
-
 $heading = $site->fullname;
-if ($context->id != CONTEXT_SYSTEM && !is_siteadmin($USER)) {
-    $categoryid=$DB->get_field('context', 'instanceid', array('id' => $context->id));
-    $PAGE->set_category_by_id($categoryid);
-    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid))); 
- } 
-else if($orgid)
-{
-    $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
-    $category = core_course_category::get($categoryid); // This will validate access.
-    $PAGE->set_category_by_id($categoryid);
-    $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid)));
+if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)){
+    if($orgid == 0){
+        $orgid = $DB->get_field_sql("SELECT min(id) FROM {local_costcenter} WHERE parentid = 0 AND visible = 1 ");
+    }
+}else if($USER->open_costcenterid){
+    $orgid = $USER->open_costcenterid;
 }
- else if ($category = core_course_category::user_top()) {
-    // Check if there is only one top-level category, if so use that.
-    $categoryid = $category->id;
-    $PAGE->set_url('/my/dashboard.php');
-    $PAGE->set_pagetype('course-index-category');
-} else {
-    throw new moodle_exception('cannotviewcategory');
+$cache = \cache::make('local_costcenter','costcentercontextdata');
+$cachekey = "costcenter_context_$orgid";
+$context = $cache->get($cachekey);
+if(empty($context)){
+    $categoryid = $DB->get_field('local_costcenter', 'category', array('id' => $orgid));
+    $context = \context_coursecat::instance($categoryid);
 }
+$PAGE->set_category_by_id($context->instanceid);
+$PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid)));
 
 $PAGE->set_pagelayout('mydashboard');
 $PAGE->set_primary_active_tab('home');
 $PAGE->add_body_class('limitedwidth');
 $courserenderer = $PAGE->get_renderer('core', 'course');
 $PAGE->set_heading($heading);
-echo $OUTPUT->header(); 
+echo $OUTPUT->header();
 echo $OUTPUT->skip_link_target();
 echo $content;
 // Trigger event, course category viewed.
@@ -67,5 +62,5 @@ $eventparams = array('context' => $PAGE->context, 'objectid' => $categoryid);
 $event = \core\event\course_category_viewed::create($eventparams);
 $event->trigger();
 
- 
+
 echo $OUTPUT->footer();
