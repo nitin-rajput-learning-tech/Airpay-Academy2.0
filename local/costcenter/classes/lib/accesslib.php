@@ -46,7 +46,8 @@ class accesslib
                         $context =\context::instance_by_id($endpathvalue);
                     }
                 }else{
-                     $highestroleinfo = self::get_user_roles_in_catgeorycontexts($USER->id);
+                     $highestroleinfo = array_shift(array_slice(self::get_user_roles_in_catgeorycontexts($USER->id), 0,1));
+
                      if (!empty($highestroleinfo)) {
                         $accessdata = get_empty_accessdata();
                         $context =\context::instance_by_id($highestroleinfo->contextid);
