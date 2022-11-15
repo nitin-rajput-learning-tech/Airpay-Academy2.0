@@ -38,15 +38,15 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
         $costcenter_instance = new costcenter;
-        
+
          if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid=0 ORDER BY s.sortorder";
             $costcenters = $DB->get_records_sql($sql);
         } else if(has_capability('local/costcenter:view', $systemcontext)){
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid = 0 AND id = ? ORDER BY s.sortorder";
             $costcenters = $DB->get_records_sql($sql, [$USER->open_costcenterid]);
-        } 
-        
+        }
+
         if (!is_siteadmin() && empty($costcenters)) {
             print_error('notassignedcostcenter', 'local_costcenter');
         }
@@ -76,7 +76,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
     /**
      * @method display_department_item
      * @todo To display the all costcenter items
-     * @param object $record is costcenter  
+     * @param object $record is costcenter
      * @param boolean $indicate_depth  depth for the costcenter item
      * @return string
      */
@@ -85,14 +85,14 @@ class local_costcenter_renderer extends plugin_renderer_base {
         global $OUTPUT, $DB, $CFG, $PAGE;
         require_once($CFG->dirroot.'/local/costcenter/lib.php');
         $core_component = new \core_component();
-        
+
         $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($record->id);
 
         $contextid =  $systemcontext->id;
 
 
         $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
- 
+
 
 
         $sql="SELECT id from {local_costcenter} where parentid=?";
@@ -104,7 +104,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         if($departmentcount > 0){
             $dept_count_link = new moodle_url("/local/costcenter/costcenterview.php?id=".$record->id."");
         }else{
-            $dept_count_link = 'javascript:void(0)';            
+            $dept_count_link = 'javascript:void(0)';
         }
 
         $subdepartmentcount = 0;
@@ -125,7 +125,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         // //this is for all plugins count
         $pluginnavs = local_costcenter_plugins_count($record->id);
-        
+
         $itemdepth = ($indicate_depth) ? 'depth' . min(10, $record->depth) : 'depth1';
         // @todo get based on item type or better still, don't use inline styles :-(
         $itemicon = $OUTPUT->image_url('/i/item');
@@ -153,7 +153,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
                     $edit = true;
                 if((is_siteadmin() || has_capability('local/costcenter:deletesubdepartment', $systemcontext)) && $departmentcount == 0 && $usercount == 0)
                     $delete = true;
-            }        
+            }
 
         }
          $viewdeptContext = [
@@ -199,9 +199,9 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }else{
             $create_organisation = false;
         }
- 
+
         $exist_sql = "SELECT id FROM {local_costcenter} WHERE 1=1 ";
-     
+
         $costcenters_exist = $DB->record_exists_sql($exist_sql);
         if($id){
             $depth = $DB->get_field('local_costcenter', 'depth', array('id' => $id));
@@ -256,7 +256,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
             print_error('invalidschoolid');
         }
- 
+
 
         $edit = false;
         $delete = false;
@@ -267,6 +267,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
                 if(is_siteadmin()){
                     if(count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
                         $delete = true;
+                    $edit = true;
+                }else if(has_capability('local/costcenter:update', $systemcontext)){
                     $edit = true;
                 }
             }else if($pathcount == 2){
@@ -295,8 +297,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
              $subdepartments_sql="SELECT id,id AS id_val FROM {local_costcenter} WHERE parentid IN($dept_id);";
              $subdepartments = $DB->get_records_sql_menu($subdepartments_sql);
              $subdepartment = count($subdepartments);
-             $subdepartment = ($subdepartment > 0 ? $subdepartment : get_string('not_available', 'local_costcenter'));        
-        }   
+             $subdepartment = ($subdepartment > 0 ? $subdepartment : get_string('not_available', 'local_costcenter'));
+        }
 
         $dept_count_link = $department;
 
@@ -304,36 +306,36 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $totaldepts = count($departments);
         /*data for organization details ends here*/
         $departments_content = array();
-        if($totaldepts % 2 == 0){ 
+        if($totaldepts % 2 == 0){
             $deptclass = '';
-        }else{ 
+        }else{
             $deptclass = 'deptsodd';
-        } 
+        }
 
         $deptkeys = array_values($departments);
         foreach($deptkeys as $key => $dept){
             $even = false;
             $odd = false;
-            if($key % 2 == 0){ 
+            if($key % 2 == 0){
                 $even = true;
-            } 
-            else{ 
+            }
+            else{
                 $odd = true;
-            } 
-         
+            }
+
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
-            
+
             $subdept = count($subdepartments);
             if($subdept){
                 $subdept_count_link = $CFG->wwwroot.'/local/costcenter/costcenterview.php?id='.$dept->id;
             }else{
                 $subdept_count_link = "javascript:void(0)";
             }
-            $subdept = ($subdept > 0 ? $subdept : get_string('not_available', 'local_costcenter'));        
+            $subdept = ($subdept > 0 ? $subdept : get_string('not_available', 'local_costcenter'));
 
             $deparray = local_costcenter_plugins_count($dept->parentid,$dept->id);
-            
+
             $deptedit = false;
             $deptdelete = false;
             if (has_capability('local/costcenter:manage', $systemcontext)) {
@@ -376,7 +378,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['odd'] = $odd;
             $departments_array['deptclass'] = $deptclass;
             $departments_array['deptedit'] = $deptedit;
-    
+
             $departments_array['deptstatus'] = $dept->visible;
             $departments_array['deptdelete'] = $deptdelete;
             $departments_array['deptid'] = $dept->id;
@@ -391,7 +393,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $costcenter_view_content = [
             "deptcount" => $dept_count_link,
             "subdeptcount" => $subdepartment,
-            "deptclass" => $deptclass, 
+            "deptclass" => $deptclass,
             "roleid" => 'test role',
             "coursefileurl" => $OUTPUT->image_url('/course_images/courseimg', 'local_costcenter'),
             "orgname" => $depart->fullname,
@@ -407,7 +409,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
 
- 
+
         $pluginnavs = local_costcenter_plugins_count($id);
         $costcenter_view_content = $costcenter_view_content+$pluginnavs;
         return $OUTPUT->render_from_template('local_costcenter/departments_view', $costcenter_view_content);
@@ -455,32 +457,32 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $totalsubdepts = count($subdepartments);
         /*data for organization details ends here*/
         $departments_content = array();
-        if($totalsubdepts % 2 == 0){ 
+        if($totalsubdepts % 2 == 0){
             $deptclass = '';
-        }else{ 
+        }else{
             $deptclass = 'deptsodd';
-        } 
+        }
 
         $deptkeys = array_values($subdepartments);
 
         foreach($deptkeys as $key => $dept){
             $even = false;
             $odd = false;
-            if($key % 2 == 0){ 
+            if($key % 2 == 0){
                 $even = true;
-            } 
-            else{ 
+            }
+            else{
                 $odd = true;
-            } 
-         
+            }
+
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
-            
+
             $subdept = count($subdepartments);
-            $subdept = ($subdept > 0 ? $subdept : get_string('not_available', 'local_costcenter'));        
+            $subdept = ($subdept > 0 ? $subdept : get_string('not_available', 'local_costcenter'));
 
             $deparray = local_costcenter_plugins_count($organisationid, $dept->parentid,$dept->id);
-            
+
             $deptedit = false;
             $deptdelete = false;
             if (has_capability('local/costcenter:manage', $systemcontext)) {
@@ -502,7 +504,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
                     if((is_siteadmin() || has_capability('local/costcenter:deletesubdepartment', $systemcontext)) && $deparray['totalusers'] == 0)
                         $deptdelete = true;
                 }
-                
+
             }
 
             $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->id);
@@ -510,7 +512,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $contextid =  $context->id;
 
             $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
-          
+
             $departments_array['subdept'] = $subdept;
             $departments_array['enablesubdepartment_link'] = false;
             $departments_array['departmentparentid'] = $dept->parentid;
@@ -543,7 +545,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             'showsubdept_content' => true,
             'totalsubdepts' => $totalsubdepts,
             "subdeptcount" => $subdepartment,
-            "deptclass" => $deptclass, 
+            "deptclass" => $deptclass,
             "coursefileurl" => $OUTPUT->image_url('/course_images/courseimg', 'local_costcenter'),
             "orgname" => $depart->fullname,
             "edit" => $edit,
