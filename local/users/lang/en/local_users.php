@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of eAbyas
  *
@@ -21,7 +22,7 @@
  */
 $string['costcenter'] = 'Organisation';
 $string['employeesearch'] = 'Filter';
-$string['subsubdepartment'] = 'subsubdepartment'; 
+$string['subsubdepartment'] = 'subsubdepartment';
 $string['msg_pwd_change'] = 'Hi {$a->username}<br>Your password changed successfully!';
 $string['adduser'] = 'Add User';
 $string['pluginname'] = 'Manage Users';
@@ -71,7 +72,7 @@ $string['users:manage'] = 'Manage Users';
 $string['manage_users'] = 'Manage Users';
 $string['users:view'] = 'View Users';
 $string['users:create'] = 'users:create';
-$string['users:delete'] ='users:delete';
+$string['users:delete'] = 'users:delete';
 $string['users:edit'] = 'users:edit';
 $string['infohelp'] = 'Info/Help';
 $string['report'] = 'Report';
@@ -159,9 +160,9 @@ $string['help_1_dephead'] = '<table class="generaltable" border="1">
 <tr><td>location</td><td>Enter Location Name.</td></tr>
 ';
 
-$string['already_assignedstocostcenter']='{$a} already assigned to costcenter. Please unassign from costcenter to proceed further';
-$string['already_instructor']='{$a} already assigned as instructor. Please unassign this user as instructor to proceed further';
-$string['already_mentor']='{$a} already assigned as mentor. Please unassign this user as mentor to proceed further';
+$string['already_assignedstocostcenter'] = '{$a} already assigned to costcenter. Please unassign from costcenter to proceed further';
+$string['already_instructor'] = '{$a} already assigned as instructor. Please unassign this user as instructor to proceed further';
+$string['already_mentor'] = '{$a} already assigned as mentor. Please unassign this user as mentor to proceed further';
 // ***********************Strings for bulk users**********************
 $string['download'] = 'Download';
 $string['csvdelimiter'] = 'CSV delimiter';
@@ -726,3 +727,8 @@ $string['cardtype'] = 'CARD';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['exportusers'] = 'Export Users to Excel';
+$string['employeeid_nospecialcharacters'] = 'User with employee id {$a->employee_id} connot contain special characters at line {$a->excel_line_number}.';
+$string['canonlycreateuserincategoryofsameorganisationwithargsdept'] = ' User with employee id {$a->employee_id} Cannot create a user under department \'{$a->dept}\'  of category \'{$a->org}\'   at line \'{$a->excel_line_number}\' ';
+$string['canonlycreateuserincategoryofsameorganisationwithargssubdept'] = ' User with employee id {$a->employee_id} Cannot create a user under the subdepartment of department \'{$a->dept}\' in category \'{$a->org}\' at line \'{$a->excel_line_number}\' ';
+$string['invalidtimezone'] = 'Invalid Timezone - User with employee id {$a->employee_id} at line {$a->excel_line_number}';
+$string['invalidcountrycode'] = 'Invalid Country code - User with employee id {$a->employee_id} at line {$a->excel_line_number}';

@@ -604,6 +604,12 @@ class local_uploadcourse_course
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
+        } else if (isset($this->defaults['open_costcenterid']) && is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+            $categories = $categorylib->get_categories($this->defaults['open_costcenterid']);
+            if (!in_array($this->rawdata['category'], $categories)) {
+                $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
+                return false;
+            }
         } else {
             if (!is_siteadmin()) {
                 return false;
