@@ -298,31 +298,9 @@ function local_costcenter_output_fragment_new_costcenterform($args){
     }
     if($args->id){
         $data = $DB->get_record('local_costcenter', array('id'=>$args->id));
+        $data->shortname_static = $data->shortname;
     }
- 
-
-    // if ($args->costcenterid > 0) {
-    //     $heading = 'Update costcenter';
-    //     $collapse = false;
-    //     $data = $DB->get_record('local_costcenter', array('id'=>$costcenterid));
-    // }
-    // if ($parentid > 0) {
-    //     $data->parentid=$parentid;
-    // }
-    // $editoroptions = [
-    //     'maxfiles' => EDITOR_UNLIMITED_FILES,
-    //     'maxbytes' => $course->maxbytes,
-    //     'trust' => false,
-    //     'context' => $context,
-    //     'noclean' => true,
-    //     'subdirs' => false
-    // ];
-    // $subdept = $args->subdept;
-    // $dept = $args->dept;
-    // $group = file_prepare_standard_editor($group, 'description', $editoroptions, $context, 'group', 'description', null);
- 
-    // $mform = new local_costcenter\form\costcenterform(null, array('editoroptions' => $editoroptions,'subdept'=>$subdept,'dept'=>$dept,'parentid' => $parentid , 'id' => $args->costcenterid), 'post', '', null, true, $formdata);
-    $mform = new local_costcenter\form\organization_form(null, array(/*'editoroptions' => $editoroptions,'subdept'=>$subdept,'dept'=>$dept,'parentid' => $parentid ,*/ 'id' => $args->id, 'formtype' => $args->formtype), 'post', '', null, true, $formdata);
+    $mform = new local_costcenter\form\organization_form(null, array('id' => $args->id, 'formtype' => $args->formtype), 'post', '', null, true, $formdata);
 
     
     $mform->set_data($data);
