@@ -191,7 +191,7 @@ if($categoryid > 0 && $visible != -1){
                 $categoryid. '');
     redirect(new moodle_url('/local/courses/index.php'));
 }
-echo isset($content);
+// echo isset($content);
 $filterparams = $renderer->get_categories_list(true,$formattype);
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 if (is_siteadmin() || has_capability('moodle/category:manage', $systemcontext))  {

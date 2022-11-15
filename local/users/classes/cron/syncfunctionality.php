@@ -104,15 +104,15 @@ class syncfunctionality {
                 $this->mandatory_field_validation($user, $field);
             }
             // To check for existing user record.
-            $sql = "SELECT u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.username LIKE :username
+            $sql = "SELECT u.id,u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.username LIKE :username
              OR u.email LIKE :email) AND u.deleted = 0";
             $params = array();
             $params['username'] = $user->username;
             $params['email'] = $user->email;
             $existing_user = $DB->get_records_sql($sql, $params);
-            if (count($existing_user == 1)) {
+            if (count($existing_user) == 1) {
                 $this->existing_user = array_values($existing_user)[0];
-            } else if (count($existing_user > 1)) {
+            } else if (count($existing_user) > 1) {
                 $this->errors[] = get_string('multiple_user', 'local_users');
             } else {
                 $this->existing_user = null;
