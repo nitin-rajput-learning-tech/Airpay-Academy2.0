@@ -343,7 +343,7 @@ i.course-prev {
     padding: 0
 }
 
-#page-my-index .block {
+.block {
     border-radius: 8px;
     border: 1px solid #ddd;
     margin-bottom: 15px !important

@@ -449,6 +449,31 @@ class core_renderer extends \core_renderer {
 
 		return $return;
     }
+    /**
+     * Whether we should display the logo in the navbar.
+     *
+     * We will when there are no main logos, and we have compact logo.
+     *
+     * @return bool
+     */
+    public function should_display_navbar_logo() {
+        global $USER, $DB;
+        if(!empty($USER->open_costcenterid)){
+            $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$USER->open_costcenterid));
+        }
+        if(!empty($costcenterid)){
+            $logopath = costcenter_logo($costcenterid);
+        }
+        //print_r($logopath); exit;
+        if(empty($logopath)) {
+            $logopath = $this->get_compact_logo_url();
+           //  if(empty($logopath)){
+           //      $default_logo = $this->image_url('default_logo', 'theme_epsilon');
+           //      $logopath = $default_logo;
+           //  }
+        }
+        return !empty($logopath);
+    }
     /*
      * Returns logo url to be displayed throughout the site
      * @author Rizwana
