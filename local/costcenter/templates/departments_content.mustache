@@ -21,7 +21,19 @@
                 <div class="dept_topcontent">
                     <span class="connent_line"></span>
                     <div class="col-md-11 col-sm-9 col-9 pull-left dept_topleft p-0">
-                        <div class="pull-left"><h4>{{ departmentfullname }}</h4></div>
+                        <div class="pull-left">
+                            <h4>{{ departmentfullname }}</h4>
+
+                            <div class="department_action_btns">
+                                <div class="row">
+                                    <div class="col-12">
+
+                                        <a class="rolescostcenterpopup" href="javascript:void(0)" data-costcenterid="{{deptid}}"  data-costcentername="{{departmentfullname}}" data-action="popupmodal{{deptid}}"  data-value={{role_count}}><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}assignroleusers,local_assignroles{{/ str}}</button></a>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
                         {{# enablesubdepartment_link}}
                         <span class="pull-right subdepartment_link">
                             <label>{{#str}}subdepartment, local_costcenter{{/str}} : </label>
@@ -29,15 +41,7 @@
                         </span>
                         {{/ enablesubdepartment_link}}
                     </div>
-                    <!--<div class="left_info text-xl-center">
-                        <span class="lable_align dept_string">{{# str}} assignroleusers, local_costcenter {{/str}}</span>
-                        <span class="dept_count">
 
-                             <a class="rolescostcenterpopup" style="margin-left:40px" href="javascript:void(0)" data-costcenterid="{{deptid}}"  data-costcentername="{{departmentfullname}}" data-action="popupmodal{{deptid}}"  data-value={{role_count}}>{{ role_count }}</a>
-
-
-                        </span>
-                    </div>-->
                     <div class="col-md-1 col-sm-3 col-3 pull-right dept_topright p-0">
                           <div class="showoptions{{{ deptid }}} actionicons pull-right">
                             <span  class="pull-right showoptions" data-action="showoptions{{{ deptid }}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{deptid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{deptid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
@@ -65,11 +69,7 @@
                             {{/ deptedit}}
                             {{# assignroles}}
                                 <li>
-                                    <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{deptid}},costcentername:'{{departmentfullname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-circle"></i></a>
-
-                                </li>
-                                <li>
-                                    <a class="rolescostcenterpopup" href="javascript:void(0)" data-costcenterid="{{deptid}}"  data-costcentername="{{departmentfullname}}" data-action="popupmodal{{deptid}}"  data-value={{role_count}}><i class="fa fa-user-plus"></i></a>
+                                    <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{deptid}},costcentername:'{{departmentfullname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-plus"></i></a>
 
                                 </li>
                             {{/ assignroles}}
