@@ -334,7 +334,7 @@ class custom_course_form extends moodleform {
             if(!empty($classroom_plugin_exist)){
                 $identify['2'] = get_string('classroom','local_courses');
             }
-            $identify['3'] = get_string('elearning','local_courses');
+             $identify['3'] = get_string('elearning','local_courses');
             if(!empty($learningplan_plugin_exist)){
               $identify['4'] = get_string('learningplan','local_courses');
             }
@@ -458,7 +458,7 @@ class custom_course_form extends moodleform {
 
         } elseif($formstatus == 1){
 
-
+            $course_costcenterid = $DB->get_field('course','open_costcenterid',array('id' => $courseid));
             $pointsArr = array();
             $pointsArr[] = $mform->createElement('text',  'open_points',  '',  get_string('points','local_courses'));
             $pointsArr[] = $mform->createElement('advcheckbox', 'open_enablepoints',  '',  '', 0);
@@ -477,7 +477,7 @@ class custom_course_form extends moodleform {
             $mform->setType('open_cost', PARAM_INT);
             $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             $skillselect = array(0 => get_string('select_skill','local_courses'));
-            $skills = $DB->get_records_menu('local_skill',  array('costcenterid' => $this->course->open_costcenterid), '', 'id,name');
+              $skills = $DB->get_records_menu('local_skill', array('costcenterid' => $course_costcenterid),'','id,name');
             if(!empty($skills)){
                 $skillselect = $skillselect+$skills;
             }
@@ -489,7 +489,8 @@ class custom_course_form extends moodleform {
             $level ="SELECT cl.name FROM {local_course_levels} as cl 
                     JOIN {local_costcenter} as c ON c.id = cl.costcenterid";
             // $levels = $DB->get_records_sql_menu("SELECT id, name FROM {local_course_levels} WHERE costcenterid={$this->course->open_costcenterid} order by sortorder asc");
-            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $this->course->open_costcenterid),'sortorder', 'id,name');
+            //$levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $this->course->open_costcenterid),'sortorder', 'id,name');
+            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $course_costcenterid),'sortorder', 'id,name');
             if(!empty($levels)){
                 $levelselect = $levelselect+$levels;
             }

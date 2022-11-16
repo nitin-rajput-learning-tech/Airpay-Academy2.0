@@ -57,7 +57,7 @@ class catslib {
         foreach($data as $category){
             $lowercat_exist = $DB->get_records('course_categories', array('parent' => $category->id));
             if($lowercat_exist){
-                $info = $this->get_lower_cats($lowercat_exist);
+               $info = $this->get_lower_cats($lowercat_exist);
             }
             $this->categories[] = $category->id;
         }
