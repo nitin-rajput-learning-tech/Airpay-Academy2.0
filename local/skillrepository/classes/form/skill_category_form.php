@@ -32,63 +32,27 @@ class skill_category_form extends moodleform {
     public function definition() {
         global $DB,$USER;
         $mform = $this->_form;
-        
-        $mform->addElement('header', 'create_category_form', get_string('create_newskill_category', 'local_skillrepository'));
+
+        // $mform->addElement('header', 'create_category_form', get_string('create_newskill_category', 'local_skillrepository'));
 
         $id = optional_param('id', 0, PARAM_INT);
 
-        //print_object($id);
-
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
-
-
-
-        //$parentid = $this->_customdata['parentid']; 
-        
-        
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-
-                      
-           $options = array(
+            $options = array(
                 'ajax' => 'local_courses/form-options-selector',
-                'multiple' => true,
+                'multiple' => false,
                 'data-action' => 'organizations',
                 'data-options' => json_encode(array('id' => 0)),
                 'placeholder' => get_string('organisations','local_costcenter')
             );
-           $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
+            $sql="SELECT id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
             $costcenters = $DB->get_records_sql_menu($sql);
-
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $costcenters,$options);
-
-             
-
-
-
-
-
-
-           // $select = $mform->addElement('autocomplete', 'organizations', '', $costcenters,$options);
-
-           
-           // $mform->setType('organizations', PARAM_RAW);
-            
-/*
-            $organizationlist=array(null=>'--Select Organization--');
-
-            foreach ($costcenters as $scl) {
-                $organizationlist[$scl->id]=$scl->fullname;
-            }
-
-
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $costcenters);
-*/
-
-           // $mform->addRule('costcenterid', null, 'required', null, 'client');
-            $mform->setType('costcenterid', PARAM_INT);
-
+            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), [null => get_string('selectorg', 'local_courses')]+$costcenters,$options);
+            $mform->setType('costcenterid', PARAM_TEXT);
+            $mform->addRule('costcenterid', get_string('pleaseselectorganization', 'local_courses'), 'required', null, 'client');
         } else {
             $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
             $mform->addElement('hidden', 'costcenterid', null);
@@ -96,81 +60,51 @@ class skill_category_form extends moodleform {
             $mform->setConstant('costcenterid', $user_dept);
         }
 
-        /*print_object($this->_customdata['id']); */
+
         $edit_id=$this->_customdata['id'];
 
         $selectoptions = array();
         $selectoptions[null] = get_string('select');
         if(is_siteadmin()){
-           /* $skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 ORDER BY name ASC");*/
-           //issue OL-2557(to not to select same category as primary skill)
-
-           if($this->_customdata['id'] > 0){
-
-            $skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 and id <> $edit_id ORDER BY name ASC");
-
-           }else{
-
-            $skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 ORDER BY name ASC");
-
-           }
-            
+            if($this->_customdata['id'] > 0){
+                $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 and id <> $edit_id ORDER BY name ASC");
+            }else{
+                $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 ORDER BY name ASC");
+            }
         } else {
 		    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
             $costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-            /*$skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter  ORDER BY name ASC");*/
-
             //Issue OL-3189 fixes//
             if($this->_customdata['id'] > 0){
-
-             /* $skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter  ORDER BY name ASC");*/
-               $skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter and id <> $edit_id ORDER BY name ASC");
+               $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter and id <> $edit_id ORDER BY name ASC");
             }else{
-
-                /*$skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter and id <> $edit_id  ORDER BY name ASC");*/
-                 $skills = $DB->get_records_sql_menu("select id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter   ORDER BY name ASC");
+                 $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter   ORDER BY name ASC");
             }
-
             //Issue OL-3189 fixes//
-
-            
         }
-
         if($skills){
             $options = $selectoptions + $skills;
         }else{
             $options = $selectoptions;
         }
-        
         $mform->addElement('select', 'parentid', get_string('parent_skillcategory', 'local_skillrepository'), $options);
         $mform->setType('parentid', PARAM_INT);
-
-       
 
         $mform->addElement('text', 'name', get_string('name', 'local_skillrepository'));
         $mform->setType('name', PARAM_RAW);
         $mform->addRule('name', null, 'required', null, 'client');
 
-
-        /*if($id && isset($parentid)){
-            $mform->disabledIf('parentid', 'id');
-        }*/
-
-        //$mform->disabledIf('parentid', 'name', 'eq', 'Category1');
-        //$mform->disabledIf('parentid', 'name');
-
         $mform->addElement('text', 'shortname', get_string('shortname', 'local_skillrepository'), array());
         $mform->setType('shortname', PARAM_RAW);
         $mform->addRule('shortname', null, 'required', null, 'client');
 
-        $submit = ($this->_customdata['id'] > 0) ? get_string('update', 'local_skillrepository') : get_string('save', 'local_skillrepository');
-        $this->add_action_buttons(true, $submit);
+        $mform->disable_form_change_checker();
     }
-    
+
     public function validation($data, $files) {
         global $DB;
         $errors = parent::validation($data, $files);
-    
+
         $shortname = $data['shortname'];
         $id = $data['id'];
         $record = $DB->get_record_sql('SELECT * FROM {local_skill_categories} WHERE shortname = ? AND  id <> ?', array($shortname, $id));
@@ -182,5 +116,5 @@ class skill_category_form extends moodleform {
         }
         return $errors;
     }
-    
+
 }

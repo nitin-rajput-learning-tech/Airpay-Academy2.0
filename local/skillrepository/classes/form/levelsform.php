@@ -32,38 +32,20 @@ class levelsform extends \moodleform {
 		global $USER, $CFG, $DB, $PAGE;
 		$mform = $this->_form;
 		$id = $this->_customdata['id'];
-
-		
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
-
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-
-
-            // $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
-            // $costcenters = $DB->get_records_sql($sql);
-            // $organizationlist=array(null=>'--Select Organization--');
-            // foreach ($costcenters as $scl) {
-            //     $organizationlist[$scl->id]=$scl->fullname;
-            // }
-
-            // $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $organizationlist);
-
-                       $options = array(
+            $options = array(
                 'ajax' => 'local_courses/form-options-selector',
-                'multiple' => true,
+                'multiple' => false,
                 'data-action' => 'organizations',
                 'data-options' => json_encode(array('id' => 0)),
                 'placeholder' => get_string('organisations','local_costcenter')
             );
-           $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
+            $sql="SELECT id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
             $costcenters = $DB->get_records_sql_menu($sql);
-
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $costcenters,$options);
-
-
-
-            $mform->addRule('costcenterid', null, 'required', null, 'client');
-            $mform->setType('costcenterid', PARAM_INT);
+            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), [null => get_string('selectorg', 'local_courses')]+$costcenters,$options);
+            $mform->addRule('costcenterid', get_string('pleaseselectorganization', 'local_courses'), 'required', null, 'client');
+            $mform->setType('costcenterid', PARAM_TEXT);
         } else {
             $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
             $mform->addElement('hidden', 'costcenterid', null);
@@ -76,12 +58,11 @@ class levelsform extends \moodleform {
 
 		$mform->addElement('text',  'code',  get_string('levelcode',  'local_skillrepository'));
 		$mform->addRule('code', get_string('levelcodereq', 'local_skillrepository'), 'required', null, 'client');
-		$mform->setType('code', PARAM_RAW);	
-		
+		$mform->setType('code', PARAM_RAW);
+
 		$mform->addElement('hidden',  'id', $id);
 		$mform->setType('id', PARAM_INT);
-
-		$this->add_action_buttons();
+        $mform->disable_form_change_checker();
 	}
 	public function validation($data, $files) {
         $errors = array();

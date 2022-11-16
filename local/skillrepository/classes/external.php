@@ -34,7 +34,7 @@ class local_skillrepository_external extends external_api {
             array(
                 'contextid' => new external_value(PARAM_INT, 'The context id for the evaluation'),
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
-           
+
             )
         );
     }
@@ -46,20 +46,20 @@ class local_skillrepository_external extends external_api {
         // We always must pass webservice params through validate_parameters.
 		$params = self::validate_parameters(self::submit_skill_repository_form_form_parameters(),
                                     ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
-		
-		
+
+
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
 		self::validate_context($context);
-		$data = array();       
+		$data = array();
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
 
 
 		 $mform = new local_skillrepository\form\skill_repository_form(null, array(), 'post', '', null, true, $data);
-		
-        $repositoryinsert  = new local_skillrepository\event\insertrepository();        
-        $valdata = $mform->get_data();    
+
+        $repositoryinsert  = new local_skillrepository\event\insertrepository();
+        $valdata = $mform->get_data();
 
         $valdata->description=$valdata->description['text'];
 
@@ -75,7 +75,7 @@ class local_skillrepository_external extends external_api {
 			// Generate a warning.
             throw new moodle_exception('Error in creation');
 		}
-            // die();    
+            // die();
 	}
 
 
@@ -98,7 +98,7 @@ class local_skillrepository_external extends external_api {
             array(
                 'contextid' => new external_value(PARAM_INT, 'The context id for the skill category'),
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
-           
+
             )
         );
     }
@@ -110,22 +110,22 @@ class local_skillrepository_external extends external_api {
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_skill_category_parameters(),
                                     ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
-        
-        
+
+
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
-        self::validate_context($context);        
-        
+        self::validate_context($context);
+
         $data = array();
-       
+
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
          $mform = new local_skillrepository\form\skill_category_form(null, array(), 'post', '', null, true, $data);
-        
+
         $repositoryinsert  = new local_skillrepository\event\insertcategory();
-        
+
         $valdata = $mform->get_data();
-       
+
 
         if($valdata){
             if($valdata->id>0){
@@ -155,43 +155,43 @@ class local_skillrepository_external extends external_api {
             PARAM_RAW,
             'Query string'
         );
-        $includes = new external_value(
-            PARAM_ALPHA,
-            'What other contexts to fetch the frameworks from. (all, parents, self)',
+        $organisation = new external_value(
+            PARAM_INT,
+            'Organisation id information',
             VALUE_DEFAULT,
-            'parents'
+            0
         );
-        
+
         return new external_function_parameters(array(
             'query' => $query,
             'context' => self::get_context_parameters(),
-            'includes' => $includes,
-            
+            'organisation' => $organisation,
+
         ));
     }
 
-    public static function repository_selector($query, $context, $includes = 'parents' /*, $limitfrom = 0, $limitnum = 25*/) {
+    public static function repository_selector($query, $context, $organisation = 0 /*, $limitfrom = 0, $limitnum = 25*/) {
         global $CFG, $DB;
 
         $params = self::validate_parameters(self::repository_selector_parameters(), array(
             'query' => $query,
             'context' => $context,
-            'includes' => $includes,
+            'organisation' => $organisation,
         ));
         $query = $params['query'];
-        $includes = $params['includes'];
+        $organisation = $params['organisation'];
         $context = self::get_context_from_params($params['context']);
         self::validate_context($context);
         $repos = array();
         if ($query) {
             $repositorysql = "SELECT id, name
                         FROM {local_skill_categories}
-                        WHERE name LIKE '%$query%'";
-            $repos = $DB->get_records_sql($repositorysql);
+                        WHERE name LIKE '%$query%' AND costcenterid = :costcenterid ";
+            $repos = $DB->get_records_sql($repositorysql, ['costcenterid' => $organisation]);
         }
         return array('repos' => $repos);
     }
-    
+
     public static function repository_selector_returns() {
         return new external_single_structure(array(
             'repos' => new external_multiple_structure(
@@ -214,7 +214,7 @@ class local_skillrepository_external extends external_api {
             array(
                 'contextid' => new external_value(PARAM_INT, 'The context id for the evaluation'),
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
-           
+
             )
         );
     }
@@ -227,21 +227,21 @@ class local_skillrepository_external extends external_api {
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_level_form_parameters(),
                                     ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
-        
-        
+
+
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        
-        
+
+
         $data = array();
-       
+
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
          $mform = new \local_skillrepository\form\levelsform(null, array(), 'post', '', null, true, $data);
-        
+
         $querylib  = new \local_skillrepository\local\querylib();
-        
+
         $valdata = $mform->get_data();
 
 
@@ -277,7 +277,7 @@ class local_skillrepository_external extends external_api {
         global $DB;
 
         $return = $DB->delete_records('local_skill',  array('id' => $id));
-     
+
         return $return;
     }
     public function delete_skill_returns(){
@@ -334,7 +334,7 @@ class local_skillrepository_external extends external_api {
                 'filterdata' => $filterdata
             ]
         );
-        
+
         $offset = $params['offset'];
         $limit = $params['limit'];
         $decodedata = json_decode($params['dataoptions']);
@@ -342,7 +342,7 @@ class local_skillrepository_external extends external_api {
 
         $stable = new \stdClass();
         $stable->thead = true;
-       
+
         $stable->thead = false;
         $stable->start = $offset;
         $stable->length = $limit;
@@ -350,7 +350,7 @@ class local_skillrepository_external extends external_api {
 
         $totalcount = $result_skill['count'];
         $data=$result_skill['data'];
-        
+
 
         return [
             'totalcount' => $totalcount,
@@ -364,7 +364,7 @@ class local_skillrepository_external extends external_api {
 
     /**
      * Returns description of method result value.
-     */ 
+     */
     public static function  manageskillsview_returns() {
         return new external_single_structure([
             'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
@@ -376,7 +376,7 @@ class local_skillrepository_external extends external_api {
                                 array(
                                     'visible' => new external_value(PARAM_INT, 'visible skill', VALUE_OPTIONAL),
                                     'skill_id' => new external_value(PARAM_RAW, 'id in skill', VALUE_OPTIONAL),
-        
+
                                     'skilname' => new external_value(PARAM_RAW, 'skill', VALUE_OPTIONAL),
                                     'shortname' => new external_value(PARAM_RAW, 'shortname of skill', VALUE_OPTIONAL),
                                     'skill_catname' => new external_value(PARAM_RAW, 'category name in skill', VALUE_OPTIONAL),

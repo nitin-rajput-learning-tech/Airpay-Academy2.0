@@ -34,39 +34,25 @@ class skill_repository_form extends moodleform {
         global $DB,$USER;
         $mform = $this->_form;
 
-        $mform->addElement('header', 'displayinfo', get_string('create_skill', 'local_skillrepository'));
         $id = $this->_customdata['id'];
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
-        
-        
+
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-
-
-            // $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
-            // $costcenters = $DB->get_records_sql($sql);
-            // $organizationlist=array(null=>'--Select Organization--');
-            // foreach ($costcenters as $scl) {
-            //     $organizationlist[$scl->id]=$scl->fullname;
-            // }
-            // $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $organizationlist);
-
-           $options = array(
+            $options = array(
                 'ajax' => 'local_courses/form-options-selector',
-                'multiple' => true,
+                'multiple' => false,
                 'data-action' => 'organizations',
                 'data-options' => json_encode(array('id' => 0)),
                 'placeholder' => get_string('organisations','local_costcenter')
             );
 
-           $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
+            $sql="SELECT id,fullname from {local_costcenter} where visible =1 AND parentid = 0 ";
             $costcenters = $DB->get_records_sql_menu($sql);
-
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $costcenters,$options);
-
-            $mform->addRule('costcenterid', null, 'required', null, 'client');
-            $mform->setType('costcenterid', PARAM_INT);
+            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), [null => get_string('selectorg', 'local_courses')]+$costcenters,$options);
+            $mform->addRule('costcenterid', get_string('pleaseselectorganization', 'local_courses'), 'required', null, 'client');
+            $mform->setType('costcenterid', PARAM_TEXT);
         } else {
             $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
             $mform->addElement('hidden', 'costcenterid', null);
@@ -89,7 +75,7 @@ class skill_repository_form extends moodleform {
         $repos = array(0=>'Select');
         if (!empty($repository)) {
 
-            
+
             $repository = implode(',', $repository);
             $repos_sql = "SELECT sc.id, sc.name
                             FROM {local_skill_categories} AS sc
@@ -102,7 +88,7 @@ class skill_repository_form extends moodleform {
         } else if ($id > 0) {
 
             // $repos_sql = "SELECT sc.id, sc.name
-            //                 FROM {local_skill_categories} AS sc 
+            //                 FROM {local_skill_categories} AS sc
             //                 JOIN {local_skill} AS s ON s.category = sc.id
             //                 WHERE s.id = $id";
             // $reposlist = $DB->get_records_sql($repos_sql);
@@ -115,15 +101,15 @@ class skill_repository_form extends moodleform {
                         foreach($skills as $rl){
                 $repos[$rl->id] = $rl;
             }
-        
+
         } else {
 
             foreach($skills as $rl){
                 $repos[$rl->id] = $rl;
             }
         }
- 
-        
+
+
 		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
 
         $options1 = array(
@@ -145,7 +131,7 @@ class skill_repository_form extends moodleform {
         $mform->addElement('text', 'shortname', get_string('shortname', 'local_skillrepository'), array());
         $mform->setType('shortname', PARAM_RAW);
         $mform->addRule('shortname', null, 'required', null, 'client');
-       /* 
+       /*
         $mform->addElement('editor', 'description', get_string('description'), array());*/
         $mform->addElement('editor', 'description', get_string('description'),NULL, array("autosave"=>false));
         $mform->setType('description', PARAM_RAW);
@@ -154,11 +140,11 @@ class skill_repository_form extends moodleform {
         $this->add_action_buttons(true, $submit);
         $mform->disable_form_change_checker();
     }
-    
+
     public function validation($data, $files) {
         global $DB;
         $errors = parent::validation($data, $files);
-    
+
         $shortname = $data['shortname'];
         $id = $data['id'];
         $category = $data['category'];
@@ -175,5 +161,5 @@ class skill_repository_form extends moodleform {
 
         return $errors;
     }
-    
+
 }
