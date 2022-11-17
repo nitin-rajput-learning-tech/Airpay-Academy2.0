@@ -45,17 +45,7 @@
                         {{/ edit}}
                         {{# assignroles}}
                         <li>
-                            <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-circle"></i></a>
-
-                        </li>
-
-                        <li>
-                            <a class="rolescostcenterpopup"  href="javascript:void(0)" data-costcenterid="{{recordid}}"  data-costcentername="{{orgname}}" data-action="popupmodal{{recordid}}"  data-value={{role_count}}><i class="fa fa-user-plus"></i></a>
-
-                        </li>
-
-                        <li>
-                            <a class="rolescostcenterpopup"  href="{{config.wwwroot}}/my/dashboard.php?orgid={{recordid}}">{{# str}}addblocks,local_costcenter{{/ str}}</a>
+                            <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-plus"></i></a>
 
                         </li>
    
@@ -82,15 +72,6 @@
                         </span>
                     </div>
 
-                <!--<div class="left_info text-xl-center">
-                        <span class="lable_align dept_string">{{# str}} assignroleusers, local_costcenter {{/str}}</span>
-                        <span class="dept_count">
-
-                             <a class="rolescostcenterpopup" style="margin-left:40px" href="javascript:void(0)" data-costcenterid="{{recordid}}"  data-costcentername="{{orgname}}" data-action="popupmodal{{recordid}}"  data-value={{role_count}}>{{ role_count }}</a>
-
-
-                        </span>
-                 </div>-->
                 {{/ showsubdept_content}}
                 <!-- <div class="left_info text-center">
                     <span class="lable_align dept_string">{{# str}} sub_departments, local_costcenter {{/str}}</span>
@@ -99,8 +80,11 @@
                 <div class="department_action_btns">
                     <div class="row">
                         <div class="col-12">
-                            <button class="btn btn-primary btn-sm mr-1 my-1" data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}'}) })(event)">{{# str}}assignroleusers,local_assignroles{{/ str}}</button>
-                            <a href="{{config.wwwroot}}/my/dashboard.php?orgid={{recordid}}"><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}addblocks,local_costcenter{{/ str}}</button></a>
+
+                            <a class="rolescostcenterpopup"  href="javascript:void(0)" data-costcenterid="{{recordid}}"  data-costcentername="{{orgname}}" data-action="popupmodal{{recordid}}"  data-value={{role_count}}><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}assignroleusers,local_assignroles{{/ str}}</button></a>
+                            {{^ showsubdept_content}}
+                                 <a href="{{config.wwwroot}}/my/dashboard.php?orgid={{recordid}}"><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}addblocks,local_costcenter{{/ str}}</button></a>
+                            {{/ showsubdept_content}}
                         </div>
                     </div>
                 </div>
