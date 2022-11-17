@@ -732,3 +732,4 @@ $string['canonlycreateuserincategoryofsameorganisationwithargsdept'] = ' User wi
 $string['canonlycreateuserincategoryofsameorganisationwithargssubdept'] = ' User with employee id {$a->employee_id} Cannot create a user under the subdepartment of department \'{$a->dept}\' in category \'{$a->org}\' at line \'{$a->excel_line_number}\' ';
 $string['invalidtimezone'] = 'Invalid Timezone - User with employee id {$a->employee_id} at line {$a->excel_line_number}';
 $string['invalidcountrycode'] = 'Invalid Country code - User with employee id {$a->employee_id} at line {$a->excel_line_number}';
+$string['orgcheckwithdhoh'] = ' DH/OH dont have permissions to create/update under organization \'{$a->org}\' at line \'{$a->excel_line_number}\' ';
