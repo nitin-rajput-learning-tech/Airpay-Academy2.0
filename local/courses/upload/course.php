@@ -604,7 +604,7 @@ class local_uploadcourse_course
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if (isset($this->defaults['open_costcenterid']) && is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+        } else if (isset($this->defaults['open_costcenterid'])){
             $categories = $categorylib->get_categories($this->defaults['open_costcenterid']);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
@@ -646,13 +646,27 @@ class local_uploadcourse_course
             $this->error('cannotuploadcoursewithlob', new lang_string('cannotuploadcoursewithlob', 'local_courses', $this->rawdata['coursetype']));
             return false;
         } else if (!empty($this->rawdata['department']) && empty($this->rawdata['subdepartment'])) {
-            if ($this->rawdata['department'] != $this->rawdata['category_idnumber']) {
+            $path = $DB->get_field('local_costcenter', 'path', array('shortname' => $this->rawdata['category_idnumber']));
+            $departmentid = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['department']));
+            $patharr = explode('/', $path);
+            if (!in_array($departmentid,$patharr)) {
                 $this->error('categorycodeshouldbedepcode', new lang_string('categorycodeshouldbedepcode', 'local_courses', $this->rawdata['department']));
                 return false;
             }
-        } else if (!empty($this->rawdata['department']) && !empty($this->rawdata['subdepartment'])) {
+            if(empty($departmentid)){
+                $this->error('departmentnotfound', new lang_string('departmentnotfound', 'local_courses', $this->rawdata['department']));
+                return false;
+            }
+        } else if (!empty($this->rawdata['department']) && !empty($this->rawdata['subdepartment'])) {            
             if ($this->rawdata['subdepartment'] != $this->rawdata['category_idnumber']) {
                 $this->error('categorycodeshouldbesubdepcode', new lang_string('categorycodeshouldbesubdepcode', 'local_courses', $this->rawdata['subdepartment']));
+                return false;
+            }
+            $path = $DB->get_field('local_costcenter', 'path', array('shortname' => $this->rawdata['subdepartment']));
+            $departmentid = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['department']));
+            $patharr = explode('/', $path);
+            if (!in_array($departmentid,$patharr)) {
+                $this->error('subdeptshouldunderdepcode', new lang_string('subdeptshouldunderdepcode', 'local_courses', $this->rawdata['department']));
                 return false;
             }
         } else {
@@ -813,6 +827,7 @@ class local_uploadcourse_course
                     );
                     return false;
                 }
+                break;
                 // No break!
             case tool_uploadcourse_processor::MODE_CREATE_OR_UPDATE:
                 if ($exists) {
