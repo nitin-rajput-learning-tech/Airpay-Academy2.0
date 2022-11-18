@@ -347,7 +347,6 @@ class custom_course_form extends moodleform {
 			      // $identify['7'] = get_string('bootcamp','local_courses');
             $select = $mform->addElement('autocomplete', 'open_identifiedas', get_string('type','local_courses'), $identify);
             $mform->addHelpButton('open_identifiedas', 'open_identifiedascourse', 'local_courses');
-            $mform->addRule('open_identifiedas', get_string('missingtype','local_courses'), 'required', null, 'client');
             $mform->setType('open_identifiedas',PARAM_RAW);
             $select->setMultiple(true);
 
@@ -366,7 +365,6 @@ class custom_course_form extends moodleform {
                           get_string('pluginname', 'format_'.$course->format));
               }
             }
-
             $mform->addElement('select', 'format', get_string('format'), $formcourseformats);
             $mform->addHelpButton('format', 'format');
             $mform->setDefault('format', $defaultformat);
@@ -458,7 +456,6 @@ class custom_course_form extends moodleform {
 
         } elseif($formstatus == 1){
 
-            $course_costcenterid = $DB->get_field('course','open_costcenterid',array('id' => $courseid));
             $pointsArr = array();
             $pointsArr[] = $mform->createElement('text',  'open_points',  '',  get_string('points','local_courses'));
             $pointsArr[] = $mform->createElement('advcheckbox', 'open_enablepoints',  '',  '', 0);
@@ -477,10 +474,12 @@ class custom_course_form extends moodleform {
             $mform->setType('open_cost', PARAM_INT);
             $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             $skillselect = array(0 => get_string('select_skill','local_courses'));
-              $skills = $DB->get_records_menu('local_skill', array('costcenterid' => $course_costcenterid),'','id,name');
+            $skills = $DB->get_records_menu('local_skill',array('costcenterid' => $this->course->open_costcenterid),'','id,name');
+       
             if(!empty($skills)){
                 $skillselect = $skillselect+$skills;
             }
+
             $mform->addElement('select',  'open_skill', get_string('open_skillcourse','local_courses'), $skillselect);
             $mform->addHelpButton('open_skill', 'open_skillcourse', 'local_courses');
             $mform->setType('open_skill', PARAM_INT);
@@ -490,7 +489,7 @@ class custom_course_form extends moodleform {
                     JOIN {local_costcenter} as c ON c.id = cl.costcenterid";
             // $levels = $DB->get_records_sql_menu("SELECT id, name FROM {local_course_levels} WHERE costcenterid={$this->course->open_costcenterid} order by sortorder asc");
             //$levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $this->course->open_costcenterid),'sortorder', 'id,name');
-            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $course_costcenterid),'sortorder', 'id,name');
+            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $this->course->open_costcenterid),'sortorder', 'id,name');
             if(!empty($levels)){
                 $levelselect = $levelselect+$levels;
             }
@@ -572,6 +571,9 @@ class custom_course_form extends moodleform {
             if($data['open_costcenterid'] == 0){
                 $errors['open_costcenterid'] = get_string('pleaseselectorganization', 'local_courses');
             }
+        }
+        if(($data['open_identifiedas'] == NULL || $data['open_identifiedas'] == 0) && $data['form_status'] == 0){
+            $errors['open_identifiedas'] = get_string('missingtype','local_courses');
         }
 
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));

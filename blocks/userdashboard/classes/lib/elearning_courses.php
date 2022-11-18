@@ -203,8 +203,7 @@ class elearning_courses{
                 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') 
                 AND ue.userid = {$USER->id} AND c.open_costcenterid = $USER->open_costcenterid
                 AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 ";
-
-        if(!empty($filter_text)){
+          if(!empty($filter_text)){
            $sql .= " AND c.fullname LIKE '%%{$filter_text}%%'";
         }
         $sql .= " ORDER BY cc.timecompleted DESC ";
@@ -219,10 +218,10 @@ class elearning_courses{
     }
     /********end of the Function****/
 
-    public static function completed_coursenames_count($filter_text = ''){
+   public static function completed_coursenames_count($filter_text = ''){
 
     }
-
+  
     /******Function to the show the Pending course names in the E-learning Tab********/
     // public static function pastdue_coursenames($filter_text = '') {
     //     global $DB, $USER;

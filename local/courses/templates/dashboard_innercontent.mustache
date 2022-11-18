@@ -38,9 +38,13 @@
                                 <div class="course_name  flex-grow-1">
                                     <a href="{{course_url}}" title="{{{course_fullname}}}"> {{course_fullname}}</a>
                                 </div>
-                                <div class="rating_container">
-                                    <i class="fa fa-star"></i> 4.4
-                                </div>
+                             <div class = "rating_container">
+                                <div class="">{{{rating_element}}}
+                                    {{# element_tags}}
+                                     <a href="javascript:void(0);" class="w-full text-left pl-md-1 mt-2 show_suggested_modules" title="{{#str}}suggcourses, block_userdashboard{{/str}}" data-moduletype = "local_courses" data-show_suggestions = 0 data-tags = '{{element_tags}}' >{{#str}}sugcourses, block_userdashboard{{/str}}</a>
+                                    {{/ element_tags}}
+                                 </div>
+                             </div>
                             </div>
                             {{# coursesummary}} 
                             <div class="desc coursedesc">{{{coursesummary}}}</div>

@@ -163,13 +163,12 @@ class general_lib{
         global $DB, $USER;
 
         $sqlquery = "SELECT cc.id as completionid,c.*";
-
         $sql .= " FROM {course_completions} cc
                 JOIN {course} c ON c.id = cc.course AND cc.userid = $USER->id
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
-                AND ue.userid = {$USER->id} AND c.open_costcenterid = $USER->open_costcenterid
+                AND ue.userid = {$USER->id}  
                 AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 ";
         if($source == 'mobile'){
            $sql .= " AND c.open_securecourse != 1 "; 
@@ -187,14 +186,16 @@ class general_lib{
 
     public static function completed_coursenames_count($filter_text = '', $source = ''){
     	global $DB, $USER;
-    	$sql = "SELECT COUNT(DISTINCT(c.id))
-    			FROM {course_completions} cc
+    	
+        $sql = "SELECT COUNT(DISTINCT(c.id))
+                FROM {course_completions} cc
                 JOIN {course} c ON c.id = cc.course AND cc.userid = {$USER->id}
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
-                AND ue.userid = {$USER->id} AND c.open_costcenterid = {$USER->open_costcenterid} AND c.visible = 1 AND c.id > 1
+                AND ue.userid = {$USER->id} AND c.visible = 1 AND c.id > 1
                 AND cc.timecompleted IS NOT NULL";
+        
         if($source == 'mobile'){
             $sql .= " AND c.open_securecourse != 1 "; 
         }

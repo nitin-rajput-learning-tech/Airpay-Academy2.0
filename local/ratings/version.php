@@ -27,7 +27,7 @@
  * @license eAbyas info solutions.
  */
 defined('MOODLE_INTERNAL') || die;
-$plugin->version  = 2022101800;
+$plugin->version  = 2022101801;
 $plugin->requires = 2013050100;
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = 3.6;
