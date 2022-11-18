@@ -63,9 +63,14 @@ class accesslib
 
                         $childcontexts=$userrolecontext->get_child_contexts();
 
+
                         if(array_key_exists($context->id,$childcontexts)){
 
                             $context =$userrolecontext;
+
+                        }else{
+
+                            $context = \context_user::instance($USER->id);
 
                         }
                     }
@@ -80,6 +85,11 @@ class accesslib
     public static function get_user_roleswitch_context($user){
 
         global $DB,$USER,$OUTPUT;
+
+        // Probably need to get accessdata (again), so...
+        if (!isset($user->access)) {
+            load_all_capabilities();
+        }
 
         if(isset($user->access['rsw']) && !empty($user->access['rsw'])){
             if(!empty($user->access['rsw']['currentroleinfo']['context'])){
