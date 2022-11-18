@@ -19,7 +19,7 @@ define([
          * @private
          */
         Newlevel.prototype.modal = null;
-     
+
         /**
          * @var {int} contextid
          * @private
@@ -43,25 +43,25 @@ define([
                     body: self.getBody()
                 });
             }.bind(self)).then(function(modal) {
-                    
+
                 // Keep a reference to the modal.
                 self.modal = modal;
                 // Forms are big, we want a big modal.
                 self.modal.setLarge();
                 this.modal.getRoot().addClass('openLMStransition local_skillrepository');
-     
+
                 // We want to reset the form every time it is opened.
                 this.modal.getRoot().on(ModalEvents.hidden, function() {
                     this.modal.getRoot().animate({"right":"-85%"}, 500);
                     setTimeout(function(){
                         modal.destroy();
-                    }, 5000);
+                    }, 1000);
                 }.bind(this));
                 // self.modal.getRoot().on(ModalEvents.hidden, function() {
                 //     modal.hide();
                 //         setTimeout(function(){
                 //             modal.destroy();
-                //         }, 5000);
+                //         }, 1000);
                 //     //     self.modal.setBody(self.getBody());
                 //     }.bind(this));
                         self.modal.getRoot().on(ModalEvents.shown, function() {
@@ -70,11 +70,11 @@ define([
                             modal.hide();
                             setTimeout(function(){
                                 modal.destroy();
-                            }, 5000);
+                            }, 1000);
                             // modal.destroy();
                         });
                     }.bind(this));
-        
+
                     // We catch the modal save event, and use it to submit the form inside the modal.
                     // Triggering a form submission will give JS validation scripts a chance to check for errors.
                     self.modal.getRoot().on(ModalEvents.save, self.submitForm.bind(self));
@@ -83,11 +83,11 @@ define([
                     self.modal.show();
                     this.modal.getRoot().animate({"right":"0%"}, 500);
                     return this.modal;
-                }.bind(this));       
-            
-            
+                }.bind(this));
+
+
             // });
-            
+
         };
 
          /**
@@ -102,7 +102,7 @@ define([
             // Get the content of the modal.
             var params = {levelid:this.args.levelid, jsonformdata: JSON.stringify(formdata)};
             return Fragment.loadFragment('local_skillrepository', 'level_form', this.args.contextid, params);
-        
+
         };
 
         /**
@@ -130,7 +130,7 @@ define([
             // Ah wait - this is normal. We need to re-display the form with errors!
             this.modal.setBody(this.getBody(data));
         };
-        
+
         /**
          * Private method
          *
@@ -141,10 +141,10 @@ define([
         Newlevel.prototype.submitFormAjax = function(e) {
             // We don't want to do a real form submission.
             e.preventDefault();
-    
+
             // Convert all the form elements values to a serialised string.
             var formData = this.modal.getRoot().find('form').serialize();
-            
+
             // Now we can continue...
             Ajax.call([{
                 methodname: 'local_skillrepository_submit_level_form',
@@ -212,7 +212,7 @@ define([
                                 window.location.reload();
                             }
                         });
- 
+
                     }.bind(this));
                     modal.getFooter().find('[data-action="cancel"]').on('click', function() {
                         modal.setBody('');
@@ -232,7 +232,7 @@ define([
                 //     var value=Str.get_string('cancel', 'local_skillrepository');
                 //     var button = this.modal.getFooter().find('[data-action="cancel"]');
                 //     this.modal.asyncSet(value, button.text.bind(button));
-                    
+
                 //     modal.getRoot().on(ModalEvents.yes, function(e) {
                 //         e.preventDefault();
                 //         args.confirm = true;
