@@ -40,7 +40,7 @@ if ($format) {
     'last_name' => 'last_name',
     'department' => 'department',
     'subdepartment' => 'subdepartment',
-    'role_designation' => 'role_designation',
+    'designation' => 'designation',
     'reportingmanager_empid' => 'reportingmanager_empid',
     'discipline' => 'discipline',
     'mobileno' => 'mobileno',
