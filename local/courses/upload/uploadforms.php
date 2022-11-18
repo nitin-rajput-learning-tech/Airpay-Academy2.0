@@ -50,7 +50,8 @@ class local_uploadcourse_step1_form extends tool_uploadcourse_base_form {
         $mform->setDisableShortforms(true);
         //$mform->addElement('header', 'generalhdr', get_string('general'));
 
-        $mform->addElement('filepicker', 'coursefile', get_string('coursefile', 'local_courses'));
+        $mform->addElement('filepicker', 'coursefile', get_string('coursefile', 'local_courses'), null, array(
+            'accepted_types' => array('.csv')));
         $mform->addRule('coursefile', null, 'required');
         $mform->addHelpButton('coursefile', 'coursefile', 'tool_uploadcourse');
 
