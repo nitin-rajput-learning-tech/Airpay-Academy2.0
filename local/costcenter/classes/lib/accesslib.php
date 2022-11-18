@@ -57,23 +57,27 @@ class accesslib
                         }
                     }
 
-                    $userrolecontext=self::get_user_roleswitch_context($USER);
+                    if(!is_siteadmin()){
 
-                    if($context->id != $userrolecontext->id){
+                        $userrolecontext=self::get_user_roleswitch_context($USER);
 
-                        $childcontexts=$userrolecontext->get_child_contexts();
+                        if($context->id != $userrolecontext->id){
+
+                            $childcontexts=$userrolecontext->get_child_contexts();
 
 
-                        if(array_key_exists($context->id,$childcontexts)){
+                            if(array_key_exists($context->id,$childcontexts)){
 
-                            $context =$userrolecontext;
+                                $context =$userrolecontext;
 
-                        }else{
+                            }else{
 
-                            $context = \context_user::instance($USER->id);
+                                $context = \context_user::instance($USER->id);
 
+                            }
                         }
                     }
+
 
                 }catch(dml_exception $e){
                     print_r($e->debuginfo);
