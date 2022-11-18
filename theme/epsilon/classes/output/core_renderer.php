@@ -58,8 +58,7 @@ defined('MOODLE_INTERNAL') || die;
  */
 class core_renderer extends \core_renderer {
 
-
-
+    private $enable_edit_switch = true;
     /**
      * Returns HTML to display a "Turn editing on/off" button in a form.
      *
@@ -68,6 +67,7 @@ class core_renderer extends \core_renderer {
      * @return string HTML the button
      */
     public function edit_button(moodle_url $url, string $method = 'post') {
+        
         if ($this->page->theme->haseditswitch) {
             return;
         }
@@ -82,7 +82,29 @@ class core_renderer extends \core_renderer {
         $button = new \single_button($url, $editstring, $method, ['class' => 'btn btn-primary']);
         return $this->render_single_button($button);
     }
+    public function seteditswtich_display($status){
+        $this->enable_edit_switch = $status;
+    }
+    /**
+     * Create a navbar switch for toggling editing mode.
+     *
+     * @return string Html containing the edit switch
+     */
+    public function edit_switch() {
+        if ($this->page->user_allowed_editing() && $this->enable_edit_switch) {
 
+            $temp = (object) [
+                'legacyseturl' => (new moodle_url('/editmode.php'))->out(false),
+                'pagecontextid' => $this->page->context->id,
+                'pageurl' => $this->page->url,
+                'sesskey' => sesskey(),
+            ];
+            if ($this->page->user_is_editing()) {
+                $temp->checked = true;
+            }
+            return $this->render_from_template('core/editswitch', $temp);
+        }
+    }
     /**
      * Renders the "breadcrumb" for all pages in epsilon.
      *
