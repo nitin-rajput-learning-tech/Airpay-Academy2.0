@@ -240,7 +240,6 @@ class local_skillrepository_external extends external_api {
 
         $valdata = $mform->get_data();
 
-
         if($valdata){
             $levelid = $querylib->insert_update_level($valdata);
         } else {

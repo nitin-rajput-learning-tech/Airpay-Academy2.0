@@ -17,10 +17,8 @@ class querylib {
 			$formdata->timemodified = time();
 			$this->db->update_record('local_course_levels', $formdata);
 		}else{
- 
-	   $formdata->costcenterid = $formdata->id;
 			$formdata->usercreated = $this->user->id;
-			$formdata->costcenterid = $formdata->costcenterid[0];
+			$formdata->costcenterid = $formdata->costcenterid;
 			$formdata->timecreated = time();
 			$this->db->insert_record('local_course_levels', $formdata);
 		}
@@ -28,8 +26,6 @@ class querylib {
 
 	public function get_table_contents($params){
 		$params = (object)$params;
-
-
 		$contentsql = "SELECT lcl.id,lcl.name,lcl.code, concat(u.firstname,' ', u.lastname) as username FROM {local_course_levels} AS lcl
 			JOIN {user} AS u ON u.id=lcl.usercreated WHERE 1=1 ";
 
@@ -70,5 +66,5 @@ class querylib {
 	}
 	public function can_edit_level($levelid){
 		return true;
-	} 
+	}
 }
