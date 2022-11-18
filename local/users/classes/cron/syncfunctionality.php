@@ -112,17 +112,7 @@ class syncfunctionality
                 // Mandatory field validation.
                 $this->mandatory_field_validation($user, $field);
             }
-
-            if (!empty($user->organization)) {
-
-                $this->categoryvalidations($user);
-            }
-            if (!empty($user->country)) {
-                $this->countryvalidations($user);
-            }
-            if (!empty($user->timezone)) {
-                $this->timezonevalidations($user);
-            }
+           
             // To check for existing user record.
             $sql = "SELECT u.id,u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.username LIKE :username
              OR u.open_employeeid LIKE :open_employeeid) AND u.deleted = 0";
@@ -143,6 +133,16 @@ class syncfunctionality
             $this->departmentid = $this->get_org_hierarchyid($user->department, $parent = $this->costcenterid);
             if ($user->subdepartment) {
                 $this->level2_departmentid = $this->get_subdepartmentid($user->subdepartment, $this->departmentid);
+            }
+            if (!empty($user->organization)) {
+
+                $this->categoryvalidations($user);
+            }
+            if (!empty($user->country)) {
+                $this->countryvalidations($user);
+            }
+            if (!empty($user->timezone)) {
+                $this->timezonevalidations($user);
             }
             // Validation for employee status.
             $this->employee_status_validation($user);
@@ -252,8 +252,8 @@ class syncfunctionality
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $orgerror = 0;
         $categorylib = new \local_courses\catslib();
-        if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-            $orgcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->organization));
+        if (!is_siteadmin()) {
+            $orgcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->organization));           
             if ($orgcostcenterid !== $USER->open_costcenterid) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
@@ -261,19 +261,28 @@ class syncfunctionality
                 $this->errorcount++;
                 $orgerror = 1;
             }
+
         }
         if ($orgerror == 0) {
-            if (has_capability('local/costcenter:manage_ownorganization', $systemcontext) && isset($excel->department) && empty($excel->subdepartment)) {
+            if (isset($excel->department) && empty($excel->subdepartment)) {
                 $orgcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->organization));
                 $categories = $categorylib->get_categories($orgcostcenterid);
                 $departmentcategory = $DB->get_field('local_costcenter', 'category', array('shortname' => $excel->department));
+                $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
+                           
+            if ($departmentcostcenterid !== $USER->open_departmentid && !empty($USER->open_departmentid)) {
+                echo '<div class=local_users_sync_error>' . get_string('departmentcheckwithdh', 'local_users', $strings) . '</div>';
+                $this->errors[] = get_string('departmentcheckwithdh', 'local_users', $strings);
+                $this->mfields[] = 'usercategory';
+                $this->errorcount++;
+            } else
                 if (!in_array($departmentcategory, $categories)) {
                     echo '<div class=local_users_sync_error>' . get_string('deptcheckwithorg', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('deptcheckwithorg', 'local_users', $strings);
                     $this->mfields[] = 'usercategory';
                     $this->errorcount++;
                 }
-            } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext) && isset($excel->department) && !empty($excel->subdepartment)) {
+            } else if (isset($excel->department) && !empty($excel->subdepartment)) {
                 $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
                 $subdepartmentcategory = $DB->get_field('local_costcenter', 'category', array('shortname' => $excel->subdepartment));
                 $categories = $categorylib->get_categories($departmentcostcenterid);
