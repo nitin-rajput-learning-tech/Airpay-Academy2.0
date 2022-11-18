@@ -504,6 +504,7 @@ function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $
 function costcenter_insert_instance($costcenter){
         global $DB, $CFG, $USER;
        // require_once("$CFG->libdir/coursecatlib.php");
+
          
         $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
         if ($costcenter->parentid == 0) {
@@ -527,6 +528,8 @@ function costcenter_insert_instance($costcenter){
         $parentid = $costcenter->parentid ?  $costcenter->parentid:0;
         $costcenter->costcenter_logo = $costcenter->costcenter_logo;
         $costcenter->shell = $costcenter->shell;
+
+        $costcenter->shortname = $costcenter->concatshortname.'_'.$costcenter->shortname;
 
         $costcenter->id = $DB->insert_record('local_costcenter', $costcenter);
         

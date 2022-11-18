@@ -84,5 +84,23 @@ define([
                 }.bind(this));
             }.bind(this));
         },
+        accountchange: function(){
+
+            var params = {};
+
+            params.accountid = $('#id_parentid').find("option:selected").val();
+            params.contextid = $('#id_parentid').data('contextid');
+             params.actions = "accountselect";
+            var promise = Ajax.call([{
+                methodname: 'local_costcenter_generate_shortcode',
+                args: params
+            }]);
+            promise[0].done(function(resp){
+                $('.shortnamestatic').html(resp);
+                $('#id_concatshortname').val(resp);
+
+            });
+
+        },
     };
 });

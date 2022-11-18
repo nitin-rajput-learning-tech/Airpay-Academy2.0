@@ -715,4 +715,42 @@ class local_costcenter_external extends external_api {
 
 
     /*End of Department creation */
+
+    public function generate_shortcode_parameters(){
+        return new external_function_parameters(
+            array(
+                'accountid' => new external_value(PARAM_INT, 'Account id', 0),
+                'contextid' => new external_value(PARAM_INT, 'The context id for the account', false),
+                'actions' => new external_value(PARAM_RAW, 'action', false),
+
+            )
+        );
+    }
+    public function generate_shortcode($accountid, $contextid,$actions){
+        $params = self::validate_parameters(self::generate_shortcode_parameters(),
+                                    ['accountid'=>$accountid, 'contextid' => $contextid,'actions'=>$actions]);
+        $context = \context::instance_by_id($params['contextid']);
+        // We always must call validate_context in a webservice.
+        self::validate_context($context);
+        global $DB;
+        switch ($actions) {
+            case 'accountselect':
+                if($accountid > 0){
+                    try{
+                        $return = $DB->get_field('local_costcenter', 'shortname', array('id' => $accountid));
+                    }catch(Exception $e){
+                         $return = '';
+                    }
+                }
+                break;
+                default:
+
+                break;
+        }
+        return $return;
+
+    }
+    public function generate_shortcode_returns(){
+        return new external_value(PARAM_RAW, 'Data of account');
+    }
 }

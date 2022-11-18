@@ -79,7 +79,17 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $options = $DB->get_records_sql_menu($subdepartmentsql);
             }
             if(count($options) > 1){
-                $mform->addElement('select', 'parentid', $parent_label, $options);
+
+                $attributes = array(
+                    'data-contextid' => $systemcontext->id,
+                    'data-action' => 'local_account_selector',
+                    'data-options' => json_encode(array('id' => key($options))),
+                    'class' => 'accountnameselect',
+                    'data-class' => 'accountnameselect',
+                    'onchange' => '(function(e){ require("local_costcenter/costcenterdatatables").accountchange() })(event)'
+                );
+
+                $mform->addElement('select', 'parentid', $parent_label, $options,$attributes);
                 $mform->setType('parentid', PARAM_INT);
                 $mform->addRule('parentid', get_string('orgemptymsg', 'local_costcenter'), 'required', null, 'client');
             }else{
@@ -105,11 +115,28 @@ class organization_form extends moodleform { /*costcenter creation form*/
             $mform->setType('shortname', PARAM_TEXT);
         }
         else{
-            $mform->addElement('text', 'shortname', get_string('shortname','local_costcenter'), 'maxlength="100" size="20"');
-        
-            $mform->addRule('shortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');
-                
-            $mform->setType('shortname', PARAM_TEXT); 
+
+            if($formtype == 'organization'){
+
+                $mform->addElement('text', 'shortname', get_string('shortname','local_costcenter'), 'maxlength="100" size="20"');
+
+                $mform->addRule('shortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');
+
+                $mform->setType('shortname', PARAM_TEXT);
+
+            }elseif($formtype == 'department' || $formtype == 'subdepartment'){
+
+                $shortnamestatic = $DB->get_field('local_costcenter', 'shortname', array('id' => key($options)));
+
+                $shortname = array();
+                $shortname[] = $mform->createElement('hidden',  'concatshortname',$shortnamestatic);
+                $shortname[] = $mform->createElement('static',  'shortnamestatic','','<span class="shortnamestatic">'.$shortnamestatic.'</span>_');
+                $shortname[] = $mform->createElement('text', 'shortname','', 'maxlength="100" size="20"');
+                $mform->addGroup($shortname,  'groupshortname',  get_string('shortname','local_costcenter'),  array(''),  false);
+
+
+            }
+
         }
 
         $attributes = array('rows' => '8', 'cols' => '40');
@@ -141,13 +168,13 @@ class organization_form extends moodleform { /*costcenter creation form*/
                               'accepted_types' => 'web_image');
             $mform->addElement('filemanager', 'costcenter_logo', get_string('costcenter_logo', 'local_costcenter'), '', $logoupload);
 
-        $iconstyle=array();
-            $default = 'circle';
-            $iconstyle[] =& $mform->createElement('radio','shell','', get_string('square', 'theme_epsilon'),'square',array('class' => 'square'));
-            $iconstyle[] =& $mform->createElement('radio','shell','', get_string('rounded', 'theme_epsilon'),'circle',array('class' => 'circle'));
-            $iconstyle[] =& $mform->createElement('radio','shell','', get_string('rounded-square', 'theme_epsilon'),'rounded',array('class' => 'rounded'));
+        // $iconstyle=array();
+        //     $default = 'circle';
+        //     $iconstyle[] =& $mform->createElement('radio','shell','', get_string('square', 'theme_epsilon'),'square',array('class' => 'square'));
+        //     $iconstyle[] =& $mform->createElement('radio','shell','', get_string('rounded', 'theme_epsilon'),'circle',array('class' => 'circle'));
+        //     $iconstyle[] =& $mform->createElement('radio','shell','', get_string('rounded-square', 'theme_epsilon'),'rounded',array('class' => 'rounded'));
 
-                $mform->addGroup($iconstyle,'shell',get_string('iconstyle', 'local_costcenter'), array(''), false);
+        //         $mform->addGroup($iconstyle,'shell',get_string('iconstyle', 'local_costcenter'), array('hidden'), false);
             
 
          //button color
@@ -180,16 +207,17 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $errors = parent::validation($data, $files);
         // fix for OL01 issue by mahesh
         if(empty(trim($data['shortname']))){
-            $errors['shortname'] = get_string('shortnamecannotbeempty', 'local_costcenter');
+            $errors['groupshortname'] = get_string('shortnamecannotbeempty', 'local_costcenter');
         }
         if(empty(trim($data['fullname']))){
             $errors['fullname'] = get_string('fullnamecannotbeempty', 'local_costcenter');
         }
         // OL01 fix ends.
-        if ($DB->record_exists('local_costcenter', array('shortname' => trim($data['shortname'])), '*', IGNORE_MULTIPLE)) {
-            $costcenter = $DB->get_record('local_costcenter', array('shortname' => trim($data['shortname'])), '*', IGNORE_MULTIPLE);
+        $shortname = trim($data['concatshortname']).'_'.trim($data['shortname']);
+        if ($DB->record_exists('local_costcenter', array('shortname' => $shortname), '*', IGNORE_MULTIPLE)) {
+            $costcenter = $DB->get_record('local_costcenter', array('shortname' => $shortname), '*', IGNORE_MULTIPLE);
             if (empty($data['id']) || $costcenter->id != $data['id']) {
-                $errors['shortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
+                $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
             }
         }
         return $errors;
