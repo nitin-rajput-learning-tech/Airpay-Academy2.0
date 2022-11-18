@@ -915,11 +915,6 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     animation-name: liststretch4
 }
 
-.middle-blocks-row,
-.quick_nav.list-inline {
-    overflow: hidden
-}
-
 @keyframes stretch {
     0% {
         transform: translate(-110%, 0)
