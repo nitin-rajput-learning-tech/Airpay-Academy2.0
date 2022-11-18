@@ -55,19 +55,20 @@ class local_skillrepository_external extends external_api {
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
 
-		$mform = new local_skillrepository\form\skill_repository_form(null, array(), 'post', '', null, true, $data);
+
+		 $mform = new local_skillrepository\form\skill_repository_form(null, array(), 'post', '', null, true, $data);
 
         $repositoryinsert  = new local_skillrepository\event\insertrepository();
         $valdata = $mform->get_data();
         $valdata->description=$valdata->description['text'];
         if($valdata){
 
-            if($valdata->id>0){
+          if($valdata->id>0){
                 $repositoryinsert->skillrepository_opertaions('local_skill', 'update', $valdata,'','');
-            } else{
+           } else{
             	$repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');
 			}
-		} else {
+          } else {
 			// Generate a warning.
             throw new moodle_exception('Error in creation');
 		}

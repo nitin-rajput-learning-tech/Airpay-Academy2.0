@@ -12,7 +12,7 @@
         <FIELD NAME="rating" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"  PREVIOUS="userid" NEXT="timecreated"/>
 		<FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" PREVIOUS="rating" NEXT="timemodified"/>
 		<FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" PREVIOUS="timecreated" NEXT="moduleid"/>
-		<!-- <FIELD NAME="moduleid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"  PREVIOUS="timemodified" /> -->
+		<FIELD NAME="moduleid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"  PREVIOUS="timemodified" />
       </FIELDS>
       <KEYS>
 		<KEY NAME="primary" TYPE="primary" FIELDS="id"/>

@@ -1965,8 +1965,9 @@ function get_course_details($courseid) {
         $fromsql = " from  {course} c";
         if ($DB->get_manager()->table_exists('local_rating')) {
             $selectsql .= " , AVG(rating) as avg ";
-            $joinsql .= " LEFT JOIN {local_rating} as r ON r.moduleid = c.id AND r.ratearea = 'local_courses' ";
+             $joinsql .= " LEFT JOIN {local_rating} as r ON r.moduleid = c.id AND r.ratearea = 'local_courses' ";
         }
+        
         $wheresql = " where c.id = ? ";
 
         $adminrecord = $DB->get_record_sql($selectsql.$fromsql.$joinsql.$wheresql, [$courseid]);
