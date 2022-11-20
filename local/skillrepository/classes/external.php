@@ -345,10 +345,8 @@ class local_skillrepository_external extends external_api {
 
         $totalcount = $result_skill['count'];
         $data=$result_skill['data'];
-
-
         return [
-            'is_admin' => is_siteadmin();
+            'is_admin' => is_siteadmin(),
             'totalcount' => $totalcount,
             'records' =>$data,
             'options' => $options,

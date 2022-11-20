@@ -33,7 +33,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
     public function display_table() {
         global $DB, $CFG, $OUTPUT,$USER, $PAGE;
         $repository = new local_skillrepository\event\insertrepository();
-			 
+
 			 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		if(is_siteadmin() /*|| has_capability('local/costcenter:manage_multiorganizations',$systemcontext)*/){
 			$skill = $repository->skillrepository_opertaions('local_skill', 'fetch-multiple','','','');
@@ -55,9 +55,9 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 					    ];
 		$table->align = array('left' ,'left', 'left', 'center');
         if ($skill) {
-            foreach ($skill as $c) {				
+            foreach ($skill as $c) {
 				$id = $c->id;
-				$usercountsql = "SELECT count(u.id) 
+				$usercountsql = "SELECT count(u.id)
 				FROM {course} c
 				JOIN {course_completions} cc
 				on cc.course = c.id
@@ -82,7 +82,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 				$actions .= html_writer:: link($deleteurl, $deleteicon, array('onclick' => '(function(e){ require("local_skillrepository/newrepository").deleteskill({selector:"deleteskill", contextid:1, skillid:'.$c->id.', name:"test"}) })(event)'));
 
 
-				
+
 				/*$actions .= ' ';
 				$actions .= html_writer:: link($deleteurl, $deleteicon, array());*/
 				$skill_catname = $DB->get_field('local_skill_categories', 'name',array('id'=>$c->category));
@@ -97,7 +97,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
             }
             $skillstable =  html_writer::table($table);
         } else
-            $skillstable = '';			
+            $skillstable = '';
 			return $skillstable;
     }
 
@@ -106,12 +106,12 @@ class local_skillrepository_renderer extends plugin_renderer_base {
     public function manageskills_content($filter = false){
         global $USER;
 
-        
+
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
         $options = array('targetID' => 'manage_skills','perPage' => 5, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
-        
+
         $options['methodName']='local_skillrepository_manageskills_view';
-        $options['templateName']='local_skillrepository/skills_view'; 
+        $options['templateName']='local_skillrepository/skills_view';
         $options = json_encode($options);
 
         $dataoptions = json_encode(array('userid' =>$USER->id,'contextid' => $systemcontext->id));
@@ -140,14 +140,14 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 
 		$popupform = '<div id="dialog_box" style="display:none;">
 					<form autocomplete="off" name = "skillcategory" method="post" accept-charset="utf-8" id="popup_form" class="mform" >
-						<fieldset class="clearfix collapsible" id="id_displayinfo">			
-							<div class="fcontainer clearfix">			
+						<fieldset class="clearfix collapsible" id="id_displayinfo">
+							<div class="fcontainer clearfix">
 					            <div id="fitem_id_name" class="fitem required fitem_ftext ">
 					                <div class="fitemtitle">
 					                    <label for="id_name">Name<img class="req" title="Required field" alt="Required field" src="'.$CFG->wwwroot.'/theme/image.php/lnt/core/1461248966/req"> </label>
 					                </div>
 					                <div class="felement ftext">
-										<span id="id_error_name" class="error" tabindex="0" style="display:none;"> You must supply a value here.</span>				
+										<span id="id_error_name" class="error" tabindex="0" style="display:none;"> You must supply a value here.</span>
 					                    <input name="name" type="text" id="id_name">
 					                </div>
 					            </div>
@@ -156,7 +156,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 					                    <label for="id_shortname">Short Name<img class="req" title="Required field" alt="Required field" src="'.$CFG->wwwroot.'/theme/image.php/lnt/core/1461248966/req"> </label>
 					                </div>
 					                <div class="felement ftext">
-										<span id="id_error_shortname" class="error" tabindex="0" style="display:none;"> You must supply a value here.</span>					
+										<span id="id_error_shortname" class="error" tabindex="0" style="display:none;"> You must supply a value here.</span>
 					                    <input name="shortname" type="text" id="id_shortname">
 					                </div>
 					            </div>
@@ -179,7 +179,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 
         return $popupform;
     }
-	
+
 	// added by anil
 /*
  *  @method view_skill_categories to show skill categories
@@ -187,18 +187,25 @@ class local_skillrepository_renderer extends plugin_renderer_base {
  */
 	public function view_skill_categories(){
 		global $DB, $OUTPUT,$USER;
-		
+
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		if(!is_siteadmin()){
-            $skill_categories = $DB->get_records_sql("select * from {local_skill_categories} where costcenterid={$USER->open_costcenterid} order by id desc");
+            $skill_categories = $DB->get_records_sql("SELECT lsc.* from {local_skill_categories} AS lsc where lsc.costcenterid={$USER->open_costcenterid} order by lsc.id desc");
+            $isadmin = false;
+            $head = [];
 		} else{
-			$skill_categories = $DB->get_records_sql("select * from {local_skill_categories} order by id desc");
+			$skill_categories = $DB->get_records_sql("SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON lc.id = lsc.costcenterid order by lsc.id desc");
+            $isadmin = true;
+            $head = [get_string('organisation', 'local_costcenter')];
 		}
 		if($skill_categories){
 			$data = array();
 			foreach($skill_categories as $skill_category){
 				$row = array();
-				$row[] = $skill_category->name;
+                if($isadmin){
+				    $row[] = $skill_category->orginsationname;
+                }
+                $row[] = $skill_category->name;
 				$row[] = $skill_category->shortname;
 				// $editurl = new moodle_url('/local/skillrepository/skill_category.php', array('id' => $skill_category->id));
 				$editurl = "javascript:void(0)";
@@ -207,25 +214,26 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 				$editicon = html_writer:: empty_tag('img', array('src'=>$editiconurl));
 				//die();
 				$actions = html_writer:: link($editurl,  $editicon,  array('title'=>get_string('edit','local_skillrepository'),'onclick' => '(function(e){ require("local_skillrepository/newcategory").init({selector:"createcategorymodal", contextid:'.$systemcontext->id.', categoryid:'.$skill_category->id.'}) })(event)'));
-				
+
 				$deleteurl = "javascript:void(0)";
 				$deleteiconurl = $OUTPUT->image_url('i/trash');
-				
+
 				$deleteicon = html_writer:: empty_tag('img', array('src'=>$deleteiconurl));
 				$actions .= ' ';
 
 				$actions .= html_writer:: link($deleteurl, $deleteicon, array('title'=>get_string('delete','local_skillrepository'),'onclick' => '(function(e){ require("local_skillrepository/newcategory").deletecategory({selector:"deletecategory", contextid:'.$systemcontext->id.', categoryid:'.$skill_category->id.', name:"'.$skill_category->name.'"}) })(event)'));
 
 				$row[] =  $actions;
-				
+
 				$data[] = $row;
 			}
-			
+
 			$table = new html_table();
 			$table->id = 'skill_categories';
 			$table->width = '100%';
 			$table->align = array('left','center','center','center');
-			$table->head = array(get_string('fullname'), get_string('shortname', 'local_skillrepository'), get_string('actions'));
+            $head = array_merge($head, array(get_string('fullname'), get_string('shortname', 'local_skillrepository'), get_string('actions')));
+			$table->head = $head;
 			$table->data = $data;
 			$skill_categoriesview =  html_writer::table($table);
 		}else{
@@ -233,7 +241,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 			//$skill_categoriesview = '<center><h5>No Data Available</h5></center>';
 			$skill_categoriesview = html_writer::tag('div', get_string('nodataavailable', 'local_skillrepository'),array('class'=>'emptymsg'));
 		}
-		
+
 		return $skill_categoriesview;
 	}
 /*
@@ -263,13 +271,13 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 			$skilldata .= html_writer:: tag('div', $skillrecord->description, array('class'=>'skill_descr'));
 		}
 		$skilldata .= '</div>';
-		
+
 		$sql = "SELECT c.id, c.fullname, c.open_skill from
 				{course} c
 				where c.open_skill = $skillid";
-				
+
 		$skill_courses = $DB->get_records_sql($sql);
-		
+
 		if($skill_courses){
 			$sk_courses = array();
 			foreach($skill_courses as $skill_course){
@@ -280,7 +288,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 			$skill_courses = "<span class = 'noskillcoursesmsg'>".get_string('nodata', 'local_skillrepository')."</span>";
 		}
 		$skilldata .= "<div class='skillcourses'><b>".get_string('skill_courses', 'local_skillrepository').': </b>'.$skill_courses."</div>";
-		
+
 		$sql = "SELECT u.id, u.open_employeeid, c.fullname, u.firstname, u.lastname, cc.timecompleted
 				FROM {course} c
 				JOIN {course_completions} cc
@@ -288,14 +296,14 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 				JOIN {user} u
 				on cc.userid = u.id
 				WHERE c.open_skill = $skillid and cc.timecompleted IS NOT NULL";
-				
+
 		$skill_compl_courses = $DB->get_records_sql($sql);
-		
+
 		$skilldata .= html_writer::tag('h4', get_string('achievedusercount', 'local_skillrepository'));
-		
+
 		$data = array();
 		if($skill_compl_courses){
-			foreach($skill_compl_courses as $skill_compl_course){	
+			foreach($skill_compl_courses as $skill_compl_course){
 				$row = array();
 				$row[] = $skill_compl_course->firstname.' '.$skill_compl_course->lastname;
 				$row[] = $skill_compl_course->open_employeeid;
@@ -312,19 +320,19 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 		}else{
 			$skilldata .= html_writer::tag('div', get_string('norecords', 'local_skillrepository'),array('class'=>'emptymsg'));
 		}
-		
+
 		return $skilldata;
 	}
 	public function get_top_action_buttons_skills(){
 		global $CFG;
-		
+
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		$data =  "<ul class='course_extended_menu_list'>
                 <li>
                 	<div class='coursebackup course_extended_menu_itemcontainer'>
                       	<a id='extended_menu_syncstats' title='".get_string('adnewrepository', 'local_skillrepository')."' class='course_extended_menu_itemlink' href='javascript:void(0)' onclick ='(function(e){ require(\"local_skillrepository/newrepository\").init({selector:\"createrepositorymodal\", contextid:$systemcontext->id, repositoryid:0}) })(event)'><i class='icon fa fa-plus' aria-hidden='true' aria-label=''></i></a>
                   	</div>
-        	        
+
                 </li>
                 <li>
         	        <div class='coursebackup course_extended_menu_itemcontainer'>
@@ -343,7 +351,12 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 	public function display_levels_tablestructure(){
 		$table = new \html_table();
 		$table->id = 'all_levels_display_table';
-		$table->head = array(get_string('levelname', 'local_skillrepository'),get_string('levelcode', 'local_skillrepository'), get_string('createdby', 'local_skillrepository'),get_string('actions'));
+        if(is_siteadmin()){
+            $head = [get_string('organisation', 'local_costcenter')];
+        }else{
+            $head = [];
+        }
+		$table->head = array_merge($head, array(get_string('levelname', 'local_skillrepository'),get_string('levelcode', 'local_skillrepository'), get_string('createdby', 'local_skillrepository'),get_string('actions')));
 		$table = \html_writer::table($table);
 		return $table;
 	}
@@ -371,11 +384,14 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 			}
 
 			$data = array();
+            if(is_siteadmin()){
+                $data[] = $level->organisationname;
+            }
 			$data[] = $level->name;
 			$data[] = $level->code;
 			$data[] = $level->username;
 			$data[] = $actions;
-			$tabledata[] = $data; 
+			$tabledata[] = $data;
  		}
  		return $tabledata;
 	}

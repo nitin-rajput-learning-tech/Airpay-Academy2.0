@@ -197,10 +197,10 @@ function skill_details($tablelimits, $filtervalues){
 
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
         $countsql = "SELECT count(sk.id) FROM {local_skill} AS sk WHERE 1=1 ";
-        $selectsql = "SELECT sk.*, lc.fullname as organisationname
+        $selectsql = "SELECT sk.*, lc.fullname as organisationname, lsc.name AS skill_catname
             FROM {local_skill} AS sk
             JOIN {local_costcenter} AS lc ON lc.id = sk.costcenterid
-            LEFT JOIN {local_skill_categories} AS lsc ON lsc.id = sk.category
+            JOIN {local_skill_categories} AS lsc ON lsc.id = sk.category
             WHERE 1=1 ";
         $queryparam = array();
 
@@ -245,7 +245,7 @@ function skill_details($tablelimits, $filtervalues){
                $list['skill_id'] = $c->id;
                $list['achieved_users'] = $usercount;
                $list['shortname']=$c->shortname;
-               $list['skill_catname']=$skill_catname;
+               $list['skill_catname']=$c->skill_catname;
                $data[] = $list;
             }
         }
