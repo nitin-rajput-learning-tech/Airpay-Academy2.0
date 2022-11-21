@@ -195,7 +195,7 @@ define([
             }]).then(function(s) {
                 ModalFactory.create({
                     title: s[0],
-                    type: ModalFactory.types.CONFIRM,
+                    type: ModalFactory.types.DEFAULT,
                     body: s[1],
                      footer: '<button type="button" class="btn btn-primary" data-action="save">Yes! Delete</button>&nbsp;' +
             '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'

@@ -50,20 +50,12 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                         modal.destroy();
                     }, 1000);
                 }.bind(this));
-                    self.modal.getRoot().on(ModalEvents.hidden, function() {
-                	modal.hide();
-                        setTimeout(function(){
-                            modal.destroy();
-                        }, 1000);
-	                }.bind(this));
-	                    self.modal.getRoot().on(ModalEvents.shown, function() {
-	                    self.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
+
+                    self.modal.getRoot().on(ModalEvents.shown, function() {
 	                    this.modal.getFooter().find('[data-action="cancel"]').on('click', function() {
-	                        modal.hide();
 	                        setTimeout(function(){
 	                            modal.destroy();
 	                        }, 1000);
-	                        // modal.destroy();
 	                    });
 	                }.bind(this));
 
@@ -189,7 +181,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             }]).then(function(s) {
                 ModalFactory.create({
                     title: s[0],
-                    type: ModalFactory.types.CONFIRM,
+                    type: ModalFactory.types.DEFAULT,
                     body: s[1],
                     footer: '<button type="button" class="btn btn-primary" data-action="save">Yes! Delete</button>&nbsp;' +
             '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'
