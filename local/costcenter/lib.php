@@ -297,8 +297,14 @@ function local_costcenter_output_fragment_new_costcenterform($args){
         parse_str($serialiseddata, $formdata);
     }
     if($args->id){
+
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($args->id);
+
         $data = $DB->get_record('local_costcenter', array('id'=>$args->id));
         $data->shortname_static = $data->shortname;
+        $draftitemid = file_get_submitted_draft_itemid('costcenter_logo');
+        file_prepare_draft_area($draftitemid, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $data->costcenter_logo, null);
+        $data->costcenter_logo = $draftitemid;
     }
     $mform = new local_costcenter\form\organization_form(null, array('id' => $args->id, 'formtype' => $args->formtype), 'post', '', null, true, $formdata);
 
@@ -506,11 +512,11 @@ function costcenter_insert_instance($costcenter){
        // require_once("$CFG->libdir/coursecatlib.php");
 
          
-        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+
         if ($costcenter->parentid == 0) {
             $costcenter->depth = 1;
             $costcenter->path = '';
-            file_save_draft_area_files($costcenter->costcenter_logo, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $costcenter->costcenter_logo);
+
 
         } else {
             /* ---parent item must exist--- */
@@ -529,9 +535,21 @@ function costcenter_insert_instance($costcenter){
         $costcenter->costcenter_logo = $costcenter->costcenter_logo;
         $costcenter->shell = $costcenter->shell;
 
-        $costcenter->shortname = $costcenter->concatshortname.'_'.$costcenter->shortname;
+        if(isset($costcenter->concatshortname) && !empty($costcenter->concatshortname)){
+
+            $costcenter->shortname = $costcenter->concatshortname.'_'.$costcenter->shortname;
+        }
+
 
         $costcenter->id = $DB->insert_record('local_costcenter', $costcenter);
+
+        if ($costcenter->parentid == 0 && $costcenter->id) {
+
+            $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenter->id);
+
+            file_save_draft_area_files($costcenter->costcenter_logo, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $costcenter->costcenter_logo);
+
+        }
         
         if($costcenter->id) {
             $parentpath = $DB->get_field('local_costcenter', 'path', array('id'=>$parentid));
@@ -565,7 +583,7 @@ function costcenter_insert_instance($costcenter){
  */
 function costcenter_edit_instance($costcenterid, $newcostcenter){
     global $DB,$CFG;
-    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenterid);
     $oldcostcenter = $DB->get_record('local_costcenter', array('id' => $costcenterid));
     $category = $DB->get_field('local_costcenter','category',array('id' => $newcostcenter->id));
     /* ---check if the parentid is the same as that of new parentid--- */

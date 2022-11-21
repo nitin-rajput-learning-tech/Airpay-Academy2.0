@@ -57,18 +57,27 @@ class accesslib
                         }
                     }
 
-                    $userrolecontext=self::get_user_roleswitch_context($USER);
+                    if(!is_siteadmin()){
 
-                    if($context->id != $userrolecontext->id){
+                        $userrolecontext=self::get_user_roleswitch_context($USER);
 
-                        $childcontexts=$userrolecontext->get_child_contexts();
+                        if($context->id != $userrolecontext->id){
 
-                        if(array_key_exists($context->id,$childcontexts)){
+                            $childcontexts=$userrolecontext->get_child_contexts();
 
-                            $context =$userrolecontext;
 
+                            if(array_key_exists($context->id,$childcontexts)){
+
+                                $context =$userrolecontext;
+
+                            }else{
+
+                                $context = \context_user::instance($USER->id);
+
+                            }
                         }
                     }
+
 
                 }catch(dml_exception $e){
                     print_r($e->debuginfo);
@@ -80,6 +89,11 @@ class accesslib
     public static function get_user_roleswitch_context($user){
 
         global $DB,$USER,$OUTPUT;
+
+        // Probably need to get accessdata (again), so...
+        if (!isset($user->access)) {
+            load_all_capabilities();
+        }
 
         if(isset($user->access['rsw']) && !empty($user->access['rsw'])){
             if(!empty($user->access['rsw']['currentroleinfo']['context'])){
