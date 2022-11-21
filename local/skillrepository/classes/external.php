@@ -179,12 +179,15 @@ class local_skillrepository_external extends external_api {
         $context = self::get_context_from_params($params['context']);
         self::validate_context($context);
         $repos = array();
-        if ($query) {
+        // if ($query) {
             $repositorysql = "SELECT id, name
                         FROM {local_skill_categories}
-                        WHERE name LIKE '%$query%' AND costcenterid = :costcenterid ";
+                        WHERE costcenterid = :costcenterid ";
+            if ($query) {
+                $repositorysql .= " AND name LIKE '%$query%' ";
+            }
             $repos = $DB->get_records_sql($repositorysql, ['costcenterid' => $organisation]);
-        }
+        // }
         return array('repos' => $repos);
     }
 
