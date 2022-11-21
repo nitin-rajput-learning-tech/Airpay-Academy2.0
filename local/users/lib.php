@@ -880,8 +880,8 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $user_picture = $user_picture->get_url($PAGE);
         $userpic = $user_picture->out();
         $list['userpic'] = $userpic;
-        // $username = $user->firstname.' '.$user->lastname;
-        $username = $user->username;
+        $username = $user->firstname.' '.$user->lastname;
+        // $username = $user->username;
         if (strlen($username) > 24) {
             $username = substr($username, 0, 24).'...';
         }
