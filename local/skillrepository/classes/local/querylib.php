@@ -26,8 +26,11 @@ class querylib {
 
 	public function get_table_contents($params){
 		$params = (object)$params;
-		$contentsql = "SELECT lcl.id,lcl.name,lcl.code, concat(u.firstname,' ', u.lastname) as username FROM {local_course_levels} AS lcl
-			JOIN {user} AS u ON u.id=lcl.usercreated WHERE 1=1 ";
+		$contentsql = "SELECT lcl.id,lcl.name,lcl.code, concat(u.firstname,' ', u.lastname) as username, lc.fullname as organisationname
+			FROM {local_course_levels} AS lcl
+			JOIN {user} AS u ON u.id=lcl.usercreated
+			JOIN {local_costcenter} AS lc ON lc.id = lcl.costcenterid
+			WHERE 1=1 ";
 
 		if(!is_siteadmin()){
         	//For Organization head show only those levels created by them.

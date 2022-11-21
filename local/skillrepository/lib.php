@@ -146,7 +146,7 @@ function local_skillrepository_output_fragment_skill_category_form($args){
 * @return  [type] string  link for the leftmenu
 */
 function local_skillrepository_leftmenunode(){
-    
+
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $skillreponode = '';
     if(has_capability('local/costcenter:manage', $systemcontext) || is_siteadmin()) {
@@ -194,63 +194,63 @@ function local_skillrepository_output_fragment_level_form($args){
 //////For display on index page//////////
 function skill_details($tablelimits, $filtervalues){
         global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-        
+
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
         $countsql = "SELECT count(sk.id) FROM {local_skill} AS sk WHERE 1=1 ";
-        $selectsql = "SELECT * 
+        $selectsql = "SELECT sk.*, lc.fullname as organisationname, lsc.name AS skill_catname
             FROM {local_skill} AS sk
+            JOIN {local_costcenter} AS lc ON lc.id = sk.costcenterid
+            JOIN {local_skill_categories} AS lsc ON lsc.id = sk.category
             WHERE 1=1 ";
         $queryparam = array();
-       if(is_siteadmin()){
-            
-        }else{
-           $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+
+        if(!is_siteadmin()){
+            $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
             $concatsql .= " AND sk.costcenterid= :usercostcenter ";
             $queryparam['usercostcenter'] = $costcenterid;
         }
         $count = $DB->count_records_sql($countsql.$concatsql, $queryparam);
-        //print_object($tablelimits);
+
         $concatsql.=" order by sk.id desc";
         $records = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
-
 
         $list=array();
         $data=array();
         if ($records) {
-            foreach ($records as $c) { 
-                
+            foreach ($records as $c) {
+
                 $list=array();
                 $id = $c->id;
-                $usercountsql = "SELECT count(DISTINCT(u.id)) 
-                FROM {course} c
-                JOIN {course_completions} cc
-                on cc.course = c.id
-                JOIN {user} u
-                on cc.userid = u.id
-                WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL
-                ";
+                $usercountsql = "SELECT count(DISTINCT(u.id))
+                    FROM {course} c
+                    JOIN {course_completions} cc
+                    on cc.course = c.id
+                    JOIN {user} u
+                    on cc.userid = u.id
+                    WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL ";
                 $usercount = $DB->count_records_sql($usercountsql);
 
-                $skill_catname = $DB->get_field('local_skill_categories', 'name',array('id'=>$c->category));
-                if($skill_catname){
-                    $skill_catname = $skill_catname;
-                }else{
-                    $skill_catname = '---';
-                }
+                // $skill_catname = $DB->get_field('local_skill_categories', 'name',array('id'=>$c->category));
+                // if($skill_catname){
+                //     $skill_catname = $skill_catname;
+                // }else{
+                //     $skill_catname = '---';
+                // }
 
                 /*$skillurl = new moodle_url('/local/skillrepository/skillinfo.php', array('id'=>$c->id));
                 $skilname = html_writer:: link($skillurl, $c->name, array());*/
                $skilname=$c->name;
                $list['skilname'] = $skilname;
+               $list['organisationname'] = $c->organisationname;
                $list['skill_id'] = $c->id;
                $list['achieved_users'] = $usercount;
                $list['shortname']=$c->shortname;
-               $list['skill_catname']=$skill_catname;
+               $list['skill_catname']=$c->skill_catname;
                $data[] = $list;
             }
         }
 
-        return array('count' => $count, 'data' => $data); 
+        return array('count' => $count, 'data' => $data);
 }
 
 

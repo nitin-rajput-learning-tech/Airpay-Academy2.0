@@ -180,12 +180,15 @@ class local_skillrepository_external extends external_api {
         $context = self::get_context_from_params($params['context']);
         self::validate_context($context);
         $repos = array();
-        if ($query) {
+        // if ($query) {
             $repositorysql = "SELECT id, name
                         FROM {local_skill_categories}
-                        WHERE name LIKE '%$query%' AND costcenterid = :costcenterid ";
+                        WHERE costcenterid = :costcenterid ";
+            if ($query) {
+                $repositorysql .= " AND name LIKE '%$query%' ";
+            }
             $repos = $DB->get_records_sql($repositorysql, ['costcenterid' => $organisation]);
-        }
+        // }
         return array('repos' => $repos);
     }
 
@@ -346,9 +349,8 @@ class local_skillrepository_external extends external_api {
 
         $totalcount = $result_skill['count'];
         $data=$result_skill['data'];
-
-
         return [
+            'is_admin' => is_siteadmin(),
             'totalcount' => $totalcount,
             'records' =>$data,
             'options' => $options,
@@ -367,12 +369,13 @@ class local_skillrepository_external extends external_api {
             'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
             'totalcount' => new external_value(PARAM_INT, 'total number of skills in result set'),
             'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+            'is_admin' => new external_value(PARAM_BOOL, 'Is user an admin flag'),
             'records' => new external_multiple_structure(
                             new external_single_structure(
                                 array(
                                     'visible' => new external_value(PARAM_INT, 'visible skill', VALUE_OPTIONAL),
                                     'skill_id' => new external_value(PARAM_RAW, 'id in skill', VALUE_OPTIONAL),
-
+                                    'organisationname' => new external_value(PARAM_RAW, 'organisationname of skill', VALUE_OPTIONAL),
                                     'skilname' => new external_value(PARAM_RAW, 'skill', VALUE_OPTIONAL),
                                     'shortname' => new external_value(PARAM_RAW, 'shortname of skill', VALUE_OPTIONAL),
                                     'skill_catname' => new external_value(PARAM_RAW, 'category name in skill', VALUE_OPTIONAL),

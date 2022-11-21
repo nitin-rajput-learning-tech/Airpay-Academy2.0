@@ -55,7 +55,7 @@ class skill_repository_form extends moodleform {
             $mform->setType('costcenterid', PARAM_TEXT);
         } else {
             $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-            $mform->addElement('hidden', 'costcenterid', null);
+            $mform->addElement('hidden', 'costcenterid', null, ['id' => 'id_costcenterid']);
             $mform->setType('costcenterid', PARAM_INT);
             $mform->setConstant('costcenterid', $user_dept);
         }
