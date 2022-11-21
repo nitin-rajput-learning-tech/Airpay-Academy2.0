@@ -34,14 +34,13 @@ if ($format) {
     $fields = array(
 		'fullname' => 'fullname',
         'course-code' => 'course-code',
-        'category_code' => 'category_code',
+        'category_path' => 'category_code',
         'coursetype' => 'coursetype',
         'summary' => 'summary',
         'points' => 'points',
         'cost' => 'cost',
         'department' => 'department',
         'subdepartment' => 'subdepartment',
-        'category_path' => 'category_code',
         'completiondays' => 'completiondays',
         'format' => 'format',
     );

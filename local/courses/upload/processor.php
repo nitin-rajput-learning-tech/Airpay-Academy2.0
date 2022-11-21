@@ -227,12 +227,13 @@ class local_uploadcourse_processor {
             // }
             $data['open_subdepartment'] = $DB->get_field('local_costcenter', 'id', $subdepartmentparams);
             // for getting startdate and enddate of the course.
-            $startdate = $data['startdate']?$data['startdate']:0;
-            $enddate = $data['enddate']?$data['enddate']:0;
-            if($startdate){
+            $startdate = isset($data['startdate']) ? $data['startdate'] : 0;
+            $enddate = isset($data['enddate']) ? $data['enddate'] : 0;
+            if ($startdate) {
                 unset($data['startdate']);
                 $data['startdate'] = DateTime::createFromFormat('!d/m/Y', $startdate)->getTimestamp();
-            }if($enddate){
+            }
+            if ($enddate) {
                 unset($data['enddate']);
                 $data['enddate'] = DateTime::createFromFormat('!d/m/Y', $enddate)->getTimestamp();
             }
@@ -265,8 +266,8 @@ class local_uploadcourse_processor {
             } else {
                 $errors++;
                 $errordata[$this->linenb] = $course->get_errors();
-                $shortnames[$this->linenb] = $data['shortname'];
-                $categories[$this->linenb] = $data['category_path'];
+                $shortnames[$this->linenb] = $data['course-code'];
+                $categories[$this->linenb] = $data['category_code'];
                 $coursetype[$this->linenb] = $data['open_identifiedas'];
                 $tracker->output($this->linenb, false, $course->get_errors(), $data);
             }
@@ -411,7 +412,7 @@ class local_uploadcourse_processor {
             $this->linenb++;
             $data = $this->parse_line($line);
             $data['shortname'] = $data['course-code'];
-            $data['idnumber'] = $data['category_code'];
+            // $data['idnumber'] = $data['category_code'];
             $course = $this->get_course($data);
             $result = $course->prepare();
             if (!$result) {
