@@ -2212,7 +2212,6 @@ function create_course($data, $editoroptions = NULL) {
         $data->visible = $category->visible;
     }
     $data->visibleold = $data->visible;
-
     $newcourseid = $DB->insert_record('course', $data);
     $context = context_course::instance($newcourseid, MUST_EXIST);
 
