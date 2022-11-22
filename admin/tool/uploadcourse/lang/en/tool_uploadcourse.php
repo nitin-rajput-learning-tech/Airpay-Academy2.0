@@ -137,4 +137,3 @@ $string['uploadcourses_help'] = 'Courses may be uploaded via text file. The form
 $string['uploadcoursespreview'] = 'Upload courses preview';
 $string['uploadcoursesresult'] = 'Upload courses results';
 $string['privacy:metadata'] = 'The Course upload plugin does not store any personal data.';
-$string['categorycode'] = 'Category Code';
