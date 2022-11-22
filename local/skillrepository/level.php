@@ -40,6 +40,10 @@ $PAGE->navbar->add(get_string('manage_level', 'local_skillrepository'));
 $PAGE->requires->js_call_amd('local_skillrepository/leveltable', 'leveltable', array());
 $heading = get_string('createlevel', 'local_skillrepository');
 
+if (!has_capability('local/skillrepository:create_level', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
+  print_error('Sorry, You are not accessable to this page');
+}
+
 $locallib = new \local_skillrepository\local\querylib();
 $renderer = $PAGE->get_renderer('local_skillrepository');
 
@@ -58,7 +62,7 @@ echo "<ul class='course_extended_menu_list'>
         <li>
         	<div class='coursebackup course_extended_menu_itemcontainer'>
               	<a id='extended_menu_syncstats' title='".get_string('createlevel', 'local_skillrepository')."' class='course_extended_menu_itemlink' href='javascript:void(0)' onclick ='(function(e){ require(\"local_skillrepository/leveltable\").init({selector:\"createlevelmodal\", contextid:$systemcontext->id, levelid:0}) })(event)'><i class='icon fa fa-plus' aria-hidden='true' aria-label=''></i></a>
-          	</div>    	        
+          	</div>
         </li>
     </ul>";
 echo $renderer->display_levels_tablestructure();
