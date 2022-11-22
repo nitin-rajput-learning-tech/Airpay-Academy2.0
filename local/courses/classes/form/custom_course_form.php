@@ -346,6 +346,7 @@ class custom_course_form extends moodleform {
             }
 			      // $identify['7'] = get_string('bootcamp','local_courses');
             $select = $mform->addElement('autocomplete', 'open_identifiedas', get_string('type','local_courses'), $identify);
+            $mform->addRule('open_identifiedas', get_string('missingtype','local_courses'), 'required', null, 'client');
             $mform->addHelpButton('open_identifiedas', 'open_identifiedascourse', 'local_courses');
             $mform->setType('open_identifiedas',PARAM_RAW);
             $select->setMultiple(true);

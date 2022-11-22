@@ -117,5 +117,14 @@ function xmldb_local_users_upgrade($oldversion) {
 
 		upgrade_plugin_savepoint(true, 2022101800, 'local', 'users');
 	}
+	if ($oldversion < 2022101800.03) {
+        $table = new xmldb_table('local_userssyncdata');
+        $field1 = new xmldb_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+
+		if (!$dbman->field_exists($table, $field1)) {
+			$dbman->add_field($table, $field1);
+		}
+		upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'user');
+	}
 	return true;
 }

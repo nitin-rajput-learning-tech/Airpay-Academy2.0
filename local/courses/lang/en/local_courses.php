@@ -372,3 +372,4 @@ $string['exportcourses'] = 'Export Courses to Excel';
 $string['make_inactive'] = 'Make Inactive';
 $string['make_active'] = 'Make Active';
 $string['departmentnotfound'] ='Department not found i.e \'{$a}\'';
+$string['categorycode'] = 'Category Code';

@@ -734,3 +734,4 @@ $string['invalidtimezone'] = 'Invalid Timezone - User with employee id {$a->empl
 $string['invalidcountrycode'] = 'Invalid Country code - User with employee id {$a->employee_id} at line {$a->excel_line_number}';
 $string['orgcheckwithdhoh'] = ' Dont have permissions to organization \'{$a->org}\' at line \'{$a->excel_line_number}\' ';
 $string['departmentcheckwithdh'] = ' Dont have permissions to Department \'{$a->dept}\' at line \'{$a->excel_line_number}\' ';
+$string['invalidemail'] = "Invalid Email id entered ";

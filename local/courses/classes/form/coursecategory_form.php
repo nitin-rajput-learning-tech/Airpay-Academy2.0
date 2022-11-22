@@ -80,11 +80,15 @@ class coursecategory_form extends moodleform {
         $mform->addElement('text', 'name', get_string('categoryname'), array('size' => '30'));
         $mform->addRule('name', get_string('required'), 'required', null);
         $mform->setType('name', PARAM_TEXT);
-
-        $mform->addElement('text', 'idnumber', get_string('categorycode','local_courses'), 'maxlength="100" size="10"');
-        $mform->addRule('idnumber', get_string('required'), 'required', null);
-        $mform->setType('idnumber', PARAM_RAW);
-
+        if (!$categoryid) {
+            $mform->addElement('text', 'idnumber', get_string('categorycode','local_courses'), 'maxlength="100" size="10"');
+            $mform->addRule('idnumber', get_string('required'), 'required', null);
+            $mform->setType('idnumber', PARAM_RAW);
+        }else{
+            $mform->addElement('hidden', 'idnumber', get_string('categorycode','local_courses'), 'maxlength="100" size="10"');
+            $mform->addRule('idnumber', get_string('required'), 'required', null);
+            $mform->setType('idnumber', PARAM_RAW);
+        }
         $mform->addElement('editor', 'description_editor', get_string('description'), null,
             $this->get_description_editor_options());
 
