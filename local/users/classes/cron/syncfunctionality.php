@@ -114,8 +114,7 @@ class syncfunctionality
             }
            
             // To check for existing user record.
-            $sql = "SELECT u.id,u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.username LIKE :username
-             OR u.open_employeeid LIKE :open_employeeid) AND u.deleted = 0";
+            $sql = "SELECT u.id,u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.open_employeeid = :open_employeeid) AND u.deleted = 0";
             $params = array();
             $params['username'] = $user->username;
             $params['open_employeeid'] = $user->employee_id;
@@ -178,11 +177,12 @@ class syncfunctionality
                     $this->update_row($user, $userobject, $formdata);
                 }
             }
+            if (count($this->warnings) > 0) {
+                $this->write_warnings_db($user);
+                $this->updatesupervisor_warningscount = count($this->warnings);
+            }
         }
-        if (count($this->warnings) > 0) {
-            $this->write_warnings_db($excel);
-            $this->updatesupervisor_warningscount = count($this->warnings);
-        }
+        
         if ($this->data) {
             $upload_info = '<div class="critera_error1"><h3 style="text-decoration: underline;">'
                 . get_string('empfile_syncstatus', 'local_users') . '</h3>';
@@ -226,6 +226,7 @@ class syncfunctionality
             $sync_data->usermodified = $USER->id;
             $sync_data->timecreated = time();
             $sync_data->timemodified = time();
+            $sync_data->costcenterid = $USER->open_costcenterid;
             $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
         } else {
             echo '<div class="critera_error">' . get_string('filenotavailable', 'local_users') . '</div>';
@@ -269,8 +270,8 @@ class syncfunctionality
                 $categories = $categorylib->get_categories($orgcostcenterid);
                 $departmentcategory = $DB->get_field('local_costcenter', 'category', array('shortname' => $excel->department));
                 $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
-                           
-            if ($departmentcostcenterid !== $USER->open_departmentid && !empty($USER->open_departmentid)) {
+                       
+            if ($departmentcostcenterid !== $USER->open_departmentid && !empty($USER->open_departmentid) && !has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
                 echo '<div class=local_users_sync_error>' . get_string('departmentcheckwithdh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('departmentcheckwithdh', 'local_users', $strings);
                 $this->mfields[] = 'usercategory';

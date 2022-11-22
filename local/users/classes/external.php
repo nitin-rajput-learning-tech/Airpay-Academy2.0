@@ -540,7 +540,7 @@ class local_users_external extends external_api {
         $PAGE->set_context($contextid);
         // Parameter validation.
         $params = self::validate_parameters(
-            self::managesyncerrors_parameters(),
+            self::managesyncstatics_parameters(),
             [
                 'options' => $options,
                 'dataoptions' => $dataoptions,
