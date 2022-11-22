@@ -27,6 +27,7 @@ namespace local_users\cron;
 use csv_import_reader;
 use moodle_url;
 use core_text;
+use moodle_exception;
 class progresslibfunctions {
     /**
      * [uu_validate_user_upload_columns description]
@@ -42,7 +43,7 @@ class progresslibfunctions {
         if (empty($columns)) {
             $cir->close();
             $cir->cleanup();
-            print_error()('cannotreadtmpfile', 'error', $returnurl);
+            print_error('cannotreadtmpfile', 'error', $returnurl);
         }
         if (count($columns) < 2) {
             $cir->close();
