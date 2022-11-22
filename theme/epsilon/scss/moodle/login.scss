@@ -145,7 +145,7 @@ body#page-login-index .div_login_logo {
     transform: translateY(50%);*/
 }
 #page-login-index .login_logo {
-    /*width: 220px;*/
+    width: 100%;
     min-height: 70px;
     max-height: 150px;
     position: relative;
@@ -167,6 +167,7 @@ body#page-login-index .loginsite-name{
    font-size:35px;
    font-weight: 700;
    background: -webkit-linear-gradient(#009FFD, #2A2A72);
+   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -178,10 +179,10 @@ body#page-login-index .heading_tag {
     /*padding: .75rem 1.25rem;*/
     /*margin-bottom: 0 !important;*/
 }
-body#page-login-index .loginstart_tag{
-    /*font-family: serif;
-    font-size: 13px;*/
-}
+// body#page-login-index .loginstart_tag{
+//     /*font-family: serif;
+//     font-size: 13px;*/
+// }
 body#page-login-index #page {
     background: #fff;
 }
@@ -283,6 +284,7 @@ body#page-login-index div.login_popup_container .div_close {
 body#page-login-index div.login_popup_container .div_close:hover {
     -webkit-transform: scale(1) rotateZ(180deg);
     border-radius: 50%;
+    transform: scale(1) rotateZ(180deg);
 }
 body#page-login-index div.login_popup_container .login_popup_content {
     clear: both;
