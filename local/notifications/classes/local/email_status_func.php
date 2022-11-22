@@ -90,4 +90,12 @@ class notification_master
         return $result;
 
     } 
+    public function getNotificationTemplateById($id) {
+        global $DB;
+
+        $result = $DB->get_record_sql('SELECT *  FROM {local_notification_info} where id=?',array($id));
+      
+        return $result;
+
+    } 
 }

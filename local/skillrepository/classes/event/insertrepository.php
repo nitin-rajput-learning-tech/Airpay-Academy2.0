@@ -29,17 +29,18 @@ class insertrepository{
 
 	function skillrepository_opertaions($table, $operation, $object, $column, $value) {
 
-
 		global $DB, $CFG, $OUTPUT, $USER,$PAGE;
-		
+
 		$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-	    if (!is_siteadmin()){
-	    	 
-			$costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-		} else {
-			$costcenter = isset($object->costcenterid);
+
+		if(in_array($operation, ['insert', 'update'])){
+		    if (!is_siteadmin()){
+				$costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+			} else {
+				$costcenter = (int)$object->costcenterid;
+			}
 		}
- 
+
 		switch($operation){
 			case 'insert':
 				$object->usercreated = $USER->id;
@@ -61,14 +62,14 @@ class insertrepository{
 			break;
 			case 'fetch-multiple':
 				if($column == null)
-					$process = $DB->get_records($table); 
+					$process = $DB->get_records($table);
 				else
-					$process = $DB->get_records($table, array($column=>$value)); 
-			break;	
+					$process = $DB->get_records($table, array($column=>$value));
+			break;
 			case 'exist':
-				$process = $DB->record_exists($table, array($column=>$value)); 
-			break;		
-			case 'error-operation':		
+				$process = $DB->record_exists($table, array($column=>$value));
+			break;
+			case 'error-operation':
 				$process = print_error(get_string('error_operation', 'local_skillrepository'));
 			break;
 		}

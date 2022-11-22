@@ -8,7 +8,7 @@
  */
 define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/fragment', 'core/ajax', 'core/yui'],
         function($, Str, ModalFactory, ModalEvents, Fragment, Ajax, Y) {
- 
+
     /**
      * Constructor
      *
@@ -23,19 +23,19 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         var self = this;
         self.init(args.selector);
     };
- 
+
     /**
      * @var {Modal} modal
      * @private
      */
     NewRepository.prototype.modal = null;
- 
+
     /**
      * @var {int} contextid
      * @private
      */
     NewRepository.prototype.contextid = -1;
- 
+
     /**
      * Initialise the class.
      *
@@ -48,7 +48,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         //var triggers = $(selector);
         var self = this;
         // Fetch the title string.
-        // $('.'+args.selector).click(function(){ 
+        // $('.'+args.selector).click(function(){
             var editid = $(this).data('value');
             if (editid) {
                 self.repositoryid = editid;
@@ -63,40 +63,40 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                     body: self.getBody()
                 });
             }.bind(self)).then(function(modal) {
-                
+
                 // Keep a reference to the modal.
                 self.modal = modal;
                 // self.modal.show();
                 // Forms are big, we want a big modal.
                 self.modal.setLarge();
                 this.modal.getRoot().addClass('openLMStransition local_skillrepository');
-     
+
                 // We want to reset the form every time it is opened.
                  this.modal.getRoot().on(ModalEvents.hidden, function() {
                     this.modal.getRoot().animate({"right":"-85%"}, 500);
                     setTimeout(function(){
                         modal.destroy();
-                    }, 5000);
+                    }, 1000);
                 }.bind(this));
-                // self.modal.getRoot().on(ModalEvents.hidden, function() {
-                //     self.modal.setBody(self.getBody());
-                // }.bind(this));
-                    self.modal.getRoot().on(ModalEvents.shown, function() {
+                self.modal.getRoot().on(ModalEvents.hidden, function() {
+                    modal.destroy();
+                }.bind(this));
+                self.modal.getRoot().on(ModalEvents.shown, function() {
                     self.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
                     this.modal.getFooter().find('[data-action="cancel"]').on('click', function() {
                         modal.hide();
                         setTimeout(function(){
                             modal.destroy();
-                        }, 5000);
+                        }, 1000);
                         // modal.destroy();
                     });
                 }.bind(this));
                 // We want to hide the submit buttons every time it is opened.
-                
+
                 // self.modal.getRoot().on(ModalEvents.shown, function() {
                 //     self.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
                 // }.bind(this));
-    
+
                 // We catch the modal save event, and use it to submit the form inside the modal.
                 // Triggering a form submission will give JS validation scripts a chance to check for errors.
                 self.modal.getRoot().on(ModalEvents.save, self.submitForm.bind(self));
@@ -105,10 +105,10 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 self.modal.show();
                 this.modal.getRoot().animate({"right":"0%"}, 500);
                 return this.modal;
-            }.bind(this));     
-        // });        
+            }.bind(this));
+        // });
     };
- 
+
     /**
      * @method getBody
      * @private
@@ -120,12 +120,12 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         }
         // Get the content of the modal.
         var params = {repositoryid:this.repositoryid, jsonformdata: JSON.stringify(formdata)};
-        
+
 
         return Fragment.loadFragment('local_skillrepository', 'new_skill_repository_form', this.contextid, params);
-    
+
     };
- 
+
     /**
      * @method handleFormSubmissionResponse
      * @private
@@ -140,7 +140,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         });
         document.location.reload();
     };
- 
+
     /**
      * @method handleFormSubmissionFailure
      * @private
@@ -151,7 +151,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         // Ah wait - this is normal. We need to re-display the form with errors!
         this.modal.setBody(this.getBody(data));
     };
- 
+
     /**
      * Private method
      *
@@ -162,10 +162,10 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
     NewRepository.prototype.submitFormAjax = function(e) {
         // We don't want to do a real form submission.
         e.preventDefault();
- 
+
         // Convert all the form elements values to a serialised string.
         var formData = this.modal.getRoot().find('form').serialize();
-        
+
         // Now we can continue...
         Ajax.call([{
             methodname: 'local_skillrepository_submit_skill_repository_form_form',
@@ -174,7 +174,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             fail: this.handleFormSubmissionFailure.bind(this, formData)
         }]);
     };
- 
+
     /**
      * This triggers a form submission, so that any mform elements can do final tricks before the form submission is processed.
      *
@@ -187,7 +187,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         var self = this;
         self.modal.getRoot().find('form').submit();
     };
- 
+
     return /** @alias module:local_costcenter/newcostcenter */ {
         // Public variables and functions.
         /**
@@ -199,16 +199,16 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
          * @return {Promise}
          */
         init: function(args) {
-          
-            
+
+
             return new NewRepository(args);
         },
         load: function(){
 
         },
         deleteskill: function(args) {
-           
-           
+
+
             return Str.get_strings([{
                 key: 'confirm'
             },
@@ -222,7 +222,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             }]).then(function(s) {
                 ModalFactory.create({
                     title: s[0],
-                    type: ModalFactory.types.CONFIRM,
+                    type: ModalFactory.types.DEFAULT,
                     body: s[1],
                      footer: '<button type="button" class="btn btn-primary" data-action="save">Yes! Delete</button>&nbsp;' +
             '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'
@@ -262,7 +262,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 //         var params = {};
                 //         params.id = args.skillid;
                 //         params.contextid = args.contextid;
-                    
+
                 //         var promise = Ajax.call([{
                 //             methodname: 'local_skillrepository_delete_skill',
                 //             args: params
@@ -290,7 +290,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                                 window.location.reload();
                             }
                         });
- 
+
                     }.bind(this));
                     modal.getFooter().find('[data-action="cancel"]').on('click', function() {
                         modal.setBody('');

@@ -14,7 +14,7 @@
     You should have received a copy of the GNU General Public License
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-   
+
     ddd
 
 }}
@@ -23,6 +23,9 @@
             <table class="generaltable dataTable no-footer" id="skill_repository" role="grid" aria-describedby="skill_repository_info">
                 <thead>
                     <tr role="row">
+                        {{# is_admin}}
+                            <th class="header text-left" tabindex="0">{{# str}} organisation, local_costcenter{{/ str}}</th>
+                        {{/ is_admin}}
                         <th class="header text-left" tabindex="0">Skill name</th>
                         <th class="header text-left" tabindex="0">Category</th>
                         <th class="header text-center" tabindex="0">Achieved Users</th>
@@ -34,6 +37,9 @@
             {{#records}}
 
                 <tr>
+                    {{# is_admin}}
+                        <td class="text-left">{{organisationname}}</td>
+                    {{/ is_admin}}
                     <td class="text-left">
                         <a href="../skillrepository/skillinfo.php?id={{skill_id}}">{{{skilname}}}</a>
                     </td>
@@ -45,14 +51,14 @@
                          <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{skill_id}}" onclick="(function(e){ require('local_skillrepository/newrepository').init({selector:'createrepositorymodal', contextid:1, repositoryid:{{skill_id}}}) })(event)" style="cursor:pointer" title="Edit">
                         <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>
 
-                       
+
                         <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/newrepository').deleteskill({ selector: 'deleteskill' ,skillid:{{skill_id}},contextid:1}) })(event)">
                                         <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
                         </a>
 
-                        
+
                     </td>
-                </tr>     
+                </tr>
             {{/records}}
             </tbody>
     </table>

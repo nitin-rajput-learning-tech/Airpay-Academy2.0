@@ -76,10 +76,6 @@ class userdashboard implements renderable {
 
     } // end of the function
     
-
-    
-
-
     /**
      * Export the data.
      *
@@ -212,10 +208,7 @@ class userdashboard implements renderable {
         return $data;
     } // end of export_for_template function
 
-
-
-     
-    private function get_progress_value($inprogress_coursename){
+  private function get_progress_value($inprogress_coursename){
         global $DB, $USER, $CFG; 
         
         $course = $DB->get_record('course',array('id' => $inprogress_coursename->id));

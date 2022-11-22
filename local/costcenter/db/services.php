@@ -90,6 +90,14 @@ $functions = array(
         'description' => 'Department Creation',
         'type'        => 'write',
         'ajax' => true,
+    ),
+    'local_costcenter_generate_shortcode' => array(
+        'classname'   => 'local_costcenter_external',
+        'methodname'  => 'generate_shortcode',
+        'classpath'   => 'local/costcenter/classes/external.php',
+        'description' => 'generate shortcode',
+        'type'        => 'write',
+        'ajax' => true,
     )
 );
 

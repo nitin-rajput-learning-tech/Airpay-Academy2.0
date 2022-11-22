@@ -52,7 +52,17 @@ class assigncostcenterrole extends moodleform {
             'data-action' => 'role_ids',
             'data-options' => json_encode(array('id' => 0,'costcenterid' => $costcenterid,'formtype' => $formtype)),
         );
+
 		$roles =array();
+
+        if($roleid=$this->_ajaxformdata['roleid']){
+
+               $sql = "SELECT r.id, r.name as fullname
+                            FROM {role} r WHERE r.id =:roleid";
+
+                $roles = $DB->get_records_sql_menu($sql, array('roleid'=>$roleid));
+
+        }
         $mform->addElement('autocomplete', 'roleid', get_string('roles', 'local_assignroles'), $roles, $options);
         $mform->setType('roleid', PARAM_RAW);
 		$mform->addRule('roleid',  get_string('pleaseselectroles', 'local_assignroles'), 'required', null, 'client');
@@ -64,7 +74,21 @@ class assigncostcenterrole extends moodleform {
             'data-action' => 'role_costcenterusers',
             'data-options' => json_encode(array('id' => 0, 'costcenterid' => $costcenterid,'formtype' => $formtype)),
         );
+
 		$users =array();
+
+        if($userids=$this->_ajaxformdata['users']){
+
+
+            list($relateduseridlistsql, $relateduseridlistparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'useridlist');
+
+
+            $sql = "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
+                        FROM {user} AS u WHERE u.id $relateduseridlistsql ";
+
+            $users = $DB->get_records_sql_menu($sql,$relateduseridlistparams);
+
+        }
         $mform->addElement('autocomplete', 'users', get_string('employees', 'local_users'), $users, $options);
         $mform->setType('users', PARAM_RAW);
 		$mform->addRule('users',  get_string('pleaseselectemployees', 'local_assignroles'), 'required', null, 'client');

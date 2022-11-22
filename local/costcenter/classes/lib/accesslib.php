@@ -36,26 +36,9 @@ class accesslib
             return $context;
         }else{
             if(($costcenterparamid == null || $costcenterparamid == 0)){
-                if(isset($USER->access['rsw']) && !empty($USER->access['rsw'])){
-                    if(!empty($USER->access['rsw']['currentroleinfo']['context'])){
-                        $context =$USER->access['rsw']['currentroleinfo']['context'];
-                    }else{
-                        $contextpath=array_values(array_flip($USER->access['rsw']));
-                        $extractcontextpath=array_filter(explode('/',$contextpath[0]));
-                        $endpathvalue=end($extractcontextpath);
-                        $context =\context::instance_by_id($endpathvalue);
-                    }
-                }else{
-                     $highestroleinfo = array_shift(array_slice(self::get_user_roles_in_catgeorycontexts($USER->id), 0,1));
 
-                     if (!empty($highestroleinfo)) {
-                        $accessdata = get_empty_accessdata();
-                        $context =\context::instance_by_id($highestroleinfo->contextid);
-                        $OUTPUT->roleswitch($highestroleinfo->roleid, $context, $accessdata);
-                    }else{
-                        $context = \context_system::instance();
-                    }
-                }
+                $context=self::get_user_roleswitch_context($USER);
+
             }elseif($costcenterparamid > 0){
                  try{
                     // Get a cache instance
@@ -70,15 +53,83 @@ class accesslib
                             $context = \context_coursecat::instance($costcentercategory);
                             $cache->set($cachekey, $context);
                         }else{
-                            $context = \context_system::instance();
+                            $context = \context_user::instance($USER->id);
                         }
                     }
+
+                    if(!is_siteadmin()){
+
+                        $userrolecontext=self::get_user_roleswitch_context($USER);
+
+                        if($userrolecontext->contextlevel != CONTEXT_SYSTEM){
+
+                            if($context->id != $userrolecontext->id){
+
+                                $childcontexts=$userrolecontext->get_child_contexts();
+
+
+                                if(array_key_exists($context->id,$childcontexts)){
+
+                                    $context =$userrolecontext;
+
+                                }else{
+
+                                    $context = \context_user::instance($USER->id);
+
+                                }
+                            }
+                        }else{
+
+                            $context = \context_user::instance($USER->id);
+
+                        }
+
+                    }
+
+
                 }catch(dml_exception $e){
                     print_r($e->debuginfo);
                 }
             }
             return $context;
         }
+    }
+    public static function get_user_roleswitch_context($user){
+
+        global $DB,$USER,$OUTPUT;
+
+        // Probably need to get accessdata (again), so...
+        if (!isset($user->access)) {
+            load_all_capabilities();
+        }
+
+        if(isset($user->access['rsw']) && !empty($user->access['rsw'])){
+            if(!empty($user->access['rsw']['currentroleinfo']['context'])){
+                $context =$user->access['rsw']['currentroleinfo']['context'];
+            }else{
+                $contextpath=array_values(array_flip($user->access['rsw']));
+
+                if(!empty($contextpath[0])){
+                    $extractcontextpath=array_filter(explode('/',$contextpath[0]));
+                    $endpathvalue=end($extractcontextpath);
+                    $context =\context::instance_by_id($endpathvalue);
+                }else{
+                    $context = \context_user::instance($user->id);
+                }
+            }
+        }else{
+             $highestroleinfo = array_shift(array_slice(self::get_user_roles_in_catgeorycontexts($user->id), 0,1));
+
+             if (!empty($highestroleinfo)) {
+                $accessdata = get_empty_accessdata();
+                $context =\context::instance_by_id($highestroleinfo->contextid);
+                $OUTPUT->roleswitch($highestroleinfo->roleid, $context, $accessdata);
+            }else{
+                $context = \context_user::instance($user->id);
+            }
+        }
+
+        return $context;
     }
     public static function get_user_roles_in_catgeorycontexts($userid = null){
         global $DB, $USER;

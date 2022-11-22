@@ -42,14 +42,16 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
             var promise;
                 contextid = parseInt($(selector).data('contextid'), 10),
                 includes = $(selector).data('includes');
-
-
+                organisation = parseInt($('#id_costcenterid').val());
+                if(isNaN(organisation)){
+                    organisation = 0;
+                }
             promise = Ajax.call([{
                 methodname: 'local_skillrepository_form_repository_selector',
                 args: {
                     query: query,
                     context: {contextid: contextid},
-                    includes: includes
+                    organisation: organisation
                 }
             }]);
 
