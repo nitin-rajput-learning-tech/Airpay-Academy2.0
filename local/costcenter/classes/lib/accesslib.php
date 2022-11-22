@@ -61,21 +61,29 @@ class accesslib
 
                         $userrolecontext=self::get_user_roleswitch_context($USER);
 
-                        if($context->id != $userrolecontext->id){
+                        if($userrolecontext->contextlevel != CONTEXT_SYSTEM){
 
-                            $childcontexts=$userrolecontext->get_child_contexts();
+                            if($context->id != $userrolecontext->id){
+
+                                $childcontexts=$userrolecontext->get_child_contexts();
 
 
-                            if(array_key_exists($context->id,$childcontexts)){
+                                if(array_key_exists($context->id,$childcontexts)){
 
-                                $context =$userrolecontext;
+                                    $context =$userrolecontext;
 
-                            }else{
+                                }else{
 
-                                $context = \context_user::instance($USER->id);
+                                    $context = \context_user::instance($USER->id);
 
+                                }
                             }
+                        }else{
+
+                            $context = \context_user::instance($USER->id);
+
                         }
+
                     }
 
 
