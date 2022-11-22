@@ -273,6 +273,7 @@ class local_uploadcourse_processor {
             }
         }
 
+
         $tracker->finish();
         foreach($errordata as $key => $info){
             foreach($info as $key1 => $infos){
