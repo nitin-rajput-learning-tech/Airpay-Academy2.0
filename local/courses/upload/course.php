@@ -517,14 +517,13 @@ class local_uploadcourse_course
             }
             $coursedata[$field] = $value;
         }
-
         $mode = $this->mode;
         $updatemode = $this->updatemode;
         $usedefaults = $this->can_use_defaults();
 
         // Resolve the category, and fail if not found.
         $errors = array();
-        $categories = explode('/', $this->rawdata['category_path']);
+        $categories = explode('/', $this->rawdata['category_code']);
         $this->rawdata['category_idnumber'] = $this->rawdata['category_code'];
         $this->rawdata['categoryname'] = $DB->get_field('course_categories', 'name', array('idnumber' => $this->rawdata['category_idnumber']));
 

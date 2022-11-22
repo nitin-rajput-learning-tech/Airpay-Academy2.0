@@ -30,7 +30,6 @@ require_once($CFG->dirroot . '/local/courses/lib.php');
 $filtervalues = json_decode($_REQUEST['formdata']);
 $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 require_login(); 
-       
 $table = new html_table();
 $table->id = "courses";
 $table->head[] = get_string('coursename','local_courses');

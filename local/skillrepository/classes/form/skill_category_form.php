@@ -61,35 +61,6 @@ class skill_category_form extends moodleform {
         }
 
 
-        $edit_id=$this->_customdata['id'];
-
-        $selectoptions = array();
-        $selectoptions[null] = get_string('select');
-        if(is_siteadmin()){
-            if($this->_customdata['id'] > 0){
-                $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 and id <> $edit_id ORDER BY name ASC");
-            }else{
-                $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 ORDER BY name ASC");
-            }
-        } else {
-		    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-            $costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-            //Issue OL-3189 fixes//
-            if($this->_customdata['id'] > 0){
-               $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter and id <> $edit_id ORDER BY name ASC");
-            }else{
-                 $skills = $DB->get_records_sql_menu("SELECT id, name from {local_skill_categories} where parentid = 0 and costcenterid=$costcenter   ORDER BY name ASC");
-            }
-            //Issue OL-3189 fixes//
-        }
-        if($skills){
-            $options = $selectoptions + $skills;
-        }else{
-            $options = $selectoptions;
-        }
-        $mform->addElement('select', 'parentid', get_string('parent_skillcategory', 'local_skillrepository'), $options);
-        $mform->setType('parentid', PARAM_INT);
-
         $mform->addElement('text', 'name', get_string('name', 'local_skillrepository'));
         $mform->setType('name', PARAM_RAW);
         $mform->addRule('name', null, 'required', null, 'client');
