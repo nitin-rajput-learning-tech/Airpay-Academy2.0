@@ -35,7 +35,7 @@ class querylib {
 		if(!is_siteadmin()){
         	//For Organization head show only those levels created by them.
         	$costcenterid=$this->user->open_costcenterid;
-			$contentsql .=" AND u.open_costcenterid=$costcenterid";
+			$contentsql .=" AND lcl.costcenterid = $costcenterid ";
         }
 		if($params->search){
 			$contentsql .= " AND (lcl.name LIKE '%%{$params->search}%%' OR lcl.code LIKE '%%{$params->search}%%')";
