@@ -1051,9 +1051,12 @@ function manage_syncstatistics_count($stable, $filterdata) {
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
         $fromsql .= " ";
     } else {
-        $fromsql .= " AND usercreated = :modifiedby ";
-        $params['modifiedby'] = $USER->id;
+        // $fromsql .= " AND usercreated = :modifiedby ";
+        // $params['modifiedby'] = $USER->id;
+        $fromsql .= " AND costcenterid = :orgid ";
+        $params['orgid'] = $USER->open_costcenterid;
     }
+    
     $count = $DB->count_records_sql($countsql.$fromsql, $params);
     $fromsql .= " ORDER BY id DESC";
 
