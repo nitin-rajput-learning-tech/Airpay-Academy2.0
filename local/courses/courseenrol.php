@@ -80,9 +80,9 @@ $canenrol = has_capability('local/courses:enrol', $systemcontext);
 // if (!$canenrol) {
     // No need to invent new error strings here...
     require_capability('local/courses:enrol', $systemcontext);
-    require_capability('enrol/manual:enrol', $systemcontext);
-    require_capability('enrol/manual:unenrol', $systemcontext);
-    // require_capability('enrol/manual:manage', $context);
+    require_capability('local/courses:unenrol', $systemcontext);
+    require_capability('local/courses:manage', $systemcontext);
+
 // }
  if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$systemcontext))) {
 
@@ -93,7 +93,7 @@ $canenrol = has_capability('local/courses:enrol', $systemcontext);
              redirect($CFG->wwwroot.'/local/courses/courses.php');
              die;
           }
-         
+
         }
         if (has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
           if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid) || (!in_array($user_costcenter->open_departmentid, explode(',', $course_costcenter->open_departmentid)))) {
@@ -194,41 +194,52 @@ if ($course) {
         $userstoassign =$add;
     }
     if (!empty($userstoassign)) {
-			$progress = 0;
-			$progressbar = new \core\progress\display_if_slow(get_string('enrollusers', 'local_courses',$course->fullname));
-			$progressbar->start_html();
-			$progressbar->start_progress('',count($userstoassign)-1);
-			foreach($userstoassign as $key=>$adduser){
-				$progressbar->progress($progress);
-				$progress++;
-				// $timestart = $course->startdate;
-				$timeend = 0;
-				// if($timestart==''){
-				// }
-					$timestart=0;
-				$enrol_manual->enrol_user($instance, $adduser, $roleid, $timestart, $timeend);
-        // $emaillogs = new \coursenotifications_emails();
-        // $email_logs = $emaillogs->course_emaillogs($type,$dataobj,$adduser,$fromuserid);
-        $notification = new \local_courses\notification();
-        $course = $DB->get_record('course', array('id' => $dataobj));
-        $user = core_user::get_user($adduser);
-        $notificationdata = $notification->get_existing_notification($course, $type);
-        if($notificationdata)
-          $notification->send_course_email($course, $user, $type, $notificationdata);
-			}
-			$progressbar->end_html();
-      $result=new stdClass();
-      $result->changecount=$progress;
-      $result->course=$course->fullname; 
+        // BAYER-23 Assign below CAP to user so that he can enrolusers to courses.
+        $capabilities = ['enrol/manual:manage', 'enrol/manual:enrol'];
+        $loggedinroleid = $USER->access['rsw']['currentroleinfo']['roleid'];
+        if(has_capability('local/courses:enrol', $context) && $roleid && !is_siteadmin()){
+            foreach($capabilities AS $capability){
+                if (!has_capability($capability, $context)) {
+                    assign_capability($capability, CAP_ALLOW, $loggedinroleid, $context->id, true);
+                }
+            }
+        }
+		$progress = 0;
+		$progressbar = new \core\progress\display_if_slow(get_string('enrollusers', 'local_courses',$course->fullname));
+		$progressbar->start_html();
+		$progressbar->start_progress('',count($userstoassign)-1);
 
-      echo $OUTPUT->notification(get_string('enrolluserssuccess', 'local_courses',$result),'success');
-      $button = new single_button($PAGE->url, get_string('click_continue','local_courses'), 'get', true);
-      $button->class = 'continuebutton';
-      echo $OUTPUT->render($button);
-      echo $OUTPUT->footer();
-      die();
+		foreach($userstoassign as $key=>$adduser){
+			$progressbar->progress($progress);
+			$progress++;
+			$timeend = 0;
+			$timestart=0;
+			$enrol_manual->enrol_user($instance, $adduser, $roleid, $timestart, $timeend);
+            $notification = new \local_courses\notification();
+            $course = $DB->get_record('course', array('id' => $dataobj));
+            $user = core_user::get_user($adduser);
+            $notificationdata = $notification->get_existing_notification($course, $type);
+            if($notificationdata)
+                $notification->send_course_email($course, $user, $type, $notificationdata);
+		}
+		$progressbar->end_html();
+        $result=new stdClass();
+        $result->changecount=$progress;
+        $result->course=$course->fullname;
+        if(has_capability('local/courses:enrol', $context) && $roleid && !is_siteadmin()){
+            foreach($capabilities AS $capability){
+                unassign_capability($capability, $loggedinroleid, $context->id);
+            }
+        }
+
+            echo $OUTPUT->notification(get_string('enrolluserssuccess', 'local_courses',$result),'success');
+            $button = new single_button($PAGE->url, get_string('click_continue','local_courses'), 'get', true);
+            $button->class = 'continuebutton';
+            echo $OUTPUT->render($button);
+            echo $OUTPUT->footer();
+            die();
+        }
     }
-  }
   if ( $remove&& confirm_sesskey()) {
     $type = 'course_unenroll';
     if($submit_value=="Remove_All_Users"){
@@ -238,39 +249,49 @@ if ($course) {
       $userstounassign = $remove;
     }
     if (!empty($userstounassign)) {
+            $capabilities = ['enrol/manual:manage', 'enrol/manual:unenrol'];
+            $loggedinroleid = $USER->access['rsw']['currentroleinfo']['roleid'];
+            if(has_capability('local/courses:enrol', $context) && $loggedinroleid && !is_siteadmin()){
+                foreach($capabilities AS $capability){
+                    if (!has_capability($capability, $context)) {
+                        assign_capability($capability, CAP_ALLOW, $loggedinroleid, $context->id, true);
+                    }
+                }
+            }
 			$progress = 0;
 			$progressbar = new \core\progress\display_if_slow(get_string('un_enrollusers', 'local_courses',$course->fullname));
 			$progressbar->start_html();
 			$progressbar->start_progress('', count($userstounassign)-1);
 			foreach($userstounassign as $key=>$removeuser){
-					$progressbar->progress($progress);
-					$progress++;
-					if($instance->enrol=='manual'){
-						$manual=$enrol_manual->unenrol_user($instance, $removeuser);
-            // $emaillogs = new \coursenotifications_emails();
-            // $email_logs = $emaillogs->course_emaillogs($type,$dataobj,$removeuser,$fromuserid);
-					}
-					$data_self=$DB->get_record_sql("SELECT * FROM {user_enrolments} ue 
-            JOIN {enrol} e ON ue.enrolid=e.id 
-            WHERE e.courseid={$course_id} and ue.userid=$removeuser");
-					$enrol_self = enrol_get_plugin('self');
-					if($data_self->enrol=='self'){
-						$self=$enrol_self->unenrol_user($data_self, $removeuser);
-            // $emaillogs = new \coursenotifications_emails();
-            // $email_logs = $emaillogs->course_emaillogs($type,$dataobj,$removeuser,$fromuserid);
-					}
-          $notification = new \local_courses\notification();
-          $course = $DB->get_record('course', array('id' => $dataobj));
-          $user = core_user::get_user($removeuser);
-          $notificationdata = $notification->get_existing_notification($course, $type);
-          if($notificationdata)
-            $notification->send_course_email($course, $user, $type, $notificationdata);
+				$progressbar->progress($progress);
+				$progress++;
+				if($instance->enrol=='manual'){
+					$manual=$enrol_manual->unenrol_user($instance, $removeuser);
+				}
+				$data_self=$DB->get_record_sql("SELECT * FROM {user_enrolments} ue
+                    JOIN {enrol} e ON ue.enrolid=e.id
+                    WHERE e.courseid={$course_id} and ue.userid=$removeuser");
+				$enrol_self = enrol_get_plugin('self');
+				if($data_self->enrol=='self'){
+					$self=$enrol_self->unenrol_user($data_self, $removeuser);
+				}
+                $notification = new \local_courses\notification();
+                $course = $DB->get_record('course', array('id' => $dataobj));
+                $user = core_user::get_user($removeuser);
+                $notificationdata = $notification->get_existing_notification($course, $type);
+                if($notificationdata)
+                    $notification->send_course_email($course, $user, $type, $notificationdata);
 			}
 			$progressbar->end_html();
 			$result=new stdClass();
 			$result->changecount=$progress;
-			$result->course=$course->fullname; 
-			
+			$result->course=$course->fullname;
+            if(has_capability('local/courses:enrol', $context) && $loggedinroleid && !is_siteadmin()){
+                foreach($capabilities AS $capability){
+                    unassign_capability($capability, $loggedinroleid, $context->id);
+                }
+            }
+
 			echo $OUTPUT->notification(get_string('unenrolluserssuccess', 'local_courses',$result),'success');
 			$button = new single_button($PAGE->url, get_string('click_continue','local_courses'), 'get', true);
 			$button->class = 'continuebutton';
@@ -278,7 +299,7 @@ if ($course) {
 			die();
     }
   }
-   
+
   $select_to_users = course_enrolled_users('add', $course_id, $options, false, $offset=-1, $perpage=50);
   $select_to_users_total = course_enrolled_users('add', $course_id, $options, true, $offset1=-1, $perpage=-1);
 
@@ -287,11 +308,11 @@ if ($course) {
 
   $select_all_enrolled_users='&nbsp&nbsp<button type="button" id="select_add" name="select_all" value="Select All" title="'.get_string('select_all', 'local_courses').'" class="btn btn-default">'.get_string('select_all', 'local_courses').'</button>';
   $select_all_enrolled_users.='&nbsp&nbsp<button type="button" id="add_select" name="remove_all" value="Remove All" title="'.get_string('remove_all', 'local_courses').'" class="btn btn-default"/>'.get_string('remove_all', 'local_courses').'</button>';
-  
+
   $select_all_not_enrolled_users='&nbsp&nbsp<button type="button" id="select_remove" name="select_all" value="Select All" title="'.get_string('select_all', 'local_courses').'" class="btn btn-default"/>'.get_string('select_all', 'local_courses').'</button>';
   $select_all_not_enrolled_users.='&nbsp&nbsp<button type="button" id="remove_select" name="remove_all" value="Remove All" title="'.get_string('remove_all', 'local_courses').'" class="btn btn-default"/>'.get_string('remove_all', 'local_courses').'</button>';
-    
-    
+
+
   $content='<div class="bootstrap-duallistbox-container">';
   $encoded_options = json_encode($options);
   $content.='<form  method="post" name="form_name" id="user_assign" class="form_class" >
@@ -377,7 +398,7 @@ if ($course) {
         $('.box3 .remove').prop('disabled', true);
         $('#bootstrap-duallistbox-selected-list_duallistbox_courses_users option').prop('selected', false);
         $('#user_unassign_all').val('Remove Selected Users');
-        
+
     });
     $('#add_select').click(function() {
        $('#bootstrap-duallistbox-nonselected-list_duallistbox_courses_users option').prop('selected', false);
@@ -411,28 +432,28 @@ if ($course) {
                 if(get_id=='bootstrap-duallistbox-nonselected-list_duallistbox_courses_users'){
                     var type='add';
                     var total_users=$select_to_users_total;
-                   
+
                 }
                 var count_selected_list=$('#'+get_id+' option').length;
-               
+
                 var lastValue = $('#'+get_id+' option:last-child').val();
-             
-              if(count_selected_list<total_users){  
+
+              if(count_selected_list<total_users){
                    //alert('end reached');
                     var selected_list_request = $.ajax({
                         method: 'GET',
                         url: M.cfg.wwwroot + '/local/courses/courseenrol.php',
                         data: {id:'$course_id',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue,enrolid:'$enrolid', options: $myJSON},
                         dataType: 'html'
-                    });  
+                    });
                     var appending_selected_list = '';
                     selected_list_request.done(function(response){
                     //console.log(response);
                     response = jQuery.parseJSON(response);
                     //console.log(response);
-                  
+
                     $.each(response, function (index, data) {
-                   
+
                         appending_selected_list = appending_selected_list + '<option value=' + index + '>' + data + '</option>';
                     });
                     $('#'+get_id+'').append(appending_selected_list);
@@ -442,7 +463,7 @@ if ($course) {
             })
         }
     );
- 
+
   });
     </script>";
 }
