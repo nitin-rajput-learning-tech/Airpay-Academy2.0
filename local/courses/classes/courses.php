@@ -59,4 +59,29 @@ class courses {
 
         return $return;
     }
+    public static function can_access_course($courseid, $userid){
+        global $DB, $CFG;
+        $coursecontext = \context_course::instance($courseid, MUST_EXIST);
+        if(!is_enrolled(\context_course::instance($COURSE->id))){
+            if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations', $coursecontext))) {
+
+                $user_costcenter =$DB->get_record('user',array('id'=>$userid),  $fields='id,open_costcenterid,open_departmentid');
+                $course_costcenter =$DB->get_record('course',array('id'=>$courseid),  $fields='id,open_costcenterid,open_departmentid');
+                if (has_capability('local/costcenter:manage_ownorganization',$coursecontext)) {
+                    if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid)) {
+                        $message = get_string('notyourorgcourse_msg','local_courses');
+                        return ['status' => false, 'message' => $message];
+                    }
+                }elseif (has_capability('local/costcenter:manage_owndepartments',$systemcontext)) {
+                    if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid) || ($user_costcenter->open_departmentid != $course_costcenter->open_departmentid)) {
+                        $message = get_string('notyourdeptcourse_msg','local_courses');
+                        return ['status' => false, 'message' => $message];
+                    }
+                }else{
+                    return ['status' => false, 'message' => ''];
+                }
+            }
+        }
+        return ['status' => true, 'message' => ''];
+    }
 }
