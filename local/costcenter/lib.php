@@ -543,13 +543,6 @@ function costcenter_insert_instance($costcenter){
 
         $costcenter->id = $DB->insert_record('local_costcenter', $costcenter);
 
-        if ($costcenter->parentid == 0 && $costcenter->id) {
-
-            $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenter->id);
-
-            file_save_draft_area_files($costcenter->costcenter_logo, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $costcenter->costcenter_logo);
-
-        }
         
         if($costcenter->id) {
             $parentpath = $DB->get_field('local_costcenter', 'path', array('id'=>$parentid));
@@ -568,6 +561,15 @@ function costcenter_insert_instance($costcenter){
             if($category ){
                 $DB->execute("UPDATE {local_costcenter} SET multipleorg = ? WHERE id = ?", [$costcenter->id, $costcenter->id]);
                 $DB->execute("UPDATE {local_costcenter} SET category= ? WHERE id = ? ", [$category->id, $costcenter->id]);
+            }
+
+            if ($costcenter->costcenter_logo > 0 && $costcenter->id) {
+
+
+                $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenter->id);
+
+                file_save_draft_area_files($costcenter->costcenter_logo, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $costcenter->costcenter_logo);
+
             }
         }
        return $costcenter->id;
