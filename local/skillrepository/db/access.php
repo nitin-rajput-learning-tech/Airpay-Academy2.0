@@ -32,7 +32,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
-            'student' => CAP_ALLOW 
+            'student' => CAP_ALLOW
         )
     ),
     'local/skillrepository:create_skill' => array(
@@ -70,7 +70,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'teacher' => CAP_ALLOW,
-            'student' => CAP_ALLOW 
+            'student' => CAP_ALLOW
         )
     ),
     'local/skillrepository:create_level' => array(
