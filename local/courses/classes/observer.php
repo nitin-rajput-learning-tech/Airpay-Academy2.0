@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
  * Event observer for local_courses. Dont let other user to view unauthorized courses
  */
 class local_courses_observer extends \core\event\course_viewed {
- 
+
     public static function course_completed_notification(\core\event\course_completed $event){
         global $DB;
         $coursedetails = $DB->get_record('course',  array('id' => $event->courseid));
@@ -36,6 +36,14 @@ class local_courses_observer extends \core\event\course_viewed {
         if(class_exists('\local_courses\notification')){
             $notification = new \local_courses\notification($DB);
             $notification->send_course_completion_notification($coursedetails, $userinfo);
+        }
+    }
+    public static function course_viewed(\core\event\course_viewed $event) {
+        global $DB, $CFG, $USER, $COURSE;
+        $canaccesscourse = \local_courses\courses::can_access_course($COURSE->id, $USER->id);
+        if(!$canaccesscourse['status']){
+            redirect($CFG->wwwroot.'/my/dashboard.php', $message, null, NOTIFY_ERROR);
+            die;
         }
     }
 }
