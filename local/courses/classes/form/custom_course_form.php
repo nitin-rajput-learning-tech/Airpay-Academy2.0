@@ -324,32 +324,34 @@ class custom_course_form extends moodleform {
                 $mform->hardFreeze('shortname');
                 $mform->setConstant('shortname', $course->shortname);
             }
-
             $identify = array();
+            $identifyone = array();
+            $identifytwo = array();
             $classroom_plugin_exist = $core_component::get_plugin_directory('local', 'classroom');
             $learningplan_plugin_exist = $core_component::get_plugin_directory('local', 'learningplan');
             $program_plugin_exist = $core_component::get_plugin_directory('local', 'program');
             $certification_plugin_exist = $core_component::get_plugin_directory('local', 'certification');
-            
-            if(!empty($classroom_plugin_exist)){
-                $identify['2'] = get_string('classroom','local_courses');
+            if(!empty($open_costcenter)){
+            $identifyone = $DB->get_records_menu('local_course_types',  array('orgid' => $open_costcenter));
             }
-             $identify['3'] = get_string('elearning','local_courses');
-            if(!empty($learningplan_plugin_exist)){
-              $identify['4'] = get_string('learningplan','local_courses');
-            }
-            if(!empty($program_plugin_exist)){
-			        $identify['5'] = get_string('program','local_courses');
-            }
-            if(!empty($certification_plugin_exist)){
-              $identify['6'] = get_string('certification','local_courses');
-            }
-			      // $identify['7'] = get_string('bootcamp','local_courses');
-            $select = $mform->addElement('autocomplete', 'open_identifiedas', get_string('type','local_courses'), $identify);
+            $identifytwo = $DB->get_records_menu('local_course_types',  array('orgid' =>'0'));
+            $identify = $identifyone + $identifytwo;
+           // print_r($identify);exit;
+            $coursetype = array(
+                'ajax' => 'local_costcenter/form-options-selector',
+                'data-contextid' => $systemcontext->id,
+                'data-action' => 'costecenter_coursetype_selector',
+                'data-options' => json_encode(array('id' => $open_costcenter)),
+                'class' => 'departmentselect',
+                'data-parentclass' => 'organisationselect',
+                'data-class' => 'departmentselect',
+                'multiple' => true,
+            );
+            $select = $mform->addElement('autocomplete', 'open_identifiedas', get_string('type','local_courses'), $identify,$coursetype);
             $mform->addRule('open_identifiedas', get_string('missingtype','local_courses'), 'required', null, 'client');
             $mform->addHelpButton('open_identifiedas', 'open_identifiedascourse', 'local_courses');
             $mform->setType('open_identifiedas',PARAM_RAW);
-            $select->setMultiple(true);
+            $select->setMultiple(false);
 
             //for course format
             $courseformats = get_sorted_course_formats(true);
