@@ -392,3 +392,4 @@ $string['coursetypeexists'] = 'Course type already created ({$a})';
 $string['deletecoursetypeconfirm'] = 'Are you sure, you want to delete "<b>{$a->name}</b>" course type?</br> Once deleted, it can not be reverted. </br><b>Note : </b> Courses assigned to this course type will be reverted to default.';
 $string['err_coursetype'] = 'Please enter Course type';
 $string['err_coursetypeshortname'] = 'Please enter shortname';
+$string['add_course_type'] = 'Add Course Type';
