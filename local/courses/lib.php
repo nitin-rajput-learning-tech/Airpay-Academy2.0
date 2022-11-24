@@ -1451,12 +1451,14 @@ function get_listof_courses($stable, $filterdata) {
             }
             $catname = $category->name;
             $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12)."..." : $catname;
-            $courestypes_names = array('2'=>get_string('classroom','local_courses'),'3'=>get_string('elearning','local_courses'), '4'=> get_string('learningplan','local_courses'), '5' => get_string('program','local_courses'), '6' => get_string('certification','local_courses'));
+            // $courestypes_names = array('2'=>get_string('classroom','local_courses'),'3'=>get_string('elearning','local_courses'), '4'=> get_string('learningplan','local_courses'), '5' => get_string('program','local_courses'), '6' => get_string('certification','local_courses'));
             $text_class = array('2'=>'classroom','3'=>'elearning', '4'=> 'learningpath', '5' => 'program', '6' => 'certification');
             $courestypes = explode(',', $course->open_identifiedas);
             $displayed_names = array();
             foreach ($courestypes as $key => $courestype){
-                $displayed_names[] = '<span class="pl-10 '.$text_class[$courestype].'">'.$courestypes_names[$courestype].'</span>';
+                $params = array("id" => $courestype);
+                $courestypes_names = $DB->get_field('local_course_types','name',$params);              
+                $displayed_names[] = '<span class="pl-10 '.$text_class[$courestype].'">'.$courestypes_names.'</span>';
             }
             if($ratings_plugin_exist){
                 require_once($CFG->dirroot.'/local/ratings/lib.php');
