@@ -42,7 +42,7 @@ class coursetype_form extends moodleform {
         $course_type = $this->_customdata['name'];
 		$shortname = $this->_customdata['shortname'];
 		$orgid = $this->_customdata['orgid'];
-		//testing org
+		$orgname = $this->_customdata['orgname'];
 		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context(); 	
 		$organisation_select = [null => get_string('selectorg','local_courses')];
 		if($id || $this->_ajaxformdata['open_costcenterid']){
@@ -65,7 +65,7 @@ class coursetype_form extends moodleform {
 		$mform->addHelpButton('orgid', 'open_costcenteridcourse', 'local_courses');
 		$mform->setType('orgid', PARAM_INT);
 		$mform->addRule('orgid', get_string('pleaseselectorganization','local_courses'), 'required', null, 'client');
-		$mform->setDefault('name', $orgid);
+		$mform->setDefault('orgid', $orgname);
 
         $mform->addElement('text', 'name', get_string('course_type','local_courses'), 'maxlength="100" size="10"');
         $mform->addRule('name', get_string('required'), 'required', null);
