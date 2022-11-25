@@ -1451,12 +1451,14 @@ function get_listof_courses($stable, $filterdata) {
             }
             $catname = $category->name;
             $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12)."..." : $catname;
-            $courestypes_names = array('2'=>get_string('classroom','local_courses'),'3'=>get_string('elearning','local_courses'), '4'=> get_string('learningplan','local_courses'), '5' => get_string('program','local_courses'), '6' => get_string('certification','local_courses'));
+            // $courestypes_names = array('2'=>get_string('classroom','local_courses'),'3'=>get_string('elearning','local_courses'), '4'=> get_string('learningplan','local_courses'), '5' => get_string('program','local_courses'), '6' => get_string('certification','local_courses'));
             $text_class = array('2'=>'classroom','3'=>'elearning', '4'=> 'learningpath', '5' => 'program', '6' => 'certification');
             $courestypes = explode(',', $course->open_identifiedas);
             $displayed_names = array();
             foreach ($courestypes as $key => $courestype){
-                $displayed_names[] = '<span class="pl-10 '.$text_class[$courestype].'">'.$courestypes_names[$courestype].'</span>';
+                $params = array("id" => $courestype);
+                $courestypes_names = $DB->get_field('local_course_types','name',$params);              
+                $displayed_names[] = '<span class="pl-10 '.$text_class[$courestype].'">'.$courestypes_names.'</span>';
             }
             if($ratings_plugin_exist){
                 require_once($CFG->dirroot.'/local/ratings/lib.php');
@@ -2158,4 +2160,66 @@ function local_courses_output_fragment_custom_selfcompletion_form($args){
     $args = (object) $args;
     
     return get_string('selfcompletionconfirm', 'local_courses',$args->coursename);
+}
+function local_courses_output_fragment_course_type($args) {
+    global $CFG, $DB;
+
+    $args = (object) $args;
+    $context = $args->context;
+    $coursetypeid = $args->coursetypeid;
+    $o = '';
+    $formdata = [];
+
+    $o = '';
+    if (!empty($args->jsonformdata)) {
+        $serialiseddata = json_decode($args->jsonformdata);
+        parse_str($serialiseddata, $formdata);
+    }
+
+    if (empty($formdata) && !empty($coursetypeid)) {
+        $data = $DB->get_record('local_course_types', array('id'=>$coursetypeid));
+        $formdata = new stdClass();
+        $formdata->id = $data->id;  
+        $costcenterdata = $DB->get_record('local_costcenter', array('id'=>$data->orgid));
+        $formdata->name = $data->name;
+        $formdata->shortname = $data->shortname;
+        $formdata->orgid=$data->orgid;
+        $formdata->orgname = $costcenterdata->fullname;
+
+    } 
+ 
+    $params = array(
+        'id' => $coursetypeid,
+        'name' => $formdata->name,
+        'shortname' => $formdata->shortname,
+        'contextid' => $context
+    ); 
+  
+    $mform = new local_courses\form\coursetype_form(null, $params, 'post', '', null, true, (array)$formdata);
+    $mform->set_data($formdata);
+    
+    if (!empty($args->jsonformdata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
+}
+
+/**
+    * function get_listof_coursetypes
+    * @return  array coursetypes
+*/
+function get_listof_coursetypes($stable, $filterdata) {
+    global $DB, $CFG, $OUTPUT, $PAGE ,$USER;
+    
+    $systemcontext = context_system::instance();
+    $allcoursetypes=$DB->get_records('local_course_types');
+    $coursesContext = array(
+        "result" => $allcoursetypes );
+
+    return $coursesContext;
 }
