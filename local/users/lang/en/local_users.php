@@ -89,8 +89,8 @@ $string['acdetails'] = 'Academic Details';
 $string['manageusers'] = 'Manage Users';
 $string['username'] = 'User Name';
 $string['unameexists'] = 'Username Already exists';
-$string['open_employeeidexist'] = 'Employee Id Already exists';
-$string['open_employeeiderror'] = 'Employee Id can contain only alplabets or numericals special charecters not allowed';
+$string['open_employeeidexist'] = 'Learner ID Already exists';
+$string['open_employeeiderror'] = 'Learner ID can contain only alplabets or numericals special charecters not allowed';
 $string['total_courses'] = 'Total number of Courses';
 $string['enrolled'] = 'Number of Courses Enrolled';
 $string['completed'] = 'Number of Courses Completed';
@@ -105,16 +105,16 @@ $string['caddress'] = 'PRESENT ADDRESS';
 $string['invalidpassword'] = 'Invalid password';
 $string['dol'] = 'Date of leave';
 $string['dor'] = 'Date of resignation';
-$string['serviceid'] = 'Employee ID';
+$string['serviceid'] = 'Learner ID';
 $string['help_1'] = '<div class="helpmanual_table"><table class="generaltable" border="1">
 <tr class="field_type_head"><td class="empty_column"></td><td class="field_type font-weight-bold" style="text-align:left;border-left:1px solid white;padding-left:50px;">Mandatory Fields</td><tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>organization</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
-<tr><td>employee_id</td><td>Enter the employee id, avoid additional spaces.</td></tr>
+<tr><td>employee_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
 <tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
-<tr><td>department</td><td>Provide Department code. Department must already exist in system as part of organization hierarchy.</td></tr>
+<tr><td>department</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
 <tr><td>employee_status</td><td>Enter Employee Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
 
 <tr><td>location</td><td>Enter Location Name.</td></tr>';
@@ -123,7 +123,7 @@ $string['help_2'] = '</td></tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>password</td><td>Provide the password,Password must be at least 8 characters long,Password must have at least 1 digit(s),Password must have at least 1 upper case letter(s),
 Password must have at least 1 non-alphanumeric character(s) such as as *, -, or #..</td></tr>
-<tr><td>subdepartment</td><td>Enter Sub Department Code. Sub Department must already exist under specified Department in system as part of organization hierarchy.</td></tr>
+<tr><td>subdepartment</td><td>Enter Bussiness Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
 <tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>role</td><td>Enter Role.</td></tr>
 <tr><td>discipline</td><td>Enter Discipline, avoid additional spaces.</td></tr>
@@ -139,12 +139,12 @@ $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-oh">Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
-<tr><td>employee_id</td><td>Enter the employee id, avoid additional spaces.</td></tr>
+<tr><td>employee_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
 <tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
-<tr><td>Department</td><td>Provide Department code. Department must already exist in system as part of organization hierarchy.</td></tr>
+<tr><td>Country</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
 <tr><td>employee_status</td><td>Enter Employee Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
-<tr><td>department</td><td>Enter Department Name.</td></tr>
+<tr><td>department</td><td>Enter Country Name.</td></tr>
 <tr><td>location</td><td>Enter Location Name.</td></tr>
 ';
 
@@ -152,11 +152,11 @@ $string['help_1_dephead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-dh">Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
-<tr><td>employee_id</td><td>Enter the employee id, avoid additional spaces.</td></tr>
+<tr><td>employee_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
 <tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
 <tr><td>employee_status</td><td>Enter Employee Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
-<tr><td>department</td><td>Enter Department Name.</td></tr>
+<tr><td>department</td><td>Enter Country Name.</td></tr>
 <tr><td>location</td><td>Enter Location Name.</td></tr>
 ';
 
@@ -352,9 +352,9 @@ EOS;
 $string['reportingto'] = 'Reports To';
 $string['functionalreportingto'] = 'Functional Reporting To';
 $string['ou_name'] = 'OU Name';
-$string['department'] = 'Department';
+$string['department'] = 'Country';
 $string['costcenter_custom'] = 'Costcenter';
-$string['subdepartment'] = 'Sub Department';
+$string['subdepartment'] = 'Bussiness Unit';
 $string['designation'] = 'Designation';
 $string['designations_help'] = 'Search and select a designation from the available pool. Designation made available here are the designation that are mapped to users on the system. Selecting a designation means that any user in the system who has the selected designation mapped to them will be eligible for enrollment.';
 $string['client'] = 'Client';
@@ -429,20 +429,20 @@ $string['courses_header_emp']='CURRENT LEARNING FOR ';
 $string['courses_data']='No Courses to display.';       
 $string['page_header']='Profile Details';
 $string['adnewuser']='<i class="fa fa-user-plus popupstringicon" aria-hidden="true"></i> Create User <div class= "popupstring"></div>';
-$string['empnumber']='Employee ID';
-$string['departments']='Departments';
-$string['sub_departments']='Sub Department';
-$string['department_help']='This setting determines the category in which the Department will appear.';
-$string['subdepartment_help']='This setting determines the category in which the Sub Department  will appear in the list of Departments.';
-$string['subsubdepartment_help']='This setting determines the category in which the sub sub department will appear in the list of Sub Department.';
-$string['errordept']='Please select Department';
-$string['errorsubdept']='Please select Sub Department';
-$string['errorsubsubdept']='Please select Sub Sub Department';
+$string['empnumber']='Learner ID';
+$string['departments']='Countries';
+$string['sub_departments']='Bussiness Unit';
+$string['department_help']='This setting determines the category in which the Country will appear.';
+$string['subdepartment_help']='This setting determines the category in which the Bussiness Unit  will appear in the list of Countries.';
+$string['subsubdepartment_help']='This setting determines the category in which the sub sub department will appear in the list of Bussiness Unit.';
+$string['errordept']='Please select Country';
+$string['errorsubdept']='Please select Bussiness Unit';
+$string['errorsubsubdept']='Please select Sub Bussiness Unit';
 $string['errorfirstname']='Please enter First Name';
 $string['errorlastname']='Please enter Last Name';
 $string['erroremail']='Please enter Email Address';
 $string['filemail']='Email Address';
-$string['idexits']='Employee ID Already exists';
+$string['idexits']='Learner ID Already exists';
 //-------for sync lang files-------
 $string['options']='Option';
 $string['enrollmethods']='Enroll method';
@@ -453,7 +453,7 @@ $string['assigned_courses'] = 'Assigned Courses';
 $string['completed_courses'] = 'Completed Courses';		
 $string['not_started_courses'] = 'Not Started';		
 $string['inprogress_courses'] = 'In Progress';		
-$string['employee_id'] = 'Employee ID';		
+$string['employee_id'] = 'Learner ID';		
 $string['certificates'] = 'Certificates';
 $string['already_assignedlp']='User assigned to Learning plan';
 $string['coursehistory']='History';
@@ -464,7 +464,7 @@ $string['sync_users'] = 'Sync users';
 $string['sync_errors'] = 'Sync errors';
 $string['sync_stats'] = 'Sync statistics';
 $string['view_users'] = 'view users';
-$string['nodepartmenterror'] = 'Department cannot be empty';
+$string['nodepartmenterror'] = 'Country cannot be empty';
 $string['syncstatistics'] = 'Sync Statistics';
 $string['phonenumvalidate']='Please enter a 10 digit valid number';
 
@@ -494,21 +494,21 @@ $string['onlineexams'] = 'Online exams';
 $string['programs'] = 'Programs';
 $string['contactno'] = 'Contact no';
 $string['nosupervisormailfound'] = 'No Reporting managers found with email {$a->email} at line {$a->line}.';
-$string['nosupervisorempidfound'] = 'No Reporting managers found with employee id {$a->empid} at line {$a->line}.';
+$string['nosupervisorempidfound'] = 'No Reporting managers found with learner id {$a->empid} at line {$a->line}.';
 $string['valusernamerequired'] = 'Please enter a valid Username';
 $string['valfirstnamerequired'] = 'Please enter a valid Firstname';
 $string['vallastnamerequired'] = 'Please enter a valid Lastname';
 $string['errororganization'] = 'Please select Organization';
 $string['usernamerequired'] = 'Please enter Username';
 $string['passwordrequired'] = 'Please enter Password';
-$string['departmentrequired'] = 'Please select Department';
+$string['departmentrequired'] = 'Please select Country';
 $string['employeeidrequired'] = 'Please enter Employeeid';
 $string['noclassroomdesc'] = 'No description provided';
 $string['noprogramdesc'] = 'No description provided';
 
 $string['team_dashboard'] = 'Team Dashboard';
 $string['myteam'] = 'My Team';
-$string['idnumber'] = 'Employee ID';
+$string['idnumber'] = 'Learner ID';
 //==============For target audience=========
 // OL-1042 Add Target Audience to Classrooms////
 $string['target_audience'] = 'Target audience';
@@ -555,7 +555,7 @@ $string['badges'] = 'Badges';
 $string['completed'] = 'Completed';
 $string['notcompleted'] = 'Not Completed';
 $string['nopermission'] = 'You dont have permissions to view ths page';
-$string['selectdepartment'] = 'Select Department';
+$string['selectdepartment'] = 'Select Country';
 $string['selectsupervisor'] = 'Select Reporting To';
 $string['total'] = 'Total';
 $string['active'] = 'Active';
@@ -597,9 +597,9 @@ $string['emailaleadyexists'] = 'User with email {$a->email} already exist at lin
 
 $string['usernamealeadyexists'] = 'User with email {$a->email} already exist at line {$a->excel_line_number}.';
 
-$string['employeeid_alreadyexists'] = 'User with employee id {$a->employee_id} already exist at line {$a->excel_line_number}.';
+$string['employeeid_alreadyexists'] = 'User with learner id {$a->employee_id} already exist at line {$a->excel_line_number}.';
 
-$string['empiddoesnotexists'] = 'User with employee id {$a->employee_id} does not exist at line  {$a->excel_line_number}.';
+$string['empiddoesnotexists'] = 'User with learner id {$a->employee_id} does not exist at line  {$a->excel_line_number}.';
 $string['empfile_syncstatus'] = 'Employee file sync status';
 $string['multiple_user'] = 'Multiple user exists';
 $string['addedusers_msg'] = 'Total {$a} new users added to the system.';
@@ -610,48 +610,48 @@ $string['superwarnings_msg'] = 'Total {$a} Warnings occured while updating super
 
 $string['filenotavailable'] = 'File with Employee data is not available for today.';
 
-$string['orgmissing_msg'] = 'Provide the organization info for employee id \'{$a->employee_id}\' of uploaded sheet at line {$a->excel_line_number} .';
+$string['orgmissing_msg'] = 'Provide the organization info for learner id \'{$a->employee_id}\' of uploaded sheet at line {$a->excel_line_number} .';
 
-$string['invalidorg_msg'] = 'Organisation "{$a->org_shortname}" for employee id \'{$a->employee_id}\' in uploaded excelsheet does not exist in system at line {$a->excel_line_number}';
-$string['otherorg_msg'] = 'Organisation "{$a->org_shortname}" entered at line \'{$a->employee_id}\' for employee id {$a->excel_line_number} in uploaded excelsheet does not belongs to you.';
+$string['invalidorg_msg'] = 'Organisation "{$a->org_shortname}" for learner id \'{$a->employee_id}\' in uploaded excelsheet does not exist in system at line {$a->excel_line_number}';
+$string['otherorg_msg'] = 'Organisation "{$a->org_shortname}" entered at line \'{$a->employee_id}\' for learner id {$a->excel_line_number} in uploaded excelsheet does not belongs to you.';
 
-$string['invaliddept_msg'] = 'Department "{$a->dept_shortname}" for employee id \'{$a->employee_id}\' in uploaded excelsheet does not exist in system at line {$a->excel_line_number}';
-$string['otherdept_msg'] = 'Department "{$a->dept_shortname}" entered at line {$a->excel_line_number} for employee id \'{$a->employee_id}\' in uploaded excelsheet does not belongs to you.';
+$string['invaliddept_msg'] = 'Country "{$a->dept_shortname}" for learner id \'{$a->employee_id}\' in uploaded excelsheet does not exist in system at line {$a->excel_line_number}';
+$string['otherdept_msg'] = 'Country "{$a->dept_shortname}" entered at line {$a->excel_line_number} for learner id \'{$a->employee_id}\' in uploaded excelsheet does not belongs to you.';
 
 
-$string['invalidempid_msg'] = 'Provide valid employee id value \'{$a->employee_id}\' inserted in the excelsheet at line {$a->excel_line_number} .';
+$string['invalidempid_msg'] = 'Provide valid learner id value \'{$a->employee_id}\' inserted in the excelsheet at line {$a->excel_line_number} .';
 
-$string['empidempty_msg'] = 'Provide employee id for username \'{$a->username}\' of uploaded sheet at line {$a->excel_line_number}. ';
+$string['empidempty_msg'] = 'Provide learner id for username \'{$a->username}\' of uploaded sheet at line {$a->excel_line_number}. ';
 $string['error_employeeidcolumn_heading'] = 'Error in Employee id column heading in uploaded excelsheet ';
 
-$string['firstname_emptymsg'] = 'Provide firstname for  employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}.';
+$string['firstname_emptymsg'] = 'Provide firstname for  learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}.';
 $string['error_firstnamecolumn_heading'] = 'Error in first name column heading in uploaded excelsheet ';
 
-$string['latname_emptymsg'] = 'Provide last name for  employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['latname_emptymsg'] = 'Provide last name for  learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 $string['error_lastnamecolumn_heading'] = 'Error in last name column heading in uploaded excelsheet';
 
-$string['email_emptymsg'] = 'Provide email id for  employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['email_emptymsg'] = 'Provide email id for  learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 $string['invalidemail_msg'] = 'Invalid email id entered for  employeeid \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}.';
 
 $string['columnsarragement_error'] = 'Error in arrangement of columns in uploaded excelsheet at line {$a}';
 
-$string['invalidusername_error'] = 'Provide valid username for employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['invalidusername_error'] = 'Provide valid username for learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['usernameempty_error'] = 'Provide username for employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['usernameempty_error'] = 'Provide username for learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['empstatusempty_error'] = 'Provide employee status for  employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['empstatusempty_error'] = 'Provide employee status for  learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['mobileno_error'] = 'Enter a valid mobilenumber for employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['mobileno_error'] = 'Enter a valid mobilenumber for learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['validmobileno_error'] = 'Enter a valid mobilenumber of 10 digits for employee id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['validmobileno_error'] = 'Enter a valid mobilenumber of 10 digits for learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
 $string['select_org'] = '--Select Organization--';
-$string['select_dept'] = '--Select Department--';
+$string['select_dept'] = '--Select Country--';
 $string['select_reportingto'] = '--Select Reporting To--';
 $string['select_domain'] = '--Select Domain--';
 $string['select_role'] = '--Select Role--';
 $string['select_position'] = '--Select Position--';
-$string['select_subdept'] = '--Select Sub Department--';
+$string['select_subdept'] = '--Select Bussiness Unit--';
 $string['select_opt'] = '-- Select --';
 $string['only_add'] = 'Only Add';
 $string['only_update'] = 'Only Update';
@@ -695,7 +695,7 @@ $string['password_upload_error'] = '{$a->errormessage} at line {$a->linenumber}'
 $string['hrmrole_help'] = 'Enter the role of the user';
 $string['open_location_help'] = 'Enter the location of the user';
 $string['open_level_help'] = 'Enter the level of the user';
-$string['client_upload_error'] = 'Provide Department information of the user at line {$a->linenumber}';
+$string['client_upload_error'] = 'Provide Country information of the user at line {$a->linenumber}';
 $string['position_upload_error'] = 'With out domain you cannot upload Position only';
 $string['notifylogins'] = 'Notify Login Details';
 $string['logininfo'] = 'Login Details';
@@ -727,11 +727,11 @@ $string['cardtype'] = 'CARD';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['exportusers'] = 'Export Users to Excel';
-$string['employeeid_nospecialcharacters'] = 'User with employee id {$a->employee_id} connot contain special characters at line {$a->excel_line_number}.';
-$string['deptcheckwithorg'] = ' User with employee id {$a->employee_id} the department \'{$a->dept}\' not belongs to \'{$a->org}\'   at line \'{$a->excel_line_number}\' ';
-$string['subdeptcheckwithdept'] = ' User with employee id {$a->employee_id} the subdepartment \'{$a->subdept}\' not belongs to \'{$a->dept}\'   at line \'{$a->excel_line_number}\' ';
-$string['invalidtimezone'] = 'Invalid Timezone - User with employee id {$a->employee_id} at line {$a->excel_line_number}';
-$string['invalidcountrycode'] = 'Invalid Country code - User with employee id {$a->employee_id} at line {$a->excel_line_number}';
+$string['employeeid_nospecialcharacters'] = 'User with learner id {$a->employee_id} connot contain special characters at line {$a->excel_line_number}.';
+$string['deptcheckwithorg'] = ' User with learner id {$a->employee_id} the department \'{$a->dept}\' not belongs to \'{$a->org}\'   at line \'{$a->excel_line_number}\' ';
+$string['subdeptcheckwithdept'] = ' User with learner id {$a->employee_id} the subdepartment \'{$a->subdept}\' not belongs to \'{$a->dept}\'   at line \'{$a->excel_line_number}\' ';
+$string['invalidtimezone'] = 'Invalid Timezone - User with learner id {$a->employee_id} at line {$a->excel_line_number}';
+$string['invalidcountrycode'] = 'Invalid Country code - User with learner id {$a->employee_id} at line {$a->excel_line_number}';
 $string['orgcheckwithdhoh'] = ' Dont have permissions to organization \'{$a->org}\' at line \'{$a->excel_line_number}\' ';
-$string['departmentcheckwithdh'] = ' Dont have permissions to Department \'{$a->dept}\' at line \'{$a->excel_line_number}\' ';
+$string['departmentcheckwithdh'] = ' Dont have permissions to Country \'{$a->dept}\' at line \'{$a->excel_line_number}\' ';
 $string['invalidemail'] = "Invalid Email id entered ";
