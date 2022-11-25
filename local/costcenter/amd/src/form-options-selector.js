@@ -97,7 +97,7 @@
                         var identifiedas = $('#id_open_identifiedtype').val();
                         if(parseInt(identifiedas) > 0){
                             $('#id_open_identifiedtype').html('');
-                            $('.categoryselect .form-autocomplete-selection').html(course_typeselect);
+                            $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
                         
                     });
@@ -127,7 +127,7 @@
                         var category = $('#id_open_identifiedtype').val();
                         if(parseInt(category) > 0){
                             $('#id_open_identifiedtype').html('');
-                            $('.categoryselect .form-autocomplete-selection').html(course_typeselect);
+                            $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
                     });
                 }
