@@ -181,6 +181,7 @@ $string['selectsubdept'] = '--Select Sub Department--';
 $string['selectorg'] = '--Select Organization--';
 $string['selectcat'] = '--Select Category--';
 $string['select_cat'] = '--Select Categories--';
+$string['selectcoursetype'] = '--Select Course Type--';
 $string['reset'] = 'Reset';
 $string['err_category'] = 'Please select Category';
 $string['availablelist'] = '<b>Available Users ({$a})</b>';

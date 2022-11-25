@@ -141,6 +141,31 @@ $functions = array(
         'description' => 'Submit form',
         'type'        => 'write',
         'ajax' => true,
+    ),
+    'local_courses_submit_course_type_form' => array(
+        'classname'    => 'local_courses_external',
+        'methodname'   => 'submit_course_type_form',
+        'classpath'    => 'local/courses/classes/external.php',
+        'description' => 'Submit course type form',
+        'type'        => 'write',
+        'ajax' => true,
+    ),
+  
+    'local_courses_delete_coursetype' => array(
+        'classname'    => 'local_courses_external',
+        'methodname'   => 'delete_coursetype',
+        'classpath'    => 'local/courses/classes/external.php',
+        'description' => 'deletion of course type',
+        'type'        => 'write',
+        'ajax' => true,
+    ),
+    'local_courses_coursetype_update_status' => array(
+        'classname'   => 'local_courses_external',
+        'methodname'  => 'coursetype_update_status',
+        'classpath'   => 'local/courses/classes/external.php',
+        'description' => 'Update Course type status',
+        'type'        => 'write',
+        'ajax' => true,
     )
 );
 

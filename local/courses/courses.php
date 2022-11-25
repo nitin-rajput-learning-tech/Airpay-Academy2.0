@@ -128,7 +128,18 @@ if ((has_capability('local/request:approverecord', (new \local_courses\lib\acces
                                 <i class="icon fa fa-share-square" aria-hidden="true"></i>
                             </a>
                         </div></li>';
-}               
+} 
+if(is_siteadmin() ||(
+    has_capability('moodle/course:create', $systemcontext)&& has_capability('moodle/course:update', $systemcontext)&&has_capability('local/courses:manage', $systemcontext))){
+    $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
+                                <a href='.$CFG->wwwroot.'/local/courses/coursestypes.php class="pull-right course_extended_menu_itemlink" title = "'.get_string('add_course_type','local_courses').'">
+                                    <span class="createicon">
+                                    <i class="icon fa fa-book"></i>
+                                    <i class="fa fa-sitemap createiconchild" aria-hidden="true"></i>
+                                    </span>
+                                </a>
+                            </div></li>';
+}              
 if(((has_capability('local/costcenter:create', $systemcontext)&&has_capability('local/courses:bulkupload', $systemcontext)&&has_capability('local/courses:manage', $systemcontext)&&has_capability('moodle/course:create', $systemcontext)&&has_capability('moodle/course:update', $systemcontext)))|| is_siteadmin()){
 
     $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
@@ -147,7 +158,7 @@ if(((has_capability('local/costcenter:create', $systemcontext)&&has_capability('
                                     </a>
                                 </div></li>';
 }
-    
+
 $extended_menu_links .= '
         </ul>
     </div>';

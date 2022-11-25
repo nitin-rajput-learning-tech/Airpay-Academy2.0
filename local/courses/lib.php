@@ -2161,3 +2161,65 @@ function local_courses_output_fragment_custom_selfcompletion_form($args){
     
     return get_string('selfcompletionconfirm', 'local_courses',$args->coursename);
 }
+function local_courses_output_fragment_course_type($args) {
+    global $CFG, $DB;
+
+    $args = (object) $args;
+    $context = $args->context;
+    $coursetypeid = $args->coursetypeid;
+    $o = '';
+    $formdata = [];
+
+    $o = '';
+    if (!empty($args->jsonformdata)) {
+        $serialiseddata = json_decode($args->jsonformdata);
+        parse_str($serialiseddata, $formdata);
+    }
+
+    if (empty($formdata) && !empty($coursetypeid)) {
+        $data = $DB->get_record('local_course_types', array('id'=>$coursetypeid));
+        $formdata = new stdClass();
+        $formdata->id = $data->id;  
+        $costcenterdata = $DB->get_record('local_costcenter', array('id'=>$data->orgid));
+        $formdata->name = $data->name;
+        $formdata->shortname = $data->shortname;
+        $formdata->orgid=$data->orgid;
+        $formdata->orgname = $costcenterdata->fullname;
+
+    } 
+ 
+    $params = array(
+        'id' => $coursetypeid,
+        'name' => $formdata->name,
+        'shortname' => $formdata->shortname,
+        'contextid' => $context
+    ); 
+  
+    $mform = new local_courses\form\coursetype_form(null, $params, 'post', '', null, true, (array)$formdata);
+    $mform->set_data($formdata);
+    
+    if (!empty($args->jsonformdata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
+}
+
+/**
+    * function get_listof_coursetypes
+    * @return  array coursetypes
+*/
+function get_listof_coursetypes($stable, $filterdata) {
+    global $DB, $CFG, $OUTPUT, $PAGE ,$USER;
+    
+    $systemcontext = context_system::instance();
+    $allcoursetypes=$DB->get_records('local_course_types');
+    $coursesContext = array(
+        "result" => $allcoursetypes );
+
+    return $coursesContext;
+}
