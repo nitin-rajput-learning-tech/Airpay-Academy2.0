@@ -70,6 +70,6 @@ $string['assignroles:manageassignroles'] = 'Manage assign Roles';
 $string['nodata_available'] = 'No data Available';
 $string['search'] ='Search';
 $string['pleaseselectemployees'] = "Please select employees";
-$string['assignroleusers'] = 'Assign Role Users';
+$string['assignroleusers'] = 'View Role Assignments';
 $string['assigncostcenterroleusers'] = '"<b>{$a->costcentername}</b>" Assign Role Users';
 $string['pleaseselectroles'] = "Please select role";

@@ -1510,13 +1510,13 @@ class local_courses_external extends external_api {
         try {
             if ($confirm) {
                 $DB->delete_records('local_course_types', array('id'=>$id));
-                $courses = $DB->get_records('course', array('open_coursetype' => $id));
+                $courses = $DB->get_records('course', array('open_identifiedas' => $id));
                 if(!empty($courses)){
                     foreach ($courses as $course) {
                         // Set Course type value to default for course
                         $toupdate = new stdClass();
                         $toupdate->id = $course->id;
-                        $toupdate->open_coursetype = 0;
+                        $toupdate->open_identifiedas = 0;
                         $DB->update_record('course', $toupdate);
                     }
                 }
