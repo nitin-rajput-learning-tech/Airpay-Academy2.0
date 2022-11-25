@@ -48,7 +48,7 @@ $renderer = $PAGE->get_renderer('local_courses');
 echo $OUTPUT->header();
 $result = $DB->get_records('local_course_types');
 foreach($result as $res){
-    if(in_array($res->id,array('1','2','3','4','5','6'))){
+    if(in_array($res->id,array('1','2','3','4','5'))){
         $show = false;
     }else{
         $show = true;
