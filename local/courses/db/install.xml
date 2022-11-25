@@ -37,5 +37,24 @@
         <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
       </INDEXES>
     </TABLE>  
+    <TABLE NAME="local_course_types" COMMENT="local course type" > 
+      <FIELDS> 
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" /> 
+        <FIELD NAME="name" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
+        <FIELD NAME="orgid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" /> 
+        <FIELD NAME="active" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" /> 
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
+      </FIELDS> 
+      <KEYS> 
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/> 
+      </KEYS> 
+       <INDEXES>
+        <INDEX NAME="orgid" UNIQUE="false" FIELDS="orgid"/>
+      </INDEXES>
+    </TABLE>  
   </TABLES>
 </XMLDB>

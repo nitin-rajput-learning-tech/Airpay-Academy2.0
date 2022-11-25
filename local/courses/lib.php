@@ -2178,8 +2178,12 @@ function local_courses_output_fragment_course_type($args) {
         $data = $DB->get_record('local_course_types', array('id'=>$coursetypeid));
         $formdata = new stdClass();
         $formdata->id = $data->id;  
-        $formdata->course_type = $data->name;
+        $costcenterdata = $DB->get_record('local_costcenter', array('id'=>$data->orgid));
+        $formdata->name = $data->name;
         $formdata->shortname = $data->shortname;
+        $formdata->orgid=$data->orgid;
+        $formdata->orgname = $costcenterdata->fullname;
+
     } 
  
     $params = array(
