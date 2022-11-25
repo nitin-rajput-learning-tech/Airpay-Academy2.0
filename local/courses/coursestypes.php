@@ -32,7 +32,7 @@ $deleteid = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
 $jsonparam    = optional_param('jsonparam', '', PARAM_RAW);
 
-$systemcontext = context_system::instance();
+$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 if (!has_capability('local/courses:view', $systemcontext) && !has_capability('local/courses:manage', $systemcontext)) {
     print_error("You don't have permissions to view this page.");
 }
