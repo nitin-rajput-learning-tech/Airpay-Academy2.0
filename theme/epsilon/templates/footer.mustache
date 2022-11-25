@@ -32,7 +32,7 @@
     }
 }}
 
-<footer id="page-footer" class="pl-15 pr-15 py-3 bg-dark text-light">
+<footer id="page-footer" class="bg-dark text-light">
     <div class="footer_datacourse">
         <a id="back2Top" title="Back to top" href="#">➤</a>
         <div id="course-footer">{{{ output.course_footer }}}</div>
@@ -52,6 +52,11 @@
           
              <div class="col-md-7 col-12 float-left text-right">{{{ output.get_copyright_text }}}</div>
              <div class="col-md-5 col-12 float-left text-right">{{{ output.footer_social_icons }}}</div>
+        </div>
+    </div>
+    <div class="footer-content-debugging footer-dark bg-dark text-light">
+        <div class="container-fluid footer-dark-inner">
+            {{{ output.debug_footer_html }}}
         </div>
     </div>
 </footer>
