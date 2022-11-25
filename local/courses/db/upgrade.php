@@ -125,7 +125,7 @@ function xmldb_local_courses_upgrade($oldversion) {
     }
     upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'local_emaillogs');
 }
-if ($oldversion < 2022101800.04) {
+if ($oldversion < 2022101800.05) {
     $time = time();
     $table = new xmldb_table('local_course_types');
 
@@ -149,8 +149,7 @@ if ($oldversion < 2022101800.04) {
     if ($dbman->table_exists($table)) {
         $course_type_data = array(
 
-            array('name' => 'MOOC', 'active' => '1','shortname' => 'mooc','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
-            array('name' => 'ILT', 'active' => '1','shortname' => 'ilt','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+            array('name' => 'Class Room', 'active' => '1','shortname' => 'classroom','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
             array('name' => 'E-Learning', 'active' => '1','shortname' => 'elearning','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
             array('name' => 'Learning Path', 'active' => '1','shortname' => 'learningpath','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
             array('name' => 'Exams', 'active' => '1','shortname' => 'exams','usercreated' => '2','orgid'=>'0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
@@ -165,7 +164,7 @@ if ($oldversion < 2022101800.04) {
             }
         }
     }
-    upgrade_plugin_savepoint(true, 2022101800.04, 'local', 'courses');    
+    upgrade_plugin_savepoint(true, 2022101800.05, 'local', 'courses');    
 }
     return true;
 }

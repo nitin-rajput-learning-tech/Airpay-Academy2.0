@@ -94,10 +94,10 @@
                             $('#id_category').html('');
                             $('.categoryselect .form-autocomplete-selection').html(categoryselect);
                         }
-                        var identifiedas = $('#id_open_identifiedas').val();
+                        var identifiedas = $('#id_open_identifiedtype').val();
                         if(parseInt(identifiedas) > 0){
-                            $('#id_open_identifiedas').html('');
-                            $('.categoryselect .form-autocomplete-selection').html(course_typeselect);
+                            $('#id_open_identifiedtype').html('');
+                            $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
                         
                     });
@@ -123,11 +123,11 @@
                     });
                 }
                 else if(action === 'costecenter_coursetype_selector'){
-                    $('#id_open_identifiedas').on('change', function(){
-                        var category = $('#id_open_identifiedas').val();
+                    $('#id_open_identifiedtype').on('change', function(){
+                        var category = $('#id_open_identifiedtype').val();
                         if(parseInt(category) > 0){
-                            $('#id_open_identifiedas').html('');
-                            $('.categoryselect .form-autocomplete-selection').html(course_typeselect);
+                            $('#id_open_identifiedtype').html('');
+                            $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
                     });
                 }
@@ -140,6 +140,8 @@
                 formoptions.organisationid = $("#id_open_costcenterid").val();
                 formoptions.departmentid = $("#id_open_departmentid").val();
                 formoptions.subdepartment = $("#id_open_subdepartment").val();
+                formoptions.name = $("#id_open_identifiedtype").val();
+
             }
             formoptions = JSON.stringify(formoptions);
 
