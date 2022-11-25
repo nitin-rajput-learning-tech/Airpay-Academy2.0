@@ -20,7 +20,7 @@
  *
  * @author eabyas  <info@eabyas.in>
  */
- 
+
 defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
 require_once("$CFG->dirroot/user/lib.php");
@@ -341,6 +341,7 @@ class local_users_external extends external_api {
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata,
+            'wwwroot' => $CFG->wwwroot,
         ];
 
     }
@@ -355,6 +356,7 @@ class local_users_external extends external_api {
             'totalcount' => new external_value(PARAM_INT, 'total number of users in result set'),
             'activeusercount' => new external_value(PARAM_INT, 'total number of users in result set'),
             'inactiveusercount' => new external_value(PARAM_INT, 'total number of users in result set'),
+            'wwwroot' => new external_value(PARAM_RAW, 'URL for wwwroot'),
             'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
             'records' => new external_multiple_structure(
                             new external_single_structure(
@@ -364,7 +366,6 @@ class local_users_external extends external_api {
 
                                     'fullname' => new external_value(PARAM_RAW, 'fullname of the user', VALUE_OPTIONAL),
                                     'userpic' => new external_value(PARAM_RAW, 'user pic', VALUE_OPTIONAL),
-                                    'username' => new external_value(PARAM_RAW, 'user name', VALUE_OPTIONAL),
                                     'empid' => new external_value(PARAM_RAW, 'empid of user', VALUE_OPTIONAL),
                                     'email' => new external_value(PARAM_RAW, 'email of the user', VALUE_OPTIONAL),
                                     'org' => new external_value(PARAM_RAW, 'org of the user', VALUE_OPTIONAL),
@@ -951,7 +952,7 @@ class local_users_external extends external_api {
         // Parameter validation.
         $params = self::validate_parameters(self::pending_activities_parameters(), array('events' => $events,
          'options' => $options));
-        $funcparam = array('courses' => array()); 
+        $funcparam = array('courses' => array());
         $hassystemcap = has_capability('moodle/calendar:manageentries', (new \local_users\lib\accesslib())::get_module_context());
         $warnings = array();
         $mycourses = \local_courses\local\user::enrol_get_users_courses($USER->id, false, false, 0, 5, true);
@@ -1221,9 +1222,9 @@ class local_users_external extends external_api {
             $userid = $USER->id;
         }
 
-        
+
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-        
+
         self::validate_context($systemcontext);
 
         if ($USER->id != $userid) {
@@ -1608,7 +1609,7 @@ class local_users_external extends external_api {
                      => $user->subdepartment));
                 if (!$userinfo->open_subdepartment) {
                         throw new moodle_exception("Provided Subdepartment {$user->subdepartment} doesn't exist");
-                }    
+                }
                     $field = 'open_employeeid';
                     $userinfo->open_supervisorid = $DB->get_field('user', 'id', array($field => $user->supervisor_empid));
                     $userinfo->password = $userinfo->auth == 'saml2' ? $userinfo->password :
@@ -1624,12 +1625,12 @@ class local_users_external extends external_api {
                         $userid = implode(',', $userids);
                         $userinfo->id = $userid;
                         user_update_user($userinfo, False);
-                       
+
                     } else {
                         $userid = user_create_user($userinfo, False);
                     }
                     if ($userid) {
-                      
+
                         $return[] = array('status' => 'success', 'userid' => $userid);
                     } else {
                         $return[] = array('status' => 'error in user creation', 'userid' => NULL);

@@ -55,29 +55,29 @@
     </thead>
     <tbody>
         {{#records}}
-      
+
         <tr>
             <td>
-              <b class="break_all">{{{ username }}}</b>
-            </td>            
-        
+              <a href="{{wwwroot}}/local/users/profile.php?id={{userid}}">{{ fullname }}</b>
+            </td>
+
             <td>{{empid}}</td>
             <td>
-                {{email}} 
+                {{email}}
             </td>
             <td> {{org}}</td>
             <td> {{dept}}</td>
             <td>{{level}}</td>
             <td>{{designationstring}}</td>
             <td>{{supervisiorstring}}</td>
-        
+
             <td>
                 {{# delcap }}
-                        
+
                     <a href="javascript:void(0)" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">
                          <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i>
                     </a>
-                                  
+
                {{/ delcap }}
               {{# editcap }}
                     <a href="javascript:void(0)" title="{{#str}}edit{{/str}}" data-action="createusermodal" class="createusermodal" data-value="{{userid}}" onclick="(function(e){ require('local_users/newuser').init({selector:'createusermodal', context:1, id:{{userid}}, form_status:0}) })(event)" style="cursor:pointer" title="Edit">
