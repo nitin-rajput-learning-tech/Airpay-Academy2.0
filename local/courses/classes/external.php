@@ -124,12 +124,12 @@ class local_courses_external extends external_api {
             $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
             if ($validateddata->id <= 0) {
-                $validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
+                $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 $validateddata->category = $category_id;
                 $validateddata->open_departmentid = $open_departmentid;
                 $validateddata->open_subdepartment = $open_subdepartment;
                 $courseid = create_course($validateddata, $editoroptions);
-                
+               
                 // Update course tags.
                 if (isset($validateddata->tags)) {
                     $coursecontext = context_course::instance($courseid->id, MUST_EXIST);
@@ -141,12 +141,12 @@ class local_courses_external extends external_api {
                         $trendingclass->trending_modules_crud($courseid->id, 'local_courses');
                     }
                 }
-                $coursedata = $courseid;
+                //$coursedata = $courseid;
                 $enrol_status = $validateddata->selfenrol;
-                insert::add_enrol_method_tocourse($coursedata,$enrol_status);
+               // insert::add_enrol_method_tocourse($coursedata,$enrol_status);
 
             } elseif($validateddata->id > 0) {
-                $validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
+                $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 if($form_status == 0){
                      $courseid =new stdClass();
                       $courseid->id=$data['id'];
@@ -171,8 +171,8 @@ class local_courses_external extends external_api {
                         $coursecontext = context_course::instance($courseid->id, MUST_EXIST);
                         local_tags_tag::set_item_tags('local_courses', 'courses', $courseid->id, $coursecontext, $validateddata->tags, 0, $validateddata->open_departmentid);
                     }
-                     $coursedata = $DB->get_record('course',array('id' => $data['id']));
-                     insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
+                   //  $coursedata = $DB->get_record('course',array('id' => $data['id']));
+                   //  insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
 
                 }else{
                     $data = (object)$data;
