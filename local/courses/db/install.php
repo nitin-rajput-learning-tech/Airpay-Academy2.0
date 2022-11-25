@@ -243,8 +243,7 @@ function xmldb_local_courses_install(){
         }
     }
     $course_type_data = array(
-        array('name' => 'MOOC', 'active' => '1','shortname' => 'mooc','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
-        array('name' => 'ILT', 'active' => '1','shortname' => 'ilt','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+        array('name' => 'Class Room', 'active' => '1','shortname' => 'classroom','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
         array('name' => 'E-Learning', 'active' => '1','shortname' => 'elearning','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
         array('name' => 'Learning Path', 'active' => '1','shortname' => 'learningpath','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
         array('name' => 'Exams', 'active' => '1','shortname' => 'exams','usercreated' => '2','orgid'=>'0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
