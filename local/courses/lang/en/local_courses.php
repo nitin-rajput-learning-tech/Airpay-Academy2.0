@@ -36,12 +36,12 @@ $string['add_users']='<< Add Users';
 $string['remove_users']='Remove Users >>';
 $string['employeesearch']='Filter';
 $string['agentsearch']='Agent Search';
-$string['empnumber']='Employee ID';
+$string['empnumber']='Learner ID';
 $string['email']='Email';
 $string['band'] = 'Band';
-$string['departments']='Departments';
-$string['sub_departments']='Sub Department';
-$string['sub-sub-departments']='Sub Sub Departments';
+$string['departments']='Countries';
+$string['sub_departments']='Bussiness Unit';
+$string['sub-sub-departments']='Sub Bussiness Units';
 $string['designation'] = 'Designation';
 $string['im:already_in'] = 'The user "{$a}" was already enroled to this course';
 $string['im:enrolled_ok'] = 'The user "{$a}" has successfully enroled to this course ';
@@ -125,7 +125,7 @@ $string['leftmenu_browsecategories'] = 'Manage Categories';
 $string['courseother_details'] = 'Other Details';
 $string['view_courses'] = 'view courses';
 $string['deleteconfirm'] = 'Are you sure, you want to delete "<b>{$a->name}</b>" course?</br> Once deleted, it can not be reverted.';
-$string['department'] = 'Department';
+$string['department'] = 'Country';
 $string['coursecategory'] = 'Category';
 $string['fullnamecourse'] = 'Fullname';
 $string['coursesummary'] = 'Summary';
@@ -160,8 +160,8 @@ $string['help_2'] = '</td></tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>Summary</td><td>Summary of the course.</td></tr>
 <tr><td>Cost</td><td>Cost of the course.</td></tr>
-<tr><td>Department</td><td>Shortname of the Department.</td></tr>
-<tr><td>Subdepartment</td><td>Shortname of the Sub Department.</td></tr>
+<tr><td>Country</td><td>Shortname of the Country.</td></tr>
+<tr><td>Subdepartment</td><td>Shortname of the Bussiness Unit.</td></tr>
 <tr><td>Points</td><td>Points for the course.</td></tr>
 <tr><td>completiondays</td><td>completiondays should be greater than \'0\'. i.e, 1,2,3..etc</td></tr>
 </table>';
@@ -176,8 +176,8 @@ $string['completed_users'] = 'Completed Users';
 $string['course_filters'] = 'Course Filters';
 $string['back'] = 'Back';
 $string['sample'] = 'Sample';
-$string['selectdept'] = '--Select Department--';
-$string['selectsubdept'] = '--Select Sub Department--';
+$string['selectdept'] = '--Select Country--';
+$string['selectsubdept'] = '--Select Bussiness Unit--';
 $string['selectorg'] = '--Select Organization--';
 $string['selectcat'] = '--Select Category--';
 $string['select_cat'] = '--Select Categories--';
@@ -218,7 +218,7 @@ $string['enablecourse'] = 'Are you sure, want Active course <b>\'{$a}\'</b>?';
 $string['disablecourse'] = 'Are you sure, want In-active course <b>\'{$a}\'</b>?';
 $string['courseconfirm'] = 'Confirm';
 $string['open_costcenteridcourse_help'] = 'Organisation for the course';
-$string['open_departmentidcourse_help'] = 'Department for the course';
+$string['open_departmentidcourse_help'] = 'Country for the course';
 $string['open_identifiedascourse_help'] = 'Type of the course (multi select)';
 $string['open_pointscourse_help'] = 'Points for the course default (0)';
 $string['selfenrolcourse_help'] = 'Check yes if required self enrollment to the course';
@@ -227,7 +227,7 @@ $string['open_costcourse_help'] = 'Cost of the course';
 $string['open_skillcourse_help'] = 'Skill achieved on completion of course';
 $string['open_levelcourse_help'] = 'Level achieved on completion of course';
 $string['open_costcenteridcourse'] = 'Organisation';
-$string['open_departmentidcourse'] = 'Department';
+$string['open_departmentidcourse'] = 'Country';
 $string['open_identifiedascourse'] = 'Type';
 $string['open_pointscourse'] = 'Points';
 $string['selfenrolcourse'] = 'self enrollment';
@@ -236,9 +236,9 @@ $string['open_costcourse'] = 'Cost';
 $string['open_skillcourse'] = 'Skill ';
 $string['open_levelcourse'] = 'Level';
 $string['notyourorg_msg'] = 'You have tried to view this activity is not belongs to your Organization';
-$string['notyourdept_msg'] = 'You have tried to view this activity is not belongs to your Department';
+$string['notyourdept_msg'] = 'You have tried to view this activity is not belongs to your Country';
 $string['notyourorgcourse_msg'] = 'You have tried to view this course is not belongs to your Organization';
-$string['notyourdeptcourse_msg'] = 'You have tried to view this course is not belongs to your Department';
+$string['notyourdeptcourse_msg'] = 'You have tried to view this course is not belongs to your Country';
 $string['notyourorgcoursereport_msg'] = 'You have tried to view this Grader report is not your Organization course, so you cann\'t access this page';
 $string['need_manager_approval '] = 'need_manager_approval';
 $string['categorycode'] = 'Category Code';
@@ -259,7 +259,7 @@ $string['courses:view'] = 'View course';
 $string['courses:visibility'] = 'Course visibility';
 $string['courses:enrol'] = 'Course enrol';
 
-$string['reason_linkedtocostcenter'] = 'As this Course category is linked with the Organization/Department, you can not delete this category';
+$string['reason_linkedtocostcenter'] = 'As this Course category is linked with the Organization/Country, you can not delete this category';
 $string['reason_subcategoriesexists'] = 'As we have sub-categories in this Course category, you can not delete this category';
 $string['reason_coursesexists'] = 'As we have courses in this Course category, you can not delete this category';
 $string['reason'] = 'Reason';
@@ -269,8 +269,8 @@ $string['tagarea_courses'] = 'Courses';
 $string['subcategories'] = 'Subcategories';
 $string['tag'] = 'Tag';
 $string['tag_help'] = 'tag';
-$string['open_subdepartmentcourse_help'] = 'Sub Department of the course';
-$string['open_subdepartmentcourse'] = 'Sub Department';
+$string['open_subdepartmentcourse_help'] = 'Bussiness Unit of the course';
+$string['open_subdepartmentcourse'] = 'Bussiness Unit';
 $string['suspendconfirm'] = 'Confirmation';
 $string['activeconfirm'] = 'Are you sure to make category active ?';
 $string['inactiveconfirm'] = 'Are you sure to make category inactive ?';
@@ -338,10 +338,10 @@ $string['missingfullname'] = 'Please Enter Valid Course Name';
 $string['missingshortname'] = 'Please Enter Valid Course Code';
 $string['missingtype'] = 'Please Select Type';
 $string['course_reports'] = 'Course Reports';
-$string['cannotuploadcoursewithlob'] = 'With out Department cannot upload a course with Sub Department';
-$string['categorycodeshouldbedepcode'] = 'Category Code should be under the Department i.e \'{$a}\'';
-$string['categorycodeshouldbesubdepcode'] = 'Category Code should be short name of Sub Department i.e \'{$a}\'';
-$string['subdeptshouldunderdepcode'] = 'Subdepartment should be under the Department i.e \'{$a}\'';
+$string['cannotuploadcoursewithlob'] = 'With out Country cannot upload a course with Bussiness Unit';
+$string['categorycodeshouldbedepcode'] = 'Category Code should be under the Country i.e \'{$a}\'';
+$string['categorycodeshouldbesubdepcode'] = 'Category Code should be short name of Bussiness Unit i.e \'{$a}\'';
+$string['subdeptshouldunderdepcode'] = 'Subdepartment should be under the Country i.e \'{$a}\'';
 $string['course_name_help'] = 'Name for the Course';
 $string['coursecode_help'] = 'Code for the Course';
 $string['enrolled_courses'] = 'My Courses';
@@ -372,7 +372,7 @@ $string['coursedescription'] = 'Description';
 $string['exportcourses'] = 'Export Courses to Excel';
 $string['make_inactive'] = 'Make Inactive';
 $string['make_active'] = 'Make Active';
-$string['departmentnotfound'] ='Department not found i.e \'{$a}\'';
+$string['departmentnotfound'] ='Country not found i.e \'{$a}\'';
 $string['categorycode'] = 'Category Code';
 // course types strings
 $string['open_coursetypecourse'] = 'Course type';
