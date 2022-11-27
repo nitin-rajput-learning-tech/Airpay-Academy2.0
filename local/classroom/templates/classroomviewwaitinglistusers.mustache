@@ -1,0 +1,73 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+{{#response}}
+    
+
+    {{#viewtypeCard}}
+    <div class="" id="users_tab_content">
+
+        <table class="w-full pull-left generaltable" id = coursesdata>
+            <thead>
+                <tr>
+                    <th>{{#str}}sortorder,local_classroom{{/str}}</th>
+                    <th>{{#str}}employee,local_classroom{{/str}}</th>
+                    <th>{{#str}}employeeid,local_classroom{{/str}}</th>
+                    <th>{{#str}}email{{/str}}</th>
+                    <th>{{#str}}supervisor,local_classroom{{/str}}</th>
+                    <th>{{#str}}enroltype,local_classroom{{/str}}</th>
+                    <th>{{#str}}waitingtime,local_classroom{{/str}}</th>
+                   
+                </tr>
+            </thead>
+            {{#records}}
+            <tr>
+                <td>{{sortorder}}</td>
+                <td>
+                    <div>
+                        <span>
+                        {{{name}}}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span> 
+                        <label for="employeeid">
+                        {{employeeid}}
+                        </label>
+                    </span>
+                </td>
+                <td>
+                    <span> 
+                        <label for="email">
+                            {{email}}
+                        </label>
+                    </span>   
+                </td>
+                <td>{{supervisor}}</td>
+
+                <td>{{enroltype}}</td>
+                <td>
+                    {{waitingtime}}
+
+                </td>
+            </tr>
+        {{/records}}
+        </table>
+    </div>
+    {{/viewtypeCard}}
+{{/response}}
