@@ -42,7 +42,7 @@ $table->head[] = get_string('enrollments','local_courses');
 $table->head[] = get_string('points','local_courses');
 $table->head[] = get_string('completed','local_courses');
 $table->head[] = get_string('skill','local_courses');
-$table->head[] = get_string('ratings','local_courses');
+// $table->head[] = get_string('ratings','local_courses');
 $table->head[] = get_string('tags','local_courses');
 $table->head[] = get_string('summary','local_courses');
 $table->head[] = get_string('format','local_courses');
@@ -73,8 +73,10 @@ $table->data = $data;
     if (!empty($table->data)) {
         foreach ($table->data as $rkey => $row) {
             foreach ($row as $key => $item) {
-                $item = is_array($item) ? implode(',', $item) : $item;
-                $matrix[$rkey + 1][$key] = str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item))));
+                if($key !== 10){
+                    $item = is_array($item) ? implode(',', $item) : $item;
+                    $matrix[$rkey + 1][$key] = str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item))));
+                }               
             }
         }
     }

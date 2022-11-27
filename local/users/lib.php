@@ -166,7 +166,7 @@ function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpa
  */
 function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = array();
     $data = data_submitted();
@@ -229,7 +229,7 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
  */
 function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = array();
     $data = data_submitted();
@@ -315,7 +315,7 @@ function designation_filter($mform) {
  */
 function location_filter($mform) {
     global $DB, $USER;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
@@ -378,7 +378,7 @@ function hrmsrole_filter($mform) {
  */
 function band_filter($mform) {
     global $DB, $USER;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
@@ -406,7 +406,7 @@ function band_filter($mform) {
  */
 function username_filter($mform) {
     global $DB, $USER;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
@@ -434,7 +434,7 @@ function username_filter($mform) {
  */
 function custom_filter($mform) {
     global $DB, $USER;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $filterv = $DB->get_field('local_filters', 'filters', array('plugins' => 'users'));
     $filterv = explode(',', $filterv);
@@ -472,7 +472,7 @@ function custom_filter($mform) {
 function globaltargetaudience_elementlist($mform, $elementlist) {
     global $CFG, $DB, $USER;
 
-    
+
     $context = (new \local_users\lib\accesslib())::get_module_context();
     $params = array();
     $params['deleted'] = 0;
@@ -575,7 +575,7 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
 */
 function local_users_leftmenunode() {
     global $USER, $DB;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $usersnode = '';
     $key = '';
@@ -595,7 +595,7 @@ function local_users_leftmenunode() {
 
 function local_users_quicklink_node() {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $local_users = '';
     if (is_siteadmin() || has_capability('local/users:view', $systemcontext)) {
@@ -668,7 +668,7 @@ function local_users_quicklink_node() {
         $countinformation['userid'] = $USER->id;
         $countinformation['create'] = $hascapablity;
         $countinformation['viewlink_url'] = $CFG->wwwroot.'/local/users/index.php';
-        $countinformation['view'] = true; 
+        $countinformation['view'] = true;
         $countinformation['displaystats'] = true;
         $countinformation['percentage'] = $percent;
         $countinformation['count_total'] = $count_users;
@@ -758,7 +758,7 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
 */
 function manage_users_count($stable, $filterdata) {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
      $statustype = $stable->status;
      $totalcostcentercount = $stable->costcenterid;
@@ -867,7 +867,7 @@ function manage_users_count($stable, $filterdata) {
 */
 function manage_users_content($stable, $users/*,$filterdata*/) {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
-    
+
     $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = $users['users'];
     $data = array();
@@ -880,13 +880,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $user_picture = $user_picture->get_url($PAGE);
         $userpic = $user_picture->out();
         $list['userpic'] = $userpic;
-        // $username = $user->firstname.' '.$user->lastname;
-        $username = $user->username;
-        if (strlen($username) > 24) {
-            $username = substr($username, 0, 24).'...';
-        }
-        $list['username'] = html_writer::tag('a', $username, array('href' => $CFG->wwwroot.
-         '/local/users/profile.php?id='.$user->id));
+
         $list['empid'] = ($user->open_employeeid) ? $user->open_employeeid : '--';
         $useremail = $user->email;
         if (strlen($useremail) > 24) {
@@ -984,7 +978,7 @@ function users_filters_form($filterparams) {
 */
 function manage_syncerrors_count($stable, $filterdata) {
     global $DB, $USER;
-    
+
     $systemcontext =(new \local_users\lib\accesslib())::get_module_context();
     $params = array();
     $countsql = " SELECT count(id) ";
@@ -1051,9 +1045,12 @@ function manage_syncstatistics_count($stable, $filterdata) {
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
         $fromsql .= " ";
     } else {
-        $fromsql .= " AND usercreated = :modifiedby ";
-        $params['modifiedby'] = $USER->id;
+        // $fromsql .= " AND usercreated = :modifiedby ";
+        // $params['modifiedby'] = $USER->id;
+        $fromsql .= " AND costcenterid = :orgid ";
+        $params['orgid'] = $USER->open_costcenterid;
     }
+
     $count = $DB->count_records_sql($countsql.$fromsql, $params);
     $fromsql .= " ORDER BY id DESC";
 

@@ -113,15 +113,19 @@ switch($action) {
     	$levelid = required_param('levelid', PARAM_INT);
     	$deleted = $querylib->delete_level($levelid);
         $return = $deleted;
+        $curenttime = time();
+        $result = $DB->execute('UPDATE {course} SET open_level = 0, timemodified ='.$curenttime.'  WHERE open_level = '.$levelid);
     	// echo json_encode($deleted);
     break;
     case 'deleteskill':
 
 		$skillid = required_param('skillid', PARAM_INT);
-		$skillid = required_param('skillid',PARAM_INT);
+		$curenttime = time();
 		$return = $DB->delete_records('local_skill',  array('id' => $skillid));
-		/*print_object($return);
-		die();*/
+		$result = $DB->execute('UPDATE {course} SET open_skill = 0, timemodified ='.$curenttime.'  WHERE open_skill = '.$skillid);
+
+		// print_object($return);
+		// die();
 		// echo json_encode($return);
 	break;
 

@@ -67,7 +67,7 @@
                                                 <i class="fa fa-eye-slash"></i></a>
                                         </li>
                                         {{/ visible}}
-                                            
+
                                         {{^ visible}}
                                         <li>
                                             <a href="javascript:void(0)" title="{{# str}} makeinactive,local_users{{/ str}}" onclick="(function(e){ require('local_users/newuser').userSuspend({ id:{{userid}},context:1, fullname:'{{fullname}}', status: 'enable'}) })(event)">
@@ -83,10 +83,10 @@
                                 </div>
                             </div>
                             {{# visible}}
-                                
+
                                 <button class="btn btn_inactive_user">{{# str}} inactive, local_users{{/ str}}</button>
                             {{/ visible}}
-                                        
+
                             {{^ visible}}
                                 <button class="btn btn_active_user">{{# str}} active, local_users{{/ str}}</button>
                             {{/ visible}}
@@ -120,11 +120,11 @@
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span>
-                                        <b class="break_all">{{{ fullname }}}</b>
+                                        <b class="break_all"><a href="{{wwwroot}}/local/users/profile.php?id={{userid}}">{{ fullname }}</b>
                                     </span>
                                 </p>
                                 <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}}email, local_users{{/ str}} 
+                                    <span class="pull-left user_info_lable">{{# str}}email, local_users{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span>
@@ -132,7 +132,7 @@
                                     </span>
                                 </p>
                                 <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} organization, local_users{{/ str}} 
+                                    <span class="pull-left user_info_lable">{{# str}} organization, local_users{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span title="{{org}}">
@@ -140,7 +140,7 @@
                                     </span>
                                 </p>
                                 <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} department, local_users{{/ str}} 
+                                    <span class="pull-left user_info_lable">{{# str}} department, local_users{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span title="{{ dept }}">
@@ -158,7 +158,7 @@
                                     </span>
                                 </p>
                                 <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} open_level, local_users{{/ str}} 
+                                    <span class="pull-left user_info_lable">{{# str}} open_level, local_users{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span>
@@ -166,7 +166,7 @@
                                     </span>
                                 </p>
                                 <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} designation, local_users{{/ str}} 
+                                    <span class="pull-left user_info_lable">{{# str}} designation, local_users{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span title="{{ designation }}">

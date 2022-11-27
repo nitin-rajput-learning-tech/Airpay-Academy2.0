@@ -1,0 +1,110 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="w-full pull-left lp_container {{^hide}}disabled{{/hide}}">
+	<div class='col-md-12 pull-left learning_plan_view p-15'> 
+		<div class="col-md-12 pull-left pl-0 pr-0">
+			<i class="fa fa-map lpicon" aria-hidden="true" aria-label=""></i>
+			<a class="lp_name" href="{{plan_url}}" >{{{learning_plan_name}}}</a>
+				<div class="pull-right showoptions{{learning_planid}} actionicons">
+	                <span  class="showoptions" data-action="showoptions{{learning_planid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{learning_planid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{learning_planid}}' }) })(event)">
+	                    <i class="fa fa-ellipsis-h options"></i>
+	                </span>
+	            <ul class="options_container" id="showoptions{{learning_planid}}">
+	            	{{# capability3}}
+	            	  <li>
+						<a href='javascript:void(0)' title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').deleteConfirm({action:'deleteplan' , id:{{{learning_planid}}}, name:'{{{learning_plan_pathname}}}' }) })(event)">
+							<!--<img src="{{delete_icon_url}}"  class="icon" >-->
+							<i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str}} delete {{/ str}}" aria-label="Delete"></i>
+						</a>
+					</li>   
+					{{/ capability3}}
+					{{# capability2}}
+					<li>
+						<a href='javascript:void(0)' title = "{{# str}} edit {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').init({selector:'updatelpmodal', contextid:1, planid:{{{learning_planid}}}, form_status:0 }) })(event)">
+							<!--<img src="{{edit_icon_url}}" title="edit" class="icon" >-->
+							<i class="fa fa-pencil fa-fw" aria-hidden="true" title="{{# str}} edit {{/ str}}" aria-label="Edit"></i>
+						</a>
+					</li>
+					{{/ capability2}}
+					{{# capability1}}
+						{{# hide}}
+						<li>
+							<a href='javascript:void(0)' title="{{title_hide_show}}" onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'visible', id:{{{learning_planid}}}, name:'{{{learning_plan_pathname}}}' }) })(event)">
+								<i class="fa fa-eye" title="{{title_hide_show}}"></i>
+							</a>
+						</li>
+						{{/ hide}}
+						{{^ hide}}
+						<li>
+							<a href='javascript:void(0)' title="{{title_hide_show}}"  onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'hidden', id:{{{learning_planid}}}, name:'{{{learning_plan_pathname}}}' }) })(event)">
+								<!--<img src="{{hide_show_icon_url}}" class="icon">-->
+								<i class="fa fa-eye-slash icon" title="{{title_hide_show}}"></i>
+							</a>
+						</li>
+						{{/hide}}
+					{{/ capability1}}
+					
+				</ul>
+			</div>
+			<div class="w-full pull-left coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-center alert alert-info mt-1 m-0">{{#str}} assign_users_to_see_path, local_learningplan{{/str}}</span> {{/ lpcoursespath }}</div>
+		</div>
+		<div class="col-md-12 pull-left learning_plan_info pull-left p-0">
+			<div class="w-full pull-left pt-10 pb-10">
+				<span class="w-full pull-left"><b>{{#str}} details {{/str}} :</b></span>
+			</div>
+					
+		<!-- 	<div class="col-md-7 col-sm-7 pull-left pl-15">
+				<div class="w-full pull-left">
+					<span class="text-muted pull-left lp_info">{{#str}} plan_type, local_learningplan {{/str}}<span  class="pull-right mr-10">:</span> </span><span class="font-weight-bold lp_value">{{{plan_type}}}</span>
+				</div> -->
+				<div class="col-md-7 col-sm-7 pull-left pl-15">
+				<div class="w-full pull-left">
+					<span class="text-muted pull-left lp_info">{{#str}}learningplan, local_learningplan {{/str}}<span  class="pull-right mr-10">:</span> </span><span class="font-weight-bold lp_value">{{{plan_shortname_string}}}</span>
+				</div>
+
+				<div class="w-full pull-left">
+					<span class="text-muted pull-left lp_info">{{#str}}department, local_users{{/str}} 
+						<span class="pull-right mr-10">:</span>
+					</span>
+					<span title = "{{{plan_department}}}" class="font-weight-bold lp_value">{{{plan_department_string}}}</span>
+				</div>
+			</div>
+			<div class="col-md-5 col-sm-5 pull-left lp_content_right">
+				<!--<div class="w-full pull-left">
+					<span class="text-muted pull-left lp_info">{{#str}}learningplan_index_credits,local_learningplan{{/str}} 
+					<span class="pull-right mr-10">:</span> 
+					</span><span class="font-weight-bold lp_value">{{{plan_credits}}}</span>
+				</div>-->
+
+				<div class="w-full pull-left">
+					<span class="text-muted pull-left lp_info">{{#str}} assigned_courses, local_learningplan {{/str}} 
+					<span class="pull-right mr-10">:</span> 
+					</span><span class="font-weight-bold lp_value">{{{lpcoursescount}}}</span>
+				</div>
+			</div>		
+			<!--<div>
+				<a href="{{plan_url}}" class="launch btn btn-primary pull-right">More info</a>
+			</div>-->
+			<div class="learning_plan_image">
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+

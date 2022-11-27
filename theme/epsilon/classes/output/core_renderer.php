@@ -67,7 +67,7 @@ class core_renderer extends \core_renderer {
      * @return string HTML the button
      */
     public function edit_button(moodle_url $url, string $method = 'post') {
-        
+
         if ($this->page->theme->haseditswitch) {
             return;
         }
@@ -815,95 +815,47 @@ class core_renderer extends \core_renderer {
         }
         return $this->render_from_template('core/loginform', $context);
     }
-    public function custom_secured_redirection(){
-        global $USER, $CFG, $DB, $COURSE;
-        $return = new stdClass();
-        if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
-            $pageurl = "https";
-        else
-            $pageurl = "http";
-        $pageurl .= "://";
-        $pageurl .= $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-        $string = strpos($pageurl, '?');
-        if($string)
-            $newpageurl = substr($pageurl,0 , $string);
-        else
-            $newpageurl = $pageurl;
+    /**
+     * Wrapper for header elements.
+     *
+     * @return string HTML to display the main header.
+     */
+    public function full_header() {
+        $data = $this->custom_secured_redirection();
+        $pagetype = $this->page->pagetype;
+        $homepage = get_home_page();
+        $homepagetype = null;
+        // Add a special case since /my/courses is a part of the /my subsystem.
+        if ($homepage == HOMEPAGE_MY || $homepage == HOMEPAGE_MYCOURSES) {
+            $homepagetype = 'my-index';
+        } else if ($homepage == HOMEPAGE_SITE) {
+            $homepagetype = 'site-index';
+        }
+        if ($this->page->include_region_main_settings_in_header_actions() &&
+                !$this->page->blocks->is_block_present('settings')) {
+            // Only include the region main settings if the page has requested it and it doesn't already have
+            // the settings block on it. The region main settings are included in the settings block and
+            // duplicating the content causes behat failures.
+            $this->page->add_header_action(html_writer::div(
+                $this->region_main_settings_menu(),
+                'd-print-none',
+                ['id' => 'region-main-settings-menu']
+            ));
+        }
 
-        if($newpageurl == $CFG->wwwroot.'/enrol/index.php' || $newpageurl == $CFG->wwwroot.'/enrol/'){
-            redirect($CFG->wwwroot.'/my');
+        $header = new stdClass();
+        $header->settingsmenu = $this->context_header_settings_menu();
+        if(!$data->hideheader)
+            $header->contextheader = $this->context_header();
+        $header->hasnavbar = empty($this->page->layout_options['nonavbar']);
+        $header->navbar = $this->navbar();
+        $header->pageheadingbutton = $this->page_heading_button();
+        $header->courseheader = $this->course_header();
+        $header->headeractions = $this->page->get_header_actions();
+        if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
+            $header->welcomemessage = \core_user::welcome_message();
         }
-        if($newpageurl == $CFG->wwwroot.'/course/management.php'){
-            redirect($CFG->wwwroot.'/local/courses/index.php');
-        }
-        if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
-            if($_GET['id']){
-                $id = $_GET['id'];
-            }else{
-                $id = $USER->id;
-            }
-            redirect($CFG->wwwroot."/local/users/profile.php?id=$id");
-        }
-        if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
-            redirect($CFG->wwwroot."/local/courses/courses.php");
-        }
-        $systemcontext = \context_system::instance();
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-            $is_oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
-            $is_dh = has_capability('local/costcenter:manage_owndepartments', $systemcontext);
-            if($newpageurl == $CFG->wwwroot.'/course/completion.php' || $newpageurl == $CFG->wwwroot.'/backup/backup.php'){/*for course completion settings and backup page*/
-                $courseid = required_param('id',  PARAM_INT);
-                $course = get_course($courseid);
-                if($is_oh && $USER->open_costcenterid != $course->open_costcenterid){
-                    redirect($CFG->wwwroot.'/local/courses/courses.php');
-                }else if($is_dh && $USER->open_departmentid != $course->open_departmentid){
-                    redirect($CFG->wwwroot.'/local/courses/courses.php');
-                }
-            }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php' || $newpageurl == $CFG->wwwroot.'/mod/quiz/report.php'){/*for edit quiz page and quiz default report page*/
-                if($COURSE->id == 1){
-                    if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php')
-                        $cmid = $_GET['cmid'];
-                    else
-                        $cmid = $_GET['id'];
-
-                    $quizmoduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-                    $onlinetest_sql = "SELECT lo.* FROM {local_onlinetests} AS lo
-                        JOIN {course_modules} AS cm ON cm.instance=lo.quizid AND cm.module = {$quizmoduleid}
-                        WHERE cm.id = :cmid";
-                        // JOIN {quiz} AS q ON q.id=lo.quizid
-                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('cmid' => $cmid));
-                    if($onlinetest){
-                        $return->hideheader = TRUE;
-                        if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
-                        }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
-                        }
-                    }else{
-                        $return->hideheader = FALSE;
-                    }
-                }
-            }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/
-                if($COURSE->id == 1){
-                    $attempt = $_GET['attempt'];
-                    $onlinetest_sql = "SELECT lo.id, lo.costcenterid, lo.departmentid FROM {local_onlinetests} AS lo
-                        JOIN {quiz_attempts} AS qa ON qa.quiz = lo.quizid
-                        WHERE qa.id=:attemptid ";
-                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('attemptid' => $attempt));
-                    if($onlinetest){
-                        $return->hideheader = TRUE;
-                        if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
-                        }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
-                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
-                        }
-                    }else{
-                        $return->hideheader = FALSE;
-                    }
-                }
-            }
-        }
-        return $return;
+        return $this->render_from_template('core/full_header', $header);
     }
     function theme_epsilon_user_get_user_navigation_info($user, $page, $options = array()) {
         global $OUTPUT, $DB, $SESSION, $CFG;
@@ -1381,6 +1333,96 @@ class core_renderer extends \core_renderer {
             parent::render($am),
             $usermenuclasses
         );
+    }
+    public function custom_secured_redirection(){
+        global $USER, $CFG, $DB, $COURSE;
+        $return = new stdClass();
+        if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+            $pageurl = "https";
+        else
+            $pageurl = "http";
+        $pageurl .= "://";
+        $pageurl .= $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+        $string = strpos($pageurl, '?');
+        if($string)
+            $newpageurl = substr($pageurl,0 , $string);
+        else
+            $newpageurl = $pageurl;
+
+        if($newpageurl == $CFG->wwwroot.'/enrol/index.php' || $newpageurl == $CFG->wwwroot.'/enrol/'){
+            redirect($CFG->wwwroot.'/my');
+        }
+        if($newpageurl == $CFG->wwwroot.'/course/management.php'){
+            redirect($CFG->wwwroot.'/local/courses/index.php');
+        }
+        if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
+            if($_GET['id']){
+                $id = $_GET['id'];
+            }else{
+                $id = $USER->id;
+            }
+            redirect($CFG->wwwroot."/local/users/profile.php?id=$id");
+        }
+        if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
+            redirect($CFG->wwwroot."/local/courses/courses.php");
+        }
+        $systemcontext = \context_system::instance();
+        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
+            $is_oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
+            $is_dh = has_capability('local/costcenter:manage_owndepartments', $systemcontext);
+            if($newpageurl == $CFG->wwwroot.'/course/completion.php' || $newpageurl == $CFG->wwwroot.'/backup/backup.php'){/*for course completion settings and backup page*/
+                $courseid = required_param('id',  PARAM_INT);
+                $course = get_course($courseid);
+                if($is_oh && $USER->open_costcenterid != $course->open_costcenterid){
+                    redirect($CFG->wwwroot.'/local/courses/courses.php');
+                }else if($is_dh && $USER->open_departmentid != $course->open_departmentid){
+                    redirect($CFG->wwwroot.'/local/courses/courses.php');
+                }
+            }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php' || $newpageurl == $CFG->wwwroot.'/mod/quiz/report.php'){/*for edit quiz page and quiz default report page*/
+                if($COURSE->id == 1){
+                    if($newpageurl == $CFG->wwwroot.'/mod/quiz/edit.php')
+                        $cmid = $_GET['cmid'];
+                    else
+                        $cmid = $_GET['id'];
+
+                    $quizmoduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
+                    $onlinetest_sql = "SELECT lo.* FROM {local_onlinetests} AS lo
+                        JOIN {course_modules} AS cm ON cm.instance=lo.quizid AND cm.module = {$quizmoduleid}
+                        WHERE cm.id = :cmid";
+                        // JOIN {quiz} AS q ON q.id=lo.quizid
+                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('cmid' => $cmid));
+                    if($onlinetest){
+                        $return->hideheader = TRUE;
+                        if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
+                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                        }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
+                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                        }
+                    }else{
+                        $return->hideheader = FALSE;
+                    }
+                }
+            }else if($newpageurl == $CFG->wwwroot.'/mod/quiz/review.php' /*|| $newpageurl == $CFG->wwwroot.'/mod/quiz/attempt.php'*/){/*for quiz reviewpage and quiz attempt page*/
+                if($COURSE->id == 1){
+                    $attempt = $_GET['attempt'];
+                    $onlinetest_sql = "SELECT lo.id, lo.costcenterid, lo.departmentid FROM {local_onlinetests} AS lo
+                        JOIN {quiz_attempts} AS qa ON qa.quiz = lo.quizid
+                        WHERE qa.id=:attemptid ";
+                    $onlinetest = $DB->get_record_sql($onlinetest_sql, array('attemptid' => $attempt));
+                    if($onlinetest){
+                        $return->hideheader = TRUE;
+                        if($is_oh && $USER->open_costcenterid != $onlinetest->costcenterid){
+                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                        }else if($is_dh && $USER->open_departmentid != $onlinetest->departmentid){
+                            redirect($CFG->wwwroot.'/local/onlinetests/index.php');
+                        }
+                    }else{
+                        $return->hideheader = FALSE;
+                    }
+                }
+            }
+        }
+        return $return;
     }
     /**
      * Number of role switch based on user roles

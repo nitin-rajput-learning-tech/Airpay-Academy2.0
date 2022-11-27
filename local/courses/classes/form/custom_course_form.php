@@ -324,33 +324,50 @@ class custom_course_form extends moodleform {
                 $mform->hardFreeze('shortname');
                 $mform->setConstant('shortname', $course->shortname);
             }
-
             $identify = array();
+            $identifyone = array();
+            $identifytwo = array();
             $classroom_plugin_exist = $core_component::get_plugin_directory('local', 'classroom');
             $learningplan_plugin_exist = $core_component::get_plugin_directory('local', 'learningplan');
             $program_plugin_exist = $core_component::get_plugin_directory('local', 'program');
             $certification_plugin_exist = $core_component::get_plugin_directory('local', 'certification');
+            if(!empty($open_costcenter)){
+            $identifyone = $DB->get_records_menu('local_course_types',  array('orgid' => $open_costcenter));
+            }
+            $identifytwo = $DB->get_records_menu('local_course_types',  array('orgid' =>'0'));
+            $identify = $identifyone + $identifytwo;
+           // print_r($identify);exit;
+        //    var_dump( $this->_ajaxformdata['open_identifiedas']);
+           if($id || $this->_ajaxformdata['identifiedtype']){
+            $identifiedtype = $this->_ajaxformdata['identifiedtype'] ? $this->_ajaxformdata['identifiedtype'] : $get_coursedetails->open_identifiedas;
+            $identifiedtype = is_array($identifiedtype) ? $identifiedtype : explode(',', $identifiedtype);
+            list($subdepartsql, $subdepartparams) = $DB->get_in_or_equal($identifiedtype, SQL_PARAMS_NAMED, 'name');
+            if(!empty($open_costcenter)){
+                $identifyone = $DB->get_records_menu('local_course_types',  array('orgid' => $open_costcenter));
+                }
+                $identifytwo = $DB->get_records_menu('local_course_types',  array('orgid' =>'0'));
+                $identify = $identifyone + $identifytwo;
+            //$subdepartmentsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$subdepartsql} ";
+            //$subdepartments = $subdepartment_select + $DB->get_records_sql_menu($subdepartmentsql, $subdepartparams);  
+            }else{
+                $open_subdepartment = 0;
+           // $subdepartments = $subdepartment_select;
+            }
+            $coursetype = array(
+                'ajax' => 'local_costcenter/form-options-selector',
+                'data-contextid' => $systemcontext->id,
+                'data-action' => 'costecenter_coursetype_selector',
+                'data-options' => json_encode(array('id' => $open_costcenter)),
+                'class' => 'identifiedasselect',
+                'data-parentclass' => 'organisationselect',
+                'data-class' => 'identifiedasselect',
+                'multiple' => false,
+            );
+            $mform->addElement('autocomplete', 'identifiedtype', get_string('type','local_courses'), $identify,$coursetype);
+            $mform->addRule('identifiedtype', get_string('missingtype','local_courses'), 'required', null, 'client');
+            $mform->addHelpButton('identifiedtype', 'open_identifiedascourse', 'local_courses');
+            $mform->setType('identifiedtype',PARAM_INT);
             
-            if(!empty($classroom_plugin_exist)){
-                $identify['2'] = get_string('classroom','local_courses');
-            }
-             $identify['3'] = get_string('elearning','local_courses');
-            if(!empty($learningplan_plugin_exist)){
-              $identify['4'] = get_string('learningplan','local_courses');
-            }
-            if(!empty($program_plugin_exist)){
-			        $identify['5'] = get_string('program','local_courses');
-            }
-            if(!empty($certification_plugin_exist)){
-              $identify['6'] = get_string('certification','local_courses');
-            }
-			      // $identify['7'] = get_string('bootcamp','local_courses');
-            $select = $mform->addElement('autocomplete', 'open_identifiedas', get_string('type','local_courses'), $identify);
-            $mform->addRule('open_identifiedas', get_string('missingtype','local_courses'), 'required', null, 'client');
-            $mform->addHelpButton('open_identifiedas', 'open_identifiedascourse', 'local_courses');
-            $mform->setType('open_identifiedas',PARAM_RAW);
-            $select->setMultiple(true);
-
             //for course format
             $courseformats = get_sorted_course_formats(true);
             $formcourseformats = array();
@@ -573,9 +590,9 @@ class custom_course_form extends moodleform {
                 $errors['open_costcenterid'] = get_string('pleaseselectorganization', 'local_courses');
             }
         }
-        if(($data['open_identifiedas'] == NULL || $data['open_identifiedas'] == 0) && $data['form_status'] == 0){
-            $errors['open_identifiedas'] = get_string('missingtype','local_courses');
-        }
+        // if(isset($data['open_identifiedas']) && ($data['open_identifiedas'] == NULL || $data['open_identifiedas'] == 0) && $data['form_status'] == 0){
+        //     $errors['open_identifiedas'] = get_string('missingtype','local_courses');
+        // }
 
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));
 

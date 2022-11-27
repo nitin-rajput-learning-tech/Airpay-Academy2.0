@@ -25,7 +25,7 @@
  * @copyright  e abyas  <info@eabyas.com>
  */
 
-define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, Templates, Str) {
+ define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, Templates, Str) {
 
     /** @var {Number} Maximum number of options to show. */
     var MAXOPTIONS = 100;
@@ -65,13 +65,17 @@ define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, 
                 {
                     key:'selectcat',
                     component: 'local_courses',
+                },
+                {
+                    key:'selectcoursetype',
+                    component: 'local_courses',
                 }
             ]);
             defaultstrings.then(function(s){
                 var departmentselect = '<span><span>'+s[0]+'</span></span>';
                 var subdeptartmentselect = '<span><span>'+s[1]+'</span></span>';
                 var categoryselect = '<span><span>'+s[2]+'</span></span>';
-
+                var course_typeselect = '<span><span>'+s[3]+'</span></span>';
                 if (action === 'costcenter_organisation_selector') {
                     $("#id_open_costcenterid").on('change', function() {
                         var department = $('#id_open_departmentid').val();
@@ -90,6 +94,12 @@ define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, 
                             $('#id_category').html('');
                             $('.categoryselect .form-autocomplete-selection').html(categoryselect);
                         }
+                        var identifiedas = $('#id_open_identifiedtype').val();
+                        if(parseInt(identifiedas) > 0){
+                            $('#id_open_identifiedtype').html('');
+                            $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
+                        }
+                        
                     });
                 }else if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector'){
                     $('#id_open_departmentid').on('change', function(){
@@ -108,12 +118,21 @@ define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, 
                         var category = $('#id_category').val();
                         if(parseInt(category) > 0){
                             $('#id_category').html('');
-                            $('.categoryselect .form-autocomplete-selection').html(categoryselect);
+                            $('.subdepartmentselect .form-autocomplete-selection').html(subdepartmentselect);
+                        }
+                    });
+                }
+                else if(action === 'costecenter_coursetype_selector'){
+                    $('#id_open_identifiedtype').on('change', function(){
+                        var category = $('#id_open_identifiedtype').val();
+                        if(parseInt(category) > 0){
+                            $('#id_open_identifiedtype').html('');
+                            $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
                     });
                 }
             });
-            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector'){
+            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector'){
                 formoptions.parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
                 console.log($('[data-class="' + $(selector).data('parentclass') + '"]'));
                 console.log(formoptions.parentid);
@@ -121,6 +140,8 @@ define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, 
                 formoptions.organisationid = $("#id_open_costcenterid").val();
                 formoptions.departmentid = $("#id_open_departmentid").val();
                 formoptions.subdepartment = $("#id_open_subdepartment").val();
+                formoptions.name = $("#id_open_identifiedtype").val();
+
             }
             formoptions = JSON.stringify(formoptions);
 
@@ -179,7 +200,5 @@ define(['jquery', 'core/ajax', 'core/templates', 'core/str'], function($, Ajax, 
 
             }).fail(failure);
         }
-
-    };
-
+    }
 });

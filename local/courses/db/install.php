@@ -242,6 +242,20 @@ function xmldb_local_courses_install(){
             $DB->insert_record('local_notification_strings', $string_obj);
         }
     }
+    $course_type_data = array(
+        array('name' => 'Class Room', 'active' => '1','shortname' => 'classroom','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+        array('name' => 'E-Learning', 'active' => '1','shortname' => 'elearning','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+        array('name' => 'Learning Path', 'active' => '1','shortname' => 'learningpath','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+        array('name' => 'Exams', 'active' => '1','shortname' => 'exams','usercreated' => '2','orgid'=>'0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+        array('name' => 'Forums', 'active' => '1','shortname' => 'forums','usercreated' => '2','orgid'=>'0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),       
+    );
+    foreach ($course_type_data as $course_type) {
+        unset($course_type['timecreated']);
+        if (!$DB->record_exists('local_course_types',  $course_type)) {
+            $course_type['timecreated'] = $time;
+            $DB->insert_record('local_course_types', $course_type);
+        }
+    }
     $corecomponent = new \core_component();
     $pluginexist = $corecomponent::get_plugin_directory('tool', 'certificate');
     if($pluginexist ){

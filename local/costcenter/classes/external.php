@@ -627,6 +627,18 @@ class local_costcenter_external extends external_api {
                         }
                     }
                 break;
+                case 'costecenter_coursetype_selector':
+                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) || 
+                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0) ) {
+                        list($organisationidssql, $organisationparams) = $DB->get_in_or_equal($formoptions->parentid, SQL_PARAMS_NAMED, 'organisationid');
+
+                        $fields      = 'SELECT id, name as fullname';
+                        $lobssql = " FROM {local_course_types}
+                                         WHERE  orgid $organisationidssql OR orgid=0 ";
+                        $coursetypes = $DB->get_records_sql($fields.$lobssql, $organisationparams, ($page * $perpage) -0, $perpage + 1);
+                        $return = array_values(json_decode(json_encode($coursetypes), true));
+                    }
+                break;
             }
         }
         return json_encode($return);

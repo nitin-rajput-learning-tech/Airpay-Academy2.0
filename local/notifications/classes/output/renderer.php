@@ -261,32 +261,30 @@ class renderer extends mainbase  {
         }
 
 
-        /////Calling this function to view details of email status///////
-         public function view_email_status_details($id) {
-            global $OUTPUT, $CFG, $DB,$USER;
+  /////Calling this function to view details of email status///////
+  public function view_email_status_details($id)
+  {
+    global $OUTPUT, $CFG, $DB, $USER;
 
-           
 
-            $notimaster = new notification_master;
+    $systemcontext = (new \local_notifications\lib\accesslib())::get_module_context();
+    $notimaster = new notification_master;
 
-           $notidetails = $notimaster->getNotificationInfoById($id);
-    $templatedetails = $notimaster->getNotificationTemplateById($notidetails->notification_infoid);
+    $notidetails = $notimaster->getNotificationInfoById($id);
     $sender_name = $notimaster->getSenderDetails($notidetails->from_userid);
     $receiver_name = $notimaster->getReceiverDetails($notidetails->to_userid);
     $return = '';
-    if ($templatedetails->costcenterid == $USER->open_costcenterid || is_siteadmin()) {
+    if ((has_capability('local/costcenter:manage_ownorganization', $systemcontext)) || is_siteadmin()) {
       $return .= "<h4>From:" . $sender_name . "</h4>";
       $return .= "<h4>To:" . $receiver_name . "</h4>";
       $return .= "<h4>Subject: " . $notidetails->subject . "</h4>";
       $return .= "<h4>Content: " . $notidetails->emailbody . "</h4>";
     } else {
-      $return .="<h5>". get_string('dont_have_permission_view_page', 'local_notifications')."</h5>";
+      $return .= "<h5>" . get_string('dont_have_permission_view_page', 'local_notifications') . "</h5>";
     }
 
 
     return $return;
   }
- /*********************Email Status(Shilpa)************************/
-
+  /*********************Email Status(Shilpa)************************/
 }
-
