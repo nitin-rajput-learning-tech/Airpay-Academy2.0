@@ -32,7 +32,7 @@ use local_learningplan\lib\lib as learninngplan_lib;
 
 class learningplan_courses implements \renderable, \templatable {
 
-    //-----hold the courselist inprogress or completed 
+    //-----hold the courselist inprogress or completed
     private $courseslist;
 
     private $subtab='';
@@ -40,9 +40,9 @@ class learningplan_courses implements \renderable, \templatable {
     private $learningplantemplate=0;
 
     private $filter_text='';
-    
+
     private $filter='';
-    
+
     public function __construct($filter, $filter_text='', $offset, $limit){
        $this->inprogressCount = DashboardLearningplan::inprogress_lepnames_count($filter_text);
        $this->completedCount = DashboardLearningplan::completed_lepnames_count($filter_text);
@@ -51,29 +51,29 @@ class learningplan_courses implements \renderable, \templatable {
             case 'inprogress':
                     $this->courseslist = DashboardLearningplan::inprogress_lepnames($filter_text, $offset, $limit);
                     $this->coursesViewCount = $this->inprogressCount;
-                    $this->subtab='elearning_inprogress'; 
+                    $this->subtab='elearning_inprogress';
                 break;
 
-            case 'completed' :                           
+            case 'completed' :
                     $this->courseslist = DashboardLearningplan::completed_lepnames($filter_text, $offset, $limit);
                     $this->coursesViewCount = $this->completedCount;
                     $this->subtab='elearning_completed';
-                break; 
-            case 'enrolled' :                           
+                break;
+            case 'enrolled' :
                     $this->courseslist =  DashboardLearningplan::enrolled_lepnames($filter_text, $filter_offset, $filter_limit);
                     $this->coursesViewCount = $this->enrolledcount;
                     $this->subtab = 'elearning_enrolled';
-                break; 
-            
+                break;
+
         }
-        $this->filter = $filter;  
+        $this->filter = $filter;
         $this->filter_text = $filter_text;
         $this->learningplantemplate=1;
 
     } // end of the function
-    
 
-    
+
+
 
 
     /**
@@ -84,11 +84,11 @@ class learningplan_courses implements \renderable, \templatable {
      */
     public function export_for_template(renderer_base $output) {
         global $DB, $USER, $CFG, $PAGE;
-       
-        $data = new stdClass(); 
-        $courses_active = ''; 
-        $tabs = '';  
-        $data->inprogress_elearning = array();    
+
+        $data = new stdClass();
+        $courses_active = '';
+        $tabs = '';
+        $data->inprogress_elearning = array();
 
         $inprogresscount = $this->inprogressCount;
         $completedcount = $this->completedCount;
@@ -105,7 +105,7 @@ class learningplan_courses implements \renderable, \templatable {
         $data->functionname ='learningplan_courses';
         $data->subtab= $this->subtab;
         $data->view_more_url = $CFG->wwwroot.'/local/learningplan/userdashboard.php?tab='.explode('_',$this->subtab)[1];
-        
+
         $data->enrolled_url = $CFG->wwwroot.'/local/learningplan/userdashboard.php?tab=enrolled';
         $data->inprogress_url = $CFG->wwwroot.'/local/learningplan/userdashboard.php?tab=inprogress';
         $data->completed_url = $CFG->wwwroot.'/local/learningplan/userdashboard.php?tab=completed';
@@ -116,15 +116,15 @@ class learningplan_courses implements \renderable, \templatable {
         $data->plan_view_count = $plan_view_count;
         if($plan_view_count > 2)
             $data->enableslider = 1;
-        else    
+        else
             $data->enableslider = 0;
-        
-        if (!empty($this->courseslist)) 
+
+        if (!empty($this->courseslist))
             $data->inprogress_elearning_available = 1;
         else
             $data->inprogress_elearning_available = 0;
 
-        
+
         if (!empty($this->courseslist)) {
 
             $data->course_count_view = generic_content::get_coursecount_class($this->courseslist);
@@ -142,7 +142,7 @@ class learningplan_courses implements \renderable, \templatable {
                  $onerow ['pathcourses'] = array();
                 if(count($lplanassignedcourses)>=2) {
                     $i = 1;
-                    foreach($lplanassignedcourses as $assignedcourse){ 
+                    foreach($lplanassignedcourses as $assignedcourse){
                             $onerow ['pathcourses'][] = array('coursename'=>$assignedcourse->fullname, 'coursename_string'=>'C'.$i);
                         $i++;
 
@@ -150,7 +150,7 @@ class learningplan_courses implements \renderable, \templatable {
                             break;
                         }
                     }
-                    
+
                 }
                 $onerow['lastaccessstime']= $lastaccessstime;
                  if($lastaccessstime){
@@ -158,13 +158,13 @@ class learningplan_courses implements \renderable, \templatable {
                  }else{
                     $onerow['lastaccessdate'] = get_string('none');
                  }
-               
+
                 $course_record = $DB->get_record('course', array('id' => $inprogress_coursename->id));
 
-             
-                // $onerow['plan_image_url'] = learninngplan_lib::get_learningplansummaryfile($inprogress_coursename->id);    
 
-                //-------- get the course summary------------------------ 
+                $onerow['plan_image_url'] = learninngplan_lib::get_learningplansummaryfile($inprogress_coursename->id);
+
+                //-------- get the course summary------------------------
                 $onerow['planSummary']= $this->get_coursesummary($inprogress_coursename);
 
 
@@ -192,12 +192,12 @@ class learningplan_courses implements \renderable, \templatable {
                 }else{
                     $onerow['label_name'] = get_string('start_plan','local_learningplan');
                 }
-             
-                array_push($data->inprogress_elearning, $onerow);
-                
-            } // end of foreach 
 
-        } // end of if condition     
+                array_push($data->inprogress_elearning, $onerow);
+
+            } // end of foreach
+
+        } // end of if condition
         // print_object($data);
         $data->moduledetails = $data->inprogress_elearning;
         $data->menu_heading = get_string('learningpaths','block_userdashboard');
@@ -206,13 +206,13 @@ class learningplan_courses implements \renderable, \templatable {
     } // end of export_for_template function.
 
 
-    private function get_coursesummary($course_record){   
+    private function get_coursesummary($course_record){
         $coursesummary = \local_costcenter\lib::strip_tags_custom($course_record->description);
         $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100)."..." : $coursesummary;
         $coursesummary = $summarystring;
         if(empty($coursesummary)){
             $coursesummary = '<span class="w-full pull-left ">'.get_string('nodecscriptionprovided','block_userdashboard').'</span>';
-            
+
         }
 
         return $coursesummary;

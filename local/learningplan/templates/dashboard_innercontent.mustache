@@ -48,13 +48,13 @@
 {{# plan_view_count}}
 {{# card_view}}
 <div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
-    <div class="userdashboard_content row d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap {{{plan_view_count}}}">    
+    <div class="userdashboard_content row d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap {{{plan_view_count}}}">
 
         {{# moduledetails}}
         <div class="col-sm-4 col-12 tabs_cmn_class courses_inprogress_slide elearning_inprogress  ctype_elearning d-flex" data-index="1">
             <div class="course_container d-flex w-100">
                 <div class="courseimg_container col-md-5 col-12">
-                    <div alt="Test courses1" class="courseimg courseimg_bg" style="background-image:url('http://localhost/bizlms4/pluginfile.php/4528/course/overviewfiles/photo-1542831371-29b0f74f9713.jpg')">
+                    <div alt="Test courses1" class="courseimg courseimg_bg" style="background-image:url('{{plan_image_url}}')">
                             <div class="course_progress_container d-flex align-items-center">
                                 <div class="progress_circular" style="background-image: conic-gradient(white 0%, transparent 0%);"> </div>
                                 <div class="progress_status">Completed</div>
@@ -67,37 +67,34 @@
                     <div>
                         <div class="d-flex mt-2">
                             <div class="course_name  flex-grow-1">
-                                <a href="http://localhost/bizlms4/course/view.php?id=185" title="Test courses1"> Test courses1</a>
+                                <a href="{{planUrl}}" title="Test courses1">{{planFullname}}</a>
                             </div>
                             <div class="rating_container">
                                 <i class="fa fa-star"></i> 4.4
                             </div>
                         </div>
-                        <div class="desc coursedesc"><span class="w-full pull-left">No Description Provided</span></div>
+                        <div class="desc coursedesc"><span class="w-full pull-left">{{planSummary}}</span></div>
                     </div>
                     <div>
                         <div class="node_container">
-                            <span class="node"><span>C1</span></span>
-                            <span class="node"><span>C1</span></span>
-                            <span class="node"><span>C1</span></span>
-                            <span class="node"><span>C1</span></span>
-                            <span class="node"><span>C1</span></span>
-                            <span class="node"><span>C1</span></span>
+                            {{# pathcourses}}
+                              <span class="node"><span title="{{coursename}}">{{coursename_string}}</span></span>
+                            {{/ pathcourses}}
                         </div>
-                        <a href="http://localhost/bizlms4/course/view.php?id=185" class="">
+                        <a href="{{planUrl}}" class="">
                             <button class="btn btn-primary my-2 launch_btn">Launch</button>
                         </a>
                     </div>
-                    
+
                 </div>
-            </div>    
+            </div>
         </div>
             <!-- <div class="col-sm-4 col-12 tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_learningplan" data-index="{{index}}">
                 <div class="w-full lp_container">
                     <div class="w-full learning_plan_view">
                         <i class="fa fa-map lpicon" aria-hidden="true" aria-label=""></i>
-                        <a class="lp_name" href="{{{planUrl}}}" title="{{{planFullname}}}"> {{{displayPlanFullname}}}</a>
-                        <div class="desc coursedesc mt-1 mb-1">{{{planSummary}}}</div> 
+                        <a class="lp_name" href="{{planUrl}}" title="{{{planFullname}}}"> {{{displayPlanFullname}}}</a>
+                        <div class="desc coursedesc mt-1 mb-1">{{{planSummary}}}</div>
                         <div class="w-full coursespath_container">
                             <ul class="pathcourses_list">
                                 {{# pathcourses}}
@@ -111,31 +108,31 @@
                                     </li>
                                 {{/ pathcourses}}
                             </ul>
-                            {{^ pathcourses }} 
-                            <span class="w-full pull-left text-center alert alert-info p-1 m-0">Assign 2 or more courses to see path</span> 
+                            {{^ pathcourses }}
+                            <span class="w-full pull-left text-center alert alert-info p-1 m-0">Assign 2 or more courses to see path</span>
                             {{/ pathcourses }}
 
                         </div>
                         <div class="pull-right mt-10 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
                             <div class="pull-left">{{{rating_element}}}</div>
-                           
+
                               {{#course_completedon}}
                               <a href="{{{planUrl}}}">
                                   <button class="btn btn-sm launch_btn">{{#str}}completed_plan, local_learningplan{{/str}}</button>
                               </a>
                               {{/course_completedon}}
-                
+
                               {{^course_completedon}}
                                  <a href="{{{planUrl}}}">
                                      <button class="btn btn-sm launch_btn">{{label_name}}</button>
                                 </a>
-                              {{/course_completedon}}   
+                              {{/course_completedon}}
                         </div>
                     </div>
-                </div>    
+                </div>
             </div> -->
-            
-        {{/ moduledetails}}  
+
+        {{/ moduledetails}}
         {{# viewMoreCard}}
             <!-- <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_learningplan d-flex justify-content-center align-items-center">
                 <a class="center_elemet" href="{{{view_more_url}}}">{{#str}} viewmore {{/str}}</a>
@@ -157,7 +154,7 @@
     <tbody>
           {{# moduledetails}}
          <tr>
-            <td> 
+            <td>
               <a class="lp_name" href="{{{planUrl}}}" title="{{{planFullname}}}"> {{{displayPlanFullname}}}</a>
             </td>
             <td>
@@ -165,32 +162,32 @@
                   <button class="btn btn-sm launch_btn">{{#str}}launch, block_userdashboard{{/str}}</button>
               </a>
                 {{{ copyaction }}} -->
-           
+
               {{#course_completedon}}
                 <a href="{{{planUrl}}}">
                     <button class="btn btn-sm launch_btn">{{#str}}completed_plan, local_learningplan{{/str}}</button>
                 </a>
                {{/course_completedon}}
-                
+
                {{^course_completedon}}
                   <a href="{{{planUrl}}}">
                         <button class="btn btn-sm launch_btn">{{label_name}}</button>
                   </a>
-                {{/course_completedon}}   
+                {{/course_completedon}}
                 {{{ copyaction }}}
 
             </td>
-           
+
 
             <td> {{{planSummary}}} </td>
-            <td> 
+            <td>
               {{# pathcourses}}
                   <div class="test"><div class="path_coursename">{{ coursename }}</div>
                   </div>
              {{/ pathcourses}}
-                          
-              {{^ pathcourses }} 
-                   <span>Assign 2 or more courses to see path</span> 
+
+              {{^ pathcourses }}
+                   <span>Assign 2 or more courses to see path</span>
               {{/ pathcourses }}
            </td>
         </tr>
@@ -199,11 +196,11 @@
 </table>
 {{/ list_view}}
 {{/ plan_view_count}}
- 
+
 {{^ plan_view_count}}
-    {{> block_userdashboard/userdashboard_nodata_text}}  
+    {{> block_userdashboard/userdashboard_nodata_text}}
 {{/ plan_view_count}}
-                   
+
 {{#enableslider}}
     {{> block_userdashboard/userdashboard_enable_slider}}
 {{/enableslider}}
