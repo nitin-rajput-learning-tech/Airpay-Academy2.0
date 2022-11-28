@@ -65,7 +65,6 @@ class local_courses_external extends external_api {
         global $DB, $CFG, $USER;
         require_once($CFG->dirroot.'/course/lib.php');
         require_once($CFG->dirroot . '/local/courses/lib.php');
-
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_create_course_form_parameters(),
                                             ['contextid' => $contextid, 'form_status'=>$form_status,  'jsonformdata' => $jsonformdata]);
