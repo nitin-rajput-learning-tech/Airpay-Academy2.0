@@ -28,7 +28,7 @@ class view extends plugin_renderer_base {
 		$this->cfg=$CFG;
 		$this->user=$USER;
     }
-    
+
     public function all_learningplans($condtion,$dataobj,$tableenable=false,$search=null,$filterdata = null,$view_type = 'card'){
     	global $CFG;
     	$status1 = optional_param('status1', '', PARAM_RAW);
@@ -52,7 +52,7 @@ class view extends plugin_renderer_base {
 				$sql .= " AND name LIKE '%%$search%%'";
 			}
 			//added by revathi
-			
+
     		if($filterdata){
     		// 	print_r($filterdata);
     	 // exit;
@@ -80,12 +80,12 @@ class view extends plugin_renderer_base {
 
 				if(!empty($filterdata->status)){
 					//print_r($filterdata->status);
-	        		
+
 			         if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
 			         	//print_r($filterdata->status);
 			            if(in_array('active' ,$filterdata->status)){
 			            	//echo "test";
-			            	$sql .= " AND l.visible = 1 ";           
+			            	$sql .= " AND l.visible = 1 ";
 			            }else if(in_array('inactive' ,$filterdata->status)){
 			            	//echo "test1";
 			                $sql .= " AND l.visible = 0 ";
@@ -136,7 +136,7 @@ class view extends plugin_renderer_base {
 	        		//$status = explode(',',$filterdata->status);
 			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
 			            if(in_array('active' ,$filterdata->status)){
-			                $assign_users_sql .= " AND l.visible = 1 ";           
+			                $assign_users_sql .= " AND l.visible = 1 ";
 			            }else if(in_array('inactive' ,$filterdata->status)){
 			                $assign_users_sql .= " AND l.visible = 0 ";
 			            }
@@ -179,7 +179,7 @@ class view extends plugin_renderer_base {
 	        		//$status = explode(',',$filterdata->status);
 			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
 			            if(in_array('active' ,$filterdata->status)){
-			                $sql .= " AND l.visible = 1 ";           
+			                $sql .= " AND l.visible = 1 ";
 			            }else if(in_array('inactive' ,$filterdata->status)){
 			                $sql .= " AND l.visible = 0 ";
 			            }
@@ -198,7 +198,7 @@ class view extends plugin_renderer_base {
 			$assigned_users_sql = "SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$this->user->open_costcenterid},',%')";//FIND_IN_SET(".$this->user->open_costcenterid.",l.costcenter)
 			if(!empty($search)){
 				$assign_users_sql .= " WHERE name LIKE '%%$search%%'";
-			} 
+			}
 
 			if($filterdata){
 				if(!empty($filterdata->subdepartment)){
@@ -225,7 +225,7 @@ class view extends plugin_renderer_base {
 	        		//$status = explode(',',$filterdata->status);
 			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
 			            if(in_array('active' ,$filterdata->status)){
-			                $assign_users_sql .= " AND l.visible = 1 ";           
+			                $assign_users_sql .= " AND l.visible = 1 ";
 			            }else if(in_array('inactive' ,$filterdata->status)){
 			                $assign_users_sql .= " AND l.visible = 0 ";
 			            }
@@ -267,7 +267,7 @@ class view extends plugin_renderer_base {
 	        		//$status = explode(',',$filterdata->status);
 			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
 			            if(in_array('active' ,$filterdata->status)){
-			                $sql .= " AND l.visible = 1 ";           
+			                $sql .= " AND l.visible = 1 ";
 			            }else if(in_array('inactive' ,$filterdata->status)){
 			                $sql .= " AND l.visible = 0 ";
 			            }
@@ -315,7 +315,7 @@ class view extends plugin_renderer_base {
 	        		//$status = explode(',',$filterdata->status);
 			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
 			            if(in_array('active' ,$filterdata->status)){
-			                $assign_users_sql .= " AND l.visible = 1 ";           
+			                $assign_users_sql .= " AND l.visible = 1 ";
 			            }else if(in_array('inactive' ,$filterdata->status)){
 			                $assign_users_sql .= " AND l.visible = 0 ";
 			            }
@@ -329,7 +329,7 @@ class view extends plugin_renderer_base {
 			$learning_plans=$learning_plans_depwise;
 		}else{
 			$data=open::userdetails();
-			
+
 			$sql="SELECT * FROM {local_learningplan} AS l WHERE
 			CONCAT(',',l.costcenter,',') LIKE CONCAT('%,',$data->open_costcenterid,',%')
 			CONCAT(',',l.open_group,',') LIKE CONCAT('%,',$data->open_group,',%')
@@ -374,13 +374,13 @@ class view extends plugin_renderer_base {
         }else{
             $sdata = array();
             $table_data = array();
-            
+
             foreach($learning_plans as $learning_plan){
                 $row = array();
                 $departmentcount = count(array_filter(explode(',',$learning_plan->department)));
                 $subdepartmentcount = count(array_filter(explode(',',$learning_plan->subdepartment)));
                 $plan_url = new \moodle_url('/local/learningplan/plan_view.php', array('id' => $learning_plan->id));
-                 
+
                 if(empty($learning_plan->credits)){
                     $plan_credits = get_string('statusna');
                 }else{
@@ -406,7 +406,7 @@ class view extends plugin_renderer_base {
                     $plan_location = get_string('statusna');
                 }
 				if(!empty($learning_plan->department)){
-                    
+
                     $plan_departments= open::departments($learning_plan->department);
 					$plan_department = array();
 					foreach($plan_departments as $plan_dep){
@@ -437,19 +437,19 @@ class view extends plugin_renderer_base {
                 if (is_siteadmin() || has_capability('local/learningplan:visible', $systemcontext)) {
 					$capability1 = true;
                 }
-                
+
                 if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))){
                 	$capability1 = false;
                 }
-              
+
                 if (has_capability('local/learningplan:update', $systemcontext)) {
                 	$capability2 = true;
-                
+
                 }
                 if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))){
                 	$capability2 = false;
                 }
-                
+
                 if (has_capability('local/learningplan:delete', $systemcontext)) {
                     $capability3 = true;
                 }
@@ -464,18 +464,18 @@ class view extends plugin_renderer_base {
 				if(count($lplanassignedcourses)>=2) {
 					$i = 1;
 					$coursespath_context['pathcourses'] = array();
-					foreach($lplanassignedcourses as $assignedcourse){	
+					foreach($lplanassignedcourses as $assignedcourse){
 							$coursename = $assignedcourse->fullname;
 							$coursespath_context['pathcourses'][] = array('coursename'=>$coursename, 'coursename_string'=>'C'.$i);
 						$i++;
 						if($i>10){
                             break;
                         }
-					}  
+					}
 
 					$pathcourses .= $this->render_from_template('local_learningplan/cousrespath', $coursespath_context);
 				}
-			  
+
 			    $learningplan_content = array();
                 $learning_plan_name = strlen($learning_plan->name) > 34 ? substr($learning_plan->name, 0, 34)."..." : $learning_plan->name;
                 $hide_show_icon = $learning_plan->visible ? $this->output->image_url('i/hide') : $this->output->image_url('i/show');
@@ -488,13 +488,13 @@ class view extends plugin_renderer_base {
                 $learningplan_content['capability1'] = $capability1;
                 $learningplan_content['capability2'] = $capability2;
                 $learningplan_content['capability3'] = $capability3;
-              
+
                 $learningplan_content['hide'] = $learning_plan->visible ? true : false;
-                
+
                 $learningplan_content['hide_show_icon_url'] = $hide_show_icon;
                 $learningplan_content['title_hide_show'] = $title_hide_show;
                 $learningplan_content['delete_icon_url'] = $this->output->image_url('i/delete');
-                
+
                 $learningplan_content['edit_icon_url'] = $this->output->image_url('i/edit');
                 $learningplan_content['learning_planid'] = $learning_plan->id;
                 //$learningplan_content['plan_type'] = $plan_type;
@@ -519,9 +519,9 @@ class view extends plugin_renderer_base {
 
                 if($capability1){
                 	if($learning_plan->visible == 0){
-                      $actions .=  '<a href="javascript:void(0);" title = \''.$title_hide_show.'\' onclick="(function(e){ require(\'local_learningplan/lpcreate\').toggleVisible({action:\'toggleplan\' ,visible:\'hidden\', id: '.$learning_plan->id.', name:\''.$learning_plan_pathname.'\'}) })(event)" ><i class="fa fa-eye-slash icon" aria-hidden="true"></i></a>' ; 
+                      $actions .=  '<a href="javascript:void(0);" title = \''.$title_hide_show.'\' onclick="(function(e){ require(\'local_learningplan/lpcreate\').toggleVisible({action:\'toggleplan\' ,visible:\'hidden\', id: '.$learning_plan->id.', name:\''.$learning_plan_pathname.'\'}) })(event)" ><i class="fa fa-eye-slash icon" aria-hidden="true"></i></a>' ;
                 	}else{
-                       
+
                        	$actions .=  '<a href="javascript:void(0);" title = \''.$title_hide_show.'\' onclick="(function(e){ require(\'local_learningplan/lpcreate\').toggleVisible({action:\'toggleplan\' ,visible:\'visible\', id:'.$learning_plan->id.',name:\''.$learning_plan_pathname.'\'}) })(event)" ><i class="fa fa-eye" aria-hidden="true"></i></a>' ;
                 	}
                 }
@@ -537,29 +537,29 @@ class view extends plugin_renderer_base {
                     $row = [html_writer::tag('a', $learning_plan_name, array('href' => $CFG->wwwroot. '/local/learningplan/plan_view.php?id='.$learning_plan->id, 'class'=> $class)) , html_writer::span($learningplan_content['plan_shortname_string'], $class), html_writer::span($learningplan_content['plan_department_string'], $class), html_writer::span($learningplan_content['lpcoursescount'], $class),html_writer::span($actions,  $class)];
                 }
 				$table_data[] = $row;
-				
+
             }
           if($tableenable){
           	$iTotal = count($assigned_users);
           	$iFilteredTotal = $iTotal;
             	if($view_type == 'card'){
 		            $lpchunk = array_chunk($sdata,2);
-		            $chunk = array(array("")); 
-		 	
-		            if(isset($lpchunk[count($lpchunk)-1]) && count($lpchunk[count($lpchunk)-1])!=2) { 
+		            $chunk = array(array(""));
 
-		                 if(count($lpchunk[count($lpchunk)-1])==1) { 
+		            if(isset($lpchunk[count($lpchunk)-1]) && count($lpchunk[count($lpchunk)-1])!=2) {
 
-		                 	$lpchunk[count($lpchunk)-1] = array_merge($lpchunk[count($lpchunk)-1],$chunk,$chunk); 
-		                 }else{  
-		                    $lpchunk[count($lpchunk)-1]=array_merge($lpchunk[count($lpchunk)-1],$chunk); 
-		                } 
+		                 if(count($lpchunk[count($lpchunk)-1])==1) {
+
+		                 	$lpchunk[count($lpchunk)-1] = array_merge($lpchunk[count($lpchunk)-1],$chunk,$chunk);
+		                 }else{
+		                    $lpchunk[count($lpchunk)-1]=array_merge($lpchunk[count($lpchunk)-1],$chunk);
+		                }
 		            }
 
-	                 
-	                
+
+
 	                  // print_r($assigned_users);
-	                  // exit;           
+	                  // exit;
 	                return $output = array(
 	                "sEcho" => intval($requestData['sEcho']),
 	                "iTotalRecords" => $iTotal,
@@ -576,7 +576,7 @@ class view extends plugin_renderer_base {
 	                );
             	}
 			}
-				
+
             $table = new html_table();
             if($view_type == 'card'){
             	$table->id = 'all_learning_plans';
@@ -610,7 +610,7 @@ class view extends plugin_renderer_base {
 
 				if($filterdata->status){
 					//print_r($filterdata->status);
-	        		$filterstatus = implode(',',$filterdata->status);			       
+	        		$filterstatus = implode(',',$filterdata->status);
 	    		}
 			}
 			else{
@@ -622,15 +622,15 @@ class view extends plugin_renderer_base {
             if(!empty($departmentid)){
             	$filterdepartments = $departmentid;
             }
-           
+
             if(!empty($status1)){
             	$filterstatus = $status1;
             }
-            
+
 			$return .= html_writer::script('$(document).ready(function(){
-										  	
+
 												$("#'.$table->id.'").DataTable({
-												
+
 												    "serverSide": true,
 												    "language": {
 														paginate: {
@@ -644,7 +644,7 @@ class view extends plugin_renderer_base {
 													"ajax": "ajax.php?manage=1&subdepts='.$filtersubdepts.'&costcenterid='.$filterorganizations.'&departmentid='.$filterdepartments.'&learningplan='.$filterlearningplan.'&status='.$filterstatus.'&view_type='.$view_type.'",
 													"datatype": "json",
 													"pageLength": 8,
-													
+
 												});
 												$("table#all_learning_plans thead").css("display" , "none");
 												$("#all_learning_plans_length").css("display" , "none");
@@ -653,18 +653,18 @@ class view extends plugin_renderer_base {
         }
         return $return;
     }
-    
+
     public function single_plan_view($planid){
     	global $CFG,$PAGE;
 		$learningplan_lib = new lib();
 
-		$lpimgurl = $learningplan_lib->get_learningplansummaryfile($planid);	
+		$lpimgurl = $learningplan_lib->get_learningplansummaryfile($planid);
 		$plan_record = $this->db->get_record('local_learningplan', array('id' => $planid));
 		$plan_description = !empty($plan_record->description) ?  \local_costcenter\lib::strip_tags_custom(html_entity_decode($plan_record->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false)) : 'No Description available';
 		$plan_objective = !empty($plan_record->objective) ? $plan_record->objective : 'No Objective available';
 		/*Count of the enrolled users to LEP*/
-		$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu 
-			JOIN {user} as u ON u.id=llu.userid 
+		$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu
+			JOIN {user} as u ON u.id=llu.userid
 			WHERE llu.planid = :planid AND u.deleted != :deleted GROUP BY llu.planid ";
 		$total_enroled_users=$this->db->get_record_sql($totaluser_sql, array('planid' => $planid, 'deleted' => 1));
 		/*Count of the requested users to LEP*/
@@ -674,25 +674,25 @@ class view extends plugin_renderer_base {
 		foreach($total_completed_users as $completed_users){
 			$cmpltd[] = $completed_users->id;
 		}
-		
+
 		$total_requested_users=$this->db->count_records('local_learningplan_approval',array('planid'=>$planid));
 		/*Count of the courses of LEP*/
 		$total_assigned_course=$this->db->count_records('local_learningplan_courses',array('planid'=>$planid));
-		
+
 		$total_mandatory_course=$this->db->get_records_sql("SELECT id FROM {local_learningplan_courses} WHERE planid = $planid
 													 AND nextsetoperator = 'and'");
 		$mandatory = array();
 		foreach($total_mandatory_course as $total_mandatory){
 			$mandatory[] = $total_mandatory->id;
 		}
-		
+
 		$total_optional_course=$this->db->get_records_sql("SELECT id FROM {local_learningplan_courses} WHERE planid = $planid
 													 AND nextsetoperator = 'or'");
 		$optional = array();
 		foreach($total_optional_course as $total_optional){
 			$optional[] = $total_optional->id;
 		}
-		
+
 		if(!empty($plan_record->startdate)){
 			$plan_startdate = \local_costcenter\lib::get_userdate("d/m/Y H:i", $plan_record->startdate);
 		}else{
@@ -799,10 +799,10 @@ class view extends plugin_renderer_base {
 		        $display_ratings = $display_like = '';
 		    }
             $planview_context = array();
-            $planview_context['lpnameimg'] = $lpimgurl; 
+            $planview_context['lpnameimg'] = $lpimgurl;
             $planview_context['lpname'] = $plan_record->name;
             $planview_context['lpcoursespath'] = $pathcourses;
-            $planview_context['description'] = $description_string; 
+            $planview_context['description'] = $description_string;
 			//$planview_context['plan_type'] = $plan_type;
 			$planview_context['plan_learningplancode'] = $plan_record->shortname?$plan_record->shortname:'NA';
 			$planview_context['plan_needapproval'] = $plan_needapproval;
@@ -815,10 +815,10 @@ class view extends plugin_renderer_base {
 			$planview_context['display_ratings'] = $display_ratings;
 			$planview_context['display_like'] = $display_like;
 
-			
-			
+
+
 			$planview_context['plan_department_string'] = ($plan_department=='-1'||empty($plan_department))?'All':$plan_department;
-			
+
 			$plan_department = strlen($plan_department) > 23 ? substr($plan_department, 0, 23)."..." : $plan_department;
 			$planview_context['plan_department'] = ($plan_department=='-1'||empty($plan_department))?'All':$plan_department;
 			$planview_context['plan_subdepartment'] = $plan_subdepartment;
@@ -826,7 +826,7 @@ class view extends plugin_renderer_base {
 			$planview_context['total_enroled_users'] = isset($total_enroled_users->data)?$total_enroled_users->data:0;
 			$planview_context['cmpltd'] = count($cmpltd);
 			$planview_context['points'] = $plan_record->open_points?$plan_record->open_points:0;
-		
+
 		return $this->render_from_template('local_learningplan/lp_planview', $planview_context);
 	}
   /** Function For The Tabs View In The Learning
@@ -834,7 +834,7 @@ class view extends plugin_renderer_base {
 	Plan**/
 	public function plan_tabview($id,$curr_tab,$condition){
 		global $PAGE;
-			
+
 		$courses_active = '';
 		$users_active = '';
 		$bulk_users_active = '';
@@ -847,7 +847,7 @@ class view extends plugin_renderer_base {
 		elseif($curr_tab == 'request_user'){
 			$request_users= ' active';
 		}
-		
+
 		$total_enroled_users=$this->db->get_record_sql('SELECT count(llu.userid) as data  FROM {local_learningplan_user} as llu JOIN {user} as u ON u.id=llu.userid WHERE llu.planid='.$id.' AND u.deleted!=1');
 		$total_requested_users=$this->db->count_records('local_learningplan_approval',array('planid'=>$id));
 		$total_assigned_course=$this->db->count_records('local_learningplan_courses',array('planid'=>$id));
@@ -889,14 +889,14 @@ class view extends plugin_renderer_base {
 		$return .= $tabs;
 		return $return;
 	}
-    
+
 	/**Function to view of course tab
 	$planid=LEP_id $curr_tab="tab name"
 	**/
 	public function learningplans_courses_tab_content($planid, $curr_tab,$condition){
-		
+
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-		
+
 		$return ='';
 		$return .='<div class="tab-pane active mt-15 ml-15" id="plan_courses" role="tabpanel">';
 		if (has_capability('local/learningplan:assigncourses', $systemcontext)) {
@@ -913,7 +913,7 @@ class view extends plugin_renderer_base {
               $data = $DB->get_record_sql('SELECT id, open_group, open_hrmsrole,
              open_designation, open_location,department, subdepartment
              FROM {local_learningplan} WHERE id = ' .$planid);
-            
+
             if($data->department==-1||$data->department==NULL){
                 $department=get_string('audience_department','local_learningplan','All');
             }else{
@@ -924,7 +924,7 @@ class view extends plugin_renderer_base {
                 $subdepartment=get_string('audience_subdepartment','local_learningplan','All');
             }else{
                 $sql = "SELECT id,fullname
-                 		FROM {local_costcenter} 
+                 		FROM {local_costcenter}
                  		WHERE id IN ($data->subdepartment)";
 
                 $subdepartments = $DB->get_records_sql_menu($sql);
@@ -936,26 +936,26 @@ class view extends plugin_renderer_base {
                  $group=get_string('audience_group','local_learningplan','All');
             }else{
                 $sql = "SELECT id,name
-                 		FROM {cohort} 
+                 		FROM {cohort}
                  		WHERE id IN ($data->open_group)";
 
                 $groupslist = $DB->get_records_sql_menu($sql);
                 $groups = implode(", ", $groupslist);
                 $group = get_string('audience_group','local_learningplan',$groups);
             }
-            
+
             $data->open_hrmsrole =(!empty($data->open_hrmsrole)) ? $hrmsrole=get_string('audience_hrmsrole','local_learningplan',$data->open_hrmsrole) :$hrmsrole=get_string('audience_hrmsrole','local_learningplan','All');
-            
+
             $data->open_designation =(!empty($data->open_designation)) ? $designation=get_string('audience_designation','local_learningplan',$data->open_designation) :$designation=get_string('audience_designation','local_learningplan','All');
-            
+
             $data->open_location =(!empty($data->open_location)) ? $location=get_string('audience_location','local_learningplan',$data->open_location) :$location=get_string('audience_location','local_learningplan','All');
-            
+
              return '<div class="tab-pane active mt-15 ml-15" id="plan_courses" role="tabpanel">'.$department.$subdepartment.$group.$hrmsrole.$designation.$location.'</div>';
     }
     /**Function to tab view of bulk users uploads
 	$planid=LEP_id $curr_tab="tab name"
-	**/ 
-	public function learningplans_bulk_users_tab_content($planid, $designation, $department,$empnumber,$organization,$email,$band,$subdepartment,$sub_subdepartment){	
+	**/
+	public function learningplans_bulk_users_tab_content($planid, $designation, $department,$empnumber,$organization,$email,$band,$subdepartment,$sub_subdepartment){
 		$return ='';
 		if(!is_null($designation) || !empty($department) || !empty($organization) || !empty($empnumber) || !empty($email) || !empty($band) || !empty($subdepartment) || !empty($sub_subdepartment)){
 			$select_to_users = $this->select_to_users_of_learninplan($planid,$this->user->id,$designation, $department,$empnumber,$organization,$email,$band,$subdepartment,$sub_subdepartment);
@@ -964,25 +964,25 @@ class view extends plugin_renderer_base {
 			$select_to_users = $this->select_to_users_of_learninplan($planid,$this->user->id,$designation,$department,$empnumber,$organization,$email,$band,$subdepartment,$sub_subdepartment);
 			$select_from_users = $this->select_from_users_of_learninplan($planid,$this->user->id,$designation, $department,$empnumber,$organization,$email,$band,$subdepartment,$sub_subdepartment);
 		}
-		
+
 		$return .='<div class="user_batches text-center">
 					<form  method="post" name="form_name" id="assign_users_'.$planid.'" action="assign_courses_users.php" class="form_class" >
 					<input type="hidden"  name="type" value="bulkusers" >
 					<input type="hidden"  name="planid" value='.$planid.' >
 					<fieldset>
 					<ul class="button_ul">
-					
+
 					<li style="padding:18px; display:none"><label>'.get_string('search','local_learningplan').'</label>
 					<input id="textbox" type="text"/>
 					</li>
 					<li><input type="button" id="select_remove" name="select_all" value="Select All">
 					<input type="button" id="remove_select" name="remove_all" value="Remove All">
 					</li>
-					
+
 					<li>';
-					
+
 					$return .='<select name="add_users[]" id="select-from" multiple size="15">';
-	
+
         $return .= '<optgroup label="Selected member list ('.count($select_from_users).') "></optgroup>';
         if(!empty($select_from_users)){
 			foreach($select_from_users as $select_from_user){
@@ -1002,7 +1002,7 @@ class view extends plugin_renderer_base {
 						$disable="";
 					}
 					$data_id=preg_replace("/[^0-9,.]/", "", $select_from_user->idnumber);
-					$return .= "<option value=$select_from_user->id $disable $title>$symbol $select_from_user->firstname $select_from_user->lastname ($data_id)</option>";	
+					$return .= "<option value=$select_from_user->id $disable $title>$symbol $select_from_user->firstname $select_from_user->lastname ($data_id)</option>";
 				}
 			}
 			foreach($select_from_users as $select_from_user){
@@ -1010,21 +1010,21 @@ class view extends plugin_renderer_base {
 		}else{
 			$return .='<optgroup label="None"></optgroup>';
 		}
-	    
+
 		$return .=	'</select></li>
 					</ul>
 					<ul class="button_ul">
-						
-					<li><input type="submit" name="submit_users" value="add users" id="btn_add" style="width:98px;"></li>                    
+
+					<li><input type="submit" name="submit_users" value="add users" id="btn_add" style="width:98px;"></li>
 					<li><input type="submit" name="submit_users" value="remove users" id="btn_remove"></li>
 					</ul>
-					
+
 					<ul class="button_ul">
 					<li><input type="button" id="select_add" name="select_all" value="Select All">
 					<input type="button" id="add_select" name="remove_all" value="Remove All">
 					</li>
 					<li><select name="remove_users[]" id="select-to" multiple size="15">';
-						
+
 		$return .= '<optgroup label="Selected member list ('.count($select_to_users).') "></optgroup>';
 		if(count($select_to_users) > 100){
 			$return .= '<optgroup label="Too many users, use search."></optgroup>';
@@ -1046,17 +1046,17 @@ class view extends plugin_renderer_base {
 		}else{
 			$return .='<optgroup label="None"></optgroup>';
 		}
-						
+
 		$return .='</select></li>
 					</ul>
 					</fieldset>
 					</form>
 					</div>';
-						
+
 		$return .="<script>
 						$('#btn_add').prop('disabled', true);
 						  $('#select-to').on('change', function() {
-						  
+
 							 if(this.value!=''){
 							  $('#btn_add').prop('disabled', false);
 							  $('#btn_remove').prop('disabled', true);
@@ -1073,8 +1073,8 @@ class view extends plugin_renderer_base {
 								 $('#select-to option').prop('selected',false);
 								 $('#btn_remove').prop('disabled', true);
 								 $('#btn_add').prop('disabled', true);
-							}); 
-						
+							});
+
 						$('#btn_remove').prop('disabled', true);
 						  $('#select-from').on('change', function() {
 							 if(this.value!=''){
@@ -1094,17 +1094,17 @@ class view extends plugin_renderer_base {
 								 $('#btn_add').prop('disabled', true);
 								 $('#btn_remove').prop('disabled', true);
 							});
-						
-						
-					</script>";								
+
+
+					</script>";
 		/*to check courses has the Learning plan enrolment or not*/
 		$courses=$this->db->get_records('local_learningplan_courses',array('planid'=>$planid));
-		
+
 		if($courses){/*If courses it self not assignes so to check condition*/
 			$table = 'local_learningplan_courses';
 			$conditions = array('planid'=>$planid);
 			$sort = 'id';
-			$fields = 'id, courseid'; 
+			$fields = 'id, courseid';
 			$result = $this->db->get_records_menu($table,$conditions,$sort,$fields);
             $count=count($result);
 			/*finally get the count of records in total courses*/
@@ -1129,9 +1129,9 @@ class view extends plugin_renderer_base {
 			$sql="SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.email,')') as fullname ";
 	    }else{
                 $sql = "SELECT count(u.id) as total";
-        }  
+        }
 
-		$sql.=" FROM {user} u WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 "; 
+		$sql.=" FROM {user} u WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 ";
 
 		if($lastitem!=0){
            $sql.=" AND u.id > $lastitem";
@@ -1147,7 +1147,7 @@ class view extends plugin_renderer_base {
 		// if($users->department !== null && $users->department !== '-1'&& $users->department !== 0){
 		// 		$sql.= ' AND u.open_departmentid IN('.$users->department.')';
 		// }
-		
+
 		$sql .=" AND u.id in(SELECT userid FROM {local_learningplan_user} WHERE planid=$planid)";
 
 		if (!empty($params['email'])) {
@@ -1169,39 +1169,39 @@ class view extends plugin_renderer_base {
 
             $locations = explode(',',$params['location']);
             list($locationsql, $locationparams) = $this->db->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'location');
-            $params = array_merge($params,$locationparams);            
+            $params = array_merge($params,$locationparams);
             $sql .= " AND u.open_location {$locationsql} ";
         }
         if (!empty($params['hrmsrole'])) {
 
             $hrmsroles = explode(',',$params['hrmsrole']);
             list($hrmsrolesql, $hrmsroleparams) = $this->db->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'hrmsrole');
-            $params = array_merge($params,$hrmsroleparams);            
+            $params = array_merge($params,$hrmsroleparams);
             $sql .= " AND u.open_hrmsrole {$hrmsrolesql} ";
         }
 		if (!empty($params['groups'])) {
-  
+
            $sql .=" AND u.id IN (select cm.userid from {cohort_members} cm, {user} u where u.id = cm.userid AND u.deleted = 0 AND u.suspended = 0 AND cm.cohortid IN ({$params['groups']}))";
-     
+
         }
         $order = ' ORDER BY u.id ASC ';
         if($perpage!=-1){
             // $order.="LIMIT $perpage";
         }
-		
+
 		if($total==0){
 			$users=$this->db->get_records_sql_menu($sql .$order,$params, '', $perpage);
 		}else{
 			$users =$this->db->count_records_sql($sql,$params);
 		}
-		
+
 		return $users;
 	}
 	/*End of the function*/
-    
+
 	/*Function to called in the bulk users upload*/
 	public function select_to_users_of_learninplan($planid, $userid,$params,$total=0,$offset1=-1,$perpage=-1,$lastitem=0){
-		
+
 		$users = $this->db->get_record('local_learningplan',array('id'=>$planid));
 		$us = $users->open_band;
 		$array=explode(',',$us);
@@ -1236,8 +1236,8 @@ class view extends plugin_renderer_base {
 		// if($users->department !== null && $users->department !== '-1'&& $users->department !== 0){
 		// 		$sql.= ' AND u.open_departmentid IN('.$users->department.')';
 		// }
-		
-		
+
+
 		if (!empty($params['email'])) {
 			$sql.=" AND u.id IN ({$params['email']})";
 		}
@@ -1257,14 +1257,14 @@ class view extends plugin_renderer_base {
 
             $locations = explode(',',$params['location']);
             list($locationsql, $locationparams) = $this->db->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'location');
-            $params = array_merge($params,$locationparams);            
+            $params = array_merge($params,$locationparams);
             $sql .= " AND u.open_location {$locationsql} ";
         }
         if (!empty($params['hrmsrole'])) {
 
             $hrmsroles = explode(',',$params['hrmsrole']);
             list($hrmsrolesql, $hrmsroleparams) = $this->db->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'hrmsrole');
-            $params = array_merge($params,$hrmsroleparams);            
+            $params = array_merge($params,$hrmsroleparams);
             $sql .= " AND u.open_hrmsrole {$hrmsrolesql} ";
         }
 		if (!empty($params['groups'])) {
@@ -1288,8 +1288,8 @@ class view extends plugin_renderer_base {
 		return $users;
 	}
 	/*End of the function*/
-	
-	
+
+
     /*Function to view the users and assign users*/
 	public function learningplans_users_tab_content($planid, $curr_tab,$condition,$ajax){
 		global $CFG,$OUTPUT;
@@ -1298,10 +1298,10 @@ class view extends plugin_renderer_base {
 	    $return = '';
 		$return .= '<div class="tab-pane" id="plan_users" role="tabpanel">';
 		if (has_capability('local/learningplan:assignhisusers', $systemcontext)) {
-			$table = 'local_learningplan_courses'; 
+			$table = 'local_learningplan_courses';
 			$conditions = array('planid'=>$planid);
 			$sort = 'id';
-			$fields = 'id, courseid'; 
+			$fields = 'id, courseid';
 			$result = $this->db->get_records_menu($table,$conditions,$sort,$fields);
 			$count=count($result);
 			/*finally get the count of records in total courses*/
@@ -1311,7 +1311,7 @@ class view extends plugin_renderer_base {
 								<div class='coursebackup course_extended_menu_itemcontainer'>
 	                   <a id='extended_menu_syncusers' title='".get_string('le_enrol_users', 'local_learningplan')."' class='course_extended_menu_itemlink' href='" . $CFG->wwwroot ."/local/learningplan/lpusers_enroll.php?lpid=".$planid."'><i class='icon fa fa-user-plus fa-fw' aria-hidden='true' aria-label=''></i></a>
 	              	</div>
-	              </li></ul>";				
+	              </li></ul>";
 		}
 		$return .= $this->assigned_learningplans_users($planid,$ajax);
 		$return .= '</div>';
@@ -1319,7 +1319,7 @@ class view extends plugin_renderer_base {
 	  	$return= $this->assigned_learningplans_users($planid,$ajax);
 	  }
       return $return;
-	   
+
 	}
 	/*End of the function*/
 
@@ -1329,7 +1329,7 @@ class view extends plugin_renderer_base {
 	public function learningplans_requested_users_content($planid, $curr_tab,$condition){
 		global $DB,$CFG,$OUTPUT,$PAGE;
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-		
+
 		$return = '';
 		if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
 		 $learningplan = $DB->get_records('local_request_records', array('compname' =>'learningplan','componentid'=>$planid));
@@ -1345,7 +1345,7 @@ class view extends plugin_renderer_base {
 		return $return;
 	}
 	/*End of the function*/
-	
+
 	public function learningplans_assign_courses_form($planid,$condition){
 		global $DB;
 		$systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
@@ -1357,7 +1357,7 @@ class view extends plugin_renderer_base {
 		$learningplan_lib = new lib;
 		$userscount = $learningplan_lib->get_enrollable_users_count_to_learningplan($planid);
 		$return = '';
-		 
+
 		$add_learningplancourses = '<ul class="course_extended_menu_list learningplan">
 							    		<li>
 									        <div class="course_extended_menu_itemcontainer">
@@ -1368,20 +1368,20 @@ class view extends plugin_renderer_base {
 									        </div>
 									    </li>
 									</ul>';
-								 
-	   
+
+
 	   if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))){
 	    	$add_learningplancourses = '';
 	    }
 
 		$return .= $add_learningplancourses;
 		$return .= '<div class="assign_courses_container">';
-		
+
 		$courses = $learningplan_lib->learningplan_courses_list($planid);
-	    
+
 
 		$return .= '</div>';
-		
+
 		return $return;
 	}
 	public function get_editand_publish_icons($planid){
@@ -1406,14 +1406,14 @@ class view extends plugin_renderer_base {
           if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))){
           	$learningplaninfo['can_update'] = '';
           }
-		    
+
 		  $learningplaninfo['can_publish'] = (is_siteadmin() || ($can_manage && has_capability('local/learningplan:publishplan', $systemcontext)));
 		  if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))){
 		  	 $learningplaninfo['can_publish'] = '';
 		  }
-         
+
           $learningplaninfo['can_enrolusers'] = (is_siteadmin() || ($can_manage && has_capability('local/learningplan:assignhisusers', $systemcontext)));
-          
+
           $challenge_exist = \core_component::get_plugin_directory('local', 'challenge');
           if($challenge_exist){
 			$enabled =  (int)get_config('', 'local_challenge_enable_challenge');
@@ -1422,7 +1422,7 @@ class view extends plugin_renderer_base {
 				$element = $challenge_render->render_challenge_object('local_learningplan', $planid);
 				$learningplaninfo['challenge_element'] = $element;
 			}else{
-				$learningplaninfo['challenge_element'] = false;	
+				$learningplaninfo['challenge_element'] = false;
 			}
 		}else{
 			$learningplaninfo['challenge_element'] = false;
@@ -1431,7 +1431,7 @@ class view extends plugin_renderer_base {
 	   }
 		return $edit_publish_icons;
 	}
-	
+
 	private function learningplans_assign_users_form($planid,$condition){
 		$sql = "SELECT userid, planid FROM {local_learningplan_user} WHERE planid = $planid";
 		$existing_plan_users = $this->db->get_records_sql($sql);
@@ -1448,7 +1448,7 @@ class view extends plugin_renderer_base {
 											</div>
 											<div class="felement ftext">
 												<select name="learning_plan_users[]" id="id_lpassignusers" size="10" multiple class="learningplan-assign-users">';
-					
+
 									$return .= "</select>
 											</div>
 										</div>
@@ -1474,32 +1474,32 @@ class view extends plugin_renderer_base {
 	public function assigned_learningplans_courses($planid){
         global $DB;
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-       
+
 		$learningplan_lib = new lib();
 
 		$includes = new \user_course_details;
 
 	    $courses = $learningplan_lib->get_learningplan_assigned_courses($planid);
-		
+
 		//$courses = lib::get_learningplan_assigned_courses($planid);
-		
+
 		$return = '';
 		$return .= '<form class ="l_form" action="assign_courses_users.php" method="post">';
 
 		if(empty($courses)){
 			$return .= html_writer::tag('div', get_string('nolearningplancourses', 'local_learningplan'), array('class' => 'alert alert-info text-center pull-left', 'style' => 'width:96%;padding-left:2%;padding-right:1%;'));
 		}else{
-			
+
 			$table_data = array();
 			/**To check the highest sortorder of courses below query written and to compare list of courses**/
 			$sql="SELECT id,sortorder FROM {local_learningplan_courses} WHERE planid = :planid ORDER BY sortorder DESC";
 		 	$find=$this->db->get_records_sql($sql, array('planid' => $planid));
 			/****End of the query****/
-			
+
 			/**Below query written to check the users assigned to LEP or NOT and Disable submit button**/
 			$userscount=$this->db->get_records('local_learningplan_user',array('planid'=>$planid));
 			/*end of query*/
-			
+
 			/**The below query has been written taken count if we have submitted condition and later we added new course then submit should open**/
 			$courses_zero_count=$this->db->get_records('local_learningplan_courses',array('planid'=>$planid,'nextsetoperator'=>0));
 			/*end of query*/
@@ -1514,18 +1514,18 @@ class view extends plugin_renderer_base {
 		    foreach($courses as $course){
             	if($course->next=='and'){
 					$select='echo checked="checked"';
-					
+
 				}elseif($course->next=='or'){
 					$select='';
 				}
-				
+
 				$startdiv ='<div class="lp_course_sortorder w-full pull-left" id="dat'.$course->id.'">';
 				$enddiv='<div>';
 				$course_url = new \moodle_url('/course/view.php', array('id'=>$course->id));
 				$course_link = strlen($course->fullname) > 25 ? substr($course->fullname, 0, 25)."..." : $course->fullname;
 				$course_view_link = html_writer::link($course_url, $course_link, array('title'=>$course->fullname));
 				$course_summary_image_url = $includes->course_summary_files($course);
-				
+
 				$coursesummary = \local_costcenter\lib::strip_tags_custom(html_entity_decode($course->summary),
                     array('overflowdiv' => false, 'noclean' => false, 'para' => false));
 				$course_summary = empty($coursesummary) ? get_string('coure_summary_not_provided','local_learningplan') : $coursesummary;
@@ -1534,32 +1534,32 @@ class view extends plugin_renderer_base {
 
 				$course_total_activities = $includes->total_course_activities($course->id);
 				$course_total_activities_link = html_writer::link($course_url, $course_total_activities, array());
-				
+
 				$actions = '';/****actions like delete and move up and down****/
 				$buttons= ''; /****buttons are select box****/
-                
-               
+
+
                 if (has_capability('local/learningplan:assigncourses', $systemcontext)) {
 
                    $learningplans = $DB->get_records('local_learningplan');
-                   foreach($learningplans AS $learningplan) 
+                   foreach($learningplans AS $learningplan)
                     $departmentcount = count(array_filter(explode(',',$learningplan->department)));
- 
+
                      if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$systemcontext)) && $departmentcount > 1){
                        $unassign_url = '';
                        $unassign_link = '';
                      } else {
-					
+
 				      	$unassign_url = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid, 'unassigncourse' => $course->lepid));
 					    $unassign_link = html_writer::link('javascript:void(0)',
 						'<i class="icon fa fa-times fa-fw" aria-hidden="true" title="Un-assign" aria-label="Delete"></i>', array('class' => 'pull-right','id' => 'unassign_course_'.$course->lepid.'', 'onclick' => '(function(e){ require(\'local_learningplan/lpcreate\').unassignCourses({action:\'unassign_course\' , unassigncourseid:'.$course->lepid.', planid:'.$planid.', fullname:"'.$course->fullname.'" }) })(event)'));
-					}	
-                   
+					}
 
 
-					 
-					if($course->sortorder==0){ /**condtion to check the sortorder and make arrows of up and down for the first record ot course**/	
-						
+
+
+					if($course->sortorder==0){ /**condtion to check the sortorder and make arrows of up and down for the first record ot course**/
+
 						if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$systemcontext)) && $departmentcount > 1){
                            $unassign_url1 = '';
                            $unassign_link1 = '';
@@ -1568,28 +1568,28 @@ class view extends plugin_renderer_base {
 					     	$unassign_url1 = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid,'instance' => $course->lepid, 'order' => 'down'));
 						    $unassign_link1 = html_writer::link($unassign_url1,'<i class="icon fas fa-arrow-down" title="Move Down"></i>', array('class' => 'pull-right'));
 				     	}
-						
+
 						if($disbaled_button==""){
 							$actions .= $unassign_link1; /*Arrows down for first course*/
 						}
 						/*condition for the select the dropdown if already selected*/
 						/*Select box*/
-						
+
                         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$systemcontext)) && $departmentcount > 1){
                            $buttons .= '';
                         } else {
-						$buttons .='<span class="switch_type">										
+						$buttons .='<span class="switch_type">
 										<label class="switch">
 											<input class="switch-input" type="checkbox" id="next_val'.$course->id.'" value="'.$course->id.'" "'.$select.'">
-											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
-											<span class="switch-handle"></span> 
+											<span class="switch-label" data-on="Man" data-off="Opt"></span>
+											<span class="switch-handle"></span>
 										</label>
-							
+
 										<input type="hidden" value="'.$course->lepid.'" id="courseid'.$course->lepid.'" name="row[]">
 										<input type="hidden" value="'.$planid.'" name="plan">
 									</span>';
-						}			
-							
+						}
+
 							/*End of the select box*/
 							$select='';
 					}elseif($course->sortorder==isset($find->sortorder)){
@@ -1599,7 +1599,7 @@ class view extends plugin_renderer_base {
                           $unassign_url2 = '';
                           $unassign_link_up = '';
 						} else {
-						
+
 					       $unassign_url2 = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid,'instance' => $course->lepid, 'order' => 'up'));
 						   $unassign_link_up = html_writer::link($unassign_url2,'<i class="icon fas fa-arrow-up" title="Move Up"></i>', array('class' => 'pull-right'));
 						}
@@ -1610,32 +1610,32 @@ class view extends plugin_renderer_base {
 						if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$systemcontext)) && $departmentcount > 1){
                          $buttons .= '';
 						} else {
-						  $buttons .='<span class="switch_type">										
+						  $buttons .='<span class="switch_type">
 										<label class="switch">
 											<input class="switch-input" type="checkbox" id="next_val'.$course->id.'" value="'.$course->id.'" "'.$select.'">
-											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
-											<span class="switch-handle"></span> 
+											<span class="switch-label" data-on="Man" data-off="Opt"></span>
+											<span class="switch-handle"></span>
 										</label>
-						
+
 						<input type="hidden" value="'.$course->lepid.'" id="courseid'.$course->lepid.'" name="row[]">
 						<input type="hidden" value="'.$planid.'" name="plan">
 						</span>';
 					    }
-							
-							
-					} else { 
+
+
+					} else {
 					/*Else condition Not for first and last record should have the both arrows*/
 					    if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$systemcontext)) && $departmentcount > 1){
                           $unassign_url = '';
                           $unassign_link1 = '';
                           $unassign_link_down = '';
-                          $buttons .= ''; 
+                          $buttons .= '';
 
-					    } else { 	
-						
+					    } else {
+
 						$unassign_url2 = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid,'instance' => $course->lepid, 'order' => 'up'));
 						$unassign_link1 = html_writer::link($unassign_url2,'<i class="icon fas fa-arrow-up" title="Move Up"></i>', array('class' => 'pull-right'));
-						
+
 						$unassign_url2 = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid,'instance' => $course->lepid, 'order' => 'down'));
 						$unassign_link_down = html_writer::link($unassign_url2,'<i class="icon fas fa-arrow-down" title="Move Down"></i>', array('class' => 'pull-right'));
 						if($disbaled_button==""){
@@ -1643,26 +1643,26 @@ class view extends plugin_renderer_base {
 							$actions .= $unassign_link1;
 						}
 						/*select box*/
-						$buttons .='<span class="switch_type">										
+						$buttons .='<span class="switch_type">
 										<label class="switch">
 											<input class="switch-input" type="checkbox" id="next_val'.$course->id.'" value="'.$course->id.'" "'.$select.'">
-											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
-											<span class="switch-handle"></span> 
+											<span class="switch-label" data-on="Man" data-off="Opt"></span>
+											<span class="switch-handle"></span>
 										</label>
-						
+
 										<input type="hidden" value="'.$course->lepid.'" id="courseid'.$course->lepid.'" name="row[]">
 									</span>';
-						}			
+						}
 						/*end of the select box*/
 						$courseid_condition[]=$course->lepid;
 						$select='';
 					}
-					
+
 							$confirmationmsg = get_string('unassign_courses_confirm','local_learningplan', $course);
-				     
+
 							$actions .= $unassign_link;
 				}
-				
+
 
 				$progress = $includes->user_course_completion_progress($course->id ,$this->user->id);
 					if (!$progress) {
@@ -1672,11 +1672,11 @@ class view extends plugin_renderer_base {
 						$progress = round($progress);
 						$progress_bar_width = "min-width: 0px;";
 					}
-					
+
 				$enrolledusers = $this->db->get_records_menu('local_learningplan_user',  array('planid' =>$planid), 'id', 'id, userid');
 				if(!empty($enrolledusers)){
 					$course_completions = $this->db->get_records_sql_menu("SELECT id,userid  FROM {course_completions} WHERE course = $course->id AND timecompleted IS NOT NULL");
-					
+
 					$result=array_intersect($enrolledusers,$course_completions);
 					$user_completions = round((count($result)/count($enrolledusers))*100);
 				}else{
@@ -1690,11 +1690,11 @@ class view extends plugin_renderer_base {
 				// 	}else{
 				// 		$completed_date = '';
 				// 	}
-					
+
 				// }else{
 					$cmpltd_class = '';
 					$completed_date = '';
-				// }			
+				// }
 				if($course->sortorder == 0){/*Condtion to set the enable to first sortorder*/
 					$disable_class1 = ' '; /*Empty has been sent to class*/
 				}
@@ -1715,13 +1715,13 @@ class view extends plugin_renderer_base {
 				$lpcourse_data .= $this->render_from_template('local_learningplan/courestab_content', $lpcourses_context);
 				$lpcourse_data .=html_writer::script("$('#next_val".$course->id."').click(function() {
 											var checked = $(this).is(':checked');
-											
+
 										if(checked){
 											   var checkbox_value = '';
 											   var plan=$planid;
 											   var value='and';
 											  checkbox_value = $(this).val();
-											 
+
 										}else{
 										    var plan=$planid;
 											var checkbox_value = '';
@@ -1733,26 +1733,26 @@ class view extends plugin_renderer_base {
 											url: M.cfg.wwwroot + '/local/learningplan/ajax.php?course='+checkbox_value+'&planid='+plan+'&value='+value,
 											data: { checked : checked },
 											success: function(data) {
-										
+
 											},
 											error: function() {
 											},
 											complete: function() {
-										
+
 											}
 											});
 										});
 										");
 			}
-		 
+
 			$return .= $lpcourse_data;
 			$return .= '</form>';
 		}
-        
-	
+
+
 		return $return;
-	 
-      
+
+
 	}
 	/******End of the function of the which has sortorder and condition for the courses*******/
 	public function assigned_learningplans_users($planid,$ajax){
@@ -1788,19 +1788,19 @@ class view extends plugin_renderer_base {
 					/*$table->head[] = get_string('learning_plan_actions', 'local_learningplan');*/
 				}
 				$table->data = array();
-				
+
 				$return= html_writer::table($table);
 			}else{
 				$return= html_writer::tag('div', get_string('nolearningplanusers', 'local_learningplan'), array('class' => 'alert alert-info text-center pull-left', 'style' => 'width:96%;padding-left:2%;padding-right:1%;'));
 			}
 	    }else{
 			$requestData= $_REQUEST;
-	        
+
 			$learningplan_lib = new lib();
 			$users = $learningplan_lib->get_learningplan_assigned_users($planid,$requestData);
-			
+
 			$return = '';
-			
+
 				$table_data = array();
 
 	            foreach($users as $user){
@@ -1808,29 +1808,29 @@ class view extends plugin_renderer_base {
 					$courses_link = html_writer::link($course_url, 'View more', array('id'=>$user->id));
 					if($user->status==1){
 						$completed="Completed";
-					}  
+					}
 					$user_url = new \moodle_url('/local/users/profile.php', array('id'=>$user->id));
 					$user_profile_link = html_writer::link($user_url, fullname($user), array());
 					$employee_id = empty($user->open_employeeid) ? 'N/A' : $user->open_employeeid;
 					$supervisor = $DB->get_field('user', 'concat(firstname," ",lastname)', array('id' => $user->open_supervisorid));
 					$supervisorname = empty($supervisor) ? 'N/A': $supervisor;
 					$start_date = empty($user->timecreated) ? 'N/A' : \local_costcenter\lib::get_userdate("d/m/Y H:i",$user->timecreated);
-					$completion_date = empty($user->completiondate) ? 'N/A' : '<i class="fa fa-calendar pr-10" aria-hidden="true"></i>'. \local_costcenter\lib::get_userdate("d/m/Y H:i",$user->completiondate); 
+					$completion_date = empty($user->completiondate) ? 'N/A' : '<i class="fa fa-calendar pr-10" aria-hidden="true"></i>'. \local_costcenter\lib::get_userdate("d/m/Y H:i",$user->completiondate);
 					$status = empty($user->status) ? 'Not Completed' : $completed;
-					
+
 					// if (has_capability('local/learningplan:assignhisusers', $systemcontext)) {
 					// 	$unassign_url = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid, 'unassignuser' => $user->id));
 					// 	$unassign_link = html_writer::link($unassign_url,
 					// 									html_writer::empty_tag('img', array('src' => $this->output->pix_url('i/delete'), 'class' => 'icon', 'title' => 'Unassign'))
 					// 									, array('id' => 'unassign_user_'.$user->id.''));
 					// 	$unassign_link = html_writer::link('javascript:void(0)',html_writer::empty_tag('img', array('src' => $this->output->pix_url('i/delete'), 'class' => 'icon', 'title' => 'Unassign')), array('id' => 'unassign_user_'.$user->id.'', 'onclick' => '(function(e){ require(\'local_learningplan/lpcreate\').unassignUsers({action:\'unassign_user\' , unassignuserid:'.$user->id.', planid:'.$planid.', fullname:"'.fullname($user).'" }) })(event)'));
-						
+
 					// 	if($completed=="Completed..."." ".$courses_link){
 					// 		$unassign_link1 = html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('t/check'), 'class' => 'icon', 'title' => 'Completed'));
 					// 		$actions = $unassign_link;
 					// 	}
 					// 	$confirmationmsg = get_string('unassign_users_confirm','local_learningplan', $user);
-								
+
 					// 	$this->page->requires->event_handler("#unassign_user_".$user->id, 'click', 'M.util.moodle_show_user_confirm_dialog',
 					// 										array(
 					// 										'message' => $confirmationmsg,
@@ -1843,13 +1843,13 @@ class view extends plugin_renderer_base {
 					// 	}else{
 					// 	$actions = $unassign_link;
 					// 	}
-						
+
 					// 	$table_header = get_string('learning_plan_actions', 'local_learningplan');
 					// }else{
 					// 	$actions = '';
 					// 	$table_header = '';
 					// }
-			   		
+
 	                $table_row = array();
 					$table_row[] = $user_profile_link;
 					$table_row[] = $employee_id;
@@ -1865,7 +1865,7 @@ class view extends plugin_renderer_base {
 					// }
 					$icon = '<i class="icon fa fa-download" aria-hidden="true"></i>';
 					if($user->completiondate){
-//                        mallikarjun added to download default certificate 
+//                        mallikarjun added to download default certificate
 //						$array = array('ctid'=>$certid, 'mtype'=>'learningplan','mid'=>$planid,'uid'=>$user->id);
 //						$url = new moodle_url('/local/certificates/view.php',$array);
             $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$planid,'userid'=>$user->id,'moduletype'=>'learningplan'));
@@ -1894,20 +1894,20 @@ class view extends plugin_renderer_base {
 		}
 		return $return;
 	}
-	
+
 	public function assigned_learningplans_courses_employee_view($planid, $userid,$condition){
 		global $CFG,$DB;
 		require_once($CFG->dirroot.'/local/learningplan/lib.php');
 		if(file_exists($CFG->dirroot.'/local/includes.php')){
 			require_once($CFG->dirroot.'/local/includes.php');
 		}
-		
+
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-		
+
 
 		$learningplan_lib = new lib();
 		$includes = new user_course_details;
-		
+
 		$courses = lib::get_learningplan_assigned_courses($planid);
 		$return = '';
 		if(empty($courses)){
@@ -1917,9 +1917,9 @@ class view extends plugin_renderer_base {
             foreach($courses as $course){
 				/**************To show course completed or not********/
 				$sql="select id from {course_completions} as cc where userid=".$this->user->id." and course=".$course->id." and timecompleted!=''";
-			   
+
 				$completed=$this->db->get_record_sql($sql);
-			    
+
 				$course_url = new moodle_url('/course/view.php', array('id'=>$course->id));
 				$course_view_link = html_writer::link($course_url, $course->fullname, array());
 				$course_summary_image_url = $includes->course_summary_files($course);
@@ -1931,7 +1931,7 @@ class view extends plugin_renderer_base {
 				$course_completed_activities_link = html_writer::link($course_url, $course_completed_activities, array());
 				$course_pending_activities = $course_total_activities - $course_completed_activities;
 				$course_pending_activities_link = html_writer::link($course_url, $course_pending_activities, array());
-				
+
 				$actions = '';
 				$buttons = '';
 				/*Select box*/
@@ -1939,21 +1939,21 @@ class view extends plugin_renderer_base {
 								$select='';
 				}/*condition for the select the dropdown if already selected*/
 				/*Select box*/
-				if($course->next=='or' || $course->next=='and'){			
-							
+				if($course->next=='or' || $course->next=='and'){
+
 					if($course->next=='and'){
 						$buttons .='<h4 class="course_sort_status"><span class="label label-default mandatory-course" >'.get_string('mandatory', 'local_learningplan').'</span></h4>';
 					}
 					elseif($course->next=='or'){
 						$buttons .='<h4 class="course_sort_status"><span class="label label-default optional-course" >'.get_string('optional').'</span></h4>';
-					}		
+					}
 				}
 				/*End of the select box*/
 				if (has_capability('local/learningplan:assigncourses', $systemcontext)) {
 					if($condition=='view'){
-						
+
 					}else{
-					
+
 					$unassign_url = new moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid, 'unassigncourse' => $course->id));
 					$unassign_link = html_writer::link($unassign_url,
 													   html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('i/delete'), 'class' => 'icon', 'title' => 'Unassign'))
@@ -1961,7 +1961,7 @@ class view extends plugin_renderer_base {
 															   'class' => 'pull-right',
 															   'id' => 'unassign_course_'.$course->id.''));
 					$confirmationmsg = get_string('unassign_courses_confirm','local_learningplan', $course);
-						
+
 					$this->page->requires->event_handler("#unassign_course_".$course->id, 'click', 'M.util.moodle_show_course_confirm_dialog',
 														array(
 														'message' => $confirmationmsg,
@@ -1970,42 +1970,42 @@ class view extends plugin_renderer_base {
 					$actions = $unassign_link;
 					}
 				}
-				
-				
-				
-				
+
+
+
+
                 $table_row = array();
 				$course_data = '';
 				if($course->sortorder == 0){/*Condtion to set the enable to first sortorder*/
 					$disable_class1 = ' '; /*Empty has been sent to class*/
 				}
-				
+
 				$course_data .= '<div class="course_complete_info row-fluid pull-left '.$disable_class1.'" id="course_info_'.$course->id.'">';
 					$course_data .= '<h4>'.$course_view_link.$actions.''.$buttons.'</h4>';
 				if($course->sortorder!==''){/*Condition to check the sortorder and disable the course */
-					
+
 					/**** Function to get the all the course details like the nextsetoperator,sortorder
 					@param planid,sortorder,courseid of the record
 					****/
 					$disable_class = $learningplan_lib->get_previous_course_status($planid,$course->sortorder,$course->id);
 					$find_completion=$learningplan_lib->get_completed_lep_users($course->id,$planid);
-					
-						 
+
+
 					if($disable_class->nextsetoperator!=''){/*condition to check not empty*/
-			        
+
 						if($disable_class->nextsetoperator=='and' && $find_completion==''){/*Condition to check the nextsetoperator*/
 						$restricted= $DB->get_field('local_learningplan','lpsequence',array('id'=>$planid));
-						
+
 						if($restricted) {
 							if($course->sortorder>=$disable_class->sortorder){/*Condition to cehck the sortorder and make all the disable*/
 								$disable_class1='course_disabled';
-							}	
+							}
 						 }
 						}
 					}
 				}
 				/* End of the function and condition By Ravi_369*/
-				
+
 					$course_data .= '<div class="course_image_comtainer pull-left span3 desktop-first-column">
 										<img class="learningplan_course_image" src="'.$course_summary_image_url.'" title="'.$course->fullname.'"/>
 									</div>';
@@ -2020,13 +2020,13 @@ class view extends plugin_renderer_base {
 							$course_data .= '<div class="row-fluid"><span style="font-size:18px;line-height:30px;">'.get_string('completed_activities', 'local_learningplan').' : </span><span style="font-size:25px;">'.$course_completed_activities_link.'</span></div>';
 							$course_data .= '<div class="row-fluid"><span style="font-size:18px;line-height:30px;">'.get_string('pending_activities', 'local_learningplan').' : </span><span style="font-size:25px;">'.$course_pending_activities_link.'</span></div>';
 						$course_data .= '</div>';
-					
+
 				/********LAUNCH button for every courses to enrol********/
 				/*First check the enrolment method*/
 				$check_course_enrol=$this->db->get_field('enrol','id',array('courseid'=>$course->id,'enrol'=>'learningplan'));
 				/***Then check the userid***/
 				$find_user=$this->db->get_field('user_enrolments','id',array('enrolid'=>$check_course_enrol,'userid'=>$this->user->id));
-				
+
 				if(!$find_user){/*Condition to check the user enroled or not*/
 				$plan_url = new moodle_url('/local/learningplan/index.php', array('courseid' => $course->id,'planid'=>$planid,'userid'=>$this->user->id));
 				$detail = html_writer::link($plan_url, 'Launch', array('class'=>'launch'));
@@ -2034,17 +2034,17 @@ class view extends plugin_renderer_base {
 				if(!empty($completed)){
 					$plan_url = "#";
 				    $detail = html_writer::link($plan_url, 'Completed', array('class'=>'launch'));
-					}else{	
+					}else{
 						$plan_url = "#";
 						$detail = html_writer::link($plan_url, 'Enrolled', array('class'=>'launch'));
 					}
 				}
 				$course_data .=$cpmpleted_buttons;
-				$course_data .= $detail;	
+				$course_data .= $detail;
 				$course_data .= '</div>';
-				$course_data .= '</div>'; 	
-				
-				
+				$course_data .= '</div>';
+
+
 				$table_row[] = $course_data;
 				$table_data[] = $table_row;
 			}
@@ -2067,21 +2067,21 @@ class view extends plugin_renderer_base {
 												//$("table#learning_plan_courses thead").css("display" , "none");
 										   });');
 		}
-		
+
 		return $return;
 	}
 public function assigned_learningplans_courses_browse_employee_view($planid, $userid,$condition){
 		if(file_exists($CFG->dirroot.'/local/includes.php')){
 			require_once($CFG->dirroot.'/local/includes.php');
 		}
-		
+
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-		
+
 		$learningplan_lib = new local_learningplan\lib\lib();
 		$includes = new user_course_details;
-		
+
 		$courses = lib::get_learningplan_assigned_courses($planid);
-		
+
 		$return = '';
 		//$return .= html_writer::tag('h3', get_string('assigned_courses', 'local_learningplan'), array());
 		if(empty($courses)){
@@ -2092,13 +2092,13 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 			$check=$this->db->get_record('local_learningplan_user',array('userid'=>$this->user->id,'planid'=>$planid));
 			/*End of query*/
             foreach($courses as $course){
-				
+
 				if($check){
 					$course_url = new moodle_url('/course/view.php', array('id'=>$course->id));
 				}else{
 					$course_url="#";
 				}
-				
+
 				$course_view_link = html_writer::link($course_url, $course->fullname, array());
 				$course_summary_image_url = $includes->course_summary_files($course);
 				$course_summary = empty($course->objective) ? get_string('coure_summary_not_provided', 'local_learningplan') : \local_costcenter\lib::strip_tags_custom(html_entity_decode($course->summary),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
@@ -2109,29 +2109,29 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 				$course_completed_activities_link = html_writer::link($course_url, $course_completed_activities, array());
 				$course_pending_activities = $course_total_activities - $course_completed_activities;
 				$course_pending_activities_link = html_writer::link($course_url, $course_pending_activities, array());
-				
+
 				$actions = '';
 				$buttons = '';
 				/*Select box*/
 				if($course->next=='or'){ $select='selected';}else{
 								$select='';
 				}/***condition for the select the dropdown if already selected***/
-							
-				if($course->next=='or' || $course->next=='and'){			
-							
+
+				if($course->next=='or' || $course->next=='and'){
+
 					if($course->next=='and'){
 						$buttons .='<h4 class="course_sort_status"><span class="label label-default mandatory-course" >'.get_string('mandatory', 'local_learningplan').'</span></h4>';
 					}
 					elseif($course->next=='or'){
 						$buttons .='<h4 class="course_sort_status"><span class="label label-default optional-course" >'.get_string('optional').'</span></h4>';
-					}		
+					}
 				}
 				/*End of the select box*/
 				if (has_capability('local/learningplan:assigncourses', $systemcontext)) {
 					if($condition=='view'){
-						
+
 					}else{
-					
+
 					$unassign_url = new moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid, 'unassigncourse' => $course->id));
 					$unassign_link = html_writer::link($unassign_url,
 													   html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('i/delete'), 'class' => 'icon', 'title' => 'Unassign'))
@@ -2139,7 +2139,7 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 															   'class' => 'pull-right',
 															   'id' => 'unassign_course_'.$course->id.''));
 					$confirmationmsg = get_string('unassign_courses_confirm','local_learningplan', $course);
-						
+
 					$this->page->requires->event_handler("#unassign_course_".$course->id, 'click', 'M.util.moodle_show_course_confirm_dialog',
 														array(
 														'message' => $confirmationmsg,
@@ -2148,33 +2148,33 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 					$actions = $unassign_link;
 					}
 				}
-				
-				
-				
-				
+
+
+
+
                 $table_row = array();
 				$course_data = '';
 				if($course->sortorder == 0){/*Condtion to set the enable to first sortorder*/
 					$disable_class1 = ' '; /*Empty has been sent to class*/
 				}
-				
+
 				$course_data .= '<div class="course_complete_info row-fluid pull-left '.$disable_class1.'" id="course_info_'.$course->id.'">';
 				$course_data .= '<h4>'.$course_view_link.$actions.''.$buttons.'</h4>';
-					
+
 				if($course->sortorder!==''){/*Condition to check the sortorder and disable the course */
-					
+
 					/**** Function to get the all the course details like the nextsetoperator,sortorder
 					@param planid,sortorder,courseid of the record
 					****/
 					$disable_class = $learningplan_lib->get_previous_course_status($planid,$course->sortorder,$course->id);
 					$find_completion=$learningplan_lib->get_completed_lep_users($course->id,$planid);
-					
-		           
-						 
+
+
+
 								if($disable_class->nextsetoperator!=''){/*condition to check not empty*/
-						        
+
 									if($disable_class->nextsetoperator=='and' && $find_completion==''){/*Condition to check the nextsetoperator*/
-										
+
 									$restricted= $DB->get_field('local_learningplan','lpsequence',array('id'=>$planid));
 						          if($restricted) {
 									if($course->sortorder>=$disable_class->sortorder){/*Condition to cehck the sortorder and make all the disable*/
@@ -2183,14 +2183,14 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 								}
 
 
-									
+
 									}else{
-						
+
 									}
 								}
 				}
 				/* End of the function and condition By Ravi_369*/
-					
+
 					$course_data .= '<div class="course_image_comtainer pull-left span3 desktop-first-column">
 										<img class="learningplan_course_image" src="'.$course_summary_image_url.'" title="'.$course->fullname.'"/>
 									</div>';
@@ -2205,16 +2205,16 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 					$course_data .= '<div class="row-fluid"><span style="font-size:18px;line-height:30px;">'.get_string('completed_activities', 'local_learningplan').': </span><span style="font-size:25px;">'.$course_completed_activities_link.'</span></div>';
 					$course_data .= '<div class="row-fluid"><span style="font-size:18px;line-height:30px;">'.get_string('pending_activities', 'local_learningplan').' : </span><span style="font-size:25px;">'.$course_pending_activities_link.'</span></div>';
 					$course_data .= '</div>';
-				
-				    $course_data .= $detail;	
+
+				    $course_data .= $detail;
 				    $course_data .= '</div>';
 				    $course_data .= '</div>';
-				
-				
+
+
 				$table_row[] = $course_data;
 				$table_data[] = $table_row;
 			}
-			
+
 			$table = new html_table();
 			$table->head = array('');
 			$table->id = 'learning_plan_courses';
@@ -2235,19 +2235,19 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 										   });');
 		}
 
-		
+
 		return $return;
 	}
-	
+
 public function learningplaninfo_for_employee($planid){
 		global $PAGE,$DB, $CFG,$USER;
 
 		$learningplan_lib = new lib();
 		$includeslib = new \user_course_details();
 		$learningplan_classes_lib = new lib();
-		
+
 		$lplan = $this->db->get_record('local_learningplan', array('id'=>$planid));
-		
+
 		// $lptype = $lplan->learning_type == 1 ? 'Core Courses' : 'Elective Courses';
 		/*if($lplan->learning_type == 1){
 			$lptype = 'Core Courses';
@@ -2255,62 +2255,61 @@ public function learningplaninfo_for_employee($planid){
 			$lptype = 'Elective Courses';
 		}*/
 		$lpapproval = $lplan->approvalreqd == 1 ? get_string('yes') : get_string('no');
-		
+
 		$lpimgurl = $learningplan_classes_lib->get_learningplansummaryfile($planid);
-		
+
 		$mandatarycourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'and');
 		$optionalcourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'or');
-		
+
 		$lplanassignedcourses = lib::get_learningplan_assigned_courses($planid);
-		
-		$catalogrenderer = $this->page->get_renderer('local_catalog');
+
 		$description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($lplan->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
         $description_string = strlen($description) > 220 ? substr($description, 0, 220)."..." : $description;
 
 		$lpinfo = '';
 		$condition="view";
-		
+
 		/***********The query Check Whether user enrolled to LEP or NOT**********/
 		$plan_record = $this->db->get_record('local_learningplan', array('id' => $planid));
 		$sql="select id from {local_learningplan_user} where planid=$planid and userid=".$this->user->id."";
 		$check=$this->db->get_record_sql($sql);
 		/*End of Query*/
-		
+
 		/**The Below query is check the approval status for the LOGIN USERS on the his LEP**/
 		$check_approvalstatus=$this->db->get_record('local_learningplan_approval',array('planid'=>$plan_record->id,'userid'=>$this->user->id));
 		if($check){ /**condition to check user already enrolled to the LEP If Enroled he get option enrolled **/
 		$approvalstatus =isset($check_approvalstatus->approvestatus);
 		if($approvalstatus==1){
 			$back_url = "#";
-		
+
 		}else{
 			$back_url ="#";
 		}
 		}else{/****Else he has 4 option like the Send Request or Waiting or Rejected or Enroled****/
-		
+
 		if(!is_siteadmin()){
-		
+
 		if($condition!='manage'){ /*******condition to check the manage page or browse page******/
-		
+
 		if($plan_record->approvalreqd==1  && (!empty($check_approvalstatus))) /***** If user has LEP with approve with 1 means request yes and empty not check approval status means he has sent request******/
 		{
-		
+
 		$check_users= $learningplan_lib->check_courses_assigned_target_audience($this->user->id,$plan_record->id);
 		/****The above Function is to check the user is present in the target audience or not***/
-		
+
 		if($check_users==1){/*if there then he will be shown the options*/
-		
+
 		$check_approvalstatus=$this->db->get_record('local_learningplan_approval',array('planid'=>$plan_record->id,'userid'=>$this->user->id));
-		
+
 		if($check_approvalstatus->approvestatus==0 && !empty($check_approvalstatus)){
 		$back_url = "#";
-		
+
 		}elseif($check_approvalstatus->approvestatus==2 && !empty($check_approvalstatus)){
 		$back_url = "#";
 		}
 
 		if(empty($check_approvalstatus)){
-		
+
 		$back_url = new moodle_url('/local/learningplan/plan_view.php',array('id'=>$plan_record->id,'enrolid'=>$plan_record->id));
 		$notify = new stdClass();
 		$notify->name = $plan_record->name;
@@ -2321,19 +2320,19 @@ public function learningplaninfo_for_employee($planid){
 		}
 		}else if(($plan_record->approvalreqd==1) && (empty($check_approvalstatus))){
 			$check_users= $learningplan_lib->check_courses_assigned_target_audience($this->user->id,$plan_record->id);
-			
+
 		// if($check_users==1){
-		// 	$back_url = new moodle_url('/local/learningplan/index.php', array('approval' => $plan_record->id));	
+		// 	$back_url = new moodle_url('/local/learningplan/index.php', array('approval' => $plan_record->id));
 		// 	$approve=  html_writer::link('Send Request', array('class' => 'pull-right enrol_to_plan nourl','id'=>'request'));
 		// 	$notify_info = new stdClass();
 		// 	$notify_info->name = $plan_record->name;
 		// 	$PAGE->requires->event_handler("#request",
 		// 	'click', 'M.util.bajaj_show_confirm_dialog', array('message' => get_string('delete_notify','local_learningplan',$notify_info),
 		// 			 'callbackargs' => array('confirmdelete' =>$plan_record->id)));
-			
+
 		// }
 		}else if($plan_record->approvalreqd==0  && (empty($check_approvalstatus))){
-		
+
 		$back_url = new moodle_url('/local/learningplan/plan_view.php',array('id'=>$plan_record->id,'enrolid'=>$plan_record->id));
 		$notify = new stdClass();
 		$notify->name = $plan_record->name;
@@ -2409,7 +2408,7 @@ public function learningplaninfo_for_employee($planid){
                 if($certificate_plugin_exist){
 	                if(!empty($lplan->certificateid)){
 		                $certificate_exists = true;
-		                $sql = "SELECT id 
+		                $sql = "SELECT id
 		                        FROM {local_learningplan_user}
 		                        WHERE planid = :planid AND userid = :userid
 		                        AND status = 1 ";
@@ -2470,14 +2469,14 @@ public function learningplaninfo_for_employee($planid){
 			$i=1;
 			foreach($lplanassignedcourses as $assignedcourse){
 				$courseimgurl = $includeslib->course_summary_files($assignedcourse);
-				
+
 				$lp_userviewcoures = array();
 				$coursesummary = \local_costcenter\lib::strip_tags_custom(html_entity_decode($assignedcourse->summary),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
 				$course_summary = empty($coursesummary) ? get_string('coure_summary_not_provided','local_learningplan') : $coursesummary;
 
  				$course_summary_string = strlen($course_summary) > 125 ? substr($course_summary, 0, 125)."..." : $course_summary;
 				$c_category = $this->db->get_field('course_categories', 'name', array('id'=>$assignedcourse->category));
-				
+
 				$coursetypes = $this->db->get_field('local_coursedetails', 'identifiedas', array('courseid'=>$assignedcourse->id));
 				if($coursetypes){
 					$types = array();
@@ -2491,8 +2490,8 @@ public function learningplaninfo_for_employee($planid){
 						$types[] = $identify[$ctype];
 					}
 				}
-				
-				
+
+
 				$coursepageurl = new \moodle_url('/course/view.php', array('id'=>$assignedcourse->id));
 				if($assignedcourse->next == 'and'){
 					$optional_or_mandtry = "<span class='mandatory' title = '".get_string('mandatory', 'local_learningplan')."'>M</span>";
@@ -2508,23 +2507,23 @@ public function learningplaninfo_for_employee($planid){
 					$autoenrol=$this->db->get_field('enrol','id',array('courseid'=>$assignedcourse->id,'enrol'=>'auto'));
 					$manualenrol=$this->db->get_field('enrol','id',array('courseid'=>$assignedcourse->id,'enrol'=>'manual'));
 					$learningplanenrol=$this->db->get_field('enrol','id',array('courseid'=>$assignedcourse->id,'enrol'=>'learningplan'));
-					
-					$sql="SELECT id FROM {user_enrolments} WHERE userid={$this->user->id} AND enrolid IN ('$enrol','$selfenrol','$autoenrol','$manualenrol','$learningplanenrol')"; 
-						
+
+					$sql="SELECT id FROM {user_enrolments} WHERE userid={$this->user->id} AND enrolid IN ('$enrol','$selfenrol','$autoenrol','$manualenrol','$learningplanenrol')";
+
 					$enrolledcourse=$this->db->get_field_sql($sql);
-					
+
 				$rname = format_string($assignedcourse->fullname);
 				if($rname > substr(($rname),0,23)){
 					$fullname = substr(($rname),0,23).'...';
 				}else{
-					$fullname =$rname; 
+					$fullname =$rname;
 				}
 				if($enrolledcourse){
-					
+
 				$courselink = html_writer::link($coursepageurl, $fullname, array('class'=>'coursesubtitle','title'=>$assignedcourse->fullname));
 				}else{
 				/**Through course Link also user can enroll the course **/
-				$coursepageurl = new moodle_url('/local/learningplan/index.php', array('courseid' => $assignedcourse->id,'planid'=>$lplan->id,'userid'=>$this->user->id));	
+				$coursepageurl = new moodle_url('/local/learningplan/index.php', array('courseid' => $assignedcourse->id,'planid'=>$lplan->id,'userid'=>$this->user->id));
 				$courselink = html_writer::link($coursepageurl, $fullname, array('class'=>'coursesubtitle','title'=>$assignedcourse->fullname));
 				}
 				}else{
@@ -2532,12 +2531,12 @@ public function learningplaninfo_for_employee($planid){
 				if($rname > substr(($rname),0,23)){
 				$fullname = substr(($rname),0,23).'...';
 				}else{
-				$fullname =$rname; 
-				}	
+				$fullname =$rname;
+				}
 				$coursepageurl="#";
 				$courselink = html_writer::link($coursepageurl, $fullname, array('class'=>'coursesubtitle','title'=>$assignedcourse->fullname));
 				}
-				
+
 				$progressbar = $includeslib->user_course_completion_progress($assignedcourse->id,$this->user->id);
 				if(!$progressbar){
 					$progressbarval = 0;
@@ -2555,7 +2554,7 @@ public function learningplaninfo_for_employee($planid){
 				$sql="SELECT id,id AS id_val FROM {enrol} WHERE courseid = $assignedcourse->id";
 				$get_data=$this->db->get_records_sql_menu($sql);
 				$data=implode(',',$get_data);
-				
+
 				/**This below query is used to check the user already enroled to course with other enrolments methods**/
 				$sql="SELECT id FROM {user_enrolments} WHERE enrolid IN($data) and userid=".$this->user->id."";
 				$find_user=$this->db->record_exists_sql($sql) ;
@@ -2599,7 +2598,7 @@ public function learningplaninfo_for_employee($planid){
 			if($disable_class){
 				$disable_class1="";
 			}else{
-				
+
 				$restricted= $DB->get_field('local_learningplan','lpsequence',array('id'=>$planid));
 				if($restricted) {
 						$disable_class1='course_disabled';
@@ -2611,7 +2610,7 @@ public function learningplaninfo_for_employee($planid){
 		}
 			$enroldisable_class1 = 'enrolled';
 			if($needenrol){
-				$enroldisable_class1='not_enrolled course_disabled';	
+				$enroldisable_class1='not_enrolled course_disabled';
 			}
 			$lp_userviewcoures['disable_class1'] = $disable_class1;
 			$lp_userviewcoures['needenrol'] = $needenrol;
@@ -2623,7 +2622,7 @@ public function learningplaninfo_for_employee($planid){
 			$lp_userviewcoures['completiondate'] = $completiondate;
 			$lp_userviewcoures['optional_or_mandtry'] = $optional_or_mandtry;
 			$lp_userviewcoures['course_summary_string'] = $course_summary_string;
-			
+
 			/**To disable the The status like Launch || Enrolled || Completed || before enrol to plan**/
 			$check=$this->db->get_field('local_learningplan_user','id',array('userid'=>$this->user->id,'planid'=>$planid));
 			/*End of query*/
@@ -2644,6 +2643,6 @@ public function learningplaninfo_for_employee($planid){
         $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol', 'local_learningplan').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_learningplan/courseenrol\').unEnrolUser({planid: '.$planid.', userid:'.$USER->id.', planname:\''.$planname.'\'}) })(event)'));
         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
         $liTag = html_writer::tag('li', $container);
-        return html_writer::tag('ul', $liTag, array('class' => 'course_extended_menu_list'));		
+        return html_writer::tag('ul', $liTag, array('class' => 'course_extended_menu_list'));
 	}
 }
