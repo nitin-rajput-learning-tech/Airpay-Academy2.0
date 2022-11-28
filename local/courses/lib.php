@@ -1261,7 +1261,7 @@ function get_listof_courses($stable, $filterdata) {
     $filtercategoriesparams= array();
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
-    $selectsql = "SELECT c.id, c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_costcenterid, c.open_identifiedas, c.visible, c.open_skill, c.open_departmentid, c.open_subdepartment FROM {course} AS c"; 
+    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_costcenterid, c.open_identifiedas, c.visible, c.open_skill, c.open_departmentid, c.open_subdepartment FROM {course} AS c"; 
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
     if(is_siteadmin()){
         $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
@@ -1282,6 +1282,7 @@ function get_listof_courses($stable, $filterdata) {
                    WHERE c.open_costcenterid = :usercostcenter 
                    AND c.open_departmentid = :userdepartment";
     }
+    $formsql .= " JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
     $formsql .= " AND c.id > 1 ";
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";
@@ -1451,15 +1452,9 @@ function get_listof_courses($stable, $filterdata) {
             }
             $catname = $category->name;
             $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12)."..." : $catname;
-            // $courestypes_names = array('2'=>get_string('classroom','local_courses'),'3'=>get_string('elearning','local_courses'), '4'=> get_string('learningplan','local_courses'), '5' => get_string('program','local_courses'), '6' => get_string('certification','local_courses'));
-            $text_class = array('2'=>'classroom','3'=>'elearning', '4'=> 'learningpath', '5' => 'program', '6' => 'certification');
-            $courestypes = explode(',', $course->open_identifiedas);
-            $displayed_names = array();
-            foreach ($courestypes as $key => $courestype){
-                $params = array("id" => $courestype);
-                $courestypes_names = $DB->get_field('local_course_types','name',$params);              
-                $displayed_names[] = '<span class="pl-10 '.$text_class[$courestype].'">'.$courestypes_names.'</span>';
-            }
+            $displayed_names = '<span class="pl-10 '.$course->coursetype.'">'.$course->coursetype.'</span>';
+            
+            $courestypes_names = array('2'=>get_string('classroom','local_courses'),'3'=>get_string('elearning','local_courses'), '4'=> get_string('learningplan','local_courses'), '5' => get_string('program','local_courses'), '6' => get_string('certification','local_courses'));
             if($ratings_plugin_exist){
                 require_once($CFG->dirroot.'/local/ratings/lib.php');
                 $ratingenable = True;
@@ -1496,8 +1491,6 @@ function get_listof_courses($stable, $filterdata) {
             } else {
                 $skillname = 'N/A';                
             }
-            
-            $displayed_names = implode(',' ,$displayed_names);
             $courseslist[$count]["coursename"] = $coursename;
             $courseslist[$count]["shortname"] =  $shortname;
             $courseslist[$count]["skillname"] = $skillname;
@@ -1520,9 +1513,6 @@ function get_listof_courses($stable, $filterdata) {
             
             $coursesummary = \local_costcenter\lib::strip_tags_custom($chelper->get_course_formatted_summary($course_in_list,
                     array('overflowdiv' => false, 'noclean' => false, 'para' => false)));
-            // $coursesummary = strip_tags(clean_text(html_to_text($chelper->get_course_formatted_summary($course_in_list,
-            //                                             array('overflowdiv' => false, 'noclean' => false, 'para' => false)))));
-            // print_r($coursesummary);
             $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100)."..." : $coursesummary;
             $courseslist[$count]["coursesummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
             $courseslist[$count]["format"] = $format;
@@ -2171,7 +2161,7 @@ function local_courses_output_fragment_course_type($args) {
     $formdata = [];
 
     $o = '';
-    if (!empty($args->jsonformdata)) {
+    if (isset($args->jsonformdata) && (!empty($args->jsonformdata))) {
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
@@ -2189,12 +2179,13 @@ function local_courses_output_fragment_course_type($args) {
     } 
  
     $params = array(
+        'orgid' => $formdata->orgid,
         'id' => $coursetypeid,
         'name' => $formdata->name,
         'shortname' => $formdata->shortname,
+        'orgname' =>$formdata->orgname,
         'contextid' => $context
     ); 
-  
     $mform = new local_courses\form\coursetype_form(null, $params, 'post', '', null, true, (array)$formdata);
     $mform->set_data($formdata);
     
