@@ -40,9 +40,9 @@
     <TABLE NAME="local_course_types" COMMENT="local course type" > 
       <FIELDS> 
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" /> 
-        <FIELD NAME="name" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
-        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
-        <FIELD NAME="orgid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" /> 
+        <FIELD NAME="name" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false" /> 
+        <FIELD NAME="shortname" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false" /> 
+        <FIELD NAME="orgid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" /> 
         <FIELD NAME="active" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" /> 
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" />

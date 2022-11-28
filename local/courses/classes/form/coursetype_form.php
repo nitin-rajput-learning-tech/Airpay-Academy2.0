@@ -41,31 +41,28 @@ class coursetype_form extends moodleform {
         $id = $this->_customdata['id'];
         $course_type = $this->_customdata['name'];
 		$shortname = $this->_customdata['shortname'];
-		$orgid = $this->_customdata['orgid'];
+		$orgid = (int)$this->_customdata['orgid'];
 		$orgname = $this->_customdata['orgname'];
 		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context(); 	
 		$organisation_select = [null => get_string('selectorg','local_courses')];
-		if($id || $this->_ajaxformdata['open_costcenterid']){
-			$open_costcenter = (int) $this->_ajaxformdata['open_costcenterid'] ? (int)$this->_ajaxformdata['open_costcenterid'] : $get_coursedetails->open_costcenterid;
-			$organisations = $organisation_select + $DB->get_records_menu('local_costcenter', array('id' => $open_costcenter), '',  $fields='id, fullname'); 
+		if($id || $this->_ajaxformdata['orgid']){
+			$organisations = $organisation_select + $DB->get_records_menu('local_costcenter', array('id' => $orgid), '',  $fields='id, fullname'); 
 		}else{
-			$open_costcenter = 0;
+			$orgid = 0;
 			$organisations = $organisation_select;
 		}
 		$costcenteroptions = array(
 			'ajax' => 'local_costcenter/form-options-selector',
 			'data-contextid' => $systemcontext->id,
 			'data-action' => 'costcenter_organisation_selector',
-			'data-options' => json_encode(array('id' => $open_costcenter)),
+			'data-options' => json_encode(array('id' => $orgid)),
 			'class' => 'organisationnameselect',
 			'data-class' => 'organisationselect',
 			'multiple' => false,
 		);
 		$mform->addElement('autocomplete', 'orgid', get_string('organization','local_courses'), $organisations, $costcenteroptions);
-		$mform->addHelpButton('orgid', 'open_costcenteridcourse', 'local_courses');
 		$mform->setType('orgid', PARAM_INT);
-		$mform->addRule('orgid', get_string('pleaseselectorganization','local_courses'), 'required', null, 'client');
-		$mform->setDefault('orgid', $orgname);
+		$mform->addRule('orgid', get_string('required','local_courses'), 'required', null);
 
         $mform->addElement('text', 'name', get_string('course_type','local_courses'), 'maxlength="100" size="10"');
         $mform->addRule('name', get_string('required'), 'required', null);
@@ -76,7 +73,6 @@ class coursetype_form extends moodleform {
         $mform->addRule('shortname', get_string('required'), 'required', null);
         $mform->setType('shortname', PARAM_RAW);
 		$mform->setDefault('shortname', $shortname);
-
 			
 		$mform->addElement('hidden', 'id');
 		$mform->setType('id', PARAM_INT);
@@ -85,7 +81,7 @@ class coursetype_form extends moodleform {
 		$mform->addElement('hidden', 'contextid');
 		$mform->setType('contextid', PARAM_INT);
 		$mform->setDefault('contextid', $contextid);
-		 
+		$mform->disable_form_change_checker();
 		//$this->add_action_buttons($cancel = null,get_string('featured_course', 'local_courses'));
 	}
 
@@ -106,18 +102,27 @@ class coursetype_form extends moodleform {
             }
         }  
 		
-		if (isset($data['coursetype'])){
-			if(empty($data['coursetype'])){
-				$errors['coursetype'] = get_string('err_coursetype', 'local_courses');
+		if (isset($data['name'])){
+			if(empty($data['name'])){
+				$errors['name'] = get_string('err_coursetype', 'local_courses');
 			}
 		}
-
-	 	if (isset($data['coursetypeshortname'])){
-			if(empty($data['coursetypeshortname'])){
-				$errors['coursetypeshortname'] = get_string('err_coursetypeshortname', 'local_courses');
+		if ($coursetype = $DB->get_record('local_course_types', array('shortname' => $data['shortname']), '*', IGNORE_MULTIPLE)) {
+            if (empty($data['id']) || $coursetype->id != $data['id']) {
+                $errors['shortname'] = get_string('coursecodeexists', 'local_courses', $coursetype->shortname);
+            }
+        }  
+	 	if (isset($data['shortname'])){
+			if(empty($data['shortname'])){
+				$errors['shortname'] = get_string('err_coursetypeshortname', 'local_courses');
 			}
 		} 
-
+		if (isset($data['id']) && isset($data['orgid'])){
+			if(($data['orgid']==0) && empty($data['orgid'])){
+                $errors['orgid'] = get_string('pleaseselectorganization', 'local_courses');
+            }
+        }
+		
 		return $errors;
     }
 

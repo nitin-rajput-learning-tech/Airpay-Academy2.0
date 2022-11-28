@@ -37,12 +37,14 @@ if (!has_capability('local/courses:view', $systemcontext) && !has_capability('lo
     print_error("You don't have permissions to view this page.");
 }
 $PAGE->set_context($systemcontext);
+$PAGE->set_pagelayout('standard');
 $PAGE->set_url('/local/courses/coursestypes.php');
 $PAGE->set_title(get_string('course_type','local_courses'));
 $PAGE->set_heading(get_string('course_type', 'local_courses'));
 $PAGE->requires->jquery();
- $PAGE->requires->js_call_amd('local_courses/createCoursetype', 'Datatable', array());
+$PAGE->requires->js_call_amd('local_courses/createCoursetype', 'Datatable', array());
 $PAGE->requires->js_call_amd('local_courses/createCourseProviders', 'Datatable', array());
+$PAGE->navbar->add(get_string('pluginname', 'local_courses'), new moodle_url('/local/courses/courses.php'));
 $PAGE->navbar->add(get_string('manage_courses', 'local_courses'));
 $renderer = $PAGE->get_renderer('local_courses');
 echo $OUTPUT->header();
