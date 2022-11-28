@@ -368,7 +368,7 @@ class local_users_renderer extends plugin_renderer_base {
                             JOIN {course} AS c ON c.id = cc.course
                              JOIN {enrol} AS e ON c.id = e.courseid AND e.enrol IN('self','manual','auto')
                             JOIN {user_enrolments} AS ue ON e.id = ue.enrolid AND ue.userid = cc.userid
-                            WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
+                            WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',2,',%')
                              AND cc.timecompleted is not NULL AND c.visible=1 AND c.id>1 AND cc.userid =
                               {$userrecord->id} AND open_skill IN ({$skillids})";
                     $completed_skills = $DB->get_records_sql($sql);

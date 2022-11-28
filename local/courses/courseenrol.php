@@ -196,7 +196,7 @@ if ($course) {
     if (!empty($userstoassign)) {
         // BAYER-23 Assign below CAP to user so that he can enrolusers to courses.
         $capabilities = ['enrol/manual:manage', 'enrol/manual:enrol'];
-        $loggedinroleid = $USER->access['rsw']['currentroleinfo']['roleid'];
+        $loggedinroleid = $USER->access_rsw_currentroleinfo['roleid'];
         if(has_capability('local/courses:enrol', $context) && $roleid && !is_siteadmin()){
             foreach($capabilities AS $capability){
                 if (!has_capability($capability, $context)) {
@@ -250,7 +250,7 @@ if ($course) {
     }
     if (!empty($userstounassign)) {
             $capabilities = ['enrol/manual:manage', 'enrol/manual:unenrol'];
-            $loggedinroleid = $USER->access['rsw']['currentroleinfo']['roleid'];
+            $loggedinroleid = $USER->access_rsw_currentroleinfo['roleid'];
             if(has_capability('local/courses:enrol', $context) && $loggedinroleid && !is_siteadmin()){
                 foreach($capabilities AS $capability){
                     if (!has_capability($capability, $context)) {
