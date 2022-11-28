@@ -394,3 +394,4 @@ $string['err_coursetype'] = 'Please enter Course type';
 $string['err_coursetypeshortname'] = 'Please enter shortname';
 $string['add_course_type'] = 'Add Course Type';
 $string['cannotcreateorupdatecourse'] = 'This Course Type is not Available for this Category i.e \'{$a}\'';
+$string['coursecodeexists'] = 'Course code already exists ({$a})';
