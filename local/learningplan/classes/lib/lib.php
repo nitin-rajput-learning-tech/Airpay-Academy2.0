@@ -20,7 +20,7 @@ class lib {
     
     function create_learning_plan($data){
 		global $DB, $USER;
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 		$data->description = $data->description['text'];
         $data->usercreated =  $this->user->id;
 		$data->timecreated = time();
@@ -103,7 +103,7 @@ class lib {
 		$data->timemodified = time();
 		$existingsummaryfile = $this->db->get_field('local_learningplan', 'summaryfile', array('id' => $data->id));
 		if($data->summaryfile){
-			$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+			$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 			file_save_draft_area_files($data->summaryfile, $systemcontext->id, 'local_learningplan', 'summaryfile', $data->summaryfile);
 		}
 		if(!empty($data->id)){
@@ -111,7 +111,7 @@ class lib {
 		}
 		// Update evaluation tags.
 	    if (isset($data->tags)) {
-	        \local_tags_tag::set_item_tags('local_learningplan', 'learningplan', $data->id, (new \local_users\lib\accesslib())::get_module_context(), $data->tags, 0, $data->costcenter, $data->department);
+	        \local_tags_tag::set_item_tags('local_learningplan', 'learningplan', $data->id, (new \local_learningplan\lib\accesslib())::get_module_context(), $data->tags, 0, $data->costcenter, $data->department);
 	    }
 		return $data->id;
     }
@@ -277,7 +277,7 @@ class lib {
 			$this->db->delete_records('local_learningplan_courses', array('planid' => $id));
 
 			$params = array(
-                'context' => (new \local_users\lib\accesslib())::get_module_context(),
+                'context' => (new \local_learningplan\lib\accesslib())::get_module_context($id),
                 'objectid' => $id,
                 'userid' => $USER->id,
                 'relateduserid' => $USER->id,
@@ -291,7 +291,7 @@ class lib {
 	
 	function learningplan_courses_list($id){
 		global $DB,$USER;
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
 		
 		if(is_siteadmin() /*|| has_capability('local/costcenter:manage_multiorganizations', $systemcontext)|| has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)*/){
 			$costcenterid = $DB->get_field('local_learningplan', 'costcenter', array('id' => $id));
@@ -705,7 +705,7 @@ class lib {
 							$emailtype="learningplan_completion";
 							$status="Completed";
 							$params = array(
-			                    'context' => (new \local_users\lib\accesslib())::get_module_context(),
+			                    'context' => (new \local_learningplan\lib\accesslib())::get_module_context(),
 			                    'objectid' => $planid,
 			                    'courseid' => 1,
 			                    'userid' => $user,
@@ -746,7 +746,7 @@ class lib {
 							$emailtype="learningplan_completion";
 							$status="Completed";
 							$params = array(
-			                    'context' => (new \local_users\lib\accesslib())::get_module_context(),
+			                    'context' => (new \local_learningplan\lib\accesslib())::get_module_context(),
 			                    'objectid' => $planid,
 			                    'courseid' => 1,
 			                    'userid' => $user,

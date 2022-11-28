@@ -28,7 +28,22 @@ namespace local_learningplan\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($costcenterid = null){
+    public static function get_module_context($planid = null){
+
+        global $DB;
+
+        $costcenterid=null;
+
+        if($planid > 0){
+
+            $plancostcenter=$DB->get_field('local_learningplan','costcenter',  array('id'=>$planid));
+            if($plancostcenter > 0){
+
+                $costcenterid=$plancostcenter;
+
+            }
+
+        }
 
         return parent::get_module_context($costcenterid);
 
