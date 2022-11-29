@@ -162,7 +162,7 @@ class local_learningplan_external extends external_api {
 
                     $courses[] = $value;
 
-            
+
             }
             $lib = new local_learningplan\lib\lib();
             $return = $lib->modal_lpcourse_enrol($courses,$planid);
@@ -584,10 +584,10 @@ class local_learningplan_external extends external_api {
     }
     public static function data_for_learningplans_returns(){
         return new external_single_structure(array (
-            'total' => new external_value(PARAM_INT, 'Number of enrolled courses.', VALUE_OPTIONAL),           
-            'inprogresscount'=>  new external_value(PARAM_INT, 'Number of inprogress course count.'),  
-            'completedcount'=>  new external_value(PARAM_INT, 'Number of complete course count.'), 
-            'plan_view_count'=>  new external_value(PARAM_INT, 'Number of courses count.'), 
+            'total' => new external_value(PARAM_INT, 'Number of enrolled courses.', VALUE_OPTIONAL),
+            'inprogresscount'=>  new external_value(PARAM_INT, 'Number of inprogress course count.'),
+            'completedcount'=>  new external_value(PARAM_INT, 'Number of complete course count.'),
+            'plan_view_count'=>  new external_value(PARAM_INT, 'Number of courses count.'),
             'enableslider'=>  new external_value(PARAM_INT, 'Flag for enable the slider.'),
             'inprogress_elearning_available'=>  new external_value(PARAM_INT, 'Flag to check enrolled course available or not.'),
             'course_count_view'=>  new external_value(PARAM_TEXT, 'to add course count class'),
@@ -607,6 +607,7 @@ class local_learningplan_external extends external_api {
                             )
                         ),
                         'lastaccessdate' => new external_value(PARAM_RAW, 'last access date'),
+                        'plan_image_url' => new external_value(PARAM_RAW, 'plan_image_url', VALUE_OPTIONAL),
                         'planSummary' => new external_value(PARAM_RAW, 'Plan Summary'),
                         'planFullname' => new external_value(PARAM_RAW, 'Plan Fullname'),
                         'displayPlanFullname' => new external_value(PARAM_RAW, 'Displayed Plan Fullname'),
@@ -677,10 +678,10 @@ class local_learningplan_external extends external_api {
         'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
         'records' => new external_multiple_structure(
                 new external_single_structure(array (
-                    'total' => new external_value(PARAM_INT, 'Number of enrolled courses.', VALUE_OPTIONAL),           
-                    'inprogresscount'=>  new external_value(PARAM_INT, 'Number of inprogress course count.'),  
-                    'completedcount'=>  new external_value(PARAM_INT, 'Number of complete course count.'), 
-                    'plan_view_count'=>  new external_value(PARAM_INT, 'Number of courses count.'), 
+                    'total' => new external_value(PARAM_INT, 'Number of enrolled courses.', VALUE_OPTIONAL),
+                    'inprogresscount'=>  new external_value(PARAM_INT, 'Number of inprogress course count.'),
+                    'completedcount'=>  new external_value(PARAM_INT, 'Number of complete course count.'),
+                    'plan_view_count'=>  new external_value(PARAM_INT, 'Number of courses count.'),
                     // 'enableslider'=>  new external_value(PARAM_INT, 'Flag for enable the slider.'),
                     'inprogress_elearning_available'=>  new external_value(PARAM_INT, 'Flag to check enrolled course available or not.'),
                     'course_count_view'=>  new external_value(PARAM_TEXT, 'to add course count class'),

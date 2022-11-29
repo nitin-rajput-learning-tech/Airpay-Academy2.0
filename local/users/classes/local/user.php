@@ -180,7 +180,7 @@ class user {
                          JOIN {course} c ON c.id = cc.course
                          JOIN {enrol} e ON c.id = e.courseid AND e.enrol IN('self','manual','auto')
                          JOIN {user_enrolments} ue ON e.id = ue.enrolid AND ue.userid = cc.userid
-                         WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
+                         WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',2,',%')
                          AND cc.timecompleted is not NULL AND c.visible = 1 AND c.id > 1
                          AND cc.userid = :userid AND c.open_level=:level AND open_skill= :skillid
                         ";

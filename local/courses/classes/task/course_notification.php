@@ -22,7 +22,7 @@
  * @category   external
  * @copyright  eAbyas <www.eabyas.in>
  */
- 
+
 namespace local_courses\task;
 
 class course_notification extends \core\task\scheduled_task{
@@ -36,14 +36,14 @@ class course_notification extends \core\task\scheduled_task{
     	$starttime = strtotime(date('d/m/Y', time()));
         $endtime = $starttime+86399;
 
-    	$newcoursesql = "SELECT c.* FROM {course} AS c WHERE c.timecreated BETWEEN :startdate AND :enddate 
-            AND concat(',',c.open_identifiedas, ',') LIKE concat('%,',3,',%') ";
+    	$newcoursesql = "SELECT c.* FROM {course} AS c WHERE c.timecreated BETWEEN :startdate AND :enddate
+            AND concat(',',c.open_identifiedas, ',') LIKE concat('%,',2,',%') ";
     	$newcourse = $DB->get_records_sql($newcoursesql, array('startdate' => $starttime, 'enddate'=> $endtime));
 		$corecomponent = new \core_component();
 		$costcenterexist = $corecomponent::get_plugin_directory('local','costcenter');
 		$coursenotification = new \local_courses\notification();
     	foreach($newcourse AS $course){
-    	   	$notification_sql = "SELECT * FROM {local_notification_info} 
+    	   	$notification_sql = "SELECT * FROM {local_notification_info}
                 WHERE notificationid=(SELECT id FROM {local_notification_type} WHERE shortname LIKE :type) AND active=1 ";
             $modulenotification_sql = "  AND concat(',',moduleid,',') LIKE concat('%,',:moduleid,',%') ";
             $globalnotification = " AND (moduleid IS NULL OR moduleid = 0) ";

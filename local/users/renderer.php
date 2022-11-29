@@ -34,7 +34,7 @@ class local_users_renderer extends plugin_renderer_base {
         require_once($CFG->libdir . '/badgeslib.php');
 
         $corecomponent = new core_component();
-        
+
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         /*user image*/
@@ -125,7 +125,6 @@ class local_users_renderer extends plugin_renderer_base {
                 }
             }
         }
-        $pluginarray['skills'] = 1;
         $badgecount = $DB->count_records_sql("SELECT count(id) FROM {badge_issued} WHERE
          userid = :userid", array('userid' => $userrecord->id));
         $certificatecount = 0;
@@ -182,7 +181,7 @@ class local_users_renderer extends plugin_renderer_base {
     public function user_page_top_action_buttons() {
         global $CFG;
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-        
+
         return $this->render_from_template('local_users/usertopactions', array('contextid' => $systemcontext->id));
     }
     /**
@@ -209,7 +208,7 @@ class local_users_renderer extends plugin_renderer_base {
         $departmentid = optional_param('departmentid', '', PARAM_INT);
         $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-        
+
         $templateName = 'local_users/users_view';
         $cardClass = 'col-md-6 col-12';
         $perpage = 10;
@@ -253,7 +252,7 @@ class local_users_renderer extends plugin_renderer_base {
         global $USER;
 
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-        
+
 
         $options = array('targetID' => 'display_sync', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
         $options['methodName'] = 'local_users_syncerrors_view';
@@ -286,7 +285,7 @@ class local_users_renderer extends plugin_renderer_base {
         global $USER;
 
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-        
+
         $options = array('targetID' => 'display_syncstatics', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
         $options['methodName'] = 'local_users_syncstatics_view';
         $options['templateName'] = 'local_users/syncstatistics';
@@ -309,8 +308,8 @@ class local_users_renderer extends plugin_renderer_base {
     }
 
      public function employees_skill_profile_view($id) {
-        global $CFG, $OUTPUT, $DB, $PAGE, $USER;        
-        
+        global $CFG, $OUTPUT, $DB, $PAGE, $USER;
+
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         $corecomponent = new \core_component();
@@ -369,7 +368,7 @@ class local_users_renderer extends plugin_renderer_base {
                             JOIN {course} AS c ON c.id = cc.course
                              JOIN {enrol} AS e ON c.id = e.courseid AND e.enrol IN('self','manual','auto')
                             JOIN {user_enrolments} AS ue ON e.id = ue.enrolid AND ue.userid = cc.userid
-                            WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
+                            WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',2,',%')
                              AND cc.timecompleted is not NULL AND c.visible=1 AND c.id>1 AND cc.userid =
                               {$userrecord->id} AND open_skill IN ({$skillids})";
                     $completed_skills = $DB->get_records_sql($sql);

@@ -262,7 +262,8 @@ function tool_certificate_pre_course_category_delete_move(\core_course_category 
 * @return  [type] string  link for the leftmenu
 */
 function tool_certificate_leftmenunode(){
-    $systemcontext = context_system::instance();
+
+    $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
     $certificatenode = '';
     if(has_capability('tool/certificate:manage', $systemcontext) || is_siteadmin() ) {
         $certificatenode .= html_writer::start_tag('li', array('class' => 'pull-left user_nav_div browsecertifications'));
@@ -271,6 +272,5 @@ function tool_certificate_leftmenunode(){
             $certificatenode .= $certification;
         $certificatenode .= html_writer::end_tag('li');
     }
-
     return array('15' => $certificatenode);
 }

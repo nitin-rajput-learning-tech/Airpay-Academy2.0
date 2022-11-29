@@ -4,7 +4,7 @@ class userdashboard_content extends \block_userdashboard\content{
 	public function userdashboard_menu_content(){
 		$returndata = array();
 		$returndata['id'] = 'learningplan_courses';
-		$returndata['order'] = 1;
+		$returndata['order'] = 2;
 		$returndata['pluginname'] = 'local_learningplan';
 		$returndata['tabname'] = 'inprogress';
 		$returndata['status'] = 'inprogress';
@@ -42,24 +42,24 @@ class userdashboard_content extends \block_userdashboard\content{
      public static function completed_lepnames($filter_text='', $offset, $limit) {
         global $DB, $USER;
         $sqlquery = "SELECT llp.id,llp.name as fullname, llp.description as description";
-        $sql = " FROM {local_learningplan} llp 
-            JOIN {local_learningplan_user} as lla on llp.id=lla.planid 
-            WHERE userid={$USER->id} and lla.completiondate is NOT NULL 
+        $sql = " FROM {local_learningplan} llp
+            JOIN {local_learningplan_user} as lla on llp.id=lla.planid
+            WHERE userid={$USER->id} and lla.completiondate is NOT NULL
             AND status=1 and llp.visible=1 ";
         if(!empty($filter_text)){
             $sql .= " AND llp.name LIKE '%%{$filter_text}%%'";
         }
         $sql .= " ORDER BY lla.id desc";
-        
+
         $completed = $DB->get_records_sql($sqlquery . $sql, array(), $offset, $limit);
         return $completed;
     }
     public static function completed_lepnames_count($filter_text=''){
     	global $DB, $USER;
     	$sqlcount = "SELECT COUNT(llp.id) ";
-    	$sql = " FROM {local_learningplan} llp 
-            JOIN {local_learningplan_user} as lla on llp.id=lla.planid 
-            WHERE userid={$USER->id} and lla.completiondate is NOT NULL 
+    	$sql = " FROM {local_learningplan} llp
+            JOIN {local_learningplan_user} as lla on llp.id=lla.planid
+            WHERE userid={$USER->id} and lla.completiondate is NOT NULL
             AND status=1 and llp.visible=1 ";
         if(!empty($filter_text)){
             $sql .= " AND llp.name LIKE '%%{$filter_text}%%'";
@@ -72,22 +72,22 @@ class userdashboard_content extends \block_userdashboard\content{
      public static function enrolled_lepnames($filter_text='', $offset, $limit) {
         global $DB, $USER;
         $sqlquery = "SELECT llp.id,llp.name as fullname, llp.description as description";
-        $sql = " FROM {local_learningplan} llp 
-            JOIN {local_learningplan_user} as lla on llp.id=lla.planid 
+        $sql = " FROM {local_learningplan} llp
+            JOIN {local_learningplan_user} as lla on llp.id=lla.planid
             WHERE userid={$USER->id} and llp.visible=1 ";
         if(!empty($filter_text)){
             $sql .= " AND llp.name LIKE '%%{$filter_text}%%'";
         }
         $sql .= " ORDER BY lla.id desc";
-        
+
         $enrolled = $DB->get_records_sql($sqlquery . $sql, array(), $offset, $limit);
         return $enrolled;
     }
     public static function enrolled_lepnames_count($filter_text=''){
         global $DB, $USER;
         $sqlcount = "SELECT COUNT(llp.id) ";
-        $sql = " FROM {local_learningplan} llp 
-            JOIN {local_learningplan_user} as lla on llp.id=lla.planid 
+        $sql = " FROM {local_learningplan} llp
+            JOIN {local_learningplan_user} as lla on llp.id=lla.planid
             WHERE userid={$USER->id} and llp.visible=1 ";
         if(!empty($filter_text)){
             $sql .= " AND llp.name LIKE '%%{$filter_text}%%'";
