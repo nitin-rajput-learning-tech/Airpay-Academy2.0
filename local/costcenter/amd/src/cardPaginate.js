@@ -239,7 +239,12 @@ define(
 						else if(options.targetID == 'manage_categories'){
 							name =Str.get_string('no_categories_data', 'local_costcenter');
 						}
-						
+                        else if(options.targetID == 'manage_skills_category'){
+                            name =Str.get_string('no_categories_data', 'local_costcenter');
+                        }
+                        else if(options.targetID == 'manage_skills_level'){
+                            name =Str.get_string('no_levels_data', 'local_costcenter');
+                        }
 						return name.then(function(s) {
                         return Templates.render('local_costcenter/no-data', {name:s});
 						});

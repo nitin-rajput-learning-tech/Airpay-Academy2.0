@@ -105,10 +105,8 @@ class local_skillrepository_renderer extends plugin_renderer_base {
     ////Using service.php showing data on index page instead of ajax datatables
     public function manageskills_content($filter = false){
         global $USER;
-
-
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-        $options = array('targetID' => 'manage_skills','perPage' => 5, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
+        $options = array('targetID' => 'manage_skills','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
 
         $options['methodName']='local_skillrepository_manageskills_view';
         $options['templateName']='local_skillrepository/skills_view';
@@ -118,10 +116,10 @@ class local_skillrepository_renderer extends plugin_renderer_base {
         $filterdata = json_encode(array());
 
         $context = [
-                'targetID' => 'manage_skills',
-                'options' => $options,
-                'dataoptions' => $dataoptions,
-                'filterdata' => $filterdata
+            'targetID' => 'manage_skills',
+            'options' => $options,
+            'dataoptions' => $dataoptions,
+            'filterdata' => $filterdata
         ];
 
         if($filter){
@@ -191,7 +189,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 		if(!is_siteadmin()){
             $skill_categories = $DB->get_records_sql("SELECT lsc.* from {local_skill_categories} AS lsc where lsc.costcenterid={$USER->open_costcenterid} order by lsc.id desc");
-            $isadmin = false;
+            // $isadmin = false;
             $head = [];
 		} else{
 			$skill_categories = $DB->get_records_sql("SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON lc.id = lsc.costcenterid order by lsc.id desc");
@@ -395,4 +393,57 @@ class local_skillrepository_renderer extends plugin_renderer_base {
  		}
  		return $tabledata;
 	}
+
+	public function manageskillslevel_content($filter = false){
+        global $USER;
+        $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+        $options = array('targetID' => 'manage_skills_level','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
+
+        $options['methodName']='local_skillrepository_manageskillslevel_view';
+        $options['templateName']='local_skillrepository/skills_level_view';
+        $options = json_encode($options);
+
+        $dataoptions = json_encode(array('userid' =>$USER->id,'contextid' => $systemcontext->id));
+        $filterdata = json_encode(array());
+
+        $context = [
+        	'targetID' => 'manage_skills_level',
+            'options' => $options,
+            'dataoptions' => $dataoptions,
+            'filterdata' => $filterdata
+        ];
+
+        if($filter){
+            return  $context;
+        }else{
+            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
+        }
+    }
+
+    public function manageskillscategory_content($filter = false){
+        global $USER;
+        $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+        $options = array('targetID' => 'manage_skills_category','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
+
+        $options['methodName']='local_skillrepository_manageskillscategory_view';
+        $options['templateName']='local_skillrepository/skills_cat_view';
+        $options = json_encode($options);
+
+        $dataoptions = json_encode(array('userid' =>$USER->id,'contextid' => $systemcontext->id));
+        $filterdata = json_encode(array());
+
+        $context = [
+            'targetID' => 'manage_skills_category',
+            'options' => $options,
+            'dataoptions' => $dataoptions,
+            'filterdata' => $filterdata
+        ];
+
+        if($filter){
+            return  $context;
+        }else{
+            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
+        }
+    }
+
 }

@@ -58,7 +58,8 @@ $id = 1;
 if (!has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
 	print_error('Sorry, You are not accessable to this page');
 }
-$renderer = $PAGE->get_renderer('local_skillrepository'); 
+$renderer = $PAGE->get_renderer('local_skillrepository');
+$filterparams = $renderer->manageskills_content(true);
 $repository = new local_skillrepository\event\insertrepository();
 // if id exists, get curernt id details else create a new class
 
@@ -94,47 +95,22 @@ if ($mform->is_cancelled()) {
 		$description = array();
 		
 		$description['format'] = 1;
-	//print_object($toform);
 		$mform->set_data($toform);
 	}elseif($submitbutton){
 		$collapse = false;
 	}else{
 		$collapse = true;
-	}
-	
+	}	
 }
 
-
-// Delete Skill Repository
-/*$returnurl = new moodle_url('/local/skillrepository/index.php');
-if ($delete) {
-    $PAGE->url->param('delete', 1);
-    if ($confirm and confirm_sesskey()) {
-		$result = $repository->skillrepository_opertaions('local_skill', 'delete', '', 'id', $delete_id);
-        redirect($returnurl);
-    }
-    $strheading = get_string('deleteskill', 'local_skillrepository');
-    $PAGE->set_title($strheading);
-
-    echo $OUTPUT->header();
-    echo $OUTPUT->heading($strheading);
-
-        $yesurl = new moodle_url('/local/skillrepository/index.php', array('delete_id' => $delete_id, 'delete' => 1, 'confirm' => 1, 'sesskey' => sesskey()));
-        $message = get_string('delconfirm', 'local_skillrepository');
-        echo $OUTPUT->confirm($message, $yesurl, $returnurl);
-    
-    echo $OUTPUT->footer();
-    die;
-}*/
 $PAGE->set_heading(get_string('manage_skills', 'local_skillrepository'));
 echo $OUTPUT->header();
 echo $renderer->get_top_action_buttons_skills();
+$filterparams['submitid'] = 'form#filteringform';
+echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 $skill = $repository->skillrepository_opertaions('local_skill', 'fetch-multiple','','','');
 if(empty($skill)){
 	$collapse = false;
 }
-// Display Skill Repository Table
-//echo $renderer->display_table();
 echo $renderer->manageskills_content();
-
 echo $OUTPUT->footer();

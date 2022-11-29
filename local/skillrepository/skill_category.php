@@ -64,6 +64,7 @@ echo $OUTPUT->header();
 $lib =  new local_skillrepository\event\insertcategory();
 $repository = new local_skillrepository\event\insertrepository();
 $renderer = $PAGE->get_renderer('local_skillrepository');
+$filterparams = $renderer->manageskillscategory_content(true);
 if ($id > 0) {
     $tool = $DB->get_record('local_skill_categories', array('id' => $id));
 } else {
@@ -75,26 +76,6 @@ if($id > 0){
     $collapse = false;
 }else{
     $collapse = true;
-}
-
-/* Start of delete the skill category */
-
-if ($delete) {
-    if ($confirm and confirm_sesskey()) {        
-		$result = $repository->skillrepository_opertaions('local_skill_categories', 'delete', '', 'id', $delete_id);
-        redirect($returnurl);
-    }
-    $strheading = get_string('deleteskill_category', 'local_skillrepository');
-    $PAGE->set_title($strheading);
-
-    echo $OUTPUT->heading($strheading);
-
-        $yesurl = new moodle_url('/local/skillrepository/skill_category.php', array('delete_id' => $delete_id, 'delete' => 1, 'confirm' => 1, 'sesskey' => sesskey()));
-        $message = get_string('delconfirm_skillcategory', 'local_skillrepository');
-        echo $OUTPUT->confirm($message, $yesurl, $returnurl);
-    
-    echo $OUTPUT->footer();
-    die;
 }
 
 //this is the return url
@@ -120,20 +101,21 @@ if(empty($skill_categories)){
 
 //Added back button
 echo "<ul class='course_extended_menu_list'>
-        <li>
-          <div class='coursebackup course_extended_menu_itemcontainer'>
+    <li>
+        <div class='coursebackup course_extended_menu_itemcontainer'>
             <a href='".$CFG->wwwroot."/local/skillrepository/index.php' title='".get_string("back")."' class='course_extended_menu_itemlink'>
-              <i class='icon fa fa-reply'></i>
+                <i class='icon fa fa-reply'></i>
             </a>
         </div>
-        </li>
-        <li>
-            <div class='coursebackup course_extended_menu_itemcontainer'>
-                <a id='extended_menu_syncstats' title='".get_string('create_skillcategory', 'local_skillrepository')."' class='course_extended_menu_itemlink' href='javascript:void(0)' onclick ='(function(e){ require(\"local_skillrepository/newcategory\").init({selector:\"createcategorymodal\", contextid:$systemcontext->id, categoryid:0}) })(event)'><i class='icon fa fa-plus' aria-hidden='true' aria-label=''></i></a>
-            </div>              
-        </li>
-        
-    </ul>";
-echo $renderer->view_skill_categories();
-
+    </li>
+    <li>
+        <div class='coursebackup course_extended_menu_itemcontainer'>
+            <a id='extended_menu_syncstats' title='".get_string('create_skillcategory', 'local_skillrepository')."' class='course_extended_menu_itemlink' href='javascript:void(0)' onclick ='(function(e){ require(\"local_skillrepository/newcategory\").init({selector:\"createcategorymodal\", contextid:$systemcontext->id, categoryid:0}) })(event)'><i class='icon fa fa-plus' aria-hidden='true' aria-label=''></i>
+            </a>
+        </div>              
+    </li>    
+</ul>";
+$filterparams['submitid'] = 'form#filteringform';
+echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
+echo $renderer->manageskillscategory_content();
 echo $OUTPUT->footer();

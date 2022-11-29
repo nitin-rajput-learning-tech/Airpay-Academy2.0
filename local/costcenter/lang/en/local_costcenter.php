@@ -339,6 +339,7 @@ $string['no_users_data'] = 'No Users Available';
 $string['no_onlineexams_data'] = 'No Online exams Available';
 $string['no_groups_data'] = 'No Groups Available';
 $string['no_categories_data'] = 'No Categories Available';
+$string['no_levels_data'] = 'No Levels Available';
 $string['totalusers'] = 'Total Users';
 $string['activeusers'] = 'Active Users';
 $string['inactiveusers'] = 'In-Active Users';
@@ -357,10 +358,6 @@ $string['inactiveonlineexams'] = 'In-Active Online Exams';
 $string['allfeedback'] = 'Total Feedbacks';
 $string['activefeedback'] = 'Active Feedback';
 $string['inactivefeedback'] = 'In-Active Feedback';
-
- 
 $string['assignroleusers'] = 'Assigned Role Users';
-
 $string['costcenterassignedrole']=' <b> {$a->costcentername} </b> : Assigned Role Users';
-
 $string['addblocks']='Add Blocks';
