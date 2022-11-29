@@ -221,7 +221,17 @@ function skill_details($tablelimits, $filtervalues){
     if ($records) {
         foreach ($records as $c) {
             $list=array();
-            $list['skilname'] = $c->name;
+            $id = $c->id;
+            $usercountsql = "SELECT count(DISTINCT(u.id))
+                FROM {course} c
+                JOIN {course_completions} cc
+                on cc.course = c.id
+                JOIN {user} u
+                on cc.userid = u.id
+                WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL ";
+            $usercount = $DB->count_records_sql($usercountsql);
+            $skilname=$c->name;
+            $list['skilname'] = $skilname;
             $list['organisationname'] = $c->organisationname;
             $list['skill_id'] = $c->id;
             $list['achieved_users'] = $usercount;
