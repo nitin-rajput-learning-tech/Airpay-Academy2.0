@@ -27,7 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->libdir . '/completionlib.php');
-use context_system;
 use local_classroom\local\querylib;
 use moodleform;
 use core_component;
@@ -50,7 +49,7 @@ class classroom_form extends moodleform {
         $querieslib = new querylib();
         $mform = &$this->_form;
         $renderer = $PAGE->get_renderer('local_classroom');
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($id);
         $formstatus = $this->_customdata['form_status'];
         $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
         $formheaders = array_keys($this->formstatus);
@@ -71,9 +70,8 @@ class classroom_form extends moodleform {
             }
             $mform->addRule('name', null, 'required', null, 'client');
 
-            if (is_siteadmin() || ((has_capability('local/classroom:manage_multiorganizations', context_system::instance()) ||has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))) ) {
+            if (is_siteadmin() || ((has_capability('local/classroom:manage_multiorganizations', $categorycontext) ||has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) ) {
 
-//                $costcenters = array();
                 $costcenters = array(null => get_string('select_costcenter', 'local_classroom'));
                 $costcenterslist = $this->_ajaxformdata['costcenter'];
                 if (!empty($costcenterslist)) {
@@ -96,7 +94,7 @@ class classroom_form extends moodleform {
 
                 $options = array(
                     'ajax' => 'local_classroom/form-options-selector',
-                    'data-contextid' => $context->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'classroom_costcenter_selector',
                     'data-options' => json_encode(array('id' => $id, 'depth' => 1, 'parnetid' => 0)),
                     'class' => 'organizationselect',
@@ -112,21 +110,9 @@ class classroom_form extends moodleform {
                 $mform->addElement('hidden', 'costcenter', $USER->open_costcenterid,
                     array( 'data-class' => 'organizationselect'));//get_string('costcenter', 'local_classroom')
                 $mform->setType('costcenter', PARAM_INT);
-                // $mform->setDefault('costcenter', $USER->open_costcenterid);
+
             }
 
-            // $type = array(1 => get_string('classroom', 'local_classroom'),
-            //     2 => get_string('learningplan', 'local_classroom'),
-            //     3 => get_string('certification', 'local_classroom'),
-            // );
-            // $mform->addElement('hidden', 'type', get_string('type', 'local_classroom'), $type,
-            //  array());
-            // $mform->addRule('type', null, 'required', null, 'client');
-            // $mform->setType('type', PARAM_INT);
-
-             //*OPEN LMSOL-333 Employee_Search_Classroom*//
-             
-              
             $manageselfenrol = array();
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('no'), 0, $attributes);
@@ -147,12 +133,10 @@ class classroom_form extends moodleform {
             $mform->addHelpButton('approvalreqd', 'need_manage_approval', 'local_classroom');
             $mform->hideIf('approvalreqd', 'selfenrol', 'neq', '1');
 
-            // $visible_options = array(1 => get_string('show'), 0 => get_string('hide'));
-            // $mform->addElement('select', 'visible', get_string('visible'), $visible_options, array());
-            // $mform->setDefault('visible', 1);
+
+
             $mform->addElement('hidden',  'visible',  1);
             $mform->setType('visible', PARAM_INT);
-            //*OPEN LMSOL-333 Employee_Search_Classroom*//
 
             $allowmultisession = array();
             $allowmultisession[] = $mform->createElement('radio', 'allow_multi_session', '',
@@ -169,7 +153,7 @@ class classroom_form extends moodleform {
              array());
             $mform->setType('capacity', PARAM_RAW);
             $mform->addHelpButton('capacity','capacity_check','local_classroom');
-             if (is_siteadmin() || ((has_capability('local/classroom:viewwaitinglist_userstab', context_system::instance())))){
+             if (is_siteadmin() || ((has_capability('local/classroom:viewwaitinglist_userstab', $categorycontext)))){
                     $allowwaitinglistusers = array();
                     $allowwaitinglistusers[] = $mform->createElement('radio', 'allow_waitinglistusers', '',
                      get_string('yes'), 1, $attributes);
@@ -200,7 +184,7 @@ class classroom_form extends moodleform {
             $options = array(
                 'ajax' => 'local_classroom/form-options-selector',
                 'multiple' => true,
-                'data-contextid' => $context->id,
+                'data-contextid' => $categorycontext->id,
                 'data-action' => 'classroom_trainer_selector',
                 'data-options' => json_encode(array('id' => $id,'organizationselect' => 'organizationselect')),
                 'class' => 'trainerselect',
@@ -231,7 +215,7 @@ class classroom_form extends moodleform {
 
                 $select = array(null => get_string('select_certificate','local_classroom'));
 
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)){
+                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_costcenterid),'name', 'id,name');
@@ -272,7 +256,7 @@ class classroom_form extends moodleform {
             }
             $options = array(
                 'ajax' => 'local_classroom/form-options-selector',
-                'data-contextid' => $context->id,
+                'data-contextid' => $categorycontext->id,
                 'data-action' => 'classroom_institute_selector',
                 'data-options' => json_encode(array('id' => $id)),
                 'data-institute_type' => 'institute_type'
@@ -304,13 +288,12 @@ class classroom_form extends moodleform {
             $mform->addHelpButton('cr_description', 'description', 'local_classroom');
 
         }else if ($formstatus == 3) {
-            // OL-1042 Add Target Audience to Classrooms//
-            // ((has_capability('local/classroom:manage_multiorganizations', context_system::instance()) && has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))) &&
+
             if (is_siteadmin() || 
-                (has_capability('local/classroom:manageclassroom', $context) 
-                    && has_capability('local/classroom:manageclassroom', $context)
-                    && !has_capability('local/classroom:manage_owndepartments',$context) 
-                    && !has_capability('local/costcenter:manage_owndepartments',$context))) {
+                (has_capability('local/classroom:manageclassroom', $categorycontext)
+                    && has_capability('local/classroom:manageclassroom', $categorycontext)
+                    && !has_capability('local/classroom:manage_owndepartments',$categorycontext)
+                    && !has_capability('local/costcenter:manage_owndepartments',$categorycontext))) {
                 $departments = array();
                 $departmentslist = $this->_ajaxformdata['department'];
 
@@ -342,7 +325,7 @@ class classroom_form extends moodleform {
                 $options = array(
                     'ajax' => 'local_classroom/form-options-selector',
                     'multiple' => true,
-                    'data-contextid' => $context->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'classroom_costcenter_selector',
                     'data-options' => json_encode(array('id' => $id, 'depth' => 2,
                         'organizationselect' => '.organizationselect', 'department' => true,
@@ -354,40 +337,13 @@ class classroom_form extends moodleform {
                     'local_classroom'), $departments, $options);
                 $mform->setType('department', PARAM_RAW);
                 
-     //        }elseif (is_siteadmin() || ((!has_capability('local/classroom:manage_multiorganizations', context_system::instance()) &&! has_capability('local/costcenter:manage_multiorganizations', context_system::instance())) && has_capability('local/classroom:manageclassroom', $context)&&(has_capability('local/classroom:manage_owndepartments',$context)||has_capability('local/costcenter:manage_owndepartments',$context)))) {
-            
-     //            	$options = array(
-					// 	'class' => 'department_select'
-					// );
-					// $costcenter = $DB->get_field('local_classroom','costcenter',array('id'=>$id));
-					// $costcenter_department = $DB->get_field('local_classroom','department',array('id'=>$id));
-                   
-					// if(empty($costcenter_department)){
-					// 	$departmentslist=array($USER->open_departmentid=>$USER->open_departmentid);
-					// }else{
-					// 	if($costcenter_department!='-1'){
-					// 		$departmentslist=explode(',',$costcenter_department);
-					// 		$departmentslist=array_combine($departmentslist,$departmentslist);
-					// 	}else{
-     //                        $departmentslist=array('-1'=>'-1');
-     //                    }
-					
-					// }
-					
-					// $mform->addElement('autocomplete', 'department', get_string('department'),$departmentslist,$options);
-					// if(empty($costcenter_department)){
-					//  $mform->setDefault('department', $USER->open_departmentid);
-					// }
-     //                if($costcenter_department=='-1'){
-					//  $mform->setDefault('department',-1);
-					// }
             }else{
-                // $departmentlist = $DB->get_field('local_classroom', 'department', array('id' => $id)); echo $departmentlist;
+
                 $mform->addElement('hidden', 'department', $USER->open_departmentid, array('id' => 'id_department'));//, array('id' => 'id_department')
                 $mform->setConstant('department', $USER->open_departmentid);
                 $mform->setType('department', PARAM_RAW);
             }
-            if(is_siteadmin() || has_capability('local/classroom:manageclassroom', $context)){
+            if(is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext)){
                 $departments = array();
                 $subdepartment = $this->_ajaxformdata['subdepartment'];
 
@@ -402,7 +358,7 @@ class classroom_form extends moodleform {
                     if (is_array($subdepartmentslist)){
                         $subdepartmentslist=implode(',',$subdepartmentslist);
                     }
-                    // $organisation = $DB->get_field('local_classroom', 'costcenter', array('id' => $id));
+
                     $departments = $DB->get_field('local_classroom', 'department', array('id' => $id));
                     
                     $subdepartmentlistsql = "SELECT id, fullname
@@ -430,13 +386,12 @@ class classroom_form extends moodleform {
                 $options = array(
                     'ajax' => 'local_classroom/form-options-selector',
                     'multiple' => true,
-                    'data-contextid' => $context->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'classroom_subdepartment_selector',
                     'data-options' => json_encode(array('id' => $id, 'depth' => 3,
                         'organizationselect' => '.organizationselect', 'subdepartment' => true)),
                     'class' => 'subdepartmentselect'
                 );
-                //'organizationselect' => 'organizationselect'
 
                 $mform->addElement('autocomplete', 'subdepartment', get_string('subdepartment',
                     'local_costcenter'), $subdepartments, $options);
@@ -566,7 +521,7 @@ class classroom_form extends moodleform {
 
     public function set_data($components) {
         global $DB;
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($components->id);
         if ($components->form_status == 0) {
             $data = $DB->get_record('local_classroom', array('id' => $components->id));
             //populate tags
@@ -599,7 +554,7 @@ class classroom_form extends moodleform {
              FROM {local_classroom} WHERE id = ' . $components->id);
             $data->cr_description['text'] = $data->description;
             $draftitemid = file_get_submitted_draft_itemid('classroomlogo');
-            file_prepare_draft_area($draftitemid, $context->id, 'local_classroom', 'classroomlogo', $data->classroomlogo, null);
+            file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_classroom', 'classroomlogo', $data->classroomlogo, null);
             $data->classroomlogo = $draftitemid;
         }else if ($components->form_status == 3) {
              // OL-1042 Add Target Audience to Classrooms//

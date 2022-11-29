@@ -29,14 +29,13 @@ require_once($CFG->libdir . '/formslib.php');
 use \local_classroom\classroom as classroom;
 use moodleform;
 use local_classroom\local\querylib;
-use context_system;
 
 class classroom_completion_form extends moodleform {
 
     public function definition() {
         global $CFG, $DB, $USER;
         $querieslib = new querylib();
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($cid);
         $mform = &$this->_form;
         $cid = $this->_customdata['cid'];
         $sid = $this->_customdata['id'];
@@ -80,7 +79,7 @@ class classroom_completion_form extends moodleform {
         $options = array(
             'ajax' => 'local_classroom/form-options-selector',
             'multiple' => true,
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-action' => 'classroom_completions_sessions_selector',
             'data-options' => json_encode(array('id' => $id,'classroomid'=>$cid)),
         );
@@ -118,7 +117,7 @@ class classroom_completion_form extends moodleform {
         $options = array(
             'ajax' => 'local_classroom/form-options-selector',
             'multiple' => true,
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-action' => 'classroom_completions_courses_selector',
             'data-options' => json_encode(array('id' => $id,'classroomid'=>$cid)),
         );

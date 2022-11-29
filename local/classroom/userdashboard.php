@@ -36,11 +36,11 @@ if ($formattype == 'card') {
     $display_icon = get_string('cardicon','local_classroom');
 }
 
-$systemcontext =  (new \local_classroom\lib\accesslib())::get_module_context();
+$categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context();
 $pageurl = new moodle_url('/local/courses/userdashboard.php',array('tab' => $tab));
 $PAGE->set_url($pageurl);
 $PAGE->set_pagelayout('standard');
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $heading = get_string($tab.'_classroom', 'local_classroom');
 $PAGE->set_title($heading);
 $PAGE->set_heading($heading);

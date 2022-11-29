@@ -23,7 +23,6 @@
  */
 namespace local_classroom\output;
 defined('MOODLE_INTERNAL') || die;
-use context_system;
 use renderable;
 use renderer_base;
 use stdClass;
@@ -35,7 +34,7 @@ class classroom implements renderable, templatable {
      * @method __construct
      */
     public function __construct() {
-        $this->context = context_system::instance();
+        $this->context = (new \local_classroom\lib\accesslib())::get_module_context();
         $this->plugintype = 'local';
         $this->plugin_name = 'classroom';
     }
@@ -51,8 +50,8 @@ class classroom implements renderable, templatable {
         $data->plugintype = $this->plugintype;
         $data->plugin_name = $this->plugin_name;
         $data->creataclassroom = ((has_capability('local/classroom:manageclassroom',
-            context_system::instance()) && has_capability('local/classroom:createclassroom',
-            context_system::instance())) || is_siteadmin()) ? true : false;
+            $this->context) && has_capability('local/classroom:createclassroom',
+            $this->context)) || is_siteadmin()) ? true : false;
         return $data;
     }
 }

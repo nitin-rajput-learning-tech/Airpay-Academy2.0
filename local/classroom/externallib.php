@@ -43,15 +43,15 @@ class local_classroom_external extends external_api {
         ]);
     }
 
-    public static function get_classrooms($contextid, $options,
+    public static function get_classrooms($categorycontextid, $options,
         $dataoptions,
         $offset = 0,
         $limit = 0
     ) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::get_classrooms_parameters(),
             [
@@ -186,7 +186,7 @@ class local_classroom_external extends external_api {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewsessions($contextid, $options,
+    public static function classroomviewsessions($categorycontextid, $options,
         $dataoptions,
         $offset = 0,
         $limit = 0,
@@ -194,8 +194,8 @@ class local_classroom_external extends external_api {
     ) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewsessions_parameters(),
             [
@@ -231,9 +231,9 @@ class local_classroom_external extends external_api {
          $departmentcount = count(array_filter(explode(',',$classroom->department)));
          $manage = true;
 
-         $context = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
+         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
 
-         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$context)) && $departmentcount > 1){
+         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
               $manage = false;
          }
          
@@ -318,7 +318,7 @@ class local_classroom_external extends external_api {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewcourses($contextid, $options,
+    public static function classroomviewcourses($categorycontextid, $options,
         $dataoptions,
         $offset = 0,
         $limit = 0,
@@ -326,12 +326,12 @@ class local_classroom_external extends external_api {
     ) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewcourses_parameters(),
             [
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
                 'options' => $options,
                 'dataoptions' => $dataoptions,
                 'offset' => $offset,
@@ -361,9 +361,9 @@ class local_classroom_external extends external_api {
         foreach($classrooms AS $classroom)
          $departmentcount = count(array_filter(explode(',',$classroom->department)));
          $manage = true;
-         $context = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
+         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
 
-         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$context)) && $departmentcount > 1){
+         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
               $manage = false;
          }
 
@@ -426,16 +426,16 @@ class local_classroom_external extends external_api {
      * @param  [type]                contextid [which context]
      * @param  [type]                classroomid      [classroomid]
      */
-    public static function classroomlastchildpopup($classroomid,$contextid) {
+    public static function classroomlastchildpopup($classroomid,$categorycontextid) {
         global $DB, $PAGE;
         // print_object($classroomid)
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomlastchildpopup_parameters(),
             [
                 'classroomid' => $classroomid,
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
             ]
         );
 
@@ -521,7 +521,7 @@ class local_classroom_external extends external_api {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewusers($contextid, $options,
+    public static function classroomviewusers($categorycontextid, $options,
         $dataoptions,
         $offset = 0,
         $limit = 0,
@@ -529,12 +529,12 @@ class local_classroom_external extends external_api {
     ) {
         global $DB, $PAGE, $CFG;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewusers_parameters(),
             [
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
                 'options' => $options,
                 'dataoptions' => $dataoptions,
                 'offset' => $offset,
@@ -638,7 +638,7 @@ class local_classroom_external extends external_api {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewfeedbacks($contextid, $options,
+    public static function classroomviewfeedbacks($categorycontextid, $options,
         $dataoptions,
         $offset = 0,
         $limit = 0,
@@ -646,12 +646,12 @@ class local_classroom_external extends external_api {
     ) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewfeedbacks_parameters(),
             [
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
                 'options' => $options,
                 'dataoptions' => $dataoptions,
                 'offset' => $offset,
@@ -678,16 +678,16 @@ class local_classroom_external extends external_api {
          $lineaction = false;
          $manage = true;
 
-         $context = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
+         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
 
-         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$context)) && $departmentcount > 1){
+         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
             $manage = false;
          }
 
         if(method_exists($renderer, $functinname)){
             $feedbacksdata = $renderer->$functinname($feedbacks['evaluations'],$decodeddataoptions->classroomid);
             $createfeedback = $feedbacksdata['createfeedback'];
-            if ((has_capability('local/classroom:editfeedback', $context) || has_capability('local/classroom:deletefeedback', $context))&&(has_capability('local/classroom:manageclassroom', $context)) && $manage) {
+            if ((has_capability('local/classroom:editfeedback', $categorycontext) || has_capability('local/classroom:deletefeedback', $categorycontext))&&(has_capability('local/classroom:manageclassroom', $categorycontext)) && $manage) {
                 $lineaction = true;
             }
 
@@ -763,15 +763,15 @@ class local_classroom_external extends external_api {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewcompletioninfo($contextid, $classroomid,$name) {
+    public static function classroomviewcompletioninfo($categorycontextid, $classroomid,$name) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewcompletioninfo_parameters(),
             [
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
                 'classroomid' => $classroomid,
                 'name' => $name,
             ]
@@ -829,14 +829,14 @@ class local_classroom_external extends external_api {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewtargetaudience($contextid, $classroomid,$name) {
+    public static function classroomviewtargetaudience($categorycontextid, $classroomid,$name) {
         global $DB, $PAGE;
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewtargetaudience_parameters(),
             [
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
                 'classroomid' => $classroomid,
                 'name' => $name,
             ]
@@ -903,7 +903,7 @@ class local_classroom_external extends external_api {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewrequestedusers($contextid, $options,
+    public static function classroomviewrequestedusers($categorycontextid, $options,
         $dataoptions,
         $offset = 0,
         $limit = 0,
@@ -911,12 +911,12 @@ class local_classroom_external extends external_api {
     ) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewrequestedusers_parameters(),
             [
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
                 'options' => $options,
                 'dataoptions' => $dataoptions,
                 'offset' => $offset,
@@ -998,10 +998,10 @@ class local_classroom_external extends external_api {
         );
     }
 
-    public static function classroom_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function classroom_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -1123,10 +1123,10 @@ class local_classroom_external extends external_api {
             // delete events in calendar
             $DB->delete_records('event', array('plugin_instance'=>$id, 'plugin'=>'local_classroom')); // added by sreenivas
 
-            $context = (new \local_classroom\lib\accesslib())::get_module_context($id);
+            $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($id);
 
             $params = array(
-                    'context' => $context,
+                    'context' => $categorycontext,
                     'objectid' =>$id
             );
 
@@ -1170,8 +1170,8 @@ class local_classroom_external extends external_api {
 
     public static function manageclassroomStatus_instance($action, $id, $confirm,$actionstatusmsg,$classroomname) {
         global $DB,$USER, $PAGE;
-        $systemcontext = (new \local_classroom\lib\accesslib())::get_module_context($id);
-        $PAGE->set_context($systemcontext);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($id);
+        $PAGE->set_context($categorycontext);
         $return_status="";
         try {
             if ($action === 'selfenrol') {
@@ -1263,12 +1263,12 @@ class local_classroom_external extends external_api {
         ));
     }
 
-    public static function classroom_course_selector($query, $context, $includes = 'parents', $classroomid /*, $limitfrom = 0, $limitnum = 25*/) {
+    public static function classroom_course_selector($query, $categorycontext, $includes = 'parents', $classroomid /*, $limitfrom = 0, $limitnum = 25*/) {
         global $CFG, $DB, $USER;
         
         $params = self::validate_parameters(self::classroom_course_selector_parameters(), array(
             'query' => $query,
-            'context' => $context,
+            'context' => $categorycontext,
             'includes' => $includes,
             'classroomid' => $classroomid,
             // 'limitfrom' => $limitfrom,
@@ -1278,11 +1278,11 @@ class local_classroom_external extends external_api {
         $query = $params['query'];
         $includes = $params['includes'];
         $classroomid = $params['classroomid'];
-        $context = self::get_context_from_params($params['context']);
+        $categorycontext = self::get_context_from_params($params['context']);
         // $limitfrom = $params['limitfrom'];
         // $limitnum = $params['limitnum'];
 
-        self::validate_context($context);
+        self::validate_context($categorycontext);
         $courses = array();
         if ($query) {
             $queryparams = array();
@@ -1502,11 +1502,11 @@ class local_classroom_external extends external_api {
         ));
     }
 
-    public static function classroom_form_option_selector($query, $context, $action, $options/*, $limitfrom = 0, $limitnum = 25*/) {
+    public static function classroom_form_option_selector($query, $categorycontext, $action, $options/*, $limitfrom = 0, $limitnum = 25*/) {
         global $CFG, $DB, $USER;
         $params = self::validate_parameters(self::classroom_form_option_selector_parameters(), array(
             'query' => $query,
-            'context' => $context,
+            'context' => $categorycontext,
             'action' => $action,
             'options' => $options
             // 'limitfrom' => $limitfrom,
@@ -1514,7 +1514,7 @@ class local_classroom_external extends external_api {
         ));
         $query = $params['query'];
         $action = $params['action'];
-        $context = self::get_context_from_params($params['context']);
+        $categorycontext = self::get_context_from_params($params['context']);
         $options = $params['options'];
         if (!empty($options)) {
             $formoptions = json_decode($options);
@@ -1524,7 +1524,7 @@ class local_classroom_external extends external_api {
         // $limitnum = $params['limitnum'];
         //
 
-        self::validate_context($context);
+        self::validate_context($categorycontext);
         if ($query && $action) {
             $querieslib = new \local_classroom\local\querylib();
             $return = array();
@@ -1640,10 +1640,10 @@ class local_classroom_external extends external_api {
         );
     }
 
-    public static function classroom_session_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function classroom_session_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -1692,10 +1692,10 @@ class local_classroom_external extends external_api {
         );
     }
 
-    public static function classroom_completion_settings_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function classroom_completion_settings_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -1744,10 +1744,10 @@ class local_classroom_external extends external_api {
         );
     }
 
-    public static function classroom_course_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function classroom_course_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -1889,20 +1889,20 @@ public static function submit_instituteform_form_parameters() {
     /**
      * form submission of institute name and returns instance of this object
      *
-     * @param int $contextid
+     * @param int $categorycontextid
      * @param [string] $jsonformdata
      * @return institute form submits
      */
-    public function submit_catform_form($contextid, $jsonformdata){
+    public function submit_catform_form($categorycontextid, $jsonformdata){
         global $PAGE, $CFG;
 
         require_once($CFG->dirroot . '/local/classroom/lib.php');
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_instituteform_form_parameters(),
-                                    ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
-        $context = (new \local_classroom\lib\accesslib())::get_module_context();
+                                    ['contextid' => $categorycontextid, 'jsonformdata' => $jsonformdata]);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
-        self::validate_context($context);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($params['jsonformdata']);
         // throw new moodle_exception('Error in creation');
         // die;
@@ -1955,9 +1955,9 @@ public static function submit_instituteform_form_parameters() {
         global $DB, $USER, $CFG, $PAGE;
         require_once($CFG->dirroot . '/local/lib.php');
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
-        $PAGE->set_context($context);
+        $PAGE->set_context($categorycontext);
         require_login();
         try {
             if ($confirm) {
@@ -2054,7 +2054,7 @@ public static function submit_instituteform_form_parameters() {
      * @param  [type]                offset      [offset]
      * @param  [type]                limit [limit]
      */
-    public static function classroomviewwaitinglistusers($contextid, $options,
+    public static function classroomviewwaitinglistusers($categorycontextid, $options,
         $dataoptions,
         $offset = 0,
         $limit = 0,
@@ -2062,12 +2062,12 @@ public static function submit_instituteform_form_parameters() {
     ) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomviewwaitinglistusers_parameters(),
             [
-                'contextid' => $contextid,
+                'contextid' => $categorycontextid,
                 'options' => $options,
                 'dataoptions' => $dataoptions,
                 'offset' => $offset,
@@ -2789,8 +2789,8 @@ public static function submit_instituteform_form_parameters() {
     ) {
         global $DB, $PAGE;
         // Parameter validation.
-        $context = context::instance_by_id(1, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id(1, MUST_EXIST);
+        self::validate_context($categorycontext);
         $params = self::validate_parameters(
             self::classroomfeedbacks_parameters(),
             [
@@ -2882,9 +2882,9 @@ public static function submit_instituteform_form_parameters() {
             'filter_limit' => $filter_limit
         ));
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
-        $PAGE->set_context($context);
+        $PAGE->set_context($categorycontext);
 
         $renderable = new \local_classroom\output\classroom_courses($params['filter'],$params['filter_text'], $params['filter_offset'], $params['filter_limit']);
 
@@ -2958,11 +2958,11 @@ public static function submit_instituteform_form_parameters() {
             'filterdata' => new external_value(PARAM_RAW, 'filters applied'),
         ]);
     }
-    public static function data_for_classrooms_paginated($options, $dataoptions, $offset = 0, $limit = 0, $contextid, $filterdata){
+    public static function data_for_classrooms_paginated($options, $dataoptions, $offset = 0, $limit = 0, $categorycontextid, $filterdata){
         global $DB, $PAGE;
         require_login();
         $PAGE->set_url('/local/courses/userdashboard.php', array());
-        $PAGE->set_context($contextid);
+        $PAGE->set_context($categorycontextid);
 
         $decodedoptions = (array)json_decode($options);
         $decodedfilter = (array)json_decode($filterdata);
@@ -2972,9 +2972,9 @@ public static function submit_instituteform_form_parameters() {
         $filter_offset = $offset;
         $filter_limit = $limit;
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
-        $PAGE->set_context($context);
+        $PAGE->set_context($categorycontext);
 
 
         $renderable = new \local_classroom\output\classroom_courses($filter, $filter_text, $filter_offset, $filter_limit);

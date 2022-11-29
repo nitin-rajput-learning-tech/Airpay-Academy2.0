@@ -29,8 +29,8 @@ use local_classroom\classroom;
 $classroomid = required_param('cid', PARAM_INT);
 $sessionid = optional_param('sid', 0, PARAM_INT);
 require_login();
-$context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
-$PAGE->set_context($context);
+$categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+$PAGE->set_context($categorycontext);
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
 $url = new moodle_url($CFG->wwwroot . '/local/classroom/attendance.php', array('cid' => $classroomid));
@@ -53,7 +53,7 @@ $PAGE->navbar->add(get_string('sessions', 'local_classroom'),new moodle_url('vie
 $PAGE->navbar->add(get_string('attendance', 'local_classroom'));
 $PAGE->set_title($classroom_name);
 $PAGE->set_heading(get_string('session_attendance_heading', 'local_classroom',$classroom_name));
-require_capability('local/classroom:takesessionattendance', $context);
+require_capability('local/classroom:takesessionattendance', $categorycontext);
 
 $classroom = new classroom();
 $attendancedata = data_submitted();

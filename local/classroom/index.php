@@ -23,12 +23,12 @@
  */
 
 require_once(dirname(__FILE__) . '/../../config.php');
-$sitecontext = (new \local_classroom\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 global $DB;
 $value = '';
 require_login();
 $PAGE->set_url('/local/classroom/index.php', array());
-$PAGE->set_context($sitecontext);
+$PAGE->set_context($categorycontext);
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
 if ($formattype == 'card') {
     $formattype_url = 'table';
@@ -38,9 +38,9 @@ if ($formattype == 'card') {
     $display_text = get_string('cardtype','local_classroom');
 }
 
-if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $sitecontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $sitecontext))
-	&& !(has_capability('local/classroom:manageclassroom', $sitecontext))) {
+if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext))
+	&& !(has_capability('local/classroom:manageclassroom', $categorycontext))) {
 	$PAGE->set_title(get_string('my_classrooms', 'local_classroom'));
 	$PAGE->set_heading(get_string('my_classrooms', 'local_classroom'));
 }else{
@@ -62,7 +62,7 @@ $renderer = $PAGE->get_renderer('local_classroom');
 $PAGE->navbar->add(get_string("pluginname", 'local_classroom'));
 echo $OUTPUT->header();
 $enabled = check_classroomenrol_pluginstatus($value);
-// if (is_siteadmin() || has_capability('local/classroom:manageclassroom', $sitecontext))  {
+// if (is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext))  {
 
 //     $display_url = new moodle_url('/local/classroom/index.php?formattype=' . $formattype_url);
 //         $displaytype_div = '<div class="col-12 d-inline-block">';

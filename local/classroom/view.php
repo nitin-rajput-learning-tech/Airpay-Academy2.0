@@ -29,10 +29,10 @@ $classroomid = required_param('cid', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHA);
 $status = optional_param('status', 0, PARAM_INT);
 
-$sitecontext =  (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+$categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 require_login();
 $PAGE->set_url('/local/classroom/view.php', array('cid' => $classroomid));
-$PAGE->set_context($sitecontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_title(get_string('classrooms', 'local_classroom'));
 
 $renderer = $PAGE->get_renderer('local_classroom');

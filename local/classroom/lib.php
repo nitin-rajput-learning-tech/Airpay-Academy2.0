@@ -29,7 +29,7 @@ use \local_classroom\form\classroom_form as classroom_form;
 use local_classroom\local\querylib;
 use local_classroom\classroom;
 
-function local_classroom_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
+function local_classroom_pluginfile($course, $cm, $categorycontext, $filearea, $args, $forcedownload, array $options=array()) {
     // Check the contextlevel is as expected - if your plugin is a block, this becomes CONTEXT_BLOCK, etc.
 
     // Make sure the filearea is one of those used by the plugin.
@@ -48,7 +48,7 @@ function local_classroom_pluginfile($course, $cm, $context, $filearea, $args, $f
 
     // Retrieve the file from the Files API.
     $fs = get_file_storage();
-    $file = $fs->get_file($context->id, 'local_classroom', $filearea, $itemid, $filepath, $filename);
+    $file = $fs->get_file($categorycontext->id, 'local_classroom', $filearea, $itemid, $filepath, $filename);
     if (!$file) {
         return false;
     }
@@ -65,7 +65,7 @@ function local_classroom_pluginfile($course, $cm, $context, $filearea, $args, $f
 function local_classroom_output_fragment_classroom_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $renderer = $PAGE->get_renderer('local_classroom');
     $formdata = [];
@@ -396,7 +396,7 @@ function classroom_evaluation_completed($evaluationid,$userid,$type){
 function local_classroom_output_fragment_session_form($args) {
     global $CFG, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
@@ -437,7 +437,7 @@ function local_classroom_output_fragment_session_form($args) {
 function local_classroom_output_fragment_classroom_completion_form($args) {
     global $CFG, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
@@ -483,7 +483,7 @@ function local_classroom_output_fragment_classroom_completion_form($args) {
 function local_classroom_output_fragment_course_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $renderer = $PAGE->get_renderer('local_classroom');
     $formdata = [];
@@ -526,7 +526,7 @@ class classroomcourse_form extends moodleform {
         $querieslib = new querylib();
         $mform = &$this->_form;
         $cid = $this->_customdata['cid'];
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($cid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($cid);
 
         $mform->addElement('hidden', 'classroomid', $cid);
         $mform->setType('classroomid', PARAM_INT);
@@ -558,7 +558,7 @@ class classroomcourse_form extends moodleform {
         $options = array(
             'ajax' => 'local_classroom/form-course-selector',
             'multiple' => true,
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-classroomid' => $cid,
         );
         $mform->addElement('autocomplete', 'course', get_string('course', 'local_classroom'), $courses, $options);
@@ -577,7 +577,7 @@ class classroomcourse_form extends moodleform {
  */
 class local_classroom_potential_users extends user_selector_base {
     protected $classroomid;
-    protected $context;
+    protected $categorycontext;
     protected $courseid;
     /**
      * @param string $name control name
@@ -722,7 +722,7 @@ class local_classroom_potential_users extends user_selector_base {
  */
 class local_classroom_existing_users extends user_selector_base {
     protected $classroomid;
-    protected $context;
+    protected $categorycontext;
     // protected $courseid;
     /**
      * @param string $name control name
@@ -804,15 +804,15 @@ class local_classroom_existing_users extends user_selector_base {
             }
         }
         if ($idsreturn) {
-            $contextusers = $DB->get_records_sql_menu('SELECT DISTINCT u.id, u.id as userid ' . $sql, $params);
-            return $contextusers;
+            $categorycontextusers = $DB->get_records_sql_menu('SELECT DISTINCT u.id, u.id as userid ' . $sql, $params);
+            return $categorycontextusers;
         } else {
             $order = " ORDER BY u.id DESC";
-            $contextusers = $DB->get_records_sql($fields . $sql . $order, $params);
+            $categorycontextusers = $DB->get_records_sql($fields . $sql . $order, $params);
         }
 
         // No users at all.
-        if (empty($contextusers)) {
+        if (empty($categorycontextusers)) {
             return array();
         }
 
@@ -821,7 +821,7 @@ class local_classroom_existing_users extends user_selector_base {
         } else {
             $groupname = get_string('enrolledusers', 'enrol');
         }
-        return array($groupname => $contextusers);
+        return array($groupname => $categorycontextusers);
     }
 
     protected function this_con_group_name($search, $numusers) {
@@ -833,11 +833,11 @@ class local_classroom_existing_users extends user_selector_base {
                 return get_string('extusers', 'local_classroom');
             }
         }
-        $contexttype = context_helper::get_level_name($this->context->contextlevel);
+        $categorycontexttype = context_helper::get_level_name($this->context->contextlevel);
         if ($search) {
             $a = new stdClass;
             $a->search = $search;
-            $a->contexttype = $contexttype;
+            $a->contexttype = $categorycontexttype;
             if ($numusers) {
                 return get_string('usersinthisxmatching', 'core_role', $a);
             } else {
@@ -845,23 +845,23 @@ class local_classroom_existing_users extends user_selector_base {
             }
         } else {
             if ($numusers) {
-                return get_string('usersinthisx', 'core_role', $contexttype);
+                return get_string('usersinthisx', 'core_role', $categorycontexttype);
             } else {
-                return get_string('noneinthisx', 'core_role', $contexttype);
+                return get_string('noneinthisx', 'core_role', $categorycontexttype);
             }
         }
     }
 
-    protected function parent_con_group_name($search, $contextid) {
-        $context = context::instance_by_id($contextid);
-        $contextname = $context->get_context_name(true, true);
+    protected function parent_con_group_name($search, $categorycontextid) {
+        $categorycontext = context::instance_by_id($categorycontextid);
+        $categorycontextname = $categorycontext->get_context_name(true, true);
         if ($search) {
             $a = new stdClass;
-            $a->contextname = $contextname;
+            $a->contextname = $categorycontextname;
             $a->search = $search;
             return get_string('usersfrommatching', 'core_role', $a);
         } else {
-            return get_string('usersfrom', 'core_role', $contextname);
+            return get_string('usersfrom', 'core_role', $categorycontextname);
         }
     }
 }
@@ -870,7 +870,7 @@ function local_classroom_output_fragment_new_catform($args) {
     global $CFG, $DB;
 
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $categoryid = $args->categoryid;
     $o = '';
     $formdata = [];
@@ -888,11 +888,11 @@ function local_classroom_output_fragment_new_catform($args) {
         'maxfiles' => EDITOR_UNLIMITED_FILES,
         'maxbytes' => $course->maxbytes,
         'trust' => false,
-        'context' => $context,
+        'context' => $categorycontext,
         'noclean' => true,
         'subdirs' => false,
     ];
-    $group = file_prepare_standard_editor($group, 'description', $editoroptions, $context, 'group', 'description', null);
+    $group = file_prepare_standard_editor($group, 'description', $editoroptions, $categorycontext, 'group', 'description', null);
 
     $mform = new local_classroom\form\catform(null, array('editoroptions' => $editoroptions), 'post', '', null, true, $formdata);
 
@@ -916,19 +916,19 @@ function classroom_filter($mform){
     $stable->start = 0;
     $stable->length = -1;
     $stable->search = '';
-    $systemcontext = (new \local_classroom\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     $sql = "SELECT id, name FROM {local_classroom} WHERE id > 1";
-    if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
+    if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
         // $classrooms = (new classroom)->classrooms($stable,true);
         $classroom_sql = "SELECT c.id FROM {local_classroom} AS c ";
         $concatsql = '';  
-        if ((has_capability('local/classroom:manageclassroom', $systemcontext)) && !(is_siteadmin()
-            || has_capability('local/classroom:manage_multiorganizations', $systemcontext)
-            || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && !(is_siteadmin()
+            || has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+            || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
             $joinon = "cc.id = c.costcenter";
             $concatsql = " AND c.costcenter = {$USER->open_costcenterid} ";
-            if (has_capability('local/classroom:manage_owndepartments', $systemcontext)
-                || has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+            if (has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                || has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
                 $joinon = "cc.id = c.department OR cc.id = c.costcenter";
                 $concatsql = " AND CONCAT(',',c.department,',') LIKE '%,{$USER->open_costcenterid},%' ";
             }
@@ -979,9 +979,9 @@ function get_user_classroom($userid) {
 * @return  [type] string  link for the leftmenu
 */
 function local_classroom_leftmenunode(){
-    $systemcontext =  (new \local_classroom\lib\accesslib())::get_module_context();
+    $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context();
     $classroomnode = '';
-    if(((has_capability('local/classroom:manageclassroom', $systemcontext))&&(!has_capability('local/classroom:trainer_viewclassroom', $systemcontext)))||(is_siteadmin())) {
+    if(((has_capability('local/classroom:manageclassroom', $categorycontext))&&(!has_capability('local/classroom:trainer_viewclassroom', $categorycontext)))||(is_siteadmin())) {
         $classroomnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browseclassrooms', 'class'=>'pull-left user_nav_div browseclassrooms'));
             $classrooms_url = new moodle_url('/local/classroom/index.php');
             // $classrooms_icon = '<span class="classroom_icon_wrap"></span>';
@@ -995,9 +995,9 @@ function local_classroom_leftmenunode(){
 }
 function local_classroom_quicklink_node(){
     global $CFG, $PAGE,$OUTPUT;
-    $systemcontext =  (new \local_classroom\lib\accesslib())::get_module_context();
+    $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context();
     $stable = new stdClass();
-    if(has_capability('local/classroom:manageclassroom', $systemcontext) || is_siteadmin()){
+    if(has_capability('local/classroom:manageclassroom', $categorycontext) || is_siteadmin()){
         $stable->thead = false;
         $stable->start = 0;
         $stable->length = 1;
@@ -1035,10 +1035,10 @@ function local_classroom_quicklink_node(){
         $data['node_header_string'] = get_string('manage_br_classrooms', 'local_classroom');
         $data['plugin_icon_class'] = 'fa fa-desktop';
         $data['createclassroom'] = false;
-        $data['contextid'] = $systemcontext->id;
+        $data['contextid'] = $categorycontext->id;
         $data['displaystats'] = TRUE;
 
-        if(has_capability('local/classroom:createclassroom', $systemcontext) || is_siteadmin()){
+        if(has_capability('local/classroom:createclassroom', $categorycontext) || is_siteadmin()){
             $data['create'] = true;
             $data['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('class' => 'quick_nav_link goto_local_classroom', 'title' => get_string('create_classroom', 'local_classroom'), 'onclick' => '(function(e){ require("local_classroom/ajaxforms").init({contextid:1, component:"local_classroom", callback:"classroom_form", form_status:0, plugintype: "local", pluginname: "classroom", id:0 }) })(event)'));
         }
@@ -1133,21 +1133,21 @@ function local_classroom_get_tagged_classrooms($tag, $exclusivemode = false, $fr
 }
 /**
 * todo sql query departmentwise
-* @param  $systemcontext object 
+* @param  $categorycontext object
 * @return array
 **/
-function org_dep_sql($systemcontext){
+function org_dep_sql($categorycontext){
     global $DB, $USER;
     $sql = '';
     $params =array();
-    if (has_capability('local/classroom:manageclassroom', $systemcontext) && 
-        has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+    if (has_capability('local/classroom:manageclassroom', $categorycontext) &&
+        has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $sql = " AND  c.costcenter = :costcenter";
         $params['costcenter'] = $USER->open_costcenterid;
-    } else if (has_capability('local/classroom:manage_owndepartments', $systemcontext)) {
+    } else if (has_capability('local/classroom:manage_owndepartments', $categorycontext)) {
         $sql = " AND c.department = :department  ";
         $params['department'] = $USER->open_departmentid;
-    } elseif (has_capability('local/classroom:trainer_viewclassroom', $systemcontext)){
+    } elseif (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)){
         $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id), 'id', 'id, classroomid');
         if (!empty($myclassrooms)) {
@@ -1256,21 +1256,21 @@ function org_dep_sql($systemcontext){
 
 /**
 * todo sql query departmentwise
-* @param  $systemcontext object 
+* @param  $categorycontext object
 * @return array
 **/
 
 function get_classroom_details($classid) {
     global $USER, $DB, $PAGE;
-    $context =  (new \local_classroom\lib\accesslib())::get_module_context();
+    $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context();
     $PAGE->requires->js_call_amd('local_classroom/classroom','load', array());
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
     $details = array();
     // $time = \local_costcenter\lib::get_userdate("d/m/Y H:i");
     $time = time();
     $joinsql = '';
-    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$context) OR 
-        has_capability('local/costcenter:manage_owndepartments',$context) OR has_capability('local/classroom:trainer_viewclassroom', $context)) {
+    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$categorycontext) OR
+        has_capability('local/costcenter:manage_owndepartments',$categorycontext) OR has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
         $selectsql = "select c.*  ";
         $fromsql = " from  {local_certification} c ";
         if ($DB->get_manager()->table_exists('local_rating')) {

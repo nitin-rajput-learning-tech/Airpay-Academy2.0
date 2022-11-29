@@ -23,7 +23,6 @@
  */
 namespace local_classroom;
 defined('MOODLE_INTERNAL') || die();
-use context_system;
 use stdClass;
 use moodle_url;
 use completion_completion;
@@ -107,12 +106,12 @@ class classroom {
                 $event->add_record_snapshot('local_classroom', $classroom->id);
                 $event->trigger();
 
-                $context = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
+                $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
 
 
                 // Update classroom tags.
                 if (isset($classroom->tags)) {
-                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $context, $classroom->tags, 0, $classroom->costcenter, $classroom->department);
+                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $categorycontext, $classroom->tags, 0, $classroom->costcenter, $classroom->department);
                 }
                 if($classroom->capacity > $localclassroom->capacity && $classroom->allow_waitinglistusers==1){
                         $stable = new \stdClass();
@@ -129,26 +128,26 @@ class classroom {
                 $classroom->timecreated = time();
                 $classroom->usercreated = $USER->id;
 
-                $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+                $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
-                if (has_capability('local/classroom:manageclassroom', $context)) {
+                if (has_capability('local/classroom:manageclassroom', $categorycontext)) {
                     $classroom->department = -1;
                     $classroom->subdepartment = -1;
 
-                    $context = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
+                    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
 
-                    if (!is_siteadmin() && (has_capability('local/classroom:manage_owndepartments', $context)
-                         || has_capability('local/costcenter:manage_owndepartments', $context))) {
+                    if (!is_siteadmin() && (has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                         || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                         $classroom->department = $USER->open_departmentid;
                     }
 
                 }
 
-                $context = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
+                $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
 
                 $classroom->id = $DB->insert_record('local_classroom', $classroom);
                 $params        = array(
-                    'context' => $context,
+                    'context' => $categorycontext,
                     'objectid' => $classroom->id
                 );
                 $event         = \local_classroom\event\classroom_created::create($params);
@@ -156,7 +155,7 @@ class classroom {
                 $event->trigger();
                 // Update classroom tags.
                 if (isset($classroom->tags)) {
-                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $context, $classroom->tags, 0, $classroom->costcenter, $classroom->department);
+                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $categorycontext, $classroom->tags, 0, $classroom->costcenter, $classroom->department);
                 }
                 $classroom->shortname = 'class' . $classroom->id;
                 $DB->update_record('local_classroom', $classroom);
@@ -553,20 +552,20 @@ class classroom {
             $params['search'] = '%' . $search . '%';
         }
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
-        if ((has_capability('local/classroom:manageclassroom', $context)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
+            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $params['costcenter'] = $USER->open_costcenterid;
             $condition .= " AND (cc.id = :costcenter)";
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-                 || has_capability('local/costcenter:manage_owndepartments', $context))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 // $params['department'] = $USER->open_departmentid;
                 // $condition .= " AND (c.department = :department )";
                 $condition .= " AND concat(',', c.department,',') LIKE '%,$USER->open_departmentid,%'";
             }
-            if (has_capability('local/classroom:trainer_viewclassroom', $context)) {
+            if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id
                 ), 'id', 'id, classroomid');
@@ -579,8 +578,8 @@ class classroom {
                 }
             }
         //end user condition
-        } else if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context))) {
+        } else if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
             $myclassrooms = $DB->get_records_menu('local_classroom_users', array(
                 'userid' => $USER->id
             ), 'id', 'id, classroomid');
@@ -613,12 +612,12 @@ class classroom {
                                   WHERE cu.classroomid = c.id
                               ) AS enrolled_users";
         // }
-        if ((has_capability('local/classroom:manageclassroom', $context)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
+            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $joinon = "cc.id = c.costcenter";
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-                || has_capability('local/costcenter:manage_owndepartments', $context))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 $joinon = "cc.id = c.department OR cc.id = c.costcenter";
             }
         } else {
@@ -630,11 +629,11 @@ class classroom {
         
 
         //added by sarath for ticket 2751
-        if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $context)){
+        if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
             $sql .= " AND c.status != 2";
         }
 
-        if(!is_siteadmin() && !has_capability('local/classroom:view_newclassroomtab', $context)){
+        if(!is_siteadmin() && !has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
             $sql .= " AND c.status != 0";
         }
         //ended here by sarath
@@ -715,11 +714,11 @@ class classroom {
                                $classroomdepartment =  get_string('statusna');
                               }
 
-                            $context = (new \local_classroom\lib\accesslib())::get_module_context($sdata->id);
+                            $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($sdata->id);
 
                             switch($sdata->status) {
                                 case CLASSROOM_NEW:
-                                   if(has_capability('local/classroom:view_newclassroomtab', $context)){
+                                   if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
                                         $line ['classroomstatusclass'] = 'classroomnew';
                                         $line ['crstatustitle'] = get_string('newclasses', 'local_classroom');
                                     }
@@ -731,7 +730,7 @@ class classroom {
 
                                 break;
                                 case CLASSROOM_HOLD:
-                                   if(has_capability('local/classroom:view_holdclassroomtab', $context)){
+                                   if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
                                         $line ['classroomstatusclass'] = 'classroomhold';
                                         $line ['crstatustitle'] = get_string('holdclasses', 'local_classroom');
                                    }
@@ -833,34 +832,34 @@ class classroom {
                             $line['assignusersurl'] = false;
 
                             $mouse_overicon=false;
-                            if ((has_capability('local/classroom:manageclassroom', $context) || is_siteadmin())) {
+                            if ((has_capability('local/classroom:manageclassroom', $categorycontext) || is_siteadmin())) {
                                 $line['action'] = true;
                             }
 
-                             if ((has_capability('local/classroom:editclassroom', $context) || is_siteadmin())) {
+                             if ((has_capability('local/classroom:editclassroom', $categorycontext) || is_siteadmin())) {
                                     $line ['edit'] =  true;
                                     $mouse_overicon=true;
                             }
-                            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context) || has_capability('local/costcenter:manage_ownorganization',$context))) {
+                            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
                   
                                   $line['edit'] = false;
                             }  
 
-                            if ((has_capability('local/classroom:deleteclassroom', $context) || is_siteadmin())) {
+                            if ((has_capability('local/classroom:deleteclassroom', $categorycontext) || is_siteadmin())) {
                                     $line ['delete'] =  true;
                                     $mouse_overicon=true;
                             }
-                            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context) || has_capability('local/costcenter:manage_ownorganization',$context))) {
+                            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
                                    $line['delete'] = false;
                                    
                             }  
-                            if ((has_capability('local/classroom:manageusers', $context) || is_siteadmin())) {
+                            if ((has_capability('local/classroom:manageusers', $categorycontext) || is_siteadmin())) {
                                     $line ['assignusers'] =  true;
                                     $assignusersurl = new moodle_url("/local/classroom/enrollusers.php?cid=".$sdata->id."");
                                     $line ['assignusersurl'] = $assignusersurl->out();
                                     $mouse_overicon=true;
                             }
-                             if ((has_capability('local/classroom:classroomcompletion', $context) || is_siteadmin())) {
+                             if ((has_capability('local/classroom:classroomcompletion', $categorycontext) || is_siteadmin())) {
                                 $line['classroomcompletion'] =  true;
                             }
                             $line['classroomcompletion_id'] = $classroomcompletion_id;
@@ -905,18 +904,18 @@ class classroom {
     public function classrooms($stable, $request = false) {
         global $DB, $USER;
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
         $params          = array();
         $classrooms      = array();
         $classroomscount = 0;
         $concatsql       = '';
         $statusarray     = array();
-        if (has_capability('local/classroom:view_newclassroomtab', $context)) {
+        if (has_capability('local/classroom:view_newclassroomtab', $categorycontext)) {
             $statusarray[] = 0;
         }
         $statusarray[] = 1;
-        if (has_capability('local/classroom:view_holdclassroomtab', $context)) {
+        if (has_capability('local/classroom:view_holdclassroomtab', $categorycontext)) {
             $statusarray[] = 2;
         }
         $statusarray[] = 3;
@@ -931,21 +930,21 @@ class classroom {
             $params['search2'] = '%' . $stable->search . '%';
             $concatsql .= " AND ($fields) ";
         }
-        if ((has_capability('local/classroom:manageclassroom', $context)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
+            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $condition            = " AND (cc.id = :costcenter)";
             $params['costcenter'] = $USER->open_costcenterid;
             $statusarrays         = implode(',', $statusarray);
             $concatsql .= " AND c.status in ($statusarrays) ";
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-                 || has_capability('local/costcenter:manage_owndepartments', $context))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 // $condition .= " AND (c.department = :department )";
                 // $params['department'] = $USER->open_departmentid;
                 $condition .= "AND concat(',', c.department,',') LIKE '%,$USER->open_departmentid,%'";
             }
             $concatsql .= $condition;
-            if (has_capability('local/classroom:trainer_viewclassroom', $context)) {
+            if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id
                 ), 'id', 'id, classroomid');
@@ -957,8 +956,8 @@ class classroom {
                     return compact('classrooms', 'classroomscount');
                 }
             }
-        } else if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context))) {
+        } else if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
             $myclassrooms = $DB->get_records_menu('local_classroom_users', array(
                 'userid' => $USER->id
             ), 'id', 'id, classroomid');
@@ -1024,12 +1023,12 @@ class classroom {
                                   WHERE cu.classroomid = c.id
                               ) AS enrolled_users";
         // }
-        if ((has_capability('local/classroom:manageclassroom', $context)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
+            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $joinon = "cc.id = c.costcenter";
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-                || has_capability('local/costcenter:manage_owndepartments', $context))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 $joinon = "cc.id = c.department OR cc.id = c.costcenter";
             }
         } else {
@@ -1189,10 +1188,10 @@ class classroom {
                 $attendeesignup->timecreated = time();
                 $id                          = $DB->insert_record('local_classroom_attendance', $attendeesignup);
 
-                $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+                $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
                 $params                      = array(
-                    'context' => $context,
+                    'context' => $categorycontext,
                     'objectid' => $id
                 );
                 $event                       = \local_classroom\event\classroom_attendance_created_updated::create($params);
@@ -1233,7 +1232,7 @@ class classroom {
     public function classroom_get_attendees($classroomid, $sessionid = 0) {
         global $DB, $OUTPUT,$USER;
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         $concatsql       = "";
         $selectfileds    = '';
@@ -1259,17 +1258,17 @@ class classroom {
                        WHERE cu.classroomid = :classroomid $whereconditions";
                        $params['classroomid'] = $classroomid;
 
-        if ((has_capability('local/classroom:manageclassroom', $context)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
+            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $condition            = " AND (u.open_costcenterid = :costcenter)";
             $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-                 || has_capability('local/costcenter:manage_owndepartments', $context))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 $condition .= " AND (u.open_departmentid = :department )";
                 $params['department'] = $USER->open_departmentid;
             }
-            if (has_capability('local/classroom:trainer_viewclassroom', $context)) {
+            if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }
             $signupssql .= $condition;
@@ -1280,14 +1279,14 @@ class classroom {
     public function classroom_evaluations($classroomid,$stable) {
         global $DB, $USER;
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         $params     = array();
         $selectsql = "SELECT e.* ";
         $countsql = "SELECT count(e.id) ";
         $sql      = " FROM {local_evaluations} AS e
                     WHERE e.plugin = 'classroom' AND e.instance = :classroomid AND e.deleted = 0 ";
-        if ((has_capability('local/classroom:editfeedback', $context) || has_capability('local/classroom:deletefeedback', $context))&&(has_capability('local/classroom:manageclassroom', $context) )) {
+        if ((has_capability('local/classroom:editfeedback', $categorycontext) || has_capability('local/classroom:deletefeedback', $categorycontext))&&(has_capability('local/classroom:manageclassroom', $categorycontext) )) {
             $sql .=" AND e.visible <> 2 ";
         }else{
             $sql .=" AND e.visible =1 ";
@@ -1306,7 +1305,7 @@ class classroom {
     public function classroom_add_assignusers($classroomid, $userstoassign, $request,$waitinglist=false) {
         global $DB, $USER, $CFG;
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         if (file_exists($CFG->dirroot . '/local/lib.php')) {
             require_once($CFG->dirroot . '/local/lib.php');
@@ -1348,7 +1347,7 @@ class classroom {
                         try {
                             $classroomuser->id = $DB->insert_record('local_classroom_users', $classroomuser);
                             $params            = array(
-                                'context' => $context,
+                                'context' => $categorycontext,
                                 'objectid' => $classroomuser->id
                             );
                             $event             = \local_classroom\event\classroom_users_created::create($params);
@@ -1397,7 +1396,7 @@ class classroom {
                         try {
                             $classroomuser->id = $DB->insert_record('local_classroom_users', $classroomuser);
                             $params            = array(
-                                'context' => $context,
+                                'context' => $categorycontext,
                                 'objectid' => $classroomuser->id
                             );
                             $event             = \local_classroom\event\classroom_users_created::create($params);
@@ -1439,7 +1438,7 @@ class classroom {
             require_once($CFG->dirroot . '/local/lib.php');
         }
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         $return=0;
         $notification = new \local_classroom\notification();
@@ -1468,7 +1467,7 @@ class classroom {
 
                         $return= $DB->insert_record('local_classroom_waitlist', $classroomuser);
                         $params            = array(
-                            'context' => $context,
+                            'context' => $categorycontext,
                             'objectid' => $return
                         );
                         $event             = \local_classroom\event\classroom_users_waitingcreated::create($params);
@@ -1494,7 +1493,7 @@ class classroom {
             require_once($CFG->dirroot . '/local/lib.php');
         }
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         // require_once($CFG->dirroot . '/local/classroom/notifications_emails.php');
         // $class_emaillogs = new classroomnotifications_emails();
@@ -1528,7 +1527,7 @@ class classroom {
                     }
                     classroom_evaluations_add_remove_users($classroomid, 0, 'users_to_feedback', $removeuser, 'update');
                     $params = array(
-                        'context' => $context,
+                        'context' => $categorycontext,
                         'objectid' => $classroomid
                     );
                     $event  = \local_classroom\event\classroom_users_deleted::create($params);
@@ -1574,7 +1573,7 @@ class classroom {
                     }
                     classroom_evaluations_add_remove_users($classroomid, 0, 'users_to_feedback', $removeuser, 'update');
                     $params = array(
-                        'context' => $context,
+                        'context' => $categorycontext,
                         'objectid' => $classroomid
                     );
                     $event  = \local_classroom\event\classroom_users_deleted::create($params);
@@ -1748,10 +1747,10 @@ class classroom {
         global $DB;
         if ($classroom->id > 0) {
 
-            $context = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
+            $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
             $classroom->description   = $classroom->cr_description['text'];
             $classroom->classroomlogo = $classroom->classroomlogo;
-            file_save_draft_area_files($classroom->classroomlogo, $context->id, 'local_classroom', 'classroomlogo', $classroom->classroomlogo);
+            file_save_draft_area_files($classroom->classroomlogo, $categorycontext->id, 'local_classroom', 'classroomlogo', $classroom->classroomlogo);
             $DB->update_record('local_classroom', $classroom);
         }
         return $classroom->id;
@@ -1916,14 +1915,14 @@ class classroom {
         // $class_emaillogs = new classroomnotifications_emails();
         $classroom_notification = new \local_classroom\notification();
 
-        $sitecontext =  (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
 
         switch ($classroomstatus) {
             case CLASSROOM_NEW:
                 $this->update_classroom_status($classroomid, CLASSROOM_ACTIVE);
                 $params = array(
-                    'context' => $sitecontext,
+                    'context' => $categorycontext,
                     'objectid' => $classroomid
                 );
                 $event  = \local_classroom\event\classroom_publish::create($params);
@@ -1932,7 +1931,7 @@ class classroom {
                 break;
             case CLASSROOM_ACTIVE:
                 $params = array(
-                    'context' => $sitecontext,
+                    'context' => $categorycontext,
                     'objectid' => $classroomid
                 );
                 $event  = \local_classroom\event\classroom_publish::create($params);
@@ -1984,7 +1983,7 @@ class classroom {
                 break;
             case CLASSROOM_CANCEL:
                 $params = array(
-                    'context' => $sitecontext,
+                    'context' => $categorycontext,
                     'objectid' => $classroomid
                 );
                 $event  = \local_classroom\event\classroom_cancel::create($params);
@@ -2036,7 +2035,7 @@ class classroom {
                 break;
             case CLASSROOM_HOLD:
                 $params = array(
-                    'context' => $sitecontext,
+                    'context' => $categorycontext,
                     'objectid' => $classroomid
                 );
                 $event  = \local_classroom\event\classroom_hold::create($params);
@@ -2091,7 +2090,7 @@ class classroom {
                 $this->classroom_completions($classroomid);
                 $this->update_classroom_status($classroomid, CLASSROOM_COMPLETED);
                 $params = array(
-                    'context' => $sitecontext,
+                    'context' => $categorycontext,
                     'objectid' => $classroomid
                 );
                 $event  = \local_classroom\event\classroom_completed::create($params);
@@ -2165,7 +2164,7 @@ class classroom {
     public function classroomusers($classroomid, $stable) {
         global $DB, $USER;
 
-        $sitecontext =  (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         $params         = array();
         $classroomusers = array();
@@ -2189,17 +2188,17 @@ class classroom {
                 WHERE c.id = :classroomid AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
-        if ((has_capability('local/classroom:manageclassroom', $sitecontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $sitecontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $sitecontext)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
+            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $condition            = " AND (u.open_costcenterid = :costcenter)";
             $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $sitecontext)
-                 || has_capability('local/costcenter:manage_owndepartments', $sitecontext))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 $condition .= " AND (u.open_departmentid = :department )";
                 $params['department'] = $USER->open_departmentid;
             }
-            if (has_capability('local/classroom:trainer_viewclassroom', $sitecontext)) {
+            if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }
             $sql .= $condition;
@@ -2217,15 +2216,15 @@ class classroom {
     }
     public function get_specific_costcenter_requests_classroom($component,$sorting,$componentid,$stable) {
         global $USER, $DB;
-        $systemcontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
         $fields = " req.id, req.createdbyid, req.compname, req.compcode, req.compkey, req.componentid, req.status, req.responder, req.respondeddate, req.usermodified, req.timecreated, req.timemodified ";
         $params = array();
-        if(has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || is_siteadmin()){
+        if(has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || is_siteadmin()){
            $selectsql = "SELECT $fields ";
            $countsql = "SELECT count(req.id) ";
            $sql = " FROM {local_request_records} AS req WHERE 1=1";
-        }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+        }else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
             $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
             if($costcenterid){
                 $selectsql = "SELECT $fields ";
@@ -2236,7 +2235,7 @@ class classroom {
                 $params['costcenterid'] = $costcenterid;
             }
 
-        }else if(has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+        }else if(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
             $selectsql = "SELECT $fields ";
             $countsql = "SELECT count(req.id) ";
             $sql = " FROM {local_request_records} AS req 
@@ -2244,9 +2243,9 @@ class classroom {
                 WHERE u.open_costcenterid= :costcenterid AND u.open_departmentid = :departmentid ";
                 $params['costcenterid'] = $USER->open_costcenterid;
                 $params['departmentid'] = $USER->open_departmentid;
-        }else if(has_capability('local/classroom:manageclassroom',$systemcontext)||
-                has_capability('local/program:manageprogram',$systemcontext)||
-                has_capability('local/classroom:manageclassroom',$systemcontext)){
+        }else if(has_capability('local/classroom:manageclassroom',$categorycontext)||
+                has_capability('local/program:manageprogram',$categorycontext)||
+                has_capability('local/classroom:manageclassroom',$categorycontext)){
             $trainerclassrooms = $DB->get_records_menu('local_classroom_trainers',array('trainerid' => $USER->id),'','id,classroomid');
             array_push($trainerclassrooms,0);
             $classroomids = implode(',', $trainerclassrooms);
@@ -2288,15 +2287,15 @@ class classroom {
     }
     public function classroomrequestedusers($list=null, $component=null,$sorting=false,$tab=false,$componentid=false, $stable) {
         global $DB, $USER;
-        $systemcontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         
-        if(has_capability('local/request:viewrecord',$systemcontext) && !has_capability('local/request:approverecord',$systemcontext)){                                       
+        if(has_capability('local/request:viewrecord',$categorycontext) && !has_capability('local/request:approverecord',$categorycontext)){
             $requestscount = $DB->count_records('local_request_records', array('createdbyid' =>$USER->id));
             $requestlist = $DB->get_records('local_request_records', array('createdbyid' =>$USER->id),$stable->start,$stable->length);
       
         }
         else{
-            if(is_siteadmin() || (has_capability('local/request:viewrecord',$systemcontext) && has_capability('local/request:approverecord',$systemcontext))){
+            if(is_siteadmin() || (has_capability('local/request:viewrecord',$categorycontext) && has_capability('local/request:approverecord',$categorycontext))){
                 $requestdata = $this->get_specific_costcenter_requests_classroom($component,$sorting,$componentid,$stable);
                 $requestlist = $requestdata['requestlist'];
                 $requestscount = $requestdata['requestscount'];
@@ -2394,35 +2393,35 @@ class classroom {
 
     public  function get_capabilitycheck_list(){
         global $USER;
-        $systemcontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $viewrecord_capability=0;
-            if(has_capability('local/request:viewrecord',$systemcontext)){
+            if(has_capability('local/request:viewrecord',$categorycontext)){
               $viewrecord_capability=1;
             }    
 
               
             $approve_capability=0;
-            if(has_capability('local/request:approverecord',$systemcontext)){
+            if(has_capability('local/request:approverecord',$categorycontext)){
               $approve_capability=1;
             }
             
             $deny_capability=0;
-            if(has_capability('local/request:denyrecord',$systemcontext)){
+            if(has_capability('local/request:denyrecord',$categorycontext)){
               $deny_capability=1;
             }
           
             $addrecord_capability=0;
-            if(has_capability('local/request:addrecord',$systemcontext)){
+            if(has_capability('local/request:addrecord',$categorycontext)){
               $addrecord_capability=1;
             }
 
             $deleterecord_capability=0;
-            if(has_capability('local/request:deleterecord',$systemcontext)){
+            if(has_capability('local/request:deleterecord',$categorycontext)){
               $deleterecord_capability=1;
             }
            
             $addcomment_capability=0;
-            if(has_capability('local/request:addcomment',$systemcontext)){
+            if(has_capability('local/request:addcomment',$categorycontext)){
               $addcomment_capability=1;
             }
 
@@ -2578,7 +2577,7 @@ class classroom {
     public function select_to_and_from_users($type = null, $clasroomid = 0, $params, $total = 0, $offset1 = -1, $perpage = -1, $lastitem = 0) {
         global $DB, $USER;
 
-        $sitecontext =  (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context();
 
         $classroom           = $DB->get_record('local_classroom', array(
             'id' => $clasroomid
@@ -2596,13 +2595,13 @@ class classroom {
         if ($lastitem != 0) {
             $sql .= " AND u.id > $lastitem";
         }
-        if ((has_capability('local/classroom:manageclassroom', $sitecontext)) && (!is_siteadmin() &&
-                        (!has_capability('local/classroom:manage_multiorganizations', $sitecontext)
-                        && !has_capability('local/costcenter:manage_multiorganizations', $sitecontext)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin() &&
+                        (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                        && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $sql .= " AND u.open_costcenterid = :costcenter";
             $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $sitecontext) ||
-                 has_capability('local/costcenter:manage_owndepartments', $sitecontext))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext) ||
+                 has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 $sql .= " AND u.open_departmentid = :department";
                 $params['department'] = $USER->open_departmentid;
             }
@@ -2824,14 +2823,14 @@ class classroom {
     public function classroom_status_strip($classroomid, $classroomstatus) {
         global $DB, $USER;
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         $return = "";
         $id     = $DB->get_field('local_classroom_users', 'id', array(
             'classroomid' => $classroomid,
             'userid' => $USER->id
         ));
-        if (!$id && !is_siteadmin() && (!has_capability('local/classroom:manageclassroom', $context))) {
+        if (!$id && !is_siteadmin() && (!has_capability('local/classroom:manageclassroom', $categorycontext))) {
             return $return;
         }
         switch ($classroomstatus) {
@@ -2849,7 +2848,7 @@ class classroom {
                 break;
             case CLASSROOM_COMPLETED:
                 $return = get_string('completed_classroom', 'local_classroom');
-                if (!is_siteadmin() && (!has_capability('local/classroom:manageclassroom', $context))) {
+                if (!is_siteadmin() && (!has_capability('local/classroom:manageclassroom', $categorycontext))) {
                     $completionstatus = $DB->get_field('local_classroom_users', 'completion_status', array(
                         'classroomid' => $classroomid,
                         'userid' => $USER->id
@@ -2989,7 +2988,7 @@ class classroom {
     public function classroomwaitinglistusers($classroomid, $stable,$forenrollment=false) {
         global $DB, $USER;
 
-        $context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
         $params         = array();
         $classroomusers = array();
@@ -3018,17 +3017,17 @@ class classroom {
                 WHERE c.id = :classroomid AND cu.enrolstatus=0 AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
-        if ((has_capability('local/classroom:manageclassroom', $context)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $context)
-                && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
+            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
             $condition            = " AND (u.open_costcenterid = :costcenter)";
             $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-                 || has_capability('local/costcenter:manage_owndepartments', $context))) {
+            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                 $condition .= " AND (u.open_departmentid = :department )";
                 $params['department'] = $USER->open_departmentid;
             }
-            if (has_capability('local/classroom:trainer_viewclassroom', $context)) {
+            if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }
             $sql .= $condition;

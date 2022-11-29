@@ -25,7 +25,6 @@
 namespace local_classroom\local;
 
 defined('MOODLE_INTERNAL') || die();
-use context_system;
 
 class querylib {
     /**
@@ -83,9 +82,9 @@ class querylib {
         global $DB,$USER;
         $costcentersql = '';
         $concatsql = '';
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $params = array();
-        list($ctxcondition, $ctxparams) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'ctx');
+        list($ctxcondition, $ctxparams) = $DB->get_in_or_equal($categorycontext->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'ctx');
         $params = array_merge($params, $ctxparams);
         if (!empty($trainers)) {
             list($trainerslistsql, $trainerslistparams) = $DB->get_in_or_equal($trainers, SQL_PARAMS_NAMED, 'crtr');
@@ -96,18 +95,16 @@ class querylib {
             $concatsql .= " AND u.open_costcenterid in ( $costcenters ) ";
             //$params['costcenterid'] = $costcenters;
         }
-         if ((has_capability('local/classroom:manageclassroom', context_system::instance())) && ( !is_siteadmin() )&&(!has_capability('local/classroom:manage_multiorganizations', context_system::instance()) &&! has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))) {
+         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && ( !is_siteadmin() )&&(!has_capability('local/classroom:manage_multiorganizations', $categorycontext) &&! has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
             $concatsql .= " AND u.open_costcenterid in ( :costcenterid ) ";
             $params['costcenterid'] = $USER->open_costcenterid;
-             if ((has_capability('local/classroom:manage_owndepartments', context_system::instance())||has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
+             if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)||has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
                     $concatsql .= " AND u.open_departmentid in ( :open_departmentid ) ";
                     $params['open_departmentid'] = $USER->open_departmentid;
              }
         }
         if (!empty($query)) {
-            // $fields = array("u.email", "CONCAT(u.firstname, ' ', u.lastname)");
-            // $fields = implode(" LIKE :search1 OR ", $fields);
-            // $fields .= " LIKE :search2 ";
+
             $fields = " u.email LIKE :search1 OR CONCAT(u.firstname,' ', u.lastname) LIKE :search2 ";
             $params['search1'] = '%' . $query . '%';
             $params['search2'] = '%' . $query . '%';
@@ -118,11 +115,7 @@ class querylib {
         $params['confirmed'] = 1;
         $params['suspended'] = 0;
         $params['deleted'] = 0;
-        //$params['roleid'] = $DB->get_field('role', 'id', array('shortname' => 'trainer'));
-        /* $sql = "SELECT u.id, CONCAT(u.firstname, ' ', u.lastname) AS fullname
-                  FROM {user} as u
-                 WHERE 1 = 1 $costcentersql AND u.confirmed = :confirmed
-                 AND u.suspended = :suspended AND u.deleted = :deleted AND u.id > 2";*/
+
 
         $fields = "SELECT u.id , CONCAT(u.firstname, ' ', u.lastname) AS fullname ";
         $sql = "FROM {role_capabilities} as rc

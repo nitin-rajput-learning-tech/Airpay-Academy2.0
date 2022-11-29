@@ -25,7 +25,6 @@
 namespace local_classroom\form;
 use core;
 use moodleform;
-use context_system;
 
 if (!defined('MOODLE_INTERNAL')) {
 	die('Direct access to this script is forbidden.'); ///  It must be included from a Moodle page

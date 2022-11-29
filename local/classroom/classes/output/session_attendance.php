@@ -28,7 +28,6 @@ use renderable;
 use renderer_base;
 use stdClass;
 use templatable;
-use context_system;
 
 class session_attendance implements renderable, templatable {
     /**
@@ -36,7 +35,7 @@ class session_attendance implements renderable, templatable {
      * @method __construct
      */
     public function __construct($sessionid) {
-        $this->context = context_system::instance();
+        $this->context = (new \local_classroom\lib\accesslib())::get_module_context();
         $this->sessionid = $sessionid;
     }
     /**

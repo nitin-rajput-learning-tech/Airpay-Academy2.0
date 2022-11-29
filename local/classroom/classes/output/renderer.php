@@ -26,7 +26,6 @@ require_once($CFG->dirroot . '/local/classroom/lib.php');
 require_once($CFG->dirroot . '/user/lib.php');
 defined('MOODLE_INTERNAL') || die;
 
-use context_system;
 use html_table;
 use html_writer;
 use local_classroom\classroom;
@@ -80,32 +79,30 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = -1;
         $stable->search = '';
-        // $tabscontent = $this->get_classrooms('-1');
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $templateName = '';
         $cardClass = '';
         $perpage = '';
         
         $all_tab=$new_tab=$active_tab=$hold_tab=$cancelled_tab=$completed_tab=false;
-        //if(has_capability('local/classroom:view_allclassroomtab', context_system::instance())){
-            $all_tab=true;
-        //}
-        if(has_capability('local/classroom:view_newclassroomtab', context_system::instance())){
+
+        $all_tab=true;
+
+        if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
             $new_tab=true;
         }
-        //if(has_capability('local/classroom:view_activeclassroomtab', context_system::instance())){
-            $active_tab=true;
-        //}
-        if(has_capability('local/classroom:view_holdclassroomtab', context_system::instance())){
+
+        $active_tab=true;
+
+        if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
             $hold_tab=true;
         }
-        //if(has_capability('local/classroom:view_cancelledclassroomtab', context_system::instance())){
-            $cancelled_tab=true;
-        //}
-        //if(has_capability('local/classroom:view_completedclassroomtab', context_system::instance())){
-            $completed_tab=true;
-        //}
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context) || has_capability('local/costcenter:manage_ownorganization',$context) || has_capability('local/costcenter:manage_owndepartments', $context)){
+
+        $cancelled_tab=true;
+
+        $completed_tab=true;
+
+        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext) || has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
              $templateName = 'local_classroom/classrooms_list';
              $cardClass = 'col-md-6 col-12';
              $perpage = 6;
@@ -117,7 +114,7 @@ class renderer extends plugin_renderer_base {
              } 
            }
            $viewcardlist = false;
-           if (is_siteadmin() || has_capability('local/classroom:manageclassroom', \context_system::instance()))  {
+           if (is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext))  {
                 $viewcardlist = true;
                 if ($view_type == 'card') {
                     $cardlisturl = new moodle_url('/local/classroom/index.php?formattype=table');
@@ -132,7 +129,7 @@ class renderer extends plugin_renderer_base {
            }
            $classroomtabslist = [
             //'classroomtabslist' => $tabscontent,
-            'contextid' => $context->id,
+            'contextid' => $categorycontext->id,
             'plugintype' => 'local',
             'plugin_name' =>'classroom',
             'all_tab'=>$all_tab,
@@ -142,8 +139,8 @@ class renderer extends plugin_renderer_base {
             'cancelled_tab'=>$cancelled_tab,
             'completed_tab'=>$completed_tab,
             'creataclassroom' => ((has_capability('local/classroom:manageclassroom',
-            context_system::instance()) && has_capability('local/classroom:createclassroom',
-            context_system::instance())) || is_siteadmin()) ? true : false,
+            $categorycontext) && has_capability('local/classroom:createclassroom',
+            $categorycontext)) || is_siteadmin()) ? true : false,
             'view_type' => $view_type,
             'templatename' => $templateName,
             'cardclass' => $cardClass,
@@ -154,16 +151,16 @@ class renderer extends plugin_renderer_base {
              'cardlistclass' => $cardlistclass
             
         ];
-        if ((has_capability('local/location:manageinstitute', context_system::instance()) || has_capability('local/location:viewinstitute', context_system::instance()))&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+        if ((has_capability('local/location:manageinstitute', $categorycontext) || has_capability('local/location:viewinstitute', $categorycontext))&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
              $classroomtabslist['location_url']=$CFG->wwwroot.'/local/location/index.php?component=classroom';
 
         }
-        if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
              $classroomtabslist['request_url']=$CFG->wwwroot.'/local/request/index.php?component=classroom';
 
         }
         if(is_siteadmin() ||(
-        has_capability('local/classroom:createclassroom', $context)||has_capability('local/classroom:updateclassroom', $context)||has_capability('local/classroom:manageclassroom', $context))){
+        has_capability('local/classroom:createclassroom', $categorycontext)||has_capability('local/classroom:updateclassroom', $categorycontext)||has_capability('local/classroom:manageclassroom', $categorycontext))){
             $sql = "SELECT id,name FROM {block_learnerscript} WHERE category = 'local_classroom'";
             $classroomreports = $DB->get_records_sql($sql);
         foreach ($classroomreports as $classroom) {
@@ -182,7 +179,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewclassrooms($stable) {
         global $OUTPUT, $CFG, $DB;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $includesfile = false;
         if(file_exists($CFG->dirroot.'/local/includes.php')){
             $includesfile = true;
@@ -261,34 +258,34 @@ class renderer extends plugin_renderer_base {
                 
                     switch($sdata->status) {
                         case CLASSROOM_NEW:
-                           if(has_capability('local/classroom:view_newclassroomtab', context_system::instance())){
+                           if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
                                 $line ['classroomstatusclass'] = 'classroomnew';
                                 $line ['crstatustitle'] = get_string('newclasses', 'local_classroom');
                             }
                         break;
                         case CLASSROOM_ACTIVE:
-                           //if(has_capability('local/classroom:view_activeclassroomtab', context_system::instance())){ 
+
                                 $line ['classroomstatusclass'] = 'classroomactive';
                                 $line ['crstatustitle'] = get_string('activeclasses', 'local_classroom');
-                           //}
+
                         break;
                         case CLASSROOM_HOLD:
-                           if(has_capability('local/classroom:view_holdclassroomtab', context_system::instance())){ 
+                           if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
                                 $line ['classroomstatusclass'] = 'classroomhold';
                                 $line ['crstatustitle'] = get_string('holdclasses', 'local_classroom');
                            }
                         break;
                         case CLASSROOM_CANCEL:
-                            //if(has_capability('local/classroom:view_cancelledclassroomtab', context_system::instance())){ 
+
                                 $line ['classroomstatusclass'] = 'classroomcancelled';
                                 $line ['crstatustitle'] = get_string('cancelledclasses', 'local_classroom');
-                            //}
+
                         break;
                         case CLASSROOM_COMPLETED:
-                          //if(has_capability('local/classroom:view_completedclassroomtab', context_system::instance())){  
+
                             $line ['classroomstatusclass'] = 'classroomcompleted';
                             $line ['crstatustitle'] = get_string('completedclasses', 'local_classroom');
-                          //}
+
                         break;
                     }
                     $classroom_actionstatus=$this->classroom_actionstatus_markup($sdata);
@@ -356,25 +353,25 @@ class renderer extends plugin_renderer_base {
 
                     $line['classroomcompletion'] = false;
                     $mouse_overicon=false;
-                    if ((has_capability('local/classroom:manageclassroom', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/classroom:manageclassroom', $categorycontext) || is_siteadmin())) {
                         $line['action'] = true;
                     }
 
-                    if ((has_capability('local/classroom:editclassroom', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/classroom:editclassroom', $categorycontext) || is_siteadmin())) {
                             $line ['edit'] =  true;
                             $mouse_overicon=true;
                     }
 
-                    if ((has_capability('local/classroom:deleteclassroom', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/classroom:deleteclassroom', $categorycontext) || is_siteadmin())) {
                             $line ['delete'] =  true;
                             $mouse_overicon=true;
                     }
-                    if ((has_capability('local/classroom:manageusers', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/classroom:manageusers', $categorycontext) || is_siteadmin())) {
                             $line ['assignusers'] =  true;
                             $line ['assignusersurl'] = new moodle_url("/local/classroom/enrollusers.php?cid=".$sdata->id."");
                             $mouse_overicon=true;
                     }
-                     if ((has_capability('local/classroom:classroomcompletion', context_system::instance()) || is_siteadmin())) {
+                     if ((has_capability('local/classroom:classroomcompletion', $categorycontext) || is_siteadmin())) {
                         $line['classroomcompletion'] =  true;
                     }
                     $line['classroomcompletion_id'] = $classroomcompletion_id;
@@ -410,12 +407,12 @@ class renderer extends plugin_renderer_base {
     //     $options = json_encode(array('targetID' => 'all', 'templateName' => 'local_classroom/classrooms_list', 'methodName' => 'local_classroom_get_classrooms',  'perPage' => 6, 'cardClass' => 'col-md-6 col-12', 'viewType' => 'card'));
     //     $dataoptions = json_encode(array('status' => $status));
 
-    //     $context = [
+    //     $categorycontext = [
     //                 "targetID" => 'all',
     //                 "options" => $options,
     //                 "dataoptions" => $dataoptions,
     //                 ];
-    //     $return = $OUTPUT->render_from_template('local_costcenter/cardPaginate', $context);
+    //     $return = $OUTPUT->render_from_template('local_costcenter/cardPaginate', $categorycontext);
     //     return $return;
     // }
 
@@ -429,13 +426,13 @@ class renderer extends plugin_renderer_base {
      */
     public function viewclassroomsessions($sessions,$classroomid,$stable=null,$triggertype='classroom') {
         global $OUTPUT, $CFG, $DB,$USER;
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
             $data = array();
             $createsession = false;
-            if (has_capability('local/classroom:createsession', $context)&&(has_capability('local/classroom:manageclassroom', $context))) {
+            if (has_capability('local/classroom:createsession', $categorycontext)&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                 $createsession = true;
             }
-            if ((has_capability('local/classroom:editsession', context_system::instance()) || has_capability('local/classroom:deletesession', context_system::instance())|| has_capability('local/classroom:takesessionattendance', context_system::instance()))&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+            if ((has_capability('local/classroom:editsession', $categorycontext) || has_capability('local/classroom:deletesession', $categorycontext)|| has_capability('local/classroom:takesessionattendance', $categorycontext))&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                 $createsession = true;
             }
             foreach ($sessions as $sdata) {
@@ -461,7 +458,7 @@ class renderer extends plugin_renderer_base {
                             if($moduleid){
                                 $link=html_writer::link($CFG->wwwroot . '/mod/' .$sdata->moduletype. '/view.php?id=' . $moduleid,get_string('join', 'local_classroom'), array('title' => get_string('join', 'local_classroom')));
                                 
-                                if (!is_siteadmin() && !has_capability('local/classroom:manageclassroom', context_system::instance())) {
+                                if (!is_siteadmin() && !has_capability('local/classroom:manageclassroom', $categorycontext)) {
                                     $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $classroomid, 'userid' => $USER->id));
                                    
                                     if (!$userenrolstatus) {
@@ -494,7 +491,7 @@ class renderer extends plugin_renderer_base {
 
                 
 
-                if(has_capability('local/classroom:manageclassroom', context_system::instance())){
+                if(has_capability('local/classroom:manageclassroom', $categorycontext)){
                     if ($sdata->timefinish <= time() && $sdata->attendance_status == 1) {
                         $line['status'] = get_string('completed', 'local_classroom');
                     } else {
@@ -519,21 +516,21 @@ class renderer extends plugin_renderer_base {
                 }
 
                 $line['assignrolesicon']=$line['deleteicon']=$line['editicon']=$line['action'] = false;
-                if ((has_capability('local/classroom:editsession', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+                if ((has_capability('local/classroom:editsession', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                     $editimg = $OUTPUT->image_url('t/edit');
                     $line['editicon'] = $editimg->out_as_local_url();
                 }
-                if ((has_capability('local/classroom:deletesession', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+                if ((has_capability('local/classroom:deletesession', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                
                     $deleteimg = $OUTPUT->image_url('t/delete');
                     $line['deleteicon'] = $deleteimg->out_as_local_url();
                 }
-                if ((has_capability('local/classroom:takesessionattendance', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+                if ((has_capability('local/classroom:takesessionattendance', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                    
                     $assignrolesimg = $OUTPUT->image_url('t/assignroles');
                     $line['assignrolesicon'] = $assignrolesimg->out_as_local_url();
                 }
-                if ((has_capability('local/classroom:editsession', context_system::instance()) || has_capability('local/classroom:deletesession', context_system::instance())|| has_capability('local/classroom:takesessionattendance', context_system::instance()))&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+                if ((has_capability('local/classroom:editsession', $categorycontext) || has_capability('local/classroom:deletesession', $categorycontext)|| has_capability('local/classroom:takesessionattendance', $categorycontext))&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                     $line['action'] = true;
                 }
                 $data[] = $line;
@@ -552,12 +549,12 @@ class renderer extends plugin_renderer_base {
      */
     public function viewclassroomfeedbacks($feedbacks,$classroomid) {
         global $OUTPUT, $CFG, $PAGE, $DB, $USER;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $exist = $DB->record_exists('local_classroom',array('id'=>$classroomid,'trainingfeedbackid'=>0));
         $exist_with_tr_fd = $DB->count_records_sql("SELECT count(id) as total FROM {local_classroom_trainers} where classroomid = :classroomid AND feedback_id>0",array('classroomid' => $classroomid));
         $exist_with_tr = $DB->count_records('local_classroom_trainers',array('classroomid'=>$classroomid));
         $createfeedback = false;
-        if ((has_capability('local/classroom:createfeedback', $systemcontext)) && (has_capability('local/classroom:manageclassroom', $systemcontext)) && ($exist || $exist_with_tr_fd!=$exist_with_tr)) {    
+        if ((has_capability('local/classroom:createfeedback', $categorycontext)) && (has_capability('local/classroom:manageclassroom', $categorycontext)) && ($exist || $exist_with_tr_fd!=$exist_with_tr)) {
             $createfeedback = true;
         }
         $data = array();
@@ -570,7 +567,7 @@ class renderer extends plugin_renderer_base {
             $classroomtrainer = $DB->get_field_sql($classroomtrainerssql, $params);
 
             $line = array();
-            if(has_capability('local/classroom:createfeedback', $systemcontext)){
+            if(has_capability('local/classroom:createfeedback', $categorycontext)){
                 $feedbackview = true;
             }else{
                 $feedbackview = false;
@@ -615,7 +612,7 @@ class renderer extends plugin_renderer_base {
 
             $line['submittedcount'] = "$submitted_count/$total_count";
 
-            if(!has_capability('local/classroom:manageclassroom', context_system::instance())){
+            if(!has_capability('local/classroom:manageclassroom', $categorycontext)){
                 if($sdata->evaluationtype==1){
                     $sql=$mainsql;
                     
@@ -635,7 +632,7 @@ class renderer extends plugin_renderer_base {
                     $line['url'] = 'show_entries';
                     $line['string'] = false;
                 }
-            }elseif(has_capability('local/classroom:manageclassroom', context_system::instance())){
+            }elseif(has_capability('local/classroom:manageclassroom', $categorycontext)){
                 $line['url'] = 'show_entries';
                 $line['string'] = false;
             }else{
@@ -644,21 +641,18 @@ class renderer extends plugin_renderer_base {
             }
 
             $line['deleteicon']=$line['preview']=$line['editicon']=$line['action'] = false;
-            if ((has_capability('local/classroom:editfeedback', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+            if ((has_capability('local/classroom:editfeedback', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
 
                 $editimg = $OUTPUT->image_url('t/edit');
                 $line['editicon'] = $editimg->out_as_local_url();
             }
-            // if ((has_capability('local/classroom:editclassroom', context_system::instance()) || is_siteadmin())) {
-            //     $preview = $OUTPUT->image_url('t/preview');
-            //     $line['preview'] = $preview->out_as_local_url();
-            // }
-            if ((has_capability('local/classroom:deletefeedback', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()) )) {
+
+            if ((has_capability('local/classroom:deletefeedback', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext) )) {
                
                 $deleteimg = $OUTPUT->image_url('t/delete');
                 $line['deleteicon'] = $deleteimg->out_as_local_url();
             }
-            if ((has_capability('local/classroom:editfeedback', context_system::instance()) || has_capability('local/classroom:deletefeedback', context_system::instance()))&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+            if ((has_capability('local/classroom:editfeedback', $categorycontext) || has_capability('local/classroom:deletefeedback', $categorycontext))&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                 $line['action'] = true;
             }
             $data[] = $line;
@@ -675,16 +669,16 @@ class renderer extends plugin_renderer_base {
      */
     public function viewclassroomcourses($courses, $classroomid) {
         global $OUTPUT, $CFG, $DB,$USER;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $data = array();
         $assign_courses = false;
-        if (has_capability('local/classroom:createcourse', $systemcontext)&&(has_capability('local/classroom:manageclassroom', $systemcontext))) {
+        if (has_capability('local/classroom:createcourse', $categorycontext)&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
             $assign_courses = true;  
         }
 
 
             $selfenrolmenttabcap = false;
-            if ((has_capability('local/classroom:deletecourse', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+            if ((has_capability('local/classroom:deletecourse', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                 $selfenrolmenttabcap = true;      
             }
                         
@@ -695,7 +689,7 @@ class renderer extends plugin_renderer_base {
                 $line['name'] = $sdata->fullname;
                 
                
-                if(is_siteadmin() || has_capability('local/classroom:manageclassroom', context_system::instance())) {
+                if(is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext)) {
 
                     $countfields = "SELECT cu.id,cu.userid ";
                     $params['classroomid'] = $classroomid;
@@ -721,12 +715,12 @@ class renderer extends plugin_renderer_base {
                 }
 
                 $line['action'] = false;
-                if ((has_capability('local/classroom:deletecourse', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+                if ((has_capability('local/classroom:deletecourse', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                    
                     $deleteimg = $OUTPUT->image_url('t/delete');
                     $line['deleteicon'] = $deleteimg->out_as_local_url();
                 }
-                if ((has_capability('local/classroom:deletecourse', context_system::instance()) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', context_system::instance()))) {
+                if ((has_capability('local/classroom:deletecourse', $categorycontext) || is_siteadmin())&&(has_capability('local/classroom:manageclassroom', $categorycontext))) {
                     $line['action'] = true;
                 }
                 $line['linkpath']=$CFG->wwwroot."/course/view.php?id=$sdata->id";
@@ -747,6 +741,9 @@ class renderer extends plugin_renderer_base {
         $local_pluginlist = $core_component::get_plugin_list('local');
         $block_pluginlist = $core_component::get_plugin_list('block');
         */
+
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+
         $stable = new stdClass();
         $stable->classroomid = $classroomid;
         $stable->thead = false;
@@ -759,19 +756,19 @@ class renderer extends plugin_renderer_base {
         $unenroll = false;
         $classroom_status = $classroom->status;
 
-        if(!has_capability('local/classroom:view_newclassroomtab', context_system::instance()) && $classroom_status==0){
+        if(!has_capability('local/classroom:view_newclassroomtab', $categorycontext) && $classroom_status==0){
             print_error("You don't have permissions to view this page.");
         }
-        elseif(!has_capability('local/classroom:view_holdclassroomtab', context_system::instance())&& $classroom_status==2){
+        elseif(!has_capability('local/classroom:view_holdclassroomtab', $categorycontext)&& $classroom_status==2){
             print_error("You don't have permissions to view this page.");
         }
         if(empty($classroom)) {
             print_error("Classroom Not Found!");
         }
-        if (!has_capability('local/classroom:manageclassroom', context_system::instance()) && !is_siteadmin()
-            && !has_capability('local/classroom:manage_multiorganizations', context_system::instance())
-            && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())&& !has_capability('local/classroom:manage_owndepartments', context_system::instance())
-                 && !has_capability('local/costcenter:manage_owndepartments', context_system::instance()) && !has_capability('local/classroom:trainer_viewclassroom', context_system::instance())) {
+        if (!has_capability('local/classroom:manageclassroom', $categorycontext) && !is_siteadmin()
+            && !has_capability('local/classroom:manage_multiorganizations', $categorycontext)
+            && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)&& !has_capability('local/classroom:manage_owndepartments', $categorycontext)
+                 && !has_capability('local/costcenter:manage_owndepartments', $categorycontext) && !has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
 
             $now = time(); // or your date as well
             $your_date = $classroom->startdate;
@@ -852,9 +849,9 @@ class renderer extends plugin_renderer_base {
             }
         }
         $return="";
-        $classroom->userenrolmentcap = (has_capability('local/classroom:manageclassroom', context_system::instance())&&has_capability('local/classroom:manageusers', context_system::instance()) && $classroom->status == 0) ? true : false;
+        $classroom->userenrolmentcap = (has_capability('local/classroom:manageclassroom', $categorycontext)&&has_capability('local/classroom:manageusers', $categorycontext) && $classroom->status == 0) ? true : false;
         $classroom->selfenrolmentcap = false;
-        if (!has_capability('local/classroom:manageclassroom', context_system::instance())) {
+        if (!has_capability('local/classroom:manageclassroom', $categorycontext)) {
             $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $classroom->id, 'userid' => $USER->id));
 
             $return=false;
@@ -900,57 +897,51 @@ class renderer extends plugin_renderer_base {
         $stable->search = '';
 
          $waitinglist_users_tab=$requested_users_tab=$classroomcompletion=$feedback_tab=$user_tab=$course_tab=$session_tab=$action =$edit= $delete =$assignusers=$assignusersurl=false;
-        //if(has_capability('local/classroom:viewsession', context_system::instance())){
             $session_tab=true;
-            //$classroom->classroomsessions = $this->viewclassroomsessions($classroomid, $stable);
-        //}
-        //if(has_capability('local/classroom:viewcourse', context_system::instance())){
+
             $course_tab=true;
-            //$classroom->classroomsessions = $this->viewclassroomcourses($classroomid, $stable);
-        //}
-        if(has_capability('local/classroom:viewusers', context_system::instance())){
+
+        if(has_capability('local/classroom:viewusers', $categorycontext)){
             $user_tab=true;
-            //$classroom->classroomsessions = $this->viewclassroomusers($classroomid, $stable);
+
         }
-        //if(has_capability('local/classroom:viewfeedback', context_system::instance())){
-            $feedback_tab=true;
-            //$classroom->classroomsessions = $this->viewclassroomevaluations($classroomid, $stable);
-        //}
-        if ((has_capability('local/classroom:manageclassroom', context_system::instance()) || is_siteadmin())) {
+        $feedback_tab=true;
+
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext) || is_siteadmin())) {
             $action = true;
         }
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',context_system::instance()) || has_capability('local/costcenter:manage_ownorganization',context_system::instance()))) {
+        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
              $action  = false;
         } 
         
-        if ((has_capability('local/classroom:classroomcompletion', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/classroom:classroomcompletion', $categorycontext) || is_siteadmin())) {
                 $classroomcompletion =  true;
         }
-        if ((has_capability('local/classroom:editclassroom', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/classroom:editclassroom', $categorycontext) || is_siteadmin())) {
                 $edit =  true;
         }
        
-        if ((has_capability('local/classroom:deleteclassroom', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/classroom:deleteclassroom', $categorycontext) || is_siteadmin())) {
                 $delete =  true;
         }
       
         
-        if ((has_capability('local/classroom:manageusers', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/classroom:manageusers', $categorycontext) || is_siteadmin())) {
                 $assignusers =  true;
                 $assignusersurl = new moodle_url("/local/classroom/enrollusers.php?cid=".$classroomid."");
         }
         
       
-       if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
+       if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
             $requested_users_tab = true;
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',context_system::instance()) || has_capability('local/costcenter:manage_ownorganization',context_system::instance()))) {
+        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
              $requested_users_tab = false;
         } 
 
         $completedwaitingseats=$waitingseats=$waitingseats_progress = 0;
-        if ((has_capability('local/classroom:viewwaitinglist_userstab', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/classroom:viewwaitinglist_userstab', $categorycontext) || is_siteadmin())) {
             $waitinglist_users_tab = true;
             $seats_sql="SELECT count(distinct(u.id)) FROM {user} AS u
                                                 JOIN {local_classroom_waitlist} AS cu ON cu.userid = u.id
@@ -966,7 +957,7 @@ class renderer extends plugin_renderer_base {
             }
         }
         $selfenrolmenttabcap = true;
-        if (!has_capability('local/classroom:manageclassroom', context_system::instance())) {
+        if (!has_capability('local/classroom:manageclassroom', $categorycontext)) {
 
                 $selfenrolmenttabcap = false;
 
@@ -1014,13 +1005,12 @@ class renderer extends plugin_renderer_base {
         }
         $classroom_status=(new classroom)->classroom_status_strip($classroomid,$classroom->status);
 
-        $systemcontext = context_system::instance();
         $createsession = false;
-        if (is_siteadmin() || (has_capability('local/classroom:createsession', $systemcontext)&&(has_capability('local/classroom:manageclassroom', $systemcontext)))) {
+        if (is_siteadmin() || (has_capability('local/classroom:createsession', $categorycontext)&&(has_capability('local/classroom:manageclassroom', $categorycontext)))) {
             $createsession = true;
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',context_system::instance()) || has_capability('local/costcenter:manage_ownorganization',context_system::instance()))) {
+        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
              $createsession = false;
         }  
 
@@ -1029,20 +1019,20 @@ class renderer extends plugin_renderer_base {
         $exist_with_tr_fd = $DB->count_records_sql("SELECT count(id) as total FROM {local_classroom_trainers} where classroomid = :classroomid AND feedback_id>0",array('classroomid' => $classroomid));
         $exist_with_tr = $DB->count_records('local_classroom_trainers',array('classroomid'=>$classroomid));
         $createfeedback = false;
-        if (is_siteadmin() || ((has_capability('local/classroom:createfeedback', $systemcontext)) && (has_capability('local/classroom:manageclassroom', $systemcontext))) && ($exist || $exist_with_tr_fd!=$exist_with_tr)) {    
+        if (is_siteadmin() || ((has_capability('local/classroom:createfeedback', $categorycontext)) && (has_capability('local/classroom:manageclassroom', $categorycontext))) && ($exist || $exist_with_tr_fd!=$exist_with_tr)) {
             $createfeedback = true;
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',context_system::instance()) || has_capability('local/costcenter:manage_ownorganization',context_system::instance()))) {
+        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
              $createfeedback  = false;
         }  
 
         $assign_courses = false;
-        if (is_siteadmin() || (has_capability('local/classroom:createcourse', $systemcontext)&&(has_capability('local/classroom:manageclassroom', $systemcontext)))) {
+        if (is_siteadmin() || (has_capability('local/classroom:createcourse', $categorycontext)&&(has_capability('local/classroom:manageclassroom', $categorycontext)))) {
             $assign_courses = true;  
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',context_system::instance()) || has_capability('local/costcenter:manage_ownorganization',context_system::instance()))) {
+        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
              $assign_courses  = false;
         }  
        // $unenrolbutton = $this->render_classroom_unenrol_object($classroomid, $USER->id);
@@ -1154,13 +1144,13 @@ class renderer extends plugin_renderer_base {
      */
     public function viewclassroomusers($users, $classroomid) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $data = array();
         $assign_users = false;
-        if(has_capability('local/classroom:manageusers',  context_system::instance()) && has_capability('local/classroom:manageclassroom',  context_system::instance())){
+        if(has_capability('local/classroom:manageusers',  $categorycontext) && has_capability('local/classroom:manageclassroom',  $categorycontext)){
             $assign_users = true;
         }
-        if (is_siteadmin() || (has_capability('local/classroom:createcourse', $systemcontext)&&(has_capability('local/classroom:manageclassroom', $systemcontext)))) {
+        if (is_siteadmin() || (has_capability('local/classroom:createcourse', $categorycontext)&&(has_capability('local/classroom:manageclassroom', $categorycontext)))) {
             $certificate_plugin_exist = \core_component::get_plugin_directory('tool', 'certificate');
             if($certificate_plugin_exist){
                 $cl_certificateid = $DB->get_field('local_classroom', 'certificateid',array('id' =>$classroomid)); 
@@ -1207,6 +1197,9 @@ class renderer extends plugin_renderer_base {
      */
     public function classroom_actionstatus_markup($classroom,$view="browseclassrooms") {
     global $DB, $PAGE, $OUTPUT;
+
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
+
         if($view=="browseclassrooms"){
         $class="";
         }else{
@@ -1222,7 +1215,7 @@ class renderer extends plugin_renderer_base {
         $fparams->id = $classroom->id;
         $fparams->classroomname = $classroom->name;
 
-        if ($classroom->status == 0 && has_capability('local/classroom:manageclassroom',  context_system::instance())&&has_capability('local/classroom:publish',  context_system::instance())) {   
+        if ($classroom->status == 0 && has_capability('local/classroom:manageclassroom',  $categorycontext)&&has_capability('local/classroom:publish',  $categorycontext)) {
             $fparams->action = "1";
             $fparams->actionstatusmsg = 'classroom_active_action';
             $fr = json_encode($fparams,JSON_HEX_APOS);
@@ -1230,7 +1223,7 @@ class renderer extends plugin_renderer_base {
             onclick='(function(e){ require(\"local_classroom/classroom\").ManageclassroomStatus($fr) })(event)'><i class='icon fa fa-share fa-fw' aria-hidden='true' ></i></a>";
 
         }
-        if ($classroom->status == 2 && has_capability('local/classroom:release_hold',  context_system::instance())&&has_capability('local/classroom:manageclassroom',  context_system::instance())) {   
+        if ($classroom->status == 2 && has_capability('local/classroom:release_hold',  $categorycontext)&&has_capability('local/classroom:manageclassroom',  $categorycontext)) {
               $fparams->action = "0";
             $fparams->actionstatusmsg = 'classroom_release_hold_action';
             $fr = json_encode($fparams,JSON_HEX_APOS);
@@ -1240,7 +1233,7 @@ class renderer extends plugin_renderer_base {
         }
         if($classroom->status == 1) {
             
-           if(has_capability('local/classroom:cancel',  context_system::instance())&&has_capability('local/classroom:manageclassroom',  context_system::instance())) {   
+           if(has_capability('local/classroom:cancel',  $categorycontext)&&has_capability('local/classroom:manageclassroom',  $categorycontext)) {
                     $fparams->action = "3";
             $fparams->actionstatusmsg = 'classroom_close_action';
             $fr = json_encode($fparams,JSON_HEX_APOS);
@@ -1249,7 +1242,7 @@ class renderer extends plugin_renderer_base {
 
            }
             
-           if(has_capability('local/classroom:hold',context_system::instance())&&has_capability('local/classroom:manageclassroom',  context_system::instance())) {   
+           if(has_capability('local/classroom:hold',$categorycontext)&&has_capability('local/classroom:manageclassroom',  $categorycontext)) {
                            $fparams->action = "2";
             $fparams->actionstatusmsg = 'classroom_hold_action';
             $fr = json_encode($fparams,JSON_HEX_APOS);
@@ -1260,7 +1253,7 @@ class renderer extends plugin_renderer_base {
             
              
             $sessionnotattendancetaken = $DB->record_exists('local_classroom_sessions', array('classroomid' => $classroom->id, 'attendance_status' => 0));
-            if(!$sessionnotattendancetaken && $classroom->enddate <= time() && has_capability('local/classroom:complete',  context_system::instance())&&has_capability('local/classroom:manageclassroom',  context_system::instance())) {
+            if(!$sessionnotattendancetaken && $classroom->enddate <= time() && has_capability('local/classroom:complete',  $categorycontext)&&has_capability('local/classroom:manageclassroom',  $categorycontext)) {
                             $fparams->action = "4";
                 $fparams->actionstatusmsg = 'classroom_complete_action';
                 $fr = json_encode($fparams,JSON_HEX_APOS);
@@ -1392,12 +1385,12 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $classroom = (new classroom)->classrooms($stable);
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $classroom_status = $DB->get_field('local_classroom','status',array('id' => $classroomid));
-        if(!has_capability('local/classroom:view_newclassroomtab', context_system::instance()) && $classroom_status==0){
+        if(!has_capability('local/classroom:view_newclassroomtab', $categorycontext) && $classroom_status==0){
             print_error("You don't have permissions to view this page.");
         }
-        elseif(!has_capability('local/classroom:view_holdclassroomtab', context_system::instance())&& $classroom_status==2){
+        elseif(!has_capability('local/classroom:view_holdclassroomtab', $categorycontext)&& $classroom_status==2){
             print_error("You don't have permissions to view this page.");
         }
         if(empty($classroom)) {
@@ -1456,7 +1449,7 @@ class renderer extends plugin_renderer_base {
             $trainers[] = array('classroomtrainerpic' => '', 'trainername' => '', 'trainerdesignation' => '', 'traineremail' => '');
         }
         $return="";
-        $classroom->userenrolmentcap = (has_capability('local/classroom:manageusers', context_system::instance()) &&has_capability('local/classroom:manageclassroom', context_system::instance()) && $classroom->status == 0) ? true : false;
+        $classroom->userenrolmentcap = (has_capability('local/classroom:manageusers', $categorycontext) &&has_capability('local/classroom:manageclassroom', $categorycontext) && $classroom->status == 0) ? true : false;
     
         $stable = new stdClass();
         $stable->thead = true;
@@ -1515,7 +1508,7 @@ class renderer extends plugin_renderer_base {
             'descriptionstring'=>$decsriptionstring,
             'isdescription'=>$isdescription,
             'seats_progress'=>$seats_progress,
-            'contextid' => $context->id,
+            'contextid' => $categorycontext->id,
             'linkpath'=>$CFG->wwwroot."/local/classroom/view.php?cid=$classroomid"
         ];
         return $classroomcontext;
@@ -1540,7 +1533,7 @@ class renderer extends plugin_renderer_base {
     }
     public function view_classroom_sessions($classroomid) {
         global $OUTPUT, $CFG, $DB,$USER;
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $stable = new \stdClass();
         $stable->search = false;
         $stable->thead = false;
@@ -1548,7 +1541,7 @@ class renderer extends plugin_renderer_base {
         $out="";
         if ($sessions['sessionscount'] > 0) {
                 $table = new html_table();
-                if ((has_capability('local/classroom:manageclassroom', context_system::instance())|| is_siteadmin())) {
+                if ((has_capability('local/classroom:manageclassroom', $categorycontext)|| is_siteadmin())) {
                     $out.='<table style="border-collapse: collapse;"  width="99%">
                             <thead>
                             <tr>
@@ -1587,7 +1580,7 @@ class renderer extends plugin_renderer_base {
                             if($moduleid){
                                 $link=html_writer::link($CFG->wwwroot . '/mod/' .$sdata->moduletype. '/view.php?id=' . $moduleid,get_string('join', 'local_classroom'), array('title' => get_string('join', 'local_classroom')));
 
-                                if (!has_capability('local/classroom:manageclassroom', context_system::instance())) {
+                                if (!has_capability('local/classroom:manageclassroom', $categorycontext)) {
                                     $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $classroomid, 'userid' => $USER->id));
 
                                     if (!$userenrolstatus) {
@@ -1609,7 +1602,7 @@ class renderer extends plugin_renderer_base {
                 } else {
                     $out.= '<td class="cell c2" style="text-align:left;border: 1px solid #dddddd;padding: 8px;">'.get_string('pending', 'local_classroom').'</td>';
                 }
-               if ((has_capability('local/classroom:manageclassroom', context_system::instance())|| is_siteadmin())) {
+               if ((has_capability('local/classroom:manageclassroom', $categorycontext)|| is_siteadmin())) {
                 $trainer = $DB->get_record('user', array('id' => $sdata->trainerid));
 
                 $trainername=  $trainer ? fullname($trainer) : 'N/A';
@@ -1661,7 +1654,7 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $classroom = (new classroom)->classrooms($stable);
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $classroom_status = $DB->get_field('local_classroom', 'status', array('id' => $classroomid));
         if (empty($classroom)) {
             print_error("classroom Not Found!");
@@ -1685,7 +1678,7 @@ class renderer extends plugin_renderer_base {
      */
   public function tagged_classrooms($tagid, $exclusivemode, $ctx, $rec, $displayoptions, $count = 0) {
     global $CFG, $DB, $USER;
-    $systemcontext = context_system::instance();
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     if ($count > 0)
     $sql =" select count(c.id) from {local_classroom} c ";
     else
@@ -1723,7 +1716,7 @@ class renderer extends plugin_renderer_base {
     $whereparams = array();
     $conditionalwhere = '';
     if (!is_siteadmin()) {
-        $wherearray = org_dep_sql($systemcontext); // get records department wise
+        $wherearray = org_dep_sql($categorycontext); // get records department wise
         $whereparams = $wherearray['params'];
         $conditionalwhere = $wherearray['sql'];
     }    
@@ -1750,7 +1743,7 @@ class renderer extends plugin_renderer_base {
     return $this->output->render_from_template('local_tags/tagfeed', $tagfeed->export_for_template($this->output));
     }
     public function get_userdashboard_classroom($tab, $filter = false,$view_type = 'card'){
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         
         $templateName = 'local_classroom/userdashboard_paginated';
         $cardClass = 'col-md-6 col-12';
@@ -1766,29 +1759,17 @@ class renderer extends plugin_renderer_base {
         $options['filter'] = $tab;
         $options = json_encode($options);
         $filterdata = json_encode(array());
-        $dataoptions = json_encode(array('contextid' => $systemcontext->id));
-        $context = [
+        $dataoptions = json_encode(array('contextid' => $categorycontext->id));
+        $categorycontext = [
             'targetID' => 'dashboard_classrooms',
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata
         ];
         if($filter){
-            return  $context;
+            return  $categorycontext;
         }else{
-            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
+            return  $this->render_from_template('local_costcenter/cardPaginate', $categorycontext);
         }
     }
-    // public function render_classroom_unenrol_object($classroomid, $userid){
-    //     global $DB;
-    //     $exists = $DB->record_exists("local_classroom_users",  array('userid' => $userid, 'classroomid' => $classroomid, 'usercreated' => $userid));
-    //     if($exists){
-    //         $systemcontext = \context_system::instance();
-    //         $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'data-module_id' => $classroomid, 'data-userid' => $userid, 'data-pluginname' => 'classroom', 'data-methodname' => 'unenrollclassroom', 'data-contextid' => $systemcontext->id));
-    //         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
-    //         return html_writer::tag('li', $container);
-    //     }else{
-    //         return null;
-    //     }
-    // }
 }

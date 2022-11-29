@@ -32,13 +32,21 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
     public static function get_module_context($classroomid = null){
 
-        // $costcenterid=null;
+        global $DB;
 
-        // if($classroomid){
+        $costcenterid=null;
 
-        //     $costcenterid=
+        if($classroomid > 0){
 
-        // }
+            $classroomcostcenter=$DB->get_field('local_classroom','costcenter',  array('id'=>$classroomid));
+
+            if($classroomcostcenter > 0){
+
+                $costcenterid=$classroomcostcenter;
+
+            }
+
+        }
 
         return parent::get_module_context($costcenterid);
 

@@ -46,13 +46,13 @@ $url = new moodle_url('/local/classroom/enrollusers.php', array('cid' => $classr
 $renderer = $PAGE->get_renderer('local_classroom');
 
 $classroom=$renderer->classroomview_check($classroomid);
-$context = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+$categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 $sesskey=sesskey();
 $classroomclass = new classroom();
 // Security.
 require_login();
-require_capability('local/classroom:manageclassroom', $context);
-require_capability('local/classroom:manageusers', $context);
+require_capability('local/classroom:manageclassroom', $categorycontext);
+require_capability('local/classroom:manageusers', $categorycontext);
 if($view=='ajax'){
     $options =(array)json_decode($_GET["options"],false);
      $select_from_users=(new classroom)->select_to_and_from_users($type,$classroomid,$options,false,$offset1=-1,$perpage=50,$lastitem);
@@ -69,7 +69,7 @@ if ($returnurl) {
     $url->param('returnurl', $returnurl);
 }
 $PAGE->set_url($url);
-$PAGE->set_context($context);
+$PAGE->set_context($categorycontext);
 $PAGE->set_title($classroom->name);
 $PAGE->set_pagelayout('standard');
 $data_submitted=data_submitted();
@@ -115,7 +115,7 @@ if ($classroomid) {
     }
 
     // Create the user selector objects.
-    $options = array('context' => $context->id, 'classroomid' => $classroomid, 'organization' => $organization, 'department' => $department, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
+    $options = array('context' => $categorycontext->id, 'classroomid' => $classroomid, 'organization' => $organization, 'department' => $department, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
     //$potentialuserselector = new local_classroom_potential_users('addselect', $options);
     //$currentuserselector = new local_classroom_existing_users('removeselect', $options);
 
