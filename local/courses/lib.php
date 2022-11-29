@@ -1265,24 +1265,27 @@ function get_listof_courses($stable, $filterdata) {
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
     if(is_siteadmin()){
         $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
-                     JOIN {course_categories} AS cc ON cc.id = c.category";
+                     JOIN {course_categories} AS cc ON cc.id = c.category
+                     JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas";
     } elseif(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
         $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                    JOIN {course_categories} AS cc ON cc.id = c.category
+                   JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
                    WHERE c.open_costcenterid = :usercostcenter";
     } elseif(has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
         $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                    JOIN {course_categories} AS cc ON cc.id = c.category
+                   JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
                    WHERE c.open_costcenterid = :usercostcenter
                    AND concat(',', c.open_departmentid,',') LIKE '%,$USER->open_departmentid,%' ";
     } else {
         
         $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                    JOIN {course_categories} AS cc ON cc.id = c.category
+                   JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
                    WHERE c.open_costcenterid = :usercostcenter 
                    AND c.open_departmentid = :userdepartment";
     }
-    $formsql .= " JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
     $formsql .= " AND c.id > 1 ";
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";
@@ -2207,7 +2210,7 @@ function local_courses_output_fragment_course_type($args) {
 function get_listof_coursetypes($stable, $filterdata) {
     global $DB, $CFG, $OUTPUT, $PAGE ,$USER;
     
-    $systemcontext = context_system::instance();
+    $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
     $allcoursetypes=$DB->get_records('local_course_types');
     $coursesContext = array(
         "result" => $allcoursetypes );
