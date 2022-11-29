@@ -2756,3 +2756,111 @@ body .que .info>div {
     float: none !important;
     min-height: 0 !important;
 }
+
+/* incoure ui changes  */
+#theme_epsilon-drawers-courseindex.drawer-left{
+    background-color: #222D3E;
+    .drawerheader{
+        height: auto;
+        align-items: end;
+        justify-content: end;
+        padding: 9px 15px;
+        .drawertoggle {
+            padding: 0;
+            margin: 0;
+            background-color: transparent;
+            border: none;
+        }
+    }
+    .drawercontent{
+        padding: 0;
+        height: 100%;
+        .courseindex-section {
+            border: none;
+            margin-bottom: 3px;
+            &[role="treeitem"]:not([aria-expanded="true"]):focus{
+                box-shadow: none;
+            }
+        }
+        .courseindex {
+            .icon{
+                color: #fff;
+            }
+            .courseindex-item{
+                .completioninfo.completion_complete i.icon{
+                    color: green;
+                    background-color: #fff;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 50%;
+                    font-size: 15px;
+                    margin-left: 2px;
+                }
+                .completioninfo.completion_complete i.icon::before{
+                    content: "\f058";
+                    margin-top: -2px;
+                    display: block;
+                    margin-left: -1px;
+                }
+                .courseindex-link{
+                  color: #a4b6d0;
+                  &:hover{
+                    color: #d3dbe6;
+                  }
+                }
+                &.pageitem {
+                    background-color: #2c384a;
+                    color: #fff;
+                    scroll-margin: 6rem;
+                    border-radius: 0;
+
+                }
+            }
+            .courseindex-item.courseindex-section-title{
+                background-color: #364459;
+                border-radius: 0;
+                a{
+                    color: #fff;
+                    font-weight: normal;
+                }
+           }
+        }
+        [role="treeitem"]:not([aria-expanded="true"]):focus{
+            box-shadow: none;
+        }
+        
+    }
+}
+.pagelayout-incourse,.pagelayout-course{
+    .main-inner{
+        background-color: transparent !important;
+    }
+    #page-header {
+        .page-header-headings h1{
+            font-weight: bold !important;
+            color: #2A354B;
+            &::after{
+                display: none;
+            }
+        }
+    }
+    .secondary-navigation{
+        border-top: 1px solid #dee2e6;
+        margin-top: 10px;
+        .more-nav{
+            .nav-link{
+                padding: 10px 30px;
+                border-bottom: 3px solid transparent;
+                color: #A6ADB7;
+                &:hover,&[aria-current="true"]{
+                    color: #255095;
+                    font-weight: bold;
+                    border-bottom: 3px solid #255095;
+                    margin-right: 15px; 
+                    background-color: transparent;
+                }
+
+            }
+        }
+    }
+}
