@@ -894,9 +894,8 @@ class view extends plugin_renderer_base {
 	$planid=LEP_id $curr_tab="tab name"
 	**/
 	public function learningplans_courses_tab_content($planid, $curr_tab,$condition){
-
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-
+		
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);		
 		$return ='';
 		$return .='<div class="tab-pane active mt-15 ml-15" id="plan_courses" role="tabpanel">';
 		if (has_capability('local/learningplan:assigncourses', $systemcontext)) {
@@ -1122,7 +1121,7 @@ class view extends plugin_renderer_base {
 		}
 	}
 	public function select_from_users_of_learninplan($planid,$userid,$params,$total=0,$offset1=-1,$perpage=-1,$lastitem=0){
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 		$users = $this->db->get_record('local_learningplan',array('id'=>$planid));
 		if($total==0){
 
@@ -1207,7 +1206,7 @@ class view extends plugin_renderer_base {
 		$array=explode(',',$us);
 		$list=implode("','",$array);
 		$loginuser= $this->user;
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 		if(!is_siteadmin()){
 			$siteadmin_sql=" AND u.open_costcenterid = $users->costcenter ";
 		}else{
@@ -1225,10 +1224,10 @@ class view extends plugin_renderer_base {
 
             $sql.=" AND u.id > $lastitem";
          }
-		if (( !is_siteadmin() && ( !has_capability('local/costcenter:manage_multiorganizations', (new \local_users\lib\accesslib())::get_module_context())))) {
+		if (( !is_siteadmin() && ( !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)))) {
                 $sql .= " AND u.open_costcenterid = :costcenter";
                 $params['costcenter'] = $this->user->open_costcenterid;
-                if (has_capability('local/costcenter:manage_owndepartments', (new \local_users\lib\accesslib())::get_module_context())) {
+                if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
                     $sql .= " AND u.open_departmentid = :department";
                     $params['department'] = $this->user->open_departmentid;
                  }
@@ -1294,7 +1293,7 @@ class view extends plugin_renderer_base {
 	public function learningplans_users_tab_content($planid, $curr_tab,$condition,$ajax){
 		global $CFG,$OUTPUT;
 		if($ajax==0){
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 	    $return = '';
 		$return .= '<div class="tab-pane" id="plan_users" role="tabpanel">';
 		if (has_capability('local/learningplan:assignhisusers', $systemcontext)) {
@@ -1328,8 +1327,8 @@ class view extends plugin_renderer_base {
 	/*Function to view the requested users in learningplan*/
 	public function learningplans_requested_users_content($planid, $curr_tab,$condition){
 		global $DB,$CFG,$OUTPUT,$PAGE;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
+		
 		$return = '';
 		if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
 		 $learningplan = $DB->get_records('local_request_records', array('compname' =>'learningplan','componentid'=>$planid));
@@ -1348,7 +1347,7 @@ class view extends plugin_renderer_base {
 
 	public function learningplans_assign_courses_form($planid,$condition){
 		global $DB;
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 		$learningplan  = $DB->get_records('local_learningplan');
 	    foreach($learningplan AS $plan)
 	    $departmentcount = count(array_filter(explode(',',$plan->department)));
@@ -1386,7 +1385,7 @@ class view extends plugin_renderer_base {
 	}
 	public function get_editand_publish_icons($planid){
 		global $DB, $CFG, $PAGE;
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 		$learningplan = $DB->get_records('local_learningplan');
 
 		foreach($learningplan AS $plan){
@@ -1473,8 +1472,8 @@ class view extends plugin_renderer_base {
 	/**Function to view the  course and functionality with the sortorder @param $planid=LEP_id**/
 	public function assigned_learningplans_courses($planid){
         global $DB;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
+       
 		$learningplan_lib = new lib();
 
 		$includes = new \user_course_details;
@@ -1758,7 +1757,7 @@ class view extends plugin_renderer_base {
 	public function assigned_learningplans_users($planid,$ajax){
 		global $OUTPUT,$DB;
 
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 
 		$core_component = new \core_component();
         $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
@@ -1901,9 +1900,9 @@ class view extends plugin_renderer_base {
 		if(file_exists($CFG->dirroot.'/local/includes.php')){
 			require_once($CFG->dirroot.'/local/includes.php');
 		}
-
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-
+		
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
+		
 
 		$learningplan_lib = new lib();
 		$includes = new user_course_details;
@@ -2074,9 +2073,9 @@ public function assigned_learningplans_courses_browse_employee_view($planid, $us
 		if(file_exists($CFG->dirroot.'/local/includes.php')){
 			require_once($CFG->dirroot.'/local/includes.php');
 		}
-
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context($planid);
-
+		
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
+		
 		$learningplan_lib = new local_learningplan\lib\lib();
 		$includes = new user_course_details;
 
@@ -2322,7 +2321,7 @@ public function learningplaninfo_for_employee($planid){
 			$check_users= $learningplan_lib->check_courses_assigned_target_audience($this->user->id,$plan_record->id);
 
 		// if($check_users==1){
-		// 	$back_url = new moodle_url('/local/learningplan/index.php', array('approval' => $plan_record->id));
+		// 	$back_url = new moodle_url('/local/learningplan/index.php', array('approval' => $plan_record->id));	
 		// 	$approve=  html_writer::link('Send Request', array('class' => 'pull-right enrol_to_plan nourl','id'=>'request'));
 		// 	$notify_info = new stdClass();
 		// 	$notify_info->name = $plan_record->name;
@@ -2639,7 +2638,7 @@ public function learningplaninfo_for_employee($planid){
 		if(!$selfenrolled){
 			return null;
 		}
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+		$systemcontext = ((new \local_learningplan\lib\accesslib())::get_module_context($planid))::get_module_context();
         $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol', 'local_learningplan').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_learningplan/courseenrol\').unEnrolUser({planid: '.$planid.', userid:'.$USER->id.', planname:\''.$planname.'\'}) })(event)'));
         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
         $liTag = html_writer::tag('li', $container);

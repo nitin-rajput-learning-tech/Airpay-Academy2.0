@@ -52,7 +52,7 @@ class learningplan extends moodleform {
 		$sub_sub_dept = $this->_customdata['sub_sub_department'];
 		$editoroptions = $this->customdata['editoroptions'];
 		$form_status = $this->_customdata['form_status'];
-		$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 		
 		$mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
@@ -140,7 +140,7 @@ class learningplan extends moodleform {
 	        $editoroption = [
 	        'maxfiles' => EDITOR_UNLIMITED_FILES,
 	        'trust' => false,
-	        'context' => (new \local_users\lib\accesslib())::get_module_context(),
+	        'context' => (new \local_learningplan\lib\accesslib())::get_module_context(),
 	        'noclean' => true,
 	        'subdirs' => false,
 	        'autosave'=>false
@@ -149,7 +149,7 @@ class learningplan extends moodleform {
 	        $mform->setType('description', PARAM_RAW);
 	        $mform->addHelpButton('description','descript','local_learningplan');
 			
-			$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+			$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 			if (is_siteadmin($USER->id) || has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)) {
 				$sql = "select id,fullname from {local_costcenter} where visible =1 and parentid IN(0,1)";
 				$costcenters = $DB->get_records_sql($sql);
@@ -185,7 +185,7 @@ class learningplan extends moodleform {
             }
 
 		}else if($form_status == 1){
-			// if ((!is_siteadmin() && (((! has_capability('local/costcenter:manage_multiorganizations', (new \local_users\lib\accesslib())::get_module_context()))) &&(!has_capability('local/costcenter:manage_owndepartments',$systemcontext))))) {
+			// if ((!is_siteadmin() && (((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))) &&(!has_capability('local/costcenter:manage_owndepartments',$systemcontext))))) {
 			if (is_siteadmin() || 
                 (has_capability('local/learningplan:manage', $systemcontext) 
                 	&& has_capability('local/costcenter:manage_ownorganization', $systemcontext)
@@ -216,7 +216,7 @@ class learningplan extends moodleform {
 				);
 				$mform->addElement('autocomplete', 'department', get_string('department','local_evaluation'),$departmentslist,$options);
 				$mform->addHelpButton('department', 'department','local_users');
-			// }elseif (is_siteadmin() || ((! has_capability('local/costcenter:manage_multiorganizations', (new \local_users\lib\accesslib())::get_module_context()))&&(has_capability('local/costcenter:manage_owndepartments',$systemcontext)))) {
+			// }elseif (is_siteadmin() || ((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))&&(has_capability('local/costcenter:manage_owndepartments',$systemcontext)))) {
           
 					/*$options = array(
 						// 'multiple' => true,

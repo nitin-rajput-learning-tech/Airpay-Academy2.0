@@ -241,7 +241,7 @@ class learningplan {
     }
     public function get_learningplans($filterdata, $start, $length){
         global $DB, $USER;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
         $filtersql = '';
         if($filterdata){
             if(!empty($filterdata->subdepartment)){

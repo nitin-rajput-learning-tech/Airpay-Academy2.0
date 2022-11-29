@@ -38,8 +38,7 @@ $course_enrol=optional_param('courseid', 0, PARAM_INT);
 $checkingid=optional_param('couid', 0, PARAM_INT);
 $userid=optional_param('userid', 0, PARAM_INT);
 $planid=optional_param('planid', 0, PARAM_INT);
-$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
-
+$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
 //check the context level of the user and check whether the user is login to the system or not
 $PAGE->set_context($systemcontext);
 require_login();
