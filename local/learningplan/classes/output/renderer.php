@@ -49,7 +49,7 @@ class renderer extends plugin_renderer_base {
      */
   public function tagged_learningplans($tagid, $exclusivemode, $ctx, $rec, $displayoptions, $count = 0, $sort='') {
     global $CFG, $DB, $USER;
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
     if ($count > 0)
     $sql =" select count(c.id) from {local_learningplan} c ";
     else
@@ -114,7 +114,7 @@ class renderer extends plugin_renderer_base {
     return $this->output->render_from_template('local_tags/tagfeed', $tagfeed->export_for_template($this->output));
   }
     public function get_userdashboard_learningplan($tab, $filter = false,$view_type = 'card'){
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 
         $templateName = 'local_learningplan/userdashboard_paginated';
         $cardClass = 'col-md-6 col-12';
