@@ -65,7 +65,7 @@ class coursetype_form extends moodleform {
 		$mform->setType('orgid', PARAM_INT);
 		$mform->addRule('orgid', get_string('required','local_courses'), 'required', null);
 		}
-		else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)||has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+		else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
 
 		$mform->addElement('hidden', 'orgid', null, array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
 		$mform->setType('orgid', PARAM_INT);
