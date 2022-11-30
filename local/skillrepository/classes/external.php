@@ -280,17 +280,15 @@ class local_skillrepository_external extends external_api {
 
 
     //////For displaying on index page//////////
-      public static function manageskillsview_parameters() {
+    public static function manageskillsview_parameters() {
         return new external_function_parameters([
-                'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
-                'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
-                'offset' => new external_value(PARAM_INT, 'Number of items to skip from the begging of the result set',
-                    VALUE_DEFAULT, 0),
-                'limit' => new external_value(PARAM_INT, 'Maximum number of results to return',
-                    VALUE_DEFAULT, 0),
-                'contextid' => new external_value(PARAM_INT, 'contextid'),
-                'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
-            ]);
+            'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
+            'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
+            'offset' => new external_value(PARAM_INT, 'Number of items to skip from the begging of the result set', VALUE_DEFAULT, 0),
+            'limit' => new external_value(PARAM_INT, 'Maximum number of results to return', VALUE_DEFAULT, 0),
+            'contextid' => new external_value(PARAM_INT, 'contextid'),
+            'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+        ]);
     }
 
     /**
@@ -336,8 +334,6 @@ class local_skillrepository_external extends external_api {
 
         $stable = new \stdClass();
         $stable->thead = true;
-
-        $stable->thead = false;
         $stable->start = $offset;
         $stable->length = $limit;
         $result_skill = skill_details($stable,$filtervalues);
@@ -366,18 +362,217 @@ class local_skillrepository_external extends external_api {
             'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
             'is_admin' => new external_value(PARAM_BOOL, 'Is user an admin flag'),
             'records' => new external_multiple_structure(
-                            new external_single_structure(
-                                array(
-                                    'visible' => new external_value(PARAM_INT, 'visible skill', VALUE_OPTIONAL),
-                                    'skill_id' => new external_value(PARAM_RAW, 'id in skill', VALUE_OPTIONAL),
-                                    'organisationname' => new external_value(PARAM_RAW, 'organisationname of skill', VALUE_OPTIONAL),
-                                    'skilname' => new external_value(PARAM_RAW, 'skill', VALUE_OPTIONAL),
-                                    'shortname' => new external_value(PARAM_RAW, 'shortname of skill', VALUE_OPTIONAL),
-                                    'skill_catname' => new external_value(PARAM_RAW, 'category name in skill', VALUE_OPTIONAL),
-                                    'achieved_users' => new external_value(PARAM_RAW, 'achieved users in skill', VALUE_OPTIONAL),
-                                )
-                            )
-                        )
+                new external_single_structure(
+                    array(
+                        'visible' => new external_value(PARAM_INT, 'visible skill', VALUE_OPTIONAL),
+                        'skill_id' => new external_value(PARAM_RAW, 'id in skill', VALUE_OPTIONAL),
+                        'organisationname' => new external_value(PARAM_RAW, 'organisationname of skill', VALUE_OPTIONAL),
+                        'skilname' => new external_value(PARAM_RAW, 'skill', VALUE_OPTIONAL),
+                        'shortname' => new external_value(PARAM_RAW, 'shortname of skill', VALUE_OPTIONAL),
+                        'skill_catname' => new external_value(PARAM_RAW, 'category name in skill', VALUE_OPTIONAL),
+                        'achieved_users' => new external_value(PARAM_RAW, 'achieved users in skill', VALUE_OPTIONAL),
+                    )
+                )
+            )
+        ]);
+    }
+
+    //////For displaying on level page//////////
+      public static function manageskillslevelview_parameters() {
+        return new external_function_parameters([
+            'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
+            'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
+            'offset' => new external_value(PARAM_INT, 'Number of items to skip from the begging of the result set', VALUE_DEFAULT, 0),
+            'limit' => new external_value(PARAM_INT, 'Maximum number of results to return', VALUE_DEFAULT, 0),
+            'contextid' => new external_value(PARAM_INT, 'contextid'),
+            'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+        ]);
+    }
+
+    /**
+     * Gets the list of users based on the login user
+     *
+     * @param int $options need to give options targetid,viewtype,perpage,cardclass
+     * @param int $dataoptions need to give data which you need to get records
+     * @param int $limit Maximum number of results to return
+     * @param int $offset Number of items to skip from the beginning of the result set.
+     * @param int $filterdata need to pass filterdata.
+     * @return array The list of users and total users count.
+     */
+    public static function manageskillslevelview(
+        $options,
+        $dataoptions,
+        $offset = 0,
+        $limit = 0,
+        $contextid,
+        $filterdata
+    ) {
+        global $OUTPUT, $CFG, $DB,$USER,$PAGE;
+        require_once($CFG->dirroot . '/local/skillrepository/lib.php');
+        require_login();
+        $PAGE->set_url('/local/skillrepository/level.php', array());
+        $PAGE->set_context($contextid);
+        // Parameter validation.
+        $params = self::validate_parameters(
+            self::manageskillslevelview_parameters(),
+            [
+                'options' => $options,
+                'dataoptions' => $dataoptions,
+                'offset' => $offset,
+                'limit' => $limit,
+                'contextid' => $contextid,
+                'filterdata' => $filterdata
+            ]
+        );
+
+        $offset = $params['offset'];
+        $limit = $params['limit'];
+        $decodedata = json_decode($params['dataoptions']);
+        $filtervalues = json_decode($filterdata);
+
+        $stable = new \stdClass();
+        $stable->thead = true;
+        $stable->start = $offset;
+        $stable->length = $limit;
+        $result_skill = skills_level_details($stable,$filtervalues);
+        $totalcount = $result_skill['count'];
+        $data=$result_skill['data'];
+        return [
+            'is_admin' => is_siteadmin(),
+            'totalcount' => $totalcount,
+            'records' =>$data,
+            'options' => $options,
+            'dataoptions' => $dataoptions,
+            'filterdata' => $filterdata,
+        ];
+
+    }
+
+    /**
+     * Returns description of method result value.
+     */
+    public static function  manageskillslevelview_returns() {
+        return new external_single_structure([
+            'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
+            'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
+            'totalcount' => new external_value(PARAM_INT, 'total number of skills in result set'),
+            'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+            'is_admin' => new external_value(PARAM_BOOL, 'Is user an admin flag'),
+            'records' => new external_multiple_structure(
+                new external_single_structure(
+                    array(
+                        'visible' => new external_value(PARAM_INT, 'visible skill', VALUE_OPTIONAL),
+                        'skillslevel_id' => new external_value(PARAM_RAW, 'id in skillslevel', VALUE_OPTIONAL),
+                        'organisationname' => new external_value(PARAM_RAW, 'organisationname of skill', VALUE_OPTIONAL),
+                        'skillslevelname' => new external_value(PARAM_RAW, 'skillslevel', VALUE_OPTIONAL),
+                        'shortname' => new external_value(PARAM_RAW, 'shortname of skill', VALUE_OPTIONAL),
+                        'skill_catname' => new external_value(PARAM_RAW, 'category name in skill', VALUE_OPTIONAL),
+                        'achieved_users' => new external_value(PARAM_RAW, 'achieved users in skill', VALUE_OPTIONAL),
+                        'code' => new external_value(PARAM_RAW, 'code in skillslevel', VALUE_OPTIONAL),
+                        'username' => new external_value(PARAM_RAW, 'username in skillslevel', VALUE_OPTIONAL),
+                    )
+                )
+            )
+        ]);
+    }
+
+    //////For displaying on level page//////////
+      public static function manageskillscategoryview_parameters() {
+        return new external_function_parameters([
+            'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
+            'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
+            'offset' => new external_value(PARAM_INT, 'Number of items to skip from the begging of the result set', VALUE_DEFAULT, 0),
+            'limit' => new external_value(PARAM_INT, 'Maximum number of results to return', VALUE_DEFAULT, 0),
+            'contextid' => new external_value(PARAM_INT, 'contextid'),
+            'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+        ]);
+    }
+
+    /**
+     * Gets the list of users based on the login user
+     *
+     * @param int $options need to give options targetid,viewtype,perpage,cardclass
+     * @param int $dataoptions need to give data which you need to get records
+     * @param int $limit Maximum number of results to return
+     * @param int $offset Number of items to skip from the beginning of the result set.
+     * @param int $filterdata need to pass filterdata.
+     * @return array The list of users and total users count.
+     */
+    public static function manageskillscategoryview(
+        $options,
+        $dataoptions,
+        $offset = 0,
+        $limit = 0,
+        $contextid,
+        $filterdata
+    ) {
+        global $OUTPUT, $CFG, $DB,$USER,$PAGE;
+        require_once($CFG->dirroot . '/local/skillrepository/lib.php');
+        require_login();
+        $PAGE->set_url('/local/skillrepository/skill_category.php', array());
+        $PAGE->set_context($contextid);
+        // Parameter validation.
+        $params = self::validate_parameters(
+            self::manageskillscategoryview_parameters(),
+            [
+                'options' => $options,
+                'dataoptions' => $dataoptions,
+                'offset' => $offset,
+                'limit' => $limit,
+                'contextid' => $contextid,
+                'filterdata' => $filterdata
+            ]
+        );
+
+        $offset = $params['offset'];
+        $limit = $params['limit'];
+        $decodedata = json_decode($params['dataoptions']);
+        $filtervalues = json_decode($filterdata);
+
+        $stable = new \stdClass();
+        $stable->thead = true;
+        $stable->start = $offset;
+        $stable->length = $limit;
+        $result_skill = skills_category_details($stable,$filtervalues);
+
+        $totalcount = $result_skill['count'];
+        $data=$result_skill['data'];
+        return [
+            'is_admin' => is_siteadmin(),
+            'totalcount' => $totalcount,
+            'records' =>$data,
+            'options' => $options,
+            'dataoptions' => $dataoptions,
+            'filterdata' => $filterdata,
+        ];
+
+    }
+
+    /**
+     * Returns description of method result value.
+     */
+    public static function  manageskillscategoryview_returns() {
+        return new external_single_structure([
+            'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
+            'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
+            'totalcount' => new external_value(PARAM_INT, 'total number of skills in result set'),
+            'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+            'is_admin' => new external_value(PARAM_BOOL, 'Is user an admin flag'),
+            'records' => new external_multiple_structure(
+                new external_single_structure(
+                    array(
+                        'visible' => new external_value(PARAM_INT, 'visible skill', VALUE_OPTIONAL),
+                        'skillscategory_id' => new external_value(PARAM_RAW, 'id in skillslevel', VALUE_OPTIONAL),
+                        'organisationname' => new external_value(PARAM_RAW, 'organisationname of skill', VALUE_OPTIONAL),
+                        'skillscategoryname' => new external_value(PARAM_RAW, 'skillscategory', VALUE_OPTIONAL),
+                        'shortname' => new external_value(PARAM_RAW, 'shortname of skill', VALUE_OPTIONAL),
+                        'skill_catname' => new external_value(PARAM_RAW, 'category name in skill', VALUE_OPTIONAL),
+                        'achieved_users' => new external_value(PARAM_RAW, 'achieved users in skill', VALUE_OPTIONAL),
+                        'code' => new external_value(PARAM_RAW, 'code in skillslevel', VALUE_OPTIONAL),
+                        'username' => new external_value(PARAM_RAW, 'username in skillslevel', VALUE_OPTIONAL),
+                    )
+                )
+            )
         ]);
     }
 }
