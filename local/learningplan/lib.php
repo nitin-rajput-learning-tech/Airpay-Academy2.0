@@ -457,14 +457,14 @@ function orgsql($systemcontext){
 
 function get_learningplan_details($lpid) {
     global $USER, $DB, $PAGE;
-    $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+    $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($lpid);
     $PAGE->requires->js_call_amd('local_learningplan/learningplan','load', array());
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
     $details = array();
     // $time = \local_costcenter\lib::get_userdate("d/m/Y H:i");
     $joinsql = '';
-    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$context) OR 
-        has_capability('local/costcenter:manage_owndepartments',$context) OR has_capability('local/learningplan:manage', $context)) {
+    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$systemcontext) OR 
+        has_capability('local/costcenter:manage_owndepartments',$systemcontext) OR has_capability('local/learningplan:manage', $systemcontext)) {
 
         $selectsql = "select c.*  ";
         $fromsql = " from  {local_learningplan} c ";

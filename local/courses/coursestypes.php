@@ -48,7 +48,7 @@ $PAGE->navbar->add(get_string('pluginname', 'local_courses'), new moodle_url('/l
 $PAGE->navbar->add(get_string('manage_courses', 'local_courses'));
 $renderer = $PAGE->get_renderer('local_courses');
 echo $OUTPUT->header();
-$result = $DB->get_records('local_course_types');
+$result = $DB->get_records('local_course_types',array(),$sort='id DESC');
 foreach($result as $res){
     if(in_array($res->id,array('1','2','3','4','5'))){
         $show = false;

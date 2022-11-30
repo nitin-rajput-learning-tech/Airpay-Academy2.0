@@ -13,7 +13,7 @@ class local_learningplan_external extends external_api {
         );
     }
     public function submit_learningplan($id, $contextid, $jsonformdata, $form_status){
-		$context  = (new \local_users\lib\accesslib())::get_module_context();
+		$context  = (new \local_learningplan\lib\accesslib())::get_module_context($id);
         // We always must call validate_context in a webservice.
 		self::validate_context($context);
 		$serialiseddata = json_decode($jsonformdata);
@@ -146,7 +146,7 @@ class local_learningplan_external extends external_api {
     }
     public static function lpcourse_enrol_form($planid,$contextid, $jsonformdata) {
         global $DB;
-        $context =(new \local_users\lib\accesslib())::get_module_context($planid);
+        $context =(new \local_learningplan\lib\accesslib())::get_module_context($planid);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
         $serialiseddata = json_decode($jsonformdata);
@@ -162,7 +162,7 @@ class local_learningplan_external extends external_api {
 
                     $courses[] = $value;
 
-
+            
             }
             $lib = new local_learningplan\lib\lib();
             $return = $lib->modal_lpcourse_enrol($courses,$planid);
@@ -574,7 +574,7 @@ class local_learningplan_external extends external_api {
             'filter_limit' => $filter_limit
         ));
 
-        $PAGE->set_context((new \local_users\lib\accesslib())::get_module_context());
+        $PAGE->set_context((new \local_learningplan\lib\accesslib())::get_module_context());
         $renderable = new \local_learningplan\output\learningplan_courses($params['filter'],$params['filter_text'], $params['filter_offset'], $params['filter_limit']);
         $output = $PAGE->get_renderer('local_learningplan');
 
@@ -655,7 +655,7 @@ class local_learningplan_external extends external_api {
         $filter_offset = $offset;
         $filter_limit = $limit;
 
-        $PAGE->set_context((new \local_users\lib\accesslib())::get_module_context());
+        $PAGE->set_context((new \local_learningplan\lib\accesslib())::get_module_context());
         $renderable = new \local_learningplan\output\learningplan_courses($filter, $filter_text, $filter_offset, $filter_limit);
         $output = $PAGE->get_renderer('local_learningplan');
 

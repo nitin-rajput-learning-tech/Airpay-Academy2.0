@@ -71,6 +71,7 @@ class learningplan_courses implements \renderable, \templatable {
         $this->learningplantemplate=1;
 
     } // end of the function
+    
 
 
 
