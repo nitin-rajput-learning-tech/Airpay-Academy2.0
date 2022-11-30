@@ -65,10 +65,10 @@ class accesslib
 
                             if($context->id != $userrolecontext->id){
 
-                                $childcontexts=$userrolecontext->get_child_contexts();
+                                $childcontexts=$context->get_child_contexts();
 
 
-                                if(array_key_exists($context->id,$childcontexts)){
+                                if(array_key_exists($userrolecontext->id,$childcontexts)){
 
                                     $context =$userrolecontext;
 
