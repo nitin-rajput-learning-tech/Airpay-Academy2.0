@@ -39,14 +39,15 @@
                 </ul>
             </div>
 
-            <div class="card-wrap m-0 p-0 pull-left w-100">
+            <div class="card-wrap m-0 p-0 row w-100">
                 {{#records}}
-                        <div class="{{cardClass}} pull-left mb-4">
-                                <div class="userscontainer pull-left {{# visible}} invisible_user {{/ visible}}">
-                            <div class="pull-right text-right actionicons showoptions{{userid}}">
+                        <div class="{{cardClass}} mb-4">
+                                <div class="userscontainer {{# visible}} invisible_user {{/ visible}}">
+                            <div>
+                                    <div class="pull-right text-right actionicons showoptions{{userid}}">
                                 <span  class="pull-right showoptions" data-action="showoptions{{userid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
                                 </span>
-                                <ul class="col-md-12 col-sm-12 col-12 p-0 options_container" id = "showoptions{{userid}}">
+                                <ul class=" options_container" id = "showoptions{{userid}}">
                                     {{# delcap }}
                                     <li>
                                         <a href="javascript:void(0)" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">
@@ -67,7 +68,7 @@
                                                 <i class="fa fa-eye-slash"></i></a>
                                         </li>
                                         {{/ visible}}
-
+                                            
                                         {{^ visible}}
                                         <li>
                                             <a href="javascript:void(0)" title="{{# str}} makeinactive,local_users{{/ str}}" onclick="(function(e){ require('local_users/newuser').userSuspend({ id:{{userid}},context:1, fullname:'{{fullname}}', status: 'enable'}) })(event)">
@@ -83,10 +84,10 @@
                                 </div>
                             </div>
                             {{# visible}}
-
+                                
                                 <button class="btn btn_inactive_user">{{# str}} inactive, local_users{{/ str}}</button>
                             {{/ visible}}
-
+                                        
                             {{^ visible}}
                                 <button class="btn btn_active_user">{{# str}} active, local_users{{/ str}}</button>
                             {{/ visible}}
@@ -111,36 +112,37 @@
                                             <span class="" style="min-width: 92px; float: left">{{# str}} lastaccess,local_users{{/ str}}<span style="margin-right: 10px;float: right;">:</span> </span><span><b>{{ lastaccess }}</b></span>
                                         </div>->
                             </div>-->
+                            <div class="clearfix"></div>
+                        </div>
+                        <div class="row mt-2">
 
-                        <div class="d-inline-block mt-2">
-
-                            <div class="p-0 col-lg-7 col-md-12 col-12 pull-left userdetails_left">
-                                <p class="mb-2 w-full pull-left">
+                            <div class=" col-lg-7 col-md-12 col-12  userdetails_left">
+                                <p class="mb-2 w-full ">
                                     <span class="pull-left user_info_lable">{{# str}} name{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span>
-                                        <b class="break_all"><a href="{{wwwroot}}/local/users/profile.php?id={{userid}}">{{ fullname }}</a></b>
+                                        <b class="break_all">{{{ username }}}</b>
                                     </span>
                                 </p>
-                                <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}}email, local_users{{/ str}}
+                                <p class="mb-2 w-full">
+                                    <span class="pull-left user_info_lable">{{# str}}email, local_users{{/ str}} 
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span>
                                         <b class="break_all">{{ email }}</b>
                                     </span>
                                 </p>
-                                <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} organization, local_users{{/ str}}
+                                <p class="mb-2 w-full">
+                                    <span class="pull-left user_info_lable">{{# str}} organization, local_users{{/ str}} 
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span title="{{org}}">
                                         <b>{{ orgstring }}</b>
                                     </span>
                                 </p>
-                                <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} department, local_users{{/ str}}
+                                <p class="mb-2 w-full">
+                                    <span class="pull-left user_info_lable">{{# str}} department, local_users{{/ str}} 
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span title="{{ dept }}">
@@ -148,8 +150,8 @@
                                     </span>
                                 </p>
                             </div>
-                            <div class="p-0 col-lg-5 col-md-12 col-12 pull-left userdetails_right">
-                                <p class="mb-2 w-full pull-left">
+                            <div class="col-lg-5 col-md-12 col-12  userdetails_right">
+                                <p class="mb-2 w-full">
                                     <span class="pull-left user_info_lable userid_lable">{{# str}} employeeid, local_users{{/ str}}
                                         <span class="pull-right mr-2"> :</span>
                                     </span>
@@ -157,23 +159,23 @@
                                         <b>{{ empid }}</b>
                                     </span>
                                 </p>
-                                <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} open_level, local_users{{/ str}}
+                                <p class="mb-2 w-fullt">
+                                    <span class="pull-left user_info_lable">{{# str}} open_level, local_users{{/ str}} 
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span>
                                         <b>{{ level }}</b>
                                     </span>
                                 </p>
-                                <p class="mb-2 w-full pull-left">
-                                    <span class="pull-left user_info_lable">{{# str}} designation, local_users{{/ str}}
+                                <p class="mb-2 w-full">
+                                    <span class="pull-left user_info_lable">{{# str}} designation, local_users{{/ str}} 
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span title="{{ designation }}">
                                         <b>{{ designationstring }}</b>
                                     </span>
                                 </p>
-                                <p class="mb-2 w-full pull-left">
+                                <p class="mb-2 w-full">
                                     <span class="pull-left user_info_lable">{{# str}} supervisor, local_users{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
