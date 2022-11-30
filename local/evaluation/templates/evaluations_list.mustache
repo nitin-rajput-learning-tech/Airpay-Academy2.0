@@ -1,0 +1,123 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_feedback/list
+
+    Displays Feedback list
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * none
+
+    Example context (json):
+    {
+    }
+}}
+
+{{#response}}
+    {{! card view }}
+    {{#viewtypeCard}}
+        {{#records}}
+            <div class="{{cardClass}} pull-left mt-4{{^ status}} inactive{{/ status}}">
+                <div class="w-full pull-left eval_container">
+                    <div class="w-full pull-left evalname_container">
+                         <span class="evalicon"><i class="fa fa-clipboard" aria-hidden="true"></i></span>
+                        <span class="m-0 evalname font-weight-bold" title="{{ eval_name }}">{{{ evalname }}}</span>
+
+                        {{# actions}}
+                            <span class="pull-right">
+                                {{{ actions }}}
+                            </span>
+                        {{/ actions}}
+                    </div>
+                    <div class="w-full pull-left evalinfo_container">
+                        <p class="font-weight-bold">
+                            <span class="eval_label"> {{# str}}type, local_evaluation{{/ str}}
+                                <span class="pull-right mr-10">:</span>
+                            </span>
+                            <span style="font-size: 15px;color: #000;font-weight: 500;">{{ evaltype }}</span>
+                        </p>
+                        {{# has_evalcap}}
+                            <p class="font-weight-bold">
+                                <span class="eval_label"> {{# str}}enrolled, local_evaluation{{/ str}}
+                                    <span class="pull-right mr-10">:</span>
+                                </span>
+                                <span>{{{ enrolled }}}</span>
+                            </p>
+                            <p class="font-weight-bold">
+                                <span class="eval_label"> {{# str}}completed, local_evaluation{{/ str}}
+                                    <span class="pull-right mr-10">:</span>
+                                </span>
+                                <span>{{{ completed }}}</span>
+                            </p>
+                        {{/ has_evalcap}}
+                        {{^ has_evalcap}}
+                            <p class="font-weight-bold">
+                                <span class="eval_label"> {{# str}}enrolledon, local_evaluation{{/ str}}
+                                    <span class="pull-right mr-10">:</span>
+                                </span>
+                                <span>{{ enrolledon }}</span>
+                            </p>
+                            <p class="font-weight-bold">
+                                <span class="eval_label"> {{# str}}completedon, local_evaluation{{/ str}}
+                                    <span class="pull-right mr-10">:</span>
+                                </span>
+                                <span class="">{{ completedon }}</span>
+                            </p>
+                        {{/ has_evalcap}}
+                        <p class="mb-1" title="{{# str}}schedule, local_evaluation{{/ str}}">
+                            <span class="pull-left eval_schedule_label font-weight-bold">
+                                <i class="fa fa-calendar pr-2" aria-hidden="true"></i>
+                            </span>
+                            <span style="font-size: 15px;color: #000;font-weight: 500;">{{ schedule }}</span>
+                        </p>
+                    </div>
+                    <div class="w-full pull-left text-center">
+                        <div class="w-full pull-left">
+                            {{# current_feedback}}
+                                {{^ completed}}
+                                    {{# actions}}
+                                    <a class="d-block take_evaluation evalactions" href="{{{previewurl}}}">{{previewstring}}</a>
+                                    {{/ actions}}
+                                {{/ completed}}
+                                
+                                {{# completed}}
+                                    <a class="d-block take_evaluation evalactions" href="{{{completedurl}}}">{{# str}}viewresponse, local_evaluation{{/str}}</a>
+                                {{/ completed}}
+                            {{/ current_feedback}}
+
+                            {{^ current_feedback}}
+                                    {{# closed_feedback}}
+                                        <a class="d-block take_evaluation evalactions" href="{{{completedurl}}}">{{# str}}closed, local_evaluation{{/ str}}</a>
+                                    {{/ closed_feedback}}
+                                    {{# not_yetstarted}}
+                                        <span class="take_evaluation evalactions">{{# str}}not_yet_started, local_evaluation{{/ str}}</span>
+                                    {{/ not_yetstarted}}
+                            {{/ current_feedback}}
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {{/records}}
+    {{/viewtypeCard}}
+{{/response}}
