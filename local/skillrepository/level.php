@@ -38,32 +38,32 @@ $PAGE->set_title(get_string('levelpluginname', 'local_skillrepository'));
 $PAGE->navbar->add(get_string('manage_skills', 'local_skillrepository'),new moodle_url('/local/skillrepository/index.php'));
 $PAGE->navbar->add(get_string('manage_level', 'local_skillrepository'));
 $PAGE->requires->js_call_amd('local_skillrepository/leveltable', 'leveltable', array());
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'downloadtrigger', array());
 $heading = get_string('createlevel', 'local_skillrepository');
-
-if (!has_capability('local/skillrepository:create_level', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
-  print_error('Sorry, You are not accessable to this page');
-}
 
 $locallib = new \local_skillrepository\local\querylib();
 $renderer = $PAGE->get_renderer('local_skillrepository');
+$filterparams = $renderer->manageskillslevel_content(true);
 
 $PAGE->set_heading(get_string('levels', 'local_skillrepository'));
 echo $OUTPUT->header();
 
 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 echo "<ul class='course_extended_menu_list'>
-		<li>
-          	<div class='coursebackup course_extended_menu_itemcontainer'>
-            <a href='".$CFG->wwwroot."/local/skillrepository/index.php' title='".get_string("back")."' class='course_extended_menu_itemlink'>
-              <i class='icon fa fa-reply'></i>
+    <li>
+        <div class='coursebackup course_extended_menu_itemcontainer'>
+            <a href='".$CFG->wwwroot."/local/skillrepository/index.php' title='".get_string("back")."' class='course_extended_menu_itemlink'><i class='icon fa fa-reply'></i>
             </a>
-        	</div>
-        </li>
-        <li>
-        	<div class='coursebackup course_extended_menu_itemcontainer'>
-              	<a id='extended_menu_syncstats' title='".get_string('createlevel', 'local_skillrepository')."' class='course_extended_menu_itemlink' href='javascript:void(0)' onclick ='(function(e){ require(\"local_skillrepository/leveltable\").init({selector:\"createlevelmodal\", contextid:$systemcontext->id, levelid:0}) })(event)'><i class='icon fa fa-plus' aria-hidden='true' aria-label=''></i></a>
-          	</div>
-        </li>
-    </ul>";
-echo $renderer->display_levels_tablestructure();
+        </div>
+    </li>
+    <li>
+        <div class='coursebackup course_extended_menu_itemcontainer'>
+            <a id='extended_menu_syncstats' title='".get_string('createlevel', 'local_skillrepository')."' class='course_extended_menu_itemlink' href='javascript:void(0)' onclick ='(function(e){ require(\"local_skillrepository/leveltable\").init({selector:\"createlevelmodal\", contextid:$systemcontext->id, levelid:0}) })(event)'><i class='icon fa fa-plus' aria-hidden='true' aria-label=''></i></a>
+        </div>
+    </li>
+</ul>";
+
+$filterparams['submitid'] = 'form#filteringform';
+echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
+echo $renderer->manageskillslevel_content();
 echo $OUTPUT->footer();

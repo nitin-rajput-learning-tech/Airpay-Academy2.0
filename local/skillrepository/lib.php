@@ -193,64 +193,135 @@ function local_skillrepository_output_fragment_level_form($args){
 
 //////For display on index page//////////
 function skill_details($tablelimits, $filtervalues){
-        global $DB, $PAGE,$USER,$CFG,$OUTPUT;
+    global $DB, $PAGE,$USER,$CFG,$OUTPUT;
+    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+    $countsql = "SELECT count(sk.id) FROM {local_skill} AS sk WHERE 1=1 ";
+    $selectsql = "SELECT sk.*, lc.fullname as organisationname, lsc.name AS skill_catname
+        FROM {local_skill} AS sk
+        JOIN {local_costcenter} AS lc ON lc.id = sk.costcenterid
+        JOIN {local_skill_categories} AS lsc ON lsc.id = sk.category
+        WHERE 1=1 ";
+    $queryparam = array();
 
-        $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-        $countsql = "SELECT count(sk.id) FROM {local_skill} AS sk WHERE 1=1 ";
-        $selectsql = "SELECT sk.*, lc.fullname as organisationname, lsc.name AS skill_catname
-            FROM {local_skill} AS sk
-            JOIN {local_costcenter} AS lc ON lc.id = sk.costcenterid
-            JOIN {local_skill_categories} AS lsc ON lsc.id = sk.category
-            WHERE 1=1 ";
-        $queryparam = array();
+    if(!is_siteadmin()){
+        $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+        $concatsql .= " AND sk.costcenterid= :usercostcenter ";
+        $queryparam['usercostcenter'] = $costcenterid;
+    }
+    if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
+        $concatsql .= " AND (sk.name LIKE :search1 )";
+        $queryparam['search1'] = '%'.trim($filtervalues->search_query).'%';
+    }
+    $count = $DB->count_records_sql($countsql.$concatsql, $queryparam);
+    $concatsql.=" order by sk.id desc";
+    $records = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
 
-        if(!is_siteadmin()){
-            $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-            $concatsql .= " AND sk.costcenterid= :usercostcenter ";
-            $queryparam['usercostcenter'] = $costcenterid;
+    $list=array();
+    $data=array();
+    if ($records) {
+        foreach ($records as $c) {
+            $list=array();
+            $id = $c->id;
+            $usercountsql = "SELECT count(DISTINCT(u.id))
+                FROM {course} c
+                JOIN {course_completions} cc
+                on cc.course = c.id
+                JOIN {user} u
+                on cc.userid = u.id
+                WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL ";
+            $usercount = $DB->count_records_sql($usercountsql);
+            $skilname=$c->name;
+            $list['skilname'] = $skilname;
+            $list['organisationname'] = $c->organisationname;
+            $list['skill_id'] = $c->id;
+            $list['achieved_users'] = $usercount;
+            $list['shortname']=$c->shortname;
+            $list['skill_catname']=$c->skill_catname;
+            $data[] = $list;
         }
-        $count = $DB->count_records_sql($countsql.$concatsql, $queryparam);
+    }
+    return array('count' => $count, 'data' => $data);
+}
 
-        $concatsql.=" order by sk.id desc";
-        $records = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
+//////For display on level page//////////
+function skills_level_details($tablelimits, $filtervalues){
+    global $DB, $PAGE,$USER,$CFG,$OUTPUT;
 
-        $list=array();
-        $data=array();
-        if ($records) {
-            foreach ($records as $c) {
+    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+    $countsql = "SELECT count(lcl.id) FROM {local_course_levels} AS lcl WHERE 1=1 ";
+    $selectsql = "SELECT lcl.id,lcl.name,lcl.code, concat(u.firstname,' ', u.lastname) as username, lc.fullname as organisationname
+        FROM {local_course_levels} AS lcl
+        JOIN {user} AS u ON u.id=lcl.usercreated
+        JOIN {local_costcenter} AS lc ON lc.id = lcl.costcenterid
+        WHERE 1=1 ";
+    $queryparam = array();
 
-                $list=array();
-                $id = $c->id;
-                $usercountsql = "SELECT count(DISTINCT(u.id))
-                    FROM {course} c
-                    JOIN {course_completions} cc
-                    on cc.course = c.id
-                    JOIN {user} u
-                    on cc.userid = u.id
-                    WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL ";
-                $usercount = $DB->count_records_sql($usercountsql);
+    if(!is_siteadmin()){
+        $concatsql .= " AND lcl.costcenterid= :usercostcenter ";
+        $queryparam['usercostcenter'] = $USER->open_costcenterid;
+    }
 
-                // $skill_catname = $DB->get_field('local_skill_categories', 'name',array('id'=>$c->category));
-                // if($skill_catname){
-                //     $skill_catname = $skill_catname;
-                // }else{
-                //     $skill_catname = '---';
-                // }
+    if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
+        $concatsql .= " AND (lcl.name LIKE :search1 )";
+        $queryparam['search1'] = '%'.trim($filtervalues->search_query).'%';
+    }
+    $count = $DB->count_records_sql($countsql.$concatsql, $queryparam);
+    $concatsql.=" order by lcl.id desc";
+    $records = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
 
-                /*$skillurl = new moodle_url('/local/skillrepository/skillinfo.php', array('id'=>$c->id));
-                $skilname = html_writer:: link($skillurl, $c->name, array());*/
-               $skilname=$c->name;
-               $list['skilname'] = $skilname;
-               $list['organisationname'] = $c->organisationname;
-               $list['skill_id'] = $c->id;
-               $list['achieved_users'] = $usercount;
-               $list['shortname']=$c->shortname;
-               $list['skill_catname']=$c->skill_catname;
-               $data[] = $list;
-            }
+    $list=array();
+    $data=array();
+    
+    if ($records) {
+        foreach ($records as $c) {
+            $list=array();                
+            $list['skillslevelname'] = $c->name;
+            $list['username'] = $c->username;
+            $list['code'] = $c->code;
+            $list['organisationname'] = $c->organisationname;
+            $list['skillslevel_id'] = $c->id;
+            $data[] = $list;
         }
+    }
+    return array('count' => $count, 'data' => $data);
+}
 
-        return array('count' => $count, 'data' => $data);
+function skills_category_details($tablelimits, $filtervalues){
+    global $DB, $PAGE,$USER,$CFG,$OUTPUT;
+    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+    $countsql = "SELECT count(lsc.id) FROM {local_skill_categories} AS lsc WHERE 1=1 ";
+
+    $selectsql = "SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON lc.id = lsc.costcenterid";
+    $queryparam = array();
+
+    if(!is_siteadmin()){
+        $concatsql .= " AND lsc.costcenterid= :usercostcenter ";
+        $queryparam['usercostcenter'] = $USER->open_costcenterid;
+    }
+    if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
+        $concatsql .= " AND (lsc.name LIKE :search1 )";
+        $queryparam['search1'] = '%'.trim($filtervalues->search_query).'%';
+    }
+    $count = $DB->count_records_sql($countsql.$concatsql, $queryparam);
+
+    $concatsql.=" order by lsc.id desc";
+    $records = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
+
+    $list=array();
+    $data=array();
+    if ($records) {
+        foreach ($records as $c) {
+            $list=array();
+            $list['skillscategoryname'] = $c->name;
+            $list['username'] = $c->username;
+            $list['code'] = $c->shortname;
+            $list['organisationname'] = $c->orginsationname;
+            $list['skillscategory_id'] = $c->id;
+            $data[] = $list;
+        }
+    }
+
+    return array('count' => $count, 'data' => $data);
 }
 
 

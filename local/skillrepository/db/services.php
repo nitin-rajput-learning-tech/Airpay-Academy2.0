@@ -74,6 +74,24 @@ $functions = array(
                 'type'        => 'write',
                 'ajax' => true,
                 'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
-        )
+        ),
+        'local_skillrepository_manageskillslevel_view' => array(
+                'classname'   => 'local_skillrepository_external',
+                'methodname'  => 'manageskillslevelview',
+                'classpath'   => 'local/skillrepository/classes/external.php',
+                'description' => 'Display the Skills Level Page',
+                'type'        => 'write',
+                'ajax' => true,
+                'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+        ),
+        'local_skillrepository_manageskillscategory_view' => array(
+                'classname'   => 'local_skillrepository_external',
+                'methodname'  => 'manageskillscategoryview',
+                'classpath'   => 'local/skillrepository/classes/external.php',
+                'description' => 'Display the Skills Category Page',
+                'type'        => 'write',
+                'ajax' => true,
+                'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+        ),
 );
 
