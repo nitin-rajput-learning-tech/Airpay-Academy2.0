@@ -18,7 +18,6 @@
  *
  * @module     tool_lp/form-option-selector
  * @class      form-option-selector
- * @package    tool_lp
  * @copyright  2015 Frédéric Massart - FMCorz.net
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -40,13 +39,13 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
 
         transport: function(selector, query, success, failure) {
             var promise;
-            contextid = parseInt($(selector).data('contextid'), 10);
-            action = $(selector).data('action');
-            formoptions = $(selector).data('options');
+            var contextid = parseInt($(selector).data('contextid'), 10);
+            var action = $(selector).data('action');
+            var formoptions = $(selector).data('options');
             if (action === 'learningplan_subdepartment_selector') {
                 var departments_selected = $("#id_department").val();
                 if (departments_selected) {
-                    formoptions.departments_selected = departments_selected
+                    formoptions.departments_selected = departments_selected;
                 }
             }
             formoptions = JSON.stringify(formoptions);

@@ -61,18 +61,10 @@ switch($action){
         exit;
     break;
 
-    case 'publishlearningplan':
-
-        echo $OUTPUT->header();
+    case 'publishlearningplan':      
         $learningplan = $DB->get_field('local_learningplan','name',array('id'=>$plan));
         $users_info = $learningplan_lib->get_enrollable_users_to_learningplan($plan);
-        $progress = 0;
-        $progressbar = new \core\progress\display_if_slow(get_string('enrollusers', 'local_learningplan',$learningplan));
-        $progressbar->start_html();
-        $progressbar->start_progress('',count($users_info)-1);
         foreach($users_info as $userid){
-            $progressbar->progress($progress);
-            $progress++;
             $data = new \stdClass();
             $data->planid = $plan;
             $data->userid = $userid->id;
@@ -82,18 +74,9 @@ switch($action){
             $data->usermodified = 0;
             $create_record = $learningplan_lib->assign_users_to_learningplan($data);
         }
-        $progressbar->end_html();
         $result=new stdClass();
-        $result->changecount=$progress;
         $result->learningplan=$learningplan; 
-        
-        $url = new moodle_url('/local/learningplan/plan_view.php', array('id' => $plan));
-        echo $OUTPUT->notification(get_string('enrolluserssuccess', 'local_learningplan',$result),'success');
-        $button = new single_button($url, get_string('click_continue','local_learningplan'), 'get', true);
-        $button->class = 'continuebutton';
-        echo $OUTPUT->render($button);
-        echo $OUTPUT->footer();
-        die();
+        echo json_encode(true);
     break;
 }
 if($value=="and"){
