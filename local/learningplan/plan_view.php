@@ -70,7 +70,7 @@ if(!($is_enrolled || is_siteadmin() || has_capability('local/costcenter:manage_m
     
     if ((has_capability('local/costcenter:manage_owndepartments', $systemcontext))) {
             $learningplans = $DB->get_record('local_learningplan',array('id'=>$id),$fields = 'id,costcenter,department');
-             if(!is_array(explode(',',$learningplans->department)) != $USER->open_departmentid){
+            if(!in_array($USER->open_departmentid,explode(',',$learningplans->department))){
                  redirect($CFG->wwwroot . '/local/learningplan/index.php');  
              }
     }
