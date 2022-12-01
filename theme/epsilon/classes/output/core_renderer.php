@@ -1028,7 +1028,6 @@ class core_renderer extends \core_renderer {
         if (is_null($user)) {
             $user = $USER;
         }
-
         // Note: this behaviour is intended to match that of core_renderer::login_info,
         // but should not be considered to be good practice; layout options are
         // intended to be theme-specific. Please don't copy this snippet anywhere else.
@@ -1474,12 +1473,29 @@ class core_renderer extends \core_renderer {
         *   - at ctx and above
         *   - below this ctx
         */
-
         if (empty($context->path)) {
             // weird, this should not happen
             return;
         }
-
+        //Fetching the category contexts where the role is assigned ans switching as user to those for achieving system level role switch starts.
+        $userroleid = $DB->get_field('role', 'id', array('shortname' => 'user'));
+        $assignedcontexts = array_map(function($cxtpath){
+            return end(explode('/', $cxtpath));
+        }, array_unique(array_keys($USER->access['ra'])));
+        foreach($assignedcontexts AS $contextid){
+            if($contextid != $context->id && $contextid != 1){
+                $othercontext = \context::instance_by_id($contextid);
+                if($this->role_capability_assignments($userroleid, $othercontext, $accessdata)){
+                    $USER->access['rsw'][$othercontext->path] = $userroleid;
+                }
+            }
+        }
+        //Fetching the category contexts where the role is assigned ans switching as user to those for achieving system level role switch ends.
+        $this->role_capability_assignments($roleid, $context, $accessdata);
+        return true;
+    }
+    private function role_capability_assignments($roleid, $context, &$accessdata){
+        global $DB;
         list($parentsaself, $params) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'pc_');
         $params['roleid'] = $roleid;
         $params['childpath'] = $context->path.'/%';
