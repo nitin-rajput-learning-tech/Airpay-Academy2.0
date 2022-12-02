@@ -61,7 +61,9 @@ if(!empty($epsilon_plugin_exist)){
 $renderer = $PAGE->get_renderer('local_classroom');
 $PAGE->navbar->add(get_string("pluginname", 'local_classroom'));
 echo $OUTPUT->header();
+
 $enabled = check_classroomenrol_pluginstatus($value);
+
 // if (is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext))  {
 
 //     $display_url = new moodle_url('/local/classroom/index.php?formattype=' . $formattype_url);
@@ -73,6 +75,5 @@ $enabled = check_classroomenrol_pluginstatus($value);
 
 //         echo $displaytype_div;
 // }
-
 echo $renderer->get_classroom_tabs($formattype);
 echo $OUTPUT->footer();

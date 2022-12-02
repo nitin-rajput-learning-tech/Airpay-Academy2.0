@@ -117,14 +117,12 @@ class querylib {
         $params['deleted'] = 0;
 
 
-        $fields = "SELECT u.id , CONCAT(u.firstname, ' ', u.lastname) AS fullname ";
+        $fields = "SELECT u.id , CONCAT(u.firstname,' ', u.lastname) AS fullname ";
         $sql = "FROM {role_capabilities} as rc
                   JOIN {role_assignments} ra ON ra.roleid=rc.roleid
                   JOIN {user} u ON u.id = ra.userid
-                  JOIN {context} ctx ON ra.contextid = ctx.id
                  WHERE u.confirmed = :confirmed
                   AND u.suspended = :suspended AND u.deleted = :deleted AND u.id > 2
-                       AND ctx.id $ctxcondition
                        AND rc.capability LIKE '%trainer_viewclassroom%' and rc.permission=1 ";
         if (!empty($trainers)) {
             $sql .= " AND u.id $trainerslistsql";

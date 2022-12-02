@@ -1532,6 +1532,7 @@ class local_classroom_external extends external_api {
             switch($action) {
                 case 'classroom_trainer_selector':
                     $parentid = $formoptions->parnetid;
+                    //print_R($query);exit;
                     $return = $querieslib->get_user_department_trainerslist(true,array($parentid), array(), $query);
                 break;
                 case 'classroom_institute_selector':
@@ -1571,8 +1572,6 @@ class local_classroom_external extends external_api {
                         $concat_array = array(-1 => array('id' => -1,'fullname' => 'All'));
                     }
                     $return = $concat_array + $DB->get_records_sql($costcntersql, $params);
-                    //$return=(object)((array)$return+array('0'=>(object)array('id'=>-1,'fullname'=>get_string('all')) ));
-                    //print_object($return);
                 break;
                 case 'classroom_subdepartment_selector':
                     if($formoptions->departments_selected){

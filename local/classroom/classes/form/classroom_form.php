@@ -49,12 +49,11 @@ class classroom_form extends moodleform {
         $querieslib = new querylib();
         $mform = &$this->_form;
         $renderer = $PAGE->get_renderer('local_classroom');
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($id);
         $formstatus = $this->_customdata['form_status'];
         $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
         $formheaders = array_keys($this->formstatus);
         $formheader = $formheaders[$formstatus];
-
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($id);
 
         $mform->addElement('hidden', 'id', $id, array('id' => 'classroomid'));
         $mform->setType('id', PARAM_INT);
