@@ -1,0 +1,142 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="classroom_container w-full pull-left mb-15 {{classroomstatusclass}}">
+<div class="w-full pull-left classroomname_status">
+    <div class="pull-left">
+        <span class="fa fa-desktop icon mr-10"></span>
+        <a href="view.php?cid={{classroomid}}" class="class_name" title = "{{ classname }}">{{ classname_string }}</a>
+        <span class="bg_banner" title="{{ crstatustitle }}"></span>
+    </div>
+    <div class="pull-right showoptions{{classroomid}} actionicons">
+        {{# action}}
+		{{# mouse_overicon}}
+            <span  class="pull-right showoptions" data-action="showoptions{{classroomid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)">
+            <i class="fa fa-ellipsis-h options" aria-hidden="true" title="" aria-label=""></i></span>
+         {{/ mouse_overicon}}
+            <ul class="options_container" id="showoptions{{classroomid}}">
+                {{# delete}}
+                <li>
+                    <a title="Course backup" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+                        title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroom', id: {{ classroomid }}, classroomid: {{ classroomid }}}) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i></a>
+                </li>
+                {{/ delete}}
+                
+				{{# edit}}
+                <li>
+                    <a title="{{# str }} user_enrollments,local_classroom {{/ str}}" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_classroom/ajaxforms').init({contextid:1, component:'local_classroom', callback:'classroom_form', form_status:0, plugintype: 'local', pluginname: 'classroom', id: {{ classroomid }} }) })(event)"><i class="fa fa-pencil fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} edit {{/str}}"></i>
+                    </a> 
+                </li>
+                {{/ edit}}
+				{{# assignusers}}
+                <li>
+                    <a  href="{{ assignusersurl }}"><i class="fa fa-users fa-fw" aria-hidden="true" aria-label="" title ="{{# str}} assignusers, local_classroom {{/str}}"></i></a>
+                </li>
+                {{/ assignusers}}
+            </ul>
+        {{/ action}}
+    </div>
+</div>
+    <div class="col-md-12 col-sm-12 col-12 p-10 classroomcontainer_top">
+        <div class="dataContainer col-md-7 p-0">
+            <div class="datacontent pl-15 pt-5 pr-15 pb-10">
+                <div class="description">
+                    {{# isdescription}}
+                        {{^ descriptionstring}}
+                            <p class="text-muted">{{{ description }}}</p>
+                        {{/ descriptionstring }}
+                        {{# descriptionstring}}
+                            <p class="text-muted">{{ descriptionstring }}...</p>
+                        {{/ descriptionstring }}
+                    {{/ isdescription}}
+                    {{^ isdescription }}
+                        <p class="alert alert-info p-5 text-center">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+                    {{/ isdescription }}
+                </div>
+                <div class="dataContainer_left">
+
+                    <!--<p class="contentlist"><span class="lable_name text-muted">{{#str}}scheduled_date, local_classroom{{/str}}</span> <span class="text-muted">: </span><span class="">&nbsp;<b>{{ startdate }} to {{ enddate }}</b></span></p>-->
+
+                    <!--<p class="contentlist"><span class="lable_name text-muted">{{#str}}code, local_classroom{{/str}}</span> <span class="text-muted pull-left">: </span><span class="">&nbsp;<b>{{ classname_string }}</b></span></p>-->
+
+                    <p class="contentlist"><span class="lable_name text-muted">{{#str}}enrolledusers, local_classroom{{/str}}</span> <span class="text-muted">: </span><span class="">&nbsp;<b>{{ enrolled_users }}</b></span></p>
+
+                    <p class="contentlist"><span class="lable_name text-muted">{{#str}}department{{/str}}</span> <span class="text-muted">: </span><span class="" title="{{ departmenttitle }}">&nbsp;<b>{{ departmentname }}</b></span></p>
+
+                    <p class="contentlist"><span class="lable_name text-muted">{{#str}}seats_allocation, local_classroom{{/str}}</span> <span class="text-muted">: </span><span class="">&nbsp;<b>{{ seatallocation }}</b></span></p>
+                </div>
+            </div>
+        </div>
+        <div class="classesimgContainer col-md-5 p-0">
+            <div class="classesimgContainer">
+                 <a href="view.php?cid={{classroomid}}"><div style="background-image: url('{{ classesimg }}');" alt="{{ classname }}" title="Classroom name" class="classesimg courseimg_bg" ></div></a>
+                <!--<img src="{{ classesimg }}" title ="{{ classname }}" class="classesimg" />-->
+                 <!--<div class="classname_strip">
+                     <span class="classname" title = "{{ classname }}" >{{ classname_string }}</span>
+                     <span class="classcreated" title="{{usercreated}}"">By&nbsp;{{ usercreated }}</span>
+                 </div>-->
+                 <div class="classdate_strip">
+                     <span class="classdate"><i class="fa fa-calendar" aria-hidden="true"></i>{{ startdate }} to {{ enddate }}</span>
+                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 col-sm-12 col-12 p-0 classroomcontainer_btm">
+        <div class="col-md-6 p-0">
+            <div class="trainersContainer p-15">
+                <h6 class="trainer_header">{{#str}}trainers, local_classroom{{/str}}</h6>
+                {{# trainerslimit}}
+                    {{# trainers }}
+                    <div class="trainer_details">
+                        <span class="trainerimg pr-10 pull-left">{{{ classroomtrainerpic }}}</span>
+                       <span class="trainerdetails"><span class="trainername">{{ trainername }}</span><span class="trainerdesignation">{{ trainerdesignation }}</span></span>
+                    </div>
+                    {{/ trainers }}
+                {{/ trainerslimit}}
+                {{^ trainerslimit }}
+                    {{# moretrainers}}
+                         <div class="trainer_details">
+                            <span class="trainerimg pull-left">{{{ classroomtrainerpic }}}</span>
+                            <span class="trainerdetails"><span class="trainername">{{ trainername }}</span><span class="trainerdesignation">{{ trainerdesignation }}</span></span>
+                        </div>
+                    {{/ moretrainers}}
+                {{/ trainerslimit}}
+                {{^ trainers}}
+                        <p class="alert alert-info no_trainers text-center m-5 p-5">{{#str}}no_trainer_assigned, local_classroom{{/str}}</p>
+                {{/ trainers}}
+            </div>
+        </div>
+        <div class="col-md-6 p-0">
+            <div class="coursesContainer p-15">
+                <h6 class="trainer_header">Courses</h6>
+                <ul class="crcourseslist pull-left m-0">
+                    {{# courses }}
+                        <li class="w-full pull-left">
+                            <p class="contentlist pull-left"> {{{ coursesdata }}} </p>
+                        </li>
+                    {{/ courses }}
+                </ul>
+                {{^ courses }}
+                    <p class="text-center m-5 nocourses">{{# str }} noclassroomcourses, local_classroom {{/ str }}</p>
+                {{/ courses }}
+            </div>
+        </div>
+    <!--<div class="col-md-12 p-0">
+        <div class="viewmorestrip pull-right pt-15 pb-15">
+            <a href="view.php?cid={{classroomid}}" class="viewmorelink">{{# str }} viewmore {{/ str }}</a>
+        </div>
+    </div>-->
+</div>
