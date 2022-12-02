@@ -2262,7 +2262,7 @@ public function learningplaninfo_for_employee($planid){
 		
 		$lplanassignedcourses = lib::get_learningplan_assigned_courses($planid);
 		
-		$catalogrenderer = $this->page->get_renderer('local_catalog');
+		// $catalogrenderer = $this->page->get_renderer('local_catalog');
 		$description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($lplan->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
         $description_string = strlen($description) > 220 ? substr($description, 0, 220)."..." : $description;
 
