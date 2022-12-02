@@ -34,7 +34,12 @@
         <td>
           {{#display}}
           <a href="javascript:void(0)"  onclick = '(function(e){ require("local_courses/createCoursetype").init({contextid:1, coursetypeid:{{id}} }) })(event)' ><i class="icon fa fa-pencil fa-fw " title="Edit" role="img" aria-label="Edit title"></i></i></a>
+          {{^identifiedas}}
           <a href="javascript:void(0)"  onclick = '(function(e){ require("local_courses/createCoursetype").deleteConfirm({ coursetypeid:{{id}}, name:"{{name}}"  }) })(event)' data-id= "{{id}}" class="local_classid{{id}}  local_class_delete_button" ><i class="icon fa fa-trash fa-fw " title="Delete" role="img" aria-label="Delete"></i></a>
+          {{/identifiedas}}
+          {{#identifiedas}}
+          <a href="javascript:void(0)"  onclick = '(function(e){ require("local_courses/createCoursetype").deletenotConfirm({ coursetypeid:{{id}}, name:"{{name}}"  }) })(event)' data-id= "{{id}}" class="local_classid{{id}}  local_class_delete_button" ><i class="icon fa fa-trash fa-fw " title="Delete" role="img" aria-label="Delete"></i></a>
+          {{/identifiedas}}
           <a href="javascript:void(0)"  onclick = '(function(e){ require("local_courses/createCoursetype").statusConfirm({ contextid:1, coursetypeid:{{id}}, status:{{#active}}"inactive"{{/active}}{{^active}}"active"{{/active}}, name:"{{name}}" }) })(event)'><i class="icon fa {{#active}}fa-eye{{/active}}{{^active}}fa-eye-slash{{/active}} fa-fw iconsmall" title="Active/Inactive" role="img" aria-label="[[le_inactive]]"></i></a>
           {{/display}}
           {{^display}}
