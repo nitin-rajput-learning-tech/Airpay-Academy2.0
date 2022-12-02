@@ -1,0 +1,65 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{# evalid}}
+
+<div class="w-full pull-left text-center">
+        <div class="w-full pull-left evalactions">
+            {{{actions}}}
+        </div>
+    </div>
+<div class="evalview_topcontainer">
+    <div class="w-full pull-left evalview_topcontent pr-15">
+        <div class="w-full classview_topcontent_right">
+		
+            <h3><span class="evalicon"><i class="fa fa-clipboard" aria-hidden="true"></i></span>  {{ evalname }}</h3>
+			
+            <div class="description">
+                {{# description}}
+                    <p class="">{{{ description }}}</p>
+                {{/ description}}
+                {{^ description }}
+                    <p class="alert alert-info text-center">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+                {{/ description }}
+            </div>
+            <div class="w-full pull-left mb-15 topcontent_right_middle p-0">
+                <div class="w-full pull-left text-center pl-15 pr-15 evalinfo_container">
+					<div class="aligninline">
+						<span class="pull-left eval_schedule_label"><i class="fa fa-calendar pr-1" aria-hidden="true"></i><b> {{# str}}schedule, local_evaluation{{/ str}}<span class="pull-right mr-10 ml-10">:</span></b> 
+						</span><span class="">{{ schedule }}</span>
+					</div>
+					{{# has_evalcap}}
+						<div class="aligninline">
+							<span class="pull-left mr-10"><b> {{# str}}enrolled, local_evaluation{{/ str}}<span class="pull-right mr-10 ml-10">:</span> </b>
+							</span><span class="">{{{ enrolled }}}</span>
+						</div>
+                    {{/ has_evalcap}}
+                    <div class="aligninline">
+                        <span class="pull-left mr-10"><b> {{# str}}type, local_evaluation{{/ str}}<span class="pull-right mr-10 ml-10">:</span> </b>
+                        </span><span class="">{{ evaltype }}</span>
+                    </div>
+                    {{# has_evalcap}}
+						<div class="aligninline">
+							<span class="pull-left mr-10"><b> {{# str}}completed, local_evaluation{{/ str}}<span class="pull-right mr-10 ml-10">:</span> </b>
+							</span><span class="">{{{ completed }}}</span>
+						</div>
+					{{/ has_evalcap}}
+				</div>
+            </div>
+        </div>
+    </div>
+</div>
+{{/ evalid}}

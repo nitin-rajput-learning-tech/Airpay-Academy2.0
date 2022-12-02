@@ -859,3 +859,8 @@ body#page-local-courses-index .catlisticons i {
 .block.block_userdashboard .ctype_elearning:hover .course_progress_container {
     background-color:var(--secondarycolor);
 }
+.dropdown-item:active, .dropdown-item:hover, .dropdown-item:focus, .dropdown-item:focus-within {
+    outline: 0;
+    background-color:var(--sitehighlight);
+    color: #fff;
+}
