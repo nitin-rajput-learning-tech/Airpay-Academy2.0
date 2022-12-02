@@ -360,4 +360,4 @@ $string['activefeedback'] = 'Active Feedback';
 $string['inactivefeedback'] = 'In-Active Feedback';
 $string['assignroleusers'] = 'Assigned Role Users';
 $string['costcenterassignedrole']=' <b> {$a->costcentername} </b> : Assigned Role Users';
-$string['addblocks']='Add Blocks';
+$string['addblocks']='Config Dashboard';
