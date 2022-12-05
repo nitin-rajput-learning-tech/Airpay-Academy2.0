@@ -56,6 +56,8 @@ foreach($result as $res){
         $show = true;
     }
     $res->display = $show;
+    $res->identifiedas = $DB->get_field('course','open_identifiedas',array('open_identifiedas'=>$res->id));
+
 }
 $data = (object)[
     'result' => array_values($result),

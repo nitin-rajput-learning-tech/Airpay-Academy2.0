@@ -316,6 +316,27 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
         }.bind(this));
       },
 
+      deletenotConfirm: function (args) {
+        return Str.get_strings([{
+          key: 'reason',
+          component: 'local_courses'
+        },
+        {
+          key: 'deletecoursetypenotconfirm',
+          component: 'local_courses',
+          param: args
+        }]).then(function (s) {
+          ModalFactory.create({
+            title: s[0],
+            type: ModalFactory.types.DEFAULT,
+            body: s[1],
+          }).done(function (modal) {
+            this.modal = modal;
+            modal.show();
+          }.bind(this));
+        }.bind(this));
+      },
+
       load: function () {
       }
     };
