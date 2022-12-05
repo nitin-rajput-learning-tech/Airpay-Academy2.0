@@ -634,7 +634,7 @@ class local_costcenter_external extends external_api {
 
                         $fields      = 'SELECT id, name as fullname';
                         $lobssql = " FROM {local_course_types}
-                                         WHERE  orgid $organisationidssql OR orgid=0 ";
+                                         WHERE  active = 1 AND orgid $organisationidssql OR orgid=0 ";
                         $coursetypes = $DB->get_records_sql($fields.$lobssql, $organisationparams, ($page * $perpage) -0, $perpage + 1);
                         $return = array_values(json_decode(json_encode($coursetypes), true));
                     }
