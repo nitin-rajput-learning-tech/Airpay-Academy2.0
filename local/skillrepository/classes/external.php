@@ -534,7 +534,6 @@ class local_skillrepository_external extends external_api {
         $stable->start = $offset;
         $stable->length = $limit;
         $result_skill = skills_category_details($stable,$filtervalues);
-
         $totalcount = $result_skill['count'];
         $data=$result_skill['data'];
         return [
@@ -570,6 +569,7 @@ class local_skillrepository_external extends external_api {
                         'achieved_users' => new external_value(PARAM_RAW, 'achieved users in skill', VALUE_OPTIONAL),
                         'code' => new external_value(PARAM_RAW, 'code in skillslevel', VALUE_OPTIONAL),
                         'username' => new external_value(PARAM_RAW, 'username in skillslevel', VALUE_OPTIONAL),
+                        'delete_cat' => new external_value(PARAM_RAW, 'delete in skillscategory', VALUE_OPTIONAL),
                     )
                 )
             )
