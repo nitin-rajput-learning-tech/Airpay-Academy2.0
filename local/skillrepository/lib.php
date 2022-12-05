@@ -271,10 +271,10 @@ function skills_level_details($tablelimits, $filtervalues){
 
     $list=array();
     $data=array();
-    
+
     if ($records) {
         foreach ($records as $c) {
-            $list=array();                
+            $list=array();
             $list['skillslevelname'] = $c->name;
             $list['username'] = $c->username;
             $list['code'] = $c->code;
@@ -312,14 +312,18 @@ function skills_category_details($tablelimits, $filtervalues){
     if ($records) {
         foreach ($records as $c) {
             $list=array();
+
             $id = $c->id;
             $delcat = $DB->get_field('local_skill','category',array('category'=>$id));
+
             $list['skillscategoryname'] = $c->name;
             $list['username'] = $c->username;
             $list['code'] = $c->shortname;
             $list['organisationname'] = $c->orginsationname;
             $list['skillscategory_id'] = $c->id;
+
             $list['delete_cat'] = $delcat;
+
             $data[] = $list;
         }
     }
