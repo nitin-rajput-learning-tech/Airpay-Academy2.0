@@ -79,13 +79,12 @@
                 if (action === 'costcenter_organisation_selector') {
                     $("#id_open_costcenterid").on('change', function() {
                         var department = $('#id_open_departmentid').val();
-                        if(parseInt(department) > 0){
+                        if(parseInt(department) >= 0){
                             $('#id_open_departmentid').html('');
-                            $('.departmentselect .form-autocomplete-selection .form-autocomplete-selection').html(departmentselect);
+                            $('.departmentselect .form-autocomplete-selection').html(departmentselect);
                         }
                         var subdept = $('#id_open_subdepartment').val();
-
-                        if(parseInt(subdept) > 0){
+                        if(parseInt(subdept) >= 0){
                             $('#id_open_subdepartment').html('');
                             $('.subdepartmentselect .form-autocomplete-selection').html(subdeptartmentselect);
                         }
@@ -94,9 +93,9 @@
                             $('#id_category').html('');
                             $('.categoryselect .form-autocomplete-selection').html(categoryselect);
                         }
-                        var identifiedas = $('#id_open_identifiedtype').val();
+                        var identifiedas = $('#id_identifiedtype').val();
                         if(parseInt(identifiedas) > 0){
-                            $('#id_open_identifiedtype').html('');
+                            $('#id_identifiedtype').html('');
                             $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
                         
@@ -104,7 +103,7 @@
                 }else if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector'){
                     $('#id_open_departmentid').on('change', function(){
                         var subdept = $('#id_open_subdepartment').val();
-                        if(parseInt(subdept) > 0){
+                        if(parseInt(subdept) >= 0){
                             $('#id_open_subdepartment').html('');
                             $('.subdepartmentselect .form-autocomplete-selection').html(subdeptartmentselect);
                         }
@@ -112,13 +111,13 @@
                         if(parseInt(category) > 0){
                             $('#id_category').html('');
                             $('.categoryselect .form-autocomplete-selection').html(categoryselect);
-                        } 
+                        }
                     });
                     $('#id_open_subdepartment').on('change', function(){
                         var category = $('#id_category').val();
                         if(parseInt(category) > 0){
                             $('#id_category').html('');
-                            $('.subdepartmentselect .form-autocomplete-selection').html(subdepartmentselect);
+                            $('.categoryselect .form-autocomplete-selection').html(categoryselect);
                         }
                     });
                 }
