@@ -538,8 +538,7 @@ class classroomcourse_form extends moodleform {
             // $course = implode(',', $course);
             $coursessql = "SELECT c.id, c.fullname
                               FROM {course} AS c
-                              JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
-                             WHERE c.visible = 1 AND CONCAT(',',c.open_identifiedas,',') LIKE '%,2,%' AND c.id <> " . SITEID;//FIND_IN_SET(2, c.open_identifiedas)
+                             WHERE c.visible = 1  AND c.id <> " . SITEID;
 
             list($csql, $courseparam) = $DB->get_in_or_equal($course, SQL_PARAMS_NAMED);
             $coursessql .= " AND c.id $csql ";
@@ -549,9 +548,9 @@ class classroomcourse_form extends moodleform {
         } else if ($id > 0) {
             $coursessql = "SELECT c.id, c.fullname
                               FROM {course} AS c
-                              JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
+
                               JOIN {local_classroom_courses} AS cc ON cc.courseid = c.id
-                             WHERE cc.classroomid = :classroomid AND c.visible = 1 AND CONCAT(',',c.open_identifiedas,',') LIKE '%,2,%' ";//FIND_IN_SET(2, c.open_identifiedas)
+                             WHERE cc.classroomid = :classroomid AND c.visible = 1 ";
             $courses = $DB->get_records_sql_menu($coursessql,array('classroomid' => $cid));
         }
 
