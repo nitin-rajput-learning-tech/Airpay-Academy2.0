@@ -40,7 +40,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $costcenter_instance = new costcenter;
 
          if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
-            $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid=0 ORDER BY s.sortorder";
+            $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid=0 ORDER BY s.sortorder DESC";
             $costcenters = $DB->get_records_sql($sql);
         } else if(has_capability('local/costcenter:view', $systemcontext)){
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid = 0 AND id = ? ORDER BY s.sortorder";
