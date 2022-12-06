@@ -2854,7 +2854,7 @@ function get_listof_evalautions($stable, $filtervalues){
 function local_evaluation_output_fragment_addquestions_or_enrol($args) {
     global $CFG, $DB, $OUTPUT;
     $args = (object) $args;
-    $context = $args->context;
+    $context =  (new \local_evaluation\lib\accesslib())::get_module_context();
     $id = $args->id;
     $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
 

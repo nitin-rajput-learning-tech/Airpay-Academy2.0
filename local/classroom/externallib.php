@@ -1073,28 +1073,6 @@ class local_classroom_external extends external_api {
         global $DB;
         try {
 
-            //$classroomcourses = $DB->get_records_menu('local_classroom_courses',
-            //    array('classroomid' => $classroomid), 'courseid', 'id, courseid');
-            //foreach($classroomcourses as $classroomcourse){
-            //    $classroomtrainers = $DB->get_records_menu('local_classroom_trainers',
-            //        array('classroomid' => $classroomid), 'trainerid', 'id, trainerid');
-            //    if (!empty($classroomtrainers)) {
-            //        foreach ($classroomtrainers as $classroomtrainer) {
-            //            $unenrolclassroomtrainer = (new classroom)->manage_classroom_course_enrolments($classroomcourse, $classroomtrainer,
-            //                'editingteacher', 'unenrol');
-            //        }
-            //    }
-            //    $classroomusers = $DB->get_records_menu('local_classroom_users',
-            //        array('classroomid' => $classroomid), 'userid', 'id, userid');
-            //    if (!empty($classroomusers)) {
-            //        foreach ($classroomusers as $classroomuser) {
-            //            $unenrolclassroomuser = (new classroom)->manage_classroom_course_enrolments($classroomcourse, $classroomuser,
-            //                'employee', 'unenrol');
-            //        }
-            //    }
-            //    $DB->delete_records('local_classroom_courses', array('classroomid' => $id,'courseid' => $classroomcourse));
-            //}
-
             $DB->delete_records('local_classroom_courses', array('classroomid' => $id));
 
             $local_evaluations=$DB->get_records_menu('local_evaluations',  array('plugin' =>'classroom', 'instance' =>$id), 'id', 'id, id as evid');
@@ -1297,19 +1275,11 @@ class local_classroom_external extends external_api {
                      $queryparams['department'] = $USER->open_departmentid;
                  }
            }
-      //       $cousresql = "SELECT c.id, c.fullname
-      //                      FROM {course} AS c
-      //                      JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
-      //                      JOIN {local_classroom_courses} as lbc ON lbc.courseid = c.id
-      //                     WHERE c.visible = 1 AND CONCAT(',',c.open_identifiedas,',') LIKE '%,2,%' AND c.fullname LIKE '%$query%'  AND (".$classroomid.", c.id) NOT IN
-      // ( SELECT classroomid, courseid FROM {local_classroom_courses} ) AND c.id <> " . SITEID . " $concatsql";
-//AND FIND_IN_SET(2,c.open_identifiedas)
 
             //unable to fetch data from the previous query.Updated into new one.
               $cousresql = "SELECT c.id, c.fullname
                            FROM {course} AS c
-                           JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
-                          WHERE c.visible = 1 AND CONCAT(',',c.open_identifiedas,',') LIKE '%,2,%' 
+                          WHERE c.visible = 1
                           AND c.fullname LIKE '%$query%' AND c.id <> " . SITEID . " $concatsql";
             $courses = $DB->get_records_sql($cousresql, $queryparams);
         }

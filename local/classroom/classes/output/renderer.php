@@ -302,7 +302,6 @@ class renderer extends plugin_renderer_base {
                     $line ['classroom_actionstatus'] = array_values(($classroom_actionstatus));
                     $classroomcoursessql = "SELECT c.id, c.fullname
                                               FROM {course} AS c
-                                              JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
                                               JOIN {local_classroom_courses} AS cc ON cc.courseid = c.id
                                              WHERE c.visible = 1 AND cc.classroomid = :classroomid ";
 
