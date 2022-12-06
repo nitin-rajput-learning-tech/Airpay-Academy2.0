@@ -31,7 +31,6 @@ $PAGE->requires->js('/local/skillrepository/js/jquery.dataTables.js',true);
 $PAGE->requires->js('/local/skillrepository/js/skills_script.js',true); //For downloading csv
 $PAGE->requires->js('/local/skillrepository/js/dataTables.buttons.min.js',true);
 $PAGE->requires->js('/local/skillrepository/js/buttons.html5.min.js',true);
-//$PAGE->requires->css('/local/skillrepository/css/jquery.dataTables.css');
 $PAGE->requires->css('/local/skillrepository/css/buttons.dataTables.min.css');
 
 $id = optional_param('id', 0, PARAM_INT);
@@ -47,16 +46,14 @@ $PAGE->set_pagelayout('standard');
 
 $PAGE->set_title(get_string('pluginname', 'local_skillrepository'));
 $PAGE->navbar->add(get_string('manage_skills', 'local_skillrepository'));
-
 $PAGE->requires->js_call_amd('local_skillrepository/newrepository', 'load', array());
-//$PAGE->requires->js_call_amd('local_skillrepository/newcategory', 'load', array());
 
 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 
 $id = 1; 
 
 if (!has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
-	print_error('Sorry, You are not accessable to this page');
+    print_error('Sorry, You are not accessable to this page');
 }
 $renderer = $PAGE->get_renderer('local_skillrepository');
 $filterparams = $renderer->manageskills_content(true);
@@ -64,43 +61,41 @@ $repository = new local_skillrepository\event\insertrepository();
 // if id exists, get curernt id details else create a new class
 
 if($id > 0) {
-	$toform = $repository->skillrepository_opertaions('local_skill', 'fetch-single', '', 'id', $id);  
-	$description= isset($toform->description);
+    $toform = $repository->skillrepository_opertaions('local_skill', 'fetch-single', '', 'id', $id);
+    $description= isset($toform->description);
     $toform->description=array();
-	$toform->description['text'] = isset($description);
+    $toform->description['text'] = isset($description);
 } else {
-	$fromform = new stdClass();
+    $fromform = new stdClass();
 }
 
-
-
-// skill repository form	        
+// skill repository form
 $mform = new local_skillrepository\form\skill_repository_form(null, array('id'=>$id)); //create object for Skill Repository Form
 
 if ($mform->is_cancelled()) {
-	redirect('index.php');
+    redirect('index.php');
 } else if ($fromform = $mform->get_data()) {
-	$fromform->description = $fromform->description['text'];
-	if($fromform->id){
-		$result = $repository->skillrepository_opertaions('local_skill', 'update', $fromform);
-	} else{
-		$result = $repository->skillrepository_opertaions('local_skill', 'insert', $fromform);	
-	}	
-	if($result)
-		redirect($PAGE->url);
-		
+    $fromform->description = $fromform->description['text'];
+    if($fromform->id){
+        $result = $repository->skillrepository_opertaions('local_skill', 'update', $fromform);
+    } else{
+        $result = $repository->skillrepository_opertaions('local_skill', 'insert', $fromform);
+    }
+    if($result)
+        redirect($PAGE->url);
+
 } else {
-	if($id > 0) {
-		$collapse = false;
-		$description = array();
-		
-		$description['format'] = 1;
-		$mform->set_data($toform);
-	}elseif($submitbutton){
-		$collapse = false;
-	}else{
-		$collapse = true;
-	}	
+    if($id > 0) {
+        $collapse = false;
+        $description = array();
+
+        $description['format'] = 1;
+        $mform->set_data($toform);
+    }else if($submitbutton){
+        $collapse = false;
+    }else{
+        $collapse = true;
+    }
 }
 
 $PAGE->set_heading(get_string('manage_skills', 'local_skillrepository'));
@@ -110,7 +105,7 @@ $filterparams['submitid'] = 'form#filteringform';
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 $skill = $repository->skillrepository_opertaions('local_skill', 'fetch-multiple','','','');
 if(empty($skill)){
-	$collapse = false;
+    $collapse = false;
 }
 echo $renderer->manageskills_content();
 echo $OUTPUT->footer();

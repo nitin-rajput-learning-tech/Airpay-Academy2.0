@@ -18,45 +18,41 @@
     ddd
 
 }}
-    {{#response}}
-            {{#viewtypeCard}}
-            <table class="generaltable dataTable no-footer" id="skill_repository" role="grid" aria-describedby="skill_repository_info">
-                <thead>
-                    <tr role="row">
-                        {{# is_admin}}
-                        <th class="header text-left" tabindex="0">Organization</th>
-                        {{/ is_admin}}
-                        <th class="header text-left" tabindex="0">Level Name</th>
-                        <th class="header text-center" tabindex="0">Level Code</th>
-                        <th class="header text-center" tabindex="0">Created By</th>
-                        <th class="header text-center" tabindex="0">Actions</th>
-                    </tr>
-                </thead>
-            <tbody>
-            {{#records}}
-
-                <tr>
+{{#response}}
+    {{#viewtypeCard}}
+        <table class="generaltable dataTable no-footer" id="skill_repository" role="grid" aria-describedby="skill_repository_info">
+            <thead>
+                <tr role="row">
                     {{# is_admin}}
-                    <td class="text-left">{{organisationname}}</td>
+                        <th class="header text-left" tabindex="0">{{# str}} organisation, local_costcenter{{/ str}}
+                        </th>
                     {{/ is_admin}}
-                    <td class="text-left">{{skillslevelname}}</td>
-                    <td class="text-center">{{code}}</td>
-                    <td class="text-center">{{username}}</td>
-
-                    <td class="text-center">
-                         <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{skill_id}}" onclick="(function(e){ require('local_skillrepository/leveltable').init({selector:'createrepositorymodal', contextid:1, levelid:{{skillslevel_id}}}) })(event)" style="cursor:pointer" title="Edit">
-                        <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>
-
-
-                        <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/leveltable').deletelevel({ selector: 'deletelevelconfirm' ,levelid:{{skillslevel_id}},contextid:1}) })(event)">
-                                        <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
-                        </a>
-
-
-                    </td>
+                    <th class="header text-left" tabindex="0">Level Name</th>
+                    <th class="header text-center" tabindex="0">Level Code</th>
+                    <th class="header text-center" tabindex="0">Created By</th>
+                    <th class="header text-center" tabindex="0">Actions</th>
                 </tr>
-            {{/records}}
+            </thead>
+            <tbody>
+                {{#records}}
+                    <tr>
+                        {{# is_admin}}
+                            <td class="text-left">{{organisationname}}</td>
+                        {{/ is_admin}}
+                        <td class="text-left">{{skillslevelname}}</td>
+                        <td class="text-center">{{code}}</td>
+                        <td class="text-center">{{username}}</td>
+                        <td class="text-center">
+                            <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{skill_id}}" onclick="(function(e){ require('local_skillrepository/leveltable').init({selector:'createrepositorymodal', contextid:1, levelid:{{skillslevel_id}}}) })(event)" style="cursor:pointer" title="Edit">
+                                <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>
+                            </a>
+                            <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/leveltable').deletelevel({ selector: 'deletelevelconfirm' ,levelid:{{skillslevel_id}},contextid:1}) })(event)">
+                                <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {{/records}}
             </tbody>
-    </table>
+        </table>
     {{/viewtypeCard}}
 {{/response}}

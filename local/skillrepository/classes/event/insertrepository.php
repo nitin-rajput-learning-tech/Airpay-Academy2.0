@@ -27,52 +27,52 @@ use context_system;
 require_once($CFG->dirroot.'/local/costcenter/lib.php');
 class insertrepository{
 
-	function skillrepository_opertaions($table, $operation, $object, $column, $value) {
+    function skillrepository_opertaions($table, $operation, $object, $column, $value) {
 
+        global $DB, $CFG, $OUTPUT, $USER,$PAGE;
 
-		global $DB, $CFG, $OUTPUT, $USER,$PAGE;
+        $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 
-		$systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-		if(in_array($operation, ['insert', 'update'])){
-		    if (!is_siteadmin()){
-				$costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-			} else {
-				$costcenter = (int)$object->costcenterid;
-			}
-		}
+        if(in_array($operation, ['insert', 'update'])){
+            if (!is_siteadmin()){
+                $costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+            } else {
+                $costcenter = (int)$object->costcenterid;
+            }
+        }
 
-		switch($operation){
-			case 'insert':
-				$object->usercreated = $USER->id;
-				$object->costcenterid= $costcenter;
-				$object->timecreated = time();
-				$process = $DB->insert_record($table, $object);
-			break;
-			case 'update':
-				$object->usermodified = $USER->id;
-				$object->costcenterid=$costcenter;
-				$object->timemodified = time();
-				$process = $DB->update_record($table, $object);
-			break;
-			case 'delete':
-				$process = $DB->delete_records($table, array($column=>$value));
-			break;
-			case 'fetch-single':
-				$process = $DB->get_record($table, array($column=>$value));
-			break;
-			case 'fetch-multiple':
-				if($column == null)
-					$process = $DB->get_records($table);
-				else
-					$process = $DB->get_records($table, array($column=>$value));
-			break;
-			case 'exist':
-				$process = $DB->record_exists($table, array($column=>$value));
-			break;
-			case 'error-operation':
-				$process = print_error(get_string('error_operation', 'local_skillrepository'));
-			break;
-		}
-		return $process;
-	}
+        switch($operation){
+            case 'insert':
+                $object->usercreated = $USER->id;
+                $object->costcenterid= $costcenter;
+                $object->timecreated = time();
+                $process = $DB->insert_record($table, $object);
+            break;
+            case 'update':
+                $object->usermodified = $USER->id;
+                $object->costcenterid=$costcenter;
+                $object->timemodified = time();
+                $process = $DB->update_record($table, $object);
+            break;
+            case 'delete':
+                $process = $DB->delete_records($table, array($column=>$value));
+            break;
+            case 'fetch-single':
+                $process = $DB->get_record($table, array($column=>$value));
+            break;
+            case 'fetch-multiple':
+                if($column == null)
+                    $process = $DB->get_records($table);
+                else
+                    $process = $DB->get_records($table, array($column=>$value));
+            break;
+            case 'exist':
+                $process = $DB->record_exists($table, array($column=>$value));
+            break;
+            case 'error-operation':
+                $process = print_error(get_string('error_operation', 'local_skillrepository'));
+            break;
+        }
+        return $process;
+    }
 }

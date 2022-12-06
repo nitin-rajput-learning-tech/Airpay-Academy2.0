@@ -50,7 +50,6 @@ $string['save'] = 'Submit';
 $string['update'] = 'Update';
 $string['action'] = 'Actions';
 $string['delconfirm'] = 'Do you really want to delete this Skill?';
-//$string['deleteskill'] = 'Delete SKILL';
 $string['proficiencylevel'] = 'Proficiency Level';
 $string['tags'] = 'Tags';
 $string['bu'] = 'Business Unit';

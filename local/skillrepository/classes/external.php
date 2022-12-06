@@ -25,7 +25,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
 class local_skillrepository_external extends external_api {
 
-	/**
+    /**
      * Describes the parameters for submit_create_group_form webservice.
      * @return external_function_parameters
      */
@@ -34,48 +34,44 @@ class local_skillrepository_external extends external_api {
             array(
                 'contextid' => new external_value(PARAM_INT, 'The context id for the evaluation'),
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
-
             )
         );
     }
 
-	public function submit_skill_repository_form_form($contextid, $jsonformdata){
-		global $PAGE, $CFG;
+    public function submit_skill_repository_form_form($contextid, $jsonformdata){
+        global $PAGE, $CFG;
 
-		require_once($CFG->dirroot . '/local/skillrepository/lib.php');
+        require_once($CFG->dirroot . '/local/skillrepository/lib.php');
         // We always must pass webservice params through validate_parameters.
-		$params = self::validate_parameters(self::submit_skill_repository_form_form_parameters(),
-                                    ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
+        $params = self::validate_parameters(self::submit_skill_repository_form_form_parameters(), ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
 
 
-		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
+        $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
-		self::validate_context($context);
-		$data = array();
+        self::validate_context($context);
+        $data = array();
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
 
-		$mform = new local_skillrepository\form\skill_repository_form(null, array(), 'post', '', null, true, $data);
+        $mform = new local_skillrepository\form\skill_repository_form(null, array(), 'post', '', null, true, $data);
 
         $repositoryinsert  = new local_skillrepository\event\insertrepository();
         $valdata = $mform->get_data();
         $valdata->description=$valdata->description['text'];
         if($valdata){
-
             if($valdata->id>0){
                 $repositoryinsert->skillrepository_opertaions('local_skill', 'update', $valdata,'','');
-            } else{
-            	$repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');
-			}
-		} else {
-			// Generate a warning.
+            } else {
+                $repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');
+            }
+        } else {
+            // Generate a warning.
             throw new moodle_exception('Error in creation');
-		}
-            // die();
-	}
+        }
+    }
 
 
-	/**
+    /**
      * Returns description of method result value.
      *
      * @return external_description
@@ -104,11 +100,10 @@ class local_skillrepository_external extends external_api {
 
         require_once($CFG->dirroot . '/local/skillrepository/lib.php');
         // We always must pass webservice params through validate_parameters.
-        $params = self::validate_parameters(self::submit_skill_category_parameters(),
-                                    ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
+        $params = self::validate_parameters(self::submit_skill_category_parameters(), ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
 
 
-		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
+        $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
 
@@ -161,7 +156,7 @@ class local_skillrepository_external extends external_api {
         ));
     }
 
-    public static function repository_selector($query, $context, $organisation = 0 /*, $limitfrom = 0, $limitnum = 25*/) {
+    public static function repository_selector($query, $context, $organisation = 0) {
         global $CFG, $DB;
 
         $params = self::validate_parameters(self::repository_selector_parameters(), array(
@@ -174,15 +169,14 @@ class local_skillrepository_external extends external_api {
         $context = self::get_context_from_params($params['context']);
         self::validate_context($context);
         $repos = array();
-        // if ($query) {
-            $repositorysql = "SELECT id, name
-                        FROM {local_skill_categories}
-                        WHERE costcenterid = :costcenterid ";
-            if ($query) {
-                $repositorysql .= " AND name LIKE '%$query%' ";
-            }
-            $repos = $DB->get_records_sql($repositorysql, ['costcenterid' => $organisation]);
-        // }
+
+        $repositorysql = "SELECT id, name
+            FROM {local_skill_categories}
+            WHERE costcenterid = :costcenterid ";
+        if ($query) {
+            $repositorysql .= " AND name LIKE '%$query%' ";
+        }
+        $repos = $DB->get_records_sql($repositorysql, ['costcenterid' => $organisation]);
         return array('repos' => $repos);
     }
 
@@ -217,25 +211,19 @@ class local_skillrepository_external extends external_api {
     public function submit_level_form($contextid, $jsonformdata){
         global $PAGE, $CFG;
 
-        // require_once($CFG->dirroot . '/local/skillrepository/lib.php');
         // We always must pass webservice params through validate_parameters.
-        $params = self::validate_parameters(self::submit_level_form_parameters(),
-                                    ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
+        $params = self::validate_parameters(self::submit_level_form_parameters(), ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
 
-
-		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
+        $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-
 
         $data = array();
 
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
-         $mform = new \local_skillrepository\form\levelsform(null, array(), 'post', '', null, true, $data);
-
+        $mform = new \local_skillrepository\form\levelsform(null, array(), 'post', '', null, true, $data);
         $querylib  = new \local_skillrepository\local\querylib();
-
         $valdata = $mform->get_data();
 
         if($valdata){
@@ -268,9 +256,7 @@ class local_skillrepository_external extends external_api {
     }
     public function delete_skill($id,$contextid){
         global $DB;
-
         $return = $DB->delete_records('local_skill',  array('id' => $id));
-
         return $return;
     }
     public function delete_skill_returns(){
@@ -330,13 +316,11 @@ class local_skillrepository_external extends external_api {
         $limit = $params['limit'];
         $decodedata = json_decode($params['dataoptions']);
         $filtervalues = json_decode($filterdata);
-
         $stable = new \stdClass();
         $stable->thead = true;
         $stable->start = $offset;
         $stable->length = $limit;
         $result_skill = skill_details($stable,$filtervalues);
-
         $totalcount = $result_skill['count'];
         $data=$result_skill['data'];
         return [
