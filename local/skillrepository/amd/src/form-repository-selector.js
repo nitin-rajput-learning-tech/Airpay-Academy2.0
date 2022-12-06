@@ -18,7 +18,6 @@
  *
  * @module     tool_lp/form-course-selector
  * @class      form-repository-selector
- * @package    tool_lp
  * @copyright  2015 Frédéric Massart - FMCorz.net
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -40,12 +39,13 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
 
         transport: function(selector, query, success, failure) {
             var promise;
-                contextid = parseInt($(selector).data('contextid'), 10),
-                includes = $(selector).data('includes');
-                organisation = parseInt($('#id_costcenterid').val());
-                if(isNaN(organisation)){
-                    organisation = 0;
-                }
+            var contextid;
+            var organisation;
+            contextid = parseInt($(selector).data('contextid'), 10);
+            organisation = parseInt($('#id_costcenterid').val());
+            if(isNaN(organisation)){
+                organisation = 0;
+            }
             promise = Ajax.call([{
                 methodname: 'local_skillrepository_form_repository_selector',
                 args: {
@@ -57,7 +57,7 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
 
             promise[0].then(function(results) {
                 var promises = [],
-                    i = 0;
+                i = 0;
                 // Render the label.
                 $.each(results.repos, function(index, repository) {
                     promises.push(Templates.render('local_skillrepository/form-repository-selector-suggestion', repository));
