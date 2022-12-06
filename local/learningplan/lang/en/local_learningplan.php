@@ -114,7 +114,7 @@ $string['learningplan_self_enrol'] = '<div class="pl-15 pr-15 pb-15">Are you sur
 $string['learningplan_self_unenrol'] = '<div class="pl-15 pr-15 pb-15">Are you sure, Do you want to unenrol from {$a->planname} learning path?</div';
 $string['target_audience_tab'] = 'Target audience';
 $string['audience_department'] = '<p>This learningpath will eligible below-listed target audience.</p>
-<p> <b>Departments :</b> {$a}</p>';
+<p> <b>Countries :</b> {$a}</p>';
 $string['audience_subdepartment'] = '<p> <b>Bussiness Unit :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';
 $string['audience_hrmsrole'] = '<p> <b>Hrms Role :</b> {$a}</p>';
@@ -241,6 +241,7 @@ $string['optional'] = 'Optional';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['exportlearningplans'] = 'Export Learning Plans to Excel';
+$string['department'] = "Country";
 
 
 
