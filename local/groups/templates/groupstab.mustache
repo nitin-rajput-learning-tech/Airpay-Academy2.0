@@ -1,0 +1,46 @@
+<!-- Groups users View -->
+ {{#response}}
+{{#viewtypeCard}}
+ {{#records}}
+  <div class="{{cardClass}} pull-left ">
+             <div class="card-page">
+              {{ # groupname }}
+               <div class="card-title"><b>{{ groupname }}</b>                  
+                    <div class="pull-right text-right actionicons showoptions{{userid}}">
+                        <span  class="pull-right showoptions" data-action="showoptions{{userid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
+                        </span>
+                          {{ / groupname }}
+
+                       <ul class="options_container" id="showoptions{{userid}}">{{{actions}}} </ul>
+                      
+                    </div>
+              </div>
+            <div class="col-sm-6 pull-left">  
+              <div class="group_id pull-left">
+                <p><b>{{#str}}tabgroupid, local_groups{{/str}} :</b></p>
+              </div>
+            <div class="groupid  ml-2 pull-left">
+              <p>{{{ groupid }}}</p>
+            </div>
+          </div>
+          <div class="col-sm-6 pull-left">  
+             <div class="group_count pull-left">
+                <p><b>{{#str}}grouptabuserscount, local_groups{{/str}} :</b></p>
+            </div>
+            <div class="groupcount ml-2 pull-left">
+            <p>{{groupcount}}</p>
+            </div>
+          </div>
+   <div class="col-sm-12 pull-left mb-10">
+    <ul>
+      
+    {{{userimages}}}
+  
+</ul>
+    </div>  
+        <a href="{{ location_url }}" class=" group_view btn btn-primary pull-right mr-10 ">{{#str}}grouptabmanageusers, local_groups{{/str}}</a>
+      </div>
+    </div>
+  {{/records}}
+ {{/viewtypeCard}}
+{{/response}}
