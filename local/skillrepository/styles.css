@@ -42,7 +42,6 @@ span.ui-button-text{
 #page-local-skillrepository-index #costcenter-form_caption a {
     position: absolute;
     top: 28px;
-    /*color: #fff !important;*/
     font-size: 20px;
     right: 5px;
 }
@@ -55,9 +54,6 @@ span.ui-button-text{
 #page-local-skillrepository-index .collapsibleregion.collapsed {
     height:25px !important;
 }
-/*.collapsibleregion {
-    height: auto !important;
-}*/
 #page-local-skillrepository-index #costcenter-form_caption a img{
     display: none !important;
 }
@@ -117,23 +113,8 @@ body.path-local-skillrepository span.ui-button-icon-primary.ui-icon.ui-icon-clos
 }
 /*code added by Raghuvaran starts here*/
 
-/*css added by Shashank --- starts here*/
-#page-local-skillrepository-skill_category #skillcategory-form_caption a {
-    /*position: absolute;*/
-    /*top: 26px;*/
-    /*color: #fff !important;*/
-    /*font-size: 20px;*/
-    /*right: 10px;*/
-}
-/*css added by Shashank --- ends here*/
-#page-local-skillrepository-skill_category #skillcategory-form_caption a>img{
-    /*display: none;*/
-}
 #page-local-skillrepository-skill_category .ftoggler {
     display: none;
-}
-body.path-local-skillrepository table#skill_categories th{
-    /*color: #336799;*/
 }
 
 table#institutes th{
