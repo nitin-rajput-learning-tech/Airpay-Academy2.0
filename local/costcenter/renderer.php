@@ -171,6 +171,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "delete_message" => $del_confirmationmsg,
             "status" => $record->visible,
             "delete" => $delete,
+            "contextid" => $contextid,
             "recordid" => $record->id,
             "parentid" => $record->parentid,
             "headstring" => 'editcostcen',
