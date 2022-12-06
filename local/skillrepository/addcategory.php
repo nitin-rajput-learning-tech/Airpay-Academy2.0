@@ -51,4 +51,3 @@ if ($nameexist){
     $create = $DB->insert_record("local_skill_" . $table, $record);
     echo "OK";
 }
-?>

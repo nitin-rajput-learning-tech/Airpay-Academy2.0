@@ -25,9 +25,8 @@ define('AJAX_SCRIPT', true);
 global $PAGE, $USER, $CFG;
 require_once(dirname(__FILE__).'/../../config.php');
 require_once('lib.php');
-  $action = required_param('action', PARAM_TEXT);
- 
-  $id = optional_param('id', 0, PARAM_INT);
+$action = required_param('action', PARAM_TEXT);
+$id = optional_param('id', 0, PARAM_INT);
  
 $name = optional_param('name', '', PARAM_TEXT);
 $shortname = optional_param('shortname', '', PARAM_TEXT);
@@ -47,52 +46,52 @@ $repository = new local_skillrepository\event\insertrepository();
 $querylib = new \local_skillrepository\local\querylib();
 $renderer = $PAGE->get_renderer('local_skillrepository');
 switch($action) {
-	case 'insert':
-	// Checking If Records Already Exists
-	$shortnameexist = $repository->skillrepository_opertaions("local_skill_".$table, 'exist', '', 'shortname', $shortname);
+    case 'insert':
+        // Checking If Records Already Exists
+        $shortnameexist = $repository->skillrepository_opertaions("local_skill_".$table, 'exist', '', 'shortname', $shortname);
 
-	if($shortnameexist){
-		$return = "SHORTNAME";
-	} else {
-		if($id <= 0) {
-			$create = $repository->skillrepository_opertaions("local_skill_".$table, 'insert', $record);
-			$return = $create;
-		}
-	}
-	break;
-	
-	case 'edit':
-		$edit = $repository->skillrepository_opertaions("local_skill_".$table, 'fetch-single', '', 'id', $dataid);
-		$return = ['data' => ['id'=>$edit->id, 'name' => $edit->name, 'shortname' => $edit->shortname]];			
-	break;
-	
-	case 'update':
-		$record->id = $id;
-		$update = $repository->skillrepository_opertaions("local_skill_".$table, 'update', $record, 'id', $id);
-		$return = $update;			
-	break;
-	case 'search':
-		$sql = 'SELECT * FROM {local_skill_'.$table.'} WHERE name LIKE "'.$q.'%"';
-	    $data = $DB->get_records_sql($sql);
-		foreach($data as $d){
-			$array[] = ['names'=>$d->name, 'id'=>$d->shortname];
-		}
+        if($shortnameexist){
+        $return = "SHORTNAME";
+        } else {
+            if($id <= 0) {
+                $create = $repository->skillrepository_opertaions("local_skill_".$table, 'insert', $record);
+                $return = $create;
+            }
+        }
+    break;
+
+    case 'edit':
+        $edit = $repository->skillrepository_opertaions("local_skill_".$table, 'fetch-single', '', 'id', $dataid);
+        $return = ['data' => ['id'=>$edit->id, 'name' => $edit->name, 'shortname' => $edit->shortname]];
+    break;
+
+    case 'update':
+        $record->id = $id;
+        $update = $repository->skillrepository_opertaions("local_skill_".$table, 'update', $record, 'id', $id);
+        $return = $update;
+    break;
+    case 'search':
+        $sql = 'SELECT * FROM {local_skill_'.$table.'} WHERE name LIKE "'.$q.'%"';
+        $data = $DB->get_records_sql($sql);
+        foreach($data as $d){
+            $array[] = ['names'=>$d->name, 'id'=>$d->shortname];
+        }
         $terms_data = array();
         $terms_data['total_count']= sizeof($array);
         $terms_data['incomplete_results'] = false;
         $terms_data['items'] = $array;
-		$return = $terms_data;
-	break;
-	case 'deletecategory':
+        $return = $terms_data;
+    break;
+    case 'deletecategory':
  
-		$categoryid = required_param('categoryid', PARAM_INT);
-		$return = $DB->delete_records('local_skill_categories',  array('id' => $categoryid));
-		// echo json_encode($return);
-	break;
+        $categoryid = required_param('categoryid', PARAM_INT);
+        $return = $DB->delete_records('local_skill_categories',  array('id' => $categoryid));
+        // echo json_encode($return);
+    break;
 
-	case 'getlevelstable':
-		$params = new \stdClass();
-		$requestdata            = $_REQUEST;
+    case 'getlevelstable':
+        $params = new \stdClass();
+        $requestdata            = $_REQUEST;
         $params->perpage        = $requestdata['iDisplayLength'];
         $params->recordsperpage = $requestdata['iDisplayStart'];
         $params->search         = $requestdata['sSearch'];
@@ -106,29 +105,19 @@ switch($action) {
             "aaData" => $data,
         );
         $return = $output;
-        // print_object($output);exit;
-        // echo json_encode($output);
     break;
     case 'deletelevel':
-    	$levelid = required_param('levelid', PARAM_INT);
-    	$deleted = $querylib->delete_level($levelid);
+        $levelid = required_param('levelid', PARAM_INT);
+        $deleted = $querylib->delete_level($levelid);
         $return = $deleted;
         $curenttime = time();
         $result = $DB->execute('UPDATE {course} SET open_level = 0, timemodified ='.$curenttime.'  WHERE open_level = '.$levelid);
-    	// echo json_encode($deleted);
     break;
     case 'deleteskill':
-
-		$skillid = required_param('skillid', PARAM_INT);
-		$curenttime = time();
-		$return = $DB->delete_records('local_skill',  array('id' => $skillid));
-		$result = $DB->execute('UPDATE {course} SET open_skill = 0, timemodified ='.$curenttime.'  WHERE open_skill = '.$skillid);
-
-		// print_object($return);
-		// die();
-		// echo json_encode($return);
-	break;
-
+        $skillid = required_param('skillid', PARAM_INT);
+        $curenttime = time();
+        $return = $DB->delete_records('local_skill',  array('id' => $skillid));
+        $result = $DB->execute('UPDATE {course} SET open_skill = 0, timemodified ='.$curenttime.'  WHERE open_skill = '.$skillid);
+    break;
 }
-	
 echo json_encode($return);

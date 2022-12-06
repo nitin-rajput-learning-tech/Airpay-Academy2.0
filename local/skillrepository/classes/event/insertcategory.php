@@ -27,35 +27,35 @@ use stdClass;
 require_once($CFG->dirroot.'/local/costcenter/lib.php');
 class insertcategory{
 
-	public function create_skill_category($data) {
-	    global $DB, $CFG, $USER;
+    public function create_skill_category($data) {
+        global $DB, $CFG, $USER;
 
-		$data = (object)$data;
-		$newskill_category = new stdClass();
+        $data = (object)$data;
+        $newskill_category = new stdClass();
 
-		$newskill_category->name = $data->name;
-		$newskill_category->shortname = $data->shortname;
+        $newskill_category->name = $data->name;
+        $newskill_category->shortname = $data->shortname;
 
-		if (!is_siteadmin()){
-			$costcenter = $DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-		} else {
-			$costcenter = $data->costcenterid;
-		}
+        if (!is_siteadmin()){
+            $costcenter = $DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+        } else {
+            $costcenter = $data->costcenterid;
+        }
 
-		if($data->id > 0){
-			$newskill_category->id = $data->id;
-			$newskill_category->costcenterid = $costcenter;
-			$newskill_category->timemodified = time();
-			$newskill_category->usermodified = $USER->id;
-			$DB->update_record('local_skill_categories', $newskill_category);
-			$perform = $newskill_category->id;
-		}else{
-			$newskill_category->costcenterid = $costcenter;
-			$newskill_category->timecreated = time();
-			$newskill_category->usercreated = $USER->id;
-			$perform = $DB->insert_record('local_skill_categories', $newskill_category);
-		}
+        if($data->id > 0){
+            $newskill_category->id = $data->id;
+            $newskill_category->costcenterid = $costcenter;
+            $newskill_category->timemodified = time();
+            $newskill_category->usermodified = $USER->id;
+            $DB->update_record('local_skill_categories', $newskill_category);
+            $perform = $newskill_category->id;
+        }else{
+            $newskill_category->costcenterid = $costcenter;
+            $newskill_category->timecreated = time();
+            $newskill_category->usercreated = $USER->id;
+            $perform = $DB->insert_record('local_skill_categories', $newskill_category);
+        }
 
-	    return $perform;
-	}
+        return $perform;
+    }
 }
