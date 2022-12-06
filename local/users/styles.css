@@ -1336,3 +1336,6 @@ body#page-local-users-index .field_required .icon {
 #fitem_id_password[hidden="hidden"]~#fitem_id_lastname {
     float: right;
 }
+.userdetails_left p span,.userdetails_right p span{
+    display: inline-block;
+}
