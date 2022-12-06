@@ -214,7 +214,7 @@ class learningplan extends moodleform {
 				$options = array(
 					'multiple' => true,
 				);
-				$mform->addElement('autocomplete', 'department', get_string('department','local_evaluation'),$departmentslist,$options);
+				$mform->addElement('autocomplete', 'department', get_string('department','local_learningplan'),$departmentslist,$options);
 				$mform->addHelpButton('department', 'department','local_users');
 			// }elseif (is_siteadmin() || ((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))&&(has_capability('local/costcenter:manage_owndepartments',$systemcontext)))) {
           
@@ -353,7 +353,7 @@ class learningplan extends moodleform {
           $value = $data['open_points'];
           $intvalue = (int)$value;
 
-          if(!("$intvalue" === "$value")){
+          if(!("$intvalue" === "$value") || $intvalue < 0){
             $errors['open_points'] = get_string('numeric', 'local_learningplan'); 
           }
           
