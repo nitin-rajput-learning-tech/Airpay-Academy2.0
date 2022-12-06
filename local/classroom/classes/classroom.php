@@ -30,6 +30,8 @@ use html_table;
 use html_writer;
 use core_component;
 use user_picture;
+use \local_courses\action\insert as insert;
+
 // use \local_classroom\notificationemails as classroomnotifications_emails;
 require_once($CFG->dirroot . '/local/classroom/lib.php');
 define('CLASSROOM_NEW', 0);
@@ -1862,21 +1864,26 @@ class classroom {
     public function manage_classroom_course_enrolments($cousre, $user, $roleshortname = 'employee', $type = 'enrol', $pluginname = 'classroom') {
         global $DB;
         $courseexist=$DB->record_exists('enrol', array('courseid' => $cousre, 'enrol' => $pluginname));
-        if($courseexist){ 
-            $enrolmethod = enrol_get_plugin($pluginname);
-            $roleid      = $DB->get_field('role', 'id', array(
-                'shortname' => $roleshortname
-            ));
-            $instance    = $DB->get_record('enrol', array(
-                'courseid' => $cousre,
-                'enrol' => $pluginname
-            ), '*', MUST_EXIST);
-            if (!empty($instance)) {
-                if ($type == 'enrol') {
-                    $enrolmethod->enrol_user($instance, $user, $roleid, time());
-                } else if ($type == 'unenrol') {
-                    $enrolmethod->unenrol_user($instance, $user, $roleid, time());
-                }
+
+        if(!$courseexist){
+            $coursedata = $DB->get_record('course',array('id' => $cousre));
+            $coursedata->open_identifiedas='2';
+            insert::add_enrol_method_tocourse($coursedata, 2);
+        }
+
+        $enrolmethod = enrol_get_plugin($pluginname);
+        $roleid      = $DB->get_field('role', 'id', array(
+            'shortname' => $roleshortname
+        ));
+        $instance    = $DB->get_record('enrol', array(
+            'courseid' => $cousre,
+            'enrol' => $pluginname
+        ), '*', MUST_EXIST);
+        if (!empty($instance)) {
+            if ($type == 'enrol') {
+                $enrolmethod->enrol_user($instance, $user, $roleid, time());
+            } else if ($type == 'unenrol') {
+                $enrolmethod->unenrol_user($instance, $user, $roleid, time());
             }
         }
         return true;
