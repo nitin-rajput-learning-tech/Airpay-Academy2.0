@@ -30,6 +30,8 @@ use html_table;
 use html_writer;
 use core_component;
 use user_picture;
+use \local_courses\action\insert as insert;
+
 // use \local_classroom\notificationemails as classroomnotifications_emails;
 require_once($CFG->dirroot . '/local/classroom/lib.php');
 define('CLASSROOM_NEW', 0);
@@ -178,6 +180,7 @@ class classroom {
     }
     public function classroom_set_events($classroom) {
         global $DB, $CFG, $USER;
+         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
         require_once($CFG->dirroot . '/calendar/lib.php');
         $eventid = $DB->get_field('event', 'id', array(
             'modulename' => '0',
@@ -190,6 +193,7 @@ class classroom {
         if (isset($classroom->startdate) && $classroom->startdate > 0) {
             $event                  = new stdClass();
             $event->eventtype       = 'open';
+            $event->categoryid      = $categorycontext->instanceid;
             $event->type            = empty($classroom->enddate) ? CALENDAR_EVENT_TYPE_ACTION : CALENDAR_EVENT_TYPE_STANDARD;
             $event->name            = $classroom->name;
             $event->description     = $classroom->name;
@@ -228,6 +232,7 @@ class classroom {
         ));
         if (isset($classroom->enddate) && $classroom->enddate > 0) {
             $event                  = new stdClass();
+            $event->categoryid      = $categorycontext->instanceid;
             $event->type            = CALENDAR_EVENT_TYPE_ACTION;
             $event->eventtype       = 'close';
             $event->name            = $classroom->name;
@@ -328,6 +333,9 @@ class classroom {
     }
     public function session_set_events($session) {
         global $DB, $CFG, $USER;
+
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($session->classroomid);
+
         require_once($CFG->dirroot . '/calendar/lib.php');
         $eventid = $DB->get_field('event', 'id', array(
             'modulename' => '0',
@@ -340,6 +348,7 @@ class classroom {
         ));
         if (isset($session->timestart) && $session->timestart > 0) {
             $event                  = new stdClass();
+            $event->categoryid      = $categorycontext->instanceid;
             $event->eventtype       = 'open';
             $event->type            = empty($session->timefinish) ? CALENDAR_EVENT_TYPE_ACTION : CALENDAR_EVENT_TYPE_STANDARD;
             $event->name            = $session->name;
@@ -381,6 +390,7 @@ class classroom {
         ));
         if (isset($session->timefinish) && $session->timefinish > 0) {
             $event                  = new stdClass();
+            $event->categoryid      = $categorycontext->instanceid;
             $event->type            = CALENDAR_EVENT_TYPE_ACTION;
             $event->eventtype       = 'close';
             $event->name            = $session->name;
@@ -762,7 +772,6 @@ class classroom {
                             // $line ['classroom_actionstatus'] = array_values(($classroom_actionstatus));
                             $classroomcoursessql = "SELECT c.id, c.fullname
                                                       FROM {course} AS c
-                                                      JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
                                                       JOIN {local_classroom_courses} AS cc ON cc.courseid = c.id
                                                      WHERE c.visible = 1 AND cc.classroomid = :id";
 
@@ -1855,21 +1864,26 @@ class classroom {
     public function manage_classroom_course_enrolments($cousre, $user, $roleshortname = 'employee', $type = 'enrol', $pluginname = 'classroom') {
         global $DB;
         $courseexist=$DB->record_exists('enrol', array('courseid' => $cousre, 'enrol' => $pluginname));
-        if($courseexist){ 
-            $enrolmethod = enrol_get_plugin($pluginname);
-            $roleid      = $DB->get_field('role', 'id', array(
-                'shortname' => $roleshortname
-            ));
-            $instance    = $DB->get_record('enrol', array(
-                'courseid' => $cousre,
-                'enrol' => $pluginname
-            ), '*', MUST_EXIST);
-            if (!empty($instance)) {
-                if ($type == 'enrol') {
-                    $enrolmethod->enrol_user($instance, $user, $roleid, time());
-                } else if ($type == 'unenrol') {
-                    $enrolmethod->unenrol_user($instance, $user, $roleid, time());
-                }
+
+        if(!$courseexist){
+            $coursedata = $DB->get_record('course',array('id' => $cousre));
+            $coursedata->open_identifiedas='2';
+            insert::add_enrol_method_tocourse($coursedata, 2);
+        }
+
+        $enrolmethod = enrol_get_plugin($pluginname);
+        $roleid      = $DB->get_field('role', 'id', array(
+            'shortname' => $roleshortname
+        ));
+        $instance    = $DB->get_record('enrol', array(
+            'courseid' => $cousre,
+            'enrol' => $pluginname
+        ), '*', MUST_EXIST);
+        if (!empty($instance)) {
+            if ($type == 'enrol') {
+                $enrolmethod->enrol_user($instance, $user, $roleid, time());
+            } else if ($type == 'unenrol') {
+                $enrolmethod->unenrol_user($instance, $user, $roleid, time());
             }
         }
         return true;
@@ -1890,7 +1904,6 @@ class classroom {
         $countsql              = "SELECT COUNT(cc.id) ";
         $fromsql               = "SELECT c.*, cc.id as classroomcourseinstance ";
         $sql                   = " FROM {course} AS c
-                                  JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
                                   JOIN {local_classroom_courses} AS cc ON cc.courseid = c.id
                                   WHERE cc.classroomid = :classroomid ";
         $params['classroomid'] = $classroomid;
@@ -2463,7 +2476,6 @@ class classroom {
         $params['classroomid'] = $classroomid;
         $classroomcoursessql = "SELECT c.*
                                   FROM {course} AS c
-                                  JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
                                   JOIN {local_classroom_courses} AS cc ON cc.courseid = c.id
                                  WHERE cc.classroomid = :classroomid";
         if (!empty($classroomcompletiondata) && $classroomcompletiondata->coursetracking == "OR" && $classroomcompletiondata->courseids != null) {
@@ -2873,7 +2885,6 @@ class classroom {
         $sessions            = $DB->get_records_sql_menu($sessionssql);
         $classroomcoursessql = "SELECT c.id,fullname
                                   FROM {course} AS c
-                                  JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
                                   JOIN {local_classroom_courses} AS cc ON cc.courseid = c.id
                                  WHERE cc.classroomid = :classroomid";
         $params = array();

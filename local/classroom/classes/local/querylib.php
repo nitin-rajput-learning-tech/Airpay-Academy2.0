@@ -61,7 +61,6 @@ class querylib {
         }
         $sql = "SELECT c.id, c.fullname
                   FROM {course} as c
-                  JOIN {enrol} AS en on en.courseid=c.id and en.enrol='classroom' and en.status=0
                  WHERE 1 = 1 AND c.visible = :visible AND c.id <> :siteid $costcentersql";
         $params['siteid'] = SITEID;
         $params['visible'] = 1;

@@ -40,6 +40,7 @@
                     {{/ is_admin}}
                     <td class="text-left">{{skillscategoryname}}</td>
                     <td class="text-center">{{code}}</td>
+
                     
                     <td class="text-center">
                         <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{skill_id}}" onclick="(function(e){ require('local_skillrepository/newcategory').init({selector:'createcategorymodal', contextid:1, categoryid:{{skillscategory_id}}}) })(event)" style="cursor:pointer" title="Edit">
@@ -57,10 +58,23 @@
                             <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
                         </a>
                         {{/ delete_cat}}
+=======
+
+                    <td class="text-center">
+                         <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{skill_id}}" onclick="(function(e){ require('local_skillrepository/newcategory').init({selector:'createcategorymodal', contextid:1, categoryid:{{skillscategory_id}}}) })(event)" style="cursor:pointer" title="Edit">
+                        <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>
+
+
+                        <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/newcategory').deletecategory({ selector: 'deletecategory' ,categoryid:{{skillscategory_id}},contextid:1}) })(event)">
+                                        <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
+                        </a>
+
+
                     </td>
                 </tr>
             {{/records}}
             </tbody>
     </table>
     {{/viewtypeCard}}
+
 {{/response}}
