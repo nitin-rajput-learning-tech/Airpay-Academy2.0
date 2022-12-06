@@ -1,0 +1,80 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+<div class="lp_course_sortorder w-full pull-left" id="data{{ courseid }}">
+	<div class = "w-full pull-left lpcourses">
+		<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pull-left p-0 prg{{ progress }} lpcourses_container {{ disable_class1 }}" id = "course_info_{{ courseid }}">
+			<div class="vertical_brdr"></div>
+			<div class="w-full pull-left lpcourse_content mt-15 mb-15">
+				<div class="col-lg-2 col-md-3 col-sm-12 col-xs-12 pull-left p-0 course_progress_container">
+					<div class="w-full pull-left middlline_div"></div>
+					<div class="w-full pull-left middlline"></div>
+					<div class="course_progress">
+						<!--<div class="col-md-1"><div class="lpnumber_container"><div class="lpnmbr_border"><button class="lp_nmbr">{{ numbercount }}</button></div></div></div>-->
+						<!--<div class="lpcourse_progress progress-chart-container m-b-1">
+						   <div class="progress-doughnut">
+						        <div class="progress-text has-percent">{{ progress }}%</div>
+						        <div class="progress-indicator">
+						            <svg xmlns="http://www.w3.org/2000/svg">
+						                <g>
+						                    <title aria-hidden="true">{{ progress }}</title>
+						                    <circle class="circle percent-{{ progress }}"
+						                        r="27.5"
+					                            cx="35"
+					                            cy="35"/>
+						                </g>
+						            </svg>
+						        </div>
+						    </div>
+						</div>-->
+					</div>
+				</div>
+				<div class="col-lg-6 col-md-5 col-sm-12 col-xs-12 pull-left p-0 lpcourseslist">
+					<div class="w-full pull-right actions">{{{ actions }}} {{{ buttons }}}</div>
+					<div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 pull-left p-0 course_container">
+						<div class="col-lg-3 col-md-3 col-sm-12 col-xs-12 pull-left p-0">
+							<div style="background-image: url('{{ course_summary_image_url }}');height:179px;" alt="" title="" class="pvcourse_img lpimg_bg" ></div>
+						</div>
+						<div class="col-lg-9 col-md-9 col-sm-12 col-xs-12 pull-left summary_container">
+							<div class="w-full pull-left p-15">
+								<h5>{{{ course_view_link }}}</h5>
+								<div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
+							</div>
+							<div class="w-full pull-left pl-15 pr-15 mb-15">
+								<div class="progress">
+            						<div class="progress-bar text-center" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+        						</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				{{#cmpltd_class}}
+				<div class="col-lg-4 col-md-4 col-sm-12 col-xs-12 pull-left">
+					<div class='completed'><span class='cmplt_icon {{cmpltd_class}}'><i class='fa fa-check' aria-hidden='true'></i></span><span cmplt_date>{{{ date }}}</span></div>
+				</div>
+				{{/cmpltd_class}}
+			</div>
+				<span class="lp_dot"></span>
+			</div>
+			<!--<div style="background-image: url('{{ course_summary_image_url }}');" alt="{{  }}" title="{{  }}" class="lpimg_bg" ></div>-->
+	</div>
+</div>
+
+
+
+
+

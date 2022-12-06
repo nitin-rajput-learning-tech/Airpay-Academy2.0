@@ -69,6 +69,7 @@ $layertwo_three_two = $OUTPUT->blocks('layerthree_two', 'col-md-12');
 
 $header = $PAGE->activityheader;
 $headercontent = $header->export_for_template($renderer);
+$OUTPUT->seteditswtich_display(true);
 
 $templatecontext = [
     'sitename' => format_string($SITE->shortname, true, ['context' => context_course::instance(SITEID), "escape" => false]),

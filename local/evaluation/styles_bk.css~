@@ -1,0 +1,411 @@
+/* styles using by evaluation */
+.path-local-evaluation span.evaluation_info {
+    font-weight: bold;
+}
+
+.path-local-evaluation div.evaluation_is_dependent {
+    background: #ddd;
+}
+
+.path-local-evaluation span.evaluation_depend {
+    color: #f00;
+}
+
+.path-local-evaluation hr.evaluation_pagebreak {
+    height: 4px;
+    color: #aaa;
+    background-color: #aaa;
+    border: 0;
+    margin: 0;
+}
+
+.path-local-evaluation .drag_target_active {
+    opacity: .25;
+}
+
+.path-local-evaluation .drag_item_active {
+    opacity: .5;
+}
+
+.path-local-evaluation .evaluation_bar_image {
+    height: 10px;
+}
+
+.path-local-evaluation #analysis-form label {
+    display: inline;
+}
+
+.path-local-evaluation .templateslist td.cell.action,
+.path-local-evaluation .templateslist th.header.action {
+    width: 10%;
+}
+
+/* Analysis page */
+.path-local-evaluation table.analysis {
+    width: 100%;
+    border-top: 1px solid #aaa;
+    margin-top: 10px;
+}
+
+.path-local-evaluation table.analysis tr:first-child th {
+    padding-top: 10px;
+}
+
+.path-local-evaluation table.analysis tr:hover {
+    background: #f5f5f5;
+}
+
+.path-local-evaluation table.analysis td.singlevalue:before,
+.path-local-evaluation table.analysis td.optionname:before {
+    content: '- ';
+}
+
+.path-local-evaluation table.analysis.itemtype_textarea td {
+    padding: 4px 0;
+}
+
+.path-local-evaluation table.analysis tr.isempty {
+    display: none;
+}
+
+/* Responses list */
+.path-local-evaluation #showentrytable td.cell.completed_timelocalified,
+.path-local-evaluation #showentryanontable td.cell.random_response {
+    font-weight: bold;
+}
+
+.path-local-evaluation #showentrytable td.cell.userpic,
+.path-local-evaluation #showentrytable td.cell.deleteentry,
+.path-local-evaluation #showentryanontable td.cell.deleteentry {
+    width: 10px;
+}
+
+/* Responses navigation */
+.path-local-evaluation .response_navigation {
+    margin: .5em 0;
+}
+
+.path-local-evaluation .response_navigation a {
+    display: inline-block;
+}
+
+.path-local-evaluation .response_navigation a.back_to_list {
+    margin: auto;
+    float: right;
+    left: -50%;
+    position: relative;
+}
+
+.path-local-evaluation .response_navigation .prev_response:before {
+    /*rtl:raw:
+    content: ' ► ';
+    */
+    /*rtl:remove*/
+    content: ' ◄ ';
+}
+
+.path-local-evaluation .response_navigation .next_response:after {
+    /*rtl:raw:
+    content: ' ◄ ';
+    */
+    /*rtl:remove*/
+    content: ' ► ';
+}
+
+.path-local-evaluation .response_navigation .next_response {
+    float: right;
+}
+
+.path-local-evaluation .response_navigation .prev_response {
+    float: left;
+}
+
+/*css for survey*/
+
+#page-local-evaluation-survey table#f2ftable.generaltable.dataTable>tbody>tr.even>td,
+#page-local-evaluation-survey table#f2ftable.generaltable.dataTable>tbody>tr.even>td{
+    background-color: #FFF !important;
+}
+#page-local-evaluation-survey table#f2ftable.generaltable.dataTable>tbody>tr.odd>td{
+    /*background-color: #F0F0F0 !important;*/
+}
+#page-local-evaluation-survey table#f2ftable.generaltable.dataTable>tbody>tr>td:hover {
+    background-color: inherit !important;
+}
+#page-local-evaluation-survey .online_test .dataTables_wrapper.no-footer,
+#page-local-evaluation-survey .dataTables_wrapper .dataTables_scroll div.dataTables_scrollBody {
+    height: auto !important;
+    overflow: inherit;
+}
+body.path-mod-feedback #mod_feedback_navblock .qnbutton {
+    color: inherit;
+    background-color: inherit;
+}
+#page-local-evaluation-survey table#f2ftable.generaltable.dataTable>tbody>tr.odd>td.dataTables_empty{
+    background-color: #d9edf7 !important;
+}
+#page-local-evaluation-survey .ui-tabs.ui-widget{
+    margin-top: 0px !important;
+}
+#page-local-evaluation-survey .ui-tabs-vertical .ui-tabs-panel{
+    background-color: #b5e8f5;
+    min-height: 125px;/*230px*/
+    margin-top: -67px;
+    border: 1px solid #ccc !important;
+    border-left: none !important;
+    border-right: none !important;
+}
+#page-local-evaluation-survey .ui-tabs-vertical .ui-tabs-nav{
+    padding: 0px;
+    margin-left: 2px;
+}
+#page-local-evaluation-survey .ui-tabs-vertical .ui-tabs-nav li.ui-tabs-active{
+    background-color: #b5e8f5 !important;
+    border: 1px solid #ccc !important;
+    border-right: none !important;
+    margin: 0px !important;
+}
+#page-local-evaluation-survey .ui-tabs-vertical .ui-tabs-nav li>a{
+    width: 140px;
+    background-image: none !important;
+    padding: 5px 0px 5px 10px !important;
+}
+#page-local-evaluation-survey .tab_questionulli>a{
+    padding: 6px 60px 6px 10px;
+}
+#page-local-evaluation-survey .span-online_test_name{
+    width: 35%;
+    float: left;
+}
+#page-local-evaluation-survey .dataTables_wrapper.no-footer{
+    padding: 0px;
+}
+
+
+
+#page-local-evaluation-users_assign .user_courses select[multiple], select[size]{
+    width: 23em !important;
+   min-height: 25em !important;
+}
+#page-local-evaluation-users_assign .user_courses,#page-local-evaluation-users_assign .user_batches_filter{
+   width: 82%;
+  display: block;
+  margin: 0 0% 0 18%;
+}
+#page-local-evaluation-users_assign #select-to option,#page-local-evaluation-users_assign #select-from option{
+    min-height: 1.5em;
+}
+#page-local-evaluation-users_assign #select-to optgroup,#page-local-evaluation-users_assign #select-from optgroup{
+    min-height: 2.0em;
+}
+#page-local-evaluation-users_assign .button_ul,#page-local-evaluation-users_assign .filter_ul{
+  display: inline-block;
+  list-style-type: none;
+  margin: auto;
+}
+#page-local-evaluation-users_assign .select2 {
+    width:88% !important;
+}
+#page-local-evaluation-users_assign .fitem_fselect {
+    width: 50%;
+    float: left;
+}
+#page-local-evaluation-users_assign .select2-search__field{
+    width: 500px !important;
+}
+#page-local-evaluation-users_assign .knowmore{
+      float: right;
+    /*background-color: #22BCB9;*/
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 8px;
+    color: #fff;
+}
+#page-local-evaluation-users_assign div#department_job_desigantion-filter_caption{
+    width: 75px;
+}
+#page-local-evaluation-users_assign .agentbranchcode{
+    /*width:450px !important;*/
+}
+#page-local-evaluation-survey .qusetin_bank{
+         margin: auto;
+         text-align: center;
+         list-style-type: none;
+}
+#page-local-evaluation-survey .qusetin_bank li{
+        margin-left: 20px;
+         display: -moz-inline-stack;
+         display: inline-block;
+}
+#page-local-evaluation-survey .notice {
+    border: 1px solid;
+    margin: 10px 0px;
+    padding:15px 10px 15px 50px;
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    color: #00529B;
+    background-color: #BDE5F8;
+    text-align: center;
+    clear: both;
+}
+.online_test{
+    /*-moz-box-shadow:    inset 0 0 10px #000000;*/
+    /*-webkit-box-shadow: inset 0 0 10px #000000;*/
+    /*box-shadow:         inset 0 0 10px #000000;*/
+    padding: 2% 0px;
+    width: 100%;
+    float: left;
+}
+
+#custompop h1 {
+  text-align: center;
+  font-family: Tahoma, Arial, sans-serif;
+  color: orange;
+  margin: 100px 0;
+}
+
+#custompop .box {
+  width: 20%;
+  margin: 0 auto;
+  background: rgba(255,255,255,0.2);
+  padding: 35px;
+  border: 2px solid #fff;
+  border-radius: 20px/50px;
+  background-clip: padding-box;
+  text-align: center;
+}
+
+.button {
+  font-size: 1em;
+  padding: 10px;
+  color: #fff;
+  border: 2px solid orange;
+  border-radius: 20px/50px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease-out;
+}
+#custompop .button:hover {
+  background: orange;
+}
+
+#custompop .overlay {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  transition: opacity 1ms;
+  visibility: hidden;
+  opacity: 0;
+}
+#custompop .overlay:target {
+  visibility: visible;
+  opacity: 1;
+}
+
+#custompop .popup {
+  margin: 70px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 5px;
+  width: 30%;
+  position: relative;
+  transition: all 5s ease-in-out;
+}
+
+#custompop .popup h2 {
+  margin-top: 0;
+  color: #333;
+  font-family: Tahoma, Arial, sans-serif;
+}
+#custompop .popup .close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  transition: all 200ms;
+  font-size: 30px;
+  font-weight: bold;
+  text-decoration: none;
+  color: #333;
+}
+#custompop .popup .close:hover {
+  color: orange;
+}
+#custompop .popup .content {
+  max-height: 30%;
+  overflow: auto;
+}
+#evaluationlist tbody tr {
+    margin: 1%;
+    padding: 10px;
+    background-color: #f3f3f3;
+}
+#evaluationlist tbody tr td .eval_firstrow{
+   width: 100%;
+   float: left;
+   margin-bottom: 15px;
+}
+#evaluationlist thead {
+    display: none;
+}
+#evaluationlist .eval_secondrow{
+    border: 1px solid #ddd;
+    width: 100%;
+    height: 50px;
+    float: left;
+    background-color: #fff;
+    display: inline-flex;
+    text-align: center;
+}
+.eval_secondrow span {
+    width: 30%;
+    text-align: center;
+    padding: 5px;
+    font-size: 14px;
+}
+.eval_secondrow span i.fa {
+    float: left;
+    margin-right: 5px;
+    font-size: 25px;
+    margin-top: 8px;
+}
+.eval_secondrow span.enrolllabel, .eval_secondrow span.cmpltlabel{
+    width: 75%;
+    float: left;
+    margin-top: -4px;
+}
+.moveleft, .staymiddle {
+    border-right: 1px solid #ddd;
+}
+.eval_heading {
+    float:left;
+    font-size: 20px;
+}
+.eval_actions {
+    float: right;
+}
+.eval_actions a {
+    padding: 0 5px;
+}
+.eval_actions a i.fa {
+    font-size: 17px;
+    color: #818a91;
+}
+#page-local-evaluation-index .createeval{
+    float: right;
+    position: relative;
+    top: -50px;
+    right: 25px;
+    color: #fff;
+    background: none !important;
+    border: none;
+    background-image: none;
+    font-size: 20px
+}
+#page-local-evaluation-index #evaluationlist_wrapper input[type="search"]{
+    border-radius: 8px;
+    padding-left: 10px;
+    width: 230px;
+}

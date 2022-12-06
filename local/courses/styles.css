@@ -142,7 +142,13 @@ body#page-local-courses-courseenrol img#image.content-img {
 #page-local-courses-courses .course_name a {
     font-size: 18px;
     word-break: break-word;
-    color: #000
+    color: #000;
+}
+#page-local-courses-courses .course_name a:hover,
+#page-local-courses-courses .course_name a:active,
+#page-local-courses-courses .course_name a:focus,
+#page-local-courses-courses .course_name a:visited {
+    text-decoration: none;
 }
 
 .coursedesc {
@@ -395,7 +401,6 @@ body#page-local-courses-index .catlist_container .courses_str {
 
 .coursebox {
     margin: 10px 0;
-    float: left;
     width: 100%
 }
 
@@ -783,11 +788,11 @@ body#page-local-courses-courses .actionicons a .icon {
 }
 
 .course_container .coursetype .classroom {
-    color: #0071bc
+    color: #0071bc;
 }
 
 .course_container .coursetype .elearning {
-    color: #3f51b5
+    color: #008dcf;
 }
 
 .course_container .coursetype .learningpath {
@@ -795,13 +800,60 @@ body#page-local-courses-courses .actionicons a .icon {
 }
 
 .course_container .coursetype .program {
-    color: #3ab54a
+   color: #3ab54a
 }
 
 .course_container .coursetype .certification {
     color: #28aae2
 }
-
+.course_container .coursetypes_container.coursetype span{
+   
+    padding: 3px 0px;
+    display: flex;
+    
+    align-items: center;
+    border-radius: 3px;
+    font-size: 14px;
+    margin-right: 5px;
+}
+.course_container .courseinfo_container{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    padding: 14px 0;
+    margin: 5px 0;
+}
+.course_container .courseinfo_container .info_container{
+    display: flex;
+    margin-right: 8px;
+    align-items: center;
+}
+.course_container .courseinfo_container .info_container .info_value{
+    color: #008dcf;
+    font-weight: 700;
+    margin-right: 5px;
+}
+.course_container .courseinfo_container .info_container .icon{
+    width: 25px;
+    height: 25px;
+    background-size: 100%;
+    background-position: center;
+    margin-right: 7px;
+}
+.course_container .courseinfo_container .info_container.enrolment_info .icon{
+    background-image: url('[[pix:local_courses|courseinfo_icons/enrollments]]');
+}
+.course_container .courseinfo_container .info_container.points_info .icon{
+    background-image: url('[[pix:local_courses|courseinfo_icons/points]]');
+}
+.course_container .courseinfo_container .info_container.rating_info .icon{
+    background-image: url('[[pix:local_courses|courseinfo_icons/rating]]');
+}
+.course_container .courseinfo_container .info_container.completed_info .icon{
+    background-image: url('[[pix:local_courses|courseinfo_icons/completed]]');
+}
 #page-local-courses-index #popup_category_wrapper .dataTables_paginate {
     width: 100%;
     text-align: right;
@@ -850,10 +902,6 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
 
 /*hema   local course view file code*/
 
-
-#page-local-courses-courses .course_container .coursetype .elearning{
-    padding-left: 0!important;
-}
 #page-local-courses-courses .courseimg_bg{
     padding: 10px!important;
 }
@@ -906,6 +954,10 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
 }
 #page-local-courses-courses .alert-info{
     border: none!important;
+    padding: 0;
+    text-align: left !important;
+    font-size: 14px;
+    color: #008dcf;
 }
 #page-local-courses-courses #region-main{
     background-color: transparent;

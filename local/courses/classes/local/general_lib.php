@@ -82,7 +82,7 @@ class general_lib{
 			case 'enrolled':
 				$count_sql = "SELECT count(ue.id) FROM {user_enrolments} AS ue
 					JOIN {enrol} AS e ON e.id = ue.enrolid
-					WHERE e.enrol IN ('self', 'manual', 'auto', 'cohort') AND e.courseid = :moduleid ";
+					WHERE e.enrol NOT IN ('classroom', 'program', 'learningplan') AND e.courseid = :moduleid ";
 				if(!is_null($date)){
 					$count_sql .= " AND ue.timecreated > :fromtime ";
 					$params['fromtime'] = $date;
@@ -113,12 +113,12 @@ class general_lib{
         $sqlquery = "SELECT course.* ";
 
         $sql = " FROM {course} AS course
-                JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
+                JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
 
-        $sql .= " WHERE ue.userid = {$USER->id} AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.id <> 1 AND course.visible=1 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
         if($source == 'mobile'){
-            $sql .= " AND course.open_securecourse != 1 "; 
+            $sql .= " AND course.open_securecourse != 1 ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -139,14 +139,13 @@ class general_lib{
     public static function inprogress_coursenames_count($filter_text = '', $source = ''){
         global $USER, $DB;
         $sql = "SELECT COUNT(DISTINCT(course.id))  FROM {course} AS course
-            JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
+            JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             WHERE ue.userid = {$USER->id}
-            AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
             AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) ";
             // AND course.open_costcenterid = {$USER->open_costcenterid}
         if($source == 'mobile'){
-            $sql .= " AND course.open_securecourse != 1 "; 
+            $sql .= " AND course.open_securecourse != 1 ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -163,16 +162,14 @@ class general_lib{
         global $DB, $USER;
 
         $sqlquery = "SELECT cc.id as completionid,c.*";
-
         $sql .= " FROM {course_completions} cc
                 JOIN {course} c ON c.id = cc.course AND cc.userid = $USER->id
-                JOIN {enrol} e ON c.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
+                JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
-                WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
-                AND ue.userid = {$USER->id} AND c.open_costcenterid = $USER->open_costcenterid
+                WHERE ue.userid = {$USER->id}
                 AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 ";
         if($source == 'mobile'){
-           $sql .= " AND c.open_securecourse != 1 "; 
+           $sql .= " AND c.open_securecourse != 1 ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -187,16 +184,17 @@ class general_lib{
 
     public static function completed_coursenames_count($filter_text = '', $source = ''){
     	global $DB, $USER;
-    	$sql = "SELECT COUNT(DISTINCT(c.id))
-    			FROM {course_completions} cc
+
+        $sql = "SELECT COUNT(DISTINCT(c.id))
+                FROM {course_completions} cc
                 JOIN {course} c ON c.id = cc.course AND cc.userid = {$USER->id}
-                JOIN {enrol} e ON c.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
+                JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
-                WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
-                AND ue.userid = {$USER->id} AND c.open_costcenterid = {$USER->open_costcenterid} AND c.visible = 1 AND c.id > 1
+                WHERE ue.userid = {$USER->id} AND c.visible = 1 AND c.id > 1
                 AND cc.timecompleted IS NOT NULL";
+
         if($source == 'mobile'){
-            $sql .= " AND c.open_securecourse != 1 "; 
+            $sql .= " AND c.open_securecourse != 1 ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -231,12 +229,12 @@ class general_lib{
         $sqlquery = "SELECT course.*";
 
         $sql = " FROM {course} AS course
-                JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
+                JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
 
-        $sql .= " WHERE ue.userid = {$USER->id} AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.id <> 1 AND course.visible=1 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
         if($source == 'mobile'){
-            $sql .= " AND course.open_securecourse != 1 "; 
+            $sql .= " AND course.open_securecourse != 1 ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -253,14 +251,13 @@ class general_lib{
     public static function enrolled_coursenames_count($filter_text='', $source = ''){
         global $USER, $DB;
         $sql = "SELECT COUNT(DISTINCT(course.id))  FROM {course} AS course
-            JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
+            JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             JOIN {user} u ON u.id = ue.userid
             WHERE ue.userid = {$USER->id}
-            AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
             AND course.id <> 1 AND course.visible = 1 AND u.id > 2 AND u.suspended = 0 AND u.deleted = 0";
         if($source == 'mobile'){
-            $sql .= " AND course.open_securecourse != 1 "; 
+            $sql .= " AND course.open_securecourse != 1 ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -276,12 +273,12 @@ class general_lib{
         $sqlquery = "SELECT course.*";
 
         $sql = " FROM {course} AS course
-                JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto', 'cohort')
+                JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
         if($type == 'recentlyaccessed'){
             $sql .= " JOIN {user_lastaccess} as ul ON ul.courseid = course.id AND ul.userid = $USER->id";
         }
-        $sql .= " WHERE ue.userid = {$USER->id} AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.id <> 1 AND course.visible=1 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse = 0 ";
         }

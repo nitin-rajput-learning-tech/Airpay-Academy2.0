@@ -112,21 +112,12 @@ class syncfunctionality
                 // Mandatory field validation.
                 $this->mandatory_field_validation($user, $field);
             }
-            if (!empty($user->organization)) {
-                $this->categoryvalidations($user);
-            }
-            if (!empty($user->country)) {
-                $this->countryvalidations($user);
-            }
-            if (!empty($user->timezone)) {
-                $this->timezonevalidations($user);
-            }
+           
             // To check for existing user record.
-            $sql = "SELECT u.id,u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.username LIKE :username
-             OR u.email LIKE :email) AND u.deleted = 0";
+            $sql = "SELECT u.id,u.username,u.open_costcenterid, u.email FROM {user} u WHERE (u.open_employeeid = :open_employeeid) AND u.deleted = 0";
             $params = array();
             $params['username'] = $user->username;
-            $params['email'] = $user->email;
+            $params['open_employeeid'] = $user->employee_id;
             $existing_user = $DB->get_records_sql($sql, $params);
             if (count($existing_user) == 1) {
                 $this->existing_user = array_values($existing_user)[0];
@@ -141,6 +132,16 @@ class syncfunctionality
             $this->departmentid = $this->get_org_hierarchyid($user->department, $parent = $this->costcenterid);
             if ($user->subdepartment) {
                 $this->level2_departmentid = $this->get_subdepartmentid($user->subdepartment, $this->departmentid);
+            }
+            if (!empty($user->organization)) {
+
+                $this->categoryvalidations($user);
+            }
+            if (!empty($user->country)) {
+                $this->countryvalidations($user);
+            }
+            if (!empty($user->timezone)) {
+                $this->timezonevalidations($user);
             }
             // Validation for employee status.
             $this->employee_status_validation($user);
@@ -176,11 +177,12 @@ class syncfunctionality
                     $this->update_row($user, $userobject, $formdata);
                 }
             }
+            if (count($this->warnings) > 0) {
+                $this->write_warnings_db($user);
+                $this->updatesupervisor_warningscount = count($this->warnings);
+            }
         }
-        if (count($this->warnings) > 0) {
-            $this->write_warnings_db($excel);
-            $this->updatesupervisor_warningscount = count($this->warnings);
-        }
+        
         if ($this->data) {
             $upload_info = '<div class="critera_error1"><h3 style="text-decoration: underline;">'
                 . get_string('empfile_syncstatus', 'local_users') . '</h3>';
@@ -224,6 +226,7 @@ class syncfunctionality
             $sync_data->usermodified = $USER->id;
             $sync_data->timecreated = time();
             $sync_data->timemodified = time();
+            $sync_data->costcenterid = $USER->open_costcenterid;
             $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
         } else {
             echo '<div class="critera_error">' . get_string('filenotavailable', 'local_users') . '</div>';
@@ -248,24 +251,48 @@ class syncfunctionality
         $strings->employee_id = $excel->employee_id;
         $strings->excel_line_number = $this->excel_line_number;
         $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $orgerror = 0;
         $categorylib = new \local_courses\catslib();
-        if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && isset($excel->department) && empty($excel->subdepartment)) {
-            $categories = $categorylib->get_categories($USER->open_costcenterid);
-            $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
-            if (!in_array($departmentcostcenterid, $categories)) {
-                echo '<div class=local_users_sync_error>' . get_string('canonlycreateuserincategoryofsameorganisationwithargsdept', 'local_users', $strings) . '</div>';
-                $this->errors[] = get_string('canonlycreateuserincategoryofsameorganisationwithargsdept', 'local_users', $strings);
+        if (!is_siteadmin()) {
+            $orgcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->organization));           
+            if ($orgcostcenterid !== $USER->open_costcenterid) {
+                echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
+                $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = 'usercategory';
                 $this->errorcount++;
+                $orgerror = 1;
             }
-        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && isset($excel->department) && !empty($excel->subdepartment)) {
-            $categories = $categorylib->get_categories($USER->open_costcenterid);
-            $subdepartmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->subdepartment));
-            if (!in_array($subdepartmentcostcenterid, $categories)) {
-                echo '<div class=local_users_sync_error>' . get_string('canonlycreateuserincategoryofsameorganisationwithargssubdept', 'local_users', $strings) . '</div>';
-                $this->errors[] = get_string('canonlycreateuserincategoryofsameorganisationwithargssubdept', 'local_users', $strings);
+
+        }
+        if ($orgerror == 0) {
+            if (isset($excel->department) && empty($excel->subdepartment)) {
+                $orgcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->organization));
+                $categories = $categorylib->get_categories($orgcostcenterid);
+                $departmentcategory = $DB->get_field('local_costcenter', 'category', array('shortname' => $excel->department));
+                $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
+                       
+            if ($departmentcostcenterid !== $USER->open_departmentid && !empty($USER->open_departmentid) && !has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+                echo '<div class=local_users_sync_error>' . get_string('departmentcheckwithdh', 'local_users', $strings) . '</div>';
+                $this->errors[] = get_string('departmentcheckwithdh', 'local_users', $strings);
                 $this->mfields[] = 'usercategory';
                 $this->errorcount++;
+            } else
+                if (!in_array($departmentcategory, $categories)) {
+                    echo '<div class=local_users_sync_error>' . get_string('deptcheckwithorg', 'local_users', $strings) . '</div>';
+                    $this->errors[] = get_string('deptcheckwithorg', 'local_users', $strings);
+                    $this->mfields[] = 'usercategory';
+                    $this->errorcount++;
+                }
+            } else if (isset($excel->department) && !empty($excel->subdepartment)) {
+                $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
+                $subdepartmentcategory = $DB->get_field('local_costcenter', 'category', array('shortname' => $excel->subdepartment));
+                $categories = $categorylib->get_categories($departmentcostcenterid);
+                if (!in_array($subdepartmentcategory, $categories)) {
+                    echo '<div class=local_users_sync_error>' . get_string('subdeptcheckwithdept', 'local_users', $strings) . '</div>';
+                    $this->errors[] = get_string('subdeptcheckwithdept', 'local_users', $strings);
+                    $this->mfields[] = 'usercategory';
+                    $this->errorcount++;
+                }
             }
         }
     }
@@ -384,23 +411,24 @@ class syncfunctionality
             $this->mfields[] = "useremployeeid";
             $this->errorcount++;
         }
-        if ($user = $DB->record_exists('user', array('open_employeeid' => $excel->employee_id))) {
-            if ($user = $DB->get_record('user', array('open_employeeid' => $excel->employee_id, 'open_costcenterid' =>
-            $this->costcenterid))) {
-                if ($user->open_costcenterid == $this->costcenterid) {
-                    if (!isset($userid) || $user->id != $userid) {
-                        echo '<div class="local_users_sync_error">' . get_string(
-                            'employeeid_alreadyexists',
-                            'local_users',
-                            $strings
-                        ) . '</div>';
-                        $this->errors[] = get_string('employeeid_alreadyexists', 'local_users', $strings);
-                        $this->mfields[] = "useremployeeid";
-                        $this->errorcount++;
-                    }
-                }
-            }
-        }
+        // echo $userid."=>userid";die;
+        // if ($user = $DB->record_exists('user', array('open_employeeid' => $excel->employee_id))) {
+        //     if ($user = $DB->get_record('user', array('open_employeeid' => $excel->employee_id, 'open_costcenterid' =>
+        //     $this->costcenterid))) {
+        //         if ($user->open_costcenterid == $this->costcenterid) {
+        //             if (!isset($userid) || $user->id != $userid) {
+        //                 echo '<div class="local_users_sync_error">' . get_string(
+        //                     'employeeid_alreadyexists',
+        //                     'local_users',
+        //                     $strings
+        //                 ) . '</div>';
+        //                 $this->errors[] = get_string('employeeid_alreadyexists', 'local_users', $strings);
+        //                 $this->mfields[] = "useremployeeid";
+        //                 $this->errorcount++;
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     private function write_error_in_db($excel)

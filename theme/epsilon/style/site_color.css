@@ -852,3 +852,15 @@ body#page-local-courses-index .catlisticons i {
 .btn.btn-icon:hover, .btn.btn-icon:focus{
     background-color: var(--sitehighlight);
 }
+.block.block_userdashboard .launch_btn, .block.block_userdashboard .launch_btn:active, .block.block_userdashboard .launch_btn:hover{
+    background-color: var(--buttonbgcolor);
+    border-color:  var(--buttonbgcolor);
+}
+.block.block_userdashboard .ctype_elearning:hover .course_progress_container {
+    background-color:var(--secondarycolor);
+}
+.dropdown-item:active, .dropdown-item:hover, .dropdown-item:focus, .dropdown-item:focus-within {
+    outline: 0;
+    background-color:var(--sitehighlight);
+    color: #fff;
+}

@@ -51,7 +51,7 @@ class elearning_courses{
                         JOIN {context} AS ctx ON c.id = ctx.instanceid
                         JOIN {role_assignments} AS ra ON ra.contextid = ctx.id
                         WHERE c.id=course.id and ra.roleid=5 and ra.userid={$USER->id})
-                AND CONCAT(',',course.open_identifiedas,',') LIKE '%,3,%' 
+                AND CONCAT(',',course.open_identifiedas,',') LIKE '%,3,%'
                 AND en.enrol IN ('self','manual','auto') AND course.visible = 1
                 ";
 
@@ -88,7 +88,7 @@ class elearning_courses{
                 JOIN {context} AS ctx ON c.id = ctx.instanceid
                 JOIN {role_assignments} AS ra ON ra.contextid = ctx.id
                 WHERE c.id=course.id and ra.roleid=5 and ra.userid=$userid)
-                AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.visible = 1 ";
+                AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',2,',%') AND course.visible = 1 ";
 
         $course = $DB->get_records_sql_menu($sql1);
         $course = implode(',', $course);
@@ -106,7 +106,7 @@ class elearning_courses{
     /******Function to the show the inprogress course names in the E-learning Tab********/
     public static function inprogress_coursenames($filter_text='', $mobile = false, $status = 'inprogress', $limit = false, $type = '', $page = 0, $perpage = 10) {
         global $DB, $USER;
-        
+
             if ($mobile) {
                 $sqlquery = "SELECT course.* ";
                 $sqlcount = "SELECT COUNT(course.id) ";
@@ -120,7 +120,7 @@ class elearning_courses{
             if($status == 'enrolled' && $mobile && $type == 'recentlyaccessed'){
                 $sql .= " JOIN {user_lastaccess} as ul ON ul.courseid = course.id AND ul.userid = $USER->id";
             }
-            $sql .= " WHERE ue.userid = $USER->id AND course.open_costcenterid = $USER->open_costcenterid AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.id>1";
+            $sql .= " WHERE ue.userid = $USER->id AND course.open_costcenterid = $USER->open_costcenterid AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',2,',%') AND course.id>1";
             if(!empty($filter_text)){
                $sql .= " AND course.fullname LIKE '%%{$filter_text}%%'";
             }
@@ -138,7 +138,7 @@ class elearning_courses{
                     } else {
                         $completed_courses = elearning_courses::completed_coursenames();
                     }
-                    
+
                 if(!empty($completed_courses)){
                     $complted_id = array();
 
@@ -151,10 +151,10 @@ class elearning_courses{
             }
             if ($limit) {
                 $sql .= ' order by ue.timecreated DESC '; //LIMIT 10
-                $sql_limit = 10; 
+                $sql_limit = 10;
             } else if ($status == 'enrolled' && $mobile && $type == 'recentlyaccessed') {
                 $sql .= "ORDER BY ul.timeaccess DESC "; //LIMIT 10
-                $sql_limit = 10; 
+                $sql_limit = 10;
             } else {
                 $sql .= ' order by ue.timecreated desc';
                 $sql_limit = 0;
@@ -173,10 +173,10 @@ class elearning_courses{
         global $USER, $DB;
         $sql = "SELECT COUNT(course.id)  FROM {course} AS course
             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto')
-            JOIN {user_enrolments} ue ON e.id = ue.enrolid 
-            WHERE ue.userid = {$USER->id} AND 
-            course.open_costcenterid = {$USER->open_costcenterid} 
-            AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') 
+            JOIN {user_enrolments} ue ON e.id = ue.enrolid
+            WHERE ue.userid = {$USER->id} AND
+            course.open_costcenterid = {$USER->open_costcenterid}
+            AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',2,',%')
             AND course.id>1 AND course.visible=1 ";
         if(!empty($filter_text)){
            $sql .= " AND course.fullname LIKE '%%{$filter_text}%%'";
@@ -200,11 +200,10 @@ class elearning_courses{
                 JOIN {course} c ON c.id = cc.course AND cc.userid = $USER->id
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol IN('self','manual','auto')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
-                WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') 
+                WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',2,',%')
                 AND ue.userid = {$USER->id} AND c.open_costcenterid = $USER->open_costcenterid
                 AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 ";
-
-        if(!empty($filter_text)){
+          if(!empty($filter_text)){
            $sql .= " AND c.fullname LIKE '%%{$filter_text}%%'";
         }
         $sql .= " ORDER BY cc.timecompleted DESC ";
@@ -219,7 +218,7 @@ class elearning_courses{
     }
     /********end of the Function****/
 
-    public static function completed_coursenames_count($filter_text = ''){
+   public static function completed_coursenames_count($filter_text = ''){
 
     }
 
@@ -241,7 +240,7 @@ class elearning_courses{
     //             JOIN {context} AS ctx ON c.id = ctx.instanceid
     //             JOIN {role_assignments} AS ra ON ra.contextid = ctx.id
     //             WHERE c.id=course.id and ra.roleid=5 and ra.userid={$USER->id})
-    //             and CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
+    //             and CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',2,',%')
     //             AND course.startdate > 0
     //             AND course.visible=1
     //             ";

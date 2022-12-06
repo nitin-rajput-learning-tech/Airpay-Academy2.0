@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/location/db" VERSION="2016120500" COMMENT="XMLDB file for Moodle rss_client block"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+  <TABLES>
+    <TABLE NAME="local_location_institutes" COMMENT="table for location institutes">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="costcenter" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="fullname" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="shortnname" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="address" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="institute_type" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="costcenter" UNIQUE="false" FIELDS="costcenter"/>
+    </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_location_room" COMMENT="table for location rooms">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="instituteid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="45" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="building" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="NULL" SEQUENCE="false"/>
+        <FIELD NAME="address" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="NULL" SEQUENCE="false"/>
+        <FIELD NAME="capacity" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="description" TYPE="text" LENGTH="big" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="visible" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="instituteid" UNIQUE="false" FIELDS="instituteid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

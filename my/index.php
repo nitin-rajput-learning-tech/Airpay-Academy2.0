@@ -34,7 +34,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 require_once(__DIR__ . '/../config.php');
-// redirect($CFG->wwwroot.'/my/dashboard.php');
+
 require_once($CFG->dirroot . '/my/lib.php');
 
 redirect_if_major_upgrade_required();
@@ -42,7 +42,10 @@ redirect_if_major_upgrade_required();
 // TODO Add sesskey check to edit
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
-
+$fredirect  = optional_param('fredirect', true, PARAM_BOOL);
+if(!(is_siteadmin() || !$fredirect)){
+    redirect($CFG->wwwroot.'/my/dashboard.php');
+}
 require_login();
 
 $hassiteconfig = has_capability('moodle/site:config', context_system::instance());

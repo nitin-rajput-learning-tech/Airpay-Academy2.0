@@ -65,7 +65,6 @@ class local_courses_external extends external_api {
         global $DB, $CFG, $USER;
         require_once($CFG->dirroot.'/course/lib.php');
         require_once($CFG->dirroot . '/local/courses/lib.php');
-
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_create_course_form_parameters(),
                                             ['contextid' => $contextid, 'form_status'=>$form_status,  'jsonformdata' => $jsonformdata]);
@@ -124,13 +123,12 @@ class local_courses_external extends external_api {
             $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
             if ($validateddata->id <= 0) {
-                //$validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
-                $validateddata->open_identifiedas = $validateddata->open_identifiedas;
+                $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 $validateddata->category = $category_id;
                 $validateddata->open_departmentid = $open_departmentid;
                 $validateddata->open_subdepartment = $open_subdepartment;
                 $courseid = create_course($validateddata, $editoroptions);
-                
+               
                 // Update course tags.
                 if (isset($validateddata->tags)) {
                     $coursecontext = context_course::instance($courseid->id, MUST_EXIST);
@@ -142,13 +140,12 @@ class local_courses_external extends external_api {
                         $trendingclass->trending_modules_crud($courseid->id, 'local_courses');
                     }
                 }
-                $coursedata = $courseid;
+                //$coursedata = $courseid;
                 $enrol_status = $validateddata->selfenrol;
-                insert::add_enrol_method_tocourse($coursedata,$enrol_status);
+               // insert::add_enrol_method_tocourse($coursedata,$enrol_status);
 
             } elseif($validateddata->id > 0) {
-               // $validateddata->open_identifiedas=implode(',',$validateddata->open_identifiedas);
-                $validateddata->open_identifiedas = $validateddata->open_identifiedas;
+                $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 if($form_status == 0){
                      $courseid =new stdClass();
                       $courseid->id=$data['id'];
@@ -168,14 +165,13 @@ class local_courses_external extends external_api {
                         }
                     }
                     
-                     
-                     // Update course tags.
+                    // Update course tags.
                     if (isset($validateddata->tags)) {
                         $coursecontext = context_course::instance($courseid->id, MUST_EXIST);
                         local_tags_tag::set_item_tags('local_courses', 'courses', $courseid->id, $coursecontext, $validateddata->tags, 0, $validateddata->open_departmentid);
                     }
-                     $coursedata = $DB->get_record('course',array('id' => $data['id']));
-                     insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
+                   //  $coursedata = $DB->get_record('course',array('id' => $data['id']));
+                   //  insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
 
                 }else{
                     $data = (object)$data;
@@ -1418,5 +1414,173 @@ class local_courses_external extends external_api {
             'enrolid' => new external_value(PARAM_INT, 'manual enrol id for the course'),
             'form_status' => new external_value(PARAM_INT, 'form_status'),
         ));
+    }
+    public static function submit_course_type_form_parameters()
+    {
+        return new external_function_parameters(
+            array(
+                //'coursetype_id' => new external_value(PARAM_INT, 'The course id for the unenrol course'),
+                'contextid' => new external_value(PARAM_INT, 'The context id for the unenrol course'),
+                'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create featured course form, encoded as a json array')
+            )
+        );
+    }
+
+    public function submit_course_type_form($contextid, $jsonformdata)
+    {
+        global $DB, $CFG, $USER;
+        // We always must pass webservice params through validate_parameters.
+        $params = self::validate_parameters(
+            self::submit_course_type_form_parameters(),
+            ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]
+        );
+
+        $context = context::instance_by_id($params['contextid'], MUST_EXIST);
+        self::validate_context($context);
+        $serialiseddata = json_decode($params['jsonformdata']);
+        $data = array();
+
+        parse_str($serialiseddata, $data);
+        $warnings = array();
+
+        // The last param is the ajax submitted data.
+        $mform = new local_courses\form\coursetype_form(null, array('contextid' => $contextid), 'post', '', null, true, $data);
+
+        $validateddata = $mform->get_data();
+        if ($validateddata) {
+            $data = new stdClass();
+            $data->name = $validateddata->name;
+            $data->orgid=$validateddata->orgid;
+            if(empty($validateddata->shortname)){
+                $data->shortname = trim($data->name);
+            }else{
+                $data->shortname = $validateddata->shortname;
+            }
+            
+            $data->shortname = strtolower(str_replace(' ', '', trim($data->shortname)));
+            if ($validateddata->id > 0) {
+                $data->id = $validateddata->id;
+                $data->usermodified = $USER->id;
+                $data->timemodified = time();
+                $coursetypeeupdate = $DB->update_record('local_course_types', $data);
+            } else {
+                $data->usercreated = $USER->id;
+                $data->timecreated = time();
+                $coursetypeinsert = $DB->insert_record('local_course_types', $data);
+            }
+        } else {
+            // Generate a warning.
+            throw new moodle_exception('Error in submission');
+        }
+    }
+
+    public static function submit_course_type_form_returns()
+    {
+        return new external_value(PARAM_INT, 'course type id');
+    }
+
+    /** Describes the parameters for delete_coursetype webservice.
+     * @return external_function_parameters
+     */
+    public static function delete_coursetype_parameters()
+    {
+        return new external_function_parameters(
+            array(
+                'action' => new external_value(PARAM_ACTION, 'Action of the event', false),
+                'coursetypeid' => new external_value(PARAM_INT, 'ID of the record', 0),
+                'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
+                'name' => new external_value(PARAM_RAW, 'name', false),
+            )
+        );
+    }
+
+    /**
+     * Deletes course type
+     *
+     * @param int $action
+     * @param int $confirm
+     * @param int $id coursetype id
+     * @param string $name
+     * @return int .
+     */
+    public static function delete_coursetype($action, $id, $confirm, $name)
+    {
+        global $DB;
+        try {
+            if ($confirm) {
+                $DB->delete_records('local_course_types', array('id'=>$id));
+                $courses = $DB->get_records('course', array('open_identifiedas' => $id));
+                if(!empty($courses)){
+                    foreach ($courses as $course) {
+                        // Set Course type value to default for course
+                        $toupdate = new stdClass();
+                        $toupdate->id = $course->id;
+                        $toupdate->open_identifiedas = 0;
+                        $DB->update_record('course', $toupdate);
+                    }
+                }
+                $return = true;
+            } else {
+                $return = false;
+            }
+        } catch (dml_exception $ex) {
+            print_error('deleteerror', 'local_courses');
+            $return = false;
+        }
+        return $return;
+    }
+
+    /**
+     * Returns description of method result value
+     * @return external_description
+     */
+
+    public static function delete_coursetype_returns()
+    {
+        return new external_value(PARAM_BOOL, 'return');
+    }
+
+    /** Describes the parameters for coursetype_status webservice.
+     * @return external_function_parameters
+     */
+    public static function coursetype_update_status_parameters(){
+        return new external_function_parameters(
+             array(
+                'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),          
+                'contextid' => new external_value(PARAM_INT, 'The context id for course type'),
+                'coursetypeid' => new external_value(PARAM_INT, 'The course type id'),
+                'status' => new external_value(PARAM_RAW, 'The status of course type'),
+                'name' => new external_value(PARAM_RAW, 'Course type name'),
+            )   
+        );
+    }
+
+      /**
+     * Changes the status of course type
+     *
+     * @param int $action
+     * @param int $confirm
+     * @param int $id coursetype id
+     * @param string $name
+    */
+    public static function coursetype_update_status($confirm, $contextid, $coursetypeid, $status, $name){
+        global $DB,$USER;
+        
+        /* $params = self::validate_parameters(self::coursetype_update_status_parameters(),
+                                    ['contextid' => $contextid,'id' => $coursetypeid, 'status' => $status ,'name' => $name]);
+         */$systemcontext = \context_system::instance();
+        // We always must call validate_context in a webservice.
+        self::validate_context($systemcontext);
+        $coursetype = $DB->get_record('local_course_types', array('id' => $coursetypeid), 'id, active');
+        $coursetype->active = $coursetype->active ? 0 : 1;
+        $coursetype->timemodified = time();
+        $return = $DB->update_record('local_course_types', $coursetype);
+		
+        return $return;
+    }
+
+
+    public static function coursetype_update_status_returns(){
+        return new external_value(PARAM_BOOL, 'Status');
     }
 }

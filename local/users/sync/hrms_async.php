@@ -57,7 +57,7 @@ $PAGE->navbar->add(get_string('uploadusers', 'local_users'));
 $returnurl = new moodle_url('/local/users/index.php');
 
 $STD_FIELDS = array('organization', 'username', 'password', 'employee_id', 'employee_name', 'first_name', 'middle_name',
- 'last_name', 'department', 'address', 'zone_region', 'area', 'city', 'role_designation', 'group', 'discipline', 'team',
+ 'last_name', 'department', 'address', 'zone_region', 'area', 'city', 'designation', 'group', 'discipline', 'team',
   'client', 'grade', 'gender', 'mobileno', 'email', 'marital_status', 'dob', 'doj', 'state_name', 'employee_status',
    'reportingmanager_code', 'reportingmanager_name', 'reportingmanager_email', 'reportingmanager_empid', 'dol', 'dor',
     'country', 'officialmail', 'subdepartment', 'location', 'password', 'timezone', 'role', 'notify_logins',

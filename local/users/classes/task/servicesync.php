@@ -1,4 +1,5 @@
 <?php
+namespace local_users\task;
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -21,7 +22,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 defined('MOODLE_INTERNAL') || die();
-namespace local_users\task;
 require_once($CFG->libdir . '/filelib.php');
 class servicesync extends \core\task\scheduled_task {
     public function get_name() {
