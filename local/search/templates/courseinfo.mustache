@@ -1,0 +1,101 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_feedback/summary
+
+    Displays feedback summary
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * none
+
+    Context variables required for this template:
+    * none
+
+    Example context (json):
+    {
+        "completedcount" : 15,
+        "itemscount" : 5,
+        "timeopen" : "May 15, 2016"
+    }
+
+}}
+<div class="w-full pull-left info_container">
+    <div class="custom_course_top_section col-12 pull-left">
+        <div class="custom_course_image col-md-5 col-12 pull-left">
+           <div style="background-image: url('{{ course_imageurl }}');" class="courseimg_bg"></div>
+           <span class="CstripCnt CstripCntrt15"> <span class="pl-10 elearning">Online Course</span> </span>
+        </div>
+        <div class="custom_course_detail col-md-7 col-12 pull-left">
+            <h3 class="custom_course_name w-full pull-left">{{ course_name }}</h3>
+            {{# course_summary }}
+                <div class="w-full pull-left">{{ course_summary }}</div>
+            {{/ course_summary }}
+            {{^ course_summary }}
+                <div class="w-full pull-left alert alert-info">{{#str}}nodescriptionprovided, local_search{{/str}}</div>
+            {{/ course_summary }}
+            <div class="m-t-1 d-flex justify-content-between flex-row flex-wrap clearboth">
+                <div class="d-flex Lpath_dur_cours_container">
+                    <div class="d-flex">
+                        <div class="pull-left d-flex flex-row flex-wrap align-items-center mx-4">
+                            <span class="text-muted pull-left catbtm_colon  d-flex flex-row flex-wrap align-items-center"><span class="icon-clock-o"></span>{{# str }} duration, block_courselister {{/ str }} <span class="colon_align">:</span> </span><span class="text-muted catbtm_info ng-binding" title="">{{durationinmin}}</span>
+                        </div>
+                        {{#displaymodules}}
+                            <div class="pull-left d-flex flex-row flex-wrap align-items-center mx-4">
+                                <span class="text-muted catbtm_colon d-flex flex-row flex-wrap align-items-center justify-content-end"><span class="icon-window-restore"></span>{{# str }} managemodules, block_courselister {{/ str }}
+                                <span class="colon_align">:</span> </span>
+                                <span class="text-muted catbtm_info ng-binding">uu</span>
+                            </div>
+                        {{/displaymodules}}
+                    </div>        
+                </div>
+                <div class="Lpath_btn_container">
+                    {{# is_admin}}
+                        <div class="col-12 pull-left enrol invisible">
+                            <button class="cat_btn courseenrolbtn pull-right btn btn-primary">{{#str}}enroll, local_search{{/str}}</button>
+                        </div>
+                    {{/ is_admin}}
+                    {{^ is_admin}}
+                         <span class="courseinfo_btn mr-15 pull-right">{{{selfenrol}}}</span>
+                    {{/ is_admin}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<ul class="w-100 pull-left py-2 px-0 spotlight-group mt-15">
+    <!-- <li>
+        <div class="spotlight">
+            <span class="icon-student">{{{ course_like }}}</span>
+            <span>Likes/Unlikes</span>
+        </div>
+    </li> -->
+    <li>
+        <div class="spotlight">
+            <span class="icon-student font-weight-bold">{{enrolled_count}}</span>
+            <span class="text-white">Enrolled Users</span>
+        </div>
+    </li>
+    <li>
+        <div class="spotlight">
+            <span class="icon-student font-weight-bold">{{course_points}}</span>
+            <span class="text-white">Course Points</span>
+        </div>
+    </li>
+</ul>
