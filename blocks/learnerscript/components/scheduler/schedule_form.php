@@ -47,6 +47,9 @@ class scheduled_reports_form extends moodleform {
 		$exportoptions = $this->_customdata['exportoptions'];
 		$schedule_list = $this->_customdata['schedule_list'];
 		$frequencyselect = $this->_customdata['frequencyselect'];
+		$orgid = $this->_customdata['organizationid'];
+		$depid = $this->_customdata['departmentid'];
+		$subdeptid = $this->_customdata['subdepartmentid'];
 
 		if (isset($this->_customdata['AjaxForm']) && $this->_customdata['AjaxForm'] && isset($this->_customdata['instance'])) {
 			$instance = $this->_customdata['instance'];
@@ -98,11 +101,72 @@ class scheduled_reports_form extends moodleform {
 			'data-placeholder' => get_string('selectroles', 'block_learnerscript')));
 		// $mform->getElement('role')->setMultiple('true');
 		$mform->setType('role', PARAM_RAW);
-		$mform->addRule('role', get_string('PleaseSelectRole', 'block_learnerscript'), 'required', null, 'client');
+		$mform->addRule('role', get_string('PleaseSelectRole', 'block_learnerscript'), 'required', null, 'client'); 
 
-		$mform->addElement('select', 'users_data', get_string('fullname'), $schusers, array('data-select2-ajax' => true, 'data-ajax--url' => $CFG->wwwroot . '/blocks/learnerscript/ajax.php', 'id' => 'id_users_data' . $reportinstance, 'multiple' => true, 'data-reportid' => $reportid, 'data-instanceid' => $instance,
-			'data-id' => $reportid, 'data-multiple' => true, 'class' => 'schusers_data', 'onchange' => '(function(e){ require("block_learnerscript/schedule").addschusers({reportid: ' . $reportid . ', reportinstance : ' . $reportinstance . '}) })(event);', 'data-class' => $requireclass,
-			'data-element' => 'users_data', 'data-placeholder' => get_string('selectusers', 'block_learnerscript')));
+		foreach ($this->_customdata['reportfilters'] as $filter) {
+			if ($filter['name'] == 'organization') {
+				$organizations = $DB->get_records_sql("SELECT id, fullname FROM {local_costcenter} WHERE parentid = 0 AND depth = 1");
+				$organizations_list[null] = 'Select organization';
+				foreach ($organizations as $organization) {
+					$organizations_list[$organization->id] = $organization->fullname;
+				}
+				if (!empty($organizations_list)) {
+		            $organizationid = array_keys($organizations_list)[0];
+		        }
+				$mform->addElement('select', 'filter_organization', get_string('organization', 'block_learnerscript'), $organizations_list, array('data-select2' => true, 'id' => 'id_organization', 'data-id' => $reportid, 'data-class' => $requireclass, 'data-element' => 'organization',
+					'onchange' => '(function(e){ require("block_learnerscript/schedule").organizationdepartments({reportid: ' . $reportid . ', reportinstance : ' . $reportinstance . ',}) })(event);',
+					'data-placeholder' => get_string('filter_organization', 'block_learnerscript')));
+				$mform->setType('organization', PARAM_INT);
+			} 
+			if ($filter['name'] == 'departments') {
+				if ($orgid) {
+					$departments = $DB->get_records_sql("SELECT id, fullname FROM {local_costcenter} WHERE parentid = $orgid AND depth = 2");
+				} else {
+					if (!empty($organizationid)) {
+						$departments = $DB->get_records_sql("SELECT id, fullname FROM {local_costcenter} WHERE parentid = $organizationid AND depth = 2");
+					}
+				}
+				$departments_list[null] = 'All';				
+				if (!empty($departments)) {
+					foreach ($departments as $department) {
+						$departments_list[$department->id] = $department->fullname;
+					}
+				}
+				if (!empty($departments_list)) {
+		            $departmentid = array_keys($departments_list)[0];
+		        }
+				$mform->addElement('select', 'filter_department', get_string('department', 'block_learnerscript'), $departments_list, array('data-select2' => true, 'id' => 'id_department', 'data-id' => $reportid, 'data-class' => $requireclass, 'data-element' => 'department', 
+					'onchange' => '(function(e){ require("block_learnerscript/schedule").deptsubdepartment({reportid: ' . $reportid . ', reportinstance : ' . $reportinstance . ',}) })(event);',
+					'data-placeholder' => get_string('filter_department', 'block_learnerscript')));
+				$mform->setType('department', PARAM_INT);
+			} 
+
+			if ($filter['name'] == 'subdepartments') {
+				if ($depid) {
+					$subdepartments = $DB->get_records_sql("SELECT id, fullname FROM {local_costcenter} WHERE parentid = $subdepartments AND depth = 3");
+				} else {
+					if (!empty($departmentid)) {
+						$subdepartments = $DB->get_records_sql("SELECT id, fullname FROM {local_costcenter} WHERE parentid = $departmentid AND depth = 3");
+					}
+				}
+				$subdepartments_list[null] = 'All';				
+				if (!empty($subdepartments)) {
+					foreach ($subdepartments as $subdepartment) {
+						$subdepartments_list[$subdepartment->id] = $subdepartment->fullname;
+					}
+				}
+				if (!empty($subdepartments_list)) {
+		            $subdepartmentid = array_keys($subdepartments_list)[0];
+		        }
+				$mform->addElement('select', 'filter_subdepartment', get_string('subdepartments', 'block_learnerscript'), $subdepartments_list, array('data-select2' => true, 'id' => 'id_subdepartment', 'data-id' => $reportid, 'data-class' => $requireclass, 'data-element' => 'subdepartment', 
+					'data-placeholder' => get_string('filter_subdepartment', 'block_learnerscript')));
+				$mform->setType('subdepartment', PARAM_INT);
+			}
+		}
+
+		$mform->addElement('select', 'users_data', get_string('fullname'), $schusers, array('data-select2-ajax' => true, 'data-ajax--url' => $CFG->wwwroot . '/blocks/learnerscript/ajax.php', 'id' => 'id_users_data' . $reportinstance, 'multiple' => true, 'data-reportid' => $reportid, 'data-instanceid' => $instance, 'data-id' => $reportid, 'data-multiple' => true, 'class' => 'schusers_data', 'onchange' => '(function(e){ require("block_learnerscript/schedule").addschusers({reportid: ' . $reportid . ', reportinstance : ' . $reportinstance . '}) })(event);', 'data-class' => $requireclass,
+			'data-element' => 'users_data', 'data-placeholder' => get_string('selectusers', 'block_learnerscript'))); 
+
 		$mform->getElement('users_data')->setMultiple('true');
 		$mform->addRule('users_data', get_string('PleaseSelectUser', 'block_learnerscript'), 'required', null, 'client');
 

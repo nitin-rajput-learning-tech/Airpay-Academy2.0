@@ -200,7 +200,7 @@ class querylib {
 	 * @param  string $role [description]
 	 * @return [type]       [description]
 	 */
-	public function activecourseusers($role = 'student') {
+	public function activecourseusers($role = 'employee') {
 		GLOBAL $DB;
 
 		$params['contextlevel'] = CONTEXT_COURSE;
@@ -310,59 +310,110 @@ class querylib {
 								array('id' => 0, 'text' => get_string('select') . ' ' . get_string('course'));
 		}
 
-		$sql = "SELECT c.id, c.fullname 
+		$rolesql  = "SELECT r.shortname
+                        FROM {role_assignments} ra 
+                        JOIN {role} r ON r.id = ra.roleid
+                         WHERE ra.userid= $USER->id";
+        $rolename = $DB->get_record_sql($rolesql);
+        if ($pluginclass->courseuserid > 0) {
+            $userid = $pluginclass->courseuserid;
+        } else {
+           $userid = $USER->id;
+        } 
+
+        if($userid > 0 &&  $rolename->shortname == "employee") { 
+        	 $sql = " SELECT c.id, c.fullname
+						FROM {user} u
+						JOIN {role_assignments} ra ON ra.userid = u.id
+						JOIN {context} AS ctx ON ctx.id = ra.contextid
+						JOIN {course} c ON c.id = ctx.instanceid
+						JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+						JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.userid = ra.userid AND ue.status = 0
+						JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+						WHERE u.id = $userid AND c.visible = 1 ";
+			if (!empty($filterdata) && !empty($filterdata['filter_organization']) ) {
+	            $sql .= " AND u.open_costcenterid = " . $filterdata['filter_organization'];
+	            $params['selectedorg'] = $filterdata['filter_organization'];
+	        }
+
+	        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > 0) {
+	            $sql .= " AND u.open_departmentid = " . $filterdata['filter_departments'];
+	            // $params['selecteddept'] = $filterdata['filter_departments'];
+	        }
+	        if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) ) {
+	            $sql .= " AND u.open_subdepartment = " . $filterdata['filter_subdepartments'];
+	        }
+
+        } else {
+
+        	$sql = "SELECT c.id, c.fullname 
 	            FROM {course} c 
 	            WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
 
-	    $systemcontext = \context_system::instance();
+	    	$systemcontext = \context_system::instance();
 
-	    $params = array();
-	    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-	        $sql .= " ";
-	    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-	        $sql .= " AND c.open_costcenterid = :costcenterid ";
-	        $params['costcenterid'] = $USER->open_costcenterid;
-	    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-	        $sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
-	        $params['costcenterid'] = $USER->open_costcenterid;
-	        $params['departmentid'] = $USER->open_departmentid;
-	    }
+		    $params = array(); 
+		    if ($pluginclass->reportclass->role == 'dh') {
+		        if (!empty($pluginclass->reportclass->courseslist)) {
+		        	$sql .= " AND c.id IN (" . $pluginclass->reportclass->courseslist .")";
+		        } 
+		    } else {
+			    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){ 
+			    	$coursesql  = $this->getcourseslist($pluginclass->courseorganizationid, $filterdata['filter_departments'], $filterdata['filter_subdepartments']);
+			    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+			        $coursesql  = $this->getcourseslist($USER->open_costcenterid, $filterdata['filter_departments'], $filterdata['filter_subdepartments']);
+			    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){ 
+			    	$coursesql  = $this->getcourseslist($USER->open_costcenterid, $USER->open_departmentid, $filterdata['filter_subdepartments']);
+			    } else {
+			    	$coursesql = $this->getcourseslist($USER->open_costcenterid, $USER->open_departmentid, $USER->open_subdepartment);
+			    }
 
-	    if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
-            $sql .= " AND c.open_costcenterid = :selectedorg ";
-            $params['selectedorg'] = $filterdata['filter_organization'];
-        }
+			    if (!empty($coursesql)) { 
+	                $sql .= " AND c.id IN (".$coursesql.")";
+	            } else {
+	                $sql .= " AND c.id IN (0)";
+	            }
+			}
 
-        if (!empty($filterdata) && !empty($filterdata['filter_departments'])) {
-            $sql .= " AND c.open_departmentid = :selecteddept ";
-            $params['selecteddept'] = $filterdata['filter_departments'];
-        }
+	    // if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
+     //        $sql .= " AND c.open_costcenterid = " . $filterdata['filter_organization'];
+     //        $params['selectedorg'] = $filterdata['filter_organization'];
+     //    }
+
+     //    if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > -1) {
+     //        $sql .= " AND c.open_departmentid = " . $filterdata['filter_departments'];
+     //    }
 
 	    if (!empty($filterdata) && !empty($filterdata['filter_coursecategories'])) {
             $sql .= " AND c.category = " . $filterdata['filter_coursecategories'];
         }
 
-        if (!empty($filterdata) && !empty($filterdata['filter_course'])) {
-            $sql .= " AND c.fullname = :selecteddept ";
-            $params['selecteddept'] = $filterdata['filter_departments'];
+        // if (!empty($pluginclass->courseorganizationid)) {
+        // 	$sql .= " AND c.open_costcenterid = " . $pluginclass->courseorganizationid;
+        // } 
+        // if (!empty($pluginclass->filtercoursesid)) {
+        // 	$sql .= " AND c.id = " . $pluginclass->filtercoursesid;
+        // }
         }
-
 	    if($searchvalue){
-            $sql .= " AND c.fullname LIKE :search ";
-            $params['search'] = "%$searchvalue%" ;
-        }
+            $sql .= " AND c.fullname LIKE '%".$searchvalue."%' ";
+        } 
+	        
+	    $sql .= " ORDER BY c.fullname ASC "; 
 
-	    $sql .= " ORDER BY c.fullname ASC ";
-	    $courses = $DB->get_records_sql_menu($sql,$params);
-	    if ($search) {
-	    	foreach ($courses as $key => $value) {
-	            $courseslist[] = array('id' => $key, 'text' => format_string($value));
+	    $courses = $DB->get_records_sql($sql); 
+
+	    foreach ($courses as $c) {
+			if ($c->id == SITEID) {
+				continue;
 			}
-        } else {
-            $courseslist = $courseoptions + $courses;
-        }
-
-        return $courseslist;
+			if ($search) {
+                $courseoptions[] = array('id' => $c->id, 'text' => format_string($c->fullname));
+            } else {
+                $courseoptions[$c->id] = format_string($c->fullname);
+            }
+		} 
+        return $courseoptions;
 	}
 
 	public function filter_get_users($pluginclass, $selectoption = true, $search = false, $filterdata = false, $type = false, $filterusers='') {
@@ -393,7 +444,7 @@ class querylib {
                 }
                 if (!empty($filterdata) && !empty($filterdata['filter_courses']) && $filterdata['filter_courses_type'] == 'basic') {
                     $courseid = $filterdata['filter_courses'];
-                    $role = 'student';
+                    $role = 'employee';
                     $concatsql1 .= " AND c.id IN ($courseid) ";
                 }
                 if (!empty($filterusers) && !$search) {
@@ -409,7 +460,7 @@ class querylib {
 		                      JOIN {enrol} AS e ON c.id = e.courseid
 		                      JOIN {user_enrolments} AS ue ON ue.enrolid = e.id
 		                      JOIN {role_assignments} AS ra ON ra.userid = ue.userid
-		                      JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'student'
+		                      JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
 		                      JOIN {context} ctx ON ctx.instanceid = c.id 
 		                      JOIN {user} AS u ON u.id = ue.userid AND u.deleted = 0 
 		                      WHERE 1 = 1 $concatsql $concatsql1" ;
@@ -426,7 +477,7 @@ class querylib {
 			                      JOIN {enrol} AS e ON c.id = e.courseid
 			                      JOIN {user_enrolments} AS ue ON ue.enrolid = e.id
 			                      JOIN {role_assignments} AS ra ON ra.userid = ue.userid
-			                      JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'student'
+			                      JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
 			                      JOIN {context} ctx ON ctx.instanceid = c.id 
 			                      JOIN {user} AS u ON u.id = ue.userid
 			                      WHERE c.id in($courselist) AND u.deleted = 0 AND ra.contextid = ctx.id AND ctx.contextlevel = 50 $concatsql $concatsql1";
@@ -481,9 +532,9 @@ class querylib {
 				$userslist = $reportclass->elements_by_conditions($conditions);
 			} else {
                 $role = isset($_SESSION['role']) ? $_SESSION['role'] : '';
-                if (!empty($filterusers) && !$search) {
-                	$concatsql .= " AND u.id = $filterusers ";
-                }
+                // if (!empty($filterusers) && !$search) {
+                // 	$concatsql .= " AND u.id = $filterusers ";
+                // }
                 if(empty($pluginclass->reportclass)) {
                 	$pluginclass->reportclass = new \stdClass;
                 	$pluginclass->reportclass->userid = $USER->id;
@@ -506,15 +557,36 @@ class querylib {
 		            $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
 		            $params['costcenterid'] = $USER->open_costcenterid;
 		            $params['departmentid'] = $USER->open_departmentid;
+		        } else {
+		        	$sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartmentid";
+		            $params['costcenterid'] = $USER->open_costcenterid;
+		            $params['departmentid'] = $USER->open_departmentid;
+		            $params['subdepartmentid'] = $USER->open_subdepartment;
+		        } 
+		        if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
+		            $sql .= " AND u.open_costcenterid = :selectedorg ";
+		            $params['selectedorg'] = $filterdata['filter_organization'];
 		        }
 
-		        if (!empty($filterdata) && !empty($filterdata['filter_users'])) {
-                    $sql .= " AND u.id = :userfilter ";
-                    $params['userfilter'] = $filterdata['filter_users'];
-                }
+		        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > -1) {
+		            $sql .= " AND u.open_departmentid = :selecteddept ";
+		            $params['selecteddept'] = $filterdata['filter_departments'];
+		        } 
+		        if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) && $filterdata['filter_subdepartments'] > -1) {
+		        	$sql .= " AND u.open_subdepartment = :selectedsubdept";
+		        	$params['selectedsubdept'] = $filterdata['filter_subdepartments'];
+		        }
+		        if (!empty($pluginclass->courseorganizationid)) {
+        			$sql .= " AND u.open_costcenterid = " . $pluginclass->courseorganizationid;
+        		}
+
+		        // if (!empty($filterdata) && !empty($filterdata['filter_users'])) {
+          //           $sql .= " AND u.id = :userfilter ";
+          //           $params['userfilter'] = $filterdata['filter_users'];
+          //       }
 
 		        $sql .= " ORDER BY u.firstname ASC ";
-		        $userslist = $DB->get_records_sql_menu($sql,$params);
+		        $userslist = $DB->get_records_sql($sql,$params);
 			}
 		} else {
 
@@ -536,14 +608,34 @@ class querylib {
 	            $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
 	            $params['costcenterid'] = $USER->open_costcenterid;
 	            $params['departmentid'] = $USER->open_departmentid;
+	        } else {
+		        	$sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartmentid";
+		            $params['costcenterid'] = $USER->open_costcenterid;
+		            $params['departmentid'] = $USER->open_departmentid;
+		            $params['subdepartmentid'] = $USER->open_subdepartment;
+		        }
+	        // if (!empty($filterdata) && !empty($filterdata['filter_users'])) {
+         //        $sql .= " AND u.id = :userfilter ";
+         //        $params['userfilter'] = $filterdata['filter_users'];
+         //    }
+            if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
+	            $sql .= " AND u.open_costcenterid = :selectedorg ";
+	            $params['selectedorg'] = $filterdata['filter_organization'];
 	        }
-	        if (!empty($filterdata) && !empty($filterdata['filter_users'])) {
-                $sql .= " AND u.id = :userfilter ";
-                $params['userfilter'] = $filterdata['filter_users'];
-            }
 
+	        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > 0) {
+	            $sql .= " AND u.open_departmentid = :selecteddept ";
+	            $params['selecteddept'] = $filterdata['filter_departments'];
+	        } 
+	        if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) && $filterdata['filter_subdepartments'] > -1) {
+		        	$sql .= " AND u.open_subdepartment = :selectedsubdept";
+		        	$params['selectedsubdept'] = $filterdata['filter_subdepartments'];
+		        }
+	        if (!empty($pluginclass->courseorganizationid)) {
+        		$sql .= " AND u.open_costcenterid = " . $pluginclass->courseorganizationid;
+        	}
 	        $sql .= " ORDER BY u.firstname ASC ";
-	        $userslist = $DB->get_records_sql_menu($sql,$params);
+	        $userslist = $DB->get_records_sql($sql,$params);
 		}
 
 		$usersoptions = array();
@@ -553,19 +645,59 @@ class querylib {
 		}
 		
 		if (!empty($userslist)) {
-			foreach ($userslist as $userid => $user) {
+			foreach ($userslist as $user) { 
 				if ($search) {
-                    $usersoptions[] = array('id' => $userid, 'text' => format_string($user));
+                    $usersoptions[] = array('id' => $user->id, 'text' => format_string($user->employeename));
                 } else {
-                    $usersoptions[$userid] = format_string($user);
+                    $usersoptions[$user->id] = format_string($user->employeename);
                 }
 			}
-		}
+		} 
         return $usersoptions;
 	}
 
-	public function get_learners($useroperatorsql = '', $courseoperatorsql = ''){
+	public function get_cohortslist_forcoursefilter($pluginclass, $selectoption = true, $search = false, $filterdata = false){
+		global $DB;
 
+		$searchvalue = '';
+		if ($search) {
+            $searchvalue = $search;
+        }
+
+		if($selectoption){
+			$cohortoptions[0] = isset($pluginclass->singleselection) && $pluginclass->singleselection ? get_string('filter_cohort', 'block_learnerscript') :
+								array('id' => 0, 'text' => get_string('select') . ' ' . get_string('cohort'));
+		}
+
+		$sql = "SELECT DISTINCT co.id, co.name 
+					FROM {cohort} co 
+					JOIN {local_groups} lg ON lg.cohortid = co.id 
+					WHERE 1 = 1 "; 
+		if (!empty($pluginclass->cohortorganizationid) && $pluginclass->cohortorganizationid > 0) {
+			$sql .= " AND lg.costcenterid = " . $pluginclass->cohortorganizationid;
+		} 
+		if (!empty($pluginclass->cohortdepartmentid) && $pluginclass->cohortdepartmentid > 0) {
+			$sql .= " AND lg.departmentid = " . $pluginclass->cohortdepartmentid;
+		}
+	    if($searchvalue){
+            $sql .= " AND co.name LIKE '%".$searchvalue."%' ";
+        } 
+	        
+	    $sql .= " ORDER BY co.name ASC "; 
+
+	    $cohorts = $DB->get_records_sql($sql); 
+
+	    foreach ($cohorts as $c) {
+			if ($search) {
+                $cohortoptions[] = array('id' => $c->id, 'text' => format_string($c->name));
+            } else {
+                $cohortoptions[$c->id] = format_string($c->name);
+            }
+		} 
+        return $cohortoptions;
+	}
+
+	public function get_learners($useroperatorsql = '', $courseoperatorsql = ''){
 		if(empty($courseoperatorsql) && empty($useroperatorsql)){
 			return false;
 		}
@@ -576,10 +708,10 @@ class querylib {
 			$sql = " SELECT ue.userid ";
 		}
 		$sql .= " FROM {course} c
-				  JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+				  JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
 				  JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
 				  JOIN {role_assignments}  ra ON ra.userid = ue.userid
-				  JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'student'
+				  JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
 				  JOIN {context} ctx ON ctx.instanceid = c.id 
 				  JOIN {user} AS u ON u.id = ue.userid
 				  AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1";
@@ -590,5 +722,76 @@ class querylib {
 			$sql .= " WHERE ra.userid = $useroperatorsql";
 		}
 		return $sql;
+	} 
+
+	public function getcourseslist($orgid = false, $depid = false, $subdeptid = false) { 
+		global $DB; 
+		if(empty($orgid) && empty($depid)){
+			return false;
+		}
+		$orgsql = " ";
+		$orgsql .= " SELECT c.id FROM {course} c WHERE c.visible = 1 "; 
+		if ($orgid > 0) {
+			$orgsql .= " AND c.open_costcenterid = " .$orgid;
+		}
+		if ($depid > 0) {
+			$orgsql .= " AND c.open_departmentid = " .$depid;
+		} 
+		if($subdeptid > 0){
+			$orgsql .= " AND c.open_subdepartment = " .$subdeptid;
+		}
+		$userssql = " ";
+		$userssql .= " SELECT c.id FROM {course} c 
+                    JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
+                  JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
+                  JOIN {role_assignments}  ra ON ra.userid = ue.userid
+                  JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                  JOIN {context} ctx ON ctx.instanceid = c.id 
+                  JOIN {user} AS u ON u.id = ue.userid 
+                  JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid 
+                  AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1 
+                  WHERE 1 = 1 ";
+        if ($orgid > 0) {
+			$userssql .= " AND u.open_costcenterid = " .$orgid;
+		}
+        if ($depid > 0) {
+			$userssql .= " AND u.open_departmentid = " .$depid;
+		}          
+		if($subdeptid > 0){
+			$userssql .= " AND u.open_subdepartment = " .$subdeptid;
+		}
+		$orgcourses = $DB->get_records_sql($orgsql); 
+		$usercourses = $DB->get_records_sql($userssql); 
+
+        if (empty($usercourses) && !empty($orgcourses)) {
+            $totalcourses = $orgcourses; 
+        } else if (!empty($usercourses) && empty($orgcourses)) {
+            $totalcourses = $usercourses;
+        } else if (!empty($usercourses) && !empty($orgcourses)) {
+            $totalcourses = array_merge($usercourses, $orgcourses);
+        } else if (!empty($usercourses) && !empty($orgcourses)) {
+            $totalcourses = array();
+        }
+        foreach ($totalcourses as $totalcourse) {
+            $list[] = $totalcourse->id;
+        } 
+        $list = !empty($totalcourses) ? implode(',', array_unique($list)) : 0;
+        return $list;
+	} 
+	public function gettagcourses($list) { 
+		global $DB;
+		$coursesql = " SELECT DISTINCT c.id 
+						FROM {course} c 
+						JOIN {tag_instance} ti ON ti.itemid = c.id 
+						JOIN {tag} t ON t.id = ti.tagid 
+						JOIN {local_tag_items} lti ON lti.name = t.rawname 
+						WHERE 1 = 1 AND lti.id IN ($list) AND ti.component = 'local_courses' 
+						AND ti.itemtype = 'courses'"; 
+		$courses = $DB->get_records_sql($coursesql);  
+		foreach ($courses as $course) {
+            $courseslist[] = $course->id;
+        } 
+		$courseslist = !empty($courses) ? implode(',', array_unique($courseslist)) : 0;
+        return $courseslist;				
 	}
 }

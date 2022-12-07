@@ -1,0 +1,94 @@
+<div class="tab-content" id="v-pills-tabContent">
+    <div class="tab-pane fade show active" id="v-pills-home" role="tabpanel" aria-labelledby="v-pills-home-tab">
+    {{#section}}
+        <div class="requirement_block">
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="compliance_report_block">
+                        <div class="row">
+                            <div class="col-md-4 pr-0">
+                                <table class="table complaince_table">
+                                    <thead>
+                                        <tr>
+                                        <td>{{sectionname}}</td>
+                                        <td></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                        <td>Required users:</td>
+                                        <td>{{users}}</td>
+                                        </tr>
+                                        {{#coursereq}}
+                                        <tr>
+                                        <td>Course/Exam requirements</td>
+                                        <td>{{coursereq}}</td>
+                                        </tr>
+                                        {{/coursereq}}
+                                        {{#certificationreq}}
+                                        <tr>
+                                        <td>Certification requirements:</td>
+                                        <td>{{certificationreq}}</td>
+                                        </tr>
+                                        {{/certificationreq}}
+                                    </tbody>
+                                    </table>
+                            </div>
+                            <div class="col-md-8 pr-0">
+                                <table width="100%" class="generaltable dependencyfilter dataTable no-footer dtr-inline table complaince_table" id="reporttable_1234">
+                                    <thead>
+                                        <tr>
+                                        <td>Course/Exam/Certification</td>
+                                        <td>Completed</td>
+                                        <td></td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {{#test}}
+                                            <tr class="section_details">
+                                            <td>{{crscert}}</td>
+                                            {{#course}}
+                                        <td><a href={{config.wwwroot}}/blocks/learnerscript/viewreport.php?id={{coursereportid}}&filter_course={{certfilterid}} class='sectionuser' data-tableid ='reporttable_{{compliancecoursesid}}' data-reportid = {{compliancecoursesid}} >
+                                        {{completedusers}}                          
+                                        </a></td>
+                                        {{/course}}
+                                        {{#cert}}
+                                        <td><a href={{config.wwwroot}}/blocks/learnerscript/viewreport.php?id={{certreportid}}&filter_certificates={{certfilterid}}&filter_status=completed class='sectionuser' data-tableid ='reporttable_{{compliancecertid}}' data-reportid = {{compliancecertid}} >
+                                        {{completedusers}}                           
+                                        </a></td>
+                                        {{#eol}}
+                                        <td><a href={{config.wwwroot}}/blocks/learnerscript/viewreport.php?id={{certreportid}}&filter_certificates={{certfilterid}}&filter_status=upcomingexpiry class='sectionuser' data-tableid ='reporttable_{{compliancecertid}}' data-reportid = {{compliancecertid}} >
+                                        <span class='notification_bell_icon'></span>                            
+                                        </a></td>
+                                        {{/eol}}
+                                        {{/cert}}
+                                            
+
+                                            </tr> 
+                                        {{/test}}                                      
+                                      </tbody>
+                               
+                                
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="col-md-3 complaince_progress_block_bg">
+                    <div class="complaince_progress_block">
+                    <h6 class="font-weight-bold text-center pt-3 mb-0 pb-4">Compliance</h6>
+                    <div class="progress-radial-container">
+                        <div class="progress-radial progress-89 setsize" id="aggregateattcircle">
+                        <div class="overlay setsize">
+                            <p class="circular_value">{{secpercentage}}%</p>
+                        </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>            
+            </div>
+        </div>
+    {{/section}}               
+    </div>                                          
+</div>

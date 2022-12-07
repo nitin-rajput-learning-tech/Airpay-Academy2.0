@@ -46,15 +46,6 @@ class plugin_classroomcompletions extends pluginbase {
     // Row -> Complet user row c->id, c->fullname, etc...
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG,$OUTPUT;
-           switch ($data->column) {
-                case 'usercompletiondate':
-                    if($row->usercompletiondate > 0){
-                        $row->{$data->column} = \local_costcenter\lib::get_userdate('d-m-Y',$row->{$data->column});
-                    }else{
-                        $row->{$data->column} = 'NA';
-                    }
-                    break;
-            }
             return (isset($row->{$data->column})) ? $row->{$data->column} : '--';
     }
 

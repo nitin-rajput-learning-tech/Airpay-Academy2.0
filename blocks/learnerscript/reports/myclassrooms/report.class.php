@@ -4,7 +4,7 @@ use block_learnerscript\local\querylib;
 
 class report_myclassrooms extends reportbase{
    public function __construct($report, $reportproperties) {
-        global $USER, $DB;
+        global $USER;
         parent::__construct($report);
         $this->components = array('columns','permissions','filters');
         $this->parent = true;
@@ -32,7 +32,7 @@ class report_myclassrooms extends reportbase{
           parent::joins();
     }
     function where(){
-        global $USER,$DB;
+        global $USER, $DB;
          $this->sql .=  " WHERE cu.userid = $USER->id AND lc.status IN(1,3,4)
                           AND lc.visible = 1 ";
         // getscheduled report

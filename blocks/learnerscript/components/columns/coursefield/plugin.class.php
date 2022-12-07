@@ -47,11 +47,20 @@ class plugin_coursefield extends pluginbase {
     // Row -> Complet course row c->id, c->fullname, etc...
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG; 
-        $courserecord = $DB->get_record('course',array('id'=>$row->courseid));
-        switch ($data->column) {
-            case 'coursename':
-                    $courserecord->{$data->column} = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$courserecord->id.'" />'.$courserecord->fullname.'</a>';
+        $courserecord = $DB->get_record('course',array('id'=>$row->courseid)); 
+        $coursereportid = $DB->get_field('block_learnerscript', 'id', array('type'=>'courseprofile'), IGNORE_MULTIPLE);
+        switch ($data->column) { 
+            case 'coursename': 
+                $checkpermissions = empty($coursereportid) ? false : (new reportbase($coursereportid))->check_permissions($USER->id, $context);
+                if($this->report->type == 'courseprofile' || empty($coursereportid) || empty($checkpermissions)){
+                    $courserecord->{$data->column} = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$courserecord->id.'" />'.$courserecord->fullname.'</a>'; 
+                } else if($coursereportid){
+                    $courserecord->{$data->column} = '<a href="'.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$coursereportid.'&filter_course='.$courserecord->id.'&filter_organization='.$this->reportfilterparams['filter_organization'].'&filter_departments='.$this->reportfilterparams['filter_departments'].'" />'.$courserecord->fullname.'</a>';
+                }
                 break;
+            // case 'coursename':
+            //         $courserecord->{$data->column} = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$courserecord->id.'" />'.$courserecord->fullname.'</a>';
+            //     break;
             case 'coursecode':
                 $courserecord->{$data->column} = $courserecord->shortname;
                 break;
@@ -66,19 +75,12 @@ class plugin_coursefield extends pluginbase {
             case 'courseorg':
                 $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$courserecord->open_costcenterid));
                 break;
-
             case 'coursedept':
                 if($courserecord->open_departmentid){
-                     $departments =$DB->get_records_sql_menu('SELECT id,fullname 
-         FROM {local_costcenter}
-         WHERE id IN('.$courserecord->open_departmentid.')');
-         $courserecord->{$data->column}= implode(', ',$departments);
+                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$courserecord->open_departmentid));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }
-
-                // print_r($courserecord->open_departmentid);
-                // exit;
                 break;
             case 'course_subdept':
                 if($courserecord->open_subdepartment){

@@ -59,8 +59,7 @@ class plugin_mycoursescolumn extends pluginbase {
 
         $sql=" SELECT c.id,c.fullname 
                 FROM {user_enrolments} as ue
-                JOIN {enrol} as e ON e.id = ue.enrolid AND 
-                                (e.enrol = 'manual' OR e.enrol = 'self')
+                JOIN {enrol} as e ON e.id = ue.enrolid 
                 JOIN {role_assignments} as ra ON ra.userid = ue.userid
                 JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
                 JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
@@ -88,7 +87,7 @@ class plugin_mycoursescolumn extends pluginbase {
     public function print_filter(&$mform) {     
         $userslist = $this->filter_data();
 
-        $array = array('data-select2' => 1,'data-maximum-selection-length' => isset($this->maxlength));
+        $array = array('data-select2' => 1,'data-maximum-selection-length' => $this->maxlength);
         $select = $mform->addElement('select', 'filter_mycoursescolumn', get_string('mycoursess'),  $userslist,$array);
 
         $mform->setType('filter_mycoursesscolumn', PARAM_INT);

@@ -64,7 +64,7 @@ class plugin_onlinetestscompletionscolumns extends pluginbase {
                     break;
                 case 'completiondate':
                     if($row->completionstatus == 1){
-                        $row->{$data->column} = \local_costcenter\lib::get_userdate('d m Y H:i', $row->{$data->column});
+                        $row->{$data->column} = date('d-M-Y', $row->{$data->column});
                     }else{
                         $row->{$data->column} = 'NA';
                     }

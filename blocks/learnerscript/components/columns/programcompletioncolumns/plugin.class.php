@@ -50,7 +50,10 @@ class plugin_programcompletioncolumns extends pluginbase {
                 $row->{$data->column} = ($row->{$data->column} == 1) ? 'Completed' : 'Not Completed';
                 break;
             case 'completiondate':
-                $row->{$data->column} = !empty($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : '--';
+                break;
+            case 'lastaccess':
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y h:m:s A',$row->{$data->column}) : date('d-m-Y h:m:s A',$DB->get_field_sql("SELECT timecreated FROM {logstore_standard_log} WHERE userid = {$row->userid} ORDER BY id DESC LIMIT 1"));
                 break;
         }
 

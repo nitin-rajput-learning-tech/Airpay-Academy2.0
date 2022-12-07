@@ -58,20 +58,14 @@ class plugin_learningpathfield extends pluginbase {
             case 'learningpath_org':
                 $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$lpathrecord->costcenter));
                 break;
-
             case 'learningpath_dept':
-                if($lpathrecord->department == -1){
-                $lpathrecord->{$data->column} = get_string('all');
+                if(!empty($lpathrecord->department) && ($lpathrecord->department != -1)){
+                    $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$lpathrecord->department));
+                }else{
+                   $lpathrecord->{$data->column} = get_string('all'); 
                 }
-             else{ 
-                 $departments =$DB->get_records_sql_menu('SELECT id,fullname 
-                  FROM {local_costcenter}
-                  WHERE id IN('.$lpathrecord->department.')');
-              $lpathrecord->{$data->column}= implode(', ',$departments);
-               }
-                break;
-
-               case 'learningpath_subdept':
+                break;   
+            case 'learningpath_subdept':
                 if(!empty($lpathrecord->subdepartment) && ($lpathrecord->subdepartment != -1)){
                     $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$lpathrecord->subdepartment));
                 }else{

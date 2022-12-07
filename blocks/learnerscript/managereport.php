@@ -46,7 +46,7 @@ $PAGE->set_url('/blocks/learnerscript/managereport.php');
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('report');
 
-$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
 $PAGE->requires->jquery_plugin('ui-css');
 
 if ($importurl) {
@@ -86,6 +86,7 @@ $PAGE->set_heading($title);
 $PAGE->set_cacheable(true);
 
 echo $OUTPUT->header();
+echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 echo html_writer::start_tag('div',array());
 
 echo '<div style="float:right;"><a class="btn linkbtn btn-primary" href="' . $CFG->wwwroot . '/blocks/learnerscript/editreport.php?courseid=' . $course->id . '">' . (get_string('addreport', 'block_learnerscript')) . '</a></div>';

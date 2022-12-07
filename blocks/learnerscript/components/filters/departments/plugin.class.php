@@ -30,7 +30,15 @@ class plugin_departments extends pluginbase {
         $this->unique = true;
         $this->singleselection = true;
         $this->placeholder = true;
-        $this->maxlength = 0;
+        $this->maxlength = 0; 
+        $this->filtertype = 'custom'; 
+        if (!empty($this->reportclass->basicparams)) {
+            foreach ($this->reportclass->basicparams as $basicparam) {
+                if ($basicparam['name'] == 'departments') {
+                    $this->filtertype = 'basic';
+                }
+            }
+        }
         $this->fullname = get_string('filterdepartments', 'block_learnerscript');
         $this->reporttypes = array();
     }
@@ -57,8 +65,43 @@ class plugin_departments extends pluginbase {
         return $finalelements;
     }
 
-    public function filter_data(){
+    public function filter_data($selectoption = true, $request){
         global $DB, $USER;
+        $filter_departments = '';
+        $filterdepartments = optional_param('filter_departments', 0, PARAM_INT);
+        if (empty($this->reportclass->basicparams)) {
+            $departmentoptions = array(get_string('filter_departments', 'block_learnerscript'));
+        } 
+        $filterdepartment = $this->reportclass->filters;
+        // $filteruserid = $filtercourse['filter_users'];
+        if($this->reportclass->basicparams){
+            $basicparams = array_column($this->reportclass->basicparams, 'name');
+            if ($basicparams[0] == 'organization') {
+                $orgoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC"); 
+                $orgids = array_keys($orgoptions);
+                if (empty($request['filter_organization'])) {
+                    $deptorgid = array_shift($orgids);
+                } else {
+                    $deptorgid = $request['filter_organization'];
+                }
+            }else {
+                $deptorgid = null;
+            }
+        } else {
+            $deptorgid = null;
+        } 
+        $concatsql = " "; 
+        $systemcontext = context_system::instance();
+        if (!is_siteadmin()) {
+            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportclass->config->id,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+            if (!empty($scheduledreport)) {
+            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            } else {
+                $ohs = $dhs = 1;
+            }
+        }
 
         $params = array();
         $sql = "SELECT id, fullname 
@@ -66,33 +109,40 @@ class plugin_departments extends pluginbase {
                 WHERE depth = :depth ";
         $params['depth'] = 2;
 
-        $systemcontext = context_system::instance();
-        if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        $systemcontext = context_system::instance(); 
+        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+            if (!empty($deptorgid)) {
+                $concatsql .= " AND parentid = $deptorgid";
+            }
+        } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
             $sql .= " AND parentid = :costcenterid ";
             $params['costcenterid'] = $USER->open_costcenterid;
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
             $sql .= " AND parentid = :costcenterid AND id = :departmentid ";
             $params['costcenterid'] = $USER->open_costcenterid;
             $params['departmentid'] = $USER->open_departmentid;
-        }
-        $sql .= " ORDER BY fullname ASC ";
+        } 
+        $sql .= $concatsql;
+        $sql .= " ORDER BY id ASC ";
 
         $deptoptions = $DB->get_records_sql_menu($sql, $params);
-
-        $selectdept = array();
-        $selectdept[null] = get_string('selectdept', 'block_learnerscript');
-        $selectdept[0] = get_string('all');
+       
+        //$deptoptions[] = 'All';
+        $selectdept = array(); 
+        if(empty($this->reportclass->basicparams)){
+            $selectdept[-1] = 'Select Department'; 
+        }else{
+            $deptoptions[-1] = 'All';
+        }
+                
+        $deptoptions = $selectdept + $deptoptions;   
+        return $deptoptions;
         
-        $deptoptions = $selectdept + $deptoptions;
-
-        // if (!$this->placeholder) {
-        //     unset($deptoptions[0]);
-        // }
         return $deptoptions;
     }
 
-    public function selected_filter($selected) {
-        $filterdata = $this->filter_data();
+    public function selected_filter($selected, $request = array()) {
+        $filterdata = $this->filter_data(false, $request);
         return $filterdata[$selected];
     }
 
@@ -100,8 +150,11 @@ class plugin_departments extends pluginbase {
         
         $systemcontext = context_system::instance();
         if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            
-            $deptoptions = $this->filter_data();
+            $request = array_merge($_POST, $_GET);
+            $deptoptions = $this->filter_data(false, $request); 
+            if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($deptoptions) > 1) { 
+                unset($deptoptions[-2]);
+            }
             $array = array('data-select2'=>true,'data-maximum-selection-length' => $this->maxlength);               
             $select = $mform->addElement('select', 'filter_departments', null, $deptoptions, $array);
             if (!$this->singleselection) {

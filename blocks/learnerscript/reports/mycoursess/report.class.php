@@ -55,8 +55,7 @@ class report_mycoursess extends reportbase implements report {
         $this->sql .= " FROM {user_enrolments} as ue";
     }
     function joins() {
-         $this->sql .= " JOIN {enrol} as e ON e.id = ue.enrolid AND 
-                                    (e.enrol = 'manual' OR e.enrol = 'self')
+         $this->sql .= " JOIN {enrol} as e ON e.id = ue.enrolid
                 JOIN {role_assignments} as ra ON ra.userid = ue.userid
                 JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
                                         AND cxt.instanceid = e.courseid
