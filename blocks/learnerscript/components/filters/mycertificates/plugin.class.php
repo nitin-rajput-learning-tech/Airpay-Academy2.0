@@ -98,7 +98,7 @@ class plugin_mycertificates extends pluginbase {
 
         $userslist = $this->filter_data();
 
-        $array = array('data-select2' => 1,'data-maximum-selection-length' => isset($this->maxlength));
+        $array = array('data-select2' => 1,'data-maximum-selection-length' => $this->maxlength);
         $select = $mform->addElement('select', 'filter_mycertificates', get_string('mycertificates'), $userslist,$array);
         
         $mform->setType('filter_mycertificates', PARAM_INT);

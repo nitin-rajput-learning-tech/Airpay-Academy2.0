@@ -29,13 +29,7 @@ class plugin_column extends pluginbase {
         $this->fullname = get_string('column', 'block_learnerscript');
         $this->form = true;
         $this->ordering = true;
-        $this->reporttypes = array('sql','coursesoverview','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress',
-    'percentagecoursecompletions', 
-                       'monthlycourselearners', 
-                       'questionattempthours', 
-                       'quizattempthours', 
-                       'questionsummary', 
-                       'timewisequizattempts');
+        $this->reporttypes = array('sql','coursesoverview','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress', 'courses', 'bigbluebutton');
     }
 
     function summary($data) {

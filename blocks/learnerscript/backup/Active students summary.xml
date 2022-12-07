@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[course]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Active students summary]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[activestudents]]></type>
+<components><![CDATA[YTo2OntpOjA7YjowO3M6NzoiY29sdW1ucyI7YToxOntzOjg6ImVsZW1lbnRzIjthOjI6e2k6MDthOjY6e3M6MjoiaWQiO3M6MTU6IkZuVjNycUQ5Yk1XUFdnRCI7czoxMDoicGx1Z2lubmFtZSI7czoxOToiYmlnYmx1ZWJ1dHRvbmZpZWxkcyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6MjU6IkJpZ0JsdWVCdXR0b24lMjUyQmNvbHVtbnMiO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6NDoidHlwZSI7czoxNToic2VsZWN0ZWRjb2x1bW5zIjtzOjg6ImZvcm1kYXRhIjtPOjg6InN0ZENsYXNzIjo0OntzOjU6InZhbHVlIjtiOjE7czo5OiJjb2x1bW5hbWUiO3M6NzoiTGVhcm5lciI7czo2OiJjb2x1bW4iO3M6NzoibGVhcm5lciI7czo3OiJoZWFkaW5nIjtzOjE5OiJiaWdibHVlYnV0dG9uZmllbGRzIjt9fWk6MTthOjY6e3M6MjoiaWQiO3M6MTU6IndKR0dETDFUdTlYTU5LVCI7czoxMDoicGx1Z2lubmFtZSI7czoxOToiYmlnYmx1ZWJ1dHRvbmZpZWxkcyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6MjU6IkJpZ0JsdWVCdXR0b24lMjUyQmNvbHVtbnMiO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6NDoidHlwZSI7czoxNToic2VsZWN0ZWRjb2x1bW5zIjtzOjg6ImZvcm1kYXRhIjtPOjg6InN0ZENsYXNzIjo0OntzOjU6InZhbHVlIjtiOjE7czo5OiJjb2x1bW5hbWUiO3M6NToiRW1haWwiO3M6NjoiY29sdW1uIjtzOjU6ImVtYWlsIjtzOjc6ImhlYWRpbmciO3M6MTk6ImJpZ2JsdWVidXR0b25maWVsZHMiO319fX1zOjc6ImZpbHRlcnMiO2E6MTp7czo4OiJlbGVtZW50cyI7Tjt9czoxMjoiY2FsY3VsYXRpb25zIjthOjE6e3M6ODoiZWxlbWVudHMiO047fXM6ODoib3JkZXJpbmciO2E6MTp7czo4OiJlbGVtZW50cyI7Tjt9czoxMToicGVybWlzc2lvbnMiO2E6MTp7czo2OiJjb25maWciO086ODoic3RkQ2xhc3MiOjM6e3M6MTM6ImNvbmRpdGlvbmV4cHIiO3M6MDoiIjtzOjE0OiJjb25kaXRpb25leHByMSI7TjtzOjE0OiJjb25kaXRpb25leHByMiI7czowOiIiO319fQ==]]></components>
+<export><![CDATA[pdf,csv,xls]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[0]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+</report>

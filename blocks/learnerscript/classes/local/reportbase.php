@@ -60,7 +60,15 @@ class reportbase {
     public $status;
     public $filters;
     public $ls_startdate;
-    public $ls_enddate;
+    public $ls_enddate; 
+    public $costcenterid;
+    public $departmentid;
+    public $onlinecourseid;
+    public $labid;
+    public $assessmentid;
+    public $webinarid;
+    public $classroomid;
+    public $learningpathid;
     public $columns;
     public $basicparams;
     public $params;
@@ -85,7 +93,7 @@ class reportbase {
     public $conditionfinalelements = array();
     function __construct($report, $properties = null) {
         global $DB, $CFG, $USER;
-
+        $systemcontext = \context_system::instance();
         if (empty($report)) {
              return false;
         }
@@ -99,15 +107,63 @@ class reportbase {
         }
         $this->userid = isset($properties->userid) ? $properties->userid : $USER->id ; 
         $this->ls_startdate = isset($properties->ls_startdate) ? $properties->ls_startdate : 0;
-        $this->ls_enddate = isset($properties->ls_enddate) ? $properties->ls_enddate : time();
+        $this->ls_enddate = isset($properties->ls_enddate) ? $properties->ls_enddate : time(); 
+        $this->costcenterid = isset($properties->costcenterid) && $properties->costcenterid > 0 ? $properties->costcenterid : 0;
+        $this->departmentid = isset($properties->departmentid) && $properties->departmentid > 0 ? $properties->departmentid : -1; 
+
+        $this->onlinecourseid = isset($properties->onlinecourseid) && $properties->onlinecourseid > 0 ? $properties->onlinecourseid : 0;
+        $this->labid = isset($properties->labid) && $properties->labid > 0 ? $properties->labid : 0;
+        $this->assessmentid = isset($properties->assessmentid) && $properties->assessmentid > 0 ? $properties->assessmentid : 0;
+        $this->webinarid = isset($properties->webinarid) && $properties->webinarid > 0 ? $properties->webinarid : 0;
+        $this->classroomid = isset($properties->classroomid) && $properties->classroomid > 0 ? $properties->classroomid : 0;
+        $this->learningpathid = isset($properties->learningpathid) && $properties->learningpathid > 0 ? $properties->learningpathid : 0;
+        
+        $this->courseid = isset($properties->courseid) && $properties->courseid > 0 ? $properties->courseid : SITEID; 
         $this->componentdata = (new ls)->cr_unserialize($this->config->components);
         $this->rolewisecourses = $this->rolewisecourses(); 
+        $opencostcenterid = isset($USER->open_costcenterid) ? $USER->open_costcenterid : 0;
+        $opendepartmentid = isset($USER->open_departmentid) ? $USER->open_departmentid : 0; 
+        $dashboardurl = isset($_GET['dashboardurl']) ? $_GET['dashboardurl'] : '';
+        // if (!has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+        //     if (($dashboardurl != 'Maindashboard' && $dashboardurl != 'Learnerdashbord' && $dashboardurl != 'Test') && (($this->config->type != 'exam' && $this->config->type != 'examenrolments' && $this->config->type != 'graphexamenrolments' && $this->config->type != 'learning' && $this->config->type != 'learners') || ($this->config->name != 'Learning Activity' && $this->config->name != 'Learning completion status' && $this->config->name != 'Learning completion deadlines' && $this->config->name != 'Learners Activity' && $this->config->name != 'Learner completion status' && $this->config->name != 'Learners Completion deadlines'))) {
+        //         $depcourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c WHERE c.visible = 1 AND c.open_costcenterid = $opencostcenterid AND c.open_departmentid = $opendepartmentid"); 
+        //         $learnercourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c 
+        //                     JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
+        //                   JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
+        //                   JOIN {role_assignments}  ra ON ra.userid = ue.userid
+        //                   JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+        //                   JOIN {context} ctx ON ctx.instanceid = c.id 
+        //                   JOIN {user} AS u ON u.id = ue.userid 
+        //                   JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid 
+        //                   AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1 
+        //                   WHERE u.open_costcenterid = $opencostcenterid AND u.open_departmentid = $opendepartmentid"); 
+        //         if (empty($learnercourseslist) && !empty($depcourseslist)) {
+        //             $totalcourses = $depcourseslist; 
+        //         } else if (!empty($learnercourseslist) && empty($depcourseslist)) {
+        //             $totalcourses = $learnercourseslist;
+        //         } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
+        //             $totalcourses = array_merge($learnercourseslist, $depcourseslist);
+        //         } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
+        //             $totalcourses = array();
+        //         }
+        //         foreach ($totalcourses as $totalcourse) {
+        //             $list[] = $totalcourse->id;
+        //         } 
+        //         $this->courseslist = !empty($totalcourses) ? implode(',', array_unique($list)) : 0; 
+        //     }
+        // }
+        
+        $userroleid = isset($USER->access['rsw']['/1']) ? $USER->access['rsw']['/1'] : 0;
+        $this->loggedinuserrole = $DB->get_field_sql("SELECT shortname FROM {role} WHERE id = $userroleid"); 
+        $_SESSION['loggedinuserrole'] = $this->loggedinuserrole;
     }
 
     function init(){}
 
     function check_permissions($userid = null, $context) {
-        global $DB, $CFG, $USER;
+        global $DB, $CFG, $USER; 
+        $systemcontext = context_system::instance();
+        $context = isset($context) ? $context : $systemcontext;
         if($userid == null){
             $userid = $USER->id;
         }
@@ -139,7 +195,6 @@ class reportbase {
                     $p['pluginname'] . '/plugin.class.php');
                 $classname = 'plugin_' . $p['pluginname'];
                 $class = new $classname($this->config);
-                
                 $class->role = $this->role;
                 $class->userroles = isset($this->userroles) ? $this->userroles : '';
                 $cond[$i] = $class->execute($userid, $context, $p['formdata']);
@@ -191,17 +246,17 @@ class reportbase {
             }
         }
     }
-    function initial_basicparams($pluginname) {
-        global $CFG;
-         require_once($CFG->dirroot . '/blocks/learnerscript/components/filters/' .
-            $pluginname . '/plugin.class.php');
-        $classname = 'plugin_' . $pluginname;
-        $class = new $classname($this->config);
-        $class->singleselection = false;
-        $selectoption = false;
-        $filterarray = $class->filter_data($selectoption);
-        $this->filterdata = $filterarray;
-    }
+    // function initial_basicparams($pluginname) {
+    //     global $CFG;
+    //      require_once($CFG->dirroot . '/blocks/learnerscript/components/filters/' .
+    //         $pluginname . '/plugin.class.php');
+    //     $classname = 'plugin_' . $pluginname;
+    //     $class = new $classname($this->config);
+    //     $class->singleselection = false;
+    //     $selectoption = false;
+    //     $filterarray = $class->filter_data($selectoption);
+    //     $this->filterdata = $filterarray;
+    // }
 
     function add_basicparams_elements(&$mform) {
         global $DB, $CFG;
@@ -426,10 +481,14 @@ class reportbase {
     
     function get_all_elements() {
         global $DB;
+        if(!empty($this->params['methodname'])) {
+            $finalelements = $DB->get_records_sql($this->sql, $this->params, $this->start, $this->totalrecords);
+        return $finalelements;
+        }
         if(($this->config->type == 'coursegradeactivities' && $this->params['filter_course'] > 0) || $this->config->type != 'coursegradeactivities'){
             try {
                 $finalelements = $DB->get_records_sql($this->sql, $this->params, $this->start, $this->length);
-            } catch (dml_exception $e) {
+            } catch (dml_exception $e) { 
                 $finalelements = array();
             }
             return $finalelements;
@@ -438,6 +497,16 @@ class reportbase {
 
     public function create_report($blockinstanceid = null, $userid = null, $cron = null){
         global $DB, $CFG, $USER;
+        $methodname = optional_param('wsfunction', '', PARAM_RAW);
+        $costcenterid = optional_param('costcenterid', '', PARAM_RAW);
+        $departmentid = optional_param('departmentid', '', PARAM_RAW);
+        $onlinecourseid = optional_param('onlinecourseid', '', PARAM_RAW);
+        $labid = optional_param('labid', '', PARAM_RAW);
+        $assessmentid = optional_param('assessmentid', '', PARAM_RAW);
+        $classroomid = optional_param('classroomid', '', PARAM_RAW);
+        $learningpathid = optional_param('learningpathid', '', PARAM_RAW);
+        $programid = optional_param('programid', '', PARAM_RAW);
+        
         $this->cronuserid = $userid;
         $this->cronset = $cron;
         if ($this->cronset == 1 AND $this->cronuserid > 0) {
@@ -517,13 +586,26 @@ class reportbase {
             $this->conditionsenabled = true;
             $this->conditionfinalelements = $this->elements_by_conditions($this->componentdata['conditions']);
         }
-        $this->params['siteid'] = SITEID;
-        if(($this->config->type == 'coursegradeactivities' && $this->params['filter_course'] > 0) || $this->config->type != 'coursegradeactivities'){
+        if(!empty($methodname)) {
+            $this->params['siteid'] = SITEID;
+            $this->params['filter_organization'] = $costcenterid;
+            $this->params['filter_departments'] = $departmentid;
+            $this->params['filter_onlinecourses'] = $onlinecourseid;
+            $this->params['filter_labs'] = $labid;
+            $this->params['filter_assessments'] = $assessmentid;
+            $this->params['filter_classrooms'] = $classroomid;
+            $this->params['filter_learningpath'] = $learningpathid;
+            $this->params['filter_programs'] = $programid;            
+            $this->params['methodname'] = $methodname;
+        }
+        // if((($this->config->type == 'coursegradeactivities' || $this->config->type == 'programlevels') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities' && $this->config->type != 'programlevels')){
+        if((($this->config->type == 'coursegradeactivities') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities')){
             $this->build_query(true);
         }
 
         if($this->reporttype == 'table'){
-            if(($this->config->type == 'coursegradeactivities' && $this->params['filter_course'] > 0) || $this->config->type != 'coursegradeactivities'){
+            // if((($this->config->type == 'coursegradeactivities' || $this->config->type == 'programlevels') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities' && $this->config->type != 'programlevels')){
+            if((($this->config->type == 'coursegradeactivities') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities')){
                 try {
                     $this->totalrecords = $DB->count_records_sql($this->sql, $this->params);
                 } catch (dml_exception $e) {
@@ -552,10 +634,42 @@ class reportbase {
             // }
         }
         $this->build_query();
-        $groupcolumn = isset($this->groupcolumn) ? $this->groupcolumn : '';
-        if ($groupcolumn)
-        $this->sql .= " GROUP by $groupcolumn ";
+        $groupcolumn = isset($this->groupcolumn) ? $this->groupcolumn : $this->defaultcolumn;
         // if ($this->config->type != 'userattendance' && $this->config->type != 'attendanceoverview') {
+        // if($this->config->type == 'exam') {
+        //     $this->sql .= " GROUP BY $this->defaultcolumn ";
+        // }
+        // if($this->config->type == 'learnerexamoverview') {
+        //     $this->sql .= " GROUP BY $this->defaultcolumn ";
+        // }
+        // if($this->config->type == 'learnerexamsummary') {
+        //     $this->sql .= " GROUP BY ue.id ";
+        // }  
+        // if($this->config->type == 'examlearnersummery') {
+        //     $this->sql .= " GROUP BY $this->defaultcolumn ";
+        // }
+        // if($this->config->type == 'examlearneroverview') {
+        //     $this->sql .= " GROUP BY $this->defaultcolumn ";
+        // }
+        // if($this->config->type == 'certifications') {
+        //     $this->sql .= " GROUP BY $this->defaultcolumn ";
+        // }
+        // if($this->config->type == 'certificationlearneroverview') {
+        //     $this->sql .= " GROUP BY $this->defaultcolumn ";
+        // }                                       
+        // if($this->config->type == 'users') {
+        //     $this->sql .= " GROUP BY $this->defaultcolumn ";
+        // } 
+        // if($this->config->type == 'learnercertificationssummary') {
+        //     $this->sql .= " GROUP BY u.id, lc.id ";
+        // }
+        // if($this->config->type == 'certificationlearnersummary') {
+        //     $this->sql .= " GROUP BY u.id ";
+        // } 
+        if ($this->config->type != 'learnerstatus'&& $this->config->type != 'learnerattendance' ) {
+            $this->sql .= " GROUP by $groupcolumn ";
+        }
+        if ($this->config->type != 'learnerstatus' && $this->config->type != 'exam' && $this->config->type != 'certifications') {
             if (is_array($this->sqlorder) && !empty($this->sqlorder)) {
                 $this->sql .= " ORDER BY ". $this->sqlorder['column'] .' '. $this->sqlorder['dir'];
             } else {
@@ -565,6 +679,17 @@ class reportbase {
                     $this->sql .= " ORDER BY $this->defaultcolumn DESC ";
                 }
             }
+        } else if ($this->config->type == 'exam' || $this->config->type == 'certifications') {
+            if (is_array($this->sqlorder) && !empty($this->sqlorder)) {
+                $this->sql .= " ORDER BY ". $this->sqlorder['column'] .' '. $this->sqlorder['dir'];
+            } else {
+                if (!empty($sqlorder)) {
+                    $this->sql .= " ORDER BY $sqlorder ";
+                } else {
+                    $this->sql .= " ORDER BY lcv.shortname ASC ";
+                }
+            }
+        }
         // }
         $finalelements = $this->get_all_elements();
         $rows = $this->get_rows($finalelements);
@@ -592,7 +717,7 @@ class reportbase {
         //         $this->params);
         // }
 
-        if($this->config->type == "coursegradeactivities"){
+        if($this->config->type == "coursegradeactivities" || $this->config->type == "programlevels"){
             $columns = (new ls)->learnerscript_activities_dynamic_columns($columns, $this->config,
                 $this->params);
         }
@@ -619,7 +744,7 @@ class reportbase {
                     $class->reportfilterparams = $this->params;
                     $rid = isset($r->id) ? $r->id : 0;
                     if (isset($c['formdata']->column) && 
-                        ($this->config->type == "coursegradeactivities" || in_array($c['formdata']->column, $this->selectedcolumns))) {
+                        (($this->config->type == "coursegradeactivities" || $this->config->type == "programlevels") || in_array($c['formdata']->column, $this->selectedcolumns))) {
                             if (!empty($this->params['filter_users'])) {
                                 $this->currentuser = $this->params['filter_users'];
                             }
@@ -882,7 +1007,8 @@ class reportbase {
     }
     public function rolewisecourses() {
         global $DB;
-        if(!is_siteadmin($this->userid) && !(new ls)->is_manager($this->userid)) {
+        $systemcontext = \context_system::instance();
+        if(!is_siteadmin($this->userid) && !(new ls)->is_manager($this->userid) && !has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
             if(!empty($this->componentdata['permissions']['elements'])){
                 $roleincourse = array_filter($this->componentdata['permissions']['elements'], function($permission){
                    //Role in course permission

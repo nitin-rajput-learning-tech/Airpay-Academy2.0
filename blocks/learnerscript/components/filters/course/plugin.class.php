@@ -33,13 +33,13 @@ class plugin_course extends pluginbase {
         $this->placeholder = true;
         $this->maxlength = 0;
         $this->filtertype = 'custom';
-        // if (!empty($this->reportclass->basicparams)) {
-        //     foreach ($this->reportclass->basicparams as $basicparam) {
-        //         if ($basicparam['name'] == 'course') {
-        //             $this->filtertype = 'basic';
-        //         }
-        //     }
-        // }
+        if (!empty($this->reportclass->basicparams)) {
+            foreach ($this->reportclass->basicparams as $basicparam) {
+                if ($basicparam['name'] == 'course') {
+                    $this->filtertype = 'basic';
+                }
+            }
+        }
         $this->fullname = get_string('filtercourse', 'block_learnerscript');
         $this->reporttypes = array('sql','coursesoverview');
     }
@@ -65,10 +65,11 @@ class plugin_course extends pluginbase {
         }
         return $finalelements;
     }
-    public function filter_data($selectoption = true){
-        global $USER;
+    public function filter_data($selectoption = true, $request){ 
+        global $DB, $USER;
         $filter_courses = '';
-        $filtercourses = optional_param('filter_course', 0, PARAM_INT);
+        $fcourses = isset($request['filter_course']) ? $request['filter_course'] : 0;
+        $filtercourses = optional_param('filter_course', $fcourses, PARAM_RAW);
         if (empty($this->reportclass->basicparams)) {
             $courseoptions = array(get_string('filter_course', 'block_learnerscript'));
         } 
@@ -80,40 +81,62 @@ class plugin_course extends pluginbase {
                 $useroptions = (new \block_learnerscript\local\querylib)->filter_get_users($this,
                             false, false, false, false, false);
                 $userids = array_keys($useroptions);
-                $courseuserid = array_shift($userids);
+                $this->courseuserid = array_shift($userids);
             }else {
-                $courseuserid = null;
+                $this->courseuserid = null;
+            } 
+            if (in_array('organization', $basicparams) && $basicparams[0] == 'organization') {
+                $organizationoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC");
+                $organizationids = array_keys($organizationoptions);
+                if (empty($request['filter_organization'])) {
+                    $courseorganizationid = array_shift($organizationids);
+                } else {
+                    $courseorganizationid = $request['filter_organization'];
+                }
+            } else {
+                $courseorganizationid = 0;
             }
         } else {
-            $courseuserid = null;
+            $this->courseuserid = null;
+        } 
+        $systemcontext = context_system::instance();
+        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+            $this->courseorganizationid = isset($courseorganizationid) ? $courseorganizationid : 0;
+        } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+            $this->courseorganizationid = $USER->open_costcenterid;
+        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+            $this->courseorganizationid = $USER->open_costcenterid;
         }
-        // $courseoptions = (new \block_learnerscript\local\querylib)->filter_get_courses($this, $selectoption,
-        //                                                                         false,$filtercourse, false,
-        //                                                                         $courseuserid, $filtercourses);
-        $querylib = new \block_learnerscript\local\querylib();
-        $courseoptions = $querylib->get_courseslist_forcoursefilter($this, $selectoption, false);   
         
+        $this->filtercoursesid = isset($filtercourses) ? $filtercourses : 0;
+        $querylib = new \block_learnerscript\local\querylib(); 
+        $courseoptions = $querylib->get_courseslist_forcoursefilter($this, $selectoption, false, false);   
         return $courseoptions;
     }
 
-    public function selected_filter($selected) {
-        $filterdata = $this->filter_data();
+    public function selected_filter($selected, $request = array()) {
+        $filterdata = $this->filter_data(true, $request);
         return $filterdata[$selected];
     }
     public function print_filter(&$mform) {
         global $DB, $CFG, $USER;
-        $selectoption = true;
-        $courseoptions = $this->filter_data();
-        if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($courseoptions) > 1) {
+        if ($this->report->type == 'courseprofile' || $this->report->type == 'userprofile') {
+            $selectoption = false;
+        } else {
+            $selectoption = true;
+        }
+        $request = array_merge($_POST, $_GET);
+        $courseoptions = $this->filter_data(true, $request);  
+        if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($courseoptions) > 1) { 
             unset($courseoptions[0]);
         }
-
         $select = $mform->addElement('select', 'filter_course', null,
             $courseoptions,
-            array('data-select2-ajax' => true,
+            array('data-select2' => true,
                   'data-maximum-selection-length' => $this->maxlength,
                   'data-action' => 'filtercourses',
-                  'data-instanceid' => $this->reportclass->config->id));
+                  'data-instanceid' => $this->reportclass->config->id)); 
+
         $select->setHiddenLabel(true);
         if (!$this->singleselection) {
             $select->setMultiple(true);
@@ -123,8 +146,8 @@ class plugin_course extends pluginbase {
         }
         $mform->setType('filter_course', PARAM_INT);
 
-        // $mform->addElement('hidden', 'filter_course_type', $this->filtertype); 
-        // $mform->setType('filter_course_type', PARAM_RAW);
+        $mform->addElement('hidden', 'filter_course_type', $this->filtertype); 
+        $mform->setType('filter_course_type', PARAM_RAW);
 
     }
 }

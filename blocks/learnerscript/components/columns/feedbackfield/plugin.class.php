@@ -78,10 +78,10 @@ class plugin_feedbackfield extends pluginbase {
                 }
                 break;
             case 'allowanswersfrom':
-                $feedbackrecord->{$data->column} = $feedbackrecord->timeopen ? \local_costcenter\lib::get_userdate('d m Y H:i', $feedbackrecord->timeopen) : 'NA';
+                $feedbackrecord->{$data->column} = $feedbackrecord->timeopen ? date('d-M-Y', $feedbackrecord->timeopen) : 'NA';
                 break;
             case 'allowanswersto':
-                $feedbackrecord->{$data->column} = $feedbackrecord->timeclose ? \local_costcenter\lib::get_userdate('d m Y H:i', $feedbackrecord->timeclose) : 'NA';
+                $feedbackrecord->{$data->column} = $feedbackrecord->timeclose ? date('d-M-Y', $feedbackrecord->timeclose) : 'NA';
                 break;
             default:
                 $feedbackrecord->{$data->column} = $feedbackrecord->{$data->column};

@@ -86,7 +86,7 @@ class plugin_skills extends pluginbase {
     }
     public function print_filter(&$mform) {     
         $skills = $this->filter_data();
-        $array = array('data-select2' => 1,'data-maximum-selection-length' => isset($this->maxlength));
+        $array = array('data-select2' => 1,'data-maximum-selection-length' => $this->maxlength);
         $select = $mform->addElement('select', 'filter_skills', get_string('skills'), $skills,$array);
         $select->setHiddenLabel(true);
         $mform->setType('filter_skills', PARAM_INT);

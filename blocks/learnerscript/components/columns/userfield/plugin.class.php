@@ -49,12 +49,36 @@ class plugin_userfield extends pluginbase {
         global $DB, $CFG, $OUTPUT;
         $row->id = isset($row->userid) ? $row->userid : 2;
 
+        // $userrecord = $DB->get_record('user',array('id'=>$row->id));
+        // $userrecord->fullname = '<span class = "userdp_name">';
+        // $userrecord->fullname .= $OUTPUT->user_picture($userrecord);
+        // $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
+        //                             array('href' =>  $CFG->wwwroot.'/user/profile.php?id='.$row->id.''));
+        // $userrecord->fullname .= '</span>';
+        
+        $userprofilereport = $DB->get_field('block_learnerscript', 'id', array('type'=> 'userprofile'), IGNORE_MULTIPLE);
         $userrecord = $DB->get_record('user',array('id'=>$row->id));
         $userrecord->fullname = '<span class = "userdp_name">';
         $userrecord->fullname .= $OUTPUT->user_picture($userrecord);
-        $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
-                                    array('href' =>  $CFG->wwwroot.'/user/profile.php?id='.$row->id.''));
+        $checkpermissions = empty($userprofilereport) ? false : (new reportbase($userprofilereport))->check_permissions($USER->id, $context);
+        if ($this->report->type == 'userprofile' || empty($userprofilereport) || empty($checkpermissions)) {
+            $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
+                        array('href' => $CFG->wwwroot.'/user/profile.php?id='.$row->id.''));
+        }else {
+            $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
+                                    array('href' => $CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$userprofilereport.'&filter_users='.$row->id.'&filter_organization='.$this->reportfilterparams['filter_organization'].'&filter_departments='.$this->reportfilterparams['filter_departments'].'&filter_subdepartments='.$this->reportfilterparams['filter_subdepartments'].''));
+        }
         $userrecord->fullname .= '</span>';
+        $userfullname = $userrecord->fullname;
+        if($CFG->messaging){
+            $userrecord->fullname .= "<sup id='communicate'>";
+            $userrecord->fullname .= html_writer::start_span('ls icon sendsms', array('id'=>"sendsms_" . $this->reportinstance . "_" . $row->id,
+                                                         'onclick'=>'(function(e){
+                                                            require("block_learnerscript/helper").sendmessage({userid: '.$row->id.', reportinstance: ' . $this->reportinstance . '}, \''.$userfullname.'\'); e.stopImmediatePropagation(); }) (event)'));
+            $userrecord->fullname .= html_writer::end_span();
+            $userrecord->fullname .='</sup>';
+        }
+
         switch ($data->column) {
             case 'employeeid':
                 $userrecord->{$data->column} = $userrecord->open_employeeid;
@@ -84,12 +108,12 @@ class plugin_userfield extends pluginbase {
                     $userrecord->{$data->column} = 'NA';
                 }
                 break;
-            // case 'state':
-            //     $userrecord->{$data->column} = ($userrecord->open_state) ? $userrecord->open_state : '--';
-            //     break;
-            // case 'branch':
-            //     $userrecord->{$data->column} = ($userrecord->open_branch) ? $userrecord->open_branch : '--';
-            //     break;
+            case 'state':
+                $userrecord->{$data->column} = ($userrecord->open_state) ? $userrecord->open_state : '--';
+                break;
+            case 'branch':
+                $userrecord->{$data->column} = ($userrecord->open_branch) ? $userrecord->open_branch : '--';
+                break;
             case 'organization':
                 $org = $DB->get_field('local_costcenter', 'fullname', array('id'=>$userrecord->open_costcenterid));
                 $userrecord->{$data->column} = $org;
@@ -111,9 +135,9 @@ class plugin_userfield extends pluginbase {
             case 'team':
                 $userrecord->{$data->column} = ($userrecord->open_team) ? $userrecord->open_team : 'NA';
                 break;
-            // case 'client':
-            //     $userrecord->{$data->column} = ($userrecord->open_client) ? $userrecord->open_client : 'NA';
-            //     break;
+            case 'client':
+                $userrecord->{$data->column} = ($userrecord->open_client) ? $userrecord->open_client : 'NA';
+                break;
             case 'hrmsrole':
                 $userrecord->{$data->column} = ($userrecord->open_hrmsrole) ? $userrecord->open_hrmsrole : 'NA';
                 break;
@@ -125,6 +149,9 @@ class plugin_userfield extends pluginbase {
                 break;
             case 'grade':
                 $userrecord->{$data->column} = ($userrecord->open_grade) ? $userrecord->open_grade : 'NA';
+                break;            
+            case 'country':
+                $userrecord->{$data->column} = ($userrecord->country) ? $userrecord->country  : '--';
                 break;
             default:
                 $userrecord->{$data->column} = $userrecord->{$data->column};

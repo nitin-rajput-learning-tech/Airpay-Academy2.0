@@ -4,11 +4,11 @@ define(['jquery',
         'block_learnerscript/report',
         'block_learnerscript/jquery.serialize-object'],
     function($, ajax, reportwidget, report) {
-        var BasicparamCourse = $('.basicparamsform #id_filter_courses');
+        var BasicparamCourse = $('.basicparamsform #id_filter_course');
         var BasicparamUser = $('.basicparamsform #id_filter_users');
         var BasicparamActivity = $('.basicparamsform #id_filter_activities');
 
-        var FilterCourse = $('.filterform #id_filter_courses');
+        var FilterCourse = $('.filterform #id_filter_course');
         var FilterUser = $('.filterform #id_filter_users');
         var FilterActivity = $('.filterform #id_filter_activities');
 
@@ -81,8 +81,12 @@ define(['jquery',
                 var dashboardurl=$.urlParam('dashboardurl');
                 if(dashboardurl == 'Course'){
                     var filter_courseid = $(".report_courses").val();
-                    reportfilter.filter_courses = filter_courseid;
-                }
+                    reportfilter.filter_course = filter_courseid;
+                } 
+                var filter_coscenterid = $("#dashboardcostcenters").val();
+                reportfilter.filter_organization = filter_coscenterid;
+                var filter_departmentid = $("#dashboarddepartment").val();
+                reportfilter.filter_departments = filter_departmentid;
                 return reportfilter;
             },
             BasicparamsData: function(reportinstance) {
@@ -131,7 +135,7 @@ define(['jquery',
                     $.each(response, function(key, value) {
                         template += '<option value = ' + key + '>' + value + '</option>';
                     });
-                    $("#id_filter_courses").html(template);
+                    $("#id_filter_course").html(template);
                 });
             }
         },
@@ -144,7 +148,7 @@ define(['jquery',
                         action: 'orgdepts',
                         basicparam: true,
                         reporttype: args.reporttype,
-                        orgid: args.orgid
+                        orgid: args.organizationid
                     },
                     url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
                 });
@@ -154,9 +158,395 @@ define(['jquery',
                         template += '<option value = ' + key + '>' + value + '</option>';
                     });
                     $("#id_filter_departments").html(template);
+                    var currentdepartment = $('.basicparamsform #id_filter_departments').find(":selected").val();
+                    if (currentdepartment == 0 || currentdepartment == null) {
+                        $('.basicparamsform #id_filter_departments').val($('.basicparamsform #id_filter_departments option:eq(1)').val());
+                    }
+                    $("#id_filter_departments").trigger('change');
                 });
             }
         },
+
+        orglearningpath: function(args) {
+            var currentorgid = $('#id_filter_organization').find(":selected").val();
+            if (currentorgid > 0) {
+                var promise = ajax.call({
+                    args: {
+                        action: 'orglearningpath',
+                        basicparam: true,
+                        reporttype: args.reporttype,
+                        orgid: args.organizationid
+                    },
+                    url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+                });
+                promise.done(function(response) {
+                    var template = '';
+                    $.each(response, function(key, value) {
+                        template += '<option value = ' + key + '>' + value + '</option>';
+                    });
+                    $("#id_filter_learningpath").html(template);
+                    var currentlearningpath = $('.basicparamsform #id_filter_learningpath').find(":selected").val();
+                    if (currentlearningpath == 0 || currentlearningpath == null) {
+                        $('.basicparamsform #id_filter_learningpath').val($('.basicparamsform #id_filter_learningpath option:eq(1)').val());
+                    }
+                    $("#id_filter_learningpath").trigger('change');
+                });
+            }
+        },
+
+        DepartmentSubdepts: function(args) {
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'deptsubdepartments',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_subdepartments").html(template);
+                var currentsubdepartment = $('.basicparamsform #id_filter_subdepartments').find(":selected").val();
+                if (currentsubdepartment == 0 || currentsubdepartment == null) {
+                    $('.basicparamsform #id_filter_subdepartments').val($('.basicparamsform #id_filter_subdepartments option:eq(1)').val());
+                }
+                $("#id_filter_subdepartments").trigger('change');
+            });
+
+        },
+
+        DepartmentCohorts: function(args) {
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'deptcohorts',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_cohort").html(template);
+                var currentcohort = $('.basicparamsform #id_filter_cohort').find(":selected").val();
+                if (currentcohort == 0 || currentcohort == null) {
+                    $('.basicparamsform #id_filter_cohort').val($('.basicparamsform #id_filter_cohort option:eq(1)').val());
+                }
+                $("#id_filter_cohort").trigger('change');
+            });
+
+        },
+
+        deplearningpath: function(args) {
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'deplearningpath',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_learningpath").html(template);
+                var currentlearningpath = $('.basicparamsform #id_filter_learningpath').find(":selected").val();
+                if (currentlearningpath == 0 || currentlearningpath == null) {
+                    $('.basicparamsform #id_filter_learningpath').val($('.basicparamsform #id_filter_learningpath option:eq(1)').val());
+                }
+                $("#id_filter_learningpath").trigger('change');
+            });
+
+        }, 
+        deponlinecourses: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'deponlinecourses',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_onlinecourses").html(template);
+                var currentonlinecourse = $('.basicparamsform #id_filter_onlinecourses').find(":selected").val();
+                if (currentonlinecourse == 0 || currentonlinecourse == null) {
+                    $('.basicparamsform #id_filter_onlinecourses').val($('.basicparamsform #id_filter_onlinecourses option:eq(1)').val());
+                }
+                $("#id_filter_onlinecourses").trigger('change');
+            });
+        },
+        deplabs: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'deplabs',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_labs").html(template);
+                var currentlab = $('.basicparamsform #id_filter_labs').find(":selected").val();
+                if (currentlab == 0 || currentlab == null) {
+                    $('.basicparamsform #id_filter_labs').val($('.basicparamsform #id_filter_labs option:eq(1)').val());
+                }
+                $("#id_filter_labs").trigger('change');
+            });
+        },
+        depassessments: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'depassessments',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_assessments").html(template);
+                var currentassessment = $('.basicparamsform #id_filter_assessments').find(":selected").val();
+                if (currentassessment == 0 || currentassessment == null) {
+                    $('.basicparamsform #id_filter_assessments').val($('.basicparamsform #id_filter_assessments option:eq(1)').val());
+                }
+                $("#id_filter_assessments").trigger('change');
+            });
+        },
+        depusergroups: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'depusergroups',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_usergroup").html(template);
+                var currentlearningpath = $('.basicparamsform #id_filter_usergroup').find(":selected").val();
+                if (currentlearningpath == 0 || currentlearningpath == null) {
+                    $('.basicparamsform #id_filter_usergroup').val($('.basicparamsform #id_filter_usergroup option:eq(1)').val());
+                }
+                $("#id_filter_usergroup").trigger('change');
+            });
+        },        
+        depwebinars: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'depwebinars',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_webinars").html(template);
+                var currentwebinar = $('.basicparamsform #id_filter_webinars').find(":selected").val();
+                if (currentwebinar == 0 || currentwebinar == null) {
+                    $('.basicparamsform #id_filter_webinars').val($('.basicparamsform #id_filter_webinars option:eq(1)').val());
+                }
+                $("#id_filter_webinars").trigger('change');
+            });
+        },
+        depprograms: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'depprograms',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_programs").html(template);
+                var currentwebinar = $('.basicparamsform #id_filter_programs').find(":selected").val();
+                if (currentwebinar == 0 || currentwebinar == null) {
+                    $('.basicparamsform #id_filter_programs').val($('.basicparamsform #id_filter_programs option:eq(1)').val());
+                }
+                $("#id_filter_programs").trigger('change');
+            });
+        },
+        depclassrooms: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'depclassrooms',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_classrooms").html(template);
+                var currentclassroom = $('.basicparamsform #id_filter_classrooms').find(":selected").val();
+                if (currentclassroom == 0 || currentclassroom == null) {
+                    $('.basicparamsform #id_filter_classrooms').val($('.basicparamsform #id_filter_classrooms option:eq(1)').val());
+                }
+                $("#id_filter_classrooms").trigger('change');
+            });
+        },
+
+        DepartmentCourses: function(args) { 
+                var currentsubdepartment = $('#id_filter_subdepartments').find(":selected").val();
+                var currentdepartment = $('#id_filter_departments').find(":selected").val();
+                var currentorganization = $('#id_filter_organization').find(":selected").val();
+                var requestedcourseid = args.courseid;
+                // if (currentorganization > 0) {
+                    var promise = ajax.call({
+                        args: {
+                            action: 'departmentcourses',
+                            basicparam: true,
+                            reporttype: args.reporttype,
+                            subdepartmentid: args.subdepartmentid,
+                            departmentid: args.departmentid,
+                            orgid: args.organizationid
+                            
+                        },
+                        url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+                    });
+                    promise.done(function(response) {
+                        var template = '';
+                        $.each(response, function(key, value) {
+                            var selected = '';
+                            if (key == requestedcourseid) {
+                                selected = 'selected';
+                            }
+                            template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                        });
+                        $("#id_filter_course").html(template);
+                        var currentcourse = $('.basicparamsform #id_filter_course').find(":selected").val();
+                        if (currentcourse == 0 || currentcourse == null) {
+                            $('.basicparamsform #id_filter_course').val($('.basicparamsform #id_filter_course option:eq(1)').val());
+                        }
+                        $("#id_filter_course").trigger('change');
+                    });
+                // }
+            }, 
+
+            DepartmentUsers: function(args) { 
+                var currentsubdepartment = $('#id_filter_subdepartments').find(":selected").val();
+                var currentdepartment = $('#id_filter_departments').find(":selected").val();
+                var currentorganization = $('#id_filter_organization').find(":selected").val();
+                var requesteduserid = args.userid;
+                // if (currentorganization > 0) {
+                    var promise = ajax.call({
+                        args: {
+                            action: 'departmentusers',
+                            basicparam: true,
+                            reporttype: args.reporttype,
+                            subdepartmentid: args.subdepartmentid,
+                            departmentid: args.departmentid,
+                            orgid: args.organizationid
+                            
+                        },
+                        url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+                    });
+                    promise.done(function(response) {
+                        var template = '';
+                        $.each(response, function(key, value) {
+                            var selected = '';
+                            if (key == requesteduserid) {
+                                selected = 'selected';
+                            }
+                            template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                        });
+                        $("#id_filter_users").html(template);
+                        var currentcourse = $('.basicparamsform #id_filter_users').find(":selected").val();
+                        if (currentcourse == 0 || currentcourse == null) {
+                            $('.basicparamsform #id_filter_users').val($('.basicparamsform #id_filter_users option:eq(1)').val());
+                        }
+                        $("#id_filter_users").trigger('change');
+                    });
+                // }
+            },
 
         CourseActivities: function(args) {
             var nearelement = args.element || $('#id_filter_activities');
@@ -205,8 +595,8 @@ define(['jquery',
             }
         },
         UserCourses: function(args) {
-            var currentcourse = $('#id_filter_courses').find(":selected").val();
-            $('#id_filter_courses').find('option')
+            var currentcourse = $('#id_filter_course').find(":selected").val();
+            $('#id_filter_course').find('option')
                 .remove()
                 .end()
                 .append('<option value="">Select Course</option>');
@@ -228,7 +618,7 @@ define(['jquery',
                         }
                         if ((key == Object.keys(response)[0] && args.firstelementactive == 1) ||
                                 (key == currentcourse && args.firstelementactive == 1)) {
-                            $('#id_filter_courses').append($("<option></option>")
+                            $('#id_filter_course').append($("<option></option>")
                                 .attr("value", key)
                                 .attr('selected', 'selected')
                                 .text(value));
@@ -236,7 +626,7 @@ define(['jquery',
                                 smartfilter.CourseActivities({ courseid: key });
                             }
                         } else {
-                            $('#id_filter_courses').append($("<option></option>")
+                            $('#id_filter_course').append($("<option></option>")
                                 .attr("value", key)
                                 .text(value));
                         }

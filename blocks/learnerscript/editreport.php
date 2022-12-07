@@ -54,7 +54,7 @@ if (!has_capability('block/learnerscript:managereports', $context) && !has_capab
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('incourse');
 
-$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');;
+//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');;
 $PAGE->requires->jquery_plugin('ui-css');
 
 if ($id) {
@@ -140,6 +140,7 @@ if ($delete && confirm_sesskey()) {
 		$PAGE->set_heading($title);
 		$PAGE->set_cacheable(true);
 		echo $OUTPUT->header();
+	        echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 		$message = get_string('confirmdeletereport', 'block_learnerscript');
 		$optionsyes = array('id' => $report->id, 'delete' => $delete, 'sesskey' => sesskey(), 'confirm' => 1);
 		$optionsno = array();
@@ -210,6 +211,7 @@ $PAGE->set_heading($title);
 $PAGE->set_cacheable(true);
 
 echo $OUTPUT->header();
+echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 echo html_writer::start_tag('div',array());
 
 if ($id) {

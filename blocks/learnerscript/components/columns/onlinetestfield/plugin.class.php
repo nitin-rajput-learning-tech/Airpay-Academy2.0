@@ -68,10 +68,10 @@ class plugin_onlinetestfield extends pluginbase {
                 $onlinetestrecord->{$data->column} = round($onlinetestrecord->grademax, 2);
             break;
             case 'quizopendate':
-                $onlinetestrecord->{$data->column} = ($onlinetestrecord->timeopen) ? \local_costcenter\lib::get_userdate('d m Y H:i', $onlinetestrecord->timeopen) : 'NA';
+                $onlinetestrecord->{$data->column} = ($onlinetestrecord->timeopen) ? date('d-M-Y', $onlinetestrecord->timeopen) : 'NA';
             break;                
             case 'quizclosedate':
-                $onlinetestrecord->{$data->column} = ($onlinetestrecord->timeclose) ? \local_costcenter\lib::get_userdate('d m Y H:i', $onlinetestrecord->timeclose) : 'NA';
+                $onlinetestrecord->{$data->column} = ($onlinetestrecord->timeclose) ? date('d-M-Y', $onlinetestrecord->timeclose) : 'NA';
                 break;
             case 'points':
                 $onlinetestrecord->{$data->column} = ($onlinetestrecord->open_points) ? $onlinetestrecord->open_points : 'NA';

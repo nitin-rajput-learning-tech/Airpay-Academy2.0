@@ -632,10 +632,7 @@ class ls {
 				$event->trigger();
 				if($config && $reportid)  {
 					$PAGE->set_context($context);
-					$regions = array('side-db-first', 'side-db-second', 'side-db-third',
-                 'side-db-four', 'side-db-one', 'side-db-two',
-                 'side-db-three', 'side-db-main', 'center-first', 'center-second','reports-db-one','reports-db-two',
-                 'reportdb-one','reportdb-second','reportdb-third','first-maindb');
+					$regions = array('side-db-first', 'side-db-second', 'side-db-third', 'side-db-four', 'learning-first', 'learning-second', 'learning-third', 'learning-fourth', 'learning-fifth', 'learning-sixth', 'first-maindb', 'learner-first', 'learner-second', 'learner-third', 'learner-fourth', 'learner-fifth', 'learner-sixth', 'learner-maindb', 'ol-one', 'ol-second', 'ol-third', 'ol-fourth', 'ol-fifth', 'ol-sixth', 'reportdb-one', 'reportdb-second', 'reportdb-third', 'center-first', 'center-second', 'reports-db-one', 'reports-db-two', 'side-db-main', 'side-db-one', 'side-db-two', 'side-db-three', 'lp-one', 'lp-second', 'lp-third', 'lp-fourth', 'lp-fifth', 'lp-sixth', 'learn-one', 'learn-second', 'learn-third', 'lp-main', 'labs-one', 'labs-second', 'labs-third', 'labs-fourth', 'labs-fifth', 'labs-sixth', 'exam-one', 'exam-second', 'labs-db-main', 'assess-one', 'assess-second', 'assess-third', 'assess-fourth', 'assess-fifth', 'assess-sixth', 'certifi-one', 'certifi-second', 'certifi-third', 'assess-db-main', 'webinars-one', 'webinars-second', 'webinars-third', 'webinars-fourth', 'webinars-fifth', 'webinars-sixth', 'compliance-one', 'compliance-second', 'compliance-third', 'webinars-db-main', 'classroom-one', 'classroom-second', 'classroom-third', 'classroom-four', 'classroom-main', 'program-one', 'program-second', 'program-third', 'program-four', 'program-fifth', 'program-sixth', 'program-main', 'compliance-first', 'reportcert-one', 'reportcert-two', 'reportcert-third', 'reportcert-four', 'reportcert-fifth', 'cert-one', 'cert-second');
 					$PAGE->blocks->add_regions($regions);
 					$blocksinstancedata = isset($data['report']['#']['instance']) ? $data['report']['#']['instance'] : 0;
 					$blockspositiondata = isset($data['report']['#']['position']) ? $data['report']['#']['position'] : 0;
@@ -804,20 +801,15 @@ class ls {
 	 */
 	public function schedulereportsquery($frequency = false) {
 		global $DB;
-		// core_date::set_default_server_timezone();
-		// $now = new DateTime("now", core_date::get_server_timezone_object());
-		// $date = $now->format('d m Y');
-		// $date = explode('-', $now->format('d m Y'));
-		// $hour = $now->format('H');
-		$date = explode('-', date('d-m-Y-H-i', time()));
-		$currenthourtimestamp = mktime($date[3], 0,0, $date[1], $date[0], $date[2]);
-		$nexthourtimestamp = $currenthourtimestamp+3600;
+		core_date::set_default_server_timezone();
+		$now = new DateTime("now", core_date::get_server_timezone_object());
+		$date = $now->format('Y-m-d');
+		$hour = $now->format('H');
 		$frequencyquery = '';
 		if ($frequency == ONDEMAND) {
 			$frequencyquery = " AND crs.frequency = $frequency AND crs.timemodified = 0 ";
 		} else {
-			$frequencyquery = " AND crs.nextschedule <= {$nexthourtimestamp} AND crs.nextschedule >= {$currenthourtimestamp} ";
-			// $frequencyquery = " AND DATE(FROM_UNIXTIME(crs.nextschedule)) = '$date' AND HOUR(FROM_UNIXTIME(crs.nextschedule)) = $hour";
+			$frequencyquery = " AND DATE(FROM_UNIXTIME(crs.nextschedule)) = '$date' AND HOUR(FROM_UNIXTIME(crs.nextschedule)) = $hour";
 		}
 		$sql = "SELECT crs.*, cr.name, cr.courseid, u.timezone
 	              FROM {block_ls_schedule} as crs
@@ -825,8 +817,6 @@ class ls {
 	              JOIN {user} as u ON crs.userid = u.id
 	             WHERE u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 $frequencyquery";
 		$scheduledreports = $DB->get_records_sql($sql);
-		// echo $sql;
-		// print_r($scheduledreports);
 		return $scheduledreports;
 	}
 	/**
@@ -838,7 +828,7 @@ class ls {
 		global $CFG, $DB;
 		$schedule = new \block_learnerscript\local\schedule;
 		$scheduledreports = (new self)->schedulereportsquery($frequency);
-		$totalschedulereports = count($scheduledreports);
+		$totalschedulereports = count($scheduledreports); 
 		mtrace('Processing ' . $totalschedulereports . ' scheduled reports');
 		if ($totalschedulereports > 0) {
 			foreach ($scheduledreports as $scheduled) {
@@ -925,10 +915,10 @@ class ls {
 	//     if ($flag == 1) {
 	//         $reportinfo = $dynclass->report;
 	//         if ($reportinfo->type == 'topic_wise_performance') {
-	//             $filter_courses = optional_param('filter_courses', 0, PARAM_INT);
-	//             $courseid = isset( $basicparams['filter_courses']) ? $basicparams['filter_courses'] : null;
-	//             if (!empty($filter_courses)) {
-	//             	$courseid = $filter_courses;
+	//             $filter_course = optional_param('filter_course', 0, PARAM_INT);
+	//             $courseid = isset( $basicparams['filter_course']) ? $basicparams['filter_course'] : null;
+	//             if (!empty($filter_course)) {
+	//             	$courseid = $filter_course;
 	//             }
 	//             // $qlist = $dynclass->get_sessionslist($courseid);
 	//             if($courseid > 1) {
@@ -994,10 +984,10 @@ class ls {
 	    if($flag==1){
 	        $reportinfo= $dynclass->report;
 	        if($reportinfo->type=='courseactivitiesinfo'){
-	            $filter_courses = optional_param('filter_courses', 0, PARAM_INT);
-	            $courseid = optional_param('courseid', $filter_courses, PARAM_INT);
-	            if(!empty($filter_courses)){
-	            	$courseid = $filter_courses;
+	            $filter_course = optional_param('filter_course', 0, PARAM_INT);
+	            $courseid = optional_param('courseid', $filter_course, PARAM_INT);
+	            if(!empty($filter_course)){
+	            	$courseid = $filter_course;
 	            }
 	            $coursecontext = context_course::instance($courseid);
 	            $studentroleid = $DB->get_field('role','id',array('shortname'=>'student'));
@@ -1008,7 +998,7 @@ class ls {
 						JOIN {context} ct ON ct.id = ra.contextid
 						JOIN {course} c ON c.id = ct.instanceid
 						JOIN {role} r ON r.id = ra.roleid
-						WHERE r.id = $studentroleid AND c.id = $filter_courses AND u.id IN (3,4)";
+						WHERE r.id = $studentroleid AND c.id = $filter_course AND u.id IN (3,4)";
 				$qlist = $DB->get_records_sql($sql);
 	        }
 	        foreach($qlist as $value){
@@ -1201,6 +1191,9 @@ class ls {
 	             	$params = array();
 	             	$params['capname'] = 'block/learnerscript:managereports';
 	             	$params['rolename'] = $_SESSION['role'];
+	                if($_SESSION['role'] == "user") {
+	        			$params['rolename'] = "employee";
+	        	    }
 	             	$params['context'] = 10;
 	             	$params['permission'] = CAP_ALLOW;
 
@@ -1238,12 +1231,12 @@ class ls {
     	if(empty($role) || $role == 'manager'){
     		return array();
     	}
-		$reportlist = $DB->get_records_select_menu('block_learnerscript', " global = 1 AND visible = 1 AND type LIKE 'statistics' ", null, '', 'id, name');
+		$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND type = "statistics"', null, '', 'id, name');
 		$statisticsreports = array();
 		if(!empty($reportlist)) {
 			foreach ($reportlist as $key => $value) {
 				if(!empty($role)) {
-		            $check_rolewise_permission = (new ls)->check_rolewise_permission($key, $role);
+		            $check_rolewise_permission = (new ls)->check_rolewise_permission($key, $_SESSION['role']);
 			        if($check_rolewise_permission == false) {
 			            continue;
 			        }
@@ -1256,12 +1249,12 @@ class ls {
     function get_reporttitle($reporttype,$reportclassparams){
     	global $DB;
     	$reporttitle = $reporttype;
-    	if(array_key_exists('filter_courses',$reportclassparams) && $reporttitle != 'Course profile'){
-    		$coursename = $DB->get_field('course','fullname',array('id'=>$reportclassparams['filter_courses']));
+    	if(array_key_exists('filter_course',$reportclassparams) && $reporttitle != 'Course profile'){
+    		$coursename = $DB->get_field('course','fullname',array('id'=>$reportclassparams['filter_course']));
     		$reporttitle = str_replace('Course', '<b>'.$coursename.'</b> Course', $reporttype);
     	}
     	if(array_key_exists('filter_status',$reportclassparams) && $reportclassparams['filter_status'] != 'all'){
-    		$reporttitle = $reporttitle . ' - ' . '<b>' . get_string($reportclassparams['filter_status'],'block_learnerscript') . '</b>';
+			$reporttitle = $reporttitle . ' - ' . '<b>' . get_string($reportclassparams['filter_status'],'block_learnerscript') . '</b>';
     	}
     	if(array_key_exists('filter_users',$reportclassparams)){
     		if(is_int($reportclassparams['filter_users'])){
@@ -1297,13 +1290,14 @@ class ls {
 		$path = $CFG->dirroot . '/blocks/learnerscript/backup/';
 		$learnerscriptreports = glob($path . '*.xml');
 		$lsreportscount = $DB->count_records('block_learnerscript');
-		$lsimportlogssql = "SELECT other
-		                      FROM {logstore_standard_log}
-		                     WHERE action = :action AND target = :target
-		                            AND objecttable = :objecttable AND other <> :other";
-		$lsimportlogs = $DB->get_fieldset_sql($lsimportlogssql, array('action' => 'import',
-		    'target' => 'report', 'objecttable' => 'block_learnerscript', 'other' => 'N;'));
+		// $lsimportlogssql = "SELECT other
+		//                       FROM {logstore_standard_log}
+		//                      WHERE action = :action AND target = :target
+		//                             AND objecttable = :objecttable AND other <> :other";
+		// $lsimportlogs = $DB->get_fieldset_sql($lsimportlogssql, array('action' => 'import',
+		//     'target' => 'report', 'objecttable' => 'block_learnerscript', 'other' => 'N;'));
 		$lastreport = 0;
+		$lsimportlogs =array();
 		foreach ($lsimportlogs as $lsimportlog) {
 		    $lslog = unserialize($lsimportlog);
 		    if ($lslog['status'] == false) {
@@ -1504,7 +1498,8 @@ class ls {
 	    }
     	foreach ($quizdetails as $quizdetail) {
     		$coursemoduleid = $DB->get_field('course_modules', 'id', array('module' => $moduleid, 'instance' => $quizdetail->quiz));
-    		$companyinfo = $DB->get_record_sql('SELECT cu.companyid, cu.departmentid  FROM {company_users} cu JOIN  {company_course} cc ON cc.companyid = cu.companyid WHERE cu.userid = "' . $quizdetail->userid . '" AND cc.courseid = "' . $quizdetail->courseid . '"');
+    		// $companyinfo = $DB->get_record_sql('SELECT cu.companyid, cu.departmentid  FROM {company_users} cu JOIN  {company_course} cc ON cc.companyid = cu.companyid WHERE cu.userid = "' . $quizdetail->userid . '" AND cc.courseid = "' . $quizdetail->courseid . '"');
+    		$companyinfo = $DB->get_record_sql('SELECT u.open_costcenterid AS companyid, u.open_departmentid AS departmentid FROM {user} u JOIN  {course} cc ON cc.open_costcenterid = u.open_costcenterid WHERE u.id = "' . $quizdetail->userid . '" AND cc.id = "' . $quizdetail->courseid . '"');
     		$insertdata = new stdClass();
 	        $insertdata->userid = $quizdetail->userid;
 	        $insertdata->courseid = $quizdetail->courseid;
@@ -1540,7 +1535,8 @@ class ls {
 	        }
 	        $records = $DB->get_records('block_ls_modtimestats',
 	                    array('courseid' => $insertdata->courseid,
-	                        'contextinstanceid' => $insertdata->contextinstanceid,
+	                        // 'contextinstanceid' => $insertdata->contextinstanceid,
+	                        'activityid' => $insertdata->contextinstanceid,
 	                        'instanceid' => $insertdata->instanceid,
 	                        'userid' => $insertdata->userid));
 		    if ($insertdata->instanceid != 0) {
@@ -1666,6 +1662,9 @@ class ls {
         if (!empty($_SESSION['role'])) {
             $data['currentrole'] = $_SESSION['role'];
             $data['dashboardrole'] = $_SESSION['role'];
+            if($_SESSION['role'] == 'user'){
+            	$data['dashboardrole'] = "employee";
+            }
         } else {
             $data['currentrole'] = 'Switch Role';
             $data['dashboardrole'] = '';
@@ -1727,8 +1726,6 @@ class ls {
             }
             $data['roles'][] = ['roleshortname' => $roleshortname, 'rolename' => $contexttext." ".$value,
                                 'active' => $active, 'contextlevel' => $rolecontext[1]];
-            // print_object($data);
-            // exit;
         }
         return $data;
   	}
@@ -1767,6 +1764,13 @@ class ls {
 	            $dynclass = new $plgname($config, $colvalue);
 	            $flag=1;
 	        }
+	        if($colvalue->pluginname=="programlevels"){
+	            require_once($CFG->dirroot . '/blocks/learnerscript/components/columns/programlevels/plugin.class.php');
+	            $pluginname =$colvalue->pluginname;
+	            $plgname= 'plugin_programlevels';
+	            $dynclass = new $plgname($config, $colvalue);
+	            $flag=1;
+	        }
 	    }
 	    if($flag==1){
 	        $reportinfo= $dynclass->report;
@@ -1802,10 +1806,46 @@ class ls {
 
 	            }
 	        }
+	        if($reportinfo->type=='programlevels'){
+	            $programid = isset( $basicparams['filter_programs']) ? $basicparams['filter_programs'] : null;
+	            if($programid){	  
+            		$newarray = array();
+            		$sqllist = "SELECT lpl.id, lpl.level 
+                                FROM {local_program_levels} lpl
+                                WHERE 1 = 1 AND lpl.programid = $programid";
+
+            		$levelslist = $DB->get_records_sql($sqllist);
+			        foreach ($levelslist as $levellist) {
+			            $levels[] = $levellist->level;
+			        }
+	            }
+	            if (!empty($levels)) {
+			        foreach($levels as $k => $value){
+			            $columns[] = (new self)->learnerscript_create_dynamic_levelcolumns($value,
+			            	'programlevels', $k);
+			        }
+			    }
+	        }
 	    }
 		return $columns;
 	} // end of public function
 
+	/**
+	 * [learnerscript_create_dynamic_sectioncolumns description]
+	 * @param  [type] $value     [description]
+	 * @param  [type] $columname [description]
+	 * @return [type]            [description]
+	 */
+	public function learnerscript_create_dynamic_levelcolumns($value, $columname, $k){
+		$newcolumn = array();
+		$formdata = new stdclass();
+		$formdata->column = "level_$k";
+		$formdata->columname = $value;;
+		$newcolumn['formdata'] = $formdata;
+		$newcolumn['pluginname'] = $columname;
+		$newcolumn['pluginfullname'] = $columname;
+		return $newcolumn;
+	}
 
 	/**
 	 * [learnerscript_create_dynamic_activities description]
@@ -1853,4 +1893,272 @@ class ls {
 	     }
 	    return $newcolumn;
 	} // end of public function
+	public function learningformats() { 
+		global $DB; 
+		$learningformatstime = get_config('block_learnerscript', 'learningformats');
+		if (!empty($learningformatstime)) {
+			$sql = "SELECT CONCAT(clf.id, '@', u.id, '&', c.id, '-', ue.id, '#', ra.id) AS sample, ue.id AS tableid, clf.id AS moduleid, clf.name AS moduletype, c.id AS learningformatid, c.fullname AS name, ue.userid AS userid, CONCAT(u.firstname, ' ', u.lastname) AS username, ue.timecreated AS enroldate, u.open_costcenterid AS user_costcenterid, u.open_departmentid AS user_departmentid, c.open_costcenterid AS costcenterid, c.open_departmentid AS departmentid, c.timecreated as timecreated, ra.timemodified AS role_assign_timemodified, c.open_contentvendor AS open_contentvendor, c.open_subdepartment AS subdepartment, u.open_subdepartment AS user_subdepartment, cc.timecompleted AS completiondate, ue.completiondate AS upcomingdeadline, CONCAT('@',ue.id) AS refid
+				FROM {user_enrolments} ue
+				JOIN {enrol} e ON e.id = ue.enrolid
+				JOIN {role_assignments} ra ON ra.userid = ue.userid
+				JOIN {context} ct ON ct.id = ra.contextid
+				JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
+				JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
+				JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
+				JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat AND clf.name IN ('Online Course','Lab','Assessment', 'Webinar') 
+				LEFT JOIN {course_completions} cc ON cc.course = c.id AND cc.userid = ue.userid
+				WHERE 1 = 1 AND c.visible = 1 AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND (ue.timecreated >= $learningformatstime OR
+					u.timemodified >= $learningformatstime OR ue.timemodified >= $learningformatstime OR c.timemodified >= $learningformatstime OR cc.timecompleted >= $learningformatstime OR ra.timemodified >= $learningformatstime OR e.timemodified >= $learningformatstime)
+				UNION ALL
+				SELECT CONCAT(8, '@', llpu.userid, '&', llp.id, '-', llpu.id, '@') AS sample, llpu.id AS tableid, 8 AS moduleid, 'Learning path' AS moduletype, llp.id AS learningformatid, llp.name AS name, llpu.userid AS userid, CONCAT(u.firstname, ' ', u.lastname) AS username, llpu.timecreated AS enroldate,
+				u.open_costcenterid AS user_costcenterid, u.open_departmentid AS user_departmentid, llp.costcenter AS costcenterid, llp.department AS departmentid, llp.timecreated AS timecreated, llpu.timecreated AS role_assign_timemodified, '0', llp.subdepartment AS subdepartment, u.open_subdepartment AS user_subdepartment, llpu.completiondate AS completiondate, llpu.lpdeadline AS upcomingdeadline, CONCAT('&',llpu.id) AS refid
+				FROM {local_learningplan_user} AS llpu
+				JOIN {local_learningplan} AS llp ON llp.id = llpu.planid
+				JOIN {user} AS u ON u.id = llpu.userid AND u.confirmed = 1 AND u.deleted = 0 
+				WHERE 1 = 1 AND (llpu.timecreated >= $learningformatstime OR llpu.timemodified >= $learningformatstime OR llp.timemodified >= $learningformatstime OR u.timemodified >= $learningformatstime)
+				UNION ALL
+				SELECT CONCAT(9, '@', lpu.userid, '&', lp.id, '-', lpu.id, '#') AS sample, lpu.id AS tableid, 9 AS moduleid, 'Program' AS moduletype, lp.id AS learningformarid, lp.name AS name, lpu.userid AS userid, CONCAT(u.firstname, ' ', u.lastname) AS username, lpu.timecreated AS enroldate, u.open_costcenterid AS user_costcenterid, u.open_departmentid AS user_departmentid, lp.costcenter AS costcenterid, lp.department AS departmentid, lp.timecreated AS timecreated, lpu.timecreated AS role_assign_timemodified, '0', lp.subdepartment AS subdepartment, u.open_subdepartment AS user_subdepartment, lpu.completiondate AS completiondate, lpu.programdeadline AS upcomingdeadline, CONCAT('$', lpu.id) AS refid
+				FROM {local_program_users} as lpu
+				JOIN {local_program} as lp on lp.id = lpu.programid
+				JOIN {user} AS u ON u.id = lpu.userid
+				WHERE 1 = 1 AND (lpu.timecreated >= $learningformatstime OR lpu.timemodified >= $learningformatstime OR lp.timemodified >= $learningformatstime AND u.timemodified >= $learningformatstime)
+				UNION ALL
+				SELECT CONCAT(10, '@', lcu.userid, '&', lc.id, '-', lcu.id, '$', lca.id) AS sample, lca.id AS tableid, 10 AS moduleid, 'Instructor-led courses' AS moduletype, lc.id AS learningformatid, lc.name AS name, lcu.userid AS userid, CONCAT(u.firstname, ' ', u.lastname) AS username, lcu.timecreated AS enroldate, u.open_costcenterid AS user_costcenterid, u.open_departmentid AS user_departmentid, lc.costcenter AS costcenterid, lc.department AS departmentid, lc.timecreated AS timecreated, lcu.timecreated AS role_assign_timemodified, '0', lc.subdepartment AS subdepartment, u.open_subdepartment AS user_subdepartment, IF ((lca.status = 1 AND lcs.timefinish < UNIX_TIMESTAMP()), lcs.timefinish, 0) AS completiondate, '0', CONCAT('#', lca.id) AS refid
+				FROM {local_classroom_attendance} as lca
+				JOIN {local_classroom_users} AS lcu ON lca.userid = lcu.userid
+				JOIN {local_classroom} AS lc ON lc.id = lcu.classroomid AND lca.classroomid = lc.id
+				JOIN {user} AS u ON u.id = lcu.userid AND u.confirmed = 1 AND u.deleted = 0 
+				JOIN {local_classroom_sessions} lcs ON lcs.classroomid = lca.classroomid AND lcs.id = lca.sessionid
+				WHERE 1 = 1 AND lca.enrol_status = 0 AND (lca.timecreated >= $learningformatstime OR lca.timemodified >= $learningformatstime OR lcu.timecreated >= $learningformatstime OR lcu.timemodified >= $learningformatstime OR lc.timemodified >= $learningformatstime OR u.timemodified >= $learningformatstime OR lcs.timefinish >= $learningformatstime)";
+			$learningformatsinfo = $DB->get_recordset_sql($sql); 
+			foreach ($learningformatsinfo as $lfinfo) {
+                $lsinfodata = new stdClass;
+                $lsinfodata->moduleid = $lfinfo->moduleid;
+                $lsinfodata->moduletype = $lfinfo->moduletype;
+                $lsinfodata->learningformatid = $lfinfo->learningformatid;
+                $lsinfodata->name = $lfinfo->name;
+                $lsinfodata->userid = $lfinfo->userid;
+                $lsinfodata->username = $lfinfo->username;
+                $lsinfodata->enroldate = $lfinfo->enroldate;
+                $lsinfodata->timecreated = $lfinfo->timecreated;
+                $lsinfodata->role_assign_timemodified = $lfinfo->role_assign_timemodified;
+                $lsinfodata->open_contentvendor = !empty($lfinfo->open_contentvendor) ? $lfinfo->open_contentvendor : 0;
+                $lsinfodata->completiondate = !empty($lfinfo->completiondate) ? $lfinfo->completiondate : 0;
+                $lsinfodata->upcomingdeadline = !empty($lfinfo->upcomingdeadline) ? $lfinfo->upcomingdeadline : 0;
+                $lsinfodata->overduedeadline = !empty($lfinfo->upcomingdeadline) ? $lfinfo->upcomingdeadline : 0;                        
+                $lsinfodata->user_costcenterid = (!empty($lfinfo->user_costcenterid) && ($lfinfo->user_costcenterid > 0)) ? $lfinfo->user_costcenterid : 0;
+                $lsinfodata->user_departmentid = (!empty($lfinfo->user_departmentid) && ($lfinfo->user_departmentid > 0)) ? $lfinfo->user_departmentid : 0;
+                $lsinfodata->costcenterid = (!empty($lfinfo->costcenterid) && ($lfinfo->costcenterid > 0))? $lfinfo->costcenterid : 0;
+                $lsinfodata->departmentid = (!empty($lfinfo->departmentid) && ($lfinfo->departmentid > 0)) ? $lfinfo->departmentid : 0;
+
+                $lsinfodata->user_subdepartment = (!empty($lfinfo->user_subdepartment) && ($lfinfo->user_subdepartment > 0)) ? $lfinfo->user_subdepartment : 0;
+                $lsinfodata->subdepartment = (!empty($lfinfo->subdepartment)&&($lfinfo->subdepartment> 0)) ? $lfinfo->subdepartment : 0;    
+                $lsinfodata->refid = $lfinfo->refid;
+
+                $records1 = $DB->get_field('block_ls_learningformats', 'id', 
+                        array('moduleid' => $lsinfodata->moduleid,
+                            'learningformatid' => $lsinfodata->learningformatid,
+                                'userid' => $lsinfodata->userid,
+                                'refid' => $lsinfodata->refid));
+
+                if (!empty($records1)) {
+                    $lsinfodata->id = $records1;
+                    $lsinfodata->moduleid = $lsinfodata->moduleid;
+                    $lsinfodata->moduletype = $lsinfodata->moduletype;
+                    $lsinfodata->learningformatid = $lsinfodata->learningformatid;
+                    $lsinfodata->name = $lsinfodata->name;
+                    $lsinfodata->userid = $lsinfodata->userid;
+                    $lsinfodata->username = $lsinfodata->username;
+                    $lsinfodata->enroldate = $lsinfodata->enroldate;
+                    $lsinfodata->timecreated = $lsinfodata->timecreated;
+                    $lsinfodata->role_assign_timemodified = $lsinfodata->role_assign_timemodified;
+                    $lsinfodata->open_contentvendor = $lsinfodata->open_contentvendor;
+                    $lsinfodata->completiondate = $lsinfodata->completiondate;
+                    $lsinfodata->upcomingdeadline = $lsinfodata->upcomingdeadline;
+                    $lsinfodata->overduedeadline = $lsinfodata->overduedeadline;
+                    $lsinfodata->user_costcenterid = $lsinfodata->user_costcenterid;
+                    $lsinfodata->user_departmentid = $lsinfodata->user_departmentid;
+                    $lsinfodata->costcenterid = $lsinfodata->costcenterid;
+                    $lsinfodata->departmentid = $lsinfodata->departmentid;
+                    $lsinfodata->user_subdepartment = $lsinfodata->user_subdepartment;
+                    $lsinfodata->subdepartment = $lsinfodata->subdepartment;
+                    $lsinfodata->refid = $lsinfodata->refid;
+                    $DB->update_record('block_ls_learningformats', $lsinfodata);
+                } else {
+                    $DB->insert_record('block_ls_learningformats',  $lsinfodata);
+                }       
+            }
+            $enrolrecords = $DB->get_recordset_sql("SELECT * FROM {block_ls_learningformats} WHERE moduleid = 10"); 
+            foreach ($enrolrecords as $enrolrecord) {
+                $userstatus = $DB->get_field_sql("SELECT enrol_status FROM {local_classroom_attendance} WHERE CONCAT('#',id) = '".$enrolrecord->refid."'");
+                if ($userstatus != 0){
+                    $DB->delete_records('block_ls_learningformats', array('id' => $enrolrecord->id));
+                }
+            }
+			set_config('learningformats', time() ,'block_learnerscript');
+			print_r("Completed");
+		}
+	}
+	public function examsinformation() {
+		global $DB;
+		$examsinformation = get_config('block_learnerscript', 'examsinformation');
+		if (!empty($examsinformation)) {
+			$sql = "SELECT DISTINCT ue.id, c.id AS examid, c.fullname AS examname, ue.userid AS userid, CONCAT(u.firstname, ' ', u.lastname) AS username, lcc1.id AS vendorid, lcc1.vendorname, ue.timecreated AS enroldate, cc.timecompleted AS completiondate, ue.completiondate AS deadline, u.open_costcenterid AS user_costcenterid, u.open_departmentid AS user_departmentid, c.open_costcenterid AS costcenterid, c.open_departmentid AS departmentid, c.timecreated AS timecreated, ra.timemodified AS usermodified, c.open_contentvendor AS open_contentvendor, c.open_subdepartment AS subdepartment, u.open_subdepartment AS user_subdepartment, (SELECT cfd.intvalue
+						FROM {customfield_data} cfd  
+						JOIN {customfield_field} cff ON cff.id = cfd.fieldid AND cff.name = 'EOL' 
+						WHERE cfd.instanceid = c.id) AS upcomingeol, (SELECT UNIX_TIMESTAMP(DATE_ADD(FROM_UNIXTIME(cfd1.timemodified) , interval cfd1.charvalue month))
+                        FROM {customfield_data} cfd1
+                        JOIN {customfield_field} cff1 ON cff1.id = cfd1.fieldid AND cff1.name = 'Valid for (months)'
+                        WHERE cfd1.charvalue != '' AND DATE_ADD(FROM_UNIXTIME(cfd1.timemodified) , interval cfd1.charvalue month) BETWEEN CURDATE()
+                        AND DATE_ADD(CURDATE(), INTERVAL 90 DAY) AND cfd1.instanceid = c.id) AS upcomingexpiry, ue.id AS refid
+					FROM {user_enrolments} ue
+					JOIN {enrol} e ON e.id = ue.enrolid 
+					JOIN {role_assignments} ra ON ra.userid = ue.userid
+					JOIN {context} ct ON ct.id = ra.contextid
+					JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
+					JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
+					JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
+					LEFT JOIN {local_courses_venderslist} lcc1 ON lcc1.id = c.open_vendor
+					JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat AND clf.name = 'Exam' 
+					LEFT JOIN {course_completions} cc ON cc.course = c.id AND cc.userid = ue.userid 
+					WHERE 1 = 1 AND ct.contextlevel = 50 AND (ue.timecreated >= $examsinformation OR
+					u.timemodified >= $examsinformation OR ue.timemodified >= $examsinformation OR c.timemodified >= $examsinformation OR cc.timecompleted >= $examsinformation OR ra.timemodified >= $examsinformation OR lcc1.timemodified >= $examsinformation OR e.timemodified >= $examsinformation) ";
+			$examrecords = $DB->get_recordset_sql($sql, array());
+			foreach ($examrecords as $examrecord) {
+			 	$record = new stdClass;
+			 	$record->examid = $examrecord->examid;
+			 	$record->examname = $examrecord->examname;
+			 	$record->vendorid = !empty($examrecord->vendorid) ? $examrecord->vendorid : 0;
+			 	$record->vendorname = !empty($examrecord->vendorname) ? $examrecord->vendorname : '';
+			 	$record->userid = $examrecord->userid;
+			 	$record->username = $examrecord->username;
+			 	$record->enroldate = $examrecord->enroldate;
+			 	$record->completiondate = !empty($examrecord->completiondate) ? $examrecord->completiondate : 0;
+			 	$record->deadline = !empty($examrecord->deadline) ? $examrecord->deadline : 0;
+			 	$record->user_costcenterid = (!empty($examrecord->user_costcenterid) && ($examrecord->user_costcenterid > 0)) ? $examrecord->user_costcenterid : 0;
+			 	$record->user_departmentid = (!empty($examrecord->user_departmentid) && ($examrecord->user_departmentid > 0)) ? $examrecord->user_departmentid : 0;
+			 	$record->costcenterid = (!empty($examrecord->costcenterid) && ($examrecord->costcenterid > 0)) ? $examrecord->costcenterid : 0;
+			 	$record->departmentid = (!empty($examrecord->departmentid) && ($examrecord->departmentid > 0) ) ? $examrecord->departmentid : 0;
+			 	$record->timecreated = !empty($examrecord->timecreated) ? $examrecord->timecreated : 0;
+			 	$record->usermodified = !empty($examrecord->usermodified) ? $examrecord->usermodified : 0;
+			 	$record->open_contentvendor = !empty($examrecord->open_contentvendor) ? $examrecord->open_contentvendor : 0;
+			 	
+			 	$record->subdepartment = (!empty($examrecord->subdepartment) && ($examrecord->subdepartment > 0))? $examrecord->subdepartment : 0;
+			 	$record->user_subdepartment = (!empty($examrecord->user_subdepartment) && ($examrecord->user_subdepartment > 0)) ? $examrecord->user_subdepartment: 0;
+
+			 	$record->upcomingeol = !empty($examrecord->upcomingeol) ? $examrecord->upcomingeol : 0; 
+			 	$record->upcomingexpiry = !empty($examrecord->upcomingexpiry) ? $examrecord->upcomingexpiry : 0; 
+			 	$record->refid = !empty($examrecord->refid) ? ($examrecord->refid) : 0 ;
+			 	$records1 = $DB->get_field('block_ls_exams', 'id', 
+		                    array('examid' => $record->examid,
+		                    	'vendorid' => $record->vendorid,
+		                    		'userid' => $record->userid,
+		                    		'refid' => $record->refid));
+			 	if (!empty($records1)) {
+		           $record->id = $records1; 
+		           $record->examid = $record->examid; 
+		           $record->examname = $record->examname;
+		           $record->vendorid = $record->vendorid;
+		           $record->vendorname = $record->vendorname;
+		           $record->userid = $record->userid;
+		           $record->username = $record->username;
+		           $record->enroldate = $record->enroldate;
+		           $record->completiondate = $record->completiondate;
+		           $record->deadline = $record->deadline;
+		           $record->user_costcenterid = $record->user_costcenterid;
+		           $record->user_departmentid = $record->user_departmentid;
+		           $record->costcenterid = $record->costcenterid;
+		           $record->departmentid = $record->departmentid;
+		           $record->timecreated = $record->timecreated;
+		           $record->usermodified = $record->usermodified;
+		           $record->open_contentvendor = $record->open_contentvendor;
+		           $record->subdepartment = $record->subdepartment;
+		           $record->user_subdepartment = $record->user_subdepartment;
+		           $record->upcomingeol = $record->upcomingeol;
+		           $record->upcomingexpiry = $record->upcomingexpiry;
+		           $record->refid = $record->refid;
+		           $DB->update_record('block_ls_exams', $record);
+			 	} else {
+			 		$DB->insert_record('block_ls_exams',  $record);
+			 	}
+			} 
+			set_config('examsinformation', time(), 'block_learnerscript');
+			print_r('Completed updating exams data');
+		}
+	} 
+	public function certificatesinfo() {
+		global $DB;
+		$certificatesinfo = get_config('block_learnerscript', 'certificatesinfo');
+		if (!empty($certificatesinfo)) {
+			$sql = "SELECT DISTINCT lcu.id, lc.id AS certificateid, lc.name AS certificatename, lccv.id AS vendorid, lccv.vendorname AS vendorname, u.id AS userid, CONCAT(u.firstname, ' ', u.lastname) AS username, lcu.timecreated AS enroldate, lcu.completiondate AS completiondate, lcu.certdeadline AS deadline, u.open_costcenterid AS user_costcenterid, u.open_departmentid AS user_departmentid, lc.costcenter AS costcenterid, lc.department AS departmentid, lc.timecreated AS timecreated, lc.timemodified AS usermodified, lc.open_vendor AS open_contentvendor, lc.subdepartment AS subdepartment, u.open_subdepartment AS user_subdepartment,lcu.expirydate AS upcomingexpiry, lc.eol AS upcomingeol, lcu.id AS courseid
+	                FROM {local_certification_users} lcu
+					JOIN {local_certification} lc ON lc.id = lcu.certificationid
+					LEFT JOIN {local_courses_venderslist} lccv ON lccv.id = lc.open_vendor
+					JOIN {user} AS u ON u.id = lcu.userid 
+					WHERE 1 = 1 AND (lcu.timecreated >= $certificatesinfo OR lcu.timemodified >= $certificatesinfo OR u.timemodified >= $certificatesinfo OR lc.timemodified >= $certificatesinfo OR lccv.timemodified >= $certificatesinfo) ";
+			$certificaterecords = $DB->get_recordset_sql($sql);
+			foreach ($certificaterecords as $certificaterecord) {
+				if($certificaterecord->certificateid){
+					$certrecord = new stdClass;
+					$certrecord->certificateid = $certificaterecord->certificateid;
+					$certrecord->certificatename = $certificaterecord->certificatename;
+					$certrecord->vendorid = !empty($certificaterecord->vendorid) ? $certificaterecord->vendorid : 0;
+					$certrecord->vendorname = !empty($certificaterecord->vendorname) ? $certificaterecord->vendorname : '';
+					$certrecord->userid = $certificaterecord->userid;
+					$certrecord->username = $certificaterecord->username;
+					$certrecord->courseid = !empty($certificaterecord->courseid) ? $certificaterecord->courseid : 0;
+					$certrecord->enroldate = $certificaterecord->enroldate;
+					$certrecord->completiondate = !empty($certificaterecord->completiondate) ? $certificaterecord->completiondate : 0;
+					$certrecord->deadline = !empty($certificaterecord->deadline) ? $certificaterecord->deadline : 0;
+					$certrecord->upcomingexpiry = !empty($certificaterecord->upcomingexpiry) ? $certificaterecord->upcomingexpiry : 0;
+					$certrecord->upcomingeol = !empty($certificaterecord->upcomingeol) ? $certificaterecord->upcomingeol : 0;
+
+					$certrecord->user_costcenterid = (!empty($certificaterecord->user_costcenterid) && ($certificaterecord->user_costcenterid > 0)) ? $certificaterecord->user_costcenterid : 0;
+					$certrecord->user_departmentid = (!empty($certificaterecord->user_departmentid) && ($certificaterecord->user_departmentid > 0)) ? $certificaterecord->user_departmentid : 0; 
+					$certrecord->costcenterid = (!empty($certificaterecord->costcenterid) && ($certificaterecord->costcenterid > 0)) ? $certificaterecord->costcenterid : 0;
+					$certrecord->departmentid = (!empty($certificaterecord->departmentid) && ($certificaterecord->departmentid > 0)) ? $certificaterecord->departmentid : 0;
+					$certrecord->timecreated = !empty($certificaterecord->timecreated) ? $certificaterecord->timecreated : 0;
+				 	$certrecord->usermodified = !empty($certificaterecord->usermodified) ? $certificaterecord->usermodified : 0;
+				 	$certrecord->open_contentvendor = !empty($certificaterecord->open_contentvendor) ? $certificaterecord->open_contentvendor : 0;
+				 	$certrecord->subdepartment = (!empty($certificaterecord->subdepartment) && ($certificaterecord->subdepartment > 0)) ? $certificaterecord->subdepartment : 0;
+				 	$certrecord->user_subdepartment = (!empty($certificaterecord->user_subdepartment) && ($certificaterecord->user_subdepartment > 0)) ? $certificaterecord->user_subdepartment : 0; 
+
+				 	$records1 = $DB->get_field('block_ls_certificates', 'id', 
+		                    array('certificateid' => $certrecord->certificateid,
+		                    	'vendorid' => $certrecord->vendorid,
+		                    		'userid' => $certrecord->userid,
+		                    		'courseid' => $certrecord->courseid));
+				 	if (!empty($records1)) {
+			            $certrecord->id = $records1;
+			            $certrecord->certificateid = $certrecord->certificateid;
+			            $certrecord->certificatename = $certrecord->certificatename;
+			            $certrecord->vendorid = $certrecord->vendorid;
+			            $certrecord->vendorname = $certrecord->vendorname;
+			            $certrecord->userid = $certrecord->userid;
+			            $certrecord->username = $certrecord->username;
+			            $certrecord->courseid = $certrecord->courseid;
+			            $certrecord->enroldate = $certrecord->enroldate;
+			            $certrecord->completiondate = $certrecord->completiondate;
+			            $certrecord->deadline = $certrecord->deadline;
+			            $certrecord->upcomingexpiry = $certrecord->upcomingexpiry;
+			            $certrecord->upcomingeol = $certrecord->upcomingeol;
+			            $certrecord->user_costcenterid = $certrecord->user_costcenterid;
+			            $certrecord->user_departmentid = $certrecord->user_departmentid;
+			            $certrecord->costcenterid = $certrecord->costcenterid;
+			            $certrecord->departmentid = $certrecord->departmentid;
+			            $certrecord->timecreated = $certrecord->timecreated;
+			            $certrecord->usermodified = $certrecord->usermodified;
+			            $certrecord->open_contentvendor = $certrecord->open_contentvendor;
+			            $certrecord->subdepartment = $certrecord->subdepartment;
+			            $certrecord->user_subdepartment = $certrecord->user_subdepartment;
+			            $DB->update_record('block_ls_certificates', $certrecord);
+				 	} else {
+			        	$DB->insert_record('block_ls_certificates',  $certrecord);
+			        }
+				}
+			}
+			set_config('certificatesinfo', time(), 'block_learnerscript');
+			print_r('Completed updating certifications data');
+		}
+	}
 }
