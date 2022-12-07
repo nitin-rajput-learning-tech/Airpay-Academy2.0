@@ -148,7 +148,7 @@ function local_skillrepository_leftmenunode(){
 
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $skillreponode = '';
-    if(has_capability('local/costcenter:manage', $systemcontext) || is_siteadmin()) {
+    if(has_capability('local/skillrepository:manage', $systemcontext) || is_siteadmin()) {
         $skillreponode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_skills', 'class'=>'pull-left user_nav_div skills'));
         $skills_url = new moodle_url('/local/skillrepository/index.php');
         $skill_icon = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
