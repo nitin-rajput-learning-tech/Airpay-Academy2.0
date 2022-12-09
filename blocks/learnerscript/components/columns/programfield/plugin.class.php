@@ -68,29 +68,13 @@ class plugin_programfield extends pluginbase {
             case 'programorg':
                 $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$programrecord->costcenter));
                 break;
-
-
             case 'programdept':
-                // if($programrecord->department > 0){
-                //      $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$programrecord->department));
-                // }else{
-                //     $programrecord->{$data->column} = get_string('all');
-                // }
-
-
-
-            if($programrecord->department == -1){
-            $programrecord->{$data->column} = get_string('all');
-            }
-             else{ 
-                     $departments =$DB->get_records_sql_menu('SELECT id,fullname 
-         FROM {local_costcenter}
-         WHERE id IN('.$programrecord->department.')');
-         $programrecord->{$data->column}= implode(', ',$departments);
-      }
+                if($programrecord->department > 0){
+                     $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$programrecord->department));
+                }else{
+                    $programrecord->{$data->column} = get_string('all');
+                }
                 break;
-
-
             case 'program_subdept':
                 if($programrecord->subdepartment > 0){
                     $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$programrecord->subdepartment));
@@ -98,7 +82,6 @@ class plugin_programfield extends pluginbase {
                    $programrecord->{$data->column} = get_string('all'); 
                 }
                 break;
-
             case 'points':
                 $programrecord->{$data->column} = !empty($programrecord->points) ? $programrecord->points : 'NA';
                 break;

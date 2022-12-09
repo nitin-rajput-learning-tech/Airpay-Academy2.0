@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[local_program]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Completion percentage]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[statistics]]></type>
+<components><![CDATA[YToyOntzOjk6ImN1c3RvbXNxbCI7YToxOntzOjY6ImNvbmZpZyI7Tzo4OiJzdGRDbGFzcyI6MTE6e3M6NDoibmFtZSI7czoyMToiQ29tcGxldGlvbitwZXJjZW50YWdlIjtzOjg6ImNhdGVnb3J5IjtzOjEzOiJsb2NhbF9wcm9ncmFtIjtzOjQ6InR5cGUiO3M6MTA6InN0YXRpc3RpY3MiO3M6ODoicXVlcnlzcWwiO3M6MTIxNzoiU0VMRUNUK1JPVU5EJTI4JTI4JTI4U0VMRUNUK0NPVU5UJTI4YmxsLmlkJTI5JTBEJTBBRlJPTStwcmVmaXhfYmxvY2tfbHNfbGVhcm5pbmdmb3JtYXRzK0FTK2JsbCUwRCUwQVdIRVJFKzErQU5EK2JsbC5jb21wbGV0aW9uZGF0ZSslMjElM0QrMCtBTkQrYmxsLm1vZHVsZWlkKyUzRCs5JTBEJTBBJTI1JTI1RklMVEVSX09SR0FOSVpBVElPTlMlM0FibGwuY29zdGNlbnRlcmlkJTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX09SR0FOSVpBVElPTiUzQWJsbC51c2VyX2Nvc3RjZW50ZXJpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UJTNBYmxsLnVzZXJfZGVwYXJ0bWVudGlkJTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX0RFUEFSVE1FTlRTJTNBYmxsLmRlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9TVUJERVBBUlRNRU5UJTNBYmxsLnVzZXJfc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9TVUJERVBBUlRNRU5UUyUzQWJsbC5zdWJkZXBhcnRtZW50JTI1JTI1JTBEJTBBQU5EK2JsbC50aW1lY3JlYXRlZCtCRVRXRUVOKyUyNSUyNUxTX1NUQVJUREFURSUyNSUyNStBTkQrJTI1JTI1TFNfRU5EREFURSUyNSUyNSUyOSslMkYrJTI4U0VMRUNUK0NPVU5UJTI4YmxsZS5pZCUyOSUwRCUwQUZST00rcHJlZml4X2Jsb2NrX2xzX2xlYXJuaW5nZm9ybWF0cytBUytibGxlJTBEJTBBV0hFUkUrMSslM0QrMStBTkQrYmxsZS5tb2R1bGVpZCslM0QrOSUwRCUwQSUyNSUyNUZJTFRFUl9PUkdBTklaQVRJT05TJTNBYmxsZS5jb3N0Y2VudGVyaWQlMjUlMjUlMEQlMEElMjUlMjVGSUxURVJfT1JHQU5JWkFUSU9OJTNBYmxsZS51c2VyX2Nvc3RjZW50ZXJpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UJTNBYmxsZS51c2VyX2RlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UUyUzQWJsbGUuZGVwYXJ0bWVudGlkJTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX1NVQkRFUEFSVE1FTlQlM0FibGwudXNlcl9zdWJkZXBhcnRtZW50JTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX1NVQkRFUEFSVE1FTlRTJTNBYmxsLnN1YmRlcGFydG1lbnQlMjUlMjUlMEQlMEFBTkQrYmxsZS50aW1lY3JlYXRlZCtCRVRXRUVOKyUyNSUyNUxTX1NUQVJUREFURSUyNSUyNStBTkQrJTI1JTI1TFNfRU5EREFURSUyNSUyNSUyOSUyOSUyQTEwMCUyQzAlMjkrQVMrY29tcGxldGlvbnBlcmNlbnRhZ2UiO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6NjoiZ2xvYmFsIjtzOjE6IjEiO3M6MjoiaWQiO2k6NDg7czo4OiJjb3Vyc2VpZCI7aToxO3M6MzU6Im1mb3JtX2lzZXhwYW5kZWRfaWRfYWR2YW5jZWRvcHRpb25zIjtpOjA7czoxMjoic3VibWl0YnV0dG9uIjtzOjQ6Ik5leHQiO3M6MTI6ImRpc2FibGV0YWJsZSI7aTowO319czoxMToicGVybWlzc2lvbnMiO2E6Mjp7czo2OiJjb25maWciO086ODoic3RkQ2xhc3MiOjM6e3M6MTM6ImNvbmRpdGlvbmV4cHIiO3M6MjoiYzEiO3M6MTQ6ImNvbmRpdGlvbmV4cHIxIjtzOjI6ImMxIjtzOjE0OiJjb25kaXRpb25leHByMiI7czowOiIiO31zOjg6ImVsZW1lbnRzIjthOjE6e2k6MDthOjU6e3M6MjoiaWQiO3M6MTU6IkZIc3dvTkNLSGM0M1VGayI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6Mjp7czo2OiJyb2xlaWQiO3M6MjoiMTEiO3M6MTI6InN1Ym1pdGJ1dHRvbiI7czozOiJBZGQiO31zOjEwOiJwbHVnaW5uYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjc6InN1bW1hcnkiO3M6MjoiZGgiO319fX0=]]></components>
+<export><![CDATA[]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[2]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[program-four]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778549]]></timecreated>
+<timemodified><![CDATA[1664778549]]></timemodified>
+<title><![CDATA[Completion percentage - program]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[320159436]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[program-four]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778549]]></timecreated>
+<timemodified><![CDATA[1664778549]]></timemodified>
+<title><![CDATA[Completion percentage - program]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[724316508]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[program-four]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778549]]></timecreated>
+<timemodified><![CDATA[1664778549]]></timemodified>
+<title><![CDATA[Completion percentage - program]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[998590269]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-sub_dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[program-four]]></defaultregion>
+<defaultweight><![CDATA[-1]]></defaultweight>
+<timecreated><![CDATA[1664778549]]></timecreated>
+<timemodified><![CDATA[1664778549]]></timemodified>
+<title><![CDATA[Completion percentage]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[749789608]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

@@ -59,7 +59,7 @@ class plugin_coursescompletionscolumns extends pluginbase{
 		        }
                 break;
             case 'completiondate':
-                $row->{$data->column} = !empty($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d-m-Y',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : 'NA';
                 break;
             case 'skill':
             	if(!empty($row->{$data->column})){

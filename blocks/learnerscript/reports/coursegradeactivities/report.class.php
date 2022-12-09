@@ -37,9 +37,7 @@ class report_coursegradeactivities extends reportbase implements report {
     $columns = array('completionstatus','completiondate');
     $columnsarray = array('coursefield'=>['coursefield'],'userfield'=>['userfield'],'coursegradeactivities' => $columns);
     $this->columns = $columnsarray;
-    $this->parent = true;
-    $this->basicparams = array(['name' => 'course']);
-    $this->filters = array('organization','departments');
+    $this->filters = array('organization','departments', 'subdepartments', 'course');
     $this->defaultcolumn = 'c.id';
   }
 
@@ -63,8 +61,7 @@ class report_coursegradeactivities extends reportbase implements report {
 
   function joins() {
     $this->sql .=" JOIN {course_categories} AS cc ON cc.id = c.category
-                  JOIN {enrol} e ON e.courseid = c.id AND 
-                                            (e.enrol = 'manual' OR e.enrol = 'self') 
+                  JOIN {enrol} e ON e.courseid = c.id  
                   JOIN {user_enrolments} ue ON ue.enrolid = e.id
                   JOIN {context} AS cxt ON cxt.instanceid = c.id and cxt.contextlevel = 50
                   JOIN {role_assignments} AS ra ON ra.contextid = cxt.id AND ra.userid = ue.userid
@@ -89,9 +86,9 @@ class report_coursegradeactivities extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dhs = 1;
             }
         }
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -99,10 +96,15 @@ class report_coursegradeactivities extends reportbase implements report {
     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
       $this->sql .= " AND c.open_costcenterid = :costcenterid ";
       $this->params['costcenterid'] = $USER->open_costcenterid;
-    }else{
+    }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
       $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
       $this->params['costcenterid'] = $USER->open_costcenterid;
       $this->params['departmentid'] = $USER->open_departmentid;
+    }else{
+      $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND open_subdepartment = :subdepartmentid";
+      $this->params['costcenterid'] = $USER->open_costcenterid;
+      $this->params['departmentid'] = $USER->open_departmentid;
+      $this->params['subdepartmentid'] = $USER->open_subdepartment;
     }
 
     parent::where();
@@ -122,15 +124,6 @@ class report_coursegradeactivities extends reportbase implements report {
         $this->sql .= " AND c.id = :courseid ";
         $this->params['courseid'] = $this->params['filter_course'];
     }
-      if(isset($this->params['filter_organization']) && $this->params['filter_organization'] > 0) {
-            $this->sql .= " AND u.open_costcenterid = :costcenterid ";
-            $this->params['costcenterid'] = $this->params['filter_organization'];
-      }
-       
-      if(isset($this->params['filter_departments']) && $this->params['filter_departments'] >= 0 && $this->params['filter_departments'] != '') {
-            $this->sql .= " AND u.open_departmentid = :departmentid ";
-            $this->params['departmentid'] = $this->params['filter_departments'];
-      }
   }
 
   public function get_rows($courseusers) {
@@ -160,7 +153,7 @@ class report_coursegradeactivities extends reportbase implements report {
         // }
         if($courseuser->timecompleted){
           $courseuser->completionstatus = get_string('completed','block_learnerscript');
-          $courseuser->completiondate = \local_costcenter\lib::get_userdate('d-M-Y H:i',$courseuser->timecompleted);
+          $courseuser->completiondate = date('d-M-Y',$courseuser->timecompleted);
         }else{
           $courseuser->completionstatus = get_string('not_completed','block_learnerscript');
           $courseuser->completiondate = 'NA';

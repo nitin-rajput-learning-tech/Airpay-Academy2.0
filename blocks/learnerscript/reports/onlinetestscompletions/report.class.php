@@ -36,7 +36,7 @@ class report_onlinetestscompletions extends reportbase implements report {
         // 'userfield' =>['userfield'],
         $this->columns = ['onlinetestfield'=>['onlinetestfield'],'userfield'=>['userfield'],'onlinetestscompletionscolumns' => ['onlinetestname','achievedgrade','completionstatus','completiondate']];
         $this->components = array('columns', 'filters', 'permissions');
-        $this->filters = array('organization','departments','onlinetests','users','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'onlinetests','users','completionstatus');
         $this->orderable = array('onlinetestname');
         $this->defaultcolumn = 'lou.id';
     }
@@ -61,7 +61,7 @@ class report_onlinetestscompletions extends reportbase implements report {
     }
     function where(){
         global $USER, $DB;
-         $this->sql .=  " WHERE u.deleted = 0 AND lo.visible = 1";
+         $this->sql .=  " WHERE u.deleted = 0 ";
         $systemcontext = \context_system::instance();
         // getscheduled report
         if (!is_siteadmin()) {
@@ -69,9 +69,9 @@ class report_onlinetestscompletions extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dhs = 1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -79,10 +79,15 @@ class report_onlinetestscompletions extends reportbase implements report {
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND lo.costcenterid = :costcenterid ";
             $this->params['costcenterid']= $USER->open_costcenterid;
-        }else{
+        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
             $this->sql .= " AND lo.costcenterid = :costcenterid  AND lo.departmentid = :departmentid";
             $this->params['costcenterid']= $USER->open_costcenterid;
             $this->params['departmentid']= $USER->open_departmentid;
+        }else{
+            $this->sql .= " AND lo.costcenterid = :costcenterid  AND lo.departmentid = :departmentid AND lo.subdepartment = :subdepartmentid";
+            $this->params['costcenterid']= $USER->open_costcenterid;
+            $this->params['departmentid']= $USER->open_departmentid;
+            $this->params['subdepartmentid']= $USER->open_subdepartment;
         }
 
          parent::where();
@@ -101,9 +106,13 @@ class report_onlinetestscompletions extends reportbase implements report {
             $this->params['orgid']= $this->params['filter_organization'];
         }
 
-        if ($this->params['filter_departments'] >= 0 && $this->params['filter_departments'] != '') {
+        if ($this->params['filter_departments'] > 0) {
            $this->sql .= " AND lo.departmentid = :deptid ";
            $this->params['deptid']= $this->params['filter_departments'];
+        }
+        if ($this->params['filter_subdepartments'] > 0) {
+           $this->sql .= " AND lo.subdepartment = :subdeptid ";
+           $this->params['subdeptid']= $this->params['filter_subdepartments'];
         }
         if (!empty($this->params['filter_onlinetests'])) {
                 $this->sql .= " AND lo.id = :testid ";

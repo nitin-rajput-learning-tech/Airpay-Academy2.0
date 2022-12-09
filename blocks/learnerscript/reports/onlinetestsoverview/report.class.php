@@ -35,7 +35,7 @@ class report_onlinetestsoverview extends reportbase implements report {
         $this->parent = true;
         $this->columns =['onlinetestfield'=>['onlinetestfield'],'onlinetestsoverviewcolumns' => ['onlinetestname','enrolmentscount','completionscount']];
         $this->components = array('columns', 'filters', 'permissions','plot','orderable');
-        $this->filters = array('organization', 'departments', 'onlinetests');
+        $this->filters = array('organization', 'departments', 'subdepartments', 'onlinetests');
         $this->orderable = array('onlinetestname','enrolmentscount','completionscount');
         $this->defaultcolumn = 'lo.id';
     }
@@ -66,7 +66,7 @@ class report_onlinetestsoverview extends reportbase implements report {
     }
     function where(){
          global $USER, $DB;
-         $this->sql .=  " WHERE 1 = 1 AND lo.visible = 1";
+         $this->sql .=  " WHERE 1 = 1 ";
          $systemcontext = \context_system::instance();
          // getscheduled report
         if (!is_siteadmin()) {
@@ -74,9 +74,9 @@ class report_onlinetestsoverview extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dh = 1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -84,10 +84,15 @@ class report_onlinetestsoverview extends reportbase implements report {
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND lo.costcenterid = :costcenterid ";
             $this->params['costcenterid']= $USER->open_costcenterid;
-        }else{
+        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
             $this->sql .= " AND lo.costcenterid = :costcenterid AND lo.departmentid = :departmentid";
             $this->params['costcenterid']= $USER->open_costcenterid;
             $this->params['departmentid']= $USER->open_departmentid;
+        }else{
+            $this->sql .= " AND lo.costcenterid = :costcenterid AND lo.departmentid = :departmentid AND lo.subdepartment = :subdepartment";
+            $this->params['costcenterid']= $USER->open_costcenterid;
+            $this->params['departmentid']= $USER->open_departmentid;
+            $this->params['subdepartment']= $USER->open_subdepartment;
         }
 
          parent::where();
@@ -111,9 +116,13 @@ class report_onlinetestsoverview extends reportbase implements report {
             $this->params['orgid']= $this->params['filter_organization'];
         }
 
-        if ($this->params['filter_departments'] >= 0 && $this->params['filter_departments'] != '') {
+        if ($this->params['filter_departments'] > 0) {
            $this->sql .= " AND lo.departmentid = :deptid ";
            $this->params['deptid']= $this->params['filter_departments'];
+        }
+        if ($this->params['filter_subdepartments'] > 0) {
+           $this->sql .= " AND lo.subdepartment = :subdeptid ";
+           $this->params['subdeptid']= $this->params['filter_subdepartments'];
         }
     }    
     public function get_rows($onlinetests) {

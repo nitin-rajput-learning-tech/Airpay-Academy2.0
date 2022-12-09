@@ -313,7 +313,7 @@ $string['add_remove_users'] = 'Enroll / Unenroll users';
 $string['add_users'] = 'Enroll users';
 $string['remove_users'] = 'Unenroll users';
 $string['manageevaluation'] = 'Feedbacks';
-$string['department'] = 'Department';
+$string['department'] = 'Country';
 
 $string['download'] = 'Download';
 $string['csvdelimiter'] = 'CSV delimiter';

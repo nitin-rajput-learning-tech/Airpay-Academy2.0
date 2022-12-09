@@ -31,7 +31,14 @@ class plugin_organization extends pluginbase {
         $this->singleselection = true;
         $this->placeholder = true;
         $this->maxlength = 0;
-        $this->filtertype = 'custom';
+        $this->filtertype = 'custom'; 
+        if (!empty($this->reportclass->basicparams)) {
+            foreach ($this->reportclass->basicparams as $basicparam) {
+                if ($basicparam['name'] == 'organization') {
+                    $this->filtertype = 'basic';
+                }
+            }
+        }
         $this->fullname = get_string('filterorganization', 'block_learnerscript');
         $this->reporttypes = array('sql','coursesoverview');
     }
@@ -59,20 +66,21 @@ class plugin_organization extends pluginbase {
         return $finalelements;
     }
 
-    public function filter_data(){
+    public function filter_data($selectoption = true, $request){
         global $DB;
 
         $sql = " SELECT id,fullname
                     FROM {local_costcenter} 
-                    WHERE visible = 1 AND parentid = 0 ";
+                    WHERE visible = 1 AND parentid = 0 
+                    ORDER BY id ASC";
 
         $organizations = $DB->get_records_sql_menu($sql);
         $organizations =array_replace(array(0=>'Select Organization'),$organizations);
         return $organizations;
     }
 
-    public function selected_filter($selected) {
-        $filterdata = $this->filter_data();
+    public function selected_filter($selected, $request = array()) {
+        $filterdata = $this->filter_data(false, $request);
         return $filterdata[$selected];
     }
 
@@ -80,11 +88,21 @@ class plugin_organization extends pluginbase {
         $systemcontext = context_system::instance();
 
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-
-            $organizations = $this->filter_data();
-            $select = $mform->addElement('select', 'filter_organization', null, $organizations,
-                        array('data-select2' => 1,
-                              'data-maximum-selection-length' => $this->maxlength,'onchange' =>'(function(e){ require("block_learnerscript/dependencyfilter").init({name:"organization"}) })(event)'));
+            $selectoption = true; 
+            $request = array_merge($_POST, $_GET);
+            $organizations = $this->filter_data(false, $request); 
+            if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($organizations) > 1) { 
+                unset($organizations[0]);
+            } 
+            $select = $mform->addElement('select', 'filter_organization', null,
+            $organizations,
+            array('data-select2' => true,
+                  'data-maximum-selection-length' => $this->maxlength,
+                  'data-action' => 'filterorganization',
+                  'data-instanceid' => $this->reportclass->config->id));
+            // $select = $mform->addElement('select', 'filter_organization', null, $organizations,
+            //             array('data-select2' => 1,
+            //                   'data-maximum-selection-length' => $this->maxlength,'onchange' =>'(function(e){ require("block_learnerscript/dependencyfilter").init({name:"organization"}) })(event)'));
             $select->setHiddenLabel(true);
             $mform->setType('filter_organization', PARAM_INT);
         }

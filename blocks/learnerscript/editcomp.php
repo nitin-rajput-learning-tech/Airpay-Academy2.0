@@ -55,7 +55,7 @@ $PAGE->set_url('/blocks/learnerscript/editcomp.php', array('id' => $id, 'comp' =
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('incourse');
 
-$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js('/blocks/learnerscript/js/learnerscript.js');
 
@@ -139,6 +139,7 @@ $PAGE->set_heading($title);
 $PAGE->set_cacheable(true);
 
 echo $OUTPUT->header();
+echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 echo html_writer::start_tag('div',array());
 
 $renderer = $PAGE->get_renderer('block_learnerscript');

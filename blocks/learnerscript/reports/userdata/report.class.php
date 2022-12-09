@@ -21,7 +21,7 @@
  * @package BizLMS
  * @subpackage block_learnerscript
  */
-use block_learnerscript\local\reportbase;
+ use block_learnerscript\local\reportbase;
 use block_learnerscript\local\querylib;
 use block_learnerscript\report;
 
@@ -67,9 +67,9 @@ class report_userdata extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dh = 1;
             }
         }
       if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -77,10 +77,15 @@ class report_userdata extends reportbase implements report {
       }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
         $this->sql .= " AND u.open_costcenterid = :costcenterid ";
         $this->params['costcenterid']= $USER->open_costcenterid;
-      }else{
+      }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
         $this->sql .= " AND u.open_costcenterid = :costcenterid  AND u.open_departmentid = :departmentid";
         $this->params['costcenterid']= $USER->open_costcenterid;
         $this->params['departmentid']= $USER->open_departmentid;
+      }else{
+        $this->sql .= " AND u.open_costcenterid = :costcenterid  AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartment";
+        $this->params['costcenterid']= $USER->open_costcenterid;
+        $this->params['departmentid']= $USER->open_departmentid;
+        $this->params['subdepartment']= $USER->open_subdepartment;
       }
       parent::where();
     }

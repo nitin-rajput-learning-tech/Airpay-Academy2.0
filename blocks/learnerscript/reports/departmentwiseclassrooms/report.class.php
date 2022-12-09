@@ -35,10 +35,11 @@ class report_departmentwiseclassrooms extends reportbase implements report {
         $this->parent = true;
         $this->columns = array('departmentwiseclassrooms' => array('organization','completed','scheduled'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
-        $this->filters = array('organization','departments','startendtime');
+        $this->filters = array('organization','departments', 'subdepartments', 'startendtime');
         $this->sqlorder['column'] = 'organization';
         $this->sqlorder['dir'] = 'desc';
-        $this->orderable = array('');
+        $this->orderable = array();
+        $this->defaultcolumn = 'c.id';
     }
     
     function init() {

@@ -22,14 +22,38 @@ define(['block_learnerscript/select2',
 ], function(select2, DataTable, reportwidget, chart, smartfilter, helper, AjaxForms,
     $, RadiosToSlider, flatpickr, templates) {
     var report;
-    var BasicparamCourse = $('.basicparamsform #id_filter_courses');
+    var BasicparamCourse = $('.basicparamsform #id_filter_course');
     var BasicparamUser = $('.basicparamsform #id_filter_users');
-    var BasicparamActivity = $('.basicparamsform #id_filter_activities');
+    var BasicparamActivity = $('.basicparamsform #id_filter_activities'); 
+    var BasicparamOrganization = $('.basicparamsform #id_filter_organization'); 
+    var BasicparamDepartments = $('.basicparamsform #id_filter_departments'); 
+    var BasicparamSubdepartments = $('.basicparamsform #id_filter_subdepartments'); 
+    var BasicparamLearningpath = $('.basicparamsform #id_filter_learningpath'); 
+    var BasicparamOnlinecourses = $('.basicparamsform #id_filter_onlinecourses'); 
+    var BasicparamLabs = $('.basicparamsform #id_filter_labs'); 
+    var BasicparamAssessments = $('.basicparamsform #id_filter_assessments');
+    var BasicparamUsergroups = $('.basicparamsform #id_filter_usergroup');     
+    var BasicparamWebinars = $('.basicparamsform #id_filter_webinars'); 
+    var BasicparamClassrooms = $('.basicparamsform #id_filter_classrooms'); 
+    var BasicparamPrograms = $('.basicparamsform #id_filter_programs');     
+    var BasicparamCohort = $('.basicparamsform #id_filter_cohort');     
 
-    var FilterCourse = $('.filterform #id_filter_courses');
+    var FilterCourse = $('.filterform #id_filter_course');
     var FilterUser = $('.filterform #id_filter_users');
     var FilterActivity = $('.filterform #id_filter_activities');
     var FilterModule = $('.filterform #id_filter_modules');
+    var FilterOrganization = $('.filterform #id_filter_organization');
+    var FilterDepartments = $('.filterform #id_filter_departments');
+    var FilterSubdepartments = $('.filterform #id_filter_subdepartments');
+    var FilterLearningpath = $('.filterform #id_filter_learningpath');
+    var FilterOnlinecourses = $('.filterform #id_filter_onlinecourses');
+    var FilterLabs = $('.filterform #id_filter_labs');
+    var FilterAssessments = $('.filterform #id_filter_assessments');
+    var FilterUsergroups = $('.filterform #id_filter_usergroup');    
+    var FilterWebinars = $('.filterform #id_filter_webinars');
+    var FilterClassrooms = $('.filterform #id_filter_classrooms');
+    var FilterPrograms = $('.filterform #id_filter_programs');
+    var FilterCohort = $('.filterform #id_filter_cohort');
 
     var NumberOfBasicParams = 0;
 
@@ -100,7 +124,7 @@ define(['block_learnerscript/select2',
              * Get Activities and Enrolled users for selected course
              */
             if (typeof BasicparamCourse != 'undefined' || typeof FilterCourse != 'undefined') {
-                $('#id_filter_courses').change(function() {
+                $('#id_filter_course').change(function() {
                     args.courseid = $(this).find(":selected").val();
                     smartfilter.CourseData(args);
                 });
@@ -112,12 +136,153 @@ define(['block_learnerscript/select2',
             $('#id_filter_users').change(function() {
                 var userid = $(this).find(":selected").val();
                 if (userid > 0 && (FilterCourse.length > 0 || BasicparamCourse.length > 0)) {
-                    if(BasicparamCourse.length > 0){
+                    if(BasicparamUser.length > 0){
+                   // FirstElementActive = true;
+                    smartfilter.UserCourses({ userid: userid, reporttype: args.reporttype, reportid: args.reportid, 
+                                              firstelementactive: FirstElementActive, triggercourseactivities: true });
+
+                 }
+                }
+            }); 
+
+            /*
+             * Get Departments for selected Organization
+             */
+            $('#id_filter_organization').change(function() {
+                var organizationid = $(this).find(":selected").val();
+                if (organizationid > 0 && (FilterDepartments.length > 0 || BasicparamDepartments.length > 0)) {
+                    if(BasicparamDepartments.length > 0){
                         FirstElementActive = true;
                     }
-                    // smartfilter.UserCourses({ userid: userid, reporttype: args.reporttype, reportid: args.reportid, 
-                    //                           firstelementactive: FirstElementActive, triggercourseactivities: true });
+                    var departmentid = args.filterrequests.filter_departments;
+                    smartfilter.orgdepartments({ organizationid: organizationid, reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid });
                 }
+                if (organizationid > 0 && (FilterLearningpath.length > 0 || BasicparamLearningpath.length > 0)) {
+                    if(BasicparamLearningpath.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    smartfilter.orglearningpath({ organizationid: organizationid, reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid });
+                }
+            }); 
+
+            $('#id_filter_departments').change(function() { 
+                var departmentid = $(this).find(":selected").val();
+                var organizationid = $('#id_filter_organization').find(":selected").val(); 
+                if ((FilterSubdepartments.length > 0 || BasicparamSubdepartments.length > 0)) {
+                    if(BasicparamSubdepartments.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.DepartmentSubdepts({ organizationid: organizationid, departmentid: departmentid, reporttype: args.reporttype, firstelementactive: FirstElementActive, subdepartmentid: subdepartmentid });
+                }
+                if ((FilterCohort.length > 0 || BasicparamCohort.length > 0)) {
+                    if(BasicparamCohort.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var cohortid = args.filterrequests.filter_cohort;
+                    smartfilter.DepartmentCohorts({ organizationid: organizationid, departmentid: departmentid, reporttype: args.reporttype, firstelementactive: FirstElementActive, cohortid: cohortid });
+                }
+            }); 
+
+            $('#id_filter_subdepartments').change(function() { 
+                var subdepartmentid = $(this).find(":selected").val();
+                var departmentid = $('#id_filter_departments').find(":selected").val();
+                var organizationid = $('#id_filter_organization').find(":selected").val(); 
+                // if (FilterUser.length > 0 && args.basicparams) {
+                //     if (args.basicparams.length == 3 && args.basicparams[2].name == 'course') {
+                //         // return false;
+                //     }
+                // } else { 
+                    // if (BasicparamUser.length > 0) {    
+                        if ((FilterUser.length > 0 || BasicparamUser.length > 0)) {
+                            if(BasicparamUser.length > 0){
+                                FirstElementActive = true;
+                            }
+                            var userid = args.filterrequests.filter_users;
+                            smartfilter.DepartmentUsers({ organizationid: organizationid, departmentid: departmentid, subdepartmentid: subdepartmentid, reporttype: args.reporttype, firstelementactive: FirstElementActive, userid: userid });
+                        }
+                    // }
+                // }
+                // if (FilterCourse.length > 0 && args.basicparams){
+                //     if (args.basicparams.length == 3 && args.basicparams[2].name == 'users') {
+                //         // return false;
+                //     }
+                // } else {
+                    if (BasicparamCourse.length > 0 || FilterCourse.length > 0) {
+                        if ((FilterCourse.length > 0 || BasicparamCourse.length > 0)) {
+                            if(BasicparamCourse.length > 0){
+                                FirstElementActive = true;
+                            }
+                            var courseid = args.filterrequests.filter_course; 
+                            smartfilter.DepartmentCourses({ organizationid: organizationid, departmentid: departmentid, subdepartmentid: subdepartmentid,reporttype: args.reporttype, firstelementactive: FirstElementActive, courseid: courseid });
+                        }
+                    }
+                // } 
+                if ((FilterLearningpath.length > 0 || BasicparamLearningpath.length > 0)) {
+                    if(BasicparamLearningpath.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.deplearningpath({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid});
+                }
+                if ((FilterOnlinecourses.length > 0 || BasicparamOnlinecourses.length > 0)) {
+                    if(BasicparamOnlinecourses.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.deponlinecourses({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
+                }
+                if ((FilterLabs.length > 0 || BasicparamLabs.length > 0)) {
+                    if(BasicparamLabs.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.deplabs({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
+                }
+                if ((FilterAssessments.length > 0 || BasicparamAssessments.length > 0)) {
+                    if(BasicparamAssessments.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.depassessments({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
+                }
+                if ((FilterUsergroups.length > 0 || BasicparamUsergroups.length > 0)) {
+                    if(BasicparamUsergroups.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.depusergroups({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
+                }                
+                if ((FilterWebinars.length > 0 || BasicparamWebinars.length > 0)) {
+                    if(BasicparamWebinars.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.depwebinars({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
+                }
+                if ((FilterClassrooms.length > 0 || BasicparamClassrooms.length > 0)) {
+                    if(BasicparamClassrooms.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.depclassrooms({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
+                }
+                if ((FilterPrograms.length > 0 || BasicparamPrograms.length > 0)) {
+                    if(BasicparamPrograms.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var departmentid = args.filterrequests.filter_departments;
+                    var subdepartmentid = args.filterrequests.filter_subdepartments;
+                    smartfilter.depprograms({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
+                }                
             });
 
             $('#id_filter_coursecategories').change(function() {
@@ -133,8 +298,8 @@ define(['block_learnerscript/select2',
             schedule.SelectRoleUsers();
 
             if (args.basicparams != null) {
-                if (args.basicparams[0].name == 'courses') {
-                    $("#id_filter_courses").trigger('change');
+                if (args.basicparams[0].name == 'course') {
+                    $("#id_filter_course").trigger('change');
                     NumberOfBasicParams++;
                 }
             }
@@ -147,7 +312,7 @@ define(['block_learnerscript/select2',
                     var userid = $("#id_filter_users").find(":selected").val();
                     if (userid > 0) {
                         //args.courseid = $(this).find(":selected").val();
-                        args.courseid = $('#id_filter_courses').find(":selected").val();
+                        args.courseid = $('#id_filter_course').find(":selected").val();
                         smartfilter.CourseData(args);
                         // smartfilter.UserCourses({ userid: userid, reportid: args.reportid, reporttype: args.reporttype,
                         //                           firstelementactive: FirstElementActive, triggercourseactivities: true });
@@ -257,7 +422,7 @@ define(['block_learnerscript/select2',
             if (args.basicparams == null) {
                 report.CreateReportPage({ reportid: args.reportid, reporttype: args.reporttype, instanceid: args.reportid, reportdashboard: false });
             } else {
-                if (args.basicparams.length == 1 || args.basicparams.length == 2 || args.basicparams.length == 3) {
+                if (args.basicparams.length == 1 || args.basicparams.length == 2 || args.basicparams.length == 3 || args.basicparams.length == 4) {
                     $(".basicparamsform #id_filter_apply").trigger('click', [true]);
                 } else {
                         $(document).ajaxComplete(function(event, xhr, settings) {
@@ -441,7 +606,10 @@ define(['block_learnerscript/select2',
                         $("#reporttable_" + reportinstance + "_wrapper .co_report_header").remove();
                         $("#reporttable_" + reportinstance + "_wrapper .co_report_footer").remove();
                     }
-
+                    if (args.reportname == 'Learning') {
+                        $("#reporttable_" + reportinstance + "_wrapper .co_report_footer").remove();
+                        $( "#reporttable_" + reportinstance + "_filter" ).hide();
+                    }
                     $('.download_menu' + reportinstance + ' li a').each(function(index) {
                         var link = $(this).attr('href');
                         if (typeof args.basicparams != 'undefined') {

@@ -66,7 +66,7 @@ class plugin_mycoursess extends pluginbase {
                 $row->{$data->column} = !empty($row->completiondate) ? 'Completed' : 'Not Completed';
             break;
             case 'completiondate':
-                $row->{$data->column} = !empty($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-M-Y',$row->{$data->column}) : 'NA';
             break;
         }
         return (isset($row->{$data->column})) ? $row->{$data->column} : '--';

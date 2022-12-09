@@ -821,7 +821,7 @@ body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .repo
     width: 100%;
 }
 body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_coursecategories,
-body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_courses,
+body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_course,
 body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_clear,
 body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_apply {
     /*margin-top: -14px;*/
@@ -838,7 +838,7 @@ body#page-blocks-learnerscript-viewreport #licenceresult form.basicparamsform {
 .block.block_reportdashboard .reportdashboard_header span.dropdown a i {
     font-size: 18px;
     margin-top: 2px;
-    margin-right: .5rem;
+    margin-right: .5rem !important;
     vertical-align: baseline;
     /*vertical-align: -moz-middle-with-baseline;*/
 }
@@ -1420,8 +1420,6 @@ body#page-blocks-learnerscript-viewreport.dir-rtl #printablediv {
 #page-blocks-learnerscript-viewreport #report_plottabs .ls-plotgraphs_list .ls-plotgraphs_listitem:last-child{
     border-bottom: none;
 }
-body .generaltable tr th {color: #414042}
-body .generaltable tr th {color: #58595b}
 #page-blocks-learnerscript-viewreport #report_plottabs .ls-plotgraphs_list .ls-plotgraph_link .ls-plotreport_editicon,
 #page-blocks-learnerscript-viewreport #report_plottabs .ls-plotgraphs_list .ls-plotgraph_link .ls-plotreport_deleteicon{padding: 5px 5px;}
 #page-blocks-learnerscript-viewreport #report_plottabs .ls-plotgraphs_list .ls-plotgraphs_listitem:last-child{margin-bottom: 0px;}
@@ -1456,6 +1454,9 @@ body#page-blocks-learnerscript-viewreport {
     }
 }
 @media(max-width: 767px){
+    #reportcustom_filters .mform #fitem_id_filter_clear {
+        padding: 0;
+    }
     #page-blocks-learnerscript-viewreport #report_plottabs .ls-plotgraphs_list{width: 100%;}
     #page-blocks-learnerscript-viewreport .ls-report_graph_container{width: 100%;}
     #page.container-fluid{padding: 0px 15px;}
@@ -1723,11 +1724,11 @@ body.path-blocks-coursels.has_dock #dock {
     body#page-blocks-learnerscript-viewreport #licenceresult .reportboxshadowdiv span.filter_buttons {
         margin-bottom: 5px;
     }
-    body#page-blocks-learnerscript-viewreport #licenceresult .reportboxshadowdiv span.filter_buttons {
+   /* body#page-blocks-learnerscript-viewreport #licenceresult .reportboxshadowdiv span.filter_buttons {
         position: relative;
-    }
+    }*/
     body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_coursecategories,
-    body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_courses,
+    body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_course,
     body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_clear,
     body#page-blocks-learnerscript-viewreport #licenceresult #reportbox_shadow .reportcustomfilters.show form.filterform #fitem_id_filter_apply {
         /*margin-top: 5px;*/
@@ -2479,14 +2480,28 @@ body#page-blocks-learnerscript-components-scheduler-schedule .select2-container-
 body#page-blocks-learnerscript-design .learnerscript_actionbuttons button.pull-right.btn.btn-primary {
     margin-left: 5px;
 }
-body#page-blocks-learnerscript-viewreport #fitem_id_filter_courses,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_course,
 body#page-blocks-learnerscript-viewreport #fitem_id_filter_users,
 body#page-blocks-learnerscript-viewreport #fitem_id_filter_clear,
 body#page-blocks-learnerscript-viewreport #fitem_id_filter_apply,
 body#page-blocks-learnerscript-viewreport #fitem_id_filter_coursecategories,
 body#page-blocks-learnerscript-viewreport #fitem_id_filter_status,
 body#page-blocks-learnerscript-viewreport #fitem_id_filter_activities,
-body#page-blocks-learnerscript-viewreport #fitem_id_filter_modules {
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_modules,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_departments, 
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_organization,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_learningtype,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_certification,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_certificationlevel,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_exam,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_solutionarea,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_technology,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_topic,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_vendor,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_level,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_language,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_jobrole,
+body#page-blocks-learnerscript-viewreport #fitem_id_filter_contentprovider, {
     vertical-align: middle;
 }
 body#page-blocks-learnerscript-managereport span.error {
@@ -3141,6 +3156,9 @@ body#page-blocks-learnerscript-viewreport #licenceresult span.graphicon ul#align
     box-sizing: border-box;
     float: left;
 }
+.readylapth-hdr .self_completion {
+    margin-top: .35rem;
+}
 span.graphicon ul#align_menu .ls-plotgraphs_listitem a:hover {
     background-color: transparent;
 }
@@ -3684,9 +3702,9 @@ body #page #page-content #region-main {
 body .dropdown-menu{
     display: none;
 }
-/*body .open>.dropdown-menu, body .show>.dropdown-menu {
+body .open>.dropdown-menu, body .show>.dropdown-menu {
     display: block;
-}*/
+}
 /*code ends for Adaptable theme dropdowns*/
 /*body#page-blocks-rdDashboard, body.path-blocks-reporttiles, body.path-blocks-learnerscript {
     font-family: 'Roboto', sans-serif !important;
@@ -3763,10 +3781,24 @@ form.schform span>input[name="exporttofilesystem"] {
 body#page-blocks-learnerscript-viewreport .ui-dialog .ajaxForm .mform select[size], select[multiple] {
     width: auto !important;
 }
-/*jira issue 359,353*/
-#page-blocks-learnerscript-editreport #fitem_id_type #id_type {
-    text-transform: capitalize;
-}
-body#page-blocks-learnerscript-viewreport #licenceresult .alert-info {
+table.dataTable.dtr-inline.collapsed>tbody>tr>td:first-child:before, table.dataTable.dtr-inline>tbody>tr>th:first-child:before {
+    top: 9px;
+    left: 4px;
+    height: 14px;
+    width: 14px;
+    background: gray;
+    display: block;
+    position: inherit;
+    color: #fff;
+    border: 2px solid white;
+    border-radius: 14px;
+    box-shadow: 0 0 3px #444;
+    margin-right: 5px;
+    display: inline-block;
+    box-sizing: content-box;
     text-align: center;
+    text-indent: 0 !important;
+    font-family: 'Courier New', Courier, monospace;
+    line-height: 14px;
+    content: '+';
 }

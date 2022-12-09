@@ -28,7 +28,7 @@ use block_learnerscript\output;
 global $PAGE, $USER, $DB;
 
 $PAGE->set_url('/blocks/learnerscript/reportsview.php');
-$PAGE->set_pagelayout('standard');
+$PAGE->set_pagelayout('admin');
 $PAGE->requires->css('/blocks/learnerscript/css/responsive.bootstrap.min.css');
 $title = get_string('managereports', 'block_learnerscript');
 
@@ -39,7 +39,6 @@ $reportdashboardurl = new moodle_url("/blocks/reportdashboard/dashboard.php" , $
 $PAGE->navbar->add(get_string('reportdashboard','block_learnerscript'), $reportdashboardurl);
 $PAGE->navbar->add(get_string('managereports','block_learnerscript'));
 $PAGE->navbar->ignore_active();
-$PAGE->set_context($systemcontext);
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_cacheable(true);
@@ -146,13 +145,13 @@ $report_details=$ls->get_categories_from_reports();
                         }
                         break;
 
-                    // case "local_certification":
-                    //     $category_name='Certification';
-                    //     $plugin_exists = core_component::get_plugin_directory('local', 'certification'); 
-                    //     if($plugin_exists){
-                    //         $certification_report = true;
-                    //     }
-                    //     break;
+                    case "local_certification":
+                        $category_name='Certification';
+                        $plugin_exists = core_component::get_plugin_directory('local', 'certification'); 
+                        if($plugin_exists){
+                            $certification_report = true;
+                        }
+                        break;
 
                     case "local_program":
                         $category_name='Program';
@@ -194,7 +193,7 @@ $report_details=$ls->get_categories_from_reports();
                 $list['classroom_report']=$classroom_report;
                 $list['course_report']=$course_report;
                 $list['user_report']=$user_report;
-                //$list['certification_report']=$certification_report;
+                $list['certification_report']=$certification_report;
                 $list['program_report']=$program_report;
                 $list['test_report']=$test_report;
                 $list['lp_report']=$lp_report;

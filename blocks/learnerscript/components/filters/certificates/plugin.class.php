@@ -61,10 +61,10 @@ class plugin_certificates extends pluginbase {
         global $DB, $USER;
 
         $selectcert = array();
-       /* if($selectoption){
+        if($selectoption){
             $selectcert[0] = $pluginclass->singleselection ? get_string('filter_certificates', 'block_learnerscript') :
             get_string('select') . ' ' . get_string('certification_nameforreports', 'block_learnerscript');
-        } */
+        }
 
         $params = array();
         $sql = "SELECT id, name 
@@ -83,8 +83,8 @@ class plugin_certificates extends pluginbase {
         $sql .= " ORDER BY name ASC ";
 
         $certoptions = $DB->get_records_sql_menu($sql, $params);
-		
-        $selectcert[0] = get_string('filter_mycertificates', 'block_learnerscript');
+
+        $selectcert[0] = 'Select certification'; 
         $certoptions = $selectcert + $certoptions;
 
         return $certoptions;

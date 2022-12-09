@@ -105,7 +105,7 @@ $string['open_band'] = 'Band';
 $string['open_hrmsrole'] = 'Role';
 $string['open_branch'] = 'Branch';
 $string['open_designation'] = 'Designation';
-$string['learningplan_enrol_users'] = 'Are you sure you want to enroll {$a->count} users to the learning path "{$a->planname}" ?';
+$string['learningplan_enrol_users'] = 'Are you sure you want to enroll {$a->count} users to the learning path <b>"{$a->planname}"</b> ?';
 $string['provide_valid_shortname'] = 'Missing Learningpath code ';
 $string['provide_valid_name'] = 'Missing Learningpath name';
 $string['publish'] = 'Publish';
@@ -216,7 +216,7 @@ $string['description'] = 'Description';
 $string['requested_users'] = 'Requested users';
 $string['users'] = 'Users';
 $string['courses'] = 'Courses';
-$string['confirm'] = 'Confirmation';
+$string['confirm'] = 'Confirm';
 $string['lperror_in_fetching_data'] = 'Unable to process the request due to an error';
 $string['learningplan_reports'] = 'Learning Path Reports';
 $string['unenrol'] = 'Unenrol';
@@ -242,6 +242,6 @@ $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['exportlearningplans'] = 'Export Learning Plans to Excel';
 $string['department'] = "Country";
-
-
-
+$string['reportingto'] = "Reporting To";
+$string['autoenrol'] = "Auto Enrol";
+$string['need_self_enrol'] = "Need Self Enroll";

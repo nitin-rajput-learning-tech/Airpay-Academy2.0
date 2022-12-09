@@ -32,7 +32,7 @@ use block_learnerscript\local\schedule;
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->css('/blocks/learnerscript/css/select2.min.css', true);
 $PAGE->requires->css('/blocks/learnerscript/css/jquery.dataTables.min.css', true);
-$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
 
 $reportid = required_param('id', PARAM_INT);
 $courseid = optional_param('courseid', SITEID, PARAM_INT);
@@ -103,6 +103,7 @@ if ($delete) {
 	$PAGE->navbar->add($strheading);
 	$PAGE->set_title($strheading);
 	echo $OUTPUT->header();
+	echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 	echo $OUTPUT->heading($strheading);
 	$yesurl = new moodle_url('/blocks/learnerscript/components/scheduler/schedule.php', array('id' => $reportid, 'courseid' => $courseid, 'scheduleid' => $scheduledreportid, 'confirm' => 1, 'sesskey' => sesskey(), 'delete' => 1));
 	$message = get_string('delconfirm', 'block_learnerscript');
@@ -127,8 +128,11 @@ if (empty($schrecords)) {
 	$collapse = false;
 } else {
 	$collapse = true;
-}
+} 
 
+$organizationid = isset($scheduledreport->organizationid) ? $scheduledreport->organizationid : 0;
+$departmentid = isset($scheduledreport->departmentid) ? $scheduledreport->departmentid : 0;
+$subdepartmentid = isset($scheduledreport->subdepartmentid) ? $scheduledreport->subdepartmentid : 0;
 $mform = new scheduled_reports_form($returnurl, array('id' => $reportid,
 												'schusers' => $schusers,
 												'scheduleid' => $scheduledreportid,
@@ -136,7 +140,11 @@ $mform = new scheduled_reports_form($returnurl, array('id' => $reportid,
 	 											'schusersids' => $schusersids,
 	 											'exportoptions' => $exportoptions,
 	 											'schedule_list' => $schedule_list,
-	 											'frequencyselect' => $frequencyselect));
+	 											'frequencyselect' => $frequencyselect,
+	 											'organizationid' => $organizationid,
+	 											'departmentid' => $departmentid,
+	 											'subdepartmentid' => $subdepartmentid,
+	 											'reportfilters' => $reportclass->basicparams));
 if ($scheduledreportid > 0) {
 
 	$collapse = false;
@@ -146,7 +154,9 @@ if ($scheduledreportid > 0) {
 	if (count($scheduledreport->users_data) > 10) {
 		$scheduledreport->users_data = $scheduledreport->users_data + array(-1 => -1);
 	}
-	$scheduledreport->frequency = array($scheduledreport->frequency, $scheduledreport->schedule);
+	$scheduledreport->frequency = array($scheduledreport->frequency, $scheduledreport->schedule); 
+	$scheduledreport->filter_organization = $scheduledreport->organizationid;
+	$scheduledreport->filter_departments = $scheduledreport->departmentid;
 	$mform->set_data($scheduledreport);
 }
 
@@ -160,7 +170,9 @@ if ($mform->is_cancelled()) {
 	$fromform->exportformat = $data->exportformat;
 	$fromform->frequency = $data->frequency;
 	$fromform->schedule = $data->schedule;
-	$fromform->userid = $USER->id;
+	$fromform->userid = $USER->id; 
+	$fromform->organizationid = !empty($data->filter_organization) ? $data->filter_organization : NULL;
+	$fromform->departmentid = !empty($data->filter_departments) ? $data->filter_departments : NULL;
 	if (empty($data->contextlevel) AND empty($fromform->contextlevel))
 	$fromform->contextlevel = CONTEXT_SYSTEM; // implicitly for BIZLMS
 	$fromform->nextschedule = $scheduling->next($fromform, null, false);
@@ -190,6 +202,7 @@ if ($mform->is_cancelled()) {
 	}
 }
 echo $OUTPUT->header();
+echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 //echo $OUTPUT->heading($report->name);
 
 if (isset($_SESSION['ls_ele_schedule']) && $_SESSION['ls_ele_schedule']) {
@@ -212,7 +225,7 @@ if (has_capability('block/learnerscript:managereports', $context) ||
 	$plotoptions = new \block_learnerscript\output\plotoption(false, $report->id, $calcbutton, 'schreportform');
 	echo $renderer->render($plotoptions);
 }
-// echo "<div  class='bulkupload'><a href='" . $CFG->wwwroot . "/blocks/learnerscript/components/scheduler/sch_upload.php?id=$reportid&courseid=" . $courseid . "'><button>Bulk Upload</button></a></div>";
+echo "<div  class='bulkupload'><a href='" . $CFG->wwwroot . "/blocks/learnerscript/components/scheduler/sch_upload.php?id=$reportid&courseid=" . $courseid . "'><button>Bulk Upload</button></a></div>";
 
 if($scheduledreportid > 0){
 	$schreport = get_string('editscheduledreport', 'block_learnerscript');
