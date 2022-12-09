@@ -1486,7 +1486,7 @@ class core_renderer extends \core_renderer {
         foreach($assignedcontexts AS $contextid){
             if($contextid != $context->id && $contextid != 1){
                 $othercontext = \context::instance_by_id($contextid);
-                if($othercontext->__get('contextlevel') == 50){
+                if($othercontext->__get('contextlevel') == 40){
                     if($this->role_capability_assignments($userroleid, $othercontext, $accessdata)){
                         $USER->access['rsw'][$othercontext->path] = $userroleid;
                     }
