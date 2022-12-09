@@ -32,13 +32,13 @@ class report_learningplansoverview extends reportbase implements report {
      * @param object $reportproperties Report properties object
      */
     public function __construct($report, $reportproperties) {
-        global $USER, $DB;
+        global $USER;
         parent::__construct($report);
         $this->components = array('columns', 'permissions','orderable','plot');
         $this->columns = ['learningpathfield'=>['learningpathfield'], 'learningplansoverviewcolumns'=> ['optionalcourses','mandatorycourses','enrolledcount',
          'completedcount']];    
         $this->parent = true;
-        $this->filters = array('organization','departments','learningpath');
+        $this->filters = array('organization','departments', 'subdepartments', 'learningpath');
         $this->orderable = array('learningpath_name','enrolledcount','completedcount');
         $this->defaultcolumn = 'lp.id';
 
@@ -69,7 +69,7 @@ class report_learningplansoverview extends reportbase implements report {
     }
     function where(){
          global $USER, $DB;
-        $this->sql .= " WHERE 1=1 AND lp.visible = 1";
+        $this->sql .= " WHERE 1=1 ";
         $systemcontext = context_system::instance();
         // getscheduled report
         if (!is_siteadmin()) {
@@ -77,9 +77,9 @@ class report_learningplansoverview extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dhs = 1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -87,10 +87,15 @@ class report_learningplansoverview extends reportbase implements report {
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND lp.costcenter = :costcenterid ";
             $this->params['costcenterid']= $USER->open_costcenterid;
-        }else{
-           $this->sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid";
+        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
+            $this->sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid";
            $this->params['costcenterid']= $USER->open_costcenterid;
            $this->params['departmentid']= $USER->open_departmentid;
+        }else{
+           $this->sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid AND lp.subdepartment = :subdepartment";
+           $this->params['costcenterid']= $USER->open_costcenterid;
+           $this->params['departmentid']= $USER->open_departmentid;
+           $this->params['subdepartment']= $USER->open_subdepartment;
         }
          parent::where();
     }
@@ -110,9 +115,14 @@ class report_learningplansoverview extends reportbase implements report {
             $this->sql .= " AND lp.costcenter = :orgid ";
             $this->params['orgid'] = $orgid;
         }
-        if ($this->params['filter_departments'] >= 0 && $this->params['filter_departments'] != '') {
+        if ($this->params['filter_departments'] > 0) {
             $this->sql .= " AND lp.department = :deptid ";
             $this->params['deptid'] = $this->params['filter_departments'];
+        }
+
+        if ($this->params['filter_subdepartments'] > 0) {
+            $this->sql .= " AND lp.subdepartment = :subdeptid ";
+            $this->params['subdeptid'] = $this->params['filter_subdepartments'];
         }
         if ($this->params['filter_learningpath'] > 0) {
             $lplan = $this->params['filter_learningpath'];

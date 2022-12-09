@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 class report_categories extends reportbase {
 
     public function __construct($report, $reportproperties) {
-        global $USER, $DB;
+        global $USER;
         parent::__construct($report,$reportproperties);
         $this->components = array('columns', 'conditions', 'filters', 'permissions', 'calcs', 'plot');
         $this->columns = array('categoryfield' => ['categoryfield']);
@@ -50,7 +50,6 @@ class report_categories extends reportbase {
     function filters() {}
 
     function where() {
-        global $DB;
         $this->sql .=" WHERE 1 = 1 AND visible = 1";
         // getscheduled report
         if (!is_siteadmin()) {

@@ -49,7 +49,7 @@ class plugin_mylearningplan extends pluginbase {
         global $DB, $USER;
         switch ($data->column) {
             case 'enrolledon':
-                $row->{$data->column} = \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column});
+                $row->{$data->column} = date('d-M-Y',$row->{$data->column});
                 break;
             case 'totalcourses':
                 $sql = "SELECT COUNT(lc.id)
@@ -93,7 +93,7 @@ class plugin_mylearningplan extends pluginbase {
                 $row->{$data->column} = ($row->{$data->column} == 1) ? 'Completed' : 'Not Completed';
                 break;
             case 'completiondate':
-                $row->{$data->column} = ($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = ($row->{$data->column}) ? date('d-M-Y',$row->{$data->column}) : 'NA';
                 break;
         }
          return (isset($row->{$data->column}))? $row->{$data->column} : ' -- ';

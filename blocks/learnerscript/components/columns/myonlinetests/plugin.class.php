@@ -71,7 +71,7 @@ class plugin_myonlinetests extends pluginbase {
 
                     $usergrade = $DB->get_record_sql($sql,array('quizid'=>$row->testid, 'itemmodule'=>'quiz', 'courseid'=>1,'userid' => $row->userid));
 
-                    $row->{$data->column} = \local_costcenter\lib::get_userdate('d m Y H:i',$usergrade->timemodified);
+                    $row->{$data->column} = date('d-M-Y',$usergrade->timemodified);
                 }else{
                     $row->{$data->column} = 'NA';
                 }

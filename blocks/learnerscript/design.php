@@ -39,7 +39,7 @@ $PAGE->requires->css('/blocks/learnerscript/css/on-off-switch.css');
 $PAGE->requires->css('/blocks/learnerscript/css/angular-material.min.css');
 $PAGE->requires->js('/blocks/learnerscript/js/smart-table.min.js');
 $PAGE->requires->js('/blocks/learnerscript/js/angular-drag-and-drop-lists.min.js');
-$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
 $PAGE->requires->js('/blocks/learnerscript/js/angular-animate.min.js');
 $PAGE->requires->js('/blocks/learnerscript/js/angular-route.js');
 $PAGE->requires->js('/blocks/learnerscript/js/angular-aria.min.js');
@@ -55,6 +55,7 @@ $PAGE->navbar->add($report->name, $reporturl);
 $PAGE->navbar->add(get_string("design", 'block_learnerscript'));
 
 echo $OUTPUT->header();
+echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 echo html_writer::start_tag('div', array('id'=>'licenceresult'));
 
 $renderer = $PAGE->get_renderer('block_learnerscript');

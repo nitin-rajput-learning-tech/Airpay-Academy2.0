@@ -147,7 +147,7 @@ if ($request){
 	            $class = new $classname($reportclass->config);
 	            //$selected = get_string('selectedfilter', 'block_learnerscript', ucfirst($plugin));
 	            $selected = get_string('selectedfilter', 'block_learnerscript', get_string($plugin, 'block_learnerscript'));
-	            $reportclass->selectedfilters[$selected] = $class->selected_filter($val);
+	            $reportclass->selectedfilters[$selected] = $class->selected_filter($val, $request);
         	}
         }
     }
@@ -159,7 +159,7 @@ $PAGE->set_url('/blocks/learnerscript/viewreport.php', array('id' => $id));
 
 $download = ($download && $format && strpos($report->export, $format) !== false) ? true : false;
 
-$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
 $PAGE->requires->js('/blocks/learnerscript/js/highcharts/treemap.js');
 $PAGE->requires->js('/blocks/learnerscript/js/highmaps/map.js');
 $PAGE->requires->js('/blocks/learnerscript/js/highmaps/world.js');
@@ -226,6 +226,7 @@ if (!$download) {
 	));
 	$event->trigger();
 	echo $OUTPUT->header();
+	echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 	if ($report->type == 'sql' || $report->type == 'statistics') {
 		echo $OUTPUT->heading($report->name);
 	} else {

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[local_learningplan]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Completion percentage]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[statistics]]></type>
+<components><![CDATA[YToyOntzOjk6ImN1c3RvbXNxbCI7YToxOntzOjY6ImNvbmZpZyI7Tzo4OiJzdGRDbGFzcyI6MTE6e3M6NDoibmFtZSI7czoyMToiQ29tcGxldGlvbitwZXJjZW50YWdlIjtzOjg6ImNhdGVnb3J5IjtzOjE4OiJsb2NhbF9sZWFybmluZ3BsYW4iO3M6NDoidHlwZSI7czoxMDoic3RhdGlzdGljcyI7czo4OiJxdWVyeXNxbCI7czoxMTcxOiJTRUxFQ1QrUk9VTkQlMjglMjglMjhTRUxFQ1QrQ09VTlQlMjhibGwuY29tcGxldGlvbmRhdGUlMjkrQVMrJTI3Q29tcGxldGVkJTI3KyslMEQlMEFGUk9NK3ByZWZpeF9ibG9ja19sc19sZWFybmluZ2Zvcm1hdHMrQVMrYmxsJTBEJTBBV0hFUkUrMSUzRDErQU5EK2JsbC5jb21wbGV0aW9uZGF0ZSslMjElM0QwK0FORCtibGwubW9kdWxlaWQlM0Q4KyUwRCUwQSUyNSUyNUZJTFRFUl9PUkdBTklaQVRJT05TJTNBYmxsLmNvc3RjZW50ZXJpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9PUkdBTklaQVRJT04lM0FibGwudXNlcl9jb3N0Y2VudGVyaWQlMjUlMjUlMEQlMEElMjUlMjVGSUxURVJfU1VCREVQQVJUTUVOVCUzQWJsbC51c2VyX3N1YmRlcGFydG1lbnQlMjUlMjUlMEQlMEElMjUlMjVGSUxURVJfU1VCREVQQVJUTUVOVFMlM0FibGwuc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQUFORCtibGwudGltZWNyZWF0ZWQrQkVUV0VFTislMjUlMjVMU19TVEFSVERBVEUlMjUlMjUrQU5EKyUyNSUyNUxTX0VORERBVEUlMjUlMjUrJTBEJTBBJTI5JTJGKyUyOFNFTEVDVCtDT1VOVCUyOGJsbGUuaWQlMjkrK2FzKyUyN0Vucm9sbG1lbnRzJTI3JTBEJTBBRlJPTStwcmVmaXhfYmxvY2tfbHNfbGVhcm5pbmdmb3JtYXRzK0FTK2JsbGUlMEQlMEFXSEVSRSsxJTNEMStBTkQrYmxsZS5tb2R1bGVpZCslM0Q4KyUwRCUwQSUyNSUyNUZJTFRFUl9PUkdBTklaQVRJT05TJTNBYmxsZS5jb3N0Y2VudGVyaWQlMjUlMjUlMEQlMEElMjUlMjVGSUxURVJfT1JHQU5JWkFUSU9OJTNBYmxsZS51c2VyX2Nvc3RjZW50ZXJpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UJTNBYmxsZS51c2VyX2RlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UUyUzQWJsbGUuZGVwYXJ0bWVudGlkJTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX1NVQkRFUEFSVE1FTlQlM0FibGxlLnVzZXJfc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9TVUJERVBBUlRNRU5UUyUzQWJsbGUuc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQUFORCtibGxlLnRpbWVjcmVhdGVkK0JFVFdFRU4rJTI1JTI1TFNfU1RBUlREQVRFJTI1JTI1K0FORCslMjUlMjVMU19FTkREQVRFJTI1JTI1KyUwRCUwQSUyOSUyOSUyQTEwMCUyQyswJTI5K0FTK2Vucm9sZW1lbnRzJTBEJTBBIjtzOjc6InN1bW1hcnkiO3M6MDoiIjtzOjY6Imdsb2JhbCI7czoxOiIxIjtzOjI6ImlkIjtpOjQ5O3M6ODoiY291cnNlaWQiO2k6MTtzOjM1OiJtZm9ybV9pc2V4cGFuZGVkX2lkX2FkdmFuY2Vkb3B0aW9ucyI7aTowO3M6MTI6InN1Ym1pdGJ1dHRvbiI7czo0OiJOZXh0IjtzOjEyOiJkaXNhYmxldGFibGUiO2k6MDt9fXM6MTE6InBlcm1pc3Npb25zIjthOjI6e3M6NjoiY29uZmlnIjtPOjg6InN0ZENsYXNzIjozOntzOjEzOiJjb25kaXRpb25leHByIjtzOjk6ImMxK2FuZCtjMiI7czoxNDoiY29uZGl0aW9uZXhwcjEiO3M6OToiYzErYW5kK2MyIjtzOjE0OiJjb25kaXRpb25leHByMiI7czowOiIiO31zOjg6ImVsZW1lbnRzIjthOjI6e2k6MDthOjU6e3M6MjoiaWQiO3M6MTU6InNsQ0lEVUNVWm9vQndESyI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6Mjp7czo2OiJyb2xlaWQiO3M6MjoiMTEiO3M6MTI6InN1Ym1pdGJ1dHRvbiI7czozOiJBZGQiO31zOjEwOiJwbHVnaW5uYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjc6InN1bW1hcnkiO3M6MjoiZGgiO31pOjE7YTo1OntzOjI6ImlkIjtzOjE1OiJDSFNKM1hFbUw2RVAwVTYiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjI6e3M6Njoicm9sZWlkIjtzOjI6IjE2IjtzOjEyOiJzdWJtaXRidXR0b24iO3M6MzoiQWRkIjt9czoxMDoicGx1Z2lubmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czo3OiJzdW1tYXJ5IjtzOjY6InN1Yl9kaCI7fX19fQ==]]></components>
+<export><![CDATA[]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[20]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[lp-fifth]]></defaultregion>
+<defaultweight><![CDATA[1]]></defaultweight>
+<timecreated><![CDATA[1664778551]]></timecreated>
+<timemodified><![CDATA[1664778551]]></timemodified>
+<title><![CDATA[Completion percentage-Learning paths]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[556679728]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[lp-fourth]]></region>
+<weight><![CDATA[1]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[lp-one]]></defaultregion>
+<defaultweight><![CDATA[-1]]></defaultweight>
+<timecreated><![CDATA[1664778551]]></timecreated>
+<timemodified><![CDATA[1664778551]]></timemodified>
+<title><![CDATA[Completion percentage-Learning paths]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[235231287]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[lp-fourth]]></region>
+<weight><![CDATA[-1]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[lp-one]]></defaultregion>
+<defaultweight><![CDATA[-1]]></defaultweight>
+<timecreated><![CDATA[1664778551]]></timecreated>
+<timemodified><![CDATA[1664778551]]></timemodified>
+<title><![CDATA[Completion percentage-Learning paths]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[29118172]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[lp-fourth]]></region>
+<weight><![CDATA[-1]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-sub_dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[lp-fourth]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778551]]></timecreated>
+<timemodified><![CDATA[1664778551]]></timemodified>
+<title><![CDATA[Completion percentage]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[566158423]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

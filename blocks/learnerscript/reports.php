@@ -42,7 +42,7 @@ if ($course->id == SITEID) {
 
 $PAGE->set_url('/blocks/learnerscript/reports.php', array('courseid' => $course->id));
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('standard');
+$PAGE->set_pagelayout('admin');
 
 $lsreportconfigstatus = get_config('block_learnerscript', 'lsreportconfigstatus');
 
@@ -66,7 +66,7 @@ if (empty($_SESSION['role'])) {
     }
 }
 
-$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
 $PAGE->requires->jquery_plugin('ui-css');
 
 $statisticsreports = (new block_learnerscript\local\ls)->listofreportsbyrole(false, true, false, true);
@@ -81,6 +81,7 @@ $PAGE->set_heading($title);
 $PAGE->set_cacheable(true);
 
 echo $OUTPUT->header();
+echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 echo html_writer::start_tag('div',array());
 echo html_writer::start_tag('div',array('id' => 'listofreports'));
 
