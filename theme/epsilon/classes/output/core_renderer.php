@@ -1478,7 +1478,7 @@ class core_renderer extends \core_renderer {
             return;
         }
         //Fetching the category contexts where the role is assigned ans switching as user to those for achieving system level role switch starts.
-        $userroleid = $DB->get_field('role', 'id', array('shortname' => 'user'));
+        $userroleid = $DB->get_field('role', 'id', array('shortname' => 'employee'));
         $assignedcontexts = array_map(function($cxtpath){
             return end(explode('/', $cxtpath));
         }, array_unique(array_keys($USER->access['ra'])));
