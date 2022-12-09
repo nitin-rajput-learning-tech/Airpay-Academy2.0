@@ -1482,11 +1482,14 @@ class core_renderer extends \core_renderer {
         $assignedcontexts = array_map(function($cxtpath){
             return end(explode('/', $cxtpath));
         }, array_unique(array_keys($USER->access['ra'])));
+
         foreach($assignedcontexts AS $contextid){
             if($contextid != $context->id && $contextid != 1){
                 $othercontext = \context::instance_by_id($contextid);
-                if($this->role_capability_assignments($userroleid, $othercontext, $accessdata)){
-                    $USER->access['rsw'][$othercontext->path] = $userroleid;
+                if($othercontext->__get('contextlevel') == 50){
+                    if($this->role_capability_assignments($userroleid, $othercontext, $accessdata)){
+                        $USER->access['rsw'][$othercontext->path] = $userroleid;
+                    }
                 }
             }
         }
