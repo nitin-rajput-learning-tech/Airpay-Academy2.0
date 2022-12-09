@@ -57,8 +57,8 @@
                     <div alt="Test courses1" class="courseimg courseimg_bg" style="background-image:url('{{plan_image_url}}')">
                             <div class="course_progress_container d-flex align-items-center">
                                 <div class="progress_circular" style="background-image: conic-gradient(white 0%, transparent 0%);"> </div>
-                                <div class="progress_status">Completed</div>
-                                <div class="progress_percentage">0%</div>
+                                <div class="progress_status">{{lpstatus}}</div>
+                                <div class="progress_percentage">{{completedpathpercent}}%</div>
                             </div>
                      </div>
 
@@ -70,7 +70,7 @@
                                 <a href="{{planUrl}}" title="{{planFullname}}">{{planFullname}}</a>
                             </div>
                             <div class="rating_container">
-                                <i class="fa fa-star"></i> 4.4
+                                <i class="fa fa-star"></i>{{ratingavg}}
                             </div>
                         </div>
                         <div class="desc coursedesc"><span class="w-full pull-left">{{planSummary}}</span></div>
@@ -82,7 +82,7 @@
                             {{/ pathcourses}}
                         </div>
                         <a href="{{planUrl}}" class="">
-                            <button class="btn btn-primary my-2 launch_btn">Launch</button>
+                            <button class="btn btn-primary my-2 launch_btn">{{label_name}}</button>
                         </a>
                     </div>
 
