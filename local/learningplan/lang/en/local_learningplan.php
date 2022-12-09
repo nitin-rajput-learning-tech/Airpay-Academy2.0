@@ -117,7 +117,7 @@ $string['audience_department'] = '<p>This learningpath will eligible below-liste
 <p> <b>Countries :</b> {$a}</p>';
 $string['audience_subdepartment'] = '<p> <b>Bussiness Unit :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';
-$string['audience_hrmsrole'] = '<p> <b>Hrms Role :</b> {$a}</p>';
+$string['audience_hrmsrole'] = '<p> <b>Role :</b> {$a}</p>';
 $string['audience_designation'] = '<p> <b>Designations :</b> {$a}</p>';
 $string['audience_location'] = '<p> <b>Locations :</b> {$a}</p>';
 $string['need_manage_approval'] = 'Need Manager Approval';

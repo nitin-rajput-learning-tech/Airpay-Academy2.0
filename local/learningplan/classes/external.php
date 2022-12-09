@@ -616,6 +616,9 @@ class local_learningplan_external extends external_api {
                         'index' => new external_value(PARAM_INT, 'Index of Card'),
                         'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),
                         'label_name' => new external_value(PARAM_RAW, 'course_completedon'),
+                        'ratingavg' => new external_value(PARAM_RAW, 'Plan Ratings'),
+                        'completedpathpercent' => new external_value(PARAM_RAW, 'Plan Ratings'),                        
+                        'lpstatus' => new external_value(PARAM_RAW, 'Plan Ratings'),                        
                     )
                 )
             ),
@@ -708,6 +711,9 @@ class local_learningplan_external extends external_api {
                                 'rating_element' => new external_value(PARAM_RAW, 'Plan ratings'),
                                 'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),
                                 'label_name' => new external_value(PARAM_RAW, 'course_completedon'),
+                                'ratingavg' => new external_value(PARAM_RAW, 'Plan Ratings'),
+                                'completedpathpercent' => new external_value(PARAM_RAW, 'Plan Ratings'),
+                                'lpstatus' => new external_value(PARAM_RAW, 'Plan Ratings'),                                
                             )
                         )
                     ),
