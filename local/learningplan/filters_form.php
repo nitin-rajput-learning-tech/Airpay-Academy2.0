@@ -47,9 +47,12 @@ class filters_form extends moodleform {
         // $buttonarray[] = &$mform->createElement('button', 'cancel', get_string('reset','local_courses'), array());
         // $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
         
-        $this->add_action_buttons(true, get_string('apply', 'local_courses'));
+        // $this->add_action_buttons(true, get_string('apply', 'local_courses'));
+        $buttonarray=array();
+        $buttonarray[] = $mform->createElement('submit', 'submitbutton', get_string('apply', 'local_courses'));
+        $buttonarray[] = $mform->createElement('cancel', 'resetbutton', get_string('reset', 'local_courses'));
+        $mform->addGroup($buttonarray, 'buttonar', '', ' ', false);
         $mform->disable_form_change_checker();
-
     }
      /**
      * Validation.

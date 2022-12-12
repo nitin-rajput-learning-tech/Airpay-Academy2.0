@@ -179,7 +179,12 @@ class learningplan_courses implements \renderable, \templatable {
                 }else{
                     $onerow['rating_element'] = '';
                 }
-
+                $planpercent = $this->planpercent($inprogress_coursename->id);
+                if($lastaccessstime){
+                    $onerow['label_name'] = get_string('continue_plan','local_learningplan');
+                }else{                    
+                    $onerow['label_name'] = $planpercent < 100 ? get_string('start_plan','local_learningplan') : get_string('completed');
+                }
 
                 $completedon = $DB->get_field('local_learningplan_user', 'completiondate', array('planid'=> $inprogress_coursename->id, 'userid'=> $USER->id));
 
@@ -187,32 +192,47 @@ class learningplan_courses implements \renderable, \templatable {
                     $onerow['course_completedon'] = date("d M Y", $completedon);
                 }else{
                     $onerow['course_completedon'] = null;
-                }
-                if($lastaccessstime){
-                    $onerow['label_name'] = get_string('continue_plan','local_learningplan');
-                }else{
-                    $onerow['label_name'] = get_string('start_plan','local_learningplan');
-                }
-
+                }                
+                require_once($CFG->dirroot.'/local/ratings/lib.php');
+                $display_ratings = get_rating($inprogress_coursename->id, 'local_learningplan');
+                $onerow['ratingavg'] = $display_ratings->avg;
+                $onerow['lpstatus'] = $planpercent < 100 ? get_string('inprogress') : get_string('completed');
+                $onerow['completedpathpercent'] = $planpercent;             
                 array_push($data->inprogress_elearning, $onerow);
-
             } // end of foreach
-
         } // end of if condition
-        // print_object($data);
         $data->moduledetails = $data->inprogress_elearning;
         $data->menu_heading = get_string('learningpaths','block_userdashboard');
         $data->nodata_string = get_string('nolearningplansavailable','block_userdashboard');
         return $data;
     } // end of export_for_template function.
-
+    private function planpercent($planid){
+        global $DB,$USER;
+        $sql = "SELECT c.* FROM {local_learningplan_courses} as lpc inner join {course} as c on c.id= lpc.courseid where lpc.planid=:planid";
+        $params =array("planid"=>$planid);
+        $courses = $DB->get_records_sql($sql,$params);
+        $coursescount= count($courses);
+        // foreach($courses as $course){
+        //     $cinfo = new \completion_info($course);
+        //     $completetedcoursecount += $cinfo->is_course_complete($USER->id) ? 0 : 1; 
+        // }
+            $lp_params = array();
+            $coursesql = "SELECT  cc.id,cc.course FROM {course_completions} AS cc
+                          JOIN {local_learningplan_courses} AS llc ON llc.courseid = cc.course
+                          WHERE cc.userid = :userid AND llc.planid = :lplanid  AND cc.timecompleted IS NOT NULL";
+            $lp_params['userid'] = $USER->id;
+            $lp_params['lplanid'] = $planid;
+            $coursecompletions = $DB->get_records_sql_menu($coursesql,$lp_params);
+            $completetedcoursecount = count($coursecompletions);
+        return $completetedcoursecount/$coursescount * 100;
+    }
 
     private function get_coursesummary($course_record){
         $coursesummary = \local_costcenter\lib::strip_tags_custom($course_record->description);
         $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100)."..." : $coursesummary;
         $coursesummary = $summarystring;
         if(empty($coursesummary)){
-            $coursesummary = '<span class="w-full pull-left ">'.get_string('nodecscriptionprovided','block_userdashboard').'</span>';
+            $coursesummary = get_string('nodecscriptionprovided','block_userdashboard');
 
         }
 
