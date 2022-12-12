@@ -758,7 +758,7 @@ function blocks_add_default_org_blocks($costcenterid) {
     $page->set_context((new \local_costcenter\lib\accesslib())::get_module_context($costcenterid));
         $subpagepattern = null;
     $page->blocks->add_blocks([
-        'content' => [
+        'layerone_full' => [
             'userdashboard',
             'quick_navigation',
         ]],
