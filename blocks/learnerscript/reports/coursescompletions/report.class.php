@@ -35,7 +35,7 @@ class report_coursescompletions extends reportbase implements report {
         $this->filters = array('organization', 'departments','subdepartments','course','user','completionstatus');
         $this->parent = true;
         $this->orderable = array('coursename');
-        $this->defaultcolumn = 'ue.id';
+        $this->defaultcolumn = 'ra.id';
     }
 
     function init() {
@@ -43,18 +43,17 @@ class report_coursescompletions extends reportbase implements report {
     }
 
     function count() {
-        $this->sql = "SELECT COUNT(ue.id) ";
+        $this->sql = "SELECT COUNT(ra.id) ";
     }
 
     function select() {
-        $this->sql = " SELECT ue.id,u.id as userid
-                        , DATE_FORMAT(FROM_UNIXTIME(ue.timecreated),'%d-%m-%Y %H:%i') as enrolledon
+        $this->sql = " SELECT ra.id as assignmentid ,u.id as userid, u.*
+                        , ra.timemodified as enrolledon
                         , cc.timecompleted 
-                        , ue.timecreated as enrolstarted
+                        , ra.timemodified as enrolstarted
                         , c.id as courseid 
                         , c.fullname as coursename
-                        , c.open_coursecompletiondays as completiondays
-                        , e.enrol as enrolmentmethod  " ;
+                        , c.open_coursecompletiondays as completiondays " ;
 //        $this->sql = " SELECT ue.id, c.id as courseid, u.id as userid,c.fullname as coursename,
  //                   cc.timecompleted AS completionstatus, cc.timecompleted AS completiondate " ;
 
@@ -66,15 +65,14 @@ class report_coursescompletions extends reportbase implements report {
     }
 
     function joins() {
+        global $DB;
+        $employeerole = $DB->get_field('role', 'id', ['shortname' => 'employee']);
         $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category
-                        JOIN {enrol} e ON e.courseid = c.id  
-                        JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                        JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 
+                        JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
+                        JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}
+                        JOIN {user} u ON ra.userid = u.id AND u.confirmed = 1
                                         AND u.deleted = 0 AND u.suspended = 0
                         JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
-                        JOIN {role_assignments} as ra ON ra.userid = u.id
-                        JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=c.id
-                        JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                         LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid ";
 
         parent::joins();
@@ -82,18 +80,17 @@ class report_coursescompletions extends reportbase implements report {
 
     function where() {
         global $USER, $DB;
-        $this->sql .= " WHERE c.id <> :siteid AND 
-                        CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
+        $this->sql .= " WHERE c.id <> :siteid   ";
         $this->params['siteid'] = SITEID;
 
         $systemcontext = context_system::instance();
         // getscheduled report
         if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+            $scheduledreport = $DB->get_record_sql('SELECT id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $ohs = $DB->record_exists_sql("SELECT id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+            $dhs = $DB->record_exists_sql("SELECT id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
                 $ohs = $dhs=1;
             }
@@ -170,6 +167,25 @@ class report_coursescompletions extends reportbase implements report {
     }
 
     public function get_rows($courseusers) {
+        global $DB;
+        if($courseusers){
+            foreach($courseusers AS $user){
+                $sql = "SELECT d.*, f.shortname, f.name, f.datatype
+                          FROM {user_info_data} d ,{user_info_field} f
+                         WHERE f.id = d.fieldid AND d.userid = ?";
+                if ($profiledata = $DB->get_records_sql($sql, array($user->userid))) {
+                    foreach ($profiledata as $p) {
+                        if ($p->datatype == 'checkbox') {
+                            $p->data = ($p->data) ? get_string('yes') : get_string('no');
+                        }
+                        if ($p->datatype == 'datetime') {
+                            $p->data = userdate($p->data);
+                        }
+                        $user->{'profile_'.$p->name} = $p->data;
+                    }
+                }
+            }
+        }
         return $courseusers;
     }
 }
