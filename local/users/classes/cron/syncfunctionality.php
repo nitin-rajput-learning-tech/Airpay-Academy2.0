@@ -71,7 +71,7 @@ class syncfunctionality
     public function main_hrms_frontendform_method($cir, $filecolumns, $formdata)
     {
         global $DB, $USER, $CFG;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $inserted = 0;
         $updated = 0;
         $linenum = 1;
@@ -250,7 +250,7 @@ class syncfunctionality
         $strings->subdept = $excel->subdepartment;
         $strings->employee_id = $excel->employee_id;
         $strings->excel_line_number = $this->excel_line_number;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $orgerror = 0;
         $categorylib = new \local_courses\catslib();
         if (!is_siteadmin()) {
@@ -271,7 +271,7 @@ class syncfunctionality
                 $departmentcategory = $DB->get_field('local_costcenter', 'category', array('shortname' => $excel->department));
                 $departmentcostcenterid = $DB->get_field('local_costcenter', 'id', array('shortname' => $excel->department));
                        
-            if ($departmentcostcenterid !== $USER->open_departmentid && !empty($USER->open_departmentid) && !has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+            if ($departmentcostcenterid !== $USER->open_departmentid && !empty($USER->open_departmentid) && !has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
                 echo '<div class=local_users_sync_error>' . get_string('departmentcheckwithdh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('departmentcheckwithdh', 'local_users', $strings);
                 $this->mfields[] = 'usercategory';

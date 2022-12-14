@@ -103,26 +103,27 @@ function local_users_output_fragment_new_create_user($args) {
 function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $userslist = array();
     $data = data_submitted();
+
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+
         $userslist_sql = "SELECT id, concat(firstname,' ',lastname) as fullname FROM {user}
          WHERE id > :adminuserid AND deleted = :deleted AND suspended = :suspended AND id <> :userid  ";
 
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+    } else{
+
         $userslist_sql = "SELECT id, concat(firstname,' ',lastname) as fullname FROM {user}
-         WHERE id > :adminuserid AND open_costcenterid = :costcenterid AND deleted = :deleted
-          AND suspended = :suspended AND id <> :userid  ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT id, concat(firstname,' ',lastname) as fullname FROM {user}
-         WHERE id > :adminuserid AND open_costcenterid = :costcenterid AND open_departmentid =
-          :departmentid AND deleted = :deleted AND suspended = :suspended AND id <> :userid ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+         WHERE id > :adminuserid AND deleted = :deleted
+          AND suspended = :suspended AND id <> :userid  $costcenterpathconcatsql";
     }
+
     if (!empty($query)) {
         if ($searchanywhere) {
             $likesql = $DB->sql_like("CONCAT(firstname, ' ',lastname)", "'%$query%'", false);
@@ -167,23 +168,19 @@ function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpa
 function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $userslist = array();
     $data = data_submitted();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $userslist_sql = "SELECT id, email as fullname FROM {user} WHERE id > :adminuserid AND deleted = :deleted AND
          suspended = :suspended AND id <> :userid ";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+    } else {
         $userslist_sql = "SELECT id, email as fullname FROM {user} WHERE id >
-         :adminuserid AND open_costcenterid = :costcenterid AND deleted = :deleted AND suspended = :suspended AND id <> :userid ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT id, email as fullname FROM {user} WHERE id >
-         :adminuserid AND open_costcenterid = :costcenterid AND open_departmentid =
-          :departmentid AND deleted = :deleted AND suspended = :suspended AND id <> :userid ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+         :adminuserid AND deleted = :deleted AND suspended = :suspended AND id <> :userid $costcenterpathconcatsql";
     }
     if (!empty($query)) {
         if ($searchanywhere) {
@@ -230,24 +227,19 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
 function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpage=25) {
     global $DB, $USER;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $userslist = array();
     $data = data_submitted();
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $userslist_sql = "SELECT id, open_employeeid as fullname FROM {user} WHERE id >
          :adminuserid AND deleted = :deleted AND suspended = :suspended AND id <> :userid";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-        $userslist_sql = "SELECT id, open_employeeid as fullname FROM {user} WHERE id > :adminuserid
-         AND open_costcenterid = :costcenterid AND deleted = :deleted AND suspended = :suspended
-          AND id <> :userid";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT id, open_employeeid as fullname FROM {user} WHERE id > :adminuserid
-         AND open_costcenterid = :costcenterid AND open_departmentid = :departmentid AND
-          deleted = :deleted AND suspended = :suspended AND id <> :userid";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+    } else {
+        $userslist_sql = "SELECT id, open_employeeid as fullname FROM {user} WHERE id > :adminuserid AND deleted = :deleted AND suspended = :suspended
+          AND id <> :userid $costcenterpathconcatsql";
     }
     if (!empty($query)) {
         if ($searchanywhere) {
@@ -286,22 +278,18 @@ function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $
  */
 function designation_filter($mform) {
     global $DB, $USER;
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $userslist_sql = "SELECT id, open_designation FROM {user} WHERE id > :adminuserid
          AND deleted = :deleted AND suspended = :suspended AND id <> :userid";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-        $userslist_sql = "SELECT id, open_designation FROM {user} WHERE id > :adminuserid
-         AND open_costcenterid = :costcenterid AND deleted = :deleted AND suspended =
-          :suspended AND id <> :userid";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT id, open_designation FROM {user} WHERE id > :adminuserid
-         AND open_costcenterid = :costcenterid AND open_departmentid = :departmentid AND
-          deleted = deleted AND suspended = :suspended AND id <> :userid";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+    } else {
+        $userslist_sql = "SELECT id, open_designation FROM {user} WHERE id > :adminuserid  AND deleted = :deleted AND suspended =
+          :suspended AND id <> :userid $costcenterpathconcatsql";
     }
     $userslist = $DB->get_records_sql_menu($userslist_sql, $userslistparams);
     $select = $mform->addElement('autocomplete', 'designation', '',
@@ -316,22 +304,18 @@ function designation_filter($mform) {
 function location_filter($mform) {
     global $DB, $USER;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $userslist_sql = "SELECT u.city, u.city AS name FROM {user} AS u WHERE
          u.id > :adminuserid AND u.deleted = :deleted AND u.suspended = :suspended AND u.id <> :userid ";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+    } else  {
         $userslist_sql = "SELECT u.city, u.city AS name FROM {user} AS u WHERE u.id > :adminuserid
-         AND u.open_costcenterid = :costcenterid AND u.deleted = :deleted AND u.suspended = :suspended
-          AND u.id <> :userid ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT u.city, u.city AS name FROM {user} AS u WHERE u.id >
-         :adminuserid AND u.open_costcenterid = :costcenterid AND u.open_departmentid =
-          :departmentid AND u.deleted = :deleted AND u.suspended = :suspended AND u.id <> :userid";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+          AND u.deleted = :deleted AND u.suspended = :suspended
+          AND u.id <> :userid $costcenterpathconcatsql";
     }
     $userslist_sql .= " AND u.city != '' AND u.city IS NOT NULL GROUP BY u.city ";
     $userslist = $DB->get_records_sql_menu($userslist_sql, $userslistparams);
@@ -347,22 +331,18 @@ function location_filter($mform) {
  */
 function hrmsrole_filter($mform) {
     global $DB, $USER;
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $userslist_sql = "SELECT u.open_hrmsrole, u.open_hrmsrole as name FROM {user} AS u WHERE u.id >
          :adminuserid AND u.deleted = :deleted AND u.suspended = :suspended AND u.id <> :userid ";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+    } else  {
         $userslist_sql = "SELECT u.open_hrmsrole, u.open_hrmsrole as name FROM
-         {user} AS u WHERE u.id > :adminuserid AND u.open_costcenterid = :costcenterid
-          AND u.deleted = :deleted AND u.suspended = :suspended ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT u.open_hrmsrole, u.open_hrmsrole as name FROM {user} AS u WHERE u.id >
-         :adminuserid AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid
-          AND u.deleted = :deleted AND u.suspended = :suspended ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+         {user} AS u WHERE u.id > :adminuserid
+          AND u.deleted = :deleted AND u.suspended = :suspended $costcenterpathconcatsql";
     }
     $userslist_sql .= " AND u.open_hrmsrole != '' AND u.open_hrmsrole IS NOT NULL GROUP BY u.open_hrmsrole ";
     $userslist = $DB->get_records_sql_menu($userslist_sql, $userslistparams);
@@ -379,21 +359,16 @@ function hrmsrole_filter($mform) {
 function band_filter($mform) {
     global $DB, $USER;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $userslist_sql = "SELECT id, open_band FROM {user} WHERE id > :adminuserid AND deleted = :deleted
          AND suspended = :suspended AND id <> :userid";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-        $userslist_sql = "SELECT id, open_band FROM {user} WHERE id > :adminuserid AND open_costcenterid =
-         :costcenterid AND deleted = :deleted AND suspended = :suspended AND id <> :userid";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT id, open_band FROM {user} WHERE id > :adminuserid AND open_costcenterid =
-         :costcenterid AND open_departmentid = :departmentid AND deleted = :deleted AND suspended = :suspended
-          AND id <> :userid ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+    } else  {
+        $userslist_sql = "SELECT id, open_band FROM {user} WHERE id > :adminuserid  AND deleted = :deleted AND suspended = :suspended AND id <> :userid $costcenterpathconcatsql";
     }
     $userslist = $DB->get_records_sql_menu($userslist_sql, $userslistparams);
     $select = $mform->addElement('autocomplete', 'band', '', $userslist, array('placeholder' => get_string('band', 'local_users')));
@@ -407,21 +382,18 @@ function band_filter($mform) {
 function username_filter($mform) {
     global $DB, $USER;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $userslist_sql = "SELECT id, username FROM {user} WHERE id > :adminuserid AND deleted = :deleted
          AND suspended = :suspended AND id <> :userid";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-        $userslist_sql = "SELECT id, username FROM {user} WHERE id > :adminuserid AND open_costcenterid =
-         :costcenterid AND deleted = :deleted AND suspended = :suspended AND id <> :userid";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $userslist_sql = "SELECT id, username FROM {user} WHERE id > :adminuserid AND open_costcenterid =
-         :costcenterid AND open_departmentid = :departmentid AND deleted = :deleted AND suspended =
-          :suspended AND id <> :userid ";
-        $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        $userslistparams['departmentid'] = $USER->open_departmentid;
+
+    } else {
+
+        $userslist_sql = "SELECT id, username FROM {user} WHERE id > :adminuserid  AND deleted = :deleted AND suspended = :suspended AND id <> :userid $costcenterpathconcatsql";
     }
     $userslist = $DB->get_records_sql_menu($userslist_sql, $userslistparams);
     $select = $mform->addElement('autocomplete', 'username', '', $userslist, array('placeholder' => get_string('username')));
@@ -435,25 +407,20 @@ function username_filter($mform) {
 function custom_filter($mform) {
     global $DB, $USER;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $filterv = $DB->get_field('local_filters', 'filters', array('plugins' => 'users'));
     $filterv = explode(',', $filterv);
     foreach ($filterv as $fieldvalue) {
         $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $userslist_sql = "SELECT id, $fieldvalue FROM {user} WHERE id > :adminuserid AND deleted =
              :deleted AND suspended = :suspended AND id <> :userid ";
-        } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-            $userslist_sql = "SELECT id, $fieldvalue FROM {user} WHERE id > :adminuserid AND
-             open_costcenterid = :costcenterid AND deleted = :deleted AND suspended = :suspended AND
-              id <> :userid ";
-            $userslistparams['costcenterid'] = $USER->open_costcenterid;
-        } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-            $userslist = $DB->get_records_sql_menu("SELECT id, $fieldvalue FROM {user} WHERE id >
-             :adminuserid AND open_costcenterid = :costcenterid AND open_departmentid = :departmentid
-              AND deleted = :deleted AND suspended = :suspended AND id <> :userid ");
-            $userslistparams['costcenterid'] = $USER->open_costcenterid;
-            $userslistparams['departmentid'] = $USER->open_departmentid;
+        } else  {
+            $userslist_sql = "SELECT id, $fieldvalue FROM {user} WHERE id > :adminuserid  AND deleted = :deleted AND suspended = :suspended AND
+              id <> :userid $costcenterpathconcatsql";
         }
         $userslist = $DB->get_records_sql_menu($userslist_sql, $userslistparams);
         $select = $mform->addElement('autocomplete', $fieldvalue, '', $userslist, array('placeholder'
@@ -474,20 +441,17 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
 
 
     $context = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+
     $params = array();
     $params['deleted'] = 0;
     $params['suspended'] = 0;
     if ($mform->modulecostcenter == 0 && (is_siteadmin()||has_capability('local/costcenter:manage_multiorganizations', $context))) {
         $main_sql = "";
-    } else if (has_capability('local/costcenter:manage_ownorganization', $context)) {
+    } else  {
          $costcenterid = $mform->modulecostcenter ? $mform->modulecostcenter : $USER->open_costcenterid;
-        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted  AND u.open_costcenterid = :costcenterid ";
-        $params['costcenterid'] = $costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $context)) {
-        $main_sql = " AND u.suspended = :suspended AND u.deleted = :deleted  AND u.open_costcenterid = :costcenterid
-         AND u.open_departmentid = :departmentid ";
-        $params['costcenterid'] = $USER->open_costcenterid;
-        $params['departmentid'] = $USER->open_departmentid;
+        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted  $costcenterpathconcatsql ";
     }
     $dbman = $DB->get_manager();
     if (in_array('group', $elementlist)) {
@@ -576,11 +540,11 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
 function local_users_leftmenunode() {
     global $USER, $DB;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
     $usersnode = '';
     $key = '';
-    if (has_capability('local/users:manage', $systemcontext) || has_capability('local/users:view',
-      $systemcontext) || is_siteadmin()) {
+    if (has_capability('local/users:manage', $categorycontext) || has_capability('local/users:view',
+      $categorycontext) || is_siteadmin()) {
         $usersnode .= html_writer::start_tag('li', array('id' => 'id_leftmenu_users', 'class' => 'pull-left user_nav_div users'));
             $users_url = new moodle_url('/local/users/index.php');
             $users = html_writer::link($users_url, '<i class="fa fa-user-plus" aria-hidden="true"></i>
@@ -596,9 +560,12 @@ function local_users_leftmenunode() {
 function local_users_quicklink_node() {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+
     $local_users = '';
-    if (is_siteadmin() || has_capability('local/users:view', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/users:view', $categorycontext)) {
         $sql = "SELECT count(id) FROM {user} WHERE id > 2  AND deleted = :deleted ";
         $suspendsql = " AND suspended = :suspended ";
 
@@ -613,26 +580,12 @@ function local_users_quicklink_node() {
         $inactiveparams['suspended'] = 1;
         $inactiveparams['deleted'] = 0;
 
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $sql .= "";
-        } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+        } else  {
             //costcenterid concating
-            $sql .= " AND open_costcenterid = :costcenterid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-            $activeparams['costcenterid'] = $USER->open_costcenterid;
-            $inactiveparams['costcenterid'] = $USER->open_costcenterid;
-        } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-            //costcenterid concating
-            $sql .= " AND open_costcenterid = :costcenterid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-            $activeparams['costcenterid'] = $USER->open_costcenterid;
-            $inactiveparams['costcenterid'] = $USER->open_costcenterid;
+            $sql .= $costcenterpathconcatsql;
 
-            //departmentid concating
-            $sql .= " AND open_departmentid = :departmentid ";
-            $params['departmentid'] = $USER->open_departmentid;
-            $activeparams['departmentid'] = $USER->open_departmentid;
-            $inactiveparams['departmentid'] = $USER->open_departmentid;
         }
 
         $count_activeusers = $DB->count_records_sql($sql.$suspendsql, $activeparams);
@@ -651,7 +604,7 @@ function local_users_quicklink_node() {
         $displayline = false;
         $hascapablity = false;
 
-        if (has_capability('local/users:create', $systemcontext) || is_siteadmin()) {
+        if (has_capability('local/users:create', $categorycontext) || is_siteadmin()) {
             $displayline = true;
             $hascapablity = true;
             $countinformation['create_element'] = html_writer::link('javascript:void(0)', get_string('create'),
@@ -664,7 +617,7 @@ function local_users_quicklink_node() {
         $countinformation['node_header_string'] = get_string('manage_br_users', 'local_users');
         $countinformation['pluginname'] = 'users';
         $countinformation['plugin_icon_class'] = 'fa fa-user-plus';
-        $countinformation['contextid'] = $systemcontext->id;
+        $countinformation['contextid'] = $categorycontext->id;
         $countinformation['userid'] = $USER->id;
         $countinformation['create'] = $hascapablity;
         $countinformation['viewlink_url'] = $CFG->wwwroot.'/local/users/index.php';
@@ -759,7 +712,10 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
 function manage_users_count($stable, $filterdata) {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+
      $statustype = $stable->status;
      $totalcostcentercount = $stable->costcenterid;
      $totaldepartmentcount = $stable->departmentid;
@@ -771,15 +727,10 @@ function manage_users_count($stable, $filterdata) {
          JOIN {local_costcenter} AS lc ON lc.id=u.open_costcenterid
          WHERE u.id > 2 AND u.deleted = 0 ";
     $params = array();
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $formsql .= "";
-    } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-        $formsql .= " AND open_costcenterid = :costcenterid ";
-        $params['costcenterid'] = $USER->open_costcenterid;
-    } else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
-        $formsql .= " AND open_costcenterid = :costcenterid AND open_departmentid = :departmentid ";
-        $params['costcenterid'] = $USER->open_costcenterid;
-        $params['departmentid'] = $USER->open_departmentid;
+    } else  {
+        $formsql .= $costcenterpathconcatsql;
     }
     if (isset($filterdata->search_query) && trim($filterdata->search_query) != '') {
         $formsql .= " AND (u.username LIKE :search1 OR concat(u.firstname,' ',u.lastname)
@@ -868,7 +819,7 @@ function manage_users_count($stable, $filterdata) {
 function manage_users_content($stable, $users/*,$filterdata*/) {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
 
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = $users['users'];
     $data = array();
 
@@ -950,16 +901,16 @@ function users_filters_form($filterparams) {
 
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
 
-    $systemcontext=(new \local_users\lib\accesslib())::get_module_context();
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $mform = new filters_form(null, array('filterlist' => array('organizations', 'departments',
             'subdepartment', 'email', 'employeeid', 'status', 'location', 'hrmsrole'), 'courseid' => 1,
              'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
-    } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+    } else if (has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
         $mform = new filters_form(null, array('filterlist' => array('departments', 'subdepartment',
             'email', 'employeeid', 'status', 'location', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0,
         'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+    } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
         $mform = new filters_form(null, array('filterlist' => array('subdepartment', 'email', 'employeeid',
          'status', 'location', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users',
          'costcenter'), 'filterparams' => $filterparams));
@@ -979,12 +930,12 @@ function users_filters_form($filterparams) {
 function manage_syncerrors_count($stable, $filterdata) {
     global $DB, $USER;
 
-    $systemcontext =(new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext =(new \local_users\lib\accesslib())::get_module_context();
     $params = array();
     $countsql = " SELECT count(id) ";
     $selectsql = "SELECT * ";
     $fromsql = " FROM {local_syncerrors} ls where 1=1";
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $fromsql .= " ";
     } else {
         $fromsql .= " AND modified_by = :modified_by ";
@@ -1037,12 +988,12 @@ function manage_syncerrors_content($stable, $filterdata) {
 */
 function manage_syncstatistics_count($stable, $filterdata) {
     global $DB, $USER;
-    $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
     $params = array();
     $countsql = " SELECT count(id) ";
     $selectsql = "SELECT * ";
     $fromsql = " FROM {local_userssyncdata} ls where 1=1";
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $fromsql .= " ";
     } else {
         // $fromsql .= " AND usercreated = :modifiedby ";

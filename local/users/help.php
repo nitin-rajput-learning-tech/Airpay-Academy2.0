@@ -24,13 +24,13 @@
 
 require_once(dirname(__FILE__) . '/../../config.php');
 global $CFG, $DB;
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-$PAGE->set_context($systemcontext);
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/users/help.php');
 $PAGE->set_pagelayout('standard');
 $strheading = get_string('pluginname', 'local_users') . ' : ' . get_string('manual', 'local_users');
 $PAGE->set_title($strheading);
-if (!(has_capability('local/users:manage', $systemcontext) && has_capability('local/users:create', $systemcontext))) {
+if (!(has_capability('local/users:manage', $categorycontext) && has_capability('local/users:create', $categorycontext))) {
     echo print_error('nopermissions');
 }
 if ($CFG->forcelogin) {
@@ -66,11 +66,11 @@ $select = new single_select(new moodle_url('#'), 'proid', $timezone, null, '');
 $select->set_label('');
 $timezones = $OUTPUT->render($select);
 
-if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
     echo get_string('help_1', 'local_users', array('countries' => $countries, 'timezones' => $timezones));
-} else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+} else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
     echo get_string('help_1_orghead', 'local_users', array('countries' => $countries, 'timezones' => $timezones));
-} else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+} else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
     echo get_string('help_1_dephead', 'local_users', array('countries' => $countries, 'timezones' => $timezones));
 }
 echo get_string('help_2', 'local_users', array('countries' => $countries, 'timezones' => $timezones));

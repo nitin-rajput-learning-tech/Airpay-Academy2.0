@@ -25,8 +25,8 @@ require_once(dirname(__FILE__) . '/../../../config.php');
 global $DB, $PAGE, $CFG, $OUTPUT;
 
 
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-$PAGE->set_context($systemcontext);
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/users/sync/sync_errors.php');
 $PAGE->set_pagelayout('standard');
 $strheading = get_string('sync_errors', 'local_users');
@@ -36,7 +36,7 @@ $PAGE->navbar->add(get_string('pluginname', 'local_users'), new moodle_url('/loc
 $PAGE->navbar->add($strheading);
 $PAGE->set_heading($strheading);
 echo $OUTPUT->header();
-if (!(has_capability('local/users:create', $systemcontext) || is_siteadmin())) {
+if (!(has_capability('local/users:create', $categorycontext) || is_siteadmin())) {
     echo print_error('no permission');
 }
 

@@ -26,7 +26,7 @@ class local_users_observer extends \core\event\user_profile_viewed {
 
         $related_userid  = $event->data['objectid'];
         
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $today = \local_costcenter\lib::get_userdate('d.m.Y');
         $ystart = strtotime($today);
         $presentday = \local_costcenter\lib::get_userdate('j', $ystart);

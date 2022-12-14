@@ -35,13 +35,13 @@ class local_users_renderer extends plugin_renderer_base {
 
         $corecomponent = new core_component();
 
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         /*user image*/
         $user_image = $OUTPUT->user_picture($userrecord, array('size' => 80, 'link' => false));
 
         /*user roles*/
-        $userroles = get_user_roles($systemcontext, $id);
+        $userroles = get_user_roles($categorycontext, $id);
         if (!empty($userroles)) {
                 $rolename  = array();
             foreach ($userroles as $roles) {
@@ -101,12 +101,12 @@ class local_users_renderer extends plugin_renderer_base {
 
         ksort($existingplugin);
         $existingplugin = array_values($existingplugin);
-        if (is_siteadmin() || has_capability('local/users:edit', $systemcontext)) {
+        if (is_siteadmin() || has_capability('local/users:edit', $categorycontext)) {
             $capabilityedit = 1;
         } else {
             $capabilityedit = 0;
         }
-        if (has_capability('moodle/user:loginas', $systemcontext)) {
+        if (has_capability('moodle/user:loginas', $categorycontext)) {
             $loginasurl = new moodle_url('/course/loginas.php', array('id' => 1, 'user' => $userrecord->id, 'sesskey' => sesskey()));
         } else {
             $loginasurl = false;
@@ -180,9 +180,9 @@ class local_users_renderer extends plugin_renderer_base {
      */
     public function user_page_top_action_buttons() {
         global $CFG;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-        return $this->render_from_template('local_users/usertopactions', array('contextid' => $systemcontext->id));
+        return $this->render_from_template('local_users/usertopactions', array('contextid' => $categorycontext->id));
     }
     /**
      * [render_form_status description]
@@ -207,7 +207,7 @@ class local_users_renderer extends plugin_renderer_base {
         $costcenterid = optional_param('costcenterid', '', PARAM_INT);
         $departmentid = optional_param('departmentid', '', PARAM_INT);
         $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
         $templateName = 'local_users/users_view';
         $cardClass = 'col-md-6 col-12';
@@ -223,7 +223,7 @@ class local_users_renderer extends plugin_renderer_base {
         $options['templateName'] = $templateName;
         $options = json_encode($options);
 
-        $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $systemcontext->id,
+        $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $categorycontext->id,
          'status' => $status, 'costcenterid' => $costcenterid, 'departmentid' => $departmentid,
           'subdepartmentid' => $subdepartmentid));
         $filterdata = json_encode(array('status' => $status, 'organizations' => $costcenterid, 'departments' =>
@@ -251,14 +251,14 @@ class local_users_renderer extends plugin_renderer_base {
     public function display_sync_errors($filter = false) {
         global $USER;
 
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
 
         $options = array('targetID' => 'display_sync', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
         $options['methodName'] = 'local_users_syncerrors_view';
         $options['templateName'] = 'local_users/syncerrors';
         $options = json_encode($options);
-        $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $systemcontext->id));
+        $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $categorycontext->id));
         $filterdata = json_encode(array());
 
         $context = [
@@ -284,13 +284,13 @@ class local_users_renderer extends plugin_renderer_base {
     public function display_sync_statics($filter = false) {
         global $USER;
 
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
         $options = array('targetID' => 'display_syncstatics', 'perPage' => 10, 'cardClass' => 'tableformat', 'viewType' => 'table');
         $options['methodName'] = 'local_users_syncstatics_view';
         $options['templateName'] = 'local_users/syncstatistics';
         $options = json_encode($options);
-        $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $systemcontext->id));
+        $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $categorycontext->id));
         $filterdata = json_encode(array());
 
         $context = [
@@ -310,7 +310,7 @@ class local_users_renderer extends plugin_renderer_base {
      public function employees_skill_profile_view($id) {
         global $CFG, $OUTPUT, $DB, $PAGE, $USER;
 
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         $corecomponent = new \core_component();
         $positionpluginexists = $corecomponent::get_plugin_directory('local', 'positions');

@@ -31,8 +31,8 @@ $id = optional_param('id', $USER->id, PARAM_INT);
 
 $PAGE->set_url('/local/users/profile.php', array('id' => $id));
 
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-$PAGE->set_context($systemcontext);
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $PAGE->requires->js_call_amd('local_users/newuser', 'load', array());
 $PAGE->requires->js_call_amd('local_users/datatablesamd', 'load', array());
 $PAGE->set_pagelayout('context_image');
@@ -41,9 +41,9 @@ require_login();
 
 $strheading = get_string('viewprofile', 'local_users');
 $PAGE->set_title(get_string('viewprofile', 'local_users'));
-if (($id != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)))) {
+if (($id != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
     $issupervisor = $DB->record_exists('user', array('id' => $id, 'open_supervisorid' => $USER->id));
-    if (has_capability('local/users:create', $systemcontext) || $issupervisor) {
+    if (has_capability('local/users:create', $categorycontext) || $issupervisor) {
         $usercostcenter = $DB->get_field('user', 'open_costcenterid', array('id' => $id));
         $managercostcenter = $USER->open_costcenterid;
 
@@ -51,7 +51,7 @@ if (($id != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:
         $managerdepartment = $USER->open_departmentid;
         if ($usercostcenter != $managercostcenter) {
             throw new moodle_exception(get_string('nopermission', 'local_users'));
-        } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)
+        } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)
             &&$userdepartment != $managerdepartment) {
             throw new moodle_exception(get_string('nopermission', 'local_users'));
         }

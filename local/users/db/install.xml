@@ -66,6 +66,22 @@
              <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
           </INDEXES> 
 	    </TABLE>
+	    <TABLE NAME="local_userdata" COMMENT="Used to store uploaded user info">
+		  <FIELDS>
+			<FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+			<FIELD NAME="userid" TYPE="int" LENGTH="20" NOTNULL="false"  SEQUENCE="false"/>
+			<FIELD NAME="costcenterpath" TYPE="char" LENGTH="255" NOTNULL="false"  SEQUENCE="false"/>
+			<FIELD NAME="pathtype" TYPE="char" LENGTH="255" NOTNULL="false"   SEQUENCE="false" />
+			<FIELD NAME="pathtypeid" TYPE="int" LENGTH="20" NOTNULL="false"  SEQUENCE="false"/>
+	      	<FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="false"  SEQUENCE="false"/>
+	      	<FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+	      	<FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false"  SEQUENCE="false"/>
+	      	<FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+		  </FIELDS>
+		  <KEYS>
+				<KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+		  </KEYS>
+	    </TABLE>
 			
   </TABLES>
 </XMLDB>

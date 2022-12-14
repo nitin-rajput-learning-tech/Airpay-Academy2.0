@@ -20,13 +20,10 @@ function xmldb_local_users_uninstall() {
     $dbman = $DB->get_manager();
     $table = new xmldb_table('user');
     if ($dbman->table_exists($table)) {
-            $costcenterfield = new xmldb_field('open_costcenterid');
-        if ($dbman->field_exists($table, $costcenterfield)) {
-            $dbman->drop_field($table, $costcenterfield);
-        }
-        $departmentfield = new xmldb_field('open_departmentid');
-        if ($dbman->field_exists($table, $departmentfield)) {
-            $dbman->drop_field($table, $departmentfield);
+
+        $opencostcenterpathfield = new xmldb_field('open_costcenterpath');
+        if ($dbman->field_exists($table, $opencostcenterpathfield)) {
+            $dbman->drop_field($table, $opencostcenterpathfield);
         }
 
         $supervisorfield = new xmldb_field('open_supervisorid');
@@ -79,11 +76,6 @@ function xmldb_local_users_uninstall() {
             $dbman->drop_field($table, $qualifield);
         }
 
-        $subdepfield = new xmldb_field('open_subdepartment');
-        if ($dbman->field_exists($table, $subdepfield)) {
-            $dbman->drop_field($table, $subdepfield);
-        }
-
         $locafield = new xmldb_field('open_location');
         if ($dbman->field_exists($table, $locafield)) {
             $dbman->drop_field($table, $locafield);
@@ -128,7 +120,6 @@ function xmldb_local_users_uninstall() {
         if ($dbman->field_exists($table, $openclientfield)) {
             $dbman->drop_field($table, $openclientfield);
         }
-
     }
     return true;
 }

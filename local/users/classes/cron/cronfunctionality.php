@@ -392,7 +392,7 @@ class cronfunctionality {
      */
     private function costcenter_validation($excel) {
         global $DB, $USER;
-       $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+       $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
          //------username validation-------------------
         if ( $this->costcenter_shortname) {
                 $costcenter_shortname = $this->costcenter_shortname;
@@ -414,7 +414,7 @@ class cronfunctionality {
                     $this->errorcount++;
             } else if ((!$DB->record_exists('user', array('id' => $USER->id, 'open_costcenterid' =>
                      $costcenterinfo->id))) && (!is_siteadmin()) && (!has_capability('local/
-                    costcenter:manage_multiorganizations', $systemcontext))) {
+                    costcenter:manage_multiorganizations', $categorycontext))) {
 
                     echo '<div class=local_users_sync_error>'.get_string('otherorg_msg', 'local_users',
                      $strings).'</div>';
@@ -434,8 +434,8 @@ class cronfunctionality {
                     $this->errorcount++;
             } else if ((!$DB->record_exists('user', array('id' => $USER->id, 'open_departmentid' =>
                     $departmentinfo->id))) && (!is_siteadmin()) && (!has_capability('local/
-                costcenter:manage_multiorganizations', $systemcontext))&&(has_capability('local/
-                costcenter:manage_owndepartments', $systemcontext))) {
+                costcenter:manage_multiorganizations', $categorycontext))&&(has_capability('local/
+                costcenter:manage_owndepartments', $categorycontext))) {
                     echo '<div class=local_users_sync_error>'.get_string('otherdept_msg', 'local_users',
                      $strings).'</div>';
                     $this->errors[] = get_string('otherdept_msg', 'local_users', $strings);
@@ -707,7 +707,7 @@ class cronfunctionality {
      */
     private function domain_validation($excel) {
         global $DB, $USER;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
          //------username validation-------------------
         if ($excel->domain) {
             $costcenter_shortname = $this->costcenter_shortname;
@@ -745,8 +745,8 @@ class cronfunctionality {
                 $this->errorcount++;
             } else if ((!$DB->record_exists('user', array('id' => $USER->id, 'open_domainid' =>
                      $domaininfo->id))) && (!is_siteadmin()) && (!has_capability('local/
-                    costcenter:manage_multiorganizations', $systemcontext))&&(has_capability('local/
-                    costcenter:manage_owndepartments', $systemcontext))) {
+                    costcenter:manage_multiorganizations', $categorycontext))&&(has_capability('local/
+                    costcenter:manage_owndepartments', $categorycontext))) {
                     echo '<div class=local_users_sync_error>Domain "'.$domain_shortname.'" entered at line
                      '.$this->excel_line_number.' for employee id "'.$excel->employee_id.'" in uploaded
                       excelsheet does not belongs to you .</div>';
@@ -767,7 +767,7 @@ class cronfunctionality {
      */
     private function position_validation($excel) {
          global $DB, $USER;
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
          //------position validation-------------------
         if ($excel->position) {
             $costcenter_shortname = $this->costcenter_shortname;
@@ -821,8 +821,8 @@ class cronfunctionality {
                     $this->errorcount++;
             } else if ((!$DB->record_exists('user', array('id' => $USER->id, 'open_positionid' =>
                  $positioninfo->id))) && (!is_siteadmin()) && (!has_capability('local/
-                costcenter:manage_multiorganizations', $systemcontext))&&(has_capability('local/
-                costcenter:manage_owndepartments', $systemcontext))) {
+                costcenter:manage_multiorganizations', $categorycontext))&&(has_capability('local/
+                costcenter:manage_owndepartments', $categorycontext))) {
                 echo '<div class=local_users_sync_error>Position "'.$position_shortname.'"
                  entered at line '.$this->excel_line_number.' for employee id "'.$excel->employee_id.'"
                   in uploaded excelsheet does not belongs to you .</div>';

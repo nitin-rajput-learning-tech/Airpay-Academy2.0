@@ -126,5 +126,32 @@ function xmldb_local_users_upgrade($oldversion) {
 		}
 		upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'user');
 	}
+    if ($oldversion < 2022101800.05) {
+
+        $table = new xmldb_table('local_userdata');
+
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('pathtype', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+
+            $table->add_field('pathtypeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+        }
+
+        $table = new xmldb_table('user');
+        $field1 = new xmldb_field('open_costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+
+        upgrade_plugin_savepoint(true, 2022101800.05, 'local', 'users');
+    }
 	return true;
 }

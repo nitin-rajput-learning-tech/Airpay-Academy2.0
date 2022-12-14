@@ -1467,7 +1467,11 @@ class core_renderer extends \core_renderer {
 
         global $DB, $ACCESSLIB_PRIVATE, $USER;
         $USER->access['rsw'][$context->path] = $roleid;
-        $USER->access['rsw']['currentroleinfo'] = ['roleid' => $roleid, 'context' => $context];
+
+        $costcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($context);
+
+        $USER->access['rsw']['currentroleinfo'] = ['roleid' => $roleid, 'context' => $context,'costcenterpath'=>$costcenterpath];
+
        /* Get the relevant rolecaps into rdef
         * - relevant role caps
         *   - at ctx and above

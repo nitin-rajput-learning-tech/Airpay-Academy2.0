@@ -26,8 +26,8 @@ global $DB, $PAGE, $CFG, $OUTPUT;
 
 $PAGE->requires->js_call_amd('local_users/datatablesamd', 'load', array());
 
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-$PAGE->set_context($systemcontext);
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 
 $PAGE->set_url('/local/users/sync/syncstatistics.php');
 $PAGE->set_pagelayout('standard');
@@ -40,7 +40,7 @@ $PAGE->navbar->add($strheading);
 $PAGE->set_heading(get_string('syncstatistics', 'local_users'));
 echo $OUTPUT->header();
 
-if (!(has_capability('local/users:create', $systemcontext) || is_siteadmin())) {
+if (!(has_capability('local/users:create', $categorycontext) || is_siteadmin())) {
     echo print_error('nopermission');
 }
 echo html_writer::link(new moodle_url('/local/users/index.php'),  get_string('back', 'local_users'), array('id' => 'sync_data'));

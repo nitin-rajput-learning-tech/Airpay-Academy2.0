@@ -65,7 +65,7 @@ function local_classroom_pluginfile($course, $cm, $categorycontext, $filearea, $
 function local_classroom_output_fragment_classroom_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $categorycontext = $args->context;
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     $return = '';
     $renderer = $PAGE->get_renderer('local_classroom');
     $formdata = [];
@@ -396,7 +396,7 @@ function classroom_evaluation_completed($evaluationid,$userid,$type){
 function local_classroom_output_fragment_session_form($args) {
     global $CFG, $DB;
     $args = (object) $args;
-    $categorycontext = $args->context;
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
@@ -437,7 +437,7 @@ function local_classroom_output_fragment_session_form($args) {
 function local_classroom_output_fragment_classroom_completion_form($args) {
     global $CFG, $DB;
     $args = (object) $args;
-    $categorycontext = $args->context;
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
@@ -483,7 +483,7 @@ function local_classroom_output_fragment_classroom_completion_form($args) {
 function local_classroom_output_fragment_course_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $categorycontext = $args->context;
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     $return = '';
     $renderer = $PAGE->get_renderer('local_classroom');
     $formdata = [];
@@ -869,7 +869,7 @@ function local_classroom_output_fragment_new_catform($args) {
     global $CFG, $DB;
 
     $args = (object) $args;
-    $categorycontext = $args->context;
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     $categoryid = $args->categoryid;
     $o = '';
     $formdata = [];

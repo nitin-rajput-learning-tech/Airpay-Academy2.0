@@ -24,8 +24,8 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 require_login();
 global $CFG, $DB;
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-$PAGE->set_context($systemcontext);
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/user/help.php');
 $PAGE->set_pagelayout('standard');
 $strheading = get_string('pluginname', 'local_users') . ' : ' . get_string('manual', 'local_users');

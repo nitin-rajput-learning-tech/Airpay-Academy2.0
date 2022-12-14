@@ -31,11 +31,11 @@ class user {
         $returnobj->count = 1;
         $returnobj->usersexist = 1;
 
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
 
         /*user roles*/
-        $userroles = get_user_roles($systemcontext, $id);
+        $userroles = get_user_roles($categorycontext, $id);
         if (!empty($userroles)) {
                 $rolename  = array();
             foreach ($userroles as $roles) {
@@ -105,7 +105,7 @@ class user {
         require_once($CFG->dirroot.'/course/renderer.php');
         require_once($CFG->libdir . '/badgeslib.php');
         $returnobj = new \stdClass();
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         $corecomponent = new \core_component();
         $positionpluginexists = $corecomponent::get_plugin_directory('local', 'positions');
@@ -136,7 +136,7 @@ class user {
                 $compnames = array();
                 $skillnames = array();
                 $compitenc_name = html_writer::link('javascript:void(0)', $compitency->name, array('title' => '',
-                'onclick' => '(function(e){ require("local_users/newuser").skillslist({ contextid:'.$systemcontext->id.'
+                'onclick' => '(function(e){ require("local_users/newuser").skillslist({ contextid:'.$categorycontext->id.'
                 ,costcenterid:'.$loginuser_position->costcenter.',categoryid:'.$compitency->id.',positionid:'.$positionid.'
                 , categoryname:"'.$compitency->name.'",userid:'.$id.'}) })(event)'));
                 $compnames['comp_name'] = $compitenc_name;
@@ -152,7 +152,7 @@ class user {
                 $progress = $this->get_competency_percentage($compitency, $positionid, $userrecord->id);
                 $compnames['percentage'] = $progress;
                 $compnames['skillnames'] = $skillnames;
-                $compnames['contextid'] = $systemcontext->id;
+                $compnames['contextid'] = $categorycontext->id;
                 $comparray[] = $compnames;
             }
         }

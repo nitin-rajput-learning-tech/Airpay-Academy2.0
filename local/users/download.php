@@ -37,9 +37,9 @@ $params = json_decode($params, true);
 global $CFG, $USER;
 $myuser = new local_users\functions\users();
 $costcenter = new costcenter();
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 require_login();
-if (!has_capability('local/users:manage', $systemcontext) ) {
+if (!has_capability('local/users:manage', $categorycontext) ) {
     throw new moodle_exception('You dont have a permission to view this page.');
 }
 
@@ -127,7 +127,7 @@ if (!$users) {
                 $line[$k] = html_writer::tag('span', $v, array('class' => 'usersuspended'));
             }
         }
-        if (has_capability('local/users:manage', $systemcontext)) {
+        if (has_capability('local/users:manage', $categorycontext)) {
                 $data[] = $line;
         }
     }

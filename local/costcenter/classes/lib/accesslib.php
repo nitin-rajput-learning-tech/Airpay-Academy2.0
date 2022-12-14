@@ -29,63 +29,116 @@ namespace local_costcenter\lib;
  */
 class accesslib
 {
-    public static function get_module_context($costcenterparamid = null){
-        global $DB,$USER,$OUTPUT;
-        if((empty($USER->id) || is_siteadmin()) && $costcenterparamid == null){
-            $context = \context_system::instance();
-            return $context;
-        }else{
-            if(($costcenterparamid == null || $costcenterparamid == 0)){
 
-                $context=self::get_user_roleswitch_context($USER);
+    public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid){
+
+        global $DB,$USER;
+
+        $endpathvalue="";
+
+        if(empty($USER->id) || is_siteadmin()){
+
+            return $endpathvalue;
+
+        }else{
+            if($costcenterparamid == null || $costcenterparamid == 0){
+
+                $costcenterpath =$USER->access['rsw']['currentroleinfo']['costcenterpath'];
+
+            }elseif($costcenterparamid > 0){
+
+                 try{
+
+                    $cache = \cache::make('local_costcenter','costcenterpathdata');
+
+                    $cachekey = "costcenter_path_$costcenterparamid";
+
+                    $costcenterpath = $cache->get($cachekey);
+
+                    if ($costcenterpath === false) {
+
+                        $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+
+                        $costcenterpath = $DB->get_field_sql($sql, array('costcenterid' => $costcenterparamid));
+
+                        if($costcenterpath){
+
+                            $cache->set($cachekey, $costcenterpath);
+
+                        }else{
+
+                            $costcenterpath = $USER->access['rsw']['currentroleinfo']['costcenterpath'];
+
+                        }
+                    }
+
+                }catch(dml_exception $e){
+                    print_r($e->debuginfo);
+                }
+            }
+
+            if($costcenterpath){
+
+                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+
+                $endpathvalue=end($extractcostcenterpath);
+
+                $concatsql = " AND concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+
+                return $concatsql;
+
+            }else{
+
+                return $endpathvalue;
+
+            }
+
+        }
+
+    }
+    public static function get_module_context($costcenterparamid = null){
+
+        global $DB,$USER;
+
+        if(empty($USER->id) || is_siteadmin()){
+
+            $context = \context_system::instance();
+
+            return $context;
+
+        }else{
+            if($costcenterparamid == null || $costcenterparamid == 0){
+
+                $context=self::get_user_roleswitch_context();
 
             }elseif($costcenterparamid > 0){
                  try{
                     // Get a cache instance
                     $cache = \cache::make('local_costcenter','costcentercontextdata');
                     // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+
                     $cachekey = "costcenter_context_$costcenterparamid";
+
                     $context = $cache->get($cachekey);
+
                     if ($context === false) {
+
                         $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
+
                         $costcentercategory = $DB->get_field_sql($sql, array('costcenterid' => $costcenterparamid));
+
                         if($costcentercategory){
+
                             $context = \context_coursecat::instance($costcentercategory);
+
                             $cache->set($cachekey, $context);
-                        }else{
-                            $context = \context_user::instance($USER->id);
-                        }
-                    }
 
-                    if(!is_siteadmin()){
-
-                        $userrolecontext=self::get_user_roleswitch_context($USER);
-
-                        if($userrolecontext->contextlevel != CONTEXT_SYSTEM){
-
-                            if($context->id != $userrolecontext->id){
-
-                                $childcontexts=$context->get_child_contexts();
-
-
-                                if(array_key_exists($userrolecontext->id,$childcontexts)){
-
-                                    $context =$userrolecontext;
-
-                                }else{
-
-                                    $context = \context_user::instance($USER->id);
-
-                                }
-                            }
                         }else{
 
-                            $context = \context_user::instance($USER->id);
+                            $context = \context_system::instance();
 
                         }
-
                     }
-
 
                 }catch(dml_exception $e){
                     print_r($e->debuginfo);
@@ -94,55 +147,94 @@ class accesslib
             return $context;
         }
     }
-    public static function get_user_roleswitch_context($user){
+    public static function get_user_roleswitch_context(){
 
         global $DB,$USER,$OUTPUT;
 
         // Probably need to get accessdata (again), so...
-        if (!isset($user->access)) {
+        if (!isset($USER->access)) {
             load_all_capabilities();
         }
 
-        if(isset($user->access['rsw']) && !empty($user->access['rsw'])){
-            if(!empty($user->access['rsw']['currentroleinfo']['context'])){
-                $context =$user->access['rsw']['currentroleinfo']['context'];
+        if(isset($USER->access['rsw']) && !empty($USER->access['rsw'])){
+
+            if(!empty($USER->access['rsw']['currentroleinfo']['context'])){
+
+                $context =$USER->access['rsw']['currentroleinfo']['context'];
+
             }else{
-                $contextpath=array_values(array_flip($user->access['rsw']));
+
+                $contextpath=array_values(array_flip($USER->access['rsw']));
 
                 if(!empty($contextpath[0])){
+
                     $extractcontextpath=array_filter(explode('/',$contextpath[0]));
+
                     $endpathvalue=end($extractcontextpath);
+
                     $context =\context::instance_by_id($endpathvalue);
+
                 }else{
-                    $context = \context_user::instance($user->id);
+
+                     $context = \context_system::instance();
+
                 }
             }
         }else{
-             $highestroleinfo = array_shift(array_slice(self::get_user_roles_in_catgeorycontexts($user->id), 0,1));
+
+             $highestroleinfo = array_shift(array_slice(self::get_user_roles_in_catgeorycontexts($USER->id), 0,1));
 
              if (!empty($highestroleinfo)) {
+
                 $accessdata = get_empty_accessdata();
+
                 $context =\context::instance_by_id($highestroleinfo->contextid);
+
                 $OUTPUT->roleswitch($highestroleinfo->roleid, $context, $accessdata);
+
             }else{
-                $context = \context_user::instance($user->id);
+
+                 $context = \context_system::instance();
+
             }
         }
 
         return $context;
     }
     public static function get_user_roles_in_catgeorycontexts($userid = null){
+
         global $DB, $USER;
+
         if(is_null($userid)){
+
             $userid = $USER->id;
+
         }
+
         $assignedsql = "SELECT ra.id, cc.id as categoryid, cc.name as categoryname, r.id as roleid, r.name AS rolename, r.shortname as rolecode, ra.contextid
         FROM {role_assignments} AS ra
         JOIN {role} AS r ON r.id =  ra.roleid
         JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
         JOIN {course_categories} AS cc ON cc.id = c.instanceid
         WHERE ra.userid = :userid ORDER BY ra.id DESC ";
+
         $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid]);
+
         return $assignedroles;
+    }
+    public static function get_costcenterpath_context($context){
+
+        global $DB, $USER;
+
+        $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.category= :categoryid ";
+        $costcenterpath = $DB->get_field_sql($sql, array('categoryid' =>$context->instanceid));
+
+        if(!$costcenterpath){
+
+            $costcenterpath='';
+
+        }
+
+        return $costcenterpath;
     }
 }

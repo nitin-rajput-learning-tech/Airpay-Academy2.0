@@ -242,8 +242,8 @@ class users {
         global $DB;
         $role = $this->get_rolename($user->id);
         
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-        if (is_siteadmin($user->id) || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        if (is_siteadmin($user->id) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             return get_string('all');
         }
         $table = 'local_costcenter_permissions';

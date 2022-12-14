@@ -26,8 +26,8 @@ require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/adminlib.php');
 $format = optional_param('format', 'csv', PARAM_ALPHA);
 
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-if (!(has_capability('local/users:manage', $systemcontext) && has_capability('local/users:create', $systemcontext))) {
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+if (!(has_capability('local/users:manage', $categorycontext) && has_capability('local/users:create', $categorycontext))) {
     echo print_error('no permission');
 }
 if ($format) {

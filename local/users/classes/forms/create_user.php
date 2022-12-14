@@ -42,7 +42,7 @@ class create_user extends moodleform {
     public function definition() {
         global $USER, $CFG, $DB, $PAGE;
 
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
         $costcenter = new costcenter();
         $mform = $this->_form;
@@ -57,13 +57,13 @@ class create_user extends moodleform {
 
             
 
-            if (is_siteadmin($USER->id) || has_capability('local/users:manage', $systemcontext)) {
+            if (is_siteadmin($USER->id) || has_capability('local/users:manage', $categorycontext)) {
                 $sql = "select id,fullname from {local_costcenter} where visible =
     			 :visible and parentid=:parentid ";
                 $costcenters = $DB->get_records_sql($sql, array('visible' => 1, 'parentid' => 0));
             }
 
-            if (is_siteadmin($USER) || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+            if (is_siteadmin($USER) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
                 $organizationlist = array(null => get_string('select_org', 'local_users'));
                 foreach ($costcenters as $scl) {
                     $organizationlist[$scl->id] = $scl->fullname;
@@ -72,7 +72,7 @@ class create_user extends moodleform {
                  $organizationlist);
                 $mform->addRule('open_costcenterid', get_string('errororganization', 'local_users'), 'required',
                  null, 'client');
-            } else if (has_capability('local/costcenter:manage_ownorganization', $systemcontext) || has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+            } else if (has_capability('local/costcenter:manage_ownorganization', $categorycontext) || has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
                 $user_dept = $DB->get_field('user', 'open_costcenterid', array('id' => $USER->id));
                 $mform->addElement('hidden', 'open_costcenterid', null);
                 $mform->setType('open_costcenterid', PARAM_ALPHANUM);
@@ -139,8 +139,8 @@ class create_user extends moodleform {
             $mform->setType('email', PARAM_RAW);
 
             if (is_siteadmin() || has_capability('local/costcenter:manage_ownorganization',
-                $systemcontext) || has_capability('local/costcenter:
-            	manage_multiorganizations', $systemcontext)) {
+                $categorycontext) || has_capability('local/costcenter:
+            	manage_multiorganizations', $categorycontext)) {
                 $departmentslist = array(get_string('select_dept', 'local_users'));
                 if ($id > 0) {
                     $existing_costcenter = $DB->get_field('user', 'open_costcenterid', array('id' => $id));
@@ -155,7 +155,7 @@ class create_user extends moodleform {
                     foreach ($departments as $depart) {
                         $departmentslist[$depart->id] = $depart->fullname;
                     }
-                } else if (!is_siteadmin() && has_capability('local/costcenter:view', $systemcontext)) {
+                } else if (!is_siteadmin() && has_capability('local/costcenter:view', $categorycontext)) {
                     $departments = userlib::find_departments_list($USER->open_costcenterid);
                     foreach ($departments as $depart) {
                         $departmentslist[$depart->id] = $depart->fullname;
@@ -178,9 +178,9 @@ class create_user extends moodleform {
             $mform->setType('open_employeeid', PARAM_RAW);
             $open_costcenterid = $this->_customdata['org'] > 0 ?
                              $this->_customdata['org'] : $this->_ajaxformdata['open_costcenterid'];
-            if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+            if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
                 $reporting = userlib::find_supervisor_list($USER->open_costcenterid, $id);
-            } else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+            } else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
                 $reporting = userlib::find_dept_supervisor_list($USER->open_departmentid, $id);
             } else if ($open_costcenterid > 0) {
                 $reporting = userlib::find_supervisor_list($open_costcenterid, $id);

@@ -6,11 +6,9 @@ function xmldb_local_users_install(){
     $table = new xmldb_table('user');
     if ($dbman->table_exists($table)) {
 
-        $field1 = new xmldb_field('open_costcenterid');
-        $field1->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        $dbman->add_field($table, $field1);
-        $table->add_key('open_costcenterid', XMLDB_KEY_FOREIGN, array('open_costcenterid'),
-         'local_costcenter', array('id'));
+          $field1 = new xmldb_field('open_costcenterpath');
+          $field1->set_attributes(XMLDB_TYPE_CHAR, '255', null, null, null, null);
+          $dbman->add_field($table, $field1);
 
           $field2 = new xmldb_field('open_supervisorid');
           $field2->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
@@ -52,17 +50,6 @@ function xmldb_local_users_install(){
           $field18->set_attributes(XMLDB_TYPE_CHAR, '200', null, null, null, null);
           $dbman->add_field($table, $field18);
 
-          $field19 = new xmldb_field('open_departmentid');
-          $field19->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-          $dbman->add_field($table, $field19);
-          $table->add_key('open_departmentid', XMLDB_KEY_FOREIGN, array('open_departmentid'),
-         'local_costcenter', array('id'));
-
-          $field21 = new xmldb_field('open_subdepartment');
-          $field21->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-          $dbman->add_field($table, $field21);
-          $table->add_key('open_subdepartment', XMLDB_KEY_FOREIGN, array('open_subdepartment'),
-         'local_costcenter', array('id'));
 
           $field30 = new xmldb_field('open_location');
           $field30->set_attributes(XMLDB_TYPE_CHAR, '200', null, null, null, null);
@@ -107,5 +94,6 @@ function xmldb_local_users_install(){
           $field8 = new xmldb_field('open_domainid');
           $field8->set_attributes(XMLDB_TYPE_CHAR, '255', null, null, null, null);
           $dbman->add_field($table, $field8);
+
     }
 }

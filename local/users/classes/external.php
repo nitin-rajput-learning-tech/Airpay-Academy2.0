@@ -1223,15 +1223,15 @@ class local_users_external extends external_api {
         }
 
 
-        $systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-        self::validate_context($systemcontext);
+        self::validate_context($categorycontext);
 
         if ($USER->id != $userid) {
             // We must check if the current user can view other users grades.
             $user = core_user::get_user($userid, '*', MUST_EXIST);
             core_user::require_active_user($user);
-            require_capability('moodle/grade:viewall', $systemcontext);
+            require_capability('moodle/grade:viewall', $categorycontext);
         }
 
         // We need the site course, and course context.

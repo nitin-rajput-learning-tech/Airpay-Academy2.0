@@ -34,9 +34,9 @@ require_login();
 $corecomponent = new core_component();
 
 // systemcontest defining
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 
 // amd js calling
 $PAGE->requires->js_call_amd('local_users/newuser', 'load', array());
@@ -72,8 +72,8 @@ $PAGE->navbar->add($heading);
 echo $OUTPUT->header();
 
 // user has capibilaty for manage users
-if (!is_siteadmin() && (!has_capability('local/users:manage', $systemcontext)&&!
-    has_capability('local/users:view', $systemcontext))) {
+if (!is_siteadmin() && (!has_capability('local/users:manage', $categorycontext)&&!
+    has_capability('local/users:view', $categorycontext))) {
     echo print_error('nopermissions');
 }
 
@@ -82,7 +82,7 @@ $userrenderer = $PAGE->get_renderer('local_users');
 $collapse = true;
 $show = '';
 
-if (has_capability('local/users:create', $systemcontext) || is_siteadmin()) {
+if (has_capability('local/users:create', $categorycontext) || is_siteadmin()) {
     // create user, uploadusers and sync errors icons
     echo $userrenderer->user_page_top_action_buttons();
 }

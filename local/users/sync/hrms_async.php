@@ -37,14 +37,14 @@ $stryes = get_string('yes');
 $strno = get_string('no');
 $stryesnooptions = array(0 => $strno, 1 => $stryes);
 
-$systemcontext = (new \local_users\lib\accesslib())::get_module_context();
-$PAGE->set_context($systemcontext);
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 
 $PAGE->set_pagelayout('standard');
 global $USER, $DB , $OUTPUT;
 
 $returnurl = new moodle_url('/local/users/index.php');
-if (!has_capability('local/users:manage', $systemcontext) || !has_capability('local/users:create', $systemcontext) ) { 
+if (!has_capability('local/users:manage', $categorycontext) || !has_capability('local/users:create', $categorycontext) ) {
     print_error('You dont have permission');
 }
 
