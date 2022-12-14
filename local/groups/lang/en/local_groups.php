@@ -136,8 +136,9 @@ $string['admintableid']='cohorts';
 $string['pleaseselectorganization'] = 'Please Select Organization';
 $string['listtype'] = 'LIST';
 $string['cardtype'] = 'CARD';
-$string['group_name'] = 'Groups/Departments Name';
+$string['group_name'] = 'Groups Name';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
+$string['organisation'] ='Organisation';
 
 
