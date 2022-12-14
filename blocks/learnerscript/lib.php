@@ -531,7 +531,7 @@ function block_learnerscript_leftmenunode(){
         // $params = get_reportdashboard();
         $reports_url = new moodle_url('/blocks/reportdashboard/dashboard.php',array());
         $reportstext =  get_string('analytics','block_learnerscript');
-        $label = '<span class="analytics_icon readynez_cmn_icon icon"></span><span class="user_navigation_link_text">'.$reportstext.'</span>';
+        $label = '<i class="fa fa-bar-chart"></i><span class="user_navigation_link_text">'.$reportstext.'</span>';
         $reportslink = html_writer::link($reports_url, $label,array('class'=>'user_navigation_link'));
         $reportsnode .= $reportslink;
         $reportsnode .= html_writer::end_tag('li');
