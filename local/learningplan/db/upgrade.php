@@ -291,6 +291,14 @@ function xmldb_local_learningplan_upgrade($oldversion) {
      upgrade_plugin_savepoint(true, 2022101800, 'local', 'learningplan');
     
     }
+    if($oldversion < 2022101800.02){
+        $table = new xmldb_table('local_learningplan');
+        $field = new xmldb_field('selfenrol', XMLDB_TYPE_INTEGER, '2', null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.02, 'local', 'learningplan');   
+    }
   
     return true;
 }

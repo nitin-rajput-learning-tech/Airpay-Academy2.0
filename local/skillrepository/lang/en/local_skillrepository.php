@@ -50,7 +50,6 @@ $string['save'] = 'Submit';
 $string['update'] = 'Update';
 $string['action'] = 'Actions';
 $string['delconfirm'] = 'Do you really want to delete this Skill?';
-//$string['deleteskill'] = 'Delete SKILL';
 $string['proficiencylevel'] = 'Proficiency Level';
 $string['tags'] = 'Tags';
 $string['bu'] = 'Business Unit';
@@ -145,5 +144,6 @@ $string['skillrepository:update_level'] = 'Update level';
 $string['skillrepository:view_level'] = 'View level';
 $string['shortnamelengthexceeds'] = 'Code length exceeds 150 Charecter\'s ';
 $string['parentcategory'] = 'Parent Category';
+
 $string['reason'] = 'Reason';
 $string['deletenotconfirm'] = 'You cannot delete this skill catagory as it is currently mapped to a skill. Please unmap to delete.';

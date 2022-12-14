@@ -927,19 +927,16 @@ function groups_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage
         }
     }
     if(isset($data->groups)&&!empty(($data->groups))){
-     
-        $implode=implode(',',$data->groups);
-          
-        $groupslist_sql.=" AND c.id in ($implode)";
+        list($groups_sql, $groupsparam) = $DB->get_in_or_equal($data->groups, SQL_PARAMS_NAMED);
+        $groupslist_sql.=" AND c.id $groups_sql ";
     }
     if(!empty($query)||empty($mform)){ 
-        $groupslist = $DB->get_records_sql($groupslist_sql, array(), $page, $perpage);
+        $groupslist = $DB->get_records_sql($groupslist_sql, $groupsparam, $page, $perpage);
         return $groupslist;
     }
     if((isset($data->groups)&&!empty($data->groups))){ 
-        $groupslist = $DB->get_records_sql_menu($groupslist_sql, array(), $page, $perpage);
+        $groupslist = $DB->get_records_sql_menu($groupslist_sql, $groupsparam, $page, $perpage);
     }
-     
     $options = array(
         'ajax' => 'local_courses/form-options-selector',
         'multiple' => true,
@@ -948,7 +945,7 @@ function groups_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage
         'placeholder' => get_string('cohort', 'local_groups')
      );
     $select = $mform->addElement('autocomplete', 'groups', '', $groupslist,$options);
-    $mform->setType('groups', PARAM_INT);
+    $mform->setType('groups', PARAM_RAW);
 }
 /*
 * Author Rizwana

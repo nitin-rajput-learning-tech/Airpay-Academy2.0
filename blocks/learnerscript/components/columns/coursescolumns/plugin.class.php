@@ -41,7 +41,7 @@ class plugin_coursescolumns extends pluginbase{
 		return array($align,$size,$wrap);
 	}
 	public function execute($data,$row,$user,$courseid,$starttime=0,$endtime=0,$reporttype = 'table'){
-		global $DB, $CFG, $USER;
+		global $DB, $CFG, $USER; 
         $context = context_system::instance();
 		$usercoursesReportID = $DB->get_field('block_learnerscript', 'id', array('type' => 'usercourses'), IGNORE_MULTIPLE);
         $competencyreportid =  $DB->get_field('block_learnerscript', 'id', array('type' => 'coursecompetency'), IGNORE_MULTIPLE);
@@ -61,11 +61,11 @@ class plugin_coursescolumns extends pluginbase{
 					$avgcompletedlink = $progress;
 				} else{
 					$avgcompletedlink = html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$usercoursesReportID
-														&filter_courses=$row->id&filter_status=all", $progress,
+														&filter_course=$row->id&filter_status=all", $progress,
 														array("target" => "_blank"));
 				}
 				return "<div class='spark-report' id='".html_writer::random_id()."' data-sparkline='$progress; progressbar'
-						data-labels = 'inprogress, completed' data-link='$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$usercoursesReportID&filter_courses=$row->id&filter_status=all' >" . $avgcompletedlink . "</div>";
+						data-labels = 'inprogress, completed' data-link='$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$usercoursesReportID&filter_course=$row->id&filter_status=all' >" . $avgcompletedlink . "</div>";
 			break;
 			case 'activities':
           if(!isset($row->activities) && isset($data->subquery)){
@@ -77,8 +77,9 @@ class plugin_coursescolumns extends pluginbase{
                 $checkpermissions = empty($listofactivitiesReportID) ? false : (new reportbase($listofactivitiesReportID))->check_permissions($USER->id, $context);
 			    if(empty($listofactivitiesReportID) || empty($checkpermissions)){
                     return $activities ;
-                } else{
-                    return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$listofactivitiesReportID&filter_courses=$row->id",$activities,array("target" => "_blank"));
+                } else{ 
+                    $row->{$data->column} = '<a href="'.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$listofactivitiesReportID.'&filter_course='.$row->id.'&filter_organization='.$this->reportfilterparams['filter_organization'].'&filter_departments='.$this->reportfilterparams['filter_departments'].'&filter_subdepartments='.$this->reportfilterparams['filter_subdepartments'].'" />'.$activities.'</a>';
+                    // return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$listofactivitiesReportID&filter_course=$row->id",$activities,array("target" => "_blank"));
                 }
 
 			break;
@@ -92,11 +93,11 @@ class plugin_coursescolumns extends pluginbase{
                 if(empty($competencyreportid) || empty($enrolcheckpermissions)){
                     return $enrolments ;
                 } else{
-                    return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$competencyreportid&filter_courses=$row->id&filter_status=all", $competencies, array("target" => "_blank"));
+                    return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$competencyreportid&filter_course=$row->id&filter_status=all", $competencies, array("target" => "_blank"));
                 }
 
             break;
-			case 'enrolments':
+			case 'enrolments': 
                 if(!isset($row->enrolments) && isset($data->subquery)){
                    $enrolments = $DB->get_field_sql($data->subquery);
                }else{
@@ -105,8 +106,9 @@ class plugin_coursescolumns extends pluginbase{
 				$enrolcheckpermissions = empty($usercoursesReportID) ? false : (new reportbase($usercoursesReportID))->check_permissions($USER->id, $context);
 			    if(empty($usercoursesReportID) || empty($enrolcheckpermissions)){
                     return $enrolments ;
-                } else{
-                    return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$usercoursesReportID&filter_courses=$row->id&filter_status=all", $enrolments, array("target" => "_blank"));
+                } else{ 
+                    $row->{$data->column} = '<a href="'.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$usercoursesReportID.'&filter_course='.$row->id.'&filter_organization='.$this->reportfilterparams['filter_organization'].'&filter_departments='.$this->reportfilterparams['filter_departments'].'&filter_subdepartments='.$this->reportfilterparams['filter_subdepartments'].'&filter_status=all" />'.$enrolments.'</a>';
+                    // return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$usercoursesReportID&filter_course=$row->id&filter_status=all&filter_organization=$this->reportfilterparams['filter_organization']&filter_departments=$this->reportfilterparams['filter_departments']", $enrolments, array("target" => "_blank"));
                 }
 
 			break;
@@ -121,7 +123,7 @@ class plugin_coursescolumns extends pluginbase{
 			    if(empty($usercoursesReportID) || empty($comcheckpermissions)){
                     return $completed ;
                 } else{
-                    return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$usercoursesReportID&filter_courses=$row->id&filter_status=completed", $completed , array("target" => "_blank"));
+                    $row->{$data->column} = '<a href="'.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$usercoursesReportID.'&filter_course='.$row->id.'&filter_organization='.$this->reportfilterparams['filter_organization'].'&filter_departments='.$this->reportfilterparams['filter_departments'].'&filter_subdepartments='.$this->reportfilterparams['filter_subdepartments'].'&filter_status=completed" />'.$completed.'</a>';
                 }
 			break;
             case 'badges':
@@ -186,8 +188,8 @@ class plugin_coursescolumns extends pluginbase{
           $comcheckpermissions = empty($reportid) ? false : (new reportbase($reportid))->check_permissions($USER->id, $context);
           if(empty($reportid) || empty($comcheckpermissions)){
             return get_string('numviews', 'report_outline', $numviews);
-          }else{
-            return html_writer::link("$CFG->wwwroot/blocks/learnerscript/viewreport.php?id=$reportid&filter_courses=$row->id", get_string('numviews', 'report_outline', $numviews), array("target" => "_blank"));
+          }else{ 
+            $row->{$data->column} = '<a href="'.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$reportid.'&filter_course='.$row->id.'&filter_organization='.$this->reportfilterparams['filter_organization'].'&filter_departments='.$this->reportfilterparams['filter_departments'].'&filter_subdepartments='.$this->reportfilterparams['filter_subdepartments'].'&filter_status=all" />'.get_string('numviews', 'report_outline', $numviews).'</a>';
           }
       break;
       case 'status':

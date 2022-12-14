@@ -38,7 +38,7 @@ class skill_repository_form extends moodleform {
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
 
-		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
+        $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
             $options = array(
                 'ajax' => 'local_courses/form-options-selector',
@@ -66,14 +66,14 @@ class skill_repository_form extends moodleform {
         $category = $this->_ajaxformdata['category'];
         if (!empty($category)) {
             $category_sql = "SELECT sc.id, sc.name
-                            FROM {local_skill_categories} AS sc
-                            WHERE sc.id  = :category  ";
+                FROM {local_skill_categories} AS sc
+                WHERE sc.id  = :category  ";
             $categories = $DB->get_records_sql_menu($category_sql, ['category' => $category]);
         } else if ($id > 0) {
             $category_sql = "SELECT sc.id, sc.name
-                            FROM {local_skill_categories} AS sc
-                            JOIN {local_skill} AS ls on ls.category = sc.id
-                            WHERE ls.id  = :skillid  ";
+                FROM {local_skill_categories} AS sc
+                JOIN {local_skill} AS ls on ls.category = sc.id
+                WHERE ls.id  = :skillid  ";
             $categories = $DB->get_records_sql_menu($category_sql, ['skillid' => $id]);
         }
 
@@ -96,8 +96,7 @@ class skill_repository_form extends moodleform {
         $mform->addElement('text', 'shortname', get_string('shortname', 'local_skillrepository'), array());
         $mform->setType('shortname', PARAM_RAW);
         $mform->addRule('shortname', null, 'required', null, 'client');
-       /*
-        $mform->addElement('editor', 'description', get_string('description'), array());*/
+
         $mform->addElement('editor', 'description', get_string('description'),NULL, array("autosave"=>false));
         $mform->setType('description', PARAM_RAW);
 

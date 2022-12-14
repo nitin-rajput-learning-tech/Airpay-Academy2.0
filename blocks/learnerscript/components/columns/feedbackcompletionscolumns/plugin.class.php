@@ -52,13 +52,13 @@ class plugin_feedbackcompletionscolumns extends pluginbase {
                 $row->{$data->column} = ($row->{$data->column} == 'SE') ? 'Self' : 'Supervsior';
                 break;
             case 'enrolleddate':
-                $row->{$data->column} = \local_costcenter\lib::get_userdate('d m Y H:i',$row->enrolleddate);
+                $row->{$data->column} = date('d-m-Y',$row->enrolleddate);
                 break;
             case 'completionstatus':
                 $row->{$data->column} = ($row->completiondate != '') ? 'Completed' : 'Not Completed';
                 break;
             case 'completiondate':
-                $row->{$data->column} = ($row->completiondate != '') ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->completiondate) : 'NA'; 
+                $row->{$data->column} = ($row->completiondate != '') ? date('d-m-Y',$row->completiondate) : 'NA'; 
                 break;
         }
         return (isset($row->{$data->column})) ? $row->{$data->column} : '--';

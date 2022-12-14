@@ -67,36 +67,72 @@ class plugin_users extends pluginbase {
         }
         return $finalelements;
     }
-    public function filter_data($selectoption = true){
-        global $DB;
+    public function filter_data($selectoption = true, $request){
+        global $DB, $USER;
         $filter_users = '';
-        $filterusers = optional_param('filter_users', $filter_users, PARAM_RAW);
+        $fusers = isset($request['filter_users']) ? $request['filter_users'] : 0;
+        $filterusers = optional_param('filter_users', $fusers, PARAM_RAW);
         if (empty($this->reportclass->basicparams)) {
-            $usersoptions = array(get_string('filter_user', 'block_learnerscript'));
+            $useroptions = array(get_string('filter_users', 'block_learnerscript'));
         } 
-        
         $filteruser = $this->reportclass->filters;
-        
-        $usersoptions = (new \block_learnerscript\local\querylib)->filter_get_orgwiseusers($this,
-                            $selectoption, false, $filteruser, $filterusers);
+        // $filteruserid = $filtercourse['filter_users'];
+        if($this->reportclass->basicparams){
+            $basicparams = array_column($this->reportclass->basicparams, 'name');
+            if ($basicparams[0] == 'courses' || $basicparams[0] == 'users') {
+                $useroptions = (new \block_learnerscript\local\querylib)->filter_get_users($this,
+                            false, false, false, false, false);
+                $userids = array_keys($useroptions);
+                $courseuserid = array_shift($userids);
+            }else {
+                $courseuserid = null;
+            } 
+            if (in_array('organization', $basicparams) && $basicparams[0] == 'organization') {
+                $organizationoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC");
+                $organizationids = array_keys($organizationoptions);
+                if (empty($request['filter_organization'])) {
+                    $courseorganizationid = array_shift($organizationids);
+                } else {
+                    $courseorganizationid = $request['filter_organization'];
+                }
+            } else {
+                $courseorganizationid = 0;
+            }
+        } else {
+            $courseuserid = null;
+        }
+        $this->courseorganizationid = isset($courseorganizationid) ? $courseorganizationid : 0;
+        $this->filtercoursesid = isset($filterusers) ? $filterusers : 0;
+        $usersoptions = (new \block_learnerscript\local\querylib)->filter_get_orgwiseusers($this, $selectoption, false, $filteruser, $filterusers);
         
         return $usersoptions;
     }
-    public function selected_filter($selected) {
-        $filterdata = $this->filter_data(false);
+    public function selected_filter($selected, $request = array()) {
+        $filterdata = $this->filter_data(true, $request);
         return $filterdata[$selected];
     }
     public function print_filter(&$mform) {
-        
-        $usersoptions = $this->filter_data();
-        
+        global $DB, $CFG, $USER;
+        if ($this->report->type == 'courseprofile' || $this->report->type == 'userprofile') {
+            $selectoption = false;
+        } else {
+            $selectoption = true;
+        }
+        $request = array_merge($_POST, $_GET);
+        $usersoptions = $this->filter_data(true, $request); 
+        if (($this->placeholder || $this->filtertype == 'basic') && COUNT($usersoptions) > 1) { 
+            unset($usersoptions[0]);
+        } 
         $select = $mform->addElement('select', 'filter_users', null, $usersoptions,
-                    array('data-select2-ajax' => true,
+                    array('data-select2' => true,
                           'data-maximum-selection-length' => $this->maxlength,
                         'data-action' => 'filterusers',
                         'data-instanceid' => $this->reportclass->config->id));
 
         $select->setHiddenLabel(true);
-        $mform->setType('filter_users', PARAM_INT);
+        $mform->setType('filter_users', PARAM_INT); 
+
+        $mform->addElement('hidden', 'filter_users_type', $this->filtertype);
+        $mform->setType('filter_users_type', PARAM_RAW);
     }
 }

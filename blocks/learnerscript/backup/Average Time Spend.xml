@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[course]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Average time spend]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[statistics]]></type>
+<components><![CDATA[YToyOntzOjk6ImN1c3RvbXNxbCI7YToxOntzOjY6ImNvbmZpZyI7Tzo4OiJzdGRDbGFzcyI6MTE6e3M6NDoibmFtZSI7czoxODoiQXZlcmFnZSt0aW1lK3NwZW5kIjtzOjg6ImNhdGVnb3J5IjtzOjY6ImNvdXJzZSI7czo0OiJ0eXBlIjtzOjEwOiJzdGF0aXN0aWNzIjtzOjg6InF1ZXJ5c3FsIjtzOjQ0MDoiU0VMRUNUK0lGJTI4QVZHJTI4YmxjLnRpbWVzcGVudCUyOStJUytOVUxMJTJDKzAlMkMrUk9VTkQlMjhBVkclMjhibGMudGltZXNwZW50JTI5JTI5JTI5KytBUyslMjJUaW1lc3BlbnQlMjIlMEQlMEFGUk9NK3ByZWZpeF9ibG9ja19sc19jb3Vyc2V0aW1lc3RhdHMrYmxjJTBEJTBBSk9JTitwcmVmaXhfcm9sZV9hc3NpZ25tZW50cytBUytyYStvbityYS51c2VyaWQrJTNEK2JsYy51c2VyaWQlMEQlMEFKT0lOK3ByZWZpeF9yb2xlK3IrT04rci5pZCslM0QrcmEucm9sZWlkKyUwRCUwQVdIRVJFK2JsYy51c2VyaWQrJTNEKyUyNSUyNVVTRVJJRCUyNSUyNSslMjUlMjVEQVNIQk9BUkRST0xFJTNBci5zaG9ydG5hbWUlMjUlMjUrJTBEJTBBQU5EK2JsYy50aW1lbW9kaWZpZWQrQkVUV0VFTislMjUlMjVMU19TVEFSVERBVEUlMjUlMjUrQU5EKyUyNSUyNUxTX0VORERBVEUlMjUlMjUiO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6NjoiZ2xvYmFsIjtzOjE6IjEiO3M6MjoiaWQiO2k6MTI7czo4OiJjb3Vyc2VpZCI7aToxO3M6MzU6Im1mb3JtX2lzZXhwYW5kZWRfaWRfYWR2YW5jZWRvcHRpb25zIjtpOjA7czoxMjoic3VibWl0YnV0dG9uIjtzOjQ6Ik5leHQiO3M6MTI6ImRpc2FibGV0YWJsZSI7aTowO319czoxMToicGVybWlzc2lvbnMiO2E6Mjp7czo2OiJjb25maWciO086ODoic3RkQ2xhc3MiOjM6e3M6MTM6ImNvbmRpdGlvbmV4cHIiO3M6MjoiYzEiO3M6MTQ6ImNvbmRpdGlvbmV4cHIxIjtzOjI6ImMxIjtzOjE0OiJjb25kaXRpb25leHByMiI7czowOiIiO31zOjg6ImVsZW1lbnRzIjthOjE6e2k6MDthOjU6e3M6MjoiaWQiO3M6MTU6InNNUm5YOUFoZGFyaUpMNSI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6Mjp7czo2OiJyb2xlaWQiO3M6MToiNyI7czoxMjoic3VibWl0YnV0dG9uIjtzOjM6IkFkZCI7fXM6MTA6InBsdWdpbm5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjE0OiJwbHVnaW5mdWxsbmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6Nzoic3VtbWFyeSI7czo0OiJ1c2VyIjt9fX19]]></components>
+<export><![CDATA[]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[3]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-user]]></pagetypepattern>
+<subpagepattern><![CDATA[Dashboard]]></subpagepattern>
+<defaultregion><![CDATA[reports-db-two]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778516]]></timecreated>
+<timemodified><![CDATA[1664778516]]></timemodified>
+<title><![CDATA[Average time spent on LMS]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[966403008]]></logo>
+<tilescolourpicker><![CDATA[C1403D]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

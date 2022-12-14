@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[course]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Completion percentage]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[statistics]]></type>
+<components><![CDATA[YToyOntzOjk6ImN1c3RvbXNxbCI7YToxOntzOjY6ImNvbmZpZyI7Tzo4OiJzdGRDbGFzcyI6MTE6e3M6NDoibmFtZSI7czoyMToiQ29tcGxldGlvbitwZXJjZW50YWdlIjtzOjg6ImNhdGVnb3J5IjtzOjY6ImNvdXJzZSI7czo0OiJ0eXBlIjtzOjEwOiJzdGF0aXN0aWNzIjtzOjg6InF1ZXJ5c3FsIjtzOjE1NTM6IlNFTEVDVCtJRiUyOFJPVU5EJTI4JTI4YzEuY29tcGxldGVkKyUyRitjMi5lbnJvbGxlZCUyOSslMkErMTAwJTJDKzAlMjkrJTNFKzAlMkMrUk9VTkQlMjglMjhjMS5jb21wbGV0ZWQrJTJGK2MyLmVucm9sbGVkJTI5KyUyQSsxMDAlMkMrMCUyOSUyQyswJTI5K0FTKyUyN0NvbXBsZXRpb24rcGVyY2VudGFnZSUyNyslMEQlMEFGUk9NKyUyOCUyOFNFTEVDVCtDT1VOVCUyOGJsbGMuaWQlMjkrQVMrY29tcGxldGVkK0ZST00rcHJlZml4X2Jsb2NrX2xzX2xlYXJuaW5nZm9ybWF0cytBUytibGxjK1dIRVJFK2JsbGMubW9kdWxlaWQrSU4rJTI4MSUyQzclMjkrQU5EK2JsbGMuY29tcGxldGlvbmRhdGUrJTNFMCslMEQlMEElMjUlMjVGSUxURVJfT1JHQU5JWkFUSU9OUyUzQWJsbGMuY29zdGNlbnRlcmlkJTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX09SR0FOSVpBVElPTiUzQWJsbGMudXNlcl9jb3N0Y2VudGVyaWQlMjUlMjUrKyUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UJTNBYmxsYy51c2VyX2RlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UUyUzQWJsbGMuZGVwYXJ0bWVudGlkJTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX1NVQkRFUEFSVE1FTlQlM0FibGxjLnVzZXJfc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9TVUJERVBBUlRNRU5UUyUzQWJsbGMuc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9PTkxJTkVDT1VSU0VTJTNBYmxsYy5sZWFybmluZ2Zvcm1hdGlkJTI1JTI1JTBEJTBBQU5EK2JsbGMucm9sZV9hc3NpZ25fdGltZW1vZGlmaWVkK0JFVFdFRU4rJTI1JTI1TFNfU1RBUlREQVRFJTI1JTI1K0FORCslMjUlMjVMU19FTkREQVRFJTI1JTI1JTI5K0FTK2MxJTJDJTI4U0VMRUNUK0NPVU5UJTI4YmxsZS5pZCUyOStBUytlbnJvbGxlZCslMEQlMEFGUk9NK3ByZWZpeF9ibG9ja19sc19sZWFybmluZ2Zvcm1hdHMrQVMrYmxsZSUwRCUwQVdIRVJFK2JsbGUubW9kdWxlaWQrSU4rJTI4MSUyQys3JTI5JTBEJTBBJTI1JTI1RklMVEVSX09SR0FOSVpBVElPTlMlM0FibGxlLmNvc3RjZW50ZXJpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9PUkdBTklaQVRJT04lM0FibGxlLnVzZXJfY29zdGNlbnRlcmlkJTI1JTI1KyslMEQlMEElMjUlMjVGSUxURVJfREVQQVJUTUVOVCUzQWJsbGUudXNlcl9kZXBhcnRtZW50aWQlMjUlMjUlMEQlMEElMjUlMjVGSUxURVJfREVQQVJUTUVOVFMlM0FibGxlLmRlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9TVUJERVBBUlRNRU5UJTNBYmxsZS51c2VyX3N1YmRlcGFydG1lbnQlMjUlMjUlMEQlMEElMjUlMjVGSUxURVJfU1VCREVQQVJUTUVOVFMlM0FibGxlLnN1YmRlcGFydG1lbnQlMjUlMjUlMEQlMEElMjUlMjVGSUxURVJfT05MSU5FQ09VUlNFUyUzQWJsbGUubGVhcm5pbmdmb3JtYXRpZCUyNSUyNSslMEQlMEFBTkQrYmxsZS5yb2xlX2Fzc2lnbl90aW1lbW9kaWZpZWQrQkVUV0VFTislMjUlMjVMU19TVEFSVERBVEUlMjUlMjUrQU5EKyUyNSUyNUxTX0VORERBVEUlMjUlMjUlMjkrQVMrYzIrJTI5JTBEJTBBIjtzOjc6InN1bW1hcnkiO3M6MDoiIjtzOjY6Imdsb2JhbCI7czoxOiIxIjtzOjI6ImlkIjtpOjQzO3M6ODoiY291cnNlaWQiO2k6MTtzOjM1OiJtZm9ybV9pc2V4cGFuZGVkX2lkX2FkdmFuY2Vkb3B0aW9ucyI7aTowO3M6MTI6InN1Ym1pdGJ1dHRvbiI7czo0OiJOZXh0IjtzOjEyOiJkaXNhYmxldGFibGUiO2k6MDt9fXM6MTE6InBlcm1pc3Npb25zIjthOjI6e3M6NjoiY29uZmlnIjtPOjg6InN0ZENsYXNzIjozOntzOjEzOiJjb25kaXRpb25leHByIjtzOjk6ImMxK2FuZCtjMiI7czoxNDoiY29uZGl0aW9uZXhwcjEiO3M6OToiYzErYW5kK2MyIjtzOjE0OiJjb25kaXRpb25leHByMiI7czowOiIiO31zOjg6ImVsZW1lbnRzIjthOjI6e2k6MDthOjU6e3M6MjoiaWQiO3M6MTU6IkpsWXhFRjRzU3JBQWdhVCI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6Mjp7czo2OiJyb2xlaWQiO3M6MjoiMTEiO3M6MTI6InN1Ym1pdGJ1dHRvbiI7czozOiJBZGQiO31zOjEwOiJwbHVnaW5uYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjc6InN1bW1hcnkiO3M6MjoiZGgiO31pOjE7YTo1OntzOjI6ImlkIjtzOjE1OiJDcWNTSmhQYUgybngwcnQiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjI6e3M6Njoicm9sZWlkIjtzOjI6IjE2IjtzOjEyOiJzdWJtaXRidXR0b24iO3M6MzoiQWRkIjt9czoxMDoicGx1Z2lubmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czo3OiJzdW1tYXJ5IjtzOjY6InN1Yl9kaCI7fX19fQ==]]></components>
+<export><![CDATA[]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[24]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[side-db-first]]></defaultregion>
+<defaultweight><![CDATA[10]]></defaultweight>
+<timecreated><![CDATA[1664778547]]></timecreated>
+<timemodified><![CDATA[1664778547]]></timemodified>
+<title><![CDATA[Completion percentage]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[896422832]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[border]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[ol-fourth]]></region>
+<weight><![CDATA[4]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[reportdb-one]]></defaultregion>
+<defaultweight><![CDATA[1]]></defaultweight>
+<timecreated><![CDATA[1664778547]]></timecreated>
+<timemodified><![CDATA[1664778547]]></timemodified>
+<title><![CDATA[Completion percentage]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[701478951]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[border]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[ol-fourth]]></region>
+<weight><![CDATA[1]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[ol-third]]></defaultregion>
+<defaultweight><![CDATA[1]]></defaultweight>
+<timecreated><![CDATA[1664778547]]></timecreated>
+<timemodified><![CDATA[1664778547]]></timemodified>
+<title><![CDATA[Completion percentage]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[862341659]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[border]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[ol-fourth]]></region>
+<weight><![CDATA[1]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-sub_dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[ol-fourth]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778547]]></timecreated>
+<timemodified><![CDATA[1664778547]]></timemodified>
+<title><![CDATA[Completion percentage]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[312826690]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

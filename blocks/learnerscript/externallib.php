@@ -13,7 +13,10 @@ class block_learnerscript_external extends external_api {
     public static function rolewiseusers_parameters() {
         return new external_function_parameters(
             array(
-                'roleid' => new external_value(PARAM_INT, 'role id of report', false),
+                'roleid' => new external_value(PARAM_INT, 'role id of report', false), 
+                'orgid' => new external_value(PARAM_INT, 'Organization id of report', false),
+                'deptid' => new external_value(PARAM_INT, 'Department id of report', false),
+                'subdeptid' => new external_value(PARAM_INT, 'Sub-Department id of report', false),
                 'term' => new external_value(PARAM_TEXT, 'Current search term in search box', false),
                 'contextlevel' => new external_value(PARAM_INT, 'contextlevel of role', false),
                 'page' => new external_value(PARAM_INT, 'Current page number to request', false),
@@ -24,11 +27,11 @@ class block_learnerscript_external extends external_api {
             )
         );
     }
-    public static function rolewiseusers($roleid, $term, $contextlevel, $page, $_type, $reportid, $action, $maximumSelectionLength) {
+    public static function rolewiseusers($roleid, $orgid, $deptid, $subdeptid, $term, $contextlevel, $page, $_type, $reportid, $action, $maximumSelectionLength) {
         global $PAGE, $DB;
         $context = contextsystem::instance();
         $PAGE->set_context($context);
-        $roles = $roleid;
+        $roles = $roleid; 
         $search = $term;
         if ((has_capability('block/learnerscript:managereports', $context) ||
             has_capability('block/learnerscript:manageownreports', $context) ||
@@ -37,14 +40,23 @@ class block_learnerscript_external extends external_api {
                 $adminssql = "SELECT user.id, CONCAT(user.firstname, ' ' , user.lastname) AS fullname
                                 FROM {user} user, {config} cfg
                                WHERE cfg.name = 'siteadmins'
-                                 AND FIND_IN_SET(user.id, cfg.value) > 0";
+                                 AND FIND_IN_SET(user.id, cfg.value) > 0"; 
+                if ($orgid > 0) {
+                    $adminssql .= " AND user.open_costcenterid = $orgid"; 
+                    if ($deptid > 0) {
+                        $adminssql .= " AND user.open_departmentid = $deptid";
+                    }
+                    if ($subdeptid > 0) {
+                        $adminssql .= " AND user.open_subdepartment = $subdeptid";
+                    }
+                }
                 $admins = $DB->get_records_sql($adminssql);
-                $user_list = array();
+                $user_list = array(); 
                 foreach ($admins as $admin) {
                     $user_list[] = ['id' => $admin->id, 'text' => $admin->fullname];
                 }
             } else {
-                $user_list = (new schedule)->rolewiseusers($roles, $term, $page, $reportid,$contextlevel);
+                $user_list = (new schedule)->rolewiseusers($roles, $orgid, $deptid, $subdeptid, $term, $page, $reportid,$contextlevel);
             }
             $terms_data = array();
             $terms_data['total_count'] = sizeof($user_list);
@@ -345,17 +357,26 @@ class block_learnerscript_external extends external_api {
                 'filters' => new external_value(PARAM_RAW, 'applied filters', false),
                 'basicparams' => new external_value(PARAM_RAW, 'basic params required to generate graph', false),
                 'columnDefs' => new external_value(PARAM_RAW, 'column definitions', false),
-                'reportdashboard' => new external_value(PARAM_RAW, 'report dashboard', false, true)
+                'reportdashboard' => new external_value(PARAM_RAW, 'report dashboard', false, true),
+                'costcenterid' => new external_value(PARAM_RAW, 'Costcenter id of course', false),
+                'departmentid' => new external_value(PARAM_RAW, 'Department id of course', false),
+                'subdepartmentid' => new external_value(PARAM_RAW, 'Sub-Department id of course', false),
+                'onlinecourseid' => new external_value(PARAM_RAW, 'Online course id', false),
+                'labid' => new external_value(PARAM_RAW, 'Lab id', false),
+                'assessmentid' => new external_value(PARAM_RAW, 'Assessment id', false),
+                'webinarid' => new external_value(PARAM_RAW, 'Webinar id', false),
+                'classroomid' => new external_value(PARAM_RAW, 'Classroom id', false),
+                'learningpathid' => new external_value(PARAM_RAW, 'Learning path id', false),
+                'programid' => new external_value(PARAM_RAW, 'Program id', false)
             )
         );
     }
     public static function generate_plotgraph($reportid, $courseid, $cmid, $status, $userid,
         $ls_fstartdate, $ls_fenddate, $reporttype, $action, $singleplot, $cols, $instanceid,
-        $container, $filters, $basicparams, $columnDefs, $reportdashboard) {
+        $container, $filters, $basicparams, $columnDefs, $reportdashboard, $costcenterid, $departmentid, $subdepartmentid, $onlinecourseid, $labid, $assessmentid, $webinarid, $classroomid, $learningpathid, $program) {
         global $DB, $PAGE, $CFG;
-
         $ls = new ls();
-
+        $departmentid = (int)$departmentid; 
         $filters =  json_decode($filters,true);
         $basicparams =  json_decode($basicparams,true);
 
@@ -365,14 +386,37 @@ class block_learnerscript_external extends external_api {
         if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
             print_error('reportdoesnotexists', 'block_learnerscript');
         }
-
         $properties = new stdClass();
         $properties->ls_startdate = !empty($filters['ls_fstartdate']) ? $filters['ls_fstartdate'] : 0;
-        $properties->ls_enddate   = !empty($filters['ls_fenddate']) ? $filters['ls_fenddate'] : time();
+        $properties->ls_enddate   = !empty($filters['ls_fenddate']) ? $filters['ls_fenddate'] : time(); 
+        $properties->costcenterid   = !empty($filters['filter_organization']) ? $filters['filter_organization'] : 0;
+        $properties->departmentid   = !empty($filters['filter_departments']) ? $filters['filter_departments'] : 0; 
+        $properties->subdepartmentid   = !empty($filters['filter_subdepartments']) ? $filters['filter_subdepartments'] : 0; 
+        $properties->courseid   = !empty($filters['filter_course']) ? $filters['filter_course'] : SITEID;
+        $properties->onlinecourseid   = !empty($filters['filter_onlinecourses']) ? $filters['filter_onlinecourses'] : 0;
+        $properties->labid   = !empty($filters['filter_labs']) ? $filters['filter_labs'] : 0;
+        $properties->assessmentid   = !empty($filters['filter_assessments']) ? $filters['filter_assessments'] : 0;
+        $properties->webinarid   = !empty($filters['filter_webinars']) ? $filters['filter_webinars'] : 0;
+        $properties->classroomid   = !empty($filters['filter_classrooms']) ? $filters['filter_classrooms'] : 0;
+        $properties->learningpathid   = !empty($filters['filter_learningpath']) ? $filters['filter_learningpath'] : 0;
+        $properties->programid   = !empty($filters['filter_programs']) ? $filters['filter_programs'] : 0;        
+
         $reportclass = $ls->create_reportclass($reportid, $properties);
         $reportclass->params = array_merge( $filters, (array)$basicparams);
         $reportclass->cmid = $cmid;
-        $reportclass->courseid = isset($courseid) ? $courseid : (isset($reportclass->params['filter_courses']) ? $reportclass->params['filter_courses'] : SITEID);
+        // $reportclass->courseid = isset($courseid) ? $courseid : (isset($reportclass->params['filter_course']) ? $reportclass->params['filter_course'] : SITEID); 
+        $reportclass->costcenterid   = !empty($filters['filter_organization']) ? $filters['filter_organization'] : 0;
+        $reportclass->departmentid   = !empty($filters['filter_departments']) ? $filters['filter_departments'] : 0; 
+        $reportclass->subdepartmentid   = !empty($filters['filter_subdepartments']) ? $filters['filter_subdepartments'] : 0; 
+        $reportclass->courseid   = !empty($filters['filter_course']) ? $filters['filter_course'] : 0; 
+        $reportclass->onlinecourseid   = !empty($filters['filter_onlinecourses']) ? $filters['filter_onlinecourses'] : 0;
+        $reportclass->labid   = !empty($filters['filter_labs']) ? $filters['filter_labs'] : 0;
+        $reportclass->assessmentid   = !empty($filters['filter_assessments']) ? $filters['filter_assessments'] : 0;
+        $reportclass->webinarid   = !empty($filters['filter_webinars']) ? $filters['filter_webinars'] : 0;
+        $reportclass->classroomid   = !empty($filters['filter_classrooms']) ? $filters['filter_classrooms'] : 0;
+        $reportclass->learningpathid   = !empty($filters['filter_learningpath']) ? $filters['filter_learningpath'] : 0;
+        $reportclass->programid   = !empty($filters['filter_programs']) ? $filters['filter_programs'] : 0;
+        
         $reportclass->status = $status;
         if ($reporttype != 'table') {
             $reportclass->start = 0;
@@ -540,6 +584,252 @@ class block_learnerscript_external extends external_api {
         return new external_value(PARAM_RAW, 'data');
     }
 
+    public static function learnerscript_reportsapi_parameters() {
+        return new external_function_parameters(
+            array(
+                'reportid' => new external_value(PARAM_INT, 'report id of report', false),
+                'courseid' => new external_value(PARAM_INT, 'course id of course', false),
+                'cmid' => new external_value(PARAM_INT, 'The course module id for the course', false),
+                'status' => new external_value(PARAM_TEXT, 'status', false),
+                'userid' => new external_value(PARAM_RAW, 'user id', false),
+                'ls_fstartdate' => new external_value(PARAM_RAW, 'start date for date filter', false),
+                'ls_fenddate' => new external_value(PARAM_RAW, 'end date for date filter', false),
+                'reporttype' => new external_value(PARAM_RAW, 'type of report', false),
+                'action' => new external_value(PARAM_RAW, 'action', false),
+                'singleplot' => new external_value(PARAM_RAW, 'single plot', false),
+                'cols' => new external_value(PARAM_RAW, 'columns', false),
+                'instanceid' => new external_value(PARAM_RAW, 'id of instance', false),
+                'container' => new external_value(PARAM_RAW, 'container', false),
+                'filters' => new external_value(PARAM_RAW, 'applied filters', false),
+                'basicparams' => new external_value(PARAM_RAW, 'basic params required to generate graph', false),
+                'columnDefs' => new external_value(PARAM_RAW, 'column definitions', false),
+                'reportdashboard' => new external_value(PARAM_RAW, 'report dashboard', false, true),
+                'costcenterid' => new external_value(PARAM_RAW, 'Costcenter id of course', false),
+                'departmentid' => new external_value(PARAM_RAW, 'Department id of course', false),
+                'subdepartmentid' => new external_value(PARAM_RAW, 'SubDepartment id of course', false),
+                'onlinecourseid' => new external_value(PARAM_RAW, 'Online course id', false),
+                'labid' => new external_value(PARAM_RAW, 'Lab id', false),
+                'assessmentid' => new external_value(PARAM_RAW, 'Assessment id', false),
+                'webinarid' => new external_value(PARAM_RAW, 'Webinar id', false),
+                'classroomid' => new external_value(PARAM_RAW, 'Classroom id', false),
+                'learningpathid' => new external_value(PARAM_RAW, 'Learning path id', false),
+                'programid' => new external_value(PARAM_RAW, 'Program id', false)
+            )
+        );
+    }
+    public static function learnerscript_reportsapi($reportid, $courseid, $cmid, $status, $userid,
+        $ls_fstartdate, $ls_fenddate, $reporttype, $action, $singleplot, $cols, $instanceid,
+        $container, $filters, $basicparams, $columnDefs, $reportdashboard, $costcenterid, $departmentid, $subdepartmentid, $onlinecourseid, $labid, $assessmentid, $webinarid, $classroomid, $learningpathid, $program) {
+        global $DB, $PAGE, $CFG;
+        $ls = new ls();
+        $departmentid = (int)$departmentid; 
+        $subdepartmentid = (int)$subdepartmentid; 
+        $filters =  json_decode($filters,true);
+        $basicparams =  json_decode($basicparams,true);
+
+        $PAGE->set_context(contextsystem::instance());
+        $learnerscript = $PAGE->get_renderer('block_learnerscript');
+
+        if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
+            print_error('reportdoesnotexists', 'block_learnerscript');
+        }
+        $properties = new stdClass();
+        $properties->ls_startdate = !empty($filters['ls_fstartdate']) ? $filters['ls_fstartdate'] : 0;
+        $properties->ls_enddate   = !empty($filters['ls_fenddate']) ? $filters['ls_fenddate'] : time(); 
+        $properties->costcenterid = $costcenterid;
+        // $properties->costcenterid   = !empty($basicparams['filter_organization']) ? $basicparams['filter_organization'] : 0;
+        $properties->departmentid   = !empty($filters['filter_departments']) ? $filters['filter_departments'] : 0; 
+        $properties->subdepartmentid   = !empty($filters['filter_subdepartments']) ? $filters['filter_subdepartments'] : 0; 
+        $properties->courseid   = !empty($filters['filter_course']) ? $filters['filter_course'] : SITEID;
+        $properties->onlinecourseid   = !empty($filters['filter_onlinecourses']) ? $filters['filter_onlinecourses'] : 0;
+        $properties->labid   = !empty($filters['filter_labs']) ? $filters['filter_labs'] : 0;
+        $properties->assessmentid   = !empty($filters['filter_assessments']) ? $filters['filter_assessments'] : 0;
+        $properties->webinarid   = !empty($filters['filter_webinars']) ? $filters['filter_webinars'] : 0;
+        $properties->classroomid   = !empty($filters['filter_classrooms']) ? $filters['filter_classrooms'] : 0;
+        $properties->learningpathid   = !empty($filters['filter_learningpath']) ? $filters['filter_learningpath'] : 0;
+
+        $reportclass = $ls->create_reportclass($reportid, $properties);
+        $reportclass->params = array_merge( $filters, (array)$basicparams);
+        $reportclass->cmid = $cmid;
+        // $reportclass->courseid = isset($courseid) ? $courseid : (isset($reportclass->params['filter_course']) ? $reportclass->params['filter_course'] : SITEID); 
+        $reportclass->costcenterid = $costcenterid;
+        // $reportclass->costcenterid   = !empty($basicparams['filter_organization']) ? $basicparams['filter_organization'] : 0;
+        $reportclass->departmentid   = !empty($filters['filter_departments']) ? $filters['filter_departments'] : 0; 
+        $reportclass->subdepartmentid   = !empty($filters['filter_subdepartments']) ? $filters['filter_subdepartments'] : 0; 
+        $reportclass->courseid   = !empty($filters['filter_course']) ? $filters['filter_course'] : 0; 
+        $reportclass->onlinecourseid   = !empty($filters['filter_onlinecourses']) ? $filters['filter_onlinecourses'] : 0;
+        $reportclass->labid   = !empty($filters['filter_labs']) ? $filters['filter_labs'] : 0;
+        $reportclass->assessmentid   = !empty($filters['filter_assessments']) ? $filters['filter_assessments'] : 0;
+        $reportclass->webinarid   = !empty($filters['filter_webinars']) ? $filters['filter_webinars'] : 0;
+        $reportclass->classroomid   = !empty($filters['filter_classrooms']) ? $filters['filter_classrooms'] : 0;
+        $reportclass->learningpathid   = !empty($filters['filter_learningpath']) ? $filters['filter_learningpath'] : 0;
+
+        $reportclass->status = $status;
+        if ($reporttype != 'table') {
+            $reportclass->start = 0;
+            $reportclass->length = -1;
+            $reportclass->reporttype = $reporttype;
+        }
+        if($reportdashboard && $report->type == 'statistics'){
+            $reportdatatable = false;
+        }else{
+            $reportdatatable = true;
+        }
+
+        $reportclass->create_report();
+
+        if ($reportdatatable && $reporttype == 'table') {
+            $datacolumns = array();
+            $columnDefs = array();
+            $i = 0;
+            $re = array();
+            if (!empty($reportclass->orderable)) {
+                $re = array_diff(array_keys($reportclass->finalreport->table->head), $reportclass->orderable);
+            }
+            if(empty($reportclass->finalreport->table->data)) {
+                $return['tdata'] = '<div class="alert alert-info">' . get_string("nodataavailable", "block_learnerscript") . '</div>';
+                $return['reporttype'] = 'table';
+                $return['emptydata'] = 1;
+            } else {
+                foreach ($reportclass->finalreport->table->head as $key => $value) {
+                    $datacolumns[]['data'] = $value;
+                    $columnDef = new stdClass();
+                    $align = isset($reportclass->finalreport->table->align[$i]) ? $reportclass->finalreport->table->align[$i] : 'left';
+                    $wrap = isset($reportclass->finalreport->table->wrap[$i]) && ($reportclass->finalreport->table->wrap[$i] == 'wrap') ? 'break-all' : 'normal';
+                    $width = isset($reportclass->finalreport->table->size[$i]) ? $reportclass->finalreport->table->size[$i] : '';
+                    $columnDef->className = 'dt-body-' . $align;
+                    $columnDef->targets = $i;
+                    $columnDef->wrap = $wrap;
+                    $columnDef->width = $width;
+                    if (!empty($re[$i]) && $re[$i])  {
+                        $columnDef->orderable = false;
+                    } else {
+                        $columnDef->orderable = true;
+                    }
+                    $columnDefs[] = $columnDef;
+                    $i++;
+                }
+                $export = explode(',', $reportclass->config->export);
+                if (!empty($reportclass->finalreport->table->head)) {
+                    $tablehead = (new ls)->report_tabledata($reportclass->finalreport->table);
+                    $reporttable = new \block_learnerscript\output\reporttable($tablehead,
+                        $reportclass->finalreport->table->id,
+                        $export,
+                        $reportid,
+                        $reportclass->sql,
+                        false,
+                        false,
+                        $instanceid,
+                        $report->type
+                    );
+                    $return = array();
+                    foreach ($reportclass->finalreport->table->data as $key => $value) {
+                        $vals = [];
+                        foreach($value AS $key => $val) {
+                            $vals[$key] = strip_tags($val);
+                        }
+                        $finalresult[] = $vals;
+                        $data = array_values($finalresult);
+                    }
+                    $return['tdata'] = $learnerscript->render($reporttable);
+                    $return['data'] =   array("data" => $data);
+                    $reporttitle = get_string('report_' . $report->type, 'block_learnerscript');
+                    $return['reportname'] = (new ls)->get_reporttitle($reporttitle, $basicparams);
+                    $return['columnDefs'] = $columnDefs;
+                    $return['reporttype'] = 'table';
+                    $return['emptydata'] = 0;
+                } else {
+                    $return['emptydata'] = 1;
+                    $return['reporttype'] = 'table';
+                    $return['tdata'] = '<div class="alert alert-info">' . get_string("nodataavailable", "block_learnerscript") . '</div>';
+                }
+            }
+        } else {
+            if ($report->type != 'statistics') {
+                $seriesvalues = (isset($reportclass->componentdata['plot']['elements'])) ? $reportclass->componentdata['plot']['elements'] : array();
+                $i = 0;
+                foreach ($seriesvalues as $g) {
+                    if (($reporttype != '' && $g['id'] == $reporttype) || $i == 0) {
+                        $return['plot'] = (new ls)->generate_report_plot($reportclass, $g);
+                        if ($reporttype != '' && $g['id'] == $reporttype) {
+                            break;
+                        }
+                    }
+                    $return['plotoptions'][] = array('id' => $g['id'], 'title' => $g['formdata']->chartname, 'pluginname' => $g['pluginname']);
+                    $i++;
+                }
+            } else {
+                if ($reporttype == 'pie') {
+                    foreach ($reportclass->finalreport->table->data[0] as $k => $r) {
+                        $r = strip_tags($r);
+                        if (is_numeric($r)) {
+                            $piedata[] = ['name' => $reportclass->finalreport->table->head[$k], 'y' => $r];
+                        }
+                    }
+                } elseif ($reporttype == 'solidgauge') {
+                    $radius = 112;
+                    $innerRadius = 88;
+                    $colors = ['#90ed7d', 'rgb(67, 67, 72)', 'rgb(124, 181, 236)'];
+                    foreach ($reportclass->finalreport->table->data[0] as $k => $r) {
+                        $r = strip_tags($r);
+                        $radius = $radius-25;
+                        $innerRadius = $innerRadius-25;
+                        if (is_numeric($r)) {
+                            $piedata[] = ['name' => $reportclass->finalreport->table->head[$k],
+                                          'data'=> [[ 'color'=> $colors[$k],'radius' =>$radius.'%','innerRadius'=> $innerRadius.'%' ,'y' => $r]]];
+                        }
+                    }
+                }else{
+                    $i = 0;
+                    $categorydata = array();
+                    if (!empty($reportclass->finalreport->table->data[0])) {
+                        foreach ($reportclass->finalreport->table->data[0] as $k => $r) {
+                                $r = strip_tags($r);
+                                $r = is_numeric($r) ? $r : $r;
+                                $seriesdata[] = $reportclass->finalreport->table->head[$k];
+                                $graphdata[$i][] = $r;
+                                $categorydata[] = $reportclass->finalreport->table->head[$k];
+                                $i++;
+                        }
+                    }
+                    $comdata = array();
+                    $comdata['dataLabels'] = ['enabled' => 1];
+                    $comdata['borderRadius'] = 5;
+                    if(!empty($graphdata)) {
+                        $i = 0;
+                        foreach ($graphdata as $key => $value) {
+                            $comdata['data'][] = [$value[0]];
+                        $i++;
+                        }
+                        $piedata = [$comdata];
+                    } else {
+                        $piedata = $comdata;
+                    }
+                }
+                $return['plot'] =  ['type' => $reporttype,
+                                    'containerid' => 'reportcontainer' . $instanceid . '',
+                                    'name' => $report->name,
+                                    'categorydata' => $categorydata,
+                                    'tooltip' => '{point.y}',
+                                    'datalabels' => 1,
+                                    'showlegend' => 0,
+                                    'id' => '{point.y}',
+                                    'height' => '210',
+                                    'data' => $piedata];
+                $return['plotoptions'][] = array('id' => random_string(5), 'title' => $report->name, 'pluginname' => $reporttype);
+            }
+        }
+        if ($reporttype == 'table') {
+            // $data = json_encode($return, JSON_PRESERVE_ZERO_FRACTION);
+            $data = json_encode($return['data']);
+        }else{
+            $data = $return['data'];
+        } 
+        return $data;
+    }
+    public static function learnerscript_reportsapi_returns() {
+        return new external_value(PARAM_RAW, 'data');
+    }
     public static function pluginlicence_parameters() {
         return new external_function_parameters(
             array(
@@ -1302,8 +1592,8 @@ class block_learnerscript_external extends external_api {
         $PAGE->set_context(contextsystem::instance());
         switch ($step) {
             case 1:
-                $DB->delete_records('logstore_standard_log',
-                                        array('objecttable' => 'block_learnerscript'));
+                //$DB->delete_records('logstore_standard_log',
+                                        //array('objecttable' => 'block_learnerscript'));
 
                 $DB->delete_records('block_learnerscript');
                 $DB->delete_records('block_ls_schedule');
@@ -1361,11 +1651,14 @@ class block_learnerscript_external extends external_api {
                 '_type' => new external_value(PARAM_RAW, 'A "request type" will be usually a query', false),
                 'fiterdata' => new external_value(PARAM_RAW, 'fiterdata', false),
                 'basicparamdata' => new external_value(PARAM_RAW, 'basicparamdata', false),
-                'reportinstanceid' => new external_value(PARAM_INT, 'reportid', false)
+                'reportinstanceid' => new external_value(PARAM_INT, 'reportid', false),
+                'costcenterid' => new external_value(PARAM_INT, 'costcenterid', false),
+                'departmentid' => new external_value(PARAM_INT, 'departmentid', false),
+                'subdepartmentid' => new external_value(PARAM_INT, 'subdepartmentid', false)
             )
         );
     }
-    public static function filtercourses($action, $maximumSelectionLength, $term, $_type, $fiterdata, $basicparamdata, $reportinstanceid) {
+    public static function filtercourses($action, $maximumSelectionLength, $term, $_type, $fiterdata, $basicparamdata, $reportinstanceid, $costcenterid, $departmentid, $subdepartmentid) {
         global $PAGE, $DB, $CFG;
         $context = contextsystem::instance();
         $PAGE->set_context($context);
@@ -1409,11 +1702,14 @@ class block_learnerscript_external extends external_api {
                 '_type' => new external_value(PARAM_RAW, 'A "request type" will be usually a query', false),
                 'fiterdata' => new external_value(PARAM_RAW, 'fiterdata', false),
                 'basicparamdata' => new external_value(PARAM_RAW, 'basicparamdata', false),
-                'reportinstanceid' => new external_value(PARAM_INT, 'reportinstanceid', false)
+                'reportinstanceid' => new external_value(PARAM_INT, 'reportinstanceid', false), 
+                'organization' => new external_value(PARAM_INT, 'organization', false),
+                'department' => new external_value(PARAM_INT, 'department', false),
+                'subdepartment' => new external_value(PARAM_INT, 'subdepartment', false)
             )
         );
     }
-    public static function filterusers($action, $maximumSelectionLength, $term, $_type, $fiterdata, $basicparamdata, $reportinstanceid) {
+    public static function filterusers($action, $maximumSelectionLength, $term, $_type, $fiterdata, $basicparamdata, $reportinstanceid, $organization, $department, $subdepartment) {
         global $PAGE, $DB, $CFG;
         $context = contextsystem::instance();
         $PAGE->set_context($context);
@@ -1488,6 +1784,15 @@ class block_learnerscript_external extends external_api {
                 else{
                     $field = 'open_departmentid';
                 }
+            }else if($name == 'subdepartments'){
+                if($dbman->field_exists($table,'subdepartment')){
+                    $field = 'subdepartment';
+                }else if($dbman->field_exists($table,'subdepartmentid')){
+                    $field = 'subdepartmentid';
+                }
+                else{
+                    $field = 'open_subdepartment';
+                }
             }
 
             if($learnerscript->category == 'course'){
@@ -1513,6 +1818,12 @@ class block_learnerscript_external extends external_api {
                                             AND open_departmentid = :departmentid ";
                         $params['costcenterid'] = $USER->open_costcenterid;
                         $params['departmentid'] = $USER->open_departmentid;
+                    } else {
+                        $sql .= " AND open_costcenterid = :costcenterid 
+                                            AND open_departmentid = :departmentid AND open_subdepartment = :subdepartmentid ";
+                        $params['costcenterid'] = $USER->open_costcenterid;
+                        $params['departmentid'] = $USER->open_departmentid;
+                        $params['subdepartmentid'] = $USER->open_subdepartment;
                     }
 
                     $sql .= " ORDER BY fullname ASC ";
@@ -1546,6 +1857,13 @@ class block_learnerscript_external extends external_api {
 
                         $params['costcenterid'] = $USER->open_costcenterid;
                         $params['departmentid'] = $USER->open_departmentid;
+                    } else {
+                        $sql .= " AND costcenter = :costcenterid 
+                                AND department = :departmentid AND subdepartment = :subdepartmentid";
+
+                        $params['costcenterid'] = $USER->open_costcenterid;
+                        $params['departmentid'] = $USER->open_departmentid;
+                        $params['subdepartmentid'] = $USER->open_subdepartment;
                     }
 
                     $sql .= " ORDER BY name ASC ";
@@ -1578,7 +1896,7 @@ class block_learnerscript_external extends external_api {
                                 AND department = $USER->open_departmentid";
                     }else {
                         $sql .= " AND costcenter = $USER->open_costcenterid 
-                                AND department = $USER->open_departmentid";
+                                AND department = $USER->open_departmentid AND subdepartment = $USER->open_subdepartment";
                     }
 
                     $sql .= " ORDER BY name ASC ";
@@ -1609,6 +1927,9 @@ class block_learnerscript_external extends external_api {
                     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
                         $sql .= " AND costcenterid = $USER->open_costcenterid 
                                     AND departmentid = $USER->open_departmentid";
+                    } else {
+                        $sql .= " AND costcenterid = $USER->open_costcenterid 
+                                    AND departmentid = $USER->open_departmentid AND subdepartmentid = $USER->open_subdepartment";
                     }
 
                     $sql .= " ORDER BY name ASC ";
@@ -1639,6 +1960,9 @@ class block_learnerscript_external extends external_api {
                     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
                         $sql .= " AND costcenter = $USER->open_costcenterid 
                                     AND department = $USER->open_departmentid";
+                    } else {
+                        $sql .= " AND costcenterid = $USER->open_costcenterid 
+                                    AND departmentid = $USER->open_departmentid AND subdepartmentid = $USER->open_subdepartment";
                     }
 
                     $sql .= " ORDER BY name ASC ";
@@ -1669,6 +1993,9 @@ class block_learnerscript_external extends external_api {
                     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
                         $sql .= " AND costcenterid = $USER->open_costcenterid 
                                     AND departmentid = $USER->open_departmentid ";
+                    }else {
+                        $sql .= " AND costcenterid = $USER->open_costcenterid 
+                                    AND departmentid = $USER->open_departmentid AND subdepartmentid = $USER->open_subdepartment";
                     }
 
                     $sql .= " ORDER BY name ASC ";
@@ -1702,7 +2029,7 @@ class block_learnerscript_external extends external_api {
                                 AND department = $USER->open_departmentid";
                     }else{
                         $sql .= " AND costcenter = $USER->open_costcenterid 
-                                AND department = $USER->open_departmentid";
+                                AND department = $USER->open_departmentid AND subdepartment = $USER->subdepartmentid";
                     }
 
                     $sql .= " ORDER BY name ASC ";
@@ -1725,9 +2052,10 @@ class block_learnerscript_external extends external_api {
                     $params['deleted'] = 0;
                     $params['suspended'] = 0;
                     if($organization){
-                        $sql .= " AND (open_costcenterid = :orgid OR open_departmentid = :deptid) ";
+                        $sql .= " AND (open_costcenterid = :orgid OR open_departmentid = :deptid OR open_subdepartment = :subdeptid) ";
                         $params['orgid'] = $organization;
                         $params['deptid'] = $organization;
+                        $params['subdeptid'] = $organization;
                     }
 
                     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -1739,7 +2067,7 @@ class block_learnerscript_external extends external_api {
                                 AND open_departmentid = $USER->open_departmentid";
                     }else{
                         $sql .= " AND open_costcenterid = $USER->open_costcenterid 
-                                AND open_departmentid = $USER->open_departmentid";
+                                AND open_departmentid = $USER->open_departmentid AND open_subdepartment = $USER->open_subdepartment";
                     }
 
                     $sql .= " ORDER BY firstname ASC ";
@@ -1759,7 +2087,7 @@ class block_learnerscript_external extends external_api {
                 $params = array();
                 $sql = "SELECT id,fullname 
                         FROM {local_costcenter} 
-                        WHERE 1 = 1 ";
+                        WHERE 1 = 1 AND depth = 2";
 
                 if($organization){
                     $sql .= " AND parentid = :parentid ";

@@ -67,6 +67,24 @@ class learningplan extends moodleform {
         $core_component = new core_component();
 
 		if($form_status == 0){
+			if (is_siteadmin($USER->id) || has_capability('local/users:manage',$systemcontext)) {
+				$sql="select id,fullname from {local_costcenter} where visible =1 and parentid=0 ";
+	            $costcenters = $DB->get_records_sql($sql);
+	        }
+			if (is_siteadmin($USER)) {
+				$organizationlist=array(null=>'--Select Organization--');
+				foreach ($costcenters as $scl) {
+					$organizationlist[$scl->id]=$scl->fullname;
+				}
+				$mform->addElement('select', 'costcenter', get_string('organization', 'local_users'), $organizationlist);
+				//$mform->addRule('costcenter', null, 'required', null, 'client');	 
+				$mform->addRule('costcenter', get_string('errororganization', 'local_users'), 'required', null, 'client');
+			} else{
+				$user_dept=$DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
+				$mform->addElement('hidden', 'costcenter', null);
+				$mform->setType('costcenter', PARAM_ALPHANUM);
+				$mform->setConstant('costcenter', $user_dept);
+			}
 	        $mform->addElement('text', 'name', get_string('learning_plan_name', 'local_learningplan'));
 	        $mform->addRule('name', null, 'required', null, 'client');
 	        $mform->setType('name', PARAM_TEXT);
@@ -96,24 +114,14 @@ class learningplan extends moodleform {
 				array('&nbsp;&nbsp;'), false);
 	        $mform->addHelpButton('lpsequence','sequence','local_learningplan');
 
-			if (is_siteadmin($USER->id) || has_capability('local/users:manage',$systemcontext)) {
-				$sql="select id,fullname from {local_costcenter} where visible =1 and parentid=0 ";
-	            $costcenters = $DB->get_records_sql($sql);
-	        }
-			if (is_siteadmin($USER)) {
-				$organizationlist=array(null=>'--Select Organization--');
-				foreach ($costcenters as $scl) {
-					$organizationlist[$scl->id]=$scl->fullname;
-				}
-				$mform->addElement('select', 'costcenter', get_string('organization', 'local_users'), $organizationlist);
-				//$mform->addRule('costcenter', null, 'required', null, 'client');	 
-				$mform->addRule('costcenter', get_string('errororganization', 'local_users'), 'required', null, 'client');
-			} else{
-				$user_dept=$DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-				$mform->addElement('hidden', 'costcenter', null);
-				$mform->setType('costcenter', PARAM_ALPHANUM);
-				$mform->setConstant('costcenter', $user_dept);
-			}
+			$manageselfenrol = array();
+            $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
+            $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('no'), 0, $attributes);
+            $mform->addGroup($manageselfenrol, 'selfenrol',
+                get_string('need_self_enrol', 'local_courses'),
+                array('&nbsp;&nbsp;'), false);
+            $mform->addHelpButton('selfenrol', 'selfenrolcourse', 'local_learningplan');
+			
 			$manageapproval = array();
 			$manageapproval[] = $mform->createElement('radio', 'approvalreqd', '', get_string('yes'), 1, $attributes);
 			$manageapproval[] = $mform->createElement('radio', 'approvalreqd', '', get_string('no'), 0, $attributes);
@@ -214,7 +222,7 @@ class learningplan extends moodleform {
 				$options = array(
 					'multiple' => true,
 				);
-				$mform->addElement('autocomplete', 'department', get_string('department','local_evaluation'),$departmentslist,$options);
+				$mform->addElement('autocomplete', 'department', get_string('department','local_learningplan'),$departmentslist,$options);
 				$mform->addHelpButton('department', 'department','local_users');
 			// }elseif (is_siteadmin() || ((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))&&(has_capability('local/costcenter:manage_owndepartments',$systemcontext)))) {
           
@@ -353,7 +361,7 @@ class learningplan extends moodleform {
           $value = $data['open_points'];
           $intvalue = (int)$value;
 
-          if(!("$intvalue" === "$value")){
+          if(!("$intvalue" === "$value") || $intvalue < 0){
             $errors['open_points'] = get_string('numeric', 'local_learningplan'); 
           }
           

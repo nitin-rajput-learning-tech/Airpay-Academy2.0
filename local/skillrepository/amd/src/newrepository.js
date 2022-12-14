@@ -3,7 +3,6 @@
  *
  * @module     local_costcenter/costcenter
  * @class      NewCostcenter
- * @package    local_costcenter
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/fragment', 'core/ajax', 'core/yui'],
@@ -11,17 +10,14 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
 
     /**
      * Constructor
-     *
-     * @param {String} selector used to find triggers for the new group modal.
-     * @param {int} contextid
-     *
+     * @type {args}
      * Each call to init gets it's own instance of this class.
      */
     var NewRepository = function(args) {
         this.contextid = args.contextid;
         this.repositoryid = args.repositoryid;
         var self = this;
-        self.init(args.selector);
+        self.init();
     };
 
     /**
@@ -38,80 +34,65 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
 
     /**
      * Initialise the class.
-     *
-     * @param {String} selector used to find triggers for the new group modal.
-     * @private
-     * @return {Promise}
+     * @type {args}
      */
-    NewRepository.prototype.init = function(args) {
-        console.log(args);
-        //var triggers = $(selector);
+    NewRepository.prototype.init = function() {
         var self = this;
         // Fetch the title string.
-        // $('.'+args.selector).click(function(){
-            var editid = $(this).data('value');
-            if (editid) {
-                self.repositoryid = editid;
-                console.log(self.repositoryid);
-                alert(self.repositoryid);
-            }
-            return Str.get_string('adnewrepository', 'local_skillrepository').then(function(title) {
-                // Create the modal.
-                return ModalFactory.create({
-                    type: ModalFactory.types.SAVE_CANCEL,
-                    title: title,
-                    body: self.getBody()
-                });
-            }.bind(self)).then(function(modal) {
+        var editid = $(this).data('value');
+        if (editid) {
+            self.repositoryid = editid;
+        }
+        return Str.get_string('adnewrepository', 'local_skillrepository').then(function(title) {
+            // Create the modal.
+            return ModalFactory.create({
+                type: ModalFactory.types.SAVE_CANCEL,
+                title: title,
+                body: self.getBody()
+            });
+        }.bind(self)).then(function(modal) {
 
-                // Keep a reference to the modal.
-                self.modal = modal;
-                // self.modal.show();
-                // Forms are big, we want a big modal.
-                self.modal.setLarge();
-                this.modal.getRoot().addClass('openLMStransition local_skillrepository');
+            // Keep a reference to the modal.
+            self.modal = modal;
+            // Forms are big, we want a big modal.
+            self.modal.setLarge();
+            this.modal.getRoot().addClass('openLMStransition local_skillrepository');
 
-                // We want to reset the form every time it is opened.
-                 this.modal.getRoot().on(ModalEvents.hidden, function() {
-                    this.modal.getRoot().animate({"right":"-85%"}, 500);
+            // We want to reset the form every time it is opened.
+             this.modal.getRoot().on(ModalEvents.hidden, function() {
+                this.modal.getRoot().animate({"right":"-85%"}, 500);
+                setTimeout(function(){
+                    modal.destroy();
+                }, 1000);
+            }.bind(this));
+            self.modal.getRoot().on(ModalEvents.hidden, function() {
+                modal.destroy();
+            }.bind(this));
+            self.modal.getRoot().on(ModalEvents.shown, function() {
+                self.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
+                this.modal.getFooter().find('[data-action="cancel"]').on('click', function() {
+                    modal.hide();
                     setTimeout(function(){
                         modal.destroy();
                     }, 1000);
-                }.bind(this));
-                self.modal.getRoot().on(ModalEvents.hidden, function() {
-                    modal.destroy();
-                }.bind(this));
-                self.modal.getRoot().on(ModalEvents.shown, function() {
-                    self.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
-                    this.modal.getFooter().find('[data-action="cancel"]').on('click', function() {
-                        modal.hide();
-                        setTimeout(function(){
-                            modal.destroy();
-                        }, 1000);
-                        // modal.destroy();
-                    });
-                }.bind(this));
-                // We want to hide the submit buttons every time it is opened.
-
-                // self.modal.getRoot().on(ModalEvents.shown, function() {
-                //     self.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
-                // }.bind(this));
-
-                // We catch the modal save event, and use it to submit the form inside the modal.
-                // Triggering a form submission will give JS validation scripts a chance to check for errors.
-                self.modal.getRoot().on(ModalEvents.save, self.submitForm.bind(self));
-                // We also catch the form submit event and use it to submit the form with ajax.
-                self.modal.getRoot().on('submit', 'form', self.submitFormAjax.bind(self));
-                self.modal.show();
-                this.modal.getRoot().animate({"right":"0%"}, 500);
-                return this.modal;
+                });
             }.bind(this));
-        // });
+
+            // We catch the modal save event, and use it to submit the form inside the modal.
+            // Triggering a form submission will give JS validation scripts a chance to check for errors.
+            self.modal.getRoot().on(ModalEvents.save, self.submitForm.bind(self));
+            // We also catch the form submit event and use it to submit the form with ajax.
+            self.modal.getRoot().on('submit', 'form', self.submitFormAjax.bind(self));
+            self.modal.show();
+            this.modal.getRoot().animate({"right":"0%"}, 500);
+            return this.modal;
+        }.bind(this));
     };
 
     /**
      * @method getBody
      * @private
+     * @type {args}
      * @return {Promise}
      */
     NewRepository.prototype.getBody = function(formdata) {
@@ -120,10 +101,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         }
         // Get the content of the modal.
         var params = {repositoryid:this.repositoryid, jsonformdata: JSON.stringify(formdata)};
-
-
         return Fragment.loadFragment('local_skillrepository', 'new_skill_repository_form', this.contextid, params);
-
     };
 
     /**
@@ -144,6 +122,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
     /**
      * @method handleFormSubmissionFailure
      * @private
+     * @type {data}
      * @return {Promise}
      */
     NewRepository.prototype.handleFormSubmissionFailure = function(data) {
@@ -194,13 +173,10 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
          * Attach event listeners to initialise this module.
          *
          * @method init
-         * @param {string} selector The CSS selector used to find nodes that will trigger this module.
-         * @param {int} contextid The contextid for the course.
+         * @type {args}
          * @return {Promise}
          */
         init: function(args) {
-
-
             return new NewRepository(args);
         },
         load: function(){
@@ -225,59 +201,10 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                     type: ModalFactory.types.DEFAULT,
                     body: s[1],
                      footer: '<button type="button" class="btn btn-primary" data-action="save">Yes! Delete</button>&nbsp;' +
-            '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'
-                })/*.done(function(modal) {
-                    this.modal = modal;
-                    modal.setSaveButtonText(s[2]);
-                    modal.getRoot().on(ModalEvents.yes, function(e) {
-                        e.preventDefault();
-                        args.confirm = true;
-                        $.ajax({
-                            method: "POST",
-                            dataType: "json",
-                            url: M.cfg.wwwroot + "/local/skillrepository/ajax.php?action="+args.selector+"&skillid="+args.skillid,
-                            success: function(data){
-                                window.location.reload();
-                            }
-                        });
-                    }.bind(this));
-                    modal.show();
-                }.bind(this));*/
-                // .done(function(modal) {
-                //     this.modal = modal;
-                //     //modal.setSaveButtonText("Yes");
+                     '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'
+                })
 
-                //    modal.setSaveButtonText(Str.get_string('yes_delete', 'local_skillrepository'));
-
-
-                // //For cancel button string changed//
-                // var value=Str.get_string('cancel', 'local_skillrepository');
-                // var button = this.modal.getFooter().find('[data-action="cancel"]');
-                // this.modal.asyncSet(value, button.text.bind(button));
-
-                //     modal.getRoot().on(ModalEvents.yes, function(e) {
-                //         e.preventDefault();
-                //         args.confirm = true;
-                //         console.log(args);
-                //         var params = {};
-                //         params.id = args.skillid;
-                //         params.contextid = args.contextid;
-
-                //         var promise = Ajax.call([{
-                //             methodname: 'local_skillrepository_delete_skill',
-                //             args: params
-                //         }]);
-                //         promise[0].done(function(resp) {
-                //             window.location.href = window.location.href;
-                //         }).fail(function(ex) {
-                //             // do something with the exception
-                //              console.log(ex);
-                //         });
-                //     }.bind(this));
-                //     modal.show();
-                // }.bind(this));
-
-                 .done(function(modal) {
+                .done(function(modal) {
                     this.modal = modal;
 
                     modal.getRoot().find('[data-action="save"]').on('click', function() {
@@ -286,7 +213,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                             method: "POST",
                             dataType: "json",
                             url: M.cfg.wwwroot + "/local/skillrepository/ajax.php?action="+args.selector+"&skillid="+args.skillid,
-                            success: function(data){
+                            success: function(){
                                 window.location.reload();
                             }
                         });

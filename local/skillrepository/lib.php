@@ -47,17 +47,17 @@ function create_array($table, $key, $value) {
  *  @return array $columnnames contains KEY AND VALUE
  */
 function getTableColumns($table){
-	global $DB;
+    global $DB;
 
-	$tables = $DB->get_tables();
-	$currenttable = $tables[$table];
+    $tables = $DB->get_tables();
+    $currenttable = $tables[$table];
 
-	$columns = $DB->get_columns($tables[$currenttable]);
-	    foreach ($columns as $column) {
-			$columnnames[$column->name] = $column->name;
-		}
+    $columns = $DB->get_columns($tables[$currenttable]);
+        foreach ($columns as $column) {
+            $columnnames[$column->name] = $column->name;
+        }
 
-	return $columnnames;
+    return $columnnames;
 }
 
 
@@ -98,7 +98,6 @@ function local_skillrepository_output_fragment_new_skill_repository_form($args){
 
     $mform = new local_skillrepository\form\skill_repository_form(null, array('id' => $args->repositoryid, 'editoroptions' => $editoroptions), 'post', '', null, true, $formdata);
 
-    //print_object($data);
     $mform->set_data($data);
 
     if (!empty($formdata)) {
@@ -149,12 +148,12 @@ function local_skillrepository_leftmenunode(){
 
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $skillreponode = '';
-    if(has_capability('local/costcenter:manage', $systemcontext) || is_siteadmin()) {
+    if(has_capability('local/skillrepository:manage', $systemcontext) || is_siteadmin()) {
         $skillreponode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_skills', 'class'=>'pull-left user_nav_div skills'));
-            $skills_url = new moodle_url('/local/skillrepository/index.php');
-            $skill_icon = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
-            $courses = html_writer::link($skills_url, $skill_icon.'<span class="user_navigation_link_text">'.get_string('manage_skills','local_skillrepository').'</span>',array('class'=>'user_navigation_link'));
-            $skillreponode .= $courses;
+        $skills_url = new moodle_url('/local/skillrepository/index.php');
+        $skill_icon = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
+        $courses = html_writer::link($skills_url, $skill_icon.'<span class="user_navigation_link_text">'.get_string('manage_skills','local_skillrepository').'</span>',array('class'=>'user_navigation_link'));
+        $skillreponode .= $courses;
         $skillreponode .= html_writer::end_tag('li');
     }
 
@@ -271,10 +270,10 @@ function skills_level_details($tablelimits, $filtervalues){
 
     $list=array();
     $data=array();
-    
+
     if ($records) {
         foreach ($records as $c) {
-            $list=array();                
+            $list=array();
             $list['skillslevelname'] = $c->name;
             $list['username'] = $c->username;
             $list['code'] = $c->code;
@@ -312,14 +311,18 @@ function skills_category_details($tablelimits, $filtervalues){
     if ($records) {
         foreach ($records as $c) {
             $list=array();
+
             $id = $c->id;
             $delcat = $DB->get_field('local_skill','category',array('category'=>$id));
+
             $list['skillscategoryname'] = $c->name;
             $list['username'] = $c->username;
             $list['code'] = $c->shortname;
             $list['organisationname'] = $c->orginsationname;
             $list['skillscategory_id'] = $c->id;
+
             $list['delete_cat'] = $delcat;
+
             $data[] = $list;
         }
     }

@@ -52,7 +52,7 @@ class plugin_learningplancompletionscolumns extends pluginbase {
                    $row->{$data->column} = ($row->completionstatus) ? 'Completed' : 'Not Completed';
                 break;              
                 case 'completiondate':
-                   $row->{$data->column} = $row->{$data->column} ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : '--';
+                   $row->{$data->column} = $row->{$data->column} ? date('d-m-Y',$row->{$data->column}) : '--';
                 break;
             }
             

@@ -8,7 +8,7 @@
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
                 <FIELD NAME="category" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-                 <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"  SEQUENCE="false"/>
+                <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"  SEQUENCE="false"/>
                 <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="shortname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
@@ -22,8 +22,8 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
             <INDEXES>
-              <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
-              <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+                <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+                <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
             </INDEXES>
         </TABLE>
         <TABLE NAME="local_skill_categories" COMMENT="local_skill_categories table">
@@ -45,11 +45,11 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
             <INDEXES>
-               <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
-               <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
+                <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+                <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
             </INDEXES>
         </TABLE>
-	<TABLE NAME="local_course_levels" COMMENT="local_course_levels table">
+        <TABLE NAME="local_course_levels" COMMENT="local_course_levels table">
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
                 <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
@@ -87,11 +87,11 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
             <INDEXES>
-               <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
-               <INDEX NAME="skill_categoryid" UNIQUE="false" FIELDS="skill_categoryid"/>
-               <INDEX NAME="skillid" UNIQUE="false" FIELDS="skillid"/>
-               <INDEX NAME="positionid" UNIQUE="false" FIELDS="positionid"/>
-               <INDEX NAME="levelid" UNIQUE="false" FIELDS="levelid"/>
+                <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
+                <INDEX NAME="skill_categoryid" UNIQUE="false" FIELDS="skill_categoryid"/>
+                <INDEX NAME="skillid" UNIQUE="false" FIELDS="skillid"/>
+                <INDEX NAME="positionid" UNIQUE="false" FIELDS="positionid"/>
+                <INDEX NAME="levelid" UNIQUE="false" FIELDS="levelid"/>
             </INDEXES>
         </TABLE>
     </TABLES>

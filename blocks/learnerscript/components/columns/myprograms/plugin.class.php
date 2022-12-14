@@ -61,7 +61,7 @@ class plugin_myprograms extends pluginbase {
                 $row->{$data->column} = ($row->{$data->column} == 1) ? 'Completed' : 'Not Completed';
                 break;
             case 'completiondate':
-                $row->{$data->column} = !empty($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : 'NA';
                 break;
         }
         return (isset($row->{$data->column})) ? $row->{$data->column} : '--';

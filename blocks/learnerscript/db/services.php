@@ -73,6 +73,13 @@ $functions = array(
         'description' => 'case generate_plotgraph',
         'ajax' => true
     ),
+'learnerscript_reportsapi' => array(
+        'classname' => 'block_learnerscript_external',
+        'methodname' => 'learnerscript_reportsapi',
+        'classpath' => 'blocks/learnerscript/externallib.php',
+        'description' => 'case generate_plotgraph',
+        'ajax' => true
+    ),
 'block_learnerscript_pluginlicence' => array(
         'classname' => 'block_learnerscript_external',
         'methodname' => 'pluginlicence',

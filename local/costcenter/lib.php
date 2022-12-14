@@ -540,10 +540,7 @@ function costcenter_insert_instance($costcenter){
             $costcenter->shortname = $costcenter->concatshortname.'_'.$costcenter->shortname;
         }
 
-
         $costcenter->id = $DB->insert_record('local_costcenter', $costcenter);
-
-        
         if($costcenter->id) {
             $parentpath = $DB->get_field('local_costcenter', 'path', array('id'=>$parentid));
             $path = $parentpath.'/'.$costcenter->id;
@@ -571,6 +568,7 @@ function costcenter_insert_instance($costcenter){
                 file_save_draft_area_files($costcenter->costcenter_logo, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $costcenter->costcenter_logo);
 
             }
+        blocks_add_default_org_blocks($costcenter->id);
         }
        return $costcenter->id;
 
@@ -749,4 +747,22 @@ function local_costcenter_output_fragment_roleusers_display($args)
     $output = $OUTPUT->render_from_template('local_costcenter/popupcontent', $templatedata);
 
     return $output;
+}
+/*
+* Author sachin
+* @default blocks for created organization
+*/
+function blocks_add_default_org_blocks($costcenterid) {
+    global $DB;
+    $page = new moodle_page();
+    $page->set_context((new \local_costcenter\lib\accesslib())::get_module_context($costcenterid));
+        $subpagepattern = null;
+    $page->blocks->add_blocks([
+        'layerone_full' => [
+            'userdashboard',
+            'quick_navigation',
+        ]],
+        'my-dashboard',
+        $subpagepattern
+    );
 }

@@ -31,7 +31,7 @@ class report_coursesoverview extends reportbase implements report {
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
         $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions']);   
         $this->columns = $columns;
-        $this->filters = array('organization','departments', 'course');
+        $this->filters = array('organization','departments', 'subdepartments', 'course');
         $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions');
         $this->defaultcolumn = 'c.id';
     }
@@ -53,7 +53,7 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN {role_assignments} ra ON ra.userid = ue.userid
                         JOIN {context} cxt ON cxt.id = ra.contextid
                         JOIN {role} r ON r.id = ra.roleid    
-                        WHERE (e.enrol = 'manual' OR e.enrol = 'self') AND u.deleted = 0 
+                        WHERE u.deleted = 0 
                             AND u.suspended = 0 AND r.shortname = 'employee' 
                             AND e.courseid = c.id ) as noofenrollments,
                     (SELECT COUNT(DISTINCT(ue.id))
@@ -65,7 +65,7 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN {role} r ON r.id = ra.roleid
                         JOIN {course_completions} cc ON e.courseid = cc.course 
                             AND cc.userid = u.id AND cc.timecompleted IS NOT NULL
-                        WHERE (e.enrol = 'manual' OR e.enrol = 'self') AND u.deleted = 0 
+                        WHERE u.deleted = 0 
                             AND u.suspended = 0 AND r.shortname = 'employee' 
                             AND e.courseid = c.id ) as noofcompletions " ;
 
@@ -84,7 +84,7 @@ class report_coursesoverview extends reportbase implements report {
 
     function where() {
         global $USER, $DB;
-        $this->sql .= " WHERE c.id <> :siteid AND c.visible = 1 AND 
+        $this->sql .= " WHERE c.id <> :siteid AND 
                 CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
 
         $this->params['siteid'] = SITEID;
@@ -96,9 +96,9 @@ class report_coursesoverview extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dh=1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -106,10 +106,15 @@ class report_coursesoverview extends reportbase implements report {
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND c.open_costcenterid = :costcenterid ";
             $this->params['costcenterid'] = $USER->open_costcenterid;
-        }else{
-            $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
+        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
+             $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
             $this->params['costcenterid'] = $USER->open_costcenterid;
             $this->params['departmentid'] = $USER->open_departmentid;
+        }else{
+            $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND c.open_subdepartment =: subdepartmentid";
+            $this->params['costcenterid'] = $USER->open_costcenterid;
+            $this->params['departmentid'] = $USER->open_departmentid;
+             $this->params['subdepartmentid'] = $USER->open_subdepartment;
         }
 
         parent::where();
@@ -125,15 +130,14 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function filters() {
-        
-        if(isset($this->params['filter_organization']) && $this->params['filter_organization'] > 0) {
-            $this->sql .= " AND c.open_costcenterid = :costcenterid ";
-            $this->params['costcenterid'] = $this->params['filter_organization'];
-        }
-       
-        if(isset($this->params['filter_departments']) && $this->params['filter_departments'] >= 0 && $this->params['filter_departments'] != '') {
+
+        if(isset($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
             $this->sql .= " AND c.open_departmentid = :departmentid ";
             $this->params['departmentid'] = $this->params['filter_departments'];
+        }
+        if(isset($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
+            $this->sql .= " AND c.open_subdepartment = :subdepartmentid ";
+            $this->params['subdepartmentid'] = $this->params['filter_subdepartments'];
         }
 
         if(isset($this->params['filter_course']) && $this->params['filter_course'] > 0) {

@@ -1,0 +1,32 @@
+<div class="dashboard_reporttile_container {{tile_with_link}}" {{colorformat}}>
+    {{#instanceurlcheck}}
+        <a href={{instanceurlcheck}} />
+    {{/instanceurlcheck}}
+        <div class="dashboard_tiles w-100" {{styletilescolour}}>
+            <span>
+                <div class="reporttile_title text-center" title="{{configtitle}}">{{config_title_fullname}}</div>
+                <div class='tiles_information' data-reportid='{{reportid}}' data-instanceid='{{instanceid}}' data-reporttype='{{reporttype}}'>
+                    <!-- {{#tableformat}}
+                        <span class="dashboard_tiles_img"><img src="{{tilelogo}}" /></span> 
+                    {{/tableformat}} -->
+                    {{^tableformat}}
+                    <div id='plotreportcontainer{{instanceid}}' class='report_dashboard_container' data-reportid={{reportid}}
+                        data-reporttype='{{reporttype}}' data-blockinstance={{instanceid}} data-chartcolor={{stylecolorpicker}}> </div>
+                    {{/tableformat}}
+                    {{#tableformat}}
+                    <table width='100%' class='report_tiles_table'>
+                        <tr>
+                            <div id="reportloading_{{instanceid}}">
+                                <img src={{loading}} alt="loading" title="loading" />
+                            </div>
+                        </tr>
+                    </table>
+                    {{/tableformat}}
+                </div>
+            </span>
+        </div>
+    {{#instanceurlcheck}}
+        </a>
+    {{/instanceurlcheck}}
+</div>
+

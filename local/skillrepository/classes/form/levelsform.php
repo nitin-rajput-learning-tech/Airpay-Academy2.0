@@ -28,11 +28,11 @@ require_once(dirname(__FILE__) . '/../../../../config.php');
 global $CFG;
 require_once("$CFG->libdir/formslib.php");
 class levelsform extends \moodleform {
-	public function definition() {
-		global $USER, $CFG, $DB, $PAGE;
-		$mform = $this->_form;
-		$id = $this->_customdata['id'];
-		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
+    public function definition() {
+        global $USER, $CFG, $DB, $PAGE;
+        $mform = $this->_form;
+        $id = $this->_customdata['id'];
+        $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
             $options = array(
                 'ajax' => 'local_courses/form-options-selector',
@@ -53,26 +53,26 @@ class levelsform extends \moodleform {
             $mform->setConstant('costcenterid', $user_dept);
         }
         $mform->addElement('text',  'name',  get_string('levelname','local_skillrepository'));
-		$mform->addRule('name', get_string('levelnamereq', 'local_skillrepository'), 'required', null, 'client');
-		$mform->setType('name', PARAM_TEXT);
+        $mform->addRule('name', get_string('levelnamereq', 'local_skillrepository'), 'required', null, 'client');
+        $mform->setType('name', PARAM_TEXT);
 
-		$mform->addElement('text',  'code',  get_string('levelcode',  'local_skillrepository'));
-		$mform->addRule('code', get_string('levelcodereq', 'local_skillrepository'), 'required', null, 'client');
-		$mform->setType('code', PARAM_RAW);
+        $mform->addElement('text',  'code',  get_string('levelcode',  'local_skillrepository'));
+        $mform->addRule('code', get_string('levelcodereq', 'local_skillrepository'), 'required', null, 'client');
+        $mform->setType('code', PARAM_RAW);
 
-		$mform->addElement('hidden',  'id', $id);
-		$mform->setType('id', PARAM_INT);
+        $mform->addElement('hidden',  'id', $id);
+        $mform->setType('id', PARAM_INT);
         $mform->disable_form_change_checker();
-	}
-	public function validation($data, $files) {
+    }
+    public function validation($data, $files) {
         $errors = array();
         global $DB, $CFG;
 
         if(empty($data['name'])){
-        	$error['name'] = get_string('nonemptyname', 'local_skillrepository');
+            $error['name'] = get_string('nonemptyname', 'local_skillrepository');
         }
         if(empty($data['code'])){
-        	$error['code'] = get_string('nonemptycode', 'local_skillrepository');
+            $error['code'] = get_string('nonemptycode', 'local_skillrepository');
         }
         if ($levelid = $DB->get_field('local_course_levels', 'id', array('code' => $data['code']))) {
             if (empty($data['id']) || $levelid != $data['id']) {

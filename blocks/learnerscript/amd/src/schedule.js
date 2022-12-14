@@ -530,6 +530,68 @@ define(['jquery',
         },
         rolewiseusers: function(args) {
             $('#id_users_data' + args.reportinstance).val(null).trigger('change');
-        }
+        },
+
+        organizationdepartments: function(args) {
+            var organizationid = $('#id_organization').val(); 
+            var FilterDepartment = $('#id_department');
+            // if (organizationid > 0 && (FilterDepartment.length > 0)) {
+                var currentorganization = organizationid;
+                if (currentorganization > 0) {
+                    var promise = ajax.call({
+                        args: {
+                            action: 'orgdepts',
+                            basicparam: true,
+                            orgid: organizationid
+                        },
+                        url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+                    });
+                    promise.done(function(response) {
+                        var template = '';
+                        $.each(response, function(key, value) {
+                            var selected = '';
+                            template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                        });
+                        $("#id_department").html(template);
+                        var currentdepartment = $('#id_department').find(":selected").val();
+                        if (currentdepartment == 0 || currentdepartment == null) {
+                            $('#id_department').val($('#id_department option:eq(1)').val());
+                        }
+                        $('#id_department').trigger('change');
+                    });
+                }
+            // }
+            // $('#id_users_data' + args.reportinstance).val(null).trigger('change');
+        },
+
+        deptsubdepartment: function(args) {
+            var departmentid = $('#id_department').val(); 
+            // if (organizationid > 0 && (FilterDepartment.length > 0)) {
+                var currentdepartment = departmentid;
+                if (currentdepartment > 0) {
+                    var promise = ajax.call({
+                        args: {
+                            action: 'deptsubdepartments',
+                            basicparam: true,
+                            departmentid: departmentid
+                        },
+                        url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+                    });
+                    promise.done(function(response) {
+                        var template = '';
+                        $.each(response, function(key, value) {
+                            var selected = '';
+                            template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                        });
+                        $("#id_subdepartment").html(template);
+                        var currentsubdepartment = $('#id_subdepartment').find(":selected").val();
+                        if (currentsubdepartment == 0 || currentsubdepartment == null) {
+                            $('#id_subdepartment').val($('#id_subdepartment option:eq(1)').val());
+                        }
+                        $('#id_subdepartment').trigger('change');
+                    });
+                }
+            // }
+        },
     }
 });

@@ -524,23 +524,18 @@ function get_roles_in_context($contextlevel, $excludedroles = null){
 */
 function block_learnerscript_leftmenunode(){
     global $USER, $DB;
+    $systemcontext = context_system::instance();
     $reportsnode = '';
-    if(is_siteadmin() || has_capability('block/learnerscript:viewreports', context_system::instance())){
+    if(has_capability('block/learnerscript:viewreports', $systemcontext) || is_siteadmin()) {
         $reportsnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_learnerscript', 'class'=>'pull-left user_nav_div learnerscript'));
-                
-        $params = get_reportdashboard();
-        if(is_siteadmin()){
-            $reports_url = new moodle_url('/blocks/learnerscript/reportsview.php');
-        }else{
-            $reports_url = new moodle_url('/blocks/reportdashboard/dashboard.php',$params);
-        }
-        $reports_label =  get_string('reportdashboard','block_learnerscript');
-
-        $reportslink = html_writer::link($reports_url, '<i class="fa fa-signal" aria-hidden="true" aria-label=""></i><span class="user_navigation_link_text">'.$reports_label.'</span>',array('class'=>'user_navigation_link'));
+        // $params = get_reportdashboard();
+        $reports_url = new moodle_url('/blocks/reportdashboard/dashboard.php',array());
+        $reportstext =  get_string('analytics','block_learnerscript');
+        $label = '<span class="analytics_icon readynez_cmn_icon icon"></span><span class="user_navigation_link_text">'.$reportstext.'</span>';
+        $reportslink = html_writer::link($reports_url, $label,array('class'=>'user_navigation_link'));
         $reportsnode .= $reportslink;
         $reportsnode .= html_writer::end_tag('li');
     }
-
     return array('24' => $reportsnode);
 }
 
@@ -548,18 +543,35 @@ function block_learnerscript_leftmenunode(){
 function get_reportdashboard(){
     global $USER, $DB;
 
-    if(!empty($USER->access['rsw']['/1'])){
-        $userrole = $DB->get_field('role','shortname',array('id'=>$USER->access['rsw']['/1']));
-    }else{
-        $userrole = 'employee';
+    if (!is_siteadmin()) {
+        if(!empty($USER->access['rsw']['/1'])){
+            $userrole = $DB->get_field('role','shortname',array('id'=>$USER->access['rsw']['/1']));
+        }else{
+            $userrole = 'user';
+        }
+    } else {
+        $userrole = '';
     }
 
     $params = array();
     $params['role'] = $userrole;
-    $sql = "SELECT subpagepattern 
-            FROM {block_instances}
-            WHERE pagetypepattern = 'blocks-reportdashboard-dashboard-$userrole'
-             ORDER BY id ASC ";
+    $sql = "SELECT DISTINCT(subpagepattern) 
+            FROM {block_instances} "; 
+    if (!empty($userrole)) {
+        $sql .= " WHERE pagetypepattern = 'blocks-reportdashboard-dashboard-$userrole' ";
+    } else {
+        $sql .= " WHERE pagetypepattern = 'blocks-reportdashboard-dashboard'";
+    } 
+    $sql .= " AND subpagepattern IN ('Maindashboard', 'Learnerdashboard', 'Examdashboard', 'Certification', 'Compliances', 'Dashboard', 'Course') ORDER BY CASE subpagepattern
+      WHEN 'Maindashboard' THEN 1
+      WHEN 'Learnerdashboard' THEN 2
+      WHEN 'Examdashboard' THEN 3
+      WHEN 'Certification' THEN 4 
+      WHEN 'Compliances' THEN 5
+      WHEN 'Dashboard' THEN 6 
+      WHEN 'Course' THEN 7
+      ELSE 8 
+   END ";
     $roledashboard = $DB->get_field_sql($sql);
     if($roledashboard){
         $params['dashboardurl'] = $roledashboard;

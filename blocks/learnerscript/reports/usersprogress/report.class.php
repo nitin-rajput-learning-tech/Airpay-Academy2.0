@@ -35,7 +35,7 @@ class report_usersprogress extends reportbase implements report {
         $this->parent = true;
         $this->columns = array('userfield' => ['userfield'], 'usersprogress' => array('userid','firstname','clsenrolled', 'clscompleted','crtsenrolled', 'crtscompleted','prgsenrolled', 'prgscompleted','csenrolled', 'cscompleted','lpsenrolled','lpscompleted','lesenrolled','lescompleted','losenrolled','loscompleted'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
-        $this->filters = array('organization','departments');
+        $this->filters = array('organization','departments', 'subdepartments');
         $this->sqlorder['column'] = 'firstname';
         $this->sqlorder['dir'] = 'asc';
         $this->orderable = array(' ');
@@ -75,13 +75,13 @@ class report_usersprogress extends reportbase implements report {
                         WHERE p.visible = 1 AND  p.status = 4 AND pu.completion_status = 1 AND pu.userid = u.id) as prgscompleted,
 
             (select count(ue.id) from {user_enrolments} ue 
-                        JOIN {enrol} e ON ue.enrolid = e.id AND (e.enrol = 'manual' OR e.enrol = 'self')
+                        JOIN {enrol} e ON ue.enrolid = e.id 
                         JOIN {course} c ON e.courseid = c.id AND concat(',',c.open_identifiedas, ',') LIKE concat('%,',3,',%') 
                         where c.visible = 1 AND ue.userid = u.id
                         ) as csenrolled,
             (select count(cc.id) from {course_completions} cc 
                         JOIN {course} c ON c.id = cc.course AND concat(',',c.open_identifiedas, ',') LIKE concat('%,',3,',%')
-                        JOIN {enrol} e ON c.id = e.courseid AND (e.enrol = 'manual' OR e.enrol = 'self')
+                        JOIN {enrol} e ON c.id = e.courseid 
                         JOIN {user_enrolments} ue ON ue.enrolid = e.id AND ue.userid = cc.userid
                         where c.visible = 1 AND cc.userid = u.id AND cc.timecompleted is not NULL
                         ) as cscompleted,
@@ -130,9 +130,9 @@ class report_usersprogress extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dhs = 1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -140,10 +140,15 @@ class report_usersprogress extends reportbase implements report {
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND u.open_costcenterid = :costcenterid ";
             $this->params['costcenterid'] = $USER->open_costcenterid; 
-        }else{
+        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
             $this->sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid";
             $this->params['costcenterid'] = $USER->open_costcenterid; 
             $this->params['departmentid'] = $USER->open_departmentid; 
+        }else{
+            $this->sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartment";
+            $this->params['costcenterid'] = $USER->open_costcenterid; 
+            $this->params['departmentid'] = $USER->open_departmentid;
+            $this->params['subdepartment'] = $USER->open_subdepartment;  
         }
         parent::where();
     }
@@ -167,6 +172,12 @@ class report_usersprogress extends reportbase implements report {
             $deptids = $this->params['filter_departments'];
             $this->sql .= " AND u.open_departmentid = :deptid ";
             $this->params['deptid'] = $deptids;
+        }
+
+        if (!empty($this->params['filter_subdepartments'])) {
+            $subdeptids = $this->params['filter_subdepartments'];
+            $this->sql .= " AND u.open_subdepartment = :subdeptid ";
+            $this->params['subdeptid'] = $subdeptids;
         }
     }
 

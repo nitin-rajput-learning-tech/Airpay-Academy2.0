@@ -81,6 +81,7 @@ if ($mform1->is_cancelled()) {
 	redirect($returnurl);
 } elseif ($formdata = $mform1->get_data()) {
 	echo $OUTPUT->header();
+	echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 	$iid = csv_import_reader::get_new_iid('uploaduser');
 	$cir = new csv_import_reader($iid, 'uploaduser');
 	$content = $mform1->get_file_content('userfile');
@@ -187,6 +188,7 @@ if ($mform1->is_cancelled()) {
 	// Continue to form2.
 } else {
 	echo $OUTPUT->header();
+	echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 	echo $OUTPUT->heading(get_string('uploadusers', 'block_learnerscript'));
 	echo '<div  class="samplecsv"><a href="'.$CFG->wwwroot.'/blocks/learnerscript/components/scheduler/sch_sample.php?format=csv&id=' . $reportid . '"><button>' . get_string('sample_csv', 'block_learnerscript') . '</button></a><a href="'.$CFG->wwwroot.'/blocks/learnerscript/components/scheduler/help.php?id=' . $reportid . '"><button>' . get_string('manual', 'block_learnerscript') . '</button></a></div>';
 	$mform1->display();

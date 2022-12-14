@@ -18,10 +18,22 @@ define(['jquery',
                 args.basicparams = JSON.stringify(smartfilter.BasicparamsData(args.instanceid));
                 args.filters['ls_fstartdate'] = $('#ls_fstartdate').val();
                 args.filters['ls_fenddate'] = $('#ls_fenddate').val();
-                if (typeof args.filters['filter_courses'] == 'undefined') {
-                    var filter_courses = $('#ls_courseid').val();
+                if (typeof args.filters['filter_course'] == 'undefined') {
+                    var filter_courses = $('#coursedashboardfilter').val();
                     if (filter_courses != 1) {
-                        args.filters['filter_courses'] = filter_courses;
+                        args.filters['filter_course'] = filter_courses;
+                    }
+                } 
+                if (typeof args.filters['filter_organization'] == 'undefined') {
+                    var filter_organization = $('#dashboardcostcenters').val();
+                    if (filter_organization != 0) {
+                        args.filters['filter_organization'] = filter_organization;
+                    }
+                }
+                if (typeof args.filters['filter_departments'] == 'undefined') {
+                    var filter_departments = $('#dashboarddepartment').val();
+                    if (filter_departments != 0) {
+                        args.filters['filter_departments'] = filter_departments;
                     }
                 }
                 args.filters = JSON.stringify(args.filters);

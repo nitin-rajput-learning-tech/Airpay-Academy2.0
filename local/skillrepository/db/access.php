@@ -99,5 +99,12 @@ $capabilities = array(
             'manager' => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW
         )
+    ),
+    'local/skillrepository:manage' => array(
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => array(
+        )
     )
 );

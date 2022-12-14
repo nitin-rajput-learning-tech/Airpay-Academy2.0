@@ -212,7 +212,10 @@ define(['jquery',
                     var instanceid = $(this).data('instanceid');
                     var reportinstance = instanceid ? instanceid : args.reportid;
                     if (args.action == 'rolewiseusers') {
-                        args.reportid = $(this).data('reportid');
+                        args.reportid = $(this).data('reportid'); 
+                        args.orgid = $('#id_organization').val();
+                        args.deptid = $('#id_department').val();
+                        args.subdeptid = $('#id_subdepartment').val();
                     }
                     if (args.action === 'userlist') {
                         args.setminimumInputLength = 2;
@@ -234,6 +237,9 @@ define(['jquery',
                                         delete args.schuserslist;
                                         delete args.scheduleid;
                                         args.roleid = $("#id_role" + reportinstance).val();
+                                        args.orgid = $('#id_organization').val();
+                                        args.deptid = $('#id_department').val();
+                                        args.subdeptid = $('#id_subdepartment').val();
                                         var roleid = args.roleid.split('_');
                                         args.roleid = roleid[0];
                                         args.contextlevel = roleid[1];
@@ -353,8 +359,15 @@ define(['jquery',
                 });
             },
             ReportModelFromLink: function(args) {
-                var tableid = args.container.parents().closest('table').attr('id');
-                var tablewidth = $("#" + tableid + "").width();
+                console.log(args);
+                if(args.dashboard == 'compliance') {
+                    var tableid = args.tableid;
+                    var tablewidth = 800.5;
+                    args.length = 1;
+                } else {
+                    var tableid = args.container.parents().closest('table').attr('id');
+                    var tablewidth = $("#" + tableid + "").width();
+                }
                 var drillurl = this.getQueryParameters(args.url);
                 var reportid = parseInt(drillurl.id);
                 var drilldata = $(this).data();
@@ -449,10 +462,22 @@ define(['jquery',
                 args.filters = smartfilter.FilterData(args.reportid);
                 args.filters['ls_fstartdate'] = $('#ls_fstartdate').val();
                 args.filters['ls_fenddate'] = $('#ls_fenddate').val();
-                if (typeof args.filters['filter_courses'] == 'undefined') {
-                    var filter_courses = $('#ls_courseid').val();
+                if (typeof args.filters['filter_course'] == 'undefined') {
+                    var filter_courses = $('#coursedashboardfilter').val();
                     if (filter_courses != 1) {
-                        args.filters['filter_courses'] = filter_courses;
+                        args.filters['filter_course'] = filter_courses;
+                    }
+                } 
+                if (typeof args.filters['filter_organization'] == 'undefined') {
+                    var filter_organization = $('#dashboardcostcenters').val();
+                    if (filter_organization != 0) {
+                        args.filters['filter_organization'] = filter_organization;
+                    }
+                }
+                if (typeof args.filters['filter_departments'] == 'undefined') {
+                    var filter_departments = $('#dashboarddepartment').val();
+                    if (filter_departments != 0) {
+                        args.filters['filter_departments'] = filter_departments;
                     }
                 }
                 args.filters = JSON.stringify(args.filters);

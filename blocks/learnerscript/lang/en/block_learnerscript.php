@@ -102,7 +102,7 @@ $string['report_certificatesoverview'] = 'Certificate Overview';
 $string['selectfeedback'] = 'Select Feedback';
 $string['certificatecompletions'] ='certificatecompletions';
 $string['report_certificatecompletions'] ='Certificate Completions';
-
+$string['filter_coursecategories'] = 'Select Category';
 
 $string['report_coursesoverview_help'] = '<p><strong>Description: </strong>List of Courses and its basic information along with the Enrolments and Completions count.</p>';
 
@@ -218,6 +218,7 @@ $string['program_nameforreports'] = 'Program';
 $string['onlinetest_nameforreports'] = 'Online Exam';
 $string['learningplan_nameforreports'] = 'Learning Path';
 $string['reportdashboard'] = 'Report Dashboard';
+$string['analytics'] = 'Analytics';
 
 
 
@@ -848,6 +849,8 @@ $string['selectcalc'] = 'Select Calc';
 $string['selectordering'] = 'Select Ordering';
 $string['generatedmodel'] = 'Generated Model';
 $string['graphcannotbedeleted'] = 'You Cannot Delete Last Graph in this Report';
+$string['upcomingendoflife'] = 'Upcoming EOL';
+$string['upcomingexpiry'] = 'Upcoming Expiry';
 
 $string['lsreportconfigimport'] = 'LearnerScript Config Status';
 $string['graphdeleted'] = 'Graph Successfully Deleted';
@@ -950,7 +953,7 @@ $string['courses'] = 'Course';
 $string['onlinetest'] = 'Onlineexam';
 $string['program'] = 'Program';
 $string['classroomcompletions'] = 'classroom completions';
-$string['report_classroomcompletions'] = 'Classroom Completions New';
+$string['report_classroomcompletions'] = 'Classroom Completions';
 $string['report_usersdata'] = 'Usersdata';
 $string['report_traininghoursvsusers'] = 'ClassroomsAndUsersByMonths';
 $string['traininghoursvsusers'] = 'ClassroomsAndUsersByMonths';
@@ -966,54 +969,258 @@ $string['departmentwiseclassrooms'] = 'Organization wise classrooms';
 $string['report_dailyuniquelogins'] = 'Daily unique logins';
 $string['dailyuniquelogins'] = 'Daily unique logins';
 $string['enduser'] = 'Enduser';
-$string['close'] = 'Close';
-$string['enterselectedcolumns'] = 'Enter selectedcolumns';
-$string['selectcolumns'] = 'Select Columns';
-$string['value'] = 'Value';
-$string['numericsonly'] = 'Numerics Only';
-$string['possibleselectedcolumns'] = 'Possible selectedcolumns';
-$string['selectedcolumns'] = 'selectedcolumns';
-$string['submit'] = 'Submit';
-$string['chartname'] = 'Chart Name';
-$string['columnsdropdown'] = 'Columns drop down';
-$string['configureplot'] = 'Configure Plot';
-$string['enterthevalues'] = 'Enter the values like <b>C1 and (C2 OR C3)</b>';
 
-$string['report_quizattempthours'] = 'Quiz Attempt Hours';
-$string['quizattempthours'] = 'Quiz Attempt Hours';
-$string['report_learningpathcourseusers'] = 'LP Course Users';
-$string['learningpathcourseusers'] = 'LP Course Users';
-$string['report_percentagecoursecompletions'] = 'Course Completion Percentage';
-$string['percentagecoursecompletions'] = 'Course Completion Percentage';
-$string['report_questionattempthours'] = 'Hourly Question Attempts';
-$string['questionattempthours'] = 'Hourly Question Attempts';
-$string['report_questionsummary'] = 'Question Summary';
-$string['questionsummary'] = 'Question Summary';
-$string['report_timewisequizattempts'] = 'Time Wise Quiz Attempts';
-$string['timewisequizattempts'] = 'Time Wise Quiz Attempts';
-$string['timewisequizattemptscolumns'] = 'Time Wise Quiz Attempts Columns';
-$string['report_monthlycourselearners'] = 'Monthly Course Learners';
-$string['monthlycourselearners'] = 'Monthly Course Learners';
-$string['monthlycourselearnerscolumns'] = 'Monthly Course Learners Columns';
-$string['report_classroomcourseusers'] = 'Classroom Course Users';
-$string['classroomcourseusers'] = 'Classroom Course Users';
-$string['employe'] = 'Employee';
-$string['category'] = 'category';
-$string['filterdepartments'] = 'filterdepartments';
-$string['filterorganization'] = 'filterorganization';
-$string['filterfeedbacks'] = 'filterfeedbacks';
-$string['filtermycertificates'] = 'filtermycertificates';
-$string['mycertificates'] = 'mycertificates';
-$string['filterskills'] = 'filterskills'; 
-$string['skills'] = 'skills';   
-$string['filterprograms'] = 'filterprograms'; 
-$string['filterusers'] = 'filterusers';
-$string['filtercourse'] = 'filtercourse'; 
-$string['mycoursecolumn'] = 'mycoursecolumn'; 
-$string['mycoursess'] = 'mycoursess';
+$string['filtercourse'] = 'Courses';
+$string['filterdepartments'] = 'Departments';
+$string['filterorganization'] = 'Organizations';
+$string['report_courseprofile'] = 'Course profile';
+$string['report_usercourses'] = 'Course Learners Summary';
+$string['report_gradedactivity'] = 'Graded activities summary';
+$string['report_courseviews'] = 'Course views';
+$string['report_noofviews'] = 'Activity views';
+$string['report_userbadges'] = 'Learner\'s badges';
+$string['report_userprofile'] = 'User profile';
+$string['report_courseactivities'] = 'Course activities'; 
+$string['report_assignment'] = 'Assignment summary';
+$string['report_quizzes'] = 'Quiz summary';
+$string['report_scorm'] = 'SCORM summary';
+$string['report_resources'] = 'Resource summary';
+$string['report_statistics'] = 'Statistics';
+$string['report_learnercoursesoverview'] = 'Learner courses overview';
+$string['learnercoursesoverview'] = 'Learner courses overview';
+$string['report_coursecompetency'] = 'Course competency';
+$string['coursecompetency'] = 'Course competency';
+$string['report_coursecompetency_help'] = '<p><strong>Description: </strong>This report provides the course competency information.</p>';
+$string['report_competency'] = 'Competency summary';
+$string['competencycolumns'] = 'Competency columns';
+$string['report_competency_help'] = '<p><strong>Description: </strong>This report provides the competency information.</p>';
+$string['report_bigbluebutton'] = 'BigBlueButton summary';
+$string['bigbluebuttonfields'] = 'BigBlueButton columns'; 
+$string['report_bigbluebutton_help'] = '<p><strong>Description: </strong>This report provides the sessions information.</p>'; 
+$string['sessions'] = 'Sessions';
+$string['filtersession'] = 'Select session';
+$string['filter_session'] = 'Select session'; 
+$string['report_activestudents'] = 'Active students summary';
+$string['activestudents'] = 'Active students'; 
+$string['report_activestudents_help'] = '<p><strong>Description: </strong>This report provides the information of learners joined the selected session.</p>'; 
+$string['activestudentscolumns'] = 'Active students columns';
+$string['department'] = 'Departments';
+$string['filter_organization'] = 'Select organization';
+$string['filter_department'] = 'Select department';
+$string['filter_contentprovider'] = 'Select content provider';
+$string['contentprovider'] = 'Content provider'; 
+$string['report_myscorm'] = 'My Scorm';
+$string['myscormcolumns'] = 'My Scorm Columns';
+$string['report_myscorm_help'] = '<p><strong>Description: </strong>With this report user can have a view of SCORMs in the enrolled courses and the detailed overview of attempted SCORMs, number of attempts made, gradings and accessed information.</p><table class = "help_icon_table" border="1"><tbody><tr><th><p><strong>Columns</strong></p></th><th><p><strong>Description</strong></p></th></tr><tr><td><p>SCORM</p></td><td><p>List of SCORM fields like name, version, SCORM type etc&hellip;</p></td></tr><tr><td><p>Course</p></td><td><p>Course name for each SCORM</p></td></tr><tr><td><p>Attempt</p></td><td><p>Total number of attempts made by current logged-in learner in each SCORM</p></td></tr><tr><td><p>Grade</p></td><td><p>Grade achieved by current learner in each SCORM</p></td></tr><tr><td><p>Activity State</p></td><td><p>Activity state of current learner in each SCORM</p></td></tr><tr><td><p>First Access</p></td><td><p>Time accessed by current logged in learner for the first time in all SCORM\'s</p></td></tr><tr><td><p>Last Access</p></td><td><p>Time accessed by current logged in learner for the last time in all SCORM\'s</p></td></tr><tr><td><p>Total Timespent</p></td><td><p>Total Timespent by current learner in each SCORM</p></td></tr><tr><td><p>No. of views</p></td><td><p>Number of hits by current learner in each SCORM</p></td></tr></tbody></table>';
+$string['report_myforums_help'] = '<p><strong>Description: </strong>This report provides the forum information like discussions count, replies, words count.</p><table class = "help_icon_table" border="1"><tbody><tr><th><p><strong>Columns</strong></p></th><th><p><strong>Description</strong></p></th></tr><tr><td><p>Forum</p></td><td><p>Forum name</p></td></tr><tr><td><p>Course</p></td><td><p>Course Name</p></td></tr><tr><td><p>Discussions count</p></td><td><p>Total count of discussions in each forum.</p></td></tr><tr><td><p>Replies</p></td><td><p>Total number of replies in each forum.</p></td></tr><tr><td><p>Words count</p></td><td><p>Total numbers of words in all replies for each forum</p></td></tr></tbody></table>';
+$string['report_myforums'] = 'My Forums';
+$string['myforumscolumns'] = 'My Forums Columns';
+$string['myforums'] = 'My Forums';
+$string['learningtype'] = 'Learning Type';
+$string['selectlearningtype'] = 'Select Learning Type';
+$string['certification'] = 'Certification';
+$string['selectcertification'] = 'Select Certification';
+$string['certificationlevel'] = 'Certification Level';
+$string['selectcertificationlevel'] = 'Select Certification Level';
+$string['exam'] = 'Exam';
+$string['selectexam'] = 'Select Exam';
+$string['solutionarea'] = 'Solution Area';
+$string['selectsolutionarea'] = 'Select Solution Area';
+$string['technology'] = 'Technology';
+$string['selecttechnology'] = 'Select Technology';
+$string['topic'] = 'Topic';
+$string['selecttopic'] = 'Select Topic';
+$string['vendor'] = 'Vendor';
+$string['selectvendor'] = 'Select Vendor';
+$string['level'] = 'Level';
+$string['selectlevel'] = 'Select Level';
+$string['language'] = 'Language';
+$string['selectlanguage'] = 'Select Language';
+$string['jobrole'] = 'Job Role';
+$string['selectjobrole'] = 'Select Job Role';
+$string['country'] = 'Country';
+$string['country_summary'] = 'Country Summary';
+$string['selectcountry'] = 'Select Country';
+$string['learningpathoverview'] = 'Learning path summary';
+$string['report_learningpathoverview'] = 'Learning path summary';
+$string['usergroup'] = 'User group';
+$string['usergroup_summary'] = 'User group Summary';
+$string['selectusergroup'] = 'Select User group'; 
 
+$string['report_onlinecourses'] = 'Online courses';
+$string['report_onlinecourses_help'] = 'Online courses summary';
+$string['onlinecoursesfields'] = 'Online course fields';
+$string['onlinecourses'] = 'Online courses';
+$string['selectonlinecourse'] = 'Select Online course';
 
+$string['report_labs'] = 'Labs';
+$string['report_labs_help'] = 'Labs summary';
+$string['labsfields'] = 'Labs fields';
+$string['labs'] = 'Labs';
+$string['selectlab'] = 'Select Lab';
 
+$string['report_assessments'] = 'Assessments';
+$string['report_assessments_help'] = 'Assessments summary';
+$string['assessmentsfields'] = 'Assessments fields';
+$string['assessments'] = 'Assessments';
+$string['selectassessment'] = 'Select Assessment';
 
+$string['report_webinars'] = 'Webinars';
+$string['report_webinars_help'] = 'Webinars summary';
+$string['webinarsfields'] = 'Webinars fields';
+$string['webinars'] = 'Webinars';
+$string['selectwebinar'] = 'Select Webinar';
 
+$string['filter_onlinecourses'] = 'Select Online courses';
+$string['filter_assessments'] = 'Select Assessments';
+$string['filter_labs'] = 'Select Labs';
+$string['filter_webinars'] = 'Select Webinars';
 
+$string['learningpaths'] = 'Learning Paths';
+$string['report_learningpaths'] = 'Learning Paths';
+$string['learningpathscolumns'] = 'Learning Paths columns';
+$string['report_learningpaths_help'] = 'This report shows the information about the Learningpaths, It includes how many users are enrolled to particular Learning plan, and how many are completed..';
+
+$string['report_classroom'] = 'Instructor-led courses';
+$string['report_classroom_help'] = 'Instructor-led courses summary';
+$string['classroomcolumns'] = 'Instructor-led courses column';
+$string['classroom'] = 'Instructor-led courses';
+
+$string['report_exam'] = 'Exam';
+$string['report_exam_help'] = 'Exam summary';
+$string['examcolumns'] = 'Exam column';
+$string['exam'] = 'Exam';
+
+$string['report_examenrolments'] = 'Exam Enrolments';
+$string['report_examenrolments_help'] = 'Exam Enrolments summary';
+$string['examenrolmentscolumns'] = 'Exam Enrolments column';
+$string['examenrolments'] = 'Exam Enrolments';
+
+$string['report_certificates'] = 'Certificates';
+$string['report_certificates_help'] = 'Certificates summary';
+$string['certificatescolumns'] = 'certificates column';
+$string['certificates'] = 'Certificates';
+
+$string['report_learners'] = 'Learners';
+$string['report_learners_help'] = 'Learners summary';
+$string['learnerscolumns'] = 'Learners column';
+$string['learners'] = 'Learners';
+
+$string['report_learnerssummary'] = 'Learners summary';
+$string['report_learnerssummary_help'] = 'Learners summary';
+$string['learnerssummarycolumns'] = 'Learners summary column';
+$string['learnerssummary'] = 'Learners summary';
+
+$string['programs'] = 'Programs';
+$string['report_programs'] = 'Programs';
+$string['programcolumns'] = 'Programs';
+$string['report_programs_help'] = 'This report shows the information about the program, It includes how many users are enrolled to particular program, and how many are completed..';
+
+$string['report_graphexamenrolments'] = 'Exam Enrolments Graph';
+$string['report_graphexamenrolments_help'] = 'Total Exam Enrolments per month Graph';
+$string['graphexamenrolmentscolumns'] = 'Exam Enrolments column';
+$string['graphexamenrolments'] = 'Exam Enrolments Graph';
+
+$string['report_graphexamcompletions'] = 'Exam Completions Graph';
+$string['report_graphexamcompletions_help'] = 'Total Exam Completions per month Graph';
+$string['graphexamcompletionscolumns'] = 'Exam Completions column';
+$string['graphexamcompletions'] = 'Exam Completions Graph';
+
+$string['report_graphlearnerenrolments'] = 'Learner Enrolments Graph';
+$string['report_graphlearnerenrolments_help'] = 'Total Learner Enrolments per month Graph';
+$string['graphlearnerenrolmentscolumns'] = 'Learner Enrolments column';
+$string['graphlearnerenrolments'] = 'Learner Enrolments Graph';
+
+$string['report_graphlearnercompletions'] = 'Learner Completions Graph';
+$string['report_graphlearnercompletions_help'] = 'Total Learner Completions per month Graph';
+$string['graphlearnercompletionscolumns'] = 'Learner Completions column';
+$string['graphlearnercompletions'] = 'Learner Completions Graph';
+
+$string['report_graphlearning'] = 'Learning Graph';
+$string['report_graphlearning_help'] = 'Total Learning per month Graph';
+$string['graphlearningcolumns'] = 'Learning column';
+$string['graphlearning'] = 'Learning Graph';
+
+$string['report_learning'] = 'Learning';
+$string['report_learning_help'] = 'Learning summary';
+$string['learningcolumns'] = 'Learning column';
+$string['learning'] = 'Learning';
+
+$string['overdue'] = 'Overdue deadlines';
+$string['upcoming'] = 'Upcoming deadlines';
+$string['enrolled'] = 'Enrollments';
+
+$string['filter_coursevendors'] = 'Select course vendors';
+$string['coursevendors'] = 'Course vendors';
+$string['filtercoursevendors_summary'] = 'Course vendors summary';
+
+$string['report_learnerexamoverview'] = 'Learner Exam overview';
+$string['learnerexamcolumns'] = 'Learner Exam columns';
+$string['report_learnerexamsummary'] = 'Learner Exam summary';
+$string['learnerexamsummarycolumns'] = 'Learner Exam summary columns';
+
+$string['report_examlearneroverview'] = 'Exam Learner overview';
+$string['report_examlearnersummery'] = 'Exam Learner Summary';
+$string['examlearneroverviewcolumns'] = 'Exam Learner overview columns';
+$string['examlearnersummerycolumns'] = 'Exam Learner summary columns';
+$string['report_examlearnersummery_help'] = 'Exam Learner summary';
+$string['report_examlearneroverview_help'] = 'Exam Learner overview';
+
+$string['report_learnercertificationssummary'] = 'Learner Certifications summary';
+$string['learnercertificationssummarycolumns'] = 'Learner Certifications summary Columns';
+$string['report_learnercertificationsoverview'] = 'Learner Certifications overview';
+$string['learnercertificationscolumns'] = 'Learner Certifications Columns';
+$string['report_certificationlearneroverview'] = 'Certifications Learner overview';
+$string['certificationlearnercolumns'] = 'Learner Certifications Learner Columns';
+$string['report_certificationlearnersummary'] = 'Certifications Learner summary';
+$string['certificationlearnersummarycolumns'] = 'Certifications Learner  Columns';
+
+$string['report_certificationsummary'] = 'Certifications summary';
+$string['enrolments'] = 'Enrolments';
+
+$string['report_learnersinfo'] = 'Learners Info';
+$string['learnersinfo'] = 'Learners Info';
+$string['learnersinfocolumns'] = 'Learners Info columns';
+$string['report_certifications'] = 'Certifications';
+$string['certificationcolumns'] = 'Certification columns';
+$string['report_examoverview'] = 'Exam overview';
+$string['examoverview'] = 'Exam overview';
+$string['examoverviewcolumns'] = 'Exam overview columns';
+$string['report_alllearningformats'] = 'Learning Formats';
+$string['alllearningformats'] = 'Learning Formats';
+$string['report_programanalysis'] = 'Programs Analysis';
+$string['programanalysis'] = 'Programs Analysis';
+$string['report_learneranalysis'] = 'Learner Analysis';
+$string['learneranalysis'] = 'Learner Analysis';
+$string['report_coursewithcategories'] = 'Course tags based categories';
+$string['coursewithcategories'] = 'Course tags based categories';
+$string['certificationsummarycolumns'] = 'Certification summary columns';
+$string['report_compliancecertificationuserslist'] = 'Compliance Data';
+$string['report_compliancecertificationuserslist'] = 'Compliance Data';
+$string['report_compliancecourseuserslist'] = 'Compliance Data';
+$string['report_compliance'] = 'Compliance List';
+$string['filter_compliance'] = 'Select Compliance';
+$string['report_compliancesummary'] = 'Compliance Data';
+$string['report_programlevels'] = 'Program Levels';
+$string['report_programlevels_help'] = 'Program Levels';
+$string['programlevels'] = 'Program Levels';
+$string['filterprograms'] = 'Program filter';
+$string['filtercohort'] = 'Select cohort';
+$string['filter_cohort'] = 'Select cohort';
+$string['cohort'] = 'Cohort';
+$string['learningformats'] = 'Learning Formats';
+$string['certificatesinfo']  = 'Certificates Data';
+$string['examsinformation']  = 'Exams Data';
+$string['report_acclaimusers'] = 'Acclaim Users';
+$string['acclaimusercolumns'] = 'Acclaim User Columns';
+$string['selectsubdept'] = 'All';
+$string['subdepartments'] = 'Subdepartments';
+$string['filter_subdepartment'] = 'Sub departments';
+$string['report_learnerstatus'] = 'Learning by learner';
+$string['learnerstatus'] = 'Learning by learner';
+$string['report_learnerattendance'] = 'Learner Attendance';
+$string['learnerattendance'] = 'Learner Attendance';
+$string['report_complianceprograms'] = 'Compliance Data';
+$string['complianceprogramscolumns'] = 'Compliance Programs Columns';
+$string['report_compliancelearningpath'] = 'Compliance Data';
+$string['compliancelearningpathcolumns'] = 'Compliance Learning Path Columns';
