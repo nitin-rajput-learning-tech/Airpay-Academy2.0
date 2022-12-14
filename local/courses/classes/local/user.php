@@ -245,9 +245,9 @@ class user{
     public function user_modulewise_content($id,$start =0,$limit=5){
       global $OUTPUT,$PAGE,$DB;
       $returnobj = new \stdClass();
-      $usercourses = $this->enrol_get_users_courses($id,false,true,$start,$limit);
+      $usercourses = enrol_get_users_courses($id,false,null,null);
       $data = array();
-      foreach($usercourses['data'] as $course){
+      foreach($usercourses as $course){
           $coursessarray = array();
           $coursessarray['name'] = $course->fullname;
           $coursessarray['code'] = $course->shortname;

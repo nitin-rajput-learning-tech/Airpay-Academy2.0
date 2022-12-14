@@ -1,0 +1,133 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{#response}}
+    {{#viewtypeCard}}
+        {{#teammembersexist}}
+        <div class="">
+            <div class="portlet-title">
+                 <div class="actions">
+                 </div>
+            </div>
+            <div class="portlet-body">
+                 <div class="slimScrollDiv" >
+                         
+                <table id ="displaymyteam" class="generaltable pull-left mt-15">
+                    <thead>
+                        <tr>
+                            {{#headers}}
+                                {{#members}}
+                                    <th class="member_col">{{members}}</th>
+                                {{/members}}
+
+                                {{#certification}}
+                                    <th class="certification_col text-center">{{certification}}</th>
+                                {{/certification}}
+
+                                {{#classroom}}
+                                    <th class="classroom_col text-center">{{classroom}}</th>
+                                {{/classroom}}
+
+                                {{#courses}}
+                                    <th class="courses_col text-center">{{courses}}</th>
+                                {{/courses}}
+
+                                {{#learningplan}}
+                                    <th class="learningplan_col text-center">{{learningplan}}</th>
+                                {{/learningplan}}
+                                
+                                {{#onlinetests}}
+                                    <th class="onlinetests_col text-center">{{onlinetests}}</th>
+                                {{/onlinetests}}
+
+                                {{#program}}
+                                    <th class="program_col text-center">{{program}}</th>
+                                {{/program}}
+
+                                {{#supervisorevaluation}}
+                                    <th class="program_col text-center">{{supervisorevaluation}}</th>
+                                {{/supervisorevaluation}}
+
+                                {{#evaluation}}
+                                    <th class="program_col text-center">{{evaluation}}</th>
+                                {{/evaluation}}
+
+                                {{#badges}}
+                                    <th class="badges_col text-center">{{badges}}</th>
+                                {{/badges}}
+                            {{/headers}}
+                           
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#records}}
+                        <tr>
+                            {{#userfullname}}
+                                <td class="member_col">
+                                    <a href="{{config.wwwroot}}/local/users/profile.php?id={{userid}}" class="message mr-1 mt-1" title="{{userfullname}}">{{userfullname}}</a>
+                                </td>
+                            {{/userfullname}}
+
+                            {{#certification}}
+                                <td class="certification_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/certification}}
+
+                            {{#classroom}}
+                                <td class="classroom_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/classroom}}
+
+                            {{#courses}}
+                                <td class="courses_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/courses}}
+
+                            {{#learningplan}}
+                                <td class="learningplan_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/learningplan}}
+
+                            {{#onlinetests}}
+                                <td class="onlinetests_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/onlinetests}}
+
+                            {{#program}}
+                                <td class="program_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/program}}
+                            {{#supervisorevaluation}}
+                                <td class="courses_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/supervisorevaluation}}
+                            {{# evaluation}}
+                                <td class="courses_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/ evaluation}}
+
+                            {{#badgescount}}
+
+                                 <!--<td class="badges_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{issuedbadges}} / {{totalbadges}}</span></td>-->
+
+                                <td class="badges_col text-center"><span class="label_colored_info label_{{elementcolor}}" data-action="popupmodalbadge{{userid}}">{{issuedbadges}} / {{totalbadges}}</span></td>
+                            {{/badgescount}}
+                        </tr>
+                        {{/records}}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+        {{/teammembersexist}}
+
+        {{^teammembersexist}}
+            <div class="alert alert-info">{{# str}}team_nodata, local_myteam{{/ str}}</div>
+        {{/teammembersexist}}
+    {{/viewtypeCard}}
+{{/response}}

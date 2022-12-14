@@ -1,0 +1,97 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class='team_approvals_content pull-left w-full'>
+    <div class="team_approval_head pull-left w-full mb-10 mt-10">
+        <div class="portlet-title courseallocation_block_heading">
+            <div class="caption pull-left">
+                <span class="caption-subject font-blue-madison uppercase" >{{# str}}team_approvals,local_myteam {{/ str}}</span>
+            </div>
+            <div class="actions pull-right dropdown">
+                <div class="btn-group allocation_course_type_btn">
+                    <a href="javascript:void(0);" class="team_learningtype_dropdown dropdown-toggle text-center pull-right" data-toggle="dropdown"data-close-others="true" aria-expanded="false">
+                        {{# str}}pluginname,local_courses {{/ str}}
+                    </a>
+                    <ul class="dropdown-menu pull-right ongoingdropdown">
+                        {{#existplugins}}
+                            {{#coursesexist}}
+                                <li>
+                                    <a href="javascript:void(0);" onclick="(function(e){require('local_myteam/team_approvals').select_learningtype(
+                                            {learningtype: 'elearning', pluginname: '{{#str}}pluginname,local_courses{{/str}}'}
+                                        )})(event)" class="changed">
+                                        {{#str}}pluginname,local_courses{{/str}}
+                                    </a>
+                                </li>
+                            {{/coursesexist}}
+
+                            {{#classroomexist}}
+                                <li>
+                                    <a href="javascript:void(0);" onclick="(function(e){require('local_myteam/team_approvals').select_learningtype(
+                                            {learningtype: 'classroom', pluginname: '{{#str}}pluginname,local_classroom{{/str}}'}
+                                        )})(event)" class="changed">
+                                        {{#str}}pluginname,local_classroom{{/str}}
+                                    </a>
+                                </li>
+                            {{/classroomexist}}
+
+                            {{#programexist}}
+                                <li>
+                                    <a href="javascript:void(0);" onclick="(function(e){require('local_myteam/team_approvals').select_learningtype(
+                                            {learningtype: 'program', pluginname: '{{#str}}pluginname,local_program{{/str}}'}
+                                        )})(event)" class="changed">
+                                        {{#str}}pluginname,local_program{{/str}}
+                                    </a>
+                                </li>
+                            {{/programexist}}
+
+                        {{/existplugins}}
+                    </ul>
+                </div>
+                <button class="btn request_approval_btn btn-sm pull-right ml-10" disabled onclick="(function(e){ require('local_myteam/team_approvals').approve_request({ learningtype: 'courses'}) })(event)"
+                >{{# str}}approve,local_myteam {{/ str}}</button>
+            </div>
+        </div>
+    </div>
+    <div class="team_approval_body pull-left col-md-12">
+        <div class="input-icon" >
+            <i class="fa fa-search icon_search_inside"></i>
+            <input type="text" style="padding-left: 33px;" name="search_requests" placeholder="{{#str}}team_requests_search, local_myteam{{/ str}}" class="form-control select-round searchcourses" onkeyup="(function(e){ require('local_myteam/team_approvals').requestsearch({ learningtype: 'elearning', searchvalue: event.target.value }) })(event)">
+        </div>
+        <div class="mt-10 pull-left w-full request_list_container">
+            <ul class="task-list w-full" id="team_requests_list">
+                {{#teamusers}}
+                    <li class='li-course'>
+                        <div class='task-checkbox'>
+                            <div class='checker'>
+                                <span>
+                                    <input type='checkbox' name='team_requests[]' {{checked}} {{disattr}} value="{{requestid}}" 
+                                    onchange='(function(e){require("local_myteam/team_approvals").select_request({requestid: {{requestid}}, learningtype: "{{componentname}}", element: e.target}) })(event)'
+                                    class='liChild allocatecourse' />
+                                </span>
+                            </div>
+                        </div>
+                        <div class='task-title'><i class="fa fa-{{icons}}"></i><span class='task-title-sp m-l-5' > {{actualcomponentname}} </span></div>
+                    </li>
+                {{/teamusers}}
+                {{^ teamusers}}
+                    <div class="alert alert-info">{{# str}}nodata, local_myteam{{/ str}}</div>
+                {{/teamusers}}
+            </ul>
+        </div>
+    </div>
+</div>
+<input id="approval_selected_user" name="approval_selected_user" type="hidden" value="" />
+<input type="hidden" name="approval_learning_type" id="approval_learning_type" value="elearning"/>
