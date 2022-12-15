@@ -1,0 +1,20 @@
+<?php
+$string['pluginname'] = 'User State';
+$string['managestates'] = 'Manage State';
+$string['createstates'] = 'Create State';
+$string['updatestates'] = 'Update State';
+$string['no_records'] = 'No records found';
+$string['actions'] = 'Actions';
+$string['statesname'] = 'State Name';
+$string['statescode'] = 'State Code';
+$string['statesnamerequired'] = 'State Name is required';
+$string['selectterritories'] = 'Territories is required';
+$string['statescoderequired'] = 'State Code is required';
+$string['statesnameexist'] = 'State Name exists';
+$string['statescodeexist'] = 'State Code exists';
+$string['territoryname'] = 'Territory Name';
+$string['deletefieldconfirmstates'] = 'Are you sure you want to delete this state?';
+$string['reason'] = 'Reason';
+$string['deletenotconfirm'] = 'You cannot delete this state as it has linked districts. Please unmap to delete.';
+$string['yesdelete'] = 'Yes! Delete';
+$string['no'] = 'No';

@@ -1061,3 +1061,64 @@ function local_users_before_http_headers() {
         $PAGE->add_body_class('usersclass');
     }
 }
+
+//masterdata view capabilities checking here by narendra
+function masterdata_capabilities($active){
+    $systemcontext = context_system::instance();
+    $viewstates = false;
+    $viewdistrict = false;
+    $viewsubdistrict = false;
+    $viewvillage = false;
+
+    if(is_siteadmin() || has_capability('usersprofilefields/states:view',$systemcontext)){
+        $viewstates = true;
+    }
+    if(is_siteadmin() || has_capability('usersprofilefields/viewdistrict:view',$systemcontext)){
+        $viewdistrict = true;
+    }
+    if(is_siteadmin() || has_capability('usersprofilefields/viewsubdistrict:view',$systemcontext)){
+        $viewsubdistrict = true;
+    }
+    if(is_siteadmin() || has_capability('usersprofilefields/viewvillage:view',$systemcontext)){
+        $viewvillage = true;
+    }
+
+    $navbar = array(
+    $active.'active' => true,
+        'viewstates' => $viewstates,
+        'viewdistrict' => $viewdistrict,
+        'viewsubdistrict' => $viewsubdistrict,
+        'viewvillage' => $viewvillage,
+    );
+    return $navbar;
+}
+
+function local_users_output_fragment_user_field_create($args){
+    global $CFG,$DB, $PAGE;
+    $args = (object) $args;
+    $o = '';
+    $context = $args->context;
+    $formType = $args->form_type;
+    $formClass = "local_users\\forms\\create_$formType";
+    $formdata = [];
+    if (!empty($args->jsonformdata)) {
+        $serialiseddata = json_decode($args->jsonformdata);
+        parse_str($serialiseddata, $formdata);
+    }
+    if($args->id>0){
+        $tableData = $DB->get_record($args->tablename,array('id' => $args->id));
+        $mform = new $formClass(null,(array)$tableData, 'post', '', null, true, $formdata);
+        $mform->set_data($tableData);
+    }else{
+        $mform = new $formClass(null,array(), 'post', '', null, true, $formdata);
+    }
+    if (!empty($args->jsonformdata) && strlen($args->jsonformdata) >2) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
+}

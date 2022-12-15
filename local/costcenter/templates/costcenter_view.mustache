@@ -63,7 +63,22 @@
                         <span class="dept_count">{{totalsubdepts}}</span>
                     </div>
                 {{/ showsubdept_content}}
-                {{^ showsubdept_content}}
+
+                {{# showsubsubdept_content}}
+                    <div class="left_info text-xl-center">
+                        <span class="lable_align dept_string">{{# str}} subsubdepartment, local_costcenter {{/str}}</span>
+                        <span class="dept_count">{{totalsubdepts}}</span>
+                    </div>
+                {{/ showsubsubdept_content}}
+
+                {{# showsubsubsubdept_content}}
+                    <div class="left_info text-xl-center">
+                        <span class="lable_align dept_string">{{# str}} subsubsubdepartment, local_costcenter {{/str}}</span>
+                        <span class="dept_count">{{totalsubdepts}}</span>
+                    </div>
+                {{/ showsubsubsubdept_content}}
+
+                {{^ showrols_content}}
                     <div class="left_info text-xl-center">
                         <span class="lable_align dept_string">{{# str}} pluginname, local_costcenter {{/str}}</span>
                         <span class="dept_count">
@@ -76,8 +91,7 @@
                             
                         </span>
                     </div>
-
-                {{/ showsubdept_content}}
+                {{/ showrols_content}}
                 <!-- <div class="left_info text-center">
                     <span class="lable_align dept_string">{{# str}} sub_departments, local_costcenter {{/str}}</span>
                     <span class="dept_count">{{subdeptcount}}</span>

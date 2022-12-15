@@ -1,0 +1,22 @@
+<?php
+$string['pluginname'] = 'User District';
+$string['managedistrict'] = 'Manage District';
+$string['createdistrict'] = 'Create District';
+$string['updatedistrict'] = 'Update District';
+$string['no_records'] = 'No records found';
+$string['actions'] = 'Actions';
+$string['districtname'] = 'District Name';
+$string['districtcode'] = 'District Code';
+$string['districtnamerequired'] = 'District Name is required';
+$string['selectstates'] = 'State Name is required';
+$string['districtcoderequired'] = 'District Code is required';
+$string['districtnameexist'] = 'District Name exists';
+$string['districtcodeexist'] = 'District Code exists';
+$string['statesname'] = 'State Name';
+$string['deletefieldconfirmdistrict'] = 'Are you sure you want to delete this district?';
+$string['reason'] = 'Reason';
+$string['deletenotconfirm'] = 'You cannot delete this district as it has linked sub districts. Please unmap to delete.';
+$string['statesname'] = 'State Name';
+$string['states'] = 'States';
+$string['yesdelete'] = 'Yes! Delete';
+$string['no'] = 'No';

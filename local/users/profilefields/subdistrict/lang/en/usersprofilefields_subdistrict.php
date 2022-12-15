@@ -1,0 +1,21 @@
+<?php
+$string['pluginname'] = 'User Sub District';
+$string['managesubdistrict'] = 'Manage Sub District';
+$string['createsubdistrict'] = 'Create Sub District';
+$string['updatesubdistrict'] = 'Update Sub District';
+$string['no_records'] = 'No records found';
+$string['actions'] = 'Actions';
+$string['subdistrictname'] = 'Sub District Name';
+$string['subdistrictcode'] = 'Sub District Code';
+$string['subdistrictnamerequired'] = 'Sub District Name is required';
+$string['selectdistrict'] = 'District Name is required';
+$string['subdistrictcoderequired'] = 'Sub District Code is required';
+$string['subdistrictnameexist'] = 'Sub District Name exists';
+$string['subdistrictcodeexist'] = 'Sub District Code exists';
+$string['districtname'] = 'District Name';
+$string['deletefieldconfirmsubdistrict'] = 'Are you sure you want to delete this sub district?';
+$string['reason'] = 'Reason';
+$string['deletenotconfirm'] = 'You cannot delete this sub district as it has linked village. Please unmap to delete.';
+$string['district'] = 'Districts';
+$string['yesdelete'] = 'Yes! Delete';
+$string['no'] = 'No';
