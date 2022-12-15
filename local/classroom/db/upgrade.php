@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of eAbyas
  *
@@ -23,7 +24,8 @@
  */
 defined('MOODLE_INTERNAL') || die();
 
-function xmldb_local_classroom_upgrade($oldversion) {
+function xmldb_local_classroom_upgrade($oldversion)
+{
     global $DB, $CFG;
     $dbman = $DB->get_manager();
     if ($oldversion < 2017050404) {
@@ -195,19 +197,19 @@ function xmldb_local_classroom_upgrade($oldversion) {
     }
     if ($oldversion < 2017050439) {
         $table = new xmldb_table('local_classroom_sessions');
-        $field = new xmldb_field('moduletype', XMLDB_TYPE_CHAR, '250', null, null, null,null, null);
+        $field = new xmldb_field('moduletype', XMLDB_TYPE_CHAR, '250', null, null, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        $field = new xmldb_field('moduleid', XMLDB_TYPE_INTEGER, '10', null, null, null,'0', null);
+        $field = new xmldb_field('moduleid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2017050439, 'local', 'classroom');
     }
     if ($oldversion < 2017050441) {
-         $table = new xmldb_table('local_classroom_sessions');
-        $field = new xmldb_field('name', XMLDB_TYPE_CHAR, '250', null, null, null,null, null);
+        $table = new xmldb_table('local_classroom_sessions');
+        $field = new xmldb_field('name', XMLDB_TYPE_CHAR, '250', null, null, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -215,61 +217,61 @@ function xmldb_local_classroom_upgrade($oldversion) {
     }
     if ($oldversion < 2017050444) {
         $table = new xmldb_table('local_classroom');
-        $field = new xmldb_field('completiondate',XMLDB_TYPE_INTEGER, '10', null, null, null,'0', null);
+        $field = new xmldb_field('completiondate', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         $table = new xmldb_table('local_classroom_users');
-        $field = new xmldb_field('completiondate',XMLDB_TYPE_INTEGER, '10', null, null, null,'0', null);
+        $field = new xmldb_field('completiondate', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
         upgrade_plugin_savepoint(true, 2017050444, 'local', 'classroom');
     }
     if ($oldversion < 2017050448) {
-            $table = new xmldb_table('local_classroom_completion');
-            if (!$dbman->table_exists($table)) {
-               $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-               
-               $table->add_field('classroomid', XMLDB_TYPE_INTEGER, '10', null, null, null);
-               
-               $table->add_field('sessiontracking',XMLDB_TYPE_CHAR, '225', null,null,null,"OR");
-               
-               $table->add_field('sessionids',XMLDB_TYPE_TEXT, 'big', null,null,null,NULL);
-               
-               $table->add_field('coursetracking',XMLDB_TYPE_CHAR, '225', null,null,null,"OR");
-               
-               $table->add_field('courseids',XMLDB_TYPE_TEXT, 'big', null,null,null,NULL);
-          
-               $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, null, null);
-               $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null,null, null,0);
-               $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10',null,null, null,0);
-               $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10',null,null, null,0);
-               
-             
-                
-               $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-               
-               $dbman->create_table($table);
-            }
-         upgrade_plugin_savepoint(true, 2017050448, 'local', 'classroom');
+        $table = new xmldb_table('local_classroom_completion');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+
+            $table->add_field('classroomid', XMLDB_TYPE_INTEGER, '10', null, null, null);
+
+            $table->add_field('sessiontracking', XMLDB_TYPE_CHAR, '225', null, null, null, "OR");
+
+            $table->add_field('sessionids', XMLDB_TYPE_TEXT, 'big', null, null, null, NULL);
+
+            $table->add_field('coursetracking', XMLDB_TYPE_CHAR, '225', null, null, null, "OR");
+
+            $table->add_field('courseids', XMLDB_TYPE_TEXT, 'big', null, null, null, NULL);
+
+            $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, null, null);
+            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+
+
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2017050448, 'local', 'classroom');
     }
     // OL-1042 Add Target Audience to Classrooms//
     if ($oldversion < 2017050453) {
         $table = new xmldb_table('local_classroom');
-        $field = new xmldb_field('open_group',XMLDB_TYPE_TEXT, 'big', null, null, null,null);
+        $field = new xmldb_field('open_group', XMLDB_TYPE_TEXT, 'big', null, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        $field = new xmldb_field('open_hrmsrole',XMLDB_TYPE_TEXT, 'big', null, null, null,null);
+        $field = new xmldb_field('open_hrmsrole', XMLDB_TYPE_TEXT, 'big', null, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        $field = new xmldb_field('open_designation',XMLDB_TYPE_TEXT, 'big', null, null, null,null);
+        $field = new xmldb_field('open_designation', XMLDB_TYPE_TEXT, 'big', null, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        $field = new xmldb_field('open_location',XMLDB_TYPE_TEXT, 'big', null, null, null,null);
+        $field = new xmldb_field('open_location', XMLDB_TYPE_TEXT, 'big', null, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -294,25 +296,25 @@ function xmldb_local_classroom_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2017050455, 'local', 'classroom');
     }
     if ($oldversion < 2017050464) {
-            $table = new xmldb_table('local_classroom_waitlist');
-            if (!$dbman->table_exists($table)) {
-               $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-               
-               $table->add_field('classroomid', XMLDB_TYPE_INTEGER, '10', null, null, null);
-               $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null);
-               $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, null, null,0);
-               $table->add_field('enroltype', XMLDB_TYPE_INTEGER, '10', null, null, null,0);
-               $table->add_field('enrolstatus', XMLDB_TYPE_INTEGER, '10', null, null, null,0);
-               $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, null, null);
-               $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null,null, null,0);
-               $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10',null,null, null,0);
-               $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10',null,null, null,0);
-               
-               $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-               
-               $dbman->create_table($table);
-            }
-         upgrade_plugin_savepoint(true, 2017050464, 'local', 'classroom');
+        $table = new xmldb_table('local_classroom_waitlist');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+
+            $table->add_field('classroomid', XMLDB_TYPE_INTEGER, '10', null, null, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null);
+            $table->add_field('sortorder', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('enroltype', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('enrolstatus', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, null, null);
+            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2017050464, 'local', 'classroom');
     }
     if ($oldversion < 2017050466) {
         $table = new xmldb_table('local_classroom');
@@ -324,26 +326,28 @@ function xmldb_local_classroom_upgrade($oldversion) {
     }
     if ($oldversion < 2017050467) {
         $time = time();
-        $initcontent = array('name' => 'Classroom','shortname' => 'classroom','parent_module' => '0','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'classroom');
+        $initcontent = array('name' => 'Classroom', 'shortname' => 'classroom', 'parent_module' => '0', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL, 'pluginname' => 'classroom');
         $parentid = $DB->get_field('local_notification_type', 'id', array('shortname' => 'classroom'));
-        if(!$parentid){
+        if (!$parentid) {
             $parentid = $DB->insert_record('local_notification_type', $initcontent);
         }
 
-        $notification_type_data = array(array('name' => 'Classroom Waiting List','shortname' => 'classroom_enrolwaiting','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'classroom'));
-            foreach($notification_type_data as $notification_type){
-                unset($notification_type['timecreated']);
-                if(!$DB->record_exists('local_notification_type',  $notification_type)){
-                    $notification_type['timecreated'] = $time;
-                    $DB->insert_record('local_notification_type', $notification_type);
-                }
+        $notification_type_data = array(array('name' => 'Classroom Waiting List', 'shortname' => 'classroom_enrolwaiting', 'parent_module' => $parentid, 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL, 'pluginname' => 'classroom'));
+        foreach ($notification_type_data as $notification_type) {
+            unset($notification_type['timecreated']);
+            if (!$DB->record_exists('local_notification_type',  $notification_type)) {
+                $notification_type['timecreated'] = $time;
+                $DB->insert_record('local_notification_type', $notification_type);
             }
-        $strings = array(array('name' => '[classroom_waitinglist_order]','module' => 'classroom','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[classroom_waitinguserfulname]','module' => 'classroom','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[classroom_waitinguseremail]','module' => 'classroom','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL));
-        foreach($strings as $string){
+        }
+        $strings = array(
+            array('name' => '[classroom_waitinglist_order]', 'module' => 'classroom', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+            array('name' => '[classroom_waitinguserfulname]', 'module' => 'classroom', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+            array('name' => '[classroom_waitinguseremail]', 'module' => 'classroom', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL)
+        );
+        foreach ($strings as $string) {
             unset($string['timecreated']);
-            if(!$DB->record_exists('local_notification_strings', $string)){
+            if (!$DB->record_exists('local_notification_strings', $string)) {
                 $string_obj = (object)$string;
                 $string_obj->timecreated = $time;
                 $DB->insert_record('local_notification_strings', $string_obj);
@@ -351,13 +355,13 @@ function xmldb_local_classroom_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2017050467, 'local', 'classroom');
     }
-    if($oldversion < 2019093004){
+    if ($oldversion < 2019093004) {
         $table = new xmldb_table('local_classroom');
         $field = new xmldb_field('subdepartment', XMLDB_TYPE_CHAR, '50', XMLDB_NOTNULL, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        upgrade_plugin_savepoint(true, 2019093004, 'local', 'classroom');   
+        upgrade_plugin_savepoint(true, 2019093004, 'local', 'classroom');
     }
     if ($oldversion < 2019093004.12) {
         $table = new xmldb_table('local_classroom');
@@ -367,10 +371,10 @@ function xmldb_local_classroom_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2019093004.12, 'local', 'classroom');
     }
- 
+
 
     if ($oldversion < 2022101800) {
-        
+
         $table = new xmldb_table('local_notification_strings');
         $table1 = new xmldb_table('local_emaillogs');
         $table2 = new xmldb_table('local_classroom_waitlist');
@@ -383,134 +387,133 @@ function xmldb_local_classroom_upgrade($oldversion) {
 
         $index = new xmldb_index('module', XMLDB_INDEX_NOTUNIQUE, array('module'));
 
-        if (!$dbman->index_exists($table,$index)) {
-            $dbman->add_index($table,$index);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
         }
 
         $index1 = new xmldb_index('notification_infoid', XMLDB_INDEX_NOTUNIQUE, array('notification_infoid'));
 
-        if (!$dbman->index_exists($table1,$index1)) {
-            $dbman->add_index($table1,$index1);
+        if (!$dbman->index_exists($table1, $index1)) {
+            $dbman->add_index($table1, $index1);
         }
 
         $index2 = new xmldb_index('from_userid', XMLDB_INDEX_NOTUNIQUE, array('from_userid'));
 
-        if (!$dbman->index_exists($table1,$index2)) {
-            $dbman->add_index($table1,$index2);
-          }
+        if (!$dbman->index_exists($table1, $index2)) {
+            $dbman->add_index($table1, $index2);
+        }
 
         $index3 = new xmldb_index('to_userid', XMLDB_INDEX_NOTUNIQUE, array('to_userid'));
 
-        if (!$dbman->index_exists($table1,$index3)) {
-            $dbman->add_index($table1,$index3);
+        if (!$dbman->index_exists($table1, $index3)) {
+            $dbman->add_index($table1, $index3);
         }
 
         $index4 = new xmldb_index('batchid', XMLDB_INDEX_NOTUNIQUE, array('batchid'));
 
-        if (!$dbman->index_exists($table1,$index4)) {
-            $dbman->add_index($table1,$index4);
+        if (!$dbman->index_exists($table1, $index4)) {
+            $dbman->add_index($table1, $index4);
         }
 
         $index5 = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, array('courseid'));
 
-        if (!$dbman->index_exists($table1,$index5)) {
-            $dbman->add_index($table1,$index5);
+        if (!$dbman->index_exists($table1, $index5)) {
+            $dbman->add_index($table1, $index5);
         }
 
         $index6 = new xmldb_index('moduleid', XMLDB_INDEX_NOTUNIQUE, array('moduleid'));
 
-        if (!$dbman->index_exists($table1,$index6)) {
-            $dbman->add_index($table1,$index6);
+        if (!$dbman->index_exists($table1, $index6)) {
+            $dbman->add_index($table1, $index6);
         }
 
-       $index7 = new xmldb_index('classroomid', XMLDB_INDEX_NOTUNIQUE, array('classroomid'));
+        $index7 = new xmldb_index('classroomid', XMLDB_INDEX_NOTUNIQUE, array('classroomid'));
 
-        if (!$dbman->index_exists($table2,$index7)) {
-            $dbman->add_index($table2,$index7);
+        if (!$dbman->index_exists($table2, $index7)) {
+            $dbman->add_index($table2, $index7);
         }
 
-       $index8 = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
+        $index8 = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
 
-        if (!$dbman->index_exists($table2,$index8)) {
-            $dbman->add_index($table2,$index8);
+        if (!$dbman->index_exists($table2, $index8)) {
+            $dbman->add_index($table2, $index8);
         }
-        
 
-       $index9 = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, array('courseid'));
 
-        if (!$dbman->index_exists($table3,$index9)) {
-            $dbman->add_index($table3,$index9);
+        $index9 = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, array('courseid'));
+
+        if (!$dbman->index_exists($table3, $index9)) {
+            $dbman->add_index($table3, $index9);
         }
 
         $index10 = new xmldb_index('supervisorid', XMLDB_INDEX_NOTUNIQUE, array('supervisorid'));
 
-        if (!$dbman->index_exists($table3,$index10)) {
-            $dbman->add_index($table3,$index10);
+        if (!$dbman->index_exists($table3, $index10)) {
+            $dbman->add_index($table3, $index10);
         }
 
-       $index11 = new xmldb_index('trainerid', XMLDB_INDEX_NOTUNIQUE, array('trainerid'));
+        $index11 = new xmldb_index('trainerid', XMLDB_INDEX_NOTUNIQUE, array('trainerid'));
 
-        if (!$dbman->index_exists($table4,$index11)) {
-            $dbman->add_index($table4,$index11);
+        if (!$dbman->index_exists($table4, $index11)) {
+            $dbman->add_index($table4, $index11);
         }
 
-       $index12 = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, array('courseid'));
+        $index12 = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, array('courseid'));
 
-        if (!$dbman->index_exists($table5,$index12)) {
-            $dbman->add_index($table5,$index12);
+        if (!$dbman->index_exists($table5, $index12)) {
+            $dbman->add_index($table5, $index12);
         }
 
         $index13 = new xmldb_index('testid', XMLDB_INDEX_NOTUNIQUE, array('testid'));
 
-        if (!$dbman->index_exists($table5,$index13)) {
-            $dbman->add_index($table5,$index13);
+        if (!$dbman->index_exists($table5, $index13)) {
+            $dbman->add_index($table5, $index13);
         }
 
         $index14 = new xmldb_index('instituteid', XMLDB_INDEX_NOTUNIQUE, array('instituteid'));
 
-        if (!$dbman->index_exists($table6,$index14)) {
-            $dbman->add_index($table6,$index14);
+        if (!$dbman->index_exists($table6, $index14)) {
+            $dbman->add_index($table6, $index14);
         }
 
         $index15 = new xmldb_index('roomid', XMLDB_INDEX_NOTUNIQUE, array('roomid'));
 
-        if (!$dbman->index_exists($table6,$index15)) {
-            $dbman->add_index($table6,$index15);
+        if (!$dbman->index_exists($table6, $index15)) {
+            $dbman->add_index($table6, $index15);
         }
-         
+
         $index16 = new xmldb_index('roomid', XMLDB_INDEX_NOTUNIQUE, array('roomid'));
 
-        if (!$dbman->index_exists($table6,$index16)) {
-            $dbman->add_index($table6,$index16);
+        if (!$dbman->index_exists($table6, $index16)) {
+            $dbman->add_index($table6, $index16);
         }
 
         $index17 = new xmldb_index('pretestid', XMLDB_INDEX_NOTUNIQUE, array('pretestid'));
 
-        if (!$dbman->index_exists($table7,$index17)) {
-            $dbman->add_index($table7,$index17);
+        if (!$dbman->index_exists($table7, $index17)) {
+            $dbman->add_index($table7, $index17);
         }
 
         $index18 = new xmldb_index('posttestid', XMLDB_INDEX_NOTUNIQUE, array('posttestid'));
 
-        if (!$dbman->index_exists($table7,$index18)) {
-            $dbman->add_index($table7,$index18);
+        if (!$dbman->index_exists($table7, $index18)) {
+            $dbman->add_index($table7, $index18);
         }
 
         $index19 = new xmldb_index('subdepartment', XMLDB_INDEX_NOTUNIQUE, array('subdepartment'));
 
-        if (!$dbman->index_exists($table8,$index19)) {
-            $dbman->add_index($table8,$index19);
+        if (!$dbman->index_exists($table8, $index19)) {
+            $dbman->add_index($table8, $index19);
         }
 
         $index20 = new xmldb_index('certificateid', XMLDB_INDEX_NOTUNIQUE, array('certificateid'));
 
-        if (!$dbman->index_exists($table8,$index20)) {
-            $dbman->add_index($table8,$index20);
+        if (!$dbman->index_exists($table8, $index20)) {
+            $dbman->add_index($table8, $index20);
         }
 
 
-     upgrade_plugin_savepoint(true, 2022101800, 'local', 'classroom');
-   }
-
+        upgrade_plugin_savepoint(true, 2022101800, 'local', 'classroom');
+    }
     return true;
 }

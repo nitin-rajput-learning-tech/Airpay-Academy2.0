@@ -514,6 +514,15 @@ class classroom_form extends moodleform {
                 $errors['costcenter'] = get_string('pleaseselectorganization', 'local_classroom');
             }
         }
+        if(isset($data['open_points']) && $data['open_points']){
+            $value = $data['open_points'];
+            $intvalue = (int)$value;
+  
+            if(!("$intvalue" === "$value") || $intvalue < 0){
+              $errors['open_points'] = get_string('numeric', 'local_classroom'); 
+            }
+            
+          }
 
         return $errors;
     }

@@ -1595,6 +1595,19 @@ class core_renderer extends \core_renderer {
                     }
                 }
             }
+            if(file_exists($CFG->dirroot.'/admin/tool/certificate/lib.php')){
+                require_once($CFG->dirroot.'/admin/tool/certificate/lib.php');
+                $functionname = 'tool_certificate_leftmenunode';
+                if(function_exists($functionname)){
+                // $block_content .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_dashboard', 'class'=>'pull-left user_nav_div dashboard row-fluid '));
+                    $data = $functionname();
+                    foreach($data as  $key => $val){
+                        $pluginnavs[$key][] = $val;
+                    }
+                // $block_content .= html_writer::end_tag('li');
+                }
+            }
+
             ksort($pluginnavs);
             foreach($pluginnavs as $pluginnav){
                 foreach($pluginnav  as $key => $value){
