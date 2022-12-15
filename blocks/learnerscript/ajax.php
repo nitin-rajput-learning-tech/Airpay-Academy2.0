@@ -21,7 +21,7 @@
  * @package BizLMS
  * @subpackage block_learnerscript
  */
-// define('AJAX_SCRIPT', true);
+define('AJAX_SCRIPT', true);
 require_once('../../config.php');
 require_once($CFG->dirroot . '/blocks/learnerscript/lib.php');
 use block_learnerscript\local\ls;
@@ -214,6 +214,17 @@ if (empty($requests['orgid'])) {
 	$orgid = 0;
 } else {
 	$orgid = $requests['orgid'];
+} 
+
+if (empty($requests['departmentid'])) {
+	$departmentid = 0;
+} else {
+	$departmentid = $requests['departmentid'];
+}
+if (empty($requests['subdepartmentid'])) {
+	$subdepartmentid = 0;
+} else {
+	$subdepartmentid = $requests['subdepartmentid'];
 }
 
 $action = $requests['action'];
@@ -681,7 +692,7 @@ case 'courseactivities':
 		$return = [];
 	}
 	break;
-case 'usercourses':
+/*case 'usercourses':
 	if ($reportid) {
         $report = $DB->get_record('block_learnerscript', array('id' => $reportid));
     } 
@@ -711,11 +722,32 @@ case 'usercourses':
 		$pluginclass->reportclass = $reportclass;
 		$return = (new \block_learnerscript\local\querylib)->filter_get_courses($pluginclass);
 	}
-	break;
+	break;*/
+case 'usercourses':		
+	if ($userid > 0) {        
+        $sql = "SELECT c.id, c.fullname
+						FROM {user} u
+						JOIN {role_assignments} ra ON ra.userid = u.id
+						JOIN {context} AS ctx ON ctx.id = ra.contextid
+						JOIN {course} c ON c.id = ctx.instanceid
+						JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
+						JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.userid = ra.userid AND ue.status = 0
+						JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+						 WHERE u.id = $userid  AND c.visible = 1 ";
+        $courses = $DB->get_records_sql_menu($sql);
+        if (!empty($courses)) {
+            $return = array('0' => 'Select course') + $courses;
+        } else {
+            $return = array(' ' => 'Select course');
+        }
+    } else {
+        $return = array('' => 'Select Course');
+    }
+	break;	
 case 'enrolledusers':
 	if ($courseid > 0) {
 		$coursecontext = context_course::instance($courseid);
-		$studentroleid = $DB->get_field('role', 'id', array('shortname' => 'student'));
+		$studentroleid = $DB->get_field('role', 'id', array('shortname' => 'employee'));
 		$enrolledusers = array_keys(get_role_users($studentroleid, $coursecontext));
 		$return = array();
 		if (!empty($enrolledusers)) {
@@ -750,17 +782,334 @@ case 'categorycourses':
 		$return = array('' => 'Select Course');
 	}
 	break;
-case 'orgdepts':
+case 'orgdepts': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
 	if ($orgid > 0) {
 		$sql = "SELECT id, fullname 
 				FROM {local_costcenter} 
-				WHERE parentid = :parentid AND visible = 1 ";
+				WHERE parentid = :parentid AND visible = 1 AND depth = 2";
 				
 		$departments = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid));
-		$return = array(0 => get_string('selectdept','block_learnerscript')) + $departments;
+        if (!empty($departments)) {
+            $return = array('-1' => 'All') + $departments;
+        } else {
+            $return = array('-1' => 'Select Department');
+        }
 	} else {
-		$return = array('' => get_string('selectdept','block_learnerscript'));
+		$return = array('' => 'Select Department');
 	}
+	break;
+case 'orglearningpath': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT lp.id, lp.name 
+                FROM {local_learningplan} lp
+                WHERE 1 = 1 AND lp.costcenter = $orgid";
+				
+		$departments = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid));
+        if (!empty($departments)) {
+            $return = array('0' => 'Select Learning path') + $departments;
+        } else {
+            $return = array('-1' => 'Select Learning path');
+        }
+	} else {
+		$return = array('' => 'Select Learning path');
+	}
+	break;
+case 'deptsubdepartments':
+	// $departmentid = isset($departmentid) && $departmentid > 0 ? $departmentid : $USER->open_departmentid;
+	if ($departmentid > 0) {
+        $sql = "SELECT lc.id, lc.fullname FROM {local_costcenter} lc WHERE lc.parentid = $departmentid AND lc.depth = 3 ";
+        $subdepartments = $DB->get_records_sql_menu($sql);
+        if (!empty($subdepartments)) {
+            $return = array('0' => 'All') + $subdepartments;
+        } else {
+            $return = array('-1' => 'All');
+        }
+    } else {
+        $return = array('-1' => 'All');
+    }
+	break;
+case 'deptcohorts':
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	// $departmentid = isset($departmentid) && $departmentid > 0 ? $departmentid : $USER->open_departmentid;
+	if ($orgid > 0) {
+        $sql = "SELECT DISTINCT co.id, co.name 
+					FROM {cohort} co 
+					JOIN {local_groups} lg ON lg.cohortid = co.id 
+					WHERE 1 = 1 AND lg.costcenterid = $orgid "; 
+
+		if ($departmentid > 0) {
+			$sql .= " AND lg.departmentid = $departmentid";
+		}
+        $subdepartments = $DB->get_records_sql_menu($sql);
+        if (!empty($subdepartments)) {
+            $return = array('0' => 'All') + $subdepartments;
+        } else {
+            $return = array('-1' => 'Select Cohort');
+        }
+    } else {
+        $return = array('-1' => 'Select Cohort');
+    }
+	break;
+case 'deponlinecourses': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT c.id, c.fullname AS onlinecourse
+                FROM {course} c 
+                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+                WHERE 1 = 1 AND clf.name = 'Online Course' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
+		if ($departmentid > 0) {
+			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
+		}
+		if ($subdepartmentid > 0) {
+			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
+		}		
+		$onlinecourses = $DB->get_records_sql_menu($sql, array());
+        if (!empty($onlinecourses)) {
+            $return = array('0' => 'Select Online course') + $onlinecourses;
+        } else {
+            $return = array('-1' => 'Select Online course');
+        }
+	} else {
+		$return = array('' => 'Select Online course');
+	}
+	break;
+case 'deplabs': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT c.id, c.fullname AS onlinecourse
+                FROM {course} c 
+                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+                WHERE 1 = 1 AND clf.name = 'Lab' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
+		if ($departmentid > 0) {
+			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
+		}
+		if ($subdepartmentid > 0) {
+			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
+		}		
+		$labs = $DB->get_records_sql_menu($sql, array());
+        if (!empty($labs)) {
+            $return = array('0' => 'Select Lab') + $labs;
+        } else {
+            $return = array('-1' => 'Select Lab');
+        }
+	} else {
+		$return = array('' => 'Select Lab');
+	}
+	break;
+case 'depassessments': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT c.id, c.fullname AS onlinecourse
+                FROM {course} c 
+                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+                WHERE 1 = 1 AND clf.name = 'Assessment' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
+		if ($departmentid > 0) {
+			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
+		}
+		if ($subdepartmentid > 0) {
+			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
+		}		
+		$assessments = $DB->get_records_sql_menu($sql, array());
+        if (!empty($assessments)) {
+            $return = array('0' => 'Select Assessment') + $assessments;
+        } else {
+            $return = array('-1' => 'Select Assessment');
+        }
+	} else {
+		$return = array('' => 'Select Assessment');
+	}
+	break;
+case 'depusergroups': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT ch.id, ch.name
+                FROM {cohort} ch 
+                JOIN {local_groups} lg ON lg.cohortid = ch.id
+                WHERE 1 = 1 AND lg.costcenterid = $orgid";
+		if ($departmentid > 0) {
+			$sql .= " AND lg.departmentid = $departmentid";
+		}
+		if ($subdepartmentid > 0) {
+			$sql .= " AND lg.subdepartmentid = $subdepartmentid";
+		}		
+		$usergroup = $DB->get_records_sql_menu($sql, array());
+        if (!empty($usergroup)) {
+            $return = array('0' => 'Select User group') + $usergroup;
+        } else {
+            $return = array('-1' => 'Select User group');
+        }
+	} else {
+		$return = array('' => 'Select User group');
+	}
+	break;	
+case 'depwebinars': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT c.id, c.fullname AS webinar
+                FROM {course} c 
+                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+                WHERE 1 = 1 AND clf.name = 'Webinar' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid = $orgid";
+		if ($departmentid > 0) {
+			$sql .= " AND c.open_departmentid = $departmentid";
+		}
+		if ($subdepartmentid > 0) {
+			$sql .= " AND c.open_subdepartment = $subdepartmentid";
+		}		
+		$webinars = $DB->get_records_sql_menu($sql, array());
+        if (!empty($webinars)) {
+            $return = array('0' => 'Select Webinar') + $webinars;
+        } else {
+            $return = array('-1' => 'Select Webinar');
+        }
+	} else {
+		$return = array('' => 'Select Webinar');
+	}
+	break;
+case 'depprograms': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT p.id, p.name AS program
+                FROM {local_program} p
+                WHERE 1 = 1 AND p.costcenter = $orgid";
+		if ($departmentid > 0) {
+			$sql .= " AND p.department = $departmentid";
+		}
+		if ($subdepartmentid > 0) {
+			$sql .= " AND p.subdepartment = $subdepartmentid";
+		}		
+		$programs = $DB->get_records_sql_menu($sql, array());
+        if (!empty($programs)) {
+            $return = array('0' => 'Select Program') + $programs;
+        } else {
+            $return = array('-1' => 'Select Program');
+        }
+	} else {
+		$return = array('' => 'Select Program');
+	}
+	break;	
+case 'depclassrooms': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT lc.id, lc.name 
+                FROM {local_classroom} lc 
+                WHERE 1 = 1 AND lc.costcenter = $orgid";
+		if ($departmentid > 0) {
+			$sql .= " AND lc.department = $departmentid";
+		}
+		if ($subdepartmentid > 0) {
+			$sql .= " AND lc.subdepartment = $subdepartmentid";
+		}		
+		$classrooms = $DB->get_records_sql_menu($sql, array());
+        if (!empty($classrooms)) {
+            $return = array('0' => 'Select Instructor-led Course') + $classrooms;
+        } else {
+            $return = array('-1' => 'Select Instructor-led Course');
+        }
+	} else {
+		$return = array('' => 'Select Instructor-led Course');
+	}
+	break;
+case 'deplearningpath': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) {
+		$sql = "SELECT lp.id, lp.name 
+                FROM {local_learningplan} lp
+                WHERE 1 = 1 AND lp.costcenter = $orgid";
+		if ($departmentid > 0) {
+			$sql .= " AND lp.department = $departmentid";
+		}
+		$departments = $DB->get_records_sql_menu($sql, array());
+        if (!empty($departments)) {
+            $return = array('0' => 'Select Learning path') + $departments;
+        } else {
+            $return = array('-1' => 'Select Learning path');
+        }
+	} else {
+		$return = array('' => 'Select Learning path');
+	}
+	break;
+case 'departmentcourses': 
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	if ($orgid > 0) { 
+        $orgsql .= " SELECT c.id FROM {course} c WHERE c.visible = 1 "; 
+        if ($orgid > 0) {
+            $orgsql .= " AND c.open_costcenterid = " .$orgid;
+        }
+        if ($departmentid > 0) {
+            $orgsql .= " AND c.open_departmentid = " .$departmentid;
+        } 
+        if ($subdepartmentid > 0) {
+            $orgsql .= " AND c.open_subdepartment = " .$subdepartmentid;
+        }
+        $userssql = " ";
+        $userssql .= " SELECT c.id FROM {course} c 
+                    JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
+                  JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
+                  JOIN {role_assignments}  ra ON ra.userid = ue.userid
+                  JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                  JOIN {context} ctx ON ctx.instanceid = c.id 
+                  JOIN {user} AS u ON u.id = ue.userid 
+                  JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid 
+                  AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1 
+                  WHERE 1 = 1 ";
+        if ($orgid > 0) {
+            $userssql .= " AND u.open_costcenterid = " .$orgid;
+        }
+        if ($departmentid > 0) {
+            $userssql .= " AND u.open_departmentid = " .$departmentid;
+        }          
+        if ($subdepartmentid > 0) {
+            $userssql .= " AND u.open_subdepartment = " .$subdepartmentid;
+        }
+
+        $orgcourses = $DB->get_records_sql($orgsql); 
+        $usercourses = $DB->get_records_sql($userssql); 
+
+        if (empty($usercourses) && !empty($orgcourses)) {
+            $totalcourses = $orgcourses; 
+        } else if (!empty($usercourses) && empty($orgcourses)) {
+            $totalcourses = $usercourses;
+        } else if (!empty($usercourses) && !empty($orgcourses)) {
+            $totalcourses = array_merge($usercourses, $orgcourses);
+        } else if (!empty($usercourses) && !empty($orgcourses)) {
+            $totalcourses = array();
+        }
+        foreach ($totalcourses as $totalcourse) {
+            $list[] = $totalcourse->id;
+        } 
+        $list = !empty($totalcourses) ? implode(',', array_unique($list)) : 0; 
+        $sql = "SELECT c.id, c.fullname FROM {course} c WHERE c.id IN (" . $list . ")";
+        $courses = $DB->get_records_sql_menu($sql);
+        if (!empty($courses)) {
+            $return = array('0' => 'Select course') + $courses;
+        } else {
+            $return = array('' => 'Select course');
+        }
+    } else {
+        $return = array('' => 'Select Course');
+    }
+	break; 
+case 'departmentusers':
+	if ($orgid > 0) { 
+            $sql = "SELECT u.id, CONCAT(u.firstname,' ',u.lastname) as employeename 
+	                FROM {user} u WHERE u.deleted = 0 AND u.suspended = 0 AND u.id > 2 AND u.open_costcenterid = $orgid"; 
+            if ($departmentid > 0) {
+                $sql .= " AND u.open_departmentid = $departmentid ";
+            }
+            if ($subdepartmentid > 0) {
+                $sql .= " AND u.open_subdepartment = $subdepartmentid ";
+            }
+            $courses = $DB->get_records_sql_menu($sql);
+            if (!empty($courses)) {
+                $return = array('0' => 'Select user') + $courses;
+            } else {
+                $return = array('1' => 'Select user');
+            }
+        } else {
+            $return = array('' => 'Select user');
+        }
 	break;
 case 'designdata':
 	$return = array();
@@ -806,7 +1155,7 @@ case 'designdata':
 		if (!isset($reportclass->columns)) {
 			$availablecolumns = $ls->report_componentslist($report, 'columns');
 		} else {
-			$availablecolumns = $reportclass->columns + $ls->report_componentslist($report, 'columns');
+			$availablecolumns = $reportclass->columns/* + $ls->report_componentslist($report, 'columns')*/;
 		}
 		// $reportTable = $reportclass->get_all_elements();
 		//$return['rows'] = $reportclass->get_rows($reportTable[0]);

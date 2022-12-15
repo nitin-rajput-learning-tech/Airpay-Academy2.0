@@ -35,7 +35,7 @@ class report_feedbackoverview extends reportbase implements report {
         $this->parent = true;
         $this->columns = ['feedbackfield'=>['feedbackfield'],'feedbackoverviewcolumns' => ['enrolmentscount','completionscount']];
         $this->components = array('columns', 'filters', 'permissions','orderable','plot');
-        $this->filters = array('organization', 'departments','feedbacks');
+        $this->filters = array('organization', 'departments', 'subdepartments', 'feedbacks');
         $this->orderable = array('feedbackname','enrolmentscount','completionscount');
         $this->defaultcolumn = 'le.id';
     }
@@ -73,9 +73,9 @@ class report_feedbackoverview extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dh = 1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -83,10 +83,16 @@ class report_feedbackoverview extends reportbase implements report {
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND le.costcenterid = :costcenterid ";
             $this->params['costcenterid']= $USER->open_costcenterid;
-        }else{
+        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
             $this->sql .= " AND le.costcenterid = :costcenterid AND le.departmentid = :departmentid";
             $this->params['costcenterid']= $USER->open_costcenterid;
             $this->params['departmentid']= $USER->open_departmentid;
+
+        }else{
+            $this->sql .= " AND le.costcenterid = :costcenterid AND le.departmentid = :departmentid AND le.subdepartment = :subdepartment";
+            $this->params['costcenterid']= $USER->open_costcenterid;
+            $this->params['departmentid']= $USER->open_departmentid;
+            $this->params['subdepartment']= $USER->open_subdepartment;
 
         }
 
@@ -106,9 +112,14 @@ class report_feedbackoverview extends reportbase implements report {
             $this->params['orgid']= $this->params['filter_organization'];
         }
 
-        if (isset($this->params['filter_departments']) && $this->params['filter_departments'] >= 0 && $this->params['filter_departments'] != '') {
+        if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
            $this->sql .= " AND le.departmentid = :deptid ";
            $this->params['deptid']= $this->params['filter_departments'];
+        }
+
+        if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
+           $this->sql .= " AND le.subdepartment = :subdeptid ";
+           $this->params['subdeptid']= $this->params['filter_subdepartments'];
         }
 
         if (!empty($this->params['filter_feedbacks'])) {

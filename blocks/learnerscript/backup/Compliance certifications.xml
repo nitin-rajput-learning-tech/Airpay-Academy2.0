@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[course]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Compliance certifications]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[compliancecertificationuserslist]]></type>
+<components><![CDATA[YTo2OntpOjA7YjowO3M6NzoiY29sdW1ucyI7YToxOntzOjg6ImVsZW1lbnRzIjthOjU6e2k6MDthOjY6e3M6MjoiaWQiO3M6MTU6Ikt5WkRzaHpEMUZyRzVRWCI7czoxMDoicGx1Z2lubmFtZSI7czozOToiY29tcGxpYW5jZWNlcnRpZmljYXRpb251c2Vyc2xpc3Rjb2x1bW5zIjtzOjE0OiJwbHVnaW5mdWxsbmFtZSI7czo4MzoiJTI1MjUyNTI1NUIlMjUyNTI1MjU1QmNvbXBsaWFuY2VjZXJ0aWZpY2F0aW9udXNlcnNsaXN0Y29sdW1ucyUyNTI1MjUyNTVEJTI1MjUyNTI1NUQiO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6NDoidHlwZSI7czoxNToic2VsZWN0ZWRjb2x1bW5zIjtzOjg6ImZvcm1kYXRhIjtPOjg6InN0ZENsYXNzIjo0OntzOjU6InZhbHVlIjtiOjE7czo5OiJjb2x1bW5hbWUiO3M6Mjk6IkNPVVJTRSUyRkVYQU0lMkZDRVJUSUZJQ0FUSU9OIjtzOjY6ImNvbHVtbiI7czoxMzoiY2VydGlmaWNhdGlvbiI7czo3OiJoZWFkaW5nIjtzOjM5OiJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMiO319aToxO2E6Njp7czoyOiJpZCI7czoxNToiVjJBWm9pa1ZVOEVTVVJlIjtzOjEwOiJwbHVnaW5uYW1lIjtzOjM5OiJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjgzOiIlMjUyNTI1MjU1QiUyNTI1MjUyNTVCY29tcGxpYW5jZWNlcnRpZmljYXRpb251c2Vyc2xpc3Rjb2x1bW5zJTI1MjUyNTI1NUQlMjUyNTI1MjU1RCI7czo3OiJzdW1tYXJ5IjtzOjA6IiI7czo0OiJ0eXBlIjtzOjE1OiJzZWxlY3RlZGNvbHVtbnMiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjQ6e3M6NToidmFsdWUiO2I6MTtzOjk6ImNvbHVtbmFtZSI7czo0OiJVU0VSIjtzOjY6ImNvbHVtbiI7czo0OiJ1c2VyIjtzOjc6ImhlYWRpbmciO3M6Mzk6ImNvbXBsaWFuY2VjZXJ0aWZpY2F0aW9udXNlcnNsaXN0Y29sdW1ucyI7fX1pOjI7YTo2OntzOjI6ImlkIjtzOjE1OiIxWThEczJrRzU4eXJPNnIiO3M6MTA6InBsdWdpbm5hbWUiO3M6Mzk6ImNvbXBsaWFuY2VjZXJ0aWZpY2F0aW9udXNlcnNsaXN0Y29sdW1ucyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6ODM6IiUyNTI1MjUyNTVCJTI1MjUyNTI1NUJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMlMjUyNTI1MjU1RCUyNTI1MjUyNTVEIjtzOjc6InN1bW1hcnkiO3M6MDoiIjtzOjQ6InR5cGUiO3M6MTU6InNlbGVjdGVkY29sdW1ucyI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6NDp7czo1OiJ2YWx1ZSI7YjoxO3M6OToiY29sdW1uYW1lIjtzOjEyOiJDT01QTEVURUQrT04iO3M6NjoiY29sdW1uIjtzOjExOiJjb21wbGV0ZWRvbiI7czo3OiJoZWFkaW5nIjtzOjM5OiJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMiO319aTozO2E6Njp7czoyOiJpZCI7czoxNToiclExaDVHR0FEMW14bGVHIjtzOjEwOiJwbHVnaW5uYW1lIjtzOjM5OiJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjgzOiIlMjUyNTI1MjU1QiUyNTI1MjUyNTVCY29tcGxpYW5jZWNlcnRpZmljYXRpb251c2Vyc2xpc3Rjb2x1bW5zJTI1MjUyNTI1NUQlMjUyNTI1MjU1RCI7czo3OiJzdW1tYXJ5IjtzOjA6IiI7czo0OiJ0eXBlIjtzOjE1OiJzZWxlY3RlZGNvbHVtbnMiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjQ6e3M6NToidmFsdWUiO2I6MTtzOjk6ImNvbHVtbmFtZSI7czo2OiJFWFBJUlkiO3M6NjoiY29sdW1uIjtzOjE0OiJ1cGNvbWluZ2V4cGlyeSI7czo3OiJoZWFkaW5nIjtzOjM5OiJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMiO319aTo0O2E6Njp7czoyOiJpZCI7czoxNToiU1diRWVQZ2xlZE5KcEhOIjtzOjEwOiJwbHVnaW5uYW1lIjtzOjM5OiJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjgzOiIlMjUyNTI1MjU1QiUyNTI1MjUyNTVCY29tcGxpYW5jZWNlcnRpZmljYXRpb251c2Vyc2xpc3Rjb2x1bW5zJTI1MjUyNTI1NUQlMjUyNTI1MjU1RCI7czo3OiJzdW1tYXJ5IjtzOjA6IiI7czo0OiJ0eXBlIjtzOjE1OiJzZWxlY3RlZGNvbHVtbnMiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjQ6e3M6NToidmFsdWUiO2I6MTtzOjk6ImNvbHVtbmFtZSI7czozOiJFT0wiO3M6NjoiY29sdW1uIjtzOjE3OiJ1cGNvbWluZ2VuZG9mbGlmZSI7czo3OiJoZWFkaW5nIjtzOjM5OiJjb21wbGlhbmNlY2VydGlmaWNhdGlvbnVzZXJzbGlzdGNvbHVtbnMiO319fX1zOjc6ImZpbHRlcnMiO2E6MTp7czo4OiJlbGVtZW50cyI7YTowOnt9fXM6MTI6ImNhbGN1bGF0aW9ucyI7YToxOntzOjg6ImVsZW1lbnRzIjtOO31zOjg6Im9yZGVyaW5nIjthOjE6e3M6ODoiZWxlbWVudHMiO047fXM6MTE6InBlcm1pc3Npb25zIjthOjI6e3M6NjoiY29uZmlnIjtPOjg6InN0ZENsYXNzIjozOntzOjEzOiJjb25kaXRpb25leHByIjtzOjI6ImMxIjtzOjE0OiJjb25kaXRpb25leHByMSI7czoyOiJjMSI7czoxNDoiY29uZGl0aW9uZXhwcjIiO3M6MDoiIjt9czo4OiJlbGVtZW50cyI7YToxOntpOjA7YTo1OntzOjI6ImlkIjtzOjE1OiJkYnhwbVpPTVR2WlVpZE8iO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjI6e3M6Njoicm9sZWlkIjtzOjI6IjEwIjtzOjEyOiJzdWJtaXRidXR0b24iO3M6MzoiQWRkIjt9czoxMDoicGx1Z2lubmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czo3OiJzdW1tYXJ5IjtzOjI6ImRoIjt9fX19]]></components>
+<export><![CDATA[]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[0]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reportdashboard]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Compliances]]></subpagepattern>
+<defaultregion><![CDATA[compliance-first]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778554]]></timecreated>
+<timemodified><![CDATA[1664778554]]></timemodified>
+<title><![CDATA[Compliance certifications]]></title>
+<reportcontenttype><![CDATA[table]]></reportcontenttype>
+<reporttype><![CDATA[]]></reporttype>
+<logo><![CDATA[]]></logo>
+<tilescolourpicker><![CDATA[]]></tilescolourpicker>
+<disableheader><![CDATA[]]></disableheader>
+<tilescolour><![CDATA[]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reportdashboard]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Compliances]]></subpagepattern>
+<defaultregion><![CDATA[compliance-first]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778554]]></timecreated>
+<timemodified><![CDATA[1664778554]]></timemodified>
+<title><![CDATA[Compliance certifications]]></title>
+<reportcontenttype><![CDATA[table]]></reportcontenttype>
+<reporttype><![CDATA[]]></reporttype>
+<logo><![CDATA[]]></logo>
+<tilescolourpicker><![CDATA[]]></tilescolourpicker>
+<disableheader><![CDATA[]]></disableheader>
+<tilescolour><![CDATA[]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reportdashboard]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Compliances]]></subpagepattern>
+<defaultregion><![CDATA[compliance-first]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778554]]></timecreated>
+<timemodified><![CDATA[1664778554]]></timemodified>
+<title><![CDATA[Compliance certifications]]></title>
+<reportcontenttype><![CDATA[table]]></reportcontenttype>
+<reporttype><![CDATA[]]></reporttype>
+<logo><![CDATA[]]></logo>
+<tilescolourpicker><![CDATA[]]></tilescolourpicker>
+<disableheader><![CDATA[]]></disableheader>
+<tilescolour><![CDATA[]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

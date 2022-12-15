@@ -639,7 +639,7 @@ class view extends plugin_renderer_base {
 														},
 														  "search": "",
                     									  "searchPlaceholder": "'.get_string('search','local_learningplan').'",
-                    									  "emptyTable":     "<div class=\'w-100 alert alert-info\'>No data available </div>",
+                    									  "emptyTable":     "<div class=\'w-100 alert alert-info\'>No Learning Paths Available </div>",
 													},
 													"ajax": "ajax.php?manage=1&subdepts='.$filtersubdepts.'&costcenterid='.$filterorganizations.'&departmentid='.$filterdepartments.'&learningplan='.$filterlearningplan.'&status='.$filterstatus.'&view_type='.$view_type.'",
 													"datatype": "json",
@@ -1773,7 +1773,7 @@ class view extends plugin_renderer_base {
 				$table->id = 'learning_plan_users';
 				$head = array(get_string('username', 'local_learningplan'),
 			                get_string('employee_id', 'local_learningplan'),
-			                get_string('supervisorname', 'local_learningplan'),
+			                get_string('reportingto', 'local_learningplan'),
 							get_string('start_date', 'local_learningplan'),
 							get_string('completion_date', 'local_learningplan'),
 							get_string('learning_plan_status', 'local_learningplan')

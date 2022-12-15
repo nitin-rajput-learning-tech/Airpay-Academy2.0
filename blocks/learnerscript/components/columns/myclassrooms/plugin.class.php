@@ -28,10 +28,10 @@ class plugin_myclassrooms extends pluginbase {
            global $DB, $CFG;
        switch ($data->column) {
             case 'startdate':
-                $row->{$data->column} = !empty($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-M-Y',$row->{$data->column}) : 'NA';
             break;
             case 'enddate':
-                $row->{$data->column} = !empty($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-M-Y',$row->{$data->column}) : 'NA';
             break;
             case 'classroomstatus':
                 if ($row->classroomstatus == 0) {
@@ -50,7 +50,7 @@ class plugin_myclassrooms extends pluginbase {
                 $row->{$data->column} = ($row->{$data->column} == 1) ? 'Completed' : 'Not Completed';
                 break;
             case 'usercompletiondate':
-                $row->{$data->column} = !empty($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',$row->{$data->column}) : 'NA';
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-M-Y',$row->{$data->column}) : 'NA';
                 break;
         }
         return (isset($row->{$data->column}))? $row->{$data->column} : ' -- ';

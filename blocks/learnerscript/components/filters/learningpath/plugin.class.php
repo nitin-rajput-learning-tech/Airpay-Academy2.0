@@ -32,6 +32,13 @@ class plugin_learningpath extends pluginbase {
         $this->maxlength = 0;
         $this->fullname = get_string('learningpath', 'block_learnerscript');
         $this->reporttypes = array();
+        if (!empty($this->reportclass->basicparams)) {
+            foreach ($this->reportclass->basicparams as $basicparam) {
+                if ($basicparam['name'] == 'learningpath') {
+                    $this->filtertype = 'basic';
+                }
+            }
+        }
     }
 
     public function summary($data) {
@@ -56,26 +63,49 @@ class plugin_learningpath extends pluginbase {
         return $finalelements;
     }
 
-    public function filter_data(){
+    public function filter_data($selectoption = true, $request){
         global $DB, $USER;
-
+        $context = context_system::instance();
+        if($this->reportclass->basicparams){
+            $basicparams = array_column($this->reportclass->basicparams, 'name');
+            if (has_capability('local/costcenter:manage_ownorganization', $context) && !is_siteadmin()) {
+                $deptorgid = $USER->open_costcenterid;
+            } else {
+                if ($basicparams[0] == 'organization') {
+                    // $orgoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC"); 
+                    // $orgids = array_keys($orgoptions);
+                    // if (empty($request['filter_organization'])) {
+                    //     $deptorgid = array_shift($orgids);
+                    // } else {
+                    //     $deptorgid = $request['filter_organization'];
+                    // }
+                    $deptorgid = null;
+                }else {
+                    $deptorgid = null;
+                } 
+            }
+        } else {
+            $deptorgid = null;
+        }
         $sql = "SELECT lp.id, lp.name 
                 FROM {local_learningplan} lp
-                WHERE 1 = 1  ";
-
-        $systemcontext = context_system::instance();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $sql .= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $sql .= " AND lp.costcenter = $USER->open_costcenterid ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            $sql .= " AND lp.costcenter = $USER->open_costcenterid 
-                    AND lp.department = $USER->open_departmentid";
+                WHERE 1 = 1 ";
+        if (!empty($deptorgid)) {
+            $sql .= " AND lp.costcenter = " . $deptorgid;
+        } else {
+            $systemcontext = context_system::instance();
+            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+                $sql .= " ";
+            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+                $sql .= " AND lp.costcenter = $USER->open_costcenterid ";
+            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+                $sql .= " AND lp.costcenter = $USER->open_costcenterid 
+                        AND lp.department = $USER->open_departmentid";
+            }
         }
         $sql .= " ORDER BY lp.name ASC ";
 
         $learningpaths = $DB->get_records_sql_menu($sql);
-
         $selectoption = array();
         $selectoption[0] = get_string('selectlearningplan', 'block_learnerscript');
 
@@ -84,15 +114,17 @@ class plugin_learningpath extends pluginbase {
         return $learningpathlist;
     }
 
-    public function selected_filter($selected) {
-        $filterdata = $this->filter_data();
+    public function selected_filter($selected, $request = array()) {
+        $filterdata = $this->filter_data(false, $request);
         return $filterdata[$selected];
     }
 
     public function print_filter(&$mform, $selectoption = true) {
-        
-        $learningpathlist = $this->filter_data();
-
+        $request = array_merge($_POST, $_GET);
+        $learningpathlist = $this->filter_data(false, $request);
+        if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($learningpathlist) > 1) { 
+            unset($learningpathlist[0]);
+        }
         $array = array('data-select2'=>true,'data-maximum-selection-length' => $this->maxlength);
         $select = $mform->addElement('select', 'filter_learningpath', null, $learningpathlist, $array);
         $mform->setType('filter_learningpath', PARAM_INT);

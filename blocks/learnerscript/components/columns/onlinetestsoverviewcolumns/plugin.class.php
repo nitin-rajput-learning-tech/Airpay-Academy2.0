@@ -49,11 +49,11 @@ class plugin_onlinetestsoverviewcolumns extends pluginbase {
         global $DB, $CFG,$OUTPUT;
             switch ($data->column) {
                 case 'timeopen':
-                    $row->{$data->column} = ($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',($row->{$data->column})) : '--';
+                    $row->{$data->column} = ($row->{$data->column}) ? date('d-m-Y H:i',($row->{$data->column})) : '--';
                 break;
 
                 case 'timeclose':
-                    $row->{$data->column} = ($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i',($row->{$data->column})) : '--';
+                    $row->{$data->column} = ($row->{$data->column}) ? date('d-m-Y H:i',($row->{$data->column})) : '--';
                 break;
 
                 case 'maxgrade':

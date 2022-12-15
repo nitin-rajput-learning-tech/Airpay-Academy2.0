@@ -36,7 +36,7 @@ class report_traininghoursvsusersvstrainers extends reportbase implements report
         $this->columns = array('traininghoursvsusersvstrainers' => array('monthyear', 'totaltrainings', 
             'month','year','traininghours', 'trainingdays', 'userscovered','trainerscovered'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
-        $this->filters = array('organization','departments');
+        $this->filters = array('organization','departments', 'subdepartments');
         $this->sqlorder['column'] = 'year';
         $this->sqlorder['dir'] = 'desc';
         $this->orderable = array('monthyear','month','year', 'totaltrainings','userscovered','trainerscovered');
@@ -113,9 +113,9 @@ class report_traininghoursvsusersvstrainers extends reportbase implements report
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dhs = 1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -123,10 +123,15 @@ class report_traininghoursvsusersvstrainers extends reportbase implements report
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND lc.costcenter = :costcenterid ";
             $this->params['costcenterid'] = $USER->open_costcenterid; 
-        }else{
-            $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid";
+        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
+           $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid";
             $this->params['costcenterid'] = $USER->open_costcenterid; 
-            $this->params['departmentid'] = $USER->open_departmentid; 
+            $this->params['departmentid'] = $USER->open_departmentid;  
+        }else{
+            $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid AND lc.subdepartment = :subdepartment";
+            $this->params['costcenterid'] = $USER->open_costcenterid; 
+            $this->params['departmentid'] = $USER->open_departmentid;
+            $this->params['subdepartment'] = $USER->open_subdepartment; 
         }
         // if ($count)
         // $this->sql .= " group by MONTH(FROM_UNIXTIME(lc.startdate)) ";
@@ -194,7 +199,7 @@ class report_traininghoursvsusersvstrainers extends reportbase implements report
     }
 
     public function department_selection($nos) {
-        global $USER, $DB;
+        global $USER;
         $systemcontext = context_system::instance();
         $params =array();
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -208,7 +213,12 @@ class report_traininghoursvsusersvstrainers extends reportbase implements report
                 $deps = $this->params['filter_departments'];
                 $sql .= " AND c.department = :".$nos."deptid ";
                 $params[''.$nos.'deptid'] = $deps;
-            }            
+            }
+            if (!empty($this->params['filter_subdepartments'])) {
+                $subdeps = $this->params['filter_subdepartments'];
+                $sql .= " AND c.subdepartment = :".$nos."subdeptid ";
+                $params[''.$nos.'subdeptid'] = $subdeps;
+            }             
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
             $sql .= " AND c.costcenter = :".$nos."orgid ";
             $params[''.$nos.'orgid'] = $USER->open_costcenterid; 
@@ -216,6 +226,11 @@ class report_traininghoursvsusersvstrainers extends reportbase implements report
             $sql .= " AND c.costcenter = :".$nos."orgid AND c.department = :".$nos."deptid";
             $params[''.$nos.'orgid'] = $USER->open_costcenterid; 
             $params[''.$nos.'deptid'] = $USER->open_departmentid; 
+        }else{
+            $sql .= " AND c.costcenter = :".$nos."orgid AND c.department = :".$nos."deptid AND c.subdepartment = :".$nos."subdeptid";
+            $params[''.$nos.'orgid'] = $USER->open_costcenterid; 
+            $params[''.$nos.'deptid'] = $USER->open_departmentid; 
+            $params[''.$nos.'subdeptid'] = $USER->open_subdepartment; 
         }
         return array($sql, $params);
     }

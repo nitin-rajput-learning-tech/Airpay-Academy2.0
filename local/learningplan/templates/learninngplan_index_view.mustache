@@ -26,7 +26,7 @@
 	            <ul class="options_container" id="showoptions{{learning_planid}}">
 	            	{{# capability3}}
 	            	  <li>
-						<a href='javascript:void(0)' title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').deleteConfirm({action:'deleteplan' , id:{{{learning_planid}}}, name:'{{{learning_plan_pathname}}}' }) })(event)">
+						<a href='javascript:void(0)' title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').deleteConfirm({action:'deleteplan' , id:{{{learning_planid}}}  }) })(event)">
 							<!--<img src="{{delete_icon_url}}"  class="icon" >-->
 							<i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str}} delete {{/ str}}" aria-label="Delete"></i>
 						</a>
@@ -43,14 +43,14 @@
 					{{# capability1}}
 						{{# hide}}
 						<li>
-							<a href='javascript:void(0)' title="{{title_hide_show}}" onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'visible', id:{{{learning_planid}}}, name:'{{{learning_plan_pathname}}}' }) })(event)">
+							<a href='javascript:void(0)' title="{{title_hide_show}}" onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'visible', id:{{{learning_planid}}} }) })(event)">
 								<i class="fa fa-eye" title="{{title_hide_show}}"></i>
 							</a>
 						</li>
 						{{/ hide}}
 						{{^ hide}}
 						<li>
-							<a href='javascript:void(0)' title="{{title_hide_show}}"  onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'hidden', id:{{{learning_planid}}}, name:'{{{learning_plan_pathname}}}' }) })(event)">
+							<a href='javascript:void(0)' title="{{title_hide_show}}"  onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'hidden', id:{{{learning_planid}}} }) })(event)">
 								<!--<img src="{{hide_show_icon_url}}" class="icon">-->
 								<i class="fa fa-eye-slash icon" title="{{title_hide_show}}"></i>
 							</a>

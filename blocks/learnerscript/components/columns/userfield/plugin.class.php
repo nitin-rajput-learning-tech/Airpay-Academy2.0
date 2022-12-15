@@ -49,20 +49,46 @@ class plugin_userfield extends pluginbase {
         global $DB, $CFG, $OUTPUT;
         $row->id = isset($row->userid) ? $row->userid : 2;
 
-        $userrecord = $DB->get_record('user',array('id'=>$row->id));
-        $userrecord->fullname = '<span class = "userdp_name">';
-        $userrecord->fullname .= $OUTPUT->user_picture($userrecord);
-        $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
-                                    array('href' =>  $CFG->wwwroot.'/user/profile.php?id='.$row->id.''));
-        $userrecord->fullname .= '</span>';
+        // $userrecord = $DB->get_record('user',array('id'=>$row->id));
+        // $userrecord->fullname = '<span class = "userdp_name">';
+        // $userrecord->fullname .= $OUTPUT->user_picture($userrecord);
+        // $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
+        //                             array('href' =>  $CFG->wwwroot.'/user/profile.php?id='.$row->id.''));
+        // $userrecord->fullname .= '</span>';
+        
+        // $userprofilereport = $DB->get_field('block_learnerscript', 'id', array('type'=> 'userprofile'), IGNORE_MULTIPLE);
+        // $userrecord = $DB->get_record('user',array('id'=>$row->id));
+        // $userrecord->fullname = '<span class = "userdp_name">';
+        // $userrecord->fullname .= $OUTPUT->user_picture($userrecord);
+        // $checkpermissions = empty($userprofilereport) ? false : (new reportbase($userprofilereport))->check_permissions($USER->id, $context);
+        // if ($this->report->type == 'userprofile' || empty($userprofilereport) || empty($checkpermissions)) {
+        //     $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
+        //                 array('href' => $CFG->wwwroot.'/user/profile.php?id='.$row->id.''));
+        // }else {
+        //     $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
+        //                             array('href' => $CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$userprofilereport.'&filter_users='.$row->id.'&filter_organization='.$this->reportfilterparams['filter_organization'].'&filter_departments='.$this->reportfilterparams['filter_departments'].'&filter_subdepartments='.$this->reportfilterparams['filter_subdepartments'].''));
+        // }
+        // $userrecord->fullname .= '</span>';
+        // $userfullname = $userrecord->fullname;
+        // if($CFG->messaging){
+        //     $userrecord->fullname .= "<sup id='communicate'>";
+        //     $userrecord->fullname .= html_writer::start_span('ls icon sendsms', array('id'=>"sendsms_" . $this->reportinstance . "_" . $row->id,
+        //                                                  'onclick'=>'(function(e){
+        //                                                     require("block_learnerscript/helper").sendmessage({userid: '.$row->id.', reportinstance: ' . $this->reportinstance . '}, \''.$userfullname.'\'); e.stopImmediatePropagation(); }) (event)'));
+        //     $userrecord->fullname .= html_writer::end_span();
+        //     $userrecord->fullname .='</sup>';
+        // }
+
+
+
         switch ($data->column) {
             case 'employeeid':
-                $userrecord->{$data->column} = $userrecord->open_employeeid;
-                break;
+                $userrecord->{$data->column} = $row->open_employeeid;
+            break;
             case 'reportingmanager':
                 if($userrecord->open_supervisorid > 0){
                     $fields = 'id,firstname,lastname,open_employeeid';
-                    $reportingto = $DB->get_record('user', array('id'=>$userrecord->open_supervisorid),$fields);
+                    $reportingto = $DB->get_record('user', array('id'=>$row->open_supervisorid),$fields);
                     $userrecord->{$data->column} = $reportingto->firstname.' '.$reportingto->lastname.' ('.$reportingto->open_employeeid.')';
                 }else{
                     $userrecord->{$data->column} = 'NA';
@@ -70,64 +96,68 @@ class plugin_userfield extends pluginbase {
                 
                 break;
             case 'userstatus':
-                $userrecord->{$data->column} = ($userrecord->suspended == 0) ?
+                $userrecord->{$data->column} = ($row->suspended == 0) ?
                                             '<span class="label label-success">' .  get_string('active') . '</span>' :
                                             '<span class="label label-warning">' . get_string('inactive') . '</span>';
                 break;
             case 'designation':
-                $userrecord->{$data->column} = ($userrecord->open_designation) ? $userrecord->open_designation : 'NA';
+                $userrecord->{$data->column} = ($row->open_designation) ? $row->open_designation : 'NA';
                 break;
             case 'level':
-                if(!empty($userrecord->open_level)){
-                    $userrecord->{$data->column} = $userrecord->open_level;
+                if(!empty($row->open_level)){
+                    $userrecord->{$data->column} = $row->open_level;
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }
                 break;
-            // case 'state':
-            //     $userrecord->{$data->column} = ($userrecord->open_state) ? $userrecord->open_state : '--';
-            //     break;
-            // case 'branch':
-            //     $userrecord->{$data->column} = ($userrecord->open_branch) ? $userrecord->open_branch : '--';
-            //     break;
+            case 'state':
+                $userrecord->{$data->column} = ($row->open_state) ? $row->open_state : '--';
+                break;
+            case 'branch':
+                $userrecord->{$data->column} = ($row->open_branch) ? $row->open_branch : '--';
+                break;
             case 'organization':
-                $org = $DB->get_field('local_costcenter', 'fullname', array('id'=>$userrecord->open_costcenterid));
+                $org = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_costcenterid));
                 $userrecord->{$data->column} = $org;
                 break;
             case 'department':
-                $dept = $DB->get_field('local_costcenter', 'fullname', array('id'=>$userrecord->open_departmentid));
+                $dept = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_departmentid));
                 $userrecord->{$data->column} = $dept;
                 break;
             case 'subdepartment':
                 if(!empty($userrecord->open_subdepartment)){
-                    $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$userrecord->open_subdepartment));
+                    $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_subdepartment));
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }
                 break;
             case 'location':
-                $userrecord->{$data->column} = ($userrecord->city) ? $userrecord->city : 'NA';
+                $userrecord->{$data->column} = ($row->city) ? $row->city : 'NA';
                 break;
             case 'team':
-                $userrecord->{$data->column} = ($userrecord->open_team) ? $userrecord->open_team : 'NA';
+                $userrecord->{$data->column} = ($row->open_team) ? $row->open_team : 'NA';
                 break;
-            // case 'client':
-            //     $userrecord->{$data->column} = ($userrecord->open_client) ? $userrecord->open_client : 'NA';
-            //     break;
+            case 'client':
+                $userrecord->{$data->column} = ($row->open_client) ? $row->open_client : 'NA';
+                break;
             case 'hrmsrole':
-                $userrecord->{$data->column} = ($userrecord->open_hrmsrole) ? $userrecord->open_hrmsrole : 'NA';
+                $userrecord->{$data->column} = ($row->open_hrmsrole) ? $row->open_hrmsrole : 'NA';
                 break;
             case 'zone':
-                $userrecord->{$data->column} = ($userrecord->open_zone) ? $userrecord->open_zone : 'NA';
+                $userrecord->{$data->column} = ($row->open_zone) ? $row->open_zone : 'NA';
                 break;
             case 'region':
-                $userrecord->{$data->column} = ($userrecord->open_region) ? $userrecord->open_region : 'NA';
+                $userrecord->{$data->column} = ($row->open_region) ? $row->open_region : 'NA';
                 break;
             case 'grade':
-                $userrecord->{$data->column} = ($userrecord->open_grade) ? $userrecord->open_grade : 'NA';
+                $userrecord->{$data->column} = ($row->open_grade) ? $row->open_grade : 'NA';
+                break;            
+            case 'country':
+                $userrecord->{$data->column} = ($row->country) ? $row->country  : '--';
                 break;
             default:
-                $userrecord->{$data->column} = $userrecord->{$data->column};
+                $userrecord->{$data->column} = isset($row->{$data->column}) ? $row->{$data->column} : $row->{$data->column};
+            break;
         }
         return (isset($userrecord->{$data->column})) ? $userrecord->{$data->column} : 'NA';
     }

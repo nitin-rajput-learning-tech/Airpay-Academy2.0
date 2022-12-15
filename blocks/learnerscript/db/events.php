@@ -23,16 +23,16 @@
  */
 defined('MOODLE_INTERNAL') || die();
 $observers  = array(
-    // array(
-    //     'eventname' => '\core\event\user_loggedin',
-    //     'callback'  => 'block_learnerscript_observer::store',
-    //     'internal'  => false, // This means that we get events only after transaction commit.
-    //     'priority'  => 1000,
-    // ),
-    // array(
-    //     'eventname'   => '*',
-    //     'callback'    => 'block_learnerscript_observer::ls_timestats',
-    //     'internal'    => 1,
-    //     'priority'    => 1001,
-    // ),
+    array(
+        'eventname' => '\core\event\user_loggedin',
+        'callback'  => 'block_learnerscript_observer::store',
+        'internal'  => false, // This means that we get events only after transaction commit.
+        'priority'  => 1000,
+    ),
+    array(
+        'eventname'   => '*',
+        'callback'    => 'block_learnerscript_observer::ls_timestats',
+        'internal'    => 1,
+        'priority'    => 1001,
+    ),
 );

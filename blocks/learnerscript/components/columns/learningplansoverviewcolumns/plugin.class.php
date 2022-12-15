@@ -47,7 +47,6 @@ class plugin_learningplansoverviewcolumns extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG,$OUTPUT;
             switch ($data->column) {
-                
                 case 'optionalcourses':
                     $sql = "SELECT c.id, c.fullname
                             FROM {local_learningplan_courses} AS llc 

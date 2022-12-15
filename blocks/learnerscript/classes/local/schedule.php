@@ -186,7 +186,7 @@ class schedule {
 		$usertz = $this->get_clean_timezone($USER->timezone);
 		if (is_null($timestamp)) {
 			$datetime = new DateTime('now', new DateTimeZone($usertz));
-			$timestamp = strtotime($datetime->format('d-m-Y H:i'));
+			$timestamp = strtotime($datetime->format('Y-m-d H:i:s'));
 		}
 		is_null($timestamp) ? $time = time() : $time = $timestamp;
 		$timeday = date('j', $time);
@@ -226,11 +226,10 @@ class schedule {
 			break;
 		}
 		// Make the appropriate conversion in case the user is using a different timezone from the server.
-		$datetime = new DateTime(date('d-m-Y H:i', $nextschedule), new DateTimeZone($usertz));
+		$datetime = new DateTime(date('Y-m-d H:i:s', $nextschedule), new DateTimeZone($usertz));
 		$datetime->setTimezone(new DateTimeZone(date_default_timezone_get()));
- 	 	
-		$nextschedule = strtotime($datetime->format('d-m-Y H:i')) ;
-		 
+		$nextschedule = strtotime($datetime->format('Y-m-d H:i:s'));
+
 		return $nextschedule;
 	}
 
@@ -504,14 +503,16 @@ class schedule {
 		$reportid = $schedule->reportid;
 		$format = $schedule->exportformat;
 		$exporttofilesystem = $schedule->exporttofilesystem;
-		$scheduleid = $schedule->id;
+		$scheduleid = $schedule->id; 
+		$organizationid = $schedule->organizationid;
+		$departmentid = $schedule->departmentid;
 		$tempfilename = md5(time());
 
 		if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
 			print_error('reportdoesnotexists', 'block_learnerscript');
 		}
 		$role = $DB->get_field('role', 'shortname', array('id' => $schedule->roleid));
-		$reportdata = $this->reportdata($reportid, $user, $role);
+		$reportdata = $this->reportdata($reportid, $user, $role, $organizationid, $departmentid);
 
 		$reportfilepathname = $this->scheduledreport_get_export_filename($report, $user, $schedule);
 
@@ -558,7 +559,7 @@ class schedule {
 	 */
 	function scheduledreport_get_export_filename($report, $user) {
 		global $DB, $CFG;
-		$reportfilename = format_string($report->type);
+		$reportfilename = format_string($report->name);
 		$reportfilename = clean_param($reportfilename, PARAM_FILE) . time();
 		$username = fullname($user);
 		$dir = get_config('block_learnerscript', 'exportfilesystempath') . DIRECTORY_SEPARATOR . $user->id;
@@ -576,9 +577,8 @@ class schedule {
 	 * @return object Report data
 	*/
 
-	function reportdata($reportid, $user, $role) {
+	function reportdata($reportid, $user, $role, $organizationid, $departmentid) {
 		global $CFG, $DB;
-
 		if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
 			print_error('reportdoesnotexists', 'block_learnerscript');
 		}
@@ -590,17 +590,35 @@ class schedule {
 		} else {
 			$context = context_course::instance($report->courseid);
 		}
-
+		$filterrequests = array('filter_organization' => $organizationid, 'filter_departments' => $departmentid);
 		$report->userid = $user->id;
 		$reportclassname = 'report_' . $report->type;
 		$reportclass = new $reportclassname($report, $properties);
-		$reportclass->courseid = $report->courseid;
+		$reportclass->courseid = $report->courseid; 
+		$reportclass->filters = $filterrequests;
 		$reportclass->userid = $user->id;
 		$reportclass->start = 0;
 		$reportclass->length = -1;
 		$reportclass->search = '';
 		$reportclass->ls_startdate = 0;
-		$reportclass->ls_enddate = time();
+		$reportclass->ls_enddate = time(); 
+		$basicparamdata = new stdclass;
+		if ($reportclass->filters){
+		    foreach ($reportclass->filters as $key => $val) {
+		        if (strpos($key, 'filter_') !== false) {
+		        	$plugin = str_replace('filter_', '', $key);
+		            $basicparamdata->{$key} = $val;
+		            if(file_exists($CFG->dirroot . '/blocks/learnerscript/components/filters/' . $plugin . '/plugin.class.php') && !empty($val)){
+			            require_once($CFG->dirroot . '/blocks/learnerscript/components/filters/' . $plugin . '/plugin.class.php');
+			            $classname = 'plugin_' . $plugin;
+			            $class = new $classname($reportclass->config);
+			            $selected = get_string('selectedfilter', 'block_learnerscript', ucfirst($plugin));
+			            $reportclass->selectedfilters[$selected] = $class->selected_filter($val, $reportclass->filters);
+		        	}
+		        }
+		    }
+		}
+		$reportclass->params = (array)$basicparamdata;
 		if (empty($role)) {
 			$role = '';
 			$rolelist = (new ls)->get_currentuser_roles($user->id);
@@ -653,59 +671,20 @@ class schedule {
 
 	//XLS
 	function export_xls($report, $filename) {
-		// global $DB, $CFG;
-		// require_once "$CFG->libdir/phpexcel/PHPExcel.php";
-
-		// $table = $report->table;
-
-		// $filename = $filename . '.xls';
-
-		// /// Creating a workbook
-		// $workbook = new PHPExcel();
-		// $workbook->getActiveSheet()->setTitle(get_string('listofusers', 'block_learnerscript'));
-		// $rowNumber = 1;
-		// $col = 'A';
-		// foreach ($table->head as $key => $heading) {
-		// 	$workbook->getActiveSheet()->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($heading)))));
-		// 	$col++;
-		// }
-		// // Loop through the result set
-		// $rowNumber = 2;
-		// if (!empty($table->data)) {
-		// 	foreach ($table->data as $rkey => $row) {
-		// 		$col = 'A';
-		// 		foreach ($row as $key => $item) {
-		// 			$workbook->getActiveSheet()->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item)))));
-		// 			$col++;
-		// 		}
-		// 		$rowNumber++;
-		// 	}
-		// }
-
-		// // Freeze pane so that the heading line won't scroll
-		// $workbook->getActiveSheet()->freezePane('A2');
-
-		// // Save as an Excel BIFF (xls) file
-		// $objWriter = PHPExcel_IOFactory::createWriter($workbook, 'Excel2007');
-
-		// $objWriter->save($filename);
 		global $DB, $CFG;
-		require_once "$CFG->libdir/excellib.class.php";
+		require_once "$CFG->libdir/phpexcel/PHPExcel.php";
 
 		$table = $report->table;
-		$matrix = array();
-		//!$fname? $filename = 'report_'.(time()).'.ods':
+
 		$filename = $filename . '.xls';
 
-		// $workbook = new \MoodleExcelWorkbook($filename);
-		$spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet(); 
-		$sheet = $spreadsheet->getActiveSheet();
-		// $workbook->getActiveSheet()->setTitle(get_string('listofusers', 'block_learnerscript'));
+		/// Creating a workbook
+		$workbook = new PHPExcel();
+		$workbook->getActiveSheet()->setTitle(get_string('listofusers', 'block_learnerscript'));
 		$rowNumber = 1;
 		$col = 'A';
 		foreach ($table->head as $key => $heading) {
-			// $workbook->getActiveSheet()->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($heading)))));
-			$sheet->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($heading)))));
+			$workbook->getActiveSheet()->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($heading)))));
 			$col++;
 		}
 		// Loop through the result set
@@ -714,19 +693,20 @@ class schedule {
 			foreach ($table->data as $rkey => $row) {
 				$col = 'A';
 				foreach ($row as $key => $item) {
-					// $workbook->objspreadsheet->getActiveSheet()->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item)))));
-					$sheet->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item)))));
+					$workbook->getActiveSheet()->setCellValue($col . $rowNumber, str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item)))));
 					$col++;
 				}
 				$rowNumber++;
 			}
 		}
-		// $worksheet = new \MoodleExcelWorksheet($filename, $spreadsheet);
-		// $workbook->add_worksheet($filename);
-		// $workbook->close();
-		$objWriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+
+		// Freeze pane so that the heading line won't scroll
+		$workbook->getActiveSheet()->freezePane('A2');
+
+		// Save as an Excel BIFF (xls) file
+		$objWriter = PHPExcel_IOFactory::createWriter($workbook, 'Excel2007');
+
 		$objWriter->save($filename);
-		
 	}
 
 	// ODS
@@ -880,7 +860,7 @@ class schedule {
 	 * @param  string $search
 	 * @return Object List of users with id and fullname
 	 */
-	public function rolewiseusers($roles, $search = '', $page = 0, $reportid = 0) {
+	public function rolewiseusers($roles, $orgid, $deptid, $subdeptid, $search = '', $page = 0, $reportid = 0) {
 		global $DB, $PAGE;
 		if (empty($roles)) {
 			throw new moodle_exception('Missing Role values.');
@@ -893,13 +873,35 @@ class schedule {
 		} else {
 			$search_sql = " ";
 		}
-
+		$roleshortname = $DB->get_field_sql("SELECT shortname FROM {role} WHERE id = $roles");
 		$role_sql = " AND ra.roleid IN ($roles) ";
 
 		$rolewiseuserssql = "SELECT u.id, CONCAT(u.firstname, ' ' , u.lastname) AS fullname
                                FROM {user} u
                                JOIN {role_assignments} ra
-                              WHERE u.id = ra.userid $role_sql $search_sql AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0";
+                              WHERE u.id = ra.userid $role_sql $search_sql AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0"; 
+        if ($orgid > 0) { 
+        	if (!empty($roleshortname)) {
+	        	if ($roleshortname == 'admin') {
+	        		$rolewiseuserssql .= " ";
+	        	} else if ($roleshortname == 'oh') {
+	            	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid"; 
+	            } else if ($roleshortname == 'dh') {
+	            	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid ";
+	            	if ($deptid > 0) {
+	                	$rolewiseuserssql .= " AND u.open_departmentid = $deptid";
+		            } 
+		        } else {
+		        	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid ";
+	            	if ($deptid > 0) {
+	                	$rolewiseuserssql .= " AND u.open_departmentid = $deptid";
+		            } 
+		            if ($subdeptid > 0) {
+		            	$rolewiseuserssql .= " AND u.open_subdepartment = $subdeptid";
+		            }
+		        }
+		    }
+        }
 		$rolewiseusers = $DB->get_records_sql($rolewiseuserssql);
 
 		$reportclass = (new ls)->create_reportclass($reportid);

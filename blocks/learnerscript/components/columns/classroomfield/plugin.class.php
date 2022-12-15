@@ -48,17 +48,16 @@ class plugin_classroomfield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB; 
         $classroomrecord = $DB->get_record('local_classroom',array('id'=>$row->classroomid));
-        
 
         switch ($data->column) {
             case 'classroomname':
                     $classroomrecord->{$data->column} = $classroomrecord->name;
                 break;
             case 'startdate':
-                $classroomrecord->{$data->column} = \local_costcenter\lib::get_userdate('d-m-Y', $classroomrecord->startdate);
+                $classroomrecord->{$data->column} = date('d-M-Y', $classroomrecord->startdate);
                 break;
             case 'enddate':
-                $classroomrecord->{$data->column} = \local_costcenter\lib::get_userdate('d-m-Y', $classroomrecord->enddate);
+                $classroomrecord->{$data->column} = date('d-M-Y', $classroomrecord->enddate);
                 break;
             case 'capacity':
                 $classroomrecord->{$data->column} = ($classroomrecord->capacity) ? $classroomrecord->capacity : 'NA';
@@ -66,22 +65,13 @@ class plugin_classroomfield extends pluginbase {
             case 'classroomorg':
                 $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$classroomrecord->costcenter));
                 break;
-
-
-
             case 'classroomdept':
-                if($classroomrecord->department == -1){
-                $classroomrecord->{$data->column} = get_string('all');
+                if($classroomrecord->department > 0){
+                    $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$classroomrecord->department));
+                }else{
+                   $classroomrecord->{$data->column} = get_string('all'); 
                 }
-             else{ 
-                 $departments =$DB->get_records_sql_menu('SELECT id,fullname 
-                FROM {local_costcenter}
-                WHERE id IN('.$classroomrecord->department.')');
-                $classroomrecord->{$data->column}= implode(', ',$departments);
-                }
-                break;
-
-
+                break;   
             case 'classroom_subdept':
                 if(!empty($classroomrecord->subdepartment) && ($classroomrecord->subdepartment != -1)){
                     $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$classroomrecord->subdepartment));

@@ -32,7 +32,7 @@ class report_orgusers extends reportbase implements report {
      * @param object $reportproperties Report properties object
      */
     public function __construct($report, $reportproperties) {
-        global $USER, $DB;
+        global $USER;
         parent::__construct($report);
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
         $this->columns = array('orgusers' => array('employeename','assignedroles'));
@@ -74,9 +74,9 @@ class report_orgusers extends reportbase implements report {
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
             $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dhs = 1;
             }
         }
       if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -84,10 +84,15 @@ class report_orgusers extends reportbase implements report {
         }else if(has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND u.open_costcenterid = :costcenterid ";
             $this->params['costcenterid'] = $USER->open_costcenterid; 
-        }else{
+        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
             $this->sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid";
             $this->params['costcenterid'] = $USER->open_costcenterid; 
+            $this->params['departmentid'] = $USER->open_departmentid;
+        }else{
+            $this->sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartment";
+            $this->params['costcenterid'] = $USER->open_costcenterid; 
             $this->params['departmentid'] = $USER->open_departmentid; 
+            $this->params['subdepartment'] = $USER->open_subdepartment; 
         }
        parent::where();
     }

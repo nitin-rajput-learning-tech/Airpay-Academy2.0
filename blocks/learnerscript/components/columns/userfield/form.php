@@ -35,8 +35,11 @@ class userfield_form extends moodleform {
         $mform = & $this->_form;
         $mform->addElement('header', 'crformheader', get_string('userfield', 'block_learnerscript'), '');
         // $columns = $DB->get_columns('user');
-        $columns = array('fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus','designation','level','organization','department'
-            ,'subdepartment','location','team','hrmsrole','zone','region','grade');
+        $columns = array('fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus','designation','level','state','branch','organization','department'
+            ,'subdepartment','location','team','client','hrmsrole','zone','region','grade','country');
+        $customfields = $DB->get_fieldset_sql("SELECT concat('profile_',name) FROM {user_info_field} WHERE 1");
+
+        $columns = array_merge($columns,$customfields);
         $usercolumns = array_map('ucfirst', $columns);
         $usercolumns = array_combine($columns, $usercolumns);
 
@@ -53,8 +56,11 @@ class userfield_form extends moodleform {
     }
 
     public function advanced_columns() {
-        $columns = array('fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus','designation','level','organization','department'
-            ,'subdepartment','location','team','hrmsrole','zone','region','grade');
+        global $DB;
+        $columns = array('fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus','designation','level','state','branch','organization','department'
+            ,'subdepartment','location','team','client','hrmsrole','zone','region','grade','country');
+        $customfields = $DB->get_fieldset_sql("SELECT concat('profile_',name) FROM {user_info_field} WHERE 1");
+        $columns = $columns+$customfields;
 
         $usercolumns = array_map('ucfirst', $columns);
         $usercolumns = array_combine($columns, $usercolumns);

@@ -75,12 +75,8 @@ class plugin_user extends pluginbase {
             $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
             $params['costcenterid'] = $USER->open_costcenterid;
             $params['departmentid'] = $USER->open_departmentid;
-        }else {
-            $sql .= " AND u.open_costcenterid = :costcenterid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
         }
         $sql .= " ORDER BY u.firstname ASC ";
-         
         $users = $DB->get_records_sql_menu($sql,$params);
 
         $selectusersopt = array();
@@ -99,7 +95,7 @@ class plugin_user extends pluginbase {
     public function print_filter(&$mform) {
 
         $useroptions = $this->filter_data();
-        $array = array('data-select2' => 1,'data-maximum-selection-length' => isset($this->maxlength));
+        $array = array('data-select2' => 1,'data-maximum-selection-length' => $this->maxlength);
         $select = $mform->addElement('select', 'filter_user', get_string('user'), $useroptions,$array);
         $select->setHiddenLabel(true);
         $mform->setType('filter_user', PARAM_INT);

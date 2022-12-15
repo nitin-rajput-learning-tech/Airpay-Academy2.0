@@ -30,12 +30,12 @@ class report_coursescompletions extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         global $DB;
         parent::__construct($report, $reportproperties);
-        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','completionstatus','completiondate']];
+        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays','daystaken']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
-        $this->filters = array('organization','course','user','completionstatus');
+        $this->filters = array('organization', 'departments','subdepartments','course','user','completionstatus');
         $this->parent = true;
         $this->orderable = array('coursename');
-        $this->defaultcolumn = 'ue.id';
+        $this->defaultcolumn = 'ra.id';
     }
 
     function init() {
@@ -43,12 +43,19 @@ class report_coursescompletions extends reportbase implements report {
     }
 
     function count() {
-        $this->sql = "SELECT COUNT(ue.id) ";
+        $this->sql = "SELECT COUNT(ra.id) ";
     }
 
     function select() {
-        $this->sql = " SELECT ue.id, c.id as courseid, u.id as userid,c.fullname as coursename,
-                    cc.timecompleted AS completionstatus, cc.timecompleted AS completiondate " ;
+        $this->sql = " SELECT ra.id as assignmentid ,u.id as userid, u.*
+                        , ra.timemodified as enrolledon
+                        , cc.timecompleted 
+                        , ra.timemodified as enrolstarted
+                        , c.id as courseid 
+                        , c.fullname as coursename
+                        , c.open_coursecompletiondays as completiondays " ;
+//        $this->sql = " SELECT ue.id, c.id as courseid, u.id as userid,c.fullname as coursename,
+ //                   cc.timecompleted AS completionstatus, cc.timecompleted AS completiondate " ;
 
         parent::select();
     }
@@ -58,16 +65,14 @@ class report_coursescompletions extends reportbase implements report {
     }
 
     function joins() {
+        global $DB;
+        $employeerole = $DB->get_field('role', 'id', ['shortname' => 'employee']);
         $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category
-                        JOIN {enrol} e ON e.courseid = c.id AND 
-                                    (e.enrol = 'manual' OR e.enrol = 'self') 
-                        JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                        JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 
+                        JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
+                        JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}
+                        JOIN {user} u ON ra.userid = u.id AND u.confirmed = 1
                                         AND u.deleted = 0 AND u.suspended = 0
                         JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
-                        JOIN {role_assignments} as ra ON ra.userid = u.id
-                        JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=c.id
-                        JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                         LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid ";
 
         parent::joins();
@@ -75,20 +80,19 @@ class report_coursescompletions extends reportbase implements report {
 
     function where() {
         global $USER, $DB;
-        $this->sql .= " WHERE c.id <> :siteid AND c.visible = 1 AND 
-                        CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
+        $this->sql .= " WHERE c.id <> :siteid   ";
         $this->params['siteid'] = SITEID;
 
         $systemcontext = context_system::instance();
         // getscheduled report
         if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+            $scheduledreport = $DB->get_record_sql('SELECT id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
             if (!empty($scheduledreport)) {
             $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            $ohs = $DB->record_exists_sql("SELECT id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+            $dhs = $DB->record_exists_sql("SELECT id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
             } else {
-                $ohs = 1;
+                $ohs = $dhs=1;
             }
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
@@ -96,10 +100,15 @@ class report_coursescompletions extends reportbase implements report {
         }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
             $this->sql .= " AND c.open_costcenterid = :costcenterid ";
             $this->params['costcenterid'] = $USER->open_costcenterid;
-        }else{
+        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
             $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
             $this->params['costcenterid'] = $USER->open_costcenterid;
             $this->params['departmentid'] = $USER->open_departmentid;
+        }else{
+            $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND c.open_subdepartment = :subdepartmentid";
+            $this->params['costcenterid'] = $USER->open_costcenterid;
+            $this->params['departmentid'] = $USER->open_departmentid;
+            $this->params['subdepartmentid'] = $USER->open_subdepartment;
         }
 
         parent::where();
@@ -122,6 +131,18 @@ class report_coursescompletions extends reportbase implements report {
             $this->params['orgid'] = $orgids;
         }
 
+        if (!empty($this->params['filter_departments'])) {
+            $departmentid = $this->params['filter_departments'];
+            $this->sql .= " AND c.open_departmentid = :departmentid ";
+            $this->params['departmentid'] = $departmentid;
+        }
+
+        if (!empty($this->params['filter_subdepartments']) && ($this->params['filter_subdepartments'] > 0)) {
+            $subdepartmentid = $this->params['filter_subdepartments'];
+            $this->sql .= " AND c.open_subdepartment = :subdepartmentid ";
+            $this->params['subdepartmentid'] = $subdepartmentid;
+        }
+
         if (!empty($this->params['filter_course'])) {
             $courseid = $this->params['filter_course'];
             $this->sql .= " AND c.id = :courseid ";
@@ -141,9 +162,30 @@ class report_coursescompletions extends reportbase implements report {
         if ($this->params['filter_completionstatus'] == 0) {
             $this->sql .= " AND cc.timecompleted IS NULL ";
         }
+        // echo $this->sql;
+        // print_r($this->params);exit;
     }
 
     public function get_rows($courseusers) {
+        global $DB;
+        if($courseusers){
+            foreach($courseusers AS $user){
+                $sql = "SELECT d.*, f.shortname, f.name, f.datatype
+                          FROM {user_info_data} d ,{user_info_field} f
+                         WHERE f.id = d.fieldid AND d.userid = ?";
+                if ($profiledata = $DB->get_records_sql($sql, array($user->userid))) {
+                    foreach ($profiledata as $p) {
+                        if ($p->datatype == 'checkbox') {
+                            $p->data = ($p->data) ? get_string('yes') : get_string('no');
+                        }
+                        if ($p->datatype == 'datetime') {
+                            $p->data = userdate($p->data);
+                        }
+                        $user->{'profile_'.$p->name} = $p->data;
+                    }
+                }
+            }
+        }
         return $courseusers;
     }
 }

@@ -109,7 +109,172 @@ function xmldb_block_learnerscript_upgrade($oldversion) {
         }   
 
         upgrade_plugin_savepoint(true, 2019052005.2, 'block', 'learnerscript');
+    } 
+
+    if ($oldversion < 2019052005.4) {
+        $table = new xmldb_table('block_ls_schedule');
+        $field1 = new xmldb_field('organizationid', XMLDB_TYPE_TEXT, '225', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {   
+            $dbman->add_field($table, $field1);    
+        } 
+        $field2 = new xmldb_field('departmentid', XMLDB_TYPE_TEXT, '225', null, null, null, null);
+        if (!$dbman->field_exists($table, $field2)) {   
+            $dbman->add_field($table, $field2);    
+        }   
+
+        upgrade_plugin_savepoint(true, 2019052005.4, 'block', 'learnerscript');
     }
 
+    if ($oldversion < 2019052005.6) {
+        $table = new xmldb_table('block_ls_learningformats');
+        // Adding fields to table tool_dataprivacy_ctxexpired.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('moduleid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('moduletype', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('learningformatid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('username', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('enroldate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('completiondate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('upcomingdeadline', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('overduedeadline', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('user_costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('user_departmentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('departmentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('role_assign_timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('open_contentvendor', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table tool_dataprivacy_ctxexpired.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);             
+        }
+    
+        $table1 = new xmldb_table('block_ls_exams');
+        // Adding fields to table tool_dataprivacy_ctxexpired.
+        $table1->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table1->add_field('examid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('examname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('vendorid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('vendorname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('username', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('enroldate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('completiondate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table1->add_field('deadline', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table1->add_field('upcomingexpiry', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table1->add_field('upcomingeol', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table1->add_field('user_costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('user_departmentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('departmentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table1->add_field('open_contentvendor', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table tool_dataprivacy_ctxexpired.
+        $table1->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        if (!$dbman->table_exists($table1)) {
+            $dbman->create_table($table1);             
+        }
+
+        $table2 = new xmldb_table('block_ls_certificates');
+        // Adding fields to table tool_dataprivacy_ctxexpired.
+        $table2->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table2->add_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('certificatename', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('vendorid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('vendorname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('username', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('enroldate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('completiondate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table2->add_field('deadline', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table2->add_field('upcomingexpiry', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table2->add_field('upcomingeol', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table2->add_field('user_costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('user_departmentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table2->add_field('departmentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table tool_dataprivacy_ctxexpired.
+        $table2->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        if (!$dbman->table_exists($table2)) {
+            $dbman->create_table($table2);             
+        }
+    }
+    if ($oldversion < 2019052005.8) {
+        $table = new xmldb_table('block_ls_certificates');
+        $field1 = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {   
+            $dbman->add_field($table, $field1);    
+        }
+        $field2 = new xmldb_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field2)) {   
+            $dbman->add_field($table, $field2);    
+        } 
+        $field3 = new xmldb_field('open_contentvendor', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field3)) {   
+            $dbman->add_field($table, $field3);    
+        }
+        upgrade_plugin_savepoint(true, 2019052005.8, 'block', 'learnerscript');
+    }
+    if ($oldversion < 2019052006.8) {
+        $table = new xmldb_table('block_ls_learningformats');
+        $table1 = new xmldb_table('block_ls_exams');
+        $table2 = new xmldb_table('block_ls_certificates');
+        $field1 = new xmldb_field('subdepartment', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $field2 = new xmldb_field('user_subdepartment', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {   
+            $dbman->add_field($table, $field1);    
+        }
+        if (!$dbman->field_exists($table, $field2)) {   
+            $dbman->add_field($table, $field2);    
+        }
+
+        if (!$dbman->field_exists($table1, $field1)) {   
+            $dbman->add_field($table1, $field1);    
+        } 
+        if (!$dbman->field_exists($table1, $field2)) {   
+            $dbman->add_field($table1, $field2);    
+        }
+
+        if (!$dbman->field_exists($table2, $field1)) {   
+            $dbman->add_field($table2, $field1);    
+        }
+        if (!$dbman->field_exists($table2, $field2)) {   
+            $dbman->add_field($table2, $field2);    
+        }
+        upgrade_plugin_savepoint(true, 2019052006.8, 'block', 'learnerscript');
+    } 
+
+    if ($oldversion < 2019052006.9) {
+        $table = new xmldb_table('block_ls_schedule');
+        $field1 = new xmldb_field('subdepartment', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {   
+            $dbman->add_field($table, $field1);    
+        }
+        upgrade_plugin_savepoint(true, 2019052006.9, 'block', 'learnerscript');         
+    }
+    if ($oldversion < 2019052008.2) {
+       $table = new xmldb_table('block_ls_learningformats');
+        $table1 = new xmldb_table('block_ls_exams');
+       $field1 = new xmldb_field('refid', XMLDB_TYPE_CHAR, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {   
+            $dbman->add_field($table, $field1);    
+        }
+        if (!$dbman->field_exists($table1, $field1)) {   
+            $dbman->add_field($table1, $field1);    
+        }
+        upgrade_plugin_savepoint(true, 2019052008.2, 'block', 'learnerscript');         
+    }
+    
     return true;
 }

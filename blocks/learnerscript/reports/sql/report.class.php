@@ -24,6 +24,7 @@
 define('REPORT_CUSTOMSQL_MAX_RECORDS', 5000);
 use block_learnerscript\local\ls;
 use block_learnerscript\local\reportbase;
+use block_learnerscript\local\querylib;
 
 class report_sql extends reportbase {
     public $tablehead;
@@ -44,7 +45,8 @@ class report_sql extends reportbase {
     function prepare_sql($sql) {
         global $DB, $USER, $CFG, $COURSE;
         $sql = str_replace('%%LS_STARTDATE%%', $this->ls_startdate, $sql);
-        $sql = str_replace('%%LS_ENDDATE%%', $this->ls_enddate, $sql);
+        $sql = str_replace('%%LS_ENDDATE%%', $this->ls_enddate, $sql); 
+        $systemcontext = context_system::instance();
         // $sql = str_replace('%%SEARCH%%', $this->search, $sql);
 
             if (!empty($this->search) && preg_match("/%%SEARCH:([^%]+)%%/i", $sql, $output)) {
@@ -99,10 +101,190 @@ class report_sql extends reportbase {
             $sql = str_replace('%%FILTER_USER:' . $output[1] . '%%', $replace, $sql);
         }
 
-        if (preg_match("/%%FILTER_COURSES:([^%]+)%%/i", $sql, $output) && $this->courseid>1) {
+        if (preg_match("/%%FILTER_COURSE:([^%]+)%%/i", $sql, $output) && $this->courseid>1) {
             $replace = ' AND ' . $output[1] . ' = ' . $this->courseid;
-            $sql = str_replace('%%FILTER_COURSES:' . $output[1] . '%%', $replace, $sql);
+            $sql = str_replace('%%FILTER_COURSE:' . $output[1] . '%%', $replace, $sql);
+        } 
+
+        // if (preg_match_all("/%%FILTER_ORGANIZATION:([^%]+)%%/i", $sql, $output) && $this->costcenterid > 0) { 
+        //     foreach ($output[1] as $o) { 
+        //         $replace = ' AND ' . $o . ' = ' . $this->costcenterid;
+        //         $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql);
+        //     }   
+
+        // }
+
+        // if (preg_match_all("/%%FILTER_DEPARTMENTS:([^%]+)%%/i", $sql, $output) && $this->departmentid > 0) { 
+        //     foreach ($output[1] as $o) { 
+        //         $replace = ' AND ' . $o . ' = ' . $this->departmentid;
+        //         $sql = str_replace('%%FILTER_DEPARTMENTS:' . $o . '%%', $replace, $sql);
+        //     }   
+
+        // }
+
+        if (!is_siteadmin()) {
+            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+            if (!empty($scheduledreport)) {
+            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            } else {
+                $ohs = $dhs = 1;
+            }
+        } 
+        if (!is_siteadmin()) {
+            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+            if (!empty($scheduledreport)) {
+            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            } else {
+                $ohs = $dhs = 1;
+            }
+        } 
+
+        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){ 
+            if (preg_match("/%%FILTER_ORGANIZATION:([^%]+)%%/i", $sql, $output) && $this->costcenterid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $this->costcenterid;
+                    $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_DEPARTMENTS:([^%]+)%%/i", $sql, $output) && $this->departmentid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $this->departmentid;
+                    $sql = str_replace('%%FILTER_DEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_SUBDEPARTMENTS:([^%]+)%%/i", $sql, $output) && $this->subdepartment > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $this->departmentid;
+                    $sql = str_replace('%%FILTER_SUBDEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+        } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){ 
+            if (preg_match("/%%FILTER_ORGANIZATION:([^%]+)%%/i", $sql, $output) && $USER->open_costcenterid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $USER->open_costcenterid;
+                    $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_DEPARTMENTS:([^%]+)%%/i", $sql, $output) && $this->departmentid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $this->departmentid;
+                    $sql = str_replace('%%FILTER_DEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_SUBDEPARTMENTS:([^%]+)%%/i", $sql, $output) && $this->subdepartment > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $this->departmentid;
+                    $sql = str_replace('%%FILTER_SUBDEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){ 
+            if (preg_match("/%%FILTER_ORGANIZATION:([^%]+)%%/i", $sql, $output) && $USER->open_costcenterid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $USER->open_costcenterid;
+                    $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_DEPARTMENTS:([^%]+)%%/i", $sql, $output) && $USER->open_costcenterid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $USER->open_costcenterid;
+                    $sql = str_replace('%%FILTER_DEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_SUBDEPARTMENTS:([^%]+)%%/i", $sql, $output) && $this->subdepartment > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $this->departmentid;
+                    $sql = str_replace('%%FILTER_SUBDEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+        } else { 
+            if (preg_match("/%%FILTER_ORGANIZATION:([^%]+)%%/i", $sql, $output) && $USER->open_costcenterid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $USER->open_costcenterid;
+                    $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_DEPARTMENTS:([^%]+)%%/i", $sql, $output) && $USER->open_departmentid > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $USER->open_departmentid;
+                    $sql = str_replace('%%FILTER_DEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+            if (preg_match("/%%FILTER_SUBDEPARTMENTS:([^%]+)%%/i", $sql, $output) && $USER->open_subdepartment > 0) {
+                foreach ($output[1] as $o) { 
+                    $replace = ' AND ' . $o . ' = ' . $USER->open_subdepartment;
+                    $sql = str_replace('%%FILTER_SUBDEPARTMENTS:' . $o . '%%', $replace, $sql);
+                }
+            }
+        } 
+
+        if ($this->loggedinuserrole == 'dh') {
+            if (preg_match("/%%DHQUERY:([^%]+)%%/i", $sql, $output)) { 
+                if (empty($this->courseslist)) {
+                    $replace = ' AND ' . $output[1] . ' IN  (0) '; 
+                } else {
+                    $replace = ' AND ' . $output[1] . ' IN  (' . $this->courseslist . ') ';
+                }
+                $sql = str_replace('%%DHQUERY:' . $output[1] . '%%', $replace, $sql);
+            }
+        } else { 
+            if (preg_match("/%%DHQUERY:([^%]+)%%/i", $sql, $output)) { 
+                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){ 
+                    $coursesql  = (new querylib)->getcourseslist($this->costcenterid, $this->departmentid);
+                }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){ 
+                    $coursesql  = (new querylib)->getcourseslist($USER->open_costcenterid, $this->departmentid);
+                }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){ 
+                    $coursesql  = (new querylib)->getcourseslist($USER->open_costcenterid, $USER->open_departmentid); 
+                } else { 
+                    $coursesql  = (new querylib)->getcourseslist($USER->open_costcenterid, $USER->open_departmentid,$USER->open_subdepartment); 
+                }
+                if (empty($coursesql)) {
+                    $replace = ' AND ' . $output[1] . ' IN  (0) '; 
+                } else {
+                    $replace = ' AND ' . $output[1] . ' IN  (' . $coursesql . ') ';
+                }
+                $sql = str_replace('%%DHQUERY:' . $output[1] . '%%', $replace, $sql);
+            }
         }
+
+        // if ($this->loggedinuserrole != 'dh') {
+        //     if (preg_match_all("/%%FILTER_ORGANIZATION:([^%]+)%%/i", $sql, $output) && $USER->open_costcenterid > 0) {
+        //         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) { 
+        //             foreach ($output[1] as $o) {
+        //                 $replace = " ";
+        //                 $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql); 
+        //             }
+        //         } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs) { 
+        //             foreach ($output[1] as $o) {
+        //                 $replace = ' AND ' . $o . ' = ' . $USER->open_costcenterid;
+        //                 $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql); 
+        //             }
+        //         } else { 
+        //             foreach ($output[1] as $o) {
+        //                 $replace = ' AND ' . $o . ' = ' . $USER->open_costcenterid;
+        //                 $sql = str_replace('%%FILTER_ORGANIZATION:' . $o . '%%', $replace, $sql); 
+        //             }
+        //             if (preg_match_all("/%%FILTER_DEPARTMENTS:([^%]+)%%/i", $sql, $output) && $USER->open_departmentid > 0) { 
+        //                 foreach ($output[1] as $o) {
+        //                     $replace = ' AND ' . $o . ' = ' . $USER->open_departmentid;
+        //                     $sql = str_replace('%%FILTER_DEPARTMENTS:' . $o. '%%', $replace, $sql); 
+        //                 }
+        //             } 
+        //         } 
+        //     } 
+        // } else {
+        //     if (preg_match("/%%DHQUERY:([^%]+)%%/i", $sql, $output)) { 
+        //         if (empty($this->courseslist)) {
+        //             $replace = ' AND ' . $output[1] . ' IN  (0) '; 
+        //         } else {
+        //             $replace = ' AND ' . $output[1] . ' IN  (' . $this->courseslist . ') ';
+        //         }
+        //         $sql = str_replace('%%DHQUERY:' . $output[1] . '%%', $replace, $sql);
+        //     }
+        // }
 
         // See http://en.wikipedia.org/wiki/Year_2038_problem
         $sql = str_replace(array('%%STARTTIME%%', '%%ENDTIME%%'), array('0', '2145938400'), $sql);
@@ -110,7 +292,6 @@ class report_sql extends reportbase {
         $sql = preg_replace('/%{2}[^%]+%{2}/i', '', $sql);
 
         $sql = str_replace('?', '[[QUESTIONMARK]]', $sql);
-
         return $sql;
     }
 
