@@ -13,3 +13,6 @@ body#page-local-learningplan-userdashboard .card_list_view {
 .disabled{
     opacity: .5;
 }
+#page-local-learningplan-view .page-header-image ,#page-local-learningplan-view .header-button-group{
+    display: none;
+}
