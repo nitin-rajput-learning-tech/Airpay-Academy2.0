@@ -211,12 +211,12 @@ class accesslib
 
         }
 
-        $assignedsql = "SELECT ra.id, cc.id as categoryid, cc.name as categoryname, r.id as roleid, r.name AS rolename, r.shortname as rolecode, ra.contextid, c.depth
+        $assignedsql = "SELECT ra.id, cc.id as categoryid, cc.name as categoryname, r.id as roleid, r.name AS rolename, r.shortname as rolecode, ra.contextid, c.depth, cc.path
         FROM {role_assignments} AS ra
         JOIN {role} AS r ON r.id =  ra.roleid
         JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
         JOIN {course_categories} AS cc ON cc.id = c.instanceid
-        WHERE ra.userid = :userid GROUP BY r.id, c.depth ORDER BY ra.id DESC ";
+        WHERE ra.userid = :userid  ORDER BY ra.id DESC ";
 
         $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid]);
 
@@ -236,5 +236,18 @@ class accesslib
         }
 
         return $costcenterpath;
+    }
+    public static function get_category_info($categoryid, $value = null){
+        global $DB;
+        $coursecatrecordcache = \cache::make('core', 'coursecatrecords');
+        $coursecat = $coursecatrecordcache->get($id);
+        if ($coursecat === false) {
+            $coursecat = $DB->get_record('course_categories', array('id' => $categoryid));
+        }
+        if(is_null($value)){
+            return $coursecat;
+        }else{
+            return $coursecat->$value;
+        }
     }
 }
