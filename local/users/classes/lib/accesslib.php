@@ -31,37 +31,37 @@ namespace local_users\lib;
 class accesslib extends \local_costcenter\lib\accesslib{
 
 
-    public function user_costcenterpath($userid = null) {
+    public static function  user_costcenterpath($userid = null) {
 
         global $DB,$USER;
 
         $endpathvalue=null;
 
-        $costcenterpath=$USER->open_costcenterpath;
-
         if($userid != null && $userid > 0){
 
             $costcenterpath=$DB->get_field('user','open_costcenterpath',  array('id'=> $userid));
-        }
 
-        if(!empty($costcenterpath)){
+            if(!empty($costcenterpath)){
 
-            $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
 
-            $endpathvalue=end($extractcostcenterpath);
+                $endpathvalue=end($extractcostcenterpath);
 
+            }
         }
 
         return $endpathvalue;
+
     }
     public static function get_module_context($userid = null){
+        global $USER;
 
-        return parent::get_module_context((new \local_users\lib\accesslib())->user_costcenterpath($userid));
+        return parent::get_module_context(self::user_costcenterpath($userid));
 
     }
     public static function get_costcenter_path_field_concatsql($columnname,$userid = null){
 
-        return parent::get_costcenter_path_field_concatsql($columnname,(new \local_users\lib\accesslib())->user_costcenterpath($userid));
+        return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid));
 
     }
 }

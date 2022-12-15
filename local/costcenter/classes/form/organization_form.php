@@ -61,22 +61,47 @@ class organization_form extends moodleform { /*costcenter creation form*/
                     FROM {local_costcenter} AS lc 
                     JOIN {local_costcenter} AS llc ON llc.id=lc.parentid 
                     WHERE lc.depth = 2 ";
+            }else if($formtype == 'subsubdepartment'){
+                $parent_label = get_string('subdepartment', 'local_costcenter');
+                $subsubdepartmentsql = "SELECT lc.id, CONCAT(lllc.fullname, ' / ', llc.fullname,' / ',lc.fullname) AS fullname
+                    FROM {local_costcenter} AS lc
+                    JOIN {local_costcenter} AS llc ON llc.id=lc.parentid
+                    JOIN {local_costcenter} AS lllc ON lllc.id=llc.parentid
+                    WHERE lc.depth = 3 ";
+            }else if($formtype == 'subsubsubdepartment'){
+                $parent_label = get_string('subsubdepartment', 'local_costcenter');
+                $subsubsubdepartmentsql = "SELECT lc.id, CONCAT(llllc.fullname, ' / ', lllc.fullname, ' / ', llc.fullname,' / ',lc.fullname) AS fullname
+                    FROM mdl_local_costcenter AS lc
+                    JOIN mdl_local_costcenter AS llc ON llc.id=lc.parentid
+                    JOIN mdl_local_costcenter AS lllc ON lllc.id=llc.parentid
+                    JOIN mdl_local_costcenter AS llllc ON llllc.id=lllc.parentid
+                    WHERE lc.depth = 4";
             }
             if($id){
                 $parentid = $DB->get_field('local_costcenter', 'parentid', array('id' => $id));
                 $departmentsql .= " AND lc.id = {$parentid} ";
-                $subdepartmentsql .= " AND lc.id = {$parentid} ";
+                $subdepartmentsql .= $departmentsql;
+                $subsubdepartmentsql .= $departmentsql;
+                $subsubsubdepartmentsql .= $departmentsql;
             }
             if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
                 $departmentsql .= " AND lc.id = {$USER->open_costcenterid} ";
-                $subdepartmentsql .= " AND llc.id = {$USER->open_costcenterid} "; 
+                $subdepartmentsql .= $departmentsql;
+                $subsubdepartmentsql .= $departmentsql;
+                $subsubsubdepartmentsql .= $departmentsql;
             }else if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
                 $subdepartmentsql .= " AND lc.id = {$USER->open_departmentid} "; 
+                $subsubdepartmentsql .= $subdepartmentsql;
+                $subsubsubdepartmentsql .= $subdepartmentsql;
             }
             if($formtype == 'department'){
                 $options = $DB->get_records_sql_menu($departmentsql);
             }else if($formtype == 'subdepartment'){
                 $options = $DB->get_records_sql_menu($subdepartmentsql);
+            }else if($formtype == 'subsubdepartment'){
+                $options = $DB->get_records_sql_menu($subsubdepartmentsql);
+            }else if($formtype == 'subsubsubdepartment'){
+                $options = $DB->get_records_sql_menu($subsubsubdepartmentsql);
             }
             if(count($options) > 1){
 
@@ -124,7 +149,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
 
                 $mform->setType('shortname', PARAM_TEXT);
 
-            }elseif($formtype == 'department' || $formtype == 'subdepartment'){
+            }elseif($formtype == 'department' || $formtype == 'subdepartment' || $formtype == 'subsubdepartment' || $formtype == 'subsubsubdepartment'){
 
                 $shortnamestatic = $DB->get_field('local_costcenter', 'shortname', array('id' => key($options)));
 
@@ -223,7 +248,6 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 }else{
                     $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
                 }
-                
             }
         }
         return $errors;

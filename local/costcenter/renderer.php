@@ -209,7 +209,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }else{
             $depth = 1;
         }
-        if($costcenters_exist && $depth != 2){
+        if($costcenters_exist && $depth != 2 && $depth != 3 && $depth != 4){
             if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext) || has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
                 $headstring = 'addnewdept';
                 $title = get_string('createdepartment','local_costcenter');
@@ -227,7 +227,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $deptexistsql .= " AND parentid={$USER->open_costcenterid} ";
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
-        if($deptexist){
+        if($deptexist && $depth != 3 && $depth != 4){
             $headstring = 'addnewsubdept';
                 $title = get_string('createsubdepartment','local_costcenter');
                 $create_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$systemcontext->id, id:0, formtype:\"subdepartment\", headstring:\"$headstring\"}) })(event)'>
@@ -236,11 +236,42 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }else{
             $create_sub_department = false;
         }
+        $deptexistth = "SELECT id FROM {local_costcenter} WHERE depth = 3 ";
+        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
+            $deptexistth .= " AND parentid={$USER->open_costcenterid} ";
+        }
+        $deptexistone = $DB->record_exists_sql($deptexistth);
+        if($deptexistone && $depth != 4 ){
+            $headstring = 'addnewsubsubdept';
+                $title = get_string('createsubsubdepartment','local_costcenter');
+                $create_sub_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$systemcontext->id, id:0, formtype:\"subsubdepartment\", headstring:\"$headstring\"}) })(event)'>
+                    <i class='icon fa fa-plus-circle'></i>
+                </a>";
+        }else{
+            $create_sub_sub_department = false;
+        }
+
+        $deptexistfo = "SELECT id FROM {local_costcenter} WHERE depth = 4 ";
+        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
+            $deptexistfo .= " AND parentid={$USER->open_costcenterid} ";
+        }
+        $deptexisttwo = $DB->record_exists_sql($deptexistfo);
+        if($deptexisttwo){
+            $headstring = 'addnewsubsubsubdept';
+                $title = get_string('createsubsubsubdepartment','local_costcenter');
+                $create_sub_sub_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$systemcontext->id, id:0, formtype:\"subsubsubdepartment\", headstring:\"$headstring\"}) })(event)'>
+                    <i class='icon fa fa-plus-square-o'></i>
+                </a>";
+        }else{
+            $create_sub_sub_sub_department = false;
+        }
 
         $buttons = array(
             'create_organisation' => $create_organisation,
             'create_department' => $create_department,
-            'create_sub_department' => $create_sub_department
+            'create_sub_department' => $create_sub_department,
+            'create_sub_sub_department' => $create_sub_sub_department,
+            'create_sub_sub_sub_department' => $create_sub_sub_sub_department
         );
     return $this->render_from_template('local_costcenter/viewbuttons', $buttons);
     }
@@ -416,7 +447,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         return $OUTPUT->render_from_template('local_costcenter/departments_view', $costcenter_view_content);
     }
     public function department_view($id, $systemcontext){
-        global $DB, $USER, $OUTPUT;
+        global $DB, $USER, $OUTPUT, $CFG;
         if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
             print_error('invalidschoolid');
         }
@@ -432,7 +463,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
                         $delete = true;
                     $edit = true;
                 }
-            }else if($pathcount == 2){
+            }else if($pathcount == 2 || 3 || 4){
                 if(is_siteadmin() || has_capability('local/costcenter:updatedepartment', $systemcontext))
                     $edit = true;
                 if((is_siteadmin() || has_capability('local/costcenter:deletedepartment', $systemcontext)) && count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
@@ -480,6 +511,11 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
 
             $subdept = count($subdepartments);
+            if($subdept){
+                $subdept_count_link = $CFG->wwwroot.'/local/costcenter/costcenterview.php?id='.$dept->id;
+            }else{
+                $subdept_count_link = "javascript:void(0)";
+            }
             $subdept = ($subdept > 0 ? $subdept : get_string('not_available', 'local_costcenter'));
 
             $deparray = local_costcenter_plugins_count($organisationid, $dept->parentid,$dept->id);
@@ -494,7 +530,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
                         if($deparray['totalusers'] == 0)
                             $deptdelete = true;
                     }
-                }else if($dept->depth == 2){
+                }else if($dept->depth == 2 || 3 || 4){
                     if(is_siteadmin() || has_capability('local/costcenter:updatedepartment', $systemcontext))
                         $deptedit = true;
                     if((is_siteadmin() || has_capability('local/costcenter:deletedepartment', $systemcontext)) && $deparray['totalusers'] == 0)
@@ -515,7 +551,21 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $rolescount = $DB->count_records_sql("SELECT count(ra.roleid) FROM {context} AS ct JOIN {role_assignments} ra ON ra.contextid = ct.id  AND ct.id = '$contextid'");
 
             $departments_array['subdept'] = $subdept;
-            $departments_array['enablesubdepartment_link'] = false;
+            $departments_array['headstring'] = 'update_subdept';
+            $departments_array['formtype'] = 'subdepartment';
+            if($dept->depth == 5){
+                $departments_array['headstring'] = 'update_subsubsubdept';
+                $departments_array['formtype'] = 'subsubsubdepartment';
+            }else if($dept->depth == 4){
+                $departments_array['enablesubsubsubdepartment_link'] = true;
+                $departments_array['headstring'] = 'update_subsubdept';
+                $departments_array['formtype'] = 'subsubdepartment';
+            }
+            else if($dept->depth == 3){
+                $departments_array['enablesubsubdepartment_link'] = true;
+            }
+
+            $departments_array['subdept_count_link'] = $subdept_count_link;
             $departments_array['departmentparentid'] = $dept->parentid;
             $departments_array['departmentfullname'] = $dept->fullname;
             $departments_array['edit_image_url'] = $OUTPUT->image_url('t/edit');
@@ -535,15 +585,13 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['hide_classroom'] = TRUE;
             $departments_array['hide_program'] = TRUE;
             $departments_array['hide_certification'] = TRUE;
-            $departments_array['headstring'] = 'update_subdept';
-            $departments_array['formtype'] = 'subdepartment';
             $departments_array['role_count'] = $rolescount;
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;
             $departments_content[] = $departments_array+$deparray;
         }
 
         $costcenter_view_content = [
-            'showsubdept_content' => true,
+            'showrols_content' => true,
             'totalsubdepts' => $totalsubdepts,
             "subdeptcount" => $subdepartment,
             "deptclass" => $deptclass,
@@ -560,6 +608,14 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "formtype" => 'department',
             "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $systemcontext)),
         ];
+        if($depart->depth == 4){
+            $costcenter_view_content['showsubsubsubdept_content'] = true;
+        }else if($depart->depth == 3){
+            $costcenter_view_content['showsubsubdept_content'] = true;
+        }else if($depart->depth == 2){
+            $costcenter_view_content['showsubdept_content'] = true;
+        }
+
         $pluginnavs = local_costcenter_plugins_count($organisationid, $id);
         $costcenter_view_content = $costcenter_view_content+$pluginnavs;
         return $OUTPUT->render_from_template('local_costcenter/departments_view', $costcenter_view_content);

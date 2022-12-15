@@ -40,10 +40,24 @@
                             <a href="{{subdept_count_link}}" class="sub_dept_count">{{subdept}}</a>
                         </span>
                         {{/ enablesubdepartment_link}}
+
+                        {{# enablesubsubdepartment_link}}
+                        <span class="pull-right subdepartment_link">
+                            <label>{{#str}}subsubdepartment, local_costcenter{{/str}} : </label>
+                            <a href="{{subdept_count_link}}" class="sub_dept_count">{{subdept}}</a>
+                        </span>
+                        {{/ enablesubsubdepartment_link}}
+
+                        {{# enablesubsubsubdepartment_link}}
+                        <span class="pull-right subdepartment_link">
+                            <label>{{#str}}subsubsubdepartment, local_costcenter{{/str}} : </label>
+                            <a href="{{subdept_count_link}}" class="sub_dept_count">{{subdept}}</a>
+                        </span>
+                        {{/ enablesubsubsubdepartment_link}}
                     </div>
 
                     <div class="col-md-1 col-sm-3 col-3 pull-right dept_topright p-0">
-                          <div class="showoptions{{{ deptid }}} actionicons pull-right">
+                        <div class="showoptions{{{ deptid }}} actionicons pull-right">
                             <span  class="pull-right showoptions" data-action="showoptions{{{ deptid }}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{deptid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{deptid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
                             </span>
                             <ul class="col-md-12 col-sm-12 col-12 p-0 options_container" id = "showoptions{{{ deptid }}}">
