@@ -1,0 +1,26 @@
+<div>
+    <section class="block block_reporttiles card mb-3 mt-4">
+        <div class="card-body p-0">
+            <div class="card-text content mt-3">
+                <div class="dashboard_reporttile_container " style="background:#FFFFFF;opacity:0.8" >
+                <div class="dashboard_tiles w-100" style="color:#FFFFFF;">
+                    <span class="allpercentage">
+                    {{#overcompliances}}
+                        <div class="reporttile_title text-center" title="Learners">{{compliancename}}</div>
+                        <div class="tiles_information">
+                            <table width="100%" class="report_tiles_table">
+                                <tbody>
+                                    <tr>
+                                        <td>Overall compliance<b><span>{{percentage}}%</span></b></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    {{/overcompliances}}
+                    </span>
+                </div>
+                </div>         
+            </div>
+        </div>
+    </section>
+</div>

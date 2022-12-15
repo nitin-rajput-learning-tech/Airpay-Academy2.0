@@ -38,7 +38,7 @@ class report_classroom_completions extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],
                                 'userfield'=>['userfield'],
                                 'classroomcompletionscolumns'=>['attendedsessions','totalsessions','usercompletionstatus','usercompletiondate']);
-        $this->filters = array('organization','departments','user','classrooms','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'user','classrooms','completionstatus');
         $this->defaultcolumn = 'lcu.id';
     }
 
@@ -129,10 +129,15 @@ class report_classroom_completions extends reportbase implements report {
         }
 
         
-        if (isset($this->params['filter_departments']) && $this->params['filter_departments'] >= 0 && $this->params['filter_departments'] != '') {
-
+        if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
             $this->sql .= " AND lc.department = :deptid ";
-            $this->params['deptid'] = $this->params['filter_departments'] ? $this->params['filter_departments'] : -1;
+            $this->params['deptid'] = $this->params['filter_departments'];
+
+        }
+
+        if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
+            $this->sql .= " AND lc.subdepartment = :subdeptid ";
+            $this->params['subdeptid'] = $this->params['filter_subdepartments'];
 
         }
 

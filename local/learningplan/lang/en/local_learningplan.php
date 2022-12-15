@@ -105,7 +105,7 @@ $string['open_band'] = 'Band';
 $string['open_hrmsrole'] = 'Role';
 $string['open_branch'] = 'Branch';
 $string['open_designation'] = 'Designation';
-$string['learningplan_enrol_users'] = 'Are you sure you want to enroll {$a->count} users to the learning path "{$a->planname}" ?';
+$string['learningplan_enrol_users'] = 'Are you sure you want to enroll {$a->count} users to the learning path <b>"{$a->planname}"</b> ?';
 $string['provide_valid_shortname'] = 'Missing Learningpath code ';
 $string['provide_valid_name'] = 'Missing Learningpath name';
 $string['publish'] = 'Publish';
@@ -114,10 +114,10 @@ $string['learningplan_self_enrol'] = '<div class="pl-15 pr-15 pb-15">Are you sur
 $string['learningplan_self_unenrol'] = '<div class="pl-15 pr-15 pb-15">Are you sure, Do you want to unenrol from {$a->planname} learning path?</div';
 $string['target_audience_tab'] = 'Target audience';
 $string['audience_department'] = '<p>This learningpath will eligible below-listed target audience.</p>
-<p> <b>Departments :</b> {$a}</p>';
+<p> <b>Countries :</b> {$a}</p>';
 $string['audience_subdepartment'] = '<p> <b>Bussiness Unit :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';
-$string['audience_hrmsrole'] = '<p> <b>Hrms Role :</b> {$a}</p>';
+$string['audience_hrmsrole'] = '<p> <b>Role :</b> {$a}</p>';
 $string['audience_designation'] = '<p> <b>Designations :</b> {$a}</p>';
 $string['audience_location'] = '<p> <b>Locations :</b> {$a}</p>';
 $string['need_manage_approval'] = 'Need Manager Approval';
@@ -216,7 +216,7 @@ $string['description'] = 'Description';
 $string['requested_users'] = 'Requested users';
 $string['users'] = 'Users';
 $string['courses'] = 'Courses';
-$string['confirm'] = 'Confirmation';
+$string['confirm'] = 'Confirm';
 $string['lperror_in_fetching_data'] = 'Unable to process the request due to an error';
 $string['learningplan_reports'] = 'Learning Path Reports';
 $string['unenrol'] = 'Unenrol';
@@ -241,6 +241,7 @@ $string['optional'] = 'Optional';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['exportlearningplans'] = 'Export Learning Plans to Excel';
-
-
-
+$string['department'] = "Country";
+$string['reportingto'] = "Reporting To";
+$string['autoenrol'] = "Auto Enrol";
+$string['need_self_enrol'] = "Need Self Enroll";

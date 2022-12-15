@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[course]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Enrolments]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[statistics]]></type>
+<components><![CDATA[YToyOntzOjk6ImN1c3RvbXNxbCI7YToxOntzOjY6ImNvbmZpZyI7Tzo4OiJzdGRDbGFzcyI6MTE6e3M6NDoibmFtZSI7czoxMDoiRW5yb2xtZW50cyI7czo4OiJjYXRlZ29yeSI7czo2OiJjb3Vyc2UiO3M6NDoidHlwZSI7czoxMDoic3RhdGlzdGljcyI7czo4OiJxdWVyeXNxbCI7czo1MjA6IlNFTEVDVCtDT1VOVCUyOGlkJTI5K0FTK2Vucm9sbWVudHMrJTBEJTBBRlJPTStwcmVmaXhfYmxvY2tfbHNfbGVhcm5pbmdmb3JtYXRzJTBEJTBBV0hFUkUrMSUzRDElMEQlMEElMjUlMjVGSUxURVJfT1JHQU5JWkFUSU9OUyUzQWNvc3RjZW50ZXJpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9PUkdBTklaQVRJT04lM0F1c2VyX2Nvc3RjZW50ZXJpZCUyNSUyNSsrJTBEJTBBJTI1JTI1RklMVEVSX0RFUEFSVE1FTlQlM0F1c2VyX2RlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UUyUzQWRlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9TVUJERVBBUlRNRU5UJTNBdXNlcl9zdWJkZXBhcnRtZW50JTI1JTI1JTBEJTBBJTI1JTI1RklMVEVSX1NVQkRFUEFSVE1FTlRTJTNBc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQUFORCtyb2xlX2Fzc2lnbl90aW1lbW9kaWZpZWQrQkVUV0VFTislMjUlMjVMU19TVEFSVERBVEUlMjUlMjUrQU5EKyUyNSUyNUxTX0VORERBVEUlMjUlMjUiO3M6Nzoic3VtbWFyeSI7czowOiIiO3M6NjoiZ2xvYmFsIjtzOjE6IjEiO3M6MjoiaWQiO2k6Nzc7czo4OiJjb3Vyc2VpZCI7aToxO3M6MzU6Im1mb3JtX2lzZXhwYW5kZWRfaWRfYWR2YW5jZWRvcHRpb25zIjtpOjA7czoxMjoic3VibWl0YnV0dG9uIjtzOjQ6Ik5leHQiO3M6MTI6ImRpc2FibGV0YWJsZSI7aTowO319czoxMToicGVybWlzc2lvbnMiO2E6Mjp7czo2OiJjb25maWciO086ODoic3RkQ2xhc3MiOjM6e3M6MTM6ImNvbmRpdGlvbmV4cHIiO3M6OToiYzErYW5kK2MyIjtzOjE0OiJjb25kaXRpb25leHByMSI7czo5OiJjMSthbmQrYzIiO3M6MTQ6ImNvbmRpdGlvbmV4cHIyIjtzOjA6IiI7fXM6ODoiZWxlbWVudHMiO2E6Mjp7aTowO2E6NTp7czoyOiJpZCI7czoxNToiZXF6TXdJZk9QZnNoMVpmIjtzOjg6ImZvcm1kYXRhIjtPOjg6InN0ZENsYXNzIjoyOntzOjY6InJvbGVpZCI7czoyOiIxMSI7czoxMjoic3VibWl0YnV0dG9uIjtzOjM6IkFkZCI7fXM6MTA6InBsdWdpbm5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjE0OiJwbHVnaW5mdWxsbmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6Nzoic3VtbWFyeSI7czoyOiJkaCI7fWk6MTthOjU6e3M6MjoiaWQiO3M6MTU6IklPSklIcElhTDlDeDhISCI7czo4OiJmb3JtZGF0YSI7Tzo4OiJzdGRDbGFzcyI6Mjp7czo2OiJyb2xlaWQiO3M6MjoiMTYiO3M6MTI6InN1Ym1pdGJ1dHRvbiI7czozOiJBZGQiO31zOjEwOiJwbHVnaW5uYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czoxNDoicGx1Z2luZnVsbG5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjc6InN1bW1hcnkiO3M6Njoic3ViX2RoIjt9fX19]]></components>
+<export><![CDATA[]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[50]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learner-first]]></defaultregion>
+<defaultweight><![CDATA[-2]]></defaultweight>
+<timecreated><![CDATA[1664778581]]></timecreated>
+<timemodified><![CDATA[1664778581]]></timemodified>
+<title><![CDATA[Enrolments-Learner]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[369827978]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learner-first]]></defaultregion>
+<defaultweight><![CDATA[-2]]></defaultweight>
+<timecreated><![CDATA[1664778581]]></timecreated>
+<timemodified><![CDATA[1664778581]]></timemodified>
+<title><![CDATA[Enrolments-Learner]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[503415836]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learner-first]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778581]]></timecreated>
+<timemodified><![CDATA[1664778581]]></timemodified>
+<title><![CDATA[Enrolments-Learner]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[695575683]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-sub_dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learner-first]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778581]]></timecreated>
+<timemodified><![CDATA[1664778581]]></timemodified>
+<title><![CDATA[Enrolments]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[45380191]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

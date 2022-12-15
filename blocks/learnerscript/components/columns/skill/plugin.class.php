@@ -49,7 +49,7 @@ class plugin_skill extends pluginbase {
         global $CFG;
         switch ($data->column) {
          case 'achievedon':
-                $row->{$data->column} = ($row->{$data->column}) ? \local_costcenter\lib::get_userdate('d m Y H:i ',$row->{$data->column}) : '--';
+                $row->{$data->column} = ($row->{$data->column}) ? date('d-M-Y H:i',$row->{$data->column}) : '--';
             break;
         }
         return (isset($row->{$data->column})) ? $row->{$data->column} : '--';

@@ -48,36 +48,36 @@ $PAGE->set_title('Import Reports');
 $PAGE->set_heading('LearnerScript Reports Configuration');
 die();
 
-// if ($reset) {
-//     $DB->delete_records('logstore_standard_log',
-//                             array('objecttable' => 'block_learnerscript'));
+if ($reset) {
+    $DB->delete_records('logstore_standard_log',
+                            array('objecttable' => 'block_learnerscript'));
 
-//     $DB->delete_records('block_learnerscript');
-//     $DB->delete_records('block_ls_schedule');
-//     $blockinstancessql = 'SELECT id
-//                             FROM {block_instances}
-//                            WHERE (pagetypepattern LIKE "%blocks-reportdashboard%"
-//                                     OR blockname = "coursels")';
-//     $blockinstances = $DB->get_fieldset_sql($blockinstancessql);
+    $DB->delete_records('block_learnerscript');
+    $DB->delete_records('block_ls_schedule');
+    $blockinstancessql = 'SELECT id
+                            FROM {block_instances}
+                           WHERE (pagetypepattern LIKE "%blocks-reportdashboard%"
+                                    OR blockname = "coursels")';
+    $blockinstances = $DB->get_fieldset_sql($blockinstancessql);
 
-//     if (!empty($blockinstances)) {
-//         blocks_delete_instances($blockinstances);
-//     }
-//     set_config('lsreportconfigstatus', 0, 'block_learnerscript');
-//     set_config('lsreportconfigimport', 0, 'block_learnerscript');
+    if (!empty($blockinstances)) {
+        blocks_delete_instances($blockinstances);
+    }
+    set_config('lsreportconfigstatus', 0, 'block_learnerscript');
+    set_config('lsreportconfigimport', 0, 'block_learnerscript');
 
-//     $usertours = $CFG->dirroot . '/blocks/learnerscript/usertours/';
-//     $usertoursjson = glob($usertours . '*.json');
+    $usertours = $CFG->dirroot . '/blocks/learnerscript/usertours/';
+    $usertoursjson = glob($usertours . '*.json');
 
-//     foreach ($usertoursjson as $usertour) {
-//         $data = file_get_contents($usertour);
-//         $tourconfig = json_decode($data);
-//         $DB->delete_records('tool_usertours_tours', array('name' => $tourconfig->name));
-//     }
+    foreach ($usertoursjson as $usertour) {
+        $data = file_get_contents($usertour);
+        $tourconfig = json_decode($data);
+        $DB->delete_records('tool_usertours_tours', array('name' => $tourconfig->name));
+    }
 
-//     redirect($CFG->wwwroot . '/blocks/learnerscript/import.php?import=1');
-//     exit;
-// }
+    redirect($CFG->wwwroot . '/blocks/learnerscript/import.php?import=1');
+    exit;
+}
 
 $lsreportconfigimport = get_config('block_learnerscript', 'lsreportconfigimport');
 if ($lsreportconfigimport) {
@@ -85,8 +85,8 @@ if ($lsreportconfigimport) {
     exit();
 }
 
-// $path = $CFG->dirroot . '/blocks/learnerscript/backup/';
-// $learnerscriptreports = glob($path . '*.xml');
+$path = $CFG->dirroot . '/blocks/learnerscript/backup/';
+$learnerscriptreports = glob($path . '*.xml');
 $lsreportscount = $DB->count_records('block_learnerscript');
 $lsimportlogssql = "SELECT other
                       FROM {logstore_standard_log}

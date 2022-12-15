@@ -91,8 +91,6 @@ class accesslib
                 }
             }
 
-            echo $concatsql;
-
             return $concatsql;
 
         }
@@ -196,12 +194,12 @@ class accesslib
 
         }
 
-        $assignedsql = "SELECT ra.id, cc.id as categoryid, cc.name as categoryname, r.id as roleid, r.name AS rolename, r.shortname as rolecode, ra.contextid
+        $assignedsql = "SELECT ra.id, cc.id as categoryid, cc.name as categoryname, r.id as roleid, r.name AS rolename, r.shortname as rolecode, ra.contextid, c.depth
         FROM {role_assignments} AS ra
         JOIN {role} AS r ON r.id =  ra.roleid
         JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
         JOIN {course_categories} AS cc ON cc.id = c.instanceid
-        WHERE ra.userid = :userid ORDER BY ra.id DESC ";
+        WHERE ra.userid = :userid GROUP BY r.id, c.depth ORDER BY ra.id DESC ";
 
         $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid]);
 
@@ -230,17 +228,24 @@ class accesslib
 
         if(!empty($USER->access['currentroleinfo']['contextinfo'])){
 
-            $costcenterpathql=array();
+            $costcenterpath=array();
 
             $contextsinfo =$USER->access['currentroleinfo']['contextinfo'];
 
             foreach($contextsinfo as $contextinfo){
 
+
                 $extractcostcenterpath=array_filter(explode('/',$contextinfo['costcenterpath']));
+
 
                 $endpathvalue=end($extractcostcenterpath);
 
-                $costcenterpath[$endpathvalue]= " concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+                if(empty($costcenterpath[$endpathvalue])){
+
+                    $costcenterpath[$endpathvalue]= " concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+                }
+
+
             }
 
             $concatsql="AND (".implode(" OR ", $costcenterpath).")";

@@ -50,7 +50,7 @@ class plugin_classroomcompletionscolumns extends pluginbase {
             switch ($data->column) {
                 case 'usercompletiondate':
                     if($row->usercompletiondate > 0){
-                        $row->{$data->column} = \local_costcenter\lib::get_userdate('d-m-Y',$row->{$data->column});
+                        $row->{$data->column} = date('d-M-Y',$row->{$data->column});
                     }else{
                         $row->{$data->column} = 'NA';
                     }

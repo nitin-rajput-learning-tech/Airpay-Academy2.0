@@ -26,7 +26,6 @@ require_once($CFG->dirroot . '/local/skillrepository/lib.php');
 
 global $CFG, $PAGE;
 
-
 $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
 $id = optional_param('id', -1, PARAM_INT);
 $delete = optional_param('delete', 0, PARAM_INT);
@@ -45,9 +44,8 @@ $PAGE->set_url('/local/skillrepository/skill_category.php');
 require_login();
 
 if (!has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
-	print_error('Sorry, You are not accessable to this page');
+    print_error('Sorry, You are not accessable to this page');
 }
-
 if ($id > 0){
     $string = get_string('skill_category', 'local_skillrepository') . ':' . get_string('edit_skill_category', 'local_skillrepository');
 } else {
@@ -55,7 +53,6 @@ if ($id > 0){
 }
 $title="Skill Category";
 $PAGE->set_title($title);
-
 $PAGE->navbar->add(get_string('manage_skills', 'local_skillrepository'),new moodle_url('/local/skillrepository/index.php'));
 $PAGE->navbar->add(get_string('manage_skill_category', 'local_skillrepository'));
 $PAGE->set_heading(get_string('skill_category', 'local_skillrepository'));
@@ -71,7 +68,6 @@ if ($id > 0) {
     $tool = new stdClass();
     $tool->id = -1;
 }
-
 if($id > 0){
     $collapse = false;
 }else{
@@ -80,7 +76,6 @@ if($id > 0){
 
 //this is the return url
 $editform =  new local_skillrepository\form\skill_category_form(null, array('id'=>$id));
-	
 $editform->set_data($tool);
 if ($editform->is_cancelled()) {
     redirect($returnurl);
@@ -91,12 +86,12 @@ if ($editform->is_cancelled()) {
     //we will get when ever we submit the form
     if($submitbutton){
         $collapse = false;
-    }    
+    }
 }
 
 $skill_categories = $repository->skillrepository_opertaions('local_skill_categories', 'fetch-multiple','','','');
 if(empty($skill_categories)){
-	$collapse = false;
+    $collapse = false;
 }
 
 //Added back button
@@ -112,8 +107,8 @@ echo "<ul class='course_extended_menu_list'>
         <div class='coursebackup course_extended_menu_itemcontainer'>
             <a id='extended_menu_syncstats' title='".get_string('create_skillcategory', 'local_skillrepository')."' class='course_extended_menu_itemlink' href='javascript:void(0)' onclick ='(function(e){ require(\"local_skillrepository/newcategory\").init({selector:\"createcategorymodal\", contextid:$systemcontext->id, categoryid:0}) })(event)'><i class='icon fa fa-plus' aria-hidden='true' aria-label=''></i>
             </a>
-        </div>              
-    </li>    
+        </div>
+    </li>
 </ul>";
 $filterparams['submitid'] = 'form#filteringform';
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);

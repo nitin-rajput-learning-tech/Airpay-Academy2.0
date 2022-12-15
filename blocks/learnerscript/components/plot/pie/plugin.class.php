@@ -33,13 +33,7 @@ class plugin_pie extends pluginbase {
                             'courseactivities', 'courseparticipation', 'courses', 'coursesoverview',
                             'gradedactivity', 'myassignments', 'myquizs', 'myresources',
                             'quizzes', 'student_overall_performance', 
-                            'student_performance',  'useractivities', 'forum', 'myforums', 'assignstatus','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress',
-                            'percentagecoursecompletions', 
-                       'monthlycourselearners', 
-                       'questionattempthours', 
-                       'quizattempthours', 
-                       'questionsummary', 
-                       'timewisequizattempts'
+                            'student_performance',  'useractivities', 'forum', 'myforums', 'assignstatus','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress'
                             );
     }
 

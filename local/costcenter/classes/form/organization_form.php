@@ -213,11 +213,17 @@ class organization_form extends moodleform { /*costcenter creation form*/
             $errors['fullname'] = get_string('fullnamecannotbeempty', 'local_costcenter');
         }
         // OL01 fix ends.
-        $shortname = trim($data['concatshortname']).'_'.trim($data['shortname']);
+        // $shortname = trim($data['concatshortname']).'_'.trim($data['shortname']);
+        $shortname = !empty(trim($data['concatshortname'])) ? trim($data['concatshortname']).'_'.trim($data['shortname']) : trim($data['shortname']);
         if ($DB->record_exists('local_costcenter', array('shortname' => $shortname), '*', IGNORE_MULTIPLE)) {
             $costcenter = $DB->get_record('local_costcenter', array('shortname' => $shortname), '*', IGNORE_MULTIPLE);
             if (empty($data['id']) || $costcenter->id != $data['id']) {
-                $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
+                if($data['parentid'] == 0){
+                    $errors['shortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
+                }else{
+                    $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
+                }
+                
             }
         }
         return $errors;

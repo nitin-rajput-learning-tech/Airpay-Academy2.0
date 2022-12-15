@@ -973,43 +973,7 @@ class core_renderer extends \core_renderer {
             $returnobject->navitems[] = $logout;
         }
 
-        if (is_role_switched($course->id)) {
-            if ($role = $DB->get_record('role', array('id' => $user->access['rsw'][$context->path]))) {
-                // Build role-return link instead of logout link.
-                $rolereturn = new stdClass();
-                $rolereturn->itemtype = 'link';
-                $rolereturn->url = new moodle_url('/course/switchrole.php', array(
-                    'id' => $course->id,
-                    'sesskey' => sesskey(),
-                    'switchrole' => 0,
-                    'returnurl' => $page->url->out_as_local_url(false)
-                ));
-                $rolereturn->pix = "a/logout";
-                $rolereturn->title = get_string('switchrolereturn');
-                $rolereturn->titleidentifier = 'switchrolereturn,moodle';
-                $returnobject->navitems[] = $rolereturn;
-
-                $returnobject->metadata['asotherrole'] = true;
-                $returnobject->metadata['rolename'] = role_get_name($role, $context);
-
-            }
-        } else {
-            // Build switch role link.
-            $roles = get_switchable_roles($context);
-            if (is_array($roles) && (count($roles) > 0)) {
-                $switchrole = new stdClass();
-                $switchrole->itemtype = 'link';
-                $switchrole->url = new moodle_url('/course/switchrole.php', array(
-                    'id' => $course->id,
-                    'switchrole' => -1,
-                    'returnurl' => $page->url->out_as_local_url(false)
-                ));
-                $switchrole->pix = "i/switchrole";
-                $switchrole->title = get_string('switchroleto');
-                $switchrole->titleidentifier = 'switchroleto,moodle';
-                $returnobject->navitems[] = $switchrole;
-            }
-        }
+        // Removed the default switch back to default role as we have custom level role switch.
 
         return $returnobject;
     }
@@ -1102,19 +1066,21 @@ class core_renderer extends \core_renderer {
             $rolename = get_string('employee','theme_epsilon');
 
             // $user_ra_array = $USER->access['ra']['/1'];
-
-            $user_ra_array = array_values(array_map(function($role){
-                            return $role;
-                        }, $roles));
+            $depths = [];
+            $user_ra_array = array_values(array_map(function($role)use($depths){
+                if(!in_array($role->depth, $depths)){
+                    $depths[] = $role->depth;
+                    return $role;
+                }
+            }, $roles));
 
             if(is_array($user_ra_array)){
                 $highest_roleinfo = max($user_ra_array);
             }else{
                 $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];
             }
-            $current_roleid = isset($USER->access['rsw']['currentroleinfo']) ? $USER->access['rsw']['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
+            $current_roleid = isset($USER->access['currentroleinfo']) ? $USER->access['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
 
-            // var_dump($USER->access['rsw']);exit;
             if(!empty($learnerroleid)){
                 if($learnerroleid->id == $current_roleid){
                     $disabled_role = 'user_role active_role';
@@ -1154,14 +1120,14 @@ class core_renderer extends \core_renderer {
             }
         }
         $highest_roleid = '';
-        if((isset($USER->access['rsw']['currentroleinfo']) && empty($USER->access['rsw']['currentroleinfo'])) ){
+        if((count($roles) > 0) && (!isset($USER->access['currentroleinfo']) || empty($USER->access['currentroleinfo'])) ){
             if($highest_roleinfo->roleid){
                 $highest_roleid = $highest_roleinfo->roleid;
                 $contextid = $highest_roleinfo->contextid;
                 $this->role_switch_basedon_userroles($highest_roleid, false, $contextid);
             }
-        }elseif((isset($USER->access['rsw']) && $USER->access['rsw']) ){
-            $highest_roleid = current($USER->access['rsw']);
+        // }elseif((isset($USER->access['rsw']) && $USER->access['rsw']) ){
+        //     $highest_roleid = current($USER->access['rsw']);
         }
 
         // Build a logout link.
@@ -1471,10 +1437,8 @@ class core_renderer extends \core_renderer {
         $costcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($context);
 
         $USER->access['currentroleinfo']['roleid'] = $roleid;
-        $USER->access['currentroleinfo']['contextinfo'][] = ['context' => $context,'costcenterpath'=>$costcenterpath];
-
-
-
+        $USER->access['currentroleinfo']['contextinfo'] = [];
+        $USER->access['currentroleinfo']['contextinfo'][] = ['context' => $context,'costcenterpath' => $costcenterpath];
        /* Get the relevant rolecaps into rdef
         * - relevant role caps
         *   - at ctx and above
@@ -1489,11 +1453,22 @@ class core_renderer extends \core_renderer {
         $assignedcontexts = array_map(function($cxtpath){
             return end(explode('/', $cxtpath));
         }, array_unique(array_keys($USER->access['ra'])));
+        $contextdepth = $context->__get('depth');
         foreach($assignedcontexts AS $contextid){
             if($contextid != $context->id && $contextid != 1){
                 $othercontext = \context::instance_by_id($contextid);
-                if($this->role_capability_assignments($userroleid, $othercontext, $accessdata)){
-                    $USER->access['rsw'][$othercontext->path] = $userroleid;
+                // considering only category level role switches.
+                if($othercontext->__get('contextlevel') == 40){
+                    if($contextdepth == $othercontext->__get('depth')){
+                        if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
+                            $USER->access['rsw'][$othercontext->path] = $roleid;
+                            $othercostcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($othercontext);
+                            $USER->access['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
+                        }
+                    }else{
+                        if($this->role_capability_assignments($userroleid, $othercontext, $accessdata))
+                            $USER->access['rsw'][$othercontext->path] = $userroleid;
+                    }
                 }
             }
         }

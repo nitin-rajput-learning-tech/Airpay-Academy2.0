@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<report version="2019052007"><category><![CDATA[course]]></category>
+<visible><![CDATA[1]]></visible>
+<name><![CDATA[Upcoming Deadlines]]></name>
+<summary><![CDATA[]]></summary>
+<type><![CDATA[statistics]]></type>
+<components><![CDATA[YToyOntzOjk6ImN1c3RvbXNxbCI7YToxOntzOjY6ImNvbmZpZyI7Tzo4OiJzdGRDbGFzcyI6MTE6e3M6NDoibmFtZSI7czoxODoiVXBjb21pbmcrRGVhZGxpbmVzIjtzOjg6ImNhdGVnb3J5IjtzOjY6ImNvdXJzZSI7czo0OiJ0eXBlIjtzOjEwOiJzdGF0aXN0aWNzIjtzOjg6InF1ZXJ5c3FsIjtzOjQ5ODoiU0VMRUNUK0NPVU5UJTI4aWQlMjkrRlJPTStwcmVmaXhfYmxvY2tfbHNfbGVhcm5pbmdmb3JtYXRzKyUwRCUwQVdIRVJFK3VwY29taW5nZGVhZGxpbmUrJTNFK1VOSVhfVElNRVNUQU1QJTI4JTI5K0FORCtjb21wbGV0aW9uZGF0ZSslM0QwKyUwRCUwQSUyNSUyNUZJTFRFUl9PUkdBTklaQVRJT04lM0F1c2VyX2Nvc3RjZW50ZXJpZCUyNSUyNSsrJTBEJTBBJTI1JTI1RklMVEVSX0RFUEFSVE1FTlQlM0F1c2VyX2RlcGFydG1lbnRpZCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9ERVBBUlRNRU5UUyUzQWRlcGFydG1lbnRpZCUyNSUyNSslMEQlMEElMjUlMjVGSUxURVJfU1VCREVQQVJUTUVOVCUzQXVzZXJfc3ViZGVwYXJ0bWVudCUyNSUyNSUwRCUwQSUyNSUyNUZJTFRFUl9TVUJERVBBUlRNRU5UUyUzQXN1YmRlcGFydG1lbnQlMjUlMjUrJTBEJTBBQU5EK3RpbWVjcmVhdGVkK0JFVFdFRU4rJTI1JTI1TFNfU1RBUlREQVRFJTI1JTI1K0FORCslMjUlMjVMU19FTkREQVRFJTI1JTI1IjtzOjc6InN1bW1hcnkiO3M6MDoiIjtzOjY6Imdsb2JhbCI7czoxOiIxIjtzOjI6ImlkIjtpOjE4MDtzOjg6ImNvdXJzZWlkIjtpOjE7czozNToibWZvcm1faXNleHBhbmRlZF9pZF9hZHZhbmNlZG9wdGlvbnMiO2k6MDtzOjEyOiJzdWJtaXRidXR0b24iO3M6NDoiTmV4dCI7czoxMjoiZGlzYWJsZXRhYmxlIjtpOjA7fX1zOjExOiJwZXJtaXNzaW9ucyI7YToyOntzOjY6ImNvbmZpZyI7Tzo4OiJzdGRDbGFzcyI6Mzp7czoxMzoiY29uZGl0aW9uZXhwciI7czo5OiJjMSthbmQrYzIiO3M6MTQ6ImNvbmRpdGlvbmV4cHIxIjtzOjk6ImMxK2FuZCtjMiI7czoxNDoiY29uZGl0aW9uZXhwcjIiO3M6MDoiIjt9czo4OiJlbGVtZW50cyI7YToyOntpOjA7YTo1OntzOjI6ImlkIjtzOjE1OiJxa0R0aUluZFZpNkFLcGMiO3M6ODoiZm9ybWRhdGEiO086ODoic3RkQ2xhc3MiOjI6e3M6Njoicm9sZWlkIjtzOjI6IjExIjtzOjEyOiJzdWJtaXRidXR0b24iO3M6MzoiQWRkIjt9czoxMDoicGx1Z2lubmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6MTQ6InBsdWdpbmZ1bGxuYW1lIjtzOjE0OiJzaXRlbGV2ZWxyb2xlcyI7czo3OiJzdW1tYXJ5IjtzOjI6ImRoIjt9aToxO2E6NTp7czoyOiJpZCI7czoxNToiZ205ZmRtNWxyRWFiOVNMIjtzOjg6ImZvcm1kYXRhIjtPOjg6InN0ZENsYXNzIjoyOntzOjY6InJvbGVpZCI7czoyOiIxNiI7czoxMjoic3VibWl0YnV0dG9uIjtzOjM6IkFkZCI7fXM6MTA6InBsdWdpbm5hbWUiO3M6MTQ6InNpdGVsZXZlbHJvbGVzIjtzOjE0OiJwbHVnaW5mdWxsbmFtZSI7czoxNDoic2l0ZWxldmVscm9sZXMiO3M6Nzoic3VtbWFyeSI7czo2OiJzdWJfZGgiO319fX0=]]></components>
+<export><![CDATA[]]></export>
+<global><![CDATA[1]]></global>
+<lastexecutiontime><![CDATA[15]]></lastexecutiontime>
+<disabletable><![CDATA[0]]></disabletable>
+<instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learner-fifth]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcoming deadlines-Learners]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[805956588]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learning-third]]></defaultregion>
+<defaultweight><![CDATA[-1]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcomingdeadlines-Learning]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[449054825]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[learning-fifth]]></region>
+<weight><![CDATA[2]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-oh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learning-fifth]]></defaultregion>
+<defaultweight><![CDATA[-1]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcomingdeadlines-Learning]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[876980466]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learning-fifth]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcomingdeadlines-Learning]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[717412497]]></logo>
+<tilescolourpicker><![CDATA[FFFFFF]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[side-db-first]]></defaultregion>
+<defaultweight><![CDATA[10]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcoming deadlines]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[140465348]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"><contextid><![CDATA[1]]></contextid>
+<pagetype><![CDATA[blocks-reportdashboard-dashboard-dh]]></pagetype>
+<subpage><![CDATA[Learnerdashboard]]></subpage>
+<visible><![CDATA[1]]></visible>
+<region><![CDATA[learner-fifth]]></region>
+<weight><![CDATA[0]]></weight>
+</position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-sub_dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learning-fifth]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcoming deadlines]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[999223149]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard-sub_dh]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learner-fifth]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcoming deadlines]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[110004826]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position><instance version="2019052007"><blockname><![CDATA[reporttiles]]></blockname>
+<parentcontextid><![CDATA[1]]></parentcontextid>
+<showinsubcontexts><![CDATA[0]]></showinsubcontexts>
+<requiredbytheme><![CDATA[0]]></requiredbytheme>
+<pagetypepattern><![CDATA[blocks-reportdashboard-dashboard]]></pagetypepattern>
+<subpagepattern><![CDATA[Learnerdashboard]]></subpagepattern>
+<defaultregion><![CDATA[learner-fifth]]></defaultregion>
+<defaultweight><![CDATA[0]]></defaultweight>
+<timecreated><![CDATA[1664778931]]></timecreated>
+<timemodified><![CDATA[1664778931]]></timemodified>
+<title><![CDATA[Upcoming Deadlines]]></title>
+<reportcontenttype><![CDATA[]]></reportcontenttype>
+<reporttype><![CDATA[table]]></reporttype>
+<logo><![CDATA[208145667]]></logo>
+<tilescolourpicker><![CDATA[12445F]]></tilescolourpicker>
+<tileformat><![CDATA[fill]]></tileformat>
+<tilescolour><![CDATA[FFFFFF]]></tilescolour>
+<url><![CDATA[]]></url>
+</instance><position version="2019052007"></position></report>

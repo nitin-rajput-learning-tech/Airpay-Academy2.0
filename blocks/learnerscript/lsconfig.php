@@ -41,7 +41,7 @@ $PAGE->requires->css('/blocks/learnerscript/css/slideshow.css');
 // $lsreportconfigstatus = get_config('block_learnerscript', 'lsreportconfigstatus');
 $PAGE->set_url($CFG->wwwroot . '/blocks/learnerscript/lsconfig.php');
 $PAGE->set_context($context);
-$PAGE->set_pagelayout('standard');
+$PAGE->set_pagelayout('admin');
 $PAGE->set_title(get_string('lsconfigtitle', 'block_learnerscript'));
 if ($status == 'reset') {
     $PAGE->set_heading(get_string('resetingls', 'block_learnerscript'));
@@ -49,91 +49,91 @@ if ($status == 'reset') {
     $PAGE->set_heading(get_string('lsreportsconfig', 'block_learnerscript'));
 }
 
-// if ($import) {
-//     $pluginman = core_plugin_manager::instance();
-//     $reportdashboardpluginfo = $pluginman->get_plugin_info('block_reportdashboard');
-//     $reporttilespluginfo = $pluginman->get_plugin_info('block_reporttiles');
-//     $error = false;
-//     $errordata = array();
-//     // Make sure we know the plugin.
-//     if (is_null($reportdashboardpluginfo)) {
-//         $error = true;
-//         $errordata[] = get_string('installreqplugins',  'block_learnerscript', 'LearnerScript Widget');
-//     }
-//     // Make sure we know the plugin.
-//     if (is_null($reporttilespluginfo)) {
-//         $error = true;
-//         $errordata[] = get_string('installreqplugins',  'block_learnerscript', 'LearnerScript Report Tiles');
-//     }
+if ($import) {
+    $pluginman = core_plugin_manager::instance();
+    $reportdashboardpluginfo = $pluginman->get_plugin_info('block_reportdashboard');
+    $reporttilespluginfo = $pluginman->get_plugin_info('block_reporttiles');
+    $error = false;
+    $errordata = array();
+    // Make sure we know the plugin.
+    if (is_null($reportdashboardpluginfo)) {
+        $error = true;
+        $errordata[] = get_string('installreqplugins',  'block_learnerscript', 'LearnerScript Widget');
+    }
+    // Make sure we know the plugin.
+    if (is_null($reporttilespluginfo)) {
+        $error = true;
+        $errordata[] = get_string('installreqplugins',  'block_learnerscript', 'LearnerScript Report Tiles');
+    }
 
-//     $reportdashboardblockexists = $PAGE->blocks->is_known_block_type('reportdashboard', false);
-//     if (!$reportdashboardblockexists) {
-//         $error = true;
-//         $errordata[] = get_string('enablereqplugins',  'block_learnerscript', 'LearnerScript Widget');
-//     }
+    $reportdashboardblockexists = $PAGE->blocks->is_known_block_type('reportdashboard', false);
+    if (!$reportdashboardblockexists) {
+        $error = true;
+        $errordata[] = get_string('enablereqplugins',  'block_learnerscript', 'LearnerScript Widget');
+    }
 
-//     $reportdashboardblockexists = $PAGE->blocks->is_known_block_type('reporttiles', false);
-//     if (!$reportdashboardblockexists) {
-//         $error = true;
-//         $errordata[] = get_string('enablereqplugins',  'block_learnerscript', 'LearnerScript Report Tiles');
-//     }
+    $reportdashboardblockexists = $PAGE->blocks->is_known_block_type('reporttiles', false);
+    if (!$reportdashboardblockexists) {
+        $error = true;
+        $errordata[] = get_string('enablereqplugins',  'block_learnerscript', 'LearnerScript Report Tiles');
+    }
 
-//     $lsreportconfigimport = get_config('block_learnerscript', 'lsreportconfigimport');
-//     if (!$error && $lsreportconfigimport) {
-//         throw new moodle_exception("LearnerScript Configuration already Started");
-//         exit();
-//     }
-// }
+    $lsreportconfigimport = get_config('block_learnerscript', 'lsreportconfigimport');
+    if (!$error && $lsreportconfigimport) {
+        throw new moodle_exception("LearnerScript Configuration already Started");
+        exit();
+    }
+}
 
 $renderer = $PAGE->get_renderer('block_learnerscript');
 echo $OUTPUT->header();
-// $error = false;
-// if ($error) {
-//     echo $OUTPUT->box_start();
-//     foreach($errordata as $errormsg) {
-//         echo "<div class='alert alert-error'>" . $errormsg . "</div>";
-//     }
-//     echo $OUTPUT->box_end();
+$error = false;
+if ($error) {
+    echo $OUTPUT->box_start();
+    foreach($errordata as $errormsg) {
+        echo "<div class='alert alert-error'>" . $errormsg . "</div>";
+    }
+    echo $OUTPUT->box_end();
 
-//     echo '<div class="text-center"><a href="' . $CFG->wwwroot . '"><button>Continue</button></a></div>' . '<br />';
-//     echo $OUTPUT->footer();
+    echo '<div class="text-center"><a href="' . $CFG->wwwroot . '"><button>Continue</button></a></div>' . '<br />';
+    echo $OUTPUT->footer();
 
-//     exit;
-// }
-// $importstatus = false;
-// $total = 0;
-// $current = 0;
-// $errorreportspositiondata = serialize(array());
-// $lastreportposition = 0;
-// if ($import) {
-//     $lsconfigreports = (new ls)->lsconfigreports();
-//     $importstatus = $lsconfigreports['importstatus'];
-//     $total = $lsconfigreports['total'];
-//     $current = $lsconfigreports['current'];
-//     $errorreportspositiondata = $lsconfigreports['errorreportspositiondata'];
-//     $lastreportposition = $lsconfigreports['lastreportposition'];
-// }
-// if ($importstatus && !$lsreportconfigstatus) {
-//     $pluginsettings = new block_learnerscript_licence_setting('block_learnerscript/lsreportconfigimport',
-//                 'lsreportconfigimport', get_string('lsreportconfigimport', 'block_learnerscript'), '', PARAM_INT, 2);
-//     $pluginsettings->config_write('lsreportconfigimport', 1);
-// }
+    exit;
+}
+$importstatus = false;
+$total = 0;
+$current = 0;
+$errorreportspositiondata = serialize(array());
+$lastreportposition = 0;
+if ($import) {
+    $lsconfigreports = (new ls)->lsconfigreports();
+    $importstatus = $lsconfigreports['importstatus'];
+    $total = $lsconfigreports['total'];
+    $current = $lsconfigreports['current'];
+    $errorreportspositiondata = $lsconfigreports['errorreportspositiondata'];
+    $lastreportposition = $lsconfigreports['lastreportposition'];
+}
+if ($importstatus && !$lsreportconfigstatus) {
+    $pluginsettings = new block_learnerscript_licence_setting('block_learnerscript/lsreportconfigimport',
+                'lsreportconfigimport', get_string('lsreportconfigimport', 'block_learnerscript'), '', PARAM_INT, 2);
+    $pluginsettings->config_write('lsreportconfigimport', 1);
+}
 
 
-// $plottabs = new \block_learnerscript\output\lsconfig($status, $importstatus);
-// echo $renderer->render($plottabs);
+$plottabs = new \block_learnerscript\output\lsconfig($status, $importstatus);
+echo $renderer->render($plottabs);
 
-// if ($import) {
-//     (new ls)->importlsusertours();
-// }
+if ($import) {
+    (new ls)->importlsusertours();
+}
 
-// $PAGE->requires->js_call_amd('block_learnerscript/lsreportconfig', 'init',
-//                                 array(array('total' => $total,
-//                                             'current' => $current,
-//                                             'errorreportspositiondata' =>
-//                                             $errorreportspositiondata,
-//                                             'lastreportposition' => $lastreportposition
-//                                         ), $status
-//                                 ));
+$PAGE->requires->js_call_amd('block_learnerscript/lsreportconfig', 'init',
+                                array(array('total' => $total,
+                                            'current' => $current,
+                                            'errorreportspositiondata' =>
+                                            $errorreportspositiondata,
+                                            'lastreportposition' => $lastreportposition
+                                        ), $status
+                                ));
 
 echo $OUTPUT->footer();

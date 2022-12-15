@@ -49,6 +49,12 @@ define(['jquery',
             ls_fstartdate = $('#ls_fstartdate').val();
             ls_fenddate = $('#ls_fenddate').val();
             var courseid = $('#ls_courseid').val();
+            var onlinecourseid = $('#ls_onlinecourseid').val();
+            var labid = $('#ls_labid').val();
+            var assessmentid = $('#ls_assessmentid').val();
+            var webinarid = $('#ls_webinarid').val();
+            var classroomid = $('#ls_classroomid').val();
+            var learningpathid = $('#ls_learningpathid').val();
             $(".tiles_information").each(function() {
                 self.CreateDashboardTile({
                     blockinstanceid: $(this).data('instanceid'),
@@ -56,7 +62,13 @@ define(['jquery',
                     reporttype: $(this).data('reporttype'),
                     ls_fstartdate: ls_fstartdate,
                     ls_fenddate: ls_fenddate,
-                    courseid: courseid
+                    courseid: courseid,
+                    onlinecourseid: onlinecourseid,
+                    labid: labid,
+                    assessmentid: assessmentid,
+                    webinarid: webinarid,
+                    classroomid: classroomid,
+                    learningpathid: learningpathid
                 })
             });
         },
@@ -67,7 +79,66 @@ define(['jquery',
             var filters = {};
             filters['ls_fstartdate'] = $('#ls_fstartdate').val();
             filters['ls_fenddate'] = $('#ls_fenddate').val();
-
+            if (typeof filters['filter_organization'] == 'undefined') {
+                var filter_organization = $('#dashboardcostcenters').val();
+                if (filter_organization != 0) {
+                    filters['filter_organization'] = filter_organization;
+                }
+            }
+            if (typeof filters['filter_departments'] == 'undefined') {
+                var filter_departments = $('#dashboarddepartment').val();
+                if (filter_departments != 0) {
+                    filters['filter_departments'] = filter_departments;
+                }
+            }
+            if (typeof filters['filter_subdepartments'] == 'undefined') {
+                var filter_subdepartments = $('#dashboardsubdepartment').val();
+                if (filter_subdepartments != 0) {
+                    filters['filter_subdepartments'] = filter_subdepartments;
+                }
+            }
+            if (typeof filters['filter_course'] == 'undefined') {
+                var filter_course = $('#coursedashboardfilter').val();
+                if (filter_course != 0) {
+                    filters['filter_course'] = filter_course;
+                }
+            }
+            if (typeof filters['filter_onlinecourses'] == 'undefined') {
+                var filter_onlinecourses = $('#ls_onlinecourseid').val();
+                if (filter_onlinecourses != 0) {
+                    filters['filter_onlinecourses'] = filter_onlinecourses;
+                }
+            }
+            if (typeof filters['filter_labs'] == 'undefined') {
+                var filter_labs = $('#ls_labid').val();
+                if (filter_labs != 0) {
+                    filters['filter_labs'] = filter_labs;
+                }
+            }
+            if (typeof filters['filter_assessments'] == 'undefined') {
+                var filter_assessments = $('#ls_assessmentid').val();
+                if (filter_assessments != 0) {
+                    filters['filter_assessments'] = filter_assessments;
+                }
+            }
+            if (typeof filters['filter_webinars'] == 'undefined') {
+                var filter_webinars = $('#ls_webinarid').val();
+                if (filter_webinars != 0) {
+                    filters['filter_webinars'] = filter_webinars;
+                }
+            }
+            if (typeof filters['filter_classrooms'] == 'undefined') {
+                var filter_classrooms = $('#ls_classroomid').val();
+                if (filter_classrooms != 0) {
+                    filters['filter_classrooms'] = filter_classrooms;
+                }
+            }
+            if (typeof filters['filter_learningpath'] == 'undefined') {
+                var filter_learningpath = $('#ls_learningpathid').val();
+                if (filter_learningpath != 0) {
+                    filters['filter_learningpath'] = filter_learningpath;
+                }
+            }
             $.urlParam = function(name){
                 var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
                 if (results === null || results == ' ' ){
@@ -76,21 +147,22 @@ define(['jquery',
                     return results[1] || 0;
                 }
             }
-            var dashboardurl = $.urlParam('dashboardurl');
-            if (typeof filters['filter_departments'] == 'undefined') {
-                var filter_departments = $('.report_courses').val();
-                if (filter_departments != null) {
-                    filters['filter_departments'] = filter_departments;
-                    args.filter_departments = filter_departments;
-                }
-            }
-            
+            // var dashboardurl = $.urlParam('dashboardurl');
+            // if (typeof filters['filter_departments'] == 'undefined') {
+            //     var filter_departments = 1;
+            //     if (filter_departments != null) {
+            //         filters['filter_departments'] = filter_departments;
+            //         args.filter_departments = filter_departments;
+            //     }
+            // }
+
             var promise = Ajax.call([{
                 methodname: 'block_learnerscript_generate_plotgraph',
                 args: {
                     instanceid: args.blockinstanceid,
                     reportid: args.reportid,
                     departmentid: args.filter_departments,
+                    subdepartmentid: args.filter_subdepartments,
                     filters: JSON.stringify(filters),
                     reporttype: args.reporttype
                 },
@@ -119,6 +191,7 @@ define(['jquery',
                     // }
                 } else {
                     if (typeof data.plot != 'undefined') {
+                        let hiding = false;
                         if (data.plot.data.length > 0) {
                             $(data.plot.data).each(function(key, value) {
                                 heads = [];
@@ -126,7 +199,11 @@ define(['jquery',
                                 heads = value.head;
                                 tabledata = value.data;
                             });
+
                             $(data.plot.categorydata).each(function(k, v) {
+                                if (tabledata[0][k] == 0) {
+                                    hiding = true;
+                                }
                                 if (data.plot.categorydata.length == 1) {
                                     if (!isNaN(tabledata[0][k])) {
                                         $("#inst" + args.blockinstanceid + " .tiles_information table tr").append('<td><h1> ' + tabledata[0][k] + ' </h1></td>');
@@ -134,14 +211,21 @@ define(['jquery',
                                         $("#inst" + args.blockinstanceid + " .tiles_information table tr").append('<td><h6> ' + tabledata[0][k] + ' </h6></td>');
                                     }
                                 } else {
-                                    $("#inst" + args.blockinstanceid + " .tiles_information table tr").append('<td>' + v + ' : <b> ' + tabledata[k] + ' </b></td>');
+                                    $("#inst" + args.blockinstanceid + " .tiles_information table tr").append('<td>' + v + '  <b> ' + tabledata[k] + ' </b></td>');
                                 }
                             });
                         } else {
-                                $("#inst" + args.blockinstanceid + " .tiles_information table tr").html("<div class='alert alert-info'> No Data Available.</div>");
-                                $("#inst" + args.blockinstanceid + " .dashboard_tiles").css('color', '#4B4B4B');
-                                // $("#inst" + args.blockinstanceid + " .tiles_information").html("<div class='alert alert-info'> No Data Available.</div>");
+                            let hiding = true;
+                            $("#inst" + args.blockinstanceid + " .tiles_information table tr").html("<div class='alert alert-info'> No Data Available.</div>");
+                            $("#inst" + args.blockinstanceid + " .dashboard_tiles").css('color', '#4B4B4B');
+                            // $("#inst" + args.blockinstanceid + " .tiles_information").html("<div class='alert alert-info'> No Data Available.</div>");
                         }
+                        // let isLearnerDashboard = $('#ls_dashboardurl').val() === 'Learnerdashboard' ? true : false;
+                        // if (hiding && isLearnerDashboard) {
+                        //     $('#inst' + args.blockinstanceid).hide();
+                        // } else {
+                        //     $('#inst' + args.blockinstanceid).show();
+                        // }
                         $("#reportloading_" + args.blockinstanceid).css('display', 'none');
                     }
                 }
@@ -159,12 +243,67 @@ define(['jquery',
             args.columnDefs = '';
             args.filters['ls_fstartdate'] = $('#ls_fstartdate').val();
             args.filters['ls_fenddate'] = $('#ls_fenddate').val();
+            if (typeof args.filters['filter_organization'] == 'undefined') {
+                var filter_organization = $('#id_filter_organization').val(); //$('#dashboardcostcenters').val();
+                if (filter_organization > 0) {
+                    args.filters['filter_organization'] = filter_organization;
+                }
+            }
             if (typeof args.filters['filter_departments'] == 'undefined') {
-                var filter_departments = $('.report_courses').val();
-                if (filter_departments != 1) {
+                var filter_departments = $('#id_filter_departments').val(); //$('#dashboarddepartment').val();
+                if (filter_departments > 0) {
                     args.filters['filter_departments'] = filter_departments;
                 }
             }
+            if (typeof args.filters['filter_subdepartments'] == 'undefined') {
+                var filter_subdepartments = $('#dashboardsubdepartment').val();
+                if (filter_subdepartments > 0) {
+                    args.filters['filter_subdepartments'] = filter_subdepartments;
+                }
+            }
+            if (typeof args.filters['filter_course'] == 'undefined') {
+                var filter_course = $('#coursedashboardfilter').val();
+                if (filter_course != 0) {
+                    args.filters['filter_course'] = filter_course;
+                }
+            }
+            if (typeof args.filters['filter_onlinecourses'] == 'undefined') {
+                var filter_onlinecourses = $('#ls_onlinecourseid').val();
+                if (filter_onlinecourses != 0) {
+                    args.filters['filter_onlinecourses'] = filter_onlinecourses;
+                }
+            }
+            if (typeof args.filters['filter_labs'] == 'undefined') {
+                var filter_labs = $('#ls_labid').val();
+                if (filter_labs != 0) {
+                    args.filters['filter_labs'] = filter_labs;
+                }
+            }
+            if (typeof args.filters['filter_assessments'] == 'undefined') {
+                var filter_assessments = $('#ls_assessmentid').val();
+                if (filter_assessments != 0) {
+                    args.filters['filter_assessments'] = filter_assessments;
+                }
+            }
+            if (typeof args.filters['filter_webinars'] == 'undefined') {
+                var filter_webinars = $('#ls_webinarid').val();
+                if (filter_webinars != 0) {
+                    args.filters['filter_webinars'] = filter_webinars;
+                }
+            }
+            if (typeof args.filters['filter_classrooms'] == 'undefined') {
+                var filter_classrooms = $('#ls_classroomid').val();
+                if (filter_classrooms != 0) {
+                    args.filters['filter_classrooms'] = filter_classrooms;
+                }
+            }
+            if (typeof args.filters['filter_learningpath'] == 'undefined') {
+                var filter_learningpath = $('#ls_learningpathid').val();
+                if (filter_learningpath != 0) {
+                    args.filters['filter_learningpath'] = filter_learningpath;
+                }
+            }
+
             if (args.reporttype == 'table') {
             } else {
                 $('.plotgraphcontainer').removeClass('hide').addClass('show');

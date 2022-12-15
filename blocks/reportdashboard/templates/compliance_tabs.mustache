@@ -1,0 +1,34 @@
+<section class="compliance_main_block">
+    <div id="popupoverlay">
+        
+        <div class="row">
+            <div class="col-md-3">
+                <div class="compliance_titles d-flex justify-content-between align-items-center">
+                    <div>Compliance Program</div>
+                    <div>Status</div>
+                </div>
+                <div class="compliancetabss nav flex-column nav-pills nav-pills-custom" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                <!-- Tabs nav -->
+                <div class="compliancetabs nav flex-column nav-pills nav-pills-custom" id="v-pills-tab" role="tablist" aria-orientation="vertical">
+                 {{#compliances}}
+                    <a class="compliance nav-link mb-3 {{percentage}} {{status}}" id="v-pills-home-tab compliance{{id}}"  data-complianceid = {{id}} data-toggle="pill" href="#v-pills-home" role="tab" aria-controls="v-pills-home" aria-selected="true" onclick = '(function(e){ require("block_reportdashboard/reportdashboard").getcompliance({{id}}) })(event)'>
+                        <span>{{compliancename}}</span>
+                        <div class="circle_bg">
+                          <div class="circle_status"></div>
+                        </div>
+                      </a>
+                {{/compliances}}
+                </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class='compliancetracking'>{{compliancetracking}}</div>
+                <div class="section_content">
+                    <!-- Tabs content -->
+                    {{> block_reportdashboard/compliance_content }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

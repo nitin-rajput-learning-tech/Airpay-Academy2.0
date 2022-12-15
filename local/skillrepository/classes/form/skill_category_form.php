@@ -33,13 +33,11 @@ class skill_category_form extends moodleform {
         global $DB,$USER;
         $mform = $this->_form;
 
-        // $mform->addElement('header', 'create_category_form', get_string('create_newskill_category', 'local_skillrepository'));
-
         $id = optional_param('id', 0, PARAM_INT);
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
-		$context =(new \local_skillrepository\lib\accesslib())::get_module_context();
+        $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
             $options = array(
                 'ajax' => 'local_courses/form-options-selector',

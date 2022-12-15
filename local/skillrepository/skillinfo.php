@@ -38,20 +38,14 @@ $PAGE->set_url('/local/skillrepository/skillinfo.php');
 $skill = $DB->get_record('local_skill', array('id' => $id));
 
 if (!has_capability('local/skillrepository:create_skill',(new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
-	print_error('Sorry, You are not accessable to this page');
+    print_error('Sorry, You are not accessable to this page');
 }
-
-/*print_object($skill);
-print_object($USER->open_costcenterid);
-die();*/
-
 
 if (!has_capability('local/costcenter:manage_multiorganizations', (new \local_skillrepository\lib\accesslib())::get_module_context())) {
         if($skill->costcenterid!=$USER->open_costcenterid){
          print_error('Sorry, You are not accessable to this page');
         }     
 }
-
 
 require_login();
 $PAGE->set_title(get_string('skillinfo', 'local_skillrepository'));
