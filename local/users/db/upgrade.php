@@ -132,10 +132,8 @@ function xmldb_local_users_upgrade($oldversion) {
 
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
             $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-            $table->add_field('costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
-            $table->add_field('pathtype', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
-
-            $table->add_field('pathtypeid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('costcenterpath', XMLDB_TYPE_CHAR, '512', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('categorypath', XMLDB_TYPE_CHAR, '512', null, XMLDB_NOTNULL, null, null);
             $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
             $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
             $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
