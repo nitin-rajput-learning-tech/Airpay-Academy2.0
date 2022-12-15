@@ -34,16 +34,16 @@ class accesslib
 
         global $DB,$USER;
 
-        $endpathvalue="";
+        $concatsql="";
 
         if(empty($USER->id) || is_siteadmin()){
 
-            return $endpathvalue;
+            return $concatsql;
 
         }else{
             if($costcenterparamid == null || $costcenterparamid == 0){
 
-                $costcenterpath =$USER->access['rsw']['currentroleinfo']['costcenterpath'];
+                $concatsql =self::get_user_roleswitch_costcenterpath($columnname);
 
             }elseif($costcenterparamid > 0){
 
@@ -63,13 +63,27 @@ class accesslib
 
                         if($costcenterpath){
 
+                            $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+
+                            $endpathvalue=end($extractcostcenterpath);
+
+                            $concatsql = " AND concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+
                             $cache->set($cachekey, $costcenterpath);
 
                         }else{
 
-                            $costcenterpath = $USER->access['rsw']['currentroleinfo']['costcenterpath'];
+                            $concatsql = self::get_user_roleswitch_costcenterpath($columnname);
 
                         }
+                    }else{
+
+                        $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+
+                        $endpathvalue=end($extractcostcenterpath);
+
+                        $concatsql = " AND concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+
                     }
 
                 }catch(dml_exception $e){
@@ -77,24 +91,9 @@ class accesslib
                 }
             }
 
-            if($costcenterpath){
-
-                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
-
-                $endpathvalue=end($extractcostcenterpath);
-
-                $concatsql = " AND concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
-
-                return $concatsql;
-
-            }else{
-
-                return $endpathvalue;
-
-            }
+            return $concatsql;
 
         }
-
     }
     public static function get_module_context($costcenterparamid = null){
 
@@ -149,20 +148,16 @@ class accesslib
     }
     public static function get_user_roleswitch_context(){
 
-        global $DB,$USER,$OUTPUT;
+        global $USER;
 
-        // Probably need to get accessdata (again), so...
-        if (!isset($USER->access)) {
-            load_all_capabilities();
-        }
 
-        if(isset($USER->access['rsw']) && !empty($USER->access['rsw'])){
+        if(!empty($USER->access['currentroleinfo']['contextinfo'])){
 
-            if(!empty($USER->access['rsw']['currentroleinfo']['context'])){
+            $context =$USER->access['currentroleinfo']['contextinfo'][0]['context'];
 
-                $context =$USER->access['rsw']['currentroleinfo']['context'];
+        }else{
 
-            }else{
+            if(!empty($USER->access['rsw'])){
 
                 $contextpath=array_values(array_flip($USER->access['rsw']));
 
@@ -176,27 +171,15 @@ class accesslib
 
                 }else{
 
-                     $context = \context_system::instance();
+                    $context = \context_system::instance();
 
                 }
-            }
-        }else{
-
-             $highestroleinfo = array_shift(array_slice(self::get_user_roles_in_catgeorycontexts($USER->id), 0,1));
-
-             if (!empty($highestroleinfo)) {
-
-                $accessdata = get_empty_accessdata();
-
-                $context =\context::instance_by_id($highestroleinfo->contextid);
-
-                $OUTPUT->roleswitch($highestroleinfo->roleid, $context, $accessdata);
-
             }else{
 
-                 $context = \context_system::instance();
+                    $context = \context_system::instance();
 
             }
+
         }
 
         return $context;
@@ -214,11 +197,11 @@ class accesslib
         $assignedsql = "SELECT ra.id, cc.id as categoryid, cc.name as categoryname, r.id as roleid, r.name AS rolename, r.shortname as rolecode, ra.contextid, c.depth
         FROM {role_assignments} AS ra
         JOIN {role} AS r ON r.id =  ra.roleid
-        JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
+        JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = :contextlevel
         JOIN {course_categories} AS cc ON cc.id = c.instanceid
         WHERE ra.userid = :userid GROUP BY r.id, c.depth ORDER BY ra.id DESC ";
 
-        $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid]);
+        $assignedroles = $DB->get_records_sql($assignedsql, ['userid' => $userid,'contextlevel'=>CONTEXT_COURSECAT]);
 
         return $assignedroles;
     }
@@ -231,10 +214,56 @@ class accesslib
 
         if(!$costcenterpath){
 
-            $costcenterpath='';
+            $costcenterpath=0;
 
         }
 
         return $costcenterpath;
+    }
+    public static function get_user_roleswitch_costcenterpath($columnname){
+
+        global $USER;
+
+        $concatsql="";
+
+        $costcenterpath=array();
+
+        $roleid=$USER->access['currentroleinfo']['roleid'];
+
+        if(!empty($USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid])){
+
+            $costcenterpath=$USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid];
+
+        }elseif(!empty($USER->access['currentroleinfo']['contextinfo'])){
+
+
+            $contextsinfo =$USER->access['currentroleinfo']['contextinfo'];
+
+            foreach($contextsinfo as $contextinfo){
+
+
+                $extractcostcenterpath=array_filter(explode('/',$contextinfo['costcenterpath']));
+
+
+                $endpathvalue=end($extractcostcenterpath);
+
+                if(empty($costcenterpath[$endpathvalue])){
+
+                    $costcenterpath[$endpathvalue]= " concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+                }
+
+
+            }
+
+            $USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid] = $costcenterpath;
+
+        }
+
+        if(!empty($costcenterpath)){
+
+            $concatsql="AND (".implode(" OR ", $costcenterpath).")";
+        }
+
+        return $concatsql;
     }
 }
