@@ -31,7 +31,7 @@
                         <a href="{{classroom_url}}" title="{{classroomFullname}}"> {{displayClassroomFullname}}</a>
                     </div>
                     <div class="rating_container">
-                        <i class="fa fa-star"></i> 4.4
+                        <i class="fa fa-star"></i>{{ratingavg}}
                     </div>
                 </div>
                 <div class="w-full">
@@ -39,7 +39,7 @@
                         <div class="desc coursedesc">{{{classroomSummary}}}</div>
                         <div class="schedule my-2"><strong>{{{startdate}}} - {{{enddate}}}</strong></div>
                         <a href="{{classroom_url}}" class="">
-                            <button class="btn btn-primary my-2 launch_btn">{{#str}}launch,block_userdashboard{{/str}}</button>
+                            <button class="btn btn-primary my-2 launch_btn">{{statusname}}</button>
                         </a>
                         
 

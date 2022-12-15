@@ -97,6 +97,7 @@ class roomform extends moodleform {
 		$mform->addRule('description', null, 'required', null, 'client');
 		$mform->addHelpButton('description', 'descript', 'local_location');
 */
-		$this->add_action_buttons();
+		// $this->add_action_buttons();
+		$mform->disable_form_change_checker();
 	}
 }
