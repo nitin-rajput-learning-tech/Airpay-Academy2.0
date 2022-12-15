@@ -343,8 +343,7 @@ class local_assignroles_external extends external_api {
                     if (!(is_siteadmin())) {
                         $costcenterid = $DB->get_field('user', 'open_costcenterid', array("id" => $USER->id), $strictness = IGNORE_MISSING);
                         $accountssql .= " AND id = $costcenterid";
-                    }
-                    
+                    }                
                     $accounts = $DB->get_records_sql($fields . $accountssql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                     
                     if ($accounts) {

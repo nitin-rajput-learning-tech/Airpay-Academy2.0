@@ -319,22 +319,15 @@ class local_groups_external extends external_api {
         $limit = $params['limit'];
         $decodedata = json_decode($params['dataoptions']);
         $filtervalues = json_decode($filterdata);
-
-        $stable = new \stdClass();
-        $stable->thead = true;
-
-
-        $group_members_count = $DB->count_records('local_groups');
-
-        $stable->thead = false;
-        $stable->start = $offset;
-        $stable->length = $limit;
-        
-        $local_groups = new local_groups($stable->start, $stable->length, $filtervalues, $showall);
+    $stable = new \stdClass();
+    $stable->thead = false;
+    $stable->start = $offset;
+    $stable->length = $limit;
+    $group_members_count = $DB->count_records('local_groups');
+    $local_groups = new local_groups($stable->start, $stable->length, $filtervalues, $showall);
 
         $output = $PAGE->get_renderer('local_groups');
-
-        $result = $output->render($local_groups);
+       $result = $output->render($local_groups);
         return [
             'totalcount' => $group_members_count,
             'records' =>$result,
@@ -360,7 +353,7 @@ class local_groups_external extends external_api {
                                     'actions' => new external_value(PARAM_RAW, 'user  actions', VALUE_OPTIONAL),
                                     'userid' => new external_value(PARAM_RAW, 'userid', VALUE_OPTIONAL),
                                     'groupid' => new external_value(PARAM_RAW, 'groupid', VALUE_OPTIONAL),
-
+                                    'orgname' => new external_value(PARAM_RAW, 'groupname', VALUE_OPTIONAL),
                                     'groupname' => new external_value(PARAM_RAW, 'groupname', VALUE_OPTIONAL),
                                     'userimages' => new external_value(PARAM_RAW, 'user pic', VALUE_OPTIONAL),
                                     'location_url' => new external_value(PARAM_RAW, 'location_url', VALUE_OPTIONAL),

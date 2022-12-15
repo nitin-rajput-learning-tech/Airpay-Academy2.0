@@ -44,7 +44,7 @@ class coursefield_form extends moodleform {
         //     $coursecolumns[$c->name] = ucfirst($c->name);
         // }
 
-        $columns = array('coursename','coursecode','coursecategory','coursevisible','courseorg','coursedept','course_subdept','points','courseskill','courselevel');
+        $columns = array('coursename','coursecode','coursecategory','coursevisible','courseorg','coursedept','course_subdept','points','courseskill','courselevel','coursetype');
         $coursecolumns = array_map('ucfirst', $columns);
         $coursecolumns = array_combine($columns, $coursecolumns);
 
@@ -65,7 +65,7 @@ class coursefield_form extends moodleform {
     public function advanced_columns() {
 
         $columns = array('coursename','coursecode','coursecategory','coursecategory','courseorg','coursedept','course_subdept','points','courseskill','courselevel','coursestartdate',
-            'courseenddate');
+            'courseenddate','coursetype');
         $coursecolumns = array_map('ucfirst', $columns);
         $coursecolumns = array_combine($columns, $coursecolumns);
 
