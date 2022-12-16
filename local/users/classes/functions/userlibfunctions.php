@@ -42,18 +42,26 @@ class userlibfunctions {
 
     /* find supervisors list
     @param need to pass supervisor and userid optional value*/
-    public function find_supervisor_list($supervisor, $userid=0) {
-        global $DB;
-        if ($supervisor) {
-                $sql = "SELECT u.id,Concat(u.firstname,' ',u.lastname) as username from {user} as u where u.suspended
-    	         = :suspended AND u.deleted = :deleted AND u.open_costcenterid = :costcenterid  AND u.id > 2";
-            if ($userid) {
+    public function find_supervisor_list($user) {
+        global $DB, $USER;
+        if($user){
+            if(!is_object($user)){
+                $user = \core_user::get_user($user);
+                $userpath = array_filter(explode('/',$user->open_costcenterpath));
+                $depth = $USER->access['currentroleinfo']['depth'];
+                if(is_siteadmin()){
+                    $depth = 1;//getting first level id value
+                }
+                $pathlike = '/'.implode('/', array_slice($userpath, 0, $depth)).'%';
+            }
+            $sql = "SELECT u.id, concat(u.firstname,' ',u.lastname) as username from {user} as u where u.suspended
+    	         = :suspended AND u.deleted = :deleted AND u.open_costcenterpath LIKE '{$pathlike}'  AND u.id > 2 ";
+            if ($user) {
                 $sql .= " AND u.id != :userid";
             }
-            $sub_dep = $DB->get_records_sql($sql, array('suspended' => 0, 'deleted' => 0, 'costcenterid' => $supervisor ,
-             'userid' => $userid));
-
-            return $sub_dep;
+            $supervisors = $DB->get_records_sql($sql, array('suspended' => 0, 'deleted' => 0,
+             'userid' => $user->id));
+            return $supervisors;
         }
     }
 

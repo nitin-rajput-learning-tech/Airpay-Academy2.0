@@ -1445,6 +1445,7 @@ class core_renderer extends \core_renderer {
         $categorypath = \local_costcenter\lib\accesslib::get_category_info($context->instanceid, 'path');
         $categoryids = array_values(array_filter((explode('/', $categorypath))));
         $USER->access['currentroleinfo']['orgcatid'] = $categoryids[0];
+        $USER->access['currentroleinfo']['depth'] = $context->depth;
         $USER->access['currentroleinfo']['contextinfo'] = [];
         $USER->access['currentroleinfo']['contextinfo'][] = ['context' => $context,'costcenterpath' => $costcenterpath];
        /* Get the relevant rolecaps into rdef

@@ -175,9 +175,7 @@ class accesslib
 
                 }
             }else{
-
                     $context = \context_system::instance();
-
             }
 
         }
