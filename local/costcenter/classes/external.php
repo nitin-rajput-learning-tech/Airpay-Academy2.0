@@ -639,6 +639,39 @@ class local_costcenter_external extends external_api {
                         $return = array_values(json_decode(json_encode($coursetypes), true));
                     }
                 break;
+                case 'costcenter_element_selector':
+                    $fields = array("fullname");
+                    $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
+                    $sqlparams['depth'] = $formoptions->depth;
+                    $likesql = array();
+                    $i = 0;
+                    if(!empty($query)){
+                        foreach ($fields as $field) {
+                            $i++;
+                            $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                            $sqlparams["queryparam$i"] = "%$query%";
+                        }
+                        $sqlfields = implode(" OR ", $likesql);
+                        $concatsql .= " AND ($sqlfields) ";
+                    }
+                    $fields      = 'SELECT id, fullname';
+                    $accountssql = " FROM {local_costcenter}
+                                     WHERE 1=1 $concatsql AND parentid = :parentid AND depth = :depth ";
+                    if ($formoptions->id == 0) {
+                        $accountssql .= ' AND visible = 1';
+                    }
+                    $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                    if ($accounts) {
+                        $totalaccounts = count($accounts);
+                        $moreaccounts = $totalaccounts > $perpage;
+
+                        if ($moreaccounts) {
+                            // We need to discard the last record.
+                            array_pop($accounts);
+                        }
+                    }
+                    $return = array_values(json_decode(json_encode(($accounts)), true));
+                break;
             }
         }
         return json_encode($return);

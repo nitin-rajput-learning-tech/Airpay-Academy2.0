@@ -1,0 +1,21 @@
+<?php
+$string['pluginname'] = 'User Village';
+$string['managevillage'] = 'Manage Village';
+$string['createvillage'] = 'Create Village';
+$string['updatevillage'] = 'Update Village';
+$string['no_records'] = 'No records found';
+$string['actions'] = 'Actions';
+$string['villagename'] = 'Village Name';
+$string['villagecode'] = 'Village Code';
+$string['villagenamerequired'] = 'Village Name is required';
+$string['villagecoderequired'] = 'Village Code is required';
+$string['selectsubdistrict'] = 'Sub District Name is required';
+$string['villagenameexist'] = 'Village Name exists';
+$string['villagecodeexist'] = 'Village Code exists';
+$string['subdistrictname'] = 'Sub District Name';
+$string['deletefieldconfirmvillage'] = 'Are you sure you want to delete this Village?';
+$string['reason'] = 'Reason';
+$string['deletenotconfirm'] = 'You cannot delete this Village as it has linked users. Please unmap to delete.';
+$string['subdistrict'] = 'Sub Districts';
+$string['yesdelete'] = 'Yes! Delete';
+$string['no'] = 'No';

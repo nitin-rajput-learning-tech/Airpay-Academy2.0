@@ -73,9 +73,12 @@ class local_users_external extends external_api {
           'open_domainid' => $data['open_domainid']), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
         $userlib = new local_users\functions\users();
+
         if ($validateddata) {
             if ($validateddata->id > 0) {
                 if ($form_status == 0)
+                    local_costcenter_get_costcenter_path($validateddata);
+                // print_r($validateddata);
                  set_user_preference('auth_forcepasswordchange', $validateddata->preference_auth_forcepasswordchange,
                   $validateddata->id);
                  $uid = $userlib->update_existinguser($validateddata);

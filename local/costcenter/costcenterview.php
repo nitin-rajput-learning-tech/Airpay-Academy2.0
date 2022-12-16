@@ -90,14 +90,58 @@ if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizat
     }
 }
 
-if($depart->parentid){
+$superparentfullname = "SELECT lllc.fullname AS fullname, lllc.id AS idd FROM {local_costcenter} AS lc
+    JOIN {local_costcenter} AS llc ON llc.id = lc.parentid
+    JOIN {local_costcenter} AS lllc ON lllc.id = llc.parentid
+    WHERE lc.id = ";
+
+$superparentid = "SELECT lllc.id AS idd FROM {local_costcenter} AS lc
+    JOIN {local_costcenter} AS llc ON llc.id = lc.parentid
+    JOIN {local_costcenter} AS lllc ON lllc.id = llc.parentid
+    WHERE lc.id = ";
+
+$parentfullname = "SELECT llc.fullname AS fullname, llc.id AS idd FROM {local_costcenter} AS lc
+    JOIN {local_costcenter} AS llc ON llc.id = lc.parentid
+    WHERE lc.id = ";
+
+$parentid = "SELECT llc.id AS idd FROM {local_costcenter} AS lc
+    JOIN {local_costcenter} AS llc ON llc.id = lc.parentid
+    WHERE lc.id = ";
+
+if($depart->parentid && $depart->depth == 2){
     if(!has_capability('local/costcenter:manage_owndepartments', $systemcontext) || is_siteadmin()){
         $PAGE->navbar->add($DB->get_field('local_costcenter', 'fullname', array('id' => $depart->parentid)), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $depart->parentid)));
-	   $PAGE->navbar->add(get_string('viewsubdepartments', 'local_costcenter'));
+	    $PAGE->navbar->add(get_string('viewsubdepartments', 'local_costcenter'));
     }
     $PAGE->set_heading(get_string('department_structure', 'local_costcenter'));
     $PAGE->set_title(get_string('department_structure', 'local_costcenter'));
-}else{
+}
+else if($depart->parentid && $depart->depth == 3){
+    if(!has_capability('local/costcenter:manage_owndepartments', $systemcontext) || is_siteadmin()){
+        $pname = $parentfullname. $depart->parentid;
+        $pid = $parentid. $depart->parentid;
+        $PAGE->navbar->add($DB->get_field_sql($pname, array('')), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $DB->get_field_sql($pid, array('')))));
+        $PAGE->navbar->add($DB->get_field('local_costcenter', 'fullname', array('id' => $depart->parentid)), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $depart->parentid)));
+        $PAGE->navbar->add(get_string('viewsubsubdepartments', 'local_costcenter'));
+    }
+    $PAGE->set_heading(get_string('subdepartment_structure', 'local_costcenter'));
+    $PAGE->set_title(get_string('subdepartment_structure', 'local_costcenter'));
+}
+else if($depart->parentid && $depart->depth == 4){
+    if(!has_capability('local/costcenter:manage_owndepartments', $systemcontext) || is_siteadmin()){
+        $spname = $superparentfullname. $depart->parentid;
+        $spid = $superparentid. $depart->parentid;
+        $PAGE->navbar->add($DB->get_field_sql($spname, array('')), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $DB->get_field_sql($spid, array('')))));
+        $pname = $parentfullname. $depart->parentid;
+        $pid = $parentid. $depart->parentid;
+        $PAGE->navbar->add($DB->get_field_sql($pname, array('')), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $DB->get_field_sql($pid, array('')))));
+        $PAGE->navbar->add($DB->get_field('local_costcenter', 'fullname', array('id' => $depart->parentid)), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $depart->parentid)));
+        $PAGE->navbar->add(get_string('viewsubsubsubdepartments', 'local_costcenter'));
+    }
+    $PAGE->set_heading(get_string('subsubdepartment_structure', 'local_costcenter'));
+    $PAGE->set_title(get_string('subsubdepartment_structure', 'local_costcenter'));
+}
+else{
 	$PAGE->navbar->add(get_string('viewcostcenter', 'local_costcenter'));
     $PAGE->set_heading(get_string('orgStructure', 'local_costcenter'));
     $PAGE->set_title(get_string('orgStructure', 'local_costcenter'));

@@ -766,3 +766,73 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $pluginname, $context, $multiple = false){
+    global $DB, $USER;
+    $depth = $USER->access['currentroleinfo']['depth'];
+    if(is_siteadmin()){
+        $depth = 0;
+    }
+    $total_fields = 5;
+    $fields = local_costcenter_get_fields();
+    $prev_element = '';
+    foreach(range(1, 5) as $level){
+
+        $levelelementoptions = array(
+            'class' => $fields[$level].'_select',
+            'id' => 'id_'.$fields[$level].'_select',
+            'data-parentclass' => $prev_element,
+            'data-selectstring' => get_string('select'.$fields[$level], 'local_costcenter'),
+            'data-depth' => $level,
+            'data-class' => $fields[$level].'_select',
+            'multiple' => $level == 1 ? false : $multiple,
+        );
+        $prev_element = $fields[$level].'_select';
+        $fieldvalue = $ajaxformdata[$fields[$level]] ? $ajaxformdata[$fields[$level]] : $customdata[$fields[$level]];
+        if($depth > $level){
+            $mform->addElement('hidden', $fields[$level], null, array('id' => 'id_open_costcenterid', 'data-class' => $fields[$level].'_select'));
+            $mform->setConstant($fields[$level], $fieldvalue);
+        }else{
+            $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
+            $levelelementoptions['data-contextid'] = $context->id;
+            $levelelementoptions['data-action'] = 'costcenter_element_selector';
+            $levelelementoptions['data-options'] = json_encode(array('depth' => $level));
+            if($fieldvalue){
+                $levelelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
+                $levelelementids = array_filter($levelelementids);
+                $levelelements = [];
+                if($levelelementids){
+                    list($idsql, $idparams) = $DB->get_in_or_equal($levelelementids, SQL_PARAMS_NAMED, 'levelelements');
+                    $levelsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$idsql} ";
+                    $levelelements = $DB->get_records_sql_menu($levelsql, $idparams);
+                }
+            }
+            $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
+            $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
+        }
+        $mform->setType($fields[$level], PARAM_RAW);
+    }
+}
+function local_costcenter_get_costcenter_path(&$data){
+    $fields = local_costcenter_get_fields();
+    $path = '';
+    foreach($fields AS $field){
+        if(isset($data->$field) && $data->$field > 0){
+            $path .= '/'.$data->$field;
+        }
+    }
+    $data->open_costcenterpath = $path;
+}
+function local_costcenter_set_costcenter_path(&$data){
+    $fields = local_costcenter_get_fields();
+    if(isset($data['open_costcenterpath'])){
+        $recordedpathids = explode('/', $data['open_costcenterpath']);
+        foreach($fields as $levelid => $field){
+            if(isset($recordedpathids[$levelid]) && $recordedpathids[$levelid] > 0){
+                $data[$field] = $recordedpathids[$levelid];
+            }
+        }
+    }
+}
+function local_costcenter_get_fields(){
+    return $fields = [ 1 => 'open_costcenter', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department', 5 => 'open_level5department'];
+}

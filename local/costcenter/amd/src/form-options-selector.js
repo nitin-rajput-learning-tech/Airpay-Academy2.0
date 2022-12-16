@@ -120,8 +120,7 @@
                             $('.categoryselect .form-autocomplete-selection').html(categoryselect);
                         }
                     });
-                }
-                else if(action === 'costecenter_coursetype_selector'){
+                }else if(action === 'costecenter_coursetype_selector'){
                     $('#id_open_identifiedtype').on('change', function(){
                         var category = $('#id_open_identifiedtype').val();
                         if(parseInt(category) > 0){
@@ -129,9 +128,23 @@
                             $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
                     });
+                }else if(action === 'costcenter_element_selector'){
+                    $('[data-action="costcenter_element_selector"]').on('change', function(){
+                        var elemvalue = $(this).val();
+                        if(parseInt(elemvalue) > 0){
+                            var depth = $(this).data('depth');
+                            $.each($('[data-action="costcenter_element_selector"]'), function(index, value){
+                                if($(value).data('depth') > depth){
+                                    // $(value).html('');
+                                    // $(value).parents().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection').html($(value).data('selectstring'));
+                                }
+
+                            });
+                        }
+                    });
                 }
             });
-            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector'){
+            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector' || action === 'costcenter_element_selector'){
                 formoptions.parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
                 console.log($('[data-class="' + $(selector).data('parentclass') + '"]'));
                 console.log(formoptions.parentid);

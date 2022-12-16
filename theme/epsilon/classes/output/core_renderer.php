@@ -1051,7 +1051,6 @@ class core_renderer extends \core_renderer {
 
         /*Start of the role Switch */
         $systemcontext = context_system::instance();
-        // $roles = get_user_roles($systemcontext, $USER->id);
         $roles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
 
         if (is_array($roles) && (count($roles) > 0)) {
@@ -1060,26 +1059,33 @@ class core_renderer extends \core_renderer {
             $switchrole->itemtype = 'link';
             $learner_record_sql = "SELECT id, name, shortname
                                     FROM {role}
-                                    WHERE shortname = 'employee' AND archetype = 'student' ";
+                                    WHERE shortname = 'user' AND archetype = 'user' ";
             $learnerroleid = $DB->get_record_sql($learner_record_sql);
 
             $rolename = get_string('employee','theme_epsilon');
 
-            // $user_ra_array = $USER->access['ra']['/1'];
+
             $depths = [];
-            $user_ra_array = array_values(array_map(function($role)use($depths){
-                if(!in_array($role->depth, $depths)){
-                    $depths[] = $role->depth;
+            $user_ra_array = array_values(array_map(function($role)use(&$depths){
+                $categoryids = array_values(array_filter((explode('/', $role->path))));
+                $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
+                if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
+                    $depths['depth'] = $role->depth.'_'.$categoryids[0];
+                    $role->categoryname = $category;
+                    $role->highest_catid = $categoryids[0];
                     return $role;
                 }
             }, $roles));
-
             if(is_array($user_ra_array)){
                 $highest_roleinfo = max($user_ra_array);
             }else{
                 $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];
             }
-            $current_roleid = isset($USER->access['currentroleinfo']) ? $USER->access['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
+
+            $current_roleid = isset($USER->access['currentroleinfo']['roleid']) ? $USER->access['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
+
+            $current_orgcatid = isset($USER->access['currentroleinfo']['orgcatid']) ? $USER->access['currentroleinfo']['orgcatid'] : $highest_roleinfo->highest_catid;
+
 
             if(!empty($learnerroleid)){
                 if($learnerroleid->id == $current_roleid){
@@ -1095,17 +1101,16 @@ class core_renderer extends \core_renderer {
                  $opts->navitems[] = $switchrole;
              }
 
-            foreach($roles as $role){   /*Get all the roles assigned to the user for display */
+            foreach($user_ra_array as $role){   /*Get all the roles assigned to the user for display */
                 if(empty($role->rolename)){
-                    $rolename = $role->categoryname .' - '. $role->rolecode;
+                    $rolename =  $role->categoryname.' - '.$role->rolecode;
                 }else{
-                    $rolename = $role->categoryname .' - '. $role->rolename;
+                    $rolename =  $role->categoryname.' - '.$role->rolename;
                 }
 
                 $switchrole = new stdClass();
                 $switchrole->itemtype = 'link';
-
-                if($role->roleid == $current_roleid){
+                if($role->roleid == $current_roleid && $current_orgcatid == $role->highest_catid ){
                     $switchrole->url = new moodle_url('javascript:void(0)');
                     $disabled_role = 'user_role active_role';
                 }else{
@@ -1437,6 +1442,10 @@ class core_renderer extends \core_renderer {
         $costcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($context);
 
         $USER->access['currentroleinfo']['roleid'] = $roleid;
+        $categorypath = \local_costcenter\lib\accesslib::get_category_info($context->instanceid, 'path');
+        $categoryids = array_values(array_filter((explode('/', $categorypath))));
+        $USER->access['currentroleinfo']['orgcatid'] = $categoryids[0];
+        $USER->access['currentroleinfo']['depth'] = $context->depth;
         $USER->access['currentroleinfo']['contextinfo'] = [];
         $USER->access['currentroleinfo']['contextinfo'][] = ['context' => $context,'costcenterpath' => $costcenterpath];
        /* Get the relevant rolecaps into rdef
@@ -1606,7 +1615,6 @@ class core_renderer extends \core_renderer {
         $theme = theme_config::load('epsilon');
         $primarycolor= $theme->settings->primarycolor;
         $costcentercolor = $this->get_costcenter_scheme_css();
-        // var_dump($costcentercolors); exit;
         if($costcentercolor && !empty($costcentercolor->button_color)){
             $primarycolor = $costcentercolor->button_color;
         }
