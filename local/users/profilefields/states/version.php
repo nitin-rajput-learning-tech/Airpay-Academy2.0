@@ -24,6 +24,6 @@
 
 defined('MOODLE_INTERNAL') || die('Direct access to this script is forbidden.');
 
-$plugin->version    = 2022120104; // The current localule version (Date: YYYYMMDDXX).
+$plugin->version    = 2022120104.01; // The current localule version (Date: YYYYMMDDXX).
 $plugin->requires   = 2016080902; // Requires this Moodle version (3.4).
 $plugin->component  = 'usersprofilefields_states';
