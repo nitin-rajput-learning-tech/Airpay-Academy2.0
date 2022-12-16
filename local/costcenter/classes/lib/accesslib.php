@@ -77,7 +77,7 @@ class accesslib
 
                         if($costcenterpath){
 
-                            $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+                            $extractcostcenterpath=array_values(array_filter(explode('/',$costcenterpath)));
 
                             if(self::$content_path_extractmethods[$datatype]){
 
@@ -100,7 +100,7 @@ class accesslib
                         }
                     }else{
 
-                        $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+                        $extractcostcenterpath=array_values(array_filter(explode('/',$costcenterpath)));
 
                         if(self::$content_path_extractmethods[$datatype]){
 
@@ -193,7 +193,7 @@ class accesslib
 
                 if(!empty($contextpath[0])){
 
-                    $extractcontextpath=array_filter(explode('/',$contextpath[0]));
+                    $extractcontextpath=array_values(array_filter(explode('/',$contextpath[0])));
 
                     $pathvalue=end($extractcontextpath);
 
@@ -251,7 +251,7 @@ class accesslib
     public static function get_category_info($categoryid, $value = null){
         global $DB;
         $coursecatrecordcache = \cache::make('core', 'coursecatrecords');
-        $coursecat = $coursecatrecordcache->get($id);
+        $coursecat = $coursecatrecordcache->get($categoryid);
         if ($coursecat === false) {
             $coursecat = $DB->get_record('course_categories', array('id' => $categoryid));
         }
@@ -280,21 +280,22 @@ class accesslib
 
             $contextsinfo =$USER->access['currentroleinfo']['contextinfo'];
 
+
             foreach($contextsinfo as $contextinfo){
 
 
-                $extractcostcenterpath=array_filter(explode('/',$contextinfo['costcenterpath']));
+                $extractcostcenterpath=array_values(array_filter(explode('/',$contextinfo['costcenterpath'])));
 
+               if(self::$content_path_extractmethods[$datatype]){
 
-                   if(self::$content_path_extractmethods[$datatype]){
+                    $pathvalue=end($extractcostcenterpath);
 
-                        $pathvalue=end($extractcostcenterpath);
+                }else{
 
-                    }else{
+                    $pathvalue=$extractcostcenterpath[0];
 
-                        $pathvalue=$extractcostcenterpath[0];
+                }
 
-                    }
 
                 if(empty($costcenterpath[$pathvalue])){
 
@@ -304,7 +305,10 @@ class accesslib
 
             }
 
-            $USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid] = $costcenterpath;
+            if(!empty($costcenterpath)){
+
+                $USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid] = $costcenterpath;
+            }
 
         }
         if(!empty($costcenterpath)){
