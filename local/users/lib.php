@@ -58,10 +58,12 @@ function local_users_output_fragment_new_create_user($args) {
         $data = $DB->get_record('user', array('id' => $args->id));
         unset($data->password);
         useredit_load_preferences($data);
-        $mform = new local_users\forms\create_user(null, array('editoroptions' => $editoroptions,
-            'form_status' => $args->form_status, 'id' => $data->id, 'org' => $data->open_costcenterid,
-            'dept' => $data->open_departmentid, 'subdept' => $data->open_subdepartment,
-            'open_positionid' => $data->open_positionid, 'open_domainid' => $data->open_domainid),
+        $customdata = array('editoroptions' => $editoroptions,
+            'form_status' => $args->form_status, 'id' => $data->id,
+            'open_positionid' => $data->open_positionid, 'open_domainid' => $data->open_domainid, 'open_costcenterpath' => $data->open_costcenterpath);
+        local_costcenter_set_costcenter_path($customdata);
+        // print_r($customdata);exit;
+        $mform = new local_users\forms\create_user(null, $customdata,
             'post', '', null, true, $formdata);
         $mform->set_data($data);
     } else {

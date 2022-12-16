@@ -766,7 +766,7 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
-function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $pluginname, $context, $multiple = false){
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $pluginname, $context, $multiple = false){
     global $DB, $USER;
     $depth = $USER->access['currentroleinfo']['depth'];
     if(is_siteadmin()){
@@ -787,16 +787,17 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $pluginnam
             'multiple' => $level == 1 ? false : $multiple,
         );
         $prev_element = $fields[$level].'_select';
-        if($depth >= $level){
+        $fieldvalue = $ajaxformdata[$fields[$level]] ? $ajaxformdata[$fields[$level]] : $customdata[$fields[$level]];
+        if($depth > $level){
             $mform->addElement('hidden', $fields[$level], null, array('id' => 'id_open_costcenterid', 'data-class' => $fields[$level].'_select'));
-            $mform->setConstant($fields[$level], $ajaxformdata[$fields[$level]]);
+            $mform->setConstant($fields[$level], $fieldvalue);
         }else{
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
             $levelelementoptions['data-action'] = 'costcenter_element_selector';
             $levelelementoptions['data-options'] = json_encode(array('depth' => $level));
-            if($ajaxformdata[$fields[$level]]){
-                $levelelementids = is_array($ajaxformdata[$fields[$level]]) ? $ajaxformdata[$fields[$level]] : explode(',', $ajaxformdata[$fields[$level]]);
+            if($fieldvalue){
+                $levelelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
                 $levelelementids = array_filter($levelelementids);
                 $levelelements = [];
                 if($levelelementids){
@@ -820,6 +821,17 @@ function local_costcenter_get_costcenter_path(&$data){
         }
     }
     $data->open_costcenterpath = $path;
+}
+function local_costcenter_set_costcenter_path(&$data){
+    $fields = local_costcenter_get_fields();
+    if(isset($data['open_costcenterpath'])){
+        $recordedpathids = explode('/', $data['open_costcenterpath']);
+        foreach($fields as $levelid => $field){
+            if(isset($recordedpathids[$levelid]) && $recordedpathids[$levelid] > 0){
+                $data[$field] = $recordedpathids[$levelid];
+            }
+        }
+    }
 }
 function local_costcenter_get_fields(){
     return $fields = [ 1 => 'open_costcenter', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department', 5 => 'open_level5department'];
