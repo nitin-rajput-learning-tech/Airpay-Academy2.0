@@ -37,5 +37,20 @@ function xmldb_local_location_upgrade($oldversion) {
 
      upgrade_plugin_savepoint(true, 2022101800, 'local', 'location');
     }
+    if ($oldversion < 2022101800.01) {
+        $table = new xmldb_table('local_location_institutes');
+        $field = new xmldb_field('address', XMLDB_TYPE_TEXT,'big', null, XMLDB_NOTNULL, null, null);
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+        }
+
+        $table = new xmldb_table('local_location_room');
+        $field = new xmldb_field('address', XMLDB_TYPE_TEXT,'big', null, XMLDB_NOTNULL, null, null);
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.01, 'local', 'location');
+    }
+    
     return true;
 }

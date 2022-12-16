@@ -88,7 +88,8 @@ class instituteform extends moodleform {
 
 
 
-		$this->add_action_buttons();
+		// $this->add_action_buttons();
+		$mform->disable_form_change_checker();
 	}
 	public function validation($data, $files){
 		$errors = parent::validation($data, $files);

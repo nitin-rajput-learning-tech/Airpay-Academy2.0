@@ -153,7 +153,7 @@ class session_form extends moodleform {
 			}
         }
 		if(isset($data['name']) &&empty(trim($data['name']))){
-            $errors['name'] = get_string('valnamerequired','local_classroom');
+            $errors['name'] = get_string('sessionvalnamerequired','local_classroom');
         }
         return $errors;
     }

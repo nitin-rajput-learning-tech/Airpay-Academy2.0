@@ -69,7 +69,7 @@ class local_classroom_external extends external_api {
         $status = $formatted_dataoptions->status;
 
         $classrooms = (new classroom)->get_classrooms($status, $search, $offset, $limit);
-        // print_object($classrooms);exit;
+        // print_r($classrooms);exit;
         $totalcount = $classrooms['classroomscount'];
         $formattedclassrooms = $classrooms['classrooms'];
 
@@ -1262,7 +1262,7 @@ class local_classroom_external extends external_api {
 
         self::validate_context($categorycontext);
         $courses = array();
-        if ($query) {
+        // if ($query) {
             $queryparams = array();
             $concatsql = '';
             $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
@@ -1275,14 +1275,19 @@ class local_classroom_external extends external_api {
                      $queryparams['department'] = $USER->open_departmentid;
                  }
            }
+           if($query){
+                $concatsql .=" AND c.fullname LIKE '%$query%'";
+           }else{
+                $concatsql .=" ";
+           }
 
             //unable to fetch data from the previous query.Updated into new one.
               $cousresql = "SELECT c.id, c.fullname
                            FROM {course} AS c
                           WHERE c.visible = 1
-                          AND c.fullname LIKE '%$query%' AND c.id <> " . SITEID . " $concatsql";
+                           AND c.id <> " . SITEID . " $concatsql";
             $courses = $DB->get_records_sql($cousresql, $queryparams);
-        }
+        // }
 
         return array('courses' => $courses);
     }
@@ -1493,9 +1498,8 @@ class local_classroom_external extends external_api {
         // $limitfrom = $params['limitfrom'];
         // $limitnum = $params['limitnum'];
         //
-
         self::validate_context($categorycontext);
-        if ($query && $action) {
+        if ($action) {
             $querieslib = new \local_classroom\local\querylib();
             $return = array();
 
@@ -1508,7 +1512,9 @@ class local_classroom_external extends external_api {
                 case 'classroom_institute_selector':
                     $service = array();
                     $service['classroomid'] = $formoptions->id;
+                    if (!empty($query)) {
                     $service['query'] = $query;
+                    }
                     $return = $querieslib->get_classroom_institutes($formoptions->institute_type, $service);
                 break;
                 case 'classroom_costcenter_selector':
@@ -1540,7 +1546,7 @@ class local_classroom_external extends external_api {
                         $concat_array = array();
                     }else{
                         $concat_array = array(-1 => array('id' => -1,'fullname' => 'All'));
-                    }
+                    }              
                     $return = $concat_array + $DB->get_records_sql($costcntersql, $params);
                 break;
                 case 'classroom_subdepartment_selector':
@@ -2898,6 +2904,8 @@ public static function submit_instituteform_form_parameters() {
                         'enddate' => new external_value(PARAM_RAW, 'Classroom enddate'),
                         'classroom_url' => new external_value(PARAM_RAW, 'Classroom url'),
                         'index' => new external_value(PARAM_INT, 'Index of Card'),
+                        'ratingavg' => new external_value(PARAM_RAW, 'Classroom Rating'),
+                        'statusname' => new external_value(PARAM_RAW, 'Classroom Status Name'),
                     )
                 )
             ),
@@ -2993,6 +3001,8 @@ public static function submit_instituteform_form_parameters() {
                                 'startdate' => new external_value(PARAM_RAW, 'Classroom startdate'),
                                 'enddate' => new external_value(PARAM_RAW, 'Classroom enddate'),
                                 'classroom_url' => new external_value(PARAM_RAW, 'Classroom url'),
+                                'ratingavg' => new external_value(PARAM_RAW, 'Classroom Rating'),
+                                'statusname' => new external_value(PARAM_RAW, 'Classroom Status Name'),
                             )
                         )
                     ),

@@ -115,16 +115,20 @@ class renderer extends plugin_renderer_base {
            }
            $viewcardlist = false;
            if (is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext))  {
+            $perpage = 6;
+            
                 $viewcardlist = true;
                 if ($view_type == 'card') {
                     $cardlisturl = new moodle_url('/local/classroom/index.php?formattype=table');
                     $cardlistlabel = get_string('listtype','local_classroom');
                     $cardlistclass = 'icon fa fa-bars fa-fw';
+                    $templateName = 'local_classroom/classrooms_list';
                 
                 } else {
                     $cardlisturl = new moodle_url('/local/classroom/index.php?formattype=card');
                     $cardlistlabel = get_string('cardtype','local_classroom');
                     $cardlistclass = 'icon fa fa-th fa-fw';
+                    $templateName = 'local_classroom/classrooms_catalog_list';
                 }
            }
            $classroomtabslist = [
@@ -1049,6 +1053,7 @@ class renderer extends plugin_renderer_base {
         }else{
             $display_ratings = $display_like = null;
         }
+        
         if(!is_siteadmin()) {
              $switchedrole = $USER->access['rsw']['/1'];
             if($switchedrole){

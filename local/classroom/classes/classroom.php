@@ -593,7 +593,6 @@ class classroom {
             $myclassrooms = $DB->get_records_menu('local_classroom_users', array(
                 'userid' => $USER->id
             ), 'id', 'id, classroomid');
-
             if (!empty($myclassrooms)) {
                     list($relatedclassromsql, $relatedclassroomparams) = $DB->get_in_or_equal($myclassrooms, SQL_PARAMS_NAMED, 'myclassrooms');
                     $params = array_merge($params,$relatedclassroomparams);
@@ -649,7 +648,6 @@ class classroom {
         //ended here by sarath
 
         $sql .= $condition;
-        
         // if (isset($stable->classroomid) && $stable->classroomid > 0) {
         //     $classrooms = $DB->get_record_sql($fromsql . $sql, $params);
         // } else {
@@ -879,24 +877,6 @@ class classroom {
                         }
 // print_object($row);exit();
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                     // }
                 // }
             } catch (dml_exception $ex) {
@@ -906,6 +886,7 @@ class classroom {
         // if (isset($stable->classroomid) && $stable->classroomid > 0) {
         //     return $classrooms;
         // } else {
+            // print_r(array('classrooms' => $row, 'classroomscount' => $classroomscount));
             return array('classrooms' => $row, 'classroomscount' => $classroomscount);
         // }
     }
