@@ -53,41 +53,26 @@
             contextid = parseInt($(selector).data('contextid'), 10);
             action = $(selector).data('action');
             formoptions = $(selector).data('options');
-            var defaultstrings = Str.get_strings([
-                {
-                    key:'selectdept',
-                    component: 'local_courses',
-                },
-                {
-                    key:'selectsubdept',
-                    component: 'local_courses',
-                },
-                {
-                    key:'selectcat',
-                    component: 'local_courses',
-                },
-                {
-                    key:'selectcoursetype',
-                    component: 'local_courses',
-                }
-            ]);
-            defaultstrings.then(function(s){
-             if(action === 'user_element_selector'){
-                    $('[data-action="costcenter_element_selector"]').on('change', function(){
+
+            if(action === 'geography_target_element_selector'){
+
+                $('[data-action="geography_target_element_selector"]').on('change', function(){
                         var elemvalue = $(this).val();
                         if(parseInt(elemvalue) > 0){
                             var depth = $(this).data('depth');
-                            $.each($('[data-action="costcenter_element_selector"]'), function(index, value){
+                            $.each($('[data-action="geography_target_element_selector"]'), function(index, value){
                                 if($(value).data('depth') > depth){
-                                    // $(value).html('');
-                                    // $(value).parents().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection').html($(value).data('selectstring'));
+                                    $(value).html('');
+                                    console.log($(value).parent().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection'));
+                                    $(value).parent().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection').html($(value).data('selectstring'));
                                 }
 
                             });
                         }
-                    });
-                }
-            });
+                });
+
+                formoptions.parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
+            }
 
             formoptions = JSON.stringify(formoptions);
 

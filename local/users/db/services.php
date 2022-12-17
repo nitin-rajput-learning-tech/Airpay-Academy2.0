@@ -185,5 +185,13 @@ $functions = array(
         'description' => 'Create or update profile',
         'type'        => 'write',
         'ajax' => true,
-    )
+    ),
+    'local_users_form_option_selector' => array(
+        'classname'   => 'local_users_external',
+        'methodname'  => 'form_option_selector',
+        'classpath'   => 'local/users/classes/external.php',
+        'description' => 'Get dynamic form options related to users',
+        'type'        => 'read',
+        'ajax' => true,
+    ),
 );

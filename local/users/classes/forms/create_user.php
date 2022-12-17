@@ -55,30 +55,10 @@ class create_user extends moodleform {
         $open_positionid = $this->_customdata['open_positionid'];
         $open_domainid = $this->_customdata['open_domainid'];
         if ($form_status == 0) {
-            // if (is_siteadmin($USER->id) || has_capability('local/users:manage', $categorycontext)) {
-            //     $sql = "select id,fullname from {local_costcenter} where visible =
-    		// 	 :visible and parentid=:parentid ";
-            //     $costcenters = $DB->get_records_sql($sql, array('visible' => 1, 'parentid' => 0));
-            // }
 
-            // if (is_siteadmin($USER) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
-            //     $organizationlist = array(null => get_string('select_org', 'local_users'));
-            //     foreach ($costcenters as $scl) {
-            //         $organizationlist[$scl->id] = $scl->fullname;
-            //     }
-            //     $mform->addElement('select', 'open_costcenterid', get_string('organization', 'local_users'),
-            //      $organizationlist);
-            //     $mform->addRule('open_costcenterid', get_string('errororganization', 'local_users'), 'required',
-            //      null, 'client');
-            // } else if (has_capability('local/costcenter:manage_ownorganization', $categorycontext) || has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
-            //     $user_dept = $DB->get_field('user', 'open_costcenterid', array('id' => $USER->id));
-            //     $mform->addElement('hidden', 'open_costcenterid', null);
-            //     $mform->setType('open_costcenterid', PARAM_ALPHANUM);
-            //     $mform->setConstant('open_costcenterid', $user_dept);
-            // }
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata, 'local_users', $categorycontext, $multiple = false);
 
-            local_users_get_geography_targetfields($mform, $this->_ajaxformdata, $this->_customdata, 'local_users', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, 'local_users', $categorycontext, $multiple = false);
+
 
             $count = count($costcenters);
             $mform->addElement('hidden', 'count', $count);
@@ -140,38 +120,7 @@ class create_user extends moodleform {
             $mform->addRule('email', get_string('emailerror', 'local_users'), 'required', null, 'client');
             $mform->setType('email', PARAM_RAW);
 
-            // if (is_siteadmin() || has_capability('local/costcenter:manage_ownorganization',
-            //     $categorycontext) || has_capability('local/costcenter:
-            // 	manage_multiorganizations', $categorycontext)) {
-            //     $departmentslist = array(get_string('select_dept', 'local_users'));
-            //     if ($id > 0) {
-            //         $existing_costcenter = $DB->get_field('user', 'open_costcenterid', array('id' => $id));
-            //     }
-            //     if ($id > 0 && $existing_costcenter && !isset($this->_ajaxformdata['open_costcenterid'])) {
-            //         $open_costcenterid = $existing_costcenter;
-            //     } else {
-            //         $open_costcenterid = $this->_ajaxformdata['open_costcenterid'];
-            //     }
-            //     if (!empty($open_costcenterid) && is_siteadmin()) {
-            //         $departments = userlib::find_departments_list($open_costcenterid);
-            //         foreach ($departments as $depart) {
-            //             $departmentslist[$depart->id] = $depart->fullname;
-            //         }
-            //     } else if (!is_siteadmin() && has_capability('local/costcenter:view', $categorycontext)) {
-            //         $departments = userlib::find_departments_list($USER->open_costcenterid);
-            //         foreach ($departments as $depart) {
-            //             $departmentslist[$depart->id] = $depart->fullname;
-            //         }
-            //     }
-            //     $mform->addElement('select', 'open_departmentid', get_string('department', 'local_users'), $departmentslist);
-            //     $mform->addHelpButton('open_departmentid', 'department', 'local_users');
-            //     $mform->addRule('open_departmentid', get_string('departmentrequired', 'local_users'), 'required', null, 'client');
-            // } else {
-            //     $departmentid = $DB->get_field('user', 'open_departmentid', array('id' => $USER->id));
-            //     $mform->addElement('hidden', 'open_departmentid');
-            //     $mform->setType('open_departmentid', PARAM_INT);
-            //     $mform->setConstant('open_departmentid', $departmentid);
-            // }
+
             $mform->addElement('text', 'open_employeeid', get_string('serviceid', 'local_users'));
             $mform->addRule('open_employeeid',  get_string('employeeidrequired', 'local_users'),  'required',  '',  'client');
             $mform->addRule('open_employeeid',  get_string('open_employeeiderror', 'local_users'),
@@ -180,17 +129,7 @@ class create_user extends moodleform {
             $mform->setType('open_employeeid', PARAM_RAW);
             $open_costcenterid = $this->_customdata['org'] > 0 ?
                              $this->_customdata['org'] : $this->_ajaxformdata['open_costcenterid'];
-            // if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
-            //     $reporting = userlib::find_supervisor_list($USER->open_costcenterid, $id);
-            // } else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
-            //     $reporting = userlib::find_dept_supervisor_list($USER->open_departmentid, $id);
-            // } else if ($open_costcenterid > 0) {
-            //     $reporting = userlib::find_supervisor_list($open_costcenterid, $id);
-            // } else if ($id > 0) {
-            //     $costcenterid = $DB->get_field('user', 'open_costcenterid',
-            //      array('id' => $id));
-            //     $reporting = userlib::find_supervisor_list($costcenterid, $id);
-            // }
+
             $reporting = userlib::find_supervisor_list($id);
             $reportingmanger = array(null => get_string('select_reportingto', 'local_users'));
             foreach ($reporting as $report) {
@@ -203,50 +142,22 @@ class create_user extends moodleform {
                 // End of if($form_status = 0) condition.
         } else if ($form_status == 1) {
                     // Commented by sarath for removing subdepartments concept in Bizz LMS.
-            $userrecord = $DB->get_record('user', array('id' => $id));
-            $subdepartmentlist = array(null => get_string('select_subdept', 'local_users'));
-            if (!empty($userrecord->open_departmentid)) {
-                $subdepartments = userlib::find_subdepartments_list($userrecord->open_departmentid);
-                foreach ($subdepartments as $subdepartment) {
-                    $subdepartmentlist[$subdepartment->id] = $subdepartment->fullname;
-                }
-            }
-            $mform->addElement('select', 'open_subdepartment', get_string('subdepartment', 'local_users'), $subdepartmentlist);
-            $mform->addHelpButton('subdepartment', 'subdepartment', 'local_users');
+
 
             $mform->addElement('select', 'lang', get_string(
                 'preferredlanguage', 'local_users'),
                 get_string_manager()->get_list_of_translations());
             $mform->setDefault('lang', $CFG->lang);
-            $mform->addElement('text', 'open_designation', get_string('designation', 'local_users'));
-            $mform->setType('open_designation', PARAM_RAW);
-            $mform->addHelpButton('open_designation', 'designation', 'local_users');
-            $mform->addElement('text', 'open_hrmsrole', get_string('hrmrole', 'local_users'));
-            $mform->setType('open_hrmsrole', PARAM_RAW);
-            $mform->addHelpButton('open_hrmsrole', 'hrmrole', 'local_users');
-            $mform->addElement('text', 'city', get_string('open_location', 'local_users'));
-            $mform->setType('city', PARAM_RAW);
-            $mform->addHelpButton('city', 'open_location', 'local_users');
-            $mform->addElement('text', 'open_level', get_string('open_level', 'local_users'));
-            $mform->setType('open_level', PARAM_RAW);
-            $mform->addHelpButton('open_level', 'open_level', 'local_users');
-            // OL-2167 jira issue.
-            // End of if($form_status = 1) condition.
+
+             local_users_get_geography_targetfields($mform, $this->_ajaxformdata, $this->_customdata,null, 'local_users', $categorycontext, $multiple = false);
+
         } else if ($form_status == 2) {
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));
             $mform->addRule('phone1', get_string('numeric', 'local_users'), 'numeric', null, 'client');
             $mform->addRule('phone1', get_string('phoneminimum', 'local_users'), 'minlength', 10, 'client');
             $mform->addRule('phone1', get_string('phonemaximum', 'local_users'), 'maxlength', 15, 'client');
             $mform->setType('phone1', PARAM_RAW);
-            $choices = get_string_manager()->get_list_of_countries();
-            $choices = array('' => get_string('selectacountry').'...') + $choices;
-            $mform->addElement('select', 'country', get_string('selectacountry'), $choices);
-            if (empty($CFG->country)) {
-                $mform->setDefault('country', $USER->country);
-            } else {
-                $mform->setDefault('country', \core_user::get_property_default('country'));
-            }
-            $mform->setAdvanced('country');
+
             if (isset($CFG->forcetimezone) && $CFG->forcetimezone != 99) {
                 $choices = \core_date::get_list_of_timezones($CFG->forcetimezone);
                 $mform->addElement('static', 'forcedtimezone', get_string('timezone'), $choices[$CFG->forcetimezone]);

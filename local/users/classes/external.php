@@ -1655,5 +1655,99 @@ class local_users_external extends external_api {
             )
         );
     }
+    public static function form_option_selector_parameters(){
+        $query = new external_value(PARAM_RAW, 'Query string');
+        $action = new external_value(PARAM_RAW, 'Action for the costcenter form selector');
+        $options = new external_value(PARAM_RAW, 'Action for the kpichallenge form selector');
+        $searchanywhere = new external_value(PARAM_BOOL, 'find a match anywhere, or only at the beginning');
+        $page = new external_value(PARAM_INT, 'Page number');
+        $perpage = new external_value(PARAM_INT, 'Number per page');
+        return new external_function_parameters(array(
+            'query' => $query,
+            'context' => self::get_context_parameters(),
+            'action' => $action,
+            'options' => $options,
+            'searchanywhere' => $searchanywhere,
+            'page' => $page,
+            'perpage' => $perpage,
+        ));
+    }
+    public static function form_option_selector($query, $context, $action, $options, $searchanywhere, $page, $perpage){
+        global $CFG, $DB, $USER;
+        $params = self::validate_parameters(self::form_option_selector_parameters(), array(
+            'query' => $query,
+            'context' => $context,
+            'action' => $action,
+            'options' => $options,
+            'searchanywhere' => $searchanywhere,
+            'page' => $page,
+            'perpage' => $perpage
+        ));
+        $query = $params['query'];
+        $action = $params['action'];
+        $context = self::get_context_from_params($params['context']);
+        $options = $params['options'];
+
+        $searchanywhere=$params['searchanywhere'];
+        $page=$params['page'];
+        $perpage=$params['perpage'];
+
+        if (!empty($options)) {
+            $formoptions = json_decode($options);
+        }
+        self::validate_context($context);
+        $allobject = new \stdClass();
+        $allobject->id = 0;
+        $allobject->fullname = 'All';
+        $allobjectarr = array(0 => $allobject);
+        if ($action) {
+
+            $return = array();
+
+            switch($action) {
+
+                case 'geography_target_element_selector':
+                    $fields = array("fullname");
+
+                    $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
+                    $sqlparams['depth'] = $formoptions->depth;
+                    $likesql = array();
+                    $i = 0;
+                    if(!empty($query)){
+                        foreach ($fields as $field) {
+                            $i++;
+                            $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                            $sqlparams["queryparam$i"] = "%$query%";
+                        }
+                        $sqlfields = implode(" OR ", $likesql);
+                        $concatsql .= " AND ($sqlfields) ";
+                    }
+                    $fields      = 'SELECT id, fullname';
+                    $accountssql = " FROM {local_costcenter}
+                                     WHERE 1=1 $concatsql AND parentid = :parentid AND depth = :depth ";
+                    if ($formoptions->id == 0) {
+                        $accountssql .= ' AND visible = 1';
+                    }
+                    $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                    if ($accounts) {
+                        $totalaccounts = count($accounts);
+                        $moreaccounts = $totalaccounts > $perpage;
+
+                        if ($moreaccounts) {
+                            // We need to discard the last record.
+                            array_pop($accounts);
+                        }
+                    }
+
+                    $return = array_values(json_decode(json_encode(($accounts)), true));
+                break;
+            }
+        }
+        return json_encode($return);
+    }
+    public static function form_option_selector_returns(){
+        return new external_value(PARAM_RAW, 'data');
+    }
+
 
 }

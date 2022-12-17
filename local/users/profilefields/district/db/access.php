@@ -62,6 +62,10 @@ $capabilities = array(
         'archetypes' => array(
              'manager' => CAP_ALLOW,  
         )
+    ),
+    'usersprofilefields/district:targetdistrictaudience' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSECAT,
     )
 );
 

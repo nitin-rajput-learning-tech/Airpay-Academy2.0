@@ -120,6 +120,26 @@ function xmldb_local_users_uninstall() {
         if ($dbman->field_exists($table, $openclientfield)) {
             $dbman->drop_field($table, $openclientfield);
         }
+
+        $field = new xmldb_field('open_states');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        $field1 = new xmldb_field('open_district');
+        if ($dbman->field_exists($table, $field1)) {
+            $dbman->drop_field($table, $field1);
+        }
+
+        $field2 = new xmldb_field('open_subdistrict');
+        if ($dbman->field_exists($table, $field2)) {
+            $dbman->drop_field($table, $field2);
+        }
+
+        $field3 = new xmldb_field('open_village');
+        if ($dbman->field_exists($table, $field3)) {
+            $dbman->drop_field($table, $field3);
+        }
     }
     return true;
 }

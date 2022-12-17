@@ -741,7 +741,11 @@ $string['district'] = "District";
 $string['territory'] = "Territory";
 $string['territories'] = "Territories";
 
-$string['open_state'] = "State";
+$string['open_states'] = "State";
 $string['open_district'] = "District";
 $string['open_subdistrict'] = "Sub District";
 $string['open_village'] = "Village";
+$string['open_states_help'] = 'Search and select an available or existing state as target audience';
+$string['open_district_help'] = 'Search and select an available or existing district as target audience';
+$string['open_subdistrict_help'] = 'Search and select an available or existing subdistrict as target audience';
+$string['open_village_help'] = 'Search and select an available or existing village as target audience';
