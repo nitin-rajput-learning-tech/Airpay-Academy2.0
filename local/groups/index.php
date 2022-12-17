@@ -88,9 +88,8 @@ echo $renderer->get_group_btns();
 
 $filterparams = $renderer->managegroups_content(true,$formattype);
 
-
-if ($showall) {
-    $cohorts = local_groups_get_all_groups($page, 25, $searchquery);
+if ($showall || is_siteadmin()) {
+    $cohorts = local_groups_get_all_groups($context->id,$page, 25, $searchquery);
 } else {
     $cohorts = local_groups_get_groups($context->id, $page, 25, $searchquery);
 }

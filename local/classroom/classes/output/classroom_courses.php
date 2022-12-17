@@ -166,7 +166,15 @@ class classroom_courses implements renderable, templatable {
                 $onerow['startdate'] = userdate($inprogress_coursename->startdate,'%d/%m/%Y %H %M');
                 $onerow['enddate'] = userdate($inprogress_coursename->enddate,'%d/%m/%Y %H %M');
                 $onerow['classroom_url'] = $CFG->wwwroot.'/local/classroom/view.php?cid='.$inprogress_coursename->id;
-                 
+                require_once($CFG->dirroot.'/local/ratings/lib.php');
+                $crratings = get_rating($inprogress_coursename->id, 'local_classroom');
+                $onerow['ratingavg'] = $crratings->avg;
+                if($DB->record_exists('local_classroom_completion', array("classroomid"=>$inprogress_coursename->id))){
+                    $onerow['statusname'] = get_string('completed','local_classroom');
+                }else{
+                    $onerow['statusname'] =  get_string('launch','block_userdashboard');
+                }
+                
                 array_push($data->inprogress_elearning, $onerow);
                 
             } // end of foreach 

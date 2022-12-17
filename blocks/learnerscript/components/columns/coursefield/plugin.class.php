@@ -108,6 +108,15 @@ class plugin_coursefield extends pluginbase {
                 }
                 $courserecord->{$data->column} = $level;
                 break;
+            case 'coursetype':
+                if($courserecord->open_identifiedas){
+                    $coursetype = $DB->get_field('local_course_types', 'name', array('id' =>$courserecord->open_identifiedas));
+                }else{
+                    $coursetype = 'NA';
+                }
+                $courserecord->{$data->column} = $coursetype;
+                break;
+
             default:
                 $courserecord->{$data->column} = $courserecord->{$data->column};
             break;

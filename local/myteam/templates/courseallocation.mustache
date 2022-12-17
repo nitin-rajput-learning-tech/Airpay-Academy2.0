@@ -1,0 +1,108 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="coursesallocation_content">
+    <div id="allocation_notifications"></div>
+
+    <div class="portlet-title courseallocation_block_heading mb-10 mt-10 pull-left w-full">
+        <div class="caption pull-left">
+            <span class="caption-subject font-blue-madison uppercase">{{# str}}team_allocation, local_myteam{{/ str}}</span>
+        </div>
+        <div class="actions pull-right dropdown">
+            <div class="btn-group allocation_course_type_btn">
+                <a href="" class="allocation_course_type btn-circle btn-sm dropdown-toggle text-center pull-right" data-toggle="dropdown" data-hover="dropdown" data-close-others="true" aria-expanded="false">{{# str}}learning_type, local_myteam{{/ str}}
+                </a>
+                <ul class="dropdown-menu pull-right ongoingdropdown">
+                {{#existplugins}}
+                    {{#coursesexist}}
+                        <li>
+                            <a href="javascript:void(0);" onclick="(function(e){require('local_myteam/courseallocation').select_type({learningtype: 1, user: null, pluginname: '{{# str}}pluginname, local_courses{{/ str}}' })})(event)" class="changed">
+                                {{# str}}pluginname, local_courses{{/ str}}
+                            </a>
+                        </li>
+                    {{/coursesexist}}
+
+                    {{#classroomexist}}
+                    <li>
+                        <a href="javascript:void(0);" onclick="(function(e){require('local_myteam/courseallocation').select_type({learningtype: 2, user: null, pluginname: '{{# str}}pluginname, local_classroom{{/ str}}' })})(event)" class="changed">
+                            {{# str}}pluginname, local_classroom{{/ str}}
+                        </a>
+                    </li>
+                    {{/classroomexist}}
+
+                    {{#programexist}}
+                    <li>
+                        <a href="javascript:void(0);" onclick="(function(e){require('local_myteam/courseallocation').select_type({learningtype: 3, user: null, pluginname: '{{# str}}pluginname, local_program{{/ str}}' })})(event)" class="changed">
+                            {{# str}}pluginname, local_program{{/ str}}
+                        </a>
+                    </li>
+                    {{/programexist}}
+
+                {{/existplugins}}
+
+                </ul>
+            </div>
+                <button class="btn1 btn allocate_button btn-sm pull-right ml-10" data-toggle="modal" disabled data-target="#myModal" onclick = "(function(e){ require('local_myteam/courseallocation').allocator({ searchtype: 'courses', searchvalue: event.target.value }) })(event)">{{# str}}allocate, local_myteam{{/ str}}
+                </button>
+        </div>
+    </div>
+
+    <div class="portlet-body course_allocation_block_container pull-left w-full">
+        <div class="col-md-6 pull-left team_allocation_myteam_list">
+            <div class="input-icon">
+                <i class="fa fa-search icon_search_inside"></i>
+                <input type="text" style="padding-left: 33px;" name="search_myteam" placeholder="{{# str}}allocate_search_myteam, local_myteam{{/ str}}" class="form-control select-round searchmyteam" data-type="myteam" onkeyup="(function(e){ require('local_myteam/courseallocation').teamsearch({ searchtype: 'myteam', searchvalue: event.target.value }) })(event)">
+            </div>
+            <div class="mt-10 pull-left w-full team_list_container" id="departmentmyteam" >
+                <ul class="task-list departmentmyteam">
+                    {{#teamusers}}
+                        <li class='li-course'>
+                                <div class='task-checkbox mt-10'>
+                                    <div class='checker'>
+                                        <span class='checked'>
+                                            <input type = 'radio' id='userid' name = 'allocateuser' class='liChild allocateuser' value='{{id}}' onclick="(function(e){require('local_myteam/courseallocation').select_type({user: {{id}}, learningtype: 1, pluginname: '{{# str}}pluginname, local_myteam{{/ str}}' })})(event)">
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class='task-title'>
+                                    {{picture}}
+                                    <span class='task-title-sp'>{{fullname}}</span>
+                                </div>
+                            </li>
+                    {{/teamusers}}
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-6 pull-left pt-15 pb-15 pr-0">
+            <div class="input-icon">
+                <i class="fa fa-search icon_search_inside"></i>
+                <input type="text" style="padding-left: 33px;" name="search_learningtypes" placeholder="{{# str}}allocate_search_learnings, local_myteam{{/ str}}" class="form-control select-round searchcourses" onkeyup="(function(e){ require('local_myteam/courseallocation').teamsearch({ searchtype: 1, searchvalue: event.target.value }) })(event)">
+            </div>
+            <div class="mt-10 w-full pull-left team_list_container" >
+                <ul class="task-list departmentcourses">
+                    <li class='li-course empty_data'>
+                        <div class='alert alert-info text-center'>{{# str}}select_user_toproceed, local_myteam{{/ str}}</div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="clearfix"></div>
+    </div>
+</div>
+<div id="coursenominate_confirm" style="display:none;"></div>
+<input id="nominate_myteamlist" name="nominate_myteamlist" type="hidden" value="" />
+<input type="hidden" name="learning_type" id="learning_type" value=""/>
+<input id="nominate_courseslist" name="nominate_courseslist[]" type="hidden" value="" />

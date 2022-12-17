@@ -189,7 +189,6 @@ $string['download_certificate'] = 'Download Certificate';
 $string['unableto_download_msg'] = 'Still you didn\'t completed this {$a}, so you cann\'t download the certificate';
 $string['cantdelete_certificate'] = 'Already couple of modules mapped to this certificate,so you cannot delete.';
 $string['costcenter'] = 'Organization';
-$string['manage_certificates'] = 'Certificates';
 $string['unableto_download_msg'] = 'Still you didn\'t completed this {$a}, so you cann\'t download the certificate';
 
 //--------------------------------------
@@ -252,7 +251,7 @@ $string['elements_help'] = 'This is the list of elements that will be displayed 
 
 Please note: The elements are rendered in this order. The order can be changed by using the arrows next to each element.';
 $string['create_cert'] = 'Create Certificate';
-$string['manage_certificates'] = 'Certificates';
+$string['manage_certificates'] = 'Certificate Templates';
 $string['no_records'] = 'No Data Available';
 $string['font'] = 'Font';
 $string['font_help'] = 'The font used when generating this element.';

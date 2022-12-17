@@ -36,8 +36,8 @@ class local_groups implements renderable {
     
      public function __construct($page, $perpage, $searchquery,$showall) {
         $context =  (new \local_groups\lib\accesslib())::get_module_context();
-        if ($showall) {
-            $cohorts = local_groups_get_all_groups($page, 10, $searchquery);
+        if ($showall || is_siteadmin()) {
+            $cohorts = local_groups_get_all_groups($context->id,$page, $perpage, $searchquery);
         } else {
             $cohorts = local_groups_get_groups($context->id, $page, $perpage, $searchquery);
         }
@@ -450,7 +450,7 @@ function local_groups_is_member($groupsid, $userid) {
  * @param string $search
  * @return array
  */
-function local_groups_get_available_groups($currentcontext, $withmembers = 0, $offset = 0, $limit = 25, $search = '') {
+function local_groups_get_available_groups($currentcontext, $withmembers = 0, $offset = 0, $limit = 10, $search = '') {
     global $DB;
 
     $params = array();
@@ -604,7 +604,7 @@ function local_groups_get_search_query($search, $tablealias = '') {
     if ($tablealias && substr($tablealias, -1) !== '.') {
         $tablealias .= '.';
     }
-    $searchparam = '%' . $DB->sql_like_escape($search) . '%';
+    $searchparam = '%' . $DB->sql_like_escape($search->search_query) . '%';
     $conditions = array();
     $fields = array('name', 'idnumber', 'description');
     $cnt = 0;
@@ -629,7 +629,7 @@ function local_groups_get_search_query($search, $tablealias = '') {
  * @param string $search search string
  * @return array    Array(totalgroups => int, groups => array, allgroups => int)
  */
-function local_groups_get_groups($contextid, $page = 0, $perpage = 25, $search = '') {
+function local_groups_get_groups($contextid, $page = 0, $perpage = 10, $search = '') {
      global $DB,$USER;
      $fields = "SELECT c.*";
      $countfields = "SELECT COUNT(1)";
@@ -660,9 +660,9 @@ function local_groups_get_groups($contextid, $page = 0, $perpage = 25, $search =
     $params = array('contextid' => $contextid);
     $order = " ORDER BY  g.id DESC";
     if(isset($search)){
-       $sql .= " AND c.name LIKE '%".trim(isset($search->search_query))."%'";
+       $sql .= " AND c.name LIKE '%".trim($search->search_query)."%'";
     } 
-    
+
     $totalgroups = $allgroups = $DB->count_records('cohort', array('contextid' => $contextid));
     if (!empty($search)) {
         $totalgroups = $DB->count_records_sql($countfields . $sql, $params);
@@ -684,16 +684,15 @@ function local_groups_get_groups($contextid, $page = 0, $perpage = 25, $search =
  * @param string $search search string
  * @return array    Array(totalgroups => int, groups => array, allgroups => int)
  */
-function local_groups_get_all_groups($page = 0, $perpage = 25, $search = '') {
+function local_groups_get_all_groups($context,$page = 0, $perpage = 10, $search = '') {
     global $DB,$USER;
-
     $fields = "SELECT c.*, ".context_helper::get_preload_record_columns_sql('ctx');
     $countfields = "SELECT COUNT(*)";
     $sql = " FROM {cohort} c
              JOIN {context} ctx ON ctx.id = c.contextid
              JOIN {local_groups} g ON g.cohortid = c.id ";
      $context = (new \local_groups\lib\accesslib())::get_module_context();
-     if ( has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
+     if (is_siteadmin() ||has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
         $costcenters = $DB->get_records_sql_menu('select fullname,id from {local_costcenter} where parentid = 0 ');
         $my_costcenters = implode(',', $costcenters);
         $sql .=" and g.costcenterid IN( $my_costcenters )";
@@ -710,7 +709,7 @@ function local_groups_get_all_groups($page = 0, $perpage = 25, $search = '') {
     $params = array();
     $wheresql = '';
 
-    if ($excludedcontexts = groups_get_invisible_contexts()) {
+    if ($excludedcontexts = local_groups_get_invisible_contexts()) {
         list($excludedsql, $excludedparams) = $DB->get_in_or_equal($excludedcontexts, SQL_PARAMS_NAMED, 'excl', false);
         $wheresql = ' WHERE c.contextid '.$excludedsql;
         $params = array_merge($params, $excludedparams);
@@ -719,15 +718,14 @@ function local_groups_get_all_groups($page = 0, $perpage = 25, $search = '') {
     $totalgroups = $allgroups = $DB->count_records_sql($countfields . $sql . $wheresql, $params);
 
     if (!empty($search)) {
-        list($searchcondition, $searchparams) = groups_get_search_query($search, 'c');
+        list($searchcondition, $searchparams) = local_groups_get_search_query($search, 'c');
         $wheresql .= ($wheresql ? ' AND ' : ' WHERE ') . $searchcondition;
         $params = array_merge($params, $searchparams);
         $totalgroups = $DB->count_records_sql($countfields . $sql . $wheresql, $params);
     }
 
     $order = " ORDER BY g.id DESC";
-    $groups = $DB->get_records_sql($fields . $sql . $wheresql . $order, $params, $page*$perpage, $perpage);
-
+    $groups = $DB->get_records_sql($fields . $sql . $wheresql . $order, $params, $page, $perpage);
     // Preload used contexts, they will be used to check view/manage/assign capabilities and display categories names.
     foreach (array_keys($groups) as $key) {
         context_helper::preload_from_record($groups[$key]);

@@ -378,3 +378,5 @@ $string['open_department']='Country';
 $string['open_subdepartment']='Bussiness Unit';
 $string['open_level4department']='Commercial Unit';
 $string['open_level5department']='Territory';
+$string['nooflevel']='No of Levels';
+$string['confignooflevel']='No of Levels in the hierarchy';

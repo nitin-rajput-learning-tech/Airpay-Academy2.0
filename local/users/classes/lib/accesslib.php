@@ -31,7 +31,7 @@ namespace local_users\lib;
 class accesslib extends \local_costcenter\lib\accesslib{
 
 
-    public static function  user_costcenterpath($userid = null) {
+    public static function user_costcenterpath($userid = null) {
 
         global $DB,$USER;
 
@@ -59,7 +59,7 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_module_context(self::user_costcenterpath($userid));
 
     }
-    public static function get_costcenter_path_field_concatsql($columnname,$userid = null){
+    public static function get_costcenter_path_field_concatsql($columnname,$userid = null,$datatype=self::MODULE_CONTENT){
 
         return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid));
 

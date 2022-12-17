@@ -267,7 +267,6 @@ function get_rating($itemid, $ratearea) {
     }else{
         $avgrec->avg = 0;
     }
-   
     return $avgrec;
 }
 /*

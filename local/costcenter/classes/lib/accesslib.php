@@ -29,8 +29,22 @@ namespace local_costcenter\lib;
  */
 class accesslib
 {
+    protected const COURSE_CONTENT = 'course';
+    protected const MODULE_CONTENT = 'module';
 
-    public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid){
+    protected const EXTRACT_METHOD_FIRST = 0;
+    protected const EXTRACT_METHOD_LAST = 1;
+
+
+    protected static $content_path_extractmethods = array(
+
+                self::COURSE_CONTENT  =>  self::EXTRACT_METHOD_FIRST,
+
+                self::MODULE_CONTENT  =>  self::EXTRACT_METHOD_LAST
+        );
+
+
+    public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid,$datatype=self::MODULE_CONTENT){
 
         global $DB,$USER;
 
@@ -43,7 +57,7 @@ class accesslib
         }else{
             if($costcenterparamid == null || $costcenterparamid == 0){
 
-                $concatsql =self::get_user_roleswitch_costcenterpath($columnname);
+                $concatsql =self::get_user_roleswitch_costcenterpath($columnname,$datatype);
 
             }elseif($costcenterparamid > 0){
 
@@ -63,26 +77,42 @@ class accesslib
 
                         if($costcenterpath){
 
-                            $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+                            $extractcostcenterpath=array_values(array_filter(explode('/',$costcenterpath)));
 
-                            $endpathvalue=end($extractcostcenterpath);
+                            if(self::$content_path_extractmethods[$datatype]){
 
-                            $concatsql = " AND concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+                                $pathvalue=end($extractcostcenterpath);
+
+                            }else{
+
+                                $pathvalue=$extractcostcenterpath[0];
+
+                            }
+
+                            $concatsql = " AND concat('/',$columnname,'/' ) like '%/$pathvalue/%' ";
 
                             $cache->set($cachekey, $costcenterpath);
 
                         }else{
 
-                            $concatsql = self::get_user_roleswitch_costcenterpath($columnname);
+                            $concatsql = self::get_user_roleswitch_costcenterpath($columnname,$datatype);
 
                         }
                     }else{
 
-                        $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+                        $extractcostcenterpath=array_values(array_filter(explode('/',$costcenterpath)));
 
-                        $endpathvalue=end($extractcostcenterpath);
+                        if(self::$content_path_extractmethods[$datatype]){
 
-                        $concatsql = " AND concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+                            $pathvalue=end($extractcostcenterpath);
+
+                        }else{
+
+                            $pathvalue=$extractcostcenterpath[0];
+
+                        }
+
+                        $concatsql = " AND concat('/',$columnname,'/' ) like '%/$pathvalue/%' ";
 
                     }
 
@@ -163,11 +193,11 @@ class accesslib
 
                 if(!empty($contextpath[0])){
 
-                    $extractcontextpath=array_filter(explode('/',$contextpath[0]));
+                    $extractcontextpath=array_values(array_filter(explode('/',$contextpath[0])));
 
-                    $endpathvalue=end($extractcontextpath);
+                    $pathvalue=end($extractcontextpath);
 
-                    $context =\context::instance_by_id($endpathvalue);
+                    $context =\context::instance_by_id($pathvalue);
 
                 }else{
 
@@ -218,11 +248,10 @@ class accesslib
 
         return $costcenterpath;
     }
-
     public static function get_category_info($categoryid, $value = null){
         global $DB;
         $coursecatrecordcache = \cache::make('core', 'coursecatrecords');
-        $coursecat = $coursecatrecordcache->get($id);
+        $coursecat = $coursecatrecordcache->get($categoryid);
         if ($coursecat === false) {
             $coursecat = $DB->get_record('course_categories', array('id' => $categoryid));
         }
@@ -251,26 +280,37 @@ class accesslib
 
             $contextsinfo =$USER->access['currentroleinfo']['contextinfo'];
 
+
             foreach($contextsinfo as $contextinfo){
 
 
-                $extractcostcenterpath=array_filter(explode('/',$contextinfo['costcenterpath']));
+                $extractcostcenterpath=array_values(array_filter(explode('/',$contextinfo['costcenterpath'])));
+
+               if(self::$content_path_extractmethods[$datatype]){
+
+                    $pathvalue=end($extractcostcenterpath);
+
+                }else{
+
+                    $pathvalue=$extractcostcenterpath[0];
+
+                }
 
 
-                $endpathvalue=end($extractcostcenterpath);
+                if(empty($costcenterpath[$pathvalue])){
 
-                if(empty($costcenterpath[$endpathvalue])){
-
-                    $costcenterpath[$endpathvalue]= " concat('/',$columnname,'/' ) like '%/$endpathvalue/%' ";
+                    $costcenterpath[$pathvalue]= " concat('/',$columnname,'/' ) like '%/$pathvalue/%' ";
                 }
 
 
             }
 
-            $USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid] = $costcenterpath;
+            if(!empty($costcenterpath)){
+
+                $USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid] = $costcenterpath;
+            }
 
         }
-
         if(!empty($costcenterpath)){
 
             $concatsql="AND (".implode(" OR ", $costcenterpath).")";

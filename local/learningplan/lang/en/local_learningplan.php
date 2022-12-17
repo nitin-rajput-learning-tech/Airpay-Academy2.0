@@ -73,7 +73,7 @@ $string['browselistlep']='Browse List of Path';
 $string['approval']='Learning Path Approval';
 $string['managelep']='Manage Learning Path';
 $string['unameexists']='Learningpath code already exists';
-$string['numeric']='Credit Points should allow only numerics';
+$string['numeric']='should allow only numerics';
 $string['points_help'] = 'Enter a number here. This will the total number of point users achieve for completing the learning path.';
 /****  Added By Shivani M  *****/
 $string['browse_learningplans'] = 'Browse Learning Paths';
@@ -82,7 +82,7 @@ $string['edit_learningplans'] = 'Update Learning Path';
 $string['lep_header'] = 'Learning Path Course Completion Details';
 $string['delete_notify'] = 'Are you sure, you want to request enrollment to <b>"{$a->name}"</b> ?';
 $string['enroll_notify'] = 'Are you sure, you want to enroll To <b>"{$a->name}"</b> ?';
-$string['deleteconfirm'] = 'Are you sure to delete "<b>{$a->name}</b>" learning path. Once this is deleted it cannot be reverted';
+$string['deleteconfirm'] = 'Are you sure to delete <b>{$a->name}</b> learning path. Once this is deleted it cannot be reverted';
 $string['deleteallconfirm'] = 'Are you sure to delete all learning paths. it cannot be reverted';
 
 $string['adnewlearningplan'] = '<i class="fa fa-map popupstringicon" aria-hidden="true"></i> Create Learning Path <div class= "popupstring">Here you will create learning paths</div>';

@@ -84,8 +84,9 @@ class report_coursesoverview extends reportbase implements report {
 
     function where() {
         global $USER, $DB;
-        $this->sql .= " WHERE c.id <> :siteid AND 
-                CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
+        $this->sql .= " WHERE c.id <> :siteid ";
+        // $this->sql .= " WHERE c.id <> :siteid AND 
+        //         CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
 
         $this->params['siteid'] = SITEID;
 
