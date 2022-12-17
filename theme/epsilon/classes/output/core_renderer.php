@@ -1066,16 +1066,17 @@ class core_renderer extends \core_renderer {
 
 
             $depths = [];
-            $user_ra_array = array_values(array_map(function($role)use(&$depths){
-                $categoryids = array_values(array_filter((explode('/', $role->path))));
-                $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
-                if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
-                    $depths['depth'] = $role->depth.'_'.$categoryids[0];
-                    $role->categoryname = $category;
-                    $role->highest_catid = $categoryids[0];
-                    return $role;
-                }
-            }, $roles));
+            $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
+                            $categoryids = array_values(array_filter((explode('/', $role->path))));
+                            $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
+                            if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
+                                $depths['depth'][] = $role->depth.'_'.$categoryids[0];
+                                $role->categoryname = $category;
+                                $role->highest_catid = $categoryids[0];
+                                return $role;
+                            }
+                        }, $roles)));
+
             if(is_array($user_ra_array)){
                 $highest_roleinfo = max($user_ra_array);
             }else{
@@ -1468,7 +1469,9 @@ class core_renderer extends \core_renderer {
                 $othercontext = \context::instance_by_id($contextid);
                 // considering only category level role switches.
                 if($othercontext->__get('contextlevel') == 40){
-                    if($contextdepth == $othercontext->__get('depth')){
+                    $othercategorypath = \local_costcenter\lib\accesslib::get_category_info($othercontext->instanceid, 'path');
+                    $othercategoryids = array_values(array_filter((explode('/', $othercategorypath))));
+                    if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->access['currentroleinfo']['orgcatid']){
                         if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
                             $USER->access['rsw'][$othercontext->path] = $roleid;
                             $othercostcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($othercontext);

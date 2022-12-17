@@ -241,9 +241,9 @@ class accesslib
     public static function get_costcenterpath_context($context){
 
         global $DB, $USER;
-
+        $categoryid = $context->instanceid;
         $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.category= :categoryid ";
-        $costcenterpath = $DB->get_field_sql($sql, array('categoryid' =>$context->instanceid));
+        $costcenterpath = $DB->get_field_sql($sql, array('categoryid' => $categoryid));
 
         if(!$costcenterpath){
 

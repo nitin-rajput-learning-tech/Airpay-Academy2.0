@@ -135,8 +135,9 @@
                             var depth = $(this).data('depth');
                             $.each($('[data-action="costcenter_element_selector"]'), function(index, value){
                                 if($(value).data('depth') > depth){
-                                    // $(value).html('');
-                                    // $(value).parents().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection').html($(value).data('selectstring'));
+                                    $(value).html('');
+                                    console.log($(value).parent().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection'));
+                                    $(value).parent().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection').html($(value).data('selectstring'));
                                 }
 
                             });
