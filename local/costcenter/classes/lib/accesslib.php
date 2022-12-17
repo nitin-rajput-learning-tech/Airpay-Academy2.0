@@ -29,8 +29,8 @@ namespace local_costcenter\lib;
  */
 class accesslib
 {
-    protected const COURSE_CONTENT = 'course';
-    protected const MODULE_CONTENT = 'module';
+    protected const ALL_MODULE_CONTENT = 'firstpath';
+    protected const PATH_MODULE_CONTENT = 'lastpath';
 
     protected const EXTRACT_METHOD_FIRST = 0;
     protected const EXTRACT_METHOD_LAST = 1;
@@ -38,15 +38,20 @@ class accesslib
 
     protected static $content_path_extractmethods = array(
 
-                self::COURSE_CONTENT  =>  self::EXTRACT_METHOD_FIRST,
+                self::ALL_MODULE_CONTENT  =>  self::EXTRACT_METHOD_FIRST,
 
-                self::MODULE_CONTENT  =>  self::EXTRACT_METHOD_LAST
+                self::PATH_MODULE_CONTENT  =>  self::EXTRACT_METHOD_LAST
         );
 
 
-    public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid,$datatype=self::MODULE_CONTENT){
+    public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid=null,$datatype=null){
 
         global $DB,$USER;
+
+        if($datatype == null){
+
+            $datatype=self::PATH_MODULE_CONTENT;
+        }
 
         $concatsql="";
 
@@ -261,7 +266,7 @@ class accesslib
             return $coursecat->$value;
         }
     }
-    public static function get_user_roleswitch_costcenterpath($columnname){
+    public static function get_user_roleswitch_costcenterpath($columnname,$datatype){
 
         global $USER;
 
