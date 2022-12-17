@@ -20,6 +20,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
+require_once($CFG->dirroot . '/local/users/lib.php');
 use moodleform;
 use context_system;
 use costcenter;
@@ -76,6 +77,9 @@ class create_user extends moodleform {
             //     $mform->setConstant('open_costcenterid', $user_dept);
             // }
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata, 'local_users', $categorycontext, $multiple = false);
+
+            local_users_get_geography_targetfields($mform, $this->_ajaxformdata, $this->_customdata, 'local_users', $categorycontext, $multiple = false);
+
             $count = count($costcenters);
             $mform->addElement('hidden', 'count', $count);
             $mform->setType('count', PARAM_INT);

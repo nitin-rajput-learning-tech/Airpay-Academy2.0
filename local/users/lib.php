@@ -1124,3 +1124,109 @@ function local_users_output_fragment_user_field_create($args){
     ob_end_clean();
     return $o;
 }
+//global geography form fields master data
+function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata, $pluginname, $context, $multiple = false){
+    global $DB, $USER;
+    $depth = $USER->access['currentroleinfo']['depth'];
+    if(is_siteadmin()){
+        $depth = 0;
+    }
+    $fields = local_users_get_geography_fields();
+
+    $prev_element = '';
+    foreach($fields as $field =>$fieldenabled){
+
+        if($fieldenabled == false){
+            continue;
+        }
+
+        $fieldelementoptions = array(
+            'class' => $field.'_select',
+            'id' => 'id_'.$field.'_select',
+            'data-parentclass' => $prev_element,
+            'data-selectstring' => get_string('select'.$field, 'local_users'),
+            'data-depth' => $field,
+            'data-class' => $field.'_select',
+            'multiple' => $field == 1 ? false : $multiple,
+        );
+        $prev_element = $field.'_select';
+        $fieldvalue = $ajaxformdata[$field] ? $ajaxformdata[$field] : $customdata[$field];
+
+            $fieldelementoptions['ajax'] = 'local_users/form-options-selector';
+            $fieldelementoptions['data-contextid'] = $context->id;
+            $fieldelementoptions['data-action'] = 'user_element_selector';
+            $fieldelementoptions['data-options'] = json_encode(array('depth' => $field));
+            if($fieldvalue){
+                $fieldelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
+                $fieldelementids = array_filter($fieldelementids);
+                $fieldelements = [];
+                if($fieldelementids){
+                    list($idsql, $idparams) = $DB->get_in_or_equal($fieldelementids, SQL_PARAMS_NAMED, 'targetaudienceements');
+                    $fieldsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$idsql} ";
+                    $fieldelements = $DB->get_records_sql_menu($fieldsql, $idparams);
+                }
+            }
+            $mform->addElement('autocomplete', $field, get_string($field, 'local_users'), $fieldelements, $fieldelementoptions);
+            $mform->addHelpButton($field, $field.$pluginname, $pluginname);
+
+        $mform->setType($field, PARAM_RAW);
+    }
+}
+function local_users_get_geography_data(&$data){
+
+    $fields = local_users_get_geography_fields();
+
+    foreach($fields AS $field){
+
+        if(isset($data->$field) && !empty($data->$field)){
+
+            $data->$field = implode(',',$data->$field);
+
+        }
+    }
+
+}
+function local_users_set_geography_data(&$data){
+
+    $fields = local_users_get_geography_fields();
+
+    foreach($fields AS $field){
+
+        if(isset($data->$field) && !empty($data->$field)){
+
+            $data[$field]= explode(',', $data->$field);
+
+        }
+
+    }
+}
+function local_users_get_geography_fields(){
+
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $targetstateaudience = false;
+    $targetdistrictaudience = false;
+    $targetsubdistrictaudience = false;
+    $targetvillageaudience = false;
+
+    if(is_siteadmin() || has_capability('usersprofilefields/states:targetstateaudience',$categorycontext)){
+        $targetstateaudience = true;
+    }
+    if(is_siteadmin() || has_capability('usersprofilefields/district:targetdistrictaudience',$categorycontext)){
+        $targetdistrictaudience = true;
+    }
+    if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:targetsubdistrictaudience',$categorycontext)){
+        $targetsubdistrictaudience = true;
+    }
+    if(is_siteadmin() || has_capability('usersprofilefields/village:targetvillageaudience',$categorycontext)){
+        $targetvillageaudience = true;
+    }
+
+    $fields = array(
+        'open_state' => $targetstateaudience,
+        'open_district' => $targetdistrictaudience,
+        'open_subdistrict' => $targetsubdistrictaudience,
+        'open_village' => $targetvillageaudience,
+    );
+    return $fields;
+}

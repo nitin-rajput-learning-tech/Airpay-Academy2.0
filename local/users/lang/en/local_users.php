@@ -740,3 +740,8 @@ $string['subdistrict'] = "Sub District";
 $string['district'] = "District";
 $string['territory'] = "Territory";
 $string['territories'] = "Territories";
+
+$string['open_state'] = "State";
+$string['open_district'] = "District";
+$string['open_subdistrict'] = "Sub District";
+$string['open_village'] = "Village";
