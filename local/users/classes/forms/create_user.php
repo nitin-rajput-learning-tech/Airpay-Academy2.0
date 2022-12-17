@@ -75,7 +75,7 @@ class create_user extends moodleform {
             //     $mform->setType('open_costcenterid', PARAM_ALPHANUM);
             //     $mform->setConstant('open_costcenterid', $user_dept);
             // }
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata, 'local_users', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata, null, 'local_users', $categorycontext, $multiple = false);
             $count = count($costcenters);
             $mform->addElement('hidden', 'count', $count);
             $mform->setType('count', PARAM_INT);

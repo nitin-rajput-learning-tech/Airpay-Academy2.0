@@ -67,8 +67,11 @@ function local_users_output_fragment_new_create_user($args) {
             'post', '', null, true, $formdata);
         $mform->set_data($data);
     } else {
-        $mform = new local_users\forms\create_user(null, array('editoroptions' => $editoroptions,
-            'form_status' => $args->form_status), 'post', '', null, true, $formdata);
+        $customdata = array('editoroptions' => $editoroptions,
+            'form_status' => $args->form_status);
+        local_costcenter_set_costcenter_path($customdata);
+        // print_r($customdata);
+        $mform = new local_users\forms\create_user(null, $customdata, 'post', '', null, true, $formdata);
     }
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata) > 2) {

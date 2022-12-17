@@ -641,33 +641,48 @@ class local_costcenter_external extends external_api {
                 break;
                 case 'costcenter_element_selector':
                     $fields = array("fullname");
-                    $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
-                    $sqlparams['depth'] = $formoptions->depth;
-                    $likesql = array();
-                    $i = 0;
-                    if(!empty($query)){
-                        foreach ($fields as $field) {
-                            $i++;
-                            $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
-                            $sqlparams["queryparam$i"] = "%$query%";
+                    if($formoptions->depth < $USER->access['currentroleinfo']['depth']){
+                        $elements = $USER->access['currentroleinfo']['contextinfo'];
+                        if($USER->access['currentroleinfo']['depth']-1 > $formoptions->depth){
+                            $elements = [$elements[0]];
                         }
-                        $sqlfields = implode(" OR ", $likesql);
-                        $concatsql .= " AND ($sqlfields) ";
-                    }
-                    $fields      = 'SELECT id, fullname';
-                    $accountssql = " FROM {local_costcenter}
-                                     WHERE 1=1 $concatsql AND parentid = :parentid AND depth = :depth ";
-                    if ($formoptions->id == 0) {
-                        $accountssql .= ' AND visible = 1';
-                    }
-                    $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
-                    if ($accounts) {
-                        $totalaccounts = count($accounts);
-                        $moreaccounts = $totalaccounts > $perpage;
 
-                        if ($moreaccounts) {
-                            // We need to discard the last record.
-                            array_pop($accounts);
+                        $accounts = array_map(function($data)use($formoptions, $DB){
+                            $identifiers = explode('/',$data['costcenterpath']);
+                            $identifier = $identifiers[$formoptions->depth];
+                            $fullname = $DB->get_field('local_costcenter', 'fullname', ['id' => $identifier]);
+                            return array('id' => $identifier, 'fullname' => $fullname);
+                        },$elements);
+
+                    }else{
+                        $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
+                        $sqlparams['depth'] = $formoptions->depth;
+                        $likesql = array();
+                        $i = 0;
+                        if(!empty($query)){
+                            foreach ($fields as $field) {
+                                $i++;
+                                $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                                $sqlparams["queryparam$i"] = "%$query%";
+                            }
+                            $sqlfields = implode(" OR ", $likesql);
+                            $concatsql .= " AND ($sqlfields) ";
+                        }
+                        $fields      = 'SELECT id, fullname';
+                        $accountssql = " FROM {local_costcenter}
+                                         WHERE 1=1 $concatsql AND parentid = :parentid AND depth = :depth ";
+                        if ($formoptions->id == 0) {
+                            $accountssql .= ' AND visible = 1';
+                        }
+                        $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                        if ($accounts) {
+                            $totalaccounts = count($accounts);
+                            $moreaccounts = $totalaccounts > $perpage;
+
+                            if ($moreaccounts) {
+                                // We need to discard the last record.
+                                array_pop($accounts);
+                            }
                         }
                     }
                     $return = array_values(json_decode(json_encode(($accounts)), true));
