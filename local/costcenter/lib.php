@@ -864,9 +864,6 @@ function local_costcenter_set_costcenter_path(&$data){
     }
 }
 function local_costcenter_get_fields(){
-
     return $fields = [ 1 => 'open_costcenterid', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department', 5 => 'open_level5department'];
-
-
 }
 
