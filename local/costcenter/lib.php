@@ -806,7 +806,11 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $prevfield = $fields[$level-1];
             $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
             $levelelementoptions['data-options'] = json_encode(array('depth' => $level, 'parentid' => $parentid, 'enableallfield' => $enableallfield));
-            $levelelements = [0 => get_string('all')];
+            if($enableallfield){
+                $levelelements = [0 => get_string('all')];
+            }else{
+                $levelelements = [];
+            }
             if($fieldvalue){
                 $levelelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
                 $levelelementids = array_filter($levelelementids);
