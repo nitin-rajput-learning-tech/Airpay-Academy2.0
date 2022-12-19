@@ -13,6 +13,7 @@ class local_learningplan_external extends external_api {
         );
     }
     public function submit_learningplan($id, $contextid, $jsonformdata, $form_status){
+        global $DB;
 		$context  = (new \local_learningplan\lib\accesslib())::get_module_context($id);
         // We always must call validate_context in a webservice.
 		self::validate_context($context);
@@ -24,10 +25,18 @@ class local_learningplan_external extends external_api {
 		$validateddata = $mform->get_data();
         $leplib = new local_learningplan\lib\lib();
         if($validateddata){
+            if(!empty($validateddata->open_costcenterid)){
+                $validateddata->costcenter = $validateddata->open_costcenterid;
+            }
             if($validateddata->id > 0){
+                $get_costcenter = $DB->get_field('local_learningplan', 'costcenter', array('id' => $validateddata->id));
+                if((($validateddata->form_status == 0) && ($get_costcenter != $validateddata->costcenter)) || $validateddata->form_status == 1){
+                    local_costcenter_get_costcenter_path($validateddata);
+                }
                 $lepid = $leplib->update_learning_plan($validateddata);
             } else{
-				$lepid = $leplib->create_learning_plan($validateddata);
+                local_costcenter_get_costcenter_path($validateddata);
+                $lepid = $leplib->create_learning_plan($validateddata);
 			}
             if(class_exists('\block_trending_modules\lib')){
                 $trendingclass = new \block_trending_modules\lib();

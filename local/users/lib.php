@@ -1139,13 +1139,15 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
 
     $prevfield='territory';
 
+    $depth = 0;
+
     foreach($fields as $field =>$fieldenabled){
 
         if($fieldenabled == false){
             continue;
         }
 
-        if($firstelement == true){
+        if($depth == 0){
 
             $mform->addElement('hidden','open_level5department', null,array('data-class'=>'open_level5department_select'));
             $mform->setConstant('open_level5department', $customdata['open_level5department']);
@@ -1155,18 +1157,18 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
             'id' => 'id_'.$field.'_select',
             'data-parentclass' => $prev_element,
             'data-selectstring' => get_string('select'.$field, 'local_users'),
-            'data-columnname' => $field,
+            'data-depth' => $depth,
             'data-class' => $field.'_select',
         );
         $prev_element = $field.'_select';
         $fieldvalue = $ajaxformdata[$field] ? $ajaxformdata[$field] : $customdata[$field];
 
-        $fieldelementoptions['multiple'] = $firstelement ? false : $multiple;
+        $fieldelementoptions['multiple'] = ($firstelement && $depth == 0) ? false : $multiple;
         $fieldelementoptions['ajax'] = 'local_users/form-options-selector';
         $fieldelementoptions['data-contextid'] = $context->id;
         $fieldelementoptions['data-action'] = 'geography_target_element_selector';
         $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
-        $fieldelementoptions['data-options'] = json_encode(array('columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield));
+        $fieldelementoptions['data-options'] = json_encode(array('depth' => $depth,'columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield));
         $fieldelements = [];
         if($fieldvalue){
             $fieldelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
@@ -1185,13 +1187,18 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
 
         $mform->setType($field, PARAM_RAW);
         $prevfield = $field;
+        $depth++;
     }
 }
 function local_users_get_geography_data(&$data){
 
     $fields = local_users_get_geography_fields();
 
-    foreach($fields AS $field){
+    foreach($fields as $field =>$fieldenabled){
+
+        if($fieldenabled == false){
+            continue;
+        }
 
         if(isset($data->$field) && !empty($data->$field)){
 
@@ -1205,11 +1212,15 @@ function local_users_set_geography_data(&$data){
 
     $fields = local_users_get_geography_fields();
 
-    foreach($fields AS $field){
+    foreach($fields as $field =>$fieldenabled){
+
+        if($fieldenabled == false){
+            continue;
+        }
 
         if(isset($data->$field) && !empty($data->$field)){
 
-            $data[$field]= explode(',', $data->$field);
+            $data[$field]= $data->$field;
 
         }
 

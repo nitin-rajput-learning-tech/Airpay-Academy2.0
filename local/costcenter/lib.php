@@ -798,14 +798,19 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->addElement('hidden', $fields[$level], null, $levelelementoptions);
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
-            $enableallfield = $firstelement ? false : $allenable;
+            $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
             $levelelementoptions['data-action'] = 'costcenter_element_selector';
+            $prevfield = $fields[$level-1];
             $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
             $levelelementoptions['data-options'] = json_encode(array('depth' => $level, 'parentid' => $parentid, 'enableallfield' => $enableallfield));
-            $levelelements = [];
+            if($enableallfield){
+                $levelelements = [0 => get_string('all')];
+            }else{
+                $levelelements = [];
+            }
             if($fieldvalue){
                 $levelelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
                 $levelelementids = array_filter($levelelementids);
@@ -813,7 +818,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
                 if($levelelementids){
                     list($idsql, $idparams) = $DB->get_in_or_equal($levelelementids, SQL_PARAMS_NAMED, 'levelelements');
                     $levelsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$idsql} ";
-                    $levelelements = $DB->get_records_sql_menu($levelsql, $idparams);
+                    $levelelements += $DB->get_records_sql_menu($levelsql, $idparams);
                 }
             }
             $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
@@ -822,7 +827,6 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $firstelement = false;
         }
         $mform->setType($fields[$level], PARAM_RAW);
-        $prevfield = $fields[$level];
     }
 }
 function local_costcenter_get_costcenter_path(&$data){
@@ -835,9 +839,11 @@ function local_costcenter_get_costcenter_path(&$data){
             // $path .= '/'.$value;
         }
     }
-    // finding the path mapped for the last element in the form to meet the data requirements for all head roles.
-    $path = $DB->get_field('local_costcenter', 'path', array('id' => $value));
-    $data->open_costcenterpath = $path;
+    if($value > 0){
+        // finding the path mapped for the last element in the form to meet the data requirements for all head roles.
+        $path = $DB->get_field('local_costcenter', 'path', array('id' => $value));
+        $data->open_costcenterpath = $path;
+    }
 }
 function local_costcenter_set_costcenter_path(&$data){
     global $USER;

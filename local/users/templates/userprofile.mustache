@@ -143,23 +143,32 @@
                             </div>
                         </div>
                     </div>
-                    <!--<div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
                         <div class="w-full d-flex flex-row flex-wrap align-content-center justify-content-start">
                             <div class ="pull-left">
                                 <h6>
-                                    <div>{{# str }} roles, local_assignroles {{/ str }}</div>
-                                    
+                                    <div>{{# str }} commercialunit, local_users {{/ str }}</div>
+
                                 </h6>
-                                <div class="u_info pull-left pl-10">{{{ rolename }}}</div>
+                                <div class="u_info pull-left pl-10">{{ usercu }}</div>
                             </div>
                         </div>
-                    </div> -->
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
+                        <div class="w-full d-flex flex-row flex-wrap align-content-center justify-content-start">
+                            <div class ="pull-left">
+                                <h6>
+                                    <div>{{# str }} territory, local_users {{/ str }}</div>
+                                </h6>
+                                <div class="u_info pull-left pl-10">{{ userterritory }}</div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
                         <div class="w-full d-flex flex-row flex-wrap align-content-center justify-content-start">
                             <div class ="pull-left">
                                 <h6>
                                     <div>{{# str }} domain, local_users {{/ str }}</div>
-                                    
                                 </h6>
                                 <div class="u_info pull-left pl-10">{{ domain }}</div>
                             </div>
@@ -170,7 +179,6 @@
                             <div class ="pull-left">
                                 <h6>
                                     <div>{{# str }} role {{/ str }}</div>
-                                    
                                 </h6>
                                 <div class="u_info pull-left pl-10">{{ domainrole }}</div>
                             </div>
@@ -198,50 +206,55 @@
                             </div>
                         </div>
                     </div>
-                    <!-- <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
+                </div>
+            </div>
+            <div class="profile_data_content mx-auto d-flex flex-wrap flex-row align-items-center">
+                <div class="userinfo-lable col-md-12 mb-2">{{# str }} addressinfo, local_users {{/ str }}</div>
+                <div class="userinfo-content col-md-12">
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
                         <div class="w-full d-flex flex-row flex-wrap align-content-center justify-content-start">
                             <div class ="pull-left">
                                 <h6>
-                                    <div>{{# str }} client, local_users {{/ str }}</div>
-                                    
+                                    <div>{{# str }} state, local_users {{/ str }}</div>
+
                                 </h6>
-                                <div class="u_info pull-left pl-10">{{ client }}</div>
+                                <div class="u_info pull-left pl-10">{{ userstate }}</div>
                             </div>
                         </div>
-                    </div> -->
-                    <!-- <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
                         <div class="w-full d-flex flex-row flex-wrap align-content-center justify-content-start">
                             <div class ="pull-left">
                                 <h6>
-                                    <div>{{# str }} team, local_users {{/ str }}</div>
-                                    
+                                    <div>{{# str }} district, local_users {{/ str }}</div>
+
                                 </h6>
-                                <div class="u_info pull-left pl-10">{{ team }}</div>
+                                <div class="u_info pull-left pl-10">{{ userdistrict }}</div>
                             </div>
                         </div>
-                    </div> -->
-                    <!-- <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
                         <div class="w-full d-flex flex-row flex-wrap align-content-center justify-content-start">
                             <div class ="pull-left">
                                 <h6>
-                                    <div>{{# str }} grade, local_users {{/ str }}</div>
-                                    
+                                    <div>{{# str }} subdistrict, local_users {{/ str }}</div>
+
                                 </h6>
-                                <div class="u_info pull-left pl-10">{{ grade }}</div>
+                                <div class="u_info pull-left pl-10">{{ usersubdistrict }}</div>
                             </div>
                         </div>
-                    </div> -->
-                    <!--<div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-4 col-lg-3 cnt-left pull-left mb-2">
                         <div class="w-full d-flex flex-row flex-wrap align-content-center justify-content-start">
                             <div class ="pull-left">
                                 <h6>
-                                    <div>{{# str }} hrmrole, local_users {{/ str }}</div>
-                                    
+                                    <div>{{# str }} village, local_users {{/ str }}</div>
+
                                 </h6>
-                                <div class="u_info pull-left pl-10">{{ hrmrole }}</div>
+                                <div class="u_info pull-left pl-10">{{ uservillage }}</div>
                             </div>
                         </div>
-                    </div> -->
+                    </div>
                 </div>
             </div>
             <div class="profile_data_content mx-auto d-flex flex-wrap flex-row align-items-center">

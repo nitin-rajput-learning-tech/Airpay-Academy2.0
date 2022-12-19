@@ -144,9 +144,10 @@
                 }
             });
             if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector' || action === 'costcenter_element_selector'){
-                formoptions.parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
-                console.log($('[data-class="' + $(selector).data('parentclass') + '"]'));
-                console.log(formoptions.parentid);
+                var parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
+                if(!(parentid == undefined && formoptions.parentid > 0)){
+                    formoptions.parentid = parentid;
+                }
             }else if(action === 'costcenter_category_selector'){
                 formoptions.organisationid = $("#id_open_costcenterid").val();
                 formoptions.departmentid = $("#id_open_departmentid").val();

@@ -80,6 +80,9 @@ class local_users_external extends external_api {
                     local_costcenter_get_costcenter_path($validateddata);
                     // print_r($validateddata);
                     set_user_preference('auth_forcepasswordchange', $validateddata->preference_auth_forcepasswordchange, $validateddata->id);
+
+                }elseif ($form_status == 1){
+                     local_users_get_geography_data($validateddata);
                 }
                 $uid = $userlib->update_existinguser($validateddata);
             } else {
