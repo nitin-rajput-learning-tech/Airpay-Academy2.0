@@ -54,13 +54,17 @@ class local_users_renderer extends plugin_renderer_base {
         $sql3 = "SELECT cc.fullname, u.open_employeeid, u.open_costcenterid,
                     u.open_designation, u.open_location,
                     u.open_supervisorid, u.open_group,
-                    u.department, u.open_subdepartment , u.open_departmentid
+                    u.department, u.open_subdepartment, u.open_costcenterpath, u.open_departmentid
                      FROM {local_costcenter} cc, {user} u
                     WHERE u.id=:id AND u.open_costcenterid=cc.id";
         $userOrg = $DB->get_record_sql($sql3, array('id' => $id));
         $usercostcenter = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_costcenterid));
         $userdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_departmentid));
         $usersubdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_subdepartment));
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userOrg->open_costcenterpath);
+        $usercu = $DB->get_field('local_costcenter', 'fullname', array('id' => $cu));
+        $userterritory = $DB->get_field('local_costcenter', 'fullname', array('id' => $territory));
+
         if (!empty($userrecord->phone1)) {
                 $contact = $userrecord->phone1;
         } else {
@@ -151,7 +155,7 @@ class local_users_renderer extends plugin_renderer_base {
             "region" => ! empty(trim($userrecord->open_region)) ? $userrecord->open_region : 'N/A',
             "level" => ! empty(trim($userrecord->open_level)) ? $userrecord->open_level : 'N/A',
             "branch" => ! empty(trim($userrecord->open_branch)) ? $userrecord->open_branch : 'N/A',
-            "state" => ! empty(trim($userrecord->open_state)) ? $userrecord->open_state : 'N/A',
+            "userstate" => ! empty(trim($userrecord->open_states)) ? $userrecord->open_states : 'N/A',
             "phnumber" => $contact,
             "badgesimg" => $OUTPUT->image_url('badgeicon', 'local_users'),
             "certimg" => $OUTPUT->image_url('certicon', 'local_users'),
@@ -167,6 +171,11 @@ class local_users_renderer extends plugin_renderer_base {
             "loginasurl" => $loginasurl,
             "options" => $options,
             "pluginslist" => $pluginarray,
+            "userterritory" => $userterritory,
+            "usercu" => $usercu,
+            "userdistrict" => ! empty(trim($userrecord->open_district)) ? $userrecord->open_district : 'N/A',
+            "usersubdistrict" => ! empty(trim($userrecord->open_subdistrict)) ? $userrecord->open_subdistrict : 'N/A',
+            "uservillage" => ! empty(trim($userrecord->open_village)) ? $userrecord->open_village : 'N/A',
         ];
         $value = $this->render_from_template('local_users/profile', $usersviewContext);
 
