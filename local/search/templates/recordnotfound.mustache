@@ -1,0 +1,50 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template catalog/No record found
+
+    Displays No recod found message 
+   
+}}
+
+<div ng-if="numberofrecords <= 0" >
+
+    <div ng-if=" tab == 1" class="w-100 pull-left  alert alert-info text-center">
+    {{#str}} noelearning, local_search {{/str}}
+    </div>
+
+    <div ng-if=" tab == 2" class="w-100 pull-left alert alert-info text-center">
+    {{#str}} noclassroom, local_search {{/str}}
+    </div>
+
+    <div ng-if=" tab == 3" class="w-100 pull-left  alert alert-info text-center">
+    {{#str}} noprogram, local_search {{/str}}
+    </div>
+
+    <div ng-if=" tab == 4" class="w-100 pull-left alert alert-info text-center">
+    {{#str}} nocertification,local_search {{/str}}
+    </div>
+
+    <div ng-if=" tab == 5" class="w-100 pull-left  alert alert-info text-center">
+    {{#str}} nolearningplan, local_search {{/str}}
+    </div>
+
+    <div ng-if=" tab == 6" class="w-100 pull-left  alert alert-info text-center">
+    {{#str}} norecord, local_search {{/str}}
+    </div>
+
+</div>

@@ -57,7 +57,7 @@ class create_user extends moodleform {
         if ($form_status == 0) {
 
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, 'local_users', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_users', $categorycontext, $multiple = false);
 
 
             $count = count($costcenters);
@@ -150,6 +150,10 @@ class create_user extends moodleform {
             $mform->setDefault('lang', $CFG->lang);
 
              local_users_get_geography_targetfields($mform, $this->_ajaxformdata, $this->_customdata,null, 'local_users', $categorycontext, $multiple = false);
+            $mform->addElement('text', 'open_designation', get_string('designation','local_users'));
+            $mform->setType('open_designation',PARAM_RAW);
+            $mform->addHelpButton('open_designation', 'designation','local_users');
+
 
         } else if ($form_status == 2) {
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));

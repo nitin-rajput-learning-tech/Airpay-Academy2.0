@@ -675,6 +675,9 @@ class local_costcenter_external extends external_api {
                             $accountssql .= ' AND visible = 1';
                         }
                         $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                        if($formoptions->enableallfield){
+                            $accounts = $allobjectarr + $accounts;
+                        }
                         if ($accounts) {
                             $totalaccounts = count($accounts);
                             $moreaccounts = $totalaccounts > $perpage;
