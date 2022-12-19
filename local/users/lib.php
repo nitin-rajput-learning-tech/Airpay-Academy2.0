@@ -1128,19 +1128,28 @@ function local_users_output_fragment_user_field_create($args){
     return $o;
 }
 //global geography form fields master data
-function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata, $elements = null, $pluginname, $context, $multiple = false){
+function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata, $pluginname, $context, $multiple = false){
     global $DB, $USER;
+
 
     $fields = local_users_get_geography_fields();
 
-    $prev_element = '';
+    $prev_element = 'open_level5department_select';
     $firstelement = true;
+
+    $prevfield='territory';
+
     foreach($fields as $field =>$fieldenabled){
 
         if($fieldenabled == false){
             continue;
         }
 
+        if($firstelement == true){
+
+            $mform->addElement('hidden','open_level5department', null,array('data-class'=>'open_level5department_select'));
+            $mform->setConstant('open_level5department', $customdata['open_level5department']);
+        }
         $fieldelementoptions = array(
             'class' => $field.'_select',
             'id' => 'id_'.$field.'_select',
@@ -1157,7 +1166,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
         $fieldelementoptions['data-contextid'] = $context->id;
         $fieldelementoptions['data-action'] = 'geography_target_element_selector';
         $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
-        $fieldelementoptions['data-options'] = json_encode(array('columnname' => $field, 'parentid' => $parentid));
+        $fieldelementoptions['data-options'] = json_encode(array('columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield));
         $fieldelements = [];
         if($fieldvalue){
             $fieldelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
@@ -1170,7 +1179,9 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
             }
         }
         $mform->addElement('autocomplete', $field, get_string($field, 'local_users'), $fieldelements, $fieldelementoptions);
-        $mform->addHelpButton($field, $field.$pluginname, $pluginname);
+        $mform->addHelpButton($field, $field, $pluginname);
+
+        $firstelement = false;
 
         $mform->setType($field, PARAM_RAW);
         $prevfield = $field;

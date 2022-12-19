@@ -749,3 +749,7 @@ $string['open_states_help'] = 'Search and select an available or existing state 
 $string['open_district_help'] = 'Search and select an available or existing district as target audience';
 $string['open_subdistrict_help'] = 'Search and select an available or existing subdistrict as target audience';
 $string['open_village_help'] = 'Search and select an available or existing village as target audience';
+$string['selectopen_states'] = '--Select State--';
+$string['selectopen_district'] = '--Select District--';
+$string['selectopen_subdistrict'] = '--Select Sub District--';
+$string['selectopen_village'] = '--Select Village--';

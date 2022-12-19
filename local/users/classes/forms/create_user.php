@@ -141,15 +141,13 @@ class create_user extends moodleform {
             $mform->setType('open_supervisorid', PARAM_RAW);
                 // End of if($form_status = 0) condition.
         } else if ($form_status == 1) {
-                    // Commented by sarath for removing subdepartments concept in Bizz LMS.
-
 
             $mform->addElement('select', 'lang', get_string(
                 'preferredlanguage', 'local_users'),
                 get_string_manager()->get_list_of_translations());
             $mform->setDefault('lang', $CFG->lang);
 
-             local_users_get_geography_targetfields($mform, $this->_ajaxformdata, $this->_customdata,null, 'local_users', $categorycontext, $multiple = false);
+             local_users_get_geography_targetfields($mform, $this->_ajaxformdata, $this->_customdata,'local_users', $categorycontext, $multiple = false);
             $mform->addElement('text', 'open_designation', get_string('designation','local_users'));
             $mform->setType('open_designation',PARAM_RAW);
             $mform->addHelpButton('open_designation', 'designation','local_users');

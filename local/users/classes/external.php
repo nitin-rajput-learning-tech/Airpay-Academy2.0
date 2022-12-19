@@ -1710,9 +1710,11 @@ class local_users_external extends external_api {
                     $fields = array("fullname");
 
                     $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
-                    $tablename=str_replace("open","local",$formoptions->columnname);
+                    $tablename="mdl_".str_replace("open","local",$formoptions->columnname);
 
-                    $fieldname=str_replace("open","local",$formoptions->columnname).'_name';
+                    $fieldname=str_replace("open_","",$formoptions->columnname).'_name';
+
+                    $parentidcolumn=str_replace("open_","",$formoptions->parentidcolumn).'id';
 
 
                     $likesql = array();
@@ -1726,12 +1728,10 @@ class local_users_external extends external_api {
                         $sqlfields = implode(" OR ", $likesql);
                         $concatsql .= " AND ($sqlfields) ";
                     }
-                    $fields      = 'SELECT id, $fieldname';
-                    $accountssql = " FROM {$tablenamer}
+                    $fields      = "SELECT id, $fieldname as fullname";
+                    $accountssql = " FROM {$tablename}
                                      WHERE 1=1 $concatsql AND $parentidcolumn = :parentid ";
-                    if ($formoptions->id == 0) {
-                        $accountssql .= ' AND visible = 1';
-                    }
+
                     $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
                     if ($accounts) {
                         $totalaccounts = count($accounts);

@@ -56,21 +56,27 @@
 
             if(action === 'geography_target_element_selector'){
 
+                formoptions.parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
+
+
+
+                console.log($('[data-class="' + $(selector).data('parentclass') + '"]').val());
+
                 $('[data-action="geography_target_element_selector"]').on('change', function(){
                         var elemvalue = $(this).val();
                         if(parseInt(elemvalue) > 0){
                             var columnname = $(this).data('columnname');
                             $.each($('[data-action="geography_target_element_selector"]'), function(index, value){
-                                if($(value).data('columnname') > columnname){
+
                                     $(value).html('');
                                     $(value).parent().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection').html($(value).data('selectstring'));
-                                }
+
 
                             });
                         }
                 });
 
-                formoptions.parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
+
             }
 
             formoptions = JSON.stringify(formoptions);
