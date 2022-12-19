@@ -766,7 +766,7 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
-function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null, $pluginname, $context, $multiple = false){
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false){
     global $DB, $USER;
     $depth = $USER->access['currentroleinfo']['depth'];
     $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
@@ -798,12 +798,13 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->addElement('hidden', $fields[$level], null, $levelelementoptions);
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
+            $enableallfield = $firstelement ? false : $allenable;
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
             $levelelementoptions['data-action'] = 'costcenter_element_selector';
             $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
-            $levelelementoptions['data-options'] = json_encode(array('depth' => $level, 'parentid' => $parentid));
+            $levelelementoptions['data-options'] = json_encode(array('depth' => $level, 'parentid' => $parentid, 'enableallfield' => $enableallfield));
             $levelelements = [];
             if($fieldvalue){
                 $levelelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
@@ -818,6 +819,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
             $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
             $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+            $firstelement = false;
         }
         $mform->setType($fields[$level], PARAM_RAW);
         $prevfield = $fields[$level];
@@ -864,9 +866,6 @@ function local_costcenter_set_costcenter_path(&$data){
     }
 }
 function local_costcenter_get_fields(){
-
     return $fields = [ 1 => 'open_costcenterid', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department', 5 => 'open_level5department'];
-
-
 }
 
