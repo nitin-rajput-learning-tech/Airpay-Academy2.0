@@ -1713,7 +1713,7 @@ class local_users_external extends external_api {
                     $fields = array("fullname");
 
                     $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
-                    $tablename="mdl_".str_replace("open","local",$formoptions->columnname);
+                    $tablename=$DB->get_prefix().str_replace("open","local",$formoptions->columnname);
 
                     $fieldname=str_replace("open_","",$formoptions->columnname).'_name';
 
@@ -1725,7 +1725,7 @@ class local_users_external extends external_api {
                     if(!empty($query)){
                         foreach ($fields as $field) {
                             $i++;
-                            $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                            $likesql[] = $DB->sql_like($fieldname, ":queryparam$i", false);
                             $sqlparams["queryparam$i"] = "%$query%";
                         }
                         $sqlfields = implode(" OR ", $likesql);

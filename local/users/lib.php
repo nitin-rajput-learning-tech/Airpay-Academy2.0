@@ -62,7 +62,7 @@ function local_users_output_fragment_new_create_user($args) {
             'form_status' => $args->form_status, 'id' => $data->id,
             'open_positionid' => $data->open_positionid, 'open_domainid' => $data->open_domainid, 'open_costcenterpath' => $data->open_costcenterpath);
         local_costcenter_set_costcenter_path($customdata);
-        // print_r($customdata);exit;
+        local_users_set_geography_data($customdata,$data);
         $mform = new local_users\forms\create_user(null, $customdata,
             'post', '', null, true, $formdata);
         $mform->set_data($data);
@@ -70,6 +70,7 @@ function local_users_output_fragment_new_create_user($args) {
         $customdata = array('editoroptions' => $editoroptions,
             'form_status' => $args->form_status);
         local_costcenter_set_costcenter_path($customdata);
+        local_users_set_geography_data($customdata,$args);
         // print_r($customdata);
         $mform = new local_users\forms\create_user(null, $customdata, 'post', '', null, true, $formdata);
     }
@@ -1161,6 +1162,13 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
             'data-class' => $field.'_select',
         );
         $prev_element = $field.'_select';
+
+       // print_r($ajaxformdata);
+
+        // print_r($customdata);
+
+        // var_dump($field);
+
         $fieldvalue = $ajaxformdata[$field] ? $ajaxformdata[$field] : $customdata[$field];
 
         $fieldelementoptions['multiple'] = ($firstelement && $depth == 0) ? false : $multiple;
@@ -1175,9 +1183,17 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
             $fieldelementids = array_filter($fieldelementids);
             $fieldelements = [];
             if($fieldelementids){
+
+                $tablename=$DB->get_prefix().str_replace("open","local",$field);
+
+                $fieldname=str_replace("open_","",$field).'_name';
+
+
                 list($idsql, $idparams) = $DB->get_in_or_equal($fieldelementids, SQL_PARAMS_NAMED, 'targetaudienceelements');
-                $fieldsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$idsql} ";
+
+                $fieldsql = "SELECT id, $fieldname as fullname FROM {$tablename} WHERE id {$idsql} ";
                 $fieldelements = $DB->get_records_sql_menu($fieldsql, $idparams);
+
             }
         }
         $mform->addElement('autocomplete', $field, get_string($field, 'local_users'), $fieldelements, $fieldelementoptions);
@@ -1194,6 +1210,7 @@ function local_users_get_geography_data(&$data){
 
     $fields = local_users_get_geography_fields();
 
+
     foreach($fields as $field =>$fieldenabled){
 
         if($fieldenabled == false){
@@ -1202,13 +1219,14 @@ function local_users_get_geography_data(&$data){
 
         if(isset($data->$field) && !empty($data->$field)){
 
-            $data->$field = implode(',',$data->$field);
+            $data->$field = is_array($data->$field) ? implode(',',$data->$field) : $data->$field;
 
         }
     }
 
 }
-function local_users_set_geography_data(&$data){
+function local_users_set_geography_data(&$customdata,$data){
+
 
     $fields = local_users_get_geography_fields();
 
@@ -1220,7 +1238,7 @@ function local_users_set_geography_data(&$data){
 
         if(isset($data->$field) && !empty($data->$field)){
 
-            $data[$field]= $data->$field;
+            $customdata[$field]= $data->$field ;
 
         }
 
