@@ -1130,10 +1130,7 @@ function local_users_output_fragment_user_field_create($args){
 //global geography form fields master data
 function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata, $elements = null, $pluginname, $context, $multiple = false){
     global $DB, $USER;
-    $depth = $USER->access['currentroleinfo']['depth'];
-    if(is_siteadmin()){
-        $depth = 0;
-    }
+
     $fields = local_users_get_geography_fields();
 
     $prev_element = '';
@@ -1149,7 +1146,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
             'id' => 'id_'.$field.'_select',
             'data-parentclass' => $prev_element,
             'data-selectstring' => get_string('select'.$field, 'local_users'),
-            'data-depth' => $field,
+            'data-columnname' => $field,
             'data-class' => $field.'_select',
         );
         $prev_element = $field.'_select';
@@ -1160,7 +1157,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
         $fieldelementoptions['data-contextid'] = $context->id;
         $fieldelementoptions['data-action'] = 'geography_target_element_selector';
         $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
-        $fieldelementoptions['data-options'] = json_encode(array('depth' => $field, 'parentid' => $parentid));
+        $fieldelementoptions['data-options'] = json_encode(array('columnname' => $field, 'parentid' => $parentid));
         $fieldelements = [];
         if($fieldvalue){
             $fieldelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);

@@ -59,11 +59,10 @@
                 $('[data-action="geography_target_element_selector"]').on('change', function(){
                         var elemvalue = $(this).val();
                         if(parseInt(elemvalue) > 0){
-                            var depth = $(this).data('depth');
+                            var columnname = $(this).data('columnname');
                             $.each($('[data-action="geography_target_element_selector"]'), function(index, value){
-                                if($(value).data('depth') > depth){
+                                if($(value).data('columnname') > columnname){
                                     $(value).html('');
-                                    console.log($(value).parent().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection'));
                                     $(value).parent().find('[data-fieldtype="autocomplete"] .form-autocomplete-selection').html($(value).data('selectstring'));
                                 }
 

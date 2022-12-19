@@ -1710,7 +1710,11 @@ class local_users_external extends external_api {
                     $fields = array("fullname");
 
                     $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
-                    $sqlparams['depth'] = $formoptions->depth;
+                    $tablename=str_replace("open","local",$formoptions->columnname);
+
+                    $fieldname=str_replace("open","local",$formoptions->columnname).'_name';
+
+
                     $likesql = array();
                     $i = 0;
                     if(!empty($query)){
@@ -1722,9 +1726,9 @@ class local_users_external extends external_api {
                         $sqlfields = implode(" OR ", $likesql);
                         $concatsql .= " AND ($sqlfields) ";
                     }
-                    $fields      = 'SELECT id, fullname';
-                    $accountssql = " FROM {local_costcenter}
-                                     WHERE 1=1 $concatsql AND parentid = :parentid AND depth = :depth ";
+                    $fields      = 'SELECT id, $fieldname';
+                    $accountssql = " FROM {$tablenamer}
+                                     WHERE 1=1 $concatsql AND $parentidcolumn = :parentid ";
                     if ($formoptions->id == 0) {
                         $accountssql .= ' AND visible = 1';
                     }
