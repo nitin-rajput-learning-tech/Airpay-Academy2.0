@@ -839,9 +839,11 @@ function local_costcenter_get_costcenter_path(&$data){
             // $path .= '/'.$value;
         }
     }
-    // finding the path mapped for the last element in the form to meet the data requirements for all head roles.
-    $path = $DB->get_field('local_costcenter', 'path', array('id' => $value));
-    $data->open_costcenterpath = $path;
+    if($value > 0){
+        // finding the path mapped for the last element in the form to meet the data requirements for all head roles.
+        $path = $DB->get_field('local_costcenter', 'path', array('id' => $value));
+        $data->open_costcenterpath = $path;
+    }
 }
 function local_costcenter_set_costcenter_path(&$data){
     global $USER;
