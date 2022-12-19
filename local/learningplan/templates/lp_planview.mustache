@@ -49,14 +49,24 @@
 						</span><span style="color:#333;"><strong>{{ plan_learningplancode }}</strong></span>
 					</div>
 					<div class="w-full pull-left">
-						<span class="text-muted"  style="min-width: 100px;float: left;">{{#str}} department {{/str}} 
+						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} department, local_users {{/ str }} 
 						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;" title="{{ plan_department_string }}"><strong>{{ plan_department }}</strong></span>
+						</span><span style="color:#333;" title="{{ plandpt }}"><strong>{{ plandpt }}</strong></span> 
 					</div>
 					<div class="w-full pull-left">
-						<span class="text-muted"  style="min-width: 100px;float: left;">{{#str}}points, local_learningplan{{/str}}
+						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} subdepartment, local_users {{/ str }}
 						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ points }}</strong></span>
+						</span><span style="color:#333;"><strong>{{ plansubdpt }}</strong></span>
+					</div>
+					<div class="w-full pull-left">
+						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} commercialunit, local_users {{/ str }}
+						<span style="margin-right: 10px;float: right;">:</span> 
+						</span><span style="color:#333;"><strong>{{ plancu }}</strong></span>
+					</div>
+					<div class="w-full pull-left">
+						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} territory, local_users {{/ str }}
+						<span style="margin-right: 10px;float: right;">:</span> 
+						</span><span style="color:#333;"><strong>{{ planterritory }}</strong></span>
 					</div>
 					<!--<div class="w-full pull-left">
 						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}} learningplan_index_credits, local_learningplan{{/str}} 

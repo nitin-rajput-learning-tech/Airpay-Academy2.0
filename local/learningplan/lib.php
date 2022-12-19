@@ -58,7 +58,9 @@ function local_learningplan_output_fragment_new_learningplan($args){
 			$data->open_designation = (!empty($data->open_designation)) ? array_diff(explode(',',$data->open_designation), array('')) :array(NULL=>NULL);
             $data->open_location = (!empty($data->open_location)) ? array_diff(explode(',',$data->open_location), array('')) :array(NULL=>NULL);
 			$data->department =(!empty($data->department)) ? (count(explode(',',$data->department))>1)? array_diff(explode(',',$data->department), array('')):$data->department :NULL;
-			$mform = new local_learningplan\forms\learningplan(null, array('editoroptions' => $editoroptions, 'id'=>$data->id, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
+            $customdata = array('editoroptions' => $editoroptions, 'id'=>$data->id, 'form_status' => $args->form_status, 'open_costcenterpath' => $data->open_costcenterpath);
+            local_costcenter_set_costcenter_path($customdata);
+			$mform = new local_learningplan\forms\learningplan(null, $customdata, 'post', '', null, true, $formdata);
             // Populate tags.
             $data->tags = local_tags_tag::get_item_tags_array('local_learningplan', 'learningplan', $data->id);
             if(!empty($data->certificateid)){

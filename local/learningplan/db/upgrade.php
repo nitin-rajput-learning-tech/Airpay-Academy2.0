@@ -299,6 +299,16 @@ function xmldb_local_learningplan_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2022101800.02, 'local', 'learningplan');   
     }
+    
+    if($oldversion < 2022101800.03){
+        $table = new xmldb_table('local_learningplan');
+        $field1 = new xmldb_field('open_costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'learningplan');   
+    }
+
   
     return true;
 }

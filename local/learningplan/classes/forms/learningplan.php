@@ -25,13 +25,17 @@
  */
 namespace local_learningplan\forms;
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 use moodleform;
 use context_system;
+use costcenter;
+use events;
+use context_user;
 use local_users\functions\userlibfunctions as userlib;
 use core_component;
 // Add Learning Plans.
 class learningplan extends moodleform {
-
+ 
 	public $formstatus;
 	public function __construct($action = null, $customdata = null, $method = 'post', $target = '', $attributes = null, $editable = true, $formdata = null) {
 
@@ -52,6 +56,7 @@ class learningplan extends moodleform {
 		$sub_sub_dept = $this->_customdata['sub_sub_department'];
 		$editoroptions = $this->customdata['editoroptions'];
 		$form_status = $this->_customdata['form_status'];
+		$open_costcenterpath = $this->_customdata['open_costcenterpath'];
 		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 		
 		$mform->addElement('hidden', 'id', $id);
@@ -71,20 +76,23 @@ class learningplan extends moodleform {
 				$sql="select id,fullname from {local_costcenter} where visible =1 and parentid=0 ";
 	            $costcenters = $DB->get_records_sql($sql);
 	        }
-			if (is_siteadmin($USER)) {
-				$organizationlist=array(null=>'--Select Organization--');
-				foreach ($costcenters as $scl) {
-					$organizationlist[$scl->id]=$scl->fullname;
-				}
-				$mform->addElement('select', 'costcenter', get_string('organization', 'local_users'), $organizationlist);
-				//$mform->addRule('costcenter', null, 'required', null, 'client');	 
-				$mform->addRule('costcenter', get_string('errororganization', 'local_users'), 'required', null, 'client');
-			} else{
-				$user_dept=$DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-				$mform->addElement('hidden', 'costcenter', null);
-				$mform->setType('costcenter', PARAM_ALPHANUM);
-				$mform->setConstant('costcenter', $user_dept);
-			}
+			// if (is_siteadmin($USER)) {
+			// 	$organizationlist=array(null=>'--Select Organization--');
+			// 	foreach ($costcenters as $scl) {
+			// 		$organizationlist[$scl->id]=$scl->fullname;
+			// 	}
+			// 	$mform->addElement('select', 'costcenter', get_string('organization', 'local_users'), $organizationlist);
+			// 	//$mform->addRule('costcenter', null, 'required', null, 'client');	 
+			// 	$mform->addRule('costcenter', get_string('errororganization', 'local_users'), 'required', null, 'client');
+			// } else{
+			// 	$user_dept=$DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
+			// 	$mform->addElement('hidden', 'costcenter', null);
+			// 	$mform->setType('costcenter', PARAM_ALPHANUM);
+			// 	$mform->setConstant('costcenter', $user_dept);
+			// }
+
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_learningplan', $systemcontext, $multiple = false);
+
 	        $mform->addElement('text', 'name', get_string('learning_plan_name', 'local_learningplan'));
 	        $mform->addRule('name', null, 'required', null, 'client');
 	        $mform->setType('name', PARAM_TEXT);
@@ -194,6 +202,8 @@ class learningplan extends moodleform {
 
 		}else if($form_status == 1){
 			// if ((!is_siteadmin() && (((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))) &&(!has_capability('local/costcenter:manage_owndepartments',$systemcontext))))) {
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $systemcontext, $multiple = false);
+
 			if (is_siteadmin() || 
                 (has_capability('local/learningplan:manage', $systemcontext) 
                 	&& has_capability('local/costcenter:manage_ownorganization', $systemcontext)
