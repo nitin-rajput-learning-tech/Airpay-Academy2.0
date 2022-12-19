@@ -803,6 +803,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
             $levelelementoptions['data-action'] = 'costcenter_element_selector';
+            $prevfield = $fields[$level-1];
             $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
             $levelelementoptions['data-options'] = json_encode(array('depth' => $level, 'parentid' => $parentid, 'enableallfield' => $enableallfield));
             $levelelements = [];
@@ -822,7 +823,6 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $firstelement = false;
         }
         $mform->setType($fields[$level], PARAM_RAW);
-        $prevfield = $fields[$level];
     }
 }
 function local_costcenter_get_costcenter_path(&$data){
