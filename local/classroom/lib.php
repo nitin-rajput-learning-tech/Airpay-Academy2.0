@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->libdir . '/formslib.php');
-
+define('classroom',2);
 use \local_classroom\form\classroom_form as classroom_form;
 use local_classroom\local\querylib;
 use local_classroom\classroom;
@@ -1435,4 +1435,8 @@ function check_classroomenrol_pluginstatus($value)
             echo $OUTPUT->notification($enable, 'notifyerror');
         }
     }
+}
+function local_classroom_search_page_js(){
+    global $PAGE;
+    $PAGE->requires->js_call_amd('local_classroom/classroom','load', array());
 }
