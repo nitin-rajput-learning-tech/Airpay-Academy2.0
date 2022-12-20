@@ -74,6 +74,7 @@ class classroom {
     }
     public function manage_classroom($classroom) {
         global $DB, $USER;
+        // require_once($CFG->dirroot . '/local/costcenter/lib.php');
         $classroom->shortname = $classroom->name;
         if (empty($classroom->trainers)) {
             $classroom->trainers = null;
@@ -85,6 +86,7 @@ class classroom {
             if ($classroom->id > 0) {
                 $classroom->timemodified = time();
                 $classroom->usermodified = $USER->id;
+                $classroom->costcenter = $classroom->open_costcenterid;
                 $localclassroom          = $DB->get_record_sql("SELECT id,startdate,enddate,capacity,
                     allow_multi_session,instituteid FROM {local_classroom}
                     where id= :classroomid",array('classroomid' => $classroom->id));
@@ -95,6 +97,7 @@ class classroom {
                 }else{
                     $classroom->certificateid = null;
                 }
+                local_costcenter_get_costcenter_path($classroom);
                 $DB->update_record('local_classroom', $classroom);
                 $this->classroom_set_events($classroom);
                 $params = array(
@@ -129,7 +132,7 @@ class classroom {
                 $classroom->status      = 0;
                 $classroom->timecreated = time();
                 $classroom->usercreated = $USER->id;
-
+                $classroom->costcenter = $classroom->open_costcenterid;
                 $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
 
                 if (has_capability('local/classroom:manageclassroom', $categorycontext)) {
@@ -146,7 +149,7 @@ class classroom {
                 }
 
                 $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
-
+                local_costcenter_get_costcenter_path($classroom);
                 $classroom->id = $DB->insert_record('local_classroom', $classroom);
                 $params        = array(
                     'context' => $categorycontext,
@@ -1772,16 +1775,18 @@ class classroom {
             } else {
                 $classroom->open_location = NULL;
             }
-            if (is_array($classroom->department)) {
-                $classroom->department = !empty($classroom->department) ? implode(',', $classroom->department) : -1;
-            } else {
-                $classroom->department = !empty($classroom->department) ? $classroom->department : -1;
-            }
-            if (is_array($classroom->subdepartment)) {
-                $classroom->subdepartment = !empty($classroom->subdepartment) ? implode(',', $classroom->subdepartment) : -1;
-            } else {
-                $classroom->subdepartment = !empty($classroom->subdepartment) ? $classroom->subdepartment : -1;
-            }
+            // if (is_array($classroom->department)) {
+            //     $classroom->department = !empty($classroom->department) ? implode(',', $classroom->department) : -1;
+            // } else {
+            //     $classroom->department = !empty($classroom->department) ? $classroom->department : -1;
+            // }
+            // if (is_array($classroom->subdepartment)) {
+            //     $classroom->subdepartment = !empty($classroom->subdepartment) ? implode(',', $classroom->subdepartment) : -1;
+            // } else {
+            //     $classroom->subdepartment = !empty($classroom->subdepartment) ? $classroom->subdepartment : -1;
+            // }
+            local_costcenter_get_costcenter_path($classroom);
+            // print_r($classroom);
             $DB->update_record('local_classroom', $classroom);
         }
         return $classroom->id;

@@ -545,3 +545,7 @@ if(!$enabled_plugins){
      }
    }    
 }
+function local_learningplan_search_page_js(){
+    global $PAGE;
+    $PAGE->requires->js_call_amd('local_learningplan/courseenrol','load');
+}
