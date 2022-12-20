@@ -276,11 +276,12 @@ class accesslib
 
         $roleid=$USER->access['currentroleinfo']['roleid'];
 
-        if(!empty($USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid])){
+        // if(!empty($USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid])){
 
-            $costcenterpath=$USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid];
+        //     $costcenterpath=$USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid];
 
-        }elseif(!empty($USER->access['currentroleinfo']['contextinfo'])){
+        // }else
+        if(!empty($USER->access['currentroleinfo']['contextinfo'])){
 
 
             $contextsinfo =$USER->access['currentroleinfo']['contextinfo'];
