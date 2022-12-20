@@ -80,6 +80,9 @@ class local_users_external extends external_api {
                     local_costcenter_get_costcenter_path($validateddata);
                     // print_r($validateddata);
                     set_user_preference('auth_forcepasswordchange', $validateddata->preference_auth_forcepasswordchange, $validateddata->id);
+
+                }elseif ($form_status == 1){
+                     local_users_get_geography_data($validateddata);
                 }
                 $uid = $userlib->update_existinguser($validateddata);
             } else {
@@ -1710,24 +1713,28 @@ class local_users_external extends external_api {
                     $fields = array("fullname");
 
                     $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
-                    $sqlparams['depth'] = $formoptions->depth;
+                    $tablename=$DB->get_prefix().str_replace("open","local",$formoptions->columnname);
+
+                    $fieldname=str_replace("open_","",$formoptions->columnname).'_name';
+
+                    $parentidcolumn=str_replace("open_","",$formoptions->parentidcolumn).'id';
+
+
                     $likesql = array();
                     $i = 0;
                     if(!empty($query)){
                         foreach ($fields as $field) {
                             $i++;
-                            $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                            $likesql[] = $DB->sql_like($fieldname, ":queryparam$i", false);
                             $sqlparams["queryparam$i"] = "%$query%";
                         }
                         $sqlfields = implode(" OR ", $likesql);
                         $concatsql .= " AND ($sqlfields) ";
                     }
-                    $fields      = 'SELECT id, fullname';
-                    $accountssql = " FROM {local_costcenter}
-                                     WHERE 1=1 $concatsql AND parentid = :parentid AND depth = :depth ";
-                    if ($formoptions->id == 0) {
-                        $accountssql .= ' AND visible = 1';
-                    }
+                    $fields      = "SELECT id, $fieldname as fullname";
+                    $accountssql = " FROM {$tablename}
+                                     WHERE 1=1 $concatsql AND $parentidcolumn = :parentid ";
+
                     $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
                     if ($accounts) {
                         $totalaccounts = count($accounts);

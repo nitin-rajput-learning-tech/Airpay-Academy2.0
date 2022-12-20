@@ -26,6 +26,7 @@ namespace local_classroom\form;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
 use local_classroom\local\querylib;
 use moodleform;
@@ -69,48 +70,7 @@ class classroom_form extends moodleform {
             }
             $mform->addRule('name', null, 'required', null, 'client');
 
-            if (is_siteadmin() || ((has_capability('local/classroom:manage_multiorganizations', $categorycontext) ||has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) ) {
-
-                $costcenters = array(null => get_string('select_costcenter', 'local_classroom'));
-                $costcenterslist = $this->_ajaxformdata['costcenter'];
-                if (!empty($costcenterslist)) {
-                    $costcenterslist = $costcenterslist;
-                } else if ($id > 0) {
-                    $costcenterslistsql = "SELECT cc.id
-                                             FROM {local_costcenter} cc
-                                             JOIN {local_classroom} c ON c.costcenter = cc.id
-                                             AND cc.parentid = 0 AND cc.visible = 1 AND
-                                             c.id = :classroomid";
-                    $costcenterslist = $DB->get_field_sql($costcenterslistsql, array('classroomid' => $id));
-                }
-                if (!empty($costcenterslist)) {
-                    $costcenterslist = $DB->get_records_menu('local_costcenter',
-                        array('visible' => 1, 'parentid' => 0, 'id' => $costcenterslist),
-                        'id', 'id, fullname');
-                    $costcenters = array(null => get_string('select_costcenter',
-                        'local_classroom')) + $costcenterslist;
-                }
-
-                $options = array(
-                    'ajax' => 'local_classroom/form-options-selector',
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'classroom_costcenter_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 1, 'parnetid' => 0)),
-                    'class' => 'organizationselect',
-                    'data-class' => 'organizationselect'
-                );
-
-                $mform->addElement('autocomplete', 'costcenter',
-                    get_string('costcenter', 'local_classroom'), $costcenters, $options);
-                $mform->addRule('costcenter', get_string('errororganization', 'local_users'), 'required', null, 'client');
-               // $mform->addRule('costcenter', null, 'required', null, 'client');
-                $mform->setType('costcenter', PARAM_INT);
-            } else {
-                $mform->addElement('hidden', 'costcenter', $USER->open_costcenterid,
-                    array( 'data-class' => 'organizationselect'));//get_string('costcenter', 'local_classroom')
-                $mform->setType('costcenter', PARAM_INT);
-
-            }
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_users', $categorycontext, $multiple = false);
 
             $manageselfenrol = array();
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
@@ -288,114 +248,8 @@ class classroom_form extends moodleform {
 
         }else if ($formstatus == 3) {
 
-            if (is_siteadmin() || 
-                (has_capability('local/classroom:manageclassroom', $categorycontext)
-                    && has_capability('local/classroom:manageclassroom', $categorycontext)
-                    && !has_capability('local/classroom:manage_owndepartments',$categorycontext)
-                    && !has_capability('local/costcenter:manage_owndepartments',$categorycontext))) {
-                $departments = array();
-                $departmentslist = $this->_ajaxformdata['department'];
-
-                $params = array();
-                if (!empty($departmentslist)) {
-                    $departmentslist = $departmentslist;
-                } else if ($id > 0) {
-                    $departmentlist = $DB->get_field('local_classroom', 'department', array('id' => $id));
-                    $departmentslist = explode(', ', $departmentlist);
-                }
-                if (!empty($departmentslist)) {
-                    if (is_array($departmentslist)){
-                        $departmentslist=implode(',',$departmentslist);
-                    }
-                    $organisation = $DB->get_field('local_classroom', 'costcenter', array('id' => $id));
-                    $params['visible'] = 1;
-                    $params['depth'] = 2;
-                    $params['parentid'] = $organisation;
-                    $departmentlistsql = "SELECT id, fullname
-                                            FROM {local_costcenter}
-                                           WHERE visible = :visible AND depth = :depth AND parentid = :parentid";
-                    if(!empty($departmentslist)) {
-                        $departmentlistsql .= " AND id in ($departmentslist)";
-                    }
-                    $departmentlist = $DB->get_records_sql_menu($departmentlistsql, $params);
-                    $departments = array(-1 => get_string('all')) + $departmentlist;
-                }
-
-                $options = array(
-                    'ajax' => 'local_classroom/form-options-selector',
-                    'multiple' => true,
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'classroom_costcenter_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 2,
-                        'organizationselect' => '.organizationselect', 'department' => true,
-                    'organizationselect' => 'organizationselect')),
-                    'class' => 'departmentselect'
-                );
-
-                $mform->addElement('autocomplete', 'department', get_string('department',
-                    'local_classroom'), $departments, $options);
-                $mform->setType('department', PARAM_RAW);
-                
-            }else{
-
-                $mform->addElement('hidden', 'department', $USER->open_departmentid, array('id' => 'id_department'));//, array('id' => 'id_department')
-                $mform->setConstant('department', $USER->open_departmentid);
-                $mform->setType('department', PARAM_RAW);
-            }
-            if(is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext)){
-                $departments = array();
-                $subdepartment = $this->_ajaxformdata['subdepartment'];
-
-                $params = array();
-                if (!empty($subdepartment)) {
-                    $subdepartmentslist = $subdepartment;
-                } else if ($id > 0) {
-                    $subdepartmentlist = $DB->get_field('local_classroom', 'subdepartment', array('id' => $id));
-                    $subdepartmentslist = explode(', ', $subdepartmentlist);
-                }
-                if (!empty($subdepartmentslist)) {
-                    if (is_array($subdepartmentslist)){
-                        $subdepartmentslist=implode(',',$subdepartmentslist);
-                    }
-
-                    $departments = $DB->get_field('local_classroom', 'department', array('id' => $id));
-                    
-                    $subdepartmentlistsql = "SELECT id, fullname
-                                            FROM {local_costcenter}
-                                           WHERE 1 = 1 ";
-                    if(!empty($subdepartmentslist)) {
-                        $arr_subdepartmentslist = explode(',', $subdepartmentslist);
-                        list($subsql, $subparam) = $DB->get_in_or_equal($arr_subdepartmentslist, SQL_PARAMS_NAMED);
-                        $subdepartmentlistsql .= " AND id $subsql ";
-                        $params = $params + $subparam;
-                    }else{
-                        $subdepartmentlistsql .= " AND visible = :visible AND depth = :depth 
-                        AND parentid IN (:parentid)";
-                        $params['visible'] = 1;
-                        $params['depth'] = 3;
-                        $params['parentid'] = $departments;
-                    }
-                    
-                    $subdepartmentlist = $DB->get_records_sql_menu($subdepartmentlistsql, $params);
-                    $subdepartments = array(-1 => get_string('all')) + $subdepartmentlist;
-                }else{
-                    $subdepartments = array(-1 => get_string('all'));
-                }
-
-                $options = array(
-                    'ajax' => 'local_classroom/form-options-selector',
-                    'multiple' => true,
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'classroom_subdepartment_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 3,
-                        'organizationselect' => '.organizationselect', 'subdepartment' => true)),
-                    'class' => 'subdepartmentselect'
-                );
-
-                $mform->addElement('autocomplete', 'subdepartment', get_string('subdepartment',
-                    'local_costcenter'), $subdepartments, $options);
-                $mform->setType('subdepartment', PARAM_INT);
-            }
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), false, 'local_users', $categorycontext, $multiple = false);
+           
 			$users_plugin_exist = $core_component::get_plugin_directory('local','users');
 			if ($users_plugin_exist) {
 				require_once($CFG->dirroot . '/local/users/lib.php');
@@ -573,9 +427,10 @@ class classroom_form extends moodleform {
             // if($data->subdepartment == -1){
             //     // $data->subdepartment = null;   
             // }else{
-            $data->department = (!empty($data->department)) ? array_diff(explode(',',$data->department), array('')) :array(NULL=>NULL);
-            $data->subdepartment = (!empty($data->subdepartment)) ? array_diff(explode(',',$data->subdepartment), array('')) :array(NULL=>NULL);
+            // $data->department = (!empty($data->department)) ? array_diff(explode(',',$data->department), array('')) :array(NULL=>NULL);
+            // $data->subdepartment = (!empty($data->subdepartment)) ? array_diff(explode(',',$data->subdepartment), array('')) :array(NULL=>NULL);
             // }
+            
             $data->open_group =(!empty($data->open_group)) ? array_diff(explode(',',$data->open_group), array('')) :array(NULL=>NULL);
             $data->open_hrmsrole =(!empty($data->open_hrmsrole)) ? array_diff(explode(',',$data->open_hrmsrole), array('')) :array(NULL=>NULL);
             $data->open_designation =(!empty($data->open_designation)) ? array_diff(explode(',',$data->open_designation), array('')) :array(NULL=>NULL);

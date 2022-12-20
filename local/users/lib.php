@@ -62,7 +62,7 @@ function local_users_output_fragment_new_create_user($args) {
             'form_status' => $args->form_status, 'id' => $data->id,
             'open_positionid' => $data->open_positionid, 'open_domainid' => $data->open_domainid, 'open_costcenterpath' => $data->open_costcenterpath);
         local_costcenter_set_costcenter_path($customdata);
-        // print_r($customdata);exit;
+        local_users_set_geography_data($customdata,$data);
         $mform = new local_users\forms\create_user(null, $customdata,
             'post', '', null, true, $formdata);
         $mform->set_data($data);
@@ -70,6 +70,7 @@ function local_users_output_fragment_new_create_user($args) {
         $customdata = array('editoroptions' => $editoroptions,
             'form_status' => $args->form_status);
         local_costcenter_set_costcenter_path($customdata);
+        local_users_set_geography_data($customdata,$args);
         // print_r($customdata);
         $mform = new local_users\forms\create_user(null, $customdata, 'post', '', null, true, $formdata);
     }
@@ -1128,80 +1129,116 @@ function local_users_output_fragment_user_field_create($args){
     return $o;
 }
 //global geography form fields master data
-function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata, $elements = null, $pluginname, $context, $multiple = false){
+function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata, $pluginname, $context, $multiple = false){
     global $DB, $USER;
-    $depth = $USER->access['currentroleinfo']['depth'];
-    if(is_siteadmin()){
-        $depth = 0;
-    }
+
+
     $fields = local_users_get_geography_fields();
 
-    $prev_element = '';
+    $prev_element = 'open_level5department_select';
     $firstelement = true;
+
+    $prevfield='territory';
+
+    $depth = 0;
+
     foreach($fields as $field =>$fieldenabled){
 
         if($fieldenabled == false){
             continue;
         }
 
+        if($depth == 0){
+
+            $mform->addElement('hidden','open_level5department', null,array('data-class'=>'open_level5department_select'));
+            $mform->setConstant('open_level5department', $customdata['open_level5department']);
+        }
         $fieldelementoptions = array(
             'class' => $field.'_select',
             'id' => 'id_'.$field.'_select',
             'data-parentclass' => $prev_element,
             'data-selectstring' => get_string('select'.$field, 'local_users'),
-            'data-depth' => $field,
+            'data-depth' => $depth,
             'data-class' => $field.'_select',
         );
         $prev_element = $field.'_select';
+
+       // print_r($ajaxformdata);
+
+        // print_r($customdata);
+
+        // var_dump($field);
+
         $fieldvalue = $ajaxformdata[$field] ? $ajaxformdata[$field] : $customdata[$field];
 
-        $fieldelementoptions['multiple'] = $firstelement ? false : $multiple;
+        $fieldelementoptions['multiple'] = ($firstelement && $depth == 0) ? false : $multiple;
         $fieldelementoptions['ajax'] = 'local_users/form-options-selector';
         $fieldelementoptions['data-contextid'] = $context->id;
         $fieldelementoptions['data-action'] = 'geography_target_element_selector';
         $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
-        $fieldelementoptions['data-options'] = json_encode(array('depth' => $field, 'parentid' => $parentid));
+        $fieldelementoptions['data-options'] = json_encode(array('depth' => $depth,'columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield));
         $fieldelements = [];
         if($fieldvalue){
             $fieldelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
             $fieldelementids = array_filter($fieldelementids);
             $fieldelements = [];
             if($fieldelementids){
+
+                $tablename=$DB->get_prefix().str_replace("open","local",$field);
+
+                $fieldname=str_replace("open_","",$field).'_name';
+
+
                 list($idsql, $idparams) = $DB->get_in_or_equal($fieldelementids, SQL_PARAMS_NAMED, 'targetaudienceelements');
-                $fieldsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$idsql} ";
+
+                $fieldsql = "SELECT id, $fieldname as fullname FROM {$tablename} WHERE id {$idsql} ";
                 $fieldelements = $DB->get_records_sql_menu($fieldsql, $idparams);
+
             }
         }
         $mform->addElement('autocomplete', $field, get_string($field, 'local_users'), $fieldelements, $fieldelementoptions);
-        $mform->addHelpButton($field, $field.$pluginname, $pluginname);
+        $mform->addHelpButton($field, $field, $pluginname);
+
+        $firstelement = false;
 
         $mform->setType($field, PARAM_RAW);
         $prevfield = $field;
+        $depth++;
     }
 }
 function local_users_get_geography_data(&$data){
 
     $fields = local_users_get_geography_fields();
 
-    foreach($fields AS $field){
+
+    foreach($fields as $field =>$fieldenabled){
+
+        if($fieldenabled == false){
+            continue;
+        }
 
         if(isset($data->$field) && !empty($data->$field)){
 
-            $data->$field = implode(',',$data->$field);
+            $data->$field = is_array($data->$field) ? implode(',',$data->$field) : $data->$field;
 
         }
     }
 
 }
-function local_users_set_geography_data(&$data){
+function local_users_set_geography_data(&$customdata,$data){
+
 
     $fields = local_users_get_geography_fields();
 
-    foreach($fields AS $field){
+    foreach($fields as $field =>$fieldenabled){
+
+        if($fieldenabled == false){
+            continue;
+        }
 
         if(isset($data->$field) && !empty($data->$field)){
 
-            $data[$field]= explode(',', $data->$field);
+            $customdata[$field]= $data->$field ;
 
         }
 

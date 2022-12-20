@@ -77,12 +77,19 @@ function local_classroom_output_fragment_classroom_form($args)
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
+    $data = $DB->get_record('local_classroom', ['id' => $args->id]);
     $formdata['id'] = $args->id;
-
-    $mform = new classroom_form(null, array(
+    $customdata = array(
         'id' => $args->id,
         'form_status' => $args->form_status
-    ), 'post', '', null, true, $formdata);
+    );
+    if($args->id){
+        $customdata['open_costcenterpath'] = $data->open_costcenterpath;
+    }
+    // print_r($customdata);
+    // $customdata['open_costcenterpath'] = '/1/3/4/16/17';
+    local_costcenter_set_costcenter_path($customdata);
+    $mform = new classroom_form(null, $customdata, 'post', '', null, true, $formdata);
     $classroomdata = new stdClass();
     $classroomdata->id = $args->id;
     $classroomdata->form_status = $args->form_status;

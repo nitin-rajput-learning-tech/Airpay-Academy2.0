@@ -500,6 +500,14 @@ class view extends plugin_renderer_base {
                 //$learningplan_content['plan_type'] = $plan_type;
                 $learningplan_content['plan_credits'] = isset($learning_plan->credits);
                 $learningplan_content['created_user'] = $created_user;
+
+		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$learning_plan->open_costcenterpath);
+        /*$learningplan_content['planorg'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
+        $learningplan_content['plansubdpt'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $bu));
+        $learningplan_content['plancu'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $cu));
+        $learningplan_content['planterritory'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $territory));*/
+        $plandpt = $this->db->get_field('local_costcenter', 'fullname', array('id' => $ctr));
+        $learningplan_content['plandpt'] = $plandpt ? $plandpt: 'All'; 
                 $learningplan_content['plan_department'] = ($plan_department=='-1'||empty($plan_department))?'All':$plan_department;
                 $learningplan_content['plan_shortname_string'] = $learning_plan->shortname?$learning_plan->shortname:'NA';
                 $learningplan_content['plan_department_string'] = ($plan_department_string=='-1'||empty($plan_department_string))?'All':$plan_department_string;
@@ -826,7 +834,14 @@ class view extends plugin_renderer_base {
 			$planview_context['total_enroled_users'] = isset($total_enroled_users->data)?$total_enroled_users->data:0;
 			$planview_context['cmpltd'] = count($cmpltd);
 			$planview_context['points'] = $plan_record->open_points?$plan_record->open_points:0;
-		
+
+
+		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$plan_record->open_costcenterpath);
+        $planview_context['planorg'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
+        $planview_context['plandpt'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $ctr));
+        $planview_context['plansubdpt'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $bu));
+        $planview_context['plancu'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $cu));
+        $planview_context['planterritory'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $territory));
 		return $this->render_from_template('local_learningplan/lp_planview', $planview_context);
 	}
   /** Function For The Tabs View In The Learning
