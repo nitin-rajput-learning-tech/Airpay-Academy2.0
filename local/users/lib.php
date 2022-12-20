@@ -1133,7 +1133,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
     global $DB, $USER;
 
 
-    $fields = local_users_get_geography_fields();
+    $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
 
     $prev_element = 'open_level5department_select';
     $firstelement = true;
@@ -1163,12 +1163,6 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
         );
         $prev_element = $field.'_select';
 
-       // print_r($ajaxformdata);
-
-        // print_r($customdata);
-
-        // var_dump($field);
-
         $fieldvalue = $ajaxformdata[$field] ? $ajaxformdata[$field] : $customdata[$field];
 
         $fieldelementoptions['multiple'] = ($firstelement && $depth == 0) ? false : $multiple;
@@ -1189,7 +1183,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
                 $fieldname=str_replace("open_","",$field).'_name';
 
 
-                list($idsql, $idparams) = $DB->get_in_or_equal($fieldelementids, SQL_PARAMS_NAMED, 'targetaudienceelements');
+                list($idsql, $idparams) = $DB->get_in_or_equal($fieldelementids, SQL_PARAMS_QM, 'targetaudienceelements');
 
                 $fieldsql = "SELECT id, $fieldname as fullname FROM {$tablename} WHERE id {$idsql} ";
                 $fieldelements = $DB->get_records_sql_menu($fieldsql, $idparams);
@@ -1208,7 +1202,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
 }
 function local_users_get_geography_data(&$data){
 
-    $fields = local_users_get_geography_fields();
+    $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
 
 
     foreach($fields as $field =>$fieldenabled){
@@ -1228,7 +1222,7 @@ function local_users_get_geography_data(&$data){
 function local_users_set_geography_data(&$customdata,$data){
 
 
-    $fields = local_users_get_geography_fields();
+    $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
 
     foreach($fields as $field =>$fieldenabled){
 
@@ -1243,34 +1237,4 @@ function local_users_set_geography_data(&$customdata,$data){
         }
 
     }
-}
-function local_users_get_geography_fields(){
-
-    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
-
-    $targetstateaudience = false;
-    $targetdistrictaudience = false;
-    $targetsubdistrictaudience = false;
-    $targetvillageaudience = false;
-
-    if(is_siteadmin() || has_capability('usersprofilefields/states:targetstateaudience',$categorycontext)){
-        $targetstateaudience = true;
-    }
-    if(is_siteadmin() || has_capability('usersprofilefields/district:targetdistrictaudience',$categorycontext)){
-        $targetdistrictaudience = true;
-    }
-    if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:targetsubdistrictaudience',$categorycontext)){
-        $targetsubdistrictaudience = true;
-    }
-    if(is_siteadmin() || has_capability('usersprofilefields/village:targetvillageaudience',$categorycontext)){
-        $targetvillageaudience = true;
-    }
-
-    $fields = array(
-        'open_states' => $targetstateaudience,
-        'open_district' => $targetdistrictaudience,
-        'open_subdistrict' => $targetsubdistrictaudience,
-        'open_village' => $targetvillageaudience,
-    );
-    return $fields;
 }
