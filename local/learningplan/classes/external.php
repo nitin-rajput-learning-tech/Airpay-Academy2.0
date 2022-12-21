@@ -33,6 +33,9 @@ class local_learningplan_external extends external_api {
                 if((($validateddata->form_status == 0) && ($get_costcenter != $validateddata->costcenter)) || $validateddata->form_status == 1){
                     local_costcenter_get_costcenter_path($validateddata);
                 }
+                if($validateddata->form_status == 1){
+                    local_users_get_userprofile_datafields($validateddata);
+                }
                 $lepid = $leplib->update_learning_plan($validateddata);
             } else{
                 local_costcenter_get_costcenter_path($validateddata);
