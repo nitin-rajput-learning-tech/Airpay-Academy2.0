@@ -1339,3 +1339,48 @@ body#page-local-users-index .field_required .icon {
 .userdetails_left p span,.userdetails_right p span{
     display: inline-block;
 }
+#page-local-users-index .openLMStransition.local_users .modal-body .form-group{
+    max-width: 50%;
+    flex: 0 0 50%;
+    margin-right: 0!important;
+    min-height: auto !important;
+    max-height: auto !important;
+}
+#page-local-users-index .modal.openLMStransition .modal-content .mform{
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    float:none!important;
+    padding: 15px;
+}
+#page-local-users-index .modal-content .badge-info{
+    margin-bottom: 0!important;
+}
+#page-local-users-index .openLMStransition.local_users .modal-body .form-group>div.col-md-3 {
+    display: flex;
+}
+#page-local-users-index .mform .form-inline input[type=text].form-control{
+    position: relative;
+    max-width: 100%;
+}
+@media (max-width: 992px){
+
+    #page-local-users-index .openLMStransition.local_users .modal-body .form-group{
+        max-width: 100%;
+        flex: 0 0 100%;
+        margin-right: 0 !important; 
+       
+    }
+    #page-local-users-index .openLMStransition.local_users .modal-body .form-autocomplete-downarrow{
+        bottom: 2px;
+    }
+    #page-local-users-index .mform .form-inline select.custom-select{
+        max-width: 100%;
+    }
+}
+@media (max-width: 1293px){
+    #page-local-users-index .openLMStransition.local_users .modal-body .form-autocomplete-downarrow {
+        bottom: 3px;
+        right: 3px;
+    }
+}
