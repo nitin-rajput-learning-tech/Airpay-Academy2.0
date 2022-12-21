@@ -50,7 +50,7 @@ class accesslib
 
         if($datatype == null){
 
-            $datatype=self::PATH_MODULE_CONTENT;
+            $datatype=self::EXTRACT_METHOD_FIRST;
         }
 
         $concatsql="";
@@ -94,7 +94,7 @@ class accesslib
 
                             }
 
-                            $concatsql = " AND concat('/',$columnname,'/' ) like '%/$pathvalue/%' ";
+                            $concatsql = " AND (concat('/',$columnname,'/' ) like '/$pathvalue/' OR concat('/',$columnname,'/' ) like '%/$costcenterpath/%')";
 
                             $cache->set($cachekey, $costcenterpath);
 
@@ -117,7 +117,7 @@ class accesslib
 
                         }
 
-                        $concatsql = " AND concat('/',$columnname,'/' ) like '%/$pathvalue/%' ";
+                        $concatsql = " AND (concat('/',$columnname,'/' ) like '/$pathvalue/' OR concat('/',$columnname,'/' ) like '%/$costcenterpath/%')";
 
                     }
 
@@ -276,11 +276,7 @@ class accesslib
 
         $roleid=$USER->access['currentroleinfo']['roleid'];
 
-        // if(!empty($USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid])){
 
-        //     $costcenterpath=$USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid];
-
-        // }else
         if(!empty($USER->access['currentroleinfo']['contextinfo'])){
 
 
@@ -305,17 +301,13 @@ class accesslib
 
                 if(empty($costcenterpath[$pathvalue])){
 
-                    $costcenterpath[$pathvalue]= " concat('/',$columnname,'/' ) like '%/$pathvalue/%' ";
+                    $path=$contextinfo['costcenterpath'];
+
+                    $costcenterpath[$pathvalue]= " (concat('/',$columnname,'/' ) like '/$pathvalue/' OR  concat('/',$columnname,'/' ) like '%/$path/%') ";
                 }
 
 
             }
-
-            if(!empty($costcenterpath)){
-
-                $USER->access['currentroleinfo']['switchedcostcenterpath'][$roleid] = $costcenterpath;
-            }
-
         }
         if(!empty($costcenterpath)){
 

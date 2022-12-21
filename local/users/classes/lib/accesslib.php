@@ -63,35 +63,40 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid));
 
     }
-    public static function get_user_geography_fields(){
+    public static function get_user_geography_fields($requiredfields=null){
 
-        $categorycontext = self::get_module_context();
-
-        $targetstateaudience = false;
-        $targetdistrictaudience = false;
-        $targetsubdistrictaudience = false;
-        $targetvillageaudience = false;
-
-        if(is_siteadmin() || has_capability('usersprofilefields/states:targetstateaudience',$categorycontext)){
-            $targetstateaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/district:targetdistrictaudience',$categorycontext)){
-            $targetdistrictaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:targetsubdistrictaudience',$categorycontext)){
-            $targetsubdistrictaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/village:targetvillageaudience',$categorycontext)){
-            $targetvillageaudience = true;
-        }
-
-        $fields = array(
-            'open_states' => $targetstateaudience,
-            'open_district' => $targetdistrictaudience,
-            'open_subdistrict' => $targetsubdistrictaudience,
-            'open_village' => $targetvillageaudience,
+        $geographyfields = array(
+            'open_states',
+            'open_district',
+            'open_subdistrict',
+            'open_village',
         );
-        return $fields;
+
+        if($requiredfields !=null ){
+
+            $fields = is_array($requiredfields) ? $requiredfields : array($requiredfields);
+            $fields = array_filter($fields);
+
+            if (is_array($fields) and !empty($fields)){
+
+                $geographyflipfields=array_flip($geographyfields);
+
+                foreach($fields as $field){
+
+                   if(!isset($geographyflipfields[$field])){
+
+                        unset($fields[$field]);
+
+                   }
+
+                }
+
+                $geographyfields =$fields;
+            }
+
+        }
+
+        return $geographyfields;
     }
     public static function get_geographical_target_users_concatsql($moduledata){
 
@@ -109,11 +114,7 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
             $fields = self::get_user_geography_fields();
 
-            foreach($fields as $field =>$fieldenabled){
-
-                if($fieldenabled == false){
-                    continue;
-                }
+            foreach($fields as $field){
 
                 if(isset($moduledata->$field) && !empty($moduledata->$field)){
 
@@ -128,7 +129,6 @@ class accesslib extends \local_costcenter\lib\accesslib{
                             $geographicaltargets[$field] = ''.$field.' IN ('.implode(',', $items).')';
 
                         }
-
                     }
                 }
             }

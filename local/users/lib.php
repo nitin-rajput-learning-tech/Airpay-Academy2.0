@@ -1129,8 +1129,12 @@ function local_users_output_fragment_user_field_create($args){
     return $o;
 }
 //global geography form fields master data
-function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata, $pluginname, $context, $multiple = false){
+function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata,$allenable = false, $pluginname, $context, $multiple = false){
     global $DB, $USER;
+
+    $mform->addElement('text', 'open_designation', get_string('designation','local_users'));
+    $mform->setType('open_designation',PARAM_RAW);
+    $mform->addHelpButton('open_designation', 'designation','local_users');
 
 
     $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
@@ -1142,11 +1146,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
 
     $depth = 0;
 
-    foreach($fields as $field =>$fieldenabled){
-
-        if($fieldenabled == false){
-            continue;
-        }
+    foreach($fields as $field){
 
         if($depth == 0){
 
@@ -1165,13 +1165,20 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
 
         $fieldvalue = $ajaxformdata[$field] ? $ajaxformdata[$field] : $customdata[$field];
 
+        $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
+
         $fieldelementoptions['multiple'] = ($firstelement && $depth == 0) ? false : $multiple;
         $fieldelementoptions['ajax'] = 'local_users/form-options-selector';
         $fieldelementoptions['data-contextid'] = $context->id;
         $fieldelementoptions['data-action'] = 'geography_target_element_selector';
         $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
-        $fieldelementoptions['data-options'] = json_encode(array('depth' => $depth,'columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield));
-        $fieldelements = [];
+        $fieldelementoptions['data-options'] = json_encode(array('depth' => $depth,'columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield, 'enableallfield' => $enableallfield));
+
+        if($enableallfield){
+            $fieldelements = [0 => get_string('all')];
+        }else{
+            $fieldelements = [];
+        }
         if($fieldvalue){
             $fieldelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
             $fieldelementids = array_filter($fieldelementids);
@@ -1204,12 +1211,7 @@ function local_users_get_geography_data(&$data){
 
     $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
 
-
-    foreach($fields as $field =>$fieldenabled){
-
-        if($fieldenabled == false){
-            continue;
-        }
+    foreach($fields as $field){
 
         if(isset($data->$field) && !empty($data->$field)){
 
@@ -1224,11 +1226,7 @@ function local_users_set_geography_data(&$customdata,$data){
 
     $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
 
-    foreach($fields as $field =>$fieldenabled){
-
-        if($fieldenabled == false){
-            continue;
-        }
+    foreach($fields as $field){
 
         if(isset($data->$field) && !empty($data->$field)){
 
