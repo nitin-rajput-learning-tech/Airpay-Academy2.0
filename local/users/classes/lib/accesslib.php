@@ -100,13 +100,11 @@ class accesslib extends \local_costcenter\lib\accesslib{
     }
     public static function get_userprofilematch_concatsql($moduledata){
 
-        global $USER;
-
         $userprofilefields=array();
 
         $concatsql="";
 
-        if(empty($USER->id) || is_siteadmin()){
+        if(is_siteadmin()){
 
             return $concatsql;
 
