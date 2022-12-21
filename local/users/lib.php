@@ -28,6 +28,8 @@ use local_users\output\team_status_lib;
 defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot.'/user/editlib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
+
 /**
  * Description: To display the form in modal on modal trigger event.
  * @param  [array] $args [the parameters required for the form]
@@ -62,7 +64,7 @@ function local_users_output_fragment_new_create_user($args) {
             'form_status' => $args->form_status, 'id' => $data->id,
             'open_positionid' => $data->open_positionid, 'open_domainid' => $data->open_domainid, 'open_costcenterpath' => $data->open_costcenterpath);
         local_costcenter_set_costcenter_path($customdata);
-        local_users_set_geography_data($customdata,$data);
+        local_users_set_userprofile_datafields($customdata,$data);
         $mform = new local_users\forms\create_user(null, $customdata,
             'post', '', null, true, $formdata);
         $mform->set_data($data);
@@ -70,7 +72,7 @@ function local_users_output_fragment_new_create_user($args) {
         $customdata = array('editoroptions' => $editoroptions,
             'form_status' => $args->form_status);
         local_costcenter_set_costcenter_path($customdata);
-        local_users_set_geography_data($customdata,$args);
+        local_users_set_userprofile_datafields($customdata,$args);
         // print_r($customdata);
         $mform = new local_users\forms\create_user(null, $customdata, 'post', '', null, true, $formdata);
     }
@@ -1128,8 +1130,8 @@ function local_users_output_fragment_user_field_create($args){
     ob_end_clean();
     return $o;
 }
-//global geography form fields master data
-function local_users_get_geography_targetfields($mform, $ajaxformdata, $customdata,$allenable = false, $pluginname, $context, $multiple = false){
+//global user profile form fields
+function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$allenable = false, $pluginname, $context, $multiple = false){
     global $DB, $USER;
 
     $mform->addElement('text', 'open_designation', get_string('designation','local_users'));
@@ -1137,9 +1139,13 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
     $mform->addHelpButton('open_designation', 'designation','local_users');
 
 
-    $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
+    $fields = (new \local_users\lib\accesslib())::get_userprofile_fields();
 
-    $prev_element = 'open_level5department_select';
+    $costcenterfields = local_costcenter_get_fields();
+
+    $enddepth=end($costcenterfields);
+
+    $prev_element = $enddepth.'_select';
     $firstelement = true;
 
     $prevfield='territory';
@@ -1150,8 +1156,8 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
 
         if($depth == 0){
 
-            $mform->addElement('hidden','open_level5department', null,array('data-class'=>'open_level5department_select'));
-            $mform->setConstant('open_level5department', $customdata['open_level5department']);
+            $mform->addElement('hidden',$enddepth, null,array('data-class'=>$prev_element));
+            $mform->setConstant($enddepth, $customdata[$enddepth]);
         }
         $fieldelementoptions = array(
             'class' => $field.'_select',
@@ -1170,7 +1176,7 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
         $fieldelementoptions['multiple'] = ($firstelement && $depth == 0) ? false : $multiple;
         $fieldelementoptions['ajax'] = 'local_users/form-options-selector';
         $fieldelementoptions['data-contextid'] = $context->id;
-        $fieldelementoptions['data-action'] = 'geography_target_element_selector';
+        $fieldelementoptions['data-action'] = 'userprofile_element_selector';
         $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
         $fieldelementoptions['data-options'] = json_encode(array('depth' => $depth,'columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield, 'enableallfield' => $enableallfield));
 
@@ -1207,9 +1213,9 @@ function local_users_get_geography_targetfields($mform, $ajaxformdata, $customda
         $depth++;
     }
 }
-function local_users_get_geography_data(&$data){
+function local_users_get_userprofile_datafields(&$data){
 
-    $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
+    $fields = (new \local_users\lib\accesslib())::get_userprofile_fields();
 
     foreach($fields as $field){
 
@@ -1221,10 +1227,10 @@ function local_users_get_geography_data(&$data){
     }
 
 }
-function local_users_set_geography_data(&$customdata,$data){
+function local_users_set_userprofile_datafields(&$customdata,$data){
 
 
-    $fields = (new \local_users\lib\accesslib())::get_user_geography_fields();
+    $fields = (new \local_users\lib\accesslib())::get_userprofile_fields();
 
     foreach($fields as $field){
 

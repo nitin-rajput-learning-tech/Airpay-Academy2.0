@@ -54,16 +54,16 @@
             action = $(selector).data('action');
             formoptions = $(selector).data('options');
 
-            if(action === 'geography_target_element_selector'){
+            if(action === 'userprofile_element_selector'){
 
 
-                $('[data-action="geography_target_element_selector"]').on('change', function(){
+                $('[data-action="userprofile_element_selector"]').on('change', function(){
                         var elemvalue = $(this).val();
                         if(parseInt(elemvalue) > 0){
 
                             var depth = $(this).data('depth');
 
-                            $.each($('[data-action="geography_target_element_selector"]'), function(index, value){
+                            $.each($('[data-action="userprofile_element_selector"]'), function(index, value){
 
                                 if($(value).data('depth') > depth){
 

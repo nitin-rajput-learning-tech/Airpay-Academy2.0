@@ -63,9 +63,9 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid));
 
     }
-    public static function get_user_geography_fields($requiredfields=null){
+    public static function get_userprofile_fields($requiredfields=null){
 
-        $geographyfields = array(
+        $userprofilefields = array(
             'open_states',
             'open_district',
             'open_subdistrict',
@@ -79,30 +79,30 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
             if (is_array($fields) and !empty($fields)){
 
-                $geographyflipfields=array_flip($geographyfields);
+                $userprofileflipfields=array_flip($userprofilefields);
+
+                $matchfields=array();
 
                 foreach($fields as $field){
 
-                   if(!isset($geographyflipfields[$field])){
+                   if(isset($userprofileflipfields[$field])){
 
-                        unset($fields[$field]);
+                        $matchfields[]=$field;
 
                    }
-
                 }
-
-                $geographyfields =$fields;
+                $userprofilefields =$matchfields;
             }
 
         }
 
-        return $geographyfields;
+        return $userprofilefields;
     }
-    public static function get_geographical_target_users_concatsql($moduledata){
+    public static function get_userprofilematch_concatsql($moduledata){
 
         global $USER;
 
-        $geographicaltargets=array();
+        $userprofilefields=array();
 
         $concatsql="";
 
@@ -112,21 +112,21 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
         }else{
 
-            $fields = self::get_user_geography_fields();
+            $fields = self::get_userprofile_fields();
 
             foreach($fields as $field){
 
                 if(isset($moduledata->$field) && !empty($moduledata->$field)){
 
 
-                    if(empty($geographicaltargets[$field])){
+                    if(empty($userprofilefields[$field])){
 
                         $items = is_array($moduledata->$field) ? $moduledata->$field : explode(',', $moduledata->$field);
                         $items = array_filter($items);
 
                         if (is_array($items) and !empty($items)){
 
-                            $geographicaltargets[$field] = ''.$field.' IN ('.implode(',', $items).')';
+                            $userprofilefields[$field] = ''.$field.' IN ('.implode(',', $items).')';
 
                         }
                     }
@@ -134,9 +134,9 @@ class accesslib extends \local_costcenter\lib\accesslib{
             }
         }
 
-        if(!empty($geographicaltargets)){
+        if(!empty($userprofilefields)){
 
-            $concatsql="AND (".implode(" OR ", $geographicaltargets).")";
+            $concatsql="AND (".implode(" OR ", $userprofilefields).")";
         }
 
         return $concatsql;
