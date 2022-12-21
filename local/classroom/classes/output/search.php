@@ -21,6 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace local_classroom\output;
+require_once($CFG->dirroot.'/local/classroom/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 use renderable;
@@ -168,19 +169,7 @@ class search implements renderable{
                             END
                         ELSE 1 END ";
 
-            if(!empty($USER->open_grade) && $USER->open_grade != ""){
-                $sqlparams[] = "%,$USER->open_grade,%";
-            }else{
-                $sqlparams[] = "";
-            }
-            $params[]= " 1 = CASE WHEN lc.open_grade IS NOT NULL
-                        THEN
-                            CASE
-                                WHEN CONCAT(',',lc.open_grade,',') LIKE ?
-                                    THEN 1
-                                    ELSE 0
-                            END
-                        ELSE 1 END ";
+
 
         if(!is_siteadmin()){
             $params[]= " 1 = CASE
@@ -241,7 +230,7 @@ class search implements renderable{
     } // end of get_facetofacelist_query
 
 
-    public function export_for_template($perpage,$startlimit,$tagitems, $selectedvendors){
+    public function export_for_template($perpage,$startlimit, $selectedfilter = array()){
         global $DB, $USER, $CFG, $PAGE,$OUTPUT;
 
         $facetofacelist_ar =$this->get_facetofacelist_query($perpage, $startlimit, true, true,$tagitems, $selectedvendors);

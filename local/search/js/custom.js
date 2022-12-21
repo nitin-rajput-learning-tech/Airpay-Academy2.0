@@ -5,19 +5,7 @@ var myModule = angular.module('catalog', ['angularUtils.directives.dirPagination
 });
 myModule.controller('courseController', function ($scope, $http,$location) {
     $scope.tab = 6;
-    checkedfilters = [];
-    var selectedfilters = $location.search().selectedfilters;
-    if(selectedfilters){
-        selectedfilters = decodeURIComponent(selectedfilters);
-        checkedfilters = JSON.parse(selectedfilters);
-    }else{
-        checkedfilters = $("input[type='checkbox']:checked");
-    }
-    $scope.selectedfilters = [];
-    $.each(checkedfilters, function( index, value ) {
-        $scope.selectedfilters[value] = value;
-    });
-    filters = JSON.stringify($scope.selectedfilters);
+
     var url = M.cfg.wwwroot + '/local/search/filterslist.php';
     $http.get(url).success( function(response) {
         $scope.filteritemslist =  response;
@@ -39,11 +27,19 @@ myModule.controller('courseController', function ($scope, $http,$location) {
         if(typeof enrolltype == 'undefined'){
            enrolltype=0;
         }
+        checkedfilters = [];
+        $scope.selectedfilters = [];
+
+        checkedfilters = $(".filter_section input[type='checkbox']:checked");
+        $.each(checkedfilters, function( index, value ) {
+            $scope.selectedfilters.push($(value).val());
+        });
+        filters = $scope.selectedfilters.toString();
+
         var en_selectedfilters = encodeURIComponent(filters);
         var dynamicurl = M.cfg.wwwroot + '/local/search/allcourses.php#?&selectedfilters='+en_selectedfilters;
         $('.dynamicurl').html(dynamicurl);
         $("#urlbtn").text('Copy URL');
-        $scope.sortid=sortid;
         $scope.tab=tab;
 
         $scope.showLoader = true;
