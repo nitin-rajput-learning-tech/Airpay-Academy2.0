@@ -35,22 +35,14 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
         global $DB;
 
-        $endpathvalue=null;
+        $costcenterpath=null;
 
         if($userid != null && $userid > 0){
 
             $costcenterpath=$DB->get_field('user','open_costcenterpath',  array('id'=> $userid));
-
-            if(!empty($costcenterpath)){
-
-                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
-
-                $endpathvalue=end($extractcostcenterpath);
-
-            }
         }
 
-        return $endpathvalue;
+        return $costcenterpath;
 
     }
     public static function get_module_context($userid = null){
@@ -58,7 +50,7 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_module_context(self::user_costcenterpath($userid));
 
     }
-    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = NULL){
+    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = self::PATH_MODULE_CONTENT){
 
         return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid));
 

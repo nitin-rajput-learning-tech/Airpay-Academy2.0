@@ -29,20 +29,8 @@ namespace local_costcenter\lib;
  */
 class accesslib
 {
-    protected const ALL_MODULE_CONTENT = 'firstpath';
-    protected const PATH_MODULE_CONTENT = 'lastpath';
-
-    protected const EXTRACT_METHOD_FIRST = 0;
-    protected const EXTRACT_METHOD_LAST = 1;
-
-
-    protected static $content_path_extractmethods = array(
-
-                self::ALL_MODULE_CONTENT  =>  self::EXTRACT_METHOD_FIRST,
-
-                self::PATH_MODULE_CONTENT  =>  self::EXTRACT_METHOD_LAST
-        );
-
+    protected const ALL_MODULE_CONTENT = 'upperandsamepath';
+    protected const PATH_MODULE_CONTENT = 'lowerandsamepath';
 
     public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid=null,$datatype=null){
 
@@ -50,7 +38,7 @@ class accesslib
 
         if($datatype == null){
 
-            $datatype=self::EXTRACT_METHOD_FIRST;
+            $datatype=self::ALL_MODULE_CONTENT;
         }
 
         $concatsql="";
@@ -82,7 +70,7 @@ class accesslib
 
                         if($costcenterpath){
 
-                            $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname);
+                            $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname,$datatype);
 
                             $cache->set($cachekey, $costcenterpath);
 
@@ -93,7 +81,7 @@ class accesslib
                         }
                     }else{
 
-                        $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname);
+                        $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname,$datatype);
                     }
 
                 }catch(dml_exception $e){
@@ -264,7 +252,7 @@ class accesslib
 
                 if(empty($costcenterpath[$path])){
 
-                    $costcenterpath[$path]=self::costcenterpath_match_sql($path,$columnname);
+                    $costcenterpath[$path]=self::costcenterpath_match_sql($path,$columnname,$datatype);
                 }
 
 
@@ -278,23 +266,33 @@ class accesslib
         return $concatsql;
     }
 
-    public static function costcenterpath_match_sql($usermatchpath,$columnname){
+    public static function costcenterpath_match_sql($usermatchpath,$columnname,$datatype){
 
-        $match_sql='';
-        $paths[] = $usermatchpath.'%';
-        while ($usermatchpath = rtrim($usermatchpath,'0123456789')) {
-            $usermatchpath = rtrim($usermatchpath, '/');
-            if ($usermatchpath === '') {
-              break;
-            }
-            $paths[] = $usermatchpath;
-        }
 
-        if(!empty($paths)){
-            foreach($paths AS $path){
-                $pathsql[] = " $columnname LIKE '$path' ";
+        if($datatype == self::ALL_MODULE_CONTENT){
+
+            $match_sql='';
+            $paths[] = $usermatchpath.'%';
+
+            while ($usermatchpath = rtrim($usermatchpath,'0123456789')) {
+                $usermatchpath = rtrim($usermatchpath, '/');
+                if ($usermatchpath === '') {
+                  break;
+                }
+                $paths[] = $usermatchpath;
             }
-            $match_sql.= " ( ".implode(' OR ', $pathsql).' ) ';
+
+            if(!empty($paths)){
+                foreach($paths AS $path){
+                    $pathsql[] = " $columnname LIKE '$path' ";
+                }
+                $match_sql.= " ( ".implode(' OR ', $pathsql).' ) ';
+            }
+
+        }else{
+
+            $match_sql= " $columnname LIKE '%$usermatchpath%' ";
+
         }
 
         return $match_sql;
