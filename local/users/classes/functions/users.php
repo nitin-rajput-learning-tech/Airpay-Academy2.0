@@ -70,6 +70,9 @@ class users {
             $userdata->id = $data;
             set_user_preference('auth_forcepasswordchange', $userdata->preference_auth_forcepasswordchange, $userdata);
 
+            if(isset($userdata->open_costcenterpath)){
+                $this->insert_update_userdata($userdata);
+            }
         }
         return $data;
     } //End of insert_newuser function.
@@ -113,6 +116,9 @@ class users {
             if ($userdata->open_costcenterid != $existingcostcenter) {
                 \core\session\manager::kill_user_sessions($userdata->id);
             }
+        }
+        if(isset($userdata->open_costcenterpath)){
+            $this->insert_update_userdata($userdata);
         }
         if ($userdata) {
             if ($userdata->open_supervisorid) {
@@ -167,7 +173,24 @@ class users {
         return $userdata->id;
     } //End of update_existinguser function.
 
-
+    private function insert_update_userdata($userdata){
+        global $DB, $USER;
+        $record_id = $DB->get_field('local_userdata', 'id', array('userid' => $userdata->id));
+        $record = new \StdClass();
+        $record->costcenterpath = $userdata->open_costcenterpath;
+        // $record->categorypath = ;
+        if($record_id){
+            $record->id = $record_id;
+            $record->usermodified = $USER->id;
+            $record->timemodified = time();
+            $DB->update_record('local_userdata', $record);
+        }else{
+            $record->userid = $userdata->id;
+            $record->usercreated = $USER->id;
+            $record->timecreated = time();
+            $DB->insert_record('local_userdata', $record);
+        }
+    }
     /* To get rolename for logged in user */
 
     public function get_rolename($userid) {

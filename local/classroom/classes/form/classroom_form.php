@@ -247,8 +247,7 @@ class classroom_form extends moodleform {
             $mform->addHelpButton('cr_description', 'description', 'local_classroom');
 
         }else if ($formstatus == 3) {
-
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), false, 'local_users', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_users', $categorycontext, $multiple = false);
            
 			$users_plugin_exist = $core_component::get_plugin_directory('local','users');
 			if ($users_plugin_exist) {

@@ -16,11 +16,3 @@ if ($crid){
 if ($learningplanid){
     echo $renderer->get_learningplan_info($learningplanid);
 }
-// }
-?>
-
-
-
-
-
-

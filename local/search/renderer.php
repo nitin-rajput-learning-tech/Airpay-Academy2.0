@@ -10,52 +10,6 @@ require_once($CFG->dirroot . '/local/search/lib.php');
 // namespace local_classroom\output;
 
 class local_search_renderer extends plugin_renderer_base {
-
-	 function display_tabs_and_its_content(){
-		  global $DB, $USER, $OUTPUT, $PAGE;
-
-		  $data = '';
-		  $data = html_writer:: start_tag('div', array('id'=>'mytabs', 'class'=>'span12'));
-
-                $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
-
-				 if(!is_siteadmin()){
-                        $tab3url = new moodle_url('#completedcourse', array());
-                        $tab3link = html_writer:: link($tab3url, get_string('completed_courses', 'local_search'), array());
-
-                        $data .= html_writer:: tag('li', $tab3link ,array());
-					}
-
-                $data .= html_writer:: end_tag('ul');
-
-               $grid = $this->mycourses_tabcontent($USER->id);
-			   $completed_course_tabcontent = $this->completedcourses_tabcontent($USER->id);
-
-			   $data .= html_writer:: tag('div', $grid, array('id'=>'mycourses', 'class'=>'coursesgrid_search')); // first tab content
-
-                if(has_capability('block/learning_plan:viewpages',$systemcontext)){
-                    $mylearnignplan_tabcontent = learning_plan_information($USER->id);
-                    if($mylearnignplan_tabcontent){
-                        $mylearnignplan_tabcontent = $mylearnignplan_tabcontent;
-                    }else{
-                        $mylearnignplan_tabcontent = html_writer:: tag('p',get_string('norecords', 'local_search'),array('class'=>'norecords_msg'));
-                    }
-
-                    $data .= html_writer:: tag('div', $mylearnignplan_tabcontent, array('id'=>'mylearningplans'));
-                }
-
-			   if(!is_siteadmin()){
-					$data .= html_writer:: tag('div', $completed_course_tabcontent, array('id'=>'completedcourse', 'class'=>'coursesgrid_search'));
-			   }
-
-
-
-		  $data .= html_writer:: end_tag('div');
-
-		  return $data;
-
-	}
-
 	/*Get uploaded course summary uploaded file
      * @param $course is an obj Moodle course
      * @return course summary file(img) src url if exists else return default course img url

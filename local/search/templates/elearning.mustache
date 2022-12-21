@@ -28,29 +28,9 @@
     <a ng-if="record.enroll == 1" title="<% record.coursename %>">
         <div style="background-image: url('<% record.fileurl %>')" alt="<% record.coursename %>" class=courseimg_bg></div>
     </a>
-  <!--   <div class="top_sticker">
-        <p>{{#str}}enroldatetil, block_userdashboard{{/str}}</p>
-        <h><% record.enrol_date %></h>
-    </div> -->
-    <!-- <span ng-if="record.eol != 0" class="Cstripeol"> <span class="pl-10 elearning">EOL <% record.eol %></span> </span> -->
-    
-    
-    <!-- <span ng-if="record.stripepayment !=0" class="leftStripePayment"> 
-        <span class="pl-3 pr-4 StripePaymentft"> 
-            <span><i class="fa fa-euro stripe_p_icon"></i></span> <%record.stripepayment%>
-        </span> 
-    </span> -->
 </div>
 <div class=" card-body readyCCnt coursecontent">
     <div class="d-block w-full ">
-        <!-- <span class="CstripCnt"> <span class="elearning"><% record.coursetype %></span> </span> -->
-        <!-- <span class="CstripCntbt" ng-if="record.open_points"> 
-         <span class="elearning d-flex align-items-center"> 
-                <span class="points_icon"></span>
-                <span class="certification_course_labeltext mr-1">Points</span>
-                <% record.open_points %>
-         </span> 
-        </span>-->
         <span class="CstripCntLt" ng-if="record.open_learningformat==2 && record.open_status != 2 && record.open_status" >
             <span class="elearning"><% record.statusstring %></span> 
         </span>
@@ -71,14 +51,8 @@
         </div>
     </div>
  
-    <!-- <hr> -->
     <div class="d-flex justify-content-between align-items-center w-full">
         <div class="endrolled_details_div">
-          <!--   <span ng-if="record.enrol_date == 'N/A'">
-            <span class="d-block"><small> Enrollments </small></span>
-            <span class="d-block"><big><strong><% record.enroll_count %></strong></big></span>
-            </span> -->
-
             <span ng-if="record.open_skillcategory">
             <span class="d-block"><small><strong>Skill Category</strong></small></span>
             <span class = "course_skill_category"><% record.open_skillcategory %></span>
@@ -97,39 +71,7 @@
              <button class="btn btn-info btn-courseaction"> 
                 <span ng-bind-html="record.selfenrol | unsafe" class="enrolled<% record.id %>"></span>
               <span ng-bind-html="record.redirect | unsafe"></span>
-            </button> 
-            <!-- <button class="btn btn-info">View more</button> -->
+            </button>
         </div>
     </div>
 </div>
-
-<!-- <div class="cat_btmContainer col-12 mb-2 pt-2  pull-left">
-    <div class="w-full cat_btm">
-        <span class="text-muted">Course Provided by<span class="pl-2">:</span></span><span><img src="<% record.course_provider %>" height="50px" width="110px" /></span>
-    </div>
-</div> -->
-<!-- <div class="cat_btmContainer col-12 mb-2 pt-2  pull-left">
-    <div class="w-full pull-left cat_btm d-flex justify-content-between">
-        <div class="pull-left d-flex flex-row flex-wrap align-items-center">
-            <span class="text-muted pull-left catbtm_colon  d-flex flex-row flex-wrap align-items-center"><span class="icon-clock-o"></span>{{# str }} duration, block_courselister {{/ str }} <span class="colon_align">:</span> </span><span class="text-muted catbtm_info" title="{{duration}}"><% record.durationinmin %></span>
-        </div>
-        <span>
-            <div class="pull-left d-flex flex-row flex-wrap align-items-center">
-                
-                <span ng-if="record.assessment == 1"   class="text-muted catbtm_colon d-flex flex-row flex-wrap align-items-center justify-content-end">
-                    <span class="icon-question"></span>
-                    {{# str }} questions, block_courselister {{/ str }} 
-                    <span class="colon_align">:</span> 
-                </span>
-
-                <span ng-if="record.assessment == 0"   class="text-muted catbtm_colon d-flex flex-row flex-wrap align-items-center justify-content-end">
-                    <span class="icon-window-restore"></span>
-                    {{# str }} managemodules, block_courselister {{/ str }} 
-                    <span class="colon_align">:</span> 
-                </span>
-
-                <span class="text-muted catbtm_info"><% record.modulescount %></span>
-            </div>
-        </span>
-    </div>
-</div> -->

@@ -19,7 +19,6 @@
 
     Displays select box
 }}
-{{! <div class='w-20 CatFilterCnt pull-left pt-1 pb-1 px-2 col-md-2  p-0 d-none d-md-block bg-white border-right' style="height:100vh"> }}
 <div class='col-md-3 col-lg-3 col-xl-2 col-sm-3 pt-3 pl-0 d-none d-md-block bg-white border-right'>
     <div>
         <div class="icon-header float-left">
@@ -28,7 +27,7 @@
         <div class="clearfix"></div>
     </div>
     <hr>
-    <div ng-repeat = 'cat1 in categoryitemslist'>
+    <div ng-repeat = 'cat1 in filteritemslist'>
         <section ng-repeat = 'cat in cat1.categoriesall' >
             <div class="collapsed_settings_div">
                 <div class="icon-header d-flex align-items-center" data-toggle="collapse" href="#list<% cat.catcode %>" role="button" aria-expanded="false" aria-controls="collapse">
@@ -60,31 +59,6 @@
                 </div>
             </div>
             <hr>
-            {{! <a href ='#list<% cat.catcode %>' data-toggle='collapse' aria-expanded='true' ><div class='section-title' ><% cat.tagcatname %></div></a>
-
-            <div  id='list<% cat.catcode %>' class='collapse show pr-2'>
-                <div ng-repeat='item in cat.itemslist' class='checkbox-item' >
-                    <div ng-if = 'tagcheckeddatas[item.tagitemid]' >
-                        <input type='checkbox' name='tagitem'  value='<% item.tagitemid %>' ng-click='tabfunction(6,0,null,null,0,0,1)' id='<% item.tagitemshortname %>' checked>
-                    </div>
-                    <div ng-if = '!tagcheckeddatas[item.tagitemid]' >
-                        <input type='checkbox' name='tagitem'  value='<% item.tagitemid %>' ng-click='tabfunction(6,0,null,null,0,0,1)' id='<% item.tagitemshortname %>' >
-                    </div>
-                    <label  class="col-sm p-0" for='<% item.tagitemshortname %>'><% item.tagitemname %><span class="pull-right"><% item.coursecount %></span></label> 
-                </div>
-                <div ng-if = 'cat.showviewmore'>
-                    <div ng-repeat='item in moreitemslist[cat.catcode]' class='checkbox_vm_item moreitemslist_<% cat.catcode %>' >
-                    <div ng-if = 'tagcheckeddatas[item.tagitemid]' >
-                        <input type='checkbox' name='tagitem'  value='<% item.tagitemid %>' ng-click='tabfunction(6,0,null,null,0,0,1)' id='<% item.tagitemshortname %>' checked>
-                    </div>
-                    <div ng-if = '!tagcheckeddatas[item.tagitemid]' >
-                        <input type='checkbox' name='tagitem'  value='<% item.tagitemid %>' ng-click='tabfunction(6,0,null,null,0,0,1)' id='<% item.tagitemshortname %>' >
-                    </div> 
-                    <label class="col-sm p-0" for='<% item.tagitemshortname %>'><% item.tagitemname %><span class="pull-right"><% item.coursecount %></span></label> 
-                    </div>
-                    <a href='javaScript:void(0)' ng-click='getitemslist(cat.catcode)' id='viewmoreless_<% cat.catcode %>' class='viewmore' >View more</a>
-                </div>
-            </div> }}
         </section>
     </div>
 </div>
