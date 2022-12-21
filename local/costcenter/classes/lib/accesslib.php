@@ -29,33 +29,21 @@ namespace local_costcenter\lib;
  */
 class accesslib
 {
-    protected const ALL_MODULE_CONTENT = 'firstpath';
-    protected const PATH_MODULE_CONTENT = 'lastpath';
-
-    protected const EXTRACT_METHOD_FIRST = 0;
-    protected const EXTRACT_METHOD_LAST = 1;
-
-
-    protected static $content_path_extractmethods = array(
-
-                self::ALL_MODULE_CONTENT  =>  self::EXTRACT_METHOD_FIRST,
-
-                self::PATH_MODULE_CONTENT  =>  self::EXTRACT_METHOD_LAST
-        );
-
+    protected const ALL_MODULE_CONTENT = 'upperandsamepath';
+    protected const PATH_MODULE_CONTENT = 'lowerandsamepath';
 
     public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid=null,$datatype=null){
 
-        global $DB,$USER;
+        global $DB;
 
         if($datatype == null){
 
-            $datatype=self::EXTRACT_METHOD_FIRST;
+            $datatype=self::ALL_MODULE_CONTENT;
         }
 
         $concatsql="";
 
-        if(empty($USER->id) || is_siteadmin()){
+        if(is_siteadmin()){
 
             return $concatsql;
 
@@ -82,19 +70,7 @@ class accesslib
 
                         if($costcenterpath){
 
-                            $extractcostcenterpath=array_values(array_filter(explode('/',$costcenterpath)));
-
-                            if(self::$content_path_extractmethods[$datatype]){
-
-                                $pathvalue=end($extractcostcenterpath);
-
-                            }else{
-
-                                $pathvalue=$extractcostcenterpath[0];
-
-                            }
-
-                            $concatsql = " AND (concat('/',$columnname,'/' ) like '/$pathvalue/' OR concat('/',$columnname,'/' ) like '%/$costcenterpath/%')";
+                            $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname,$datatype);
 
                             $cache->set($cachekey, $costcenterpath);
 
@@ -105,20 +81,7 @@ class accesslib
                         }
                     }else{
 
-                        $extractcostcenterpath=array_values(array_filter(explode('/',$costcenterpath)));
-
-                        if(self::$content_path_extractmethods[$datatype]){
-
-                            $pathvalue=end($extractcostcenterpath);
-
-                        }else{
-
-                            $pathvalue=$extractcostcenterpath[0];
-
-                        }
-
-                        $concatsql = " AND (concat('/',$columnname,'/' ) like '/$pathvalue/' OR concat('/',$columnname,'/' ) like '%/$costcenterpath/%')";
-
+                        $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname,$datatype);
                     }
 
                 }catch(dml_exception $e){
@@ -132,9 +95,9 @@ class accesslib
     }
     public static function get_module_context($costcenterparamid = null){
 
-        global $DB,$USER;
+        global $DB;
 
-        if(empty($USER->id) || is_siteadmin()){
+        if(is_siteadmin()){
 
             $context = \context_system::instance();
 
@@ -240,7 +203,7 @@ class accesslib
     }
     public static function get_costcenterpath_context($context){
 
-        global $DB, $USER;
+        global $DB;
         $categoryid = $context->instanceid;
         $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.category= :categoryid ";
         $costcenterpath = $DB->get_field_sql($sql, array('categoryid' => $categoryid));
@@ -285,25 +248,11 @@ class accesslib
 
             foreach($contextsinfo as $contextinfo){
 
+                $path=$contextinfo['costcenterpath'];
 
-                $extractcostcenterpath=array_values(array_filter(explode('/',$contextinfo['costcenterpath'])));
+                if(empty($costcenterpath[$path])){
 
-               if(self::$content_path_extractmethods[$datatype]){
-
-                    $pathvalue=end($extractcostcenterpath);
-
-                }else{
-
-                    $pathvalue=$extractcostcenterpath[0];
-
-                }
-
-
-                if(empty($costcenterpath[$pathvalue])){
-
-                    $path=$contextinfo['costcenterpath'];
-
-                    $costcenterpath[$pathvalue]= " (concat('/',$columnname,'/' ) like '/$pathvalue/' OR  concat('/',$columnname,'/' ) like '%/$path/%') ";
+                    $costcenterpath[$path]=self::costcenterpath_match_sql($path,$columnname,$datatype);
                 }
 
 
@@ -316,4 +265,37 @@ class accesslib
 
         return $concatsql;
     }
+
+    public static function costcenterpath_match_sql($usermatchpath,$columnname,$datatype){
+
+
+        if($datatype == self::ALL_MODULE_CONTENT){
+
+            $match_sql='';
+            $paths[] = $usermatchpath.'%';
+
+            while ($usermatchpath = rtrim($usermatchpath,'0123456789')) {
+                $usermatchpath = rtrim($usermatchpath, '/');
+                if ($usermatchpath === '') {
+                  break;
+                }
+                $paths[] = $usermatchpath;
+            }
+
+            if(!empty($paths)){
+                foreach($paths AS $path){
+                    $pathsql[] = " $columnname LIKE '$path' ";
+                }
+                $match_sql.= " ( ".implode(' OR ', $pathsql).' ) ';
+            }
+
+        }else{
+
+            $match_sql= " $columnname LIKE '%$usermatchpath%' ";
+
+        }
+
+        return $match_sql;
+    }
+
 }

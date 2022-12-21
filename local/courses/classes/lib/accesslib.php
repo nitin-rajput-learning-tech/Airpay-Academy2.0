@@ -30,9 +30,28 @@ namespace local_courses\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($costcenterid = null){
+    public static function course_costcenterpath($courseid = null) {
 
-        return parent::get_module_context($costcenterid);
+        global $DB;
+
+        $costcenterpath=null;
+
+        if($courseid != null && $courseid > 0){
+
+            $costcenterpath=$DB->get_field('course','open_costcenterpath',  array('id'=> $courseid));
+        }
+
+        return $costcenterpath;
+
+    }
+    public static function get_module_context($courseid = null){
+
+        return parent::get_module_context(self::course_costcenterpath($courseid));
+
+    }
+    public static function get_costcenter_path_field_concatsql($columnname,$courseid = null, $datatype = NULL){
+
+        return parent::get_costcenter_path_field_concatsql($columnname, self::course_costcenterpath($courseid));
 
     }
 }

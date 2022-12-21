@@ -35,22 +35,14 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
         global $DB;
 
-        $endpathvalue=null;
+        $costcenterpath=null;
 
         if($classroomid != null && $classroomid > 0){
 
             $costcenterpath=$DB->get_field('local_classroom','open_costcenterpath',  array('id'=> $classroomid));
-
-            if(!empty($costcenterpath)){
-
-                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
-
-                $endpathvalue=end($extractcostcenterpath);
-
-            }
         }
 
-        return $endpathvalue;
+        return $costcenterpath;
 
     }
     public static function get_module_context($classroomid = null){
@@ -61,86 +53,6 @@ class accesslib extends \local_costcenter\lib\accesslib{
     public static function get_costcenter_path_field_concatsql($columnname,$classroomid = null, $datatype = NULL){
 
         return parent::get_costcenter_path_field_concatsql($columnname, self::classroom_costcenterpath($classroomid));
-
-    }
-    public static function get_classroom_geography_fields(){
-
-        $categorycontext = self::get_module_context();
-
-        $targetstateaudience = false;
-        $targetdistrictaudience = false;
-        $targetsubdistrictaudience = false;
-        $targetvillageaudience = false;
-
-        if(is_siteadmin() || has_capability('usersprofilefields/states:targetstateaudience',$categorycontext)){
-            $targetstateaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/district:targetdistrictaudience',$categorycontext)){
-            $targetdistrictaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:targetsubdistrictaudience',$categorycontext)){
-            $targetsubdistrictaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/village:targetvillageaudience',$categorycontext)){
-            $targetvillageaudience = true;
-        }
-
-        $fields = array(
-            'open_states' => $targetstateaudience,
-            'open_district' => $targetdistrictaudience,
-            'open_subdistrict' => $targetsubdistrictaudience,
-            'open_village' => $targetvillageaudience,
-        );
-        return $fields;
-    }
-    public static function get_geographical_target_classroom_concatsql($moduledata){
-
-        global $USER;
-
-        $geographicaltargets=array();
-
-        $concatsql="";
-
-        if(empty($USER->id) || is_siteadmin()){
-
-            return $concatsql;
-
-        }else{
-
-            $fields = self::get_classroom_geography_fields();
-
-            foreach($fields as $field =>$fieldenabled){
-
-                if($fieldenabled == false){
-                    continue;
-                }
-
-                if(isset($moduledata->$field) && !empty($moduledata->$field)){
-
-
-                    if(empty($geographicaltargets[$field])){
-
-                        $items = is_array($moduledata->$field) ? $moduledata->$field : explode(',', $moduledata->$field);
-                        $items = array_filter($items);
-
-                        if (is_array($items) and !empty($items)){
-
-                            $geographicaltargets[$field] = ''.$field.' IN ('.implode(',', $items).')';
-
-                        }
-
-                    }
-                }
-            }
-        }
-
-        if(!empty($geographicaltargets)){
-
-            $concatsql="AND (".implode(" OR ", $geographicaltargets).")";
-        }
-
-        return $concatsql;
-
 
     }
 }
