@@ -1171,16 +1171,15 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
 
         $fieldvalue = $ajaxformdata[$field] ? $ajaxformdata[$field] : $customdata[$field];
 
-        $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
-
-        $fieldelementoptions['multiple'] = ($firstelement && $depth == 0) ? false : $multiple;
+        $fieldelementoptions['multiple'] = $multiple;
         $fieldelementoptions['ajax'] = 'local_users/form-options-selector';
         $fieldelementoptions['data-contextid'] = $context->id;
         $fieldelementoptions['data-action'] = 'userprofile_element_selector';
         $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
-        $fieldelementoptions['data-options'] = json_encode(array('depth' => $depth,'columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield, 'enableallfield' => $enableallfield));
+        $fieldelementoptions['data-options'] = json_encode(array('depth' => $depth,'columnname' => $field, 'parentid' => $parentid,'parentidcolumn' => $prevfield, 'enableallfield' => $allenable));
 
-        if($enableallfield){
+        $fieldelements = [];
+        if($allenable){
             $fieldelements = [0 => get_string('all')];
         }else{
             $fieldelements = [];
@@ -1188,7 +1187,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
         if($fieldvalue){
             $fieldelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
             $fieldelementids = array_filter($fieldelementids);
-            $fieldelements = [];
+
             if($fieldelementids){
 
                 $tablename=$DB->get_prefix().str_replace("open","local",$field);

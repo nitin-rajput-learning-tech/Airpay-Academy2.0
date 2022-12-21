@@ -147,7 +147,7 @@ class create_user extends moodleform {
                 get_string_manager()->get_list_of_translations());
             $mform->setDefault('lang', $CFG->lang);
 
-             local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_users', $categorycontext, $multiple = true);
+             local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, true, 'local_users', $categorycontext, $multiple = true);
 
         } else if ($form_status == 2) {
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));

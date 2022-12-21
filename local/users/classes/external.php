@@ -1709,16 +1709,32 @@ class local_users_external extends external_api {
 
             switch($action) {
 
-                case 'geography_target_element_selector':
+                case 'userprofile_element_selector':
+
                     $fields = array("fullname");
 
-                    $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
                     $tablename=$DB->get_prefix().str_replace("open","local",$formoptions->columnname);
 
                     $fieldname=str_replace("open_","",$formoptions->columnname).'_name';
 
                     $parentidcolumn=str_replace("open_","",$formoptions->parentidcolumn).'id';
 
+                    $concatsql='';
+
+                    $sqlparams =array();
+
+
+                    if (!empty($formoptions->parentid)  && $formoptions->parentid != null) {
+
+                        list($relatedparentidsql, $relatedparentidparams) = $DB->get_in_or_equal($formoptions->parentid, SQL_PARAMS_QM, 'parentids');
+                        $sqlparams = $relatedparentidparams;
+
+                        $concatsql .= " AND $parentidcolumn  $relatedparentidsql";
+
+                    }else{
+
+                       $concatsql .= " AND $parentidcolumn=0 ";
+                    }
 
                     $likesql = array();
                     $i = 0;
@@ -1732,21 +1748,21 @@ class local_users_external extends external_api {
                         $concatsql .= " AND ($sqlfields) ";
                     }
                     $fields      = "SELECT id, $fieldname as fullname";
-                    $accountssql = " FROM {$tablename}
-                                     WHERE 1=1 $concatsql AND $parentidcolumn = :parentid ";
+                    $userprofile = " FROM {$tablename}
+                                     WHERE 1=1 $concatsql  ";
 
-                    $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
-                    if ($accounts) {
-                        $totalaccounts = count($accounts);
+                    $userprofile = $DB->get_records_sql($fields.$userprofile, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                    if ($userprofile) {
+                        $totalaccounts = count($userprofile);
                         $moreaccounts = $totalaccounts > $perpage;
 
                         if ($moreaccounts) {
                             // We need to discard the last record.
-                            array_pop($accounts);
+                            array_pop($userprofile);
                         }
                     }
 
-                    $return = array_values(json_decode(json_encode(($accounts)), true));
+                    $return = array_values(json_decode(json_encode(($userprofile)), true));
                 break;
             }
         }
