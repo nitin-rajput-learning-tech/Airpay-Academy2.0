@@ -40,7 +40,7 @@ $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
 
 $evaluationstructure = new local_evaluation_structure($evaluation);
 
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 $PAGE->set_context($context);
 if (!$evaluationstructure->can_view_analysis()) {
     print_error(get_string('cannotaccess', 'local_evaluation'));

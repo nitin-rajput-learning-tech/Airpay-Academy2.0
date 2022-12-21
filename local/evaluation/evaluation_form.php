@@ -28,6 +28,7 @@ if (!defined('MOODLE_INTERNAL')) {
 }
 
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 require_once('lib.php');
 use local_costcenter\functions\userlibfunctions as costcenterlib;
 class evaluation_form extends moodleform {
@@ -36,7 +37,7 @@ class evaluation_form extends moodleform {
         global $CFG, $DB, $USER;
 
         $editoroptions = evaluation_get_editor_options();
-        $context = (new \local_evaluation\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();
         $mform    =& $this->_form;
         $mformajax    =& $this->_ajaxformdata;
         $id = $this->_customdata['id'];
@@ -46,7 +47,7 @@ class evaluation_form extends moodleform {
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', get_string('feedbackname', 'local_evaluation'), 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');       
-        costcenterlib::department_elements($mform, $id, $context, $mformajax, 'evaluations');
+       local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_users', $categorycontext, $multiple = false);
         if ($instance == 0) {
             $type = array(null => get_string('selecttype', 'local_evaluation'),
                          '1'=>get_string('feedback', 'local_evaluation'),
@@ -54,11 +55,12 @@ class evaluation_form extends moodleform {
             $mform->addElement('autocomplete', 'type', get_string('type', 'local_evaluation'), $type);
             $mform->addRule('type', null, 'required', null, 'client');
             
-            if (is_siteadmin($USER->id) || has_capability('local/evaluation:evaluationmode',$context)) {
+            if (is_siteadmin($USER->id) || has_capability('local/evaluation:evaluationmode',$categorycontext)) {
                 $radioarray=array();
                 $radioarray[] = $mform->createElement('radio', 'evaluationmode', '',get_string('self_evaluation', 'local_evaluation'),'SE');
                 $radioarray[] = $mform->createElement('radio', 'evaluationmode', '', get_string('supervsior_evaluation', 'local_evaluation'), 'SP');
                 $mform->addGroup($radioarray, 'evaluationmode', get_string('submissiontype', 'local_evaluation'), array(' '), false);
+                $mform->setDefault('evaluationmode', 'SE');
                 $submissions = $DB->record_exists('local_evaluation_completed', array('evaluation'  => $id));
                 if($submissions){
                     $mode = $DB->get_field('local_evaluations', 'evaluationmode', array('id' => $id));
@@ -172,12 +174,12 @@ class evaluation_form extends moodleform {
 
     public function data_preprocessing(&$default_values) {
         $editoroptions = evaluation_get_editor_options();
-        $context = (new \local_evaluation\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();
         if ($default_values['id']) {
             // editing an existing evaluation - let us prepare the added editor elements (intro done automatically)
             $draftitemid = file_get_submitted_draft_itemid('page_after_submit');
             $default_values['page_after_submit_editor']['text'] =
-                                    file_prepare_draft_area($draftitemid, $context->id,
+                                    file_prepare_draft_area($draftitemid, $categorycontext->id,
                                     'local_evaluation', 'page_after_submit', false,
                                     $editoroptions,
                                     $default_values['page_after_submit']);
@@ -187,7 +189,7 @@ class evaluation_form extends moodleform {
             // setting for intro field
             $draftitemid = file_get_submitted_draft_itemid('intro');
             $default_values['introeditor']['text'] =
-                                    file_prepare_draft_area($draftitemid, $context->id,
+                                    file_prepare_draft_area($draftitemid, $categorycontext->id,
                                     'local_evaluation', 'intro', false,
                                     $editoroptions,
                                     $default_values['intro']);

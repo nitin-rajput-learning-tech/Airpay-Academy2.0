@@ -41,7 +41,7 @@ require_login();
 require_capability('local/evaluation:deletetemplate', $context);
 
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
-$systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
+$systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 
 // Process template deletion.
 if ($deletetempl) {

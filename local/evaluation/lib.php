@@ -22,13 +22,14 @@
  * @package BizLMS
  * @subpackage local_evaluation
  */
-
 defined('MOODLE_INTERNAL') || die();
-
+require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot.'/user/editlib.php');
+require_once("$CFG->libdir/externallib.php");
+require_once($CFG->dirroot.'/local/evaluation/lib.php');
 /** Include eventslib.php */
 //require_once($CFG->libdir.'/eventslib.php');
 // Include forms lib.
-require_once($CFG->libdir.'/formslib.php');
 define('EVALUATION_ANONYMOUS_YES', 1);
 define('EVALUATION_ANONYMOUS_NO', 2);
 define('EVALUATION_MIN_ANONYMOUS_COUNT_IN_GROUP', 2);
@@ -93,7 +94,6 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
     $instance = $args->instance;
     $plugin = $args->plugin;
     $o = '';
-
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
@@ -111,17 +111,20 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
         $data->departmentid = explode(',',$data->departmentid);
         // Populate tags.
         $data->tags = local_tags_tag::get_item_tags_array('local_evaluation', 'evaluation', $id);
-		$default_values = (array)$data;
+	$default_values = (array)$data;
 		$mform->data_preprocessing($default_values);
 	}
-
+    $customdata = array('id' => $data->id,
+        'open_costcenterpath' => $data->open_costcenterpath);
+        local_costcenter_set_costcenter_path($customdata);
+        $mform = new \evaluation_form(null, $customdata,
+        'post', '', null, true, $formdata);
 	$mform->set_data($default_values);
 
     if (!empty($formdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
-
     ob_start();
     $mform->display();
     $o .= ob_get_contents();
@@ -320,19 +323,13 @@ function check_evaluationdeletion($evalautionid){
  */
 function dep_sql($context) {
     global $DB, $USER;
+    $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
     if ( has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
         $costcenters = $DB->get_records_sql_menu('select fullname,id from {local_costcenter} where parentid = 0 ');
         $my_costcenters = implode(',', $costcenters);
         $sql =" and costcenterid IN( $my_costcenters )";
-    } elseif(has_capability('local/costcenter:manage_ownorganization',$context)) {
-        $costcenter = $DB->get_record_sql("SELECT cc.id, cc.parentid FROM {user} u JOIN {local_costcenter} cc ON u.open_costcenterid = cc.id WHERE u.id={$USER->id}");
-        if ($costcenter->parentid == 0) {
-            $sql =" and costcenterid = $costcenter->id ";
-        } else {
-            $sql =" and departmentid = $costcenter->id  ";
-        }
     } else {
-        $sql = " and departmentid = $USER->open_departmentid  ";
+        $sql = " $costcenterpathconcatsql ";
     }
     return $sql;
 }
@@ -600,13 +597,13 @@ function evaluation_get_incomplete_users($evaluation,
     global $DB;
 
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
-
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
     //first get all user who can complete this evaluation
     $cap = 'local/evaluation:complete';
 
     $sql = "SELECT u.id, u.firstnamephonetic, u.lastnamephonetic, u.middlename, u.alternatename,
     u.firstname, u.lastname, u.picture, u.email, u.imagealt FROM {user} u
-                WHERE u.id >1 AND u.deleted=0 AND u.suspended=0
+                WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 $costcenterpathconcatsql
                  ";
     if($evaluation->id != 0){
         $enrolled_users=$DB->get_fieldset_sql("SELECT userid FROM {local_evaluation_users} WHERE evaluationid = $evaluation->id");
@@ -673,13 +670,10 @@ function evaluation_create_template($courseid, $name, $ispublic = 0, $data) {
 
     $evaluation = $DB->get_record('local_evaluations', array('id'=>$data->id));
     if ($evaluation->instance == 0) {
-        $templ->costcenterid = $evaluation->costcenterid;
-        $templ->departmentid = $evaluation->departmentid;
+        $templ->open_costcenterpath = $evaluation->open_costcenterpath;
     } else {
-        $templ->costcenterid = $USER->open_costcenterid;
-        $templ->departmentid = $USER->open_departmentid;
+        $templ->open_costcenterpath = $USER->open_costcenterpath;
     }
-
     $templid = $DB->insert_record('local_evaluation_template', $templ);
     return $DB->get_record('local_evaluation_template', array('id'=>$templid));
 }

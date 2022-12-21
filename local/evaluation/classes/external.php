@@ -72,7 +72,6 @@ class local_evaluation_external extends external_api {
      */
     public static function submit_create_evaluation_form($contextid, $jsonformdata) {
         global $DB, $CFG, $USER;
-
         require_once($CFG->dirroot . '/local/evaluation/evaluation_form.php');
         require_once($CFG->dirroot . '/local/evaluation/lib.php');
 
@@ -108,18 +107,16 @@ class local_evaluation_external extends external_api {
                 $validateddata->timeclose = $validateddata->timeclose;
             }
             if ($validateddata->id > 0) {
+                local_costcenter_get_costcenter_path($validateddata);
                 $evaluationid = evaluation_update_instance($validateddata);
-            } else if ($validateddata->id < 0) {
+            } else{
+                local_costcenter_get_costcenter_path($validateddata);
                 $validateddata->instance = $instance;
                 $validateddata->plugin = $plugin;
                 $validateddata->evaluationtype = ($evaluationtype) ? $evaluationtype: 0;
                 $evaluationid = evaluation_add_instance($validateddata);
             }
-        } else {
-            // Generate a warning.
-            throw new moodle_exception('Error in submission');
         }
-
         return $evaluationid;
     }
 
@@ -399,7 +396,6 @@ class local_evaluation_external extends external_api {
             $hasvaue = 1;
         }
         $data->hasvalue = $hasvaue;
-            // print_object($data);
         if(file_exists($CFG->dirroot.'/local/evaluation/item/'.$data->typ.'/'.$data->typ.'_form.php')){
             require_once($CFG->dirroot.'/local/evaluation/item/'.$data->typ.'/'.$data->typ.'_form.php');
             require_once($CFG->dirroot.'/local/evaluation/item/'.$data->typ.'/lib.php');

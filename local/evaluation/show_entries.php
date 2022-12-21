@@ -44,7 +44,7 @@ $baseurl = new moodle_url('/local/evaluation/show_entries.php', array('id' => $i
 $PAGE->set_url(new moodle_url($baseurl, array('userid' => $userid, 'showcompleted' => $showcompleted,
         'delete' => $deleteid)));
 $PAGE->set_pagelayout('standard');
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 $PAGE->set_context($context);
 require_login();
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
@@ -119,18 +119,6 @@ if ($evaluation->plugin === "classroom"){
       JOIN {user} AS u ON u.id=leu.userid 
       WHERE le.evaluationmode LIKE :evaluationmode AND u.open_supervisorid = :userid AND le.id = :evaluationid ";
     $paramssuperuser = array('evaluationmode' => 'SP','userid' => $USER->id, 'evaluationid' => $id);
-    if(!is_siteadmin() && has_capability('local/evaluation:viewanalysepage', $context) && has_capability('local/costcenter:manage_ownorganization', $context)){
-      if($feedback->costcenterid != $USER->open_costcenterid){
-        print_error(get_string('no_permission_to_view_this_page', 'local_evaluation'));
-      }
-    }else if(!is_siteadmin() && has_capability('local/evaluation:viewanalysepage', $context) && ! has_capability('local/costcenter:manage_ownorganization', $context) && has_capability('local/costcenter:manage_owndepartments', $context)){
-        if($feedback->departmentid != $USER->open_departmentid){
-            print_error(get_string('no_permission_to_view_this_page', 'local_evaluation'));
-        }
-    }else if(!is_siteadmin() && !($DB->record_exists('local_evaluation_users', array('userid' => $USER->id, 'evaluationid' => $id)) || $DB->record_exists_sql($superusersql, $paramssuperuser))){
-        print_error(get_string('no_permission_to_view_this_page', 'local_evaluation'));
-    }
-    
 }
 
 if ($deleteid) {

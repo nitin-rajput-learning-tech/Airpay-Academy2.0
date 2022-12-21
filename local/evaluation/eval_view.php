@@ -50,7 +50,7 @@ $deleteitem = optional_param('deleteitem', false, PARAM_INT);
 $url = new moodle_url('/local/evaluation/eval_view.php', array('id'=>$id, 'do_show'=>$do_show));
 
 $PAGE->set_pagelayout('standard');
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 require_login();
 $PAGE->set_context($context);
 if (!( is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$context) OR has_capability('local/costcenter:manage_ownorganization',$context) OR has_capability('local/costcenter:manage_owndepartments',$context) )) {
@@ -78,12 +78,6 @@ if ($evaluation->plugin === "classroom"){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
 
-            if ((has_capability('local/classroom:manage_owndepartments', (new \local_evaluation\lib\accesslib())::get_module_context())
-             || has_capability('local/costcenter:manage_owndepartments', (new \local_evaluation\lib\accesslib())::get_module_context()))) {
-                if($classroom->department!=$USER->open_departmentid){
-                    print_error(get_string('no_permissions', 'local_evaluation'));
-                }
-            }
     }
 }elseif ($evaluation->plugin === "program"){
     $program = $DB->get_record('local_program', array('id' => $evaluation->instance));
@@ -97,45 +91,11 @@ if ($evaluation->plugin === "classroom"){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
 
-            if ((has_capability('local/classroom:manage_owndepartments', (new \local_evaluation\lib\accesslib())::get_module_context())
-             || has_capability('local/costcenter:manage_owndepartments', (new \local_evaluation\lib\accesslib())::get_module_context()))) {
-                if($program->department!=$USER->open_departmentid){
-                    print_error(get_string('no_permissions', 'local_evaluation'));
-                }
-            }
     }
-}elseif ($evaluation->plugin === "certification"){
-    $certification = $DB->get_record('local_certification', array('id' => $evaluation->instance));
-    if (empty($certification)) {
-        print_error('certification not found!');
-    }
-    if ((has_capability('local/certification:managecertification', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
-        && (!has_capability('local/certification:manage_multiorganizations', (new \local_evaluation\lib\accesslib())::get_module_context())
-            && !has_capability('local/costcenter:manage_multiorganizations', (new \local_evaluation\lib\accesslib())::get_module_context())))) {
-            if($certification->costcenter!=$USER->open_costcenterid){
-             print_error(get_string('no_permissions', 'local_evaluation'));
-            }
+}
 
-            if ((has_capability('local/classroom:manage_owndepartments', (new \local_evaluation\lib\accesslib())::get_module_context())
-             || has_capability('local/costcenter:manage_owndepartments', (new \local_evaluation\lib\accesslib())::get_module_context()))) {
-                if($certification->department!=$USER->open_departmentid){
-                    print_error(get_string('no_permissions', 'local_evaluation'));
-                }
-            }
-    }
-}else{
+else{
     $feedback = $DB->get_record('local_evaluations',array('id' => $id));
-    if(!is_siteadmin() && has_capability('local/evaluation:viewanalysepage', $context) && has_capability('local/costcenter:manage_ownorganization', (new \local_evaluation\lib\accesslib())::get_module_context())){
-      if($feedback->costcenterid != $USER->open_costcenterid){
-        print_error(get_string('no_permission_to_view_this_page', 'local_evaluation'));
-      }
-    }else if(!is_siteadmin() && has_capability('local/evaluation:viewanalysepage', $context) && ! has_capability('local/costcenter:manage_ownorganization', $context) && has_capability('local/costcenter:manage_owndepartments', $context)){
-        if($feedback->departmentid != $USER->open_departmentid){
-            print_error(get_string('no_permission_to_view_this_page', 'local_evaluation'));
-        }
-    }else if(!is_siteadmin() && !$DB->record_exists('local_evaluation_users', array('userid' => $USER->id, 'evaluationid' => $id))){
-        print_error(get_string('no_permission_to_view_this_page', 'local_evaluation'));
-    }
 }
 
 

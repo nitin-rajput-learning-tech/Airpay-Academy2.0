@@ -49,7 +49,7 @@ $PAGE->set_url('/local/evaluation/complete.php', $urlparams);
 
 
 
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($evaluation->id);
 $PAGE->set_context($context);
 $evaluationcompletion = new local_evaluation_completion($evaluation);
 

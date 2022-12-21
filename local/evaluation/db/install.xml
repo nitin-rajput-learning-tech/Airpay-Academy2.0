@@ -33,6 +33,7 @@
         <FIELD NAME="plugin" TYPE="char" LENGTH="400" NOTNULL="true" SEQUENCE="false" COMMENT=" plugin name"/>
         <FIELD NAME="completionsubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="If this field is set to 1, then the activity will be automatically marked as 'complete' once the user submits their choice."/>
         <FIELD NAME="evaluationmode" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="SE" SEQUENCE="false" COMMENT=" plugin name"/>
+        <FIELD NAME="costcenterpath" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT=" costcenterpath"/>
         <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Delete Status"/>
       </FIELDS>
       <KEYS>
@@ -52,6 +53,7 @@
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="costcenterid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="organization"/>
         <FIELD NAME="departmentid" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="costcenterpath" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for evaluation_template"/>

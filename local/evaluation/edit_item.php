@@ -41,7 +41,7 @@ if ($id == -1 OR $id == 0) {
 $url = new moodle_url('/local/evaluation/edit_item.php', array('id' => $itemid, 'typ' => $typ));
 $item = (object)['id' => null, 'position' => -1, 'typ' => $typ, 'options' => ''];
 require_login();
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 require_capability('local/evaluation:edititems', $context);
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
 

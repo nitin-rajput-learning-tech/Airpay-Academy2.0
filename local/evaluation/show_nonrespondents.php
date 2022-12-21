@@ -56,7 +56,7 @@ $url = new moodle_url('/local/evaluation/show_nonrespondents.php', array('id'=>$
 
 $PAGE->set_url($url);
 
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($evaluation->id);
 
 //we need the coursecontext to allow sending of mass mails
 
