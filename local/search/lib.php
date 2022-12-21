@@ -54,6 +54,11 @@ function local_search_get_coursecount_for_modules($moduletype){
     $sumofallrecords = $response['sumofallrecords'];
     return $sumofallrecords;
 }
+function local_search_get_coursecount_for_status($status){
+    $response = allcourses::get_available_catalogtypes($status);
+    $sumofallrecords = $response['sumofallrecords'];
+    return $sumofallrecords;
+}
 
 
 
@@ -79,7 +84,7 @@ function local_search_get_itemlist_grade($start = 0, $limit = 5){
 	$showviewmore = false;
 	if($start == 0){
 		$total_count = $DB->count_records_sql($countsql.$sql, $params);
-		$showviewmore = $total_count >= 5 ? true : false;
+		$showviewmore = $total_count > 6 ? true : false;
 	}
 	return [$itemlist, $showviewmore];
 }
@@ -100,7 +105,7 @@ function local_search_get_itemlist_skill($start = 0, $limit = 5){
 	$showviewmore = false;
 	if($start == 0){
 		$total_count = $DB->count_records_sql($countsql.$sql, $params);
-		$showviewmore = $total_count >= 5 ? true : false;
+		$showviewmore = $total_count > 6 ? true : false;
 	}
 	return [$itemlist, $showviewmore];
 }
@@ -126,10 +131,18 @@ function local_search_get_itemlist_level($start = 0, $limit = 5){
     $showviewmore = false;
     if($start == 0){
     	$total_count = $DB->count_records_sql($countsql.$sql, $params);
-    	$showviewmore = $total_count >= 5 ? true : false;
+    	$showviewmore = $total_count > 6 ? true : false;
     }
     return [$itemlist, $showviewmore];
 
+}
+function local_search_include_search_js(){
+    $plugins = get_plugins_with_function('search_page_js');
+    foreach($plugins AS $plugin){
+        foreach($plugin as $function){
+            $function();
+        }
+    }
 }
 
 

@@ -48,13 +48,11 @@ $PAGE->requires->jquery();
 $PAGE->requires->js('/local/search/js/angular.min.js');
 $PAGE->requires->js('/local/search/js/custom.js');
 $PAGE->requires->js('/local/search/js/dirPagination.js');
-$PAGE->requires->js_call_amd('local_classroom/classroom','load', array());
-$PAGE->requires->js_call_amd('local_learningplan/courseenrol','load');
 $PAGE->requires->js_call_amd('local_search/courseinfo', 'load', array());
-$PAGE->requires->js_call_amd('local_request/requestconfirm', 'load', array());
 $renderer = $PAGE->get_renderer('local_search');
 
-//$includes = new user_course_details();
+local_search_include_search_js();
+
 
 use local_search\output\searchlib;
 
@@ -72,22 +70,6 @@ echo $OUTPUT->header();
 $return = array();
 $return["loader"] = $CFG->wwwroot.'/local/ajax-loader.gif';
 
-if(is_siteadmin()){
-    $enduser = false;
-}else{
-    if($USER->access['rsw']['currentroleinfo']['roleid']){
-        $switchedrole = $DB->get_field('role', 'shortname', array('id' => $USER->access['rsw']['currentroleinfo']['roleid']));
-        if($switchedrole == ''){
-            $enduser = true;
-        }else{
-            $enduser = false;
-        }
-    }else{
-        $enduser = true;
-    }
-}
-$return['enduser'] = $enduser;
-    // echo $renderer->render_from_template('local_search/catalog_main', $return);
 $renderer = $PAGE->get_renderer('local_search');
 echo "<div ng-app = 'catalog' class='' id='allcourses_section'>
     <div ng-controller = 'courseController' class='row'>".
@@ -95,10 +77,7 @@ echo "<div ng-app = 'catalog' class='' id='allcourses_section'>
    "<div class='col-md-9 col-lg-9 col-xl-10 col-sm-12 content_section'>
             <div id='' class='box jplist'>
                 <div class='' ng-init='init(6)'>
-".
-                    // {{> local_search/catalog_selectbox }}
-
-                    $OUTPUT->render_from_template('local_search/catalog_selectbox', $return).
+".$OUTPUT->render_from_template('local_search/catalog_selectbox', $return).
                     "<div class='w-100 pull-left course_view_list_container'>
                         <div class='col-12 pull-left pl-15'>
                             <div ng-show='showLoader' class='loader_container'>
@@ -109,43 +88,15 @@ echo "<div ng-app = 'catalog' class='' id='allcourses_section'>
 
                                 <div dir-paginate='record in courseinfo | filter:q | itemsPerPage: 15' total-items=numberofrecords class='col-md-6 col-sm-6 col-lg-4 col-12  catcourses_list active'>
                                         <div ng-if=\"record.id >=1\" class='card coursecard'>
-                                            <div ng-if=\" tab == 1\">".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                            </div>
-                                            <div ng-if=\" tab == 2\">".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                            </div>
-                                            <div ng-if=\" tab == 4\">".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                            </div>
-                                             <div ng-if=\" tab == 8\">".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                            </div>
-                                             <div ng-if=\" tab == 9\">".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                            </div>
-
-                                           <div ng-if=\" tab == -2\">
-                                                <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/learningplan', $return)."
-                                                </div>
-                                            </div>
-                                            <div ng-if=\" tab == 7\">
-                                                <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/classroom', $return)."
-                                                </div>
-                                            </div>
                                             <div ng-if=\" tab == 6\">
                                                 <div ng-if='record.type == 1'>".$OUTPUT->render_from_template('local_search/elearning', $return)."
                                                 </div>
-
-                                                <div ng-if='record.type == 2'>".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                                </div>
-                                                <div ng-if='record.type == 4'>".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                                </div>
-                                                 <div ng-if='record.type == 8'>".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                                </div>
-                                                 <div ng-if='record.type == 9'>".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                                </div>
-                                                <div ng-if='record.type == -2'>
-                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/learningplan', $return)."
+                                                <div ng-if='record.type == 2'>
+                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/classroom', $return)."
                                                     </div>
                                                 </div>
-                                                <div ng-if='record.type == 7'>
-                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/classroom', $return)."
+                                                <div ng-if='record.type == 3'>
+                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/learningplan', $return)."
                                                     </div>
                                                 </div>
                                             </div>

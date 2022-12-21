@@ -244,108 +244,56 @@ class allcourses {
   } // end of toset_nexttab_perpage_andstartlimit function 
 
    
-   public function get_available_catalogtypes($selectedtag = null, $selectedvendors = null, $selectedlformats = null){
+   public function get_available_catalogtypes($selectedfilter = null){
     global $DB;
 
     $othertagitems = array();
 
     if($selectedtag){
-      $coursetypes = [];
-      foreach ($selectedtag as $tagitemid => $itemname) {
-        $moduletype = strpos($itemname, 'moduletype_');
-        if($format === 0){
-            $itemname = str_replace('moduletype_', '', $itemname);
+        $standard_catalogtypes = [];
+        foreach ($selectedfilter as $tagitemid => $itemname) {
+
         }
-        switch ($itemname) {
-            case 'elearning':
-                if(!in_array(ELE, $standard_catalogtypes)){
-                    $standard_catalogtypes[] = ELE;
-                }
-                $coursetypes[] = 3;
-            break;
-            case 'learningpath':
-                if(!in_array(LP, $standard_catalogtypes)){
-                    $standard_catalogtypes[] = LP;
-                }
-            break;
-            case 'classroom':
-                if(!in_array(ILT, $standard_catalogtypes)){
-                    $standard_catalogtypes[] = ILT;
-                }
-            break;
-            case 'program':
-                if(!in_array(PROGRAM, $standard_catalogtypes)){
-                    $standard_catalogtypes[] = PROGRAM;
-                }
-            break;
-            default:
-                $type_sql_params = array();
-                $type_sql = "SELECT id FROM {local_course_types} WHERE shortname = :itemname ";
-                $type_sql_params['itemname'] = $itemname;
-
-                if($moduleid = $DB->get_field_sql($type_sql,$type_sql_params)){
-                    if(!in_array(ELE, $standard_catalogtypes)){
-                        $standard_catalogtypes[] = ELE;
-                    }
-                    $coursetypes[] = $moduleid;
-                } else {
-                    if(!in_array(LP, $standard_catalogtypes)){
-                        $standard_catalogtypes[] = LP;
-                    }
-                    if(!in_array(ILT, $standard_catalogtypes)){
-                        $standard_catalogtypes[] = ILT;
-                    }
-                }  
-
-                $othertagitems[] = $itemname;
-                $category = strpos($itemname, 'categories_');
-                if(!in_array(ELE, $standard_catalogtypes)){
-                    $standard_catalogtypes[] = ELE;
-                }
-
-           break;
+        if(empty($standard_catalogtypes)){
+            $standard_catalogtypes = array(elearning, learningplan, classroom);
         }
-      }
-      if(empty($standard_catalogtypes)){
-        $standard_catalogtypes = array(ELE, LP, ILT);
-      }
-      
     } else{
-        $standard_catalogtypes = array(ELE, LP, ILT);
-        $coursetypes = $DB->get_records_sql_menu("SELECT id, id AS value FROM {local_course_types} WHERE active = 1 ");
+        $standard_catalogtypes = array(elearning, learningplan, classroom);
     }
     $sumofallrecords = 0;
     foreach($standard_catalogtypes as $key => $type){
       switch($type){
        
-       case LP : 
-          $plugin_exists = core_component::get_plugin_directory('local', 'learningplan'); 
-          if(!empty($plugin_exists)){
-            $availabletypes[]=  $type;
-            $learning_plans_ar=(new learningplan)->get_learningpathlist_query(1,searchlib::$page*1,true,true,$othertagitems, $selectedvendors);
-            $totalrecords_ineachtype[]= array('numberofrecords'=>$learning_plans_ar['numberofrecords'],'type' =>'LP');
-            $sumofallrecords += $learning_plans_ar['numberofrecords'];
-          } // end of if condition
+       case learningplan :
+            $classname = '\local_learningplan\output\search';
+            if(class_exists($classname)){
+                $class = new $classname();
+                $availabletypes[] =  $type;
+                $learning_plans_ar = $class->get_learningpathlist_query(1,searchlib::$page*1,true,true, $selectedfilter);
+                $totalrecords_ineachtype[]= array('numberofrecords'=>$learning_plans_ar['numberofrecords'],'type' =>'learningplan');
+                $sumofallrecords += $learning_plans_ar['numberofrecords'];
+            } // end of if condition
           break;
 
-        case ILT: 
-          $plugin_exists = core_component::get_plugin_directory('local', 'classroom'); 
-          if(!empty($plugin_exists)){
-            $availabletypes[]=  $type;
-            $classroom_ar=(new classroom)->get_facetofacelist_query(1,searchlib::$page*1,true,true,$othertagitems, $selectedvendors);
-            $totalrecords_ineachtype[]= array('numberofrecords'=>$classroom_ar['numberofrecords'],'type' =>'ILT');
-            $sumofallrecords += $classroom_ar['numberofrecords'];
-          } // end of if condition
+        case classroom:
+            $classname = '\local_classroom\output\search';
+            if(class_exists($classname)){
+                $class = new $classname();
+                $availabletypes[]=  $type;
+                $classroom_ar= $class->get_facetofacelist_query(1,searchlib::$page*1,true,true,$selectedfilter);
+                $totalrecords_ineachtype[]= array('numberofrecords'=>$classroom_ar['numberofrecords'],'type' =>'classroom');
+                $sumofallrecords += $classroom_ar['numberofrecords'];
+            } // end of if condition
           break;
 
         default:
-            $plugin_exists = core_component::get_plugin_directory('local','courses');
-            if(!empty($plugin_exists)){
-              $availabletypes[] = $type;
-              $courseslist_ar = (new \local_courses\output\search)->get_elearning_courselist_query(1, searchlib::$page*1, true,false,$othertagitems, $selectedvendors, $selectedlformats, $coursetypes);
-              $totalrecords_ineachtype[]= array('numberofrecords'=>$courseslist_ar['numberofrecords'],'type'=>'ELE'); //as ele,mooc,icource,blended.
-              $sumofallrecords += $courseslist_ar['numberofrecords'];
-
+            $classname = '\local_courses\output\search';
+            if(class_exists($classname)){
+                $class = new $classname();
+                $availabletypes[] = $type;
+                $courseslist_ar = $class->get_elearning_courselist_query(1, searchlib::$page*1, true,false, $selectedfilter);
+                $totalrecords_ineachtype[]= array('numberofrecords'=>$courseslist_ar['numberofrecords'],'type'=>'elearning');
+                $sumofallrecords += $courseslist_ar['numberofrecords'];
             }
           break;
         
@@ -358,13 +306,13 @@ class allcourses {
    } // end of get_available_catalogtype  */
 
      
-public function main_toget_catalogtypes($perpage, $selectedtag = array(), $selectedvendors = array(), $selectedlformats = array()){
+public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     global $DB;
     $othertagitems = array();
     if($selectedlformats){
        $selectedtag[] = ELE;
     }
-    $response = $this->get_available_catalogtypes($selectedtag, $selectedvendors, $selectedlformats);
+    $response = $this->get_available_catalogtypes($selectedfilter);
     $totalrecords_ineachtype = $response['totalrecords_ineachtype'];
     $sumofallrecords = $response['sumofallrecords'];
     $finallist= array();
@@ -380,7 +328,7 @@ public function main_toget_catalogtypes($perpage, $selectedtag = array(), $selec
             $iteration_space = $res['firstlevel_space'];
             $iteration_remainder = $res['firstlevel_remainder'];
             if($firstlvl_perpage){
-                $firstresult_ar = $this->to_finding_specific_catalogtype($record['type'], $firstlvl_perpage,$firstlvl_startlimit, $selectedtag, $selectedvendors, $selectedlformats);
+                $firstresult_ar = $this->to_finding_specific_catalogtype($record['type'], $firstlvl_perpage,$firstlvl_startlimit, $selectedfilter);
                 $finallist = $firstresult_ar + $finallist;
                 $ss[] = $firstresult_ar;
             }
@@ -389,7 +337,7 @@ public function main_toget_catalogtypes($perpage, $selectedtag = array(), $selec
             $secondlvl_perpage= $secondres_ar['secondlvl_perpage'];
             $secondlvl_startlimit = $secondres_ar['secondlvl_startlimit'];
             if($secondlvl_perpage){
-                $secondresult_ar = $this->to_finding_specific_catalogtype($record['type'], $secondlvl_perpage,$secondlvl_startlimit, $selectedtag, $selectedvendors, $selectedlformats);
+                $secondresult_ar = $this->to_finding_specific_catalogtype($record['type'], $secondlvl_perpage,$secondlvl_startlimit, $selectedfilter);
                 $ss[] = $secondresult_ar;
                 $finallist = $secondresult_ar+$finallist;
             }
@@ -401,7 +349,7 @@ public function main_toget_catalogtypes($perpage, $selectedtag = array(), $selec
             $lvl_perpage= $lvlresult_ar['lvl_perpage'];
             $lvl_startlimit = $lvlresult_ar['lvl_startlimit'];
             if($lvl_perpage){
-                $lvlresult_list = $this->to_finding_specific_catalogtype($record['type'], $lvl_perpage,$lvl_startlimit, $selectedtag, $selectedvendors, $selectedlformats);
+                $lvlresult_list = $this->to_finding_specific_catalogtype($record['type'], $lvl_perpage,$lvl_startlimit, $selectedfilter);
                 $finallist = $lvlresult_list+$finallist;
                 $ss[] = $lvlresult_list;
             }
@@ -430,24 +378,33 @@ public function main_toget_catalogtypes($perpage, $selectedtag = array(), $selec
   } // end of  main_toget_catalogtypes function
 
 
- private function to_finding_specific_catalogtype($recordtype, $level_perpage,$level_startlimit, $tagitems = array(), $selectedvendors = array(), $selectedlformats = array()){
+ private function to_finding_specific_catalogtype($recordtype, $level_perpage,$level_startlimit, $selectedfilter = array()){
         $finallist = array();
         switch($recordtype){
-            case 'ELE' : 
-              $courselist = (new elearning)->export_for_template($level_perpage, $level_startlimit,$tagitems, $selectedvendors, $selectedlformats);
-              $finallist =$this->get_array_format($courselist);                       
-             break;
-
-            case 'LP' : 
-              $lplist = (new learningplan)->export_for_template($level_perpage, $level_startlimit,$tagitems, $selectedvendors);
-              $finallist = $this->get_array_format($lplist); 
+            case 'ELE' :
+                $classname = '\local_courses\output\search';
+                if(class_exists($classname)){
+                    $class = new $classname();
+                    $courselist = $class->export_for_template($level_perpage, $level_startlimit,$selectedfilter);
+                    $finallist =$this->get_array_format($courselist);
+                }
             break;
-
-            case 'ILT' : 
-              $lplist = (new classroom)->export_for_template($level_perpage, $level_startlimit,$tagitems, $selectedvendors);
-              $finallist = $this->get_array_format($lplist); 
+            case 'LP' :
+                $classname = '\local_learningplan\output\search';
+                if(class_exists($classname)){
+                    $class = new $classname();
+                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$selectedfilter);
+                    $finallist = $this->get_array_format($lplist);
+                }
             break;
-
+            case 'ILT' :
+                $classname = '\local_classroom\output\search';
+                if(class_exists($classname)){
+                    $class = new $classname();
+                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$selectedfilter);
+                    $finallist = $this->get_array_format($lplist);
+                }
+            break;
        } // end of switch statement
 
       return $finallist;

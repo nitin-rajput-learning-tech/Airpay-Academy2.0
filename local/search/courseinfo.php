@@ -41,10 +41,3 @@ else{
 	$renderer = $PAGE->get_renderer('local_search');
 	echo $renderer->get_course_info($id);
 }
-?>
-
-
-
-
-
-
