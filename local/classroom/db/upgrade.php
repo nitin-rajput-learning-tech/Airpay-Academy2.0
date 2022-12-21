@@ -515,5 +515,15 @@ function xmldb_local_classroom_upgrade($oldversion)
 
         upgrade_plugin_savepoint(true, 2022101800, 'local', 'classroom');
     }
+    if($oldversion < 2022101800.03){
+       
+        $table = new xmldb_table('local_classroom');
+        $field1 = new xmldb_field('open_costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'classroom');
+    }
+   
     return true;
 }
