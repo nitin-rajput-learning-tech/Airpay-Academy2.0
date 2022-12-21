@@ -1447,3 +1447,10 @@ function local_classroom_search_page_js(){
     global $PAGE;
     $PAGE->requires->js_call_amd('local_classroom/classroom','load', array());
 }
+function local_classroom_search_page_filter_element(&$filterelements){
+    global $CFG;
+    if(file_exists($CFG->dirroot.'/local/search/lib.php')){
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        $filterelements['ilt'] = ['tagitemid' => 'learningtype_classroom', 'tagitemname' => 'ILT', 'tagitemshortname' => 'classroom', 'coursecount' => local_search_get_coursecount_for_modules([classroom => 'classroom'])];
+    }
+}

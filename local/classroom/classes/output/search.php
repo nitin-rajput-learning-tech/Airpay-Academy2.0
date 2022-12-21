@@ -15,13 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Class containing data for course competencies page
+ * Class containing data for search
  *
- * @package    local_search
- * @copyright  2018 hemalathacarun <hemalatha@eabyas.in>
+ * @package    local_classroom
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-namespace local_search\output;
+namespace local_classroom\output;
+require_once($CFG->dirroot.'/local/classroom/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 use renderable;
@@ -38,12 +38,11 @@ use user_course_details;
 use local_request\api\requestapi;
 
 /**
- * Class containing data for course competencies page
+ * Class containing data for search
  *
- * @copyright  2018 hemalatha c arun <hemalatha@eabyas.in>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class classroom implements renderable{
+class search implements renderable{
 
 
     public function get_facetofacelist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false, $tagitems = array(), $selectedvendors = array()){
@@ -170,19 +169,7 @@ class classroom implements renderable{
                             END
                         ELSE 1 END ";
 
-            if(!empty($USER->open_grade) && $USER->open_grade != ""){
-                $sqlparams[] = "%,$USER->open_grade,%";
-            }else{
-                $sqlparams[] = "";
-            }
-            $params[]= " 1 = CASE WHEN lc.open_grade IS NOT NULL
-                        THEN
-                            CASE
-                                WHEN CONCAT(',',lc.open_grade,',') LIKE ?
-                                    THEN 1
-                                    ELSE 0
-                            END
-                        ELSE 1 END ";
+
 
         if(!is_siteadmin()){
             $params[]= " 1 = CASE
@@ -243,7 +230,7 @@ class classroom implements renderable{
     } // end of get_facetofacelist_query
 
 
-    public function export_for_template($perpage,$startlimit,$tagitems, $selectedvendors){
+    public function export_for_template($perpage,$startlimit, $selectedfilter = array()){
         global $DB, $USER, $CFG, $PAGE,$OUTPUT;
 
         $facetofacelist_ar =$this->get_facetofacelist_query($perpage, $startlimit, true, true,$tagitems, $selectedvendors);
@@ -305,7 +292,7 @@ class classroom implements renderable{
             $list->start_date = date("j M 'y", $list->startdate);
 
             $list->bands=searchlib::trim_theband($list->bands);
-            $list->type = ILT;
+            $list->type = classroom;
 
             $list->enroll=$this->get_the_enrollflag($classroomid);
 
@@ -388,7 +375,7 @@ class classroom implements renderable{
         return $flag;
     } // end of get_the_enrollflag
 
-	private function get_enrollbtn($classroominfo){
+    private function get_enrollbtn($classroominfo){
         global $DB,$USER;
         $classroomid = $classroominfo->id;
         $classroomname =  $classroominfo->name;

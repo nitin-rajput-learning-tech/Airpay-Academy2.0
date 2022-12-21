@@ -20,7 +20,7 @@
  *
  * @author eabyas  <info@eabyas.in>
  * @package BizLMS
- * @subpackage local_classroom
+ * @subpackage local_users
  */
 
 namespace local_classroom\lib;
@@ -30,25 +30,29 @@ namespace local_classroom\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($classroomid = null){
+
+    public static function classroom_costcenterpath($classroomid = null) {
 
         global $DB;
 
-        $costcenterid=null;
+        $costcenterpath=null;
 
-        if($classroomid > 0){
+        if($classroomid != null && $classroomid > 0){
 
-            $classroomcostcenter=$DB->get_field('local_classroom','costcenter',  array('id'=>$classroomid));
-
-            if($classroomcostcenter > 0){
-
-                $costcenterid=$classroomcostcenter;
-
-            }
-
+            $costcenterpath=$DB->get_field('local_classroom','open_costcenterpath',  array('id'=> $classroomid));
         }
 
-        return parent::get_module_context($costcenterid);
+        return $costcenterpath;
+
+    }
+    public static function get_module_context($classroomid = null){
+
+        return parent::get_module_context(self::classroom_costcenterpath($classroomid));
+
+    }
+    public static function get_costcenter_path_field_concatsql($columnname,$classroomid = null, $datatype = NULL){
+
+        return parent::get_costcenter_path_field_concatsql($columnname, self::classroom_costcenterpath($classroomid));
 
     }
 }

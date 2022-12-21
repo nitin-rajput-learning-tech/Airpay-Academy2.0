@@ -35,22 +35,14 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
         global $DB;
 
-        $endpathvalue=null;
+        $costcenterpath=null;
 
         if($userid != null && $userid > 0){
 
             $costcenterpath=$DB->get_field('user','open_costcenterpath',  array('id'=> $userid));
-
-            if(!empty($costcenterpath)){
-
-                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
-
-                $endpathvalue=end($extractcostcenterpath);
-
-            }
         }
 
-        return $endpathvalue;
+        return $costcenterpath;
 
     }
     public static function get_module_context($userid = null){
@@ -58,85 +50,83 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_module_context(self::user_costcenterpath($userid));
 
     }
-    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = NULL){
+    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = self::PATH_MODULE_CONTENT){
 
         return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid));
 
     }
-    public static function get_user_geography_fields(){
+    public static function get_userprofile_fields($requiredfields=null){
 
-        $categorycontext = self::get_module_context();
-
-        $targetstateaudience = false;
-        $targetdistrictaudience = false;
-        $targetsubdistrictaudience = false;
-        $targetvillageaudience = false;
-
-        if(is_siteadmin() || has_capability('usersprofilefields/states:targetstateaudience',$categorycontext)){
-            $targetstateaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/district:targetdistrictaudience',$categorycontext)){
-            $targetdistrictaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:targetsubdistrictaudience',$categorycontext)){
-            $targetsubdistrictaudience = true;
-        }
-        if(is_siteadmin() || has_capability('usersprofilefields/village:targetvillageaudience',$categorycontext)){
-            $targetvillageaudience = true;
-        }
-
-        $fields = array(
-            'open_states' => $targetstateaudience,
-            'open_district' => $targetdistrictaudience,
-            'open_subdistrict' => $targetsubdistrictaudience,
-            'open_village' => $targetvillageaudience,
+        $userprofilefields = array(
+            'open_states',
+            'open_district',
+            'open_subdistrict',
+            'open_village',
         );
-        return $fields;
+
+        if($requiredfields !=null ){
+
+            $fields = is_array($requiredfields) ? $requiredfields : array($requiredfields);
+            $fields = array_filter($fields);
+
+            if (is_array($fields) and !empty($fields)){
+
+                $userprofileflipfields=array_flip($userprofilefields);
+
+                $matchfields=array();
+
+                foreach($fields as $field){
+
+                   if(isset($userprofileflipfields[$field])){
+
+                        $matchfields[]=$field;
+
+                   }
+                }
+                $userprofilefields =$matchfields;
+            }
+
+        }
+
+        return $userprofilefields;
     }
-    public static function get_geographical_target_users_concatsql($moduledata){
+    public static function get_userprofilematch_concatsql($moduledata){
 
-        global $USER;
-
-        $geographicaltargets=array();
+        $userprofilefields=array();
 
         $concatsql="";
 
-        if(empty($USER->id) || is_siteadmin()){
+        if(is_siteadmin()){
 
             return $concatsql;
 
         }else{
 
-            $fields = self::get_user_geography_fields();
+            $fields = self::get_userprofile_fields();
 
-            foreach($fields as $field =>$fieldenabled){
-
-                if($fieldenabled == false){
-                    continue;
-                }
+            foreach($fields as $field){
 
                 if(isset($moduledata->$field) && !empty($moduledata->$field)){
 
 
-                    if(empty($geographicaltargets[$field])){
+                    if(empty($userprofilefields[$field])){
 
                         $items = is_array($moduledata->$field) ? $moduledata->$field : explode(',', $moduledata->$field);
                         $items = array_filter($items);
 
                         if (is_array($items) and !empty($items)){
 
-                            $geographicaltargets[$field] = ''.$field.' IN ('.implode(',', $items).')';
+                            $userprofilefields[$field] = ''.$field.' IN ('.implode(',', $items).')';
 
                         }
-
                     }
                 }
             }
         }
 
-        if(!empty($geographicaltargets)){
+        if(!empty($userprofilefields)){
 
-            $concatsql="AND (".implode(" OR ", $geographicaltargets).")";
+            $concatsql="AND (".implode(" OR ", $userprofilefields).")";
         }
 
         return $concatsql;

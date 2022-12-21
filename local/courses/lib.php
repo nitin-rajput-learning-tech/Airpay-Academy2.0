@@ -22,7 +22,7 @@
  * @package BizLMS
  * @subpackage local_courses
  */
-
+define('elearning', 1);
 
 if(file_exists($CFG->dirroot.'/local/costcenter/lib.php')){
     require_once($CFG->dirroot.'/local/costcenter/lib.php');                  
@@ -2216,4 +2216,11 @@ function get_listof_coursetypes($stable, $filterdata) {
         "result" => $allcoursetypes );
 
     return $coursesContext;
+}
+function local_courses_search_page_filter_element(&$filterelements){
+    global $CFG;
+    if(file_exists($CFG->dirroot.'/local/search/lib.php')){
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        $filterelements['elearning'] = ['tagitemid' => 'learningtype_elearning', 'tagitemname' => 'Online Course', 'tagitemshortname' => 'elearning', 'coursecount' => local_search_get_coursecount_for_modules([elearning => 'elearning'])];
+    }
 }

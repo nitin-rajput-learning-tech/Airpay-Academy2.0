@@ -108,3 +108,7 @@ function local_request_leftmenunode(){
 
     return array('21' => $requestnode);
 }
+function local_request_search_page_js(){
+    global $PAGE;
+    $PAGE->requires->js_call_amd('local_request/requestconfirm', 'load', array());
+}

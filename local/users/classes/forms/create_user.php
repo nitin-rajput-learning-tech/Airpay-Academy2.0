@@ -147,11 +147,7 @@ class create_user extends moodleform {
                 get_string_manager()->get_list_of_translations());
             $mform->setDefault('lang', $CFG->lang);
 
-             local_users_get_geography_targetfields($mform, $this->_ajaxformdata, $this->_customdata,'local_users', $categorycontext, $multiple = false);
-            $mform->addElement('text', 'open_designation', get_string('designation','local_users'));
-            $mform->setType('open_designation',PARAM_RAW);
-            $mform->addHelpButton('open_designation', 'designation','local_users');
-
+             local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_users', $categorycontext, $multiple = false);
 
         } else if ($form_status == 2) {
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));

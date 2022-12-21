@@ -21,6 +21,7 @@
  * @package BizLMS
  * @subpackage local_learning
  */
+define('learningplan', 3);
 
 function local_learningplan_output_fragment_new_learningplan($args){
 	global $CFG,$DB, $PAGE;
@@ -548,4 +549,11 @@ if(!$enabled_plugins){
 function local_learningplan_search_page_js(){
     global $PAGE;
     $PAGE->requires->js_call_amd('local_learningplan/courseenrol','load');
+}
+function local_learningplan_search_page_filter_element(&$filterelements){
+    global $CFG;
+    if(file_exists($CFG->dirroot.'/local/search/lib.php')){
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        $filterelements['learningpath'] = ['tagitemid' => 'learningtype_learningpath', 'tagitemname' => 'LP', 'tagitemshortname' => 'learningpath', 'coursecount' => local_search_get_coursecount_for_modules([learningplan => 'learningpath'])];
+    }
 }
