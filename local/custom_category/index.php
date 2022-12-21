@@ -1,0 +1,62 @@
+<?php
+/**
+ * This file is part of eAbyas
+ *
+ * Copyright eAbyas Info Solutons Pvt Ltd, India
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @author eabyas  <info@eabyas.in>
+ * @package BizLMS
+ * @subpackage local_custom_category
+ */
+require_once(dirname(__FILE__) . '/../../config.php');
+global $USER, $CFG, $PAGE, $OUTPUT, $DB;
+require_once($CFG->dirroot . '/lib/formslib.php');
+require_once($CFG->dirroot . '/local/custom_category/lib.php');
+
+// $PAGE->requires->jquery();
+// $PAGE->requires->js('/local/skillrepository/js/jquery.dataTables.js',true);
+// $PAGE->requires->js('/local/skillrepository/js/skills_script.js',true); //For downloading csv
+// $PAGE->requires->js('/local/skillrepository/js/dataTables.buttons.min.js',true);
+// $PAGE->requires->js('/local/skillrepository/js/buttons.html5.min.js',true);
+// $PAGE->requires->css('/local/skillrepository/css/buttons.dataTables.min.css');
+
+$id = optional_param('id', 0, PARAM_INT);
+$delete_id = optional_param('delete_id', 0, PARAM_INT);
+$delete = optional_param('delete', 0, PARAM_INT);
+$confirm = optional_param('confirm', 0, PARAM_INT);
+$submitbutton = optional_param('submitbutton', '', PARAM_RAW);
+
+require_login();
+$PAGE->set_url('/local/skillrepository/index.php');
+$PAGE->set_context((new \local_custom_category\lib\accesslib())::get_module_context());
+$PAGE->set_pagelayout('standard');
+
+$PAGE->set_title(get_string('pluginname', 'local_custom_category'));
+$PAGE->navbar->add(get_string('manage_custom_category', 'local_custom_category'));
+$PAGE->requires->js_call_amd('local_custom_category/newcustomcategory', 'load', array());
+$PAGE->requires->js_call_amd('local_skillrepository/newrepository', 'load', array());
+
+
+$renderer = $PAGE->get_renderer('local_custom_category');
+$filterparams = $renderer->custom_category_content(true);
+
+$PAGE->set_heading(get_string('manage_custom_category', 'local_custom_category'));
+echo $OUTPUT->header();
+echo $renderer->get_top_action_buttons_custom_category();
+$filterparams['submitid'] = 'form#filteringform';
+echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
+echo $renderer->custom_category_content();
+echo $OUTPUT->footer();
