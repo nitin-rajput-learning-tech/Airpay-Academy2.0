@@ -26,11 +26,8 @@
 defined('MOODLE_INTERNAL') || die();
 
 $definitions = array(
-    'costcenterpathcontextdata' => array(
+    'costcenterpathcontextdata' => [
         'mode' => cache_store::MODE_APPLICATION,
-        'simplekeys' => true,
         'simpledata' => true,
-        'staticacceleration' => true,
-        'staticaccelerationsize' => 1,
-    )
+    ],
 );

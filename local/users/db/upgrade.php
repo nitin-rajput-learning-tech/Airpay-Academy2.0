@@ -126,7 +126,7 @@ function xmldb_local_users_upgrade($oldversion) {
 		}
 		upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'user');
 	}
-    if ($oldversion < 2022101800.07) {
+    if ($oldversion < 2022101800.08) {
 
         $table = new xmldb_table('local_userdata');
 
@@ -149,7 +149,7 @@ function xmldb_local_users_upgrade($oldversion) {
             $dbman->add_field($table, $field1);
         }
 
-        upgrade_plugin_savepoint(true, 2022101800.07, 'local', 'users');
+        upgrade_plugin_savepoint(true, 2022101800.08, 'local', 'users');
     }
 	return true;
 }

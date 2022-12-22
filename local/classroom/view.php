@@ -30,6 +30,8 @@ $action = optional_param('action', '', PARAM_ALPHA);
 $status = optional_param('status', 0, PARAM_INT);
 
 $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+
+
 require_login();
 $PAGE->set_url('/local/classroom/view.php', array('cid' => $classroomid));
 $PAGE->set_context($categorycontext);

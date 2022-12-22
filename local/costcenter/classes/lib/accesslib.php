@@ -75,11 +75,11 @@ class accesslib
 
         }else{
 
-            if($costcenterpath == null || $costcenterpath == 0){
+            if($costcenterpath == null){
 
                 $context=self::get_user_roleswitch_context();
 
-            }elseif($costcenterpath > 0){
+            }else{
 
                 $context=self::costcenterpath_contextdata($costcenterpath);
             }

@@ -173,7 +173,7 @@ function xmldb_local_courses_upgrade($oldversion)
         if (!$dbman->field_exists($table, $field1)) {
             $dbman->add_field($table, $field1);
         }
-        upgrade_plugin_savepoint(true, 2022101800.08, 'local', 'users');
+        upgrade_plugin_savepoint(true, 2022101800.08, 'local', 'courses');
     }
     return true;
 }
