@@ -144,5 +144,15 @@ function local_search_include_search_js(){
         }
     }
 }
+function local_search_get_enabled_searchplugin_info(){
+    $plugins = get_plugins_with_function('enabled_search');
+    $pluginsinfo = [];
+    foreach($plugins AS  $plugin_type => $plugin){
+        foreach($plugin as $pluginname => $function){
+            $pluginsinfo[] = $function();
+        }
+    }
+    return $pluginsinfo;
+}
 
 

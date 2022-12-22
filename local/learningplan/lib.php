@@ -567,3 +567,6 @@ function local_learningplan_search_page_filter_element(&$filterelements){
         $filterelements['learningpath'] = ['tagitemid' => 'learningtype_learningpath', 'tagitemname' => 'LP', 'tagitemshortname' => 'learningpath', 'coursecount' => local_search_get_coursecount_for_modules([learningplan => 'learningpath'])];
     }
 }
+function local_learningplan_enabled_search(){
+    return ['pluginname' => 'local_learningplan', 'templatename' => 'local_learningplan/searchpagecontent', 'type' => learningplan];
+}

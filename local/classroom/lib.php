@@ -1453,3 +1453,6 @@ function local_classroom_search_page_filter_element(&$filterelements){
         $filterelements['ilt'] = ['tagitemid' => 'learningtype_classroom', 'tagitemname' => 'ILT', 'tagitemshortname' => 'classroom', 'coursecount' => local_search_get_coursecount_for_modules([classroom => 'classroom'])];
     }
 }
+function local_classroom_enabled_search(){
+    return ['pluginname' => 'local_classroom', 'templatename' => 'local_classroom/searchpagecontent', 'type' => classroom];
+}

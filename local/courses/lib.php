@@ -2224,3 +2224,6 @@ function local_courses_search_page_filter_element(&$filterelements){
         $filterelements['elearning'] = ['tagitemid' => 'learningtype_elearning', 'tagitemname' => 'Online Course', 'tagitemshortname' => 'elearning', 'coursecount' => local_search_get_coursecount_for_modules([elearning => 'elearning'])];
     }
 }
+function local_courses_enabled_search(){
+    return ['pluginname' => 'local_courses', 'templatename' => 'local_courses/searchpagecontent', 'type' => elearning];
+}
