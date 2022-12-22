@@ -247,21 +247,9 @@ class classroom_form extends moodleform {
             $mform->addHelpButton('cr_description', 'description', 'local_classroom');
 
         }else if ($formstatus == 3) {
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_users', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_classroom', $categorycontext, $multiple = false);
            
-			$users_plugin_exist = $core_component::get_plugin_directory('local','users');
-			if ($users_plugin_exist) {
-				require_once($CFG->dirroot . '/local/users/lib.php');
-				$functionname ='globaltargetaudience_elementlist';
-				 if(function_exists($functionname)) {
-                      $modulecostcenter = $DB->get_field('local_classroom', 'costcenter',array('id' => $id));
-
-                    $mform->modulecostcenter = $modulecostcenter;
-
-                    $functionname($mform,array('group','hrmsrole','designation','location'));
-                }
-			}
-          // OL-1042 Add Target Audience to Classrooms//
+			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_classroom', $categorycontext, $multiple = false);
         }
         $mform->disable_form_change_checker();
     }

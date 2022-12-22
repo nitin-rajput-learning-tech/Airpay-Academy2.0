@@ -32,7 +32,7 @@ class accesslib
     protected const ALL_MODULE_CONTENT = 'upperandsamepath';
     protected const PATH_MODULE_CONTENT = 'lowerandsamepath';
 
-    public static function get_costcenter_path_field_concatsql($columnname,$costcenterparamid=null,$datatype=null){
+    public static function get_costcenter_path_field_concatsql($matchcolumnname,$costcenterpath=null,$datatype=null){
 
         global $DB;
 
@@ -48,52 +48,22 @@ class accesslib
             return $concatsql;
 
         }else{
-            if($costcenterparamid == null || $costcenterparamid == 0){
 
-                $concatsql =self::get_user_roleswitch_costcenterpath($columnname,$datatype);
+            if($costcenterpath == null || $costcenterpath == 0){
 
-            }elseif($costcenterparamid > 0){
+                $concatsql =self::get_user_roleswitch_costcenterpath_concatsql($matchcolumnname,$datatype);
 
-                 try{
+            }elseif($costcenterpath > 0){
 
-                    $cache = \cache::make('local_costcenter','costcenterpathdata');
+                $concatsql=self::costcenterpath_match_sql($costcenterpath,$matchcolumnname,$datatype);
 
-                    $cachekey = "costcenter_path_$costcenterparamid";
-
-                    $costcenterpath = $cache->get($cachekey);
-
-                    if ($costcenterpath === false) {
-
-                        $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
-
-                        $costcenterpath = $DB->get_field_sql($sql, array('costcenterid' => $costcenterparamid));
-
-                        if($costcenterpath){
-
-                            $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname,$datatype);
-
-                            $cache->set($cachekey, $costcenterpath);
-
-                        }else{
-
-                            $concatsql = self::get_user_roleswitch_costcenterpath($columnname,$datatype);
-
-                        }
-                    }else{
-
-                        $concatsql=self::costcenterpath_match_sql($costcenterpath,$columnname,$datatype);
-                    }
-
-                }catch(dml_exception $e){
-                    print_r($e->debuginfo);
-                }
             }
 
             return $concatsql;
 
         }
     }
-    public static function get_module_context($costcenterparamid = null){
+    public static function get_module_context($costcenterpath = null){
 
         global $DB;
 
@@ -104,43 +74,16 @@ class accesslib
             return $context;
 
         }else{
-            if($costcenterparamid == null || $costcenterparamid == 0){
+
+            if($costcenterpath == null || $costcenterpath == 0){
 
                 $context=self::get_user_roleswitch_context();
 
-            }elseif($costcenterparamid > 0){
-                 try{
-                    // Get a cache instance
-                    $cache = \cache::make('local_costcenter','costcentercontextdata');
-                    // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+            }elseif($costcenterpath > 0){
 
-                    $cachekey = "costcenter_context_$costcenterparamid";
-
-                    $context = $cache->get($cachekey);
-
-                    if ($context === false) {
-
-                        $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.id= :costcenterid ";
-
-                        $costcentercategory = $DB->get_field_sql($sql, array('costcenterid' => $costcenterparamid));
-
-                        if($costcentercategory){
-
-                            $context = \context_coursecat::instance($costcentercategory);
-
-                            $cache->set($cachekey, $context);
-
-                        }else{
-
-                            $context = \context_system::instance();
-
-                        }
-                    }
-
-                }catch(dml_exception $e){
-                    print_r($e->debuginfo);
-                }
+                $context=self::costcenterpath_contextdata($costcenterpath);
             }
+
             return $context;
         }
     }
@@ -151,29 +94,31 @@ class accesslib
 
         if(!empty($USER->access['currentroleinfo']['contextinfo'])){
 
-            $context =$USER->access['currentroleinfo']['contextinfo'][0]['context'];
+            $firstrole =current($USER->access['currentroleinfo']['contextinfo']);
+
+            $context =$firstrole['context'];
 
         }else{
 
+            $context = \context_system::instance();
+
             if(!empty($USER->access['rsw'])){
 
-                $contextpath=array_values(array_flip($USER->access['rsw']));
+                $contextpath=current(array_values(array_flip($USER->access['rsw'])));
 
-                if(!empty($contextpath[0])){
+                if(!empty($contextpath)){
 
-                    $extractcontextpath=array_values(array_filter(explode('/',$contextpath[0])));
+                    $extractcontextpath=array_values(array_filter(explode('/',$contextpath)));
 
-                    $pathvalue=end($extractcontextpath);
+                    if(!empty($extractcontextpath)){
 
-                    $context =\context::instance_by_id($pathvalue);
+                        $pathvalue=end($extractcontextpath);
 
-                }else{
+                        $context =\context::instance_by_id($pathvalue);
+                    }
 
-                    $context = \context_system::instance();
 
                 }
-            }else{
-                    $context = \context_system::instance();
             }
 
         }
@@ -229,73 +174,108 @@ class accesslib
             return $coursecat->$value;
         }
     }
-    public static function get_user_roleswitch_costcenterpath($columnname,$datatype){
+    public static function get_user_roleswitch_costcenterpath_concatsql($matchcolumnname,$datatype){
 
         global $USER;
 
         $concatsql="";
 
-        $costcenterpath=array();
-
-        $roleid=$USER->access['currentroleinfo']['roleid'];
-
+        $sqlarray=array();
 
         if(!empty($USER->access['currentroleinfo']['contextinfo'])){
 
 
-            $contextsinfo =$USER->access['currentroleinfo']['contextinfo'];
+            $contextarray =$USER->access['currentroleinfo']['contextinfo'];
 
 
-            foreach($contextsinfo as $contextinfo){
+            foreach($contextarray as $context){
 
-                $path=$contextinfo['costcenterpath'];
+                $costcenterpath=$context['costcenterpath'];
 
-                if(empty($costcenterpath[$path])){
+                if(empty($sqlarray[$costcenterpath])){
 
-                    $costcenterpath[$path]=self::costcenterpath_match_sql($path,$columnname,$datatype);
+                    $sqlarray[$costcenterpath]=self::costcenterpath_match_sql($costcenterpath,$matchcolumnname,$datatype);
                 }
 
 
             }
         }
-        if(!empty($costcenterpath)){
+        if(!empty($sqlarray)){
 
-            $concatsql="AND (".implode(" OR ", $costcenterpath).")";
+            $concatsql="AND (".implode(" OR ", $sqlarray).")";
         }
 
         return $concatsql;
     }
 
-    public static function costcenterpath_match_sql($usermatchpath,$columnname,$datatype){
+    public static function costcenterpath_match_sql($costcenterpath,$matchcolumnname,$datatype){
 
 
         if($datatype == self::ALL_MODULE_CONTENT){
 
             $match_sql='';
-            $paths[] = $usermatchpath.'%';
+            $paths[] = $costcenterpath.'%';
 
-            while ($usermatchpath = rtrim($usermatchpath,'0123456789')) {
-                $usermatchpath = rtrim($usermatchpath, '/');
-                if ($usermatchpath === '') {
+            while ($costcenterpath = rtrim($costcenterpath,'0123456789')) {
+                $costcenterpath = rtrim($costcenterpath, '/');
+                if ($costcenterpath === '') {
                   break;
                 }
-                $paths[] = $usermatchpath;
+                $paths[] = $costcenterpath;
             }
 
             if(!empty($paths)){
                 foreach($paths AS $path){
-                    $pathsql[] = " $columnname LIKE '$path' ";
+                    $pathsql[] = " $matchcolumnname LIKE '$path' ";
                 }
                 $match_sql.= " ( ".implode(' OR ', $pathsql).' ) ';
             }
 
         }else{
 
-            $match_sql= " $columnname LIKE '%$usermatchpath%' ";
+            $match_sql= " $matchcolumnname LIKE '%$costcenterpath%' ";
 
         }
 
         return $match_sql;
+    }
+
+    public static function costcenterpath_contextdata($costcenterpath){
+
+        global $DB;
+
+        $context = \context_system::instance();
+
+        try{
+            // Get a cache instance
+            $cache = \cache::make('local_costcenter','costcenterpathcontextdata');
+            // Get all of the roles used in this context, including special roles such as user, and frontpageuser.
+
+            $cachekey = "costcenterpath_context_$costcenterpath";
+
+            $context = $cache->get($cachekey);
+
+            if ($context === false) {
+
+                $sql = "SELECT cc.category FROM {local_costcenter} AS cc WHERE cc.path like '$costcenterpath' ";
+
+                $costcentercategory = $DB->get_field_sql($sql);
+
+                if($costcentercategory){
+
+                    $context = \context_coursecat::instance($costcentercategory);
+
+                    $cache->set($cachekey, $context);
+
+                }
+            }
+
+        }catch(dml_exception $e){
+            print_r($e->debuginfo);
+        }
+
+        return $context;
+
     }
 
 }

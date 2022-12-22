@@ -39,13 +39,7 @@ if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations'
 }else if($USER->open_costcenterid){
     $orgid = $USER->open_costcenterid;
 }
-$cache = \cache::make('local_costcenter','costcentercontextdata');
-$cachekey = "costcenter_context_$orgid";
-$context = $cache->get($cachekey);
-if(empty($context)){
-    $categoryid = $DB->get_field('local_costcenter', 'category', array('id' => $orgid));
-    $context = \context_coursecat::instance($categoryid);
-}
+$context = (new \local_users\lib\accesslib())::get_module_context();
 $PAGE->set_category_by_id($context->instanceid);
 $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid)));
 

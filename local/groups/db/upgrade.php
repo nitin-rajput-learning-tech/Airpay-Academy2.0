@@ -31,6 +31,15 @@ function xmldb_local_groups_upgrade($oldversion) {
 
 	upgrade_plugin_savepoint(true, 2022101300, 'local', 'groups');
 	}
+	if($oldversion < 2022101300.03){
+
+        $table = new xmldb_table('local_groups');
+        $field1 = new xmldb_field('open_costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101300.03, 'local', 'groups');
+    }
 
 	return true;
 }

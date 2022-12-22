@@ -447,19 +447,18 @@ function custom_filter($mform) {
 function globaltargetaudience_elementlist($mform, $elementlist) {
     global $CFG, $DB, $USER;
 
-
     $context = (new \local_users\lib\accesslib())::get_module_context();
-
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
 
     $params = array();
     $params['deleted'] = 0;
     $params['suspended'] = 0;
-    if ($mform->modulecostcenter == 0 && (is_siteadmin()||has_capability('local/costcenter:manage_multiorganizations', $context))) {
+    if ($mform->modulecostcenterpath == 0 && (is_siteadmin()||has_capability('local/costcenter:manage_multiorganizations', $context))) {
         $main_sql = "";
     } else  {
-         $costcenterid = $mform->modulecostcenter ? $mform->modulecostcenter : $USER->open_costcenterid;
-        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted  $costcenterpathconcatsql ";
+        $costcenterpath = $mform->modulecostcenterpath ? $mform->modulecostcenterpath : $USER->open_costcenterpath;
+
+        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted  AND u.open_costcenterpath = :open_costcenterpath ";
+        $params['open_costcenterpath'] = $costcenterpath;
     }
     $dbman = $DB->get_manager();
     if (in_array('group', $elementlist)) {
@@ -469,15 +468,10 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
                 $groupslist += $DB->get_records_sql_menu("SELECT c.id, c.name FROM {local_groups} g, {cohort}
                  c  WHERE c.visible = :visible AND c.id = g.cohortid ", array('visible' => 1));
             }
-        } else if (has_capability('local/costcenter:manage_ownorganization', $context)) {
+        } else {
             $groupslist += $DB->get_records_sql_menu("SELECT c.id, c.name FROM {local_groups} g, {cohort} c
-              WHERE c.visible = :visible AND c.id = g.cohortid AND g.costcenterid = :costcenterid ",
-               array('costcenterid' => $USER->open_costcenterid, 'visible' => 1));
-        } else if (has_capability('local/costcenter:manage_owndepartments', $context)) {
-            $groupslist += $DB->get_records_sql_menu("SELECT c.id, c.name FROM {local_groups} g,
-             {cohort} c WHERE c.visible = 1 AND c.id = g.cohortid AND g.costcenterid = :costcenterid AND
-               g.departmentid = :departmentid ", array('costcenterid' => $USER->open_costcenterid,
-                'departmentid' => $USER->open_departmentid, 'visible' => 1));
+              WHERE c.visible = :visible AND c.id = g.cohortid AND g.open_costcenterpath = :open_costcenterpath ",
+               array('open_costcenterpath' => $costcenterpath, 'visible' => 1));
         }
         $selectgroup = $mform->addElement('autocomplete', 'open_group', get_string('open_group', 'local_users')
             , $groupslist);
@@ -538,8 +532,6 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
         $selectband->setMultiple(true);
     }
 }
-
-
 /*
 * Author Rizwana
 * Displays a node in left side menu
@@ -1072,22 +1064,22 @@ function local_users_before_http_headers() {
 
 //masterdata view capabilities checking here by narendra
 function masterdata_capabilities($active){
-    $systemcontext = context_system::instance();
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
     $viewstates = false;
     $viewdistrict = false;
     $viewsubdistrict = false;
     $viewvillage = false;
 
-    if(is_siteadmin() || has_capability('usersprofilefields/states:view',$systemcontext)){
+    if(is_siteadmin() || has_capability('usersprofilefields/states:view',$categorycontext)){
         $viewstates = true;
     }
-    if(is_siteadmin() || has_capability('usersprofilefields/viewdistrict:view',$systemcontext)){
+    if(is_siteadmin() || has_capability('usersprofilefields/viewdistrict:view',$categorycontext)){
         $viewdistrict = true;
     }
-    if(is_siteadmin() || has_capability('usersprofilefields/viewsubdistrict:view',$systemcontext)){
+    if(is_siteadmin() || has_capability('usersprofilefields/viewsubdistrict:view',$categorycontext)){
         $viewsubdistrict = true;
     }
-    if(is_siteadmin() || has_capability('usersprofilefields/viewvillage:view',$systemcontext)){
+    if(is_siteadmin() || has_capability('usersprofilefields/viewvillage:view',$categorycontext)){
         $viewvillage = true;
     }
 
@@ -1134,18 +1126,29 @@ function local_users_output_fragment_user_field_create($args){
 function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$allenable = false, $pluginname, $context, $multiple = false){
     global $DB, $USER;
 
-    $mform->addElement('text', 'open_designation', get_string('designation','local_users'));
-    $mform->setType('open_designation',PARAM_RAW);
-    $mform->addHelpButton('open_designation', 'designation','local_users');
-
 
     $fields = (new \local_users\lib\accesslib())::get_userprofile_fields();
 
     $costcenterfields = local_costcenter_get_fields();
 
-    $enddepth=end($costcenterfields);
+    $firstdepth=current($costcenterfields);
 
-    $prev_element = $enddepth.'_select';
+    $lastdepth=end($costcenterfields);
+
+    if($pluginname != 'local_users'){
+
+        $functionname ='globaltargetaudience_elementlist';
+
+        if(function_exists($functionname)) {
+
+            $mform->modulecostcenterpath = $customdata[$firstdepth];
+
+            $functionname($mform,array('group','designation'));
+        }
+    }
+
+
+    $prev_element = 'locationfieldparentid_select';
     $firstelement = true;
 
     $prevfield='territory';
@@ -1156,8 +1159,8 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
 
         if($depth == 0){
 
-            $mform->addElement('hidden',$enddepth, null,array('data-class'=>$prev_element));
-            $mform->setConstant($enddepth, $customdata[$enddepth]);
+            $mform->addElement('hidden','locationfieldparentid', null,array('data-class'=>$prev_element));
+            $mform->setConstant('locationfieldparentid', $customdata[$lastdepth]);
         }
         $fieldelementoptions = array(
             'class' => $field.'_select',
