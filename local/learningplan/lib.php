@@ -59,7 +59,7 @@ function local_learningplan_output_fragment_new_learningplan($args){
 			$data->open_designation = (!empty($data->open_designation)) ? array_diff(explode(',',$data->open_designation), array('')) :array(NULL=>NULL);
             $data->open_location = (!empty($data->open_location)) ? array_diff(explode(',',$data->open_location), array('')) :array(NULL=>NULL);
 			$data->department =(!empty($data->department)) ? (count(explode(',',$data->department))>1)? array_diff(explode(',',$data->department), array('')):$data->department :NULL;
-            $customdata = array('editoroptions' => $editoroptions, 'id'=>$data->id, 'form_status' => $args->form_status, 'open_costcenterpath' => $data->open_costcenterpath);
+            $customdata = array('editoroptions' => $editoroptions, 'id'=>$data->id, 'form_status' => $args->form_status, 'open_costcenterpath' => $data->open_path);
             local_costcenter_set_costcenter_path($customdata);
             local_users_set_userprofile_datafields($customdata,$data);
 			$mform = new local_learningplan\forms\learningplan(null, $customdata, 'post', '', null, true, $formdata);
@@ -156,9 +156,15 @@ function local_learningplan_pluginfile($course, $cm, $context, $filearea, $args,
 function learningplan_filter($mform){
     global $DB,$USER;
     $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
-    // $sql = "SELECT id, name FROM {local_learningplan} WHERE id > 1";
+    $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $learningplan_params = array();
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
+    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+        $sql .= "";
+    } else  {
+        $sql .= $costcenterpathconcatsql;
+    }
+   /* if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE  costcenter = :costcenter ";
@@ -167,7 +173,7 @@ function learningplan_filter($mform){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE  costcenter = :costcenter AND (department = :department OR department = -1) ";
         $learningplan_params['costcenter'] = $USER->open_costcenterid;
         $learningplan_params['department'] = $USER->open_departmentid;
-    }
+    }*/
     if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
         $learningplanlist = $DB->get_records_sql_menu($sql, $learningplan_params);
     }

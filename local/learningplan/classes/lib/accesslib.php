@@ -28,24 +28,28 @@ namespace local_learningplan\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($planid = null){
+    public static function learningplan_costcenterpath($planid = null) {
 
         global $DB;
 
-        $costcenterid=null;
+        $costcenterpath=null;
 
-        if($planid > 0){
+        if($planid != null && $planid > 0){
 
-            $plancostcenter=$DB->get_field('local_learningplan','costcenter',  array('id'=>$planid));
-            if($plancostcenter > 0){
-
-                $costcenterid=$plancostcenter;
-
-            }
-
+            $costcenterpath=$DB->get_field('local_learningplan','open_path',  array('id'=> $planid));
         }
 
-        return parent::get_module_context($costcenterid);
+        return $costcenterpath;
+
+    }
+    public static function get_module_context($planid = null){
+
+        return parent::get_module_context(self::learningplan_costcenterpath($planid));
+
+    }
+    public static function get_costcenter_path_field_concatsql($columnname,$planid = null, $datatype = NULL){
+
+        return parent::get_costcenter_path_field_concatsql($columnname, self::learningplan_costcenterpath($planid));
 
     }
 }
