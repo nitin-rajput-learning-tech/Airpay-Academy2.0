@@ -37,7 +37,7 @@ if (!$templateid) {
 $url = new moodle_url('/local/evaluation/use_templ.php', array('id'=>$id, 'templateid'=>$templateid));
 $PAGE->set_url($url);
 
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 
 require_login();
 

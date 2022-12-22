@@ -57,7 +57,7 @@ class learningplan extends moodleform {
 		$editoroptions = $this->customdata['editoroptions'];
 		$form_status = $this->_customdata['form_status'];
 		$open_costcenterpath = $this->_customdata['open_costcenterpath'];
-		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 		
 		$mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
@@ -72,7 +72,7 @@ class learningplan extends moodleform {
         $core_component = new core_component();
 
 		if($form_status == 0){
-			if (is_siteadmin($USER->id) || has_capability('local/users:manage',$systemcontext)) {
+			if (is_siteadmin($USER->id) || has_capability('local/users:manage',$categorycontext)) {
 				$sql="select id,fullname from {local_costcenter} where visible =1 and parentid=0 ";
 	            $costcenters = $DB->get_records_sql($sql);
 	        }
@@ -91,7 +91,7 @@ class learningplan extends moodleform {
 			// 	$mform->setConstant('costcenter', $user_dept);
 			// }
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_learningplan', $systemcontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_learningplan', $categorycontext, $multiple = false);
 
 	        $mform->addElement('text', 'name', get_string('learning_plan_name', 'local_learningplan'));
 	        $mform->addRule('name', null, 'required', null, 'client');
@@ -165,8 +165,8 @@ class learningplan extends moodleform {
 	        $mform->setType('description', PARAM_RAW);
 	        $mform->addHelpButton('description','descript','local_learningplan');
 			
-			$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
-			if (is_siteadmin($USER->id) || has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)) {
+			$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+			if (is_siteadmin($USER->id) || has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)) {
 				$sql = "select id,fullname from {local_costcenter} where visible =1 and parentid IN(0,1)";
 				$costcenters = $DB->get_records_sql($sql);
 	        } else {
@@ -187,7 +187,7 @@ class learningplan extends moodleform {
 
                 $select = array(null => get_string('select_certificate','local_learningplan'));
 
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_costcenterid),'name', 'id,name');
@@ -201,13 +201,13 @@ class learningplan extends moodleform {
             }
 
 		}else if($form_status == 1){
-			// if ((!is_siteadmin() && (((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))) &&(!has_capability('local/costcenter:manage_owndepartments',$systemcontext))))) {
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $systemcontext, $multiple = false);
+			// if ((!is_siteadmin() && (((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))) &&(!has_capability('local/costcenter:manage_owndepartments',$categorycontext))))) {
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
 
 			if (is_siteadmin() || 
-                (has_capability('local/learningplan:manage', $systemcontext) 
-                	&& has_capability('local/costcenter:manage_ownorganization', $systemcontext)
-                    && !has_capability('local/costcenter:manage_owndepartments', $systemcontext))) {
+                (has_capability('local/learningplan:manage', $categorycontext) 
+                	&& has_capability('local/costcenter:manage_ownorganization', $categorycontext)
+                    && !has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
 				$departmentslist[-1]=get_string('all');
 				if($id > 0 ){
 					$costcenter = $DB->get_field('local_learningplan','costcenter',array('id'=>$id));
@@ -222,7 +222,7 @@ class learningplan extends moodleform {
 						$departmentslist[$depart->id]=$depart->fullname;
 					}
 				}
-				else if(!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)){
+				else if(!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)){
 					$departments = userlib::find_departments_list($USER->open_costcenterid);
 					foreach($departments as $depart){
 						$departmentslist[$depart->id]=$depart->fullname;
@@ -234,7 +234,7 @@ class learningplan extends moodleform {
 				);
 				$mform->addElement('autocomplete', 'department', get_string('department','local_learningplan'),$departmentslist,$options);
 				$mform->addHelpButton('department', 'department','local_users');
-			// }elseif (is_siteadmin() || ((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))&&(has_capability('local/costcenter:manage_owndepartments',$systemcontext)))) {
+			// }elseif (is_siteadmin() || ((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))&&(has_capability('local/costcenter:manage_owndepartments',$categorycontext)))) {
           
 					/*$options = array(
 						// 'multiple' => true,
@@ -264,7 +264,7 @@ class learningplan extends moodleform {
             	$mform->addElement('hidden', 'department', $plan_department, array('id' => 'id_department'));
             	$mform->setType('department', PARAM_RAW);
             }
-            if (is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext)){
+            if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)){
             	$subdepartmentslist[-1]=get_string('all');
             	$subdepartment = $this->_ajaxformdata['subdepartment'];
 
@@ -316,7 +316,7 @@ class learningplan extends moodleform {
 				$options = array(
                     'ajax' => 'local_learningplan/form-options-selector',
                     'multiple' => true,
-                    'data-contextid' => $systemcontext->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'learningplan_subdepartment_selector',
                     'data-options' => json_encode(array('id' => $id, 'depth' => 3,
                         'organizationselect' => '.organizationselect', 'subdepartment' => true)),
@@ -339,6 +339,8 @@ class learningplan extends moodleform {
                     $functionname($mform,array('group','hrmsrole','designation','location'));
                 }
 			}
+
+			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
     	}
         $mform->disable_form_change_checker();
     }

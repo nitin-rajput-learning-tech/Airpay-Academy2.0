@@ -36,7 +36,7 @@ $url = new moodle_url('/local/evaluation/analysis_to_excel.php', array('id' => $
 $PAGE->set_url($url);
 
 require_login();
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 require_capability('local/evaluation:viewreports', $context);
 
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));

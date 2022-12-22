@@ -26,7 +26,7 @@ define('learningplan', 3);
 function local_learningplan_output_fragment_new_learningplan($args){
 	global $CFG,$DB, $PAGE;
 	$args = (object) $args;
-    $contextid = $args->contextid;
+    $contextid = $args->context;
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
@@ -61,6 +61,7 @@ function local_learningplan_output_fragment_new_learningplan($args){
 			$data->department =(!empty($data->department)) ? (count(explode(',',$data->department))>1)? array_diff(explode(',',$data->department), array('')):$data->department :NULL;
             $customdata = array('editoroptions' => $editoroptions, 'id'=>$data->id, 'form_status' => $args->form_status, 'open_costcenterpath' => $data->open_costcenterpath);
             local_costcenter_set_costcenter_path($customdata);
+            local_users_set_userprofile_datafields($customdata,$data);
 			$mform = new local_learningplan\forms\learningplan(null, $customdata, 'post', '', null, true, $formdata);
             // Populate tags.
             $data->tags = local_tags_tag::get_item_tags_array('local_learningplan', 'learningplan', $data->id);
@@ -74,7 +75,10 @@ function local_learningplan_output_fragment_new_learningplan($args){
 		}
     }
     else{
-    	$mform = new local_learningplan\forms\learningplan(null, array('editoroptions' => $editoroptions, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
+        $customdata = array('editoroptions' => $editoroptions, 'form_status' => $args->form_status);
+        local_costcenter_set_costcenter_path($customdata);
+        // print_r($customdata);exit;
+    	$mform = new local_learningplan\forms\learningplan(null, $customdata, 'post', '', null, true, $formdata);
     }
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata) >2) {
@@ -151,12 +155,12 @@ function local_learningplan_pluginfile($course, $cm, $context, $filearea, $args,
 }
 function learningplan_filter($mform){
     global $DB,$USER;
-    $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
     // $sql = "SELECT id, name FROM {local_learningplan} WHERE id > 1";
     $learningplan_params = array();
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
-    }else if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+    }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE  costcenter = :costcenter ";
         $learningplan_params['costcenter'] = $USER->open_costcenterid;
     }else{
@@ -164,7 +168,7 @@ function learningplan_filter($mform){
         $learningplan_params['costcenter'] = $USER->open_costcenterid;
         $learningplan_params['department'] = $USER->open_departmentid;
     }
-    if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
+    if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
         $learningplanlist = $DB->get_records_sql_menu($sql, $learningplan_params);
     }
     $select = $mform->addElement('autocomplete', 'learningplan', '', $learningplanlist, array('placeholder' => get_string('learning_path_name', 'local_learningplan')));
@@ -187,9 +191,9 @@ function get_user_learningplan($userid) {
 * @return  [type] string  link for the leftmenu
 */
 function local_learningplan_leftmenunode(){    
-    $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
     $learningplannode = '';
-    if(has_capability('local/learningplan:manage', $systemcontext) || is_siteadmin()) {
+    if(has_capability('local/learningplan:manage', $categorycontext) || is_siteadmin()) {
         $learningplannode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_learningplans', 'class'=>'pull-left user_nav_div learningplans'));
             $learningplan_url = new moodle_url('/local/learningplan/index.php');
             $learningplan = html_writer::link($learningplan_url, '<i class="fa fa-map" aria-hidden="true" aria-label=""></i><span class="user_navigation_link_text">'.get_string('managelep','local_learningplan').'</span>',array('class'=>'user_navigation_link'));
@@ -201,9 +205,9 @@ function local_learningplan_leftmenunode(){
 }
 function local_learningplan_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;
-    $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
     $content = '';
-    if (is_siteadmin() || has_capability('local/learningplan:view',$systemcontext)){
+    if (is_siteadmin() || has_capability('local/learningplan:view',$categorycontext)){
             //local learningplans content
         $PAGE->requires->js_call_amd('local_learningplan/lpcreate', 'load', array());
         // $local_learningplans_content = $PAGE->requires->js_call_amd('local_learningplan/lpcreate', 'load', array());
@@ -228,9 +232,9 @@ function local_learningplan_quicklink_node(){
         $learningplan['node_header_string'] = get_string('manage_br_learningplan', 'local_learningplan');
         $learningplan['pluginname'] = 'learningplans';
         $learningplan['plugin_icon_class'] = 'fa fa-map';
-        if(is_siteadmin() || (has_capability('local/learningplan:manage', $systemcontext) && has_capability('local/learningplan:create', $systemcontext))){
+        if(is_siteadmin() || (has_capability('local/learningplan:manage', $categorycontext) && has_capability('local/learningplan:create', $categorycontext))){
             $learningplan['create'] = TRUE;
-            $learningplan['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('class' => 'quick_nav_link goto_local_learningplan', 'title' => get_string('create_learningplan', 'local_learningplan'), 'data-action' => 'createlpmodal', 'onclick' => '(function(e){ require("local_learningplan/lpcreate").init({selector:"createlpmodal", contextid:'.$systemcontext->id.', planid:0,form_status:0}) })(event)'));
+            $learningplan['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('class' => 'quick_nav_link goto_local_learningplan', 'title' => get_string('create_learningplan', 'local_learningplan'), 'data-action' => 'createlpmodal', 'onclick' => '(function(e){ require("local_learningplan/lpcreate").init({selector:"createlpmodal", contextid:'.$categorycontext->id.', planid:0,form_status:0}) })(event)'));
         }
         // if(has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext)){
         $learningplan['viewlink_url'] = $CFG->wwwroot.'/local/learningplan/index.php';
@@ -340,18 +344,18 @@ function local_learningplan_get_tagged_learningplans($tag, $exclusivemode = fals
 
 /**
 * todo sql query departmentwise
-* @param  $systemcontext object
+* @param  $categorycontext object
 * @return array
 **/
-function orgsql($systemcontext){
+function orgsql($categorycontext){
     global $DB, $USER;
     $sql = '';
     $params =array();
-    if (has_capability('local/learningplan:manage', $systemcontext) && 
-        has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+    if (has_capability('local/learningplan:manage', $categorycontext) && 
+        has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $sql = " AND  c.costcenter = :costcenter";
         $params['costcenter'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+    } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
         $sql = " AND  c.department = :department";
         $params['department'] = $USER->open_departmentid;
     } else {
@@ -454,20 +458,20 @@ function orgsql($systemcontext){
 
 /**
 * todo sql query departmentwise
-* @param  $systemcontext object 
+* @param  $categorycontext object 
 * @return array
 **/
 
 function get_learningplan_details($lpid) {
     global $USER, $DB, $PAGE;
-    $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($lpid);
+    $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($lpid);
     $PAGE->requires->js_call_amd('local_learningplan/learningplan','load', array());
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
     $details = array();
     // $time = \local_costcenter\lib::get_userdate("d/m/Y H:i");
     $joinsql = '';
-    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$systemcontext) OR 
-        has_capability('local/costcenter:manage_owndepartments',$systemcontext) OR has_capability('local/learningplan:manage', $systemcontext)) {
+    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$categorycontext) OR 
+        has_capability('local/costcenter:manage_owndepartments',$categorycontext) OR has_capability('local/learningplan:manage', $categorycontext)) {
 
         $selectsql = "select c.*  ";
         $fromsql = " from  {local_learningplan} c ";

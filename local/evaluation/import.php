@@ -46,7 +46,7 @@ if (! $evaluation = $DB->get_record("local_evaluations", array("id"=>$id))) {
     print_error('invalidcourselocalule');
 }
 
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 
 require_login();
 

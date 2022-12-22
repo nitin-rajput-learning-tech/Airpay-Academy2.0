@@ -34,13 +34,6 @@ use context_system;
 use context_course;
 use core_component;
 use local_search\output\searchlib;
-use local_search\output\certification;
-use local_search\output\classroom;
-use local_search\output\elearning;
-use local_search\output\learningplan;
-use local_search\output\program;
-use local_search\output\mooc;
-use local_search\output\iltcourse;
 
 /**
  * Class containing data for course competencies page
@@ -248,8 +241,7 @@ class allcourses {
     global $DB;
 
     $othertagitems = array();
-
-    if($selectedtag){
+    if($selectedfilter){
         $standard_catalogtypes = [];
         foreach ($selectedfilter as $tagitemid => $itemname) {
 
@@ -381,7 +373,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
  private function to_finding_specific_catalogtype($recordtype, $level_perpage,$level_startlimit, $selectedfilter = array()){
         $finallist = array();
         switch($recordtype){
-            case 'ELE' :
+            case 'elearning' :
                 $classname = '\local_courses\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();
@@ -389,7 +381,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
                     $finallist =$this->get_array_format($courselist);
                 }
             break;
-            case 'LP' :
+            case 'learningplan' :
                 $classname = '\local_learningplan\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();
@@ -397,7 +389,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
                     $finallist = $this->get_array_format($lplist);
                 }
             break;
-            case 'ILT' :
+            case 'classroom' :
                 $classname = '\local_classroom\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();

@@ -1264,16 +1264,9 @@ class local_classroom_external extends external_api {
         $courses = array();
         // if ($query) {
             $queryparams = array();
-            $concatsql = '';
-            $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
-
-            if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && ( !is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext) && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-                $concatsql .= " AND open_costcenterid = :costcenterid";
-                $queryparams['costcenterid'] = $USER->open_costcenterid;
-                if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)|| has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                     $concatsql .= " AND open_departmentid = :department";
-                     $queryparams['department'] = $USER->open_departmentid;
-                 }
+            $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($classroomid);            
+            if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+                $concatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_costcenterpath');
            }
            if($query){
                 $concatsql .=" AND c.fullname LIKE '%$query%'";

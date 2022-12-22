@@ -91,13 +91,13 @@ class local_evaluation_renderer extends plugin_renderer_base  {
       if(substr($PAGE->url->out_as_local_url(), 0, strpos($PAGE->url->out_as_local_url(), '?')) == '/local/evaluation/eval_view.php'){
         if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $context) || has_capability('local/evaluation:edititems', $context)){
             $exporturl = new moodle_url('/local/evaluation/export.php?action=exportfile&id='.$id);
-            $backupimg = html_writer::tag('i', '', array('class' => 'icon fa fa-upload'));
+            $backupimg = html_writer::tag('i', '', array('class' => 'icon fa fa-download'));
             $buttons[] = html_writer::start_tag('li', array('title' => get_string('export_questions', 'local_evaluation'))).
                 html_writer::link($exporturl, $backupimg, array('class' => 'course_extended_menu_itemlink')).
                 html_writer::end_tag('li');
             $importurl = new moodle_url('/local/evaluation/import.php', array('id'=>$id));
             
-            $importimg = html_writer::tag('i', '', array('class' => 'icon fa fa-download'));
+            $importimg = html_writer::tag('i', '', array('class' => 'icon fa fa-upload'));
             $buttons[] = html_writer::start_tag('li', array('title' => get_string('import_questions', 'local_evaluation'))).
                     html_writer::link($importurl, $importimg, array('class' => 'course_extended_menu_itemlink')).
                     html_writer::end_tag('li');

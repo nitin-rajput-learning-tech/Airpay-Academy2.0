@@ -59,12 +59,12 @@ if(!empty($epsilon_plugin_exist)){
 }
 
 $return_url = new moodle_url('/local/learningplan/managelearningplan.php');
-$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 $PAGE->requires->js_call_amd('local_learningplan/lpcreate', 'load', array());
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'downloadtrigger',array());
 
 //check the context level of the user and check whether the user is login to the system or not
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 require_login();
 $PAGE->set_url('/local/learningplan/index.php');
 $PAGE->set_title(get_string('pluginname', 'local_learningplan'));
@@ -88,11 +88,11 @@ if($course_enrol && $planid && $userid){
     }
 }
 if(!is_siteadmin()){
-    require_capability('local/learningplan:manage', $systemcontext);
+    require_capability('local/learningplan:manage', $categorycontext);
 }
 $out = "<ul class='course_extended_menu_list learning_plan'>";
 if(is_siteadmin() ||(
-        has_capability('local/learningplan:create', $systemcontext)|| has_capability('local/learningplan:update', $systemcontext)||has_capability('local/learningplan:manage', $systemcontext))){
+        has_capability('local/learningplan:create', $categorycontext)|| has_capability('local/learningplan:update', $categorycontext)||has_capability('local/learningplan:manage', $categorycontext))){
      $sql = "SELECT id,name FROM {block_learnerscript} WHERE category = 'local_learningplan'" ;
     $learningplanreports = $DB->get_records_sql($sql);
       //print_object($courses);
@@ -129,7 +129,7 @@ if(is_siteadmin() ||(
         </div>
     </li>";
 }
-if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
+if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
         $out .= "<li>    
             <div class = 'coursebackup course_extended_menu_itemcontainer'>
                 <a href='".$CFG->wwwroot."/local/request/index.php?component=learningplan' class='course_extended_menu_itemlink' title='".get_string('request','local_learningplan')."'><i class='icon fa fa-share-square' aria-hidden='true'></i>
@@ -137,11 +137,11 @@ if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadm
             </div>
         </li>";
 }
-if (is_siteadmin() || (has_capability('local/learningplan:create', $systemcontext) && has_capability('local/learningplan:manage', $systemcontext))) {
+if (is_siteadmin() || (has_capability('local/learningplan:create', $categorycontext) && has_capability('local/learningplan:manage', $categorycontext))) {
     $titlestring = get_string('addnew_learningplans','local_learningplan');
     $out .= "<li>    
                 <div class = 'coursebackup course_extended_menu_itemcontainer'>
-                    <a class='course_extended_menu_itemlink' data-action='createlpmodal' title='$titlestring' onclick ='(function(e){ require(\"local_learningplan/lpcreate\").init({selector:\"createlpmodal\", contextid:$systemcontext->id, planid:0, form_status:0}) })(event)'><span class='createicon'><i class='icon fa fa-map' aria-hidden='true' aria-label=''></i><i class='fa fa-plus createiconchild' aria-hidden='true'></i></span>
+                    <a class='course_extended_menu_itemlink' data-action='createlpmodal' title='$titlestring' onclick ='(function(e){ require(\"local_learningplan/lpcreate\").init({selector:\"createlpmodal\", contextid:$categorycontext->id, planid:0, form_status:0}) })(event)'><span class='createicon'><i class='icon fa fa-map' aria-hidden='true' aria-label=''></i><i class='fa fa-plus createiconchild' aria-hidden='true'></i></span>
                     </a>
                 </div>
             </li>";
@@ -152,9 +152,9 @@ echo $out;
 
 if(is_siteadmin()){
     $thisfilters = array('learningplan', 'organizations', 'departments', 'subdepartment', 'status');
-}else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+}else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
     $thisfilters = array('learningplan','departments', 'subdepartment', 'status');
-}else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+}else if(has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
     $thisfilters = array('subdepartment', 'learningplan',  'status');
 }else {
     $thisfilters = array('learningplan', 'status');

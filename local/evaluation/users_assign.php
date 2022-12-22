@@ -47,12 +47,6 @@ $evaluation = $DB->get_record('local_evaluations', array('id'=>$evaluationid));
 $context = (new \local_evaluation\lib\accesslib())::get_module_context();
 if (empty($evaluation)) {
   print_error(get_string('feedback_not_found', 'local_evaluation'));
-} elseif (!is_siteadmin()) {
-	if ( !$DB->record_exists_sql(" Select id from {user} where id=? AND  open_costcenterid IN (?) ", [$USER->id, $evaluation->costcenterid]) ) {
-    print_error(get_string('dont_have_permission', 'local_evaluation'));
-	}else if($USER->open_departmentid != $evaluation->departmentid && !has_capability('local/costcenter:manage_ownorganization', $context)){
-		print_error(get_string('dont_have_permission', 'local_evaluation'));
-  }
 }
 if (!has_capability('local/evaluation:enroll_users', $context) ) {
     print_error(get_string('dont_have_permission', 'local_evaluation'));

@@ -30,25 +30,37 @@ namespace local_evaluation\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($evaluationid = null){
+    public static function evaluation_costcenterpath($userid = null) {
 
-        global $DB;
+        global $DB,$USER;
 
-        $costcenterid=null;
+        $endpathvalue=null;
 
-        if($evaluationid > 0){
+        if($userid != null && $userid > 0){
 
-            $classroomcostcenter=$DB->get_field('local_evaluations','costcenterid',  array('id'=>$evaluationid));
+            $costcenterpath=$DB->get_field('local_evaluations','open_costcenterpath',  array('id'=> $userid));
 
-            if($classroomcostcenter > 0){
+            if(!empty($costcenterpath)){
 
-                $costcenterid=$classroomcostcenter;
+                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+
+                $endpathvalue=end($extractcostcenterpath);
 
             }
-
         }
 
-        return parent::get_module_context($costcenterid);
+        return $endpathvalue;
+
+    }
+    public static function get_module_context($userid = null){
+        global $USER;
+
+        return parent::get_module_context(self::evaluation_costcenterpath($userid));
+
+    }
+    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = NULL){
+
+        return parent::get_costcenter_path_field_concatsql($columnname, self::evaluation_costcenterpath($userid));
 
     }
 }

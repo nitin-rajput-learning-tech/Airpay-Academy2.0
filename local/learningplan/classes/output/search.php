@@ -21,6 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace local_learningplan\output;
+require_once($CFG->dirroot.'/local/learningplan/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 use renderable;
@@ -136,17 +137,7 @@ class search implements renderable{
                         ELSE 0 END
                 ELSE 1 END ";
 
-            if(!empty($USER->open_grade) && $USER->open_grade != ""){
-                $gradelike = "'%,$USER->open_grade,%'";
-            }else{
-                $gradelike = "''";
-            }
-            $params[]= " 1 = CASE WHEN llp.open_grade IS NOT NULL
-                THEN
-                    CASE WHEN CONCAT(',',llp.open_grade,',') LIKE {$gradelike}
-                        THEN 1
-                        ELSE 0 END
-                ELSE 1 END ";
+
 
 
             if(!is_siteadmin()){
@@ -166,7 +157,7 @@ class search implements renderable{
             }else{
                 $finalparams= '1=1' ;
             }
-            $wheresql .= " AND ($finalparams OR (llp.open_hrmsrole IS NULL AND llp.open_designation IS NULL AND llp.open_location IS NULL AND llp.open_grade IS NULL AND llp.open_group IS NULL AND llp.department='-1' ) )";
+            $wheresql .= " AND ($finalparams OR (llp.open_hrmsrole IS NULL AND llp.open_designation IS NULL AND llp.open_location IS NULL AND llp.open_group IS NULL AND llp.department='-1' ) )";
 
 
             if(searchlib::$enrolltype && searchlib::$enrolltype>0 ){
@@ -201,7 +192,7 @@ class search implements renderable{
         }
     }
 
-    public function export_for_template($perpage,$startlimit,$tagitems, $selectedvendors){
+    public function export_for_template($perpage,$startlimit,$selectedfilter = array()){
         global $DB, $USER, $CFG, $PAGE,$OUTPUT;
         $context = \local_costcenter\lib\accesslib::get_module_context();
         $certificationlist_ar =$this->get_learningpathlist_query($perpage, $startlimit, true, true,$tagitems, $selectedvendors);
@@ -238,7 +229,7 @@ class search implements renderable{
 
             //-------bands----------------------------
             $list->bands = searchlib::trim_theband($list->bands);
-            $list->type = LEARNINGPATH;
+            $list->type = learningplan;
             $list->enroll = $this->get_enrollflag($list->id);
             $userenrolstatus = $DB->record_exists('local_learningplan_user', array('planid' => $list->id, 'userid' => $USER->id));
             $return=false;

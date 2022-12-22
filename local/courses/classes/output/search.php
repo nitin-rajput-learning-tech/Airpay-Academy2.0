@@ -21,6 +21,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace local_courses\output;
+require_once($CFG->dirroot.'/local/courses/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 use renderable;
@@ -108,25 +109,6 @@ class search implements renderable{
                 where e.courseid=c.id and ue.userid=$USER->id) ";
         }
 
-      if(!is_siteadmin() || !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-                $wheresql .= " AND (c.open_subdepartment = 0 OR c.open_subdepartment IS NULL OR (c.open_subdepartment = $USER->open_subdepartment) ) ";
-            }else{
-                $wheresql .= " AND (c.open_subdepartment = 0 OR c.open_subdepartment IS NULL ) ";
-            }
-
-            // if(!empty($USER->open_grade) && $USER->open_grade != ""){
-            //     $wheresql .= " AND (c.open_grade = 0 OR c.open_grade IS NULL OR c.open_grade = -1 OR (concat(',',c.open_grade,',') LIKE '%,$USER->open_grade,%' ) )";
-            // }else{
-            //     $wheresql .= " AND (c.open_grade = 0 OR c.open_grade IS NULL OR c.open_grade = -1 ) ";
-            // }
-
-            if(!empty($USER->open_ouname) && $USER->open_ouname != ""){
-                $wheresql .= " AND (c.open_ouname = 0 OR c.open_ouname IS NULL OR c.open_ouname = -1 OR (concat(',',c.open_ouname,',') LIKE '%,$USER->open_ouname,%' ) )";
-            }else{
-                $wheresql .= " AND (c.open_ouname = 0 OR c.open_ouname IS NULL OR c.open_ouname = -1 ) ";
-            }
-       }
 
         $wheresql .= " AND c.visible = 1 ";
 
@@ -194,7 +176,7 @@ class search implements renderable{
 
 
 
-   public function export_for_template($perpage,$startlimit,$tagitems = array(), $selectedvendors = array(), $selectedlformats){
+   public function export_for_template($perpage,$startlimit,$selectedfilter = array()){
         global $DB, $USER,$CFG, $OUTPUT,$PAGE;
         $context = \local_costcenter\lib\accesslib::get_module_context();
 
@@ -391,6 +373,31 @@ class search implements renderable{
         }
         return $selfenrolbutton;
     } // end of get_enrollbutton function
+    private function get_coursecompletiondays_format($duration){
+
+        if(!empty($duration)){
+            if($duration >= 60 ){
+                $hours = floor($duration / 60);
+                $minutes = ($duration % 60);
+                $hformat = $hours > 1 ? $hformat = '%01shrs': $hformat = '%01shr';
+                if($minutes == NULL){
+                    $mformat = '';
+                }else{
+                    $mformat = $minutes > 1 ? $mformat = '%01smins': $mformat = '%01smin';
+                }
+                $format = $hformat . ' ' . $mformat;
+                $coursecompletiondays = sprintf($format, $hours, $minutes);
+            }else{
+                $minutes = $duration;
+                $coursecompletiondays = $duration > 1 ? $duration.'mins' : $duration.'min';
+            }
+        }else{
+            $coursecompletiondays = 'N/A';
+        }
+
+        return $coursecompletiondays;
+
+    } // end of get_coursecompletiondays_format function
 } // end of class
 
 
