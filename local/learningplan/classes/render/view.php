@@ -1141,7 +1141,7 @@ class view extends plugin_renderer_base {
 
 		$sql.=" FROM {user} u WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 "; 
 
-    	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+    	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 		if($lastitem!=0){
            $sql.=" AND u.id > $lastitem";
         }
@@ -1249,7 +1249,7 @@ class view extends plugin_renderer_base {
         //          }
         //  }
 
-    	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+    	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $sql .= "";
         } else  {

@@ -38,7 +38,7 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
         if($userid != null && $userid > 0){
 
-            $costcenterpath=$DB->get_field('local_evaluations','open_costcenterpath',  array('id'=> $userid));
+            $costcenterpath=$DB->get_field('local_evaluations','open_path',  array('id'=> $userid));
 
             if(!empty($costcenterpath)){
 

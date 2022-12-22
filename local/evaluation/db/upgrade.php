@@ -153,7 +153,7 @@ function xmldb_local_evaluation_upgrade($oldversion) {
     if($oldversion < 2022101800.02){
     $table1 = new xmldb_table('local_evaluations');
     $table2 = new xmldb_table('local_evaluation_template');
-    $field1 = new xmldb_field('open_costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+    $field1 = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
     if (!$dbman->field_exists($table1, $field1)) {
         $dbman->add_field($table1, $field1);
     }

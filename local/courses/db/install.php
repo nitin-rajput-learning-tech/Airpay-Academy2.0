@@ -266,7 +266,7 @@ function xmldb_local_courses_install(){
             $dbman->add_field($table, $field);
            }   
         }
-        $field1 = new xmldb_field('open_costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $field1 = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
         if (!$dbman->field_exists($table, $field1)) {
             $dbman->add_field($table, $field1);
         }

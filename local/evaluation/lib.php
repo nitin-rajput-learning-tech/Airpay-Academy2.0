@@ -115,7 +115,7 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
 		$mform->data_preprocessing($default_values);
 	}
     $customdata = array('id' => $data->id,
-        'open_costcenterpath' => $data->open_costcenterpath);
+        'open_path' => $data->open_path);
         local_costcenter_set_costcenter_path($customdata);
         local_users_set_userprofile_datafields($customdata,$data);
         $mform = new \evaluation_form(null, $customdata,
@@ -324,7 +324,7 @@ function check_evaluationdeletion($evalautionid){
  */
 function dep_sql($context) {
     global $DB, $USER;
-    $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     if ( has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
         $costcenters = $DB->get_records_sql_menu('select fullname,id from {local_costcenter} where parentid = 0 ');
         $my_costcenters = implode(',', $costcenters);
@@ -598,7 +598,7 @@ function evaluation_get_incomplete_users($evaluation,
     global $DB;
 
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($evaluation);
     //first get all user who can complete this evaluation
     $cap = 'local/evaluation:complete';
@@ -672,9 +672,9 @@ function evaluation_create_template($courseid, $name, $ispublic = 0, $data) {
 
     $evaluation = $DB->get_record('local_evaluations', array('id'=>$data->id));
     if ($evaluation->instance == 0) {
-        $templ->open_costcenterpath = $evaluation->open_costcenterpath;
+        $templ->open_path = $evaluation->open_path;
     } else {
-        $templ->open_costcenterpath = $USER->open_costcenterpath;
+        $templ->open_path = $USER->open_path;
     }
     $templid = $DB->insert_record('local_evaluation_template', $templ);
     return $DB->get_record('local_evaluation_template', array('id'=>$templid));
@@ -2353,7 +2353,7 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
 
     global $DB, $USER;
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $evaluation = $DB->get_record('local_evaluations', array('id' => $evaluationid));
     $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($evaluation);
 
@@ -2874,7 +2874,7 @@ function local_evaluation_output_fragment_addquestions_or_enrol($args) {
 function local_evaluation_output_fragment_enrolledusers($args) {
     global $CFG, $DB, $OUTPUT;
     $record = (object) $args;
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     if ($record->type == 1) {
 
         $sql ="SELECT u.id as userid,u.firstname,u.lastname,u.email, f.id as evaluationid, fu.timecreated

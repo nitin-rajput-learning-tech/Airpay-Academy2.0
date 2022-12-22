@@ -56,7 +56,7 @@ class learningplan extends moodleform {
 		$sub_sub_dept = $this->_customdata['sub_sub_department'];
 		$editoroptions = $this->customdata['editoroptions'];
 		$form_status = $this->_customdata['form_status'];
-		$open_costcenterpath = $this->_customdata['open_path'];
+		$open_path = $this->_customdata['open_path'];
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 		
 		$mform->addElement('hidden', 'id', $id);

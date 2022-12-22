@@ -54,14 +54,14 @@ class local_users_renderer extends plugin_renderer_base {
         $sql3 = "SELECT cc.fullname, u.open_employeeid, u.open_costcenterid,
                     u.open_designation, u.open_location,
                     u.open_supervisorid, u.open_group,
-                    u.department, u.open_subdepartment, u.open_costcenterpath, u.open_departmentid
+                    u.department, u.open_subdepartment, u.open_path, u.open_departmentid
                      FROM {local_costcenter} cc, {user} u
                     WHERE u.id=:id AND u.open_costcenterid=cc.id";
         $userOrg = $DB->get_record_sql($sql3, array('id' => $id));
         $usercostcenter = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_costcenterid));
         $userdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_departmentid));
         $usersubdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_subdepartment));
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userOrg->open_costcenterpath);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userOrg->open_path);
         $usercu = $DB->get_field('local_costcenter', 'fullname', array('id' => $cu));
         $userterritory = $DB->get_field('local_costcenter', 'fullname', array('id' => $territory));
 

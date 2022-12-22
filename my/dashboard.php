@@ -43,7 +43,7 @@ $context = (new \local_users\lib\accesslib())::get_module_context();
 
 $categoryid = $DB->get_field('local_costcenter', 'category', array('id' => $orgid));
 
-$PAGE->set_category_by_id($context->instanceid);
+$PAGE->set_category_by_id($categoryid);
 $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid)));
 
 $PAGE->set_pagelayout('mydashboard');

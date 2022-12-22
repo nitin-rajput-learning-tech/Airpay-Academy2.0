@@ -62,7 +62,7 @@ function local_users_output_fragment_new_create_user($args) {
         useredit_load_preferences($data);
         $customdata = array('editoroptions' => $editoroptions,
             'form_status' => $args->form_status, 'id' => $data->id,
-            'open_positionid' => $data->open_positionid, 'open_domainid' => $data->open_domainid, 'open_costcenterpath' => $data->open_costcenterpath);
+            'open_positionid' => $data->open_positionid, 'open_domainid' => $data->open_domainid, 'open_path' => $data->open_path);
         local_costcenter_set_costcenter_path($customdata);
         local_users_set_userprofile_datafields($customdata,$data);
         $mform = new local_users\forms\create_user(null, $customdata,
@@ -113,7 +113,7 @@ function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpa
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $userslist = array();
     $data = data_submitted();
@@ -178,7 +178,7 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $userslist = array();
     $data = data_submitted();
@@ -237,7 +237,7 @@ function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $userslist = array();
     $data = data_submitted();
@@ -289,7 +289,7 @@ function designation_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
@@ -314,7 +314,7 @@ function location_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
@@ -341,7 +341,7 @@ function hrmsrole_filter($mform) {
     global $DB, $USER;
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
@@ -369,7 +369,7 @@ function band_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
@@ -392,7 +392,7 @@ function username_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $userslistparams = array('adminuserid' => 2, 'deleted' => 0, 'suspended' => 0, 'userid' => $USER->id);
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
@@ -417,7 +417,7 @@ function custom_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $filterv = $DB->get_field('local_filters', 'filters', array('plugins' => 'users'));
     $filterv = explode(',', $filterv);
@@ -455,10 +455,10 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
     if ($mform->modulecostcenterpath == 0 && (is_siteadmin()||has_capability('local/costcenter:manage_multiorganizations', $context))) {
         $main_sql = "";
     } else  {
-        $costcenterpath = $mform->modulecostcenterpath ? $mform->modulecostcenterpath : $USER->open_costcenterpath;
+        $costcenterpath = $mform->modulecostcenterpath ? $mform->modulecostcenterpath : $USER->open_path;
 
-        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted  AND u.open_costcenterpath = :open_costcenterpath ";
-        $params['open_costcenterpath'] = $costcenterpath;
+        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted  AND u.open_path = :open_path ";
+        $params['open_path'] = $costcenterpath;
     }
     $dbman = $DB->get_manager();
     if (in_array('group', $elementlist)) {
@@ -470,8 +470,8 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
             }
         } else {
             $groupslist += $DB->get_records_sql_menu("SELECT c.id, c.name FROM {local_groups} g, {cohort} c
-              WHERE c.visible = :visible AND c.id = g.cohortid AND g.open_costcenterpath = :open_costcenterpath ",
-               array('open_costcenterpath' => $costcenterpath, 'visible' => 1));
+              WHERE c.visible = :visible AND c.id = g.cohortid AND g.open_path = :open_path ",
+               array('open_path' => $costcenterpath, 'visible' => 1));
         }
         $selectgroup = $mform->addElement('autocomplete', 'open_group', get_string('open_group', 'local_users')
             , $groupslist);
@@ -562,7 +562,7 @@ function local_users_quicklink_node() {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 
     $local_users = '';
     if (is_siteadmin() || has_capability('local/users:view', $categorycontext)) {
@@ -714,7 +714,7 @@ function manage_users_count($stable, $filterdata) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
      $statustype = $stable->status;
      $totalcostcentercount = $stable->costcenterid;

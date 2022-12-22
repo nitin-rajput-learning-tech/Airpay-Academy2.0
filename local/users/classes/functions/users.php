@@ -70,7 +70,7 @@ class users {
             $userdata->id = $data;
             set_user_preference('auth_forcepasswordchange', $userdata->preference_auth_forcepasswordchange, $userdata);
 
-            if(isset($userdata->open_costcenterpath)){
+            if(isset($userdata->open_path)){
                 $this->insert_update_userdata($userdata);
             }
         }
@@ -117,7 +117,7 @@ class users {
                 \core\session\manager::kill_user_sessions($userdata->id);
             }
         }
-        if(isset($userdata->open_costcenterpath)){
+        if(isset($userdata->open_path)){
             $this->insert_update_userdata($userdata);
         }
         if ($userdata) {
@@ -177,7 +177,7 @@ class users {
         global $DB, $USER;
         $record_id = $DB->get_field('local_userdata', 'id', array('userid' => $userdata->id));
         $record = new \StdClass();
-        $record->costcenterpath = $userdata->open_costcenterpath;
+        $record->costcenterpath = $userdata->open_path;
         // $record->categorypath = ;
         if($record_id){
             $record->id = $record_id;

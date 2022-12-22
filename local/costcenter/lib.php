@@ -842,7 +842,7 @@ function local_costcenter_get_costcenter_path(&$data){
     if($value > 0){
         // finding the path mapped for the last element in the form to meet the data requirements for all head roles.
         $path = $DB->get_field('local_costcenter', 'path', array('id' => $value));
-        $data->open_costcenterpath = $path;
+        $data->open_path = $path;
     }
 }
 function local_costcenter_set_costcenter_path(&$data){
@@ -850,8 +850,8 @@ function local_costcenter_set_costcenter_path(&$data){
     $fields = local_costcenter_get_fields();
     $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
     
-    if(isset($data['open_costcenterpath']) && (strpos($data['open_costcenterpath'], $contextinfo[0]['costcenterpath']) === 0 || !isset($contextinfo[0]['costcenterpath']))){
-        $recordedpathids = explode('/', $data['open_costcenterpath']);
+    if(isset($data['open_path']) && (strpos($data['open_path'], $contextinfo[0]['costcenterpath']) === 0 || !isset($contextinfo[0]['costcenterpath']))){
+        $recordedpathids = explode('/', $data['open_path']);
         foreach($fields as $levelid => $field){
             if(isset($recordedpathids[$levelid]) && $recordedpathids[$levelid] > 0){
                 $data[$field] = $recordedpathids[$levelid];

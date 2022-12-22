@@ -77,7 +77,7 @@ class search implements renderable{
             }
             if(!empty($paths)){
                 foreach($paths AS $path){
-                    $pathsql[] = " c.open_costcenterpath LIKE {$path} ";
+                    $pathsql[] = " c.open_path LIKE {$path} ";
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }

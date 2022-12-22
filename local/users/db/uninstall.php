@@ -21,7 +21,7 @@ function xmldb_local_users_uninstall() {
     $table = new xmldb_table('user');
     if ($dbman->table_exists($table)) {
 
-        $opencostcenterpathfield = new xmldb_field('open_costcenterpath');
+        $opencostcenterpathfield = new xmldb_field('open_path');
         if ($dbman->field_exists($table, $opencostcenterpathfield)) {
             $dbman->drop_field($table, $opencostcenterpathfield);
         }

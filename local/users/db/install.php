@@ -6,7 +6,7 @@ function xmldb_local_users_install(){
     $table = new xmldb_table('user');
     if ($dbman->table_exists($table)) {
 
-          $field1 = new xmldb_field('open_costcenterpath');
+          $field1 = new xmldb_field('open_path');
           $field1->set_attributes(XMLDB_TYPE_CHAR, '255', null, null, null, null);
           $dbman->add_field($table, $field1);
 

@@ -47,7 +47,7 @@ class userlibfunctions {
         if($user){
             if(!is_object($user)){
                 $user = \core_user::get_user($user);
-                $userpath = array_filter(explode('/',$user->open_costcenterpath));
+                $userpath = array_filter(explode('/',$user->open_path));
                 $depth = $USER->access['currentroleinfo']['depth'];
                 if(is_siteadmin()){
                     $depth = 1;//getting first level id value
@@ -55,7 +55,7 @@ class userlibfunctions {
                 $pathlike = '/'.implode('/', array_slice($userpath, 0, $depth)).'%';
             }
             $sql = "SELECT u.id, concat(u.firstname,' ',u.lastname) as username from {user} as u where u.suspended
-    	         = :suspended AND u.deleted = :deleted AND u.open_costcenterpath LIKE '{$pathlike}'  AND u.id > 2 ";
+    	         = :suspended AND u.deleted = :deleted AND u.open_path LIKE '{$pathlike}'  AND u.id > 2 ";
             if ($user) {
                 $sql .= " AND u.id != :userid";
             }
