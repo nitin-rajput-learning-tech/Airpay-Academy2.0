@@ -639,6 +639,62 @@ class local_costcenter_external extends external_api {
                         $return = array_values(json_decode(json_encode($coursetypes), true));
                     }
                 break;
+                case 'custom_category_selector':
+                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) ||
+                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0) ) {
+                        $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
+                        $fields = array("fullname");
+                        $likesql = array();
+                        $i = 0;
+                        if(!empty($query)){
+                            foreach ($fields as $field) {
+                                $i++;
+                                $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                                $sqlparams["queryparam$i"] = "%$query%";
+                            }
+                            $sqlfields = implode(" OR ", $likesql);
+                            $concatsql .= " AND ($sqlfields) ";
+                        }
+                        $fields      = 'SELECT id, fullname';
+                        $accountssql = " FROM {local_custom_category}
+                                         WHERE 1=1 $concatsql AND costcenterid = :parentid ";
+
+                        $customcat = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+
+                        if($formoptions->enableallfield){
+                            $customcat = $allobjectarr + $customcat;
+                        }
+                        if ($customcat) {
+                            $totalaccounts = count($customcat);
+                            $moreaccounts = $totalaccounts > $perpage;
+
+                            if ($moreaccounts) {
+                                // We need to discard the last record.
+                                array_pop($customcat);
+                            }
+                        }
+                        foreach($customcat AS $key => $categorywise){
+                            $explodepaths = explode('/',$categorywise);
+
+                            $countcat = count($explodepaths);
+                            if($countcat > 0){
+                                $catpathnames = array();
+                                for ($i=0; $i < $countcat; $i++) {
+                                    if($i != 0){
+                                        $catpathnames[$i] = $DB->get_field('local_custom_category','fullname',array('id' => $explodepaths[$i]));
+                                    }
+                                }
+                                if(count($catpathnames) > 1){
+                                    $return[] = array('id' => $key, 'fullname' => implode(' / ',$catpathnames));
+                                }else{
+                                    $return[] = array('id' => $key, 'fullname' => $catpathnames[1]);;
+                                }
+                            }
+                        }
+
+                        $return = array_values(json_decode(json_encode($customcat), true));
+                    }
+                break;
                 case 'costcenter_element_selector':
                     $fields = array("fullname");
                     if($formoptions->depth < $USER->access['currentroleinfo']['depth']){

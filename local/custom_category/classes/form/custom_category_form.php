@@ -61,7 +61,19 @@ class custom_category_form extends moodleform {
         }
         $parents[0] = 'Top';
         asort($parents);
-        $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents);
+
+        $coursetype = array(
+            'ajax' => 'local_costcenter/form-options-selector',
+            'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
+            'data-action' => 'custom_category_selector',
+            'data-options' => json_encode(array('id' => $identifiedtype)),
+            'class' => 'idparentselect',
+            'data-parentclass' => 'open_costcenterid_select',
+            'data-class' => 'idparentselect',
+            'multiple' => false,
+            );
+
+        $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents, $coursetype);
         $mform->setType('parentid', PARAM_INT);
 
         $mform->addElement('text', 'name', get_string('name', 'local_custom_category'));
@@ -71,7 +83,6 @@ class custom_category_form extends moodleform {
         $mform->addElement('text', 'shortname', get_string('shortname', 'local_custom_category'), array());
         $mform->setType('shortname', PARAM_RAW);
         $mform->addRule('shortname', null, 'required', null, 'client');
-
         $mform->disable_form_change_checker();
     }
 

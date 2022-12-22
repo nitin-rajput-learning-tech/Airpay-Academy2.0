@@ -98,7 +98,7 @@
                             $('#id_identifiedtype').html('');
                             $('.identifiedasselect .form-autocomplete-selection').html(course_typeselect);
                         }
-                        
+
                     });
                 }else if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector'){
                     $('#id_open_departmentid').on('change', function(){
@@ -143,7 +143,7 @@
                     });
                 }
             });
-            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector' || action === 'costcenter_element_selector'){
+            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector' || action === 'costcenter_element_selector' || action === 'custom_category_selector'){
                 var parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
                 if(!(parentid == undefined && formoptions.parentid > 0)){
                     formoptions.parentid = parentid;
