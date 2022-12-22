@@ -108,9 +108,11 @@ class local_evaluation_external extends external_api {
             }
             if ($validateddata->id > 0) {
                 local_costcenter_get_costcenter_path($validateddata);
+                local_users_get_userprofile_datafields($validateddata,$data);                
                 $evaluationid = evaluation_update_instance($validateddata);
             } else{
                 local_costcenter_get_costcenter_path($validateddata);
+                local_users_get_userprofile_datafields($validateddata,$data);
                 $validateddata->instance = $instance;
                 $validateddata->plugin = $plugin;
                 $validateddata->evaluationtype = ($evaluationtype) ? $evaluationtype: 0;

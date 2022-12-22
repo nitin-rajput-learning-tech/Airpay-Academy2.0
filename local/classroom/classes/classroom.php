@@ -565,9 +565,9 @@ class classroom {
             $params['search'] = '%' . $search . '%';
         }
 
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
-        $condition .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_costcenterpath');
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();        
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+            $condition .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id
@@ -602,7 +602,7 @@ class classroom {
        $sql = " FROM {local_classroom} AS c
                WHERE 1 = 1 ";
         
-               $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+               $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         //added by sarath for ticket 2751
         if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
             $sql .= " AND c.status != 2";
@@ -887,7 +887,7 @@ class classroom {
         }
         
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $condition = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+            $condition = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
              $statusarrays         = implode(',', $statusarray);
             $concatsql .= " AND c.status in ($statusarrays) ";
             $concatsql .= $condition;
@@ -1192,16 +1192,8 @@ class classroom {
                        WHERE cu.classroomid = :classroomid $whereconditions";
                        $params['classroomid'] = $classroomid;
 
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $condition            = " AND (u.open_costcenterid = :costcenter)";
-            $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                $condition .= " AND (u.open_departmentid = :department )";
-                $params['department'] = $USER->open_departmentid;
-            }
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }
@@ -1716,18 +1708,8 @@ class classroom {
             } else {
                 $classroom->open_location = NULL;
             }
-            // if (is_array($classroom->department)) {
-            //     $classroom->department = !empty($classroom->department) ? implode(',', $classroom->department) : -1;
-            // } else {
-            //     $classroom->department = !empty($classroom->department) ? $classroom->department : -1;
-            // }
-            // if (is_array($classroom->subdepartment)) {
-            //     $classroom->subdepartment = !empty($classroom->subdepartment) ? implode(',', $classroom->subdepartment) : -1;
-            // } else {
-            //     $classroom->subdepartment = !empty($classroom->subdepartment) ? $classroom->subdepartment : -1;
-            // }
             local_costcenter_get_costcenter_path($classroom);
-            // print_r($classroom);
+            local_users_get_userprofile_datafields($classroom);
             $DB->update_record('local_classroom', $classroom);
         }
         return $classroom->id;
@@ -1770,6 +1752,24 @@ class classroom {
             $classroomcourse->timecreated = time();
             $classroomcourse->usercreated = $USER->id;
             $classroomcourse->id          = $DB->insert_record('local_classroom_courses', $classroomcourse);
+            $courseobj = $DB->get_record('course', array('id' => $course));
+            $fields = array('customint1'=>$courses->classroomid,'roleid'=>$DB->get_field('role','id',array('shortname' => 'employee')));
+            $params =array('courseid' => $course, 'enrol' => 'classroom','customint1'=>$courses->classroomid);            
+            if ($classroomcourse->id) {
+                $plugin = enrol_get_plugin('classroom');                
+                if (!$DB->record_exists('enrol',$params)) {
+                    // Only add an enrol instance to the course if non-existent                    
+                    $enrolid = $plugin->add_instance($courseobj,$fields);
+                    // $instance = $DB->get_record('enrol', array('id' => $enrolid));
+                }else{                   
+                    $enrolid= $DB->get_field('enrol', 'id', $params);
+                    $arrayfields = array("id"=>$enrolid,"status"=>ENROL_INSTANCE_ENABLED);
+                    $fields =array_merge($fields,$arrayfields);
+                    // $enrolid = $plugin->update_instance($arrayfields,$fields);
+                    $update = $DB->update_record('enrol', $fields);
+                }
+            }
+
             $params                       = array(
                 'context' => (new \local_classroom\lib\accesslib())::get_module_context($courses->classroomid),
                 'objectid' => $classroomcourse->id
@@ -1779,22 +1779,44 @@ class classroom {
             $event->trigger();
             if ($classroomcourse->id) {
                 foreach ($classroomtrainers as $classroomtrainer) {
-                    $this->manage_classroom_course_enrolments($course, $classroomtrainer, 'editingteacher', 'enrol');
+                    $this->manage_classroom_course_enrolments($course, $classroomtrainer, 'editingteacher', 'enrol',$pluginname = 'classroom',$courses->clasroomid);
                 }
                 foreach ($classroomusers as $classroomuser) {
-                    $unenrolclassroomuser = $this->manage_classroom_course_enrolments($course, $classroomuser, 'employee', 'enrol');
+                    $unenrolclassroomuser = $this->manage_classroom_course_enrolments($course, $classroomuser, 'employee', 'enrol',$pluginname = 'classroom',$courses->clasroomid);
                 }
             }
         }
         return true;
     }
-    public function manage_classroom_course_enrolments($cousre, $user, $roleshortname = 'employee', $type = 'enrol', $pluginname = 'classroom') {
+    public function update_enrol_status($course,$classroomid,$status){
         global $DB;
-        $courseexist=$DB->record_exists('enrol', array('courseid' => $cousre, 'enrol' => $pluginname));
+        $params =array('courseid' => $course, 'enrol' => 'classroom','customint1'=>$classroomid,'roleid'=>$DB->get_field('role','id',array('shortname' => 'employee')));
+        $fields = array('customint1'=>$classroomid);
+        $enrolid= $DB->get_field('enrol', 'id', $params);
+        if(!empty($enrolid)){
+            $arrayfields = array("id"=>$enrolid,"status"=>$status);
+            $fields =array_merge($fields,$arrayfields);
+            $update = $DB->update_record('enrol', $fields);
+        }else{
+            $update = false;
+        }        
+        return  $update;
+    }
+    public function manage_classroom_course_enrolments($cousre, $user, $roleshortname = 'employee', $type = 'enrol', $pluginname = 'classroom',$classroomid=null)
+    {
+        global $DB;
+        $params =array(
+            'courseid' => $cousre,
+            'enrol' => $pluginname
+        );
+        if($classroomid !== null){
+            $params['customint1']=$classroomid;
+        }
+        $courseexist = $DB->record_exists('enrol', $params);
 
-        if(!$courseexist){
-            $coursedata = $DB->get_record('course',array('id' => $cousre));
-            $coursedata->open_identifiedas='2';
+        if (!$courseexist) {
+            $coursedata = $DB->get_record('course', array('id' => $cousre));
+            $coursedata->open_identifiedas = '2';
             insert::add_enrol_method_tocourse($coursedata, 2);
         }
 
@@ -1802,10 +1824,8 @@ class classroom {
         $roleid      = $DB->get_field('role', 'id', array(
             'shortname' => $roleshortname
         ));
-        $instance    = $DB->get_record('enrol', array(
-            'courseid' => $cousre,
-            'enrol' => $pluginname
-        ), '*', MUST_EXIST);
+        
+        $instance    = $DB->get_record('enrol',$params , '*', MUST_EXIST);
         if (!empty($instance)) {
             if ($type == 'enrol') {
                 $enrolmethod->enrol_user($instance, $user, $roleid, time());
@@ -1877,7 +1897,7 @@ class classroom {
                 $event  = \local_classroom\event\classroom_publish::create($params);
                 $event->add_record_snapshot('local_classroom', $classroomid);
                 $event->trigger();
-                $this->update_classroom_status($classroomid, CLASSROOM_ACTIVE);
+                $cstatus = $this->update_classroom_status($classroomid, CLASSROOM_ACTIVE);                
                 $classroom = $DB->get_record('local_classroom', array(
                     'id' => $classroomid
                 ));
@@ -1894,8 +1914,8 @@ class classroom {
                 if (!empty($classroomcourses)) {
                     $i = 0;
                     foreach ($classroomcourses as $classroomcourse) {
-                        foreach ($classroomusers as $classroomuser) {
-                            $this->manage_classroom_course_enrolments($classroomcourse, $classroomuser, 'employee', 'enrol');
+                        foreach ($classroomusers as $classroomuser) {                            
+                            $this->manage_classroom_course_enrolments($classroomcourse, $classroomuser, 'employee', 'enrol',$pluginname = 'classroom',$classroomid);
                             if ($i == 0) {
                                 $touser = \core_user::get_user($classroomuser);
                                 // $emaillogs = $class_emaillogs->classroom_emaillogs($type, $dataobj, $classroomuser, $fromuserid);
@@ -1903,6 +1923,9 @@ class classroom {
 
                             }
                         }
+                        if($cstatus){
+                                $this->update_enrol_status($classroomcourse,$classroomid,$status=ENROL_INSTANCE_ENABLED);
+                            }
                         $i++;
                     }
                 } else if (empty($classroomcourses)) {
@@ -1929,7 +1952,7 @@ class classroom {
                 $event  = \local_classroom\event\classroom_cancel::create($params);
                 $event->add_record_snapshot('local_classroom', $classroomid);
                 $event->trigger();
-                $this->update_classroom_status($classroomid, CLASSROOM_CANCEL);
+                $cstatus =$this->update_classroom_status($classroomid, CLASSROOM_CANCEL);                
                 $classroomusers   = $DB->get_records_menu('local_classroom_users', array(
                     'classroomid' => $classroomid
                 ), 'id', 'id, userid');
@@ -1950,6 +1973,9 @@ class classroom {
                                 $touser = \core_user::get_user($classroomuser);
                                 $emaillogs = $classroom_notification->classroom_notification($type, $touser, $USER ,$classroom);
                             }
+                        }
+                        if($cstatus){
+                            $this->update_enrol_status($classroomcourse,$classroomid,$status=ENROL_INSTANCE_DISABLED);
                         }
                         $i++;
                     }
@@ -1981,7 +2007,8 @@ class classroom {
                 $event  = \local_classroom\event\classroom_hold::create($params);
                 $event->add_record_snapshot('local_classroom', $classroomid);
                 $event->trigger();
-                $this->update_classroom_status($classroomid, CLASSROOM_HOLD);
+                $cstatus = $this->update_classroom_status($classroomid, CLASSROOM_HOLD);
+                
                 $classroomusers   = $DB->get_records_menu('local_classroom_users', array(
                     'classroomid' => $classroomid
                 ), 'id', 'id, userid');
@@ -1995,14 +2022,18 @@ class classroom {
                 $classroom = $DB->get_record('local_classroom', array('id' => $classroomid));
                 if (!empty($classroomcourses)) {
                     $i = 0;
+                    
                     foreach ($classroomcourses as $classroomcourse) {
                         foreach ($classroomusers as $classroomuser) {
-                            $this->manage_classroom_course_enrolments($classroomcourse, $classroomuser, 'employee', 'unenrol');
+                            $this->manage_classroom_course_enrolments($classroomcourse, $classroomuser, 'employee', 'unenrol',$pluginname = 'classroom',$classroomid);
                             if ($i == 0 && $localclassroom->status != 0) {
                                 // $emaillogs = $class_emaillogs->classroom_emaillogs($type, $dataobj, $classroomuser, $fromuserid);
                                 $touser = \core_user::get_user($classroomuser);
                                 $emaillogs = $classroom_notification->classroom_notification($type, $touser, $USER ,$classroom);
                             }
+                        }
+                        if($cstatus){
+                            $this->update_enrol_status($classroomcourse,$classroomid,$status=ENROL_INSTANCE_DISABLED);
                         }
                         $i++;
                     }
@@ -2128,16 +2159,8 @@ class classroom {
                 WHERE c.id = :classroomid AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $condition            = " AND (u.open_costcenterid = :costcenter)";
-            $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                $condition .= " AND (u.open_departmentid = :department )";
-                $params['department'] = $USER->open_departmentid;
-            }
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }
@@ -2535,10 +2558,10 @@ class classroom {
             $sql .= " AND u.id > $lastitem";
         }
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+            $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($classroom);
         }
         $sql .= " AND u.id <> $USER->id ";
-
 
         if (!empty($params['email'])) {
 
@@ -2553,27 +2576,6 @@ class classroom {
             list($relatedunamesql, $relatedunameparams) = $DB->get_in_or_equal($unames, SQL_PARAMS_NAMED, 'uname');
             $params = array_merge($params,$relatedunameparams);            
             $sql .= " AND u.id $relatedunamesql";
-        }
-        if (!empty($params['department'])) {
-
-            $departments = explode(',',$params['department']);
-            list($relateddepartmentsql, $relateddepparams) = $DB->get_in_or_equal($departments, SQL_PARAMS_NAMED, 'department');
-            $params = array_merge($params,$relateddepparams);            
-            $sql .= " AND u.open_departmentid $relateddepartmentsql";
-        }
-        if (!empty($params['organization'])) {
-
-            $organizations = explode(',',$params['organization']);
-            list($relatedorgsql, $relatedorgparams) = $DB->get_in_or_equal($organizations, SQL_PARAMS_NAMED, 'organization');
-            $params = array_merge($params,$relatedorgparams);            
-            $sql .= " AND u.open_costcenterid {$relatedorgsql} ";
-        }
-        if (!empty($params['location'])) {
-
-            $locations = explode(',',$params['location']);
-            list($locationsql, $locationparams) = $DB->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'location');
-            $params = array_merge($params,$locationparams);            
-            $sql .= " AND u.open_location {$locationsql} ";
         }
 
         if (!empty($params['hrmsrole'])) {
@@ -2947,16 +2949,8 @@ class classroom {
                 WHERE c.id = :classroomid AND cu.enrolstatus=0 AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $condition            = " AND (u.open_costcenterid = :costcenter)";
-            $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                $condition .= " AND (u.open_departmentid = :department )";
-                $params['department'] = $USER->open_departmentid;
-            }
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }

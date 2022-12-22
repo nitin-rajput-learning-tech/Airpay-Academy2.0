@@ -1266,7 +1266,7 @@ class local_classroom_external extends external_api {
             $queryparams = array();
             $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($classroomid);            
             if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-                $concatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_costcenterpath');
+                $concatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
            }
            if($query){
                 $concatsql .=" AND c.fullname LIKE '%$query%'";

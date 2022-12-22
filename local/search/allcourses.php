@@ -52,6 +52,7 @@ $PAGE->requires->js_call_amd('local_search/courseinfo', 'load', array());
 $renderer = $PAGE->get_renderer('local_search');
 
 local_search_include_search_js();
+$plugininfo = local_search_get_enabled_searchplugin_info();
 
 
 use local_search\output\searchlib;
@@ -71,7 +72,7 @@ $return = array();
 $return["loader"] = $CFG->wwwroot.'/local/ajax-loader.gif';
 
 $renderer = $PAGE->get_renderer('local_search');
-echo "<div ng-app = 'catalog' class='' id='allcourses_section'>
+$content = "<div ng-app = 'catalog' class='' id='allcourses_section'>
     <div ng-controller = 'courseController' class='row'>".
         $OUTPUT->render_from_template('local_search/filters', $return).
    "<div class='col-md-9 col-lg-9 col-xl-10 col-sm-12 content_section'>
@@ -85,21 +86,17 @@ echo "<div ng-app = 'catalog' class='' id='allcourses_section'>
                             </div>
 
                             <div ng-if=\"numberofrecords > 0\" class=' clearfix row'>
-
                                 <div dir-paginate='record in courseinfo | filter:q | itemsPerPage: 15' total-items=numberofrecords class='col-md-6 col-sm-6 col-lg-4 col-12  catcourses_list active'>
                                         <div ng-if=\"record.id >=1\" class='card coursecard'>
-                                            <div ng-if=\" tab == 6\">
-                                                <div ng-if='record.type == 1'>".$OUTPUT->render_from_template('local_search/elearning', $return)."
-                                                </div>
-                                                <div ng-if='record.type == 2'>
-                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/classroom', $return)."
+                                            <div ng-if=\" tab == 6\">";
+                                        foreach($plugininfo AS $plugindata){
+                                            $content .= "<div ng-if='record.type == ".$plugindata['type']."'>
+                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template($plugindata['templatename'], $return)."
                                                     </div>
-                                                </div>
-                                                <div ng-if='record.type == 3'>
-                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/learningplan', $return)."
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                </div>";
+                                        }
+
+                                        $content .= "</div>
                                         </div>
                                     </div>
                                 </div>
@@ -118,5 +115,17 @@ echo "<div ng-app = 'catalog' class='' id='allcourses_section'>
 
     </div>
 </div>";
+echo $content;
+
+// <div ng-if='record.type == 1'>".$OUTPUT->render_from_template('local_search/elearning', $return)."
+//                                                 </div>
+//                                                 <div ng-if='record.type == 2'>
+//                                                     <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/classroom', $return)."
+//                                                     </div>
+//                                                 </div>
+//                                                 <div ng-if='record.type == 3'>
+//                                                     <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template('local_search/learningplan', $return)."
+//                                                     </div>
+//                                                 </div>
 
 echo $OUTPUT->footer();

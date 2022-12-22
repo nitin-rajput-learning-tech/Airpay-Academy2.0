@@ -50,12 +50,9 @@ $deleteitem = optional_param('deleteitem', false, PARAM_INT);
 $url = new moodle_url('/local/evaluation/eval_view.php', array('id'=>$id, 'do_show'=>$do_show));
 
 $PAGE->set_pagelayout('standard');
-$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
+$context = (new \local_evaluation\lib\accesslib())::get_module_context();
 require_login();
 $PAGE->set_context($context);
-if (!( is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$context) OR has_capability('local/costcenter:manage_ownorganization',$context) OR has_capability('local/costcenter:manage_owndepartments',$context) )) {
-    redirect($CFG->wwwroot.'/local/evaluation/complete.php?id='.$id.'');
-}
 if (!has_capability('local/evaluation:edititems', $context) OR !has_capability('local/evaluation:createpublictemplate', $context) ) {
     print_error(get_string('no_permission_to_view_this_page', 'local_evaluation')); 
 }
@@ -72,8 +69,7 @@ if ($evaluation->plugin === "classroom"){
         print_error(get_string('classroom_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/classroom:manageclassroom', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
-        && (!has_capability('local/classroom:manage_multiorganizations', (new \local_evaluation\lib\accesslib())::get_module_context())
-            && !has_capability('local/costcenter:manage_multiorganizations', (new \local_evaluation\lib\accesslib())::get_module_context())))) {
+    )) {
             if($classroom->costcenter!=$USER->open_costcenterid){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
@@ -85,8 +81,7 @@ if ($evaluation->plugin === "classroom"){
         print_error(get_string('program_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/program:manageprogram', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
-        && (!has_capability('local/program:manage_multiorganizations', (new \local_evaluation\lib\accesslib())::get_module_context())
-            && !has_capability('local/costcenter:manage_multiorganizations', (new \local_evaluation\lib\accesslib())::get_module_context())))) {
+        )) {
             if($program->costcenter!=$USER->open_costcenterid){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }

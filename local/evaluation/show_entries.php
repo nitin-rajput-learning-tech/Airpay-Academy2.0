@@ -60,18 +60,9 @@ if ($evaluation->plugin === "classroom"){
     if (empty($classroom)) {
         print_error(get_string('classroom_not_found', 'local_evaluation'));
     }
-    if ((has_capability('local/classroom:manageclassroom', $context)) && (!is_siteadmin()
-        && (!has_capability('local/classroom:manage_multiorganizations', $context)
-            && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+    if ((has_capability('local/classroom:manageclassroom', $context))) {
             if($classroom->costcenter!=$USER->open_costcenterid){
              print_error(get_string('no_permissions', 'local_evaluation'));
-            }
-
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-             || has_capability('local/costcenter:manage_owndepartments', $context))) {
-                if($classroom->department!=$USER->open_departmentid){
-                    print_error(get_string('no_permissions', 'local_evaluation'));
-                }
             }
     }
 }elseif ($evaluation->plugin === "program"){
@@ -80,17 +71,9 @@ if ($evaluation->plugin === "classroom"){
         print_error(get_string('program_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/program:manageprogram', $context)) && (!is_siteadmin()
-        && (!has_capability('local/program:manage_multiorganizations', $context)
-            && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+    )) {
             if($program->costcenter!=$USER->open_costcenterid){
              print_error(get_string('no_permissions', 'local_evaluation'));
-            }
-
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-             || has_capability('local/costcenter:manage_owndepartments', $context))) {
-                if($program->department!=$USER->open_departmentid){
-                    print_error(get_string('no_permissions', 'local_evaluation'));
-                }
             }
     }
 }elseif ($evaluation->plugin === "certification"){
@@ -98,18 +81,9 @@ if ($evaluation->plugin === "classroom"){
     if (empty($certification)) {
         print_error(get_string('certification_not_found', 'local_evaluation'));
     }
-    if ((has_capability('local/certification:managecertification', $context)) && (!is_siteadmin()
-        && (!has_capability('local/certification:manage_multiorganizations', $context)
-            && !has_capability('local/costcenter:manage_multiorganizations', $context)))) {
+    if ((has_capability('local/certification:managecertification', $context))) {
             if($certification->costcenter!=$USER->open_costcenterid){
              print_error(get_string('no_permissions', 'local_evaluation'));
-            }
-
-            if ((has_capability('local/classroom:manage_owndepartments', $context)
-             || has_capability('local/costcenter:manage_owndepartments', $context))) {
-                if($certification->department!=$USER->open_departmentid){
-                    print_error(get_string('no_permissions', 'local_evaluation'));
-                }
             }
     }
 }else{

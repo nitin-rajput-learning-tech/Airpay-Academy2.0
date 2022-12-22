@@ -53,13 +53,30 @@ class local_evaluation_renderer extends plugin_renderer_base  {
   public function get_evaluation_top_buttons($id, $context, $record){
     global $PAGE;
     $buttons = array();
+    if((is_siteadmin() OR has_capability('local/evaluation:edititems', $context))){
+      if(substr($PAGE->url->out_as_local_url(), 0, strpos($PAGE->url->out_as_local_url(), '?')) == '/local/evaluation/eval_view.php'){
+        if(is_siteadmin() || has_capability('local/evaluation:edititems', $context)){
+            $exporturl = new moodle_url('/local/evaluation/export.php?action=exportfile&id='.$id);
+            $backupimg = html_writer::tag('i', '', array('class' => 'icon fa fa-download'));
+            $buttons[] = html_writer::start_tag('li', array('title' => get_string('export_questions', 'local_evaluation'))).
+                html_writer::link($exporturl, $backupimg, array('class' => 'course_extended_menu_itemlink')).
+                html_writer::end_tag('li');
+            $importurl = new moodle_url('/local/evaluation/import.php', array('id'=>$id));
+            
+            $importimg = html_writer::tag('i', '', array('class' => 'icon fa fa-upload'));
+            $buttons[] = html_writer::start_tag('li', array('title' => get_string('import_questions', 'local_evaluation'))).
+                    html_writer::link($importurl, $importimg, array('class' => 'course_extended_menu_itemlink')).
+                    html_writer::end_tag('li');
+        }
+      }
+    }
     if ( (is_siteadmin() OR has_capability('local/evaluation:edititems', $context) ) AND $record->instance == 0  ) {
          
       $buttons[] =  html_writer::start_tag('li', array('')).
           html_writer::link("javascript:void(0)",$this->pix_icon('t/edit', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')), array('class'=>'course_extended_menu_itemlink', 'data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).
           html_writer::end_tag('li');
 
-      if (has_capability('local/evaluation:viewreports', $context))
+      // if (has_capability('local/evaluation:viewreports', $context))
       // $buttons[] = html_writer::start_tag('li', array('')).
       //     html_writer::link(new moodle_url('/local/evaluation/analysis.php', array('id' => $record->id, 'sesskey' => sesskey())), $this->pix_icon('i/grades', get_string('overview', 'local_evaluation'), 'moodle', array('class' => 'iconsmall ', 'title' => '')),  array('class'=>'course_extended_menu_itemlink')).
       //     html_writer::end_tag('li');
@@ -85,23 +102,6 @@ class local_evaluation_renderer extends plugin_renderer_base  {
            require("local_evaluation/newevaluation").deleteevaluation("' . $record->id . '")
            })(event)')).
        html_writer::end_tag('li');
-      }
-    }
-    if((is_siteadmin() OR has_capability('local/evaluation:edititems', $context))){
-      if(substr($PAGE->url->out_as_local_url(), 0, strpos($PAGE->url->out_as_local_url(), '?')) == '/local/evaluation/eval_view.php'){
-        if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $context) || has_capability('local/evaluation:edititems', $context)){
-            $exporturl = new moodle_url('/local/evaluation/export.php?action=exportfile&id='.$id);
-            $backupimg = html_writer::tag('i', '', array('class' => 'icon fa fa-download'));
-            $buttons[] = html_writer::start_tag('li', array('title' => get_string('export_questions', 'local_evaluation'))).
-                html_writer::link($exporturl, $backupimg, array('class' => 'course_extended_menu_itemlink')).
-                html_writer::end_tag('li');
-            $importurl = new moodle_url('/local/evaluation/import.php', array('id'=>$id));
-            
-            $importimg = html_writer::tag('i', '', array('class' => 'icon fa fa-upload'));
-            $buttons[] = html_writer::start_tag('li', array('title' => get_string('import_questions', 'local_evaluation'))).
-                    html_writer::link($importurl, $importimg, array('class' => 'course_extended_menu_itemlink')).
-                    html_writer::end_tag('li');
-        }
       }
     }
     return $buttons;
@@ -203,7 +203,7 @@ class local_evaluation_renderer extends plugin_renderer_base  {
   function editquestions($id, $context, $evaluationstructure) {
       global $DB, $CFG, $OUTPUT, $USER, $PAGE;
       $output = "";
-      if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $context) || has_capability('local/evaluation:create_update_question', $context)){
+      if(is_siteadmin() || has_capability('local/evaluation:create_update_question', $context)){
           $output .= html_writer::start_tag('li', array('')).
                 html_writer::link('javascript:void(0)', $this->pix_icon('i/addblock', get_string('le_createnewquestion', 'local_evaluation'), 'moodle', array('class' => 'iconsmall  pull-right', 'title' => '', 'target'=>'_blank')), array('data-fg' => 'c', 'data-method' => 'addnew_question', 'data-plugin' => 'local_evaluation', 'class' => 'course_extended_menu_itemlink', 'data-id' => $id)).
                 html_writer::end_tag('li');

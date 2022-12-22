@@ -43,13 +43,12 @@ $evaluation = $DB->get_record("local_evaluations", array("id" => $id), '*', MUST
 if (empty($evaluation)) {
   print_error(get_string('feedback_not_found', 'local_evaluation'));
 }
-// $urlparams = array('id' => $evaluation->id, 'gopage' => $gopage);
 $urlparams = array('id' => $evaluation->id, 'gopage' => $gopage,'teamuserid'=>$teamuserid);
 $PAGE->set_url('/local/evaluation/complete.php', $urlparams);
 
 
 
-$context = (new \local_evaluation\lib\accesslib())::get_module_context($evaluation->id);
+$context = (new \local_evaluation\lib\accesslib())::get_module_context();
 $PAGE->set_context($context);
 $evaluationcompletion = new local_evaluation_completion($evaluation);
 

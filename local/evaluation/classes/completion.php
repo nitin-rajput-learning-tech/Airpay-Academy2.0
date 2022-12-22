@@ -64,10 +64,6 @@ class local_evaluation_completion extends local_evaluation_structure {
     public function __construct($evaluation, $iscompleted = false, $completedid = null, $userid = null) {
         global $DB;
         parent::__construct($evaluation);
-        // Make sure courseid is always set for site evaluation.
-        //if ($this->evaluation->course == SITEID && !$this->courseid) {
-        //    $this->courseid = SITEID;
-        //}
         if ($iscompleted) {
             // Retrieve information about the completion.
             $this->iscompleted = true;
@@ -650,8 +646,6 @@ class local_evaluation_completion extends local_evaluation_structure {
 
         // Save the form for later during the request.
         $this->create_completed_tmp_from_last_completed();
-        // $this->form = new local_evaluation_complete_form($mode,
-        //     $this, 'evaluation_complete_form', array('gopage' => $gopage, 'evalid'=>$this->get_evaluation()->id));
         $this->form = new local_evaluation_complete_form(local_evaluation_complete_form::MODE_COMPLETE,
             $this, 'evaluation_complete_form', array('gopage' => $gopage, 'evalid'=>$this->get_evaluation()->id,'teamuserid'=>$teamuserid));
 
@@ -674,7 +668,6 @@ class local_evaluation_completion extends local_evaluation_structure {
             if (!empty($data->savevalues) || !empty($data->gonextpage)) {
                 if (($nextpage = $this->get_next_page($gopage)) !== null) {
                     if ($PAGE->has_set_url()) {
-                        // $urltogo = new moodle_url($PAGE->url, array('gopage' => $nextpage));
                         $urltogo = new moodle_url($PAGE->url, array('gopage' => $nextpage,'teamuserid'=>$teamuserid));
                     }
                     $this->jumpto = $nextpage;
@@ -688,7 +681,6 @@ class local_evaluation_completion extends local_evaluation_structure {
             } else if (!empty($gopreviouspage)) {
                 $prevpage = intval($this->get_previous_page($gopage));
                 if ($PAGE->has_set_url()) {
-                    // $urltogo = new moodle_url($PAGE->url, array('gopage' => $prevpage));
                     $urltogo = new moodle_url($PAGE->url, array('gopage' => $prevpage,'teamuserid'=>$teamuserid));
                 }
                 $this->jumpto = $prevpage;

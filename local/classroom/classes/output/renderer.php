@@ -1228,7 +1228,7 @@ class renderer extends plugin_renderer_base {
 
         }
         if ($classroom->status == 2 && has_capability('local/classroom:release_hold',  $categorycontext)&&has_capability('local/classroom:manageclassroom',  $categorycontext)) {
-              $fparams->action = "0";
+              $fparams->action = "1";
             $fparams->actionstatusmsg = 'classroom_release_hold_action';
             $fr = json_encode($fparams,JSON_HEX_APOS);
             $return[]= "<a href='javascript:void(0);' class=$class alt = ".get_string('release_hold','local_classroom') ." title = ".get_string('release_hold','local_classroom')." 

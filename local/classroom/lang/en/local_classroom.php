@@ -503,3 +503,4 @@ $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['completed'] = 'Completed';
 $string['selfenrolclassroom'] = 'need Self enrol ';
 $string['no_courses_assigned'] = 'No Courses assigned';
+$string['session_classropm'] = 'Select Classroom';

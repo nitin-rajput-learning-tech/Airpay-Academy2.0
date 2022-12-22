@@ -88,10 +88,6 @@ $renderer = $PAGE->get_renderer('local_evaluation');
 $filterparams = $renderer->get_evaluations(true,$formattype);
 if(is_siteadmin()){
     $thisfilters = array('organizations', 'departments', 'evaluation', 'evaluation_type', 'status');
-}else if(has_capability('local/costcenter:manage_ownorganization',$context) || has_capability('local/evaluation:manage_ownorganization',$context)){
-    $thisfilters = array('departments', 'evaluation', 'evaluation_type', 'status');
-}else if(has_capability('local/costcenter:manage_owndepartments',$context) || has_capability('local/evaluation:manage_owndepartments',$context)){
-    $thisfilters = array('evaluation', 'evaluation_type', 'status');
 }else {
     $thisfilters = array('evaluation', 'evaluation_type');
 }
