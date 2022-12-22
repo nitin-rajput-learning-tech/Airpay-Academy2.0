@@ -1148,7 +1148,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
     }
 
 
-    $prev_element = 'locationfieldparentid_select';
+    $prev_element = $lastdepth.'_select';
     $firstelement = true;
 
     $prevfield='territory';
@@ -1157,7 +1157,9 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
 
     foreach($fields as $field){
 
-        if($depth == 0){
+        if($depth == 0 && $pluginname == 'local_users'){
+
+            $prev_element = 'locationfieldparentid_select';
 
             $mform->addElement('hidden','locationfieldparentid', null,array('data-class'=>$prev_element));
             $mform->setConstant('locationfieldparentid', $customdata[$lastdepth]);
