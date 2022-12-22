@@ -298,9 +298,10 @@ function local_costcenter_output_fragment_new_costcenterform($args){
     }
     if($args->id){
 
-        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($args->id);
-
         $data = $DB->get_record('local_costcenter', array('id'=>$args->id));
+
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($data->path);
+
         $data->shortname_static = $data->shortname;
         $draftitemid = file_get_submitted_draft_itemid('costcenter_logo');
         file_prepare_draft_area($draftitemid, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $data->costcenter_logo, null);
@@ -563,7 +564,7 @@ function costcenter_insert_instance($costcenter){
             if ($costcenter->costcenter_logo > 0 && $costcenter->id) {
 
 
-                $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenter->id);
+                $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($datarecord->path);
 
                 file_save_draft_area_files($costcenter->costcenter_logo, $systemcontext->id, 'local_costcenter', 'costcenter_logo', $costcenter->costcenter_logo);
 
@@ -583,8 +584,11 @@ function costcenter_insert_instance($costcenter){
  */
 function costcenter_edit_instance($costcenterid, $newcostcenter){
     global $DB,$CFG;
-    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenterid);
+
     $oldcostcenter = $DB->get_record('local_costcenter', array('id' => $costcenterid));
+
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($oldcostcenter->path);
+
     $category = $DB->get_field('local_costcenter','category',array('id' => $newcostcenter->id));
     /* ---check if the parentid is the same as that of new parentid--- */
     if ($newcostcenter->parentid != $oldcostcenter->parentid) {
@@ -755,7 +759,10 @@ function local_costcenter_output_fragment_roleusers_display($args)
 function blocks_add_default_org_blocks($costcenterid) {
     global $DB;
     $page = new moodle_page();
-    $page->set_context((new \local_costcenter\lib\accesslib())::get_module_context($costcenterid));
+    $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ";
+
+    $costcenterpath = $DB->get_field_sql($sql,array('organisationid'=>$costcenterid));
+    $page->set_context((new \local_costcenter\lib\accesslib())::get_module_context($costcenterpath));
         $subpagepattern = null;
     $page->blocks->add_blocks([
         'layerone_full' => [

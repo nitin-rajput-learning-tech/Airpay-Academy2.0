@@ -194,10 +194,13 @@ function local_assignroles_output_fragment_costcenterroleusers_display($args)
     $args = (object) $args;
     $context = $args->context;
     $costcenterid = $args->costcenterid;
+
+    $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ";
+
+    $costcenterpath = $DB->get_field_sql($sql,array('organisationid'=>$costcenterid));
    
-  
-    $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterid);
-    
+
+    $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterpath);
 
     $sql = "SELECT u.id,u.firstname,u.lastname,u.email,u.open_employeeid,ra.roleid,ra.contextid FROM {role_assignments} AS ra JOIN {user} AS u on u.id=ra.userid 
             WHERE  ra.contextid=:contextid ";

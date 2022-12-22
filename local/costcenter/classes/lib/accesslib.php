@@ -43,7 +43,7 @@ class accesslib
 
         $concatsql="";
 
-        if(is_siteadmin()){
+        if(is_siteadmin() && $costcenterpath == null){
 
             return $concatsql;
 
@@ -67,7 +67,7 @@ class accesslib
 
         global $DB;
 
-        if(is_siteadmin()){
+        if(is_siteadmin() && $costcenterpath == null){
 
             $context = \context_system::instance();
 
@@ -233,7 +233,7 @@ class accesslib
 
         }else{
 
-            $match_sql= " $matchcolumnname LIKE '%$costcenterpath%' ";
+            $match_sql= " $matchcolumnname LIKE '%$costcenterpath/%' ";
 
         }
 

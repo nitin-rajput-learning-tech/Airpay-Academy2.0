@@ -86,7 +86,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         require_once($CFG->dirroot.'/local/costcenter/lib.php');
         $core_component = new \core_component();
 
-        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($record->id);
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($record->path);
 
         $contextid =  $systemcontext->id;
 
@@ -194,21 +194,26 @@ class local_costcenter_renderer extends plugin_renderer_base {
      */
     public function get_dept_view_btns($id = false) {
         global $PAGE, $USER, $DB;
-        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($id);
+
+        $exist_sql = "SELECT id FROM {local_costcenter} WHERE 1=1 ";
+
+        $costcenters_exist = $DB->record_exists_sql($exist_sql);
+        if($id){
+            $costcenter = $DB->get_record('local_costcenter', array('id' => $id));
+            $depth=$costcenter->depth;
+            $costcenterpath=$costcenter->path;
+        }else{
+            $costcenterpath=null;
+            $depth = 1;
+        }
+
+        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenterpath);
         if ((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && $PAGE->pagetype == 'local-costcenter-index'){
             $create_organisation = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '".get_string('create_organization','local_costcenter')."' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$systemcontext->id, id:0, formtype:\"organization\", headstring:\"adnewcostcenter\"}) })(event)'><span class='createicon'><i class='fa fa-sitemap icon' aria-hidden='true'></i><i class='createiconchild fa fa-plus' aria-hidden='true'></i></span></a>";
         }else{
             $create_organisation = false;
         }
 
-        $exist_sql = "SELECT id FROM {local_costcenter} WHERE 1=1 ";
-
-        $costcenters_exist = $DB->record_exists_sql($exist_sql);
-        if($id){
-            $depth = $DB->get_field('local_costcenter', 'depth', array('id' => $id));
-        }else{
-            $depth = 1;
-        }
         if($costcenters_exist && $depth != 2 && $depth != 3 && $depth != 4){
             if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext) || has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
                 $headstring = 'addnewdept';
@@ -392,7 +397,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             }
 
-           $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->id);
+           $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);
 
            $contextid =  $context->id;
 
@@ -544,7 +549,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             }
 
-            $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->id);
+            $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);
 
             $contextid =  $context->id;
 

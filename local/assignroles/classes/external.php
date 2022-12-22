@@ -176,34 +176,6 @@ class local_assignroles_external extends external_api {
                             JOIN {role_context_levels} rcl ON (rcl.contextlevel =:contextlevel AND r.id = rcl.roleid)
                          WHERE r.name !='' ";
 
-                    if ($formoptions->formtype) {
-
-                        switch ($formoptions->formtype) {
-                            case 'organization':
-
-                                $sql .=" AND r.shortname NOT IN ('dh') ";
-
-                                break;
-
-                            case 'department':
-
-                                $sql .=" AND r.shortname NOT IN ('oh') ";
-
-                                break;
-
-                            case 'subdepartment':
-
-                                $sql .=" AND r.shortname NOT IN ('oh') ";
-
-                                break;
-                            
-                            default:
-                                // code...
-                                break;
-                        }
-
-
-                    }
 
                     $params = array('contextlevel' => CONTEXT_COURSECAT);
                     if(!empty($query)){ 
@@ -224,65 +196,41 @@ class local_assignroles_external extends external_api {
 
                 case 'role_costcenterusers':
 
-                
-                    $context = (new \local_assignroles\lib\accesslib())::get_module_context($formoptions->organisationid);
+                    if($formoptions->roleid){
 
-                    if(is_siteadmin()){
-                      $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname 
-                        FROM {user} AS u 
-                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser   AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE roleid=:roleid)";  
-                    }else{
 
-                        $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname 
-                        FROM {user} AS u 
-                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid)";  
+                        $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ";
 
-                    }
+                        $costcenterpath = $DB->get_field_sql($sql,array('organisationid'=>$formoptions->organisationid));
 
-                    if ($formoptions->formtype) {
+                        $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterpath);
 
-                        switch ($formoptions->formtype) {
-                            case 'organization':
+                        if(is_siteadmin()){
+                          $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
+                            FROM {user} AS u
+                            WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser   AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid) AND u.open_path LIKE '%$costcenterpath/%'";
+                        }else{
 
-                                $userssql .=" AND u.open_costcenterid = :organisationid ";
+                            $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
+                            FROM {user} AS u
+                            WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid) AND u.open_path LIKE '%$costcenterpath/%'";
 
-                                break;
-
-                            case 'department':
-
-                                $userssql .=" AND u.open_departmentid = :organisationid ";
-
-                                break;
-
-                            case 'subdepartment':
-
-                                $userssql .=" AND u.open_subdepartment = :organisationid ";
-
-                                break;
-                            
-                            default:
-                                // code...
-                                break;
                         }
 
-
-                    }
-                    
-                    $params = array('loginuser' =>$USER->id, 'context' => $context->id, 'roleid' => $formoptions->roleid, 'organisationid' => $formoptions->organisationid);
-                    if(!empty($query)){ 
-                        if ($searchanywhere) {
-                            $userssql .=" AND CONCAT(u.firstname,' ',u.lastname) LIKE :query ";
-                            $params['query'] = "%$query%";
-                        } else {
-                            $userssql .=" AND CONCAT(u.firstname,' ',u.lastname) LIKE :query ";
-                            $params['query'] = "$query%";
+                        $params = array('loginuser' =>$USER->id, 'context' => $context->id, 'roleid' => $formoptions->roleid);
+                        if(!empty($query)){
+                            if ($searchanywhere) {
+                                $userssql .=" AND CONCAT(u.firstname,' ',u.lastname) LIKE :query ";
+                                $params['query'] = "%$query%";
+                            } else {
+                                $userssql .=" AND CONCAT(u.firstname,' ',u.lastname) LIKE :query ";
+                                $params['query'] = "$query%";
+                            }
                         }
+
+                        $return = $DB->get_records_sql($userssql, $params, $page, $perpage);
                     }
-                    if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context))){
-                        $userssql .= " AND u.open_costcenterid=:logincostcenter";
-                        $params['logincostcenter'] = $USER->open_costcenterid;
-                    }
-                    $return = $DB->get_records_sql($userssql, $params, $page, $perpage);
+
 
                     break;
 
