@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
+require_once($CFG->dirroot . '/local/users/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
 use local_classroom\local\querylib;
 use moodleform;

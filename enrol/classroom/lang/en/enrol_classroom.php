@@ -126,3 +126,6 @@ $string['classroom:manage'] = 'Manage user enrolments';
 $string['classroom:unenrol'] = 'Unenrol users from the course';
 $string['classroom:unenrolself'] = 'Unenrol self from the course';
 $string['classroom:holdkey'] = 'Classroom Holdkey';
+$string['select_classroom'] = 'Select Classroom';
+$string['classroom'] = 'Classroom';
+$string['instanceexists'] = 'Classroom is already synchronised with selected role';

@@ -72,17 +72,29 @@ class enrol_classroom_plugin extends enrol_plugin {
     public function get_instance_name($instance) {
         global $DB;
 
-        if (empty($instance->name)) {
-            if (!empty($instance->roleid) and $role = $DB->get_record('role', array('id'=>$instance->roleid))) {
-                $role = ' (' . role_get_name($role, context_course::instance($instance->courseid, IGNORE_MISSING)) . ')';
-            } else {
-                $role = '';
-            }
+
+        if (empty($instance)) {
             $enrol = $this->get_name();
-            return get_string('pluginname', 'enrol_'.$enrol) . $role;
+            return get_string('pluginname', 'enrol_'.$enrol);
+
+        } else if (empty($instance->name)) {
+            $enrol = $this->get_name();
+            $classroom = $DB->get_record('local_classroom', array('id'=>$instance->customint1));
+            if (!$classroom) {
+                return get_string('pluginname', 'enrol_'.$enrol);
+            }
+           
+            if ($role = $DB->get_record('role', array('id'=>$instance->roleid))) {
+                $role = role_get_name($role, context_course::instance($instance->courseid, IGNORE_MISSING), ROLENAME_BOTH);
+                return get_string('pluginname', 'enrol_'.$enrol) . ' (' . $classroom->name . ' - ' . $role .')';
+            } else {
+                return get_string('pluginname', 'enrol_'.$enrol) . ' (' . $classroom->name . ')';
+            }
+
         } else {
-            return format_string($instance->name);
+            return format_string($instance->name, true, array('context'=>context_course::instance($instance->courseid)));
         }
+
     }
 
     public function roles_protected() {
@@ -123,10 +135,10 @@ class enrol_classroom_plugin extends enrol_plugin {
             return false;
         }
 		
-		 if ($DB->record_exists('enrol', array('courseid'=>$courseid, 'enrol'=>'classroom'))) {
-            // Multiple instances not supported.
-            return false;
-        }
+		//  if($DB->record_exists('enrol', array('courseid'=>$courseid, 'enrol'=>'classroom','customint1'=>$classroomid))) {
+        //     // Multiple instances not supported.
+        //     return false;
+        // }
 
         return true;
     }
@@ -185,7 +197,6 @@ class enrol_classroom_plugin extends enrol_plugin {
         require_once("$CFG->dirroot/enrol/classroom/locallib.php");
 
         $enrolstatus = $this->can_classroom_enrol($instance);
-
         if (true === $enrolstatus) {
             // This user can self enrol using this instance.
             $form = new enrol_classroom_enrol_form(null, $instance);
@@ -477,11 +488,41 @@ class enrol_classroom_plugin extends enrol_plugin {
      */
     public function edit_instance_form($instance, MoodleQuickForm $mform, $context) {
         global $CFG;
-
+        $options = $this->get_status_options();
+        $mform->addElement('select', 'status', get_string('status', 'enrol_classroom'), $options);
         $roles = $this->extend_assignable_roles($context, $instance->roleid);
         $mform->addElement('select', 'roleid', get_string('role', 'enrol_classroom'), $roles);
+        $classroomoptions = $this->get_classroom_options($context,$instance);
+        $classrooms = array(null => get_string('select_classroom',
+                        'enrol_classroom')) + $classroomoptions;
+        $mform->addElement('select', 'customint1', get_string('classroom', 'enrol_classroom'), $classrooms);
+        if ($instance->id) {
+            $mform->setConstant('customint1', $instance->customint1);
+            $mform->hardFreeze('customint1', $instance->customint1);
+        } else {
+            $mform->addRule('customint1', get_string('required'), 'required', null, 'client');
+        }
 
     }
+    public function edit_instance_validation($data, $files, $instance, $context) {
+        global $DB;
+        $errors = array();
+        // Allows multiple cohorts to be selected.
+        // list($sql1, $params1) = $DB->get_in_or_equal($data['customint1'], SQL_PARAMS_NAMED);
+        $params = array(
+            'roleid' => $data['roleid'],
+            'courseid' => $data['courseid'],
+            'customint1' => $data['customint1'],
+            'id' => $data['id'],           
+        );
+        // $params = array_merge($params, $params1);
+        $sql = "roleid = :roleid AND customint1 =:customint1 AND courseid = :courseid AND enrol = 'classroom' AND id <> :id";
+        if ($DB->record_exists_select('enrol', $sql, $params)) {
+            $errors['customint1'] = get_string('instanceexists', 'enrol_cohort');
+        }
+        return $errors;
+    }
+
 
     /**
      * We are a good plugin and don't invent our own UI/validation code path.
@@ -493,7 +534,11 @@ class enrol_classroom_plugin extends enrol_plugin {
     }
 
   
-
+    protected function get_status_options() {
+        $options = array(ENROL_INSTANCE_ENABLED  => get_string('yes'),
+                         ENROL_INSTANCE_DISABLED => get_string('no'));
+        return $options;
+    }
  
     /**
      * Update instance of enrol plugin.
@@ -520,6 +565,19 @@ class enrol_classroom_plugin extends enrol_plugin {
 
         return parent::update_instance($instance, $data);
     }
+ /**
+     * Add new instance of enrol plugin.
+     * @param object $course
+     * @param array $fields instance fields
+     * @return int id of new instance, null if can not be created
+     */
+    // public function add_instance($course, array $fields = null) {
+    //     global $CFG;
+    //         $result = parent::add_instance($course, $fields);
+    //     return $result;
+    // }
+
+
 
     /**
      * Gets a list of roles that this user can assign for the course as the default for self-enrolment.
@@ -538,5 +596,14 @@ class enrol_classroom_plugin extends enrol_plugin {
             }
         }
         return $roles;
+    }
+    public function get_classroom_options($context,$instance){
+        global $DB;
+        $sqlclass = "SELECT classroomid FROM {local_classroom_courses} as lcc  WHERE lcc.courseid =:courseid ";
+        $classroomidsarr = $DB->get_fieldset_sql($sqlclass,array("courseid"=>$instance->courseid));
+        list($insql, $inparams) = $DB->get_in_or_equal($classroomidsarr);
+        $sql = "SELECT id,name FROM {local_classroom}  WHERE id $insql";
+        $classroomoptions=$DB->get_records_sql_menu($sql,  $inparams, $sort='', $fields='*', $limitfrom=0, $limitnum=0);
+        return $classroomoptions;
     }
 }
