@@ -56,8 +56,6 @@ echo $OUTPUT->header();
 if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)|| has_capability('local/evaluation:manage_multiorganizations', $context))){
     if($evaluation->costcenterid != $USER->open_costcenterid){
         print_error(get_string('cannotaccess', 'local_evaluation'));
-    }else if(!(has_capability('local/costcenter:manage_ownorganization', $context) || has_capability('local/evaluation:manage_ownorganization', $context)) && $evaluation->departmentid != $USER->open_departmentid){
-        print_error(get_string('cannotaccess', 'local_evaluation'));
     }
 }
 

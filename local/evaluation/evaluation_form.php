@@ -29,6 +29,7 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
+require_once($CFG->dirroot . '/local/users/lib.php');
 require_once('lib.php');
 use local_costcenter\functions\userlibfunctions as costcenterlib;
 class evaluation_form extends moodleform {
@@ -37,17 +38,18 @@ class evaluation_form extends moodleform {
         global $CFG, $DB, $USER;
 
         $editoroptions = evaluation_get_editor_options();
-        $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();
         $mform    =& $this->_form;
         $mformajax    =& $this->_ajaxformdata;
         $id = $this->_customdata['id'];
         $instance = $this->_customdata['instance'];
         $plugin = $this->_customdata['plugin'];
+        $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();
         $mform->addElement('text', 'name', get_string('name', 'local_evaluation'), array('size'=>'64'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', get_string('feedbackname', 'local_evaluation'), 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');       
-       local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_users', $categorycontext, $multiple = false);
+       local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_evaluation', $categorycontext, $multiple = false);
+        local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_users', $categorycontext, $multiple = false);
         if ($instance == 0) {
             $type = array(null => get_string('selecttype', 'local_evaluation'),
                          '1'=>get_string('feedback', 'local_evaluation'),
@@ -70,7 +72,6 @@ class evaluation_form extends moodleform {
                 $mform->addHelpButton('evaluationmode', 'evaluationmode', 'local_evaluation');
             }
         } 
-
         if ($instance !=0) {
             // get elements from respective plugin
             require_once($CFG->dirroot . '/local/'.$plugin.'/lib.php');

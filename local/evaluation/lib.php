@@ -117,6 +117,7 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
     $customdata = array('id' => $data->id,
         'open_costcenterpath' => $data->open_costcenterpath);
         local_costcenter_set_costcenter_path($customdata);
+        local_users_set_userprofile_datafields($customdata,$data);
         $mform = new \evaluation_form(null, $customdata,
         'post', '', null, true, $formdata);
 	$mform->set_data($default_values);
@@ -598,12 +599,13 @@ function evaluation_get_incomplete_users($evaluation,
 
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+    $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($evaluation);
     //first get all user who can complete this evaluation
     $cap = 'local/evaluation:complete';
 
     $sql = "SELECT u.id, u.firstnamephonetic, u.lastnamephonetic, u.middlename, u.alternatename,
     u.firstname, u.lastname, u.picture, u.email, u.imagealt FROM {user} u
-                WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 $costcenterpathconcatsql
+                WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 $costcenterpathconcatsql $userprofilesql
                  ";
     if($evaluation->id != 0){
         $enrolled_users=$DB->get_fieldset_sql("SELECT userid FROM {local_evaluation_users} WHERE evaluationid = $evaluation->id");
@@ -902,7 +904,7 @@ function evaluation_get_template_list($onlyownorpublic = '') {
         case 'all':
             if (is_siteadmin()) {
                 $sql ="select id, name from {local_evaluation_template} where id > 0 ";
-            } else if (has_capability('local/costcenter:manage_multiorganizations', $context ) OR has_capability('local/costcenter:manage_ownorganization',$context) OR has_capability('local/costcenter:manage_owndepartments',$context)) {
+            } else{
                 $deptsql = dep_sql($context);
                 $sql ="select id, name from {local_evaluation_template} where id > 0 $deptsql ";
             }
@@ -2351,7 +2353,9 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
 
     global $DB, $USER;
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
     $evaluation = $DB->get_record('local_evaluations', array('id' => $evaluationid));
+    $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($evaluation);
 
     $params['suspended'] = 0;
     $params['deleted'] = 0;
@@ -2361,7 +2365,7 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
     }else{
         $sql = "SELECT count(u.id) as total";
     }
-     $sql.=" FROM {user} AS u WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted ";
+     $sql.=" FROM {user} AS u WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql $userprofilesql";
     if($lastitem!=0){
         $sql.=" AND u.id > $lastitem";
     }
@@ -2369,10 +2373,6 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
         $user_detail = $DB->get_record('user', array('id'=>$USER->id));
         $sql .= " AND u.open_costcenterid = :costcenter";
         $params['costcenter'] = $user_detail->open_costcenterid;
-        if (has_capability('local/costcenter:manage_owndepartments',$context) AND !has_capability('local/costcenter:manage_ownorganization',$context)) {
-            $sql .=" AND u.open_departmentid = :department";
-            $params['department'] = $user_detail->open_departmentid;
-        }
     }
     $sql .=" AND u.id <> $USER->id";
     if (!empty($params['email'])) {
@@ -2380,9 +2380,6 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
     }
     if (!empty($params['uname'])) {
         $sql .=" AND u.id IN ({$params['uname']})";
-    }
-    if (!empty($params['department'])) {
-        $sql .=" AND u.open_departmentid IN ({$params['department']})";
     }
     if (!empty($params['organization'])) {
         $sql .=" AND u.open_costcenterid IN ({$params['organization']})";
@@ -2620,7 +2617,7 @@ function get_listof_evalautions($stable, $filtervalues){
     $filtervalues->organizations = (ltrim($filtervalues->organizations, ','));
     // exit;
     $countsql = "SELECT count(a.id) ";
-    if ( has_capability('local/costcenter:manage_multiorganizations', $context ) OR is_siteadmin()) {
+    if (is_siteadmin()) {
        $sql ="SELECT a.* ";
        $fromsql = " from {local_evaluations} a where a.id > 0 AND instance = 0";
     } else if ( has_capability('local/evaluation:edititems',$context) ) {
@@ -2877,13 +2874,14 @@ function local_evaluation_output_fragment_addquestions_or_enrol($args) {
 function local_evaluation_output_fragment_enrolledusers($args) {
     global $CFG, $DB, $OUTPUT;
     $record = (object) $args;
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
     if ($record->type == 1) {
 
         $sql ="SELECT u.id as userid,u.firstname,u.lastname,u.email, f.id as evaluationid, fu.timecreated
                 from {local_evaluation_users} fu
                 JOIN {local_evaluations} f ON fu.evaluationid = f.id
-                JOIN {user} u ON fu.userid=u.id AND u.deleted = 0 AND u.suspended = 0
-                where fu.evaluationid = ?  ";
+                JOIN {user} u ON fu.userid=u.id AND u.deleted = 0 AND u.suspended = 0 
+                where fu.evaluationid = ?  $costcenterpathconcatsql";
 
         $assignedusers= $DB->get_records_sql($sql, array($record->id));
         $out='';
@@ -2945,7 +2943,7 @@ function local_evaluation_output_fragment_enrolledusers($args) {
             JOIN {local_evaluations} AS e ON e.id=eu.evaluationid
             JOIN {local_evaluation_completed} AS ec ON ec.userid=eu.userid AND ec.evaluation=eu.evaluationid
             JOIN {user} AS u ON u.id = ec.userid AND u.deleted = 0 AND u.suspended = 0
-            WHERE e.id = ? ";
+            WHERE e.id = ? $costcenterpathconcatsql";
         $assignedusers = $DB->get_records_sql($sql, array($record->id));
         $out='';
         $data=array();
@@ -3022,7 +3020,7 @@ function evaluation_return_url($plugin, $evaluation) {
         $pageurl .= $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
         $string = strpos($pageurl, '?');
         $newpageurl =  substr($pageurl,0 , $string);
-        $capability_array = array('local/costcenter:manage_multiorganizations', 'local/costcenter:manage_ownorganization', 'local/costcenter:manage_owndepartments');
+        $capability_array = array();
         $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
         if($evaluation->evaluationmode == 'SP' && !($newpageurl == $CFG->wwwroot.'/local/evaluation/eval_view.php' || $newpageurl == $CFG->wwwroot.'local/evaluation/users_assign.php' || has_any_capability($capability_array, $systemcontext))){
             $backurl = new moodle_url('/local/myteam/team.php');
@@ -3049,10 +3047,6 @@ function evaluation_filter($mform,$query='',$searchanywhere=false, $page=0, $per
 
     if(is_siteadmin()){
         $evaluation_sql="SELECT id, name AS fullname FROM {local_evaluations} WHERE 1=1 ";
-    }else if(has_capability('local/costcenter:manage_ownorganization', $systemcontext) || has_capability('local/evaluation:manage_ownorganization', $systemcontext)){
-        $evaluation_sql="SELECT id, name AS fullname FROM {local_evaluations} WHERE costcenterid={$USER->open_costcenterid} ";
-    }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) || has_capability('local/evaluation:manage_owndepartments', $systemcontext)){
-        $evaluation_sql="SELECT id, name AS fullname FROM {local_evaluations} WHERE departmentid={$USER->open_departmentid} ";
     }else{
         $evaluation_sql="SELECT id, name AS fullname FROM {local_evaluations} WHERE id IN (SELECT evaluationid
         FROM {local_evaluation_users} WHERE userid = {$USER->id}) AND visible=1 AND evaluationmode LIKE 'SE' ";
@@ -3163,26 +3157,6 @@ function get_evaluation_details($testid) {
 
     $details = array();
     $joinsql = '';
-    if(has_capability('local/costcenter:manage_ownorganization',$context) OR
-        has_capability('local/costcenter:manage_owndepartments',$context)) {
-
-        $selectsql = "select c.*  ";
-        $fromsql = " from  {local_evaluations} c ";
-        if ($DB->get_manager()->table_exists('local_rating')) {
-            $selectsql .= " , AVG(rating) as avg ";
-            $joinsql .= " LEFT JOIN {local_rating} as r ON r.moduleid = c.id AND r.ratearea = 'local_evaluation' ";
-        }
-        $wheresql = " where c.id = ? ";
-
-        $adminrecord = $DB->get_record_sql($selectsql.$fromsql.$joinsql.$wheresql, [$testid]);
-        $details['manage'] = 1;
-        $completedcount = $DB->count_records_sql("select count(eu.id) from {local_evaluation_users} eu, {user} u where
-            u.id = eu.userid AND u.deleted = 0 AND u.suspended = 0 AND eu.evaluationid=? AND eu.status=?", array($testid, 1));
-        $enrolledcount = $DB->count_records_sql("select count(eu.id) from {local_evaluation_users} eu, {user} u where
-            u.id = eu.userid AND u.deleted = 0 AND u.suspended = 0 AND eu.evaluationid=? ", array($testid));
-        $details['completed'] = $completedcount.$adminrecord->avg;
-        $details['enrolled'] = $enrolledcount;
-    } else {
         $selectsql = "select eu.* ";
 
         $fromsql = " from {local_evaluation_users} eu
@@ -3200,7 +3174,6 @@ function get_evaluation_details($testid) {
         $details['status'] = ($record->status == 1) ? get_string('completed', 'local_onlinetests'):get_string('pending', 'local_onlinetests');
         $details['enrolled'] = ($record->timecreated) ? \local_costcenter\lib::get_userdate("d/m/Y H:i ", $record->timecreated): '-';
         $details['completed'] = ($record->timemodified) ? \local_costcenter\lib::get_userdate("d/m/Y H:i ", $record->timemodified): '-';
-    }
 
     return $details;
 }
