@@ -566,18 +566,8 @@ class classroom {
         }
 
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
-
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $params['costcenter'] = $USER->open_costcenterid;
-            $condition .= " AND (cc.id = :costcenter)";
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                // $params['department'] = $USER->open_departmentid;
-                // $condition .= " AND (c.department = :department )";
-                $condition .= " AND concat(',', c.department,',') LIKE '%,$USER->open_departmentid,%'";
-            }
+        $condition .= (new \local_classroom\lib\accesslib())::get_clasroom_path_field_concatsql($columnname='c.open_costcenterpath');
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id
@@ -591,8 +581,7 @@ class classroom {
                 }
             }
         //end user condition
-        } else if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
+        } else if (!is_siteadmin()) {
             $myclassrooms = $DB->get_records_menu('local_classroom_users', array(
                 'userid' => $USER->id
             ), 'id', 'id, classroomid');
@@ -603,43 +592,17 @@ class classroom {
                 }else{
                     return array('classrooms' => array(), 'classroomscount' =>0);
                 }
-        } else {
-            // $statusarrays = implode(',', $status);//implode(',', $statusarray);
-            // $concatsql .= " AND c.status in ($statusarrays) ";
-        }
-        // if (isset($stable->classroomid) && $stable->classroomid > 0) {
-        //     $concatsql .= " AND c.id = :classroomid";
-        //     $params['classroomid'] = $stable->classroomid;
-        // }
-        // if (isset($stable->classroomstatus) && $stable->classroomstatus != -1) {
-        //     $concatsql .= " AND c.status = :classroomstatus";
-        //     $params['classroomstatus'] = $stable->classroomstatus;
-        // }
+        } 
         $countsql = "SELECT COUNT(c.id) ";
-        // if ($request == true) {
-        //     $fromsql = "SELECT group_concat(c.id) as classroomids";
-        // } else {
             $fromsql = "SELECT c.*, (SELECT COUNT(DISTINCT cu.userid)
                                   FROM {local_classroom_users} AS cu
                                   WHERE cu.classroomid = c.id
                               ) AS enrolled_users";
-        // }
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $joinon = "cc.id = c.costcenter";
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                $joinon = "cc.id = c.department OR cc.id = c.costcenter";
-            }
-        } else {
-            $joinon = "cc.id = c.costcenter";
-        }
+     
        $sql = " FROM {local_classroom} AS c
-                JOIN {local_costcenter} AS cc ON $joinon
                WHERE 1 = 1 ";
         
-
+               $sql .= (new \local_classroom\lib\accesslib())::get_clasroom_path_field_concatsql($columnname='open_costcenterpath');
         //added by sarath for ticket 2751
         if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
             $sql .= " AND c.status != 2";
@@ -896,8 +859,7 @@ class classroom {
 
     public function classrooms($stable, $request = false) {
         global $DB, $USER;
-
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($stable->classroomid);
 
         $params          = array();
         $classrooms      = array();
@@ -923,19 +885,11 @@ class classroom {
             $params['search2'] = '%' . $stable->search . '%';
             $concatsql .= " AND ($fields) ";
         }
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $condition            = " AND (cc.id = :costcenter)";
-            $params['costcenter'] = $USER->open_costcenterid;
-            $statusarrays         = implode(',', $statusarray);
+        
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+            $condition = (new \local_classroom\lib\accesslib())::get_clasroom_path_field_concatsql($columnname='open_costcenterpath');
+             $statusarrays         = implode(',', $statusarray);
             $concatsql .= " AND c.status in ($statusarrays) ";
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                 || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                // $condition .= " AND (c.department = :department )";
-                // $params['department'] = $USER->open_departmentid;
-                $condition .= "AND concat(',', c.department,',') LIKE '%,$USER->open_departmentid,%'";
-            }
             $concatsql .= $condition;
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
@@ -949,8 +903,7 @@ class classroom {
                     return compact('classrooms', 'classroomscount');
                 }
             }
-        } else if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
+        } else if (!is_siteadmin()) {
             $myclassrooms = $DB->get_records_menu('local_classroom_users', array(
                 'userid' => $USER->id
             ), 'id', 'id, classroomid');
@@ -1015,20 +968,8 @@ class classroom {
                                   FROM {local_classroom_users} AS cu
                                   WHERE cu.classroomid = c.id
                               ) AS enrolled_users";
-        // }
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin()
-            && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $joinon = "cc.id = c.costcenter";
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                $joinon = "cc.id = c.department OR cc.id = c.costcenter";
-            }
-        } else {
-            $joinon = "cc.id = c.costcenter";
-        }
+        // }       
         $sql = " FROM {local_classroom} AS c
-                 JOIN {local_costcenter} AS cc ON $joinon
                 WHERE 1 = 1 ";
         $sql .= $concatsql;
         if (isset($stable->classroomid) && $stable->classroomid > 0) {
@@ -2593,16 +2534,8 @@ class classroom {
         if ($lastitem != 0) {
             $sql .= " AND u.id > $lastitem";
         }
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin() &&
-                        (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                        && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $sql .= " AND u.open_costcenterid = :costcenter";
-            $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/classroom:manage_owndepartments', $categorycontext) ||
-                 has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                $sql .= " AND u.open_departmentid = :department";
-                $params['department'] = $USER->open_departmentid;
-            }
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+            $sql .= (new \local_classroom\lib\accesslib())::get_clasroom_path_field_concatsql($columnname='u.open_costcenterpath');
         }
         $sql .= " AND u.id <> $USER->id ";
 

@@ -86,7 +86,6 @@ function local_classroom_output_fragment_classroom_form($args)
     if($args->id){
         $customdata['open_costcenterpath'] = $data->open_costcenterpath;
     }
-    // print_r($customdata);
     // $customdata['open_costcenterpath'] = '/1/3/4/16/17';
     local_costcenter_set_costcenter_path($customdata);
     $mform = new classroom_form(null, $customdata, 'post', '', null, true, $formdata);
