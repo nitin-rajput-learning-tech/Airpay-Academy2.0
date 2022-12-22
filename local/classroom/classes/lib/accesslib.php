@@ -39,7 +39,7 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
         if($classroomid != null && $classroomid > 0){
 
-            $costcenterpath=$DB->get_field('local_classroom','open_costcenterpath',  array('id'=> $classroomid));
+            $costcenterpath=$DB->get_field('local_classroom','open_path',  array('id'=> $classroomid));
         }
 
         return $costcenterpath;

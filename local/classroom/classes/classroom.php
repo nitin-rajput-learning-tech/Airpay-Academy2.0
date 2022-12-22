@@ -567,7 +567,7 @@ class classroom {
 
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();        
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $condition .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_costcenterpath');
+            $condition .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id
@@ -602,7 +602,7 @@ class classroom {
        $sql = " FROM {local_classroom} AS c
                WHERE 1 = 1 ";
         
-               $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+               $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         //added by sarath for ticket 2751
         if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
             $sql .= " AND c.status != 2";
@@ -887,7 +887,7 @@ class classroom {
         }
         
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $condition = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_costcenterpath');
+            $condition = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
              $statusarrays         = implode(',', $statusarray);
             $concatsql .= " AND c.status in ($statusarrays) ";
             $concatsql .= $condition;
@@ -1193,7 +1193,7 @@ class classroom {
                        $params['classroomid'] = $classroomid;
 
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }
@@ -2160,7 +2160,7 @@ class classroom {
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }
@@ -2558,7 +2558,7 @@ class classroom {
             $sql .= " AND u.id > $lastitem";
         }
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($classroom);
         }
         $sql .= " AND u.id <> $USER->id ";
@@ -2950,7 +2950,7 @@ class classroom {
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_costcenterpath');
+            $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                  $condition="";
             }

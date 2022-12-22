@@ -67,7 +67,7 @@ class insert{
         $coursetypes = explode(',', $types);
 
         foreach($coursetypes as $type){
-            if($type == 2 ||$type == 3 || $type == 5 || $type == 4 || $type ==6){
+            if($type == 3 || $type == 5 || $type == 4 || $type ==6){
                 $plugin = \enrol_get_plugin(constant($type));
                 if (!$plugin) {
                     throw new moodle_exception('invaliddata', 'error');
