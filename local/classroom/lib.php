@@ -84,10 +84,11 @@ function local_classroom_output_fragment_classroom_form($args)
         'form_status' => $args->form_status
     );
     if($args->id){
-        $customdata['open_costcenterpath'] = $data->open_costcenterpath;
+        $customdata['open_path'] = $data->open_path;
     }
-    // $customdata['open_costcenterpath'] = '/1/3/4/16/17';
+    // $customdata['open_path'] = '/1/3/4/16/17';
     local_costcenter_set_costcenter_path($customdata);
+    local_users_set_userprofile_datafields($customdata,$data);
     $mform = new classroom_form(null, $customdata, 'post', '', null, true, $formdata);
     $classroomdata = new stdClass();
     $classroomdata->id = $args->id;
