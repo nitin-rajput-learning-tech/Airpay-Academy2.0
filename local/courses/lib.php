@@ -1115,12 +1115,7 @@ function local_courses_leftmenunode(){
     $coursecatnodes = '';
     if(has_capability('moodle/category:manage', $systemcontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_categories', 'class'=>'pull-left user_nav_div categories usernavdep'));
-        $categories_url = new moodle_url('/local/courses/index.php');
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-            $orgcategory = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_costcenterid));
-            if($orgcategory)
-                $categories_url->params(['id' => $orgcategory]);
-        }
+        $categories_url = new moodle_url('/local/custom_category/index.php');
         $categories = html_writer::link($categories_url, '<i class="fa fa-book" aria-hidden="true" aria-label=""></i><i class="fa fa-book secbook" aria-hidden="true" aria-label=""></i><span class="user_navigation_link_text">'.get_string('leftmenu_browsecategories','local_courses').'</span>',array('class'=>'user_navigation_link'));
         $coursecatnodes .= $categories;
         $coursecatnodes .= html_writer::end_tag('li');
