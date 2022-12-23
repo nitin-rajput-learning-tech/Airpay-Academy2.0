@@ -919,9 +919,9 @@ class view extends plugin_renderer_base {
     public function learningplans_target_audience_content($planid, $curr_tab,$condition) {
         global $OUTPUT, $CFG, $DB,$USER;
               $data = $DB->get_record_sql('SELECT id, open_group, open_hrmsrole,
-             open_designation, open_location,department, subdepartment, open_path
+             open_designation, open_location,department, subdepartment, open_path,open_states,open_district,open_subdistrict,open_village
              FROM {local_learningplan} WHERE id = ' .$planid);
-        	list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$data->open_path);
+        	list($zero, $org, $ctr, $bu, $cu, $territ) = explode("/",$data->open_path);
             if($ctr==-1||$ctr==NULL){
                 $department=get_string('audience_department','local_learningplan','All');
             }else{
@@ -931,16 +931,66 @@ class view extends plugin_renderer_base {
             if($bu == -1 || $bu == NULL){
                 $subdepartment=get_string('audience_subdepartment','local_learningplan','All');
             }else{
-                $sql = "SELECT id,fullname
-                 		FROM {local_costcenter} 
-                 		WHERE id IN ($bu)";
-
+                $sql = "SELECT id,fullname FROM {local_costcenter} WHERE id IN ($bu)";
                 $subdepartments = $DB->get_records_sql_menu($sql);
                 $subdepts = implode(", ", $subdepartments);
-
                 $subdepartment = get_string('audience_subdepartment','local_learningplan',$subdepts);
             }
-            if(empty($data->open_group)){
+
+            if($cu == NULL){
+                $commercial=get_string('audience_commercial','local_learningplan','All');
+            }else{
+                $sql = "SELECT id,fullname FROM {local_costcenter} WHERE id IN ($cu)";
+                $commercials = $DB->get_records_sql_menu($sql);
+                $commercial_list = implode(", ", $commercials);
+                $commercial = get_string('audience_commercial','local_learningplan',$commercial_list);
+            }
+
+            if($territ == NULL){
+                $territory=get_string('audience_terriroty','local_learningplan','All');
+            }else{
+                $sql = "SELECT id,fullname FROM {local_costcenter} WHERE id IN ($territ)";
+                $territorys = $DB->get_records_sql_menu($sql);
+                $territory_list = implode(", ", $territorys);
+                $territory = get_string('audience_terriroty','local_learningplan',$territory_list);
+            }
+
+            if($data->open_states > 0){
+                $sql = "SELECT id,states_name FROM {local_states} WHERE id IN ($data->open_states)";
+                $open_states = $DB->get_records_sql_menu($sql);
+                $states = implode(", ", $open_states);
+                $state = get_string('audience_state','local_learningplan',$states);
+            }else{
+                $state=get_string('audience_state','local_learningplan','All');
+            }
+
+            if($data->open_district > 0){
+                $sql = "SELECT id,district_name FROM {local_district} WHERE id IN ($data->open_district)";
+                $open_districts = $DB->get_records_sql_menu($sql);
+                $districts = implode(", ", $open_districts);
+                $district = get_string('audience_district','local_learningplan',$districts);
+            }else{
+                $district=get_string('audience_district','local_learningplan','All');
+            }
+
+            if($data->open_subdistrict > 0){
+                $sql = "SELECT id,subdistrict_name FROM {local_subdistrict} WHERE id IN ($data->open_subdistrict)";
+                $open_subdistricts = $DB->get_records_sql_menu($sql);
+                $subdistricts = implode(", ", $open_subdistricts);
+                $subdistrict = get_string('audience_sub_disctrict','local_learningplan',$subdistricts);
+            }else{
+                $subdistrict=get_string('audience_sub_disctrict','local_learningplan','All');
+            }
+
+            if($data->open_village > 0){
+                $sql = "SELECT id,village_name FROM {local_village} WHERE id IN ($data->open_village)";
+                $open_villages = $DB->get_records_sql_menu($sql);
+                $villages = implode(", ", $open_villages);
+                $village = get_string('audience_village','local_learningplan',$villages);
+            }else{
+                $village=get_string('audience_village','local_learningplan','All');
+            }
+/*            if(empty($data->open_group)){
                  $group=get_string('audience_group','local_learningplan','All');
             }else{
                 $sql = "SELECT id,name
@@ -956,9 +1006,9 @@ class view extends plugin_renderer_base {
             
             $data->open_designation =(!empty($data->open_designation)) ? $designation=get_string('audience_designation','local_learningplan',$data->open_designation) :$designation=get_string('audience_designation','local_learningplan','All');
             
-            $data->open_location =(!empty($data->open_location)) ? $location=get_string('audience_location','local_learningplan',$data->open_location) :$location=get_string('audience_location','local_learningplan','All');
+            $data->open_location =(!empty($data->open_location)) ? $location=get_string('audience_location','local_learningplan',$data->open_location) :$location=get_string('audience_location','local_learningplan','All');*/
             
-             return '<div class="tab-pane active mt-15 ml-15" id="plan_courses" role="tabpanel">'.$department.$subdepartment.$group.$hrmsrole.$designation.$location.'</div>';
+             return '<div class="tab-pane active mt-15 ml-15" id="plan_courses" role="tabpanel">'.$department.$subdepartment.$commercial.$territory.$state.$district.$subdistrict.$village.'</div>';
     }
     /**Function to tab view of bulk users uploads
 	$planid=LEP_id $curr_tab="tab name"

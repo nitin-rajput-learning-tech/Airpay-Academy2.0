@@ -89,8 +89,7 @@ class accesslib
     }
     public static function get_user_roleswitch_context(){
 
-        global $USER;
-
+        global $USER,$OUTPUT;
 
         if(!empty($USER->access['currentroleinfo']['contextinfo'])){
 
@@ -117,6 +116,50 @@ class accesslib
                         $context =\context::instance_by_id($pathvalue);
                     }
 
+
+                }
+            }else{
+
+                /*Start of the role Switch */
+
+                $roles = self::get_user_roles_in_catgeorycontexts($USER->id);
+
+                if (is_array($roles) && (count($roles) > 0)) {
+
+
+                    $depths = [];
+                    $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
+                                    $categoryids = array_values(array_filter((explode('/', $role->path))));
+                                    $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
+                                    if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
+                                        $depths['depth'][] = $role->depth.'_'.$categoryids[0];
+                                        $role->categoryname = $category;
+                                        $role->highest_catid = $categoryids[0];
+                                        return $role;
+                                    }
+                                }, $roles)));
+
+                    if(is_array($user_ra_array)){
+                        $highest_roleinfo = max($user_ra_array);
+                    }else{
+                        $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];
+                    }
+
+                    $highest_roleid = '';
+
+                    if((count($roles) > 0) && (!isset($USER->access['currentroleinfo']) || empty($USER->access['currentroleinfo'])) ){
+
+                        if($highest_roleinfo->roleid){
+
+                            $highest_roleid = $highest_roleinfo->roleid;
+                            $contextid = $highest_roleinfo->contextid;
+
+                            $OUTPUT->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+
+                            $context =\context::instance_by_id($contextid);
+                        }
+
+                    }
 
                 }
             }
@@ -233,7 +276,7 @@ class accesslib
 
         }else{
 
-            $match_sql= " $matchcolumnname LIKE '%$costcenterpath/%' ";
+            $match_sql= " CONCAT('',$matchcolumnname,'/') LIKE '%$costcenterpath/%' ";
 
         }
 
