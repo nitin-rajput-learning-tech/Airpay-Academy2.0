@@ -561,7 +561,7 @@ class classroom {
         }
         $params['status'] = $status;
         if (!empty($search)) {
-            $condition .= " AND (c.name LIKE :search )";
+            $condition .= " AND (c.name LIKE :search ) ";
             $params['search'] = '%' . $search . '%';
         }
 
@@ -575,7 +575,7 @@ class classroom {
                 if (!empty($myclassrooms)) {
                     list($relatedclassromsql, $relatedclassroomparams) = $DB->get_in_or_equal($myclassrooms, SQL_PARAMS_NAMED, 'myclassrooms');
                     $params = array_merge($params,$relatedclassroomparams);
-                    $condition .= " AND c.id $relatedclassromsql";
+                    $condition .= " AND c.id $relatedclassromsql ";
                 }else{
                     return array('classrooms' => array(), 'classroomscount' =>0);
                 }
@@ -588,7 +588,7 @@ class classroom {
             if (!empty($myclassrooms)) {
                     list($relatedclassromsql, $relatedclassroomparams) = $DB->get_in_or_equal($myclassrooms, SQL_PARAMS_NAMED, 'myclassrooms');
                     $params = array_merge($params,$relatedclassroomparams);
-                    $condition .= " AND c.id $relatedclassromsql";
+                    $condition .= " AND c.id $relatedclassromsql ";
                 }else{
                     return array('classrooms' => array(), 'classroomscount' =>0);
                 }
@@ -602,15 +602,15 @@ class classroom {
        $sql = " FROM {local_classroom} AS c
                WHERE 1 = 1 ";
         
-               $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+            //    $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         //added by sarath for ticket 2751
-        if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
-            $sql .= " AND c.status != 2";
-        }
+        // if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
+        //     $sql .= " AND c.status != 2 ";
+        // }
 
-        if(!is_siteadmin() && !has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
-            $sql .= " AND c.status != 0";
-        }
+        // if(!is_siteadmin() && !has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
+        //     $sql .= " AND c.status != 0 ";
+        // }
         //ended here by sarath
 
         $sql .= $condition;
@@ -692,10 +692,10 @@ class classroom {
 
                             switch($sdata->status) {
                                 case CLASSROOM_NEW:
-                                   if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
+                                    // if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
                                         $line ['classroomstatusclass'] = 'classroomnew';
                                         $line ['crstatustitle'] = get_string('newclasses', 'local_classroom');
-                                    }
+                                    // }
                                 break;
                                 case CLASSROOM_ACTIVE:
 
@@ -704,10 +704,10 @@ class classroom {
 
                                 break;
                                 case CLASSROOM_HOLD:
-                                   if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
+                                    // if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
                                         $line ['classroomstatusclass'] = 'classroomhold';
                                         $line ['crstatustitle'] = get_string('holdclasses', 'local_classroom');
-                                   }
+                                //    }
                                 break;
                                 case CLASSROOM_CANCEL:
 
@@ -839,9 +839,7 @@ class classroom {
                             $line['mouse_overicon'] = $mouse_overicon;
                             // $row[] = $this->render_from_template('local_classroom/browseclassroom', $line);
                             $row[] = $line;
-// print_object($line);exit();
                         }
-// print_object($row);exit();
 
                     // }
                 // }
@@ -1189,7 +1187,7 @@ class classroom {
                         JOIN {local_classroom_users} AS cu ON
                                 (cu.userid = u.id AND cu.classroomid = $classroomid)
                             $concatsql
-                       WHERE cu.classroomid = :classroomid $whereconditions";
+                       WHERE cu.classroomid = :classroomid $whereconditions ";
                        $params['classroomid'] = $classroomid;
 
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
@@ -2156,7 +2154,7 @@ class classroom {
         $sql      = " FROM {user} AS u
                  JOIN {local_classroom_users} AS cu ON cu.userid = u.id
                  JOIN {local_classroom} AS c ON c.id = cu.classroomid
-                WHERE c.id = :classroomid AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
+                WHERE c.id = :classroomid AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2 ";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
@@ -2614,7 +2612,7 @@ class classroom {
         // }
         if ($total == 0) {
             $availableusers = $DB->get_records_sql_menu($sql . $order, $params);
-        // echo $sql;
+        
         // print_object($params);
         // print_object($availableusers);exit;
         } else {
@@ -2946,7 +2944,7 @@ class classroom {
         $sql      = " FROM {user} AS u
                  JOIN {local_classroom_waitlist} AS cu ON cu.userid = u.id
                  JOIN {local_classroom} AS c ON c.id = cu.classroomid
-                WHERE c.id = :classroomid AND cu.enrolstatus=0 AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
+                WHERE c.id = :classroomid AND cu.enrolstatus=0 AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2 ";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
