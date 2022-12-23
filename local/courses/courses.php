@@ -122,7 +122,7 @@ $extended_menu_links .= "<li>
         </div>
     </li>";
 }
-if ((has_capability('local/request:approverecord', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())) {
+if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
     $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                             <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('request', 'local_request').'" href = '.$CFG->wwwroot.'/local/request/index.php?component=elearning>
                                 <i class="icon fa fa-share-square" aria-hidden="true"></i>

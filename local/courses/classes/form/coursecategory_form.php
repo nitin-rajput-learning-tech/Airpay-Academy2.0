@@ -44,7 +44,7 @@ class coursecategory_form extends moodleform {
         $context = (new \local_courses\lib\accesslib())::get_module_context(); 		
         // Get list of categories to use as parents, with site as the first one.
         $options = array();
-        if (has_capability('moodle/category:manage', (new \local_courses\lib\accesslib())::get_module_context()) || $parent == 0) {
+        if (has_capability('moodle/category:manage', $context) || $parent == 0) {
             $option[0] = get_string('top');
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context)){            

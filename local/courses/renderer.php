@@ -269,7 +269,7 @@ class local_courses_renderer extends plugin_renderer_base {
     global $DB;
   
     $certificate_plugin_exist = \core_component::get_plugin_directory('tool', 'certificate');
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
     if(is_siteadmin() || has_capability('enrol/manual:manage', $systemcontext)) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
                 $userenrollment = true;
@@ -314,7 +314,7 @@ class local_courses_renderer extends plugin_renderer_base {
     $params = array();
     $params['courseid'] = $dataobj->courseid;
 
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context($dataobj->courseid);
 
     if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
       $sql .= " AND c.open_costcenterid = :costcenterid ";

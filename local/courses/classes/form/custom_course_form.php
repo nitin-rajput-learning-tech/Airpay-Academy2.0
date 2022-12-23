@@ -115,7 +115,7 @@ class custom_course_form extends moodleform {
         $mform->addElement('hidden', 'id', $courseid);
         $mform->setType('id', PARAM_INT);
 		
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context(); 		
+        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
         $core_component = new core_component();
         if($formstatus == 0){
 			$selectdepartmentslist = array(null=>get_string('selectdept','local_courses'));

@@ -114,7 +114,9 @@ class local_courses_external extends external_api {
 
             $formheaders = array_keys($mform->formstatus);
             $category_id=$data['category'];
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',(new \local_courses\lib\accesslib())::get_module_context()) || has_capability('local/costcenter:manage_ownorganization',(new \local_courses\lib\accesslib())::get_module_context())){
+
+            $systemcontext=(new \local_courses\lib\accesslib())::get_module_context($course->id);
+            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
               $open_departmentid = implode(',',$data['open_departmentid']);
             }else {
               $open_departmentid = $data['open_departmentid'];
@@ -1054,7 +1056,7 @@ class local_courses_external extends external_api {
         global $DB;
         $params = self::validate_parameters(self::course_update_status_parameters(),
                                     ['contextid' => $contextid,'id' => $id, 'params' => $params]);
-        $context = (new \local_courses\lib\accesslib())::get_module_context();
+        $context = (new \local_courses\lib\accesslib())::get_module_context( $id);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
         $course = $DB->get_record('course', array('id' => $id), 'id, visible');

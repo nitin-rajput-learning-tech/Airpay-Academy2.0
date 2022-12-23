@@ -129,7 +129,6 @@ $PAGE->set_heading($course->fullname);
 }
 
 navigation_node::override_active_url(new moodle_url('/local/mass_enroll/mass_enroll.php', array('id'=>$course->id)));
-$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(is_siteadmin()){
   $costcenter="";
 }else{

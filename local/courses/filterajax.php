@@ -49,7 +49,7 @@ if(is_array($subdepartments)){
 }
 
 
-$PAGE->set_context((new \local_courses\lib\accesslib())::get_module_context());
+$PAGE->set_context((new \local_courses\lib\accesslib())::get_module_context($course_id));
 $costcenterlib = new costcenter();
 $filter_class = new custom_filter; 
 

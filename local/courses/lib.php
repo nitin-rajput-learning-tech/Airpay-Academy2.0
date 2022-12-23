@@ -98,7 +98,7 @@ function mass_enroll($cir, $course, $context, $data) {
         $fieldcontcat=$string.$fields[0];
         /******The below code is for the AH checking condtion if AH any user can be enrolled else if OH only his costcenter users enrol*****/
         // $id=$DB->get_field('course','open_costcenterid',array('id'=>$course->id));
-		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context($course->id);
 
         // if(!is_siteadmin()  && has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)){
         //     $sql=" ";
@@ -942,7 +942,7 @@ function status_filter($mform){
 function elearning_filter($mform){
     global $DB,$USER;
 	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-    if ((has_capability('local/request:approverecord', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())) {
+    if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
         $courseslist = $DB->get_records_sql_menu("SELECT id, fullname FROM {course} WHERE visible = 1");
     }
     $select = $mform->addElement('autocomplete', 'elearning', '', $courseslist, array('placeholder' => get_string('course_name', 'local_courses')));
@@ -1015,7 +1015,7 @@ function print_filterform(){
 function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, $offset=-1, $perpage=-1, $lastitem=0){
 
     global $DB, $USER;
-	$context = (new \local_courses\lib\accesslib())::get_module_context();
+	$context = (new \local_courses\lib\accesslib())::get_module_context($course_id);
     $course = $DB->get_record('course', array('id' => $course_id));
  
     $params['suspended'] = 0;
@@ -1506,7 +1506,7 @@ function get_listof_courses($stable, $filterdata) {
             $courseslist[$count]["coursetype"] = $displayed_names;
             $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
             $courseslist[$count]["grade_view"] = ((has_capability('local/courses:grade_view',
-            (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false;
+            $systemcontext) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false;
             $courseslist[$count]["request_view"] = ((has_capability('local/request:approverecord', $systemcontext)) || is_siteadmin()) ? true : false;
             
             $coursesummary = \local_costcenter\lib::strip_tags_custom($chelper->get_course_formatted_summary($course_in_list,
@@ -1626,7 +1626,7 @@ function get_listof_courses($stable, $filterdata) {
              }   
 
            
-            if ((has_capability('local/request:approverecord', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())) {
+            if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
                 $courseslist[$count]["requestlink"] = $CFG->wwwroot."/local/request/index.php?courseid=".$course->id;
             }
 
@@ -1671,18 +1671,18 @@ function get_listof_courses($stable, $filterdata) {
         "totalcourses" => $totalcourses,
         "length" => count($courseslist),
         "actions"=>(((has_capability('local/courses:enrol',
-        (new \local_courses\lib\accesslib())::get_module_context())|| has_capability('local/courses:update',
-        (new \local_courses\lib\accesslib())::get_module_context())||has_capability('local/courses:delete',
-        (new \local_courses\lib\accesslib())::get_module_context()) || has_capability('local/courses:grade_view',
-        (new \local_courses\lib\accesslib())::get_module_context())|| has_capability('local/courses:report_view',
-        (new \local_courses\lib\accesslib())::get_module_context())) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        $systemcontext)|| has_capability('local/courses:update',
+        $systemcontext)||has_capability('local/courses:delete',
+        $systemcontext) || has_capability('local/courses:grade_view',
+        $systemcontext)|| has_capability('local/courses:report_view',
+        $systemcontext)) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
         "enrol"=>((has_capability('local/courses:enrol',
-        (new \local_courses\lib\accesslib())::get_module_context())  || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        $systemcontext)  || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
         "update"=>((has_capability('local/courses:update',
-        (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        $systemcontext) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
         "delete"=>((has_capability('local/courses:delete',
-        (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
-        "report_view"=>((has_capability('local/courses:report_view', (new \local_courses\lib\accesslib())::get_module_context()) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false 
+        $systemcontext) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false,
+        "report_view"=>((has_capability('local/courses:report_view', $systemcontext) || is_siteadmin())&&has_capability('local/courses:manage', $systemcontext)) ? true : false
     );
 
     return $coursesContext;
@@ -1941,7 +1941,7 @@ function local_courses_get_tagged_courses($tag, $exclusivemode = false, $fromctx
 
 function get_course_details($courseid) {
     global $USER, $DB, $PAGE;
-	$context = (new \local_courses\lib\accesslib())::get_module_context();
+	$context = (new \local_courses\lib\accesslib())::get_module_context($courseid);
     
     $PAGE->requires->js_call_amd('local_courses/courses','load', array());
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
@@ -2037,7 +2037,7 @@ function get_enrolledusers($courseid){
     $params = array();
     $params['courseid'] = $courseid;
 
-	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+	$systemcontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
     
     if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
         $sql .= " AND c.open_costcenterid = :costcenterid ";
