@@ -54,28 +54,10 @@ function manage_groups_count($stable,$filterdata){
      $fields = "SELECT c.*";
      $countfields = "SELECT COUNT(1)";
      $sql = " FROM {cohort} c, {local_groups} g
-              WHERE g.cohortid = c.id AND contextid = :contextid";
+              WHERE g.cohortid = c.id";
      $context =  (new \local_groups\lib\accesslib())::get_module_context();
-     if ( has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
-        $costcenters = $DB->get_records_sql_menu('select fullname,id from {local_costcenter} where parentid = 0 ');
-        if(!empty($costcenters)){
-            $my_costcenters = implode(',', $costcenters);
-            $sql .=" and costcenterid IN( $my_costcenters )";
-        }
-    } elseif(has_capability('local/costcenter:manage_ownorganization',$context)) {
-        $costcenter = $DB->get_record_sql("SELECT cc.id, cc.parentid 
-                            FROM {user} u 
-                            JOIN {local_costcenter} cc ON u.open_costcenterid = cc.id 
-                            WHERE u.id={$USER->id}");
-        if ($costcenter->parentid == 0) {
-            $sql .=" and costcenterid IN( $costcenter->id )";
-        } else {
-            
-            $sql .=" AND ( CONCAT(',',$costcenter->id,',') LIKE CONCAT('%,',g.departmentid,',%') )  ";
-        }
-    } else {
-        $sql .=" AND ( CONCAT(',',$USER->open_departmentid,',') LIKE CONCAT('%,',g.departmentid,',%') )  ";
-    }
+     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+        $sql .=" $costcenterpathconcatsql";
     $params = array();
 
     $order = " ORDER BY  g.id DESC";
@@ -264,7 +246,8 @@ function local_groups_add_groups($groups) {
     $new_group->cohortid = $groups->id;
     $new_group->usermodified = $USER->id;
     $new_group->timemodified = time();
-    $new_group->costcenterid = $groups->costcenterid;
+    $new_group->costcenterid = $groups->open_costcenterid;
+    $new_group->open_path = $groups->open_path;
     $new_group->departmentid = is_array($groups->departmentid) ? implode(',', $groups->departmentid) : $groups->departmentid;
     $DB->insert_record('local_groups', $new_group);
 
@@ -452,7 +435,6 @@ function local_groups_is_member($groupsid, $userid) {
  */
 function local_groups_get_available_groups($currentcontext, $withmembers = 0, $offset = 0, $limit = 10, $search = '') {
     global $DB;
-
     $params = array();
 
     // Build context subquery. Find the list of parent context where user is able to see any or visible-only groups.
@@ -634,29 +616,10 @@ function local_groups_get_groups($contextid, $page = 0, $perpage = 10, $search =
      $fields = "SELECT c.*";
      $countfields = "SELECT COUNT(1)";
      $sql = " FROM {cohort} c, {local_groups} g
-              WHERE g.cohortid = c.id AND contextid = :contextid";
+              WHERE g.cohortid = c.id";
      $context = (new \local_groups\lib\accesslib())::get_module_context();
-     if ( has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
-        $costcenters = $DB->get_records_sql_menu('select fullname,id 
-                                                from {local_costcenter} 
-                                                where parentid = 0 ');
-        if(!empty($costcenters)){
-            $my_costcenters = implode(',', $costcenters);
-            $sql .=" and g.costcenterid IN( $my_costcenters )";
-        }
-    } elseif(has_capability('local/costcenter:manage_ownorganization',$context)) {
-        $costcenter = $DB->get_record_sql("SELECT cc.id, cc.parentid 
-                                        FROM {user} u 
-                                        JOIN {local_costcenter} cc ON u.open_costcenterid = cc.id 
-                                        WHERE u.id={$USER->id}");
-        if ($costcenter->parentid == 0) {
-            $sql .=" and g.costcenterid IN( $costcenter->id )";
-        } else {
-            $sql .=" AND ( CONCAT(',',$costcenter->id,',') LIKE CONCAT('%,',g.departmentid,',%') )  ";
-        }
-    } else {
-        $sql .=" AND ( CONCAT(',',$USER->open_departmentid,',') LIKE CONCAT('%,',g.departmentid,',%') )  ";
-    }
+     $costcenterpathconcatsql = (new \local_groups\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+        $sql .=" $costcenterpathconcatsql";
     $params = array('contextid' => $contextid);
     $order = " ORDER BY  g.id DESC";
     if(isset($search)){
@@ -668,7 +631,6 @@ function local_groups_get_groups($contextid, $page = 0, $perpage = 10, $search =
         $totalgroups = $DB->count_records_sql($countfields . $sql, $params);
     }
         $groups = $DB->get_records_sql($fields . $sql . $order, $params, $page, $perpage);
-
     return array('totalgroups' => $totalgroups, 'groups' => $groups, 'allgroups' => $allgroups);
 }
 
@@ -692,20 +654,8 @@ function local_groups_get_all_groups($context,$page = 0, $perpage = 10, $search 
              JOIN {context} ctx ON ctx.id = c.contextid
              JOIN {local_groups} g ON g.cohortid = c.id ";
      $context = (new \local_groups\lib\accesslib())::get_module_context();
-     if (is_siteadmin() ||has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
-        $costcenters = $DB->get_records_sql_menu('select fullname,id from {local_costcenter} where parentid = 0 ');
-        $my_costcenters = implode(',', $costcenters);
-        $sql .=" and g.costcenterid IN( $my_costcenters )";
-    } elseif(has_capability('local/costcenter:manage_ownorganization',$context)) {
-        $costcenter = $DB->get_record_sql("SELECT cc.id, cc.parentid FROM {user} u JOIN {local_costcenter} cc ON u.open_costcenterid = cc.id WHERE u.id={$USER->id}");
-        if ($costcenter->parentid == 0) {
-            $sql .=" and g.costcenterid IN( $costcenter->id )";
-        } else {
-            $sql .=" AND ( CONCAT(',',$costcenter->id,',') LIKE CONCAT('%,',g.departmentid,',%') )  ";
-        }
-    } else {
-        $sql .=" AND ( CONCAT(',',$USER->open_departmentid,',') LIKE CONCAT('%,',g.departmentid,',%') )  ";
-    }
+     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $sql .="$costcenterpathconcatsql";
     $params = array();
     $wheresql = '';
 
@@ -813,6 +763,8 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
     $context =  (new \local_groups\lib\accesslib())::get_module_context();
     $group = $DB->get_record('cohort', array('id' => $groupid));
     $cohort_group  = $DB->get_record('local_groups', array('cohortid' => $groupid));
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($group);
     $params['suspended'] = 0;
     $params['deleted'] = 0;
   
@@ -822,7 +774,7 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
         $sql = "SELECT count(u.id) as total";
     }
     $sql.=" FROM {user} AS u 
-            WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted ";
+            WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql $userprofilesql";
     if($lastitem!=0){
         $sql.= " AND u.id > $lastitem";
     }
@@ -830,22 +782,12 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
         $user_detail = $DB->get_record('user', array('id'=>$USER->id));
         $sql .= " AND u.open_costcenterid = :costcenter";
         $params['costcenter'] = $user_detail->open_costcenterid;
-        if (has_capability('local/costcenter:manage_owndepartments',$context) AND !has_capability('local/costcenter:manage_ownorganization',$context)) {
-            $sql .=" AND u.open_departmentid = :department";
-            $params['department'] = $user_detail->open_departmentid;
-        }
     }
     if (!empty($params['email'])) {
         $sql.=" AND u.id IN ({$params['email']})";
     }
     if (!empty($params['uname'])) {
         $sql .=" AND u.id IN ({$params['uname']})";
-    }
-    if (!empty($params['department'])) {
-        $sql .=" AND u.open_departmentid IN ({$params['department']})";
-    }
-    if (!empty($params['organization'])) {
-        $sql .=" AND u.open_costcenterid IN ({$params['organization']})";
     }
     if (!empty($params['idnumber'])) {
         $sql .=" AND u.id IN ({$params['idnumber']})";
@@ -906,19 +848,8 @@ function groups_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage
     $systemcontext =  (new \local_groups\lib\accesslib())::get_module_context();
     $groupslist=array();
     $data=data_submitted();
-    
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) ){     
-        $groupslist_sql="SELECT c.id, c.name as fullname FROM {local_groups} g, {cohort} c  WHERE c.visible = 1 AND c.id = g.cohortid ";
-    }else if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-       
-        $groupslist_sql="SELECT c.id, c.name as fullname FROM {local_groups} g, {cohort} c  WHERE c.visible = 1 AND c.id = g.cohortid AND g.costcenterid IN( $USER->open_costcenterid )";
-        
-    }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-        $groupslist_sql="SELECT c.id, c.name as fullname 
-                        FROM {local_groups} g, {cohort} c  
-                        WHERE c.visible = 1 AND c.id = g.cohortid 
-                        AND ( CONCAT(',',$USER->open_departmentid,',') LIKE CONCAT('%,',g.departmentid,',%') ) ";
-    }
+    $costcenterpathconcatsql = (new \local_groups\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $groupslist_sql="SELECT c.id, c.name as fullname FROM {local_groups} g, {cohort} c  WHERE c.visible = 1 AND c.id = g.cohortid $costcenterpathconcatsql";
     if(!empty($query)){ 
         if ($searchanywhere) {
             $groupslist_sql.=" AND c.name LIKE '%$query%' ";
@@ -986,14 +917,9 @@ function groups_mass_enroll($cir, $groups, $context, $data) {
             continue;
         $fields[0]= str_replace('"', '', trim($fields[0]));
         /*First Condition To validate users*/
-        $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield='$fields[0]'";
+        $costcenterpathconcatsql = (new \local_groups\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+        $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield='$fields[0]' $costcenterpathconcatsql";
         $systemcontext =  (new \local_groups\lib\accesslib())::get_module_context();
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-            $sql .= " AND u.open_costcenterid = {$USER->open_costcenterid} "; 
-            if(!has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-                $sql .= " AND u.open_departmentid = {$USER->open_departmentid} "; 
-            }
-        }
         if (!$user = $DB->get_record_sql($sql)) {
             $result .= '<div class="alert alert-error">'.get_string('im:user_unknown', 'local_courses', $fields[0] ). '</div>';
             continue;
@@ -1044,13 +970,23 @@ function local_groups_output_fragment_new_groupsform($args){
         $data->description_editor['format'] = FORMAT_HTML;
 
         $groups_data = $DB->get_record('local_groups', array('cohortid'=>$data->id));
-        $data->departmentid = explode(',',$groups_data->departmentid);
-        $data->costcenterid = $groups_data->costcenterid;
-        $mform = new local_groups\form\edit_form(null, array('editoroptions' => $editoroptions,'id' => $data->id, 'org'=>$groups_data->costcenterid,'dept'=>$groups_data->departmentid, 'data' => $groups_data), 'post', '', null, true, $formdata);
+        $customdata = array('id' => $groups_data->id,
+        'open_path' => $groups_data->open_path,
+        'editoroptions' => $editoroptions,
+        'data' => $data
+    );
+    local_costcenter_set_costcenter_path($customdata);
+    local_users_set_userprofile_datafields($customdata,$groups_data);
+        $mform = new local_groups\form\edit_form(null, $customdata, 'post', '', null, true, $formdata);
         $mform->set_data($data);
     }
     else{
-        $mform = new local_groups\form\edit_form(null, array('editoroptions' => $editoroptions), 'post', '', null, true, $formdata);
+        $customdata = array(
+        'editoroptions' => $editoroptions,
+    );
+    local_costcenter_set_costcenter_path($customdata);
+    local_users_set_userprofile_datafields($customdata,$formdata);
+        $mform = new local_groups\form\edit_form(null,$customdata, 'post', '', null, true, $formdata);
     }
     if (!empty($formdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
