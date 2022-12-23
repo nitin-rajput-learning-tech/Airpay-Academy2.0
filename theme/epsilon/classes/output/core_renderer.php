@@ -1087,6 +1087,7 @@ class core_renderer extends \core_renderer {
 
             $current_orgcatid = isset($USER->access['currentroleinfo']['orgcatid']) ? $USER->access['currentroleinfo']['orgcatid'] : $highest_roleinfo->highest_catid;
 
+            $current_depth = isset($USER->access['currentroleinfo']['depth']) ? $USER->access['currentroleinfo']['depth'] : $highest_roleinfo->depth;
 
             if(!empty($learnerroleid)){
                 if($learnerroleid->id == $current_roleid){
@@ -1111,7 +1112,7 @@ class core_renderer extends \core_renderer {
 
                 $switchrole = new stdClass();
                 $switchrole->itemtype = 'link';
-                if($role->roleid == $current_roleid && $current_orgcatid == $role->highest_catid ){
+                if($role->roleid == $current_roleid && $current_depth == $role->depth && $current_orgcatid == $role->highest_catid ){
                     $switchrole->url = new moodle_url('javascript:void(0)');
                     $disabled_role = 'user_role active_role';
                 }else{
