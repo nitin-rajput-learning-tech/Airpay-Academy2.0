@@ -30,25 +30,37 @@ namespace local_groups\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($groupid = null){
+    public static function groups_costcenterpath($userid = null) {
 
-        global $DB;
+        global $DB,$USER;
 
-        $costcenterid=null;
+        $endpathvalue=null;
 
-        if($groupid > 0){
+        if($userid != null && $userid > 0){
 
-            $groupcostcenter=$DB->get_field('local_groups','costcenterid',  array('id'=>$groupid));
+            $costcenterpath=$DB->get_field('local_groups','open_path',  array('id'=> $userid));
 
-            if($groupcostcenter > 0){
+            if(!empty($costcenterpath)){
 
-                $costcenterid=$groupcostcenter;
+                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
+
+                $endpathvalue=end($extractcostcenterpath);
 
             }
-
         }
 
-        return parent::get_module_context($costcenterid);
+        return $endpathvalue;
+
+    }
+    public static function get_module_context($userid = null){
+        global $USER;
+
+        return parent::get_module_context(self::groups_costcenterpath($userid));
+
+    }
+    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = NULL){
+
+        return parent::get_costcenter_path_field_concatsql($columnname, self::groups_costcenterpath($userid));
 
     }
 }

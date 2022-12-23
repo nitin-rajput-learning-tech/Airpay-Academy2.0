@@ -859,11 +859,13 @@ class local_classroom_external extends external_api {
                             new external_single_structure(
                                 array(
                                     'department' => new external_value(PARAM_RAW, 'department'),
-                                    'subdepartment' => new external_value(PARAM_RAW, 'subdepartment'),
-                                    'group' => new external_value(PARAM_RAW, 'group'),
-                                    'hrmsrole' => new external_value(PARAM_RAW, 'hrmsrole'),
-                                    'designation' => new external_value(PARAM_RAW, 'designation'),
-                                    'location' => new external_value(PARAM_RAW, 'location'),
+                                    'bussinessunit' => new external_value(PARAM_RAW, 'bussinessunit'),
+                                    'commercialunit' => new external_value(PARAM_RAW, 'commercialunit'),
+                                    'territory' => new external_value(PARAM_RAW, 'territory'),
+                                    'states' => new external_value(PARAM_RAW, 'states'),
+                                    'district' => new external_value(PARAM_RAW, 'district'),
+                                    'subdistrict' => new external_value(PARAM_RAW, 'subdistrict'),
+                                    'village' => new external_value(PARAM_RAW, 'village'),
                                 )
                             )
             )

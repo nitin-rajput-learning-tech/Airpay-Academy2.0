@@ -25,6 +25,7 @@
  
 defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
+require_once($CFG->dirroot . '/user/selector/lib.php');
 class local_groups_external extends external_api {
 
 		/**
@@ -63,14 +64,17 @@ class local_groups_external extends external_api {
 		$data = array();
        
         parse_str($serialiseddata, $data);
-        $warnings = array();
-		$mform = new \local_groups\form\edit_form(null, array(''), 'post', '', null, true, $data);
-		
+        $warnings = array();      
+        $mform = new \local_groups\form\edit_form(null,'', 'post', '', null, true, $data);
         $valdata = $mform->get_data();
         if($valdata){
             if($valdata->id>0){
+                local_costcenter_get_costcenter_path($valdata);
+                local_users_get_userprofile_datafields($valdata,$data); 
                 $groupsupdate = local_groups_update_groups($valdata);
             } else{
+                local_costcenter_get_costcenter_path($valdata);
+                local_users_get_userprofile_datafields($valdata,$data);
 				$groupsinsert = local_groups_add_groups($valdata);
 			}
 		} else {

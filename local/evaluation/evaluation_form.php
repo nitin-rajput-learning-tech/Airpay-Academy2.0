@@ -49,7 +49,7 @@ class evaluation_form extends moodleform {
         $mform->addRule('name', get_string('feedbackname', 'local_evaluation'), 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');       
        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_evaluation', $categorycontext, $multiple = false);
-        local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_users', $categorycontext, $multiple = false);
+        local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_evoluation', $categorycontext, $multiple = false);
         if ($instance == 0) {
             $type = array(null => get_string('selecttype', 'local_evaluation'),
                          '1'=>get_string('feedback', 'local_evaluation'),

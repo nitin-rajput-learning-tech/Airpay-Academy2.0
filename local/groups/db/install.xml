@@ -11,6 +11,7 @@
         <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="organization"/>
         <FIELD NAME="open_path" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="departmentid" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="open_path" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT=" open path for costcenter"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

@@ -14,9 +14,9 @@ class local_learningplan_external extends external_api {
     }
     public function submit_learningplan($id, $contextid, $jsonformdata, $form_status){
         global $DB;
-		$context  = (new \local_learningplan\lib\accesslib())::get_module_context($id);
+		$categorycontext  = (new \local_learningplan\lib\accesslib())::get_module_context($id);
         // We always must call validate_context in a webservice.
-		self::validate_context($context);
+		self::validate_context($categorycontext);
 		$serialiseddata = json_decode($jsonformdata);
 
 		$data = array();
@@ -158,9 +158,9 @@ class local_learningplan_external extends external_api {
     }
     public static function lpcourse_enrol_form($planid,$contextid, $jsonformdata) {
         global $DB;
-        $context =(new \local_learningplan\lib\accesslib())::get_module_context($planid);
+        $categorycontext =(new \local_learningplan\lib\accesslib())::get_module_context($planid);
         // We always must call validate_context in a webservice.
-        self::validate_context($context);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
 
         $data = array();

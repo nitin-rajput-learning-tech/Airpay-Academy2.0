@@ -27,7 +27,9 @@ use context_instance;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/lib/formslib.php');
+require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
+require_once($CFG->dirroot . '/local/users/lib.php');
 
 use local_users\functions\userlibfunctions as userlib;
 class edit_form extends moodleform {
@@ -42,75 +44,7 @@ class edit_form extends moodleform {
         $cohort = $this->_customdata['data'];
         
         $context = (new \local_groups\lib\accesslib())::get_module_context();
-        $departmentslist = array(null=>get_string('all'));
-        if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-            $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
-            $costcenters = $DB->get_records_sql($sql);
-            $organizationlist=array(0=>'--Select Organization--');
-            foreach ($costcenters as $scl) {
-                $organizationlist[$scl->id]=$scl->fullname;
-            }
-            $costcenteroptions = array(
-                'data-contextid' => $context->id,
-                'data-action' => 'costcenter_organisation_selector',
-                'data-options' => json_encode(array('id' => $open_costcenter)),
-                'class' => 'organisationnameselect',
-                'data-class' => 'organisationselect',
-                'multiple' => false,
-            );
-           $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), $organizationlist, $costcenteroptions);
-           
-            $mform->setType('costcenterid', PARAM_INT);
-            $mform->addRule('costcenterid',get_string('pleaseselectorganization','local_groups'), 'required', null, 'client');
-
-         } elseif (has_capability('local/costcenter:manage_ownorganization',$context)){
-            $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-            $mform->addElement('hidden', 'costcenterid', null,array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
-            $mform->setType('costcenterid', PARAM_INT);
-            $mform->setConstant('costcenterid', $user_dept);
-            $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = $user_dept";
-            $departmentslists = $DB->get_records_sql_menu($sql);
-            if(isset($departmentslists)&&!empty($departmentslists))
-            $departmentslist = $departmentslist+$departmentslists;
-        } else {
-            $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-            $mform->addElement('hidden', 'costcenterid', null);
-            $mform->setType('costcenterid', PARAM_INT);
-            $mform->setConstant('costcenterid', $user_dept);
-            
-            $mform->addElement('hidden', 'departmentid');
-            $mform->setType('departmentid', PARAM_INT);
-            $mform->setConstant('departmentid', $USER->open_departmentid);
-            
-        }
-            
-        if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context) ||
-            has_capability('local/costcenter:manage_ownorganization',$context)) {
-            if($cohort->id > 0){
-                $open_costcenterid = $DB->get_field('local_groups','costcenterid',array('cohortid'=>$cohort->id));
-            } else {
-                $open_costcenterid = $this->_ajaxformdata['costcenterid'];
-            }
-            if(!empty($open_costcenterid)) {
-                $departments = userlib::find_departments_list($open_costcenterid);
-                foreach($departments as $depart){
-                    $departmentslist[$depart->id]=$depart->fullname;
-                }
-            }
-            $departmentoptions = array(
-                    'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $context->id,
-                    'data-action' => 'costcenter_department_selector',
-                    'data-options' => json_encode(array('id' => $open_department)),
-                    'class' => 'departmentselect',
-                    'data-parentclass' => 'organisationselect',
-                    'data-class' => 'departmentselect',
-                    'multiple' => false,
-            );
-            $mform->addElement('autocomplete', 'departmentid', get_string('department','local_evaluation'),$departmentslist,$departmentoptions);
-            $mform->setType('departmentid', PARAM_INT);
-        }
-
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_groups', $context, $multiple = false);
         $mform->addElement('text', 'name', get_string('name', 'local_groups'), 'maxlength="254" size="50"');
         $mform->addRule('name', get_string('groupname','local_groups'), 'required', null, 'client');
         $mform->setType('name', PARAM_TEXT);

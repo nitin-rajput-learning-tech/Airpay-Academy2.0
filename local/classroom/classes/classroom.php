@@ -561,7 +561,7 @@ class classroom {
         }
         $params['status'] = $status;
         if (!empty($search)) {
-            $condition .= " AND (c.name LIKE :search )";
+            $condition .= " AND (c.name LIKE :search ) ";
             $params['search'] = '%' . $search . '%';
         }
 
@@ -575,7 +575,7 @@ class classroom {
                 if (!empty($myclassrooms)) {
                     list($relatedclassromsql, $relatedclassroomparams) = $DB->get_in_or_equal($myclassrooms, SQL_PARAMS_NAMED, 'myclassrooms');
                     $params = array_merge($params,$relatedclassroomparams);
-                    $condition .= " AND c.id $relatedclassromsql";
+                    $condition .= " AND c.id $relatedclassromsql ";
                 }else{
                     return array('classrooms' => array(), 'classroomscount' =>0);
                 }
@@ -588,7 +588,7 @@ class classroom {
             if (!empty($myclassrooms)) {
                     list($relatedclassromsql, $relatedclassroomparams) = $DB->get_in_or_equal($myclassrooms, SQL_PARAMS_NAMED, 'myclassrooms');
                     $params = array_merge($params,$relatedclassroomparams);
-                    $condition .= " AND c.id $relatedclassromsql";
+                    $condition .= " AND c.id $relatedclassromsql ";
                 }else{
                     return array('classrooms' => array(), 'classroomscount' =>0);
                 }
@@ -602,15 +602,15 @@ class classroom {
        $sql = " FROM {local_classroom} AS c
                WHERE 1 = 1 ";
         
-               $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+            //    $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         //added by sarath for ticket 2751
-        if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
-            $sql .= " AND c.status != 2";
-        }
+        // if(!is_siteadmin() && !has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
+        //     $sql .= " AND c.status != 2 ";
+        // }
 
-        if(!is_siteadmin() && !has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
-            $sql .= " AND c.status != 0";
-        }
+        // if(!is_siteadmin() && !has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
+        //     $sql .= " AND c.status != 0 ";
+        // }
         //ended here by sarath
 
         $sql .= $condition;
@@ -674,10 +674,10 @@ class classroom {
                             //     $classroomdepartment = $DB->get_fieldset_select('local_costcenter', 'fullname', " CONCAT(',',$sdata->department,',') LIKE CONCAT('%,',id,',%') ", array());//FIND_IN_SET(id, '$sdata->department')
                             //     $departmentname = (count($classroomdepartment)>1) ? $classroomdepartment[0].'...' : $classroomdepartment[0];
                             //     $departmenttitle = implode(', ', $classroomdepartment);
-                            // }
-
-                             if(!empty($sdata->department)){
-                              $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$sdata->department.')');
+                            // }                           
+                            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$sdata->open_path);
+                             if(!empty($ctr)){
+                              $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$ctr.')');
                               $Department=array();
                               foreach($department as $dep){
                                  $Department[]=$dep->fullname;
@@ -692,10 +692,10 @@ class classroom {
 
                             switch($sdata->status) {
                                 case CLASSROOM_NEW:
-                                   if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
+                                    // if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
                                         $line ['classroomstatusclass'] = 'classroomnew';
                                         $line ['crstatustitle'] = get_string('newclasses', 'local_classroom');
-                                    }
+                                    // }
                                 break;
                                 case CLASSROOM_ACTIVE:
 
@@ -704,10 +704,10 @@ class classroom {
 
                                 break;
                                 case CLASSROOM_HOLD:
-                                   if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
+                                    // if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
                                         $line ['classroomstatusclass'] = 'classroomhold';
                                         $line ['crstatustitle'] = get_string('holdclasses', 'local_classroom');
-                                   }
+                                //    }
                                 break;
                                 case CLASSROOM_CANCEL:
 
@@ -839,9 +839,7 @@ class classroom {
                             $line['mouse_overicon'] = $mouse_overicon;
                             // $row[] = $this->render_from_template('local_classroom/browseclassroom', $line);
                             $row[] = $line;
-// print_object($line);exit();
                         }
-// print_object($row);exit();
 
                     // }
                 // }
@@ -1189,7 +1187,7 @@ class classroom {
                         JOIN {local_classroom_users} AS cu ON
                                 (cu.userid = u.id AND cu.classroomid = $classroomid)
                             $concatsql
-                       WHERE cu.classroomid = :classroomid $whereconditions";
+                       WHERE cu.classroomid = :classroomid $whereconditions ";
                        $params['classroomid'] = $classroomid;
 
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
@@ -2156,7 +2154,7 @@ class classroom {
         $sql      = " FROM {user} AS u
                  JOIN {local_classroom_users} AS cu ON cu.userid = u.id
                  JOIN {local_classroom} AS c ON c.id = cu.classroomid
-                WHERE c.id = :classroomid AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
+                WHERE c.id = :classroomid AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2 ";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
@@ -2614,7 +2612,7 @@ class classroom {
         // }
         if ($total == 0) {
             $availableusers = $DB->get_records_sql_menu($sql . $order, $params);
-        // echo $sql;
+        
         // print_object($params);
         // print_object($availableusers);exit;
         } else {
@@ -2879,27 +2877,108 @@ class classroom {
 
         $list = array();
 
-        $data = $DB->get_record_sql('SELECT id, open_group, open_hrmsrole,
-             open_designation, open_location,department,subdepartment
+        $classroom = $DB->get_record_sql('SELECT id, open_group, open_path,open_states,open_district,open_subdistrict,open_village
              FROM {local_classroom} WHERE id = :classroomid',array('classroomid' => $classroomid));
-        if ($data->department == -1 || $data->department == null) {
-            $department = 'All';
-        } else {
-            $departments = $DB->get_fieldset_sql("SELECT fullname FROM {local_costcenter} WHERE id IN ($data->department) ");
-            $department  = implode(',', $departments);
-        }
-        if ($data->subdepartment == -1 || $data->subdepartment == null) {
-            $subdepartment = 'All';
-        } else {
-            $subdepartments = $DB->get_fieldset_sql("SELECT fullname  FROM {local_costcenter} WHERE id IN ($data->subdepartment)");
-            $subdepartment  = implode(',', $subdepartments);
-        }
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroom->open_path);
+         if(!empty($ctr)){
+            $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$ctr.')');
+            $Department=array();
+            foreach($department as $dep){
+                $Department[]=$dep->fullname;
+            }
+            $classroomdepartment=implode(',',$Department);
+         }else{
+            $classroomdepartment =  get_string('statusna');
+         }         
+         if(!empty($bu)){
+            $bussinessunit = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$bu.')');
+            $bussinessunitarr=array();
+            foreach($bussinessunit as $bu){
+                $bussinessunitarr[]=$bu->fullname;
+            }
+            $classroombu=implode(',',$bussinessunitarr);
+         }else{
+            $classroombu =  get_string('statusna');
+         }      
+         if(!empty($cu)){   
+            $commercialunit = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$cu.')');
+            $commercialunitarr=array();
+            foreach($commercialunit as $cu){
+                $commercialunitarr[]=$cu->fullname;
+            }
+            $classroomcu=implode(',',$commercialunitarr);
+         }else{
+            $classroomcu =  get_string('statusna');
+         }
+         if(!empty($territory)){
+            $territory = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$territory.')');
+            $territoryarr=array();
+            foreach($territory as $bu){
+                $territoryarr[]=$bu->fullname;
+            }
+            $classroomterritory=implode(',',$territoryarr);
+         }else{
+            $classroomterritory =  get_string('statusna');
+         }         
+        
+         if(!empty($classroom->open_states)){            
+            $states = $DB->get_records_sql('SELECT id, fullname FROM {local_states} WHERE id IN('.$classroom->open_states.')');
+            $statesarr=array();
+            foreach($states as $st){
+                $statesarr[]=$st->states_name;
+            }
+            $classroomstates=implode(',',$statesarr);
+         }else{
+            $classroomstates =  get_string('statusna');
+         }
+       
+         if(!empty($classroom->open_district)){            
+            $district = $DB->get_records_sql('SELECT id, fullname FROM {local_district} WHERE id IN('.$classroom->open_district.')');
+            $districtarr=array();
+            foreach($district as $dist){
+                $districtarr[]=$dist->district_name;
+            }
+            $classroomdistrict=implode(',',$districtarr);
+         }else{
+            $classroomdistrict =  get_string('statusna');
+         }
+         
+         if(!empty($classroom->open_subdistrict)){            
+            $subdistrict = $DB->get_records_sql('SELECT id, fullname FROM {local_subdistrict} WHERE id IN('.$classroom->open_subdistrict.')');
+            $subdistrictarr=array();
+            foreach($subdistrict as $subdist){
+                $subdistrictarr[]=$subdist->subdistrict_name;
+            }
+            $classroomsubdistrict=implode(',',$subdistrictarr);
+         }else{
+            $classroomsubdistrict =  get_string('statusna');
+         }
+         
+         
+         if(!empty($classroom->open_village)){            
+            $village = $DB->get_records_sql('SELECT id, fullname FROM {local_village} WHERE id IN('.$classroom->open_village.')');
+            $villagearr=array();
+            foreach($states as $bu){
+                $villagearr[]=$bu->village_name;
+            }
+            $classroomvillage=implode(',',$villagearr);
+         }else{
+            $classroomvillage =  get_string('statusna');
+         }
+        
+       
         
         
-        $list['department'] = $department;
-        $list['subdepartment'] = $subdepartment;
+        $list['department'] = $classroomdepartment;
+        $list['bussinessunit'] = $classroombu;
+        $list['commercialunit'] = $classroomcu;
+        $list['territory'] = $classroomterritory;
+        $list['states'] = $classroomstates;
+        $list['district'] = $classroomdistrict;
+        $list['subdistrict'] = $classroomsubdistrict;
+        $list['village'] = $classroomvillage;
 
-        if (empty($data->open_group)) {
+        if (empty($classroom->open_group)) {
             $group = 'All';
         } else {
             $groups = $DB->get_fieldset_sql("SELECT name FROM {cohort} WHERE id IN ($data->open_group)");
@@ -2907,12 +2986,6 @@ class classroom {
         }
 
         $list['group'] = $group;
-
-        $list['hrmsrole'] = (!empty($data->open_hrmsrole)) ? $hrmsrole = $data->open_hrmsrole : $hrmsrole = 'All';
-
-        $list['designation'] = (!empty($data->open_designation)) ? /*$designation =*/ $data->open_designation : $designation = 'All';
-
-        $list['location'] = (!empty($data->open_location)) ? /*$location =*/ $data->open_location : $location = 'All';
 
         $array[] = $list;
         return $array;
@@ -2946,7 +3019,7 @@ class classroom {
         $sql      = " FROM {user} AS u
                  JOIN {local_classroom_waitlist} AS cu ON cu.userid = u.id
                  JOIN {local_classroom} AS c ON c.id = cu.classroomid
-                WHERE c.id = :classroomid AND cu.enrolstatus=0 AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
+                WHERE c.id = :classroomid AND cu.enrolstatus=0 AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2 ";
         $sql .= $concatsql;
         $params['classroomid'] = $classroomid;
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {

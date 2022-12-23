@@ -27,6 +27,7 @@ require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot.'/user/editlib.php');
 require_once("$CFG->libdir/externallib.php");
 require_once($CFG->dirroot.'/local/evaluation/lib.php');
+require_once($CFG->dirroot . '/user/selector/lib.php');
 /** Include eventslib.php */
 //require_once($CFG->libdir.'/eventslib.php');
 // Include forms lib.
@@ -114,12 +115,11 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
 	$default_values = (array)$data;
 		$mform->data_preprocessing($default_values);
 	}
-    $customdata = array('id' => $data->id,
+    $customdata = array(
         'open_path' => $data->open_path);
         local_costcenter_set_costcenter_path($customdata);
         local_users_set_userprofile_datafields($customdata,$data);
-        $mform = new \evaluation_form(null, $customdata,
-        'post', '', null, true, $formdata);
+        $mform = new \evaluation_form(null, $customdata,'post', '', null, true, $formdata);
 	$mform->set_data($default_values);
 
     if (!empty($formdata)) {
