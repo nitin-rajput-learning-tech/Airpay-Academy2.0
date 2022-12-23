@@ -815,9 +815,9 @@ class renderer extends plugin_renderer_base {
         //     $classroom->classroomdepartment =  (count($classroomdepartment)>1) ? $classroomdepartment[0].'...' : $classroomdepartment[0];
         //     $classroom->classroomdepartmenttitle = implode(', ', $classroomdepartment);
         // }
-
-         if(!empty($classroom->department)){
-            $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$classroom->department.')');
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroom->open_path);
+         if(!empty($ctr)){
+            $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$ctr.')');
             $Department=array();
             foreach($department as $dep){
                 $Department[]=$dep->fullname;
@@ -826,8 +826,98 @@ class renderer extends plugin_renderer_base {
          }else{
             $classroomdepartment =  get_string('statusna');
          }
-
-        $classroom->classroomdepartment = ($classroomdepartment=='-1'||empty($classroomdepartment))?get_string('all') :$classroomdepartment;
+         $classroom->classroomdepartment = ($classroomdepartment=='-1'||empty($classroomdepartment))?get_string('all') :$classroomdepartment;
+         if(!empty($bu)){
+            $bussinessunit = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$bu.')');
+            $bussinessunitarr=array();
+            foreach($bussinessunit as $bu){
+                $bussinessunitarr[]=$bu->fullname;
+            }
+            $classroombu=implode(',',$bussinessunitarr);
+         }else{
+            $classroombu =  get_string('statusna');
+         }
+         $classroom->classroombu = ($classroombu=='-1'||empty($classroombu))?get_string('all') :$classroombu;
+         if(!empty($cu)){
+            $commercialunit = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$cu.')');
+            $commercialunitarr=array();
+            foreach($commercialunit as $cu){
+                $commercialunitarr[]=$cu->fullname;
+            }
+            $classroomcu=implode(',',$commercialunitarr);
+         }else{
+            $classroomcu =  get_string('statusna');
+         }
+         $classroom->classroomcu = ($classroomcu=='-1'||empty($classroomcu))?get_string('all') :$classroomcu;
+         if(!empty($territory)){
+            $territory = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$territory.')');
+            $territoryarr=array();
+            foreach($territory as $bu){
+                $territoryarr[]=$bu->fullname;
+            }
+            $classroomterritory=implode(',',$territoryarr);
+         }else{
+            $classroomterritory =  get_string('statusna');
+         }
+         $classroom->classroomterritory = ($classroomterritory=='-1'||empty($classroomterritory))?get_string('all') :$classroomterritory;
+       
+         if(!empty($classroom->open_states)){            
+            $states = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$classroom->open_states.')');
+            $statesarr=array();
+            foreach($states as $bu){
+                $statesarr[]=$bu->fullname;
+            }
+            $classroomstates=implode(',',$statesarr);
+         }else{
+            $classroomstates =  get_string('statusna');
+         }
+         $classroom->classroomstates = ($classroomstates=='-1'||empty($classroomstates))?get_string('all') :$classroomstates;
+         if(!empty($classroom->open_states)){            
+            $states = $DB->get_records_sql('SELECT id, fullname FROM {local_states} WHERE id IN('.$classroom->open_states.')');
+            $statesarr=array();
+            foreach($states as $st){
+                $statesarr[]=$st->states_name;
+            }
+            $classroomstates=implode(',',$statesarr);
+         }else{
+            $classroomstates =  get_string('statusna');
+         }
+         $classroom->classroomstates = ($classroomstates=='-1'||empty($classroomstates))?get_string('all') :$classroomstates;
+         if(!empty($classroom->open_district)){            
+            $district = $DB->get_records_sql('SELECT id, fullname FROM {local_district} WHERE id IN('.$classroom->open_district.')');
+            $districtarr=array();
+            foreach($district as $dist){
+                $districtarr[]=$dist->district_name;
+            }
+            $classroomdistrict=implode(',',$districtarr);
+         }else{
+            $classroomdistrict =  get_string('statusna');
+         }
+         $classroom->classroomdistrict = ($classroomdistrict=='-1'||empty($classroomdistrict))?get_string('all') :$classroomdistrict;
+         if(!empty($classroom->open_subdistrict)){            
+            $subdistrict = $DB->get_records_sql('SELECT id, fullname FROM {local_subdistrict} WHERE id IN('.$classroom->open_subdistrict.')');
+            $subdistrictarr=array();
+            foreach($subdistrict as $subdist){
+                $subdistrictarr[]=$subdist->subdistrict_name;
+            }
+            $classroomsubdistrict=implode(',',$subdistrictarr);
+         }else{
+            $classroomsubdistrict =  get_string('statusna');
+         }
+         $classroom->classroomsubdistrict = ($classroomsubdistrict=='-1'||empty($classroomsubdistrict))?get_string('all') :$classroomsubdistrict;
+         
+         if(!empty($classroom->open_village)){            
+            $village = $DB->get_records_sql('SELECT id, fullname FROM {local_village} WHERE id IN('.$classroom->open_village.')');
+            $villagearr=array();
+            foreach($states as $bu){
+                $villagearr[]=$bu->village_name;
+            }
+            $classroomvillage=implode(',',$villagesarr);
+         }else{
+            $classroomvillage =  get_string('statusna');
+         }
+         $classroom->classroomvillage = ($classroomvillage=='-1'||empty($classroomvillage))?get_string('all') :$classroomvillage;
+       
 
 
         $classroomtrainerssql = "SELECT u.id, u.picture, u.firstname, u.lastname,
