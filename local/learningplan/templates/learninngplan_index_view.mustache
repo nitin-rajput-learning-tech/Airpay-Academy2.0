@@ -26,7 +26,7 @@
 	            <ul class="options_container" id="showoptions{{learning_planid}}">
 	            	{{# capability3}}
 	            	  <li>
-						<a href='javascript:void(0)' title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').deleteConfirm({action:'deleteplan' , id:{{{learning_planid}}}  }) })(event)">
+						<a href='javascript:void(0)' title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').deleteConfirm({action:'deleteplan' , id:{{{learning_planid}}}, name:'{{{learning_plan_name}}}'  }) })(event)">
 							<!--<img src="{{delete_icon_url}}"  class="icon" >-->
 							<i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str}} delete {{/ str}}" aria-label="Delete"></i>
 						</a>
