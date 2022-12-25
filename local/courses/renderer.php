@@ -55,7 +55,7 @@ class local_courses_renderer extends plugin_renderer_base {
      * @return string The text to render
      */
     public function get_catalog_courses($filter = false,$view_type='card') {
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $status = optional_param('status', '', PARAM_RAW);
         $costcenterid = optional_param('costcenterid', '', PARAM_INT);
         $departmentid = optional_param('departmentid', '', PARAM_INT);
@@ -80,7 +80,7 @@ class local_courses_renderer extends plugin_renderer_base {
         $options['templateName']= $templateName;
         $options = json_encode($options);
         $filterdata = json_encode(array('status'=>$status,'organizations'=>$costcenterid,'departments'=>$departmentid));
-        $dataoptions = json_encode(array('contextid' => $systemcontext->id,'status'=>$status,'costcenterid'=>$costcenterid,'departmentid'=>$departmentid));
+        $dataoptions = json_encode(array('contextid' => $categorycontext->id,'status'=>$status,'costcenterid'=>$costcenterid,'departmentid'=>$departmentid));
         $context = [
                 'targetID' => 'manage_courses',
                 'options' => $options,
@@ -101,7 +101,7 @@ class local_courses_renderer extends plugin_renderer_base {
      */
     public function get_categories_list($filter = false,$view_type= 'card') {
         $id = optional_param('id', 0, PARAM_INT);
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         
         // change the display according to moodle 3.6
         // $stable = new stdClass();
@@ -125,7 +125,7 @@ class local_courses_renderer extends plugin_renderer_base {
         $options['parentid'] = $id;
         $options = json_encode($options);
         $filterdata = json_encode(array());
-        $dataoptions = json_encode(array('contextid' => $systemcontext->id));
+        $dataoptions = json_encode(array('contextid' => $categorycontext->id));
         $context = [
                 'targetID' => 'manage_categories',
                 'options' => $options,
@@ -154,7 +154,7 @@ class local_courses_renderer extends plugin_renderer_base {
      */
     public function tagged_courses($tagid, $exclusivemode = true, $ctx = 0, $rec = true, $displayoptions = null, $count = 0, $sort='') {
         global $CFG, $DB,$USER;
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $userorg = array();
         $userdep = array();
         if ($count > 0)
@@ -194,11 +194,11 @@ class local_courses_renderer extends plugin_renderer_base {
             $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                          JOIN {course_categories} AS cc ON cc.id = c.category
                          where 1 = 1 ";
-        } elseif(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+        } elseif(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
             $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                        JOIN {course_categories} AS cc ON cc.id = c.category
                        WHERE c.open_costcenterid = :usercostcenter";
-        } elseif(has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+        } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
             $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                        JOIN {course_categories} AS cc ON cc.id = c.category
                        WHERE c.open_costcenterid = :usercostcenter 
@@ -252,7 +252,7 @@ class local_courses_renderer extends plugin_renderer_base {
         $data['courses'] = html_writer::link('javascript:void(0)', $category->coursecount, array('title' => '', 'alt' => '', 'class'=>'createcoursemodal', 'onclick' =>'(function(e){ require("local_courses/newcategory").courselist({contextid:'.$categorycontext->id.', categoryname: "'.$category->name.'", categoryid: "' . $category->id . '" }) })(event)'));
         $data['subcategory_count'] = $DB->count_records('course_categories', array('parent' => $categoryid)); 
         // $actions = False;
-        // if(has_capability('moodle/category:manage', $systemcontext)){
+        // if(has_capability('moodle/category:manage', $categorycontext)){
         //     $actions = True;
         //     if(!empty($category->visible)){
         //         $visible_value = 0;
@@ -269,8 +269,8 @@ class local_courses_renderer extends plugin_renderer_base {
     global $DB;
   
     $certificate_plugin_exist = \core_component::get_plugin_directory('tool', 'certificate');
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
-    if(is_siteadmin() || has_capability('enrol/manual:manage', $systemcontext)) {
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
+    if(is_siteadmin() || has_capability('enrol/manual:manage', $categorycontext)) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
                 $userenrollment = true;
         }
@@ -314,12 +314,12 @@ class local_courses_renderer extends plugin_renderer_base {
     $params = array();
     $params['courseid'] = $dataobj->courseid;
 
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context($dataobj->courseid);
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($dataobj->courseid);
 
-    if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+    if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
       $sql .= " AND c.open_costcenterid = :costcenterid ";
       $params['costcenterid'] = $USER->open_costcenterid;
-    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
       $sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
       $params['costcenterid'] = $USER->open_costcenterid;
       $params['departmentid'] = $USER->open_departmentid;
@@ -450,7 +450,7 @@ class local_courses_renderer extends plugin_renderer_base {
     return $return;
   }
     public function get_userdashboard_courses($tab, $filter = false,$view_type = 'card') {
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         
         
         $templateName = 'local_courses/userdashboard_paginated';
@@ -468,7 +468,7 @@ class local_courses_renderer extends plugin_renderer_base {
         $options['filter'] = $tab;
         $options = json_encode($options);
         $filterdata = json_encode(array());
-        $dataoptions = json_encode(array('contextid' => $systemcontext->id));
+        $dataoptions = json_encode(array('contextid' => $categorycontext->id));
         $context = [
                 'targetID' => 'dashboard_courses',
                 'options' => $options,

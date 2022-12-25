@@ -59,7 +59,7 @@ class search implements renderable{
        // added condition for not displaying retired courses except exams.
         $wheresql = " WHERE c.id > 1 AND c.selfenrol = 1 ";
 
-        $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
+        $categorycontext = \local_costcenter\lib\accesslib::get_module_context();
 
         if(!is_siteadmin()){
 

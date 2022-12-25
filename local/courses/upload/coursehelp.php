@@ -25,8 +25,8 @@
 
 require_once(dirname(__FILE__) . '/../../../config.php');
 global $CFG, $DB;
-$systemcontext =  (new \local_courses\lib\accesslib())::get_module_context();
-$PAGE->set_context($systemcontext);
+$categorycontext =  (new \local_courses\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/courses/upload/coursehelp.php');
 $PAGE->set_pagelayout('standard');
 $strheading = get_string('pluginname', 'local_courses') . ' : ' . get_string('manual', 'local_courses');

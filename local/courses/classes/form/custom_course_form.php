@@ -63,7 +63,7 @@ class custom_course_form extends moodleform {
         $returnurl = $this->_customdata['returnurl'];
         $costcenterid = $this->_customdata['costcenterid'];
         $coursetype =  $course->open_identifiedas;
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context(); 		
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $formheaders = array_keys($this->formstatus);
         $formheader = $formheaders[$formstatus];
 
@@ -115,11 +115,11 @@ class custom_course_form extends moodleform {
         $mform->addElement('hidden', 'id', $courseid);
         $mform->setType('id', PARAM_INT);
 		
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
         $core_component = new core_component();
         if($formstatus == 0){
 			$selectdepartmentslist = array(null=>get_string('selectdept','local_courses'));
-            if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$systemcontext)) {
+            if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext)) {
                 $organisation_select = [null => get_string('selectorg','local_courses')];
                 if($id || $this->_ajaxformdata['open_costcenterid']){
                     $open_costcenter = (int) $this->_ajaxformdata['open_costcenterid'] ? (int)$this->_ajaxformdata['open_costcenterid'] : $get_coursedetails->open_costcenterid;
@@ -130,7 +130,7 @@ class custom_course_form extends moodleform {
                 }
                 $costcenteroptions = array(
                     'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $systemcontext->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'costcenter_organisation_selector',
                     'data-options' => json_encode(array('id' => $open_costcenter)),
                     'class' => 'organisationnameselect',
@@ -143,13 +143,13 @@ class custom_course_form extends moodleform {
                 $mform->setType('open_costcenterid', PARAM_INT);
                 $mform->addRule('open_costcenterid', get_string('pleaseselectorganization','local_courses'), 'required', null, 'client');
 
-            } else if (has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+            } else if (has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
 
                 $mform->addElement('hidden', 'open_costcenterid', null, array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
                 $mform->setType('open_costcenterid', PARAM_INT);
                 $mform->setConstant('open_costcenterid', $USER->open_costcenterid);
             
-            } else if (has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+            } else if (has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
             
                 $mform->addElement('hidden', 'open_costcenterid', null, array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
                 $mform->setType('open_costcenterid', PARAM_INT);
@@ -175,7 +175,7 @@ class custom_course_form extends moodleform {
                     $mform->setConstant('open_subdepartment', $USER->open_subdepartment);
                 }
             }
-            if(is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+            if(is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
                 $department_select = [0 => get_string('all')];
                 if($id || $this->_ajaxformdata['open_departmentid']){
                     $open_department = $this->_ajaxformdata['open_departmentid'] ? $this->_ajaxformdata['open_departmentid'] : $get_coursedetails->open_departmentid;
@@ -189,7 +189,7 @@ class custom_course_form extends moodleform {
                 }
                 $departmentoptions = array(
                     'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $systemcontext->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'costcenter_department_selector',
                     'data-options' => json_encode(array('id' => $open_department)),
                     'class' => 'departmentselect',
@@ -203,9 +203,9 @@ class custom_course_form extends moodleform {
                 $mform->setType('open_departmentid', PARAM_RAW);
             }
             if(is_siteadmin($USER->id) || 
-                has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || 
-                has_capability('local/costcenter:manage_ownorganization',$systemcontext) || 
-                has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+                has_capability('local/costcenter:manage_multiorganizations',$categorycontext) ||
+                has_capability('local/costcenter:manage_ownorganization',$categorycontext) ||
+                has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
                 $subdepartment_select = [0 => get_string('all')];
                 if($id || $this->_ajaxformdata['open_subdepartment']){
                     $open_subdepartment = $this->_ajaxformdata['open_subdepartment'] ? $this->_ajaxformdata['open_subdepartment'] : $get_coursedetails->open_subdepartment;
@@ -219,7 +219,7 @@ class custom_course_form extends moodleform {
                 }
                 $subdepartmentoptions = array(
                     'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $systemcontext->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'costcenter_subdepartment_selector',
                     'data-options' => json_encode(array('id' => $open_subdepartment)),
                     'class' => 'subdepartmentselect',
@@ -276,7 +276,7 @@ class custom_course_form extends moodleform {
             
             $categoryoptions = array(
               'ajax' => 'local_costcenter/form-options-selector',
-              'data-contextid' => $systemcontext->id,
+              'data-contextid' => $categorycontext->id,
               'data-action' => 'costcenter_category_selector',
               'data-options' => json_encode(array('id' => $parentcategory)),
               'class' => 'categoryselect',
@@ -327,7 +327,7 @@ class custom_course_form extends moodleform {
 
             $coursetype = array(
                 'ajax' => 'local_costcenter/form-options-selector',
-                'data-contextid' => $systemcontext->id,
+                'data-contextid' => $categorycontext->id,
                 'data-action' => 'costecenter_coursetype_selector',
                 'data-options' => json_encode(array('id' => $identifiedtype)),
                 'class' => 'identifiedasselect',
@@ -369,7 +369,7 @@ class custom_course_form extends moodleform {
 
                 $select = array(null => get_string('select_certificate','local_courses'));
 
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
                   if($this->_ajaxformdata['open_costcenterid'] > 0){
                     $costcenter = (int) $this->_ajaxformdata['open_costcenterid'];
                   }else{

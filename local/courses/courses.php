@@ -47,13 +47,13 @@ if ($formattype == 'card') {
 
 require_login();
 
-$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-if(!has_capability('local/courses:view', $systemcontext) && !has_capability('local/courses:manage', $systemcontext) ){
+$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+if(!has_capability('local/courses:view', $categorycontext) && !has_capability('local/courses:manage', $categorycontext) ){
     print_error("You don't have permissions to view this page.");
 }
 $PAGE->set_pagelayout('standard');
 
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/courses/courses.php');
 $PAGE->set_title(get_string('courses'));
 $PAGE->set_heading(get_string('manage_courses','local_courses'));
@@ -89,7 +89,7 @@ $extended_menu_links = '';
 $extended_menu_links = '<div class="course_contextmenu_extended">
             <ul class="course_extended_menu_list">';
 if(is_siteadmin() ||(
-        has_capability('moodle/course:create', $systemcontext)|| has_capability('moodle/course:update', $systemcontext)||has_capability('local/courses:manage', $systemcontext))){
+        has_capability('moodle/course:create', $categorycontext)|| has_capability('moodle/course:update', $categorycontext)||has_capability('local/courses:manage', $categorycontext))){
      $sql = "SELECT id,name FROM {block_learnerscript} WHERE category = 'course'" ;
      $coursereports = $DB->get_records_sql($sql);
      
@@ -122,7 +122,7 @@ $extended_menu_links .= "<li>
         </div>
     </li>";
 }
-if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadmin())) {
+if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
     $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                             <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('request', 'local_request').'" href = '.$CFG->wwwroot.'/local/request/index.php?component=elearning>
                                 <i class="icon fa fa-share-square" aria-hidden="true"></i>
@@ -130,7 +130,7 @@ if ((has_capability('local/request:approverecord', $systemcontext) || is_siteadm
                         </div></li>';
 } 
 if(is_siteadmin() ||(
-    has_capability('moodle/course:create', $systemcontext)&& has_capability('moodle/course:update', $systemcontext)&&has_capability('local/courses:manage', $systemcontext))){
+    has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
     $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                                 <a href='.$CFG->wwwroot.'/local/courses/coursestypes.php class="pull-right course_extended_menu_itemlink" title = "'.get_string('add_course_type','local_courses').'">
                                     <span class="createicon">
@@ -140,7 +140,7 @@ if(is_siteadmin() ||(
                                 </a>
                             </div></li>';
 }              
-if(((has_capability('local/costcenter:create', $systemcontext)&&has_capability('local/courses:bulkupload', $systemcontext)&&has_capability('local/courses:manage', $systemcontext)&&has_capability('moodle/course:create', $systemcontext)&&has_capability('moodle/course:update', $systemcontext)))|| is_siteadmin()){
+if(((has_capability('local/costcenter:create', $categorycontext)&&has_capability('local/courses:bulkupload', $categorycontext)&&has_capability('local/courses:manage', $categorycontext)&&has_capability('moodle/course:create', $categorycontext)&&has_capability('moodle/course:update', $categorycontext)))|| is_siteadmin()){
 
     $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                                 <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('uploadcourses','local_courses').'" href = '.$CFG->wwwroot.'/local/courses/upload/index.php>
@@ -148,9 +148,9 @@ if(((has_capability('local/costcenter:create', $systemcontext)&&has_capability('
                                 </a>
                             </div></li>';
 }if(is_siteadmin() ||(
-        has_capability('moodle/course:create', $systemcontext)&& has_capability('moodle/course:update', $systemcontext)&&has_capability('local/courses:manage', $systemcontext))){
+        has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
         $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
-                                    <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('create_newcourse','local_courses').'" data-action="createcoursemodal" onclick="(function(e){ require(\'local_courses/courseAjaxform\').init({contextid:'.$systemcontext->id.', component:\'local_courses\', callback:\'custom_course_form\', form_status:0, plugintype: \'local\', pluginname: \'courses\'}) })(event)">
+                                    <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('create_newcourse','local_courses').'" data-action="createcoursemodal" onclick="(function(e){ require(\'local_courses/courseAjaxform\').init({contextid:'.$categorycontext->id.', component:\'local_courses\', callback:\'custom_course_form\', form_status:0, plugintype: \'local\', pluginname: \'courses\'}) })(event)">
                                         <span class="createicon">
                                         <i class="icon fa fa-book"></i>
                                         <i class="fa fa-plus createiconchild" aria-hidden="true"></i>
@@ -171,9 +171,9 @@ $filterparams = $renderer->get_catalog_courses(true,$formattype);
 
 // if(is_siteadmin()){
 //     $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'status');
-// }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+// }else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
 //     $thisfilters = array('courses', 'categories', 'departments', 'subdepartment', 'status');
-// }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+// }else if(has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
 //     $thisfilters = array('subdepartment', 'courses', 'categories', 'status');
 // }else {
 //     $thisfilters = array('courses', 'categories', 'status');
@@ -230,7 +230,7 @@ echo        '</div>
 $filterparams['submitid'] = 'form#filteringform';
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 if (is_siteadmin() || (
-        has_capability('moodle/course:create', $systemcontext) && has_capability('moodle/course:update', $systemcontext) && has_capability('local/courses:manage', $systemcontext))) {
+        has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/courses:manage', $categorycontext))) {
    $display_url = new moodle_url('/local/courses/courses.php');
    if($costcenterid){
     $display_url->param('costcenterid', $costcenterid);  

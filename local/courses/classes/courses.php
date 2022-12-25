@@ -72,7 +72,7 @@ class courses {
                         $message = get_string('notyourorgcourse_msg','local_courses');
                         return ['status' => false, 'message' => $message];
                     }
-                }elseif (has_capability('local/costcenter:manage_owndepartments',$systemcontext)) {
+                }elseif (has_capability('local/costcenter:manage_owndepartments',$categorycontext)) {
                     if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid) || ($user_costcenter->open_departmentid != $course_costcenter->open_departmentid)) {
                         $message = get_string('notyourdeptcourse_msg','local_courses');
                         return ['status' => false, 'message' => $message];

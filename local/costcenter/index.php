@@ -28,26 +28,26 @@ require_once(dirname(__FILE__) . '/../../config.php');
 global $CFG, $USER, $PAGE, $OUTPUT;
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
-$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
 
 $PAGE->requires->css('/local/costcenter/css/jquery.dataTables.min.css');
 $PAGE->requires->js_call_amd('local_costcenter/costcenterdatatables', 'costcenterDatatable', array());
 $PAGE->requires->js_call_amd('local_assignroles/newcostcenterassignrole', 'load', array());
-$PAGE->requires->js_call_amd('local_assignroles/rolespopup', 'init',array(array('contextid' => $systemcontext->id, 'selector' => '.rolescostcenterpopup')));
+$PAGE->requires->js_call_amd('local_assignroles/rolespopup', 'init',array(array('contextid' => $categorycontext->id, 'selector' => '.rolescostcenterpopup')));
 $PAGE->requires->js_call_amd('local_assignroles/popup', 'Datatable', array());
 
  
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 require_login();
 
-if(!has_capability('local/costcenter:view', $systemcontext)) {
+if(!has_capability('local/costcenter:view', $categorycontext)) {
     print_error('nopermissiontoviewpage');
 }
 
 
-if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))) {
-	if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
+	if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
     	redirect($CFG->wwwroot . '/local/costcenter/costcenterview.php?id='.$USER->open_costcenterid);
 	}else{
 		redirect($CFG->wwwroot . '/local/costcenter/costcenterview.php?id='.$USER->open_departmentid);
@@ -55,7 +55,7 @@ if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizat
 }
 
 $PAGE->set_pagelayout('standard');
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/costcenter/index.php');
 $PAGE->set_heading(get_string('orgmanage', 'local_costcenter'));
 $PAGE->set_title(get_string('orgmanage', 'local_costcenter'));

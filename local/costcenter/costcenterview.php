@@ -41,17 +41,17 @@ if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
 }
 
 
-$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context($depart->path);
+$categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context($depart->path);
 
 
-if(!has_capability('local/costcenter:view', $systemcontext)) {
+if(!has_capability('local/costcenter:view', $categorycontext)) {
     print_error('nopermissiontoviewpage');
 }
 /*OL-2166- Added the below condition for checking  */
 
-if(!is_siteadmin() || !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+if(!is_siteadmin() || !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
     if($depart->parentid){
-    	if(!($DB->record_exists('user',array('open_departmentid' => $id, 'id' => $USER->id)) || has_capability('local/costcenter:manage_ownorganization', $systemcontext))){
+    	if(!($DB->record_exists('user',array('open_departmentid' => $id, 'id' => $USER->id)) || has_capability('local/costcenter:manage_ownorganization', $categorycontext))){
             print_error('nopermissiontoviewpage');
     	}
     }else if(!$DB->record_exists('user',array('open_costcenterid'=>$id,'id'=>$USER->id))){
@@ -66,7 +66,7 @@ $PAGE->requires->jquery('ui-css');
 $PAGE->requires->js_call_amd('local_costcenter/costcenterdatatables', 'costcenterDatatable', array());
 $PAGE->requires->js_call_amd('local_assignroles/newcostcenterassignrole', 'load', array());
 
-$PAGE->requires->js_call_amd('local_assignroles/rolespopup', 'init',array(array('contextid' => $systemcontext->id, 'selector' => '.rolescostcenterpopup')));
+$PAGE->requires->js_call_amd('local_assignroles/rolespopup', 'init',array(array('contextid' => $categorycontext->id, 'selector' => '.rolescostcenterpopup')));
 $PAGE->requires->js_call_amd('local_assignroles/popup', 'Datatable', array());
 
 
@@ -76,15 +76,15 @@ $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 
 $PAGE->set_pagelayout('standard');
 /* ---check the context level of the user and check whether the user is login to the system or not--- */
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/costcenter/costcenterview.php');
 /* ---Header and the navigation bar--- */
 $PAGE->navbar->ignore_active();
 
-if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
     $PAGE->navbar->add(get_string('orgmanage', 'local_costcenter'), new moodle_url('/local/costcenter/index.php'));
 }
-if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizations', $systemcontext) || has_capability('local/costcenter:manage_ownorganization', $systemcontext))) {
+if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext) || has_capability('local/costcenter:manage_ownorganization', $categorycontext))) {
     if($USER->open_departmentid != $id){
         redirect($CFG->wwwroot . '/local/costcenter/costcenterview.php?id='.$USER->open_departmentid);
     }
@@ -109,7 +109,7 @@ $parentid = "SELECT llc.id AS idd FROM {local_costcenter} AS lc
     WHERE lc.id = ";
 
 if($depart->parentid && $depart->depth == 2){
-    if(!has_capability('local/costcenter:manage_owndepartments', $systemcontext) || is_siteadmin()){
+    if(!has_capability('local/costcenter:manage_owndepartments', $categorycontext) || is_siteadmin()){
         $PAGE->navbar->add($DB->get_field('local_costcenter', 'fullname', array('id' => $depart->parentid)), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $depart->parentid)));
 	    $PAGE->navbar->add(get_string('viewsubdepartments', 'local_costcenter'));
     }
@@ -117,7 +117,7 @@ if($depart->parentid && $depart->depth == 2){
     $PAGE->set_title(get_string('department_structure', 'local_costcenter'));
 }
 else if($depart->parentid && $depart->depth == 3){
-    if(!has_capability('local/costcenter:manage_owndepartments', $systemcontext) || is_siteadmin()){
+    if(!has_capability('local/costcenter:manage_owndepartments', $categorycontext) || is_siteadmin()){
         $pname = $parentfullname. $depart->parentid;
         $pid = $parentid. $depart->parentid;
         $PAGE->navbar->add($DB->get_field_sql($pname, array('')), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $DB->get_field_sql($pid, array('')))));
@@ -128,7 +128,7 @@ else if($depart->parentid && $depart->depth == 3){
     $PAGE->set_title(get_string('subdepartment_structure', 'local_costcenter'));
 }
 else if($depart->parentid && $depart->depth == 4){
-    if(!has_capability('local/costcenter:manage_owndepartments', $systemcontext) || is_siteadmin()){
+    if(!has_capability('local/costcenter:manage_owndepartments', $categorycontext) || is_siteadmin()){
         $spname = $superparentfullname. $depart->parentid;
         $spid = $superparentid. $depart->parentid;
         $PAGE->navbar->add($DB->get_field_sql($spname, array('')), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $DB->get_field_sql($spid, array('')))));
@@ -153,8 +153,8 @@ echo $OUTPUT->header();
 $renderer = $PAGE->get_renderer('local_costcenter');
 echo $renderer->get_dept_view_btns($id);
 if($depart->parentid){ // display department page
-    echo $renderer->department_view($id, $systemcontext);
+    echo $renderer->department_view($id, $categorycontext);
 }else{// display organization page
-    echo $renderer->costcenterview($id, $systemcontext);
+    echo $renderer->costcenterview($id, $categorycontext);
 }
 echo $OUTPUT->footer();

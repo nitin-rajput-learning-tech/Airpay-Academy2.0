@@ -186,8 +186,8 @@ class userlibfunctions{
         }else{
             $pluginname = 'local_course';
         }
-	    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
-    	if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$systemcontext)) {
+	    $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+    	if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext)) {
                 $organisation_select = [null => get_string('selectorg','local_courses')];
                 if($id || $mformajax['costcenterid']){
                     $open_costcenter = (int) $mformajax['costcenterid'] ? (int)$mformajax['costcenterid'] : $existdata->costcenterid;
@@ -198,7 +198,7 @@ class userlibfunctions{
                 }
                 $costcenteroptions = array(
                     'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $systemcontext->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'costcenter_organisation_selector',
                     'data-options' => json_encode(array('id' => $open_costcenter)),
                     'class' => 'organisationnameselect',
@@ -211,13 +211,13 @@ class userlibfunctions{
                 $mform->setType('costcenterid', PARAM_INT);
                 $mform->addRule('costcenterid', get_string('pleaseselectorganization','local_courses'), 'required', null, 'client');
 
-            } else if (has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+            } else if (has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
 
                 $mform->addElement('hidden', 'costcenterid', null, array('id' => 'id_costcenterid', 'data-class' => 'organisationselect'));
                 $mform->setType('costcenterid', PARAM_INT);
                 $mform->setConstant('costcenterid', $USER->open_costcenterid);
             
-            } else if (has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+            } else if (has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
             
                 $mform->addElement('hidden', 'costcenterid', null, array('id' => 'id_costcenterid', 'data-class' => 'organisationselect'));
                 $mform->setType('costcenterid', PARAM_INT);
@@ -243,7 +243,7 @@ class userlibfunctions{
                 //     $mform->setConstant('subdepartment', $USER->open_subdepartment);
                 // }
             }
-            if(is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+            if(is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
                 $department_select = [0 => get_string('selectdept','local_courses')];
                 if($id || $mformajax['departmentid']){
                     $open_department = (int)$mformajax['departmentid'] ? (int)$mformajax['departmentid'] : $existdata->departmentid;
@@ -254,7 +254,7 @@ class userlibfunctions{
                 }
                 $departmentoptions = array(
                     'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $systemcontext->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'costcenter_department_selector',
                     'data-options' => json_encode(array('id' => $open_department)),
                     'class' => 'departmentselect',
@@ -268,9 +268,9 @@ class userlibfunctions{
                 $mform->setType('departmentid', PARAM_INT);
             }
             // if(is_siteadmin($USER->id) || 
-            //     has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || 
-            //     has_capability('local/costcenter:manage_ownorganization',$systemcontext) || 
-            //     has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+            //     has_capability('local/costcenter:manage_multiorganizations',$categorycontext) ||
+            //     has_capability('local/costcenter:manage_ownorganization',$categorycontext) ||
+            //     has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
             //     $subdepartment_select = [0 => get_string('selectsubdept','local_courses')];
             //     if($id || $mformajax['subdepartment']){
             //         $subdepartment = (int)$mformajax['subdepartment'] ? (int)$mformajax['subdepartment'] : $existdata->subdepartment;
@@ -281,7 +281,7 @@ class userlibfunctions{
             //     }
             //     $subdepartmentoptions = array(
             //         'ajax' => 'local_costcenter/form-options-selector',
-            //         'data-contextid' => $systemcontext->id,
+            //         'data-contextid' => $categorycontext->id,
             //         'data-action' => 'costcenter_subdepartment_selector',
             //         'data-options' => json_encode(array('id' => $subdepartment)),
             //         'class' => 'subdepartmentselect',

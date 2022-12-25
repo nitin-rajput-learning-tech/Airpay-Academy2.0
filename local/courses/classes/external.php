@@ -115,8 +115,8 @@ class local_courses_external extends external_api {
             $formheaders = array_keys($mform->formstatus);
             $category_id=$data['category'];
 
-            $systemcontext=(new \local_courses\lib\accesslib())::get_module_context($course->id);
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+            $categorycontext=(new \local_courses\lib\accesslib())::get_module_context($course->id);
+            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
               $open_departmentid = implode(',',$data['open_departmentid']);
             }else {
               $open_departmentid = $data['open_departmentid'];
@@ -459,17 +459,17 @@ class local_courses_external extends external_api {
             $levelslist = $DB->get_records_sql_menu($sql);
 
             $categorylib = new local_courses\catslib();
-            $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+            $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
             
-            if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganizations',$systemcontext)){
+            if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganizations',$categorycontext)){
                 $orgcategories = $categorylib->get_categories($orgid);
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
-            } else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+            } else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
                 $orgcategories = $categorylib->get_categories($USER->open_costcenterid);
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
-            } elseif(has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
+            } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
                 $deptcategories = $categorylib->get_categories($USER->open_departmentid);
                 $deptcategoryids = implode(',',$deptcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($deptcategoryids)";
@@ -811,11 +811,11 @@ class local_courses_external extends external_api {
                               )
                           )
                       ),
-                      'report_view' => new external_value(PARAM_INT, 'report_view', VALUE_OPTIONAL),
-                      'delete' => new external_value(PARAM_INT, 'delete', VALUE_OPTIONAL),
-                      'update' => new external_value(PARAM_INT, 'update', VALUE_OPTIONAL),
-                      'enrol' => new external_value(PARAM_INT, 'enrol', VALUE_OPTIONAL),
-                      'actions' => new external_value(PARAM_INT, 'actions', VALUE_OPTIONAL),
+                      'report_view' => new external_value(PARAM_BOOL, 'report_view', VALUE_OPTIONAL),
+                      'delete' => new external_value(PARAM_BOOL, 'delete', VALUE_OPTIONAL),
+                      'update' => new external_value(PARAM_BOOL, 'update', VALUE_OPTIONAL),
+                      'enrol' => new external_value(PARAM_BOOL, 'enrol', VALUE_OPTIONAL),
+                      'actions' => new external_value(PARAM_BOOL, 'actions', VALUE_OPTIONAL),
                       'nocourses' => new external_value(PARAM_BOOL, 'nocourses', VALUE_OPTIONAL),
                       'totalcourses' => new external_value(PARAM_INT, 'totalcourses', VALUE_OPTIONAL),
                       'length' => new external_value(PARAM_INT, 'length', VALUE_OPTIONAL),
@@ -1570,9 +1570,9 @@ class local_courses_external extends external_api {
         
         /* $params = self::validate_parameters(self::coursetype_update_status_parameters(),
                                     ['contextid' => $contextid,'id' => $coursetypeid, 'status' => $status ,'name' => $name]);
-         */$systemcontext = \context_system::instance();
+         */$categorycontext = \context_system::instance();
         // We always must call validate_context in a webservice.
-        self::validate_context($systemcontext);
+        self::validate_context($categorycontext);
         $coursetype = $DB->get_record('local_course_types', array('id' => $coursetypeid), 'id, active');
         $coursetype->active = $coursetype->active ? 0 : 1;
         $coursetype->timemodified = time();
