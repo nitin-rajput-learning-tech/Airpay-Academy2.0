@@ -31,7 +31,7 @@ $courseid = optional_param('courseid', null, PARAM_INT);
 $search = optional_param_array('search', '', PARAM_RAW);
 $start = optional_param('start', 0, PARAM_INT);
 $length = optional_param('length', 10, PARAM_INT);
-$context = (new \local_courses\lib\accesslib())::get_module_context();
+$context = (new \local_courses\lib\accesslib())::get_module_context($courseid);
 require_login();
 $PAGE->set_context($context);
 $renderer = $PAGE->get_renderer('local_courses');

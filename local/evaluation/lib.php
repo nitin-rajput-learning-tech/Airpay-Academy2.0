@@ -104,9 +104,12 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
     if ($id > 0) {
 		$data = $DB->get_record('local_evaluations', array('id'=>$id));
 	}
-    $params = array('id' => $id, 'instance'=>$instance, 'plugin'=>$plugin);
-    $mform = new evaluation_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
+    $customdata = array(
+        'open_path' => $data->open_path,'id' => $id, 'instance'=>$instance, 'plugin'=>$plugin);
+        local_costcenter_set_costcenter_path($customdata);
+        local_users_set_userprofile_datafields($customdata,$data);
+        $mform = new \evaluation_form(null, $customdata,'post', '', null, true, $formdata);
     if (is_object($data)) {
 		$data->introeditor['text'] = $data->intro;
         $data->departmentid = explode(',',$data->departmentid);
@@ -115,11 +118,6 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
 	$default_values = (array)$data;
 		$mform->data_preprocessing($default_values);
 	}
-    $customdata = array(
-        'open_path' => $data->open_path);
-        local_costcenter_set_costcenter_path($customdata);
-        local_users_set_userprofile_datafields($customdata,$data);
-        $mform = new \evaluation_form(null, $customdata,'post', '', null, true, $formdata);
 	$mform->set_data($default_values);
 
     if (!empty($formdata)) {

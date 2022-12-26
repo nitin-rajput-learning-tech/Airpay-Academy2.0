@@ -48,7 +48,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $formtype = $this->_customdata['formtype'];
         $headstring = $this->_customdata['headstring'];
 
-        $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
        
         if($formtype != 'organization'){
             if($formtype == 'department'){
@@ -84,12 +84,12 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $subsubdepartmentsql .= $departmentsql;
                 $subsubsubdepartmentsql .= $departmentsql;
             }
-            if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+            if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) && has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
                 $departmentsql .= " AND lc.id = {$USER->open_costcenterid} ";
                 $subdepartmentsql .= $departmentsql;
                 $subsubdepartmentsql .= $departmentsql;
                 $subsubsubdepartmentsql .= $departmentsql;
-            }else if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+            }else if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) && has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
                 $subdepartmentsql .= " AND lc.id = {$USER->open_departmentid} "; 
                 $subsubdepartmentsql .= $subdepartmentsql;
                 $subsubsubdepartmentsql .= $subdepartmentsql;
@@ -106,7 +106,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
             if(count($options) > 1){
 
                 $attributes = array(
-                    'data-contextid' => $systemcontext->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'local_account_selector',
                     'data-options' => json_encode(array('id' => key($options))),
                     'class' => 'accountnameselect',

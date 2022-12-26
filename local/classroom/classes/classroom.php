@@ -2898,7 +2898,7 @@ class classroom {
             }
             $classroombu=implode(',',$bussinessunitarr);
          }else{
-            $classroombu =  get_string('statusna');
+            $classroombu =  get_string('all');
          }      
          if(!empty($cu)){   
             $commercialunit = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$cu.')');
@@ -2908,7 +2908,7 @@ class classroom {
             }
             $classroomcu=implode(',',$commercialunitarr);
          }else{
-            $classroomcu =  get_string('statusna');
+            $classroomcu =  get_string('all');
          }
          if(!empty($territory)){
             $territory = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$territory.')');
@@ -2918,52 +2918,51 @@ class classroom {
             }
             $classroomterritory=implode(',',$territoryarr);
          }else{
-            $classroomterritory =  get_string('statusna');
+            $classroomterritory =  get_string('all');
          }         
         
          if(!empty($classroom->open_states)){            
-            $states = $DB->get_records_sql('SELECT id, fullname FROM {local_states} WHERE id IN('.$classroom->open_states.')');
+            $states = $DB->get_records_sql('SELECT id, states_name FROM {local_states} WHERE id IN('.$classroom->open_states.')');
             $statesarr=array();
             foreach($states as $st){
                 $statesarr[]=$st->states_name;
             }
             $classroomstates=implode(',',$statesarr);
          }else{
-            $classroomstates =  get_string('statusna');
+            $classroomstates =  get_string('all');
          }
        
          if(!empty($classroom->open_district)){            
-            $district = $DB->get_records_sql('SELECT id, fullname FROM {local_district} WHERE id IN('.$classroom->open_district.')');
+            $district = $DB->get_records_sql('SELECT id, district_name FROM {local_district} WHERE id IN('.$classroom->open_district.')');
             $districtarr=array();
             foreach($district as $dist){
                 $districtarr[]=$dist->district_name;
             }
             $classroomdistrict=implode(',',$districtarr);
          }else{
-            $classroomdistrict =  get_string('statusna');
+            $classroomdistrict =  get_string('all');
          }
          
          if(!empty($classroom->open_subdistrict)){            
-            $subdistrict = $DB->get_records_sql('SELECT id, fullname FROM {local_subdistrict} WHERE id IN('.$classroom->open_subdistrict.')');
+            $subdistrict = $DB->get_records_sql('SELECT id, subdistrict_name FROM {local_subdistrict} WHERE id IN('.$classroom->open_subdistrict.')');
             $subdistrictarr=array();
             foreach($subdistrict as $subdist){
                 $subdistrictarr[]=$subdist->subdistrict_name;
             }
             $classroomsubdistrict=implode(',',$subdistrictarr);
          }else{
-            $classroomsubdistrict =  get_string('statusna');
+            $classroomsubdistrict =  get_string('all');
          }
          
-         
          if(!empty($classroom->open_village)){            
-            $village = $DB->get_records_sql('SELECT id, fullname FROM {local_village} WHERE id IN('.$classroom->open_village.')');
+            $village = $DB->get_records_sql('SELECT id, village_name FROM {local_village} WHERE id IN('.$classroom->open_village.')');
             $villagearr=array();
-            foreach($states as $bu){
-                $villagearr[]=$bu->village_name;
+            foreach($village as $vlg){
+                $villagearr[]=$vlg->village_name;
             }
             $classroomvillage=implode(',',$villagearr);
          }else{
-            $classroomvillage =  get_string('statusna');
+            $classroomvillage =  get_string('all');
          }
         
        

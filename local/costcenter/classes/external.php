@@ -269,9 +269,9 @@ class local_costcenter_external extends external_api {
         $data = array();
         parse_str($serialiseddata, $data);
         
-        $systemcontext =(new \local_costcenter\lib\accesslib())::get_module_context();
+        $categorycontext =(new \local_costcenter\lib\accesslib())::get_module_context();
 
-        $PAGE->set_context($systemcontext);
+        $PAGE->set_context($categorycontext);
         $mform = new \local_costcenter\functions\costcenter(null, array(), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
         $formdata = data_submitted();

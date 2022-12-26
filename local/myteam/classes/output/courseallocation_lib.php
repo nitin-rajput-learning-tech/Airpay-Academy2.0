@@ -35,9 +35,10 @@ class courseallocation_lib{
         } else {
             $condition = "";
         }
+ $concatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $departmentmyteamsql = "SELECT u.* FROM {user} as u
                                     WHERE u.open_supervisorid = $USER->id AND u.id != $USER->id
-                                    AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2".$condition;
+                                    AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2 $concatsql".$condition ;
         
         $departmentmyteam = $DB->get_records_sql($departmentmyteamsql);
 
@@ -182,12 +183,13 @@ class courseallocation_lib{
 							$return_status='';
 							     if($out > 0){
                                     $params=array();  
+ 									$concatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
                                     $sql = "SELECT lw.sortorder as classroomwaitinglistno,c.name as classroom,concat(u.firstname,'',u.lastname) as username,
                                             (select GROUP_CONCAT(lcw.id) FROM {local_classroom_waitlist} as lcw where lcw.classroomid=lw.classroomid and lcw.enrolstatus=0) as active
                                             FROM {local_classroom_waitlist} as lw
                                             JOIN {local_classroom} AS c ON c.id = lw.classroomid
                                             JOIN {user} as u ON u.id=lw.userid
-                                            where lw.id=:waitlistid";        
+                                            where lw.id=:waitlistid $concatsql";        
                                     $params['waitlistid'] = $out;
                                     $stringobj=$DB->get_record_sql($sql, $params);
                                     $active=explode(',',$stringobj->active);

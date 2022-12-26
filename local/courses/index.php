@@ -47,7 +47,7 @@ if ($formattype == 'card') {
     $display_text = get_string('cardtype','local_courses');
     $display_icon = get_string('cardicon','local_courses');
 }
-$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 
 
 if($categoryid > 0 && $visible != -1){
@@ -93,7 +93,7 @@ $capabilities = array(
     'moodle/course:create',
     'moodle/site:approvecourse'
 );
-if ($category && !has_any_capability($capabilities, $systemcontext)) {
+if ($category && !has_any_capability($capabilities, $categorycontext)) {
     // If the user doesn't poses any of these system capabilities then we're going to mark the manage link in the settings block
     // as active, tell the page to ignore the active path and just build what the user would expect.
     // This will at least give the page some relevant navigation.
@@ -123,26 +123,26 @@ if ($category && !has_any_capability($capabilities, $systemcontext)) {
 $renderer = $PAGE->get_renderer('local_courses');
 
 if($id == 0){
-    if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-        if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $catid = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_costcenterid));
-        }else{
-            $catid = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_departmentid));
-        }
-        redirect(new moodle_url('/local/courses/index.php', array('id' => $catid)));
-    }
+    // if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
+    //     if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
+    //         $catid = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_costcenterid));
+    //     }else{
+    //         $catid = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_departmentid));
+    //     }
+    //     redirect(new moodle_url('/local/courses/index.php', array('id' => $catid)));
+    // }
     $PAGE->navbar->add(get_string('leftmenu_browsecategories','local_courses'));
 }else{
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $PAGE->navbar->add(get_string('leftmenu_browsecategories','local_courses'), $PAGE->url->out_omit_querystring());
     }
     $superparent_sql = "SELECT id,name FROM {course_categories} WHERE id = (SELECT parent FROM {course_categories} WHERE id = {$id}) ";
     if($superparent = $DB->get_record_sql($superparent_sql)){
-        if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $PAGE->navbar->add($superparent->name, new moodle_url('/local/courses/index.php', array('id' => $superparent->id)));
-        }else{
+        // if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
+        //     $PAGE->navbar->add($superparent->name, new moodle_url('/local/courses/index.php', array('id' => $superparent->id)));
+        // }else{
             $PAGE->navbar->add($superparent->name);
-        }
+        // }
     }
     $parentcategory = $DB->get_field('course_categories','name',array('id'=>$id));
     $PAGE->navbar->add($parentcategory);
@@ -165,7 +165,7 @@ echo $OUTPUT->header();
 }*/
 
 if(is_siteadmin() ||
-    has_capability('moodle/category:manage', $systemcontext)){
+    has_capability('moodle/category:manage', $categorycontext)){
     echo '<ul class="course_extended_menu_list">
         <li>
             <div class="coursebackup course_extended_menu_itemcontainer">
@@ -194,7 +194,7 @@ if($categoryid > 0 && $visible != -1){
 // echo isset($content);
 $filterparams = $renderer->get_categories_list(true,$formattype);
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
-if (is_siteadmin() || has_capability('moodle/category:manage', $systemcontext))  {
+if (is_siteadmin() || has_capability('moodle/category:manage', $categorycontext))  {
 
     $display_url = new moodle_url('/local/courses/index.php?formattype=' . $formattype_url);
         $displaytype_div = '<div class="col-12 d-inline-block">';

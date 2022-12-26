@@ -32,11 +32,11 @@ $deleteid = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
 $jsonparam    = optional_param('jsonparam', '', PARAM_RAW);
 
-$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-if (!has_capability('local/courses:view', $systemcontext) && !has_capability('local/courses:manage', $systemcontext)) {
+$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+if (!has_capability('local/courses:view', $categorycontext) && !has_capability('local/courses:manage', $categorycontext)) {
     print_error("You don't have permissions to view this page.");
 }
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_pagelayout('standard');
 $PAGE->set_url('/local/courses/coursestypes.php');
 $PAGE->set_title(get_string('course_type','local_courses'));

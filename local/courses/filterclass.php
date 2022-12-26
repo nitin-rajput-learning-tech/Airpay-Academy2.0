@@ -418,11 +418,11 @@ Class custom_filter extends moodleform{
 	 
 	public function get_category_list($costcenter){
 		global $DB, $CFG, $USER;
-		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
-		if (!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)){
+		$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+		if (!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)){
 
 		$catid= $DB->get_field('local_costcenter','category',array('shortname'=>'ACD'));
-		}elseif(!is_siteadmin() && has_capability('local/courses:enrol', $systemcontext)){
+		}elseif(!is_siteadmin() && has_capability('local/courses:enrol', $categorycontext)){
 		/** For The Course Manager both the acd and other costcenter categories should come in Dropdown **/
 		$cat1= $DB->get_field('local_costcenter','category',array('shortname'=>'ACD'));
 		$cat2=$DB->get_field('local_costcenter','category',array('id'=>$costcenter));

@@ -28,11 +28,11 @@ global $USER, $DB,$PAGE,$CFG, $OUTPUT;
 require_once('../../config.php');
 
 $depth = required_param('depth', PARAM_INT);
-$systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 require_login();
 
 $PAGE->set_pagelayout('standard');
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/costcenter/costcentersettings.php');
 $PAGE->set_heading($SITE->fullname);
 

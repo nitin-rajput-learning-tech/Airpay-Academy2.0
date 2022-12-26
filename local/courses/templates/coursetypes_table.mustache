@@ -16,7 +16,7 @@
 }}
 
 <button type="button" id ="btn_add" style="float: right;margin: 35px 10px 0px 0px;" onclick="(function(e){ require('local_courses/createCoursetype').init({contextid:1}) })(event)">{{#str}}add_coursetype,local_courses{{/str}}</button>
-<!--<a id="extended_menu_createcoursetype" class="pull-right course_extended_menu_itemlink" title = "'.get_string('create_coursetype','local_courses').'" data-action="coursetypemodal" onclick="(function(e){ require(\'local_courses/createCoursetype\').init({contextid:'.$systemcontext->id . ' }) })(event)"></a>-->
+<!--<a id="extended_menu_createcoursetype" class="pull-right course_extended_menu_itemlink" title = "'.get_string('create_coursetype','local_courses').'" data-action="coursetypemodal" onclick="(function(e){ require(\'local_courses/createCoursetype\').init({contextid:'.$categorycontext->id . ' }) })(event)"></a>-->
                                         
 <table id ="manage_coursetypes" class="generaltable">
     <thead>

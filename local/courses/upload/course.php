@@ -455,7 +455,7 @@ class local_uploadcourse_course
     public function prepare()
     {
         global $DB, $SITE, $USER;
-        $systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $this->prepared = true;
         // Validate the shortname.
         if (!empty($this->shortname) || is_numeric($this->shortname)) {
@@ -578,26 +578,26 @@ class local_uploadcourse_course
             }
         }
         $categorylib = new local_courses\catslib();
-        if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && !isset($this->rawdata['department']) && isset($this->rawdata['category'])) {
+        if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext) && !isset($this->rawdata['department']) && isset($this->rawdata['category'])) {
             $categories = $categorylib->get_categories($USER->open_costcenterid);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if (isset($this->defaults['open_costcenterid']) && !is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && !empty($this->rawdata['department']) && isset($this->rawdata['category'])) {
+        } else if (isset($this->defaults['open_costcenterid']) && !is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext) && !empty($this->rawdata['department']) && isset($this->rawdata['category'])) {
             $departmentid = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['department']));
             $categories = $categorylib->get_categories($departmentid);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)  && isset($this->rawdata['category'])) {
+        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)  && isset($this->rawdata['category'])) {
             $categories = $categorylib->get_categories($USER->open_costcenterid);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && isset($this->rawdata['category'])) {
+        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext) && isset($this->rawdata['category'])) {
             $categories = $categorylib->get_categories($USER->open_departmentid);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
@@ -642,7 +642,7 @@ class local_uploadcourse_course
             $departmentid = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['department']));
             $this->data['department'] = $departmentid;
         } else {
-            if (!is_siteadmin() and has_capability('local/costcenter:manage_owndepartments', $systemcontext)) {
+            if (!is_siteadmin() and has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
                 $this->data['department'] = $USER->open_departmentid;
             }
         }

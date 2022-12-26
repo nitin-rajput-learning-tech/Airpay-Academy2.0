@@ -97,7 +97,7 @@ class local_assignroles_external extends external_api {
         $params = self::validate_parameters(self::local_unassign_role_parameters(),
                                     ['contextid' => $contextid, 'roleid'=>$roleid,'userid' => $userid]);
         require_once($CFG->dirroot . '/lib/accesslib.php');
-        $systemcontext = (new \local_assignroles\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_assignroles\lib\accesslib())::get_module_context();
         try{
             role_unassign($roleid, $userid, $contextid, '');
             return true;

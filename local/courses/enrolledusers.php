@@ -31,13 +31,13 @@ $delete = optional_param('delete',0,PARAM_INT);
 $userid = optional_param('ue',0,PARAM_INT);
 require_login();
 
-$systemcontext =(new \local_courses\lib\accesslib())::get_module_context();
+$categorycontext =(new \local_courses\lib\accesslib())::get_module_context($courseid);
 $PAGE->set_pagelayout('standard');
 
 $PAGE->requires->jquery();
 $PAGE->requires->js_call_amd('local_courses/courses', 'usersdatatable', array(array('courseid' => $courseid,
                                                                             'action'=>'enrolledusers')));
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/courses/enrolledusers.php');
 $PAGE->set_title(get_string('courses'));
 $PAGE->set_heading(get_string('enrolledusers','local_courses'));

@@ -49,7 +49,7 @@ $sesskey=sesskey();
 $context = context_course::instance($course->id, MUST_EXIST);
 
 
-$systemcontext = (new \local_courses\lib\accesslib())::get_module_context($instance->courseid);
+$categorycontext = (new \local_courses\lib\accesslib())::get_module_context($instance->courseid);
 
 require_login();
 
@@ -60,35 +60,35 @@ if($view == 'ajax'){
   exit;
 }
 
-$canenrol = has_capability('local/courses:enrol', $systemcontext);
+$canenrol = has_capability('local/courses:enrol', $categorycontext);
 //$canunenrol = has_capability('local/courses:unenrol', $context);
 // Note: manage capability not used here because it is used for editing
 // of existing enrolments which is not possible here.
 // if (!$canenrol) {
     // No need to invent new error strings here...
-    require_capability('local/courses:enrol', $systemcontext);
-    require_capability('local/courses:unenrol', $systemcontext);
-    require_capability('local/courses:manage', $systemcontext);
+    require_capability('local/courses:enrol', $categorycontext);
+    require_capability('local/courses:unenrol', $categorycontext);
+    require_capability('local/courses:manage', $categorycontext);
 
 // }
- if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$systemcontext))) {
+ // if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations',$categorycontext))) {
 
-        $user_costcenter =$DB->get_record('user',array('id'=>$USER->id),  $fields='id,open_costcenterid,open_departmentid');
-        $course_costcenter =$DB->get_record('course',array('id'=>$course->id),  $fields='id,open_costcenterid,open_departmentid');
-        if (has_capability('local/costcenter:manage_ownorganization',$systemcontext)) {
-           if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid)) {
-             redirect($CFG->wwwroot.'/local/courses/courses.php');
-             die;
-          }
+ //        $user_costcenter =$DB->get_record('user',array('id'=>$USER->id),  $fields='id,open_costcenterid,open_departmentid');
+ //        $course_costcenter =$DB->get_record('course',array('id'=>$course->id),  $fields='id,open_costcenterid,open_departmentid');
+ //        if (has_capability('local/costcenter:manage_ownorganization',$categorycontext)) {
+ //           if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid)) {
+ //             redirect($CFG->wwwroot.'/local/courses/courses.php');
+ //             die;
+ //          }
 
-        }
-        if (has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
-          if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid) || (!in_array($user_costcenter->open_departmentid, explode(',', $course_costcenter->open_departmentid)))) {
-              redirect($CFG->wwwroot.'/local/courses/courses.php');
-              die;
-          }
-      }
-  }
+ //        }
+ //        if (has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
+ //          if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid) || (!in_array($user_costcenter->open_departmentid, explode(',', $course_costcenter->open_departmentid)))) {
+ //              redirect($CFG->wwwroot.'/local/courses/courses.php');
+ //              die;
+ //          }
+ //      }
+ //  }
 /*Department level restrictions */
 require_once($CFG->dirroot.'/local/includes.php');
 $userlist=new has_user_permission();
@@ -129,7 +129,6 @@ $PAGE->set_heading($course->fullname);
 }
 
 navigation_node::override_active_url(new moodle_url('/local/mass_enroll/mass_enroll.php', array('id'=>$course->id)));
-$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(is_siteadmin()){
   $costcenter="";
 }else{

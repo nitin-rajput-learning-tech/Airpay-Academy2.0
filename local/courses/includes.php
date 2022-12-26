@@ -103,12 +103,12 @@ class has_user_permission{
 	 public function access_user_permission($userid){
          global $DB, $USER;
 		 
-		$systemcontext = (new \local_courses\lib\accesslib())::get_module_context();
+		$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
          //------userid and courseid validation-------------------    
          if (empty($userid)) {
              return false;               
          }  //---------end validation------------------
-	   if(is_siteadmin() || has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext))
+	   if(is_siteadmin() || has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext))
 		   return true;
            
         $check_course_acc=$DB->get_field('user','open_costcenterid',array('id'=>$userid)); 
