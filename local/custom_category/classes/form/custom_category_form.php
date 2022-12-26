@@ -71,7 +71,7 @@ class custom_category_form extends moodleform {
             'data-parentclass' => 'open_costcenterid_select',
             'data-class' => 'idparentselect',
             'multiple' => false,
-            );
+        );
 
         $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents, $coursetype);
         $mform->setType('parentid', PARAM_INT);

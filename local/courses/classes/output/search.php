@@ -47,7 +47,7 @@ use local_udemysync\plugin;
  */
 class search implements renderable{
 
-    public function get_elearning_courselist_query($perpage, $startlimit, $return_noofrecords=false,$returnobjectlist=false, $tagitems = array(), $selectedvendors = array(), $selectedlformats = array(), $coursetype = []){
+    public function get_elearning_courselist_query($perpage, $startlimit, $return_noofrecords=false,$returnobjectlist=false, $filters = array()){
 
         global $DB,$USER,$COURSE,$CFG;
 
@@ -81,6 +81,57 @@ class search implements renderable{
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }
+            if($filters['status']){
+
+            }
+            $params = [];
+            foreach($filters AS $filtertype => $filtervalues){
+                switch($filtertype){
+                    case 'status':
+                        $statussql = [];
+                        foreach($filters['status'] AS $statusfilter){
+                            switch ($statusfilter) {
+                                case 'notenrolled':
+                                    $statussql[] = " c.id not in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
+                                break;
+                                case 'enrolled':
+                                    $statussql[] = " c.id in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
+                                break;
+                                case 'completed':
+                                    $statussql[] = " c.id in (SELECT cc.course FROM {course_completions} AS cc where cc.userid = {$USER->id} AND cc.timecompleted IS NOT NULL) ";
+                                break;
+                            }
+                        }
+                        if(!empty($statussql)){
+                            $wheresql .= " AND (".implode('OR', $statussql).' ) ';
+                        }
+                    break;
+                    case 'learningtype':
+                        $learningtypes = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                        list($learningtypesql, $learningtypeparams) = $DB->get_in_or_equal($learningtypes, SQL_PARAMS_NAMED, 'learningtype');
+                        $wheresql .= " AND c.open_identifiedas $learningtypesql ";
+                        $params = array_merge($params, $learningtypeparams);
+                    break;
+                    // case 'categories':
+                    //     $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    //     list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
+                    //     $wheresql .= " AND c.customcategory $categoriessql ";
+                    //     $params = array_merge($params, $categoriesparams);
+                    // break;
+                    case 'level':
+                        $level = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                        list($levelsql, $levelparams) = $DB->get_in_or_equal($level, SQL_PARAMS_NAMED, 'level');
+                        $wheresql .= " AND c.open_level $levelsql ";
+                        $params = array_merge($params, $levelparams);
+                    break;
+                    case 'skill':
+                        $skill = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                        list($skillsql, $skillparams) = $DB->get_in_or_equal($skill, SQL_PARAMS_NAMED, 'skill');
+                        $wheresql .= " AND c.open_skill $skillsql ";
+                        $params = array_merge($params, $skillparams);
+                    break;
+                }
+            }
         }
         $course_searchsql = "";
         if(searchlib::$search && searchlib::$search!='null'){
@@ -90,76 +141,22 @@ class search implements renderable{
             $types = implode(',',array_filter($coursetype,'is_numeric'));
             $wheresql .= " AND c.open_identifiedas IN ($types) ";
         }
-        $category=searchlib::$category;
-        if(searchlib::$category && searchlib::$category > 0){
-            $wheresql .= " AND c.category=$category";
-        }
-
-        if(searchlib::$enrolltype && searchlib::$enrolltype > 0){
-            if(searchlib::$enrolltype==1){
-                $coursecondition= "c.id in";
-            }
-            else{
-                $coursecondition = "c.id not in";
-            }
-
-            $wheresql .=" AND $coursecondition (select
-                distinct e.courseid  from {enrol} e
-                JOIN {user_enrolments} ue on ue.enrolid = e.id
-                where e.courseid=c.id and ue.userid=$USER->id) ";
-        }
-
 
         $wheresql .= " AND c.visible = 1 ";
 
-         if($tagitems){
-
-            $i = 0;
-            $courseprovidersql = $courseskillsql = $coursecategorysql = [];
-            foreach($tagitems AS $item){
-                $type = substr($item, 0, strpos($item, '_'));
-                $value = substr($item, strpos($item, '_')+1);
-                switch($type){
-                    case 'courseprovider':
-                        $courseprovidersql[] = " concat(',', c.open_courseprovider, ',') LIKE '%,{$value},%' ";
-                    break;
-                    case 'skill':
-                        $skillids = $DB->get_fieldset_sql("SELECT ls.id FROM {local_skill} AS ls WHERE ls.category = {$value} ");
-                        if($skillids){
-                            foreach($skillids AS $skillid){
-                                $courseskillsql[] = " concat(',',c.open_skill, ',') LIKE '%,{$skillid},%' ";
-                            }
-                        }
-                    break;
-                    case 'categories':
-                        $coursecategorysql[] = " c.category = {$value} ";
-                    break;
-                }
-                $i++;
-            }
-            if($courseprovidersql){
-                $wheresql .= " AND (". implode(' OR ', $courseprovidersql).')';
-            }
-            if($courseskillsql){
-                $wheresql .= " AND (". implode(' OR ', $courseskillsql).')';
-            }
-            if($coursecategorysql){
-                $wheresql .= " AND (". implode(' OR ', $coursecategorysql).')';
-            }
-        }
 
         $groupby = " GROUP BY c.id ";
 
         $countsql = "SELECT c.id ";
         $finalcountquery = $countsql.$fromsql.$wheresql.$course_searchsql.$groupby;
 
-        $numberofrecords = sizeof($DB->get_records_sql($finalcountquery));
+        $numberofrecords = sizeof($DB->get_records_sql($finalcountquery, $params));
 
         $finalsql = $selectsql.$fromsql.$wheresql.$course_searchsql.$groupby;
 
         $finalsql .= "  ORDER by c.id DESC";
 
-        $courseslist = $DB->get_records_sql($finalsql, array(), $startlimit, $perpage);
+        $courseslist = $DB->get_records_sql($finalsql, $params, $startlimit, $perpage);
 
         if($return_noofrecords && !$returnobjectlist){
             $return = array('numberofrecords'=>$numberofrecords);

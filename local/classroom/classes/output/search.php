@@ -45,7 +45,7 @@ use local_request\api\requestapi;
 class search implements renderable{
 
 
-    public function get_facetofacelist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false, $tagitems = array(), $selectedvendors = array()){
+    public function get_facetofacelist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false, $filters = array()){
         global $DB, $USER, $CFG;
         $search = searchlib::$search;
         //------main queries written here to fetch Classrooms or  session based on condition
@@ -55,7 +55,7 @@ class search implements renderable{
         $leftjoinsql = '';
 
         // added condition for not displaying retired ILT's.
-         $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 ";// AND lc.course_status = 'available' AND lc.course_type = 'public'
+        $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 ";
 
         $searchsql = '';
         if(searchlib::$search && searchlib::$search != 'null'){
@@ -64,11 +64,23 @@ class search implements renderable{
         $usercontext = context_user::instance($USER->id);
         $sqlparams = array();
         if(!is_siteadmin()){
-            if($USER->open_costcenterid){
-
-                $wheresql .= " AND ( $USER->open_costcenterid = lc.costcenter
-
-                OR ( lc.classroom_type = 0 AND lc.costcenter = 0 ) ) ";//AND lc.contentvendor IN ($subquery)
+            $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
+            $paths = [];
+            foreach($usercostcenterpaths AS $userpath){
+                $paths[] = $userpath.'%';
+                while ($userpath = rtrim($userpath,'0123456789')) {
+                    $userpath = rtrim($userpath, '/');
+                    if ($userpath === '') {
+                      break;
+                    }
+                    $paths[] = $userpath;
+                }
+            }
+            if(!empty($paths)){
+                foreach($paths AS $path){
+                    $pathsql[] = " lc.open_path LIKE {$path} ";
+                }
+                $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }
 
             $params = array();
@@ -105,41 +117,7 @@ class search implements renderable{
                     ELSE 1 END ";
 
 
-            $params[]= " 1 = CASE WHEN lc.department!='-1'
-                THEN
-                    CASE
-                        WHEN CONCAT(',',lc.department,',') LIKE CONCAT('%,',{$USER->open_departmentid},',%')
-                            THEN 1
-                            ELSE 0
-                    END
-                ELSE 1 END ";
 
-            if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-                $sqlparams[] = "%,$USER->open_subdepartment,%";
-            }else{
-                $sqlparams[] = "";
-            }
-            $params[]= " 1 = CASE WHEN lc.subdepartment != '-1'
-                THEN
-                    CASE
-                        WHEN CONCAT(',',lc.subdepartment,',') LIKE ?
-                            THEN 1
-                            ELSE 0
-                    END
-                ELSE 1 END ";
-            if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
-                $sqlparams[] = "%,$USER->open_hrmsrole,%";
-            }else{
-                $sqlparams[] = "";
-            }
-            $params[]= " 1 = CASE WHEN lc.open_hrmsrole IS NOT NULL
-                        THEN
-                            CASE
-                                WHEN CONCAT(',',lc.open_hrmsrole,',') LIKE ?
-                                    THEN 1
-                                    ELSE 0
-                            END
-                        ELSE 1 END ";
 
             if(!empty($USER->open_designation) && $USER->open_designation != ""){
                 $sqlparams[] = "%,$USER->open_designation,%";
@@ -155,54 +133,44 @@ class search implements renderable{
                             END
                         ELSE 1 END ";
 
-            if(!empty($USER->open_location) && $USER->open_location != ""){
-                $sqlparams[] = "%,$USER->open_location,%";
+
+            if(!empty($params)){
+                $finalparams = implode('AND',$params);
             }else{
-                $sqlparams[] = "";
-            }
-            $params[]= " 1 = CASE WHEN lc.open_location IS NOT NULL
-                        THEN
-                            CASE
-                                WHEN CONCAT(',',lc.open_location,',') LIKE ?
-                                    THEN 1
-                                    ELSE 0
-                            END
-                        ELSE 1 END ";
-
-
-
-        if(!is_siteadmin()){
-            $params[]= " 1 = CASE
-                                WHEN lc.classroom_type = 1
-                                    THEN
-                                        CASE
-                                            WHEN ((lc.costcenter = $USER->open_costcenterid) AND (lc.department IS NULL OR lc.department = 0 OR lc.department = -1 OR (lc.department = $USER->open_departmentid)))
-                                            THEN 1
-                                            ELSE 0
-                                        END
-                                ELSE 1 END ";
-
-        }
-          if(!empty($params)){
-              $finalparams = implode('AND',$params);
-            }else{
-              $finalparams= '1=1' ;
+                $finalparams= '1=1' ;
             }
 
-           $joinsql = " AND ($finalparams) ";
-
-
-            if(searchlib::$enrolltype && searchlib::$enrolltype>0 ){
-                if(searchlib::$enrolltype==1){
-                    $wheresql .= " AND lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1,3,4) ";
+            $joinsql = " AND ($finalparams) ";
+            if($filters['status']){
+                $statussql = [];
+                foreach($filters['status'] AS $statusfilter){
+                    switch ($statusfilter) {
+                        case 'notenrolled':
+                            $statussql[] = " lc.id not in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1) ";
+                        break;
+                        case 'enrolled':
+                            $wheresql .= " AND lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1,3,4)";
+                        break;
+                        case 'completed':
+                            $statussql[] = " lc.id in (lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id AND completion_status = 1) AND lc.status in (1,3,4) ";
+                        break;
+                    }
+                }
+                if(!empty($statussql)){
+                    $wheresql .= " AND (".implode('OR', $statussql).' ) ';
                 }else{
-                    $wheresql .= " AND lc.id not in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1)";
-                    $wheresql .= $joinsql;
+                    $wheresql .= " AND lc.status in (1,3,4)";
                 }
             }else{
                 $wheresql .= " AND lc.status in (1,3,4)";
-                $wheresql .= $joinsql;
             }
+            $wheresql .= $joinsql;
+            // foreach($filters AS $filtertype => $filtervalues){
+            //     switch($filtertype){
+            //         case 'categories':
+            //         break;
+            //     }
+            // }
         }
 
         $groupby = " GROUP BY lc.id ";

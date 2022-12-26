@@ -44,7 +44,7 @@ use local_request\api\requestapi;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class search implements renderable{
-    public function get_learningpathlist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false,$tagitems = array(), $selectedvendors = array()){
+    public function get_learningpathlist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false, $filters = array()){
         global $DB, $USER, $CFG;
 
         $search = searchlib::$search;
@@ -64,6 +64,25 @@ class search implements renderable{
 
         $usercontext = context_user::instance($USER->id);
         if(!is_siteadmin()){
+            $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
+            $paths = [];
+            foreach($usercostcenterpaths AS $userpath){
+                $paths[] = $userpath.'%';
+                while ($userpath = rtrim($userpath,'0123456789')) {
+                    $userpath = rtrim($userpath, '/');
+                    if ($userpath === '') {
+                      break;
+                    }
+                    $paths[] = $userpath;
+                }
+            }
+            if(!empty($paths)){
+                foreach($paths AS $path){
+                    $pathsql[] = " llp.open_path LIKE {$path} ";
+                }
+                $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+            }
+
             $params = array();
             $group_list = $DB->get_records_sql_menu("SELECT cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
 
@@ -77,29 +96,7 @@ class search implements renderable{
             $groupqueeryparams =implode('OR',$grouquery);
             $params[]= '('.$groupqueeryparams.')';
 
-            if(!empty($USER->open_departmentid) && $USER->open_departmentid != ""){
-                $departmentlike = "'%,$USER->open_departmentid,%'";
-            }else{
-                $departmentlike = "''";
-            }
-            $params[]= " 1 = CASE WHEN llp.department!='-1'
-                THEN
-                    CASE WHEN CONCAT(',',llp.department,',') LIKE {$departmentlike}
-                        THEN 1
-                        ELSE 0 END
-                ELSE 1 END ";
 
-            if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-                $subdepartmentlike = "'%,$USER->open_subdepartment,%'";
-            }else{
-                $subdepartmentlike = "''";
-            }
-            $params[]= " 1 = CASE WHEN llp.subdepartment!='-1'
-                THEN
-                    CASE WHEN CONCAT(',',llp.subdepartment,',') LIKE {$subdepartmentlike}
-                        THEN 1
-                        ELSE 0 END
-                ELSE 1 END ";
 
             if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
                 $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
@@ -137,34 +134,40 @@ class search implements renderable{
                         ELSE 0 END
                 ELSE 1 END ";
 
-
-
-
-            if(!is_siteadmin()){
-            $params[]= " 1 = CASE
-                                WHEN llp.learning_type = 1
-                                    THEN
-                                        CASE
-                                            WHEN ((llp.costcenter = $USER->open_costcenterid) AND (llp.department IS NULL OR llp.department = 0 OR (llp.department = $USER->open_departmentid)))
-                                            THEN 1
-                                            ELSE 0
-                                        END
-                                ELSE 1 END ";
-            }
-
             if(!empty($params)){
                 $finalparams=implode('AND',$params);
             }else{
                 $finalparams= '1=1' ;
             }
-            $wheresql .= " AND ($finalparams OR (llp.open_hrmsrole IS NULL AND llp.open_designation IS NULL AND llp.open_location IS NULL AND llp.open_group IS NULL AND llp.department='-1' ) )";
+            $wheresql .= " AND ($finalparams)";
 
 
-            if(searchlib::$enrolltype && searchlib::$enrolltype>0 ){
-                if(searchlib::$enrolltype==1){
-                    $wheresql .= " AND llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id)";
-                }else{
-                    $wheresql .= " AND llp.id not in (select distinct planid from {local_learningplan_user} where userid=$USER->id)";
+            if($filters['status']){
+
+            }
+            foreach($filters AS $filtertype => $filtervalues){
+                switch($filtertype){
+                    // case 'categories':
+                    // break;
+                    case 'status':
+                        $statussql = [];
+                        foreach($filters['status'] AS $statusfilter){
+                            switch ($statusfilter) {
+                                case 'notenrolled':
+                                    $statussql[] = " llp.id not in (select distinct planid from {local_learningplan_user} where userid=$USER->id) ";
+                                break;
+                                case 'enrolled':
+                                    $wheresql .= " AND llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id)";
+                                break;
+                                case 'completed':
+                                    $statussql[] = " AND llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id AND status = 1)";
+                                break;
+                            }
+                        }
+                        if(!empty($statussql)){
+                            $wheresql .= " AND (".implode('OR', $statussql).' ) ';
+                        }
+                    break;
                 }
             }
         }

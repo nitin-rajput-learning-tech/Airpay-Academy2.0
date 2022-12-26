@@ -1451,9 +1451,12 @@ function local_classroom_search_page_filter_element(&$filterelements){
     global $CFG;
     if(file_exists($CFG->dirroot.'/local/search/lib.php')){
         require_once($CFG->dirroot.'/local/search/lib.php');
-        $filterelements['ilt'] = ['tagitemid' => 'learningtype_classroom', 'tagitemname' => 'ILT', 'tagitemshortname' => 'classroom', 'coursecount' => local_search_get_coursecount_for_modules([classroom => 'classroom'])];
+        $filterelements['ilt'] = ['tagitemid' => 'moduletype_classroom', 'tagitemname' => 'ILT', 'tagitemshortname' => 'classroom', 'coursecount' => local_search_get_coursecount_for_modules(['moduletype_classroom'])];
     }
 }
 function local_classroom_enabled_search(){
     return ['pluginname' => 'local_classroom', 'templatename' => 'local_classroom/searchpagecontent', 'type' => classroom];
+}
+function  local_classroom_applicable_filters_for_search_page(&$filterapplicable){
+    $filterapplicable[classroom] = [/*'learningtype',*/ 'status', 'categories'/*, 'level', 'skill'*/];
 }

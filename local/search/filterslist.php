@@ -23,10 +23,10 @@ $finallist = [];
 $categoriesall = [];
 $final_array['categoriesall'] = [];
 // moduletype filters
-// $final_array['categoriesall'][] = get_itemlist('moduletype');
+$final_array['categoriesall'][] = get_itemlist('moduletype');
 $final_array['categoriesall'][] = get_itemlist('status');
 $final_array['categoriesall'][] = get_itemlist('learningtype');
-// $final_array['categoriesall'][] = get_itemlist('categories');
+$final_array['categoriesall'][] = get_itemlist('categories');
 $final_array['categoriesall'][] = get_itemlist('level');
 $final_array['categoriesall'][] = get_itemlist('skill');
 
@@ -37,14 +37,17 @@ echo json_encode($final);
 function get_itemlist($catid, $start = 0, $limit = 6){
 	global $DB;
 	switch($catid){
-		// case 'moduletype':
-		// 	$itemslist['learningpath'] = ['tagitemid' => 'moduletype_learningpath', 'tagitemname' => 'LP', 'tagitemshortname' => 'learningpath', 'coursecount' => local_search_get_coursecount_for_modules(['learningpath'])];
-		// 	$itemslist['ilt'] = ['tagitemid' => 'moduletype_classroom', 'tagitemname' => 'ILT', 'tagitemshortname' => 'classroom', 'coursecount' => local_search_get_coursecount_for_modules(['classroom'])];
-        //     $itemslist['elearning'] = ['tagitemid' => 'moduletype_elearning', 'tagitemname' => 'E-Learning', 'tagitemshortname' => 'elearning', 'coursecount' => local_search_get_coursecount_for_modules(['elearning'])];
-		// 	$itemslist['program'] = ['tagitemid' => 'moduletype_program', 'tagitemname' => 'Program', 'tagitemshortname' => 'program', 'coursecount' => local_search_get_coursecount_for_modules(['program'])];
-		// 	ksort($itemslist);
-        //     return ['catcode' => 'moduletype', 'tagcatname' => 'Module Type', 'itemslist' => $itemslist, 'showviewmore' => false];
-		// break;
+		case 'moduletype':
+			$itemslist = [];
+			$filterplugins = get_plugins_with_function('search_page_filter_element');
+
+			foreach($filterplugins AS $filterelements){
+				foreach($filterelements AS $filterelement){
+					$filterelement($itemslist);
+				}
+			}
+            return ['catcode' => 'moduletype', 'tagcatname' => 'Module Type', 'itemslist' => $itemslist, 'showviewmore' => false];
+		break;
 		case 'status':
 			$itemslist[] = ['tagitemid' => 'status_notenrolled', 'tagitemname' => 'Not Enrolled', 'tagitemshortname' => 'notenrolled_modules', 'coursecount' => local_search_get_coursecount_for_status(['status_notenrolled'])];
 			$itemslist[] = ['tagitemid' => 'status_enrolled', 'tagitemname' => 'Enrolled', 'tagitemshortname' => 'enrolled_modules', 'coursecount' => local_search_get_coursecount_for_status(['status_enrolled'])];
@@ -53,42 +56,33 @@ function get_itemlist($catid, $start = 0, $limit = 6){
         break;
 		case 'learningtype':
 			$itemslist = [];
-			$filterplugins = get_plugins_with_function('search_page_filter_element');
-			$totalelements = array_sum(array_map(function($functions){
-				return count($functions);
-			}, $filterplugins));
 
-			$totalfields = 6 - $totalelements;
+			$totalfields = 6;
 			if($start == 0){
-				foreach($filterplugins AS $filterelements){
-					foreach($filterelements AS $filterelement){
-						$filterelement($itemslist);
-					}
+
+	            $sql = "SELECT id, name, shortname FROM {local_course_types} WHERE active = 1 ";
+			 	$ctypes = $DB->get_records_sql($sql, [], 0, $totalfields+1);
+	        	if(count($ctypes) == 7){
+					array_pop($ctypes);
+					$showviewmore = true;
+				}else{
+					$showviewmore = false;
 				}
-				if($totalfields > 0){
-		            $sql = "SELECT id, name, shortname FROM {local_course_types} WHERE active = 1 ";
-				 	$ctypes = $DB->get_records_sql($sql, [], 0, $totalfields);
-				    foreach($ctypes AS $customtype){
-		        		$itemslist['custom_'.$customtype->shortname] = ['tagitemid' => 'learningtype_'.$customtype->shortname, 'tagitemname' => $customtype->name, 'tagitemshortname' => $customtype->shortname, 'coursecount' => local_search_get_coursecount_for_modules([$customtype->id => $customtype->shortname])];
-		        	}
-				}
+
 			} else {
-				if($totalfields <= 0){
-					$totalfields = 0;
-				}
 				$sql = "SELECT id, name, shortname FROM {local_course_types} WHERE active = 1 ";
 			 	$ctypes = $DB->get_records_sql($sql, [], $totalfields, 0);
-			    foreach($ctypes AS $customtype){
-	        		$itemslist['custom_'.$customtype->shortname] = ['tagitemid' => 'learningtype_'.$customtype->shortname, 'tagitemname' => $customtype->name, 'tagitemshortname' => $customtype->shortname, 'coursecount' => local_search_get_coursecount_for_modules([$customtype->id => $customtype->shortname])];
-	        	}
-				ksort($itemslist);
             }
-            return ['catcode' => 'learningtype', 'tagcatname' => 'Learning Type', 'itemslist' => $itemslist, 'showviewmore' => true];
+            foreach($ctypes AS $customtype){
+        		$itemslist['custom_'.$customtype->shortname] = ['tagitemid' => 'learningtype_'.$customtype->shortname, 'tagitemname' => $customtype->name, 'tagitemshortname' => $customtype->shortname, 'coursecount' => local_search_get_coursecount_for_modules([$customtype->id => $customtype->shortname])];
+        	}
+			ksort($itemslist);
+            return ['catcode' => 'learningtype', 'tagcatname' => 'Learning Type', 'itemslist' => $itemslist, 'showviewmore' => $showviewmore];
 		break;
 
 	   	case 'categories':
 			if($start == 0){
-				$categorySql = "SELECT id, name FROM {course_categories} WHERE visible = 1 ";
+				$categorySql = "SELECT id, fullname FROM {local_custom_category} WHERE 1 = 1 ";
 				$categories = $DB->get_records_sql_menu($categorySql, [], 0,7);
 				if(count($categories) == 7){
 					array_pop($categories);
@@ -97,7 +91,7 @@ function get_itemlist($catid, $start = 0, $limit = 6){
 					$showviewmore = false;
 				}
 			}else{
-				$categorySql = "SELECT id, name FROM {course_categories} WHERE visible = 1 ";
+				$categorySql = "SELECT id, fullname FROM {local_custom_category} WHERE 1 = 1";
 				$categories = $DB->get_records_sql_menu($categorySql, [], 6,0);
 			}
 			$itemslist = [];
