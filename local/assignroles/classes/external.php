@@ -1,4 +1,3 @@
-
 <?php
 defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
@@ -228,7 +227,7 @@ class local_assignroles_external extends external_api {
                             }
                         }
 
-
+                        // echo $userssql;
                         $return = $DB->get_records_sql($userssql, $params, $page, $perpage);
                     }
 

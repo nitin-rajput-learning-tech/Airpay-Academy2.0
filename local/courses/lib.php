@@ -23,6 +23,7 @@
  * @subpackage local_courses
  */
 define('elearning', 1);
+define('courses', 1);
 
 if(file_exists($CFG->dirroot.'/local/costcenter/lib.php')){
     require_once($CFG->dirroot.'/local/costcenter/lib.php');                  
@@ -2212,9 +2213,12 @@ function local_courses_search_page_filter_element(&$filterelements){
     global $CFG;
     if(file_exists($CFG->dirroot.'/local/search/lib.php')){
         require_once($CFG->dirroot.'/local/search/lib.php');
-        $filterelements['elearning'] = ['tagitemid' => 'learningtype_elearning', 'tagitemname' => 'Online Course', 'tagitemshortname' => 'elearning', 'coursecount' => local_search_get_coursecount_for_modules([elearning => 'elearning'])];
+        $filterelements['elearning'] = ['tagitemid' => 'moduletype_elearning', 'tagitemname' => 'Online Course', 'tagitemshortname' => 'elearning', 'coursecount' => local_search_get_coursecount_for_modules(['moduletype_elearning'])];
     }
 }
 function local_courses_enabled_search(){
     return ['pluginname' => 'local_courses', 'templatename' => 'local_courses/searchpagecontent', 'type' => elearning];
+}
+function  local_courses_applicable_filters_for_search_page(&$filterapplicable){
+    $filterapplicable[elearning] = ['learningtype', 'status', 'categories', 'level', 'skill'];
 }

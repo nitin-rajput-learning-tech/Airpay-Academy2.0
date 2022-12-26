@@ -241,16 +241,48 @@ class allcourses {
     global $DB;
 
     $othertagitems = array();
+    $standard_catalogtypes = [];
+    $filterplugins = get_plugins_with_function('applicable_filters_for_search_page');
+    $filterapplicable = [];
+    $defaultPlugins = [];
+    foreach($filterplugins AS $filtertypes){
+        foreach($filtertypes AS $pluginname => $filtertype){
+            $defaultPlugins[] = constant($pluginname);
+            $filtertype($filterapplicable);
+        }
+    }
+    asort($defaultPlugins);
     if($selectedfilter){
-        $standard_catalogtypes = [];
-        foreach ($selectedfilter as $tagitemid => $itemname) {
 
+        foreach ($selectedfilter as $itemname) {
+            $filter = explode('_', $itemname);
+            if(count($filter) === 2){
+                $thisfilters[$filter[0]][] = $filter[1];
+
+            }
+        }
+        ;
+        if($moduletype = $thisfilters['moduletype']){
+            foreach($moduletype AS $module ){
+                $ltype = constant($module);
+                if(!in_array($ltype, $standard_catalogtypes)){
+                    $standard_catalogtypes[] = $ltype;
+                }
+            }
+        }else{
+            foreach($thisfilters AS $filtertype => $filter){
+                foreach($filterapplicable AS $plugin => $applicablefilters){
+                    if(in_array($filtertype, $applicablefilters) && !in_array($plugin, $standard_catalogtypes)){
+                        $standard_catalogtypes[] = $plugin;
+                    }
+                }
+            }
         }
         if(empty($standard_catalogtypes)){
-            $standard_catalogtypes = array(elearning, learningplan, classroom);
+            $standard_catalogtypes = $defaultPlugins;
         }
     } else{
-        $standard_catalogtypes = array(elearning, learningplan, classroom);
+        $standard_catalogtypes = $defaultPlugins;
     }
     $sumofallrecords = 0;
     foreach($standard_catalogtypes as $key => $type){
@@ -261,7 +293,7 @@ class allcourses {
             if(class_exists($classname)){
                 $class = new $classname();
                 $availabletypes[] =  $type;
-                $learning_plans_ar = $class->get_learningpathlist_query(1,searchlib::$page*1,true,true, $selectedfilter);
+                $learning_plans_ar = $class->get_learningpathlist_query(1,searchlib::$page*1,true,true, $thisfilters);
                 $totalrecords_ineachtype[]= array('numberofrecords'=>$learning_plans_ar['numberofrecords'],'type' =>'learningplan');
                 $sumofallrecords += $learning_plans_ar['numberofrecords'];
             } // end of if condition
@@ -272,7 +304,7 @@ class allcourses {
             if(class_exists($classname)){
                 $class = new $classname();
                 $availabletypes[]=  $type;
-                $classroom_ar= $class->get_facetofacelist_query(1,searchlib::$page*1,true,true,$selectedfilter);
+                $classroom_ar= $class->get_facetofacelist_query(1,searchlib::$page*1,true,true,$thisfilters);
                 $totalrecords_ineachtype[]= array('numberofrecords'=>$classroom_ar['numberofrecords'],'type' =>'classroom');
                 $sumofallrecords += $classroom_ar['numberofrecords'];
             } // end of if condition
@@ -283,7 +315,7 @@ class allcourses {
             if(class_exists($classname)){
                 $class = new $classname();
                 $availabletypes[] = $type;
-                $courseslist_ar = $class->get_elearning_courselist_query(1, searchlib::$page*1, true,false, $selectedfilter);
+                $courseslist_ar = $class->get_elearning_courselist_query(1, searchlib::$page*1, true,false, $thisfilters);
                 $totalrecords_ineachtype[]= array('numberofrecords'=>$courseslist_ar['numberofrecords'],'type'=>'elearning');
                 $sumofallrecords += $courseslist_ar['numberofrecords'];
             }

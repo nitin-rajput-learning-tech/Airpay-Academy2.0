@@ -38,12 +38,13 @@ class team_approvals_lib{
         } else {
             $condition = "";
         }
+        $concatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $departmentmyteamsql = "SELECT lrr.id, lrr.createdbyid, lrr.compname, lrr.componentid, lrr.status, lrr.responder, lrr.respondeddate,
         							u.firstname, u.lastname, u.email, u.idnumber
         							FROM {local_request_records} as lrr
         							JOIN {user} as u ON u.id = lrr.createdbyid
                                     WHERE lrr.compname = :learningtype AND u.open_supervisorid = :loggedinuserid AND u.id != :userid
-                                    AND u.confirmed = :confirmed AND u.suspended = :suspended AND u.deleted = :deleted AND u.id > 2".$condition." ORDER BY lrr.timemodified DESC";
+                                    AND u.confirmed = :confirmed AND u.suspended = :suspended AND u.deleted = :deleted AND u.id > 2 $concatsql".$condition." ORDER BY lrr.timemodified DESC";
         $params['learningtype'] = $learningtype;
         $params['loggedinuserid'] = $USER->id;
         $params['userid'] = $USER->id;

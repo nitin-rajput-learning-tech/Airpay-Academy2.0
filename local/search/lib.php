@@ -50,7 +50,7 @@ function local_search_leftmenunode(){
 function local_search_get_coursecount_for_modules($moduletype){
 	// global $DB;
 
-	$response = allcourses::get_available_catalogtypes($moduletype);
+	$response = (new allcourses())->get_available_catalogtypes($moduletype);
     $sumofallrecords = $response['sumofallrecords'];
     return $sumofallrecords;
 }

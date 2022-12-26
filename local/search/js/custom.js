@@ -34,7 +34,7 @@ myModule.controller('courseController', function ($scope, $http,$location) {
         $.each(checkedfilters, function( index, value ) {
             $scope.selectedfilters.push($(value).val());
         });
-        filters = $scope.selectedfilters.toString();
+        filters = JSON.stringify($scope.selectedfilters);
 
         var en_selectedfilters = encodeURIComponent(filters);
         var dynamicurl = M.cfg.wwwroot + '/local/search/allcourses.php#?&selectedfilters='+en_selectedfilters;

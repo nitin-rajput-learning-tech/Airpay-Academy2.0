@@ -74,7 +74,6 @@ class local_evaluation_external extends external_api {
         global $DB, $CFG, $USER;
         require_once($CFG->dirroot . '/local/evaluation/evaluation_form.php');
         require_once($CFG->dirroot . '/local/evaluation/lib.php');
-
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_create_evaluation_form_parameters(),
                                             ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);

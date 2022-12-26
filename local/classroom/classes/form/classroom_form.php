@@ -72,7 +72,19 @@ class classroom_form extends moodleform {
             $mform->addRule('name', null, 'required', null, 'client');
 
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_users', $categorycontext, $multiple = false);
+            $categoryinfo = array(
+                'ajax' => 'local_costcenter/form-options-selector',
+                'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
+                'data-action' => 'custom_category_selector',
+                'data-options' => json_encode(array('id' => $id)),
+                'class' => 'idparentselect',
+                'data-parentclass' => 'open_costcenterid_select',
+                'data-class' => 'idparentselect',
+                'multiple' => false,
+            );
 
+            $mform->addElement('autocomplete', 'categoryid', get_string('category'), [], $categoryinfo);
+            $mform->setType('categoryid', PARAM_INT);
             $manageselfenrol = array();
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('no'), 0, $attributes);

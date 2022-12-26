@@ -17,7 +17,7 @@ $search= optional_param('search','', PARAM_RAW);
 $category = optional_param('category',0,PARAM_INT);
 $enrolltype = optional_param('enrolltype',0,PARAM_INT);
 $sortid = optional_param('sortid',0, PARAM_RAW);
-$selectedfilter = optional_param('selectedfilter',null, PARAM_RAW);
+$selectedfilter = optional_param('selectedfilters',null, PARAM_RAW);
 
 //new one
 define('PERPAGE',15);
