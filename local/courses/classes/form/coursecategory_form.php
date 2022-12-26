@@ -44,22 +44,22 @@ class coursecategory_form extends moodleform {
         $context = (new \local_courses\lib\accesslib())::get_module_context(); 		
         // Get list of categories to use as parents, with site as the first one.
         $options = array();
-        if (has_capability('moodle/category:manage', $context) || $parent == 0) {
+        if (has_capability('local/courses:manage', $context) || $parent == 0) {
             $option[0] = get_string('top');
         }
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context)){            
-            $options = categorylist('moodle/category:manage');
+            $options = categorylist('local/courses:manage');
             $options = $option+$options;
 
         }else if(has_capability('local/costcenter:manage_ownorganization',$context)){
             $orgcategory = $DB->get_field('local_costcenter','category',array('id' => $USER->open_costcenterid));
-            $options = categorylist('moodle/category:manage','','/',0,$orgcategory);
+            $options = categorylist('local/courses:manage','','/',0,$orgcategory);
         }else if(has_capability('local/costcenter:manage_owndepartments',$context)){
             $deptcategory = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_departmentid));
-            $options = categorylist('moodle/category:manage','','/',$deptcategory);
+            $options = categorylist('local/courses:manage','','/',$deptcategory);
         } elseif ($categoryid) {
             // Editing an existing category.
-            $options = categorylist('moodle/category:manage', $categoryid);
+            $options = categorylist('local/courses:manage', $categoryid);
             if (empty($options[$parent])) {
                 // Ensure the the category parent has been included in the options.
                 $options[$parent] = $DB->get_field('course_categories', 'name', array('id'=>$parent));

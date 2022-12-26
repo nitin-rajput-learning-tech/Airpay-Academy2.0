@@ -89,7 +89,7 @@ $PAGE->requires->js_call_amd('local_courses/deletecategory', 'load');
 $capabilities = array(
     'moodle/site:config',
     'moodle/backup:backupcourse',
-    'moodle/category:manage',
+    'local/courses:manage',
     'moodle/course:create',
     'moodle/site:approvecourse'
 );
@@ -165,7 +165,7 @@ echo $OUTPUT->header();
 }*/
 
 if(is_siteadmin() ||
-    has_capability('moodle/category:manage', $categorycontext)){
+    has_capability('local/courses:manage', $categorycontext)){
     echo '<ul class="course_extended_menu_list">
         <li>
             <div class="coursebackup course_extended_menu_itemcontainer">
@@ -194,7 +194,7 @@ if($categoryid > 0 && $visible != -1){
 // echo isset($content);
 $filterparams = $renderer->get_categories_list(true,$formattype);
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
-if (is_siteadmin() || has_capability('moodle/category:manage', $categorycontext))  {
+if (is_siteadmin() || has_capability('local/courses:manage', $categorycontext))  {
 
     $display_url = new moodle_url('/local/courses/index.php?formattype=' . $formattype_url);
         $displaytype_div = '<div class="col-12 d-inline-block">';

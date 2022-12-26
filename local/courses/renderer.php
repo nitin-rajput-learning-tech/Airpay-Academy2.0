@@ -252,7 +252,7 @@ class local_courses_renderer extends plugin_renderer_base {
         $data['courses'] = html_writer::link('javascript:void(0)', $category->coursecount, array('title' => '', 'alt' => '', 'class'=>'createcoursemodal', 'onclick' =>'(function(e){ require("local_courses/newcategory").courselist({contextid:'.$categorycontext->id.', categoryname: "'.$category->name.'", categoryid: "' . $category->id . '" }) })(event)'));
         $data['subcategory_count'] = $DB->count_records('course_categories', array('parent' => $categoryid)); 
         // $actions = False;
-        // if(has_capability('moodle/category:manage', $categorycontext)){
+        // if(has_capability('local/courses:manage', $categorycontext)){
         //     $actions = True;
         //     if(!empty($category->visible)){
         //         $visible_value = 0;

@@ -175,7 +175,7 @@ if (!empty($course->id)) {
     // We'd prefer to use the management interface URL without args.
     $managementurl = new moodle_url('/course/management.php');
     // These are the caps required in order to see the management interface.
-    $managementcaps = array('moodle/category:manage', 'moodle/course:create');
+    $managementcaps = array('local/courses:manage', 'moodle/course:create');
     if ($categoryid && !has_any_capability($managementcaps, (new \local_courses\lib\accesslib())::get_module_context())) {
         // If the user doesn't have either manage caps then they can only manage within the given category.
         $managementurl->param('categoryid', $categoryid);

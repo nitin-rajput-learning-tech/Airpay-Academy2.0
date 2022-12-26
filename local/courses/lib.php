@@ -1109,7 +1109,7 @@ function local_courses_leftmenunode(){
     global $DB, $USER;
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
-    if(has_capability('moodle/category:manage', $categorycontext) || is_siteadmin()) {
+    if(has_capability('local/courses:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_categories', 'class'=>'pull-left user_nav_div categories usernavdep'));
         $categories_url = new moodle_url('/local/custom_category/index.php');
         $categories = html_writer::link($categories_url, '<i class="fa fa-book" aria-hidden="true" aria-label=""></i><i class="fa fa-book secbook" aria-hidden="true" aria-label=""></i><span class="user_navigation_link_text">'.get_string('leftmenu_browsecategories','local_courses').'</span>',array('class'=>'user_navigation_link'));
@@ -1778,7 +1778,7 @@ function get_listof_categories($stable, $filterdata) {
         $count = html_writer::link('javascript:void(0)', $categories->coursecount, array('title' => '', 'alt' => '', 'class'=>'createcoursemodal course_count_popup', 'onclick' =>'(function(e){ require("local_courses/newcategory").courselist({contextid:'.$categorycontext->id.', categoryname: "'.$categories->name.'", categoryid: "' . $categories->id . '" }) })(event)'));
 
         $actions = '';
-        if(has_capability('moodle/category:manage',$categorycontext)){
+        if(has_capability('local/courses:manage',$categorycontext)){
             $actions = true;
             if(!empty($categories->visible)){
                 $visible_value = 0;
