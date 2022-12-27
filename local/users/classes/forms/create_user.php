@@ -141,7 +141,7 @@ class create_user extends moodleform {
             'data-contextid' => $categorycontext->id,
             'data-parentclass' => 'open_costcenterid_select',
             'data-selectstring' => get_string('select_reportingto', 'local_users'),
-            'data-options' => json_encode(array('parentid' => $open_costcenterid, 'enableallfield' => false)),
+            'data-options' => json_encode(array('id' => $id, 'parentid' => $open_costcenterid, 'enableallfield' => false)),
             'data-class' => 'supervisor_select',
             'multiple' => false,
             'ajax' => 'local_costcenter/form-options-selector',

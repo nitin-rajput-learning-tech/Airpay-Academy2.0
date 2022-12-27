@@ -761,6 +761,10 @@ class local_costcenter_external extends external_api {
                     $fields = "SELECT id, concat(u.firstname,' ',u.lastname) AS fullname ";
                     $userssql = " FROM {user} AS u
                                          WHERE u.suspended = 0 AND u.deleted = 0 $concatsql AND CONCAT('/', u.open_path,'/') LIKE :parentpath ";
+                    if($formoptions->id > 0){
+                        $userssql .= " AND u.id <> :userid ";
+                        $sqlparams['userid'] = $formoptions->id;
+                    }
                     $users = $DB->get_records_sql($fields.$userssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
                     if ($users) {
                         $totalusers = count($users);
