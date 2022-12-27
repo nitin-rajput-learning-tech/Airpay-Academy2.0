@@ -62,19 +62,9 @@ if (!empty($groups->component)) {
 $groupsdetails = $DB->get_record('local_groups', array('cohortid'=>$id));
 $context_cat= (new \local_groups\lib\accesslib())::get_module_context();
 //i.e other than admin eg:Org.Head
-if ( !(is_siteadmin()) && has_capability('local/costcenter:manage_ownorganization', $context_cat)) {
-        if($groupsdetails->costcenterid!=$USER->open_costcenterid){
-         print_error('Sorry, You are not accessable to this page');
-        }     
-}
 
 
 //For Dept.Head
-if(!(is_siteadmin()) && has_capability('local/costcenter:manage_owndepartments', $context_cat)) {
-    if($groupsdetails->departmentid!=$USER->open_departmentid){
-        print_error("You donot have permissions");
-    }
-}
 
 if (optional_param('cancel', false, PARAM_BOOL)) {
     redirect($url);
