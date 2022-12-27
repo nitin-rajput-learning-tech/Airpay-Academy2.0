@@ -24,9 +24,6 @@ myModule.controller('courseController', function ($scope, $http,$location) {
            search_criteria=null;
         }
 
-        if(typeof enrolltype == 'undefined'){
-           enrolltype=0;
-        }
         checkedfilters = [];
         $scope.selectedfilters = [];
 
@@ -80,7 +77,7 @@ myModule.controller('courseController', function ($scope, $http,$location) {
             $("#viewmoreless_"+catid).addClass('viewmore');
             $("#viewmoreless_"+catid).text('View More');
         }
-    } // end of  enrolltypechange function
+    }
     $scope.copytoClipboard= function (){
         var str =    $("#dynamicurl").html();
         var str = str.replace(/&amp;/g, '&');
