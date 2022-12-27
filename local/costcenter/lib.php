@@ -569,7 +569,10 @@ function costcenter_insert_instance($costcenter){
                 file_save_draft_area_files($costcenter->costcenter_logo, $categorycontext->id, 'local_costcenter', 'costcenter_logo', $costcenter->costcenter_logo);
 
             }
-        blocks_add_default_org_blocks($costcenter->id);
+            $costcenter_depth = $DB->get_field('local_costcenter', 'depth', array('id'=>$costcenter->id));
+            if($costcenter_depth==1){
+            blocks_add_default_org_blocks($costcenter->id);
+            }
         }
        return $costcenter->id;
 
