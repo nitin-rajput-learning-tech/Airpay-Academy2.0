@@ -76,6 +76,7 @@ class classroom {
         global $DB, $USER;
         // require_once($CFG->dirroot . '/local/costcenter/lib.php');
         $classroom->shortname = $classroom->name;
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroom->open_path);
         if (empty($classroom->trainers)) {
             $classroom->trainers = null;
         }
@@ -85,8 +86,7 @@ class classroom {
         try {
             if ($classroom->id > 0) {
                 $classroom->timemodified = time();
-                $classroom->usermodified = $USER->id;
-                $classroom->costcenter = $classroom->open_costcenterid;
+                $classroom->usermodified = $USER->id; 
                 $localclassroom          = $DB->get_record_sql("SELECT id,startdate,enddate,capacity,
                     allow_multi_session,instituteid FROM {local_classroom}
                     where id= :classroomid",array('classroomid' => $classroom->id));
@@ -116,7 +116,7 @@ class classroom {
 
                 // Update classroom tags.
                 if (isset($classroom->tags)) {
-                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $categorycontext, $classroom->tags, 0, $classroom->costcenter, $classroom->department);
+                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $categorycontext, $classroom->tags, 0, 0,0);
                 }
                 if($classroom->capacity > $localclassroom->capacity && $classroom->allow_waitinglistusers==1){
                         $stable = new \stdClass();
@@ -132,22 +132,7 @@ class classroom {
                 $classroom->status      = 0;
                 $classroom->timecreated = time();
                 $classroom->usercreated = $USER->id;
-                $classroom->costcenter = $classroom->open_costcenterid;
-                $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
-
-                if (has_capability('local/classroom:manageclassroom', $categorycontext)) {
-                    $classroom->department = -1;
-                    $classroom->subdepartment = -1;
-
-                    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
-
-                    if (!is_siteadmin() && (has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                         || has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                        $classroom->department = $USER->open_departmentid;
-                    }
-
-                }
-
+                $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
                 $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroom->id);
                 local_costcenter_get_costcenter_path($classroom);
                 $classroom->id = $DB->insert_record('local_classroom', $classroom);
@@ -160,7 +145,7 @@ class classroom {
                 $event->trigger();
                 // Update classroom tags.
                 if (isset($classroom->tags)) {
-                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $categorycontext, $classroom->tags, 0, $classroom->costcenter, $classroom->department);
+                    \local_tags_tag::set_item_tags('local_classroom', 'classroom', $classroom->id, $categorycontext, $classroom->tags, 0, 0,0);
                 }
                 $classroom->shortname = 'class' . $classroom->id;
                 $DB->update_record('local_classroom', $classroom);
@@ -813,7 +798,7 @@ class classroom {
                                     $line ['edit'] =  true;
                                     $mouse_overicon=true;
                             }
-                            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+                            if($departmentcount > 1 && !(is_siteadmin())) {
                   
                                   $line['edit'] = false;
                             }  
@@ -822,7 +807,7 @@ class classroom {
                                     $line ['delete'] =  true;
                                     $mouse_overicon=true;
                             }
-                            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+                            if($departmentcount > 1 && !(is_siteadmin())) {
                                    $line['delete'] = false;
                                    
                             }  
@@ -913,10 +898,7 @@ class classroom {
                 $status               = $DB->get_field('local_classroom', 'status', array(
                     'id' => $stable->classroomid
                 ));
-                $classroomcostcenter = $DB->get_field('local_classroom', 'costcenter', array(
-                    'id' => $stable->classroomid
-                ));
-                if ($status == 1 && !$userenrolstatus && $classroomcostcenter == $USER->open_costcenterid) {
+                if ($status == 1 && !$userenrolstatus ) {
                     $empty = 1;
                 } else {
                     if (!empty($myclassrooms)) {
@@ -2181,50 +2163,17 @@ class classroom {
 
         $fields = " req.id, req.createdbyid, req.compname, req.compcode, req.compkey, req.componentid, req.status, req.responder, req.respondeddate, req.usermodified, req.timecreated, req.timemodified ";
         $params = array();
-        if(has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || is_siteadmin()){
+        if(is_siteadmin()){
            $selectsql = "SELECT $fields ";
            $countsql = "SELECT count(req.id) ";
            $sql = " FROM {local_request_records} AS req WHERE 1=1";
-        }else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-            $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-            if($costcenterid){
+        }else {         
                 $selectsql = "SELECT $fields ";
                 $countsql = "SELECT count(req.id) ";
                 $sql = " FROM {local_request_records} AS req 
                     JOIN {user} AS u ON u.id=req.createdbyid 
-                    WHERE u.open_costcenterid= :costcenterid ";
-                $params['costcenterid'] = $costcenterid;
-            }
-
-        }else if(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-            $selectsql = "SELECT $fields ";
-            $countsql = "SELECT count(req.id) ";
-            $sql = " FROM {local_request_records} AS req 
-                JOIN {user} AS u ON u.id=req.createdbyid 
-                WHERE u.open_costcenterid= :costcenterid AND u.open_departmentid = :departmentid ";
-                $params['costcenterid'] = $USER->open_costcenterid;
-                $params['departmentid'] = $USER->open_departmentid;
-        }else if(has_capability('local/classroom:manageclassroom',$categorycontext)||
-                has_capability('local/program:manageprogram',$categorycontext)||
-                has_capability('local/classroom:manageclassroom',$categorycontext)){
-            $trainerclassrooms = $DB->get_records_menu('local_classroom_trainers',array('trainerid' => $USER->id),'','id,classroomid');
-            array_push($trainerclassrooms,0);
-            $classroomids = implode(',', $trainerclassrooms);
-
-            $trainerprograms = $DB->get_records_menu('local_program_trainers',array('trainerid' => $USER->id),'','id,programid');
-            array_push($trainerprograms,0);
-            $programids = implode(',', $trainerprograms);
-
-            $trainerclassrooms = $DB->get_records_menu('local_classroom_trainers',array('trainerid' => $USER->id),'','id,classroomid');
-            array_push($trainerclassrooms,0);
-            $classroomids = implode(',', $trainerclassrooms);
-            $selectsql = "SELECT $fields ";
-            $countsql = "SELECT count(req.id) ";
-            $sql = " FROM {local_request_records} AS req
-                JOIN {user} AS u ON u.id=req.createdbyid
-                WHERE ((req.compname='classroom' AND req.componentid IN($classroomids)) OR
-                (req.compname='program' AND req.componentid IN($programids)) OR
-                (req.compname='classroom' AND req.componentid IN($programids))) AND req.compname!='elearning'";
+                    WHERE 1=1 ";
+                    $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         }
         if($sql){
           if($component){

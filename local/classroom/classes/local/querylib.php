@@ -36,8 +36,7 @@ class querylib {
 
         $sql = "SELECT lc.id, CONCAT(lc.fullname, '-', lc.shortname) AS fullshrtname
                   FROM {local_costcenter} lc
-                  JOIN {user} u on (u.open_costcenterid = lc.id OR
-                        u.open_costcenterid = lc.parentid)
+                  JOIN {user} u on (concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') or concat('/',u.open_path,'/') LIKE concat('%/',lc.parentid,'/%') ) AND lc.depth = 1
                 WHERE u.id = :userid";
         $departments = $DB->get_records_sql_menu($sql, array('userid' => $USER->id));
         if (empty($departments)) {
@@ -56,7 +55,7 @@ class querylib {
         $courses = array();
         if (!empty($costcenters)) {
             $costcenter = implode(',', $costcenters);
-            $costcentersql .= " AND c.open_costcenterid in (:costcenter) ";
+            $costcentersql .= " AND concat('/',u.open_path,'/') LIKE  (:costcenter) ";
             $params['costcenter'] = $costcenter;
         }
         $sql = "SELECT c.id, c.fullname
@@ -91,16 +90,11 @@ class querylib {
         }
         if (!empty(array_filter($costcenters))) {
             $costcenters = implode(',', $costcenters);
-            $concatsql .= " AND u.open_costcenterid in ( $costcenters ) ";
+            $concatsql .= " AND concat('/',u.open_path,'/') in ( $costcenters ) ";
             //$params['costcenterid'] = $costcenters;
         }
-         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && ( !is_siteadmin() )&&(!has_capability('local/classroom:manage_multiorganizations', $categorycontext) &&! has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
-            $concatsql .= " AND u.open_costcenterid in ( :costcenterid ) ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-             if ((has_capability('local/classroom:manage_owndepartments', $categorycontext)||has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                    $concatsql .= " AND u.open_departmentid in ( :open_departmentid ) ";
-                    $params['open_departmentid'] = $USER->open_departmentid;
-             }
+         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && ( !is_siteadmin() )) {
+            $concatsql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         }
         if (!empty($query)) {
 
@@ -182,8 +176,10 @@ class querylib {
                     $params['instituteid'] = $instituteid;
                 }
                 if ($service['classroomid'] > 0) {
-                    $institutessql .= " AND costcenter = :costcenter ";
-                    $params['costcenter'] = $DB->get_field('local_classroom', 'costcenter', array('id' => $service['classroomid']));
+                    $institutessql .= " AND costcenter = :costcenter ";                   
+                    $open_path= $DB->get_field('local_classroom', 'open_path', array('id' => $service['classroomid']));
+                    list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+                    $params['costcenter'] =$org;
                 }
                 if (!empty($service['query'])) {
                     $institutessql .= " AND fullname LIKE :query ";
