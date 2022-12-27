@@ -60,6 +60,10 @@
         <FIELD NAME="selfenrol" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="open_path" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="open_states" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="open_district" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="open_subdistrict" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="open_village" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" />
