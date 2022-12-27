@@ -44,8 +44,9 @@ $PAGE->set_title(get_string('viewprofile', 'local_users'));
 if (($id != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
     $issupervisor = $DB->record_exists('user', array('id' => $id, 'open_supervisorid' => $USER->id));
     if (has_capability('local/users:create', $categorycontext) || $issupervisor) {
-        $usercostcenter = $DB->get_field('user', 'open_costcenterid', array('id' => $id));
-        $managercostcenter = $USER->open_costcenterid;
+        $usercostcenterpath = $DB->get_field('user', 'open_path', array('id' => $id));
+        $usercostcenter = explode('/', $usercostcenterpath)[1];
+        $managercostcenter = explode('/', $USER->open_path)[1];
 
         $userdepartment = $DB->get_field('user', 'open_departmentid', array('id' => $id));
         $managerdepartment = $USER->open_departmentid;

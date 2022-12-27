@@ -269,17 +269,18 @@ class users {
         if (is_siteadmin($user->id) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             return get_string('all');
         }
-        $table = 'local_costcenter_permissions';
-        $field = 'userid';
-        if ( $role != 'manager') {
+        // $table = 'local_costcenter_permissions';
+        // $field = 'userid';
+        // if ( $role != 'manager') {
             $table = 'user';
             $field = 'id';
-        }
+        // }
         $costcenters = $DB->get_records_sql("SELECT * FROM {{$table}} WHERE {$field} = {$user->id}");
         $scl = array();
         if ($costcenters) {
             foreach ($costcenters as $costcenter) {
-                $scl[] = $DB->get_field('local_costcenter', 'fullname', array('id' => $costcenter->open_costcenterid));
+                $costcenterid = explode('/',$costcenter->open_path)[1];
+                $scl[] = $DB->get_field('local_costcenter', 'fullname', array('id' => $costcenterid));
             }
             return implode(', ', $scl);
         }

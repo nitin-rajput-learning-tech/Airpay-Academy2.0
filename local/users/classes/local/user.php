@@ -45,7 +45,7 @@ class user {
         } else {
             $roleinfo = get_string('employee', 'local_users');
         }
-        $sql3 = "SELECT  u.open_employeeid,u.open_costcenterid,
+        $sql3 = "SELECT  u.open_employeeid,
                     u.open_designation, u.open_location,
                     u.open_supervisorid, u.open_group,
                     u.department, u.open_path

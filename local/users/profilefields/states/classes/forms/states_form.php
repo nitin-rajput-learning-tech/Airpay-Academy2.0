@@ -21,7 +21,8 @@ class states_form extends \moodleform {
         }else if(!is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
             $mform->addElement('hidden', 'territoryid');
             $mform->setType('territoryid', PARAM_INT);
-            $mform->setDefault('territoryid', $USER->open_costcenterid);
+            $territoryid = explode('/', $USER->open_path)[5];
+            $mform->setDefault('territoryid', $territoryid);
         }
 
 
@@ -45,7 +46,7 @@ class states_form extends \moodleform {
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
             $territoryid = $data['territoryid'];
         }else{
-            $territoryid = $USER->open_costcenterid;
+            $territoryid = explode('/', $USER->open_path)[5];
         }
 
         $recordid = $DB->get_field('local_states','id',array('code' => $data['code'],'territoryid' => $territoryid));

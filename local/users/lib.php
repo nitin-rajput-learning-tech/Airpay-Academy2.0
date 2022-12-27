@@ -649,8 +649,9 @@ function local_users_quicklink_node() {
 function costcenterwise_users_count($costcenter, $department = false, $subdepartment=false) {
     global $USER, $DB, $CFG;
         $params = array();
-        $params['costcenter'] = $costcenter;
-        $countusersql = "SELECT count(id) FROM {user} WHERE open_costcenterid = :costcenter AND deleted = 0";
+
+        $params['costcenterpath'] = '%'.$costcenter.'%';
+        $countusersql = "SELECT count(id) FROM {user} WHERE concat('/',u.open_path,'/') LIKE :costcenterpath  AND deleted = 0";
     if ($department) {
             $countusersql .= " AND open_departmentid = :department ";
             $params['department'] = $department;
@@ -1007,7 +1008,8 @@ function manage_syncstatistics_count($stable, $filterdata) {
         // $fromsql .= " AND usercreated = :modifiedby ";
         // $params['modifiedby'] = $USER->id;
         $fromsql .= " AND costcenterid = :orgid ";
-        $params['orgid'] = $USER->open_costcenterid;
+        $orgpath = explode('/', $USER->open_path);
+        $params['orgid'] = $orgpath[1];
     }
 
     $count = $DB->count_records_sql($countsql.$fromsql, $params);

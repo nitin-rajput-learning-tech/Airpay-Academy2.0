@@ -34,11 +34,11 @@ class lib{
         }else if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
             $states_sql = "SELECT ls.id,ls.states_name,(SELECT lc.fullname FROM {local_costcenter} AS lc WHERE lc.id=ls.territoryid) as territoryname FROM {local_states} as ls
                 JOIN {local_costcenter} as lc ON lc.id = ls.territoryid
-                WHERE lc.id={$USER->open_costcenterid}";
+                WHERE concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 5 ";//territory depth = 5
         }else{
             $states_sql = "SELECT ls.id,ls.states_name,(SELECT lc.fullname FROM {local_costcenter} AS lc WHERE lc.id=ls.territoryid) as territoryname FROM {local_states} as ls
                 JOIN {local_costcenter} as lc ON lc.id = ls.territoryid
-                WHERE lc.id={$USER->open_costcenterid}";
+                WHERE concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 5 ";//territory depth = 5
         }
         $states_sql .= " ORDER BY ls.states_name";
 
