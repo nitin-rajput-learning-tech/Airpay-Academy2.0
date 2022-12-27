@@ -118,120 +118,17 @@ class custom_course_form extends moodleform {
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
         $core_component = new core_component();
         if($formstatus == 0){
-			$selectdepartmentslist = array(null=>get_string('selectdept','local_courses'));
-            if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext)) {
-                $organisation_select = [null => get_string('selectorg','local_courses')];
-                if($id || $this->_ajaxformdata['open_costcenterid']){
-                    $open_costcenter = (int) $this->_ajaxformdata['open_costcenterid'] ? (int)$this->_ajaxformdata['open_costcenterid'] : $get_coursedetails->open_costcenterid;
-                    $organisations = $organisation_select + $DB->get_records_menu('local_costcenter', array('id' => $open_costcenter), '',  $fields='id, fullname'); 
-                }else{
-                    $open_costcenter = 0;
-                    $organisations = $organisation_select;
-                }
-                $costcenteroptions = array(
-                    'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'costcenter_organisation_selector',
-                    'data-options' => json_encode(array('id' => $open_costcenter)),
-                    'class' => 'organisationnameselect',
-                    'data-class' => 'organisationselect',
-                    'multiple' => false,
-                );
 
-                $mform->addElement('autocomplete', 'open_costcenterid', get_string('organization','local_courses'), $organisations, $costcenteroptions);
-                $mform->addHelpButton('open_costcenterid', 'open_costcenteridcourse', 'local_courses');
-                $mform->setType('open_costcenterid', PARAM_INT);
-                $mform->addRule('open_costcenterid', get_string('pleaseselectorganization','local_courses'), 'required', null, 'client');
 
-            } else if (has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
 
-                $mform->addElement('hidden', 'open_costcenterid', null, array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
-                $mform->setType('open_costcenterid', PARAM_INT);
-                $mform->setConstant('open_costcenterid', $USER->open_costcenterid);
             
-            } else if (has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
             
-                $mform->addElement('hidden', 'open_costcenterid', null, array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
-                $mform->setType('open_costcenterid', PARAM_INT);
-                $mform->setConstant('open_costcenterid', $USER->open_costcenterid);
 
-                $mform->addElement('hidden', 'open_departmentid', $USER->open_departmentid,array('id' => 'id_open_departmentid', 'data-class' => 'departmentselect'));
-                $mform->setType('open_departmentid', PARAM_RAW);
-                $mform->setConstant('open_departmentid', $USER->open_departmentid);
 
-            } else {
 
-                $mform->addElement('hidden', 'open_costcenterid', null, array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
-                $mform->setType('open_costcenterid', PARAM_INT);
-                $mform->setConstant('open_costcenterid', $USER->open_costcenterid);
 
-                $mform->addElement('hidden', 'open_departmentid', $USER->open_departmentid, array('id' => 'id_open_departmentid', 'data-class' => 'departmentselect'));
-                $mform->setType('open_departmentid', PARAM_RAW);
-                $mform->setConstant('open_departmentid', $USER->open_departmentid);
 
-                if($USER->open_subdepartment){
-                    $mform->addElement('hidden', 'open_subdepartment', null,array('id' => 'id_open_subdepartment'));
-                    $mform->setType('open_subdepartment', PARAM_RAW);
-                    $mform->setConstant('open_subdepartment', $USER->open_subdepartment);
-                }
-            }
-            if(is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-                $department_select = [0 => get_string('all')];
-                if($id || $this->_ajaxformdata['open_departmentid']){
-                    $open_department = $this->_ajaxformdata['open_departmentid'] ? $this->_ajaxformdata['open_departmentid'] : $get_coursedetails->open_departmentid;
-                    $departmentids = is_array($open_department) ? $open_department : explode(',', $open_department);
-                    list($departsql, $departparams) = $DB->get_in_or_equal($departmentids, SQL_PARAMS_NAMED, 'departmentid');
-                    $departmentsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$departsql} ";
-                    $departments = $department_select + $DB->get_records_sql_menu($departmentsql, $departparams); 
-                }else{
-                    $open_department = 0;
-                    $departments = $department_select;
-                }
-                $departmentoptions = array(
-                    'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'costcenter_department_selector',
-                    'data-options' => json_encode(array('id' => $open_department)),
-                    'class' => 'departmentselect',
-                    'data-parentclass' => 'organisationselect',
-                    'data-class' => 'departmentselect',
-                    'multiple' => true,
-                );
-                $department_select = [0 => get_string('all')];
-                $mform->addElement('autocomplete', 'open_departmentid', get_string('department', 'local_users'), $departments, $departmentoptions);
-                $mform->addHelpButton('open_departmentid', 'open_departmentidcourse', 'local_courses');
-                $mform->setType('open_departmentid', PARAM_RAW);
-            }
-            if(is_siteadmin($USER->id) || 
-                has_capability('local/costcenter:manage_multiorganizations',$categorycontext) ||
-                has_capability('local/costcenter:manage_ownorganization',$categorycontext) ||
-                has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-                $subdepartment_select = [0 => get_string('all')];
-                if($id || $this->_ajaxformdata['open_subdepartment']){
-                    $open_subdepartment = $this->_ajaxformdata['open_subdepartment'] ? $this->_ajaxformdata['open_subdepartment'] : $get_coursedetails->open_subdepartment;
-                    $subdepartmentids = is_array($open_subdepartment) ? $open_subdepartment : explode(',', $open_subdepartment);
-                    list($subdepartsql, $subdepartparams) = $DB->get_in_or_equal($subdepartmentids, SQL_PARAMS_NAMED, 'subdepartmentid');
-                    $subdepartmentsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$subdepartsql} ";
-                    $subdepartments = $subdepartment_select + $DB->get_records_sql_menu($subdepartmentsql, $subdepartparams);  
-                }else{
-                    $open_subdepartment = 0;
-                    $subdepartments = $subdepartment_select;
-                }
-                $subdepartmentoptions = array(
-                    'ajax' => 'local_costcenter/form-options-selector',
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'costcenter_subdepartment_selector',
-                    'data-options' => json_encode(array('id' => $open_subdepartment)),
-                    'class' => 'subdepartmentselect',
-                    'data-parentclass' => 'departmentselect',
-                    'data-class' => 'subdepartmentselect',
-                    'multiple' => true,
-                );
 
-                $mform->addElement('autocomplete', 'open_subdepartment', get_string('sub_departments', 'local_courses'), $subdepartments, $subdepartmentoptions);
-                $mform->addHelpButton('open_subdepartment', 'open_subdepartmentcourse', 'local_courses');
-                $mform->setType('open_subdepartment', PARAM_INT);
-            }
 
             if(explode(',',(array)$this->_ajaxformdata['open_subdepartment'])){
                $parentid = (int)$this->_ajaxformdata['open_subdepartment'];
@@ -247,7 +144,8 @@ class custom_course_form extends moodleform {
                   WHERE (cc.path LIKE '%/{$parentcategory}/%' OR cc.id = {$parentcategory}) ";
                 $displaylist = $DB->get_records_sql_menu($categorysql);
 
-            }
+             }
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,true, false, 'local_groups', $context, $multiple = false);
             $selectcatlist = array(null=>get_string('selectcat','local_courses'));
             if( isset($displaylist) && !empty($displaylist) ){
               $findisplaylist = array();

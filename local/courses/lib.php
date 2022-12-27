@@ -1255,30 +1255,12 @@ function get_listof_courses($stable, $filterdata) {
     $chelper = new coursecat_helper();
     $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_costcenterid, c.open_identifiedas, c.visible, c.open_skill, c.open_departmentid, c.open_subdepartment FROM {course} AS c"; 
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
-    if(is_siteadmin()){
+        $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                      JOIN {course_categories} AS cc ON cc.id = c.category
-                     JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas";
-    } elseif(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-        $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
-                   JOIN {course_categories} AS cc ON cc.id = c.category
-                   JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
-                   WHERE c.open_costcenterid = :usercostcenter";
-    } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-        $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
-                   JOIN {course_categories} AS cc ON cc.id = c.category
-                   JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
-                   WHERE c.open_costcenterid = :usercostcenter
-                   AND concat(',', c.open_departmentid,',') LIKE '%,$USER->open_departmentid,%' ";
-    } else {
+                     JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";    
         
-        $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
-                   JOIN {course_categories} AS cc ON cc.id = c.category
-                   JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
-                   WHERE c.open_costcenterid = :usercostcenter 
-                   AND c.open_departmentid = :userdepartment";
-    }
-    $formsql .= " AND c.id > 1 ";
+    $formsql .= " AND c.id > 1  $open_path";
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";
         $searchparams = array('search' => '%'.trim($filterdata->search_query).'%');
@@ -1393,16 +1375,7 @@ function get_listof_courses($stable, $filterdata) {
             $params = array('courseid'=>$course->id);
             if(is_siteadmin()){
                 $conditionsql = " ";
-            } elseif(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-                $conditionsql = " AND u.open_costcenterid = :costcenterid ";
-                $params['costcenterid'] = $USER->open_costcenterid;
-            } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-                $conditionsql = " AND u.open_departmentid = :departmentid ";
-                $params['departmentid'] = $USER->open_departmentid;
-            } else {
-                $conditionsql = " AND u.open_subdepartment = :subdepartment ";
-                $params['subdepartment'] = $USER->open_subdepartment;
-            }
+            }           
             $enrolledusersssql = " SELECT COUNT(DISTINCT(ue.id)) as ccount
                                 FROM {course} c
                                 JOIN {course_categories} cat ON cat.id = c.category
@@ -1414,7 +1387,7 @@ function get_listof_courses($stable, $filterdata) {
                                 JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
                                 JOIN {role_assignments} as ra ON ra.userid = u.id
                                 JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
-                                WHERE c.id = :courseid {$conditionsql} ";
+                                WHERE c.id = :courseid {$conditionsql} $open_path";
 
             $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
 
@@ -1432,7 +1405,7 @@ function get_listof_courses($stable, $filterdata) {
                                 JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                                 JOIN {course_completions} as cc 
                                         ON cc.course = c.id AND u.id = cc.userid
-                                WHERE c.id = :courseid AND cc.timecompleted IS NOT NULL {$conditionsql} ";
+                                WHERE c.id = :courseid AND cc.timecompleted IS NOT NULL {$conditionsql} $open_path";
 
             $completed_count = $DB->count_records_sql($completedusersssql,$params);
 
@@ -1590,7 +1563,7 @@ function get_listof_courses($stable, $filterdata) {
                 }
             }
 
-             if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+             if($departmentcount > 1 && !(is_siteadmin() )) {
                   $courseslist[$count]["editcourse"] = ''; 
                   $courseslist[$count]["update_status"] = '';
                   $courseslist[$count]["auto_enrol"] = '';
@@ -1602,15 +1575,15 @@ function get_listof_courses($stable, $filterdata) {
            
             }
             
-            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+            if($departmentcount > 1 && !(is_siteadmin())) {
                  $courseslist[$count]["deleteaction"] = '';
              }   
 
-            if(has_capability('local/courses:grade_view',$categorycontext)&&has_capability('local/courses:manage', $categorycontext)){
+            if(has_capability('local/courses:grade_view',$categorycontext) && has_capability('local/courses:manage', $categorycontext)){
                   $courseslist[$count]["grader"] =  $CFG->wwwroot."/grade/report/grader/index.php?id=".$course->id;
             }
 
-            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+            if($departmentcount > 1 && !(is_siteadmin() )) {
                     unset($courseslist[$count]["grader"]);
             }   
             
@@ -1618,7 +1591,7 @@ function get_listof_courses($stable, $filterdata) {
                 $courseslist[$count]["activity"] = $CFG->wwwroot."/report/outline/index.php?id=".$course->id;
            
             }
-            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+            if($departmentcount > 1 && !(is_siteadmin() )) {
                  unset($courseslist[$count]["activity"]);
              }   
 
@@ -1627,7 +1600,7 @@ function get_listof_courses($stable, $filterdata) {
                 $courseslist[$count]["requestlink"] = $CFG->wwwroot."/local/request/index.php?courseid=".$course->id;
             }
 
-            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+            if($departmentcount > 1 && !(is_siteadmin() )) {
                   unset($courseslist[$count]["requestlink"]);
              }   
 
