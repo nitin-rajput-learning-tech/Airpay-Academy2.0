@@ -38,9 +38,7 @@ if ($formattype == 'card') {
     $display_text = get_string('cardtype','local_classroom');
 }
 
-if (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-                && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext))
-	&& !(has_capability('local/classroom:manageclassroom', $categorycontext))) {
+if (!is_siteadmin() && !(has_capability('local/classroom:manageclassroom', $categorycontext))) {
 	$PAGE->set_title(get_string('my_classrooms', 'local_classroom'));
 	$PAGE->set_heading(get_string('my_classrooms', 'local_classroom'));
 }else{
@@ -64,16 +62,5 @@ echo $OUTPUT->header();
 
 $enabled = check_classroomenrol_pluginstatus($value);
 
-// if (is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext))  {
-
-//     $display_url = new moodle_url('/local/classroom/index.php?formattype=' . $formattype_url);
-//         $displaytype_div = '<div class="col-12 d-inline-block">';
-//     $displaytype_div .= '<a class="btn btn-outline-secondary pull-right" href="' . $display_url . '">';
-//     $displaytype_div .= '<span class="icon fa fa-th fa-fw"></span>' . $display_text;
-//     $displaytype_div .= '</a>';
-//     $displaytype_div .= '</div>';
-
-//         echo $displaytype_div;
-// }
 echo $renderer->get_classroom_tabs($formattype);
 echo $OUTPUT->footer();

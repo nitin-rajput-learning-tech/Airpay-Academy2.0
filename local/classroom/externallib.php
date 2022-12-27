@@ -233,7 +233,7 @@ class local_classroom_external extends external_api {
 
          $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
 
-         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+         if(!(is_siteadmin())  && $departmentcount > 1){
               $manage = false;
          }
          
@@ -363,7 +363,7 @@ class local_classroom_external extends external_api {
          $manage = true;
          $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
 
-         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+         if(!(is_siteadmin()) && $departmentcount > 1){
               $manage = false;
          }
 
@@ -673,14 +673,17 @@ class local_classroom_external extends external_api {
         $totalcount = $feedbacks['evaluationscount'];
         $functinname = 'viewclassroom'.$decodeddataoptions->tabname;
         $classrooms = $DB->get_records('local_classroom');
-        foreach($classrooms AS $classroom)
-         $departmentcount = count(array_filter(explode(',',$classroom->department)));
+        foreach($classrooms AS $classroom){
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroom->open_path);
+            $departmentcount = count(array_filter(explode(',',$ctr)));
+        }
+       
          $lineaction = false;
          $manage = true;
 
          $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($decodeddataoptions->classroomid);
 
-         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+         if(!(is_siteadmin()) && $departmentcount > 1){
             $manage = false;
          }
 
@@ -1511,62 +1514,6 @@ class local_classroom_external extends external_api {
                     $service['query'] = $query;
                     }
                     $return = $querieslib->get_classroom_institutes($formoptions->institute_type, $service);
-                break;
-                case 'classroom_costcenter_selector':
-                // OL-1042 Add Target Audience to Classrooms//
-                    if($formoptions->id>0&&!isset($formoptions->parnetid)){
-                        $parentid=$DB->get_field('local_classroom','costcenter', array('id'=>$formoptions->id));
-                    }else{
-                         $parentid = $formoptions->parnetid;
-                    }
-                // OL-1042 Add Target Audience to Classrooms//
-                    $depth = $formoptions->depth;
-                    $params = array();
-                    $costcntersql = "SELECT id, fullname
-                                        FROM {local_costcenter}
-                                        WHERE visible = 1 ";
-                    if ($parentid >= 0) {
-                        $costcntersql .= " AND parentid = :parentid ";
-                        $params['parentid'] = $parentid;
-                    }
-                    if ($depth > 0) {
-                        $costcntersql .= " AND depth = :depth ";
-                        $params['depth'] = $depth;
-                    }
-                    if (!empty($query)) {
-                        $costcntersql .= " AND fullname LIKE :query ";
-                        $params['query'] = '%' . $query . '%';
-                    }
-                    if($depth == 1){
-                        $concat_array = array();
-                    }else{
-                        $concat_array = array(-1 => array('id' => -1,'fullname' => 'All'));
-                    }              
-                    $return = $concat_array + $DB->get_records_sql($costcntersql, $params);
-                break;
-                case 'classroom_subdepartment_selector':
-                    if($formoptions->departments_selected){
-                        if(is_array($formoptions->departments_selected) && count($formoptions->departments_selected) > 1){
-                            $return = array(-1 => array('id' => -1,'fullname' => 'All'));
-                        }else{
-
-                            $departments_selected = is_array($formoptions->departments_selected) ? implode(',', $formoptions->departments_selected): $formoptions->departments_selected;
-                            $subdept_sql = "SELECT id, fullname
-                                            FROM {local_costcenter}
-                                            WHERE visible = 1 AND '%,{$departments_selected},%' LIKE CONCAT('%,',parentid,',%') ";
-
-                            $depth = $formoptions->depth;
-                            if ($depth > 0) {
-                                $subdept_sql .= " AND depth = :depth ";
-                                $params['depth'] = $depth;
-                            }
-                            if (!empty($query)) {
-                                $subdept_sql .= " AND fullname LIKE :query ";
-                                $params['query'] = '%' . $query . '%';
-                            }
-                            $return = array(-1 => array('id' => -1,'fullname' => 'All'))+$DB->get_records_sql($subdept_sql, $params);
-                        }
-                    }
                 break;
                 case 'classroomsession_trainer_selector':
                     $classroomtrainerssql = "SELECT u.id, CONCAT(u.firstname, ' ', u.lastname) AS fullname FROM {user} AS u JOIN {local_classroom_trainers} AS ct ON ct.trainerid = u.id

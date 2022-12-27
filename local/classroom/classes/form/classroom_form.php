@@ -59,7 +59,7 @@ class classroom_form extends moodleform {
 
         $mform->addElement('hidden', 'id', $id, array('id' => 'classroomid'));
         $mform->setType('id', PARAM_INT);
-
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
         $core_component = new core_component();
         if ($formstatus == 0) {
             $querieslib = new querylib();
@@ -72,6 +72,20 @@ class classroom_form extends moodleform {
             $mform->addRule('name', null, 'required', null, 'client');
 
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_users', $categorycontext, $multiple = false);
+            if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
+
+            $depsql = "SELECT lcc.id,lcc.fullname
+                        FROM {local_custom_category} as lcc";
+
+            $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
+            // $parents[0] = 'Top';
+        }else{            
+            $sql = "SELECT id,fullname
+                    FROM {local_custom_category} WHERE costcenterid = ?";
+            $parents = $DB->get_records_sql_menu($sql, [$org]);
+        }        
+        $parents[0] = 'Select Category';       
+        ksort($parents);
             $categoryinfo = array(
                 'ajax' => 'local_costcenter/form-options-selector',
                 'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
@@ -83,8 +97,8 @@ class classroom_form extends moodleform {
                 'multiple' => false,
             );
 
-            $mform->addElement('autocomplete', 'categoryid', get_string('category'), [], $categoryinfo);
-            $mform->setType('categoryid', PARAM_INT);
+            $mform->addElement('autocomplete', 'open_categoryid', get_string('category'), $parents, $categoryinfo);
+            $mform->setType('open_categoryid', PARAM_INT);
             $manageselfenrol = array();
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('no'), 0, $attributes);
@@ -186,11 +200,10 @@ class classroom_form extends moodleform {
 
 
                 $select = array(null => get_string('select_certificate','local_classroom'));
-
                 if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_costcenterid),'name', 'id,name');
+                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$org),'name', 'id,name');
                 }
                 $certificateslist = $select + $cert_templates;
 

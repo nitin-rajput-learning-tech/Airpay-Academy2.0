@@ -698,15 +698,8 @@ class local_classroom_potential_users extends user_selector_base
 
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($this->classroomid);
 
-        if ($classroom->costcenter && (has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin() && (!has_capability('local/classroom:manage_multiorganizations', $categorycontext) && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-            $sql .= " AND u.open_costcenterid = :costcenter";
-            $params['costcenter'] = $classroom->costcenter;
-
-            if ($classroom->department && (has_capability('local/classroom:manage_owndepartments', $categorycontext) ||
-                has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-                $sql .= " AND u.open_departmentid = :department";
-                $params['department'] = $classroom->department;
-            }
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+            $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         }
 
 
@@ -722,12 +715,12 @@ class local_classroom_potential_users extends user_selector_base
             $sql .= " AND u.id $unamesql";
             $params = $params + $unameparam;
         }
-        if (!empty($this->department)) {
-            $department = explode(',', $this->department);
-            list($departmentsql, $departmentparam) = $DB->get_in_or_equal($department, SQL_PARAMS_NAMED);
-            $sql .= " AND u.open_departmentid $departmentsql";
-            $params = $params + $departmentparam;
-        }
+        // if (!empty($this->department)) {
+        //     $department = explode(',', $this->department);
+        //     list($departmentsql, $departmentparam) = $DB->get_in_or_equal($department, SQL_PARAMS_NAMED);
+        //     $sql .= " AND u.open_departmentid $departmentsql";
+        //     $params = $params + $departmentparam;
+        // }
         if (!empty($this->idnumber)) {
             $idnumber = explode(',', $this->idnumber);
             list($idnumbersql, $idnumberparam) = $DB->get_in_or_equal($idnumber, SQL_PARAMS_NAMED);
@@ -986,23 +979,10 @@ function classroom_filter($mform)
         // $classrooms = (new classroom)->classrooms($stable,true);
         $classroom_sql = "SELECT c.id FROM {local_classroom} AS c ";
         $concatsql = '';
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && !(is_siteadmin()
-            || has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-            || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
-            $joinon = "cc.id = c.costcenter";
-            $concatsql = " AND c.costcenter = {$USER->open_costcenterid} ";
-            if (
-                has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                || has_capability('local/costcenter:manage_owndepartments', $categorycontext)
-            ) {
-                $joinon = "cc.id = c.department OR cc.id = c.costcenter";
-                $concatsql = " AND CONCAT(',',c.department,',') LIKE '%,{$USER->open_costcenterid},%' ";
+        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && !(is_siteadmin())) {
+            $concatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
             }
-        } else {
-            $joinon = "cc.id = c.costcenter";
-        }
-        $classroom_sql .= " JOIN {local_costcenter} AS cc ON $joinon
-                WHERE 1 = 1 ";
+        $classroom_sql .= " WHERE 1 = 1 ";
         $classroom_sql .= $concatsql;
         $classroomids = $DB->get_fieldset_sql($classroom_sql);
         $componentid = implode(',', $classroomids);
@@ -1135,16 +1115,16 @@ function costcenterwise_classroom_count($costcenter, $department = false, $subde
     global $USER, $DB;
     $newsql = $activesql = $cancelledsql = $completedsql = '';
     $params = array();
-    $params['costcenter'] = $costcenter;
-    $sql = "SELECT count(id) FROM {local_classroom} WHERE costcenter = :costcenter ";
+    $params['costcenterpath'] = '%'.$costcenter.'%';
+    $sql = "SELECT count(id) FROM {local_classroom} WHERE concat('/',open_path,'/') LIKE :costcenterpath";
 
     if ($department) {
-        $sql .= " AND department = :department ";
-        $params['department'] = $department;
+        $sql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
+        $params['departmentpath'] = '%'.$department.'%';
     }
     if ($subdepartment) {
-        $sql .= " AND subdepartment = :subdepartment ";
-        $params['subdepartment'] = $subdepartment;
+        $sql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
+        $params['subdepartmentpath'] = '%'.$subdepartment.'%';
     }
     $count = $DB->count_records_sql($sql, $params);
 
@@ -1223,15 +1203,8 @@ function org_dep_sql($categorycontext)
     global $DB, $USER;
     $sql = '';
     $params = array();
-    if (
-        has_capability('local/classroom:manageclassroom', $categorycontext) &&
-        has_capability('local/costcenter:manage_multiorganizations', $categorycontext)
-    ) {
-        $sql = " AND  c.costcenter = :costcenter";
-        $params['costcenter'] = $USER->open_costcenterid;
-    } else if (has_capability('local/classroom:manage_owndepartments', $categorycontext)) {
-        $sql = " AND c.department = :department  ";
-        $params['department'] = $USER->open_departmentid;
+    if (has_capability('local/classroom:manageclassroom', $categorycontext)) {
+        $sql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
     } elseif (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
         $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
             'trainerid' => $USER->id
@@ -1243,10 +1216,7 @@ function org_dep_sql($categorycontext)
             return compact('sql', 'params');
         }
     } else {
-        $sql .= " AND  c.costcenter = :costcenter";
-        $params['costcenter'] = $USER->open_costcenterid;
-        $sql .= " AND  ( c.department = :department OR c.department = '-1' ) ";
-        $params['department'] = $USER->open_departmentid;
+        $sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         // target audience
         $gparams = array();
         $group_list = $DB->get_records_sql_menu("select cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
@@ -1261,7 +1231,7 @@ function org_dep_sql($categorycontext)
                 $gparams[] = '(' . $groupqueeryparams . ')';
             }
         }
-
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
         if (!empty($gparams))
             $opengroup = implode('AND', $gparams);
         else
@@ -1273,8 +1243,8 @@ function org_dep_sql($categorycontext)
                     THEN 1
                     ELSE 0 END 
                 ELSE 1 END ";
-        if (!empty($USER->open_departmentid) && $USER->open_departmentid != "") {
-            $departmentlike = "'%,$USER->open_departmentid,%'";
+        if (!empty($ctr) && $ctr != "") {
+            $departmentlike = "'%,$ctr,%'";
         } else {
             $departmentlike = "''";
         }
@@ -1284,8 +1254,8 @@ function org_dep_sql($categorycontext)
             THEN 1
             ELSE 0 END
           ELSE 1 END ";
-        if (!empty($USER->open_subdepartment) && $USER->open_subdepartment != "") {
-            $subdepartmentlike = "'%,$USER->open_subdepartment,%'";
+        if (!empty($bu) && $bu != "") {
+            $subdepartmentlike = "'%,$bu,%'";
         } else {
             $subdepartmentlike = "''";
         }
@@ -1295,17 +1265,7 @@ function org_dep_sql($categorycontext)
             THEN 1
             ELSE 0 END
           ELSE 1 END ";
-        if (!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != "") {
-            $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
-        } else {
-            $hrmsrolelike = "''";
-        }
-        $fparams[] = " 1 = CASE WHEN c.open_hrmsrole IS NOT NULL
-          THEN 
-            CASE WHEN CONCAT(',',c.open_hrmsrole,',') LIKE {$hrmsrolelike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
+      
         if (!empty($USER->open_designation) && $USER->open_designation != "") {
             $designationlike = "'%,$USER->open_designation,%'";
         } else {
@@ -1317,17 +1277,7 @@ function org_dep_sql($categorycontext)
                 THEN 1
                 ELSE 0 END
             ELSE 1 END  ";
-        if (!empty($USER->open_location) && $USER->open_location != "") {
-            $citylike = "'%,$USER->open_location,%'";
-        } else {
-            $citylike = "''";
-        }
-        $fparams[] = " 1 = CASE WHEN c.open_location IS NOT NULL
-          THEN 
-            CASE WHEN CONCAT(',',c.open_location,',') LIKE {$citylike}
-              THEN 1
-              ELSE 0 END
-          ELSE 1 END  ";
+
 
         if (!empty($params)) {
             $finalparams = implode('AND', $fparams);
@@ -1335,7 +1285,7 @@ function org_dep_sql($categorycontext)
             $finalparams = '1=1';
         }
 
-        $sql .= " AND ($finalparams OR (c.open_hrmsrole IS NULL AND c.open_designation IS NULL AND c.open_location IS NULL AND c.open_group IS NULL AND c.department='-1' ) ) AND c.status in (1,3,4) ";
+        $sql .= " AND ($finalparams OR ( c.open_designation IS NULL  AND c.open_group IS NULL ) ) AND c.status in (1,3,4) ";
     }
     return compact('sql', 'params');
 }

@@ -51,33 +51,9 @@ class catform extends moodleform {
 		$mform->addElement('hidden', 'id', $instituteid);
 		$mform->setType('categoryid', PARAM_INT);
 
-		// $institutes = $DB->get_records('local_costcenter');
-		// $institutenames = array();
-		// $institutenames[null] = get_string('select', 'local_location');
-		// if ($institutes) {
-		// 	foreach ($institutes as $institute) {
-		// 		$institutenames[$institute->id] = $institute->fullname;
-		// 	}
-		// }
-
-		// $mform->addElement('select', 'costcenter', get_string('department', 'local_location'), $institutenames, array());
-		// $mform->addRule('costcenter', null, 'required', null, 'client');
-
-		// $allow_multi_session = array();
-		// $allow_multi_session[] = $mform->createElement('radio', 'institute_type', '', get_string('internal', 'local_location'), 1);
-		// $allow_multi_session[] = $mform->createElement('radio', 'institute_type', '', get_string('external', 'local_location'), 2);
-		// $mform->addGroup($allow_multi_session, 'radioar', get_string('institutetype', 'local_location'), array(' '), false);
-		// $mform->setDefault('institute_type',1);
-
 		$mform->addElement('text', 'fullname', get_string('category_name', 'local_classroom'));
 		$mform->setType('fullname', PARAM_TEXT);
 		$mform->addRule('fullname', null, 'required', null, 'client');
-
-		// $mform->addElement('textarea', 'address', get_string('address', 'local_classroom')	);
-		// $mform->setType('address', PARAM_TEXT);
-		// $mform->addRule('address', null, 'required', null, 'client');
-
-
 
 		$this->add_action_buttons();
 	}
