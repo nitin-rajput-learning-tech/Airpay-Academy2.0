@@ -6,7 +6,7 @@ use moodleform;
 class district_form extends \moodleform {
     public function definition() {
         global $USER, $CFG, $DB, $PAGE;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
         $mform = $this->_form;
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
@@ -36,7 +36,7 @@ class district_form extends \moodleform {
     //validations
     public function validation($data, $files) {
         global $DB,$USER;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
         $errors = array();
 
         $recordid = $DB->get_field('local_district','id',array('code' => $data['code'],'statesid' => $data['statesid']));

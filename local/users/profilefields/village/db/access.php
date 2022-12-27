@@ -28,7 +28,7 @@ $capabilities = array(
     'usersprofilefields/village:manage' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW,
         )
@@ -36,14 +36,14 @@ $capabilities = array(
     'usersprofilefields/village:create' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
     ),
     'usersprofilefields/village:view' => array(
         'captype'       => 'write',
-        'contextlevel'  => CONTEXT_SYSTEM,
+        'contextlevel'  => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW,
         )
@@ -51,14 +51,14 @@ $capabilities = array(
 
    'usersprofilefields/village:edit' => array(
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
              'manager' => CAP_ALLOW,
         )
     ),
     'usersprofilefields/village:delete' => array(
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
              'manager' => CAP_ALLOW,
         )

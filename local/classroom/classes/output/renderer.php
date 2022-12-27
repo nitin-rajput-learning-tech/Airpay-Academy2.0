@@ -102,15 +102,14 @@ class renderer extends plugin_renderer_base {
 
         $completed_tab=true;
 
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext) || has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
+        if(is_siteadmin()){
              $templateName = 'local_classroom/classrooms_list';
              $cardClass = 'col-md-6 col-12';
              $perpage = 6;
                if($view_type=='table'){
                  $templateName = 'local_classroom/classrooms_catalog_list';
                  $cardClass = 'tableformat';
-                 $perpage = 12;
-              
+                 $perpage = 12;              
              } 
            }
            $viewcardlist = false;
@@ -249,23 +248,21 @@ class renderer extends plugin_renderer_base {
                     }
                     
                     $enrolled_users = $sdata->enrolled_users;
-
-                    if ($sdata->department == -1) {
+                    list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$sdata->open_path);;
+                    if (empty($ctr)) {
                         $departmentname = 'All';
                         $departmenttitle = 'All departments';
                     } else {
-                        $classroomdepartment = $DB->get_fieldset_select('local_costcenter', 'fullname', " CONCAT(',',$sdata->department,',') LIKE CONCAT('%,',id,',%') ", array()); //FIND_IN_SET(id, '$sdata->department')
+                        $classroomdepartment = $DB->get_fieldset_select('local_costcenter', 'fullname', " CONCAT(',',$ctr,',') LIKE CONCAT('%,',id,',%') ", array()); //FIND_IN_SET(id, '$sdata->department')
                         $departmentname = (count($classroomdepartment)>1) ? $classroomdepartment[0].'...' : $classroomdepartment[0];
                         $departmenttitle = implode(', ', $classroomdepartment);
                     }
 
                 
                     switch($sdata->status) {
-                        case CLASSROOM_NEW:
-                           if(has_capability('local/classroom:view_newclassroomtab', $categorycontext)){
+                        case CLASSROOM_NEW:                          
                                 $line ['classroomstatusclass'] = 'classroomnew';
                                 $line ['crstatustitle'] = get_string('newclasses', 'local_classroom');
-                            }
                         break;
                         case CLASSROOM_ACTIVE:
 
@@ -274,10 +271,10 @@ class renderer extends plugin_renderer_base {
 
                         break;
                         case CLASSROOM_HOLD:
-                           if(has_capability('local/classroom:view_holdclassroomtab', $categorycontext)){
+                         
                                 $line ['classroomstatusclass'] = 'classroomhold';
                                 $line ['crstatustitle'] = get_string('holdclasses', 'local_classroom');
-                           }
+                           
                         break;
                         case CLASSROOM_CANCEL:
 
@@ -768,10 +765,7 @@ class renderer extends plugin_renderer_base {
         if(empty($classroom)) {
             print_error("Classroom Not Found!");
         }
-        if (!has_capability('local/classroom:manageclassroom', $categorycontext) && !is_siteadmin()
-            && !has_capability('local/classroom:manage_multiorganizations', $categorycontext)
-            && !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)&& !has_capability('local/classroom:manage_owndepartments', $categorycontext)
-                 && !has_capability('local/costcenter:manage_owndepartments', $categorycontext) && !has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
+        if (!has_capability('local/classroom:manageclassroom', $categorycontext) && !is_siteadmin()) {
 
             $now = time(); // or your date as well
             $your_date = $classroom->startdate;
@@ -806,15 +800,6 @@ class renderer extends plugin_renderer_base {
         } else {
             $classroom->classroomlocation = 'N/A';
         }
-
-        // if ($classroom->department == -1) {
-        //     $classroom->classroomdepartment = 'All';
-        //     $classroom->classroomdepartmenttitle = 'All';
-        // } else {
-        //     $classroomdepartment = $DB->get_fieldset_select('local_costcenter', 'fullname', " CONCAT(',',$classroom->department,',') LIKE CONCAT('%,',id,',%') ", array());//FIND_IN_SET(id, '$classroom->department')
-        //     $classroom->classroomdepartment =  (count($classroomdepartment)>1) ? $classroomdepartment[0].'...' : $classroomdepartment[0];
-        //     $classroom->classroomdepartmenttitle = implode(', ', $classroomdepartment);
-        // }
         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroom->open_path);
          if(!empty($ctr)){
             $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$ctr.')');
@@ -951,8 +936,6 @@ class renderer extends plugin_renderer_base {
             if($classroom->id > 0 && $classroom->nomination_startdate!=0 && $classroom->nomination_enddate!=0){
                 $params1 = array();
                 $params1['classroomid'] = $classroom->id;
-                // $params1['nomination_startdate'] = \local_costcenter\lib::get_userdate('d/m/Y H:i',time());
-                // $params1['nomination_enddate'] = \local_costcenter\lib::get_userdate('d/m/Y H:i',time());
                 $params1['nomination_startdate'] = time();
                 $params1['nomination_enddate'] = time();
 
@@ -968,13 +951,7 @@ class renderer extends plugin_renderer_base {
             if ($classroom->status == 1 && !$userenrolstatus && $return) {
                 $classroom->selfenrolmentcap = true;
                 $url = new moodle_url('/local/classroom/view.php', array('cid' =>$classroom->id,'action' => 'selfenrol'));
-                    //$btn = new single_button($url,get_string('enroll','local_catalog'), 'POST');
-                    //$btn->add_confirm_action(get_string('classroom_self_enrolment', 'local_classroom'));
-                    //
-                    //$cbutton=str_replace("Enroll",''.get_string('enroll','local_catalog'),$OUTPUT->render($btn));
-                    // $cbutton=str_replace('title=""','title="'.get_string('enroll','local_catalog').'"',$cbutton);
                      $classroom->selfenrolmentcap='<a href="javascript:void(0);" class="" alt = ' . get_string('enroll','local_classroom'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_classroom/classroom\').ManageclassroomStatus({action:\'selfenrol\', id: '.$classroom->id.', classroomid:'.$classroom->id.',actionstatusmsg:\'classroom_self_enrolment\',classroomname:\''.$classroom->name.'\'}) })(event)" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_classroom').'</a>';
-                     //$classroom->selfenrolmentcap= array_values(array($cbutton));
             }
                 $classroom_capacity_check=(new classroom)->classroom_capacity_check($classroomid);
                 if($classroom_capacity_check&&$classroom->status == 1 && !$userenrolstatus){
@@ -1003,7 +980,7 @@ class renderer extends plugin_renderer_base {
         if ((has_capability('local/classroom:manageclassroom', $categorycontext) || is_siteadmin())) {
             $action = true;
         }
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+        if($departmentcount > 1 && !(is_siteadmin())) {
              $action  = false;
         } 
         
@@ -1029,7 +1006,7 @@ class renderer extends plugin_renderer_base {
             $requested_users_tab = true;
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+        if($departmentcount > 1 && !(is_siteadmin())) {
              $requested_users_tab = false;
         } 
 
@@ -1103,7 +1080,7 @@ class renderer extends plugin_renderer_base {
             $createsession = true;
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+        if($departmentcount > 1 && !(is_siteadmin() )) {
              $createsession = false;
         }  
 
@@ -1116,7 +1093,7 @@ class renderer extends plugin_renderer_base {
             $createfeedback = true;
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) )) {
              $createfeedback  = false;
         }  
 
@@ -1125,7 +1102,7 @@ class renderer extends plugin_renderer_base {
             $assign_courses = true;  
         }
 
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))) {
+        if($departmentcount > 1 && !(is_siteadmin())) {
              $assign_courses  = false;
         }  
        // $unenrolbutton = $this->render_classroom_unenrol_object($classroomid, $USER->id);

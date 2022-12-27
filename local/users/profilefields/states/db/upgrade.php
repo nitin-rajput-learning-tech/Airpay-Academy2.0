@@ -1,6 +1,6 @@
 <?php
 defined('MOODLE_INTERNAL') || die();
-function xmldb_usersprofilefields_states_upgrade(){
+function xmldb_usersprofilefields_states_upgrade($oldversion){
     global $CFG, $USER, $DB, $OUTPUT;
     $dbman = $DB->get_manager(); // loads ddl manager and xmldb classes
 
@@ -31,5 +31,6 @@ function xmldb_usersprofilefields_states_upgrade(){
         }
         upgrade_plugin_savepoint(true, 2022120104.02, 'usersprofilefields', 'states');
     }
+    return true;
 
 }

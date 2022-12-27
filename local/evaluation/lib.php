@@ -145,19 +145,6 @@ function evaluation_add_instance($evaluation) {
     $evaluation->timemodified = time();
     $evaluation->usermodified = $USER->id;
 
-    if ($evaluation->instance == 0) {
-        if (is_array($evaluation->costcenterid))
-            $evaluation->costcenterid = implode(',',$evaluation->costcenterid);
-        else
-            $evaluation->costcenterid = $evaluation->costcenterid;
-        if (is_array($evaluation->departmentid))
-            $evaluation->departmentid = implode(',',$evaluation->departmentid);
-        else
-            $evaluation->departmentid = $evaluation->departmentid;
-        // }
-    } else {
-        $evaluation->costcenterid = 0;
-    }
 
     $introeditor = $evaluation->introeditor;
     unset($evaluation->introeditor);
@@ -193,9 +180,6 @@ function evaluation_add_instance($evaluation) {
     $DB->update_record('local_evaluations', $evaluation);
 
     // Update evaluation tags.
-    if (isset($evaluation->tags)) {
-        local_tags_tag::set_item_tags('local_evaluation', 'evaluation', $evaluation->id, (new \local_evaluation\lib\accesslib())::get_module_context(), $evaluation->tags, 0, $evaluation->costcenterid, $evaluation->departmentid);
-    }
 
     // Trigger evaluation created event.
     if ($evaluation->instance == 0) {
@@ -230,23 +214,6 @@ function evaluation_update_instance($evaluation) {
     if (empty($evaluation->site_after_submit)) {
         $evaluation->site_after_submit = '';
     }
-    if ($evaluation->instance == 0) {
-        if (is_array($evaluation->costcenterid))
-            $evaluation->costcenterid = implode(',',$evaluation->costcenterid);
-        else
-            $evaluation->costcenterid = $evaluation->costcenterid;
-        if (is_array($evaluation->departmentid))
-            $evaluation->departmentid = implode(',',$evaluation->departmentid);
-        else {
-            if ($evaluation->departmentid)
-            $evaluation->departmentid = $evaluation->departmentid;
-            else
-            $evaluation->departmentid = null;
-        }
-        // }
-    } else {
-        $evaluation->costcenterid = 0;
-    }
 
     $evaluation->intro = file_save_draft_area_files($introeditor['itemid'], $context->id, 'local_evaluation', 'intro', 0, array('subdirs'=>true), $evaluation->intro);
     //save the evaluation into the db
@@ -273,9 +240,6 @@ function evaluation_update_instance($evaluation) {
     $DB->update_record('local_evaluations', $evaluation);
 
     // Update evaluation tags.
-    if (isset($evaluation->tags)) {
-        local_tags_tag::set_item_tags('local_evaluation', 'evaluation', $evaluation->id, (new \local_evaluation\lib\accesslib())::get_module_context(), $evaluation->tags, 0, $evaluation->costcenterid, $evaluation->departmentid);
-    }
 
     // Trigger evaluation created event.
     $params = array(
@@ -324,10 +288,6 @@ function dep_sql($context) {
     global $DB, $USER;
     $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     if ( has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
-        $costcenters = $DB->get_records_sql_menu('select fullname,id from {local_costcenter} where parentid = 0 ');
-        $my_costcenters = implode(',', $costcenters);
-        $sql =" and costcenterid IN( $my_costcenters )";
-    } else {
         $sql = " $costcenterpathconcatsql ";
     }
     return $sql;
@@ -2367,20 +2327,12 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
     if($lastitem!=0){
         $sql.=" AND u.id > $lastitem";
     }
-    if (!is_siteadmin()) {
-        $user_detail = $DB->get_record('user', array('id'=>$USER->id));
-        $sql .= " AND u.open_costcenterid = :costcenter";
-        $params['costcenter'] = $user_detail->open_costcenterid;
-    }
     $sql .=" AND u.id <> $USER->id";
     if (!empty($params['email'])) {
         $sql.=" AND u.id IN ({$params['email']})";
     }
     if (!empty($params['uname'])) {
         $sql .=" AND u.id IN ({$params['uname']})";
-    }
-    if (!empty($params['organization'])) {
-        $sql .=" AND u.open_costcenterid IN ({$params['organization']})";
     }
     if (!empty($params['idnumber'])) {
         $sql .=" AND u.id IN ({$params['idnumber']})";
@@ -2440,7 +2392,8 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
  */
 function user_evaluations($userid, $tabstatus) {
     global $DB, $OUTPUT;
-    $sql ="SELECT a.*, eu.creatorid, eu.timemodified, eu.timecreated as joinedate from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = ? AND instance = 0 AND a.visible = 1";
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+    $sql ="SELECT a.*, eu.creatorid, eu.timemodified, eu.timecreated as joinedate from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = ? AND instance = 0 AND a.visible = 1 $costcenterpathconcatsql";
     $sql .= " ORDER BY eu.timecreated DESC";
     $evaluations = $DB->get_records_sql($sql, [$userid]);
     $data = array();
@@ -2554,9 +2507,9 @@ function costcenterwise_evaluation_count($costcenter, $department = false){
     global $USER, $DB,$CFG;
         $params = array();
         $params['costcenter'] = $costcenter;
-        $countfeedbacksql = "SELECT count(id) FROM {local_evaluations} WHERE costcenterid = :costcenter ";
+        $countfeedbacksql = "SELECT count(id) FROM {local_evaluations} WHERE concat('/',open_path,'/') LIKE :costcenter ";
         if($department){
-            $countfeedbacksql .= " AND departmentid = :department ";
+            $countfeedbacksql .= " AND concat('/',open_path,'/') LIKE  :department ";
             $params['department'] = $department;
         }
         $activesql = " AND visible = 1 ";
@@ -2604,9 +2557,6 @@ function get_listof_evalautions($stable, $filtervalues){
     global $DB, $USER, $OUTPUT;
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
     $statustype=$stable->status;
-    $totalcostcentercount=$stable->costcenterid;
-    $totaldepartmentcount=$stable->departmentid;
-    $departmentsparams = array();
     $data = array();
     $userarray = array();
     $params = array();
@@ -2632,14 +2582,6 @@ function get_listof_evalautions($stable, $filtervalues){
     if(isset($filtervalues->search_query) && trim($filtervalues->search_query) != ''){
         $fromsql .= " AND a.name LIKE :search";
         $userarray['search'] = '%'.trim($filtervalues->search_query).'%';
-    }
-    if(isset($filtervalues->organizations) && !empty($filtervalues->organizations)){
-        $orgids = is_array($filtervalues->organizations) ? implode($filtervalues->organizations) : $filtervalues->organizations ;
-        $fromsql .= " AND a.costcenterid IN ($orgids) ";
-    }
-    if(isset($filtervalues->departments) && !empty($filtervalues->departments)){
-        $lobids = is_array($filtervalues->departments) ? implode($filtervalues->departments) : $filtervalues->departments ;
-        $fromsql .= " AND a.departmentid IN ($lobids) ";
     }
     if(isset($filtervalues->evaluation) && !empty($filtervalues->evaluation)){
         $evalids = is_array($filtervalues->evaluation) ? implode($filtervalues->evaluation) : $filtervalues->evaluation ;
@@ -2872,14 +2814,14 @@ function local_evaluation_output_fragment_addquestions_or_enrol($args) {
 function local_evaluation_output_fragment_enrolledusers($args) {
     global $CFG, $DB, $OUTPUT;
     $record = (object) $args;
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
     if ($record->type == 1) {
 
         $sql ="SELECT u.id as userid,u.firstname,u.lastname,u.email, f.id as evaluationid, fu.timecreated
                 from {local_evaluation_users} fu
                 JOIN {local_evaluations} f ON fu.evaluationid = f.id
-                JOIN {user} u ON fu.userid=u.id AND u.deleted = 0 AND u.suspended = 0 
-                where fu.evaluationid = ?  $costcenterpathconcatsql";
+                JOIN {user} u ON fu.userid=u.id AND u.deleted = 0 AND u.suspended = 0 $costcenterpathconcatsql
+                where fu.evaluationid = ? ";
 
         $assignedusers= $DB->get_records_sql($sql, array($record->id));
         $out='';

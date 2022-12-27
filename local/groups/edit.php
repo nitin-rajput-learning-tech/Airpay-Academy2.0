@@ -50,19 +50,8 @@ if ($id) {
     $groupsdetails = $DB->get_record('local_groups', array('cohortid'=>$id));
 
     //i.e other than admin eg:Org.Head
-    if ( !(is_siteadmin()) && has_capability('local/costcenter:manage_ownorganization', (new \local_groups\lib\accesslib())::get_module_context())) {
-            if($groupsdetails->costcenterid!=$USER->open_costcenterid){
-             print_error('Sorry, You are not accessable to this page');
-            }     
-    }
 
 
-    //For Dept.Head
-    if(!(is_siteadmin()) && has_capability('local/costcenter:manage_owndepartments', (new \local_groups\lib\accesslib())::get_module_context())) {
-        if($groupsdetails->departmentid!=$USER->open_departmentid){
-            print_error("You donot have permissions");
-        }
-    }
 
 } else {
     $context = context::instance_by_id($contextid, MUST_EXIST);
@@ -161,7 +150,6 @@ $editform = new groups_edit_form(null, array('editoroptions'=>$editoroptions, 'd
 if ($id) {
     $cohort_group = $DB->get_record('local_groups', array('cohortid'=>$id));
     $groups->departmentid = explode(',',$cohort_group->departmentid);
-    $groups->costcenterid = $cohort_group->costcenterid;
     $editform->set_data($groups);
 }
 

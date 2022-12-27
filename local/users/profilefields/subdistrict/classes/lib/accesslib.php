@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of eAbyas
  *
@@ -18,15 +19,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author eabyas  <info@eabyas.in>
- * @package Bizlms
- * @subpackage local_classroom
+ * @package BizLMS
+ * @subpackage local_users
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace usersprofilefields_subdistrict\lib;
 
-$plugin->version = 2022101800.07; // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires = 2017042102; // Requires this Moodle version.
-$plugin->component = 'local_classroom'; // Full name of the plugin (used for diagnostics).
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = '3.3.330';
-$plugin->dependencies = array('enrol_classroom' => 2016052300);
+/**
+ * get access lib functions
+ */
+class accesslib extends \local_costcenter\lib\accesslib{
+
+    public static function get_module_context($costcenterid = null){
+
+        return parent::get_module_context($costcenterid);
+
+    }
+}

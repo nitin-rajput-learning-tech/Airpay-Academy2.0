@@ -46,9 +46,9 @@ class filters_form extends moodleform {
         foreach ($filterlist as $key => $value) {
             if($value === 'categories' || $value === 'elearning' || $value === 'status'){
                 $filter = 'courses';
-            } else if($value === 'email' || $value === 'employeeid' || $value === 'username' || $value === 'users' || $value === 'hrmsrole'){
+            } else if($value === 'email' || $value ==='states' || $value ==='district' || $value ==='subdistrict' || $value ==='village' || $value === 'employeeid' || $value === 'username' || $value === 'users' || $value === 'hrmsrole'){
                 $filter = 'users';
-            } else if($value === 'organizations' || $value === 'departments' || $value === 'subdepartment'){
+            } else if($value === 'organizations' || $value === 'departments' || $value === 'subdepartment' || $value === 'department4level' || $value === 'department5level'){
                 $filter = 'costcenter';
             } else if($value === 'sorting' || $value === 'requeststatus'){
                 $filter = 'request';

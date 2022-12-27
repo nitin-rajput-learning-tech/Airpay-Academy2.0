@@ -305,6 +305,62 @@ function designation_filter($mform) {
     $mform->setType('idnumber', PARAM_RAW);
     $select->setMultiple(true);
 }
+
+function states_filter($mform) {
+    global $DB, $USER;
+
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $stateslist_sql = "SELECT id, states_name FROM {local_states} ";
+
+    $stateslist = $DB->get_records_menu('local_states', array(),'states_name', 'id, states_name');
+    $select = $mform->addElement('autocomplete', 'states', '',
+     $stateslist, array('placeholder' => get_string('states', 'local_users')));
+    $mform->setType('states', PARAM_RAW);
+    $select->setMultiple(true);
+}
+
+function district_filter($mform) {
+    global $DB, $USER;
+
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $districtlist_sql = "SELECT id, district_name FROM {local_district} ";
+
+    $districtlist = $DB->get_records_menu('local_district', array(),'district_name', 'id,district_name');
+    $select = $mform->addElement('autocomplete', 'district', '',
+     $districtlist, array('placeholder' => get_string('district', 'local_users')));
+    $mform->setType('district', PARAM_RAW);
+    $select->setMultiple(true);
+}
+
+function subdistrict_filter($mform) {
+    global $DB, $USER;
+
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} ";
+
+    $subdistrictlist = $DB->get_records_menu('local_subdistrict', array(),'subdistrict_name', 'id, subdistrict_name');
+    $select = $mform->addElement('autocomplete', 'subdistrict', '',
+     $subdistrictlist, array('placeholder' => get_string('subdistrict', 'local_users')));
+    $mform->setType('subdistrict', PARAM_RAW);
+    $select->setMultiple(true);
+}
+
+function village_filter($mform) {
+    global $DB, $USER;
+
+    $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+
+    $villagelist_sql = "SELECT id, village_name FROM {local_village} ";
+
+    $villagelist = $DB->get_records_menu('local_village', array(),'village_name', 'id,village_name');
+    $select = $mform->addElement('autocomplete', 'village', '',
+     $villagelist, array('placeholder' => get_string('village', 'local_users')));
+    $mform->setType('village', PARAM_RAW);
+    $select->setMultiple(true);
+}
 /**
  * Description: User location filter code
  * @param  [mform object]  $mform          [the form object where the form is initiated]
@@ -793,6 +849,36 @@ function manage_users_count($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
         }
     }
+    if (!empty($filterdata->department4level)) {
+        $subdepartments = explode(',', $filterdata->department4level);
+        // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
+        //  SQL_PARAMS_NAMED, 'subdepartment');
+        // $params = array_merge($params, $relatedsubdepartmentparams);
+        // $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
+        $subdeptsql = [];
+        foreach($subdepartments AS $department4level){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+            $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+    if (!empty($filterdata->department5level)) {
+        $subdepartments = explode(',', $filterdata->department5level);
+        // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
+        //  SQL_PARAMS_NAMED, 'subdepartment');
+        // $params = array_merge($params, $relatedsubdepartmentparams);
+        // $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
+        $subdeptsql = [];
+        foreach($subdepartments AS $department5level){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+            $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
     if (!empty($filterdata->location)) {
         $locations = explode(',', $filterdata->location);
         list($locationsql, $locationparams) = $DB->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'location');
@@ -924,18 +1010,17 @@ function users_filters_form($filterparams) {
     $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $mform = new filters_form(null, array('filterlist' => array('organizations', 'departments',
-            'subdepartment', 'email', 'employeeid', 'status', 'location', 'hrmsrole'), 'courseid' => 1,
+            'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status', 'hrmsrole'), 'courseid' => 1,
              'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
     } else if (has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
-        $mform = new filters_form(null, array('filterlist' => array('departments', 'subdepartment',
-            'email', 'employeeid', 'status', 'location', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0,
+        $mform = new filters_form(null, array('filterlist' => array('departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0,
         'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
     } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
-        $mform = new filters_form(null, array('filterlist' => array('subdepartment', 'email', 'employeeid',
-         'status', 'location', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users',
+        $mform = new filters_form(null, array('filterlist' => array('subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid',
+         'status', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users',
          'costcenter'), 'filterparams' => $filterparams));
     } else {
-        $mform = new filters_form(null, array('filterlist' => array('email', 'employeeid', 'status', 'location',
+        $mform = new filters_form(null, array('filterlist' => array('states','district','subdistrict','village','email', 'employeeid', 'status',
          'hrmsrole'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
           => $filterparams));
     }

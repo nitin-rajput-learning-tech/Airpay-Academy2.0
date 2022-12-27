@@ -232,13 +232,6 @@ function local_groups_add_groups($groups) {
     if (!isset($groups->timemodified)) {
         $groups->timemodified = $groups->timecreated;
     }
-    if (isset($groups->costcenterid))
-    {
-    $context = $DB->get_field_sql("SELECT c.id FROM {context} AS c 
-                    JOIN {local_costcenter} AS lc ON lc.category=c.instanceid 
-                    WHERE c.contextlevel='40' and lc.id=$groups->costcenterid");
-    $groups->contextid=$context;
-    }
     $groups->id = $DB->insert_record('cohort', $groups);
     
     // create relation between cohort and creator of this cohort
@@ -246,13 +239,12 @@ function local_groups_add_groups($groups) {
     $new_group->cohortid = $groups->id;
     $new_group->usermodified = $USER->id;
     $new_group->timemodified = time();
-    $new_group->costcenterid = $groups->open_costcenterid;
     $new_group->open_path = $groups->open_path;
     $new_group->departmentid = is_array($groups->departmentid) ? implode(',', $groups->departmentid) : $groups->departmentid;
     $DB->insert_record('local_groups', $new_group);
 
     $event = \core\event\cohort_created::create(array(
-       'context' => context::instance_by_id($groups->contextid),
+        'context' =>(new \local_groups\lib\accesslib())::get_module_context(),
        'objectid' => $groups->id,
     ));
     $event->add_record_snapshot('groups', $groups);
@@ -294,11 +286,9 @@ function local_groups_update_groups($groups) {
         $cohort_group->departmentid = $departmentid;
     }
 
-    if ($groups->costcenterid)     
-    $cohort_group->costcenterid = $groups->costcenterid;
     $DB->update_record('local_groups', $cohort_group);
     $event = \core\event\cohort_updated::create(array(
-       'context' => context::instance_by_id($groups->contextid),
+        'context' =>(new \local_groups\lib\accesslib())::get_module_context(),
        'objectid' => $groups->id,
     ));
     $event->trigger();
@@ -777,11 +767,6 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
             WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql $userprofilesql";
     if($lastitem!=0){
         $sql.= " AND u.id > $lastitem";
-    }
-    if (!is_siteadmin()) {
-        $user_detail = $DB->get_record('user', array('id'=>$USER->id));
-        $sql .= " AND u.open_costcenterid = :costcenter";
-        $params['costcenter'] = $user_detail->open_costcenterid;
     }
     if (!empty($params['email'])) {
         $sql.=" AND u.id IN ({$params['email']})";

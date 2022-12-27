@@ -63,7 +63,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $params['starttime'] = $starttime;
         $params['endtime'] = $endtime;
         if($costcenterexist){
-            $sql .= " AND lc.costcenter=:costcenterid ";
+            $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
             $params['costcenterid'] = $notification->costcenterid;
         }
 		// echo $sql;
@@ -85,7 +85,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $params['starttime'] = $starttime;
         $params['endtime'] = $endtime;
         if($costcenterexist){
-            $sql .= " AND lc.costcenter=:costcenterid ";
+            $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
             $params['costcenterid'] = $notification->costcenterid;
         }
 		// 	echo $sql;
@@ -121,7 +121,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $params['endtime'] = $endtime;
         // $params['moduleids'] = $moduleids;
         if($costcenterexist){
-            $sql .= " AND lc.costcenter=:costcenterid ";
+            $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
             $params['costcenterid'] = $notification->costcenterid;
         }
 		// 	echo $sql;
@@ -144,7 +144,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $params['endtime'] = $endtime;
         // $params['moduleids'] = $moduleids;
         if($costcenterexist){
-            $sql .= " AND lc.costcenter=:costcenterid ";
+            $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
             $params['costcenterid'] = $notification->costcenterid;
         }
 		// 	echo $sql;

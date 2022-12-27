@@ -27,7 +27,7 @@ require_once($CFG->dirroot . '/local/users/lib.php');
 
 global $OUTPUT, $DB, $USER, $CFG;
 $pageurl = $CFG->wwwroot.'/local/users/profilefields/states/createstates.php';
-$systemcontext = context_system::instance();
+$systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url($pageurl);
 $PAGE->set_pagelayout('standard');

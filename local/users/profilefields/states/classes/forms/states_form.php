@@ -6,7 +6,7 @@ use moodleform;
 class states_form extends \moodleform {
     public function definition() {
         global $USER, $CFG, $DB, $PAGE;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
         $mform = $this->_form;
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
@@ -40,7 +40,7 @@ class states_form extends \moodleform {
     //validations
     public function validation($data, $files) {
         global $DB,$USER;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
         $errors = array();
 
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){

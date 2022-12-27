@@ -200,15 +200,6 @@ $filterparams['submitid'] = 'form#filteringform';
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 
     $display_url = new moodle_url('/local/evaluation/index.php');
-    if($costcenterid){
-      $display_url->param('costcenterid', $costcenterid);  
-    }
-    if($departmentid){
-     $display_url->param('departmentid',$departmentid);
-    }
-    if(isset($subdepartmentid)){
-     $display_url->param('subdepartmentid',$subdepartmentid);
-    }
     if($status){
      $display_url->param('status',$status);
     }

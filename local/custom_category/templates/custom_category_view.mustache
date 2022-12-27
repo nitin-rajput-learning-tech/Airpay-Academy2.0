@@ -23,25 +23,20 @@
         <table class="generaltable dataTable no-footer" id="skill_repository" role="grid" aria-describedby="skill_repository_info">
             <thead>
                 <tr role="row">
-                    {{# is_admin}}
-                        <th class="header text-left" tabindex="0">{{# str}} organisation, local_costcenter{{/ str}}
-                        </th>
-                    {{/ is_admin}}
                     <th class="header text-left" tabindex="0">{{# str}} custom_category, local_custom_category{{/ str}}</th>
                     <th class="header text-left" tabindex="0">{{# str}} shortname, local_custom_category{{/ str}}</th>
                     <th class="header text-center" tabindex="0">{{# str}} parent, local_custom_category{{/ str}}</th>
+                    <th class="header text-left" tabindex="0">{{# str}} organisation, local_costcenter{{/ str}}</th>
                     <th class="header text-center" tabindex="0">{{# str}} action, local_custom_category{{/ str}}</th>
                 </tr>
             </thead>
             <tbody>
                 {{#records}}
                     <tr>
-                        {{# is_admin}}
-                            <td class="text-left">{{organisationname}}</td>
-                        {{/ is_admin}}
                         <td class="text-left">{{custom_category_name}}</td>
                         <td class="text-left">{{shortname}}</td>
                         <td class="text-center">{{parent}}</td>
+                        <td class="text-left">{{organisationname}}</td>
                         <td class="text-center">
                             <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{custom_category_id}}" onclick="(function(e){ require('local_custom_category/newcustomcategory').init({selector:'createrepositorymodal', contextid:1, repositoryid:{{custom_category_id}}}) })(event)" style="cursor:pointer" title="Edit">
                                 <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>
