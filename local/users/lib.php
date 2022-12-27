@@ -653,12 +653,12 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
         $params['costcenterpath'] = '%'.$costcenter.'%';
         $countusersql = "SELECT count(id) FROM {user} WHERE concat('/',u.open_path,'/') LIKE :costcenterpath  AND deleted = 0";
     if ($department) {
-            $countusersql .= " AND open_departmentid = :department ";
-            $params['department'] = $department;
+            $countusersql .= " AND concat('/',u.open_path,'/') LIKE :departmentpath ";
+            $params['departmentpath'] = '%'.$department.'%';
     }
     if ($subdepartment) {
-            $countusersql .= " AND open_subdepartment = :subdepartment ";
-            $params['subdepartment'] = $subdepartment;
+            $countusersql .= " AND concat('/',u.open_path,'/') LIKE :subdepartmentpath ";
+            $params['subdepartmentpath'] = '%'.$subdepartment.'%';
     }
         $activesql = " AND suspended = 0 ";
         $inactivesql = " AND suspended = 1 ";
@@ -722,10 +722,8 @@ function manage_users_count($stable, $filterdata) {
      $totaldepartmentcount = $stable->departmentid;
      $totalsubdepartmentcount = $stable->subdepartmentid;
     $countsql = "SELECT  count(u.id) ";
-    $selectsql = "SELECT  u.* ,lc.fullname AS costcentername ,(SELECT fullname FROM {local_costcenter}
-     WHERE id=u.open_departmentid) AS departmentname ";
+    $selectsql = "SELECT  u.*  ";
     $formsql = " FROM {user} AS u
-         JOIN {local_costcenter} AS lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
          WHERE u.id > 2 AND u.deleted = 0 ";
     $params = array();
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
@@ -771,17 +769,33 @@ function manage_users_count($stable, $filterdata) {
     }
     if (!empty($filterdata->departments)) {
         $departments = explode(',', $filterdata->departments);
-        list($relatededepartmentssql, $relateddepartmentsparams) = $DB->get_in_or_equal($departments,
-         SQL_PARAMS_NAMED, 'departments');
-        $params = array_merge($params, $relateddepartmentsparams);
-        $formsql .= " AND u.open_departmentid $relatededepartmentssql";
+        // list($relatededepartmentssql, $relateddepartmentsparams) = $DB->get_in_or_equal($departments,
+        //  SQL_PARAMS_NAMED, 'departments');
+        // $params = array_merge($params, $relateddepartmentsparams);
+        // $formsql .= " AND u.open_departmentid $relatededepartmentssql";
+        $deptsql = [];
+        foreach($departments AS $department){
+            $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+            $params["departmentparam_{$department}"] = '%'.$department.'%';
+        }
+        if(!empty($deptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+        }
     }
     if (!empty($filterdata->subdepartment)) {
-        $subdepartment = explode(',', $filterdata->subdepartment);
-        list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
-         SQL_PARAMS_NAMED, 'subdepartment');
-        $params = array_merge($params, $relatedsubdepartmentparams);
-        $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
+        $subdepartments = explode(',', $filterdata->subdepartment);
+        // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
+        //  SQL_PARAMS_NAMED, 'subdepartment');
+        // $params = array_merge($params, $relatedsubdepartmentparams);
+        // $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
+        $subdeptsql = [];
+        foreach($subdepartments AS $subdepartment){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $params["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartment.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
     }
     if (!empty($filterdata->location)) {
         $locations = explode(',', $filterdata->location);

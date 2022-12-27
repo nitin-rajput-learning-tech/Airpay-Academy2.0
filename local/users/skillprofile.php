@@ -43,11 +43,13 @@ if (($id != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:
     $issupervisor = $DB->record_exists('user', array('id' => $id, 'open_supervisorid' => $USER->id));
     if (has_capability('local/users:create', $categorycontext) || $issupervisor) {
         $usercostcenterpath = $DB->get_field('user', 'open_path', array('id' => $id));
-        $usercostcenter = explode('/', $usercostcenterpath)[1];
-        $managercostcenter = explode('/', $USER->open_path)[1];
+        $userpathdata = explode('/', $usercostcenterpath);
+        $managerpathdata = explode('/', $USER->open_path);
+        $usercostcenter = $userpathdata[1];
+        $managercostcenter = $managerpathdata[1];
 
-        $userdepartment = $DB->get_field('user', 'open_departmentid', array('id' => $id));
-        $managerdepartment = $USER->open_departmentid;
+        $userdepartment = $userpathdata[2];
+        $managerdepartment = $managerpathdata[2];
         if ($usercostcenter != $managercostcenter) {
             throw new moodle_exception(get_string('nopermission', 'local_users'));
         } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext) &&

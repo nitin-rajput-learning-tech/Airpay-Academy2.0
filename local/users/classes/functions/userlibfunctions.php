@@ -71,7 +71,7 @@ class userlibfunctions {
         if ($supervisor) {
             global $DB;
             $sql = "SELECT u.id,Concat(u.firstname,' ',u.lastname) as username from {user} as u where u.suspended!=1
-             AND u.deleted!=1 AND u.open_departmentid= $supervisor AND u.id!= 1 AND u.id!=2";
+             AND u.deleted!=1 AND CONCAT('/',u.open_path,'/') = CONCAT('%/',$supervisor,'/%') AND u.id!= 1 AND u.id!=2";
             if ($userid) {
                 $sql .= " AND u.id != $userid AND u.id IN (SELECT open_supervisorid FROM {user} WHERE id = {$userid})";
             }
