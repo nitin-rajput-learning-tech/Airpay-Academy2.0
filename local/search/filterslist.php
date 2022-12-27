@@ -74,7 +74,7 @@ function get_itemlist($catid, $start = 0, $limit = 6){
 			 	$ctypes = $DB->get_records_sql($sql, [], $totalfields, 0);
             }
             foreach($ctypes AS $customtype){
-        		$itemslist['custom_'.$customtype->shortname] = ['tagitemid' => 'learningtype_'.$customtype->shortname, 'tagitemname' => $customtype->name, 'tagitemshortname' => $customtype->shortname, 'coursecount' => local_search_get_coursecount_for_modules([$customtype->id => $customtype->shortname])];
+        		$itemslist['custom_'.$customtype->shortname] = ['tagitemid' => 'learningtype_'.$customtype->id, 'tagitemname' => $customtype->name, 'tagitemshortname' => $customtype->shortname, 'coursecount' => local_search_get_coursecount_for_modules(['learningtype_'.$customtype->id])];
         	}
 			ksort($itemslist);
             return ['catcode' => 'learningtype', 'tagcatname' => 'Learning Type', 'itemslist' => $itemslist, 'showviewmore' => $showviewmore];

@@ -60,7 +60,7 @@ class search implements renderable{
         $wheresql = " WHERE c.id > 1 AND c.selfenrol = 1 ";
 
         $categorycontext = \local_costcenter\lib\accesslib::get_module_context();
-
+        $params = [];
         if(!is_siteadmin()){
 
             $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
@@ -81,56 +81,52 @@ class search implements renderable{
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }
-            if($filters['status']){
-
-            }
-            $params = [];
-            foreach($filters AS $filtertype => $filtervalues){
-                switch($filtertype){
-                    case 'status':
-                        $statussql = [];
-                        foreach($filters['status'] AS $statusfilter){
-                            switch ($statusfilter) {
-                                case 'notenrolled':
-                                    $statussql[] = " c.id not in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
-                                break;
-                                case 'enrolled':
-                                    $statussql[] = " c.id in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
-                                break;
-                                case 'completed':
-                                    $statussql[] = " c.id in (SELECT cc.course FROM {course_completions} AS cc where cc.userid = {$USER->id} AND cc.timecompleted IS NOT NULL) ";
-                                break;
-                            }
+        }
+        foreach($filters AS $filtertype => $filtervalues){
+            switch($filtertype){
+                case 'status':
+                    $statussql = [];
+                    foreach($filters['status'] AS $statusfilter){
+                        switch ($statusfilter) {
+                            case 'notenrolled':
+                                $statussql[] = " c.id not in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
+                            break;
+                            case 'enrolled':
+                                $statussql[] = " c.id in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
+                            break;
+                            case 'completed':
+                                $statussql[] = " c.id in (SELECT cc.course FROM {course_completions} AS cc where cc.userid = {$USER->id} AND cc.timecompleted IS NOT NULL) ";
+                            break;
                         }
-                        if(!empty($statussql)){
-                            $wheresql .= " AND (".implode('OR', $statussql).' ) ';
-                        }
-                    break;
-                    case 'learningtype':
-                        $learningtypes = is_array($filtervalues) ? $filtervalues : [$filtervalues];
-                        list($learningtypesql, $learningtypeparams) = $DB->get_in_or_equal($learningtypes, SQL_PARAMS_NAMED, 'learningtype');
-                        $wheresql .= " AND c.open_identifiedas $learningtypesql ";
-                        $params = array_merge($params, $learningtypeparams);
-                    break;
-                    // case 'categories':
-                    //     $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
-                    //     list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
-                    //     $wheresql .= " AND c.customcategory $categoriessql ";
-                    //     $params = array_merge($params, $categoriesparams);
-                    // break;
-                    case 'level':
-                        $level = is_array($filtervalues) ? $filtervalues : [$filtervalues];
-                        list($levelsql, $levelparams) = $DB->get_in_or_equal($level, SQL_PARAMS_NAMED, 'level');
-                        $wheresql .= " AND c.open_level $levelsql ";
-                        $params = array_merge($params, $levelparams);
-                    break;
-                    case 'skill':
-                        $skill = is_array($filtervalues) ? $filtervalues : [$filtervalues];
-                        list($skillsql, $skillparams) = $DB->get_in_or_equal($skill, SQL_PARAMS_NAMED, 'skill');
-                        $wheresql .= " AND c.open_skill $skillsql ";
-                        $params = array_merge($params, $skillparams);
-                    break;
-                }
+                    }
+                    if(!empty($statussql)){
+                        $wheresql .= " AND (".implode('OR', $statussql).' ) ';
+                    }
+                break;
+                case 'learningtype':
+                    $learningtypes = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    list($learningtypesql, $learningtypeparams) = $DB->get_in_or_equal($learningtypes, SQL_PARAMS_NAMED, 'learningtype');
+                    $wheresql .= " AND c.open_identifiedas $learningtypesql ";
+                    $params = array_merge($params, $learningtypeparams);
+                break;
+                // case 'categories':
+                //     $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                //     list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
+                //     $wheresql .= " AND c.customcategory $categoriessql ";
+                //     $params = array_merge($params, $categoriesparams);
+                // break;
+                case 'level':
+                    $level = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    list($levelsql, $levelparams) = $DB->get_in_or_equal($level, SQL_PARAMS_NAMED, 'level');
+                    $wheresql .= " AND c.open_level $levelsql ";
+                    $params = array_merge($params, $levelparams);
+                break;
+                case 'skill':
+                    $skill = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    list($skillsql, $skillparams) = $DB->get_in_or_equal($skill, SQL_PARAMS_NAMED, 'skill');
+                    $wheresql .= " AND c.open_skill $skillsql ";
+                    $params = array_merge($params, $skillparams);
+                break;
             }
         }
         $course_searchsql = "";
