@@ -36,9 +36,9 @@ class catslib {
         global $DB, $USER;
 
         if (is_null($costcenter) || empty($costcenter)) {
-            $category = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_path));
+            $category = $DB->get_field('local_costcenter', 'category', array('path' => $USER->open_path));
         } else {
-            $category = $DB->get_field('local_costcenter', 'category', array('id' => $costcenter));
+            $category = $DB->get_field('local_costcenter', 'category', array('path' => $costcenter));
         }
         $data = $DB->get_records('course_categories',array('parent' => $category));
         $this->categories[] = $category;

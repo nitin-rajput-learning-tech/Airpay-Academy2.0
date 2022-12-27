@@ -194,25 +194,13 @@ class local_courses_renderer extends plugin_renderer_base {
             $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
                          JOIN {course_categories} AS cc ON cc.id = c.category
                          where 1 = 1 ";
-        } elseif(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
-                       JOIN {course_categories} AS cc ON cc.id = c.category
-                       WHERE c.open_path = :usercostcenter";
-        } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
-                       JOIN {course_categories} AS cc ON cc.id = c.category
-                       WHERE c.open_path = :usercostcenter
-                       AND c.open_departmentid = :userdepartment";
-        } else {
-            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
-                       JOIN {course_categories} AS cc ON cc.id = c.category
-                       WHERE c.open_path = :usercostcenter
-                       AND c.open_departmentid = :userdepartment";
-        }
+        }else {
 
-        if (!is_siteadmin()) {
-            $userorg['usercostcenter'] = $USER->open_path;
-            $userdep['userdepartment'] = $USER->open_departmentid;
+            $condition= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+
+            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
+                       JOIN {course_categories} AS cc ON cc.id = c.category
+                       WHERE $condition";
         }
 
         $tagparams = array('tagid' => $tagid, 'itemtype' => 'courses', 'component' => 'local_courses');
@@ -316,13 +304,9 @@ class local_courses_renderer extends plugin_renderer_base {
 
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($dataobj->courseid);
 
-    if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-      $sql .= " AND c.open_path = :costcenterid ";
-      $params['costcenterid'] = $USER->open_path;
-    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
-      $sql .= " AND c.open_path = :costcenterid AND c.open_departmentid = :departmentid ";
-      $params['costcenterid'] = $USER->open_path;
-      $params['departmentid'] = $USER->open_departmentid;
+    if(!is_siteadmin()){
+
+      $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
     }
 
     if (!empty($dataobj->search)) {
