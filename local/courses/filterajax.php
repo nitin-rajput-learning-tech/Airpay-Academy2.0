@@ -84,6 +84,10 @@ if(($action == 'courseenroll')){
             $subdepartments = $costcenterlib->get_enrolledcoursefilter_users_subdepartments($costcenter,$like,$page,$course_id, $filterpage,$departments);
             echo json_encode($subdepartments);
         break;
+        case 'department4level':
+            $subdepartments = $costcenterlib->get_enrolledcoursefilter_users_department4level($costcenter,$like,$page,$course_id, $filterpage,$departments);
+            echo json_encode($subdepartments);
+        break;
         case 'costcenter':
             $costcenters = $costcenterlib->get_enrolledcoursefilter_users_costcenters($like,$page,$course_id, $filterpage);
             echo json_encode($costcenters);
