@@ -1296,9 +1296,9 @@ function get_listof_courses($stable, $filterdata) {
     $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-        $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_path
+        $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
                      JOIN {course_categories} AS cc ON cc.id = c.category
-                     JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";    
+                     LEFT JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
         
     $formsql .= " AND c.id > 1  $open_path";
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
@@ -1400,8 +1400,7 @@ function get_listof_courses($stable, $filterdata) {
     }
 
     $params = array_merge($searchparams, $userorg, $userdep, $filtercategoriesparams, $filtercoursesparams, $departmentsparams, $subdepartmentsparams, $organizationsparams, $hrmsrolessparams, $locationsparams);
-    echo $countsql.$formsql;
-    print_r($params);
+
     $totalcourses = $DB->count_records_sql($countsql.$formsql, $params);
     $formsql .=" ORDER BY c.id DESC";
     $courses = $DB->get_records_sql($selectsql.$formsql, $params, $stable->start,$stable->length);
