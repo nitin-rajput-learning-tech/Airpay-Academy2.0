@@ -241,7 +241,7 @@ class learningplan {
     }
     public function get_learningplans($filterdata, $start, $length){
         global $DB, $USER;
-        $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
         $filtersql = '';
         if($filterdata){
             if(!empty($filterdata->subdepartment)){
@@ -273,48 +273,62 @@ class learningplan {
             }
 
         }
-        if(is_siteadmin()){
-            $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1"; 
-            if(!empty($search)){
-                $sql .= " AND name LIKE '%%$search%%'";
-            }
-            $sql .= $filtersql;
-            $sql .= " ORDER BY l.id DESC";    
-            $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
-        }elseif(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
-            $data = \local_learningplan\render\open::userdetails();
-            $sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$USER->open_costcenterid},',%')";
-            if(!empty($search)){
-                $sql .= " AND name LIKE '%%$search%%'";
-            }
-            $sql .= $filtersql;
-            $sql .= " ORDER BY l.id DESC";
-            $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
-        }elseif(has_capability('local/costcenter:manage_owndepartments',$systemcontext) ){
-            $sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$USER->open_costcenterid},',%') AND CONCAT(',',l.department,',') LIKE CONCAT('%,',{$USER->open_departmentid},',%') AND l.id > 0 ";
-            if(!empty($search)){
-                $sql .= " AND name LIKE '%%$search%%'";
-            }
-            $sql .= $filtersql;
-            $sql .= "  ORDER BY l.id DESC";
-            $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
-        }else{
-            $data = \local_learningplan\render\open::userdetails();
-            $sql="SELECT * FROM {local_learningplan} AS l WHERE
-            CONCAT(',',l.costcenter,',') LIKE CONCAT('%,',$data->open_costcenterid,',%')
-            CONCAT(',',l.open_group,',') LIKE CONCAT('%,',$data->open_group,',%')
-            CONCAT(',',l.department,',') LIKE CONCAT('%,',$data->open_departmentid,',%')
-            CONCAT(',',l.subdepartment,',') LIKE CONCAT('%,',$data->open_subdepartment,',%')
-            AND l.id > 0";
-            if(!empty($search)){
-                $sql .= " AND name LIKE '%%$search%%'";
-            }
-            $sql .= $filtersql;
-            $sql .= ' AND l.visible=1 ORDER BY l.timemodified DESC';
-            
-            $learning_plans = $DB->get_records_sql($sql, array(), $start, $length);
-            
+
+        $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1"; 
+        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='l.open_path');
+        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+            $sql .= "";
+        } else  {
+            $sql .= $costcenterpathconcatsql;
         }
+        if(!empty($search)){
+            $sql .= " AND name LIKE '%%$search%%'";
+        }
+        $sql .= $filtersql;
+        $sql .= " ORDER BY l.id DESC"; 
+        $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
+        // if(is_siteadmin()){
+        //     $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1"; 
+        //     if(!empty($search)){
+        //         $sql .= " AND name LIKE '%%$search%%'";
+        //     }
+        //     $sql .= $filtersql;
+        //     $sql .= " ORDER BY l.id DESC";    
+        //     $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
+        // }elseif(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
+        //     $data = \local_learningplan\render\open::userdetails();
+        //     $sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.open_path,',') LIKE concat('%,',{$USER->open_costcenterid},',%')";
+        //     if(!empty($search)){
+        //         $sql .= " AND name LIKE '%%$search%%'";
+        //     }
+        //     $sql .= $filtersql;
+        //     $sql .= " ORDER BY l.id DESC";
+        //     $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
+        // }elseif(has_capability('local/costcenter:manage_owndepartments',$systemcontext) ){
+        //     $sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.open_path,',') LIKE concat('%,',{$USER->open_path},',%') AND CONCAT(',',l.department,',') LIKE CONCAT('%,',{$USER->open_departmentid},',%') AND l.id > 0 ";
+        //     if(!empty($search)){
+        //         $sql .= " AND name LIKE '%%$search%%'";
+        //     }
+        //     $sql .= $filtersql;
+        //     $sql .= "  ORDER BY l.id DESC";
+        //     $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
+        // }else{
+        //     $data = \local_learningplan\render\open::userdetails();
+        //     $sql="SELECT * FROM {local_learningplan} AS l WHERE
+        //     CONCAT(',',l.open_path,',') LIKE CONCAT('%,',$data->open_path,',%')
+        //     CONCAT(',',l.open_group,',') LIKE CONCAT('%,',$data->open_group,',%')
+        //     CONCAT(',',l.department,',') LIKE CONCAT('%,',$data->open_departmentid,',%')
+        //     CONCAT(',',l.subdepartment,',') LIKE CONCAT('%,',$data->open_subdepartment,',%')
+        //     AND l.id > 0";
+        //     if(!empty($search)){
+        //         $sql .= " AND name LIKE '%%$search%%'";
+        //     }
+        //     $sql .= $filtersql;
+        //     $sql .= ' AND l.visible=1 ORDER BY l.timemodified DESC';
+            
+        //     $learning_plans = $DB->get_records_sql($sql, array(), $start, $length);
+            
+        // }
         return $learning_plans;
     }
 }

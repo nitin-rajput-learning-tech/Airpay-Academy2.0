@@ -119,8 +119,9 @@ class learningplan extends moodleform {
         }else{
 
             $sql = "SELECT id,fullname
-                    FROM {local_custom_category} WHERE costcenterid = ?";
-            $parents = $DB->get_records_sql_menu($sql, [$USER->open_costcenterid]);
+                    FROM {local_custom_category} WHERE CONCAT('/',open_path,'/') = ?";
+            $userpath = $DB->get_field('user', 'open_path', array('id' => $USER->id));
+            $parents = $DB->get_records_sql_menu($sql, [explode('/', $userpath)[1]]);
         }
         $parents[0] = 'Select Category';
         asort($parents);
@@ -220,7 +221,7 @@ class learningplan extends moodleform {
                 if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_costcenterid),'name', 'id,name');
+                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>explode('/', $USER->open_path)[1]),'name', 'id,name');
                 }
                 $certificateslist = $select + $cert_templates;
 
@@ -240,7 +241,7 @@ class learningplan extends moodleform {
                     && !has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
 				$departmentslist[-1]=get_string('all');
 				if($id > 0 ){
-					$costcenter = $DB->get_field('local_learningplan','costcenter',array('id'=>$id));
+					$costcenter = $DB->get_field('local_learningplan','open_path',array('id'=>$id));
 					$departments = userlib::find_departments_list($costcenter);
 					foreach($departments as $depart){
 						$departmentslist[$depart->id]=$depart->fullname;
@@ -253,7 +254,7 @@ class learningplan extends moodleform {
 					}
 				}
 				else if(!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)){
-					$departments = userlib::find_departments_list($USER->open_costcenterid);
+					$departments = userlib::find_departments_list(explode('/', $USER->open_path)[1]);
 					foreach($departments as $depart){
 						$departmentslist[$depart->id]=$depart->fullname;
 					}

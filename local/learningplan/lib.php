@@ -262,12 +262,11 @@ function local_learningplan_quicklink_node(){
 function costcenterwise_learningplan_count($costcenter,$department = false){
     global $USER, $DB,$CFG;
         $params = array();
-        $params['costcenter'] = $costcenter;
-        $countlpql = "SELECT count(id) FROM {local_learningplan} WHERE costcenter = :costcenter";
+        $params['costcenterpath'] = '%'.$costcenter.'%';
+        // $countlpql = "SELECT count(u.id) FROM {user} u WHERE concat('/',u.open_path,'/') LIKE :costcenterpath  AND deleted = 0";
+        $countlpql = "SELECT count(lp.id) FROM {local_learningplan} lp WHERE concat('/',lp.open_path,'/') LIKE :costcenterpath";
         if($department){
-           // $countlpql .= " AND department = :department ";
-            $countlpql .= "AND CONCAT(',',department,',') LIKE CONCAT('%,',{$department},',%')";
-            //$params['department'] = $department;
+            $countlpql .= "AND CONCAT(',',lp.department,',') LIKE CONCAT('%,',{$department},',%')";
         }
         $activesql = " AND visible = 1 ";
         $inactivesql = " AND visible = 0 ";
@@ -359,106 +358,110 @@ function orgsql($categorycontext){
     $params =array();
     if (has_capability('local/learningplan:manage', $categorycontext) && 
         has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
-        $sql = " AND  c.costcenter = :costcenter";
-        $params['costcenter'] = $USER->open_costcenterid;
-    } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
-        $sql = " AND  c.department = :department";
-        $params['department'] = $USER->open_departmentid;
-    } else {
-        $sql .= " AND  c.costcenter = :costcenter";
-        $params['costcenter'] = $USER->open_costcenterid;
-        $sql .= " AND  ( c.department = :department OR c.department = '-1' ) ";
-        $params['department'] = $USER->open_departmentid;
-        // target audience
-        $gparams = array();
-        $group_list = $DB->get_records_sql_menu("select cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
-        if (!empty($group_list)){
-             $groups_members = implode(',', $group_list);
-             if(!empty($group_list)){
-                $grouquery = array();
-                foreach ($group_list as $key => $group) {
-                    $grouquery[] = " CONCAT(',',c.open_group,',') LIKE CONCAT('%,',$group,',%') "; 
-                }
-                $groupqueeryparams =implode('OR',$grouquery);
-                $gparams[]= '('.$groupqueeryparams.')';
-             }
-        }
+        // $sql = " AND  c.costcenter = :costcenter";
+        // $params['costcenter'] = $USER->open_costcenterid;
+        $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+         $sql = $costcenterpathconcatsql;
+     }
+    // } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
+    //     $sql = " AND  c.department = :department";
+    //     $params['department'] = $USER->open_departmentid;
+    // } else {
+    //     $sql .= " AND  c.costcenter = :costcenter";
+    //     $params['costcenter'] = $USER->open_costcenterid;
+    //     $sql .= " AND  ( c.department = :department OR c.department = '-1' ) ";
+    //     $params['department'] = $USER->open_departmentid;
+    //     // target audience
+    //     $gparams = array();
+    //     $group_list = $DB->get_records_sql_menu("select cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
+    //     if (!empty($group_list)){
+    //          $groups_members = implode(',', $group_list);
+    //          if(!empty($group_list)){
+    //             $grouquery = array();
+    //             foreach ($group_list as $key => $group) {
+    //                 $grouquery[] = " CONCAT(',',c.open_group,',') LIKE CONCAT('%,',$group,',%') "; 
+    //             }
+    //             $groupqueeryparams =implode('OR',$grouquery);
+    //             $gparams[]= '('.$groupqueeryparams.')';
+    //          }
+    //     }
 
-        if(!empty($gparams))
-          $opengroup=implode('AND',$gparams);
-        else
-          $opengroup = '1 != 1';
-        $fparams = array();
-        $fparams[]= " 1 = CASE WHEN (c.open_group!='-1' AND c.open_group <> '')
-                THEN
-                  CASE WHEN $opengroup
-                    THEN 1
-                    ELSE 0 END 
-                ELSE 1 END ";
-        if(!empty($USER->open_departmentid) && $USER->open_departmentid != ""){
-          $departmentlike = "'%,$USER->open_departmentid,%'";
-        }else{
-          $departmentlike = "''";
-        }
-        $fparams[]= " 1 = CASE WHEN c.department!='-1'
-          THEN 
-            CASE WHEN CONCAT(',',c.department,',') LIKE {$departmentlike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
-        if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-          $subdepartmentlike = "'%,$USER->open_subdepartment,%'";
-        }else{
-          $subdepartmentlike = "''";
-        }
-        $fparams[]= " 1 = CASE WHEN c.subdepartment!='-1'
-          THEN 
-            CASE WHEN CONCAT(',',c.subdepartment,',') LIKE {$subdepartmentlike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
-        if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
-          $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
-        }else{
-          $hrmsrolelike = "''";
-        }
-          $fparams[]= " 1 = CASE WHEN c.open_hrmsrole IS NOT NULL
-          THEN 
-            CASE WHEN CONCAT(',',c.open_hrmsrole,',') LIKE {$hrmsrolelike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
-        if(!empty($USER->open_designation) && $USER->open_designation != ""){
-          $designationlike = "'%,$USER->open_designation,%'";
-        }else{
-          $designationlike = "''";
-        }
-          $fparams[]= " 1 = CASE WHEN c.open_designation IS NOT NULL
-            THEN 
-              CASE WHEN CONCAT(',',c.open_designation,',') LIKE {$designationlike}
-                THEN 1
-                ELSE 0 END
-            ELSE 1 END  ";
-        if(!empty($USER->open_location) && $USER->open_location != ""){
-          $citylike = "'%,$USER->open_location,%'";
-        }else{
-          $citylike = "''";
-        }
-        $fparams[]= " 1 = CASE WHEN c.open_location IS NOT NULL
-          THEN 
-            CASE WHEN CONCAT(',',c.open_location,',') LIKE {$citylike}
-              THEN 1
-              ELSE 0 END
-          ELSE 1 END  ";
+    //     if(!empty($gparams))
+    //       $opengroup=implode('AND',$gparams);
+    //     else
+    //       $opengroup = '1 != 1';
+    //     $fparams = array();
+    //     $fparams[]= " 1 = CASE WHEN (c.open_group!='-1' AND c.open_group <> '')
+    //             THEN
+    //               CASE WHEN $opengroup
+    //                 THEN 1
+    //                 ELSE 0 END 
+    //             ELSE 1 END ";
+    //     if(!empty($USER->open_departmentid) && $USER->open_departmentid != ""){
+    //       $departmentlike = "'%,$USER->open_departmentid,%'";
+    //     }else{
+    //       $departmentlike = "''";
+    //     }
+    //     $fparams[]= " 1 = CASE WHEN c.department!='-1'
+    //       THEN 
+    //         CASE WHEN CONCAT(',',c.department,',') LIKE {$departmentlike}
+    //         THEN 1
+    //         ELSE 0 END
+    //       ELSE 1 END ";
+    //     if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
+    //       $subdepartmentlike = "'%,$USER->open_subdepartment,%'";
+    //     }else{
+    //       $subdepartmentlike = "''";
+    //     }
+    //     $fparams[]= " 1 = CASE WHEN c.subdepartment!='-1'
+    //       THEN 
+    //         CASE WHEN CONCAT(',',c.subdepartment,',') LIKE {$subdepartmentlike}
+    //         THEN 1
+    //         ELSE 0 END
+    //       ELSE 1 END ";
+    //     if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
+    //       $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
+    //     }else{
+    //       $hrmsrolelike = "''";
+    //     }
+    //       $fparams[]= " 1 = CASE WHEN c.open_hrmsrole IS NOT NULL
+    //       THEN 
+    //         CASE WHEN CONCAT(',',c.open_hrmsrole,',') LIKE {$hrmsrolelike}
+    //         THEN 1
+    //         ELSE 0 END
+    //       ELSE 1 END ";
+    //     if(!empty($USER->open_designation) && $USER->open_designation != ""){
+    //       $designationlike = "'%,$USER->open_designation,%'";
+    //     }else{
+    //       $designationlike = "''";
+    //     }
+    //       $fparams[]= " 1 = CASE WHEN c.open_designation IS NOT NULL
+    //         THEN 
+    //           CASE WHEN CONCAT(',',c.open_designation,',') LIKE {$designationlike}
+    //             THEN 1
+    //             ELSE 0 END
+    //         ELSE 1 END  ";
+    //     if(!empty($USER->open_location) && $USER->open_location != ""){
+    //       $citylike = "'%,$USER->open_location,%'";
+    //     }else{
+    //       $citylike = "''";
+    //     }
+    //     $fparams[]= " 1 = CASE WHEN c.open_location IS NOT NULL
+    //       THEN 
+    //         CASE WHEN CONCAT(',',c.open_location,',') LIKE {$citylike}
+    //           THEN 1
+    //           ELSE 0 END
+    //       ELSE 1 END  ";
 
-        if(!empty($params)){
-          $finalparams=implode('AND',$fparams);
-        }else{
-          $finalparams= '1=1' ;
-        }
+    //     if(!empty($params)){
+    //       $finalparams=implode('AND',$fparams);
+    //     }else{
+    //       $finalparams= '1=1' ;
+    //     }
 
-        $sql .= " AND ($finalparams OR (c.open_hrmsrole IS NULL AND c.open_designation IS NULL AND c.open_location IS NULL AND c.open_group IS NULL AND c.department='-1' ) )  ";
-    }
+    //     $sql .= " AND ($finalparams OR (c.open_hrmsrole IS NULL AND c.open_designation IS NULL AND c.open_location IS NULL AND c.open_group IS NULL AND c.department='-1' ) )  ";
+    // }
     return compact('sql', 'params'); 
 }
 

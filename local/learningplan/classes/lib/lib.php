@@ -130,10 +130,11 @@ class lib
 	public function get_enrollable_users_to_learningplan($planid)
 	{
 		global $DB, $USER;
+			$orgpath = explode('/', $USER->open_path);
 
 		if (!is_siteadmin()) {
 			$siteadmin_sql = " AND u.suspended =0
-								 AND u.deleted =0  AND u.open_costcenterid = $USER->open_costcenterid ";
+								 AND u.deleted =0  AND concat('/',u.open_path,'/') = '%'.$orgpath[1].'%' ";
 		} else {
 			$siteadmin_sql = "";
 		}
@@ -187,9 +188,10 @@ class lib
 	public function get_enrollable_users_count_to_learningplan($planid)
 	{
 		global $DB, $USER;
+			$orgpath = explode('/', $USER->open_path);
 		if (!is_siteadmin()) {
 			$siteadmin_sql = " AND u.suspended =0
-							AND u.deleted =0  AND u.open_costcenterid = $USER->open_costcenterid ";
+							AND u.deleted =0  AND concat('/',u.open_path,'/') = '%'.$orgpath[1].'%' ";
 		} else {
 			$siteadmin_sql = "";
 		}
@@ -199,14 +201,14 @@ class lib
 	    		WHERE u.id > 2 $siteadmin_sql AND u.id not in ($USER->id) ";
 
 		$params = array();
-		if ($plan_info->department !== null && $plan_info->department !== '-1' && $plan_info->department !== 0 && !empty($plan_info->department)) {
-			$params['dept'] = '%,' . $plan_info->department . ',%';
-			$sql .= " AND :dept LIKE CONCAT('%,',u.open_departmentid,',%') ";
-		}
-		if ($plan_info->subdepartment !== null && $plan_info->subdepartment !== '-1' && $plan_info->subdepartment !== 0) {
-			$params['subdept'] = '%,' . $plan_info->subdepartment . ',%';
-			$sql .= " AND :subdept LIKE CONCAT('%,',u.open_subdepartment,',%') ";
-		}
+		// if ($plan_info->department !== null && $plan_info->department !== '-1' && $plan_info->department !== 0 && !empty($plan_info->department)) {
+		// 	$params['dept'] = '%,' . $plan_info->department . ',%';
+		// 	$sql .= " AND :dept LIKE CONCAT('%,',u.open_departmentid,',%') ";
+		// }
+		// if ($plan_info->subdepartment !== null && $plan_info->subdepartment !== '-1' && $plan_info->subdepartment !== 0) {
+		// 	$params['subdept'] = '%,' . $plan_info->subdepartment . ',%';
+		// 	$sql .= " AND :subdept LIKE CONCAT('%,',u.open_subdepartment,',%') ";
+		// }
 
 		// OL-1042 Add Target Audience to Classrooms//
 
@@ -303,23 +305,24 @@ class lib
 		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
 
 		if (is_siteadmin() /*|| has_capability('local/costcenter:manage_multiorganizations', $systemcontext)|| has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)*/) {
-			$costcenterid = $DB->get_field('local_learningplan', 'costcenter', array('id' => $id));
+			$costcenterid = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
+			$orgpath = explode('/', $costcenterid);
 			$sql = "SELECT c.id as id, c.fullname FROM {course} as c
 					WHERE c.id > 1 AND c.visible = 1  "; //FIND_IN_SET(4,c.open_identifiedas)
 			if ($costcenterid) {
-				$sql .= " AND c.open_costcenterid=$costcenterid";
+				$sql .= " AND  CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[1],'/%')";
 			}
 			$courses = $DB->get_records_sql_menu($sql);
 		} else {
 			$course_sql = "SELECT c.id as id, c.fullname
 							FROM {course} as c
 							WHERE c.id > 1 AND c.visible = 1  "; //and FIND_IN_SET(4,c.open_identifiedas)
-
+			$orgpath = explode('/', $USER->open_path);
 			$course_sql .= " AND 
-							c.open_costcenterid=$USER->open_costcenterid";
+							CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[1],'/%')";
 			if (!has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
 				$course_sql .= " AND 
-							c.open_departmentid=$USER->open_departmentid";
+							CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[2],'/%')";
 			}
 			$courses = $DB->get_records_sql_menu($course_sql);
 		}
@@ -606,9 +609,12 @@ class lib
 		$us = $users->open_band;
 		$array = explode(',', $us);
 		$list = implode("','", $array);
+		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 		/*********changed IN to Find_in_set in query for issues 1258********/
 		$sql = "SELECT ud.* FROM {local_learningplan} AS ud WHERE
-			ud.id={$planid} AND (1 = CASE WHEN ud.costcenter IS NOT NULL 
+			ud.id={$planid} $costcenterpathconcatsql";
+
+			/*AND (1 = CASE WHEN ud.costcenter IS NOT NULL 
 				THEN WHEN CONCAT(',',ud.costcenter,',') LIKE CONCAT('%,',{$users->open_costcenterid},',%')
 					THEN 1
 					ELSE 0 END
@@ -622,7 +628,7 @@ class lib
 				THEN WHEN CONCAT(',',ud.department,',') LIKE CONCAT('%,',{$users->open_subdepartment},',%') 
 					THEN 1
 					ELSE 0 END
-				ELSE 1 END)";
+				ELSE 1 END)";*/
 		// FIND_IN_SET('.$users->open_costcenterid.',ud.costcenter)
 		// FIND_IN_SET('.$users->open_departmentid.',ud.department)
 		// FIND_IN_SET('.$users->open_subdepartment.', ud.subdepartment)
