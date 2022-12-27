@@ -724,7 +724,7 @@ function manage_users_count($stable, $filterdata) {
     $selectsql = "SELECT  u.* ,lc.fullname AS costcentername ,(SELECT fullname FROM {local_costcenter}
      WHERE id=u.open_departmentid) AS departmentname ";
     $formsql = " FROM {user} AS u
-         JOIN {local_costcenter} AS lc ON lc.id=u.open_costcenterid
+         JOIN {local_costcenter} AS lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
          WHERE u.id > 2 AND u.deleted = 0 ";
     $params = array();
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
@@ -755,10 +755,18 @@ function manage_users_count($stable, $filterdata) {
     }
     if (!empty($filterdata->organizations)) {
         $organizations = explode(',', $filterdata->organizations);
-        list($relatedeorganizationssql, $relatedorganizationsparams) = $DB->get_in_or_equal($organizations,
-         SQL_PARAMS_NAMED, 'organizations');
-        $params = array_merge($params, $relatedorganizationsparams);
-        $formsql .= " AND u.open_costcenterid $relatedeorganizationssql";
+        // list($relatedeorganizationssql, $relatedorganizationsparams) = $DB->get_in_or_equal($organizations,
+        //  SQL_PARAMS_NAMED, 'organizations');
+        // $params = array_merge($params, $relatedorganizationsparams);
+        // $formsql .= " AND u.open_costcenterid $relatedeorganizationssql ";
+        $orgsql = [];
+        foreach($organizations AS $organisation){
+            $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $params["organisationparam_{$organisation}"] = '%'.$organisation.'%';
+        }
+        if(!empty($orgsql)){
+            $formsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        }
     }
     if (!empty($filterdata->departments)) {
         $departments = explode(',', $filterdata->departments);

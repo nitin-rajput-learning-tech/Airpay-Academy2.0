@@ -51,19 +51,29 @@ class local_users_renderer extends plugin_renderer_base {
         } else {
             $roleinfo = "Employee";
         }
-        $sql3 = "SELECT cc.fullname, u.open_employeeid, u.open_costcenterid,
+        $sql3 = "SELECT u.open_employeeid,
                     u.open_designation, u.open_location,
                     u.open_supervisorid, u.open_group,
-                    u.department, u.open_subdepartment, u.open_path, u.open_departmentid
-                     FROM {local_costcenter} cc, {user} u
-                    WHERE u.id=:id AND u.open_costcenterid=cc.id";
+                    u.department, u.open_path
+                     FROM {user} u
+                    WHERE u.id=:id ";
         $userOrg = $DB->get_record_sql($sql3, array('id' => $id));
-        $usercostcenter = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_costcenterid));
-        $userdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_departmentid));
-        $usersubdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_subdepartment));
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userOrg->open_path);
-        $usercu = $DB->get_field('local_costcenter', 'fullname', array('id' => $cu));
-        $userterritory = $DB->get_field('local_costcenter', 'fullname', array('id' => $territory));
+        $organisationdata = array_filter(explode('/', $userOrg->open_path));
+        $organisationnames = array_map(function($orgid){
+            return \local_costcenter\lib\accesslib::get_costcenter_info($orgid, 'fullname');
+        }, $organisationdata);
+
+        $usercostcenter = $organisationnames[1];
+        $userdepartment = $organisationnames[2];
+        $usersubdepartment = $organisationnames[3];
+        $usercu = $organisationnames[4];
+        $userterritory = $organisationnames[5];
+        // $usercostcenter = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_costcenterid));
+        // $userdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_departmentid));
+        // $usersubdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_subdepartment));
+        // list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userOrg->open_path);
+        // $usercu = $DB->get_field('local_costcenter', 'fullname', array('id' => $cu));
+        // $userterritory = $DB->get_field('local_costcenter', 'fullname', array('id' => $territory));
 
         if (!empty($userrecord->phone1)) {
                 $contact = $userrecord->phone1;

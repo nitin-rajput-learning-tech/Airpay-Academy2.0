@@ -24,7 +24,7 @@
  */
 
 defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2022101800.08;          // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version = 2022101800.09;          // The current plugin version (Date: YYYYMMDDXX)
 $plugin->requires  = 2017050505;        // Requires this Moodle version
 $plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'local_costcenter';

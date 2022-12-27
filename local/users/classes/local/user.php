@@ -45,19 +45,25 @@ class user {
         } else {
             $roleinfo = get_string('employee', 'local_users');
         }
-        $sql3 = "SELECT cc.fullname, u.open_employeeid,u.open_costcenterid,
+        $sql3 = "SELECT  u.open_employeeid,u.open_costcenterid,
                     u.open_designation, u.open_location,
                     u.open_supervisorid, u.open_group,
-                    u.department, u.open_subdepartment ,u.open_departmentid
-                     FROM {local_costcenter} cc, {user} u
-                    WHERE u.id=:id AND u.open_costcenterid=cc.id";
+                    u.department, u.open_path
+                     FROM {user} u
+                    WHERE u.id=:id ";
         $userOrg = $DB->get_record_sql($sql3, array('id' => $id));
-        $usercostcenter = $DB->get_field('local_costcenter', 'fullname',  array('id' => $userOrg->open_costcenterid));
-        $userdepartment = $DB->get_field('local_costcenter', 'fullname',  array('id' => $userOrg->open_departmentid));
+        $organisationdata = array_filter(explode('/', $userOrg->open_path));
+        $organisationnames = array_map(function($orgid){
+            return \local_costcenter\lib\accesslib::get_costcenter_info($orgid, 'fullname');
+        }, $organisationdata);
+        $usercostcenter = $organisationnames[1];
+        $userdepartment = $organisationnames[2];
+        // $usercostcenter = $DB->get_field('local_costcenter', 'fullname',  array('id' => $userOrg->open_costcenterid));
+        // $userdepartment = $DB->get_field('local_costcenter', 'fullname',  array('id' => $userOrg->open_departmentid));
         if (!empty($userrecord->phone1)) {
-                $contact = $userrecord->phone1;
+            $contact = $userrecord->phone1;
         } else {
-                $contact = 'N/A';
+            $contact = 'N/A';
         }
         if (!empty($userOrg->open_supervisorid)) {
             $get_reporting_username_sql = "SELECT u.id, u.firstname, u.lastname, u.open_employeeid FROM {user}

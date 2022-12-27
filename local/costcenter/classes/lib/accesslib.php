@@ -217,6 +217,19 @@ class accesslib
             return $coursecat->$value;
         }
     }
+    public static function get_costcenter_info($costcenterid, $value = null){
+        global $DB;
+        $costcenterrecordcache = \cache::make('local_costcenter', 'costcenterrecords');
+        $costcenterrecord = $costcenterrecordcache->get($costcenterid);
+        if ($costcenterrecord === false) {
+            $costcenterrecord = $DB->get_record('local_costcenter', array('id' => $costcenterid));
+        }
+        if(is_null($value) || !isset($costcenterrecord->$value)){
+            return $costcenterrecord;
+        }else{
+            return $costcenterrecord->$value;
+        }
+    }
     public static function get_user_roleswitch_costcenterpath_concatsql($matchcolumnname,$datatype){
 
         global $USER;
