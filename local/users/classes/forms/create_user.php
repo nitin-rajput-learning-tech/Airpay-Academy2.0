@@ -127,17 +127,29 @@ class create_user extends moodleform {
                 'alphanumeric', 'extraruledata',  'client');
 
             $mform->setType('open_employeeid', PARAM_RAW);
-            $open_costcenterid = $this->_customdata['org'] > 0 ?
-                             $this->_customdata['org'] : $this->_ajaxformdata['open_costcenterid'];
+            $open_costcenterid = $this->_customdata['open_costcenterid'] > 0 ?
+                             $this->_customdata['open_costcenterid'] : $this->_ajaxformdata['open_costcenterid'];
 
-            $reporting = userlib::find_supervisor_list($id);
+
             $reportingmanger = array(null => get_string('select_reportingto', 'local_users'));
-            foreach ($reporting as $report) {
-                $reportingmanger[$report->id] = $report->username;
+            if($id){
+                $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} WHERE id = (SELECT open_supervisorid FROM {user} WHERE id = :id) ", ['id' => $id]);
             }
-            $select = $mform->addElement('select', 'open_supervisorid',
+            $supervisoroptions = array(
+            'class' => 'supervisor_select',
+            'id' => 'id_supervisor_select',
+            'data-contextid' => $categorycontext->id,
+            'data-parentclass' => 'open_costcenterid_select',
+            'data-selectstring' => get_string('select_reportingto', 'local_users'),
+            'data-options' => json_encode(array('parentid' => $open_costcenterid, 'enableallfield' => false)),
+            'data-class' => 'supervisor_select',
+            'multiple' => false,
+            'ajax' => 'local_costcenter/form-options-selector',
+            'data-action' => 'user_supervisor_selector',
+            );
+            $select = $mform->addElement('autocomplete', 'open_supervisorid',
                     get_string('supervisor', 'local_users'),
-                    $reportingmanger, array('id' => 'open_supervisorid'));
+                    $reportingmanger, $supervisoroptions);
             $mform->setType('open_supervisorid', PARAM_RAW);
                 // End of if($form_status = 0) condition.
         } else if ($form_status == 1) {
