@@ -215,7 +215,7 @@ class user{
                     JOIN {user_enrolments} ue ON ue.enrolid = e.id
                     JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1
                                     AND u.deleted = 0 AND u.suspended = 0
-                    JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
+                    JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
                     JOIN {role_assignments} as ra ON ra.userid = u.id
                     JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=course.id
                     JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
