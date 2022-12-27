@@ -16,12 +16,14 @@ class userdashboard_content extends \block_userdashboard\content{
 	}
 	public static function inprogress_evaluations($filter_text='', $offset, $limit) {
         global $DB, $USER;
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+
         $sqlquery = "SELECT a.*, eu.creatorid, eu.timemodified as joinedate";
         $sql =" FROM {local_evaluations} a , {local_evaluation_users} eu
             WHERE a.plugin = 'site' AND a.id = eu.evaluationid AND eu.userid = {$USER->id}
             AND instance = 0 AND a.visible = 1
             AND a.id NOT IN (SELECT evl.id from {local_evaluations} evl, {local_evaluation_completed} lec WHERE lec.evaluation = evl.id AND lec.userid = {$USER->id})
-            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 "; 
+            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 $costcenterpathconcatsql"; 
         if(!empty($filter_text)){
             $sql .= " AND a.name LIKE '%%{$filter_text}%%' ";
         }
@@ -33,11 +35,12 @@ class userdashboard_content extends \block_userdashboard\content{
 
     public static function inprogress_evaluations_count($filter_text=''){
     	global $USER,$DB;
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     	$sql ="SELECT COUNT(a.id) FROM {local_evaluations} a , {local_evaluation_users} eu
             WHERE a.plugin = 'site' AND a.id = eu.evaluationid AND eu.userid = {$USER->id}
             AND instance = 0 AND a.visible = 1
             AND a.id NOT IN (SELECT evl.id from {local_evaluations} evl, {local_evaluation_completed} lec WHERE lec.evaluation = evl.id AND lec.userid = {$USER->id})
-            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 "; 
+            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 $costcenterpathconcatsql"; 
         if(!empty($filter_text)){
             $sql .= " AND a.name LIKE '%%{$filter_text}%%' ";
         }
@@ -47,8 +50,9 @@ class userdashboard_content extends \block_userdashboard\content{
 
     public static function completed_evaluations($filter_text='', $offset, $limit){
         global $DB,$USER;
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         $sqlquery = "SELECT a.*, eu.timemodified as joinedate";
-        $sql = " from {local_evaluations} a, {local_evaluation_completed} ec, {local_evaluation_users} eu where a.plugin = 'site' AND ec.evaluation = a.id AND ec.userid = {$USER->id} AND a.id = ec.evaluation AND eu.userid = {$USER->id} AND a.evaluationmode LIKE 'SE' AND a.deleted != 1  ";
+        $sql = " from {local_evaluations} a, {local_evaluation_completed} ec, {local_evaluation_users} eu where a.plugin = 'site' AND ec.evaluation = a.id AND ec.userid = {$USER->id} AND a.id = ec.evaluation AND eu.userid = {$USER->id} AND a.evaluationmode LIKE 'SE' AND a.deleted != 1  $costcenterpathconcatsql";
         if(!empty($filter_text)){
             $sql .= " AND a.name LIKE '%%$filter_text%%'";
         }
@@ -59,11 +63,12 @@ class userdashboard_content extends \block_userdashboard\content{
     }
     public static function completed_evaluations_count($filter_text=''){
     	global $USER, $DB;
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     	$sql = "SELECT COUNT(a.id) 
     		FROM {local_evaluations} a 
     		JOIN {local_evaluation_completed} AS ec ON  ec.evaluation = a.id
     		WHERE a.plugin = 'site' AND ec.userid = {$USER->id} 
-    		AND a.evaluationmode LIKE 'SE' AND a.deleted != 1  ";
+    		AND a.evaluationmode LIKE 'SE' AND a.deleted != 1  $costcenterpathconcatsql";
         if(!empty($filter_text)){
             $sql .= " AND a.name LIKE '%%$filter_text%%'";
         }
@@ -74,11 +79,12 @@ class userdashboard_content extends \block_userdashboard\content{
     //Enrolled Evaluation
     public static function enrolled_evaluations($filter_text='', $offset, $limit) {
         global $DB, $USER;
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         $sqlquery = "SELECT a.*, eu.creatorid, eu.timemodified as joinedate";
         $sql =" FROM {local_evaluations} a , {local_evaluation_users} eu
             WHERE a.plugin = 'site' AND a.id = eu.evaluationid AND eu.userid = {$USER->id}
             AND instance = 0 AND a.visible = 1
-            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 "; 
+            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 $costcenterpathconcatsql"; 
         if(!empty($filter_text)){
             $sql .= " AND a.name LIKE '%%{$filter_text}%%' ";
         }
@@ -90,10 +96,11 @@ class userdashboard_content extends \block_userdashboard\content{
 
     public static function enrolled_evaluations_count($filter_text=''){
         global $USER,$DB;
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         $sql ="SELECT COUNT(a.id) FROM {local_evaluations} a , {local_evaluation_users} eu
             WHERE a.plugin = 'site' AND a.id = eu.evaluationid AND eu.userid = {$USER->id}
             AND instance = 0 AND a.visible = 1
-            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 "; 
+            AND a.evaluationmode LIKE 'SE' AND a.deleted != 1 $costcenterpathconcatsql"; 
         if(!empty($filter_text)){
             $sql .= " AND a.name LIKE '%%{$filter_text}%%' ";
         }

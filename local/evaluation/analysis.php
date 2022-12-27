@@ -54,7 +54,7 @@ $PAGE->navbar->add(get_string("manageevaluation", 'local_evaluation'), new moodl
 $PAGE->navbar->add($evaluation->name);
 echo $OUTPUT->header();
 if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)|| has_capability('local/evaluation:manage_multiorganizations', $context))){
-    if($evaluation->costcenterid != $USER->open_costcenterid){
+    if($evaluation->open_path != $USER->open_path){
         print_error(get_string('cannotaccess', 'local_evaluation'));
     }
 }

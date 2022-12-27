@@ -61,7 +61,7 @@ if ($evaluation->plugin === "classroom"){
         print_error(get_string('classroom_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/classroom:manageclassroom', $context))) {
-            if($classroom->costcenter!=$USER->open_costcenterid){
+            if($classroom->open_path!=$USER->open_path){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
     }
@@ -72,17 +72,7 @@ if ($evaluation->plugin === "classroom"){
     }
     if ((has_capability('local/program:manageprogram', $context)) && (!is_siteadmin()
     )) {
-            if($program->costcenter!=$USER->open_costcenterid){
-             print_error(get_string('no_permissions', 'local_evaluation'));
-            }
-    }
-}elseif ($evaluation->plugin === "certification"){
-    $certification = $DB->get_record('local_certification', array('id' => $evaluation->instance));
-    if (empty($certification)) {
-        print_error(get_string('certification_not_found', 'local_evaluation'));
-    }
-    if ((has_capability('local/certification:managecertification', $context))) {
-            if($certification->costcenter!=$USER->open_costcenterid){
+            if($program->oprn_path!=$USER->oprn_path){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
     }
