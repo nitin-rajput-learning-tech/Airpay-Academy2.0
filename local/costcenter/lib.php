@@ -503,6 +503,130 @@ function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $
     $select = $mform->addElement('autocomplete', 'subdepartment', '', $subdepartmentslist, $options);
     $mform->setType('subdepartment', PARAM_RAW);
 }
+
+/**
+  * Description: [department4level_filter code]
+ * @param  [mform]  $mform          [form where the filetr is initiated]
+ * @param  string  $query          [description]
+ * @param  boolean $searchanywhere [description]
+ * @param  integer $page           [description]
+ * @param  integer $perpage        [description]
+ * @return [type]                  [description]
+ */
+function department4level_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage=25){
+    global $DB,$USER;
+    $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+    $department4levelslist=array();
+    $data=data_submitted();
+    $department4levelid = optional_param('department4level', '', PARAM_INT);
+    $userparam = array();
+    $departmentparam = array();
+    $params = array();
+    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 ";
+    }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
+        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid :usercostcenter)) ";
+        $userparam['usercostcenter'] = $USER->open_costcenterid;
+
+    }else{
+        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid = :userdepartment ";
+        $userparam['userdepartment'] = $USER->open_departmentid;
+    }
+    if(!empty($query)){
+        if ($searchanywhere) {
+            $department4levelslist_sql .= " AND fullname LIKE '%$query%' ";
+        } else {
+            $department4levelslist_sql .= " AND fullname LIKE '$query%' ";
+        }
+    }
+    if(isset($data->department4level)&&!empty(($data->department4level))){
+        list($departmentparamsql, $departmentparam) = $DB->get_in_or_equal($data->department4level, SQL_PARAMS_NAMED, 'param', true, false);
+        $department4levelslist_sql.=" AND id $departmentparamsql";
+    }
+    $params = array_merge($userparam, $departmentparam);
+
+    if(!empty($query)||empty($mform)){
+        $department4levelslist = $DB->get_records_sql($department4levelslist_sql, $params, $page, $perpage);
+        return $department4levelslist;
+    }
+    if((isset($data->department4level)&&!empty($data->department4level)) || !empty($department4levelid)){
+        $department4levelslist = $DB->get_records_sql_menu($department4levelslist_sql, $params, $page, $perpage);
+    }
+
+    $options = array(
+            'ajax' => 'local_courses/form-options-selector',
+            'multiple' => true,
+            'data-action' => 'department4level',
+            'data-options' => json_encode(array('id' => 0)),
+            'placeholder' => get_string('department4levelt','local_costcenter'),
+            'id' => 'department4level_filter_element'
+    );
+
+    $select = $mform->addElement('autocomplete', 'department4level', '', $department4levelslist, $options);
+    $mform->setType('department4level', PARAM_RAW);
+}
+/**
+  * Description: [department5level_filter code]
+ * @param  [mform]  $mform          [form where the filetr is initiated]
+ * @param  string  $query          [description]
+ * @param  boolean $searchanywhere [description]
+ * @param  integer $page           [description]
+ * @param  integer $perpage        [description]
+ * @return [type]                  [description]
+ */
+function department5level_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage=25){
+    global $DB,$USER;
+    $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+    $department5levelslist=array();
+    $data=data_submitted();
+    $department5levelid = optional_param('department5level', '', PARAM_INT);
+    $userparam = array();
+    $departmentparam = array();
+    $params = array();
+    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 ";
+    }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
+        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid :usercostcenter)) ";
+        $userparam['usercostcenter'] = $USER->open_costcenterid;
+
+    }else{
+        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid = :userdepartment ";
+        $userparam['userdepartment'] = $USER->open_departmentid;
+    }
+    if(!empty($query)){
+        if ($searchanywhere) {
+            $department5levelslist_sql .= " AND fullname LIKE '%$query%' ";
+        } else {
+            $department5levelslist_sql .= " AND fullname LIKE '$query%' ";
+        }
+    }
+    if(isset($data->department5level)&&!empty(($data->department5level))){
+        list($departmentparamsql, $departmentparam) = $DB->get_in_or_equal($data->department5level, SQL_PARAMS_NAMED, 'param', true, false);
+        $department5levelslist_sql.=" AND id $departmentparamsql";
+    }
+    $params = array_merge($userparam, $departmentparam);
+
+    if(!empty($query)||empty($mform)){
+        $department5levelslist = $DB->get_records_sql($department5levelslist_sql, $params, $page, $perpage);
+        return $department5levelslist;
+    }
+    if((isset($data->department5level)&&!empty($data->department5level)) || !empty($department5levelid)){
+        $department5levelslist = $DB->get_records_sql_menu($department5levelslist_sql, $params, $page, $perpage);
+    }
+
+    $options = array(
+            'ajax' => 'local_courses/form-options-selector',
+            'multiple' => true,
+            'data-action' => 'department5level',
+            'data-options' => json_encode(array('id' => 0)),
+            'placeholder' => get_string('department5levelt','local_costcenter'),
+            'id' => 'department5level_filter_element'
+    );
+
+    $select = $mform->addElement('autocomplete', 'department5level', '', $department5levelslist, $options);
+    $mform->setType('department5level', PARAM_RAW);
+}
+
 /**
  * Description: [insert costcenter instance ]
  * @param  [OBJECT] $costcenter [costcenter object]
@@ -856,7 +980,6 @@ function local_costcenter_set_costcenter_path(&$data){
     global $USER;
     $fields = local_costcenter_get_fields();
     $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
-    
     if(isset($data['open_path']) && (strpos($data['open_path'], $contextinfo[0]['costcenterpath']) === 0 || !isset($contextinfo[0]['costcenterpath']))){
         $recordedpathids = explode('/', $data['open_path']);
         foreach($fields as $levelid => $field){

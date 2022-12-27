@@ -24,15 +24,15 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 $string['pluginname'] = 'Custom Category';
-$string['manage_custom_category'] = 'Manage Custom Category';
-$string['addnewcustom_category'] = 'Create Custom Category';
+$string['manage_custom_category'] = 'Manage Category';
+$string['addnewcustom_category'] = 'Create Category';
 $string['name'] = 'Name';
 $string['shortname'] = 'Shortname';
-$string['custom_category'] = 'Custom Category';
+$string['custom_category'] = 'Category';
 $string['parent'] = 'Parent Name';
 $string['action'] = 'Action';
-$string['updatecuscategory'] = 'Update Custom Category';
+$string['updatecuscategory'] = 'Update Category';
 $string['shortnameexists'] = 'Shortname Already Exist';
-$string['deletecategory'] = 'Are you sure to delete this custom category';
+$string['deletecategory'] = 'Are you sure to delete this category';
 $string['yesdelete'] = 'Yes! Delete';
 $string['no'] = 'No';
