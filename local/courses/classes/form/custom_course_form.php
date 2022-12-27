@@ -33,6 +33,7 @@ use core_component;
 defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir.'/formslib.php');
 require_once($CFG->libdir.'/completionlib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 //require_once($CFG->libdir. '/coursecatlib.php');
 
 class custom_course_form extends moodleform {
@@ -119,17 +120,6 @@ class custom_course_form extends moodleform {
         $core_component = new core_component();
         if($formstatus == 0){
 
-
-
-            
-            
-
-
-
-
-
-
-
             if(explode(',',(array)$this->_ajaxformdata['open_subdepartment'])){
                $parentid = (int)$this->_ajaxformdata['open_subdepartment'];
             }else if(explode(',',(array)$this->_ajaxformdata['open_departmentid'])){
@@ -145,7 +135,9 @@ class custom_course_form extends moodleform {
                 $displaylist = $DB->get_records_sql_menu($categorysql);
 
              }
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,true, false, 'local_groups', $context, $multiple = false);
+
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_courses', $categorycontext, $multiple = false);
+
             $selectcatlist = array(null=>get_string('selectcat','local_courses'));
             if( isset($displaylist) && !empty($displaylist) ){
               $findisplaylist = array();

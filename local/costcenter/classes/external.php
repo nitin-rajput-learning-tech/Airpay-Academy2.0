@@ -569,12 +569,12 @@ class local_costcenter_external extends external_api {
                         //$sqlparams['parentid'] = $formoptions->parentid;
 
                         $fields      = 'SELECT id, path AS fullname';
-                        $categoriessql = " FROM {course_categories}
+                        $categoriessql = " FROM {local_custom_category}
                                          WHERE 1=1 $concatsql 
                                          AND (path like '%/{$parentcategory}/%' OR id = $parentcategory) ";
-                        if ($formoptions->id == 0) {
-                            $categoriessql .= ' AND visible = 1';
-                        }
+                        // if ($formoptions->id == 0) {
+                        //     $categoriessql .= ' AND visible = 1';
+                        // }
                         // var_dump($fields.$categoriessql);
                         // var_dump($sqlparams);
                         $categories = $DB->get_records_sql_menu($fields.$categoriessql, $sqlparams, ($page * $perpage) -0, $perpage + 1);

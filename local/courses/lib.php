@@ -1255,7 +1255,7 @@ function get_listof_courses($stable, $filterdata) {
     $chelper = new coursecat_helper();
     $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_costcenterid, c.open_identifiedas, c.visible, c.open_skill, c.open_departmentid, c.open_subdepartment FROM {course} AS c"; 
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
-        $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+        $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
                      JOIN {course_categories} AS cc ON cc.id = c.category
                      JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";    
