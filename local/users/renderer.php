@@ -68,12 +68,6 @@ class local_users_renderer extends plugin_renderer_base {
         $usersubdepartment = $organisationnames[3];
         $usercu = $organisationnames[4];
         $userterritory = $organisationnames[5];
-        // $usercostcenter = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_costcenterid));
-        // $userdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_departmentid));
-        // $usersubdepartment = $DB->get_field('local_costcenter', 'fullname', array('id' => $userOrg->open_subdepartment));
-        // list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userOrg->open_path);
-        // $usercu = $DB->get_field('local_costcenter', 'fullname', array('id' => $cu));
-        // $userterritory = $DB->get_field('local_costcenter', 'fullname', array('id' => $territory));
 
         if (!empty($userrecord->phone1)) {
                 $contact = $userrecord->phone1;

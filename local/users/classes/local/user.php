@@ -58,8 +58,6 @@ class user {
         }, $organisationdata);
         $usercostcenter = $organisationnames[1];
         $userdepartment = $organisationnames[2];
-        // $usercostcenter = $DB->get_field('local_costcenter', 'fullname',  array('id' => $userOrg->open_costcenterid));
-        // $userdepartment = $DB->get_field('local_costcenter', 'fullname',  array('id' => $userOrg->open_departmentid));
         if (!empty($userrecord->phone1)) {
             $contact = $userrecord->phone1;
         } else {
