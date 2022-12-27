@@ -754,10 +754,6 @@ function manage_users_count($stable, $filterdata) {
     }
     if (!empty($filterdata->organizations)) {
         $organizations = explode(',', $filterdata->organizations);
-        // list($relatedeorganizationssql, $relatedorganizationsparams) = $DB->get_in_or_equal($organizations,
-        //  SQL_PARAMS_NAMED, 'organizations');
-        // $params = array_merge($params, $relatedorganizationsparams);
-        // $formsql .= " AND u.open_costcenterid $relatedeorganizationssql ";
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
@@ -861,15 +857,16 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
             $useremail = substr($useremail, 0, 24).'...';
         }
         $list['email'] = !empty($useremail) ? $useremail : 'N/A';
-        $organization = $user->costcentername;
-        $dept = $user->departmentname;
+        $organisationdata = array_filter(explode('/', $user->open_path));
+        $organisationnames = array_map(function($orgid){
+            return \local_costcenter\lib\accesslib::get_costcenter_info($orgid, 'fullname');
+        }, $organisationdata);
+        $organization = $organisationnames[1];
+        $dept = $organisationnames[2];
         if (!$dept) {
             $dept = 'N/A';
         }
 
-        $sql = "SELECT u.id as idnumber_value, u.open_department, c.fullname AS departmentname
-                    from {user} as u
-                        JOIN {local_costcenter} AS c ON c.id = u.open_department";
         $orgstring = strlen($organization) > 24 ? substr($organization, 0, 24)."..." : $organization;
         $list['org'] = $organization;
         $list['orgstring'] = $orgstring;

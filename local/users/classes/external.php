@@ -253,8 +253,8 @@ class local_users_external extends external_api {
             $selectarray = array(0 => get_string('selectsupervisor', 'local_users'));
         if ($params['costcenterid'] > 0) {
             try {
-                $return = $selectarray + $DB->get_records_menu('user', array('open_costcenterid' =>
-                 $params['costcenterid']), '', "id, concat(firstname,' ',lastname)");
+                $userssql = "SELECT u.id, concat(u.firstname,' ',u.lastname) FROM {user} AS u WHERE u.deleted = 0 AND u.suspended = 0 AND concat('/',u.open_path,'/') LIKE :costcenterpath "
+                $return = $selectarray + $DB->get_records_sql_menu(, array('costcenterpath' => '%'.$params['costcenterid'].'%'));
             } catch (Exception $e) {
                 $return = $selectarray;
             }

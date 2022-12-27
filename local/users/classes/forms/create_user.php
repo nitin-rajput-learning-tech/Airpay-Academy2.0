@@ -304,11 +304,12 @@ class create_user extends moodleform {
                     $errors['username'] = get_string('unameexists', 'local_users');
                 }
             }
-            if ($user = $DB->get_record('user', array(
+            $userempsql = "SELECT u.id, u.open_path FROM {user} AS u WHERE u.open_employeeid = :open_employeeid AND concat('/',u.open_path,'/') LIKE :costcenterpathlike ";
+            if ($user = $DB->get_record_sql($userempsql, array(
                 'open_employeeid' => $employeeid,
-                'open_costcenterid' => $data['open_costcenterid']))) {
-                if ($user->open_costcenterid ==
-                    $data['open_costcenterid']) {
+                'costcenterpathlike' => '%'.$data['open_costcenterid'].'%'))) {
+                $usercostcenter = explode('/', $user->open_path)[1];
+                if ($usercostcenter == $data['open_costcenterid']) {
                     if (!isset($data['id']) ||
                     $user->id != $data['id']) {
                         $errors['open_employeeid'] = get_string('open_employeeidexist', 'local_users');

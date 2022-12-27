@@ -112,7 +112,8 @@ class users {
             $userdata->open_location = $userdata->city;
         }
         if (isset($userdata->open_costcenterid)) {
-            $existingcostcenter = $DB->get_field('user', 'open_costcenterid', array('id' => $userdata->id));
+            $existingpath = $DB->get_field('user', 'open_path', array('id' => $userdata->id));
+            $existingcostcenter = explode('/', $existingpath)[1];
             if ($userdata->open_costcenterid != $existingcostcenter) {
                 \core\session\manager::kill_user_sessions($userdata->id);
             }
