@@ -2392,7 +2392,8 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
  */
 function user_evaluations($userid, $tabstatus) {
     global $DB, $OUTPUT;
-    $sql ="SELECT a.*, eu.creatorid, eu.timemodified, eu.timecreated as joinedate from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = ? AND instance = 0 AND a.visible = 1";
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+    $sql ="SELECT a.*, eu.creatorid, eu.timemodified, eu.timecreated as joinedate from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = ? AND instance = 0 AND a.visible = 1 $costcenterpathconcatsql";
     $sql .= " ORDER BY eu.timecreated DESC";
     $evaluations = $DB->get_records_sql($sql, [$userid]);
     $data = array();
@@ -2506,9 +2507,9 @@ function costcenterwise_evaluation_count($costcenter, $department = false){
     global $USER, $DB,$CFG;
         $params = array();
         $params['costcenter'] = $costcenter;
-        $countfeedbacksql = "SELECT count(id) FROM {local_evaluations} WHERE concat('/',u.open_path,'/') LIKE :costcenter ";
+        $countfeedbacksql = "SELECT count(id) FROM {local_evaluations} WHERE concat('/',open_path,'/') LIKE :costcenter ";
         if($department){
-            $countfeedbacksql .= " AND concat('/',u.open_path,'/') LIKE  :department ";
+            $countfeedbacksql .= " AND concat('/',open_path,'/') LIKE  :department ";
             $params['department'] = $department;
         }
         $activesql = " AND visible = 1 ";
