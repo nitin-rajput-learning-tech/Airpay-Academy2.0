@@ -551,14 +551,12 @@ function xmldb_local_classroom_upgrade($oldversion)
         }
         upgrade_plugin_savepoint(true, 2022101800.04, 'local', 'classroom');
     }
-    if ($oldversion < 2022101800.06) {
+    if ($oldversion < 2022101800.05) {
         $table = new xmldb_table('local_classroom');
-        $field = new xmldb_field('open_costcenterpath', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $field1 = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
 
-        if ($dbman->field_exists($table, $field)) {
-            $dbman->rename_field($table, $field, 'open_path');
-        }
-        upgrade_plugin_savepoint(true, 2022101800.06, 'local', 'classroom');
+    if ($dbman->field_exists($table, $field1)) {
+        $dbman->rename_field($table, $field1, 'open_path');
     }
     upgrade_plugin_savepoint(true, 2022101800.05, 'local', 'classroom');
 }

@@ -384,3 +384,5 @@ $string['selectopen_department'] = 'Select Country';
 $string['selectopen_subdepartment'] = 'Select Bussiness Unit';
 $string['selectopen_level4department'] = 'Select Commercial Unit';
 $string['selectopen_level5department'] = 'Select Territory';
+$string['department4levelt'] = 'Select Commercial Unit';
+$string['department5levelt'] = 'Select Territory';
