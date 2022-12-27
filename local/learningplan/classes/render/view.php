@@ -1222,10 +1222,12 @@ class view extends plugin_renderer_base {
 			$sql .=" AND u.id IN ({$params['uname']})";
 		}
 		if (!empty($params['department'])) {
-			$sql .=" AND u.open_departmentid IN ({$params['department']})";
+			$sql .=" AND concat('/',u.open_path,'/') LIKE concat('%/',{$params['department']},'/%')";
+			// $sql .=" AND u.open_path IN ({$params['department']})";
 		}
 		if (!empty($params['organization'])) {
-			$sql .=" AND u.open_costcenterid IN ({$params['organization']})";
+			$sql .=" AND concat('/',u.open_path,'/') LIKE concat('%/',{$params['organization']},'/%')";
+			// $sql .=" AND u.open_path IN ({$params['organization']})";
 		}
 		if (!empty($params['idnumber'])) {
 			$sql .=" AND u.id IN ({$params['idnumber']})";
@@ -1273,8 +1275,9 @@ class view extends plugin_renderer_base {
 		$list=implode("','",$array);
 		$loginuser= $this->user;
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
+    	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 		if(!is_siteadmin()){
-			$siteadmin_sql=" AND u.open_costcenterid = $users->costcenter ";
+			$siteadmin_sql= $$costcenterpathconcatsql;
 		}else{
 			$siteadmin_sql="";
 		}
@@ -1317,12 +1320,12 @@ class view extends plugin_renderer_base {
 		if (!empty($params['uname'])) {
 			$sql .=" AND u.id IN ({$params['uname']})";
 		}
-		if (!empty($params['department'])) {
+		/*if (!empty($params['department'])) {
 			$sql .=" AND u.open_departmentid IN ({$params['department']})";
 		}
 		if (!empty($params['organization'])) {
 			$sql .=" AND u.open_costcenterid IN ({$params['organization']})";
-		}
+		}*/
 		if (!empty($params['idnumber'])) {
 			$sql .=" AND u.id IN ({$params['idnumber']})";
 		}

@@ -46,7 +46,7 @@ $learningplan = $DB->get_record('local_learningplan',array('id' => $planid));
 if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
     $is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
     $is_Dh = has_capability('local/costcenter:manage_owndepartments',$systemcontext);
-    if($is_Oh && $learningplan->costcenter != $USER->open_costcenterid){
+    if($is_Oh && explode('/', $learningplan->open_path)[1] != explode('/', $USER->open_path)[1]){
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
     }
     $learningplans = $DB->get_record('local_learningplan',array('id'=>$planid),$fields = 'id,costcenter,department');

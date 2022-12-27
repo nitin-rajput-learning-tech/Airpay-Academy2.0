@@ -25,11 +25,11 @@ class local_learningplan_external extends external_api {
 		$validateddata = $mform->get_data();
         $leplib = new local_learningplan\lib\lib();
         if($validateddata){
-            if(!empty($validateddata->open_costcenterid)){
-                $validateddata->costcenter = $validateddata->open_costcenterid;
-            }
+            // if(!empty($validateddata->open_costcenterid)){
+            //     $validateddata->costcenter = $validateddata->open_costcenterid;
+            // }
             if($validateddata->id > 0){
-                $get_costcenter = $DB->get_field('local_learningplan', 'costcenter', array('id' => $validateddata->id));
+                $get_costcenter = $DB->get_field('local_learningplan', 'open_path', array('id' => $validateddata->id));
                 if((($validateddata->form_status == 0) && ($get_costcenter != $validateddata->costcenter)) || $validateddata->form_status == 1){
                     local_costcenter_get_costcenter_path($validateddata);
                 }
@@ -530,7 +530,7 @@ class local_learningplan_external extends external_api {
 
                             $departments_selected = is_array($formoptions->departments_selected) ? implode(',', $formoptions->departments_selected) : $formoptions->departments_selected;
                             if($departments_selected == -1 && $formoptions->id){
-                                $costcenter = $DB->get_field('local_learningplan', 'costcenter', array('id' => $formoptions->id));
+                                $costcenter = $DB->get_field('local_learningplan', 'open_path', array('id' => $formoptions->id));
                                 $subdept_sql = "SELECT id, fullname
                                                 FROM {local_costcenter}
                                                 WHERE visible = 1 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid = :parentid ) ";

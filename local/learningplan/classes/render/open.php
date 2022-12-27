@@ -12,10 +12,9 @@ class open{
     
     public static function userdetails(){
 		 global $DB, $CFG, $OUTPUT, $USER, $PAGE;
-        $sql="SELECT u.id AS userid,u.open_costcenterid,u.open_group,u.open_departmentid,
-                u.open_subdepartment,c.fullname AS costcentername 
+        $sql="SELECT u.id AS userid,u.open_path,u.open_group,c.fullname AS costcentername 
                 FROM {user} AS u 
-                JOIN {local_costcenter} c ON c.id=u.open_costcenterid
+                JOIN {local_costcenter} c ON c.id LIKE concat('%/',u.open_path,'/%')
                 WHERE u.id=$USER->id";
 	    $userinfo=$DB->get_record_sql($sql);
         return $userinfo;
