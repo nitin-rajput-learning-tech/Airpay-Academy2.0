@@ -251,3 +251,4 @@ $string['audience_state'] = '<p> <b>State :</b> {$a}</p>';
 $string['audience_district'] = '<p> <b>District :</b> {$a}</p>';
 $string['audience_sub_disctrict'] = '<p> <b>Sub District :</b> {$a}</p>';
 $string['audience_village'] = '<p> <b>Village :</b> {$a}</p>';
+$string['open_categoryid'] = 'Category';

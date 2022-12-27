@@ -356,5 +356,14 @@ function xmldb_local_learningplan_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2022101800.07, 'local', 'learningplan');   
     }
+    if($oldversion < 2022101800.08){
+        $table = new xmldb_table('local_learningplan');
+        $field1 = new xmldb_field('open_categoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.08, 'local', 'learningplan');   
+    }
+
     return true;
 }
