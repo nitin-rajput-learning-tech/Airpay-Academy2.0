@@ -849,6 +849,36 @@ function manage_users_count($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
         }
     }
+    if (!empty($filterdata->department4level)) {
+        $subdepartments = explode(',', $filterdata->department4level);
+        // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
+        //  SQL_PARAMS_NAMED, 'subdepartment');
+        // $params = array_merge($params, $relatedsubdepartmentparams);
+        // $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
+        $subdeptsql = [];
+        foreach($subdepartments AS $department4level){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+            $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+    if (!empty($filterdata->department5level)) {
+        $subdepartments = explode(',', $filterdata->department5level);
+        // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
+        //  SQL_PARAMS_NAMED, 'subdepartment');
+        // $params = array_merge($params, $relatedsubdepartmentparams);
+        // $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
+        $subdeptsql = [];
+        foreach($subdepartments AS $department5level){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+            $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
     if (!empty($filterdata->location)) {
         $locations = explode(',', $filterdata->location);
         list($locationsql, $locationparams) = $DB->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'location');

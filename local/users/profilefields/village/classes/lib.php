@@ -28,7 +28,7 @@ class lib{
     }
     public function village_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \usersprofilefields_village\lib\accesslib())::get_module_context();
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
             $village_sql = "SELECT lv.id,lv.village_name,(SELECT ls.subdistrict_name FROM {local_subdistrict} AS ls WHERE ls.id=lv.subdistrictid) as subdistrictname FROM {local_village} as lv";
         }

@@ -28,7 +28,7 @@ $capabilities = array(
     'usersprofilefields/district:manage' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW,
         )
@@ -36,14 +36,14 @@ $capabilities = array(
     'usersprofilefields/district:create' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW
         )
     ),
     'usersprofilefields/district:view' => array(
         'captype'       => 'write',
-        'contextlevel'  => CONTEXT_SYSTEM,
+        'contextlevel'  => CONTEXT_COURSECAT,
         'archetypes' => array(
             'manager' => CAP_ALLOW,
         )
@@ -51,14 +51,14 @@ $capabilities = array(
 
    'usersprofilefields/district:edit' => array(
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
              'manager' => CAP_ALLOW,
         )
     ),
     'usersprofilefields/district:delete' => array(
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
+        'contextlevel' => CONTEXT_COURSECAT,
         'archetypes' => array(
              'manager' => CAP_ALLOW,  
         )

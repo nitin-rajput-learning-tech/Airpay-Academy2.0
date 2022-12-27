@@ -28,7 +28,7 @@ class lib{
     }
     public function district_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
-        $systemcontext = \context_system::instance();
+        $systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
             $district_sql = "SELECT ld.id,ld.district_name,(SELECT ls.states_name FROM {local_states} AS ls WHERE ls.id=ld.statesid) as statesname FROM {local_district} as ld";
         }
