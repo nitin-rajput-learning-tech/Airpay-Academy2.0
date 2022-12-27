@@ -259,7 +259,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                      $groupid = substr($groupid, 0,8).'...';
                 }
                 $orgname = $DB->get_field_sql("SELECT cc.fullname FROM {local_costcenter} AS cc 
-                JOIN {local_groups} AS lg ON  lg.costcenterid =cc.id WHERE lg.cohortid=".$cohort->id);
+                JOIN {local_groups} AS lg ON  concat('/',lg.open_path,'/') LIKE concat('%/',cc.id,'/%') AND cc.depth = 1 WHERE lg.cohortid=".$cohort->id);
                 $cohortcontext = context::instance_by_id($cohort->contextid);
                 $urlparams = array('id' => $cohort->id, 'returnurl' => $baseurl->out_as_local_url());
                 $group_members_count = $DB->count_records('cohort_members', array('cohortid'=>$cohort->id));

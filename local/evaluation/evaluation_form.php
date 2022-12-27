@@ -109,68 +109,9 @@ class evaluation_form extends moodleform {
             $mform->addElement('hidden', 'visible', $visible);
             $mform->setDefault('visible', $visible);
         }
-
         //-------------------------------------------------------------------------------
-        $mform->addElement('header', 'evaluationhdr', get_string('questionandsubmission', 'local_evaluation'));
-
-        $options=array();
-        $options[1]  = get_string('anonymous', 'local_evaluation');
-        $options[2]  = get_string('non_anonymous', 'local_evaluation');
-        $mform->addElement('select',
-                           'anonymous',
-                           get_string('anonymous_edit', 'local_evaluation'),
-                           $options);
-        if ($instance != 0) {
-            $mform->setDefault('anonymous', 2);
-        }
-
-        // check if there is existing responses to this evaluation
-        if ( $evaluation = $DB->get_record("local_evaluations", array("id"=>$id))) {
-            $completed_evaluation_count = evaluation_get_completeds_group_count($evaluation);
-        } else {
-            $completed_evaluation_count = false;
-        }
-
-        if ($completed_evaluation_count) {
-            $multiple_submit_value = $evaluation->multiple_submit ? get_string('yes') : get_string('no');
-            $mform->addElement('text', 'multiple_submit_static', get_string('multiplesubmit', 'local_evaluation'),
-            array('size'=>'4', 'disabled'=>'disabled', 'value'=>$multiple_submit_value));
-            $mform->setType('multiple_submit_static', PARAM_RAW);
-
-            $mform->addElement('hidden', 'multiple_submit', '');
-            $mform->setType('multiple_submit', PARAM_INT);
-            $mform->addHelpButton('multiple_submit_static', 'multiplesubmit', 'local_evaluation');
-        } else {
-            $mform->addElement('selectyesno',
-                               'multiple_submit',
-                               get_string('multiplesubmit', 'local_evaluation'));
-            if ($instance != 0) {
-                $mform->setDefault('multiple_submit', 1);
-            }
-            
-
-            $mform->addHelpButton('multiple_submit', 'multiplesubmit', 'local_evaluation');
-        }
-
-        $mform->addElement('selectyesno', 'email_notification', get_string('email_notification', 'local_evaluation'));
-        $mform->addHelpButton('email_notification', 'email_notification', 'local_evaluation');
-
-        //-------------------------------------------------------------------------------
-        $mform->addElement('header', 'aftersubmithdr', get_string('after_submit', 'local_evaluation'));
-
-        $mform->addElement('selectyesno', 'publish_stats', get_string('show_analysepage_after_submit', 'local_evaluation'));
-
-        $mform->addElement('editor', 'page_after_submit_editor', get_string("page_after_submit", "local_evaluation"), null,  $editoroptions);
-
-        $mform->setType('page_after_submit_editor', PARAM_RAW);
-
-        // tags
-        $mform->addElement('header', 'tagshdr', get_string('tags', 'tag'));
-        $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'evaluation', 'component' => 'local_evaluation'));
-        
-        $mform->addElement('hidden', 'id', $id);
-        $mform->setType('id', PARAM_INT);
-        $mform->disable_form_change_checker();
+        $mform->addElement('header', 'evaluationhdr', get_string('target_audiance','local_evaluation'));
+        local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_evoluation', $categorycontext, $multiple = false);
     }
 
     public function data_preprocessing(&$default_values) {
