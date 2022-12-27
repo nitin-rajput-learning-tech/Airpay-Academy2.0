@@ -746,6 +746,32 @@ class local_costcenter_external extends external_api {
                     }
                     $return = array_values(json_decode(json_encode(($accounts)), true));
                 break;
+                case 'user_supervisor_selector':
+                    $sqlparams['parentpath'] = $formoptions->parentid ? '%/'.$formoptions->parentid.'/%' : 0;
+                    if(!empty($query)){
+                        $fields = array("u.firstname", "u.lastname");
+                        foreach ($fields as $field) {
+                            $i++;
+                            $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                            $sqlparams["queryparam$i"] = "%$query%";
+                        }
+                        $sqlfields = implode(" OR ", $likesql);
+                        $concatsql .= " AND ($sqlfields) ";
+                    }
+                    $fields = "SELECT id, concat(u.firstname,' ',u.lastname) AS fullname ";
+                    $userssql = " FROM {user} AS u
+                                         WHERE u.suspended = 0 AND u.deleted = 0 $concatsql AND CONCAT('/', u.open_path,'/') LIKE :parentpath ";
+                    $users = $DB->get_records_sql($fields.$userssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                    if ($users) {
+                        $totalusers = count($users);
+                        $moreusers = $totalusers > $perpage;
+                        if ($moreusers) {
+                            // We need to discard the last record.
+                            array_pop($users);
+                        }
+                    }
+                    $return = array_values(json_decode(json_encode(($users)), true));
+                break;
             }
         }
         return json_encode($return);

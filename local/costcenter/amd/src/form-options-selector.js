@@ -139,11 +139,16 @@
                                     $(value).parent().find('.form-autocomplete-selection').html($(value).data('selectstring'));
                                 }
                             });
+                            if(depth == 1){
+                                var value = $('[data-class="supervisor_select"]');
+                                value.html('');
+                                value.parent().find('.form-autocomplete-selection').html(value.data('selectstring'));;
+                            }
                         }
                     });
                 }
             });
-            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector' || action === 'costcenter_element_selector' || action === 'custom_category_selector'){
+            if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector' || action === 'costcenter_element_selector' || action === 'custom_category_selector' || action === 'user_supervisor_selector'){
                 var parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
                 if(!(parentid == undefined && formoptions.parentid > 0)){
                     formoptions.parentid = parentid;
