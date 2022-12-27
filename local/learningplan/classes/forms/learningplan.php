@@ -26,6 +26,7 @@
 namespace local_learningplan\forms;
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
+require_once($CFG->dirroot . '/local/users/lib.php');
 use moodleform;
 use context_system;
 use costcenter;
@@ -107,6 +108,35 @@ class learningplan extends moodleform {
 			// }
 	        $mform->setType('shortname', PARAM_TEXT);
 			
+        if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
+
+            $depsql = "SELECT lcc.id,lcc.fullname
+                        FROM {local_custom_category} as lcc";
+
+            $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
+            // $parents[0] = 'Top';
+
+        }else{
+
+            $sql = "SELECT id,fullname
+                    FROM {local_custom_category} WHERE costcenterid = ?";
+            $parents = $DB->get_records_sql_menu($sql, [$USER->open_costcenterid]);
+        }
+        $parents[0] = 'Select Category';
+        asort($parents);
+        $coursetype = array(
+            'ajax' => 'local_costcenter/form-options-selector',
+            'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
+            'data-action' => 'custom_category_selector',
+            'data-options' => json_encode(array('id' => $identifiedtype)),
+            'class' => 'idparentselect',
+            'data-parentclass' => 'open_costcenterid_select',
+            'data-class' => 'idparentselect',
+            'multiple' => false,
+            );
+
+        $mform->addElement('autocomplete', 'open_categoryid', get_string('open_categoryid','local_learningplan'), $parents, $coursetype);
+        $mform->setType('open_categoryid', PARAM_INT);
 			/*$options = array();
 			$options[null] = 'Select Type';
 			$options['1'] = 'Core Courses';
