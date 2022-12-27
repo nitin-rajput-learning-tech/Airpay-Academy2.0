@@ -140,35 +140,30 @@ class search implements renderable{
                 $finalparams= '1=1' ;
             }
             $wheresql .= " AND ($finalparams)";
-
-
-            if($filters['status']){
-
-            }
-            foreach($filters AS $filtertype => $filtervalues){
-                switch($filtertype){
-                    // case 'categories':
-                    // break;
-                    case 'status':
-                        $statussql = [];
-                        foreach($filters['status'] AS $statusfilter){
-                            switch ($statusfilter) {
-                                case 'notenrolled':
-                                    $statussql[] = " llp.id not in (select distinct planid from {local_learningplan_user} where userid=$USER->id) ";
-                                break;
-                                case 'enrolled':
-                                    $wheresql .= " AND llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id)";
-                                break;
-                                case 'completed':
-                                    $statussql[] = " AND llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id AND status = 1)";
-                                break;
-                            }
+        }
+        foreach($filters AS $filtertype => $filtervalues){
+            switch($filtertype){
+                // case 'categories':
+                // break;
+                case 'status':
+                    $statussql = [];
+                    foreach($filters['status'] AS $statusfilter){
+                        switch ($statusfilter) {
+                            case 'notenrolled':
+                                $statussql[] = " llp.id not in (select distinct planid from {local_learningplan_user} where userid=$USER->id) ";
+                            break;
+                            case 'enrolled':
+                                $statussql[] = " llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id)";
+                            break;
+                            case 'completed':
+                                $statussql[] = "  llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id AND status = 1) ";
+                            break;
                         }
-                        if(!empty($statussql)){
-                            $wheresql .= " AND (".implode('OR', $statussql).' ) ';
-                        }
-                    break;
-                }
+                    }
+                    if(!empty($statussql)){
+                        $wheresql .= " AND (".implode('OR', $statussql).' ) ';
+                    }
+                break;
             }
         }
 

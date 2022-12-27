@@ -141,38 +141,38 @@ class search implements renderable{
             }
 
             $joinsql = " AND ($finalparams) ";
-            if($filters['status']){
-                $statussql = [];
-                foreach($filters['status'] AS $statusfilter){
-                    switch ($statusfilter) {
-                        case 'notenrolled':
-                            $statussql[] = " lc.id not in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1) ";
-                        break;
-                        case 'enrolled':
-                            $wheresql .= " AND lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1,3,4)";
-                        break;
-                        case 'completed':
-                            $statussql[] = " lc.id in (lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id AND completion_status = 1) AND lc.status in (1,3,4) ";
-                        break;
-                    }
-                }
-                if(!empty($statussql)){
-                    $wheresql .= " AND (".implode('OR', $statussql).' ) ';
-                }else{
-                    $wheresql .= " AND lc.status in (1,3,4)";
-                }
-            }else{
-                $wheresql .= " AND lc.status in (1,3,4)";
-            }
             $wheresql .= $joinsql;
-            // foreach($filters AS $filtertype => $filtervalues){
-            //     switch($filtertype){
-            //         case 'categories':
-            //         break;
-            //     }
-            // }
+        }
+        if($filters['status']){
+            $statussql = [];
+            foreach($filters['status'] AS $statusfilter){
+                switch ($statusfilter) {
+                    case 'notenrolled':
+                        $statussql[] = " lc.id not in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1) ";
+                    break;
+                    case 'enrolled':
+                        $wheresql .= " AND lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1,3,4)";
+                    break;
+                    case 'completed':
+                        $statussql[] = " lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id AND completion_status = 1) AND lc.status in (1,3,4) ";
+                    break;
+                }
+            }
+            if(!empty($statussql)){
+                $wheresql .= " AND (".implode('OR', $statussql)." ) ";
+            }else{
+                $wheresql .= " AND lc.status in (1,3,4) ";
+            }
+        }else{
+            $wheresql .= " AND lc.status in (1,3,4) ";
         }
 
+        // foreach($filters AS $filtertype => $filtervalues){
+        //     switch($filtertype){
+        //         case 'categories':
+        //         break;
+        //     }
+        // }
         $groupby = " GROUP BY lc.id ";
 
         $countsql = "SELECT lc.id ";

@@ -284,6 +284,7 @@ class allcourses {
     } else{
         $standard_catalogtypes = $defaultPlugins;
     }
+    asort($standard_catalogtypes);
     $sumofallrecords = 0;
     foreach($standard_catalogtypes as $key => $type){
       switch($type){
