@@ -86,7 +86,7 @@ function mass_enroll($cir, $course, $context, $data) {
         $a = new stdClass();
         if (empty ($fields))
         continue;
-        $coscenter=$DB->get_field('course','open_costcenterid',array('id'=>$course->id));
+        $coscenter=$DB->get_field('course','open_path',array('id'=>$course->id));
         $coscenter_name=$DB->get_field('local_costcenter','shortname',array('id'=>$coscenter));
 
         $string=strtolower($coscenter_name);
@@ -98,13 +98,13 @@ function mass_enroll($cir, $course, $context, $data) {
         $fields[0]= str_replace('"', '', trim($fields[0]));
         $fieldcontcat=$string.$fields[0];
         /******The below code is for the AH checking condtion if AH any user can be enrolled else if OH only his costcenter users enrol*****/
-        // $id=$DB->get_field('course','open_costcenterid',array('id'=>$course->id));
+        // $id=$DB->get_field('course','open_path',array('id'=>$course->id));
 		$categorycontext = (new \local_courses\lib\accesslib())::get_module_context($course->id);
 
         // if(!is_siteadmin()  && has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)){
         //     $sql=" ";
         // }else{
-        //     $sql=" and u.open_costcenterid=$id ";
+        //     $sql=" and u.open_path=$id ";
         // }
 
         /*First Condition To validate users*/
@@ -121,14 +121,14 @@ function mass_enroll($cir, $course, $context, $data) {
             continue;
         }
 
-        $id=$DB->get_field('course','open_costcenterid',array('id'=>$course->id));
+        $id=$DB->get_field('course','open_path',array('id'=>$course->id));
         /** The below code is for the AH checking condtion if AH any user can be enrolled else if OH only his costcenter users enrol **/
         if(!is_siteadmin()  && has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)){
 
             $sql=" ";
         }else{
 
-            $sql=" open_costcenterid=$id AND ";
+            $sql=" open_path=$id AND ";
         }
         /*Second Condition To validate users*/
         if(!$DB->record_exists_sql("select id from {user} where $sql  id=$user->id")){
@@ -425,7 +425,7 @@ function categorylist($requiredcapability = '', $excludeid = 0, $separator = ' /
 
     // Now build the array of strings to return, mind $separator and $excludeid.
     $names = array();
-    $category = $DB->get_field('local_costcenter', 'category' ,array('id' => $USER->open_costcenterid));
+    $category = $DB->get_field('local_costcenter', 'category' ,array('id' => $USER->open_path));
     foreach ($thislist as $id) {
 
         $path = preg_split('|/|', $baselist[$id]['path'], -1, PREG_SPLIT_NO_EMPTY);
@@ -535,10 +535,11 @@ function local_courses_output_fragment_custom_course_form($args){
         'returnto' => $returnto,
         'get_coursedetails'=>$get_coursedetails,
         'form_status' => $args->form_status,
-        'costcenterid' => $data->open_costcenterid
+        'costcenterid' => $data->open_path
     );
     $mform = new custom_course_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
+    local_costcenter_set_costcenter_path($formdata);
     $mform->set_data($formdata);
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata)>2) {
@@ -959,7 +960,7 @@ function categories_filter($mform){
     if(is_siteadmin()){
         $categorylist = $DB->get_records_sql_menu("SELECT id, name FROM {course_categories} ");
     } else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)) {
-        $categories = $catslib->get_categories($USER->open_costcenterid);
+        $categories = $catslib->get_categories($USER->open_path);
         list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'param', true, false);
         $categorylist = $DB->get_records_sql_menu("SELECT cc.id, cc.name FROM {course_categories} AS cc WHERE cc.id 
             $categoriessql ", $categoriesparams);
@@ -1029,8 +1030,8 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     }
     if (!is_siteadmin()) {
         $user_detail = $DB->get_record('user', array('id'=>$USER->id));
-        $sql .= " AND u.open_costcenterid = :costcenter";
-        $params['costcenter'] = $course ->open_costcenterid;
+        $sql .= " AND u.open_path = :costcenter";
+        $params['costcenter'] = $course ->open_path;
         if (has_capability('local/costcenter:manage_owndepartments',$context) AND !has_capability('local/costcenter:manage_ownorganization',$context)) {
             $sql .=" AND u.open_departmentid = :department";
             $params['department'] = $user_detail->open_departmentid;
@@ -1047,7 +1048,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
          $sql .=" AND u.open_departmentid IN ({$params['department']})";
     }
     if (!empty($params['organization'])) {
-         $sql .=" AND u.open_costcenterid IN ({$params['organization']})";
+         $sql .=" AND u.open_path IN ({$params['organization']})";
     }
     if (!empty($params['idnumber'])) {
          $sql .=" AND u.id IN ({$params['idnumber']})";
@@ -1181,7 +1182,7 @@ function costcenterwise_courses_count($costcenter,$department = false){
     global $USER, $DB,$CFG;
     $params = array();
     $params['costcenter'] = $costcenter;
-    $countcoursesql = "SELECT count(id) FROM {course} WHERE open_costcenterid = :costcenter";
+    $countcoursesql = "SELECT count(id) FROM {course} WHERE open_path = :costcenter";
     if($department){
        // $countcoursesql .= " AND open_departmentid = :department ";
         $countcoursesql .= "AND CONCAT(',',open_departmentid,',') LIKE CONCAT('%,',{$department},',%')";
@@ -1253,10 +1254,10 @@ function get_listof_courses($stable, $filterdata) {
     $filtercategoriesparams= array();
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
-    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_costcenterid, c.open_identifiedas, c.visible, c.open_skill, c.open_departmentid, c.open_subdepartment FROM {course} AS c"; 
+    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-        $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
+        $formsql = " JOIN {local_costcenter} AS co ON co.id = c.open_path
                      JOIN {course_categories} AS cc ON cc.id = c.category
                      JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";    
         
@@ -1278,36 +1279,63 @@ function get_listof_courses($stable, $filterdata) {
         $formsql .= " AND c.id $filtercoursessql";
     }
     
-    if(!empty($filterdata->departments)){
-        $departments = explode(',', $filterdata->departments);
-        // list($departmentssql, $departmentsparams) = $DB->get_in_or_equal($departments, SQL_PARAMS_NAMED, 'param', true, false);
-        $departmentsql = [];
-        foreach($departments AS $department){
-            $departmentsql[] = " concat(',',c.open_departmentid,',') LIKE '%,{$department},%' ";
-        }
-        if(!empty($departmentsql)){
-            $formsql .= " AND (".implode(' OR ', $departmentsql)." ) ";
-        }
-            // $formsql .= " AND c.open_departmentid $departmentssql";
-    
-    }
-    if(!empty($filterdata->subdepartment)){
-        $subdepartments = explode(',', $filterdata->subdepartment);
-        // list($subdepartmentssql, $subdepartmentsparams) = $DB->get_in_or_equal($subdepartments, SQL_PARAMS_NAMED, 'param', true, false);
-        // $formsql .= " AND c.open_subdepartment $subdepartmentssql";
-        $subdepartmentsql = [];
-        foreach($subdepartments AS $subdepartment){
-            $subdepartmentsql[] = " concat(',',c.open_subdepartment,',') LIKE '%,{$subdepartment},%' ";
-        }
-        if(!empty($subdepartmentsql)){
-            $formsql .= " AND (".implode(' OR ', $subdepartmentsql)." ) ";
-        }
-    }
-    
-    if(!empty($filterdata->organizations)){
+    if (!empty($filterdata->organizations)) {
         $organizations = explode(',', $filterdata->organizations);
-        list($organizationssql, $organizationsparams) = $DB->get_in_or_equal($organizations, SQL_PARAMS_NAMED, 'param', true, false);
-        $formsql .= " AND c.open_costcenterid $organizationssql";
+        $orgsql = [];
+        foreach($organizations AS $organisation){
+            $orgsql[] = " concat('/',c.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $params["organisationparam_{$organisation}"] = '%'.$organisation.'%';
+        }
+        if(!empty($orgsql)){
+            $formsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        }
+    }
+    if (!empty($filterdata->departments)) {
+        $departments = explode(',', $filterdata->departments);
+
+        $deptsql = [];
+        foreach($departments AS $department){
+            $deptsql[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
+            $params["departmentparam_{$department}"] = '%'.$department.'%';
+        }
+        if(!empty($deptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+        }
+    }
+    if (!empty($filterdata->subdepartment)) {
+        $subdepartments = explode(',', $filterdata->subdepartment);
+
+        $subdeptsql = [];
+        foreach($subdepartments AS $subdepartment){
+            $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $params["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartment.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+    if (!empty($filterdata->department4level)) {
+        $subdepartments = explode(',', $filterdata->department4level);
+
+        $subdeptsql = [];
+        foreach($subdepartments AS $department4level){
+            $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :department4levelparam_{$department4level}";
+            $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+    if (!empty($filterdata->department5level)) {
+        $subdepartments = explode(',', $filterdata->department5level);
+        $subdeptsql = [];
+        foreach($subdepartments AS $department5level){
+            $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :department5levelparam_{$department5level}";
+            $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
+        }
+        if(!empty($subdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
     }
     if(!empty($filterdata->hrmsrole)){
         $hrmsroles = explode(',', $filterdata->hrmsrole);
@@ -1333,7 +1361,7 @@ function get_listof_courses($stable, $filterdata) {
     }
 
     if (!is_siteadmin()) {
-        $userorg = array('usercostcenter'=>$USER->open_costcenterid);
+        $userorg = array('usercostcenter'=>$USER->open_path);
         $userdep = array('userdepartment' => $USER->open_departmentid);
 
      }
@@ -1349,7 +1377,7 @@ function get_listof_courses($stable, $filterdata) {
     //     }
     // }
     // if(!empty($totalcostcentercount)){
-    //      $formsql .= " AND c.open_costcenterid = $totalcostcentercount";
+    //      $formsql .= " AND c.open_path = $totalcostcentercount";
     // }
     // if(!empty($totaldepartmentcount)){
     //      $formsql .= " AND c.open_departmentid = $totaldepartmentcount";
@@ -1384,7 +1412,7 @@ function get_listof_courses($stable, $filterdata) {
                                 JOIN {user_enrolments} ue ON ue.enrolid = e.id
                                 JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 
                                                 AND u.deleted = 0 AND u.suspended = 0
-                                JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
+                                JOIN {local_costcenter} lc ON lc.id = u.open_path
                                 JOIN {role_assignments} as ra ON ra.userid = u.id
                                 JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                                 WHERE c.id = :courseid {$conditionsql} $open_path";
@@ -1400,7 +1428,7 @@ function get_listof_courses($stable, $filterdata) {
                                 JOIN {user_enrolments} ue ON ue.enrolid = e.id
                                 JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 
                                                 AND u.deleted = 0 AND u.suspended = 0
-                                JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
+                                JOIN {local_costcenter} lc ON lc.id = u.open_path
                                 JOIN {role_assignments} as ra ON ra.userid = u.id
                                 JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                                 JOIN {course_completions} as cc 
@@ -1694,11 +1722,11 @@ function get_listof_categories($stable, $filterdata) {
             $fromsql .= " AND c.parent =0 ";
         } elseif(has_capability('local/costcenter:manage_ownorganization',$categorycontext)) {
 
-        // $orgcategories = $categorylib->get_categories($USER->open_costcenterid);
+        // $orgcategories = $categorylib->get_categories($USER->open_path);
         
         // list($organizationssql, $organizationsparams) = $DB->get_in_or_equal($orgcategories, SQL_PARAMS_NAMED, 'param', true, false);
         // $fromsql .= " AND c.id $organizationssql";
-            $fromsql .= " AND c.id = (SELECT category FROM {local_costcenter} WHERE id = {$USER->open_costcenterid} )";
+            $fromsql .= " AND c.id = (SELECT category FROM {local_costcenter} WHERE id = {$USER->open_path} )";
 
         } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)) {
         // $deptcategories = $categorylib->get_categories($USER->open_departmentid);
@@ -1997,7 +2025,7 @@ function get_enrolledusers($courseid){
                         (e.enrol = 'manual' OR e.enrol = 'self') 
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             JOIN {user} u ON u.id = ue.userid AND u.deleted = 0
-            JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
+            JOIN {local_costcenter} lc ON lc.id = u.open_path
             JOIN {role_assignments} as ra ON ra.userid = u.id
             JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=c.id
             JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
@@ -2010,11 +2038,11 @@ function get_enrolledusers($courseid){
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
     
     if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $sql .= " AND c.open_costcenterid = :costcenterid ";
-        $params['costcenterid'] = $USER->open_costcenterid;
+        $sql .= " AND c.open_path = :costcenterid ";
+        $params['costcenterid'] = $USER->open_path;
     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
-        $sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
-        $params['costcenterid'] = $USER->open_costcenterid;
+        $sql .= " AND c.open_path = :costcenterid AND c.open_departmentid = :departmentid ";
+        $params['costcenterid'] = $USER->open_path;
         $params['departmentid'] = $USER->open_departmentid;
     }
 

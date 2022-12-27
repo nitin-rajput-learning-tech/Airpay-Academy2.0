@@ -25,17 +25,14 @@ function xmldb_local_courses_install(){
 	$dbman = $DB->get_manager(); // loads ddl manager and xmldb classes
 	$table = new xmldb_table('course');
 	if ($dbman->table_exists($table)) {
-		$field1 = new xmldb_field('open_costcenterid');
-        $field1->set_attributes(XMLDB_TYPE_INTEGER, '10',XMLDB_NOTNULL, null, null, null, null);
-        $dbman->add_field($table, $field1);
-        
-        $field2 = new xmldb_field('open_departmentid');
-        $field2->set_attributes(XMLDB_TYPE_CHAR, '255',XMLDB_NOTNULL, null, null, null, null);
-        $dbman->add_field($table, $field2);
 
-        $field21 = new xmldb_field('open_subdepartment');
-        $field21->set_attributes(XMLDB_TYPE_CHAR, '255',XMLDB_NOTNULL, null, null, null, null);
-        $dbman->add_field($table, $field21);
+        $field1 = new xmldb_field('open_path');
+        $field1->set_attributes(XMLDB_TYPE_CHAR, '255',XMLDB_NOTNULL, null, null, null, null);
+        $dbman->add_field($table, $field1);
+
+        $field2 = new xmldb_field('open_categoryid');
+        $field2->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $dbman->add_field($table, $field2);
 
         $field3 = new xmldb_field('open_identifiedas');
         $field3->set_attributes(XMLDB_TYPE_CHAR, '255',null, null, null, null);
@@ -265,10 +262,6 @@ function xmldb_local_courses_install(){
            if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
            }   
-        }
-        $field1 = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
-        if (!$dbman->field_exists($table, $field1)) {
-            $dbman->add_field($table, $field1);
         }
     }
 }

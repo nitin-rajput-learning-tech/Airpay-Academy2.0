@@ -80,13 +80,13 @@ class has_user_permission{
 	   if(is_siteadmin() || $courseid==1)
 	       return true;
 	   
-       $check_course_acc=$DB->get_field('course','open_costcenterid',array('id'=>$courseid)); 
+       $check_course_acc=$DB->get_field('course','open_path',array('id'=>$courseid));
 	   // $course_costcenter=$DB->get_field('local_costcenter','shortname',array('id'=>$check_course_acc));
 	 
 	 // if($course_costcenter =='ACD')
 		//   return true;
 	 
-           $usercostcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));   
+           $usercostcenter=$DB->get_field('user','open_path',array('id'=>$USER->id));
               
 		 
 		 if(!empty($usercostcenter)){
@@ -111,8 +111,8 @@ class has_user_permission{
 	   if(is_siteadmin() || has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext))
 		   return true;
            
-        $check_course_acc=$DB->get_field('user','open_costcenterid',array('id'=>$userid)); 
-	    $usercostcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+        $check_course_acc=$DB->get_field('user','open_path',array('id'=>$userid));
+	    $usercostcenter=$DB->get_field('user','open_path',array('id'=>$USER->id));
 		 
 		 if(!empty($usercostcenter) && !empty($check_course_acc) ){
                      

@@ -65,15 +65,15 @@ class courses {
         if(!is_enrolled(\context_course::instance($COURSE->id))){
             if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations', $coursecontext))) {
 
-                $user_costcenter =$DB->get_record('user',array('id'=>$userid),  $fields='id,open_costcenterid,open_departmentid');
-                $course_costcenter =$DB->get_record('course',array('id'=>$courseid),  $fields='id,open_costcenterid,open_departmentid');
+                $user_costcenter =$DB->get_record('user',array('id'=>$userid),  $fields='id,open_path,open_departmentid');
+                $course_costcenter =$DB->get_record('course',array('id'=>$courseid),  $fields='id,open_path,open_departmentid');
                 if (has_capability('local/costcenter:manage_ownorganization',$coursecontext)) {
-                    if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid)) {
+                    if (($user_costcenter->open_path != $course_costcenter->open_path)) {
                         $message = get_string('notyourorgcourse_msg','local_courses');
                         return ['status' => false, 'message' => $message];
                     }
                 }elseif (has_capability('local/costcenter:manage_owndepartments',$categorycontext)) {
-                    if (($user_costcenter->open_costcenterid != $course_costcenter->open_costcenterid) || ($user_costcenter->open_departmentid != $course_costcenter->open_departmentid)) {
+                    if (($user_costcenter->open_path != $course_costcenter->open_path) || ($user_costcenter->open_departmentid != $course_costcenter->open_departmentid)) {
                         $message = get_string('notyourdeptcourse_msg','local_courses');
                         return ['status' => false, 'message' => $message];
                     }

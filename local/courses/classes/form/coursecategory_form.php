@@ -52,7 +52,7 @@ class coursecategory_form extends moodleform {
             $options = $option+$options;
 
         }else if(has_capability('local/costcenter:manage_ownorganization',$context)){
-            $orgcategory = $DB->get_field('local_costcenter','category',array('id' => $USER->open_costcenterid));
+            $orgcategory = $DB->get_field('local_costcenter','category',array('id' => $USER->open_path));
             $options = categorylist('local/courses:manage','','/',0,$orgcategory);
         }else if(has_capability('local/costcenter:manage_owndepartments',$context)){
             $deptcategory = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_departmentid));

@@ -54,7 +54,7 @@ class general_lib{
 		}
 		$params = array('id' => $courseid);
 		$coursedata = $this->get_custom_data('*', $params);
-		if(($coursedata->open_costcenterid == $user->open_costcenterid) &&
+		if(($coursedata->open_path == $user->open_path) &&
 			($coursedata->open_departmentid == $user->open_departmentid
 				|| $coursedata->open_departmentid == 0) &&
 			($coursedata->open_subdepartment == $user->open_subdepartment
@@ -143,7 +143,7 @@ class general_lib{
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             WHERE ue.userid = {$USER->id}
             AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) ";
-            // AND course.open_costcenterid = {$USER->open_costcenterid}
+            // AND course.open_path = {$USER->open_path}
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -213,7 +213,7 @@ class general_lib{
             INNER JOIN {course_completion_criteria} ccc ON ccc.course = c.id
             WHERE c.enablecompletion = ".COMPLETION_ENABLED."  AND c.id <> :courseid
 
-            AND c.open_costcenterid = (SELECT open_costcenterid FROM {course} WHERE id = :thiscourseid) ";
+            AND c.open_path = (SELECT open_path FROM {course} WHERE id = :thiscourseid) ";
         $params = array('courseid' => $courseid, 'thiscourseid' => $courseid);
         if($query != ''){
             $coursesSql .= " AND ".$DB->sql_like('c.fullname', ":search", false);

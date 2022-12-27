@@ -107,12 +107,12 @@ class local_uploadcourse_step2_form extends tool_uploadcourse_base_form {
             $displaylist = $DB->get_records_menu('local_costcenter',  array('parentid' => 0),  $sort='',  $fields='id,fullname');
             $options[null] = 'select organization';
             $data = $options+$displaylist;
-            $mform->addElement('select', 'defaults[open_costcenterid]', get_string('organization', 'local_courses'), $data);
-            $mform->addRule('defaults[open_costcenterid]', null, 'required');
-            $mform->addHelpButton('defaults[open_costcenterid]', 'coursecategory');
+            $mform->addElement('select', 'defaults[open_path]', get_string('organization', 'local_courses'), $data);
+            $mform->addRule('defaults[open_path]', null, 'required');
+            $mform->addHelpButton('defaults[open_path]', 'coursecategory');
         } else {
-            $mform->addElement('hidden', 'defaults[open_costcenterid]');
-            $mform->setDefault('defaults[open_costcenterid]',  $USER->open_costcenterid);
+            $mform->addElement('hidden', 'defaults[open_path]');
+            $mform->setDefault('defaults[open_path]',  $USER->open_path);
         }
         
         // Hidden fields.

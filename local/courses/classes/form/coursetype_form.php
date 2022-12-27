@@ -67,9 +67,9 @@ class coursetype_form extends moodleform {
 		}
 		else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
 
-		$mform->addElement('hidden', 'orgid', null, array('id' => 'id_open_costcenterid', 'data-class' => 'organisationselect'));
+		$mform->addElement('hidden', 'orgid', null, array('id' => 'id_open_path', 'data-class' => 'organisationselect'));
 		$mform->setType('orgid', PARAM_INT);
-		$mform->setConstant('orgid', $USER->open_costcenterid);
+		$mform->setConstant('orgid', $USER->open_path);
 		}
 	
         $mform->addElement('text', 'name', get_string('course_type','local_courses'), 'maxlength="100" size="10"');

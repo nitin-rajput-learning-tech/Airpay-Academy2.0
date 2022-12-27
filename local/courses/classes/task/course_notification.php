@@ -52,10 +52,10 @@ class course_notification extends \core\task\scheduled_task{
             $userssql = "SELECT u.* FROM {user} AS u WHERE u.suspended=0 AND u.deleted=0 ";
             if($costcenterexist){
                 $notification_sql .= " AND costcenterid=:costcenterid ";
-                $userssql .= " AND u.open_costcenterid=:costcenterid";
-                $params['costcenterid'] = $course->open_costcenterid;
-                $notificationparams['costcenterid'] = $course->open_costcenterid;
-                $modulenotificationparams['costcenterid'] = $course->open_costcenterid;
+                $userssql .= " AND u.open_path=:costcenterid";
+                $params['costcenterid'] = $course->open_path;
+                $notificationparams['costcenterid'] = $course->open_path;
+                $modulenotificationparams['costcenterid'] = $course->open_path;
     			if(!empty($course->open_departmentid)){
 					$userssql .= " AND u.open_departmentid=:departmentid";
     				$params['departmentid'] = $course->open_departmentid;

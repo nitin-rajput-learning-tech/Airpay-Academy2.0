@@ -438,7 +438,7 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
             }.bind(this));
         },
         getCatlist: function() {
-            // $('#id_open_costcenterid').on('change',function(){
+            // $('#id_open_path').on('change',function(){
             //     return Str.get_strings([{
             //         key: 'selectdept',
             //         component: 'local_courses'
@@ -572,9 +572,9 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
             //         } else {
             //             var empty_subdept_template = '<option>'+s[1]+'</option>'
             //             $("#id_open_subdepartment").html(empty_subdept_template);
-            //             costcenter = $('#id_open_costcenterid').val();   
+            //             costcenter = $('#id_open_path').val();
             //             if (!costcenter) 
-            //                 costcenter = $('input[name="open_costcenterid"]').val();
+            //                 costcenter = $('input[name="open_path"]').val();
             //             if(costcenter){
             //                 var promise = Ajax.call([{
             //                 methodname: 'local_courses_departmentlist',

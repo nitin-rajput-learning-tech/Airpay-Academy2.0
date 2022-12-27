@@ -58,12 +58,12 @@ if(($action == 'courseenroll')){
         $costcenter="";
     }else{
         if($filterpage == 'course'){
-            $costcenter=$DB->get_field('course','open_costcenterid',array('id'=>$course_id));
+            $costcenter=$DB->get_field('course','open_path',array('id'=>$course_id));
             if($costcenter==1){
-                $costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id)) ;
+                $costcenter=$DB->get_field('user','open_path',array('id'=>$USER->id)) ;
             }
         }else{
-            $costcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id)) ;
+            $costcenter=$DB->get_field('user','open_path',array('id'=>$USER->id)) ;
         }
     }
     

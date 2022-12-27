@@ -191,27 +191,27 @@ class local_courses_renderer extends plugin_renderer_base {
         }
 
         if(is_siteadmin()){
-            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
+            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
                          JOIN {course_categories} AS cc ON cc.id = c.category
                          where 1 = 1 ";
         } elseif(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
+            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
                        JOIN {course_categories} AS cc ON cc.id = c.category
-                       WHERE c.open_costcenterid = :usercostcenter";
+                       WHERE c.open_path = :usercostcenter";
         } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
+            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
                        JOIN {course_categories} AS cc ON cc.id = c.category
-                       WHERE c.open_costcenterid = :usercostcenter 
+                       WHERE c.open_path = :usercostcenter
                        AND c.open_departmentid = :userdepartment";
         } else {
-            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_costcenterid
+            $joinsql .= " JOIN {local_costcenter} AS co ON co.id = c.open_path
                        JOIN {course_categories} AS cc ON cc.id = c.category
-                       WHERE c.open_costcenterid = :usercostcenter 
+                       WHERE c.open_path = :usercostcenter
                        AND c.open_departmentid = :userdepartment";
         }
 
         if (!is_siteadmin()) {
-            $userorg['usercostcenter'] = $USER->open_costcenterid;
+            $userorg['usercostcenter'] = $USER->open_path;
             $userdep['userdepartment'] = $USER->open_departmentid;
         }
 
@@ -304,7 +304,7 @@ class local_courses_renderer extends plugin_renderer_base {
                         (e.enrol = 'manual' OR e.enrol = 'self') 
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             JOIN {user} u ON u.id = ue.userid AND u.deleted = 0
-            JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
+            JOIN {local_costcenter} lc ON lc.id = u.open_path
             JOIN {role_assignments} as ra ON ra.userid = u.id
             JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=c.id
             JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
@@ -317,11 +317,11 @@ class local_courses_renderer extends plugin_renderer_base {
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($dataobj->courseid);
 
     if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-      $sql .= " AND c.open_costcenterid = :costcenterid ";
-      $params['costcenterid'] = $USER->open_costcenterid;
+      $sql .= " AND c.open_path = :costcenterid ";
+      $params['costcenterid'] = $USER->open_path;
     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
-      $sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
-      $params['costcenterid'] = $USER->open_costcenterid;
+      $sql .= " AND c.open_path = :costcenterid AND c.open_departmentid = :departmentid ";
+      $params['costcenterid'] = $USER->open_path;
       $params['departmentid'] = $USER->open_departmentid;
     }
 

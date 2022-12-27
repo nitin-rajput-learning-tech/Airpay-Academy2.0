@@ -150,12 +150,6 @@
             });
             if(action === 'costcenter_department_selector' || action === 'costcenter_subdepartment_selector' || action === 'costecenter_coursetype_selector' || action === 'costcenter_element_selector' || action === 'custom_category_selector' || action === 'user_supervisor_selector'){
                 var parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();
-
-                console.log(selector);
-
-                                console.log(parentid);
-
-
                 if(!(parentid == undefined && formoptions.parentid > 0)){
                     formoptions.parentid = parentid;
                 }

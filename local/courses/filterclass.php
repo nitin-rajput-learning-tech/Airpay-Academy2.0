@@ -76,7 +76,7 @@ Class custom_filter extends moodleform{
 			$users_emails = $DB->get_records_sql("SELECT id,email FROM {user} WHERE id  $implodeemailssql", [$implodeemailsparams]);
 		}else{
 			if($costcenter){
-				$sql = "select u.id,u.email from {user} as u where u.deleted = 0 and u.suspended = 0 and u.id>2 and u.open_costcenterid = ?"; 
+				$sql = "select u.id,u.email from {user} as u where u.deleted = 0 and u.suspended = 0 and u.id>2 and u.open_path = ?";
 				$users_emails = $DB->get_records_sql($sql, [$costcenter] );
 			}else{
 				$sql = "select u.id,u.email from {user} as u where u.deleted = 0 and u.suspended = 0 and u.id>2";
@@ -112,7 +112,7 @@ Class custom_filter extends moodleform{
 			$sql .= " AND u.idnumber IN ($implodeidnumber) ";
 		}else{
 			if($costcenter){
-				$sql .= " AND u.open_costcenterid=$costcenter"; 
+				$sql .= " AND u.open_path=$costcenter";
 			}
 			$allusers_employees['-1'] = get_string('all');
 		}
@@ -141,7 +141,7 @@ Class custom_filter extends moodleform{
 			$sql .= " AND c.id IN ($implodedepartments) ";
 		}else{
 			if($costcenter){
-				$sql .= " AND u.open_costcenterid = $costcenter";
+				$sql .= " AND u.open_path = $costcenter";
 			}
 			$allusers_emails['-1'] = get_string('all');
 		}
@@ -169,7 +169,7 @@ Class custom_filter extends moodleform{
 			$sql .= " AND c.id IN ($implodedepartments)";
 		}else{
 			if($costcenter){
-				$sql .= " AND u.open_costcenterid = $costcenter";
+				$sql .= " AND u.open_path = $costcenter";
 			}
 			$allusers_emails['-1'] = get_string('all');
 		}
@@ -200,7 +200,7 @@ Class custom_filter extends moodleform{
 			$sql .= " AND u.open_band IN ($implodebands) ";
 		}else{
 			if(isset($costcenter) && $costcenter ){
-				$sql .= " AND u.open_costcenterid=$costcenter ";
+				$sql .= " AND u.open_path=$costcenter ";
 			}
 			$allusers_emails['-1'] = get_string('all');
 		}
@@ -265,7 +265,7 @@ Class custom_filter extends moodleform{
         if($costcenter){
             $sql = "SELECT distinct(u.idnumber) as idnumber_key, u.id as idnumber_value,Concat(u.firstname,' ',u.lastname) as firstname
                 from {user} as u
-                where u.deleted = 0 and u.suspended = 0 and u.open_costcenterid={$costcenter}";
+                where u.deleted = 0 and u.suspended = 0 and u.open_path={$costcenter}";
         }else{
             $sql = "SELECT distinct(u.idnumber) as idnumber_key, u.id as idnumber_value,Concat(u.firstname,' ',u.lastname)as firstname
             from {user} as u
@@ -359,7 +359,7 @@ Class custom_filter extends moodleform{
 		}
 		
 		if($users->costcenter){
-			$sql .=' AND u.open_costcenterid IN ('.$users->costcenter.') ';
+			$sql .=' AND u.open_path IN ('.$users->costcenter.') ';
 		}else{
 			//$sql .='';
 		}
@@ -382,7 +382,7 @@ Class custom_filter extends moodleform{
 				if(is_siteadmin()){
 				$sql .=" ";
 				}else{
-				$sql .=" and u.open_costcenterid=$costcenter ";
+				$sql .=" and u.open_path=$costcenter ";
 				}
 		}
 		

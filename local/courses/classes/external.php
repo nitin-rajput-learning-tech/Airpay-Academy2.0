@@ -34,6 +34,8 @@ use \local_courses\form\custom_courseevidence_form as custom_courseevidence_form
 require_once("$CFG->libdir/externallib.php");
 require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->dirroot.'/local/courses/lib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
+
 
 class local_courses_external extends external_api {
 
@@ -129,12 +131,13 @@ class local_courses_external extends external_api {
                 $validateddata->category = $category_id;
                 $validateddata->open_departmentid = $open_departmentid;
                 $validateddata->open_subdepartment = $open_subdepartment;
+                local_costcenter_get_costcenter_path($validateddata);
                 $courseid = create_course($validateddata, $editoroptions);
                
                 // Update course tags.
                 if (isset($validateddata->tags)) {
                     $coursecontext = context_course::instance($courseid->id, MUST_EXIST);
-                    local_tags_tag::set_item_tags('local_courses', 'courses', $courseid->id, $coursecontext, $validateddata->tags, 0, $data['open_costcenterid'], $validateddata->open_departmentid );
+                    local_tags_tag::set_item_tags('local_courses', 'courses', $courseid->id, $coursecontext, $validateddata->tags, 0, $data['open_path'], $validateddata->open_departmentid );
                 }
                 if(class_exists('\block_trending_modules\lib')){
                     $trendingclass = new \block_trending_modules\lib();
@@ -159,6 +162,7 @@ class local_courses_external extends external_api {
                     }else{
                         $validateddata->open_certificateid = null;
                     }
+                     local_costcenter_get_costcenter_path($validateddata);
                     update_course($validateddata, $editoroptions);
                     if(class_exists('\block_trending_modules\lib')){
                         $trendingclass = new \block_trending_modules\lib();
@@ -466,7 +470,7 @@ class local_courses_external extends external_api {
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
             } else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-                $orgcategories = $categorylib->get_categories($USER->open_costcenterid);
+                $orgcategories = $categorylib->get_categories($USER->open_path);
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
             } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
@@ -478,7 +482,7 @@ class local_courses_external extends external_api {
             $allcategories = $DB->get_records_sql_menu($sql);
 
         } else if($flag){
-            $parentcategory = $DB->get_field('local_costcenter','category',array('id'=>$USER->open_costcenterid));
+            $parentcategory = $DB->get_field('local_costcenter','category',array('id'=>$USER->open_path));
             if(is_siteadmin())
                 $allcategories = $DB->get_records_sql_menu("select id,name from {course_categories} where visible=1");
             else
@@ -1063,7 +1067,7 @@ class local_courses_external extends external_api {
         $course->visible = $course->visible ? 0 : 1;
         $course->timemodified = time();
         $return = $DB->update_record('course', $course);
-		$costcenterid = $DB->get_field('course','open_costcenterid',array('id' => $id));
+		$costcenterid = $DB->get_field('course','open_path',array('id' => $id));
         if(class_exists('\block_trending_modules\lib')){
             $dataobject = new stdClass();
             $dataobject->update_status = True;

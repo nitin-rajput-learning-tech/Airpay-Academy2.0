@@ -62,7 +62,6 @@ class custom_course_form extends moodleform {
         $editoroptions = $this->_customdata['editoroptions'];
         $returnto = $this->_customdata['returnto'];
         $returnurl = $this->_customdata['returnurl'];
-        $costcenterid = $this->_customdata['costcenterid'];
         $coursetype =  $course->open_identifiedas;
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $formheaders = array_keys($this->formstatus);
@@ -110,6 +109,8 @@ class custom_course_form extends moodleform {
           $courseid = $id = $course->id;
         }
 
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
 
@@ -124,8 +125,8 @@ class custom_course_form extends moodleform {
                $parentid = (int)$this->_ajaxformdata['open_subdepartment'];
             }else if(explode(',',(array)$this->_ajaxformdata['open_departmentid'])){
                $parentid = (int)$this->_ajaxformdata['open_departmentid'];
-            }else if((int)$this->_ajaxformdata['open_costcenterid']){
-               $parentid = (int)$this->_ajaxformdata['open_costcenterid'];
+            }else if((int)$this->_ajaxformdata['open_path']){
+               $parentid = (int)$this->_ajaxformdata['open_path'];
             }
              
             if($parentid){
@@ -138,46 +139,31 @@ class custom_course_form extends moodleform {
 
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_courses', $categorycontext, $multiple = false);
 
-            $selectcatlist = array(null=>get_string('selectcat','local_courses'));
-            if( isset($displaylist) && !empty($displaylist) ){
-              $findisplaylist = array();
-              foreach ($displaylist as $key => $categorywise) {
-                $explodepaths = explode('/',$categorywise);
-                $countcat = count($explodepaths);
-                if($countcat > 0){
-                    $catpathnames = array();
-                    for ($i=0; $i < $countcat; $i++) { 
-                        if($i != 0){
-                            $catpathnames[$i] = $DB->get_field('course_categories','name',array('id' => $explodepaths[$i]));
-                        }
-                    }
-                    if(count($catpathnames) > 1){
-                        $findisplaylist[$key] = implode(' / ',$catpathnames);
-                    }else{
-                        $findisplaylist[$key] = $catpathnames[1];
-                    }
-                    
-                }
-              }
-              $categories = $selectcatlist+$findisplaylist;
-            }else {
-              $categories = $selectcatlist;
-            }
-            
-            $categoryoptions = array(
-              'ajax' => 'local_costcenter/form-options-selector',
-              'data-contextid' => $categorycontext->id,
-              'data-action' => 'costcenter_category_selector',
-              'data-options' => json_encode(array('id' => $parentcategory)),
-              'class' => 'categoryselect',
-              'data-parentclass' => 'subdepartmentselect',
-              'data-class' => 'categoryselect',
-              'multiple' => false,
+
+
+        $mform->addElement('hidden','category', null);
+        $mform->setConstant('category', $category);
+
+
+        $sql = "SELECT id,fullname
+                    FROM {local_custom_category} WHERE costcenterid = ?";
+        $parents = $DB->get_records_sql_menu($sql, [$org]);
+
+        $parents[0] = 'Select Category';
+        ksort($parents);
+            $categoryinfo = array(
+                'ajax' => 'local_costcenter/form-options-selector',
+                'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
+                'data-action' => 'custom_category_selector',
+                'data-options' => json_encode(array('id' => $courseid)),
+                'class' => 'idparentselect',
+                'data-parentclass' => 'open_path_select',
+                'data-class' => 'idparentselect',
+                'multiple' => false,
             );
-            $mform->addElement('autocomplete', 'category', get_string('coursecategory','local_courses'), $categories, $categoryoptions);
-            $mform->addHelpButton('category', 'coursecategory');
-            $mform->addRule('category', get_string('pleaseselectcategory','local_courses'), 'required', null, 'client');
-            $mform->setType('category', PARAM_INT);
+
+            $mform->addElement('autocomplete', 'open_categoryid', get_string('category'), $parents, $categoryinfo);
+            $mform->setType('open_categoryid', PARAM_INT);
 
 
             $mform->addElement('text','fullname', get_string('course_name','local_courses'),'maxlength="254" size="50"');
@@ -260,14 +246,14 @@ class custom_course_form extends moodleform {
                 $select = array(null => get_string('select_certificate','local_courses'));
 
                 if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
-                  if($this->_ajaxformdata['open_costcenterid'] > 0){
-                    $costcenter = (int) $this->_ajaxformdata['open_costcenterid'];
+                  if($this->_ajaxformdata['open_path'] > 0){
+                    $costcenter = (int) $this->_ajaxformdata['open_path'];
                   }else{
-                    $costcenter = $costcenterid;
+                    $costcenter = $org;
                   }
                   $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter' => $costcenter),'name', 'id,name');
                 }else{
-                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_costcenterid),'name', 'id,name');
+                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_path),'name', 'id,name');
 
                }
                 $certificateslist = $select + $cert_templates;
@@ -334,7 +320,7 @@ class custom_course_form extends moodleform {
             $mform->setType('open_cost', PARAM_INT);
             $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             $skillselect = array(0 => get_string('select_skill','local_courses'));
-            $skills = $DB->get_records_menu('local_skill',array('costcenterid' => $this->course->open_costcenterid),'','id,name');
+            $skills = $DB->get_records_menu('local_skill',array('costcenterid' => $this->course->open_path),'','id,name');
        
             if(!empty($skills)){
                 $skillselect = $skillselect+$skills;
@@ -347,7 +333,7 @@ class custom_course_form extends moodleform {
             $levelselect = array(0 => get_string('select_level','local_courses'));
             $level ="SELECT cl.name FROM {local_course_levels} as cl 
                     JOIN {local_costcenter} as c ON c.id = cl.costcenterid";
-            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $this->course->open_costcenterid),'sortorder', 'id,name');
+            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $this->course->open_path),'sortorder', 'id,name');
             if(!empty($levels)){
                 $levelselect = $levelselect+$levels;
             }
@@ -367,7 +353,7 @@ class custom_course_form extends moodleform {
                 require_once($CFG->dirroot . '/local/users/lib.php');
                 $functionname ='globaltargetaudience_elementlist';
                  if(function_exists($functionname)) {
-                    $modulecostcenter = $DB->get_field('course', 'open_costcenterid',array('id' => $courseid));
+                    $modulecostcenter = $DB->get_field('course', 'open_path',array('id' => $courseid));
 
                     $mform->modulecostcenter = $modulecostcenter;
                     $functionname($mform,array('hrmsrole','location'));
@@ -424,9 +410,9 @@ class custom_course_form extends moodleform {
         if ($data['open_enablepoints'] == 1 && empty($data['open_points'])){
             $errors['pointsArr'] = get_string('err_points', 'local_courses');
         }
-        if (isset($data['open_costcenterid']) && $data['form_status'] == 0){
-            if($data['open_costcenterid'] == 0){
-                $errors['open_costcenterid'] = get_string('pleaseselectorganization', 'local_courses');
+        if (isset($data['open_path']) && $data['form_status'] == 0){
+            if($data['open_path'] == 0){
+                $errors['open_path'] = get_string('pleaseselectorganization', 'local_courses');
             }
         }
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));

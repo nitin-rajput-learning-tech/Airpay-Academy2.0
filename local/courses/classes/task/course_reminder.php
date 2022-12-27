@@ -77,7 +77,7 @@ class course_reminder extends \core\task\scheduled_task {
         $params['starttime'] = $starttime;
         $params['endtime'] = $endtime;
         if($costcenterexist){
-            $sql .= " AND c.open_costcenterid=:costcenterid ";
+            $sql .= " AND c.open_path=:costcenterid ";
             $params['costcenterid'] = $notification->costcenterid;
         }
         $enrolcourses=$DB->get_records_sql($sql, $params);
@@ -110,7 +110,7 @@ class course_reminder extends \core\task\scheduled_task {
         $params['endtime'] = $endtime;
         $params['moduleids'] = $moduleids;
         if($costcenterexist){
-            $sql .= " AND c.open_costcenterid=:costcenterid ";
+            $sql .= " AND c.open_path=:costcenterid ";
             $params['costcenterid'] = $notification->costcenterid;
         }
         $enrolcourses=$DB->get_records_sql($sql, $params);

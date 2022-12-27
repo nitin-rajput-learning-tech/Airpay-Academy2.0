@@ -99,7 +99,7 @@ class local_uploadcourse_course
 
     /** @var array fields allowed as course data. */
     static protected $validfields = array(
-        'fullname', 'course-code', 'idnumber', 'category', 'visible', 'startdate', 'enddate', 'open_points', 'coursetype', 'open_identifiedas', 'open_costcenterid', 'open_cost', 'open_requestcourseid', 'open_coursecreator', 'open_coursecompletiondays', 'open_departmentid', 'open_subdepartment', 'file',
+        'fullname', 'course-code', 'idnumber', 'category', 'visible', 'startdate', 'enddate', 'open_points', 'coursetype', 'open_identifiedas', 'open_path', 'open_cost', 'open_requestcourseid', 'open_coursecreator', 'open_coursecompletiondays', 'open_departmentid', 'open_subdepartment', 'file',
         'summary', 'format', 'theme', 'lang', 'newsitems', 'showgrades', 'showreports', 'legacyfiles', 'maxbytes',
         'groupmode', 'groupmodeforce', 'enablecompletion', 'completiondays'
     );
@@ -579,12 +579,12 @@ class local_uploadcourse_course
         }
         $categorylib = new local_courses\catslib();
         if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext) && !isset($this->rawdata['department']) && isset($this->rawdata['category'])) {
-            $categories = $categorylib->get_categories($USER->open_costcenterid);
+            $categories = $categorylib->get_categories($USER->open_path);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if (isset($this->defaults['open_costcenterid']) && !is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext) && !empty($this->rawdata['department']) && isset($this->rawdata['category'])) {
+        } else if (isset($this->defaults['open_path']) && !is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext) && !empty($this->rawdata['department']) && isset($this->rawdata['category'])) {
             $departmentid = $DB->get_field('local_costcenter', 'id', array('shortname' => $this->rawdata['department']));
             $categories = $categorylib->get_categories($departmentid);
             if (!in_array($this->rawdata['category'], $categories)) {
@@ -592,7 +592,7 @@ class local_uploadcourse_course
                 return false;
             }
         } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)  && isset($this->rawdata['category'])) {
-            $categories = $categorylib->get_categories($USER->open_costcenterid);
+            $categories = $categorylib->get_categories($USER->open_path);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
@@ -603,8 +603,8 @@ class local_uploadcourse_course
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else if (isset($this->defaults['open_costcenterid'])){
-            $categories = $categorylib->get_categories($this->defaults['open_costcenterid']);
+        } else if (isset($this->defaults['open_path'])){
+            $categories = $categorylib->get_categories($this->defaults['open_path']);
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
