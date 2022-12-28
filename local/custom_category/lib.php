@@ -73,9 +73,11 @@ function custom_category_details($tablelimits, $filtervalues){
     $queryparam = array();
 
     if(!is_siteadmin()){
-        $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+        $costctrid=$DB->get_field('user','open_path',array('id'=>$USER->id));
+        $costcenterid = explode("/",$costctrid);
         $concatsql .= " AND lcc.costcenterid= :usercostcenter ";
-        $queryparam['usercostcenter'] = $costcenterid;
+        $queryparam['usercostcenter'] = $costcenterid[1];
+
     }
     if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
         $concatsql .= " AND (lcc.fullname LIKE :search1 )";
@@ -92,7 +94,6 @@ function custom_category_details($tablelimits, $filtervalues){
             $list=array();
             $id = $c->id;
             $parent = $DB->get_field('local_custom_category', 'fullname', array('id' => $c->parentid));
-            // print_r($parent); die;
             $list['custom_category_name'] = $c->fullname;
             $list['organisationname'] = $c->organisationname;
             $list['custom_category_id'] = $c->id;

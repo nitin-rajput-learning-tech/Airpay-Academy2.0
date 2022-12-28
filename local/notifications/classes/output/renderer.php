@@ -188,7 +188,7 @@ class renderer extends mainbase  {
             //------Adding Custom Search Filters --------//
             $output.= "<table class='email-filter-table'>
                  <tr>";
-                 if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', (new \local_notifications\lib\accesslib())::get_module_context())){
+                 if(is_siteadmin() || has_capability('local/notifications:manage', (new \local_notifications\lib\accesslib())::get_module_context())){
             $output.= "<td class='d-xs-block'>
               <select class='custom_noti_filter custom-select form-control-danger' id='1'>
                        <option value=''>".get_string('select_organization', 'local_notifications')."</option>";
@@ -274,7 +274,7 @@ class renderer extends mainbase  {
     $sender_name = $notimaster->getSenderDetails($notidetails->from_userid);
     $receiver_name = $notimaster->getReceiverDetails($notidetails->to_userid);
     $return = '';
-    if ((has_capability('local/costcenter:manage_ownorganization', $systemcontext)) || is_siteadmin()) {
+    if ((has_capability('local/notifications:manage', $systemcontext)) || is_siteadmin()) {
       $return .= "<h4>From:" . $sender_name . "</h4>";
       $return .= "<h4>To:" . $receiver_name . "</h4>";
       $return .= "<h4>Subject: " . $notidetails->subject . "</h4>";
