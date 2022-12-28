@@ -751,6 +751,7 @@ class lib
 							$event->trigger();
 							// $this->to_send_request_notification($id,$emailtype,$status,$planid);
 							$learningplaninstance = $this->db->get_record('local_learningplan', array('id' => $learnigplanuser->planid));
+							$learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path)[1];
 							$touser = \core_user::get_user($user);
 							$fromuser = \core_user::get_user(2);
 							$learningplan_notification = new \local_learningplan\notification();

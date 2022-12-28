@@ -37,6 +37,7 @@ $PAGE->set_context((new \local_notifications\lib\accesslib())::get_module_contex
 require_login();
 $lib = new \notifications();
 $notif_type = $DB->get_field('local_notification_type', 'shortname', array('id'=>$notificationid));
+$params['costcenterpath'] = '%'.$costcenterid.'%';
 switch($page){
 	case 1:		
 		$strings = $lib->get_string_identifiers($notif_type);
@@ -44,8 +45,8 @@ switch($page){
 		if($notif_type == 'course_reminder'){
 			$completiondays_sql = "SELECT open_coursecompletiondays AS value, open_coursecompletiondays AS completiondays 
             	FROM {course} WHERE id > 1 AND open_coursecompletiondays IS NOT NULL 
-            	AND open_costcenterid={$costcenterid} GROUP BY open_coursecompletiondays ";
-			$completiondays = $DB->get_records_sql_menu($completiondays_sql);
+            	AND concat('/',c.open_path,'/') LIKE :costcenterpath GROUP BY open_coursecompletiondays ";
+			$completiondays = $DB->get_records_sql_menu($completiondays_sql,$params);
 			$completiondays = array(0 => get_string('selectcompletiondays', 'local_notifications')) + $completiondays;
 		}else{
 			$completiondays = array();
@@ -54,48 +55,47 @@ switch($page){
 		switch(strtolower($notif_type_find[0])){
 			case 'course':	
 			$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
-                            WHERE  c.visible = 1 AND c.open_costcenterid = {$costcenterid} ";                    
-        	$datamoduleids = $DB->get_records_sql($sql);
+                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath ";                   
+			$datamoduleids = $DB->get_records_sql($sql,$params);
 
         	$datamodule_label="Courses";
 
 			break;	
 			case 'classroom':	
 			$sql = "SELECT c.id, c.name FROM {local_classroom} c                           
-                            WHERE  c.costcenter = {$costcenterid} ";                    
-        	$datamoduleids = $DB->get_records_sql($sql);
-
+                            WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath  ";													                  
+        	$datamoduleids = $DB->get_records_sql($sql,$params);
         	$datamodule_label="Classrooms";
 
 			break;
 			case 'onlinetest':	
 			$sql = "SELECT c.id, c.name FROM {local_onlinetests} c                           
-                            WHERE  c.visible = 1 AND c.costcenterid	= {$costcenterid} ";                    
-        	$datamoduleids = $DB->get_records_sql($sql);
+                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath ";                    
+        	$datamoduleids = $DB->get_records_sql($sql,$params);
 
         	$datamodule_label="Onlinetests";
 
 			break;
 			case 'feedback':	
 			$sql = "SELECT c.id, c.name FROM {local_evaluations} c                           
-                WHERE  c.visible = 1 AND c.costcenterid = {$costcenterid} AND deleted != 1 ";                    
-        	$datamoduleids = $DB->get_records_sql($sql);
+                WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath AND deleted != 1 ";                    
+        	$datamoduleids = $DB->get_records_sql($sql,$params);
 
         	$datamodule_label="Feedbacks";
 
 			break;	
 			case 'program':	
 			$sql = "SELECT c.id, c.name FROM {local_program} c                           
-                            WHERE  c.visible = 1 AND c.costcenter = {$costcenterid} ";                 
-        	$datamoduleids = $DB->get_records_sql($sql);
+                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath ";                 
+        	$datamoduleids = $DB->get_records_sql($sql,$params);
 
         	$datamodule_label="Programs";
 
 			break;
 			case 'learningplan':	
 			$sql = "SELECT c.id, c.name FROM {local_learningplan} c                           
-                            WHERE  c.visible = 1 AND c.costcenter = {$costcenterid} ";                    
-        	$datamoduleids = $DB->get_records_sql($sql);
+                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath ";                    
+        	$datamoduleids = $DB->get_records_sql($sql,$params);
 
         	$datamodule_label="Learning Paths";
 
@@ -107,24 +107,24 @@ switch($page){
 	break;
 	case 2:
 		$sql = "SELECT c.id, c.fullname FROM {course} c                           
-                            WHERE  c.visible = 1 AND c.open_costcenterid = {$costcenterid} ";                    
-        $courses = $DB->get_records_sql($sql);
+                            WHERE  c.visible = 1 AND  concat('/',c.open_path,'/') LIKE :costcenterpath ";                    
+        $courses = $DB->get_records_sql($sql,$params);
 		echo json_encode(['data' =>$courses]);
 		break;
 	
 	case 3:
-		$sql = "SELECT id, name FROM {local_classroom} WHERE costcenter = {$data->costcenterid} AND status=1 ";
-        $courses = $DB->get_records_sql($sql);
+		$sql = "SELECT id, name FROM {local_classroom} WHERE concat('/',open_path,'/') LIKE :costcenterpath AND status=1 ";
+        $courses = $DB->get_records_sql($sql,$params);
 		echo json_encode(['data' =>$courses]);
 		break;
 	case 4:
 		$completiondays = optional_param('completiondays', 0, PARAM_INT);
 		$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
-                    WHERE  c.visible = 1 AND c.open_costcenterid ={$costcenterid} ";
+                    WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath ";
 		if($completiondays){
 			$sql .= " AND c.open_coursecompletiondays = {$completiondays} ";                    
 		}
-		$datamoduleids = $DB->get_records_sql($sql);
+		$datamoduleids = $DB->get_records_sql($sql,$params);
 		$datamodule_label='Courses<abbr class="initialism text-danger" title="Required"><img src='.$OUTPUT->image_url("new_req").'></abbr>';
 		echo json_encode(['datamodule_label'=>$datamodule_label,'datamoduleids' =>$datamoduleids]);
 	break;
