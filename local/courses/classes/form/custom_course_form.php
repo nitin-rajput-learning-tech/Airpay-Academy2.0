@@ -137,7 +137,7 @@ class custom_course_form extends moodleform {
 
              }
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_courses', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, true, 'local_courses', $categorycontext, $multiple = false,$addrule=false);
 
 
 
