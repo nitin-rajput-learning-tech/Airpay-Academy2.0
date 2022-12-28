@@ -67,18 +67,19 @@ class search implements renderable{
             $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
             $paths = [];
             foreach($usercostcenterpaths AS $userpath){
-                $paths[] = $userpath.'%';
-                while ($userpath = rtrim($userpath,'0123456789')) {
-                    $userpath = rtrim($userpath, '/');
-                    if ($userpath === '') {
+                $userpathinfo = $userpath->costcenterpath;
+                $paths[] = $userpathinfo.'%';
+                while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                    $userpathinfo = rtrim($userpathinfo, '/');
+                    if ($userpathinfo === '') {
                       break;
                     }
-                    $paths[] = $userpath;
+                    $paths[] = $userpathinfo;
                 }
             }
             if(!empty($paths)){
                 foreach($paths AS $path){
-                    $pathsql[] = " lc.open_path LIKE {$path} ";
+                    $pathsql[] = " lc.open_path LIKE '{$path}' ";
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }
@@ -177,6 +178,7 @@ class search implements renderable{
 
         $countsql = "SELECT lc.id ";
         $finalcountquery = $countsql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
+        // print_r($finalcountquery);exit;
         $numberofrecords = sizeof($DB->get_records_sql($finalcountquery,$sqlparams));
 
         $finalsql = $csql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
