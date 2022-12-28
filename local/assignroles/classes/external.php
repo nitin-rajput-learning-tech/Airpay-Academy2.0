@@ -201,8 +201,9 @@ class local_assignroles_external extends external_api {
                         $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ";
 
                         $costcenterpath = $DB->get_field_sql($sql,array('organisationid'=>$formoptions->organisationid));
-
                         $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterpath);
+
+                        $costcenterpath = '/'.explode('/', $costcenterpath)[1];
 
                         if(is_siteadmin()){
                           $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
@@ -241,16 +242,16 @@ class local_assignroles_external extends external_api {
                     if(is_siteadmin()){
                       $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname 
                         FROM {user} AS u 
-                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser AND u.open_costcenterid = :organisationid  AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE roleid=:roleid)";  
+                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser AND CONCAT(u.open_path,'/') LIKE :organisationpathlike  AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE roleid=:roleid)";
                     }else{
 
                         $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname 
                         FROM {user} AS u 
-                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0  AND u.open_costcenterid = :organisationid AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid)";  
+                        WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0  AND CONCAT(u.open_path,'/') LIKE :organisationpathlike AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid)";
 
                     }
                     
-                    $params = array('loginuser' =>$USER->id, 'context' => $context->id, 'roleid' => $formoptions->roleid, 'organisationid' => $formoptions->organisationid);
+                    $params = array('loginuser' =>$USER->id, 'context' => $context->id, 'roleid' => $formoptions->roleid, 'organisationpathlike' => '%/'.$formoptions->organisationid.'/%');
                     if(!empty($query)){ 
                         if ($searchanywhere) {
                             $userssql .=" AND CONCAT(u.firstname,' ',u.lastname) LIKE :query ";

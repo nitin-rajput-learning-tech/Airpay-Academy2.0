@@ -29,21 +29,20 @@ class lib{
     public function states_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $states_sql = "SELECT ls.id,ls.states_name,(SELECT lc.fullname FROM {local_costcenter} AS lc WHERE lc.id=ls.territoryid) as territoryname FROM {local_states} as ls ";
-        }else{
+        $states_sql = "SELECT ls.id,ls.states_name,lc.fullname as territoryname
+                FROM {local_states} as ls
+                JOIN  {local_costcenter} AS lc ON lc.id = ls.territoryid WHERE 1 = 1 ";
+        if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
-                $territoriescond[] = " concat(lc.path,'/') LIKE concat({$contextinfo['costcenterpath']},'/%') ";
+                $territoriescond[] = " concat(lc.path,'/') LIKE '{$contextinfo['costcenterpath']}/%' ";
             }
             if(!empty($territoriescond)){
                 $consql = " AND ( ".implode(' OR ', $territoriescond)." ) ";
             }else{
                 $consql = " AND 1 <> 1 ";
             }
-            $states_sql = "SELECT ls.id,ls.states_name,(SELECT lc.fullname FROM {local_costcenter} AS lc WHERE lc.id=ls.territoryid) as territoryname FROM {local_states} as ls
-                JOIN {local_costcenter} as lc ON lc.id = ls.territoryid
-                WHERE $consql AND lc.depth = 5 ";//territory depth = 5
+            $states_sql .= "  $consql AND lc.depth = 5 ";//territory depth = 5
         }
         $states_sql .= " ORDER BY ls.states_name";
 

@@ -1195,13 +1195,13 @@ function masterdata_capabilities($active){
     if(is_siteadmin() || has_capability('usersprofilefields/states:view',$categorycontext)){
         $viewstates = true;
     }
-    if(is_siteadmin() || has_capability('usersprofilefields/viewdistrict:view',$categorycontext)){
+    if(is_siteadmin() || has_capability('usersprofilefields/district:view',$categorycontext)){
         $viewdistrict = true;
     }
-    if(is_siteadmin() || has_capability('usersprofilefields/viewsubdistrict:view',$categorycontext)){
+    if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:view',$categorycontext)){
         $viewsubdistrict = true;
     }
-    if(is_siteadmin() || has_capability('usersprofilefields/viewvillage:view',$categorycontext)){
+    if(is_siteadmin() || has_capability('usersprofilefields/village:view',$categorycontext)){
         $viewvillage = true;
     }
 
