@@ -11,7 +11,7 @@ class lib{
             $updata->id           = $formdata->id;
             $updata->states_name   = $formdata->states_name;
             $updata->code         = $formdata->code;
-            $updata->territoryid = $formdata->territoryid;
+            $updata->costcenterid = $formdata->costcenterid;
             $updata->timemodified = time();
             $updata->usermodified = $USER->id;
             $statesid = $DB->update_record('local_states', $updata);
@@ -19,7 +19,7 @@ class lib{
             $newdata = new \stdClass();
             $newdata->states_name   = $formdata->states_name;
             $newdata->code         = $formdata->code;
-            $newdata->territoryid = $formdata->territoryid;
+            $newdata->costcenterid = $formdata->costcenterid;
             $newdata->timecreated  = time();
             $newdata->usercreated  = $USER->id;
             $statesid = $DB->insert_record('local_states', $newdata);
@@ -31,18 +31,19 @@ class lib{
         $systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
         $states_sql = "SELECT ls.id,ls.states_name,lc.fullname as territoryname
                 FROM {local_states} as ls
-                JOIN  {local_costcenter} AS lc ON lc.id = ls.territoryid WHERE 1 = 1 ";
+                JOIN  {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
-                $territoriescond[] = " concat(lc.path,'/') LIKE '{$contextinfo['costcenterpath']}/%' ";
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $territoriescond[] = " lc.id = {$costcenterid} ";
             }
             if(!empty($territoriescond)){
                 $consql = " AND ( ".implode(' OR ', $territoriescond)." ) ";
             }else{
                 $consql = " AND 1 <> 1 ";
             }
-            $states_sql .= "  $consql AND lc.depth = 5 ";//territory depth = 5
+            $states_sql .= "  $consql  ";//territory depth = 5
         }
         $states_sql .= " ORDER BY ls.states_name";
 

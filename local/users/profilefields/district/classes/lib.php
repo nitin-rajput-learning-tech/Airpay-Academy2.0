@@ -31,14 +31,15 @@ class lib{
         $systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
         $district_sql = "SELECT ld.id,ld.district_name,ls.states_name as statesname FROM {local_district} as ld
             JOIN {local_states} AS ls ON ls.id=ld.statesid
-            JOIN  {local_costcenter} AS lc ON lc.id = ls.territoryid WHERE 1 ";
+            JOIN  {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
-                $territoriescond[] = " concat(lc.path,'/') LIKE '{$contextinfo['costcenterpath']}/%' ";
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $territoriescond[] = " lc.id = {$costcenterid} ";
             }
             if(!empty($territoriescond)){
-                $district_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) AND lc.depth = 5 ";
+                $district_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) ";
             }else{
                 $district_sql .= " AND 1 <> 1 ";
             }
