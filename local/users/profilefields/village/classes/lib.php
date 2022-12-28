@@ -29,8 +29,22 @@ class lib{
     public function village_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_village\lib\accesslib())::get_module_context();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $village_sql = "SELECT lv.id,lv.village_name,(SELECT ls.subdistrict_name FROM {local_subdistrict} AS ls WHERE ls.id=lv.subdistrictid) as subdistrictname FROM {local_village} as lv";
+        $village_sql = "SELECT lv.id,lv.village_name,lsd.subdistrict_name as subdistrictname
+            FROM {local_village} as lv
+            JOIN {local_subdistrict} AS lsd ON lsd.id=lv.subdistrictid
+            JOIN {local_district} AS ld ON ld.id = lsd.districtid
+            JOIN {local_states} AS ls ON ls.id=ld.statesid
+            JOIN {local_costcenter} AS lc ON lc.id = ls.territoryid WHERE 1 = 1";
+        if(!is_siteadmin()){
+            $territoriescond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $territoriescond[] = " concat(lc.path,'/') LIKE '{$contextinfo['costcenterpath']}/%' ";
+            }
+            if(!empty($territoriescond)){
+                $village_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) AND lc.depth = 5 ";
+            }else{
+                $village_sql .= " AND 1 <> 1 ";
+            }
         }
         $village_sql .= " ORDER BY lv.village_name";
 

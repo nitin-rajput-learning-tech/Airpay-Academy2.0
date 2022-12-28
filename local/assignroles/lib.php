@@ -44,14 +44,18 @@ function local_assignroles_output_fragment_new_assignrole($args)
     }
     $users = array();
     if (!is_siteadmin()) {
-        $costcentersql = "SELECT open_costcenterid FROM {user} WHERE id= :userid ";
-        $costcenterid = $DB->get_field_sql($costcentersql, array('userid' => $USER->id));
+        // $costcentersql = "SELECT open_costcenterid FROM {user} WHERE id= :userid ";
+        // $costcenterid = $DB->get_field_sql($costcentersql, array('userid' => $USER->id));
+        $costcenterid = explode('/', $USER->open_path)[1];
+
         /*$records = $DB->get_records('user', array('open_costcenterid' => $costcenterid), $sort='', $fields='username', $limitfrom=0, $limitnum=0);
         foreach ($records as $id => $record) {
            $users[] = $record->username;
         }   */     
+    }else{
+
     }
-   
+
     $mform = new local_assignroles\form\assignrole(null, array('roleid' => $roleid, 'costcenterid' => $costcenterid), 'post', '', null, true, $formdata);
     $mform->set_data($formdata);
     if (!empty($formdata)) {
