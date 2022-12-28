@@ -132,6 +132,10 @@ class local_courses_external extends external_api {
                 $validateddata->open_departmentid = $open_departmentid;
                 $validateddata->open_subdepartment = $open_subdepartment;
                 local_costcenter_get_costcenter_path($validateddata);
+
+                if($validateddata->open_path){
+                    $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
+                }
                 $courseid = create_course($validateddata, $editoroptions);
                
                 // Update course tags.
@@ -163,6 +167,11 @@ class local_courses_external extends external_api {
                         $validateddata->open_certificateid = null;
                     }
                      local_costcenter_get_costcenter_path($validateddata);
+
+                     if($validateddata->open_path){
+                        $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
+                     }
+
                     update_course($validateddata, $editoroptions);
                     if(class_exists('\block_trending_modules\lib')){
                         $trendingclass = new \block_trending_modules\lib();

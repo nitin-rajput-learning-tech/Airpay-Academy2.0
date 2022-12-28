@@ -242,26 +242,26 @@ class has_user_permission{
 	   if(is_siteadmin() || $courseid==1)
 	       return true;
 	   
-       $check_course_acc=$DB->get_field('course','open_costcenterid',array('id'=>$courseid)); 
-	   $course_costcenter=$DB->get_field('local_costcenter','shortname',array('id'=>$check_course_acc));
+  //      $check_course_acc=$DB->get_field('course','open_costcenterid',array('id'=>$courseid));
+	 //   $course_costcenter=$DB->get_field('local_costcenter','shortname',array('id'=>$check_course_acc));
 	 
-	 if($course_costcenter =='ACD')
-		  return true;
+	 // if($course_costcenter =='ACD')
+		//   return true;
 	 
-           $usercostcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));   
+  //          $usercostcenter=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
               
 		 
-		 if(!empty($usercostcenter)){
+		//  if(!empty($usercostcenter)){
 			 
-			if($check_course_acc == $usercostcenter)			 
-			      return true;
-		        else 
-                  return false;				 
+		// 	if($check_course_acc == $usercostcenter)
+		// 	      return true;
+		//         else
+  //                 return false;
 		 
-		 }
+		//  }
 		 
 		 
-		 
+		 return true;
 
            		 
         

@@ -850,33 +850,25 @@ function manage_users_count($stable, $filterdata) {
         }
     }
     if (!empty($filterdata->department4level)) {
-        $subdepartments = explode(',', $filterdata->department4level);
-        // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
-        //  SQL_PARAMS_NAMED, 'subdepartment');
-        // $params = array_merge($params, $relatedsubdepartmentparams);
-        // $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
-        $subdeptsql = [];
-        foreach($subdepartments AS $department4level){
-            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+        $depart4level = explode(',', $filterdata->department4level);
+        $department4levelsql = [];
+        foreach($depart4level AS $department4level){
+            $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
             $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
         }
-        if(!empty($subdeptsql)){
-            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        if(!empty($department4levelsql)){
+            $formsql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
         }
     }
     if (!empty($filterdata->department5level)) {
-        $subdepartments = explode(',', $filterdata->department5level);
-        // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
-        //  SQL_PARAMS_NAMED, 'subdepartment');
-        // $params = array_merge($params, $relatedsubdepartmentparams);
-        // $formsql .= " AND u.open_subdepartment $relatedesubdepartmentsql";
-        $subdeptsql = [];
-        foreach($subdepartments AS $department5level){
-            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+        $depart5level = explode(',', $filterdata->department5level);
+        $department5levelsql = [];
+        foreach($depart5level AS $department5level){
+            $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
             $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
         }
-        if(!empty($subdeptsql)){
-            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        if(!empty($department5levelsql)){
+            $formsql .= " AND ( ".implode(' OR ', $department5levelsql)." ) ";
         }
     }
     if (!empty($filterdata->location)) {
@@ -891,6 +883,24 @@ function manage_users_count($stable, $filterdata) {
         list($hrmsrolesql, $hrmsroleparams) = $DB->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'hrmsrole');
         $params = array_merge($params, $hrmsroleparams);
         $formsql .= " AND u.open_hrmsrole {$hrmsrolesql} ";
+    }
+    if (!empty($filterdata->village)) {
+        $villages = explode(',', $filterdata->village);
+        list($villagesql, $villageparam) = $DB->get_in_or_equal($villages, SQL_PARAMS_NAMED, 'village');
+        $params = array_merge($params, $villageparam);
+        $formsql .= " AND u.open_village {$villagesql} ";
+    }
+    if (!empty($filterdata->subdistrict)) {
+        $subdistricts = explode(',', $filterdata->subdistrict);
+        list($subdistrictsql, $subdistrictparam) = $DB->get_in_or_equal($subdistricts, SQL_PARAMS_NAMED, 'subdistrict');
+        $params = array_merge($params, $subdistrictparam);
+        $formsql .= " AND u.open_subdistrict {$subdistrictsql} ";
+    }
+    if (!empty($filterdata->district)) {
+        $districts = explode(',', $filterdata->district);
+        list($districtsql, $districtparam) = $DB->get_in_or_equal($districts, SQL_PARAMS_NAMED, 'district');
+        $params = array_merge($params, $districtparam);
+        $formsql .= " AND u.open_district {$districtsql} ";
     }
     if (!empty($filterdata->status)) {
         $status = explode(',', $filterdata->status);

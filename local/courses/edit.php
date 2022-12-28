@@ -5,6 +5,8 @@ global $CFG,$DB,$OUTPUT,$PAGE,$USER;
 
 require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->dirroot.'/local/courses/course_form.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
+
 
 $id = optional_param('id', 0, PARAM_INT); // Course id.
 $categoryid = optional_param('category', 0, PARAM_INT); // Course category - can be changed in edit form.
@@ -91,6 +93,7 @@ $get_coursedetails=$DB->get_record('course',array('id'=>$course->id));
     }
 }
 // First create the form.
+local_costcenter_set_costcenter_path($course);
 $args = array(
     'course' => $course,
     'category' => $category,
@@ -114,6 +117,7 @@ if ($editform->is_cancelled()) {
         // In creating the course.
         $data->open_identifiedas=implode(',',$data->open_identifiedas);
         $data->category = $category_id;
+        local_costcenter_get_costcenter_path($data);
         $course = create_course($data, $editoroptions);
 
         // Get the context of the newly created course.
@@ -133,6 +137,7 @@ if ($editform->is_cancelled()) {
         $code=implode(',',$data->open_identifiedas);
         $data->open_identifiedas=implode(',',$data->open_identifiedas);
         $data->category = $category_id;
+        local_costcenter_get_costcenter_path($data);
         update_course($data, $editoroptions);
         $course_detail = new stdClass();
         $sql = $DB->get_field('user','firstname', array('id' =>$USER->id));
