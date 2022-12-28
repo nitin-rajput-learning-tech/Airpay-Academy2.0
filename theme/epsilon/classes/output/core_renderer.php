@@ -1066,16 +1066,25 @@ class core_renderer extends \core_renderer {
 
 
             $depths = [];
-            $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
-                            $categoryids = array_values(array_filter((explode('/', $role->path))));
-                            $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
-                            if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
-                                $depths['depth'][] = $role->depth.'_'.$categoryids[0];
-                                $role->categoryname = $category;
-                                $role->highest_catid = $categoryids[0];
-                                return $role;
-                            }
-                        }, $roles)));
+            array_values(array_filter(array_walk($roles, function(&$role, $rolekey)use(&$depths, &$roles){
+                $categoryids = array_values(array_filter((explode('/', $role->path))));
+                $category = \local_costcenter\lib\accesslib::get_category_info(end($categoryids), 'name');
+
+                if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
+                    $depths['depth'][$rolekey] = $role->depth.'_'.$categoryids[0];
+                    $role->categoryname = $category;
+                    $role->highest_catid = $categoryids[0];
+                    $roles[$rolekey] = $role;
+                }else{
+                    if($prevkey = array_search($role->depth.'_'.$categoryids[0], $depths['depth'])){
+                        $prevrole = $roles[$prevkey];
+                        $prevrole->categoryname .= ", ".$category;
+                        $roles[$prevkey] = $prevrole;
+                        unset($roles[$rolekey]);
+                    }
+                }
+            })));
+            $user_ra_array = $roles;
 
             if(is_array($user_ra_array)){
                 $highest_roleinfo = max($user_ra_array);

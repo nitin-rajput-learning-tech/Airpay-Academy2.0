@@ -933,8 +933,14 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
 
+            if($addrule==true){
 
-            $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
+                $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
+
+            }else{
+
+                $enableallfield = $allenable;
+            }
 
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
