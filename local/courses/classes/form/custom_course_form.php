@@ -43,7 +43,8 @@ class custom_course_form extends moodleform {
     public function __construct($action = null, $customdata = null, $method = 'post', $target = '', $attributes = null, $editable = true, $formdata = null) {
         $this->formstatus = array(
             'manage_course' => get_string('manage_course', 'local_courses'),
-            'other_details' => get_string('courseother_details', 'local_courses')
+            'other_details' => get_string('courseother_details', 'local_courses'),
+            'target_audience' => get_string('target_audience', 'local_users'),
         );
         parent::__construct($action, $customdata, $method, $target, $attributes, $editable, $formdata);
     }
@@ -137,20 +138,26 @@ class custom_course_form extends moodleform {
 
              }
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, true, 'local_courses', $categorycontext, $multiple = false,$addrule=false);
-
-
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_courses', $categorycontext, $multiple = false);
 
         $mform->addElement('hidden','category', null);
         $mform->setConstant('category', $category);
 
 
-        $sql = "SELECT id,fullname
-                    FROM {local_custom_category} WHERE costcenterid = ?";
-        $parents = $DB->get_records_sql_menu($sql, [$org]);
+            if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
 
-        $parents[0] = 'Select Category';
-        ksort($parents);
+            $depsql = "SELECT lcc.id,lcc.fullname
+                        FROM {local_custom_category} as lcc";
+
+            $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
+            }else{
+                $sql = "SELECT id,fullname
+                        FROM {local_custom_category} WHERE costcenterid = ?";
+                $parents = $DB->get_records_sql_menu($sql, [$org]);
+            }
+
+            $parents[0] = 'Select Category';
+            ksort($parents);
             $categoryinfo = array(
                 'ajax' => 'local_costcenter/form-options-selector',
                 'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
@@ -359,6 +366,8 @@ class custom_course_form extends moodleform {
             //         $functionname($mform,array('hrmsrole','location'));
             //     }
             // }
+        }else if ($formstatus == 2) {
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_courses', $categorycontext, $multiple = false);
         }
         $mform->closeHeaderBefore('buttonar');
 		$mform->disable_form_change_checker();

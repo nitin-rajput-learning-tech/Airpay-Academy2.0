@@ -93,7 +93,7 @@ $get_coursedetails=$DB->get_record('course',array('id'=>$course->id));
     }
 }
 // First create the form.
-local_costcenter_set_costcenter_path($course);
+local_costcenter_set_costcenter_path((array)$course);
 $args = array(
     'course' => $course,
     'category' => $category,
