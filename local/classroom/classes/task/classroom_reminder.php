@@ -37,6 +37,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $get_type_notifications = $DB->get_records_sql($get_type_sql, $params);
         $moduleids = array(0);
         foreach($get_type_notifications AS $notification){
+            $notification->costcenterid = explode('/',$notification->open_path)[1];
             $moduleids[] = $notification->moduleid;
             $this->send_reminder_notification($notification, $type, $costcenterexist);
         }
@@ -45,6 +46,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $global_notifications = $DB->get_records_sql($globalnotification_sql, $params);
         $moduleids = implode(',', $moduleids);
         foreach($global_notifications AS $notification){
+            $notification->costcenterid = explode('/',$notification->open_path)[1];
             $this->send_global_reminder_notification($notification, $type, $moduleids, $costcenterexist);
         }
 	}

@@ -23,6 +23,7 @@
 namespace local_notifications\forms;
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot .'/local/notifications/lib.php');
+require_once($CFG->dirroot .'/local/costcenter/lib.php');
 use moodleform;
 use stdClass;
 class notification_form extends moodleform {
@@ -51,28 +52,9 @@ class notification_form extends moodleform {
 		}else{
 			$formdata = new stdClass();
 		}
-        if($form_status == 0){        
-            if (is_siteadmin($USER->id)) {
-    			$departments = $DB->get_records_sql_menu("SELECT * FROM {local_costcenter} WHERE visible = 1 AND parentid = 0");
-    			$departments = $departments;
-    			
-    			$mform->addElement('select', 'costcenterid', get_string('organization', 'local_users'), $departments);
-    			$mform->setType('costcenterid', PARAM_INT);
-    			$mform->addRule('costcenterid', null, 'required', null, 'client');
-    		} elseif(!is_siteadmin()  && has_capability('local/costcenter:assign_multiple_departments_manage',$context)){
-    			$user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-    			$departments = $DB->get_records_sql_menu("SELECT * FROM {local_costcenter} WHERE visible = 1 AND id = $user_dept");
-    			$departments = $departments;
-    			$mform->addElement('select', 'costcenterid', get_string('organization', 'local_users'), $departments);
-    			$mform->setType('costcenterid', PARAM_INT);
-    			$mform->setConstant('costcenterid', $user_dept);
-    		}else{
-    			$user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-    			$mform->addElement('hidden', 'costcenterid', null, array('id' => 'id_costcenterid'));
-    			$mform->setType('costcenterid', PARAM_INT);
-    			$mform->setConstant('costcenterid', $user_dept);
-    		}
-            
+		$categorycontext = (new \local_notifications\lib\accesslib())::get_module_context();
+        if($form_status == 0){          
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_users', $categorycontext, $multiple = false);
             $notification_type = array();
             $select = array();
             $select[null] = get_string('select_opt', 'local_notifications');
@@ -88,7 +70,7 @@ class notification_form extends moodleform {
             $mform->addElement('selectgroups', 'notificationid', get_string('notification_type', 'local_notifications'), $notification_type,array());
             $mform->addRule('notificationid', null, 'required', null, 'client');  
             $mform->addHelpButton('notificationid','notification_help','local_notifications');
-      $coursereminder = $DB->get_field('local_notification_type', 'id', array('shortname' => 'course_reminder'));
+      		$coursereminder = $DB->get_field('local_notification_type', 'id', array('shortname' => 'course_reminder'));
             if(($this->_ajaxformdata['costcenterid'] && $this->_ajaxformdata['notificationid'])||$formdata->notificationid == $coursereminder){
             	if($this->_ajaxformdata['costcenterid']){
             		$costcenterid = $this->_ajaxformdata['costcenterid'];
@@ -133,65 +115,8 @@ class notification_form extends moodleform {
 				$data = $this->get_datamoduleids_labels($notifyid->moduletype, $notifyid->costcenterid);
 				$datamoduleids = $data['datamoduleids'];
 				$datamodule_label = $data['datamodule_label'];
-				$strings = $lib->get_string_identifiers($notif_type);
+				$strings = $lib->get_string_identifiers($notif_type);				
 				
-				// switch(strtolower($notifyid->moduletype)){
-				// 	case 'course':	
-				// 		$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
-				// 		WHERE  c.visible = 1 AND c.open_costcenterid =$notifyid->costcenterid ";                    
-				// 		$datamoduleids = $DB->get_records_sql_menu($sql);
-						
-				// 		$datamodule_label="Courses";
-						
-				// 	break;	
-				// 	case 'classroom':	
-				// 		$sql = "SELECT c.id, c.name FROM {local_classroom} c                           
-				// 		WHERE  c.costcenter =$notifyid->costcenterid ";                    
-				// 		$datamoduleids = $DB->get_records_sql_menu($sql);
-						
-				// 		$datamodule_label="Classrooms";
-					
-				// 	break;
-				// 	case 'onlinetest':	
-				// 		$sql = "SELECT c.id, c.name FROM {local_onlinetests} c                           
-				// 		WHERE  c.visible = 1 AND c.costcenterid	 =$notifyid->costcenterid ";                    
-				// 		$datamoduleids = $DB->get_records_sql_menu($sql);
-						
-				// 		$datamodule_label="Onlinetests";
-					
-				// 	break;
-				// 	case 'feedback':	
-				// 		$sql = "SELECT c.id, c.name FROM {local_evaluations} c                           
-				// 		WHERE  c.visible = 1 AND c.costcenterid =$notifyid->costcenterid ";                    
-				// 		$datamoduleids = $DB->get_records_sql_menu($sql);
-						
-				// 		$datamodule_label="Feedbacks";
-					
-				// 	break;	
-				// 	case 'program':	
-				// 		$sql = "SELECT c.id, c.name FROM {local_program} c                           
-				// 		WHERE  c.visible = 1 AND c.costcenter =$notifyid->costcenterid ";                 
-				// 		$datamoduleids = $DB->get_records_sql_menu($sql);
-						
-				// 		$datamodule_label="Programs";
-						
-				// 	break;
-				// 	case 'learningplan':	
-				// 		$sql = "SELECT c.id, c.name FROM {local_learningplan} c                           
-				// 		WHERE  c.visible = 1 AND c.costcenter =$notifyid->costcenterid ";                    
-				// 		$datamoduleids = $DB->get_records_sql_menu($sql);
-						
-				// 		$datamodule_label="Learningplans";
-				// 	break;
-				// 	case 'certification':	
-				// 		$sql = "SELECT c.id, c.name FROM {local_certification} c                           
-				// 		WHERE  c.visible = 1 AND c.costcenter =$notifyid->costcenterid ";                
-				// 		$datamoduleids = $DB->get_records_sql_menu($sql);
-						
-				// 		$datamodule_label="Certifications";
-					
-				// 	break;
-				// }
     		}else if($notification_selected && $organization_selected){
     			$notif_type = $DB->get_field('local_notification_type', 'shortname', array('id'=>$notification_selected));
     			$notif_type_find = explode('_',$notif_type);
@@ -199,12 +124,7 @@ class notification_form extends moodleform {
 				$data = $this->get_datamoduleids_labels($moduletype, $organization_selected);
 				$datamoduleids = $data['datamoduleids'];
 				$datamodule_label = $data['datamodule_label'];
-				// print_object($data);
-    // 			list($datamoduleids, $datamodule_label) = $this->get_datamoduleids_labels($moduletype, $organization_selected);
-    // 			print_object($moduletype);
-    // 			print_object($organization_selected);
-    // 			print_object($datamoduleids);
-    // 			print_object($datamodule_label);
+				
 				$strings = $lib->get_string_identifiers($notif_type);
     		}
     		if(strtolower($notifyid->moduletype)!='request'){
@@ -265,11 +185,12 @@ class notification_form extends moodleform {
     }
     public function get_datamoduleids_labels($moduletype, $costcenterid){
     	global $DB;
+		$params['costcenterpath'] = '%'.$costcenterid.'%';
     	switch(strtolower($moduletype)){
 			case 'course':	
 				$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
-				WHERE  c.visible = 1 AND c.open_costcenterid = {$costcenterid} ";                    
-				$datamoduleids = $DB->get_records_sql_menu($sql);
+				WHERE  c.visible = 1 AND  concat('/',c.open_path,'/') LIKE :costcenterpath  ";                    
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Courses";
                                 $datamodule_label=get_string('form_courses', 'local_notifications');
@@ -277,8 +198,8 @@ class notification_form extends moodleform {
 			break;	
 			case 'classroom':	
 				$sql = "SELECT c.id, c.name FROM {local_classroom} c                           
-				WHERE  c.costcenter = {$costcenterid} ";                    
-				$datamoduleids = $DB->get_records_sql_menu($sql);
+				WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath  ";                    
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Classrooms";
                                 $datamodule_label=get_string('form_classrooms', 'local_notifications');
@@ -286,8 +207,8 @@ class notification_form extends moodleform {
 			break;
 			case 'onlinetest':	
 				$sql = "SELECT c.id, c.name FROM {local_onlinetests} c                           
-				WHERE  c.visible = 1 AND c.costcenterid	 = {$costcenterid} ";                    
-				$datamoduleids = $DB->get_records_sql_menu($sql);
+				WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath  ";                    
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Onlinetests";
                                 $datamodule_label=get_string('form_onlinetests', 'local_notifications');
@@ -295,8 +216,8 @@ class notification_form extends moodleform {
 			break;
 			case 'feedback':	
 				$sql = "SELECT c.id, c.name FROM {local_evaluations} c                           
-				WHERE  c.visible = 1 AND c.costcenterid = {$costcenterid} AND deleted != 1 ";
-				$datamoduleids = $DB->get_records_sql_menu($sql);
+				WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath  AND deleted != 1 ";
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Feedbacks";
                                 $datamodule_label=get_string('form_feedbacks', 'local_notifications');
@@ -304,8 +225,8 @@ class notification_form extends moodleform {
 			break;	
 			case 'program':	
 				$sql = "SELECT c.id, c.name FROM {local_program} c                           
-				WHERE  c.visible = 1 AND c.costcenter = {$costcenterid} ";                 
-				$datamoduleids = $DB->get_records_sql_menu($sql);
+				WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath } ";                 
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Programs";
                                 $datamodule_label=get_string('form_programs', 'local_notifications');
@@ -313,16 +234,16 @@ class notification_form extends moodleform {
 			break;
 			case 'learningplan':	
 				$sql = "SELECT c.id, c.name FROM {local_learningplan} c                           
-				WHERE  c.visible = 1 AND c.costcenter = {$costcenterid} ";                    
-				$datamoduleids = $DB->get_records_sql_menu($sql);
+				WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath  ";                    
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Learning Paths";
                                 $datamodule_label=get_string('form_learning_paths', 'local_notifications');
 			break;
 			case 'certification':	
 				$sql = "SELECT c.id, c.name FROM {local_certification} c                           
-				WHERE  c.visible = 1 AND c.costcenter = {$costcenterid} ";                
-				$datamoduleids = $DB->get_records_sql_menu($sql);
+				WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath  ";                
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Certifications";
                                 $datamodule_label=get_string('form_certifications', 'local_notifications');

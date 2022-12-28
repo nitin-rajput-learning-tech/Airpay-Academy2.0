@@ -902,6 +902,12 @@ function manage_users_count($stable, $filterdata) {
         $params = array_merge($params, $districtparam);
         $formsql .= " AND u.open_district {$districtsql} ";
     }
+    if (!empty($filterdata->states)) {
+        $state = explode(',', $filterdata->states);
+        list($statessql, $statesparam) = $DB->get_in_or_equal($state, SQL_PARAMS_NAMED, 'states');
+        $params = array_merge($params, $statesparam);
+        $formsql .= " AND u.open_states {$statessql} ";
+    }
     if (!empty($filterdata->status)) {
         $status = explode(',', $filterdata->status);
         if (!(in_array('active', $status) && in_array('inactive', $status))) {

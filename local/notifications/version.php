@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2022101800.01; // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version = 2022101800.02; // The current plugin version (Date: YYYYMMDDXX)
 $plugin->component = 'local_notifications'; // Full name of the plugin (used for diagnostics).
 $plugin->maturity = MATURITY_STABLE;
 $plugin->release = '3.3.330';

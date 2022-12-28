@@ -900,7 +900,7 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
-function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false){
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false,$addrule=true){
     global $DB, $USER;
     $depth = $USER->access['currentroleinfo']['depth'];
     $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
@@ -932,7 +932,16 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->addElement('hidden', $fields[$level], null, $levelelementoptions);
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
-            $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
+
+            if($addrule==true){
+
+                $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
+
+            }else{
+
+                $enableallfield = $allenable;
+            }
+
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
@@ -957,7 +966,10 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             }
             $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
             $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
-            $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+            if($addrule==true){
+
+                $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+            }
             $firstelement = false;
         }
         $mform->setType($fields[$level], PARAM_RAW);
