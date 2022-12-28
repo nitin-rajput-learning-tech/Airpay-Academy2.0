@@ -119,7 +119,7 @@ class learningplan extends moodleform {
         }else{
 
             $sql = "SELECT id,fullname
-                    FROM {local_custom_category} WHERE CONCAT('/',open_path,'/') = ?";
+                    FROM {local_custom_category} WHERE costcenterid = ?";
             $userpath = $DB->get_field('user', 'open_path', array('id' => $USER->id));
             $parents = $DB->get_records_sql_menu($sql, [explode('/', $userpath)[1]]);
         }
@@ -358,18 +358,16 @@ class learningplan extends moodleform {
 				$mform->addHelpButton('subdepartment', 'subdepartment','local_users');
             }
 			
-			$users_plugin_exist = $core_component::get_plugin_directory('local','users');
-			if ($users_plugin_exist) {
-				require_once($CFG->dirroot . '/local/users/lib.php');
-				$functionname ='globaltargetaudience_elementlist';
-				if(function_exists($functionname)) {
-				$modulecostcenter = $DB->get_field('local_learningplan', 'costcenter',array('id' => $id));
-
-                    $mform->modulecostcenter = $modulecostcenter;
-
-                    $functionname($mform,array('group','hrmsrole','designation','location'));
-                }
-			}
+			// $users_plugin_exist = $core_component::get_plugin_directory('local','users');
+			// if ($users_plugin_exist) {
+			// require_once($CFG->dirroot . '/local/users/lib.php');
+			// $functionname ='globaltargetaudience_elementlist';
+			// 	if(function_exists($functionname)) {
+			// 		$modulecostcenter = $DB->get_field('local_learningplan', 'costcenter',array('id' => $id));
+			// 		$mform->modulecostcenter = $modulecostcenter;
+			// 		$functionname($mform,array('group','hrmsrole','designation','location'));
+			// 	}
+			// }
 
 			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
     	}
