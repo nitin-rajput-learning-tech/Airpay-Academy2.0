@@ -1651,6 +1651,23 @@ function get_listof_courses($stable, $filterdata) {
              }   
 
 
+        $courseslist[$count]=array_merge($courseslist[$count],array(
+                                    "actions"=>(((has_capability('local/courses:enrol',
+                                $categorycontext)|| has_capability('local/courses:update',
+                                $categorycontext)||has_capability('local/courses:delete',
+                                $categorycontext) || has_capability('local/courses:grade_view',
+                                $categorycontext)|| has_capability('local/courses:report_view',
+                                $categorycontext)) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
+                                "enrol"=>((has_capability('local/courses:enrol',
+                                $categorycontext)  || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
+                                "update"=>((has_capability('local/courses:update',
+                                $categorycontext) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
+                                "delete"=>((has_capability('local/courses:delete',
+                                $categorycontext) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
+                                "report_view"=>((has_capability('local/courses:report_view', $categorycontext) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false
+                            ));
+
+
             $count++;
         }
         $nocourse = false;
@@ -1686,19 +1703,7 @@ function get_listof_courses($stable, $filterdata) {
         "nocourses" => $nocourse,
         "totalcourses" => $totalcourses,
         "length" => count($courseslist),
-        "actions"=>(((has_capability('local/courses:enrol',
-        $categorycontext)|| has_capability('local/courses:update',
-        $categorycontext)||has_capability('local/courses:delete',
-        $categorycontext) || has_capability('local/courses:grade_view',
-        $categorycontext)|| has_capability('local/courses:report_view',
-        $categorycontext)) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
-        "enrol"=>((has_capability('local/courses:enrol',
-        $categorycontext)  || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
-        "update"=>((has_capability('local/courses:update',
-        $categorycontext) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
-        "delete"=>((has_capability('local/courses:delete',
-        $categorycontext) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false,
-        "report_view"=>((has_capability('local/courses:report_view', $categorycontext) || is_siteadmin())&&has_capability('local/courses:manage', $categorycontext)) ? true : false
+
     );
 
     return $coursesContext;

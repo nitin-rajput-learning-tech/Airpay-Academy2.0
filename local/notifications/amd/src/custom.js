@@ -2,10 +2,10 @@ define(['local_notifications/jquery.dataTables', 'jquery', 'core/str', 'core/mod
         function(dataTable, $, Str, ModalFactory) {
     return {
         init: function() {
-            $(document).on('change', '#id_notificationid, #id_costcenterid', function() {
+            $(document).on('change', '#id_notificationid, #open_costcenterid', function() {
                 // console.log('init');
                 var notificationid = $('#id_notificationid').find("option:selected").val();
-                 var costcenterid = $('#id_costcenterid').find("option:selected").val();
+                 var costcenterid = $('#open_costcenterid').find("option:selected").val();
                 // console.log(notificationid);
                 if (notificationid !== null) {
                       $.ajax({

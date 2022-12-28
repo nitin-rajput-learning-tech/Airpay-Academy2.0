@@ -1230,6 +1230,7 @@ class classroom {
         if ($allow) {
             // $localclassroom = $DB->get_record_sql("SELECT id,name,status FROM {local_classroom} where id= $classroomid");
             $localclassroom = $DB->get_record_sql("SELECT * FROM {local_classroom} where id= $classroomid");
+            $localclassroom->costcenter = explode('/',$localclassroom->open_path)[1];
             if($request != 1) {
                 $progress       = 0;
                 // $progressbar    = new \core\progress\display_if_slow(get_string('enrollusers', 'local_classroom', $localclassroom->name));
@@ -1259,7 +1260,7 @@ class classroom {
                             $event             = \local_classroom\event\classroom_users_created::create($params);
                             $event->add_record_snapshot('local_classroom', $localclassroom);
                             $event->trigger();
-                            if ($localclassroom->status != 0) {
+                            if ($localclassroom->status != 0) {                                
                                 // $emaillogs = $class_emaillogs->classroom_emaillogs($type, $dataobj, $classroomuser->userid, $fromuserid);
                                 $touser = \core_user::get_user($classroomuser->userid);
                                 $emaillogs = $notification->classroom_notification($type, $touser, $USER, $localclassroom);
@@ -1353,7 +1354,7 @@ class classroom {
         $dataobj        = $classroomid;
         $fromuserid     = $USER->id;
         $localclassroom = $DB->get_record_sql("SELECT * FROM {local_classroom} where id= $classroomid");
-
+        $localclassroom->costcenter = explode('/',$localclassroom->open_path)[1];
             foreach ($userstoassign as $key => $adduser) {
                 $sortorder= $DB->get_field_sql("SELECT max(sortorder) FROM {local_classroom_waitlist} where classroomid=$classroomid");
                 $classroomuser               = new stdClass();
@@ -1414,6 +1415,7 @@ class classroom {
         try {
             $localclassroom = $DB->get_record_sql("SELECT id,name,status,allow_waitinglistusers FROM {local_classroom} where id= $classroomid");
             $classroominstance = $DB->get_record('local_classroom', array('id' => $classroomid));
+            $classroominstance->costcenter = explode('/',$classroominstance->open_path)[1];
             if($request != 1) {
                 $progress       = 0;
                 $progressbar    = new \core\progress\display_if_slow(get_string('un_enrollusers', 'local_classroom', $localclassroom->name));
@@ -1443,7 +1445,8 @@ class classroom {
                         'classroomid' => $classroomid,
                         'userid' => $removeuser
                     ));
-                    if ($localclassroom->status != 0) {                    
+                    if ($localclassroom->status != 0) {                
+                        $localclassroom->costcenter = explode('/',$localclassroom->open_path)[1];    
                         // $emaillogs = $class_emaillogs->classroom_emaillogs($type, $dataobj, $removeuser, $fromuserid);
                         $touser = \core_user::get_user($removeuser);
                         $emaillogs = $classroom_notification->classroom_notification($type, $touser, $USER, $classroominstance);
@@ -1881,6 +1884,7 @@ class classroom {
                 $classroom = $DB->get_record('local_classroom', array(
                     'id' => $classroomid
                 ));
+                $classroom->costcenter = explode('/',$classroom->open_path)[1]; 
                 $this->classroom_set_events($classroom);
                 $classroomusers   = $DB->get_records_menu('local_classroom_users', array(
                     'classroomid' => $classroomid
@@ -1944,6 +1948,7 @@ class classroom {
                 $fromuserid       = $USER->id;
                 $localclassroom   = $DB->get_record_sql("SELECT id,status FROM {local_classroom} where id= :classroomid",array('classroomid' => $classroomid));
                 $classroom = $DB->get_record('local_classroom', array('id' => $dataobj));
+                $classroom->costcenter = explode('/',$classroom->open_path)[1]; 
                 if (!empty($classroomcourses)) {
                     $i = 0;
                     foreach ($classroomcourses as $classroomcourse) {
@@ -2000,13 +2005,14 @@ class classroom {
                 $fromuserid       = $USER->id;
                 $localclassroom   = $DB->get_record_sql("SELECT id,status FROM {local_classroom} where id = :classroomid ",array('classroomid' => $classroomid));
                 $classroom = $DB->get_record('local_classroom', array('id' => $classroomid));
+                $classroom->costcenter = explode('/',$classroom->open_path)[1]; 
                 if (!empty($classroomcourses)) {
                     $i = 0;
                     
                     foreach ($classroomcourses as $classroomcourse) {
                         foreach ($classroomusers as $classroomuser) {
                             $this->manage_classroom_course_enrolments($classroomcourse, $classroomuser, 'employee', 'unenrol',$pluginname = 'classroom',$classroomid);
-                            if ($i == 0 && $localclassroom->status != 0) {
+                            if ($i == 0 && $localclassroom->status != 0) {                               
                                 // $emaillogs = $class_emaillogs->classroom_emaillogs($type, $dataobj, $classroomuser, $fromuserid);
                                 $touser = \core_user::get_user($classroomuser);
                                 $emaillogs = $classroom_notification->classroom_notification($type, $touser, $USER ,$classroom);
@@ -2019,7 +2025,7 @@ class classroom {
                     }
                 } else if (empty($classroomcourses)) {
                     foreach ($classroomusers as $classroomuser) {
-                        if ($localclassroom->status != 0) {
+                        if ($localclassroom->status != 0) {                  
                             // $emaillogs = $class_emaillogs->classroom_emaillogs($type, $dataobj, $classroomuser, $fromuserid);
                             $touser = \core_user::get_user($classroomuser);
                             $emaillogs = $classroom_notification->classroom_notification($type, $touser, $USER ,$classroom);
@@ -2055,6 +2061,7 @@ class classroom {
                 $fromuserid     = $USER->id;
                 $localclassroom = $DB->get_record_sql("SELECT id,status FROM {local_classroom} where id= :classroomid",array('classroomid' => $classroomid));
                 $classroom = $DB->get_record('local_classroom', array('id' => $classroomid));
+                $classroom->costcenter = explode('/',$classroom->open_path)[1];
                 foreach ($classroomusers as $classroomuser) {
                     if ($localclassroom->status != 0) {
                         // $emaillogs = $class_emaillogs->classroom_emaillogs($type, $dataobj, $classroomuser, $fromuserid);

@@ -58,11 +58,14 @@ function local_notifications_output_fragment_new_notification_form($args) {
 		if (!empty($formdata)) {
 			$args->moduleid=$formdata['moduleid'];
 		}
+        $customdata = array('form_status' => $args->form_status,'id' => $id,'org'=>$data->costcenterid,'notificationid'=>$args->notificationid,'moduleid'=>$args->moduleid,'open_path'=>$data->open_path);
+        local_costcenter_set_costcenter_path($customdata);
 		//print_object($formdata);
-        $mform = new \local_notifications\forms\notification_form(null, array('form_status' => $args->form_status,'id' => $id,'org'=>$data->costcenterid,'notificationid'=>$args->notificationid,'moduleid'=>$args->moduleid), 'post', '', null, true, $formdata);
+        $mform = new \local_notifications\forms\notification_form(null,$customdata, 'post', '', null, true, $formdata);
         $mform->set_data($data);
     }else{
-    $params = array('form_status' => $args->form_status,'id' => $id,'org'=>$formdata['costcenterid'],'notificationid'=>$formdata['notificationid'],'moduleid'=>$formdata['moduleid']);
+    $params = array('form_status' => $args->form_status,'id' => $id,'org'=>$formdata['open_costcenterid'],'notificationid'=>$formdata['notificationid'],'moduleid'=>$formdata['moduleid']);
+    local_costcenter_set_costcenter_path($params);
     $mform = new \local_notifications\forms\notification_form(null, $params, 'post', '', null, true, $formdata);
     }
 
@@ -403,6 +406,7 @@ class notifications {
             $keywords2 = preg_split("/[\s,]+/", $keywords[1]);
             $pieces = explode("/", $keywords2[0]);          
             file_save_draft_area_files($pieces[8], $systemcontext->id, 'local', 'notifications',$pieces[8], array('maxfiles' => 5));
+            local_costcenter_get_costcenter_path($dataobject);
             $result = $DB->insert_record("$table", $dataobject);
         } elseif($action == 'update') {
             $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
@@ -411,7 +415,8 @@ class notifications {
             $keywords2 = preg_split("/[\s,]+/", $keywords[1]);
             $pieces = explode("/", $keywords2[0]);  
             file_save_draft_area_files($pieces[8], $systemcontext->id, 'local', 'notifications',$pieces[8], array('maxfiles' => 5));
-             $DB->update_record("$table", $dataobject);
+            local_costcenter_get_costcenter_path($dataobject); 
+            $DB->update_record("$table", $dataobject);
              $result =$dataobject->id;
         }else{
             $result = false;
@@ -695,8 +700,8 @@ function local_notifications_leftmenunode(){
     
     $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
     $notificationsnode = '';
-    // if(has_capability('local/notifications:view',$systemcontext) || is_siteadmin()){
-    if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+    if(has_capability('local/notifications:manage',$systemcontext) || is_siteadmin()){
+    // if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
         $notificationsnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_notifications', 'class'=>'pull-left user_nav_div notifications'));
             $notifications_url = new moodle_url('/local/notifications/index.php');
             $notifications = html_writer::link($notifications_url, '<i class="fa fa-bell-o"></i><span class="user_navigation_link_text">'.get_string('pluginname','local_notifications').'</span>',array('class'=>'user_navigation_link'));
@@ -717,23 +722,22 @@ function notification_details($tablelimits, $filtervalues){
         $countsql = "SELECT count(ni.id)
                 FROM {local_notification_info} AS ni
                 JOIN {local_notification_type} AS nt ON ni.notificationid = nt.id
-                JOIN {local_costcenter} AS lc ON ni.costcenterid = lc.id";
-        $selectsql = "SELECT ni.id, nt.name, nt.shortname, ni.subject, costcenterid,ni.moduleid, lc.fullname as deptname, ni.active
+                JOIN {local_costcenter} AS lc ON concat('/',ni.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1 ";
+        $selectsql = "SELECT ni.id, nt.name, nt.shortname, ni.subject, ni.open_path,ni.moduleid, lc.fullname as deptname, ni.active
                 FROM {local_notification_info} ni
                 JOIN {local_notification_type} nt ON ni.notificationid = nt.id
-                JOIN {local_costcenter} lc ON ni.costcenterid = lc.id
+                JOIN {local_costcenter} lc ON concat('/',ni.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
             WHERE 1=1 ";
         $queryparam = array();
+        $concatsql=''; 
         if(is_siteadmin()){
 
-        }
-        elseif(!is_siteadmin()  && has_capability('local/costcenter:manage_ownorganization', $systemcontext))
+        }else if(!is_siteadmin()  && has_capability('local/notifications:view', $systemcontext))
         {
             // $costcenter = $DB->get_field_sql("SELECT u.open_costcenterid from {user} u where u.id = $USER->id");
-            $costcenter = $USER->open_costcenterid;
-            
-            $concatsql .= " AND ni.costcenterid= :usercostcenter ";
-            $queryparam['usercostcenter'] = $costcenter;
+            $costcenter = explode('/',$USER->open_path)[1];            
+            $concatsql .= " AND concat('/',ni.open_path,'/') LIKE :usercostcenter  ";
+            $queryparam['usercostcenter'] = '%'.$costcenter.'%';
         }
         else {
           print_error('You dont have permissions to view this page.');
@@ -754,24 +758,17 @@ function notification_details($tablelimits, $filtervalues){
 
         $concatsql.=" order by ni.id desc";
         $notifications_info = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
-
         $list=array();
         $data = array();
         if ($notifications_info) {
             foreach ($notifications_info as $each_notification) { 
                 
-                /*$row = array();
-                $row[] = $each_notification->name;
-                $row[] = $each_notification->shortname;
-                $row[] = $each_notification->subject;
-                $row[] = $DB->get_field('local_costcenter', 'fullname', array('id'=>$each_notification->costcenterid));*/
-
               $list['notification_id'] = $each_notification->id;
               $list['contextid'] = $systemcontext->id;
                $list['notification_type'] = $each_notification->name;
                $list['code'] = $each_notification->shortname;
                $list['subject'] = $each_notification->subject;
-               $list['organization']=$DB->get_field('local_costcenter', 'fullname', array('id'=>$each_notification->costcenterid));
+               $list['organization']=$DB->get_field('local_costcenter', 'fullname', array('id'=>explode('/',$each_notification->open_path)[1]));
                $data[] = $list;
             }
         }
@@ -785,19 +782,7 @@ function notifications_filter($mform){
     $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
     // $sql = "SELECT id, name FROM {local_classroom} WHERE id > 1";
     if ((has_capability('local/notifications:view', (new \local_notifications\lib\accesslib())::get_module_context()) || is_siteadmin())) {
-        // $requestlist = $DB->get_records_sql_menu("SELECT id, compname FROM {local_request_records} GROUP BY compname");
-        // $customrequestlist = array();
-        // $trainer_user = ((has_capability('local/classroom:manageclassroom',$systemcontext)||
-        //         has_capability('local/program:manageprogram',$systemcontext)||
-        //         has_capability('local/certification:managecertification',$systemcontext)) && !is_siteadmin() && !has_capability('local/costcenter:manage_ownorganization',$systemcontext) && !has_capability('local/costcenter:manage_owndepartments',$systemcontext));
-        // foreach($requestlist as $key => $value){
-        //     if($trainer_user && ($value == 'elearning' || $value == 'learningplan')){
-        //         // $value = 'E-Learning';
-        //         continue;    
-        //     }
-        //     $customrequestlist[$value] = get_string($value, 'local_request');
-        // }
-        // $requestlist = $customrequestlist; 
+ 
         $notificationlist = $DB->get_records_sql("SELECT distinct(moduletype) FROM {local_notification_info} ");
         foreach($notificationlist AS $list){
             $customrequestlist[$list->moduletype] = ucfirst($list->moduletype);

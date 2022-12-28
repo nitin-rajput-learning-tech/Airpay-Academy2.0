@@ -821,14 +821,15 @@ class local_courses_external extends external_api {
                                   'tagenable' => new external_value(PARAM_BOOL, 'tagenable', VALUE_OPTIONAL),
                                   'request_view' => new external_value(PARAM_BOOL, 'request_view', VALUE_OPTIONAL),
                                   'grade_view' => new external_value(PARAM_BOOL, 'grade_view', VALUE_OPTIONAL),
+                                   'report_view' => new external_value(PARAM_BOOL, 'report_view', VALUE_OPTIONAL),
+                                  'delete' => new external_value(PARAM_BOOL, 'delete', VALUE_OPTIONAL),
+                                  'update' => new external_value(PARAM_BOOL, 'update', VALUE_OPTIONAL),
+                                  'enrol' => new external_value(PARAM_BOOL, 'enrol', VALUE_OPTIONAL),
+                                  'actions' => new external_value(PARAM_BOOL, 'actions', VALUE_OPTIONAL),
                               )
                           )
                       ),
-                      'report_view' => new external_value(PARAM_BOOL, 'report_view', VALUE_OPTIONAL),
-                      'delete' => new external_value(PARAM_BOOL, 'delete', VALUE_OPTIONAL),
-                      'update' => new external_value(PARAM_BOOL, 'update', VALUE_OPTIONAL),
-                      'enrol' => new external_value(PARAM_BOOL, 'enrol', VALUE_OPTIONAL),
-                      'actions' => new external_value(PARAM_BOOL, 'actions', VALUE_OPTIONAL),
+
                       'nocourses' => new external_value(PARAM_BOOL, 'nocourses', VALUE_OPTIONAL),
                       'totalcourses' => new external_value(PARAM_INT, 'totalcourses', VALUE_OPTIONAL),
                       'length' => new external_value(PARAM_INT, 'length', VALUE_OPTIONAL),
