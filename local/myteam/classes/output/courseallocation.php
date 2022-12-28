@@ -93,9 +93,9 @@ class courseallocation {
                             JOIN {enrol} as e ON e.id = ue.enrolid
                             JOIN {course} as c ON c.id = e.courseid
                             WHERE e.courseid = :courseid AND ue.userid = :userid AND e.enrol = :enrollment";
-                $costcenterid = $DB->get_field('user', 'open_costcenterid', array('id' => $user));
-                if($costcenterid > 0){
-                    $sql .= " AND c.open_costcenterid = ".$costcenterid;
+                $open_path = $DB->get_field('user', 'open_path', array('id' => $user));
+                if($open_path > 0){
+                    $sql .= " AND c.open_path = ".$open_path;
                 }
 
                 $enrolled = $DB->record_exists_sql($sql,  array('courseid' => $cid, 'userid' => $user, 'enrollment' => 'manual'));
