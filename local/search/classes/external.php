@@ -26,30 +26,30 @@
 defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/local/search/lib.php');
 class local_search_external extends external_api {
-    // public static function get_available_modules_parameters(){
-    //     return new external_function_parameters([
-    //         'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
-    //         'filter' => new external_multiple_structure(
-    //             new external_single_structure([
-    //                 'name' => new external_value(PARAM_TEXT, 'The filter name'),
-    //                 'value' => new external_value(PARAM_TEXT, 'The filter value')
-    //             ])
-    //         )
-    //     ]);
-    // }
-    // public static function get_available_modules($contextid, $filters){
-    //     $params = self::validate_parameters(self::get_available_modules_parameters(),
-    //                                         ['contextid' => $contextid, 'filter' => $filter]);
-    //     $context = context::instance_by_id($params['contextid'], MUST_EXIST);
-    //     // We always must call validate_context in a webservice.
-    //     self::validate_context($context);
-    //     $selectedfilter = array_map(function(){}, $filters);
-    //     foreach($filters AS $filter){
-    //         $selectedfilter
-    //     }
+    public static function get_available_modules_parameters(){
+        return new external_function_parameters([
+            'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
+            'filter' => new external_multiple_structure(
+                new external_single_structure([
+                    'name' => new external_value(PARAM_TEXT, 'The filter name'),
+                    'value' => new external_value(PARAM_TEXT, 'The filter value')
+                ])
+            )
+        ]);
+    }
+    public static function get_available_modules($contextid, $filters){
+        $params = self::validate_parameters(self::get_available_modules_parameters(),
+                                            ['contextid' => $contextid, 'filter' => $filter]);
+        $context = context::instance_by_id($params['contextid'], MUST_EXIST);
+        // We always must call validate_context in a webservice.
+        self::validate_context($context);
+        $selectedfilter = array_map(function(){}, $filters);
+        // foreach($filters AS $filter){
+        //     $selectedfilter
+        // }
 
-    // }
-    // public static function get_available_modules_returns(){}
+    }
+    public static function get_available_modules_returns(){}
 
 
     public static function get_filter_elements_parameters(){
