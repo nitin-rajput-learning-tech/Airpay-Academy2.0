@@ -917,6 +917,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
         $elements = range(1, 5);
     }
     $firstelement = true;
+    print_object($ajaxformdata);
     foreach($elements as $level){
         $levelelementoptions = array(
             'class' => $fields[$level].'_select',
@@ -945,6 +946,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             }else{
                 $levelelements = [];
             }
+            var_dump($$fields[$level]);
             if($fieldvalue){
                 $levelelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
                 $levelelementids = array_filter($levelelementids);
@@ -952,6 +954,8 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
                 if($levelelementids){
                     list($idsql, $idparams) = $DB->get_in_or_equal($levelelementids, SQL_PARAMS_NAMED, 'levelelements');
                     $levelsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$idsql} ";
+                    echo $levelsql;
+                    print_r($idparams);
                     $levelelements += $DB->get_records_sql_menu($levelsql, $idparams);
                 }
             }

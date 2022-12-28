@@ -157,7 +157,7 @@ class custom_course_form extends moodleform {
                 'data-action' => 'custom_category_selector',
                 'data-options' => json_encode(array('id' => $courseid)),
                 'class' => 'idparentselect',
-                'data-parentclass' => 'open_path_select',
+                'data-parentclass' => 'open_costcenterid_select',
                 'data-class' => 'idparentselect',
                 'multiple' => false,
             );
