@@ -1726,7 +1726,7 @@ class local_users_external extends external_api {
 
                     if (!empty($formoptions->parentid)  && $formoptions->parentid != null) {
 
-                        list($relatedparentidsql, $relatedparentidparams) = $DB->get_in_or_equal($formoptions->parentid, SQL_PARAMS_QM, 'parentids');
+                        list($relatedparentidsql, $relatedparentidparams) = $DB->get_in_or_equal($formoptions->parentid, SQL_PARAMS_NAMED, 'parentids');
                         $sqlparams = $relatedparentidparams;
 
                         $concatsql .= " AND $parentidcolumn  $relatedparentidsql";
