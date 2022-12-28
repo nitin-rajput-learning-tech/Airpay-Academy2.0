@@ -11,19 +11,25 @@ class states_form extends \moodleform {
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
 
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $organiasations = $DB->get_records_menu('local_costcenter', array('depth' => 5),'fullname', 'id,fullname');
-
-            $organiasations = [null => get_string('territories', 'local_users')]+$organiasations;
-            $mform->addElement('autocomplete', 'territoryid',  get_string('territory', 'local_users'), $organiasations);
-            $mform->setType('territoryid', PARAM_INT);
-            $states_select = [null => get_string('selectstates', 'local_users')];
-        }else if(!is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $mform->addElement('hidden', 'territoryid');
-            $mform->setType('territoryid', PARAM_INT);
-            $territoryid = explode('/', $USER->open_path)[5];
-            $mform->setDefault('territoryid', $territoryid);
+        $organisationsql = "SELECT lc.id, lc.fullname FROM {local_costcenter} AS lc WHERE 1 = 1 AND lc.depth = 1 ";
+        if(!is_siteadmin()){
+            $orgcond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $orgcond[] = " lc.id = {$costcenterid} ";
+            }
+            if(!empty($orgcond)){
+                $organisationsql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
+            }else{
+                $organisationsql .= " AND 1 <> 1 ";
+            }
         }
+        $organiasations = $DB->get_records_sql_menu($organisationsql);
+        $organiasations = [null => get_string('organisation', 'local_users')] + $organiasations;
+        $mform->addElement('autocomplete', 'costcenterid',  get_string('territory', 'local_users'), $organiasations);
+        $mform->setType('costcenterid', PARAM_INT);
+        $states_select = [null => get_string('selectstates', 'local_users')];
+
 
 
         $mform->addElement('text', 'states_name', get_string('statesname', 'usersprofilefields_states'));
@@ -44,24 +50,22 @@ class states_form extends \moodleform {
         $errors = array();
 
         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $territoryid = $data['territoryid'];
+            $costcenterid = $data['costcenterid'];
         }else{
-            $territoryid = explode('/', $USER->open_path)[5];
+            $costcenterid = explode('/', $USER->open_path)[1];
         }
 
-        $recordid = $DB->get_field('local_states','id',array('code' => $data['code'],'territoryid' => $territoryid));
+        $recordid = $DB->get_field('local_states','id',array('code' => $data['code'],'costcenterid' => $costcenterid));
         if($recordid && $recordid!=$data['id']){
             $errors['code'] = get_string('statescodeexist', 'usersprofilefields_states');
         }
-        $recordid = $DB->get_field('local_states','id',array('states_name' => $data['states_name'],'territoryid' => $territoryid));
+
         if($recordid && $recordid!=$data['id']){
             $errors['states_name'] = get_string('statesnameexist', 'usersprofilefields_states');
         }
-        if($data['territoryid'] < 0){
-            $errors['territoryid'] = get_string('statesnameexist', 'usersprofilefields_states');
-        }
-        if(empty($data['territoryid'])){
-            $errors['territoryid'] = get_string('selectterritories', 'usersprofilefields_states');
+
+        if(empty($data['costcenterid'])){
+            $errors['costcenterid'] = get_string('selectorganisation', 'usersprofilefields_states');
         }
         return $errors;
     }
