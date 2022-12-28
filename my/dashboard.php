@@ -27,29 +27,20 @@ require_once("../config.php");
 require_once($CFG->dirroot. '/course/lib.php');
 $orgid  = optional_param('orgid', 0, PARAM_INT);
 
-global $USER;
-
-$context =(new \local_costcenter\lib\accesslib())::get_module_context();
+global $USER,$DB;
 $site = get_site();
-
 require_login();
 
 $heading = $site->fullname;
-if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)){
-    if($orgid == 0){
-        $orgid = $DB->get_field_sql("SELECT min(id) FROM {local_costcenter} WHERE parentid = 0 AND visible = 1 ");
-    }
-}else if($USER->open_costcenterid){
-    $orgid = $USER->open_costcenterid;
-}
-if($context->instanceid == 0){
+if(is_siteadmin()){
     $categoryid=1;
-}else{
-    $categoryid=$context->instanceid;
-}
+    }
+else{
+    $orgid=explode('/',$USER->open_path)[1];
+    $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
+    }
 $PAGE->set_category_by_id($categoryid);
 $PAGE->set_url(new moodle_url('/my/dashboard.php', array('orgid' => $orgid)));
-
 $PAGE->set_pagelayout('mydashboard');
 $PAGE->set_primary_active_tab('home');
 $PAGE->add_body_class('limitedwidth');
@@ -62,6 +53,4 @@ echo $content;
 $eventparams = array('context' => $PAGE->context, 'objectid' => $context->instanceid);
 $event = \core\event\course_category_viewed::create($eventparams);
 $event->trigger();
-
-
 echo $OUTPUT->footer();
