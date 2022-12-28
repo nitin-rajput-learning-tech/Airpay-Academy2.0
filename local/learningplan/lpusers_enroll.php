@@ -144,6 +144,7 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
 }
 // $learningplaninstance = $DB->get_record('local_learningplan', array('id' => $planid));
 $learningplaninstance = $learningplan;
+$learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path)[1];
   if ( $add AND confirm_sesskey()) {
 
 		if($submit_value=="Add_All_Users"){

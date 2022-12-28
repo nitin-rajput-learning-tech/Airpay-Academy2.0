@@ -45,7 +45,7 @@ $PAGE->requires->css('/local/notifications/css/jquery.dataTables.min.css', true)
 $PAGE->requires->js(new moodle_url('/local/notifications/js/jquery.dataTables.min.js'),true);
 $renderer = $PAGE->get_renderer('local_notifications');
 echo $OUTPUT->header();
-if (is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $sitecontext)) {
+if (is_siteadmin() || has_capability('local/notifications:manage', $sitecontext)) {
     echo $renderer->view_email_status();
 } else {
     echo "<h4>".get_string('dont_have_permission_view_page', 'local_notifications')."</h4>";
