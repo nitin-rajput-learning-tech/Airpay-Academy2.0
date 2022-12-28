@@ -39,12 +39,14 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $costcenter_instance = new costcenter;
 
-         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+         if (is_siteadmin()) {
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid=0 ORDER BY s.sortorder DESC";
             $costcenters = $DB->get_records_sql($sql);
         } else if(has_capability('local/costcenter:view', $categorycontext)){
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid = 0 AND id = ? ORDER BY s.sortorder";
-            $costcenters = $DB->get_records_sql($sql, [$USER->open_costcenterid]);
+            //$depth=$categorycontext->depth;   
+            $costcenterid=explode('/',$USER->open_path)[1];   
+            $costcenters = $DB->get_records_sql($sql, [$costcenterid]);
         }
 
         if (!is_siteadmin() && empty($costcenters)) {
@@ -208,7 +210,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
 
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context($costcenterpath);
-        if ((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) && $PAGE->pagetype == 'local-costcenter-index'){
+        if ((is_siteadmin()) && $PAGE->pagetype == 'local-costcenter-index'){
             $create_organisation = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '".get_string('create_organization','local_costcenter')."' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"organization\", headstring:\"adnewcostcenter\"}) })(event)'><span class='createicon'><i class='fa fa-sitemap icon' aria-hidden='true'></i><i class='createiconchild fa fa-plus' aria-hidden='true'></i></span></a>";
         }else{
             $create_organisation = false;
@@ -228,8 +230,9 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $create_department = false;
         }
         $deptexistsql = "SELECT id FROM {local_costcenter} WHERE depth = 2 ";
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
-            $deptexistsql .= " AND parentid={$USER->open_costcenterid} ";
+        if(!(is_siteadmin())){
+            $costcenterid=explode('/',$USER->open_path)[2];   
+            $deptexistsql .= "AND parentid={$costcenterid} ";
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
         if($deptexist && $depth != 3 && $depth != 4){
@@ -242,8 +245,9 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $create_sub_department = false;
         }
         $deptexistth = "SELECT id FROM {local_costcenter} WHERE depth = 3 ";
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
-            $deptexistth .= " AND parentid={$USER->open_costcenterid} ";
+        if(!(is_siteadmin())){
+            $costcenterid=explode('/',$USER->open_path)[3];   
+            $deptexistth .= " AND parentid={$costcenterid} ";
         }
         $deptexistone = $DB->record_exists_sql($deptexistth);
         if($deptexistone && $depth != 4 ){
@@ -257,8 +261,9 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
 
         $deptexistfo = "SELECT id FROM {local_costcenter} WHERE depth = 4 ";
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
-            $deptexistfo .= " AND parentid={$USER->open_costcenterid} ";
+        if(!(is_siteadmin())){
+            $costcenterid=explode('/',$USER->open_path)[4];   
+            $deptexistfo .= " AND parentid={$costcenterid} ";
         }
         $deptexisttwo = $DB->record_exists_sql($deptexistfo);
         if($deptexisttwo){
