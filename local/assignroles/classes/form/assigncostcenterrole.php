@@ -38,15 +38,15 @@ class assigncostcenterrole extends moodleform {
 		$context = (new \local_assignroles\lib\accesslib())::get_module_context(); 		
 
 		$mform = & $this->_form;
-		$costcenterid = $this->_customdata['costcenterid'];
+        $costcenterid = $this->_customdata['costcenterid'];
 		$formtype = $this->_customdata['formtype'];
 		
 		
 		$mform->addElement('hidden', 'open_costcenterid');
 		$mform->setType('open_costcenterid', PARAM_INT);
 		$mform->setDefault('open_costcenterid', $costcenterid);
-		
-	
+
+
 		$options = array(
             'ajax' => 'local_assignroles/form-options-selector',
             'data-action' => 'role_ids',
@@ -101,7 +101,7 @@ class assigncostcenterrole extends moodleform {
 		
 		$mform->disable_form_change_checker();
 
-        $this->add_action_buttons($cancel = null,get_string('assign', 'local_assignroles'));
+        // $this->add_action_buttons($cancel = null,get_string('assign', 'local_assignroles'));
     }
 
 

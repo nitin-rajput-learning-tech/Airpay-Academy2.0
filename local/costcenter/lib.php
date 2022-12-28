@@ -769,16 +769,16 @@ function local_costcenter_leftmenunode(){
     global $USER;
     $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $costcenternode = '';
-    if(has_capability('local/costcenter:view', $categorycontext) || is_siteadmin()) {
-        $costcenternode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_departments', 'class'=>'pull-left user_nav_div departments'));
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if(has_capability('local/costcenter:view', $categorycontext) || is_siteadmin()) { 
+    $costcenternode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_departments', 'class'=>'pull-left user_nav_div departments'));
+    if(is_siteadmin()) {
             $organization_url = new moodle_url('/local/costcenter/index.php');
             $organization_string = get_string('orgStructure','local_costcenter');
-        }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-            $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $USER->open_costcenterid));
-            $organization_string = get_string('orgStructure','local_costcenter');
-        }else{
-            $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $USER->open_departmentid));
+        }
+    else{
+            $depth=$categorycontext->depth;   
+            $costcenterid=explode('/',$USER->open_path)[$depth];    
+            $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
             $organization_string = get_string('orgStructure','local_costcenter');
         }
         $department = html_writer::link($organization_url, '<i class="fa fa-sitemap" aria-hidden="true" aria-label=""></i><span class="user_navigation_link_text">'.$organization_string.'</span>',array('class'=>'user_navigation_link'));

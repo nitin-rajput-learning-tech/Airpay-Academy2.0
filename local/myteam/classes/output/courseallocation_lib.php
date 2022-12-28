@@ -67,9 +67,9 @@ class courseallocation_lib{
 		}else{
 			$condition = " ";
 		}
-		$costcenterid = $DB->get_field('user', 'open_costcenterid', array('id' => $user));
-		if($costcenterid > 0){
-			$condition .= " AND c.open_costcenterid = ".$costcenterid;
+		$open_path = $DB->get_field('user', 'open_path', array('id' => $user));
+		if($open_path > 0){
+			$condition .= " AND c.open_path = ".$open_path;
 		}
 		$courses_sql = "SELECT c.id, c.fullname 
 										FROM {course} as c
@@ -89,9 +89,9 @@ class courseallocation_lib{
 		}else{
 			$condition = " ";
 		}
-		$costcenterid = $DB->get_field('user', 'open_costcenterid', array('id' => $user));
-		if($costcenterid > 0){
-			$condition .= " AND c.costcenter = ".$costcenterid;
+		$open_path = $DB->get_field('user', 'open_path', array('id' => $user));
+		if($open_path > 0){
+			$condition .= " AND c.open_path = ".$open_path;
 		}
 		$classrooms_sql = "SELECT c.id, c.name 
 							FROM {local_classroom} as c
@@ -108,9 +108,9 @@ class courseallocation_lib{
 			} else {
 				$condition = "";
 			}
-			$costcenterid = $DB->get_field('user', 'open_costcenterid', array('id' => $user));
-			if($costcenterid > 0){
-				$condition .= " AND p.costcenter = ".$costcenterid;
+			$open_path = $DB->get_field('user', 'open_path', array('id' => $user));
+			if($open_path > 0){
+				$condition .= " AND p.open_path = ".$open_path;
 			}
 			$programssql = "SELECT p.id, p.name FROM {local_program} as p
 										WHERE p.visible = 1".$condition;

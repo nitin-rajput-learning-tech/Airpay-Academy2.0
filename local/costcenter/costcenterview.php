@@ -34,7 +34,6 @@ $deptid = optional_param('deptid', 0, PARAM_INT);
 global $DB,$OUTPUT,$CFG, $PAGE;
 /* ---First level of checking--- */
 require_login();
-
 /* ---Get the records from the database--- */
 if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
     print_error('invalidschoolid');
@@ -47,18 +46,6 @@ $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context($
 if(!has_capability('local/costcenter:view', $categorycontext)) {
     print_error('nopermissiontoviewpage');
 }
-/*OL-2166- Added the below condition for checking  */
-
-if(!is_siteadmin() || !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
-    if($depart->parentid){
-    	if(!($DB->record_exists('user',array('open_departmentid' => $id, 'id' => $USER->id)) || has_capability('local/costcenter:manage_ownorganization', $categorycontext))){
-            print_error('nopermissiontoviewpage');
-    	}
-    }else if(!$DB->record_exists('user',array('open_costcenterid'=>$id,'id'=>$USER->id))){
-            print_error('nopermissiontoviewpage');
-    }
-}
-
 $PAGE->requires->jquery();
 $PAGE->requires->jquery('ui');
 $PAGE->requires->jquery('ui-css');
@@ -81,15 +68,15 @@ $PAGE->set_url('/local/costcenter/costcenterview.php');
 /* ---Header and the navigation bar--- */
 $PAGE->navbar->ignore_active();
 
-if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+if(is_siteadmin()){
     $PAGE->navbar->add(get_string('orgmanage', 'local_costcenter'), new moodle_url('/local/costcenter/index.php'));
 }
-if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext) || has_capability('local/costcenter:manage_ownorganization', $categorycontext))) {
-    if($USER->open_departmentid != $id){
-        redirect($CFG->wwwroot . '/local/costcenter/costcenterview.php?id='.$USER->open_departmentid);
-    }
+else {
+    $depth=$categorycontext->depth;   
+    $costcenterid=explode('/',$USER->open_path)[$depth];          
+    $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
+    $organization_string = get_string('orgStructure','local_costcenter');
 }
-
 $superparentfullname = "SELECT lllc.fullname AS fullname, lllc.id AS idd FROM {local_costcenter} AS lc
     JOIN {local_costcenter} AS llc ON llc.id = lc.parentid
     JOIN {local_costcenter} AS lllc ON lllc.id = llc.parentid
@@ -109,7 +96,7 @@ $parentid = "SELECT llc.id AS idd FROM {local_costcenter} AS lc
     WHERE lc.id = ";
 
 if($depart->parentid && $depart->depth == 2){
-    if(!has_capability('local/costcenter:manage_owndepartments', $categorycontext) || is_siteadmin()){
+    if(is_siteadmin()){
         $PAGE->navbar->add($DB->get_field('local_costcenter', 'fullname', array('id' => $depart->parentid)), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $depart->parentid)));
 	    $PAGE->navbar->add(get_string('viewsubdepartments', 'local_costcenter'));
     }
@@ -117,7 +104,7 @@ if($depart->parentid && $depart->depth == 2){
     $PAGE->set_title(get_string('department_structure', 'local_costcenter'));
 }
 else if($depart->parentid && $depart->depth == 3){
-    if(!has_capability('local/costcenter:manage_owndepartments', $categorycontext) || is_siteadmin()){
+    if(is_siteadmin()){
         $pname = $parentfullname. $depart->parentid;
         $pid = $parentid. $depart->parentid;
         $PAGE->navbar->add($DB->get_field_sql($pname, array('')), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $DB->get_field_sql($pid, array('')))));
@@ -128,7 +115,7 @@ else if($depart->parentid && $depart->depth == 3){
     $PAGE->set_title(get_string('subdepartment_structure', 'local_costcenter'));
 }
 else if($depart->parentid && $depart->depth == 4){
-    if(!has_capability('local/costcenter:manage_owndepartments', $categorycontext) || is_siteadmin()){
+    if( is_siteadmin()){
         $spname = $superparentfullname. $depart->parentid;
         $spid = $superparentid. $depart->parentid;
         $PAGE->navbar->add($DB->get_field_sql($spname, array('')), new moodle_url('/local/costcenter/costcenterview.php', array('id' => $DB->get_field_sql($spid, array('')))));

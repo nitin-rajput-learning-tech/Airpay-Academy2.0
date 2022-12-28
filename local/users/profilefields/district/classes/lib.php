@@ -29,8 +29,20 @@ class lib{
     public function district_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $district_sql = "SELECT ld.id,ld.district_name,(SELECT ls.states_name FROM {local_states} AS ls WHERE ls.id=ld.statesid) as statesname FROM {local_district} as ld";
+        $district_sql = "SELECT ld.id,ld.district_name,ls.states_name as statesname FROM {local_district} as ld
+            JOIN {local_states} AS ls ON ls.id=ld.statesid
+            JOIN  {local_costcenter} AS lc ON lc.id = ls.territoryid WHERE 1 ";
+        if(!is_siteadmin()){
+            $territoriescond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $territoriescond[] = " concat(lc.path,'/') LIKE '{$contextinfo['costcenterpath']}/%' ";
+            }
+            if(!empty($territoriescond)){
+                $district_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) AND lc.depth = 5 ";
+            }else{
+                $district_sql .= " AND 1 <> 1 ";
+            }
+
         }
         $district_sql .= " ORDER BY ld.district_name";
 

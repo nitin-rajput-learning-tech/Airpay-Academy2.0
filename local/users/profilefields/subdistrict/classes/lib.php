@@ -29,10 +29,23 @@ class lib{
     public function subdistrict_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_subdistrict\lib\accesslib())::get_module_context();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $subdistrict_sql = "SELECT ls.id,ls.subdistrict_name,(SELECT ld.district_name FROM {local_district} AS ld WHERE ld.id=ls.districtid) as districtname FROM {local_subdistrict} as ls";
+        $subdistrict_sql = "SELECT lsd.id,lsd.subdistrict_name,ld.district_name as districtname
+            FROM {local_subdistrict} as lsd
+            JOIN {local_district} AS ld ON ld.id = lsd.districtid
+            JOIN {local_states} AS ls ON ls.id=ld.statesid
+            JOIN {local_costcenter} AS lc ON lc.id = ls.territoryid WHERE 1 = 1";
+        if(!is_siteadmin()){
+            $territoriescond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $territoriescond[] = " concat(lc.path,'/') LIKE '{$contextinfo['costcenterpath']}/%' ";
+            }
+            if(!empty($territoriescond)){
+                $subdistrict_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) AND lc.depth = 5 ";
+            }else{
+                $subdistrict_sql .= " AND 1 <> 1 ";
+            }
         }
-        $subdistrict_sql .= " ORDER BY ls.subdistrict_name";
+        $subdistrict_sql .= " ORDER BY lsd.subdistrict_name";
 
         $subdist = $DB->get_records_sql($subdistrict_sql);
         $subdistrict_table = new \html_table();
