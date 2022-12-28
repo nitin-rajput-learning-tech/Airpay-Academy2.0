@@ -30,7 +30,8 @@ class local_learningplan_external extends external_api {
             // }
             if($validateddata->id > 0){
                 $get_costcenter = $DB->get_field('local_learningplan', 'open_path', array('id' => $validateddata->id));
-                if((($validateddata->form_status == 0) && ($get_costcenter != $validateddata->costcenter)) || $validateddata->form_status == 1){
+                $costcenterid = explode('/', $get_costcenter)[1];
+                if((($validateddata->form_status == 0) && ($costcenterid != $validateddata->open_costcenterid)) || $validateddata->form_status == 1){
                     local_costcenter_get_costcenter_path($validateddata);
                 }
                 if($validateddata->form_status == 1){

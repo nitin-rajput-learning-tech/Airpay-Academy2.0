@@ -830,12 +830,17 @@ class view extends plugin_renderer_base {
 			$planview_context['points'] = $plan_record->open_points?$plan_record->open_points:0;
 
 
-		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$plan_record->open_path);
-        $planview_context['planorg'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
-        $planview_context['plandpt'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $ctr));
-        $planview_context['plansubdpt'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $bu));
-        $planview_context['plancu'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $cu));
-        $planview_context['planterritory'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $territory));
+			list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$plan_record->open_path);
+			$planorg = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
+			$plandpt = $this->db->get_field('local_costcenter', 'fullname', array('id' => $ctr));
+			$plansubdpt = $this->db->get_field('local_costcenter', 'fullname', array('id' => $bu));
+			$plancu = $this->db->get_field('local_costcenter', 'fullname', array('id' => $cu));
+			$planterritory = $this->db->get_field('local_costcenter', 'fullname', array('id' => $territory));
+			$planview_context['planorg'] = $planorg ? $planorg : 'All';
+			$planview_context['plandpt'] = $plandpt ? $plandpt : 'All';
+			$planview_context['plansubdpt'] = $plansubdpt ? $plansubdpt : 'All';
+			$planview_context['plancu'] = $plancu ? $plancu : 'All';
+			$planview_context['planterritory'] = $planterritory ? $planterritory : 'All';
 		return $this->render_from_template('local_learningplan/lp_planview', $planview_context);
 	}
   /** Function For The Tabs View In The Learning
