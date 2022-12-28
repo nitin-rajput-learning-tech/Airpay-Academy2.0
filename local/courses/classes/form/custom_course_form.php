@@ -175,20 +175,31 @@ class custom_course_form extends moodleform {
 
             $mform->addElement('text','fullname', get_string('course_name','local_courses'),'maxlength="254" size="50"');
             $mform->addHelpButton('fullname', 'course_name','local_courses');
-            $mform->addRule('fullname', get_string('missingfullname','local_courses'), 'required', null, 'client');
-            $mform->setType('fullname', PARAM_TEXT);
-            if (!empty($course->id) and !has_capability('moodle/course:changefullname', $coursecontext)) {
+
+
+            if (!empty($course->id) and !has_capability('moodle/course:changefullname', $categorycontext)) {
                 $mform->hardFreeze('fullname');
                 $mform->setConstant('fullname', $course->fullname);
+
+            }elseif(has_capability('moodle/course:changefullname', $categorycontext)) {
+
+                $mform->addRule('fullname', get_string('missingfullname','local_courses'), 'required', null, 'client');
+                $mform->setType('fullname', PARAM_TEXT);
+
             }
 
             $mform->addElement('text', 'shortname', get_string('coursecode','local_courses'), 'maxlength="100" size="20"');
             $mform->addHelpButton('shortname', 'coursecode','local_courses');
-            $mform->addRule('shortname', get_string('missingshortname','local_courses'), 'required', null, 'client');
-            $mform->setType('shortname', PARAM_TEXT);
-            if (!empty($course->id) and !has_capability('moodle/course:changeshortname', $coursecontext)) {
+
+
+            if (!empty($course->id) and !has_capability('moodle/course:changeshortname', $categorycontext)) {
                 $mform->hardFreeze('shortname');
                 $mform->setConstant('shortname', $course->shortname);
+            }elseif(has_capability('moodle/course:changefullname', $categorycontext)) {
+
+                $mform->addRule('shortname', get_string('missingshortname','local_courses'), 'required', null, 'client');
+                $mform->setType('shortname', PARAM_TEXT);
+
             }
             $identify = array();
             $identifyone = array();

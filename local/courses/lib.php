@@ -1414,7 +1414,7 @@ function get_listof_courses($stable, $filterdata) {
         $count = 0;
         foreach ($courses as $key => $course) {
             $course_in_list = new core_course_list_element($course);
-            $context = context_course::instance($course->id);
+            $context =  \context_coursecat::instance($course->category);
             $category = $DB->get_record('course_categories',array('id'=>$course->category));
             $departmentcount = 1;
             $subdepartmentcount = 1;
