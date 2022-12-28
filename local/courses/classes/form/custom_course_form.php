@@ -207,7 +207,7 @@ class custom_course_form extends moodleform {
                 'data-action' => 'costecenter_coursetype_selector',
                 'data-options' => json_encode(array('id' => $identifiedtype)),
                 'class' => 'identifiedasselect',
-                'data-parentclass' => 'organisationselect',
+                'data-parentclass' => 'open_costcenterid_select',
                 'data-class' => 'identifiedasselect',
                 'multiple' => false,
             );
@@ -348,17 +348,17 @@ class custom_course_form extends moodleform {
 			$mform->addElement('date_time_selector', 'enddate', get_string('enddate','local_courses'), array('optional' => false));
             $mform->addHelpButton('enddate', 'enddate');
 
-            $users_plugin_exist = $core_component::get_plugin_directory('local','users');
-            if ($users_plugin_exist) {
-                require_once($CFG->dirroot . '/local/users/lib.php');
-                $functionname ='globaltargetaudience_elementlist';
-                 if(function_exists($functionname)) {
-                    $modulecostcenter = $DB->get_field('course', 'open_path',array('id' => $courseid));
+            // $users_plugin_exist = $core_component::get_plugin_directory('local','users');
+            // if ($users_plugin_exist) {
+            //     require_once($CFG->dirroot . '/local/users/lib.php');
+            //     $functionname ='globaltargetaudience_elementlist';
+            //      if(function_exists($functionname)) {
+            //         $modulecostcenter = $DB->get_field('course', 'open_path',array('id' => $courseid));
 
-                    $mform->modulecostcenter = $modulecostcenter;
-                    $functionname($mform,array('hrmsrole','location'));
-                }
-            }
+            //         $mform->modulecostcenter = $modulecostcenter;
+            //         $functionname($mform,array('hrmsrole','location'));
+            //     }
+            // }
         }
         $mform->closeHeaderBefore('buttonar');
 		$mform->disable_form_change_checker();
