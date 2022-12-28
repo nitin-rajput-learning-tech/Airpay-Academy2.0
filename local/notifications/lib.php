@@ -441,16 +441,17 @@ class notifications {
         global $DB, $USER; 
   
 		if($touserid){
-            $costcenter = $DB->get_field_sql("SELECT open_costcenterid from {user} where id in($touserid)");			
+            $costcenter = $DB->get_field_sql("SELECT open_path from {user} where id in($touserid)");			
 		} else {
 		    return false;
 		}
+        $params['costcenterpath'] = '%'.explode('/',$costcenter)[1].'%';
 	 	$sql = "SELECT ni.*
 			FROM {local_notification_info} ni
 			JOIN {local_notification_type} nt ON nt.id = ni.notificationid
-			WHERE nt.shortname = '$emailtype' and ni.costcenterid = {$costcenter} and ni.active=1";
+			WHERE nt.shortname = '$emailtype' and concat('/',ni.open_path,'/') LIKE :costcenterpath   and ni.active=1";
 		// }
-        $notfn_data = $DB->get_record_sql($sql);
+        $notfn_data = $DB->get_record_sql($sql,$params);
             
         $touser = $DB->get_record('user', array('id'=>$touserid));
         $fromuser = $DB->get_record('user', array('id'=>$fromuserid));
@@ -729,15 +730,13 @@ function notification_details($tablelimits, $filtervalues){
                 JOIN {local_costcenter} lc ON concat('/',ni.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
             WHERE 1=1 ";
         $queryparam = array();
-        $concatsql=''; 
+        $concatsql=' '; 
         if(is_siteadmin()){
 
-        }else if(!is_siteadmin()  && has_capability('local/notifications:view', $systemcontext))
+        }else if(!is_siteadmin())
         {
             // $costcenter = $DB->get_field_sql("SELECT u.open_costcenterid from {user} u where u.id = $USER->id");
-            $costcenter = explode('/',$USER->open_path)[1];            
-            $concatsql .= " AND concat('/',ni.open_path,'/') LIKE :usercostcenter  ";
-            $queryparam['usercostcenter'] = '%'.$costcenter.'%';
+            $concatsql .= (new \local_notifications\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='ni.open_path');
         }
         else {
           print_error('You dont have permissions to view this page.');
