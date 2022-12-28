@@ -54,10 +54,10 @@ class custom_category_form extends moodleform {
             $parents[0] = 'Top';
 
         }else{
-
+            $costcenterid = explode('/',$USER->open_path);
             $sql = "SELECT id,fullname
                     FROM {local_custom_category} WHERE id = ?";
-            $parents = $DB->get_records_sql_menu($sql, [$USER->open_costcenterid]);
+            $parents = $DB->get_records_sql_menu($sql, array('costcenterid' => $costcenterid[1]));
         }
         $parents[0] = 'Top';
         asort($parents);
