@@ -49,7 +49,7 @@ $sesskey=sesskey();
 $context = context_course::instance($course->id, MUST_EXIST);
 
 
-$categorycontext = (new \local_courses\lib\accesslib())::get_module_context($instance->courseid);
+$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 
 require_login();
 
