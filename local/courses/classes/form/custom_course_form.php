@@ -369,6 +369,7 @@ class custom_course_form extends moodleform {
         if(!empty($course->open_certificateid)){
             $course->map_certificate = 1;
         }
+
         $this->set_data($course);
 		$mform->disable_form_change_checker();
     }
@@ -397,11 +398,11 @@ class custom_course_form extends moodleform {
             }
         }
 
-        if (isset($data['category']) && $data['form_status'] == 0){
-            if(empty($data['category'])){
-                $errors['category'] = get_string('err_category', 'local_courses');
-            }
-        }
+        // if (isset($data['category']) && $data['form_status'] == 0){
+        //     if(empty($data['category'])){
+        //         $errors['category'] = get_string('err_category', 'local_courses');
+        //     }
+        // }
 
         if ($data['map_certificate'] == 1 && empty($data['open_certificateid'])){
             $errors['open_certificateid'] = get_string('err_certificate', 'local_courses');

@@ -536,9 +536,10 @@ function local_courses_output_fragment_custom_course_form($args){
         'form_status' => $args->form_status,
         'costcenterid' => $data->open_path
     );
+    local_costcenter_set_costcenter_path($formdata);
     $mform = new custom_course_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
-    local_costcenter_set_costcenter_path($formdata);
+
     $mform->set_data($formdata);
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata)>2) {
