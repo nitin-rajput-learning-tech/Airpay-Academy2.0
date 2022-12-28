@@ -1012,7 +1012,6 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
 	$context = (new \local_courses\lib\accesslib())::get_module_context($course_id);
     $course = $DB->get_record('course', array('id' => $course_id));
     $condition = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
- 
     $params['suspended'] = 0;
     $params['deleted'] = 0;
  
@@ -1035,8 +1034,8 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     if (!empty($params['uname'])) {
          $sql .=" AND u.id IN ({$params['uname']})";
     }
-    if (!empty($params['organizations'])) {
-        $organizations = explode(',', $params['organizations']);
+    if (!empty($params['organization'])) {
+        $organizations = explode(',', $params['organization']);
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
@@ -1046,8 +1045,8 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
             $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
         }
     }
-    if (!empty($params['departments'])) {
-        $departments = explode(',', $params['departments']);
+    if (!empty($params['department'])) {
+        $departments = explode(',', $params['department']);
         $deptsql = [];
         foreach($departments AS $department){
             $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
@@ -1134,6 +1133,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     }
 
     $order = " ORDER BY concat(u.firstname,' ',u.lastname) ASC ";
+
     if($total==0){
         $availableusers = $DB->get_records_sql_menu($sql.$order, $params, $offset, $perpage);
     }else{
