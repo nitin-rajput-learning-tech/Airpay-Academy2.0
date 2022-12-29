@@ -4,25 +4,23 @@ namespace usersprofilefields_subdistrict;
 class lib{
     public function create_update_subdistrict($formdata){
         global $DB, $USER;
-        // print_object($formdata);
-        // exit;
+        $data = new \stdClass();
+        $data->subdistrict_name   = $formdata->subdistrict_name;
+        $data->code         = $formdata->code;
+        $data->districtid = $formdata->districtid;
+        $sql = $DB->get_record('local_district', array('id' => $formdata->districtid));
+        $data->statesid = $sql->statesid;
+        $data->costcenterid = $sql->costcenterid;
+
         if($formdata->id){
-            $updata = new \stdClass();
-            $updata->id           = $formdata->id;
-            $updata->subdistrict_name   = $formdata->subdistrict_name;
-            $updata->code         = $formdata->code;
-            $updata->districtid = $formdata->districtid;
-            $updata->timemodified = time();
-            $updata->usermodified = $USER->id;
-            $subdistrictid = $DB->update_record('local_subdistrict', $updata);
+            $data->id           = $formdata->id;
+            $data->timemodified = time();
+            $data->usermodified = $USER->id;
+            $subdistrictid = $DB->update_record('local_subdistrict', $data);
         }else{
-            $newdata = new \stdClass();
-            $newdata->subdistrict_name   = $formdata->subdistrict_name;
-            $newdata->code         = $formdata->code;
-            $newdata->districtid = $formdata->districtid;
-            $newdata->timecreated  = time();
-            $newdata->usercreated  = $USER->id;
-            $subdistrictid = $DB->insert_record('local_subdistrict', $newdata);
+            $data->timecreated  = time();
+            $data->usercreated  = $USER->id;
+            $subdistrictid = $DB->insert_record('local_subdistrict', $data);
         }
         return $subdistrictid;
     }
@@ -31,14 +29,12 @@ class lib{
         $systemcontext = (new \usersprofilefields_subdistrict\lib\accesslib())::get_module_context();
         $subdistrict_sql = "SELECT lsd.id,lsd.subdistrict_name,ld.district_name as districtname
             FROM {local_subdistrict} as lsd
-            JOIN {local_district} AS ld ON ld.id = lsd.districtid
-            JOIN {local_states} AS ls ON ls.id=ld.statesid
-            JOIN {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
+            JOIN {local_district} AS ld ON ld.id = lsd.districtid";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
-                $territoriescond[] = " lc.id = {$costcenterid} ";
+                $territoriescond[] = " lsd.costcenterid = {$costcenterid} ";
             }
             if(!empty($territoriescond)){
                 $subdistrict_sql .= " AND ( ".implode(' OR ', $territoriescond)." )  ";
@@ -68,7 +64,7 @@ class lib{
                     $userexist = $DB->record_exists('local_village', array('subdistrictid'=>$subdistrict->id));
                     $noredirecturl = 'javascript:void(0)';
                     if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:edit',$systemcontext)){
-                        $editicon = '<i class="fa fa-cog"></i>';
+                        $editicon = '<i class="fa fa-pencil"></i>';
                         $actions .= \html_writer::link($noredirecturl ,$editicon,array('onclick' => '(function(e){ require("usersprofilefields_subdistrict/createSubdistrict").init({selector:"createsubdistrictmodal", contextid:'.$systemcontext->id.', subdistrictid:'.$subdistrict->id.' }) })(event)'));
                     }
                     if($userexist){

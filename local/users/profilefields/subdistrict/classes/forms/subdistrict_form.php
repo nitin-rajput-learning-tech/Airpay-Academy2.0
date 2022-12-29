@@ -11,17 +11,25 @@ class subdistrict_form extends \moodleform {
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
 
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $district = $DB->get_records_menu('local_district', array(),'district_name', 'id,district_name');
-            $district = [null => get_string('district', 'usersprofilefields_subdistrict')]+$district;
-            $mform->addElement('autocomplete', 'districtid',  get_string('districtname', 'usersprofilefields_subdistrict'), $district);
-            $mform->setType('districtid', PARAM_INT);
-            $subdistrict_select = [null => get_string('selectsubdistrict', 'local_users')];
-        }else if(!is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $mform->addElement('hidden', 'districtid');
-            $mform->setType('districtid', PARAM_INT);
-
+        $districtsql = "SELECT ld.id, ld.district_name FROM {local_district} AS ld WHERE 1 = 1 ";
+        if(!is_siteadmin()){
+            $orgcond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $orgcond[] = " ld.costcenterid = {$costcenterid} ";
+            }
+            // print_r($orgcond);die;
+            if(!empty($orgcond)){
+                $districtsql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
+            }else{
+                $districtsql .= " AND 1 <> 1 ";
+            }
         }
+
+        $districts = $DB->get_records_sql_menu($districtsql);
+        $districts = [null => get_string('district', 'local_users')] + $districts;
+        $mform->addElement('autocomplete', 'districtid',  get_string('district', 'local_users'), $districts);
+        $mform->setType('districtid', PARAM_INT);
 
 
         $mform->addElement('text', 'subdistrict_name', get_string('subdistrictname', 'usersprofilefields_subdistrict'));
@@ -46,10 +54,7 @@ class subdistrict_form extends \moodleform {
         if($recordid && $recordid!=$data['id']){
             $errors['code'] = get_string('subdistrictcodeexist', 'usersprofilefields_subdistrict');
         }
-        $recordid = $DB->get_field('local_subdistrict','id',array('subdistrict_name' => $data['subdistrict_name'],'districtid' => $data['districtid']));
-        if($recordid && $recordid!=$data['id']){
-            $errors['subdistrict_name'] = get_string('subdistrictnameexist', 'usersprofilefields_subdistrict');
-        }
+
         if(empty($data['districtid'])){
             $errors['districtid'] = get_string('selectdistrict', 'usersprofilefields_subdistrict');
         }
