@@ -1777,7 +1777,7 @@ function get_listof_categories($stable, $filterdata) {
         }
 
         if($categorynames > 0){
-            $linkurl = new moodle_url("/local/courses/index.php?id=".$categories->id."");
+            $linkurl = new moodle_url("/local/custom_category/index.php?id=".$categories->id."");
         }else{
             $linkurl = null;
         }
