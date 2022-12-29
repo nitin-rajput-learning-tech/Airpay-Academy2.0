@@ -134,7 +134,7 @@ class lib
 
 		if (!is_siteadmin()) {
 			$siteadmin_sql = " AND u.suspended =0
-								 AND u.deleted =0  AND concat('/',u.open_path,'/') = '%'.$orgpath[1].'%' ";
+								 AND u.deleted =0  AND concat('/',u.open_path,'/') LIKE concat('%/',$orgpath[1],'/%')";
 		} else {
 			$siteadmin_sql = "";
 		}
@@ -191,7 +191,7 @@ class lib
 			$orgpath = explode('/', $USER->open_path);
 		if (!is_siteadmin()) {
 			$siteadmin_sql = " AND u.suspended =0
-							AND u.deleted =0  AND concat('/',u.open_path,'/') = '%'.$orgpath[1].'%' ";
+							AND u.deleted =0  AND concat('/',u.open_path,'/') LIKE concat('%/',$orgpath[1],'/%')";
 		} else {
 			$siteadmin_sql = "";
 		}
