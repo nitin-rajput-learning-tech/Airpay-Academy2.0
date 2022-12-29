@@ -97,7 +97,15 @@ class classroom {
                 }else{
                     $classroom->certificateid = null;
                 }
-                local_costcenter_get_costcenter_path($classroom);
+                $open_path=$DB->get_field('local_classroom', 'open_path', array('id' => $classroom->id));
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+                if($classroom->open_costcenterid !=$org){
+
+                     local_costcenter_get_costcenter_path($classroom);
+
+                }
+
                 $DB->update_record('local_classroom', $classroom);
                 $this->classroom_set_events($classroom);
                 $params = array(
@@ -1691,7 +1699,14 @@ class classroom {
             } else {
                 $classroom->open_location = NULL;
             }
-            local_costcenter_get_costcenter_path($classroom);
+            $open_path=$DB->get_field('local_classroom', 'open_path', array('id' => $classroom->id));
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+            if($classroom->open_costcenterid !=$org){
+
+                 local_costcenter_get_costcenter_path($classroom);
+
+            }
             local_users_get_userprofile_datafields($classroom);
             $DB->update_record('local_classroom', $classroom);
         }

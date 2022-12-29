@@ -118,6 +118,13 @@ if ($editform->is_cancelled()) {
         $data->open_identifiedas=implode(',',$data->open_identifiedas);
         $data->category = $category_id;
         local_costcenter_get_costcenter_path($data);
+
+        if($data->open_path){
+
+         $data->category = $DB->get_field('local_costcenter', 'category', array('path' => $data->open_path));
+
+        }
+
         $course = create_course($data, $editoroptions);
 
         // Get the context of the newly created course.
@@ -137,7 +144,19 @@ if ($editform->is_cancelled()) {
         $code=implode(',',$data->open_identifiedas);
         $data->open_identifiedas=implode(',',$data->open_identifiedas);
         $data->category = $category_id;
-        local_costcenter_get_costcenter_path($data);
+
+        $open_path=$DB->get_field('course', 'open_path', array('id' => $data->id));
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+      if($data->open_costcenterid !=$org){
+
+            local_costcenter_get_costcenter_path($data);
+
+            if($data->open_path){
+                $data->category = $DB->get_field('local_costcenter', 'category', array('path' => $data->open_path));
+            }
+        }
+
         update_course($data, $editoroptions);
         $course_detail = new stdClass();
         $sql = $DB->get_field('user','firstname', array('id' =>$USER->id));
