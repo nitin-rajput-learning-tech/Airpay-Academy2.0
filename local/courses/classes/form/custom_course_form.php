@@ -338,7 +338,10 @@ class custom_course_form extends moodleform {
             $mform->setType('open_cost', PARAM_INT);
             $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             $skillselect = array(0 => get_string('select_skill','local_courses'));
-            $skills = $DB->get_records_menu('local_skill',array('costcenterid' => $this->course->open_path),'','id,name');
+
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$this->course->open_path);
+
+            $skills = $DB->get_records_menu('local_skill',array('costcenterid' => $org),'','id,name');
        
             if(!empty($skills)){
                 $skillselect = $skillselect+$skills;
@@ -351,7 +354,8 @@ class custom_course_form extends moodleform {
             $levelselect = array(0 => get_string('select_level','local_courses'));
             $level ="SELECT cl.name FROM {local_course_levels} as cl 
                     JOIN {local_costcenter} as c ON c.id = cl.costcenterid";
-            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $this->course->open_path),'sortorder', 'id,name');
+
+            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $org),'sortorder', 'id,name');
             if(!empty($levels)){
                 $levelselect = $levelselect+$levels;
             }
