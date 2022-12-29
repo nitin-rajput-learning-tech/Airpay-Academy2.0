@@ -960,8 +960,10 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             }
             $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
             $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
+            if($level == 1){
 
-            $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+                $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+            }
 
             $firstelement = false;
         }
