@@ -188,8 +188,8 @@ class costcenter {
     }
     function get_costcenter_icons(){
         global $USER, $DB;
-
-        if(!empty($costcentershell = $DB->get_field('local_costcenter', 'shell', array('id' => $USER->open_costcenterid, 'visible' => 1)))){
+        $costcenterid=explode('/',$USER->open_path)[1];   
+        if(!empty($costcentershell = $DB->get_field('local_costcenter', 'shell', array('id' => $costcenterid, 'visible' => 1)))){
             return $costcentershell;
         }else{
             return false;
@@ -209,14 +209,15 @@ class costcenter {
         global $USER, $DB;
        
        $table = 'local_costcenter';
-       $costcentercolor = $DB->get_record($table, array('id' => $USER->open_costcenterid,'visible' =>1), $fields='*');
+       $costcenterid=explode('/',$USER->open_path)[1];   
+       $costcentercolor = $DB->get_record($table, array('id' => $costcenterid,'visible' =>1), $fields='*');
        if(!empty($costcentercolor)){
             return $costcentercolor;
        }else{
         return false;
        }
-       
-        if(!empty($costcentertheme = $DB->get_field('local_costcenter', 'theme', array('id' => $USER->open_costcenterid, 'visible' => 1)))){
+       $costcenterid=explode('/',$USER->open_path)[1];   
+        if(!empty($costcentertheme = $DB->get_field('local_costcenter', 'theme', array('id' => $costcenterid, 'visible' => 1)))){
             return $costcentertheme;
         }else{
             return false;
@@ -349,7 +350,7 @@ function organizations_filter($mform,$query='',$searchanywhere=false, $page=0, $
         $organizationlist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth =1";
     }else{
         $organizationlist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth =1 AND id = :usercostcenter ";
-        $userparam['usercostcenter'] = $USER->open_costcenterid;
+        $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
     }
     if(!empty($query)){ 
         if ($searchanywhere) {
@@ -406,7 +407,7 @@ function departments_filter($mform,$query='',$searchanywhere=false, $page=0, $pe
         $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2";
     }else{
         $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2 AND parentid = :usercostcenter ";
-        $userparam['usercostcenter'] = $USER->open_costcenterid;
+        $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
     }
     if(!empty($query)){ 
         if ($searchanywhere) {
@@ -461,14 +462,15 @@ function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $
     $userparam = array();
     $departmentparam = array();
     $params = array();
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if(is_siteadmin()){
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid = :usercostcenter) ";
-        $userparam['usercostcenter'] = $USER->open_costcenterid;
+        $userparam['usercostcenter'] =explode('/',$USER->open_path)[1];   
+        ;
     }else{
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND parentid = :userdepartment ";
-        $userparam['userdepartment'] = $USER->open_departmentid;
+        $userparam['userdepartment'] = explode('/',$USER->open_path)[1];
     }
     if(!empty($query)){ 
         if ($searchanywhere) {
@@ -522,15 +524,12 @@ function department4level_filter($mform,$query='',$searchanywhere=false, $page=0
     $userparam = array();
     $departmentparam = array();
     $params = array();
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if(is_siteadmin()){
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid :usercostcenter)) ";
-        $userparam['usercostcenter'] = $USER->open_costcenterid;
+        $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
 
-    }else{
-        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid = :userdepartment ";
-        $userparam['userdepartment'] = $USER->open_departmentid;
     }
     if(!empty($query)){
         if ($searchanywhere) {
@@ -587,11 +586,8 @@ function department5level_filter($mform,$query='',$searchanywhere=false, $page=0
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid :usercostcenter)) ";
-        $userparam['usercostcenter'] = $USER->open_costcenterid;
+        $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
 
-    }else{
-        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid = :userdepartment ";
-        $userparam['userdepartment'] = $USER->open_departmentid;
     }
     if(!empty($query)){
         if ($searchanywhere) {
@@ -751,12 +747,12 @@ function costcenter_items(){
     global $DB, $USER;
     $assigned_costcenters = '';
     $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+    if (is_siteadmin()) {
                    $sql="SELECT * from {local_costcenter} where visible=1 AND depth <3 ORDER by sortorder,fullname ";
         $assigned_costcenters = $DB->get_records_sql($sql);
     } else {
          $sql="SELECT * from {local_costcenter} where visible = 1 and (id = ? or parentid = ?) ORDER by sortorder,fullname";
-        $assigned_costcenters = $DB->get_records_sql($sql, [$USER->open_costcenterid, $USER->open_costcenterid]);
+        $assigned_costcenters = $DB->get_records_sql($sql, [explode('/',$USER->open_path)[1], explode('/',$USER->open_path)[1]]);
     }
     return $assigned_costcenters;
 }
@@ -887,7 +883,6 @@ function blocks_add_default_org_blocks($costcenterid) {
     global $DB;
     $page = new moodle_page();
     $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ";
-
     $costcenterpath = $DB->get_field_sql($sql,array('organisationid'=>$costcenterid));
     $page->set_context((new \local_costcenter\lib\accesslib())::get_module_context($costcenterpath));
         $subpagepattern = null;
