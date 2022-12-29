@@ -44,23 +44,21 @@ class custom_category_form extends moodleform {
 
         local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1, 1), false, 'local_custom_category', $context, $multiple = false);
 
-
-        if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context))){
-
-            $depsql = "SELECT lcc.id,lcc.fullname
-                        FROM {local_custom_category} as lcc";
-
-            $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
-            $parents[0] = 'Top';
-
-        }else{
-            $costcenterid = explode('/',$USER->open_path);
-            $sql = "SELECT id,fullname
-                    FROM {local_custom_category} WHERE id = ?";
-            $parents = $DB->get_records_sql_menu($sql, array('costcenterid' => $costcenterid[1]));
+        $parentsql = "SELECT lcc.id, lcc.fullname FROM {local_custom_category} AS lcc WHERE 1 = 1";
+        if(!is_siteadmin()){
+            $orgcond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $orgcond[] = " lcc.costcenterid = {$costcenterid} ";
+            }
+            if(!empty($orgcond)){
+                $parentsql .= " AND".implode(' OR ', $orgcond);
+            }else{
+                $parentsql .= " AND 1 <> 1 ";
+            }
         }
-        $parents[0] = 'Top';
-        asort($parents);
+        $parents = $DB->get_records_sql_menu($parentsql);
+        $parents = [null => get_string('top', 'local_custom_category')] + $parents;
 
         $coursetype = array(
             'ajax' => 'local_costcenter/form-options-selector',
@@ -73,7 +71,11 @@ class custom_category_form extends moodleform {
             'multiple' => false,
         );
 
-        $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents, $coursetype);
+        if(!is_siteadmin()){
+            $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents);
+        } else {
+            $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents,$coursetype);
+        }
         $mform->setType('parentid', PARAM_INT);
 
         $mform->addElement('text', 'name', get_string('name', 'local_custom_category'));
