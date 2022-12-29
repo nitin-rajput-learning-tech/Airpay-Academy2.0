@@ -29,7 +29,16 @@ function xmldb_usersprofilefields_states_upgrade($oldversion){
         if (!$dbman->field_exists($table, $field3)) {
             $dbman->add_field($table, $field3);
         }
+
         upgrade_plugin_savepoint(true, 2022120104.02, 'usersprofilefields', 'states');
+    }
+    if ($oldversion < 2022120104.06) {
+        $table = new xmldb_table('local_states');
+        $field = new xmldb_field('territoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', null);
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->rename_field($table, $field, 'costcenterid');
+        }
+        upgrade_plugin_savepoint(true, 2022120104.06, 'usersprofilefields', 'states');
     }
     return true;
 

@@ -481,7 +481,7 @@ function local_courses_output_fragment_custom_course_form($args){
         $course = course_get_format($course)->get_course();
         $category = $DB->get_record('course_categories', array('id'=>$course->category), '*', MUST_EXIST);
         $coursecontext = context_course::instance($course->id);
-        require_capability('moodle/course:update', $coursecontext);
+        //require_capability('moodle/course:update', $coursecontext);
     }else{
         $category = $CFG->defaultrequestcategory;
     }
@@ -1012,7 +1012,6 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
 	$context = (new \local_courses\lib\accesslib())::get_module_context($course_id);
     $course = $DB->get_record('course', array('id' => $course_id));
     $condition = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
- 
     $params['suspended'] = 0;
     $params['deleted'] = 0;
  
@@ -1035,8 +1034,8 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     if (!empty($params['uname'])) {
          $sql .=" AND u.id IN ({$params['uname']})";
     }
-    if (!empty($params['organizations'])) {
-        $organizations = explode(',', $params['organizations']);
+    if (!empty($params['organization'])) {
+        $organizations = explode(',', $params['organization']);
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
@@ -1046,8 +1045,8 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
             $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
         }
     }
-    if (!empty($params['departments'])) {
-        $departments = explode(',', $filterdata->departments);
+    if (!empty($params['department'])) {
+        $departments = explode(',', $params['department']);
         $deptsql = [];
         foreach($departments AS $department){
             $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
@@ -1058,7 +1057,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
         }
     }
     if (!empty($params['subdepartment'])) {
-        $subdepartments = explode(',', $filterdata->subdepartment);
+        $subdepartments = explode(',', $params['subdepartment']);
         $subdeptsql = [];
         foreach($subdepartments AS $subdepartment){
             $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
@@ -1069,7 +1068,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
         }
     }
     if (!empty($params['department4level'])) {
-        $subdepartments = explode(',', $filterdata->department4level);
+        $subdepartments = explode(',', $params['department4level']);
         $subdeptsql = [];
         foreach($subdepartments AS $department4level){
             $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
@@ -1080,7 +1079,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
         }
     }
     if (!empty($params['department5level'])) {
-        $subdepartments = explode(',', $filterdata->department5level);
+        $subdepartments = explode(',', $params['department5level']);
         $subdeptsql = [];
         foreach($subdepartments AS $department5level){
             $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
@@ -1134,6 +1133,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     }
 
     $order = " ORDER BY concat(u.firstname,' ',u.lastname) ASC ";
+
     if($total==0){
         $availableusers = $DB->get_records_sql_menu($sql.$order, $params, $offset, $perpage);
     }else{
@@ -1299,7 +1299,7 @@ function get_listof_courses($stable, $filterdata) {
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
                      JOIN {course_categories} AS cc ON cc.id = c.category
-                     LEFT JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
+                     JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
         
     $formsql .= " AND c.id > 1  $open_path";
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
@@ -1318,13 +1318,14 @@ function get_listof_courses($stable, $filterdata) {
         list($filtercoursessql, $filtercoursesparams) = $DB->get_in_or_equal($filtercourses, SQL_PARAMS_NAMED, 'param', true, false);
         $formsql .= " AND c.id $filtercoursessql";
     }
-    
+    $filterparams=array();
     if (!empty($filterdata->organizations)) {
+
         $organizations = explode(',', $filterdata->organizations);
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',c.open_path,'/') LIKE :organisationparam_{$organisation}";
-            $params["organisationparam_{$organisation}"] = '%'.$organisation.'%';
+            $filterparams["organisationparam_{$organisation}"] = '%'.$organisation.'%';
         }
         if(!empty($orgsql)){
             $formsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
@@ -1336,7 +1337,7 @@ function get_listof_courses($stable, $filterdata) {
         $deptsql = [];
         foreach($departments AS $department){
             $deptsql[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
-            $params["departmentparam_{$department}"] = '%'.$department.'%';
+            $filterparams["departmentparam_{$department}"] = '%'.$department.'%';
         }
         if(!empty($deptsql)){
             $formsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
@@ -1348,7 +1349,7 @@ function get_listof_courses($stable, $filterdata) {
         $subdeptsql = [];
         foreach($subdepartments AS $subdepartment){
             $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
-            $params["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartment.'%';
+            $filterparams["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartment.'%';
         }
         if(!empty($subdeptsql)){
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -1360,7 +1361,7 @@ function get_listof_courses($stable, $filterdata) {
         $subdeptsql = [];
         foreach($subdepartments AS $department4level){
             $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :department4levelparam_{$department4level}";
-            $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
+            $filterparams["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
         }
         if(!empty($subdeptsql)){
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -1371,7 +1372,7 @@ function get_listof_courses($stable, $filterdata) {
         $subdeptsql = [];
         foreach($subdepartments AS $department5level){
             $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :department5levelparam_{$department5level}";
-            $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
+            $filterparams["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
         }
         if(!empty($subdeptsql)){
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -1400,7 +1401,7 @@ function get_listof_courses($stable, $filterdata) {
         }
     }
 
-    $params = array_merge($searchparams, $userorg, $userdep, $filtercategoriesparams, $filtercoursesparams, $departmentsparams, $subdepartmentsparams, $organizationsparams, $hrmsrolessparams, $locationsparams);
+    $params = array_merge($searchparams, $userorg, $userdep, $filtercategoriesparams,$filtercoursesparams, $departmentsparams, $subdepartmentsparams, $organizationsparams, $hrmsrolessparams, $locationsparams,$filterparams);
 
     $totalcourses = $DB->count_records_sql($countsql.$formsql, $params);
     $formsql .=" ORDER BY c.id DESC";
@@ -1413,10 +1414,10 @@ function get_listof_courses($stable, $filterdata) {
         $count = 0;
         foreach ($courses as $key => $course) {
             $course_in_list = new core_course_list_element($course);
-            $context = context_course::instance($course->id);
+            $context =  \context_coursecat::instance($course->category);
             $category = $DB->get_record('course_categories',array('id'=>$course->category));
-            $departmentcount = count(array_filter(explode(',', $course->open_departmentid)));
-            $subdepartmentcount = count(array_filter(explode(',',$course->open_subdepartment)));
+            $departmentcount = 1;
+            $subdepartmentcount = 1;
           
             $params = array('courseid'=>$course->id);
             if(is_siteadmin()){

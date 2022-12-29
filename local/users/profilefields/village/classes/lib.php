@@ -34,14 +34,15 @@ class lib{
             JOIN {local_subdistrict} AS lsd ON lsd.id=lv.subdistrictid
             JOIN {local_district} AS ld ON ld.id = lsd.districtid
             JOIN {local_states} AS ls ON ls.id=ld.statesid
-            JOIN {local_costcenter} AS lc ON lc.id = ls.territoryid WHERE 1 = 1";
+            JOIN {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
-                $territoriescond[] = " concat(lc.path,'/') LIKE '{$contextinfo['costcenterpath']}/%' ";
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $territoriescond[] = " lc.id = {$costcenterid} ";
             }
             if(!empty($territoriescond)){
-                $village_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) AND lc.depth = 5 ";
+                $village_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) ";
             }else{
                 $village_sql .= " AND 1 <> 1 ";
             }

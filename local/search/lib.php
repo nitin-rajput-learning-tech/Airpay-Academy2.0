@@ -89,29 +89,32 @@ function local_search_get_itemlist_grade($start = 0, $limit = 5){
 	return [$itemlist, $showviewmore];
 }
 
-function local_search_get_itemlist_skill($start = 0, $limit = 5){
+function local_search_get_itemlist_skill($start = 0, $limit = 6){
 	global $DB, $USER;
 	$selectsql = "SELECT id, name as value ";
 	$countsql = "SELECT count(name) ";
 	$sql .= " FROM {local_skill_categories} AS u WHERE 1=1";
 	$params = [];
     $skill = $DB->get_records_sql_menu($selectsql.$sql, $params, $start, $limit);
+    if($start == 0){
+        if(count($skill) == $limit){
+            array_pop($skill);
+            $showviewmore = true;
+        }else{
+            $showviewmore = false;
+        }
+    }
 	$itemlist = [];
 	foreach($skill AS $skillid => $skillname){
 		$response = allcourses::get_available_catalogtypes(['skill_'.$skillid]);
     	$sumofallrecords = $response['sumofallrecords'];
 		$itemlist[] = ['tagitemid' => 'skill_'.$skillid, 'tagitemname' => $skillname, 'tagitemshortname' => $skillname, 'coursecount' => $sumofallrecords];
 	}
-	$showviewmore = false;
-	if($start == 0){
-		$total_count = $DB->count_records_sql($countsql.$sql, $params);
-		$showviewmore = $total_count > 6 ? true : false;
-	}
 	return [$itemlist, $showviewmore];
 }
 
 
-function local_search_get_itemlist_level($start = 0, $limit = 5){
+function local_search_get_itemlist_level($start = 0, $limit = 6){
 	global $DB, $USER;
 	$selectsql = "SELECT id, name as value ";
 	$countsql = "SELECT count(id) ";
@@ -122,16 +125,19 @@ function local_search_get_itemlist_level($start = 0, $limit = 5){
         $params['costcenterid'] = $USER->open_costcenterid;
     }
     $courselevel = $DB->get_records_sql_menu($selectsql.$sql, $params, $start, $limit);
+    if($start == 0){
+        if(count($courselevel) == $limit){
+            array_pop($courselevel);
+            $showviewmore = true;
+        }else{
+            $showviewmore = false;
+        }
+    }
     $itemlist = [];
     foreach($courselevel AS $levelid => $levelname){
        $response = allcourses::get_available_catalogtypes(['level_'.$levelid]);
        $sumofallrecords = $response['sumofallrecords'];
        $itemlist[] = ['tagitemid' => 'level_'.$levelid,'tagitemname' => $levelname,'tagitemshortname' => $levelname, 'coursecount' => $sumofallrecords];
-    }
-    $showviewmore = false;
-    if($start == 0){
-    	$total_count = $DB->count_records_sql($countsql.$sql, $params);
-    	$showviewmore = $total_count > 6 ? true : false;
     }
     return [$itemlist, $showviewmore];
 
@@ -153,6 +159,83 @@ function local_search_get_enabled_searchplugin_info(){
         }
     }
     return $pluginsinfo;
+}
+function local_search_get_filters(){
+    $filter_array = [];
+    $filter_array[] = local_search_get_filter_itemlist('moduletype',0, 0);
+    $filter_array[] = local_search_get_filter_itemlist('status',0, 0);
+    $filter_array[] = local_search_get_filter_itemlist('learningtype',0, 0);
+    $filter_array[] = local_search_get_filter_itemlist('categories',0, 0);
+    $filter_array[] = local_search_get_filter_itemlist('level',0, 0);
+    $filter_array[] = local_search_get_filter_itemlist('skill',0, 0);
+    return $filter_array;
+}
+function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
+    global $DB;
+    switch($catid){
+        case 'moduletype':
+            $itemslist = [];
+            $filterplugins = get_plugins_with_function('search_page_filter_element');
+
+            foreach($filterplugins AS $filterelements){
+                foreach($filterelements AS $filterelement){
+                    $filterelement($itemslist);
+                }
+            }
+            return ['catcode' => 'moduletype', 'tagcatname' => 'Module Type', 'itemslist' => $itemslist, 'showviewmore' => false];
+        break;
+        case 'status':
+            $itemslist[] = ['tagitemid' => 'status_notenrolled', 'tagitemname' => 'Not Enrolled', 'tagitemshortname' => 'notenrolled_modules', 'coursecount' => local_search_get_coursecount_for_status(['status_notenrolled'])];
+            $itemslist[] = ['tagitemid' => 'status_enrolled', 'tagitemname' => 'Enrolled', 'tagitemshortname' => 'enrolled_modules', 'coursecount' => local_search_get_coursecount_for_status(['status_enrolled'])];
+            $itemslist[] = ['tagitemid' => 'status_completed', 'tagitemname' => 'Completed', 'tagitemshortname' => 'completed_modules', 'coursecount' => local_search_get_coursecount_for_status(['status_completed'])];
+            return ['catcode' => 'learningstatus', 'tagcatname' => 'Status', 'itemslist' => $itemslist, 'showviewmore' => false];
+        break;
+        case 'learningtype':
+            $itemslist = [];
+            $sql = "SELECT id, name, shortname FROM {local_course_types} WHERE active = 1 ";
+            $ctypes = $DB->get_records_sql($sql, [], $start, $limit);
+            if($start == 0){
+                if(count($ctypes) == $limit){
+                    array_pop($ctypes);
+                    $showviewmore = true;
+                }else{
+                    $showviewmore = false;
+                }
+            }
+            foreach($ctypes AS $customtype){
+                $itemslist['custom_'.$customtype->shortname] = ['tagitemid' => 'learningtype_'.$customtype->id, 'tagitemname' => $customtype->name, 'tagitemshortname' => $customtype->shortname, 'coursecount' => local_search_get_coursecount_for_modules(['learningtype_'.$customtype->id])];
+            }
+            ksort($itemslist);
+            return ['catcode' => 'learningtype', 'tagcatname' => 'Learning Type', 'itemslist' => $itemslist, 'showviewmore' => $showviewmore];
+        break;
+        case 'categories':
+            $categorySql = "SELECT id, fullname FROM {local_custom_category} WHERE 1 = 1 ";
+            $categories = $DB->get_records_sql_menu($categorySql, [], $start, $limit);
+            if($start == 0){
+                if(count($categories) == 7){
+                    array_pop($categories);
+                    $showviewmore = true;
+                }else{
+                    $showviewmore = false;
+                }
+            }
+            $itemslist = [];
+            foreach($categories AS $catid => $catname){
+                $coursecount = local_search\output\allcourses::get_available_catalogtypes(['categories_'.$catid])['sumofallrecords'];
+                $itemslist[] = ['tagitemid' => 'categories_'.$catid, 'tagitemname' => $catname, 'tagitemshortname' => $catname, 'coursecount' => $coursecount];
+            }
+            return ['catcode' => 'categories', 'tagcatname' => 'Category ', 'itemslist' => $itemslist, 'showviewmore' => $showviewmore];
+        break;
+        case 'level':
+            list($itemslist, $showviewmore) = local_search_get_itemlist_level($start, $limit);
+            return ['catcode' => 'level', 'tagcatname' => 'Level', 'itemslist' => $itemslist, 'showviewmore' => $showviewmore];
+            break;
+
+        case 'skill':
+            list($itemslist, $showviewmore) = local_search_get_itemlist_skill($start, $limit);
+            return ['catcode' => 'skill', 'tagcatname' => 'Skill Category', 'itemslist' => $itemslist, 'showviewmore' => $showviewmore];
+        break;
+     }
 }
 
 

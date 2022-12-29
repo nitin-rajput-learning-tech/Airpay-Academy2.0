@@ -42,7 +42,7 @@ $functions = array(
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
     ),
-    'local_assignroles_enrol_user_to_module' => array(
+    'local_search_enrol_user_to_module' => array(
         'classname' => 'local_search_external',
         'methodname' => 'enrol_user_to_module',
         'classpath' => 'local/search/classes/external.php',
