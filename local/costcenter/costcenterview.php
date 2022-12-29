@@ -72,7 +72,7 @@ if(is_siteadmin()){
     $PAGE->navbar->add(get_string('orgmanage', 'local_costcenter'), new moodle_url('/local/costcenter/index.php'));
 }
 else {
-    $depth=$categorycontext->depth;   
+    $depth=($categorycontext->depth-1);   
     $costcenterid=explode('/',$USER->open_path)[$depth];          
     $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
     $organization_string = get_string('orgStructure','local_costcenter');
