@@ -47,8 +47,8 @@ class notification{
 		$params['moduleid'] = $course->id;
 		$params['emailtype'] = $emailtype;
 		if($costcenterexist){
-			$notification_typesql .= " AND lni.costcenterid=:costcenterid";
-			$params['costcenterid'] = $course->open_path;
+			$notification_typesql .= " AND  concat('/',lni.open_path,'/') LIKE :costcenterid";
+			$params['costcenterid'] = '%'.explode('/',$course->open_path)[1].'%';
 		}
 		$notification = $this->db->get_record_sql($notification_typesql, $params);
 		if(empty($notification)){ // sends the default notification for the type.
@@ -59,8 +59,8 @@ class notification{
 				AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
 			$params['emailtype'] = $emailtype;
 			if($costcenterexist){
-				$notification_typesql .= " AND lni.costcenterid=:costcenterid";
-				$params['costcenterid'] = $course->open_path;
+				$notification_typesql .= " AND  concat('/',lni.open_path,'/') LIKE :costcenterid ";
+				$params['costcenterid'] = '%'.explode('/',$course->open_path)[1].'%';
 			}
 			$notification = $this->db->get_record_sql($notification_typesql, $params);
 		}
