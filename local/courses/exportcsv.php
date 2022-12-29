@@ -27,6 +27,8 @@ require_once(dirname(__FILE__) . '/../../config.php');
 
 global $CFG, $USER,$PAGE,$OUTPUT,$DB;
 require_once($CFG->dirroot . '/local/courses/lib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
+
 $filtervalues = json_decode($_REQUEST['formdata']);
 $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 require_login(); 
@@ -35,8 +37,10 @@ $table->id = "courses";
 $table->head[] = get_string('coursename','local_courses');
 $table->head[] = get_string('coursecode','local_courses');
 $table->head[] = get_string('coursetype','local_courses');
-$table->head[] = get_string('department','local_courses');
-$table->head[] = get_string('subdepartment','local_courses');
+$table->head[] = get_string('open_departmentlocal_courses','local_courses');
+$table->head[] = get_string('open_subdepartmentlocal_courses','local_courses');
+$table->head[] = get_string('open_level4departmentlocal_courses','local_courses');
+$table->head[] = get_string('open_level5departmentlocal_courses','local_courses');
 $table->head[] = get_string('category','local_courses');
 $table->head[] = get_string('enrollments','local_courses');
 $table->head[] = get_string('points','local_courses');
@@ -55,7 +59,10 @@ $stable->length = 0;
 $coursedata = get_listof_courses($stable, $filtervalues);
 $data = [];
 foreach($coursedata['hascourses'] AS $course){
-     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_departmentid'], $course['open_subdepartment'], $course['catname'], $course['enrolled_count'], $course['points'], $course['completed_count'], $course['skillname'], $course['ratings_value'], $course['tagstringtotal'],$course['coursesummary'],$course['format'],$course['selfenrol']];
+
+     local_costcenter_set_costcenter_path($course);
+
+     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_department'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['points'], $course['completed_count'], $course['skillname'], $course['ratings_value'], $course['tagstringtotal'],$course['coursesummary'],$course['format'],$course['selfenrol']];
 }
 $table->id = "users";
 $table->data = $data;

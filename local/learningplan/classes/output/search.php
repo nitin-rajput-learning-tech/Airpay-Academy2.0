@@ -67,18 +67,19 @@ class search implements renderable{
             $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
             $paths = [];
             foreach($usercostcenterpaths AS $userpath){
-                $paths[] = $userpath.'%';
-                while ($userpath = rtrim($userpath,'0123456789')) {
-                    $userpath = rtrim($userpath, '/');
-                    if ($userpath === '') {
+                $userpathinfo = $userpath->costcenterpath;
+                $paths[] = $userpathinfo.'%';
+                while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                    $userpathinfo = rtrim($userpathinfo, '/');
+                    if ($userpathinfo === '') {
                       break;
                     }
-                    $paths[] = $userpath;
+                    $paths[] = $userpathinfo;
                 }
             }
             if(!empty($paths)){
                 foreach($paths AS $path){
-                    $pathsql[] = " llp.open_path LIKE {$path} ";
+                    $pathsql[] = " llp.open_path LIKE '{$path}' ";
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }

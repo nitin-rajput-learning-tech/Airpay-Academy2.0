@@ -900,7 +900,7 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
-function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false,$addrule=true){
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false){
     global $DB, $USER;
     $depth = $USER->access['currentroleinfo']['depth'];
     $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
@@ -933,14 +933,8 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
 
-            if($addrule==true){
 
-                $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
-
-            }else{
-
-                $enableallfield = $allenable;
-            }
+            $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
 
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
@@ -966,10 +960,9 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             }
             $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
             $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
-            if($addrule==true){
 
-                $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
-            }
+            // $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+
             $firstelement = false;
         }
         $mform->setType($fields[$level], PARAM_RAW);
