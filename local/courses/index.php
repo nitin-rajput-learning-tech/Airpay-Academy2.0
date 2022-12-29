@@ -35,7 +35,7 @@ $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 $categoryid = optional_param('categoryid', 0, PARAM_INT);
 $hide = optional_param('hide', '', PARAM_INT);
 $visible = optional_param('visible', -1, PARAM_INT);
-$url = new moodle_url('/local/courses/index.php');
+$url = new moodle_url('/local/custom_category/index.php');
 $id = optional_param('id', 0, PARAM_INT);
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
 if ($formattype == 'card') {
@@ -61,7 +61,7 @@ if($categoryid > 0 && $visible != -1){
                     $visible . ' WHERE category = ' .
                 $categoryid. '');
 
-    redirect(new moodle_url('/local/courses/index.php'));
+    redirect(new moodle_url('/local/custom_category/index.php'));
 }
 if ($categoryid) {
     $category = core_course_category::get($categoryid);
@@ -97,14 +97,14 @@ if ($category && !has_any_capability($capabilities, $categorycontext)) {
     // If the user doesn't poses any of these system capabilities then we're going to mark the manage link in the settings block
     // as active, tell the page to ignore the active path and just build what the user would expect.
     // This will at least give the page some relevant navigation.
-    navigation_node::override_active_url(new moodle_url('/local/courses/index.php', array('categoryid' => $category->id)));
+    navigation_node::override_active_url(new moodle_url('/local/custom_category/index.php', array('categoryid' => $category->id)));
     $PAGE->set_category_by_id($category->id);
     $PAGE->navbar->ignore_active(true);
     $PAGE->navbar->add(get_string('coursemgmt', 'admin'), $PAGE->url->out_omit_querystring());
 } else {
     // If user has system capabilities, make sure the "Manage courses and categories" item in Administration block is active.
     navigation_node::require_admin_tree();
-    navigation_node::override_active_url(new moodle_url('/local/courses/index.php'));
+    navigation_node::override_active_url(new moodle_url('/local/custom_category/index.php'));
 }
 // if($category !== null){
 //     $parents = coursecat::get_many($category->get_parents());
@@ -129,7 +129,7 @@ if($id == 0){
     //     }else{
     //         $catid = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_departmentid));
     //     }
-    //     redirect(new moodle_url('/local/courses/index.php', array('id' => $catid)));
+    //     redirect(new moodle_url('/local/custom_category/index.php', array('id' => $catid)));
     // }
     $PAGE->navbar->add(get_string('leftmenu_browsecategories','local_courses'));
 }else{
@@ -139,7 +139,7 @@ if($id == 0){
     $superparent_sql = "SELECT id,name FROM {course_categories} WHERE id = (SELECT parent FROM {course_categories} WHERE id = {$id}) ";
     if($superparent = $DB->get_record_sql($superparent_sql)){
         // if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        //     $PAGE->navbar->add($superparent->name, new moodle_url('/local/courses/index.php', array('id' => $superparent->id)));
+        //     $PAGE->navbar->add($superparent->name, new moodle_url('/local/custom_category/index.php', array('id' => $superparent->id)));
         // }else{
             $PAGE->navbar->add($superparent->name);
         // }
@@ -189,14 +189,14 @@ if($categoryid > 0 && $visible != -1){
                     $visible . ',visibleold= ' .
                     $visible . ' WHERE category = ' .
                 $categoryid. '');
-    redirect(new moodle_url('/local/courses/index.php'));
+    redirect(new moodle_url('/local/custom_category/index.php'));
 }
 // echo isset($content);
 $filterparams = $renderer->get_categories_list(true,$formattype);
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 if (is_siteadmin() || has_capability('local/courses:manage', $categorycontext))  {
 
-    $display_url = new moodle_url('/local/courses/index.php?formattype=' . $formattype_url);
+    $display_url = new moodle_url('/local/custom_category/index.php?formattype=' . $formattype_url);
         $displaytype_div = '<div class="col-12 d-inline-block">';
     $displaytype_div .= '<a class="btn btn-outline-secondary pull-right" href="' . $display_url . '">';
     $displaytype_div .= '<span class="'.$display_icon.'"></span>' . $display_text;

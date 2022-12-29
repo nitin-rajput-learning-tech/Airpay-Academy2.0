@@ -4,25 +4,24 @@ namespace usersprofilefields_village;
 class lib{
     public function create_update_village($formdata){
         global $DB, $USER;
-        // print_object($formdata);
-        // exit;
+        $data = new \stdClass();
+        $data->village_name   = $formdata->village_name;
+        $data->code         = $formdata->code;
+        $data->subdistrictid = $formdata->subdistrictid;
+        $sql = $DB->get_record('local_subdistrict', array('id' => $formdata->subdistrictid));
+        $data->districtid = $sql->districtid;
+        $data->statesid = $sql->statesid;
+        $data->costcenterid = $sql->costcenterid;
+
         if($formdata->id){
-            $updata = new \stdClass();
-            $updata->id           = $formdata->id;
-            $updata->village_name   = $formdata->village_name;
-            $updata->code         = $formdata->code;
-            $updata->subdistrictid = $formdata->subdistrictid;
-            $updata->timemodified = time();
-            $updata->usermodified = $USER->id;
-            $villageid = $DB->update_record('local_village', $updata);
+            $data->id           = $formdata->id;
+            $data->timemodified = time();
+            $data->usermodified = $USER->id;
+            $villageid = $DB->update_record('local_village', $data);
         }else{
-            $newdata = new \stdClass();
-            $newdata->village_name   = $formdata->village_name;
-            $newdata->code         = $formdata->code;
-            $newdata->subdistrictid = $formdata->subdistrictid;
-            $newdata->timecreated  = time();
-            $newdata->usercreated  = $USER->id;
-            $villageid = $DB->insert_record('local_village', $newdata);
+            $data->timecreated  = time();
+            $data->usercreated  = $USER->id;
+            $villageid = $DB->insert_record('local_village', $data);
         }
         return $villageid;
     }
@@ -31,15 +30,12 @@ class lib{
         $systemcontext = (new \usersprofilefields_village\lib\accesslib())::get_module_context();
         $village_sql = "SELECT lv.id,lv.village_name,lsd.subdistrict_name as subdistrictname
             FROM {local_village} as lv
-            JOIN {local_subdistrict} AS lsd ON lsd.id=lv.subdistrictid
-            JOIN {local_district} AS ld ON ld.id = lsd.districtid
-            JOIN {local_states} AS ls ON ls.id=ld.statesid
-            JOIN {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
+            JOIN {local_subdistrict} AS lsd ON lsd.id=lv.subdistrictid";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
-                $territoriescond[] = " lc.id = {$costcenterid} ";
+                $territoriescond[] = " lv.costcenterid = {$costcenterid} ";
             }
             if(!empty($territoriescond)){
                 $village_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) ";
@@ -69,7 +65,7 @@ class lib{
                     // $userexist = $DB->record_exists('user', array('open_village' => $village->id));
                     $noredirecturl = 'javascript:void(0)';
                     if(is_siteadmin() || has_capability('usersprofilefields/village:edit',$systemcontext)){
-                        $editicon = '<i class="fa fa-cog"></i>';
+                        $editicon = '<i class="fa fa-pencil"></i>';
                         $actions .= \html_writer::link($noredirecturl ,$editicon,array('onclick' => '(function(e){ require("usersprofilefields_village/createVillage").init({selector:"createvillagemodal", contextid:'.$systemcontext->id.', villageid:'.$village->id.' }) })(event)'));
                     }
                     /*if($userexist > 0){
