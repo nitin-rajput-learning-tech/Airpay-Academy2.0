@@ -4,25 +4,21 @@ namespace usersprofilefields_district;
 class lib{
     public function create_update_district($formdata){
         global $DB, $USER;
-        // print_object($formdata);
-        // exit;
+        $data = new \stdClass();
+        $data->district_name   = $formdata->district_name;
+        $data->code         = $formdata->code;
+        $data->statesid = $formdata->statesid;
+        $costcenter = $DB->get_field('local_states', 'costcenterid', array('id' => $formdata->statesid));
+        $data->costcenterid = $costcenter;
         if($formdata->id){
-            $updata = new \stdClass();
-            $updata->id           = $formdata->id;
-            $updata->district_name   = $formdata->district_name;
-            $updata->code         = $formdata->code;
-            $updata->statesid = $formdata->statesid;
-            $updata->timemodified = time();
-            $updata->usermodified = $USER->id;
-            $districtid = $DB->update_record('local_district', $updata);
+            $data->id           = $formdata->id;
+            $data->timemodified = time();
+            $data->usermodified = $USER->id;
+            $districtid = $DB->update_record('local_district', $data);
         }else{
-            $newdata = new \stdClass();
-            $newdata->district_name   = $formdata->district_name;
-            $newdata->code         = $formdata->code;
-            $newdata->statesid = $formdata->statesid;
-            $newdata->timecreated  = time();
-            $newdata->usercreated  = $USER->id;
-            $districtid = $DB->insert_record('local_district', $newdata);
+            $data->timecreated  = time();
+            $data->usercreated  = $USER->id;
+            $districtid = $DB->insert_record('local_district', $data);
         }
         return $districtid;
     }
@@ -30,13 +26,12 @@ class lib{
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
         $district_sql = "SELECT ld.id,ld.district_name,ls.states_name as statesname FROM {local_district} as ld
-            JOIN {local_states} AS ls ON ls.id=ld.statesid
-            JOIN  {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
+            JOIN {local_states} AS ls ON ls.id=ld.statesid ";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
-                $territoriescond[] = " lc.id = {$costcenterid} ";
+                $territoriescond[] = " ld.costcenterid = {$costcenterid} ";
             }
             if(!empty($territoriescond)){
                 $district_sql .= " AND ( ".implode(' OR ', $territoriescond)." ) ";
@@ -67,7 +62,7 @@ class lib{
                     $userexist = $DB->record_exists('local_subdistrict', array('districtid'=>$district->id));
                     $noredirecturl = 'javascript:void(0)';
                     if(is_siteadmin() || has_capability('usersprofilefields/district:edit',$systemcontext)){
-                        $editicon = '<i class="fa fa-cog"></i>';
+                        $editicon = '<i class="fa fa-pencil"></i>';
                         $actions .= \html_writer::link($noredirecturl ,$editicon,array('onclick' => '(function(e){ require("usersprofilefields_district/createDistrict").init({selector:"createdistrictmodal", contextid:'.$systemcontext->id.', districtid:'.$district->id.' }) })(event)'));
                     }
                     if($userexist > 0){

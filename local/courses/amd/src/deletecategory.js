@@ -221,7 +221,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 }).done(function(modal) {
                     this.modal = modal;
                     modal.getRoot().find('[data-action="save"]').on('click', function() {
-                        window.location.href = M.cfg.wwwroot+'/local/courses/index.php?categoryid='+elem.id+'&visible='+elem.visible+'&hide=1&sesskey='+ M.cfg.sesskey;
+                        window.location.href = M.cfg.wwwroot+'/local/custom_category/index.php?categoryid='+elem.id+'&visible='+elem.visible+'&hide=1&sesskey='+ M.cfg.sesskey;
                     }.bind(this));
                     modal.getFooter().find('[data-action="cancel"]').on('click', function() {
                         modal.setBody('');

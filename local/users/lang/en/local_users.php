@@ -763,3 +763,4 @@ $string['open_level4departmentlocal_users'] = 'Commercial Unit';
 $string['open_level5departmentlocal_users'] = 'Territory';
 $string['managestates'] = 'Manage State';
 $string['states'] = 'State';
+$string['organisation'] = 'Organisation';

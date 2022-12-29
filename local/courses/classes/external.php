@@ -416,7 +416,7 @@ class local_courses_external extends external_api {
         if ($validateddata) {
             // The form has been submit handle it.
                 if ($validateddata->fulldelete == 1 && $category->can_delete_full()) {
-                    $continueurl = new moodle_url('/local/courses/index.php');
+                    $continueurl = new moodle_url('/local/custom_category/index.php');
                     if ($category->parent != '0') {
                         $continueurl->param('categoryid', $category->parent);
                     }
@@ -889,7 +889,7 @@ class local_courses_external extends external_api {
   public static function categories_view($options, $dataoptions, $offset = 0, $limit = 0, $contextid, $filterdata) {
     global $DB, $PAGE;
     require_login();
-    $PAGE->set_url('/local/courses/index.php', array());
+    $PAGE->set_url('/local/custom_category/index.php', array());
     $PAGE->set_context($contextid);
     // Parameter validation.
     $params = self::validate_parameters(

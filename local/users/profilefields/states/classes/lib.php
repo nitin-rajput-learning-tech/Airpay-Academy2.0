@@ -4,25 +4,20 @@ namespace usersprofilefields_states;
 class lib{
     public function create_update_states($formdata){
         global $DB, $USER;
-        // print_object($formdata);
-        // exit;
+        $data = new \stdClass();
+        $data->states_name   = $formdata->states_name;
+        $data->code         = $formdata->code;
+        $data->costcenterid = $formdata->costcenterid;
         if($formdata->id){
-            $updata = new \stdClass();
-            $updata->id           = $formdata->id;
-            $updata->states_name   = $formdata->states_name;
-            $updata->code         = $formdata->code;
-            $updata->costcenterid = $formdata->costcenterid;
-            $updata->timemodified = time();
-            $updata->usermodified = $USER->id;
-            $statesid = $DB->update_record('local_states', $updata);
+            $data = new \stdClass();
+            $data->id           = $formdata->id;
+            $data->timemodified = time();
+            $data->usermodified = $USER->id;
+            $statesid = $DB->update_record('local_states', $data);
         }else{
-            $newdata = new \stdClass();
-            $newdata->states_name   = $formdata->states_name;
-            $newdata->code         = $formdata->code;
-            $newdata->costcenterid = $formdata->costcenterid;
-            $newdata->timecreated  = time();
-            $newdata->usercreated  = $USER->id;
-            $statesid = $DB->insert_record('local_states', $newdata);
+            $data->timecreated  = time();
+            $data->usercreated  = $USER->id;
+            $statesid = $DB->insert_record('local_states', $data);
         }
         return $statesid;
     }
@@ -68,7 +63,7 @@ class lib{
                     $userexist = $DB->record_exists('local_district', array('statesid'=>$states->id));
                     $noredirecturl = 'javascript:void(0)';
                     if(is_siteadmin() || has_capability('usersprofilefields/states:edit',$systemcontext)){
-                        $editicon = '<i class="fa fa-cog"></i>';
+                        $editicon = '<i class="fa fa-pencil"></i>';
                         $actions .= \html_writer::link($noredirecturl ,$editicon,array('onclick' => '(function(e){ require("usersprofilefields_states/createStates").init({selector:"createstatesmodal", contextid:'.$systemcontext->id.', statesid:'.$states->id.' }) })(event)'));
                     }
                     if($userexist){

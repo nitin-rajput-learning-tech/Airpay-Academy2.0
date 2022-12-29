@@ -776,7 +776,7 @@ function local_costcenter_leftmenunode(){
             $organization_string = get_string('orgStructure','local_costcenter');
         }
     else{
-            $depth=$categorycontext->depth;   
+            $depth=($categorycontext->depth-1);   
             $costcenterid=explode('/',$USER->open_path)[$depth];    
             $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
             $organization_string = get_string('orgStructure','local_costcenter');
@@ -960,8 +960,10 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             }
             $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
             $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
+            if($level == 1){
 
-            // $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+                $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+            }
 
             $firstelement = false;
         }
