@@ -36,3 +36,4 @@ $string['shortnameexists'] = 'Shortname Already Exist';
 $string['deletecategory'] = 'Are you sure to delete this category';
 $string['yesdelete'] = 'Yes! Delete';
 $string['no'] = 'No';
+$string['top'] = 'Top';

@@ -30,9 +30,28 @@ namespace local_notifications\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function get_module_context($costcenterid = null){
+    public static function notifications_costcenterpath($notinfoid = null) {
 
-        return parent::get_module_context($costcenterid);
+        global $DB;
+
+        $costcenterpath=null;
+
+        if($notinfoid != null && $notinfoid > 0){
+
+            $costcenterpath=$DB->get_field('local_notifications_info','open_path',  array('id'=> $notinfoid));
+        }
+
+        return $costcenterpath;
+
+    }
+    public static function get_module_context($notinfoid = null){
+
+        return parent::get_module_context(self::notifications_costcenterpath($notinfoid));
+
+    }
+    public static function get_costcenter_path_field_concatsql($columnname,$notinfoid = null, $datatype = NULL){
+
+        return parent::get_costcenter_path_field_concatsql($columnname, self::notifications_costcenterpath($notinfoid));
 
     }
 }

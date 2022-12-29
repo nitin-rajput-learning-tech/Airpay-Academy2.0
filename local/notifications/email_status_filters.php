@@ -37,15 +37,6 @@ if ( $_REQUEST['columns'][2]['search'] != "" ){
 
 $countquery="SELECT count(le.id) FROM {local_emaillogs} AS le INNER JOIN {local_notification_info} AS ni ON le.notification_infoid=ni.id where 1=1 ";
 
-// $select_query="SELECT le.id,le.notification_infoid,le.from_userid,le.to_userid,le.status,
-// 	le.timecreated,le.sent_date,ni.costcenterid,ni.notificationid, 
-// 	(SELECT concat(u.firstname,' ', u.lastname) FROM {user} as u WHERE u.id=le.to_userid) as to_username,
-// 	(SELECT concat(u.firstname,' ', u.lastname) FROM {user} as u WHERE u.id=le.from_userid) as from_username,
-// 	(SELECT name  FROM {local_notification_type} as t WHERE t.id=ni.notificationid) as notification_type,
-// 	(SELECT fullname  FROM {local_costcenter} as cc WHERE cc.id=ni.costcenterid) as organization 
-// 	FROM {local_emaillogs} AS le 
-// 	INNER JOIN {local_notification_info} AS ni ON le.notification_infoid=ni.id 
-// 	WHERE 1=1 ";
 $select_query = "SELECT le.id,le.notification_infoid,le.from_userid,le.to_userid,le.status,
 	le.timecreated,le.sent_date,ni.open_path,ni.notificationid, 
 	concat(u.firstname,' ', u.lastname) AS to_username,
@@ -55,20 +46,19 @@ $select_query = "SELECT le.id,le.notification_infoid,le.from_userid,le.to_userid
 	JOIN {user} as u ON u.id = le.to_userid
 	JOIN {local_notification_type} as lnt ON lnt.id=ni.notificationid
 	JOIN {local_costcenter} as lc ON concat('/',ni.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
-	WHERE 1=1";
+	WHERE 1=1 ";
 
 
 $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
 $params = array();
-if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-	$cond_query .= " AND concat('/',ni.open_path,'/') LIKE  :userorgid ";
-	$params['userorgid'] = explode('/',$USER->open_path)[1];
+if(!(is_siteadmin())){
+	$cond_query .= (new \local_notifications\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='ni.open_path');
 }
 
 if (isset($organization_search) && $organization_search != ""){
 
 	$cond_query .= " AND concat('/',ni.open_path,'/') LIKE :orgid";
-	$params['orgid'] = $organization_search;
+	$params['orgid'] = '%'.$organization_search.'%';
 
 }
 if(isset($status_search) && $status_search != ""){
