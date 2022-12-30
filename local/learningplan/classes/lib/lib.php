@@ -302,30 +302,44 @@ class lib
 	function learningplan_courses_list($id)
 	{
 		global $DB, $USER;
-		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
+		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
 
-		if (is_siteadmin() /*|| has_capability('local/costcenter:manage_multiorganizations', $systemcontext)|| has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)*/) {
-			$costcenterid = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
-			$orgpath = explode('/', $costcenterid);
-			$sql = "SELECT c.id as id, c.fullname FROM {course} as c
-					WHERE c.id > 1 AND c.visible = 1  "; //FIND_IN_SET(4,c.open_identifiedas)
-			if ($costcenterid) {
-				$sql .= " AND  CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[1],'/%')";
-			}
-			$courses = $DB->get_records_sql_menu($sql);
-		} else {
-			$course_sql = "SELECT c.id as id, c.fullname
-							FROM {course} as c
-							WHERE c.id > 1 AND c.visible = 1  "; //and FIND_IN_SET(4,c.open_identifiedas)
-			$orgpath = explode('/', $USER->open_path);
-			$course_sql .= " AND 
-							CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[1],'/%')";
-			if (!has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
-				$course_sql .= " AND 
-							CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[2],'/%')";
-			}
-			$courses = $DB->get_records_sql_menu($course_sql);
-		}
+		$costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1  "; 
+		$costcenterid = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
+		$orgpath = explode('/', $costcenterid);
+		if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+	        $sql .= "";
+	        // if ($costcenterid) {
+			// 	$sql .= " AND  CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[1],'/%')";
+			// }
+	    } else  {
+	        $sql .= $costcenterpathconcatsql;
+	    }
+	    $courses = $DB->get_records_sql_menu($sql);
+		// if (is_siteadmin() /*|| has_capability('local/costcenter:manage_multiorganizations', $systemcontext)|| has_capability('local/costcenter:assign_multiple_departments_manage', $systemcontext)*/) {
+		// 	$costcenterid = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
+		// 	$orgpath = explode('/', $costcenterid);
+		// 	$sql = "SELECT c.id as id, c.fullname FROM {course} as c
+		// 			WHERE c.id > 1 AND c.visible = 1  "; //FIND_IN_SET(4,c.open_identifiedas)
+		// 	if ($costcenterid) {
+		// 		$sql .= " AND  CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[1],'/%')";
+		// 	}
+		// 	$courses = $DB->get_records_sql_menu($sql);
+		// } else {
+		// 	$course_sql = "SELECT c.id as id, c.fullname
+		// 					FROM {course} as c
+		// 					WHERE c.id > 1 AND c.visible = 1  "; //and FIND_IN_SET(4,c.open_identifiedas)
+		// 	$orgpath = explode('/', $USER->open_path);
+		// 	$course_sql .= " AND 
+		// 					CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[1],'/%')";
+		// 	if (!has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
+		// 		$course_sql .= " AND 
+		// 					CONCAT('/',c.open_path,'/') = CONCAT('%/',$orgpath[2],'/%')";
+		// 	}
+		// 	echo $course_sql;exit;
+		// 	$courses = $DB->get_records_sql_menu($course_sql);
+		// }
 		return $courses;
 	}
 	// AND concat(',',c.open_identifiedas,',') LIKE '%,4,%'
