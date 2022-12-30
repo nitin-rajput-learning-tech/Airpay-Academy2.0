@@ -44,7 +44,7 @@ class custom_category_form extends moodleform {
 
         local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1, 1), false, 'local_custom_category', $context, $multiple = false);
 
-        $parentsql = "SELECT lcc.id, lcc.fullname FROM {local_custom_category} AS lcc WHERE 1 = 1";
+        $parentsql = "SELECT lcc.id, lcc.fullname FROM {local_custom_category} AS lcc WHERE 1 = 1 AND lcc.depth = 1";
         if(!is_siteadmin()){
             $orgcond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){

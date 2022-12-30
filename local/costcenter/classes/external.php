@@ -628,7 +628,7 @@ class local_costcenter_external extends external_api {
                     }
                 break;
                 case 'costecenter_coursetype_selector':
-                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) || 
+                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) ||
                         (!is_array($formoptions->parentid) && $formoptions->parentid > 0) ) {
                         list($organisationidssql, $organisationparams) = $DB->get_in_or_equal($formoptions->parentid, SQL_PARAMS_NAMED, 'organisationid');
 
@@ -657,7 +657,7 @@ class local_costcenter_external extends external_api {
                         }
                         $fields      = 'SELECT id, fullname';
                         $accountssql = " FROM {local_custom_category}
-                                         WHERE 1=1 $concatsql AND costcenterid = :parentid ";
+                                         WHERE 1=1 AND depth = 1 $concatsql AND costcenterid = :parentid ";
 
                         $customcat = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
 
