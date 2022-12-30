@@ -1351,7 +1351,7 @@ body#page-local-users-index .field_required .icon {
     display: flex;
     flex-wrap: wrap;
     float:none!important;
-    padding: 15px;
+     padding:15px 15px 15px 30px;
 }
 #page-local-users-index .modal-content .badge-info{
     margin-bottom: 0!important;
@@ -1384,3 +1384,10 @@ body#page-local-users-index .field_required .icon {
         right: 3px;
     }
 }
+#page-local-users-index .openLMStransition.local_users .modal-body .form-group{
+    margin-bottom: 2rem;
+}
+#page-local-users-index .openLMStransition .form_status{
+    margin-bottom: 0 !important;
+}
+
