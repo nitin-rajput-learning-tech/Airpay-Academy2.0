@@ -24,9 +24,9 @@ class lib{
     public function states_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
-        $states_sql = "SELECT ls.id,ls.states_name,lc.fullname as territoryname
+        $states_sql = "SELECT ls.id,ls.states_name,lc.fullname as costcentername
                 FROM {local_states} as ls
-                JOIN  {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
+                JOIN {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
@@ -46,7 +46,7 @@ class lib{
         $states_table = new \html_table();
         $states_table->id = 'states_table';
         $headarray = array(get_string('statesname','usersprofilefields_states'),
-                        get_string('territoryname','usersprofilefields_states'));
+                        get_string('costcentername','usersprofilefields_states'));
         if(is_siteadmin() || has_capability('usersprofilefields/states:edit',$systemcontext) || has_capability('usersprofilefields/states:delete',$systemcontext)){
             $headarray[] = get_string('actions','usersprofilefields_states');
         }
@@ -56,7 +56,7 @@ class lib{
             foreach($state as $states){
                 $data=array();
                 $data[] = $states->states_name;
-                $data[] = $states->territoryname;
+                $data[] = $states->costcentername;
                 if(is_siteadmin() || has_capability('usersprofilefields/states:edit',$systemcontext) || has_capability('usersprofilefields/states:delete',$systemcontext)){
                     $actions= '';
 
