@@ -179,7 +179,9 @@ class search implements renderable{
         $countsql = "SELECT lc.id ";
         $finalcountquery = $countsql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
         // print_r($finalcountquery);exit;
-        $numberofrecords = sizeof($DB->get_records_sql($finalcountquery,$sqlparams));
+        $numberofrecords = 0;
+        if($return_noofrecords)
+            $numberofrecords = sizeof($DB->get_records_sql($finalcountquery,$sqlparams));
 
         $finalsql = $csql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
         $finalsql .= " ORDER BY lc.id DESC ";

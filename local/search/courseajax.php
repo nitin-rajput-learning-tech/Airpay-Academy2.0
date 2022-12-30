@@ -38,7 +38,7 @@ searchlib::$enrolltype = $enrolltype;
 searchlib::$sortid = $sortid;
 
 $startlimit= $page*PERPAGE;
-$selectedfilter = json_decode($selectedfilter);
+$selectedfilter = json_decode($selectedfilter, true);
 
 switch($tab){
     case 6: $pages = new \local_search\output\allcourses();

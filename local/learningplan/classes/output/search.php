@@ -171,7 +171,9 @@ class search implements renderable{
         $countsql = "SELECT llp.id ";
         $countquery = $countsql.$fromsql.$leftjoinsql.$wheresql.$searchsql;
         $countquery .= " GROUP BY llp.id";
-        $numberofrecords = sizeof($DB->get_records_sql($countquery));
+        $numberofrecords = 0;
+        if($return_noofrecords)
+            $numberofrecords = sizeof($DB->get_records_sql($countquery));
 
         $finalsql = $selectsql.$fromsql.$leftjoinsql.$wheresql.$searchsql;
         $finalsql .= " GROUP BY llp.id ORDER by llp.id DESC ";
@@ -194,7 +196,7 @@ class search implements renderable{
     public function export_for_template($perpage,$startlimit,$selectedfilter = array()){
         global $DB, $USER, $CFG, $PAGE,$OUTPUT;
         $context = \local_costcenter\lib\accesslib::get_module_context();
-        $certificationlist_ar =$this->get_learningpathlist_query($perpage, $startlimit, true, true,$tagitems, $selectedvendors);
+        $certificationlist_ar =$this->get_learningpathlist_query($perpage, $startlimit, true, true,$selectedfilter);
         $certificationlist= $certificationlist_ar['list'];
         foreach($certificationlist as $list){
           $iltlocation=$DB->get_field('local_location_institutes','fullname',array('id'=>$list->instituteid));

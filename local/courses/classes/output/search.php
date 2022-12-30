@@ -146,8 +146,9 @@ class search implements renderable{
 
         $countsql = "SELECT c.id ";
         $finalcountquery = $countsql.$fromsql.$wheresql.$course_searchsql.$groupby;
-
-        $numberofrecords = sizeof($DB->get_records_sql($finalcountquery, $params));
+        $numberofrecords = 0;
+        if($return_noofrecords)
+            $numberofrecords = sizeof($DB->get_records_sql($finalcountquery, $params));
 
         $finalsql = $selectsql.$fromsql.$wheresql.$course_searchsql.$groupby;
 

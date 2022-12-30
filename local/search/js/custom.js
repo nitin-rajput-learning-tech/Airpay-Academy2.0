@@ -26,11 +26,19 @@ myModule.controller('courseController', function ($scope, $http,$location) {
 
         checkedfilters = [];
         $scope.selectedfilters = [];
-
-        checkedfilters = $(".filter_section input[type='checkbox']:checked");
-        $.each(checkedfilters, function( index, value ) {
-            $scope.selectedfilters.push($(value).val());
+        $.each($(".filter_section .module_filter_params"), function(index, value){
+            filters = [];
+            filtername = $(value).data('filtertype');
+            checkedfilters = $(value).find("input[type='checkbox']:checked");
+            $.each(checkedfilters, function( filterindex, filtervalue ) {
+                filters.push($(filtervalue).val());
+            });
+            if(!$.isEmptyObject(filters))
+                $scope.selectedfilters.push({filtername, filters});;
         });
+        // $.each(checkedfilters, function( index, value ) {
+        //     $scope.selectedfilters.push($(value).val());
+        // });
         filters = JSON.stringify($scope.selectedfilters);
 
         var en_selectedfilters = encodeURIComponent(filters);

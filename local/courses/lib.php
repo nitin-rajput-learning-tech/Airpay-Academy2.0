@@ -2218,7 +2218,7 @@ function local_courses_search_page_filter_element(&$filterelements){
     global $CFG;
     if(file_exists($CFG->dirroot.'/local/search/lib.php')){
         require_once($CFG->dirroot.'/local/search/lib.php');
-        $filterelements['elearning'] = ['tagitemid' => 'moduletype_elearning', 'tagitemname' => 'Online Course', 'tagitemshortname' => 'elearning', 'coursecount' => local_search_get_coursecount_for_modules(['moduletype_elearning'])];
+        $filterelements['elearning'] = ['code' => 'elearning', 'name' => 'Online Course', 'tagitemshortname' => 'elearning', 'count' => local_search_get_coursecount_for_modules([['filtername' => 'moduletype', 'filters' => ['elearning']]])];
     }
 }
 function local_courses_enabled_search(){

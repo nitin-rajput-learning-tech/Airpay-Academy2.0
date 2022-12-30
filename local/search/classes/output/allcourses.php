@@ -253,13 +253,8 @@ class allcourses {
     }
     asort($defaultPlugins);
     if($selectedfilter){
-
-        foreach ($selectedfilter as $itemname) {
-            $filter = explode('_', $itemname);
-            if(count($filter) === 2){
-                $thisfilters[$filter[0]][] = $filter[1];
-
-            }
+        foreach ($selectedfilter as $filters) {
+            $thisfilters[$filters['filtername']] = $filters['filters'];
         }
         ;
         if($moduletype = $thisfilters['moduletype']){
@@ -293,7 +288,6 @@ class allcourses {
             $classname = '\local_learningplan\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
-                $availabletypes[] =  $type;
                 $learning_plans_ar = $class->get_learningpathlist_query(1,searchlib::$page*1,true,true, $thisfilters);
                 $totalrecords_ineachtype[]= array('numberofrecords'=>$learning_plans_ar['numberofrecords'],'type' =>'learningplan');
                 $sumofallrecords += $learning_plans_ar['numberofrecords'];
@@ -304,7 +298,6 @@ class allcourses {
             $classname = '\local_classroom\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
-                $availabletypes[]=  $type;
                 $classroom_ar= $class->get_facetofacelist_query(1,searchlib::$page*1,true,true,$thisfilters);
                 $totalrecords_ineachtype[]= array('numberofrecords'=>$classroom_ar['numberofrecords'],'type' =>'classroom');
                 $sumofallrecords += $classroom_ar['numberofrecords'];
@@ -315,7 +308,6 @@ class allcourses {
             $classname = '\local_courses\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
-                $availabletypes[] = $type;
                 $courseslist_ar = $class->get_elearning_courselist_query(1, searchlib::$page*1, true,false, $thisfilters);
                 $totalrecords_ineachtype[]= array('numberofrecords'=>$courseslist_ar['numberofrecords'],'type'=>'elearning');
                 $sumofallrecords += $courseslist_ar['numberofrecords'];
@@ -329,7 +321,88 @@ class allcourses {
    return $response_array; 
 
    } // end of get_available_catalogtype  */
+    // public static function get_filter_based_modules($selectedfilters){
+    //     global $DB;
 
+    //     $othertagitems = array();
+    //     $standard_catalogtypes = [];
+    //     $filterplugins = get_plugins_with_function('applicable_filters_for_search_page');
+    //     $filterapplicable = [];
+    //     $defaultPlugins = [];
+    //     foreach($filterplugins AS $filtertypes){
+    //         foreach($filtertypes AS $pluginname => $filtertype){
+    //             $defaultPlugins[] = constant($pluginname);
+    //             $filtertype($filterapplicable);
+    //         }
+    //     }
+    //     asort($defaultPlugins);
+    //     if($selectedfilter){
+    //         foreach ($selectedfilter as $filters) {
+    //             $thisfilters[$filters['filtername']] = $filters['filters'];
+    //         }
+    //         ;
+    //         if($moduletype = $thisfilters['moduletype']){
+    //             foreach($moduletype AS $module ){
+    //                 $ltype = constant($module);
+    //                 if(!in_array($ltype, $standard_catalogtypes)){
+    //                     $standard_catalogtypes[] = $ltype;
+    //                 }
+    //             }
+    //         }else{
+    //             foreach($thisfilters AS $filtertype => $filter){
+    //                 foreach($filterapplicable AS $plugin => $applicablefilters){
+    //                     if(in_array($filtertype, $applicablefilters) && !in_array($plugin, $standard_catalogtypes)){
+    //                         $standard_catalogtypes[] = $plugin;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         if(empty($standard_catalogtypes)){
+    //             $standard_catalogtypes = $defaultPlugins;
+    //         }
+    //     } else{
+    //         $standard_catalogtypes = $defaultPlugins;
+    //     }
+    //     asort($standard_catalogtypes);
+    //     $totalrecords = 0;
+    //     foreach($standard_catalogtypes as $key => $type){
+    //         switch($type){
+
+    //             case learningplan :
+    //                 $classname = '\local_learningplan\output\search';
+    //                 if(class_exists($classname)){
+    //                     $class = new $classname();
+    //                     $learning_plans_ar = $class->get_learningpathlist_query(0, 0 ,false,true, $thisfilters);
+    //                     $records = array_merge($records, $learning_plans_ar);
+    //                     $totalrecords += count($learning_plans_ar['list']);
+    //                 } // end of if condition
+    //             break;
+
+    //             case classroom:
+    //                 $classname = '\local_classroom\output\search';
+    //                 if(class_exists($classname)){
+    //                     $class = new $classname();
+    //                     $classroom_ar= $class->get_facetofacelist_query(0, 0,false,true,$thisfilters);
+    //                     $totalrecords_ineachtype[]= array('numberofrecords'=>$classroom_ar['numberofrecords'],'type' =>'classroom');
+    //                     $totalrecords += count($classroom_ar['list']);
+    //                 } // end of if condition
+    //             break;
+
+    //         default:
+    //             $classname = '\local_courses\output\search';
+    //             if(class_exists($classname)){
+    //                 $class = new $classname();
+    //                 $courseslist_ar = $class->get_elearning_courselist_query(0, 0, false,true, $thisfilters);
+    //                 $totalrecords_ineachtype[]= array('numberofrecords'=>$courseslist_ar['numberofrecords'],'type'=>'elearning');
+    //                 $totalrecords += count($courseslist_ar['list']);
+    //             }
+    //         break;
+    //         }// end of switch case
+    //     } // end of foreach
+    //     $response_array = array('totalrecords'=>$totalrecords,
+    //                         'sumofallrecords'=>$sumofallrecords);
+    //     return $response_array;
+    // }
      
 public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     global $DB;
