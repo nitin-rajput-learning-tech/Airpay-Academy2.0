@@ -558,7 +558,7 @@ class classroom {
             $params['search'] = '%' . $search . '%';
         }
 
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();        
+        $categorycontext = $maincategorycontext = (new \local_classroom\lib\accesslib())::get_module_context();        
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
             $condition .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
@@ -819,11 +819,12 @@ class classroom {
                                    $line['delete'] = false;
                                    
                             }  
-                            if ((has_capability('local/classroom:manageusers', $categorycontext) || is_siteadmin())) {
+                            if ((has_capability('local/classroom:manageusers', $maincategorycontext) || is_siteadmin())) {
                                     $line ['assignusers'] =  true;
                                     $assignusersurl = new moodle_url("/local/classroom/enrollusers.php?cid=".$sdata->id."");
                                     $line ['assignusersurl'] = $assignusersurl->out();
                                     $mouse_overicon=true;
+                                    $line['action'] = true;
                             }
                              if ((has_capability('local/classroom:classroomcompletion', $categorycontext) || is_siteadmin())) {
                                 $line['classroomcompletion'] =  true;
@@ -850,7 +851,7 @@ class classroom {
 
     public function classrooms($stable, $request = false) {
         global $DB, $USER;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($stable->classroomid);
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
         $params          = array();
         $classrooms      = array();
@@ -906,7 +907,10 @@ class classroom {
                 $status               = $DB->get_field('local_classroom', 'status', array(
                     'id' => $stable->classroomid
                 ));
-                if ($status == 1 && !$userenrolstatus ) {
+                $classroomcostcenter = $DB->get_field('local_classroom', 'open_path', array(
+                    'id' => $stable->classroomid
+                ));
+                if ($status == 1 && !$userenrolstatus && explode('/',$classroomcostcenter)[1] == explode('/',$USER->open_path)[1]) {
                     $empty = 1;
                 } else {
                     if (!empty($myclassrooms)) {
@@ -976,7 +980,7 @@ class classroom {
             } catch (dml_exception $ex) {
                 $classroomscount = 0;
             }
-        }
+        }        
         if (isset($stable->classroomid) && $stable->classroomid > 0) {
             return $classrooms;
         } else {

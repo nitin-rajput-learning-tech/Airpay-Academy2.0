@@ -46,7 +46,7 @@ $url = new moodle_url('/local/classroom/enrollusers.php', array('cid' => $classr
 $renderer = $PAGE->get_renderer('local_classroom');
 
 $classroom=$renderer->classroomview_check($classroomid);
-$categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
+$categorycontext = (new \local_classroom\lib\accesslib())::get_module_context(); 
 $sesskey=sesskey();
 $classroomclass = new classroom();
 // Security.
