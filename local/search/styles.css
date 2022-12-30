@@ -500,4 +500,170 @@ body#page-local-search-allcourses .loader_container img {
 }
 
  
+/*custom changes for search plugin coursecard section*/
 
+#page-local-search-allcourses .catcourses_list .coursecard {
+    overflow: hidden ;
+    height: 96%;
+}
+body#page-local-search-allcourses .courseimg_bg {
+    height: 100%;
+    border-radius: 11px !important;
+    box-shadow: 0 0 3px 0 #00000078;
+}
+#page-local-search-allcourses .courseimg_strip{
+    display: none;
+}
+body#page-local-search-allcourses .card-img-top.courseimg_container{
+    padding: 10px 15px;
+}
+#page-local-search-allcourses #allcourses_section .catcourses_list{
+    border-bottom: 1px solid #dcdcdc;
+    padding-left: 0;
+}
+#page-local-search-allcourses #allcourses_section .catcourses_list .card{
+    border:none!important;
+}
+#page-local-search-allcourses #avaliable_courses{
+    margin-bottom:0!important;
+}
+#page-local-search-allcourses #allcourses_section .CstripCnt {
+    font-size: 10px;
+    color: #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+    float: right;
+    box-shadow: 1px 2px #f3e4e4;
+    background-color: #ffb536;
+    padding: 4px 7px;
+    border-radius: 6px;
+}
+#page-local-search-allcourses .readyCCnt .course_name{
+    text-transform: capitalize!important;
+}
+#page-local-search-allcourses .content_section {
+    background-color: #fff;
+}
+#page-local-search-allcourses div#region-main-box {
+    background-color: #fff !important;
+}
+#allcourses_section .alert-info{
+    border: none;
+    padding: 0;
+}
+#page-local-search-allcourses .coursecard .course_name_container{
+    display: flex;
+    align-items: center;
+    margin: 7px 0px;
+}
+#page-local-search-allcourses .coursecard .course_name_container>div:first-child{
+    flex-grow: 1;
+}
+#page-local-search-allcourses .coursecard .course_name_container .course-lable{
+    padding: 2px 15px;
+    background-color: #FDB71A;
+    border-radius: 5px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 10px;
+    box-shadow: 0 0 2px 1px #00000021;
+}
+#page-local-search-allcourses .coursecard .action_div {
+    margin: 8px 0;
+}
+#page-local-search-allcourses .cat_btn, 
+#page-local-search-allcourses .viewmore_btn {
+    max-width: 220px;
+    width: 100%;
+    padding: 8px 10px;
+    margin: 0 5px;
+    font-weight: 700;
+    text-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+#page-local-search-allcourses #allcourses_section #avaliable_courses input#search {
+    border: 1px solid #000;
+    margin-left: 2px;
+    font-size: 17px;
+    height: 50px !important;
+    background-color: rgba(255,255,255,1);
+}
+#page-local-search-allcourses #allcourses_section #searchinputformgroup .form-control {
+    border-radius: 0;
+    box-shadow: none;
+    background-color: #eaeff0;
+    padding-left: 20px;
+}
+#page-local-search-allcourses div#searchinputformgroup {
+    width: 100%;
+}
+#page-local-search-allcourses .coursecard .course_name_container>div:first-child {
+    flex-grow: 1;
+}
+#page-local-search-allcourses  .req_button button{
+    padding:11px 15px !important;
+}
+#page-local-search-allcourses .cat_btn:hover, 
+#page-local-search-allcourses .viewmore_btn:hover{
+    text-decoration: none!important;
+}
+#page-local-search-allcourses #avaliable_courses #filterviewdiv {
+    border-bottom: none !important;
+}
+#page-local-search-allcourses #allcourses_section .ng-scope{
+    margin:0 !important;
+    background-color: #fff;
+}
+#page-local-search-allcourses #allcourses_section .d-md-block {
+    border: 1px solid #dbdbdb;
+    padding-left: 16px!important;
+    margin-top: 25px;
+}
+#page-local-search-allcourses #allcourses_section input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    accent-color: #000;
+}
+#page-local-search-allcourses #allcourses_section .icon-header {
+    padding: 0 !important;
+    font-weight: 600!important;
+    align-items: center;
+}
+
+#page-local-search-allcourses #allcourses_section .icon-header .icon_img {
+    margin-right: 10px;
+    display: flex;
+    padding: 9px 9px;
+    border: 1px solid #000;
+}
+#page-local-search-allcourses #allcourses_section .collapsed_settings_div .collapse_content {
+    padding-left: 8px !important;
+}
+#page-local-search-allcourses #allcourses_section .collapsed_settings_div  .collapseicon {
+    display: none;
+}
+#page-local-search-allcourses .collapsed_settings_div .checkbox-item label {
+    margin-left: 12px !important;
+    color: #726e6e!important;
+    text-transform: capitalize!important;
+}
+#page-local-search-allcourses #allcourses_section .collapsed_settings_div .icon-header {
+    padding-left: 13px !important;
+    font-weight: 500!important;
+    margin-left: -13px;
+    color: #000;
+}
+#page-local-search-allcourses #allcourses_section .collapsed_settings_div .icon_img {
+    border: 0 !important;
+    display: none;
+}
+#page-local-search-allcourses #allcourses_section #searchinputformgroup #searchicon {
+    left: 12px;
+}
+@media (max-width: 767px){
+#page-local-search-allcourses .card .card-body {
+    padding: 1rem !important;
+}
+}
