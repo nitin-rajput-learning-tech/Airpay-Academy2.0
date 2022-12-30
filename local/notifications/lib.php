@@ -415,7 +415,16 @@ class notifications {
             $keywords2 = preg_split("/[\s,]+/", $keywords[1]);
             $pieces = explode("/", $keywords2[0]);  
             file_save_draft_area_files($pieces[8], $systemcontext->id, 'local', 'notifications',$pieces[8], array('maxfiles' => 5));
-            local_costcenter_get_costcenter_path($dataobject); 
+
+            $open_path=$DB->get_field("$table", 'open_path', array('id' => $dataobject->id));
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+            if($dataobject->open_costcenterid !=$org){
+
+                local_costcenter_get_costcenter_path($dataobject);
+
+            }
+
             $DB->update_record("$table", $dataobject);
              $result =$dataobject->id;
         }else{

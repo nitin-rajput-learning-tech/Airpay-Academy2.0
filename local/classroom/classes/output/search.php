@@ -304,7 +304,7 @@ class search implements renderable{
                   $list->selfenroll=2;
               }
 
-            // $list->enrollmentbtn= $this->get_enrollbtn($list);
+            $list->enrollmentbtn= $this->get_enrollbtn($list);
             if(class_exists('local_ratings\output\renderer')){
                 $rating_render = $PAGE->get_renderer('local_ratings');
                 $list->rating_element = $rating_render->render_ratings_data('local_courses', $list->id ,null, 14);
@@ -375,7 +375,7 @@ class search implements renderable{
                 }
             }
         }
-        // return $enrollmentbtn;
+        return $enrollmentbtn;
     } // end of get_enrollbtn
 } // end of class
 

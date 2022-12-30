@@ -188,7 +188,7 @@ class costcenter {
     }
     function get_costcenter_icons(){
         global $USER, $DB;
-        $costcenterid=explode('/',$USER->open_path)[1];   
+        $costcenterid=explode('/',$USER->open_path)[1];
         if(!empty($costcentershell = $DB->get_field('local_costcenter', 'shell', array('id' => $costcenterid, 'visible' => 1)))){
             return $costcentershell;
         }else{
@@ -209,14 +209,14 @@ class costcenter {
         global $USER, $DB;
        
        $table = 'local_costcenter';
-       $costcenterid=explode('/',$USER->open_path)[1];   
+       $costcenterid=explode('/',$USER->open_path)[1];
        $costcentercolor = $DB->get_record($table, array('id' => $costcenterid,'visible' =>1), $fields='*');
        if(!empty($costcentercolor)){
             return $costcentercolor;
        }else{
         return false;
        }
-       $costcenterid=explode('/',$USER->open_path)[1];   
+       $costcenterid=explode('/',$USER->open_path)[1];
         if(!empty($costcentertheme = $DB->get_field('local_costcenter', 'theme', array('id' => $costcenterid, 'visible' => 1)))){
             return $costcentertheme;
         }else{
@@ -466,7 +466,7 @@ function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid = :usercostcenter) ";
-        $userparam['usercostcenter'] =explode('/',$USER->open_path)[1];   
+        $userparam['usercostcenter'] =explode('/',$USER->open_path)[1];
         ;
     }else{
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND parentid = :userdepartment ";
@@ -772,7 +772,7 @@ function local_costcenter_leftmenunode(){
             $organization_string = get_string('orgStructure','local_costcenter');
         }
     else{
-            $depth=($categorycontext->depth-1);   
+            $depth=($categorycontext->depth-1);
             $costcenterid=explode('/',$USER->open_path)[$depth];    
             $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
             $organization_string = get_string('orgStructure','local_costcenter');
@@ -928,9 +928,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
 
-
-            $enableallfield = ($firstelement && $depth == $level) ? false : $allenable;
-
+            $enableallfield = ($firstelement && $depth == $level) || (is_siteadmin() && $level == 1) ? false : $allenable;
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;

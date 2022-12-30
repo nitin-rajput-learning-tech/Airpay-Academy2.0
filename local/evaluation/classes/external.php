@@ -106,7 +106,16 @@ class local_evaluation_external extends external_api {
                 $validateddata->timeclose = $validateddata->timeclose;
             }
             if ($validateddata->id > 0) {
-                local_costcenter_get_costcenter_path($validateddata);
+
+                $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+                if($validateddata->open_costcenterid !=$org){
+
+                     local_costcenter_get_costcenter_path($validateddata);
+
+                }
+
                 local_users_get_userprofile_datafields($validateddata,$data);                
                 $evaluationid = evaluation_update_instance($validateddata);
             } else{

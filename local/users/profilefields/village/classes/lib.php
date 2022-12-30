@@ -28,9 +28,12 @@ class lib{
     public function village_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_village\lib\accesslib())::get_module_context();
-        $village_sql = "SELECT lv.id,lv.village_name,lsd.subdistrict_name as subdistrictname
-            FROM {local_village} as lv
-            JOIN {local_subdistrict} AS lsd ON lsd.id=lv.subdistrictid";
+        $village_sql = "SELECT lv.id,lv.village_name,lsd.subdistrict_name AS subdistrictname,ld.district_name AS districtname,ls.states_name AS statesname,lc.fullname AS costcentername
+            FROM {local_village} AS lv
+            JOIN {local_subdistrict} AS lsd ON lsd.id=lv.subdistrictid
+            JOIN {local_district} AS ld ON ld.id = lv.districtid
+            JOIN {local_states} AS ls ON ls.id=lv.statesid
+            JOIN {local_costcenter} AS lc ON lc.id=lv.costcenterid";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
@@ -49,7 +52,10 @@ class lib{
         $village_table = new \html_table();
         $village_table->id = 'village_table';
         $headarray = array(get_string('villagename','usersprofilefields_village'),
-                        get_string('subdistrictname','usersprofilefields_village'));
+            get_string('subdistrictname','usersprofilefields_village'),
+            get_string('districtname','usersprofilefields_village'),
+            get_string('statesname','usersprofilefields_village'),
+            get_string('costcentername','usersprofilefields_village'));
         if(is_siteadmin() || has_capability('usersprofilefields/village:edit',$systemcontext) || has_capability('usersprofilefields/village:delete',$systemcontext)){
             $headarray[] = get_string('actions','usersprofilefields_village');
         }
@@ -60,6 +66,9 @@ class lib{
                 $data=array();
                 $data[] = $village->village_name;
                 $data[] = $village->subdistrictname;
+                $data[] = $village->districtname;
+                $data[] = $village->statesname;
+                $data[] = $village->costcentername;
                 if(is_siteadmin() || has_capability('usersprofilefields/village:edit',$systemcontext) || has_capability('usersprofilefields/village:delete',$systemcontext)){
                     $actions= '';
                     // $userexist = $DB->record_exists('user', array('open_village' => $village->id));

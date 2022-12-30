@@ -19,3 +19,7 @@ $string['deletenotconfirm'] = 'You cannot delete this Village as it has linked u
 $string['subdistrict'] = 'Sub Districts';
 $string['yesdelete'] = 'Yes! Delete';
 $string['no'] = 'No';
+$string['districtname'] = 'District';
+$string['subdistrictname'] = 'Sub District';
+$string['statesname'] = 'State';
+$string['costcentername'] = 'Organisation';

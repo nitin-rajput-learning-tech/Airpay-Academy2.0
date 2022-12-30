@@ -69,7 +69,15 @@ class local_groups_external extends external_api {
         $valdata = $mform->get_data();
         if($valdata){
             if($valdata->id>0){
-                local_costcenter_get_costcenter_path($valdata);
+
+                $open_path=$DB->get_field('local_groups', 'open_path', array('id' => $valdata->id));
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+                if($valdata->open_costcenterid !=$org){
+
+                    local_costcenter_get_costcenter_path($valdata);
+
+                }
                 local_users_get_userprofile_datafields($valdata,$data); 
                 $groupsupdate = local_groups_update_groups($valdata);
             } else{

@@ -20,3 +20,4 @@ $string['statesname'] = 'State';
 $string['states'] = 'States';
 $string['yesdelete'] = 'Yes! Delete';
 $string['no'] = 'No';
+$string['costcentername'] = 'Organisation';
