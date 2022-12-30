@@ -1092,12 +1092,31 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     if (!empty($params['idnumber'])) {
          $sql .=" AND u.id IN ({$params['idnumber']})";
     }
-    // if(!empty($params['location'])){
-    //     $sql .=" AND u.open_location IN ({$params['location']})";
-    // }
-    // if(!empty($params['hrmsrole'])){
-    //     $sql .=" AND u.open_hrmsrole IN ({$params['hrmsrole']})";
-    // }
+    if (!empty($params['village'])) {
+        $villages = explode(',', $params['village']);
+        list($villagesql, $villageparam) = $DB->get_in_or_equal($villages, SQL_PARAMS_NAMED, 'village');
+        $params = array_merge($params, $villageparam);
+        $sql .= " AND u.open_village {$villagesql} ";
+    }
+    if (!empty($params['subdistrict'])) {
+        $subdistricts = explode(',', $params['subdistrict']);
+        list($subdistrictsql, $subdistrictparam) = $DB->get_in_or_equal($subdistricts, SQL_PARAMS_NAMED, 'subdistrict');
+        $params = array_merge($params, $subdistrictparam);
+        $sql .= " AND u.open_subdistrict {$subdistrictsql} ";
+    }
+    if (!empty($params['district'])) {
+        $districts = explode(',', $params['district']);
+        list($districtsql, $districtparam) = $DB->get_in_or_equal($districts, SQL_PARAMS_NAMED, 'district');
+        $params = array_merge($params, $districtparam);
+        $sql .= " AND u.open_district {$districtsql} ";
+    }
+    if (!empty($params['states'])) {
+        $state = explode(',', $params['states']);
+        list($statessql, $statesparam) = $DB->get_in_or_equal($state, SQL_PARAMS_NAMED, 'states');
+        $params = array_merge($params, $statesparam);
+        $sql .= " AND u.open_states {$statessql} ";
+    }
+
     if (!empty($params['location'])) {
 
         $locations = explode(',',$params['location']);
@@ -1884,16 +1903,16 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
     // $renderer = $PAGE->get_renderer('local_courses');
     // $filterparams = $renderer->get_catalog_courses(true,$formattype);
     if(is_siteadmin()){
-        $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'status');
+        $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status');
     }else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-        $thisfilters = array('courses', 'categories', 'departments', 'subdepartment', 'status');
+        $thisfilters = array('courses', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status');
     }else if(has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
-        $thisfilters = array('subdepartment', 'courses', 'categories', 'status');
+        $thisfilters = array('subdepartment', 'department4level','department5level', 'courses', 'categories', 'status');
     }else {
         $thisfilters = array('courses', 'categories', 'status');
     }
-    $thisfilters[] = 'hrmsrole';
-    $thisfilters[] = 'location';
+    // $thisfilters[] = 'hrmsrole';
+    // $thisfilters[] = 'location';
 
     $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
     return $mform;

@@ -118,6 +118,9 @@ echo $OUTPUT->header();
 if ($course) {
   $organization = null;
   $department   = null;
+  $subdepartment   = null;
+  $department4level   = null;
+  $department5level   = null;
   $email        = null;
   $idnumber     = null;
   $uname        = null;
@@ -138,6 +141,10 @@ if ($course) {
     }
     $organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
     $department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
+    $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
+    $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
+    $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
+
     $email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
     $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
     $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
@@ -147,7 +154,7 @@ if ($course) {
   }
 
   // Create the user selector objects.
-  $options = array('context' => $context->id, 'courseid' => $course_id, 'organization' => $organization, 'department' => $department, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
+  $options = array('context' => $context->id, 'courseid' => $course_id, 'organization' => $organization, 'department' => $department, 'subdepartment' => $subdepartment, 'department4level' => $department4level, 'department5level' => $department5level, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
 	$dataobj = $course_id;
 	$fromuserid = $USER->id;
   if ( $add AND confirm_sesskey()) {

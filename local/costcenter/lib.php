@@ -527,7 +527,7 @@ function department4level_filter($mform,$query='',$searchanywhere=false, $page=0
     if(is_siteadmin()){
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid :usercostcenter)) ";
+        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid =:usercostcenter)) ";
         $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
 
     }
@@ -585,7 +585,7 @@ function department5level_filter($mform,$query='',$searchanywhere=false, $page=0
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid :usercostcenter)) ";
+        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid =:usercostcenter)) ";
         $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
 
     }
