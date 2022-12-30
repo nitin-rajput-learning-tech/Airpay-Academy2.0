@@ -1273,7 +1273,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
     $prev_element = $lastdepth.'_select';
     $firstelement = true;
 
-    $prevfield='territory';
+    $prevfield='costcenter';
 
     $depth = 0;
 
@@ -1284,7 +1284,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
             $prev_element = 'locationfieldparentid_select';
 
             $mform->addElement('hidden','locationfieldparentid', null,array('data-class'=>$prev_element));
-            $mform->setConstant('locationfieldparentid', $customdata[$lastdepth]);
+            $mform->setConstant('locationfieldparentid', $customdata[$firstdepth]);
         }
         $fieldelementoptions = array(
             'class' => $field.'_select',
