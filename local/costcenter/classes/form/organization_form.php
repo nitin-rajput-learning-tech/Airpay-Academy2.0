@@ -71,10 +71,10 @@ class organization_form extends moodleform { /*costcenter creation form*/
             }else if($formtype == 'subsubsubdepartment'){
                 $parent_label = get_string('subsubdepartment', 'local_costcenter');
                 $subsubsubdepartmentsql = "SELECT lc.id, CONCAT(llllc.fullname, ' / ', lllc.fullname, ' / ', llc.fullname,' / ',lc.fullname) AS fullname
-                    FROM mdl_local_costcenter AS lc
-                    JOIN mdl_local_costcenter AS llc ON llc.id=lc.parentid
-                    JOIN mdl_local_costcenter AS lllc ON lllc.id=llc.parentid
-                    JOIN mdl_local_costcenter AS llllc ON llllc.id=lllc.parentid
+                    FROM {local_costcenter} AS lc
+                    JOIN {local_costcenter} AS llc ON llc.id=lc.parentid
+                    JOIN {local_costcenter} AS lllc ON lllc.id=llc.parentid
+                    JOIN {local_costcenter} AS llllc ON llllc.id=lllc.parentid
                     WHERE lc.depth = 4";
             }
             if($id){
@@ -84,8 +84,9 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $subsubdepartmentsql .= $departmentsql;
                 $subsubsubdepartmentsql .= $departmentsql;
             }
-            else{
-                $subdepartmentsql .= " AND lc.id = {explode('/',$USER->open_path)[1]} "; 
+            elseif($USER->open_path){
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+                $subdepartmentsql .= " AND lc.id = $org ";
                 $subsubdepartmentsql .= $subdepartmentsql;
                 $subsubsubdepartmentsql .= $subdepartmentsql;
             }

@@ -527,7 +527,7 @@ function department4level_filter($mform,$query='',$searchanywhere=false, $page=0
     if(is_siteadmin()){
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid =:usercostcenter)) ";
+        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM {local_costcenter} WHERE parentid =:usercostcenter)) ";
         $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
 
     }
@@ -585,7 +585,7 @@ function department5level_filter($mform,$query='',$searchanywhere=false, $page=0
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM mdl_local_costcenter WHERE parentid =:usercostcenter)) ";
+        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM {local_costcenter} WHERE parentid =:usercostcenter)) ";
         $userparam['usercostcenter'] = explode('/',$USER->open_path)[1];
 
     }
@@ -857,7 +857,7 @@ function local_costcenter_output_fragment_roleusers_display($args)
       $templatedata =  array();
       $rowdata = array();
    
-  $query1 = $DB->get_records_sql("SELECT ro.shortname,us.firstname,us.email,cat.name FROM mdl_role_assignments as ra JOIN mdl_context as cc ON cc.id=ra.contextid JOIN mdl_user as us ON us.id=ra.userid join mdl_role as ro on ro.id=ra.roleid JOIN mdl_course_categories as cat on cat.id= cc.instanceid WHERE ro.id IN ($rolestring)");
+  $query1 = $DB->get_records_sql("SELECT ro.shortname,us.firstname,us.email,cat.name FROM {role_assignments} as ra JOIN {context} as cc ON cc.id=ra.contextid JOIN {user} as us ON us.id=ra.userid join {role} as ro on ro.id=ra.roleid JOIN {course_categories} as cat on cat.id= cc.instanceid WHERE ro.id IN ($rolestring)");
  
  $templatedata['enabletable'] = true;
           foreach($query1 as $a)
