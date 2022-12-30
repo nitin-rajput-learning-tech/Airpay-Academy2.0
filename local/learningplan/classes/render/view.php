@@ -427,6 +427,7 @@ class view extends plugin_renderer_base {
                 }else{
                     $plan_subdepartment = get_string('statusna');
                 }
+                $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($learning_plan->id);
                 $action_icons = '';
                 if (is_siteadmin() || has_capability('local/learningplan:visible', $categorycontext)) {
 					$capability1 = true;
@@ -450,6 +451,10 @@ class view extends plugin_renderer_base {
 
                 if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))){
                 	$capability3 = false;
+                }
+				$can_view = false;
+                if (is_siteadmin() || has_capability('local/learningplan:view', $categorycontext)) {
+					$can_view = true;
                 }
 
                 $planlib = new \local_learningplan\lib\lib();
@@ -509,6 +514,8 @@ class view extends plugin_renderer_base {
                 $learningplan_content['plan_url'] = $plan_url;
                 $learningplan_content['lpcoursespath'] = $pathcourses;
                 $learningplan_content['lpcoursescount'] = count($lplanassignedcourses);
+                $learningplan_content['can_view'] = $can_view;
+                $learningplan_content['enroll_link'] = $CFG->wwwroot.'/local/learningplan/lpusers_enroll.php?lpid='.$learning_plan->id;
 
 
                if($capability3){
@@ -527,6 +534,8 @@ class view extends plugin_renderer_base {
                        	$actions .=  '<a href="javascript:void(0);" title = \''.$title_hide_show.'\' onclick="(function(e){ require(\'local_learningplan/lpcreate\').toggleVisible({action:\'toggleplan\' ,visible:\'visible\', id:'.$learning_plan->id.',name:\''.$learning_plan_pathname.'\'}) })(event)" ><i class="fa fa-eye" aria-hidden="true"></i></a>' ;
                 	}
                 }
+
+                       	$actions .=  '<a href="'.$CFG->wwwroot.'"/local/learningplan/lpusers_enroll.php?lpid="'.$learning_plan->id.'" title = ' .get_string('le_enrol_users','local_learningplan'). '><i class="icon fa fa-user-plus fa-fw" aria-hidden="true"></i></a>' ;
 
                 if($view_type == 'card'){
                     $row[] = $this->render_from_template('local_learningplan/learninngplan_index_view', $learningplan_content);

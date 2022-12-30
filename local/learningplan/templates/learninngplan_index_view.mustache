@@ -18,7 +18,12 @@
 	<div class='col-md-12 pull-left learning_plan_view p-15'> 
 		<div class="col-md-12 pull-left pl-0 pr-0">
 			<i class="fa fa-map lpicon" aria-hidden="true" aria-label=""></i>
+			{{#can_view}}
 			<a class="lp_name" href="{{plan_url}}" >{{{learning_plan_name}}}</a>
+			{{/can_view}}
+			{{^can_view}}
+			<a class="lp_name" href="javascript:void(0)" >{{{learning_plan_name}}}</a>
+			{{/can_view}}
 				<div class="pull-right showoptions{{learning_planid}} actionicons">
 	                <span  class="showoptions" data-action="showoptions{{learning_planid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{learning_planid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{learning_planid}}' }) })(event)">
 	                    <i class="fa fa-ellipsis-h options"></i>
@@ -58,6 +63,11 @@
 						{{/hide}}
 					{{/ capability1}}
 					
+					<li>
+						<a href='{{enroll_link}}' title = "{{# str}} le_enrol_users,local_learningplan {{/ str}}" >
+							<i class="icon fa fa-user-plus fa-fw" aria-hidden="true" title="{{# str}} le_enrol_users,local_learningplan {{/ str}}" aria-label="Enroll Users"></i>
+						</a>
+					</li>
 				</ul>
 			</div>
 			<div class="w-full pull-left coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-center alert alert-info mt-1 m-0">{{#str}} assign_users_to_see_path, local_learningplan{{/str}}</span> {{/ lpcoursespath }}</div>
