@@ -93,6 +93,8 @@ class reportbase {
     public $conditionfinalelements = array();
     function __construct($report, $properties = null) {
         global $DB, $CFG, $USER;
+        $user_costcenterid = explode('/',$USER->open_path)[1];
+        $user_departmentid = explode('/',$USER->open_path)[2];
         $systemcontext = \context_system::instance();
         if (empty($report)) {
              return false;
@@ -121,8 +123,8 @@ class reportbase {
         $this->courseid = isset($properties->courseid) && $properties->courseid > 0 ? $properties->courseid : SITEID; 
         $this->componentdata = (new ls)->cr_unserialize($this->config->components);
         $this->rolewisecourses = $this->rolewisecourses(); 
-        $opencostcenterid = isset($USER->open_costcenterid) ? $USER->open_costcenterid : 0;
-        $opendepartmentid = isset($USER->open_departmentid) ? $USER->open_departmentid : 0; 
+        $opencostcenterid = isset($user_costcenterid) ? $user_costcenterid : 0;
+        $opendepartmentid = isset($user_departmentid) ? $user_departmentid : 0; 
         $dashboardurl = isset($_GET['dashboardurl']) ? $_GET['dashboardurl'] : '';
         // if (!has_capability('local/costcenter:manage_ownorganization', $systemcontext)) {
         //     if (($dashboardurl != 'Maindashboard' && $dashboardurl != 'Learnerdashbord' && $dashboardurl != 'Test') && (($this->config->type != 'exam' && $this->config->type != 'examenrolments' && $this->config->type != 'graphexamenrolments' && $this->config->type != 'learning' && $this->config->type != 'learners') || ($this->config->name != 'Learning Activity' && $this->config->name != 'Learning completion status' && $this->config->name != 'Learning completion deadlines' && $this->config->name != 'Learners Activity' && $this->config->name != 'Learner completion status' && $this->config->name != 'Learners Completion deadlines'))) {
@@ -497,6 +499,11 @@ class reportbase {
 
     public function create_report($blockinstanceid = null, $userid = null, $cron = null){
         global $DB, $CFG, $USER;
+
+        $user_costcenterid = explode('/',$USER->open_path)[1];
+        $user_departmentid = explode('/',$USER->open_path)[2];
+        $user_subdepartmentid = explode('/',$USER->open_path)[3];
+
         $methodname = optional_param('wsfunction', '', PARAM_RAW);
         $costcenterid = optional_param('costcenterid', '', PARAM_RAW);
         $departmentid = optional_param('departmentid', '', PARAM_RAW);
@@ -511,8 +518,8 @@ class reportbase {
         $this->cronset = $cron;
         if ($this->cronset == 1 AND $this->cronuserid > 0) {
             $cronuser = $DB->get_record('user', array('id' => $this->cronuserid), '*', MUST_EXIST);
-            $USER->open_costcenterid = $cronuser->open_costcenterid;
-            $USER->open_departmentid = $cronuser->open_departmentid;
+            $user_costcenterid = explode('/',$cronuser->open_path)[1];
+            $user_departmentid = explode('/',$cronuser->open_path)[2];
             $USER->id = $cronuser->id;
         }
         $context = context_system::instance();

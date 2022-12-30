@@ -91,21 +91,28 @@ class report_coursegradeactivities extends reportbase implements report {
                 $ohs = $dhs = 1;
             }
         }
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-      $this->sql .= " ";
-    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-      $this->sql .= " AND c.open_costcenterid = :costcenterid ";
-      $this->params['costcenterid'] = $USER->open_costcenterid;
-    }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-      $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
-      $this->params['costcenterid'] = $USER->open_costcenterid;
-      $this->params['departmentid'] = $USER->open_departmentid;
-    }else{
-      $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND open_subdepartment = :subdepartmentid";
-      $this->params['costcenterid'] = $USER->open_costcenterid;
-      $this->params['departmentid'] = $USER->open_departmentid;
-      $this->params['subdepartmentid'] = $USER->open_subdepartment;
-    }
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+          $this->sql .= "";
+        } else  {
+          $this->sql .= $costcenterpathconcatsql;
+        }
+    // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+    //   $this->sql .= " ";
+    // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
+    //   $this->sql .= " AND c.open_costcenterid = :costcenterid ";
+    //   $this->params['costcenterid'] = $USER->open_costcenterid;
+    // }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
+    //   $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
+    //   $this->params['costcenterid'] = $USER->open_costcenterid;
+    //   $this->params['departmentid'] = $USER->open_departmentid;
+    // }else{
+    //   $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND open_subdepartment = :subdepartmentid";
+    //   $this->params['costcenterid'] = $USER->open_costcenterid;
+    //   $this->params['departmentid'] = $USER->open_departmentid;
+    //   $this->params['subdepartmentid'] = $USER->open_subdepartment;
+    // }
 
     parent::where();
   }

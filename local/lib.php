@@ -92,16 +92,16 @@ function get_mydepartment() {
 function get_filterslist() {
 	$context = (new \local_costcenter\lib\accesslib())::get_module_context();
 	if (is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations', $context )) {
-		$filterlist = array('organizations', 'departments','idnumber', 'email', 'groups','users', 'location', 'hrmsrole');
+		$filterlist = array('organizations', 'departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village','idnumber', 'email', 'groups','users');
 	}
 	else if (has_capability('local/costcenter:manage_ownorganization',$context) ) {
-		$filterlist = array('departments','idnumber', 'email', 'groups','users', 'location', 'hrmsrole');
+		$filterlist = array('departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village','idnumber', 'email', 'groups','users');
 	} 
 	else if (has_capability('local/costcenter:manage_owndepartments',$context) ) {
-		$filterlist = array('idnumber', 'email', 'groups', 'users', 'location', 'hrmsrole');
+		$filterlist = array('states','district','subdistrict','village','idnumber', 'email', 'groups', 'users');
 	} 
 	else {
-		$filterlist = array('idnumber', 'email','users', 'location', 'hrmsrole');
+		$filterlist = array('states','district','subdistrict','village','idnumber', 'email','users');
 	}
 	return $filterlist;
 }

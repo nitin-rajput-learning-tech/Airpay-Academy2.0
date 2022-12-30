@@ -25,8 +25,9 @@ class lib{
     public function district_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
-        $district_sql = "SELECT ld.id,ld.district_name,ls.states_name as statesname FROM {local_district} as ld
-            JOIN {local_states} AS ls ON ls.id=ld.statesid ";
+        $district_sql = "SELECT ld.id,ld.district_name,ls.states_name AS statesname,lc.fullname AS costcentername FROM {local_district} AS ld
+            JOIN {local_states} AS ls ON ls.id=ld.statesid
+            JOIN {local_costcenter} AS lc ON lc.id=ld.costcenterid";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
@@ -46,7 +47,7 @@ class lib{
         $district_table = new \html_table();
         $district_table->id = 'district_table';
         $headarray = array(get_string('districtname','usersprofilefields_district'),
-                        get_string('statesname','usersprofilefields_district'));
+                        get_string('statesname','usersprofilefields_district'), get_string('costcentername','usersprofilefields_district'));
         if(is_siteadmin() || has_capability('usersprofilefields/district:edit',$systemcontext) || has_capability('usersprofilefields/district:delete',$systemcontext)){
             $headarray[] = get_string('actions','usersprofilefields_district');
         }
@@ -57,6 +58,7 @@ class lib{
                 $data=array();
                 $data[] = $district->district_name;
                 $data[] = $district->statesname;
+                $data[] = $district->costcentername;
                 if(is_siteadmin() || has_capability('usersprofilefields/district:edit',$systemcontext) || has_capability('usersprofilefields/district:delete',$systemcontext)){
                     $actions= '';
                     $userexist = $DB->record_exists('local_subdistrict', array('districtid'=>$district->id));

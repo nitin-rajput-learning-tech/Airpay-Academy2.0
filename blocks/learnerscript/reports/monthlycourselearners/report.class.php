@@ -57,8 +57,8 @@ class report_monthlycourselearners extends reportbase implements report {
     }
 
     function joins() {
-        $this->sql .=" JOIN mdl_course_completions cc ON c.id = cc.course
-        JOIN mdl_user u ON u.id = cc.userid ";
+        $this->sql .=" JOIN {course_completions} cc ON c.id = cc.course
+        JOIN {user} u ON u.id = cc.userid ";
 
         parent::joins();
     }

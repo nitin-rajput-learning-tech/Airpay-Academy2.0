@@ -5,6 +5,7 @@
             </a>
  </div>
  {{/ createreport}}
+    {{#users_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }}user{{/ str }}</h4>
     <div class="w-100 pull-left">
@@ -16,6 +17,8 @@
         </div>-->
     </div>
 </div>
+    {{/users_exist}}
+    {{#course_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }}course{{/ str }}</h4>
     <div class="w-100 pull-left">
@@ -27,82 +30,95 @@
         </div>-->     
     </div> 
 </div>
-{{#local_classroom}}
+        {{/course_exist}}
+    {{#classroom_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }} classroom_nameforreports, block_learnerscript {{/ str }}</h4>
     <div class="w-100 pull-left classroom_report">
-        
+    {{#local_classroom}}
             {{> block_learnerscript/reportscontent}}
-        
+    {{/local_classroom}}
         <!--<div class="w-100 pull-right text-right">
             <button>View More</button>
         </div>-->
     </div>
 </div>
-{{/local_classroom}}
-{{#local_certification}}
+    {{/classroom_exist}}
+    {{#certification_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }} certification_nameforreports, block_learnerscript {{/ str }}</h4>
     <div class="w-100 pull-left">
+    {{#local_certification}}
             {{> block_learnerscript/reportscontent}}
+    {{/local_certification}}
         <!--<div class="w-100 pull-right text-right">
             <button>View More</button>
         </div>-->    
     </div> 
 </div>
-{{/local_certification}}
-{{#local_program}}
+    {{/certification_exist}}
+    {{#program_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }} program_nameforreports, block_learnerscript {{/ str }}</h4>
     <div class="w-100 pull-left">
+    {{#local_program}}
             {{> block_learnerscript/reportscontent}}
+    {{/local_program}}
         <!--<div class="w-100 pull-right text-right">
             <button>View More</button>
         </div>--> 
     </div>  
 </div>
-{{/local_program}}
-{{#local_onlinetests}}
+    {{/program_exist}}
+    {{#onlinetests_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }} onlinetest_nameforreports, block_learnerscript {{/ str }}</h4>
     <div class="w-100 pull-left">
+    {{#local_onlinetests}}
             {{> block_learnerscript/reportscontent}}
+    {{/local_onlinetests}}
         <!--<div class="w-100 pull-right text-right">
             <button>View More</button>
         </div>-->
     </div> 
 </div>
-{{/local_onlinetests}}
-{{#local_learningplan}}
+    {{/onlinetests_exist}}
+    {{#learningplan_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }} learningplan_nameforreports, block_learnerscript {{/ str }}</h4>
     <div class="w-100 pull-left">
+    {{#local_learningplan}}
             {{> block_learnerscript/reportscontent}}
+    {{/local_learningplan}}
         <!--<div class="w-100 pull-right text-right">
             <button>View More</button>
         </div>--> 
     </div> 
 </div>
-{{/local_learningplan}}
-{{#local_evaluations}}
+    {{/learningplan_exist}}
+    {{#evaluation_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }}feedback{{/ str }}</h4>
     <div class="w-100 pull-left">
+    {{#local_evaluations}}
             {{> block_learnerscript/reportscontent}}
+    {{/local_evaluations}}
         <!--<div class="w-100 pull-right text-right">
             <button>View More</button>
         </div>-->
     </div>
 </div>
-{{/local_evaluations}}
-{{#enduser}}
+    {{/evaluation_exist}}
+    {{#users_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }}enduser,block_learnerscript{{/ str }}</h4>
     <div class="w-100 pull-left">
+    {{#enduser}}
             {{> block_learnerscript/reportscontent}}
+    {{/enduser}}
         <!--<div class="w-100 pull-right text-right">
             <button>View More</button>
         </div>-->
     </div>
 </div>
-{{/enduser}}
+    {{/users_exist}}

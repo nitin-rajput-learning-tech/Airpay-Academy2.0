@@ -89,8 +89,8 @@ class report_coursecompetency extends reportbase implements report {
         global $DB, $USER;
         $userid = isset($this->params['filter_users']) ? $this->params['filter_users'] : array();
         $this->sql .= " WHERE 1 = 1 ";
-
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+        // $systemcontext = context_system::instance();
         if (!is_siteadmin()) {
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
             if (!empty($scheduledreport)) {
@@ -103,11 +103,11 @@ class report_coursecompetency extends reportbase implements report {
         }
         if (!$this->scheduling) {
             if ($this->loggedinuserrole != 'dh') {
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){ 
+                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){ 
                     $coursesql  = (new querylib)->getcourseslist($this->params['filter_organization'], $this->params['filter_departments'],$this->params['filter_subdepartments']);
-                }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){ 
+                }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext) && $ohs){ 
                     $coursesql  = (new querylib)->getcourseslist($USER->open_costcenterid, $this->params['filter_departments'],$this->params['filter_subdepartments']);
-                }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){ 
+                }else if(has_capability('local/costcenter:manage_owndepartments', $categorycontext) && $dhs){ 
                     $coursesql  = (new querylib)->getcourseslist($USER->open_costcenterid, $USER->open_departmentid,$this->params['filter_subdepartments']); 
                 } else { 
                     $coursesql  = (new querylib)->getcourseslist($USER->open_costcenterid, $USER->open_departmentid,$USER->open_subdepartment); 

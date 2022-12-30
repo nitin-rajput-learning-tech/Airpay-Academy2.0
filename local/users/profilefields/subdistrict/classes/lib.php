@@ -27,9 +27,11 @@ class lib{
     public function subdistrict_page_content(){
         global $DB,$OUTPUT,$USER, $PAGE;
         $systemcontext = (new \usersprofilefields_subdistrict\lib\accesslib())::get_module_context();
-        $subdistrict_sql = "SELECT lsd.id,lsd.subdistrict_name,ld.district_name as districtname
-            FROM {local_subdistrict} as lsd
-            JOIN {local_district} AS ld ON ld.id = lsd.districtid";
+        $subdistrict_sql = "SELECT lsd.id,lsd.subdistrict_name,ld.district_name AS districtname,ls.states_name AS statesname,lc.fullname AS costcentername
+            FROM {local_subdistrict} AS lsd
+            JOIN {local_district} AS ld ON ld.id = lsd.districtid
+            JOIN {local_states} AS ls ON ls.id=lsd.statesid
+            JOIN {local_costcenter} AS lc ON lc.id=lsd.costcenterid";
         if(!is_siteadmin()){
             $territoriescond = [];
             foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
@@ -48,7 +50,9 @@ class lib{
         $subdistrict_table = new \html_table();
         $subdistrict_table->id = 'subdistrict_table';
         $headarray = array(get_string('subdistrictname','usersprofilefields_subdistrict'),
-                        get_string('districtname','usersprofilefields_subdistrict'));
+            get_string('districtname','usersprofilefields_subdistrict'),
+            get_string('statesname','usersprofilefields_subdistrict'),
+            get_string('costcentername','usersprofilefields_subdistrict'));
         if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:edit',$systemcontext) || has_capability('usersprofilefields/subdistrict:delete',$systemcontext)){
             $headarray[] = get_string('actions','usersprofilefields_subdistrict');
         }
@@ -59,6 +63,8 @@ class lib{
                 $data=array();
                 $data[] = $subdistrict->subdistrict_name;
                 $data[] = $subdistrict->districtname;
+                $data[] = $subdistrict->statesname;
+                $data[] = $subdistrict->costcentername;
                 if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:edit',$systemcontext) || has_capability('usersprofilefields/subdistrict:delete',$systemcontext)){
                     $actions= '';
                     $userexist = $DB->record_exists('local_village', array('subdistrictid'=>$subdistrict->id));

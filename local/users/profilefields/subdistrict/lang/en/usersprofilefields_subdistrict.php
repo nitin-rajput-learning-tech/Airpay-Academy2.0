@@ -19,3 +19,6 @@ $string['deletenotconfirm'] = 'You cannot delete this sub district as it has lin
 $string['district'] = 'Districts';
 $string['yesdelete'] = 'Yes! Delete';
 $string['no'] = 'No';
+$string['districtname'] = 'District';
+$string['statesname'] = 'State';
+$string['costcentername'] = 'Organisation';

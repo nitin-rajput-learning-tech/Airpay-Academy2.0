@@ -84,7 +84,7 @@ class report_learning extends reportbase implements report {
                 $learningtypf= " AND bll.learningformatid IN (0)";
             } 
         }        
-        $this->sql .= " FROM mdl_block_ls_learningformats  AS bll
+        $this->sql .= " FROM {block_ls_learningformats}  AS bll
                         WHERE 1 = 1 AND bll.moduleid !=7  {$contentprovideridsf} {$learningtypf} {$costcenter}" ;
     }
     public function joins() { 

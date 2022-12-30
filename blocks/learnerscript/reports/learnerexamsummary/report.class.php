@@ -61,8 +61,8 @@ class report_learnerexamsummary extends reportbase implements report {
                         JOIN {role} as r on r.id = ra.roleid AND r.shortname = 'employee'
                         JOIN {context} as ct on ct.id = ra.contextid and ct.instanceid = c.id
                         LEFT JOIN {course_completions} AS cc ON cc.userid = ue.userid AND cc.course = c.id 
-                        LEFT JOIN mdl_customfield_data cfd ON c.id = cfd.instanceid
-                        LEFT JOIN mdl_customfield_field cff ON cff.id = cfd.fieldid  ";
+                        LEFT JOIN {customfield_data} cfd ON c.id = cfd.instanceid
+                        LEFT JOIN {customfield_field} cff ON cff.id = cfd.fieldid  ";
     }
     public function joins() { 
         parent::joins();

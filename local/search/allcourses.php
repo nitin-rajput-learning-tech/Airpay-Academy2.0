@@ -86,7 +86,7 @@ $content = "<div ng-app = 'catalog' class='' id='allcourses_section'>
                             </div>
 
                             <div ng-if=\"numberofrecords > 0\" class=' clearfix row'>
-                                <div dir-paginate='record in courseinfo | filter:q | itemsPerPage: 15' total-items=numberofrecords class='col-md-6 col-sm-6 col-lg-4 col-12  catcourses_list active'>
+                                <div dir-paginate='record in courseinfo | filter:q | itemsPerPage: 15' total-items=numberofrecords class=' col-12  catcourses_list active'>
                                         <div ng-if=\"record.id >=1\" class='card coursecard'>
                                             <div ng-if=\" tab == 6\">";
                                         foreach($plugininfo AS $plugindata){

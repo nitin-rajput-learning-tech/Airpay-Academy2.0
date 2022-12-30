@@ -82,7 +82,8 @@ if (!$course = $DB->get_record('course', array('id' => $courseid))) {
 // 	$context = context_course::instance($course->id);
 // }
 require_login();
-$context = context_system::instance();
+// $context = context_system::instance();
+$context = (new \local_costcenter\lib\accesslib())::get_module_context();
 
 $PAGE->set_context($context);
 $PAGE->set_title($report->name);

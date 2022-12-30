@@ -966,7 +966,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $organization = $organisationnames[1];
         $dept = $organisationnames[2];
         if (!$dept) {
-            $dept = 'N/A';
+            $dept = 'All';
         }
 
         $orgstring = strlen($organization) > 24 ? substr($organization, 0, 24)."..." : $organization;
@@ -1026,18 +1026,17 @@ function users_filters_form($filterparams) {
     $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
         $mform = new filters_form(null, array('filterlist' => array('organizations', 'departments',
-            'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status', 'hrmsrole'), 'courseid' => 1,
+            'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status'), 'courseid' => 1,
              'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
     } else if (has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
-        $mform = new filters_form(null, array('filterlist' => array('departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0,
+        $mform = new filters_form(null, array('filterlist' => array('departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status'), 'courseid' => 1, 'enrolid' => 0,
         'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
     } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
         $mform = new filters_form(null, array('filterlist' => array('subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid',
-         'status', 'hrmsrole'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users',
+         'status'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users',
          'costcenter'), 'filterparams' => $filterparams));
     } else {
-        $mform = new filters_form(null, array('filterlist' => array('states','district','subdistrict','village','email', 'employeeid', 'status',
-         'hrmsrole'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
+        $mform = new filters_form(null, array('filterlist' => array('states','district','subdistrict','village','email', 'employeeid', 'status'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
           => $filterparams));
     }
     return $mform;
@@ -1273,7 +1272,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
     $prev_element = $lastdepth.'_select';
     $firstelement = true;
 
-    $prevfield='territory';
+    $prevfield='costcenter';
 
     $depth = 0;
 
@@ -1284,7 +1283,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
             $prev_element = 'locationfieldparentid_select';
 
             $mform->addElement('hidden','locationfieldparentid', null,array('data-class'=>$prev_element));
-            $mform->setConstant('locationfieldparentid', $customdata[$lastdepth]);
+            $mform->setConstant('locationfieldparentid', $customdata[$firstdepth]);
         }
         $fieldelementoptions = array(
             'class' => $field.'_select',
