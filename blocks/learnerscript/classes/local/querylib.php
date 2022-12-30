@@ -730,16 +730,18 @@ class querylib {
 			return false;
 		}
 		$orgsql = " ";
-		$orgsql .= " SELECT c.id FROM {course} c WHERE c.visible = 1 "; 
-		if ($orgid > 0) {
-			$orgsql .= " AND c.open_costcenterid = " .$orgid;
-		}
-		if ($depid > 0) {
-			$orgsql .= " AND c.open_departmentid = " .$depid;
-		} 
-		if($subdeptid > 0){
-			$orgsql .= " AND c.open_subdepartment = " .$subdeptid;
-		}
+		$orgsql .= " SELECT c.id FROM {course} c WHERE c.visible = 1 ";
+		$orgsql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+		// echo $costcenterpathconcatsql. 'testing';exit;
+		// if ($orgid > 0) {
+		// 	$orgsql .= $costcenterpathconcatsql. " AND c.open_costcenterid = " .$orgid;
+		// }
+		// if ($depid > 0) {
+		// 	$orgsql .= " AND c.open_departmentid = " .$depid;
+		// } 
+		// if($subdeptid > 0){
+		// 	$orgsql .= " AND c.open_subdepartment = " .$subdeptid;
+		// }
 		$userssql = " ";
 		$userssql .= " SELECT c.id FROM {course} c 
                     JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
@@ -748,18 +750,28 @@ class querylib {
                   JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
                   JOIN {context} ctx ON ctx.instanceid = c.id 
                   JOIN {user} AS u ON u.id = ue.userid 
-                  JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid 
+                  JOIN {local_costcenter} lc ON lc.id like concat('%/',u.open_path,'/%') 
                   AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1 
                   WHERE 1 = 1 ";
-        if ($orgid > 0) {
-			$userssql .= " AND u.open_costcenterid = " .$orgid;
-		}
-        if ($depid > 0) {
-			$userssql .= " AND u.open_departmentid = " .$depid;
-		}          
-		if($subdeptid > 0){
-			$userssql .= " AND u.open_subdepartment = " .$subdeptid;
-		}
+                  $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+                  $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
+					if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+				        $userssql .= "";
+				    } else  {
+				        $userssql .= $costcenterpathconcatsql;
+				    }
+        // if ($orgid > 0) {
+		// 	$userssql .= " AND u.open_costcenterid = " .$orgid;
+		// }
+        // if ($depid > 0) {
+		// 	$userssql .= " AND u.open_departmentid = " .$depid;
+		// }          
+		// if($subdeptid > 0){
+		// 	$userssql .= " AND u.open_subdepartment = " .$subdeptid;
+		// }
+                  $userssql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+                  // echo $userssql;exit;
 		$orgcourses = $DB->get_records_sql($orgsql); 
 		$usercourses = $DB->get_records_sql($userssql); 
 

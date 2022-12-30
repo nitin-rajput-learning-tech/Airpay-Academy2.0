@@ -108,63 +108,63 @@ class plugin_coursesfield extends pluginbase {
                 $courserecord->{$data->column} = ($courserecord->enddate); 
             break;
             case 'customdurationinminutes':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='duration_in_minutes'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='duration_in_minutes'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):''; 
             break;
             case 'customlastmodified':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='last_modifie'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='last_modifie'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):''; 
             break;
             case 'customurl':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='url'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='url'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';  
             break;
             case 'customvalidfor':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='valid_for'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='valid_for'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):''; 
             break;
             case 'customfieldnumber':
-               $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='number'";
+               $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='number'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customendoflife':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='end_of_life'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='end_of_life'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customvalidforcomplaince':
-                 $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='valid_for_compliance_until'";
+                 $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='valid_for_compliance_until'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customcostprice':
-            $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='costprice'";
+            $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='costprice'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customcostpricecurrency':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='costpricecurrency'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='costpricecurrency'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customcostpricemarkup':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='costpricemarkup'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='costpricemarkup'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customsellingprice':
-               $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='sellingprice'";
+               $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='sellingprice'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customsellingpricecurrency':
-               $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='sellingpricecurrency'";
+               $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='sellingpricecurrency'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'customnoofquestions':
-                 $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='numberofquestions'";
+                 $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='numberofquestions'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):''; 
             break;
             case 'customacclaimtemplateid':
-                $sql="Select cd.value FROM mdl_customfield_data as cd JOIN mdl_customfield_field as cf ON cf.id=cd.fieldid JOIN mdl_course as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='acclaim_templateid'";
+                $sql="Select cd.value FROM {customfield_data} as cd JOIN {customfield_field} as cf ON cf.id=cd.fieldid JOIN {course} as c ON cd.instanceid=c.id WHERE c.id='".$courserecord->id."' AND cf.shortname='acclaim_templateid'";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'coursetags':
-            $sql="Select GROUP_CONCAT(t.name) as Tags from mdl_tag as t JOIN mdl_tag_instance as ti ON t.id = ti.tagid JOIN mdl_course as c ON c.id=ti.itemid JOIN mdl_course_categories as cc ON cc.id =c.category WHERE c.id='".$courserecord->id."' AND ti.component = 'local_courses' Group By c.id";
+            $sql="Select GROUP_CONCAT(t.name) as Tags from {tag} as t JOIN {tag_instance} as ti ON t.id = ti.tagid JOIN {course} as c ON c.id=ti.itemid JOIN {course_categories} as cc ON cc.id =c.category WHERE c.id='".$courserecord->id."' AND ti.component = 'local_courses' Group By c.id";
             $courserecord->{$data->column}= $DB->get_field_sql($sql, array())?$DB->get_field_sql($sql, array()):'';
             break;
             case 'coursestatus':

@@ -243,10 +243,10 @@ class plugin_graphlearningcolumns extends pluginbase {
                     $instructorledcoursesenrollments = $DB->get_field_sql($data->subquery);
                 }else{
                     $sql = "SELECT  COUNT(lcu.timecreated) AS enrolments 
-                          FROM mdl_local_classroom_users as lcu
-                          JOIN mdl_local_classroom as lc on lc.id = lcu.classroomid
-                          JOIN mdl_local_classroom_attendance as lca on lca.classroomid = lc.id AND lca.userid = lcu.userid
-                          JOIN mdl_user as u on u.id = lcu.userid  
+                          FROM {local_classroom_users} as lcu
+                          JOIN {local_classroom} as lc on lc.id = lcu.classroomid
+                          JOIN {local_classroom_attendance} as lca on lca.classroomid = lc.id AND lca.userid = lcu.userid
+                          JOIN {user} as u on u.id = lcu.userid  
                           WHERE 1=1 {$costcenter} {$dept} {$subdept} AND DATE_FORMAT(from_unixtime(lcu.timecreated), '%M') = '{$row->month}' ";
                     if ($this->reportfilterparams['ls_fstartdate'] >= 0 && $this->reportfilterparams['ls_fenddate']) {
                         $sql .= " AND lc.timecreated BETWEEN ". $this->reportfilterparams['ls_fstartdate'] ." AND ". $this->reportfilterparams['ls_fenddate'] ;
@@ -330,9 +330,9 @@ class plugin_graphlearningcolumns extends pluginbase {
                     $learningpathcompletions = $DB->get_field_sql($data->subquery);
                 }else{
                     $sql = "SELECT COUNT(llpu.completiondate) AS completiondate  
-                           FROM mdl_local_learningplan_user AS llpu
-                           JOIN mdl_local_learningplan AS llp ON llp.id = llpu.planid
-                           JOIN mdl_user AS u ON u.id = llpu.userid  
+                           FROM {local_learningplan_user} AS llpu
+                           JOIN {local_learningplan} AS llp ON llp.id = llpu.planid
+                           JOIN {user} AS u ON u.id = llpu.userid  
                            WHERE 1=1 {$costcenter} {$dept} {$subdept} AND DATE_FORMAT(from_unixtime(llpu.completiondate), '%M') = '{$row->month}' ";
                     if ($this->reportfilterparams['ls_fstartdate'] >= 0 && $this->reportfilterparams['ls_fenddate']) {
                         $sql .= " AND llp.timecreated BETWEEN ". $this->reportfilterparams['ls_fstartdate'] ." AND ". $this->reportfilterparams['ls_fenddate'] ;
@@ -346,10 +346,10 @@ class plugin_graphlearningcolumns extends pluginbase {
                     $instructorledcoursescompletions = $DB->get_field_sql($data->subquery);
                 }else{
                     $sql = "SELECT count(lcu.completiondate) AS completiondate 
-                          FROM mdl_local_classroom_users as lcu
-                          JOIN mdl_local_classroom as lc on lc.id = lcu.classroomid
-                          JOIN mdl_local_classroom_attendance as lca on lca.classroomid = lc.id AND lca.userid = lcu.userid
-                          JOIN mdl_user as u on u.id = lcu.userid  
+                          FROM {local_classroom_users} as lcu
+                          JOIN {local_classroom} as lc on lc.id = lcu.classroomid
+                          JOIN {local_classroom_attendance} as lca on lca.classroomid = lc.id AND lca.userid = lcu.userid
+                          JOIN {user} as u on u.id = lcu.userid  
                           WHERE 1=1 {$costcenter} {$dept} {$subdept} AND lca.status = 1 AND lca.enrol_status = 0 AND DATE_FORMAT(from_unixtime(lcu.completiondate), '%M') = '{$row->month}' ";
                     if ($this->reportfilterparams['ls_fstartdate'] >= 0 && $this->reportfilterparams['ls_fenddate']) {
                         $sql .= " AND lc.timecreated BETWEEN ". $this->reportfilterparams['ls_fstartdate'] ." AND ". $this->reportfilterparams['ls_fenddate'] ;

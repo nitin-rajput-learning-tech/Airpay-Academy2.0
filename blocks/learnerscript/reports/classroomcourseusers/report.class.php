@@ -63,7 +63,7 @@ class report_classroomcourseusers extends reportbase implements report {
   }
 
   function joins() {
-    $this->sql .=" JOIN mdl_local_classroom_users lcu JOIN mdl_user AS u ON lcu.userid = u.id  ";
+    $this->sql .=" JOIN {local_classroom_users} lcu JOIN {user} AS u ON lcu.userid = u.id  ";
 
     parent::joins();
   }
@@ -71,7 +71,7 @@ class report_classroomcourseusers extends reportbase implements report {
   function where() {
     global $USER, $DB;
     $courseid = $this->params['filter_course'];
-    $this->sql .= " where c.id IN (select lcc.courseid from mdl_local_classroom_courses lcc where lcc.classroomid = lcu.classroomid )  AND u.deleted = 0 ";
+    $this->sql .= " where c.id IN (select lcc.courseid from {local_classroom_courses} lcc where lcc.classroomid = lcu.classroomid )  AND u.deleted = 0 ";
 
     $systemcontext = context_system::instance();
     // getscheduled report

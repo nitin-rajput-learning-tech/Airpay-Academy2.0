@@ -523,8 +523,9 @@ function get_roles_in_context($contextlevel, $excludedroles = null){
 * @return  [type] string  link for the leftmenu
 */
 function block_learnerscript_leftmenunode(){
-    global $USER, $DB;
-    $systemcontext = context_system::instance();
+    global $USER, $DB; 
+    // $systemcontext = context_system::instance();
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $reportsnode = '';
     if(has_capability('block/learnerscript:viewreports', $systemcontext) || is_siteadmin()) {
         $reportsnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_learnerscript', 'class'=>'pull-left user_nav_div learnerscript'));

@@ -50,17 +50,17 @@ class report_examlearnersummery extends reportbase implements report {
         parent::select();
     }
     function from() {
-        $this->sql .= " FROM mdl_user as u 
-                        JOIN mdl_user_enrolments as ue on ue.userid = u.id
-                        JOIN mdl_enrol as e on e.id = ue.enrolid 
-                        JOIN mdl_course as c on c.id = e.courseid
-                        JOIN mdl_local_courses_learningformat as lclf on lclf.id = c.open_learningformat
-                        JOIN mdl_role_assignments ra ON ra.userid = ue.userid
-                        JOIN mdl_context ct ON ct.id = ra.contextid AND ct.instanceid = c.id
-                        JOIN mdl_role rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
-                        LEFT JOIN mdl_course_completions as cc on cc.userid = u.id AND cc.course = c.id 
-                        LEFT JOIN mdl_customfield_data cfd ON c.id = cfd.instanceid
-                        LEFT JOIN mdl_customfield_field cff ON cff.id = cfd.fieldid  ";
+        $this->sql .= " FROM {user} as u 
+                        JOIN {user_enrolments} as ue on ue.userid = u.id
+                        JOIN {enrol} as e on e.id = ue.enrolid 
+                        JOIN {course} as c on c.id = e.courseid
+                        JOIN {local_courses_learningformat} as lclf on lclf.id = c.open_learningformat
+                        JOIN {role_assignments} ra ON ra.userid = ue.userid
+                        JOIN {context} ct ON ct.id = ra.contextid AND ct.instanceid = c.id
+                        JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
+                        LEFT JOIN {course_completions} as cc on cc.userid = u.id AND cc.course = c.id 
+                        LEFT JOIN {customfield_data} cfd ON c.id = cfd.instanceid
+                        LEFT JOIN {customfield_field} cff ON cff.id = cfd.fieldid  ";
     }
     function joins() { 
         parent::joins();

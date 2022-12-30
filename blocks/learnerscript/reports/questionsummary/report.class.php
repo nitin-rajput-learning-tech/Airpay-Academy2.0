@@ -58,11 +58,11 @@ class report_questionsummary extends reportbase implements report {
 
 ( select count(qa.id) 
  
-FROM mdl_quiz_attempts quiza
-JOIN mdl_quiz q ON q.id=quiza.quiz
-JOIN mdl_question_usages qu ON qu.id = quiza.uniqueid
-JOIN mdl_question_attempts qa ON qa.questionusageid = qu.id
-JOIN mdl_question que ON que.id = qa.questionid
+FROM {quiz_attempts} quiza
+JOIN {quiz} q ON q.id=quiza.quiz
+JOIN {question_usages} qu ON qu.id = quiza.uniqueid
+JOIN {question_attempts} qa ON qa.questionusageid = qu.id
+JOIN {question} que ON que.id = qa.questionid
 
 
  
@@ -70,22 +70,22 @@ WHERE que.id = qst.id AND qa.rightanswer = qa.responsesummary AND q.id = mq.id )
 
 ( select count(qa.id) 
  
-FROM mdl_quiz_attempts quiza
-JOIN mdl_quiz q ON q.id=quiza.quiz
-JOIN mdl_question_usages qu ON qu.id = quiza.uniqueid
-JOIN mdl_question_attempts qa ON qa.questionusageid = qu.id
-JOIN mdl_question que ON que.id = qa.questionid
+FROM {quiz_attempts} quiza
+JOIN {quiz} q ON q.id=quiza.quiz
+JOIN {question_usages} qu ON qu.id = quiza.uniqueid
+JOIN {question_attempts} qa ON qa.questionusageid = qu.id
+JOIN {question} que ON que.id = qa.questionid
 
 
  
 WHERE que.id = qst.id AND qa.rightanswer != qa.responsesummary AND q.id = mq.id ) as wrongansers,
 ( select count(qa.id) 
  
-FROM mdl_quiz_attempts quiza
-JOIN mdl_quiz q ON q.id=quiza.quiz
-JOIN mdl_question_usages qu ON qu.id = quiza.uniqueid
-JOIN mdl_question_attempts qa ON qa.questionusageid = qu.id
-JOIN mdl_question que ON que.id = qa.questionid
+FROM {quiz_attempts} quiza
+JOIN {quiz} q ON q.id=quiza.quiz
+JOIN {question_usages} qu ON qu.id = quiza.uniqueid
+JOIN {question_attempts} qa ON qa.questionusageid = qu.id
+JOIN {question} que ON que.id = qa.questionid
 
 
  
@@ -95,15 +95,15 @@ WHERE que.id = qst.id AND q.id = mq.id ) as totalresponses
   }
 
   function from() {
-    $this->sql .= " FROM mdl_question qst ";
+    $this->sql .= " FROM {question} qst ";
   }
 
   function joins() {
     $this->sql .=" 
-    JOIN mdl_question_attempts mqa ON qst.id = mqa.questionid 
-    JOIN mdl_question_usages mqu ON mqa.questionusageid = mqu.id
-    JOIN mdl_quiz_attempts mquiza  ON mqu.id = mquiza.uniqueid
-    JOIN mdl_quiz mq ON mq.id = mquiza.quiz
+    JOIN {question_attempts} mqa ON qst.id = mqa.questionid 
+    JOIN {question_usages} mqu ON mqa.questionusageid = mqu.id
+    JOIN {quiz_attempts} mquiza  ON mqu.id = mquiza.uniqueid
+    JOIN {quiz} mq ON mq.id = mquiza.quiz
     ";
 
     parent::joins();

@@ -52,12 +52,12 @@ class report_timewisequizattempts extends reportbase implements report {
     }
 
     function from() {
-        $this->sql .= " FROM mdl_quiz_attempts AS qa ";
+        $this->sql .= " FROM {quiz_attempts} AS qa ";
     }
 
     function joins() {
-        $this->sql .=" JOIN mdl_quiz AS q ON q.id = qa.quiz
-                    join mdl_course as c on c.id = q.course ";
+        $this->sql .=" JOIN {quiz} AS q ON q.id = qa.quiz
+                    join {course} as c on c.id = q.course ";
 
         parent::joins();
     }

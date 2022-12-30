@@ -113,39 +113,39 @@ class report_users extends reportbase {
         if(isset($this->params['filter_status'])) {
           if($this->params['filter_status'] == 'enrolled') {
             $this->sql .= " AND u.id IN (SELECT DISTINCT u.id
-                        FROM mdl_user as u
-                        JOIN mdl_user_enrolments as ue on ue.userid = u.id
-                        JOIN mdl_enrol as e on e.id = ue.enrolid 
-                        JOIN mdl_course as c on c.id = e.courseid
+                        FROM {user} as u
+                        JOIN {user_enrolments} as ue on ue.userid = u.id
+                        JOIN {enrol} as e on e.id = ue.enrolid 
+                        JOIN {course} as c on c.id = e.courseid
                         WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
           } else if($this->params['filter_status'] == 'completed') {
             $this->sql .= " AND u.id IN (SELECT DISTINCT cc.userid AS completed 
-                        FROM mdl_user_enrolments ue   
-                        JOIN mdl_user as u on u.id = ue.userid
-                        JOIN mdl_enrol e ON ue.enrolid = e.id 
-                        JOIN mdl_role_assignments ra ON ra.userid = ue.userid
-                        JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'employee'
-                        JOIN mdl_context AS ctx ON ctx.id = ra.contextid
-                        JOIN mdl_course c ON c.id = ctx.instanceid AND  c.visible = 1 
-                        JOIN mdl_course_completions cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
+                        FROM {user_enrolments} ue   
+                        JOIN {user} as u on u.id = ue.userid
+                        JOIN {enrol} e ON ue.enrolid = e.id 
+                        JOIN {role_assignments} ra ON ra.userid = ue.userid
+                        JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                        JOIN {context} AS ctx ON ctx.id = ra.contextid
+                        JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
+                        JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
                         WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
                          AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  ";
           } else if($this->params['filter_status'] == 'inprogress') {
               $this->sql .= " AND u.id NOT IN (SELECT DISTINCT cc.userid AS completed 
-                        FROM mdl_user_enrolments ue   
-                        JOIN mdl_user as u on u.id = ue.userid
-                        JOIN mdl_enrol e ON ue.enrolid = e.id 
-                        JOIN mdl_role_assignments ra ON ra.userid = ue.userid
-                        JOIN mdl_role r ON r.id = ra.roleid AND r.shortname = 'employee'
-                        JOIN mdl_context AS ctx ON ctx.id = ra.contextid
-                        JOIN mdl_course c ON c.id = ctx.instanceid AND  c.visible = 1 
-                        JOIN mdl_course_completions cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
+                        FROM {user_enrolments} ue   
+                        JOIN {user} as u on u.id = ue.userid
+                        JOIN {enrol} e ON ue.enrolid = e.id 
+                        JOIN {role_assignments} ra ON ra.userid = ue.userid
+                        JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                        JOIN {context} AS ctx ON ctx.id = ra.contextid
+                        JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
+                        JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
                         WHERE 1 AND cc.timecompleted IS NULL AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
                          AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  AND u.id IN (SELECT DISTINCT u.id
-                        FROM mdl_user as u
-                        JOIN mdl_user_enrolments as ue on ue.userid = u.id
-                        JOIN mdl_enrol as e on e.id = ue.enrolid 
-                        JOIN mdl_course as c on c.id = e.courseid
+                        FROM {user} as u
+                        JOIN {user_enrolments} as ue on ue.userid = u.id
+                        JOIN {enrol} as e on e.id = ue.enrolid 
+                        JOIN {course} as c on c.id = e.courseid
                         WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
           }
         }

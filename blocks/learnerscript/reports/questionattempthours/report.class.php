@@ -60,14 +60,14 @@ class report_questionattempthours extends reportbase implements report {
   }
 
   function from() {
-    $this->sql .= " FROM mdl_question_attempts AS qa ";
+    $this->sql .= " FROM {question_attempts} AS qa ";
   }
 
   function joins() {
-    $this->sql .=" JOIN mdl_question qst ON qst.id = qa.questionid 
-    JOIN mdl_question_usages mqu ON qa.questionusageid = mqu.id
-    JOIN mdl_quiz_attempts mquiza  ON mqu.id = mquiza.uniqueid
-    JOIN mdl_quiz mq ON mq.id = mquiza.quiz ";
+    $this->sql .=" JOIN {question} qst ON qst.id = qa.questionid 
+    JOIN {question_usages} mqu ON qa.questionusageid = mqu.id
+    JOIN {quiz_attempts} mquiza  ON mqu.id = mquiza.uniqueid
+    JOIN {quiz} mq ON mq.id = mquiza.quiz ";
 
     parent::joins();
   }

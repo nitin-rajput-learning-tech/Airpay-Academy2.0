@@ -66,8 +66,8 @@ class report_coursewithcategories extends reportbase implements report {
     public function from() {
       $this->sql .= " FROM {course} as main 
                     JOIN {course_categories} as cat ON main.category = cat.id 
-                    JOIN mdl_tag_instance as ti ON main.id=ti.itemid 
-                    JOIN mdl_tag as t ON t.id = ti.tagid";
+                    JOIN {tag_instance} as ti ON main.id=ti.itemid 
+                    JOIN {tag} as t ON t.id = ti.tagid";
     }
     public function joins() { 
       parent::joins();
