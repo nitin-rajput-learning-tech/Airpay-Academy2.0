@@ -38,14 +38,12 @@ function local_custom_category_output_fragment_new_custom_category_form($args){
     }
     if ($args->repositoryid > 0) {
         $heading = get_string('updatecuscategory', 'local_custom_category');
-        $collapse = false;
         $data = $DB->get_record('local_custom_category', array('id'=>$repositoryid));
     }
 
-    $mform = new local_custom_category\form\custom_category_form(null, array('id' => $args->repositoryid, 'editoroptions' => $editoroptions, 'open_costcenterid' => $data->costcenterid), 'post', '', null, true, $formdata);
+    $mform = new local_custom_category\form\custom_category_form(null, array('id' => $args->repositoryid, 'editoroptions' => $editoroptions, 'open_costcenterid' => $data->costcenterid, 'parentid' => $data->parentid), 'post', '', null, true, $formdata);
 
     $data->name = $data->fullname;
-    // $costcentername = $DB->get_records_menu('local_costcenter', array('id' => $data->costcenterid),'id', 'id,fullname');
     $data->open_costcenterid = $data->costcenterid;
     $mform->set_data($data);
 

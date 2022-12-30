@@ -2556,6 +2556,7 @@ function costcenterwise_evaluation_count($costcenter, $department = false){
 function get_listof_evalautions($stable, $filtervalues){
     global $DB, $USER, $OUTPUT;
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
     $statustype=$stable->status;
     $data = array();
     $userarray = array();
@@ -2567,14 +2568,14 @@ function get_listof_evalautions($stable, $filtervalues){
     $countsql = "SELECT count(a.id) ";
     if (is_siteadmin()) {
        $sql ="SELECT a.* ";
-       $fromsql = " from {local_evaluations} a where a.id > 0 AND instance = 0";
+       $fromsql = " from {local_evaluations} a where a.id > 0 AND instance = 0 $costcenterpathconcatsql";
     } else if ( has_capability('local/evaluation:edititems',$context) ) {
        $deptsql = dep_sql($context);
        $sql ="SELECT a.* ";
        $fromsql =" FROM  {local_evaluations} a where a.id > 0 AND instance = 0 $deptsql ";
     } else { // check for users
        $sql ="SELECT a.*, eu.creatorid, eu.timemodified as joinedate ";
-       $fromsql =" from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = :userid AND instance = 0 AND a.visible=1 AND a.evaluationmode LIKE 'SE' ";
+       $fromsql =" from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = :userid AND instance = 0 AND a.visible=1 AND a.evaluationmode LIKE 'SE' $costcenterpathconcatsql";
        $userorder = 1;
        $userarray['userid'] = $USER->id;
     }

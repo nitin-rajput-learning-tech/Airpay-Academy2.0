@@ -77,20 +77,6 @@ class learningplan extends moodleform {
 				$sql="select id,fullname from {local_costcenter} where visible =1 and parentid=0 ";
 	            $costcenters = $DB->get_records_sql($sql);
 	        }
-			// if (is_siteadmin($USER)) {
-			// 	$organizationlist=array(null=>'--Select Organization--');
-			// 	foreach ($costcenters as $scl) {
-			// 		$organizationlist[$scl->id]=$scl->fullname;
-			// 	}
-			// 	$mform->addElement('select', 'costcenter', get_string('organization', 'local_users'), $organizationlist);
-			// 	//$mform->addRule('costcenter', null, 'required', null, 'client');	 
-			// 	$mform->addRule('costcenter', get_string('errororganization', 'local_users'), 'required', null, 'client');
-			// } else{
-			// 	$user_dept=$DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-			// 	$mform->addElement('hidden', 'costcenter', null);
-			// 	$mform->setType('costcenter', PARAM_ALPHANUM);
-			// 	$mform->setConstant('costcenter', $user_dept);
-			// }
 
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_learningplan', $categorycontext, $multiple = false);
 
@@ -102,10 +88,6 @@ class learningplan extends moodleform {
 			if($id < 0 || empty($id)){
 			$mform->addRule('shortname', get_string('missing_plan_learningplan', 'local_learningplan'), 'required', null, 'client');
 			}
-			// if($id > 0){
-			// 	$mform->disabledIf('shortname','id');
-			// 	// $mform->disabledIf('costcenter','id');
-			// }
 	        $mform->setType('shortname', PARAM_TEXT);
 			
         if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
@@ -138,14 +120,6 @@ class learningplan extends moodleform {
 
         $mform->addElement('autocomplete', 'open_categoryid', get_string('open_categoryid','local_learningplan'), $parents, $coursetype);
         $mform->setType('open_categoryid', PARAM_INT);
-			/*$options = array();
-			$options[null] = 'Select Type';
-			$options['1'] = 'Core Courses';
-			$options['2'] = 'Elective Courses';
-		    $mform->addElement('select', 'learning_type', get_string('learning_plan_type', 'local_learningplan'), $options);
-	        $mform->addRule('learning_type', null, 'required', null, 'client');
-	        $mform->setType('learning_type', PARAM_TEXT);
-			*/
 	       	$sequence = array();
 			$sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('yes'), 1, $attributes);
 			$sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('no'), 0, $attributes);
@@ -167,18 +141,11 @@ class learningplan extends moodleform {
 			$mform->addGroup($manageapproval, 'approvalreqd',get_string('need_manage_approval', 'local_learningplan'),
 				array('&nbsp;&nbsp;'), false);
 			$mform->addHelpButton('approvalreqd','need_manager_approval','local_learningplan');
-			// $credits[] = $mform->createElement('text', 'credits', '');
-			// $credits[] = $mform->createElement('html', get_string('le_credits_defaultzero', 'local_learningplan'));
-			// $mform->addGroup($credits, 'creditslink',get_string('credits','local_learningplan'),
-			// 	array('&nbsp;&nbsp;'), false);
-			// $mform->addHelpButton('creditslink','points','local_learningplan');
 
 			$mform->addElement('text', 'open_points', get_string('points','local_learningplan'));
 	        $mform->addHelpButton('open_points', 'open_pointslearningpath', 'local_learningplan');
 	        $mform->setType('open_points', PARAM_INT);
 
-			// $mform->addElement('text', 'credits', get_string('credits','local_learningplan'));
-			// $mform->addRule('credits', get_string('numeric','local_learningplan'), 'numeric', null, 'client');
 	        $mform->setType('credits', PARAM_RAW);
 
 	        // tags
@@ -232,143 +199,7 @@ class learningplan extends moodleform {
             }
 
 		}else if($form_status == 1){
-			// if ((!is_siteadmin() && (((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))) &&(!has_capability('local/costcenter:manage_owndepartments',$categorycontext))))) {
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
-
-			if (is_siteadmin() || 
-                (has_capability('local/learningplan:manage', $categorycontext) 
-                	&& has_capability('local/costcenter:manage_ownorganization', $categorycontext)
-                    && !has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-				$departmentslist[-1]=get_string('all');
-				if($id > 0 ){
-					$costcenter = $DB->get_field('local_learningplan','open_path',array('id'=>$id));
-					$departments = userlib::find_departments_list($costcenter);
-					foreach($departments as $depart){
-						$departmentslist[$depart->id]=$depart->fullname;
-					}
-				}
-				else if(isset($org)){
-					$departments = userlib::find_departments_list($org);
-					foreach($departments as $depart){
-						$departmentslist[$depart->id]=$depart->fullname;
-					}
-				}
-				else if(!is_siteadmin() && has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)){
-					$departments = userlib::find_departments_list(explode('/', $USER->open_path)[1]);
-					foreach($departments as $depart){
-						$departmentslist[$depart->id]=$depart->fullname;
-					}
-				}
-				
-				$options = array(
-					'multiple' => true,
-				);
-				$mform->addElement('autocomplete', 'department', get_string('department','local_learningplan'),$departmentslist,$options);
-				$mform->addHelpButton('department', 'department','local_users');
-			// }elseif (is_siteadmin() || ((! has_capability('local/costcenter:manage_multiorganizations', (new \local_learningplan\lib\accesslib())::get_module_context()))&&(has_capability('local/costcenter:manage_owndepartments',$categorycontext)))) {
-          
-					/*$options = array(
-						// 'multiple' => true,
-						'class' => 'departmentselect'
-					);
-					$costcenter = $DB->get_field('local_learningplan','costcenter',array('id'=>$id));
-					$costcenter_department = $DB->get_field('local_learningplan','department',array('id'=>$id));
-					if(empty($costcenter_department)){
-						$departmentslist=array($USER->open_departmentid=>$USER->open_departmentid);
-					}else{
-						if($costcenter_department!=-1){
-							$departmentslist=explode(',',$costcenter_department);
-							$departmentslist=array_combine($departmentslist,$departmentslist);
-						}*/
-					
-			// 		}
-					
-				/*	$mform->addElement('autocomplete', 'department', get_string('department'),$departmentslist,$options);
-				    $mform->addHelpButton('department', 'department','local_users');
-					if(empty($costcenter_department)&&$costcenter_department!=-1)
-					 $mform->setDefault('department', $USER->open_departmentid);
-					}
-				*/
-            }else{
-            	$department = $DB->get_field('local_learningplan', 'department', array('id' => $id));
-            	$plan_department = $department ? $department : $USER->open_departmentid;
-            	$mform->addElement('hidden', 'department', $plan_department, array('id' => 'id_department'));
-            	$mform->setType('department', PARAM_RAW);
-            }
-            if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)){
-            	$subdepartmentslist[-1]=get_string('all');
-            	$subdepartment = $this->_ajaxformdata['subdepartment'];
-
-                $params = array();
-                if (!empty($subdepartment)) {
-                    $subdepartmentslist = $subdepartment;
-                } else if ($id > 0) {
-                    $subdepartmentlist = $DB->get_field('local_learningplan', 'subdepartment', array('id' => $id));
-                    $subdepartmentslist = explode(', ', $subdepartmentlist);
-                }
-                if (!empty($subdepartmentslist)) {
-                    if (is_array($subdepartmentslist)){
-                        $subdepartmentslist=implode(',',$subdepartmentslist);
-                    }
-                    // $organisation = $DB->get_field('local_classroom', 'costcenter', array('id' => $id));
-                    $departments = $DB->get_field('local_learningplan', 'department', array('id' => $id));
-                    
-                    $subdepartmentlistsql = "SELECT id, fullname
-                                            FROM {local_costcenter}
-                                           WHERE 1 = 1 ";
-                    if(!empty($subdepartmentslist)) {
-                        $arr_subdepartmentslist = explode(',', $subdepartmentslist);
-                        list($subsql, $subparam) = $DB->get_in_or_equal($arr_subdepartmentslist, SQL_PARAMS_NAMED);
-                        $subdepartmentlistsql .= " AND id $subsql ";
-                        $params = $params + $subparam;
-                    }else{
-                        $subdepartmentlistsql .= " AND visible = :visible AND depth = :depth 
-                        AND parentid IN (:parentid)";
-                        $params['visible'] = 1;
-                        $params['depth'] = 3;
-                        $params['parentid'] = $departments;
-                    }
-                    
-                    $subdepartmentlist = $DB->get_records_sql_menu($subdepartmentlistsql, $params);
-                    $subdepartments = array(-1 => get_string('all')) + $subdepartmentlist;
-                }
-				// if($id > 0 ){
-					// $departments = $DB->get_field('local_learningplan','department',array('id'=>$id));
-					// $departments = explode(',', $departments);
-					// $subdepartments = userlib::find_subdepartments_list($departments);
-					// foreach($subdepartments as $subdepart){
-					// 	$subdepartmentslist[$subdepart->id]=$subdepart->fullname;
-					// }
-				// }
-				
-				// $options = array(
-				// 	'multiple' => true,
-				// );
-				$options = array(
-                    'ajax' => 'local_learningplan/form-options-selector',
-                    'multiple' => true,
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'learningplan_subdepartment_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 3,
-                        'organizationselect' => '.organizationselect', 'subdepartment' => true)),
-                    'class' => 'subdepartmentselect'
-                );
-					// js_call_amd
-				$mform->addElement('autocomplete', 'subdepartment', get_string('subdepartment', 'local_costcenter'), $subdepartments, $options);
-				$mform->addHelpButton('subdepartment', 'subdepartment','local_users');
-            }
-			
-			// $users_plugin_exist = $core_component::get_plugin_directory('local','users');
-			// if ($users_plugin_exist) {
-			// require_once($CFG->dirroot . '/local/users/lib.php');
-			// $functionname ='globaltargetaudience_elementlist';
-			// 	if(function_exists($functionname)) {
-			// 		$modulecostcenter = $DB->get_field('local_learningplan', 'costcenter',array('id' => $id));
-			// 		$mform->modulecostcenter = $modulecostcenter;
-			// 		$functionname($mform,array('group','hrmsrole','designation','location'));
-			// 	}
-			// }
-
 			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
     	}
         $mform->disable_form_change_checker();

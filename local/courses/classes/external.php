@@ -154,23 +154,28 @@ class local_courses_external extends external_api {
                // insert::add_enrol_method_tocourse($coursedata,$enrol_status);
 
             } elseif($validateddata->id > 0) {
+                $open_path=$DB->get_field('course', 'open_path', array('id' => $validateddata->id));
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
                 $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 if($form_status == 0){
                      $courseid =new stdClass();
                       $courseid->id=$data['id'];
                       $validateddata->category = $category_id;
-                      $validateddata->open_departmentid = ($open_departmentid!='null') ? $open_departmentid : 0;
-                      $validateddata->open_subdepartment = ($open_subdepartment != 'null') ? $open_subdepartment : 0;
+
                     if($validateddata->map_certificate == 1){
                         $validateddata->open_certificateid = $validateddata->open_certificateid;
                     }else{
                         $validateddata->open_certificateid = null;
                     }
-                     local_costcenter_get_costcenter_path($validateddata);
 
-                     if($validateddata->open_path){
-                        $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
-                     }
+                    if($validateddata->open_costcenterid !=$org){
+
+                         local_costcenter_get_costcenter_path($validateddata);
+
+                         if($validateddata->open_path){
+                            $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
+                         }
+                    }
 
                     update_course($validateddata, $editoroptions);
                     if(class_exists('\block_trending_modules\lib')){
@@ -195,8 +200,13 @@ class local_courses_external extends external_api {
 					}else{
 						$data->open_points=0;
 					}
-                    $data->startdate=$validateddata->startdate;
-                    $data->enddate=$validateddata->enddate;
+                    if(!empty($validateddata->startdate)) {
+                        $data->startdate=$validateddata->startdate;
+                    }
+                    if(!empty($validateddata->enddate)) {
+                        $data->enddate=$validateddata->enddate;
+                    }
+
                     // added for startek data saving.
                     $data->open_hrmsrole    = (!empty($data->open_hrmsrole)) ? implode(',', array_filter($data->open_hrmsrole)) : null;
                     if(!empty($data->open_hrmsrole)) {
@@ -213,6 +223,16 @@ class local_courses_external extends external_api {
                     
                     $courseid = new stdClass();
                     $courseid->id = $data->id;
+
+                    if($form_status == 2){
+
+                        local_costcenter_get_costcenter_path($data);
+
+                         if($data->open_path){
+                            $data->category = $DB->get_field('local_costcenter', 'category', array('path' => $data->open_path));
+                         }
+                    }
+
                     $DB->update_record('course', $data);
                 }
             }
@@ -396,7 +416,7 @@ class local_courses_external extends external_api {
         if ($validateddata) {
             // The form has been submit handle it.
                 if ($validateddata->fulldelete == 1 && $category->can_delete_full()) {
-                    $continueurl = new moodle_url('/local/courses/index.php');
+                    $continueurl = new moodle_url('/local/custom_category/index.php');
                     if ($category->parent != '0') {
                         $continueurl->param('categoryid', $category->parent);
                     }
@@ -869,7 +889,7 @@ class local_courses_external extends external_api {
   public static function categories_view($options, $dataoptions, $offset = 0, $limit = 0, $contextid, $filterdata) {
     global $DB, $PAGE;
     require_login();
-    $PAGE->set_url('/local/courses/index.php', array());
+    $PAGE->set_url('/local/custom_category/index.php', array());
     $PAGE->set_context($contextid);
     // Parameter validation.
     $params = self::validate_parameters(

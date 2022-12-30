@@ -26,10 +26,8 @@ class states_form extends \moodleform {
         }
         $organiasations = $DB->get_records_sql_menu($organisationsql);
         $organiasations = [null => get_string('organisation', 'local_users')] + $organiasations;
-        $mform->addElement('autocomplete', 'costcenterid',  get_string('territory', 'local_users'), $organiasations);
+        $mform->addElement('autocomplete', 'costcenterid',  get_string('organisation', 'local_users'), $organiasations);
         $mform->setType('costcenterid', PARAM_INT);
-        $states_select = [null => get_string('selectstates', 'local_users')];
-
 
 
         $mform->addElement('text', 'states_name', get_string('statesname', 'usersprofilefields_states'));
@@ -56,12 +54,9 @@ class states_form extends \moodleform {
         }
 
         $recordid = $DB->get_field('local_states','id',array('code' => $data['code'],'costcenterid' => $costcenterid));
-        if($recordid && $recordid!=$data['id']){
-            $errors['code'] = get_string('statescodeexist', 'usersprofilefields_states');
-        }
 
         if($recordid && $recordid!=$data['id']){
-            $errors['states_name'] = get_string('statesnameexist', 'usersprofilefields_states');
+            $errors['code'] = get_string('statescodeexist', 'usersprofilefields_states');
         }
 
         if(empty($data['costcenterid'])){

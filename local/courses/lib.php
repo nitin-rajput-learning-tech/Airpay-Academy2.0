@@ -481,7 +481,7 @@ function local_courses_output_fragment_custom_course_form($args){
         $course = course_get_format($course)->get_course();
         $category = $DB->get_record('course_categories', array('id'=>$course->category), '*', MUST_EXIST);
         $coursecontext = context_course::instance($course->id);
-        require_capability('moodle/course:update', $coursecontext);
+        //require_capability('moodle/course:update', $coursecontext);
     }else{
         $category = $CFG->defaultrequestcategory;
     }
@@ -1414,7 +1414,7 @@ function get_listof_courses($stable, $filterdata) {
         $count = 0;
         foreach ($courses as $key => $course) {
             $course_in_list = new core_course_list_element($course);
-            $context = context_course::instance($course->id);
+            $context =  \context_coursecat::instance($course->category);
             $category = $DB->get_record('course_categories',array('id'=>$course->category));
             $departmentcount = 1;
             $subdepartmentcount = 1;
@@ -1777,7 +1777,7 @@ function get_listof_categories($stable, $filterdata) {
         }
 
         if($categorynames > 0){
-            $linkurl = new moodle_url("/local/courses/index.php?id=".$categories->id."");
+            $linkurl = new moodle_url("/local/custom_category/index.php?id=".$categories->id."");
         }else{
             $linkurl = null;
         }

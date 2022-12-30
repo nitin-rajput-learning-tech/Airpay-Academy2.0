@@ -11,18 +11,25 @@ class village_form extends \moodleform {
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
 
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $subdistrict = $DB->get_records_menu('local_subdistrict', array(),'subdistrict_name', 'id,subdistrict_name');
-            $subdistrict = [null => get_string('subdistrict', 'usersprofilefields_village')]+$subdistrict;
-            $mform->addElement('autocomplete', 'subdistrictid',  get_string('subdistrictname', 'usersprofilefields_village'), $subdistrict);
-            $mform->setType('subdistrictid', PARAM_INT);
-            $village_select = [null => get_string('selectvillage', 'local_users')];
-
-        }else if(!is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $mform->addElement('hidden', 'subdistrictid');
-            $mform->setType('subdistrictid', PARAM_INT);
-
+        $subdistrictsql = "SELECT lsd.id, lsd.subdistrict_name FROM {local_subdistrict} AS lsd WHERE 1 = 1 ";
+        if(!is_siteadmin()){
+            $orgcond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $orgcond[] = " lsd.costcenterid = {$costcenterid} ";
+            }
+            // print_r($orgcond);die;
+            if(!empty($orgcond)){
+                $subdistrictsql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
+            }else{
+                $subdistrictsql .= " AND 1 <> 1 ";
+            }
         }
+
+        $subdistricts = $DB->get_records_sql_menu($subdistrictsql);
+        $subdistricts = [null => get_string('subdistrict', 'local_users')] + $subdistricts;
+        $mform->addElement('autocomplete', 'subdistrictid',  get_string('subdistrict', 'local_users'), $subdistricts);
+        $mform->setType('subdistrictid', PARAM_INT);
 
         $mform->addElement('text', 'village_name', get_string('villagename', 'usersprofilefields_village'));
         $mform->setType('village_name', PARAM_TEXT);
@@ -46,10 +53,7 @@ class village_form extends \moodleform {
         if($recordid && $recordid!=$data['id']){
             $errors['code'] = get_string('villagecodeexist', 'usersprofilefields_village');
         }
-        $recordid = $DB->get_field('local_village','id',array('village_name' => $data['village_name'],'subdistrictid' => $data['subdistrictid']));
-        if($recordid && $recordid!=$data['id']){
-            $errors['village_name'] = get_string('villagenameexist', 'usersprofilefields_village');
-        }
+
         if(empty($data['subdistrictid'])){
             $errors['subdistrictid'] = get_string('selectsubdistrict', 'usersprofilefields_village');
         }

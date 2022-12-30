@@ -56,19 +56,18 @@ class renderer extends mainbase  {
           $lib = new notifications();
           $costcenter = new \costcenter();
           $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
-         
        if(is_siteadmin()){
-            $sql = "SELECT ni.id, nt.name, nt.shortname, ni.subject, costcenterid, lc.fullname as deptname, ni.active
+            $sql = "SELECT ni.id, nt.name, nt.shortname, ni.subject, open_path, lc.fullname as deptname, ni.active
                 FROM {local_notification_info} ni
                 JOIN {local_notification_type} nt ON ni.notificationid = nt.id
-                JOIN {local_costcenter} lc ON ni.costcenterid = lc.id ORDER BY ni.id DESC";
-        } elseif(!is_siteadmin()  && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            // $costcenter = $DB->get_field_sql("SELECT u.open_costcenterid from {user} u where u.id = {$USER->id}");
-            $costcenter = $USER->open_costcenterid;
-            $sql = "SELECT ni.id, nt.name, nt.shortname, ni.subject, costcenterid, lc.fullname as deptname, ni.active
+                JOIN {local_costcenter} lc ON concat('/',ni.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1 ORDER BY ni.id DESC";
+        } elseif(!is_siteadmin()){
+            $cond_query = (new \local_notifications\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='ni.open_path');
+            $sql = "SELECT ni.id, nt.name, nt.shortname, ni.subject, open_path, lc.fullname as deptname, ni.active
                 FROM {local_notification_info} ni
                 JOIN {local_notification_type} nt ON ni.notificationid = nt.id
-                JOIN {local_costcenter} lc ON ni.costcenterid = lc.id where ni.costcenterid in ($costcenter) ORDER BY ni.id DESC";
+                JOIN {local_costcenter} lc ON concat('/',ni.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
+                 where $cond_query ORDER BY ni.id DESC";
         } else {
 //          print_error('You dont have permissions to view this page.');
              print_error(get_string('dont_have_permission_view_page', 'local_notifications'));
@@ -83,7 +82,7 @@ class renderer extends mainbase  {
                 $row[] = $each_notification->name;
                 $row[] = $each_notification->shortname;
                 $row[] = $each_notification->subject;
-                $row[] = $DB->get_field('local_costcenter', 'fullname', array('id'=>$each_notification->costcenterid));
+                $row[] = $DB->get_field('local_costcenter', 'fullname', array('id'=> explode('/',$each_notification->open_path)[1]));
                 
                
                 
@@ -274,7 +273,7 @@ class renderer extends mainbase  {
     $sender_name = $notimaster->getSenderDetails($notidetails->from_userid);
     $receiver_name = $notimaster->getReceiverDetails($notidetails->to_userid);
     $return = '';
-    if ((has_capability('local/notifications:manage', $systemcontext)) || is_siteadmin()) {
+    if ((has_capability('local/notifications:view', $systemcontext)) || is_siteadmin()) {
       $return .= "<h4>From:" . $sender_name . "</h4>";
       $return .= "<h4>To:" . $receiver_name . "</h4>";
       $return .= "<h4>Subject: " . $notidetails->subject . "</h4>";

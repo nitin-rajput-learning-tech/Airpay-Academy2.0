@@ -65,8 +65,9 @@
         $params['moduleid'] = $evaluationinstance->id;
         $params['emailtype'] = $emailtype;
         if($costcenterexist){
-            $notification_typesql .= " AND lni.costcenterid=:costcenterid";
-            $params['costcenterid'] = $evaluationinstance->costcenterid;
+            $costcenterid=explode('/',$evaluationinstance->open_path)[1];   
+            $notification_typesql .= " AND lni.open_costcenterid=:costcenterid";
+            $params['costcenterid'] = $costcenterid;
         }
         $notification = $this->db->get_record_sql($notification_typesql, $params);
         if(empty($notification)){ // sends the default notification for the type.
@@ -77,8 +78,9 @@
                 AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
             $params['emailtype'] = $emailtype;
             if($costcenterexist){
-                $notification_typesql .= " AND lni.costcenterid=:costcenterid";
-                $params['costcenterid'] = $evaluationinstance->costcenterid;
+                $costcenterid=explode('/',$evaluationinstance->open_path)[1];   
+                $notification_typesql .= " AND lni.open_costcenterid=:costcenterid";
+                $params['costcenterid'] = $costcenterid;
             }
             $notification = $this->db->get_record_sql($notification_typesql, $params);
         }
@@ -89,7 +91,7 @@
         }
     }
     public function send_evaluation_notification($evaluationinstance, $touser, $fromuser, $emailtype, $notification){
-    	$datamailobject = new \stdClass();
+        $datamailobject = new \stdClass();
     	$datamailobject->notification_infoid = $notification->id;
     	$datamailobject->feedback_name = $evaluationinstance->name;
     	if($evaluationinstance->timeopen && $evaluationinstance->timeclose){

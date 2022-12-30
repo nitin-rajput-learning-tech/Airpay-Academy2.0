@@ -50,7 +50,7 @@ if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganization
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
     }
     $learningplans = $DB->get_record('local_learningplan',array('id'=>$planid),$fields = 'id,costcenter,department');
-    if($is_Dh && (!in_array(explode(',',$learningplans->department)) != $USER->open_departmentid)){
+    if($is_Dh && (!in_array(explode(',',$learningplans->open_path)) != explode('/', $USER->open_path)[2]){
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
     }
 }

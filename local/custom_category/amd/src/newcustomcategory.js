@@ -43,7 +43,12 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         if (editid) {
             self.repositoryid = editid;
         }
-        return Str.get_string('addnewcustom_category', 'local_custom_category').then(function(title) {
+        if(this.repositoryid){
+                var head = Str.get_string('updatecuscategory', 'local_custom_category');
+            }else{
+                var head = Str.get_string('addnewcustom_category', 'local_custom_category');
+            }
+        return head.then(function(title) {
             // Create the modal.
             return ModalFactory.create({
                 type: ModalFactory.types.SAVE_CANCEL,

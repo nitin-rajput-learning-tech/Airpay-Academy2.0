@@ -73,6 +73,7 @@ use core_user;
       $record = new stdClass();
       $record->compname = $component;
       $record->componentid  = $componentid;
+      $record->module_id  = $componentid;
 
       $record->createdbyid = $USER->id;
       $record->timecreated = time();
@@ -116,13 +117,16 @@ use core_user;
           $event->trigger();
           $requesteduser = \core_user::get_user($requests->createdbyid);
           $systemcontext = (new \local_skillrepository\lib\accesslib())::get_module_context();
-          $org_id = $requesteduser->open_costcenterid;
-          $departmentid = $requesteduser->open_departmentid;
+          list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$requesteduser->open_path);
+          $requesteduser->open_costcenterid=$org_id;
+          $requesteduser->open_departmentid = $ctr_id;          
           foreach($lpcreated_id as $created_id){
           // $org = $DB->get_field('local_costcenter','fullname',array('id'=>$org_id));
-          if($created_id->open_costcenterid == $org_id){
+          $costcenterid=explode('/',$created_id->open_path)[1];
+          $countryid=explode('/',$created_id->open_path)[2];
+          if($costcenterid == $org_id){
             if(has_capability('local/costcenter:manage_owndepartments', $systemcontext, $created_id) && !(has_capability('local/costcenter:manage_ownorganization', $systemcontext, $created_id) || has_capability('local/costcenter:manage_multiorganizations', $systemcontext, $created_id))){
-              if($created_id->open_departmentid != $departmentid){
+              if($countryid != $ctr_id){
                 continue;
               }
             }
@@ -240,6 +244,9 @@ use core_user;
         //     // }
         //   }
         // }
+        list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$requesteduser->open_path);
+          $requesteduser->open_costcenterid=$org_id;
+          $requesteduser->open_departmentid = $ctr_id;
         $touser = core_user::get_user($updaterecord->createdbyid);
         $fromuserid = core_user::get_support_user();
         $logmail = $notification->request_notification($type, $requests, $touser, $fromuserid, $requesteduser);
@@ -363,6 +370,9 @@ use core_user;
         //     // }
         //   }
         // }
+        list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$requesteduser->open_path);
+          $requesteduser->open_costcenterid=$org_id;
+          $requesteduser->open_departmentid = $ctr_id;
         $touser = core_user::get_user($updaterecord->createdbyid);
         $fromuserid = core_user::get_support_user();
         $logmail = $notification->request_notification($type, $requests, $touser, $fromuserid, $requesteduser);

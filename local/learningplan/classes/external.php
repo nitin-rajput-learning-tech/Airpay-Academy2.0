@@ -29,10 +29,19 @@ class local_learningplan_external extends external_api {
             //     $validateddata->costcenter = $validateddata->open_costcenterid;
             // }
             if($validateddata->id > 0){
-                $get_costcenter = $DB->get_field('local_learningplan', 'open_path', array('id' => $validateddata->id));
-                $costcenterid = explode('/', $get_costcenter)[1];
-                if((($validateddata->form_status == 0) && ($costcenterid != $validateddata->open_costcenterid)) || $validateddata->form_status == 1){
+                // $get_costcenter = $DB->get_field('local_learningplan', 'open_path', array('id' => $validateddata->id));
+                // $costcenterid = explode('/', $get_costcenter)[1];
+                // if((($validateddata->form_status == 0) && ($costcenterid != $validateddata->open_costcenterid)) || $validateddata->form_status == 1){
+                //     local_costcenter_get_costcenter_path($validateddata);
+                // }
+
+                $open_path=$DB->get_field('local_learningplan', 'open_path', array('id' => $validateddata->id));
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+                if($validateddata->open_costcenterid !=$org){
+
                     local_costcenter_get_costcenter_path($validateddata);
+
                 }
                 if($validateddata->form_status == 1){
                     local_users_get_userprofile_datafields($validateddata);

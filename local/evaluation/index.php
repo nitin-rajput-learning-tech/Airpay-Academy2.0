@@ -112,7 +112,7 @@ if(empty($filterdata) && !empty($jsonparam)){
     }
     $mform->set_data($filterdata);
 }
-if(!empty($costcenterid) || !empty($status) || !empty($departmentid) || !empty($subdepartmentid)){   
+if(!empty($costcenterid) || !empty($status)){   
         $formdata = new stdClass();
         $formdata->organizations = $costcenterid;
         $formdata->departments = $departmentid;
