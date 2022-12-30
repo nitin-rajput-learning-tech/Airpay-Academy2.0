@@ -966,7 +966,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $organization = $organisationnames[1];
         $dept = $organisationnames[2];
         if (!$dept) {
-            $dept = 'N/A';
+            $dept = 'All';
         }
 
         $orgstring = strlen($organization) > 24 ? substr($organization, 0, 24)."..." : $organization;
