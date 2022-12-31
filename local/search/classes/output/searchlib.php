@@ -44,6 +44,10 @@ use core_component;
 
     static public $includesobj;
 
+    static public $skills;
+
+    static public $levels;
+
     /* To hold page number */
     static public $page;
 

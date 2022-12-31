@@ -28,7 +28,7 @@ require_once($CFG->dirroot.'/local/search/lib.php');
 class local_search_external extends external_api {
     public static function get_available_modules_parameters(){
         return new external_function_parameters([
-            'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
+            'page' => new external_value(PARAM_INT, 'The page number for the modules'),
             'filters' => new external_multiple_structure(
                 new external_single_structure([
                     "type" => new external_value(PARAM_TEXT, 'The context id for the course'),
@@ -36,20 +36,53 @@ class local_search_external extends external_api {
                          new external_value(PARAM_TEXT, 'The filter value')
                     )
                 ])
-            )
+            ),
+            'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
+            'pagelimit' => new external_value(PARAM_INT, 'Page length for the modules', VALUE_OPTIONAL, 15),
+            'query' => new external_value(PARAM_RAW, 'Search criteria for the modules', VALUE_OPTIONAL)
         ]);
     }
-    public static function get_available_modules($contextid, $filters){
-
+    public static function get_available_modules($page, $filters, $contextid = SYSCONTEXTID, $pagelimit = 15, $query = ''){
+        global $CFG, $DB;
         $params = self::validate_parameters(self::get_available_modules_parameters(),
-                                            ['contextid' => $contextid, 'filters' => $filters]);
+                                            ['contextid' => $contextid, 'page' => $page, 'pagelimit' => $pagelimit, 'query' => $query, 'filters' => $filters]);
         $context = context::instance_by_id($params['contextid'], MUST_EXIST);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        allcourses::get_filter_based_modules($filters);
+        \local_search\output\searchlib::$page = $page;
+        \local_search\output\searchlib::$search = $search;
+        if(file_exists($CFG->dirroot . '/local/includes.php')){
+            require_once($CFG->dirroot . '/local/includes.php');
+            $includes = new user_course_details();
+            \local_search\output\searchlib::$includesobj = $includes;
+        }
+        \local_search\output\searchlib::$skills = $DB->get_records_menu('local_skill', null, '', 'id, name');
+        \local_search\output\searchlib::$levels = $DB->get_records_menu('local_course_levels', null, '', 'id, name');
 
+        $pages = new \local_search\output\allcourses();
+        $data = $pages->main_toget_catalogtypes($pagelimit, $filters);
+        $totalrecords = $data['numberofrecords'];
+        unset($data['numberofrecords']);
+        return ['modules' => $data, 'count' => $totalrecords];
     }
-    public static function get_available_modules_returns(){}
+    public static function get_available_modules_returns(){
+        return new external_single_structure([
+            "count" => new external_value(PARAM_INT, 'Count of modules'),
+            "modules" => new external_multiple_structure(
+                new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Module ID'),
+                    'fullname' => new external_value(PARAM_TEXT, 'Category Code'),
+                    'shortname' => new external_value(PARAM_TEXT, 'Tag Category Name'),
+                    'bannerimage' => new external_value(PARAM_URL, 'Banner image'),
+                    'summary' => new external_value(PARAM_RAW, 'Summary Information'),
+                    'skill' => new external_value(PARAM_TEXT, 'SKill Information'),
+                    'level' => new external_value(PARAM_TEXT, 'level Information'),
+                    'startdate' => new external_value(PARAM_INT, 'Startdate Information'),
+                    'enddate' => new external_value(PARAM_INT, 'Endddate Information'),
+                ])
+            )
+        ]);
+    }
 
 
     public static function get_filter_elements_parameters(){

@@ -205,7 +205,7 @@ class search implements renderable{
     public function export_for_template($perpage,$startlimit, $selectedfilter = array()){
         global $DB, $USER, $CFG, $PAGE,$OUTPUT;
 
-        $facetofacelist_ar =$this->get_facetofacelist_query($perpage, $startlimit, true, true,$tagitems, $selectedvendors);
+        $facetofacelist_ar =$this->get_facetofacelist_query($perpage, $startlimit, true, true, $selectedfilter);
         $facetofacelist= $facetofacelist_ar['list'];
 
         foreach($facetofacelist as $list){
