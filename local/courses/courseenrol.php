@@ -125,6 +125,10 @@ if ($course) {
   $idnumber     = null;
   $uname        = null;
   $groups        = null;
+  $states = null;
+  $district = null;
+  $subdistrict   = null;
+  $village   = null;
   $filterlist = get_filterslist();
   $filterparams = array('options'=>null, 'dataoptions'=>null);
   $mform = new filters_form($PAGE->url, array('filterlist'=>$filterlist,'enrolid'=>$enrolid, 'courseid'=>$course_id,'filterparams' => $filterparams, 'action' => 'user_enrolment'));
@@ -145,6 +149,11 @@ if ($course) {
     $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
     $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
 
+    $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
+    $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
+    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
+    $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
+
     $email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
     $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
     $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
@@ -154,7 +163,7 @@ if ($course) {
   }
 
   // Create the user selector objects.
-  $options = array('context' => $context->id, 'courseid' => $course_id, 'organization' => $organization, 'department' => $department, 'subdepartment' => $subdepartment, 'department4level' => $department4level, 'department5level' => $department5level, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
+  $options = array('context' => $context->id, 'courseid' => $course_id, 'organization' => $organization, 'department' => $department, 'subdepartment' => $subdepartment, 'department4level' => $department4level, 'department5level' => $department5level, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location, 'states' => $states, 'district' => $district, 'subdistrict' => $subdistrict, 'village' => $village);
 	$dataobj = $course_id;
 	$fromuserid = $USER->id;
   if ( $add AND confirm_sesskey()) {

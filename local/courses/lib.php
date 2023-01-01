@@ -914,13 +914,14 @@ function local_courses_output_fragment_coursestatus_display($args){
 function courses_filter($mform){
     global $DB,$USER;
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-    $sql = "SELECT id, fullname FROM {course} WHERE id > 1";
+    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 ";
 
     if(is_siteadmin()){
        $courseslist = $DB->get_records_sql_menu($sql);
     }else{
       $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     }
+    $courseslist = $DB->get_records_sql_menu($sql);
 
     $select = $mform->addElement('autocomplete', 'courses', '', $courseslist, array('placeholder' => get_string('course')));
     $mform->setType('courses', PARAM_RAW);
