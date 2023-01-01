@@ -254,7 +254,7 @@ class allcourses {
     asort($defaultPlugins);
     if($selectedfilter){
         foreach ($selectedfilter as $filters) {
-            $thisfilters[$filters['filtername']] = $filters['filters'];
+            $thisfilters[$filters['type']] = $filters['values'];
         }
         ;
         if($moduletype = $thisfilters['moduletype']){
@@ -281,6 +281,7 @@ class allcourses {
     }
     asort($standard_catalogtypes);
     $sumofallrecords = 0;
+    // print_r($thisfilters);
     foreach($standard_catalogtypes as $key => $type){
       switch($type){
        
@@ -484,7 +485,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
                 if(class_exists($classname)){
                     $class = new $classname();
                     $courselist = $class->export_for_template($level_perpage, $level_startlimit,$selectedfilter);
-                    $finallist =$this->get_array_format($courselist);
+                    $finallist = $this->get_array_format($courselist);
                 }
             break;
             case 'learningplan' :

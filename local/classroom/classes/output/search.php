@@ -265,6 +265,7 @@ class search implements renderable{
 
             $list->bands=searchlib::trim_theband($list->bands);
             $list->type = classroom;
+            $list->module = 'classroom';
 
             $list->enroll=$this->get_the_enrollflag($classroomid);
 
@@ -307,11 +308,21 @@ class search implements renderable{
               }
 
             $list->enrollmentbtn= $this->get_enrollbtn($list);
+            $list->rating_element = '';
+            $list->avgrating = 0;
+            $list->ratedusers = 0;
+            $list->likes = 0;
+            $list->dislikes = 0;
             if(class_exists('local_ratings\output\renderer')){
                 $rating_render = $PAGE->get_renderer('local_ratings');
-                $list->rating_element = $rating_render->render_ratings_data('local_courses', $list->id ,null, 14);
-            }else{
-                $list->rating_element = '';
+                $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $list->id, 'module_area' => 'local_classroom'));
+                if($ratinginfo){
+                    $list->avgrating = $ratinginfo->module_rating;
+                    $list->ratedusers = $ratinginfo->module_rating_users;
+                    $list->likes = $ratinginfo->module_like;
+                    $list->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+                    $list->rating_element = $rating_render->render_ratings_data('local_classroom', $list->id ,$ratinginfo->module_rating, 14);
+                }
             }
 
             // classroom view link

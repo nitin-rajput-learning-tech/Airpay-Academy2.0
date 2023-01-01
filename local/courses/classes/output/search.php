@@ -232,11 +232,21 @@ class search implements renderable{
 
             $course->selfenrol = $this->get_enrollbutton($enroll, $course);
 
+            $course->rating_element = '';
+            $course->avgrating = 0;
+            $course->ratedusers = 0;
+            $course->likes = 0;
+            $course->dislikes = 0;
             if(class_exists('local_ratings\output\renderer')){
                 $rating_render = $PAGE->get_renderer('local_ratings');
-                $course->rating_element = $rating_render->render_ratings_data('local_courses',$course->id, null,14);
-            }else{
-                $course->rating_element = '';
+                $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_courses'));
+                if($ratinginfo){
+                    $course->avgrating = $ratinginfo->module_rating;
+                    $course->ratedusers = $ratinginfo->module_rating_users;
+                    $course->likes = $ratinginfo->module_like;
+                    $course->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+                    $course->rating_element = $rating_render->render_ratings_data('local_classroom', $list->id ,$ratinginfo->module_rating, 14);
+                }
             }
 
             $dur_min_sql = "SELECT cd.charvalue
@@ -292,6 +302,7 @@ class search implements renderable{
             }
 
             $course->type = elearning;
+            $course->module = 'Course';
             $coursecontext = context_course::instance($course->id);
 
             if(isset($course->open_learningformat)){

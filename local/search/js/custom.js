@@ -27,14 +27,14 @@ myModule.controller('courseController', function ($scope, $http,$location) {
         checkedfilters = [];
         $scope.selectedfilters = [];
         $.each($(".filter_section .module_filter_params"), function(index, value){
-            filters = [];
-            filtername = $(value).data('filtertype');
+            values = [];
+            type = $(value).data('filtertype');
             checkedfilters = $(value).find("input[type='checkbox']:checked");
             $.each(checkedfilters, function( filterindex, filtervalue ) {
-                filters.push($(filtervalue).val());
+                values.push($(filtervalue).val());
             });
             if(!$.isEmptyObject(filters))
-                $scope.selectedfilters.push({filtername, filters});;
+                $scope.selectedfilters.push({type, values});;
         });
         // $.each(checkedfilters, function( index, value ) {
         //     $scope.selectedfilters.push($(value).val());
