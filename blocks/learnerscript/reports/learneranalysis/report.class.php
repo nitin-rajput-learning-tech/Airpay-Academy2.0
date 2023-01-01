@@ -146,27 +146,27 @@ class report_learneranalysis extends reportbase implements report {
         //         $this->sql .= " AND cc.timecompleted IS NULL ";
         //     } else if($this->params['filter_status'] == 'overdue') {
         //         $this->sql .= " AND ue.completiondate !=0 AND ue.completiondate < UNIX_TIMESTAMP() AND ue.id NOT IN (SELECT DISTINCT ue.id 
-        //             FROM mdl_user_enrolments ue
-        //             JOIN mdl_enrol e ON e.id = ue.enrolid 
-        //             JOIN mdl_role_assignments ra ON ra.userid = ue.userid
-        //             JOIN mdl_context ct ON ct.id = ra.contextid
-        //             JOIN mdl_role rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
-        //             JOIN mdl_user u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
-        //             JOIN mdl_course_completions as cc ON cc.course = ct.instanceid AND cc.timecompleted > 0 AND cc.userid = ue.userid 
-        //             JOIN mdl_course c ON c.id = e.courseid AND c.id = ct.instanceid 
-        //             JOIN mdl_local_courses_learningformat clf ON clf.id = c.open_learningformat AND clf.name = 'Online Course'
+        //             FROM {user_enrolments} ue
+        //             JOIN {enrol} e ON e.id = ue.enrolid 
+        //             JOIN {role_assignments} ra ON ra.userid = ue.userid
+        //             JOIN {context} ct ON ct.id = ra.contextid
+        //             JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
+        //             JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
+        //             JOIN {course_completions} as cc ON cc.course = ct.instanceid AND cc.timecompleted > 0 AND cc.userid = ue.userid 
+        //             JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
+        //             JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat AND clf.name = 'Online Course'
         //             WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') $subqueryfilter ) ";               
         //     } else if($this->params['filter_status'] == 'upcoming') {
         //         $this->sql .= " AND ue.completiondate !=0 AND ue.completiondate > UNIX_TIMESTAMP() AND ue.id NOT IN (SELECT DISTINCT ue.id 
-        //             FROM mdl_user_enrolments ue
-        //             JOIN mdl_enrol e ON e.id = ue.enrolid 
-        //             JOIN mdl_role_assignments ra ON ra.userid = ue.userid
-        //             JOIN mdl_context ct ON ct.id = ra.contextid
-        //             JOIN mdl_role rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
-        //             JOIN mdl_user u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
-        //             JOIN mdl_course_completions as cc ON cc.course = ct.instanceid AND cc.timecompleted > 0 AND cc.userid = ue.userid 
-        //             JOIN mdl_course c ON c.id = e.courseid AND c.id = ct.instanceid 
-        //             JOIN mdl_local_courses_learningformat clf ON clf.id = c.open_learningformat AND clf.name = 'Online Course'
+        //             FROM {user_enrolments} ue
+        //             JOIN {enrol} e ON e.id = ue.enrolid 
+        //             JOIN {role_assignments} ra ON ra.userid = ue.userid
+        //             JOIN {context} ct ON ct.id = ra.contextid
+        //             JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
+        //             JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
+        //             JOIN {course_completions} as cc ON cc.course = ct.instanceid AND cc.timecompleted > 0 AND cc.userid = ue.userid 
+        //             JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
+        //             JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat AND clf.name = 'Online Course'
         //             WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') $subqueryfilter ) ";
         //     }
 

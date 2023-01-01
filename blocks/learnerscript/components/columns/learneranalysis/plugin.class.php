@@ -132,14 +132,14 @@ class plugin_learneranalysis extends pluginbase{
              	$learningformat = $DB->get_field_sql($data->subquery);
          	}else{
             $sql = "SELECT count(ue.id) 
-              FROM mdl_user_enrolments ue
-              JOIN mdl_enrol e ON e.id = ue.enrolid 
-              JOIN mdl_role_assignments ra ON ra.userid = ue.userid
-              JOIN mdl_context ct ON ct.id = ra.contextid
-              JOIN mdl_role rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
-              JOIN mdl_user u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
-              JOIN mdl_course c ON c.id = e.courseid AND c.id = ct.instanceid 
-              JOIN mdl_local_courses_learningformat clf ON clf.id = c.open_learningformat AND clf.name IN ('Online Course', 'Assessment', 'Lab','Webinar')
+              FROM {user_enrolments} ue
+              JOIN {enrol} e ON e.id = ue.enrolid 
+              JOIN {role_assignments} ra ON ra.userid = ue.userid
+              JOIN {context} ct ON ct.id = ra.contextid
+              JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
+              JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
+              JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
+              JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat AND clf.name IN ('Online Course', 'Assessment', 'Lab','Webinar')
               WHERE 1 = 1 AND u.id = $row->id AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') {$costcenter} {$dept} {$subdept} ";
             $learningformat = $DB->get_field_sql($sql);
          	}

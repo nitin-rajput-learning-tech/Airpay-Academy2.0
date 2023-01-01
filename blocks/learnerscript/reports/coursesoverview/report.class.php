@@ -90,7 +90,8 @@ class report_coursesoverview extends reportbase implements report {
 
         $this->params['siteid'] = SITEID;
 
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         // getscheduled report
         if (!is_siteadmin()) {
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
@@ -102,20 +103,10 @@ class report_coursesoverview extends reportbase implements report {
                 $ohs = $dh=1;
             }
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $this->sql .= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-            $this->sql .= " AND c.open_costcenterid = :costcenterid ";
-            $this->params['costcenterid'] = $USER->open_costcenterid;
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-             $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
-            $this->params['costcenterid'] = $USER->open_costcenterid;
-            $this->params['departmentid'] = $USER->open_departmentid;
-        }else{
-            $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND c.open_subdepartment =: subdepartmentid";
-            $this->params['costcenterid'] = $USER->open_costcenterid;
-            $this->params['departmentid'] = $USER->open_departmentid;
-             $this->params['subdepartmentid'] = $USER->open_subdepartment;
+        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+            $this->sql .= "";
+        } else  {
+            $this->sql .= $costcenterpathconcatsql;
         }
 
         parent::where();

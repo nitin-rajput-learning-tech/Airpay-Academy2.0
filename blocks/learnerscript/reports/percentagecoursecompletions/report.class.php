@@ -121,10 +121,10 @@ class report_percentagecoursecompletions extends reportbase implements report {
   public function get_rows($course) {
     global $DB;
     $finalelements = array();
-    $sql .= " select ue.id, c.id as courseid, c.fullname, ue.userid FROM mdl_course c
-    JOIN mdl_enrol e ON e.courseid = c.id 
-    JOIN mdl_user_enrolments ue ON ue.enrolid = e.id
-    JOIN mdl_user u ON u.id = ue.userid
+    $sql .= " select ue.id, c.id as courseid, c.fullname, ue.userid FROM {course} c
+    JOIN {enrol} e ON e.courseid = c.id 
+    JOIN {user_enrolments} ue ON ue.enrolid = e.id
+    JOIN {user} u ON u.id = ue.userid
     where c.id = ?  AND u.deleted = 0  group by ue.userid ";
     $courseusers = $DB->get_records_sql($sql, [$this->params['filter_course']]);
     if($courseusers){

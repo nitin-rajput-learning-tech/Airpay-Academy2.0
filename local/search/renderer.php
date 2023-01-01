@@ -220,8 +220,8 @@ class local_search_renderer extends plugin_renderer_base {
 		if(file_exists($CFG->dirroot .'/local/includes.php')){
 			require_once($CFG->dirroot .'/local/includes.php');
 			$includes = new user_course_details;
+			$url = $includes->course_summary_files($course);
 		}
-		$url = $includes->course_summary_files($course);
 
 		$course_summary = strip_tags(html_entity_decode(clean_text($course->summary)),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
 		if(!empty($course_summary)){

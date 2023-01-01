@@ -1492,7 +1492,7 @@ class ls {
 		$crontime = $task->get_last_run_time();
 
     	$moduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-    	$quizdetails = $DB->get_records_sql("SELECT DISTINCT qa.id, qa.userid, SUM(qa.timefinish - qa.timestart) AS time, qa.quiz, q.course AS courseid FROM mdl_user u JOIN mdl_quiz_attempts qa ON qa.userid = u.id JOIN mdl_user_enrolments ue ON ue.userid = u.id AND ue.status = 0 JOIN mdl_enrol e ON e.id = ue.enrolid AND e.status = 0 JOIN mdl_quiz q ON q.id = qa.quiz WHERE qa.preview = 0 AND q.course = e.courseid AND qa.state = 'finished' AND qa.timemodified > $crontime AND qa.userid > 2 GROUP BY u.id, qa.quiz, q.course");
+    	$quizdetails = $DB->get_records_sql("SELECT DISTINCT qa.id, qa.userid, SUM(qa.timefinish - qa.timestart) AS time, qa.quiz, q.course AS courseid FROM {user} u JOIN {quiz_attempts} qa ON qa.userid = u.id JOIN {user_enrolments} ue ON ue.userid = u.id AND ue.status = 0 JOIN {enrol} e ON e.id = ue.enrolid AND e.status = 0 JOIN {quiz} q ON q.id = qa.quiz WHERE qa.preview = 0 AND q.course = e.courseid AND qa.state = 'finished' AND qa.timemodified > $crontime AND qa.userid > 2 GROUP BY u.id, qa.quiz, q.course");
 	    if (empty($quizdetails)) {
 	    	return true;
 	    }

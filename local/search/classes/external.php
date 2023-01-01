@@ -28,28 +28,71 @@ require_once($CFG->dirroot.'/local/search/lib.php');
 class local_search_external extends external_api {
     public static function get_available_modules_parameters(){
         return new external_function_parameters([
-            'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
-            'filter' => new external_multiple_structure(
+            'page' => new external_value(PARAM_INT, 'The page number for the modules'),
+            'filters' => new external_multiple_structure(
                 new external_single_structure([
-                    'name' => new external_value(PARAM_TEXT, 'The filter name'),
-                    'value' => new external_value(PARAM_TEXT, 'The filter value')
+                    "type" => new external_value(PARAM_TEXT, 'The context id for the course', 'Filter type', VALUE_OPTIONAL),
+                    "values" => new external_multiple_structure(
+                         new external_value(PARAM_TEXT, 'The filter value'), 'Filter options', VALUE_OPTIONAL
+                    )
+                ], 'Filters',VALUE_OPTIONAL) ,'Filters' ,VALUE_OPTIONAL
+            ),
+            'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
+            'pagelimit' => new external_value(PARAM_INT, 'Page length for the modules', VALUE_OPTIONAL, 15),
+            'query' => new external_value(PARAM_RAW, 'Search criteria for the modules', VALUE_OPTIONAL)
+        ]);
+    }
+    public static function get_available_modules($page, $filters = [], $contextid = SYSCONTEXTID, $pagelimit = 15, $query = ''){
+        global $CFG, $DB;
+        $params = self::validate_parameters(self::get_available_modules_parameters(),
+                                            ['page' => $page, 'filters' => $filters, 'contextid' => $contextid, 'pagelimit' => $pagelimit, 'query' => $query]);
+        $context = context::instance_by_id($params['contextid'], MUST_EXIST);
+        // We always must call validate_context in a webservice.
+        self::validate_context($context);
+        \local_search\output\searchlib::$page = $page;
+        \local_search\output\searchlib::$search = $search;
+        if(file_exists($CFG->dirroot . '/local/includes.php')){
+            require_once($CFG->dirroot . '/local/includes.php');
+            $includes = new user_course_details();
+            \local_search\output\searchlib::$includesobj = $includes;
+        }
+        \local_search\output\searchlib::$skills = $DB->get_records_menu('local_skill', null, '', 'id, name');
+        \local_search\output\searchlib::$levels = $DB->get_records_menu('local_course_levels', null, '', 'id, name');
+
+        $pages = new \local_search\output\allcourses();
+        $data = $pages->main_toget_catalogtypes($pagelimit, $filters);
+        $totalrecords = $data['numberofrecords'];
+        unset($data['numberofrecords']);
+        return ['modules' => $data, 'count' => $totalrecords];
+    }
+    public static function get_available_modules_returns(){
+        return new external_single_structure([
+            "count" => new external_value(PARAM_INT, 'Count of modules'),
+            "modules" => new external_multiple_structure(
+                new external_single_structure([
+                    'id' => new external_value(PARAM_INT, 'Module ID'),
+                    'module' => new external_value(PARAM_TEXT, 'module'),
+                    'avgrating' => new external_value(PARAM_FLOAT, 'Average Ratings', VALUE_OPTIONAL),
+                    'ratedusers' => new external_value(PARAM_INT, 'Rated Users', VALUE_OPTIONAL),
+                    'likes' => new external_value(PARAM_INT, 'liked Users', VALUE_OPTIONAL, 0),
+                    'dislikes' => new external_value(PARAM_INT, 'Disliked Users', VALUE_OPTIONAL, 0),
+                    'isenrolled' => new external_value(PARAM_BOOL, 'User enrollment to module', VALUE_OPTIONAL, FALSE),
+                    'enrolmethods' => new external_multiple_structure(
+                        new external_value(PARAM_TEXT, 'Module custom enrollment method', VALUE_OPTIONAL), //Self, Request
+                            'Enrollment methods info', VALUE_OPTIONAL
+                    ),
+                    'fullname' => new external_value(PARAM_TEXT, 'Category Code'),
+                    'shortname' => new external_value(PARAM_TEXT, 'Tag Category Name'),
+                    'bannerimage' => new external_value(PARAM_URL, 'Banner image'),
+                    'summary' => new external_value(PARAM_RAW, 'Summary Information'),
+                    'skill' => new external_value(PARAM_TEXT, 'SKill Information'),
+                    'level' => new external_value(PARAM_TEXT, 'level Information'),
+                    'startdate' => new external_value(PARAM_INT, 'Startdate Information'),
+                    'enddate' => new external_value(PARAM_INT, 'Endddate Information'),
                 ])
             )
         ]);
     }
-    public static function get_available_modules($contextid, $filters){
-        $params = self::validate_parameters(self::get_available_modules_parameters(),
-                                            ['contextid' => $contextid, 'filter' => $filter]);
-        $context = context::instance_by_id($params['contextid'], MUST_EXIST);
-        // We always must call validate_context in a webservice.
-        self::validate_context($context);
-        $selectedfilter = array_map(function(){}, $filters);
-        // foreach($filters AS $filter){
-        //     $selectedfilter
-        // }
-
-    }
-    public static function get_available_modules_returns(){}
 
 
     public static function get_filter_elements_parameters(){
@@ -76,14 +119,13 @@ class local_search_external extends external_api {
     public static function get_filter_elements_returns(){
         return new external_multiple_structure(
             new external_single_structure([
-                'catcode' => new external_value(PARAM_TEXT, 'Category Code'),
-                'tagcatname' => new external_value(PARAM_TEXT, 'Tag Category Name'),
-                'itemslist' => new external_multiple_structure(
+                'type' => new external_value(PARAM_TEXT, 'Category Code'),
+                'name' => new external_value(PARAM_TEXT, 'Tag Category Name'),
+                'options' => new external_multiple_structure(
                     new external_single_structure([
-                        'tagitemid' => new external_value(PARAM_TEXT, 'Tag Item Id'),
-                        'tagitemname' => new external_value(PARAM_TEXT, 'Tag Item name'),
-                        'tagitemname' => new external_value(PARAM_TEXT, 'Tag Item shortname'),
-                        'coursecount' => new external_value(PARAM_INT, 'Count of modules')
+                        'code' => new external_value(PARAM_TEXT, 'Tag Item Id'),
+                        'name' => new external_value(PARAM_TEXT, 'Tag Item name'),
+                        'count' => new external_value(PARAM_INT, 'Count of modules')
                     ])
                 )
             ])

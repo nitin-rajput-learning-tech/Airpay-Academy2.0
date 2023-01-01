@@ -99,10 +99,10 @@ class plugin_programanalysis extends pluginbase {
         } 
 
         $enrol = $DB->get_field_sql("SELECT COUNT(lpu.id)
-            FROM mdl_local_program_users as lpu
+            FROM {local_program_users} as lpu
             WHERE lpu.programid = $row->id ");
         $completed = $DB->get_field_sql("SELECT COUNT(lpu.id)
-            FROM mdl_local_program_users lpu
+            FROM {local_program_users} lpu
             WHERE 1 AND lpu.completion_status != 0 AND lpu.completiondate != 0 AND lpu.programid = $row->id ");
         switch ($data->column) {
             case 'enrolments':

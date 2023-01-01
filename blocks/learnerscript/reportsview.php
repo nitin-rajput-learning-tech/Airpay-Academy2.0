@@ -68,6 +68,66 @@ $report_details=$ls->get_categories_from_reports();
         foreach ($report_details as $r) {
             $report_results=$ls->get_reportdetails_categorywise($r->category);
 
+                switch ($r->category) {
+                    case "course":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'courses'); 
+                        if($plugin_exists){
+                            $data['course_exist'] = true;
+                        }
+                        break;
+
+                    case "user":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'users'); 
+                        if($plugin_exists){
+                            $data['users_exist'] = true;
+                        }
+                        break;
+
+                    case "local_classroom":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'classroom'); 
+                        if($plugin_exists){
+                            $data['classroom_exist'] = true;
+                        }
+                        break;
+
+                    case "local_certification":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'certification'); 
+                        if($plugin_exists){
+                            $data['certification_exist'] = true;
+                        }
+                        break;
+
+                    case "local_program":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'program'); 
+                        if($plugin_exists){
+                            $data['program_exist'] = true;
+                        }
+                        break;
+
+                    case "local_onlinetests":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'onlinetests'); 
+                        if($plugin_exists){
+                            $data['onlinetests_exist'] = true;
+                        }
+                        break;
+
+                    case "local_learningplan":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'learningplan'); 
+                        if($plugin_exists){
+                            $data['learningplan_exist'] = true;
+                        }
+                        break;
+
+                    case "local_evaluations":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'evaluation'); 
+                        if($plugin_exists){
+                            $data['evaluation_exist'] = true;
+                        }
+                        break;
+
+                    default:
+                        $category_name = '';
+                }
            
             $alllist=array();
             foreach ($report_results as $results) {

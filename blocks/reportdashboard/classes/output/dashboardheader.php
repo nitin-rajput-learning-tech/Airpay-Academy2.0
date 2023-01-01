@@ -53,6 +53,7 @@ class dashboardheader implements renderable, templatable {
         $data = array();
         $systemcontext = context_system::instance(); 
         $userroleid = isset($USER->access['rsw']['/1']) ? $USER->access['rsw']['/1'] : 0; 
+        $user_costcenterid = explode('/', $USER->open_path)[1];
         $userrole = $DB->get_field_sql("SELECT shortname FROM {role} WHERE id = $userroleid");
         if (!empty($_SESSION['role'])) {
             $data['currentrole'] = $_SESSION['role'];
@@ -68,7 +69,7 @@ class dashboardheader implements renderable, templatable {
                 END AS name
                 FROM {role} r
                 JOIN {role_context_levels} rcl ON rcl.roleid = r.id 
-                WHERE rcl.contextlevel = 10";
+                WHERE rcl.contextlevel IN (10,40)";
 
         $roles = $DB->get_records_sql_menu($sql);
         $emproleid = $DB->get_field('role','id',array('shortname'=>'user'));
@@ -189,7 +190,7 @@ class dashboardheader implements renderable, templatable {
         } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $_SESSION['role'] == 'oh') { 
             $costcentersql = " SELECT lc.id, lc.fullname 
                     FROM {local_costcenter} lc 
-                    WHERE lc.id = $USER->open_costcenterid
+                    WHERE lc.id = $user_costcenterid
                     AND lc.depth = 1 AND lc.visible = 1
                     ORDER BY lc.id ASC "; 
             $costcenters = $DB->get_records_sql($costcentersql); 
@@ -228,7 +229,7 @@ class dashboardheader implements renderable, templatable {
         } else if ((!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $_SESSION['role'] == 'dh')) {
             $costcentersql = " SELECT lc.id, lc.fullname 
                     FROM {local_costcenter} lc 
-                    WHERE lc.id = $USER->open_costcenterid
+                    WHERE lc.id = $user_costcenterid
                     AND lc.depth = 1 AND lc.visible = 1
                     ORDER BY lc.id ASC "; 
             $costcenters = $DB->get_records_sql($costcentersql); 
@@ -250,7 +251,7 @@ class dashboardheader implements renderable, templatable {
         } else {
             $costcentersql = " SELECT lc.id, lc.fullname 
                     FROM {local_costcenter} lc 
-                    WHERE lc.id = $USER->open_costcenterid
+                    WHERE lc.id = $user_costcenterid
                     AND lc.depth = 1 AND lc.visible = 1
                     ORDER BY lc.id ASC "; 
             $costcenters = $DB->get_records_sql($costcentersql); 
@@ -457,7 +458,7 @@ class dashboardheader implements renderable, templatable {
                     }
                 } 
             } else { 
-                $depcourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c WHERE c.visible = 1 AND c.open_costcenterid = $USER->open_costcenterid AND c.open_departmentid = $USER->open_departmentid"); 
+                $depcourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c WHERE c.visible = 1 AND c.open_costcenterid = $user_costcenterid AND c.open_departmentid = $USER->open_departmentid"); 
                 $learnercourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c 
                     JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
                   JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
@@ -467,7 +468,7 @@ class dashboardheader implements renderable, templatable {
                   JOIN {user} AS u ON u.id = ue.userid 
                   JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid 
                   AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1 
-                  WHERE u.open_costcenterid = $USER->open_costcenterid AND u.open_departmentid = $USER->open_departmentid"); 
+                  WHERE u.open_costcenterid = $user_costcenterid AND u.open_departmentid = $USER->open_departmentid"); 
                 if (empty($learnercourseslist) && !empty($depcourseslist)) {
                     $totalcourses = $depcourseslist; 
                 } else if (!empty($learnercourseslist) && empty($depcourseslist)) {
@@ -500,11 +501,11 @@ class dashboardheader implements renderable, templatable {
                 $costcenter = $DB->get_record_sql("SELECT id FROM {local_costcenter} WHERE 1=1 AND depth = 1");
                 $sql .= " AND lcc.costcenter IN (".$costcenter->id.",0) AND lco.costcenterid = " . $costcenter->id;
             } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $_SESSION['role'] == 'oh') {  
-                $sql .= " AND lcc.costcenter IN (". $USER->open_costcenterid.", 0) AND lco.costcenterid = " . $USER->open_costcenterid;
+                $sql .= " AND lcc.costcenter IN (". $user_costcenterid.", 0) AND lco.costcenterid = " . $user_costcenterid;
             }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $_SESSION['role'] == 'dh'){ 
-                $sql .= " AND lcc.costcenter IN (". $USER->open_costcenterid .", 0) AND lcc.department IN (". $USER->open_departmentid.", -1) AND lco.costcenterid = " . $USER->open_costcenterid ; 
+                $sql .= " AND lcc.costcenter IN (". $user_costcenterid .", 0) AND lcc.department IN (". $USER->open_departmentid.", -1) AND lco.costcenterid = " . $user_costcenterid ; 
             }else {
-                $sql .= " AND lcc.costcenter IN (". $USER->open_costcenterid .", 0) AND lcc.department IN (". $USER->open_departmentid.", -1) AND lcc.subdepartment IN (". $USER->open_subdepartment .", -1) AND lco.costcenterid = " . $USER->open_costcenterid;
+                $sql .= " AND lcc.costcenter IN (". $user_costcenterid .", 0) AND lcc.department IN (". $USER->open_departmentid.", -1) AND lcc.subdepartment IN (". $USER->open_subdepartment .", -1) AND lco.costcenterid = " . $user_costcenterid;
                 
             }
             

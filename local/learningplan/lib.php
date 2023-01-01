@@ -567,7 +567,7 @@ function local_learningplan_search_page_filter_element(&$filterelements){
     global $CFG;
     if(file_exists($CFG->dirroot.'/local/search/lib.php')){
         require_once($CFG->dirroot.'/local/search/lib.php');
-        $filterelements['learningpath'] = ['tagitemid' => 'moduletype_learningplan', 'tagitemname' => 'LP', 'tagitemshortname' => 'learningplan', 'coursecount' => local_search_get_coursecount_for_modules(['moduletype_learningplan'])];
+        $filterelements['learningpath'] = ['code' => 'learningplan', 'name' => 'LP', 'tagitemshortname' => 'learningplan', 'count' => local_search_get_coursecount_for_modules([['filtername' => 'moduletype', 'filters' => ['learningplan']]])];
     }
 }
 function local_learningplan_enabled_search(){

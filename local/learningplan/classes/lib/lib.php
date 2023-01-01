@@ -132,11 +132,17 @@ class lib
 		global $DB, $USER;
 			$orgpath = explode('/', $USER->open_path);
 
-		if (!is_siteadmin()) {
-			$siteadmin_sql = " AND u.suspended =0
-								 AND u.deleted =0  AND concat('/',u.open_path,'/') LIKE concat('%/',$orgpath[1],'/%')";
-		} else {
-			$siteadmin_sql = "";
+		// if (!is_siteadmin()) {
+		// 	$siteadmin_sql = " AND u.suspended =0
+		// 						 AND u.deleted =0  AND concat('/',u.open_path,'/') LIKE concat('%/',$orgpath[1],'/%')";
+		// } else {
+		// 	$siteadmin_sql = "";
+		// }
+		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
+		if (is_siteadmin()) {
+			$siteadmin_sql .= "";
+		} else  {
+			$siteadmin_sql .= " AND u.suspended = 0 AND u.deleted = 0 ".$costcenterpathconcatsql;
 		}
 
 		$plan_info = $DB->get_record('local_learningplan', array('id' => $planid));
@@ -189,11 +195,18 @@ class lib
 	{
 		global $DB, $USER;
 			$orgpath = explode('/', $USER->open_path);
-		if (!is_siteadmin()) {
-			$siteadmin_sql = " AND u.suspended =0
-							AND u.deleted =0  AND concat('/',u.open_path,'/') LIKE concat('%/',$orgpath[1],'/%')";
-		} else {
-			$siteadmin_sql = "";
+		// if (!is_siteadmin()) {
+		// 	$siteadmin_sql = " AND u.suspended =0
+		// 					AND u.deleted =0  AND concat('/',u.open_path,'/') LIKE concat('%/',$orgpath[1],'/%')";
+		// } else {
+		// 	$siteadmin_sql = "";
+		// }
+
+		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
+		if (is_siteadmin()) {
+			$siteadmin_sql .= "";
+		} else  {
+			$siteadmin_sql .= " AND u.suspended = 0 AND u.deleted = 0 ".$costcenterpathconcatsql;
 		}
 		$plan_info = $DB->get_record('local_learningplan', array('id' => $planid));
 
