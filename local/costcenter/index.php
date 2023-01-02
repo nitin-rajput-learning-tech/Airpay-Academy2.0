@@ -47,11 +47,14 @@ if(!has_capability('local/costcenter:view', $categorycontext)) {
 
 
 if (!((is_siteadmin()) || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))) {
-	if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-    	redirect($CFG->wwwroot . '/local/costcenter/costcenterview.php?id='.$USER->open_costcenterid);
-	}else{
-		redirect($CFG->wwwroot . '/local/costcenter/costcenterview.php?id='.$USER->open_departmentid);
-	}
+
+        $costcenterpath=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
+
+        $sql = "SELECT cc.id FROM {local_costcenter} AS cc WHERE cc.path like '$costcenterpath' ";
+
+        $costcenterid = $DB->get_field_sql($sql);
+
+    	redirect($CFG->wwwroot . '/local/costcenter/costcenterview.php?id='.$costcenterid);
 }
 
 $PAGE->set_pagelayout('standard');

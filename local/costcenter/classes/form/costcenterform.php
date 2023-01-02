@@ -56,12 +56,14 @@ class costcenterform extends moodleform { /*costcenter creation form*/
                             WHERE parentid = :parentid";
                 $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
 
-                // $departments = array(null =>'Select');          
-                // $parents = $departments + $parents;      
+
             }else{
                 $sql = "SELECT id,fullname 
                         FROM {local_costcenter} WHERE id = ? ";
-                $parents = $DB->get_records_sql_menu($sql, [$USER->open_costcenterid]);
+
+                $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+
+                $parents = $DB->get_records_sql_menu($sql, [$costcenterid]);
             }
             $mform->addElement('select', 'parentid', get_string('organisation','local_costcenter'), $parents);
             $mform->setType('parentid', PARAM_INT);
@@ -71,50 +73,6 @@ class costcenterform extends moodleform { /*costcenter creation form*/
             $mform->addElement('hidden', 'parentid', 0);
             $mform->setType('parentid', PARAM_INT);
         }
-
-        
-        // if($subdept){
-        //     $depsql = "SELECT lc.id,lc.fullname FROM {local_costcenter} as lc WHERE parentid = :parentid";
-        //     $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
-        //     $departments = array(null =>'Select');
-        //     // $departments[null] = get_string('select');
-        //     // foreach($depts as $dept){
-        //     //     $departments[$dept->id] =$dept->fullname;
-        //     //     // $subsql = "SELECT lc.id,lc.fullname FROM {local_costcenter} as lc WHERE parentid = :parentid ";
-        //     //     // $subdepts =  $DB->get_records_sql_menu($subsql, ['parentid' => 0]);
-        //     // }            
-        //     $parents = $departments+$parents;            
-        // } elseif($depts){
-        //     $sql = "SELECT id,fullname FROM {local_costcenter} WHERE id=?";
-        //     $sqlrec = $DB->get_record_sql($sql, [$USER->open_costcenterid]);
-        //     $parents = $sqlrec;           
-        // } else{
-        //     // $items = $costcenter->get_costcenter_items(true);
-        //     // $parents = $costcenter->get_costcenter_parent($items, $costcenters->id);
-        //     // $parents = array_filter($parents);
-        //     $departments = array(null =>'Select');
-        //     $depsql = "SELECT lc.id,lc.fullname FROM {local_costcenter} as lc WHERE parentid = :parentid";
-        //     $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
-        //     $parents = $departments+$parents; 
-        // }
-
-        // if (count($parents) <= 1) {
-        //     $mform->addElement('hidden', 'parentid', $parents->id);
-        //     $mform->setType('parentid', PARAM_RAW);
-        // } else {
-        //     $mform->addElement('select', 'parentid', get_string('parent', 'local_costcenter'), $parents);
-        //     $mform->setType('parentid', PARAM_RAW);
-        // }
-        // // issue num OL29
-        // if($id && isset($parentid)){
-        //     $mform->disabledIf('parentid', 'id');
-        // }
-        // end of OL29
-        // issue num OL-912
-        // if(!is_siteadmin() && $subdept){
-        //     $mform->addRule('parentid', get_string('parentcannotbeempty', 'local_costcenter'), 'required', null, 'client');
-        // }
-        // end of OL-912
         
         $mform->addElement('text', 'fullname', get_string('costcentername', 'local_costcenter'), array());
         $mform->setType('fullname', PARAM_TEXT);
@@ -130,8 +88,7 @@ class costcenterform extends moodleform { /*costcenter creation form*/
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
         
-        // $now = \local_costcenter\lib::get_userdate("d/m/Y H:i");
-        // $now = strtotime($now);
+
         $mform->addElement('hidden', 'timecreated', time());
         $mform->setType('timecreated', PARAM_INT);
         

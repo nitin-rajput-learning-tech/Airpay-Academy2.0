@@ -84,7 +84,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $subsubdepartmentsql .= $departmentsql;
                 $subsubsubdepartmentsql .= $departmentsql;
             }
-            elseif($USER->open_path){
+            else{
                 list($zero, $org, $ctr, $bu, $cu, $territory) = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
                 $subdepartmentsql .= " AND lc.id = $org ";
                 $subsubdepartmentsql .= $subdepartmentsql;

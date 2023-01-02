@@ -103,84 +103,7 @@ class userlibfunctions{
 	public function department_elements($mform, $id, $context, $mformajax, $plugin){
 	    global $DB, $USER;
 	    $existdata = $DB->get_record('local_'.$plugin, array('id' => $id)); 
-	    // $departmentslist = array(get_string('all'));
-	    // if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-	    //     $sql="select id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
-	    //     $costcenters = $DB->get_records_sql($sql);
-	    //     $organizationlist=array(null=>get_string('select_organization', 'local_evaluation'));
-	    //     foreach ($costcenters as $scl) {
-	    //         $organizationlist[$scl->id]=$scl->fullname;
-	    //     }
-	    //     $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), 
-	    //     	$organizationlist);
-	    //     $mform->addRule('costcenterid', null, 'required', null, 'client');
-	    //     $mform->setType('costcenterid', PARAM_RAW);
-	    // } elseif (has_capability('local/costcenter:manage_ownorganization',$context)){
-	    //     $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-	    //     $mform->addElement('hidden', 'costcenterid', null);
-	    //     $mform->setType('costcenterid', PARAM_RAW);
-	    //     $mform->setConstant('costcenterid', $user_dept);
-	    //     $sql="SELECT id,fullname from {local_costcenter} where visible =1 AND parentid = ?";
-	    //     $departmentslists = $DB->get_records_sql_menu($sql, [$user_dept]);
-	    //     if(isset($departmentslists)&&!empty($departmentslists))
-	    //     $departmentslist = $departmentslist+$departmentslists;
-	    // } elseif (has_capability('local/costcenter:manage_owndepartments',$context)){
-	    // 	$mform->addElement('hidden', 'costcenterid', null);
-	    //     $mform->setType('costcenterid', PARAM_RAW);
-	    //     $mform->setConstant('costcenterid', $USER->open_costcenterid);
-	        
-	    //     $mform->addElement('hidden', 'departmentid');
-	    //     $mform->setType('departmentid', PARAM_INT);
-	    //     $mform->setConstant('departmentid', $USER->open_departmentid);
-	    // } else {
-	    //     $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-	    //     $mform->addElement('hidden', 'costcenterid', null);
-	    //     $mform->setType('costcenterid', PARAM_RAW);
-	    //     $mform->setConstant('costcenterid', $USER->open_costcenterid);
-	        
-	    //     $mform->addElement('hidden', 'departmentid');
-	    //     $mform->setType('departmentid', PARAM_INT);
-	    //     $mform->setConstant('departmentid', $USER->open_departmentid);
 
-	    //     $mform->addElement('hidden', 'subdepartment');
-	    //     $mform->setType('subdepartment', PARAM_INT);
-	    //     $mform->setConstant('subdepartment', $USER->open_subdepartment);
-	    // }
-
-	    // if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context) ||
-     //            has_capability('local/costcenter:manage_ownorganization',$context)) {
-     //        if($id > 0){
-     //            $open_costcenterid = $DB->get_field('local_'.$plugin.'','costcenterid',array('id'=>$id));
-     //        } else{
-     //            $open_costcenterid = $mformajax['costcenterid'];
-     //        }
-
-     //        if(!empty($open_costcenterid)){
-     //            $departments = self::find_departments_list($open_costcenterid);
-     //            foreach($departments as $depart){
-     //                $departmentslist[$depart->id]=$depart->fullname;
-     //            }
-     //        } 
-     //        $departmentselect = $mform->addElement('autocomplete', 'departmentid', get_string('department'),$departmentslist);
-     //        $mform->setType('departmentid', PARAM_RAW);
-     //    }
-     //    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context) ||
-     //            has_capability('local/costcenter:manage_ownorganization',$context) || has_capability('local/costcenter:manage_owndepartments',$context)){
-     //    	if($id > 0){
-     //            $departmentid = $DB->get_field('local_'.$plugin.'','departmentid',array('id'=>$id));
-     //        } else{
-     //            $departmentid = $mformajax['departmentid'];
-     //        }
-     //        $sub_departmentslist[NULL] = 'All';
-     //        if(!empty($departmentid)){
-     //            $sub_departments = self::find_subdepartments_list($departmentid);
-     //            foreach($sub_departments as $subdepart){
-     //                $sub_departmentslist[$subdepart->id] = $subdepart->fullname;
-     //            }
-     //        } 
-     //        $departmentselect = $mform->addElement('autocomplete', 'subdepartment', get_string('subdepartment', 'local_costcenter'),$sub_departmentslist);
-     //        $mform->setType('subdepartment', PARAM_RAW);
-     //    }
         if($plugin == 'evaluations'){
             $pluginname = 'local_evaluation';
         }else{
@@ -215,33 +138,29 @@ class userlibfunctions{
 
                 $mform->addElement('hidden', 'costcenterid', null, array('id' => 'id_costcenterid', 'data-class' => 'organisationselect'));
                 $mform->setType('costcenterid', PARAM_INT);
-                $mform->setConstant('costcenterid', $USER->open_costcenterid);
+                $mform->setConstant('costcenterid', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1));
             
             } else if (has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
             
                 $mform->addElement('hidden', 'costcenterid', null, array('id' => 'id_costcenterid', 'data-class' => 'organisationselect'));
                 $mform->setType('costcenterid', PARAM_INT);
-                $mform->setConstant('costcenterid', $USER->open_costcenterid);
+                $mform->setConstant('costcenterid', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1));
 
                 $mform->addElement('hidden', 'departmentid', $USER->open_departmentid,array('id' => 'id_departmentid', 'data-class' => 'departmentselect'));
                 $mform->setType('departmentid', PARAM_INT);
-                $mform->setConstant('departmentid', $USER->open_departmentid);
+                $mform->setConstant('departmentid', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2));
 
             } else {
 
                 $mform->addElement('hidden', 'costcenterid', null, array('id' => 'id_costcenterid', 'data-class' => 'organisationselect'));
                 $mform->setType('costcenterid', PARAM_INT);
-                $mform->setConstant('costcenterid', $USER->open_costcenterid);
+                $mform->setConstant('costcenterid', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1));
 
-                $mform->addElement('hidden', 'departmentid', $USER->open_departmentid, array('id' => 'id_departmentid', 'data-class' => 'departmentselect'));
+                $mform->addElement('hidden', 'departmentid', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2), array('id' => 'id_departmentid', 'data-class' => 'departmentselect'));
                 $mform->setType('departmentid', PARAM_INT);
-                $mform->setConstant('departmentid', $USER->open_departmentid);
+                $mform->setConstant('departmentid', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2));
 
-                // if($USER->open_subdepartment){
-                //     $mform->addElement('hidden', 'subdepartment', null,array('id' => 'id_subdepartment'));
-                //     $mform->setType('subdepartment', PARAM_INT);
-                //     $mform->setConstant('subdepartment', $USER->open_subdepartment);
-                // }
+
             }
             if(is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
                 $department_select = [0 => get_string('selectdept','local_courses')];

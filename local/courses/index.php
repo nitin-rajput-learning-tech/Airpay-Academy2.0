@@ -123,14 +123,6 @@ if ($category && !has_any_capability($capabilities, $categorycontext)) {
 $renderer = $PAGE->get_renderer('local_courses');
 
 if($id == 0){
-    // if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
-    //     if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-    //         $catid = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_path));
-    //     }else{
-    //         $catid = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_departmentid));
-    //     }
-    //     redirect(new moodle_url('/local/custom_category/index.php', array('id' => $catid)));
-    // }
     $PAGE->navbar->add(get_string('leftmenu_browsecategories','local_courses'));
 }else{
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
