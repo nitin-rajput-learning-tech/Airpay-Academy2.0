@@ -8,11 +8,11 @@
             <FIELDS>
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
                 <FIELD NAME="category" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-                <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"  SEQUENCE="false"/>
                 <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="shortname" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
                 <FIELD NAME="description" TYPE="text"  NOTNULL="false" SEQUENCE="false"/>
+                <FIELD NAME="open_path" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="usermodified" TYPE="int" LENGTH="15" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
@@ -35,7 +35,8 @@
                 <FIELD NAME="parentid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
                 <FIELD NAME="sortorder" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
                 <FIELD NAME="depth" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>                
-                <FIELD NAME="path" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>                                
+                <FIELD NAME="path" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/> 
+                <FIELD NAME="open_path" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>                                
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>                
@@ -54,6 +55,7 @@
                 <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
                 <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="code" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+                <FIELD NAME="open_path" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
                 <FIELD NAME="usermodified" TYPE="int" LENGTH="15" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>

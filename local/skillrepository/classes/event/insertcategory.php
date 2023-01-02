@@ -29,7 +29,6 @@ class insertcategory{
 
     public function create_skill_category($data) {
         global $DB, $CFG, $USER;
-
         $data = (object)$data;
         $newskill_category = new stdClass();
 
@@ -45,12 +44,14 @@ class insertcategory{
         if($data->id > 0){
             $newskill_category->id = $data->id;
             $newskill_category->costcenterid = $costcenter;
+            $newskill_category->open_path = $data->open_path;
             $newskill_category->timemodified = time();
             $newskill_category->usermodified = $USER->id;
             $DB->update_record('local_skill_categories', $newskill_category);
             $perform = $newskill_category->id;
         }else{
             $newskill_category->costcenterid = $costcenter;
+            $newskill_category->open_path = $data->open_path;
             $newskill_category->timecreated = time();
             $newskill_category->usercreated = $USER->id;
             $perform = $DB->insert_record('local_skill_categories', $newskill_category);

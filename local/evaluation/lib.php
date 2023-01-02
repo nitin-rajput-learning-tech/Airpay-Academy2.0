@@ -288,7 +288,7 @@ function dep_sql($context) {
     global $DB, $USER;
     $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     if ( has_capability('local/costcenter:manage_multiorganizations', $context ) ) {
-        $sql = " $costcenterpathconcatsql ";
+        $sql = "$costcenterpathconcatsql ";
     }
     return $sql;
 }
@@ -632,7 +632,7 @@ function evaluation_create_template($courseid, $name, $ispublic = 0, $data) {
     if ($evaluation->instance == 0) {
         $templ->open_path = $evaluation->open_path;
     } else {
-        $templ->open_path = $USER->open_path;
+        $templ->open_path = (new \local_evaluation\lib\accesslib())::get_user_roleswitch_path();
     }
     $templid = $DB->insert_record('local_evaluation_template', $templ);
     return $DB->get_record('local_evaluation_template', array('id'=>$templid));
@@ -2556,7 +2556,7 @@ function costcenterwise_evaluation_count($costcenter, $department = false){
 function get_listof_evalautions($stable, $filtervalues){
     global $DB, $USER, $OUTPUT;
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $statustype=$stable->status;
     $data = array();
     $userarray = array();
@@ -2564,15 +2564,10 @@ function get_listof_evalautions($stable, $filtervalues){
     
     
     $filtervalues->organizations = (ltrim($filtervalues->organizations, ','));
-    // exit;
     $countsql = "SELECT count(a.id) ";
-    if (is_siteadmin()) {
+    if (is_siteadmin() || has_capability('local/evaluation:edititems',$context)) {
        $sql ="SELECT a.* ";
        $fromsql = " from {local_evaluations} a where a.id > 0 AND instance = 0 $costcenterpathconcatsql";
-    } else if ( has_capability('local/evaluation:edititems',$context) ) {
-       $deptsql = dep_sql($context);
-       $sql ="SELECT a.* ";
-       $fromsql =" FROM  {local_evaluations} a where a.id > 0 AND instance = 0 $deptsql ";
     } else { // check for users
        $sql ="SELECT a.*, eu.creatorid, eu.timemodified as joinedate ";
        $fromsql =" from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = :userid AND instance = 0 AND a.visible=1 AND a.evaluationmode LIKE 'SE' $costcenterpathconcatsql";
@@ -2611,7 +2606,6 @@ function get_listof_evalautions($stable, $filtervalues){
     $params = array_merge($userarray);
     $feedbackcount = $DB->count_records_sql($countsql.$fromsql, $params);
     $records = $DB->get_records_sql($sql.$fromsql.$ordersql, $params, $stable->start, $stable->length);
-
     foreach($records as $record) {
         $line = array();
         $localcontext = (new \local_evaluation\lib\accesslib())::get_module_context();

@@ -27,6 +27,7 @@ use context_system;
 require_once(dirname(__FILE__) . '/../../../../config.php');
 global $CFG;
 require_once("$CFG->libdir/formslib.php");
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
 class skill_repository_form extends moodleform {
 
@@ -39,30 +40,9 @@ class skill_repository_form extends moodleform {
         $mform->setType('id', PARAM_INT);
 
         $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
-        if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-            $options = array(
-                'ajax' => 'local_courses/form-options-selector',
-                'multiple' => false,
-                'data-action' => 'organizations',
-                'data-options' => json_encode(array('id' => 0)),
-                'placeholder' => get_string('organisations','local_costcenter')
-            );
-
-            $sql = "SELECT id, fullname from {local_costcenter} where visible =1 AND parentid = 0 ";
-            $costcenters = $DB->get_records_sql_menu($sql);
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), [null => get_string('selectorg', 'local_courses')]+$costcenters,$options);
-            $mform->addRule('costcenterid', get_string('pleaseselectorganization', 'local_courses'), 'required', null, 'client');
-            $mform->setType('costcenterid', PARAM_TEXT);
-        } else {
-            $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-            $mform->addElement('hidden', 'costcenterid', null, ['id' => 'id_costcenterid']);
-            $mform->setType('costcenterid', PARAM_INT);
-            $mform->setConstant('costcenterid', $user_dept);
-        }
-
+       local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1),false, 'local_skillrepository', $context, $multiple = false);
         $skillsoptions = array();
         $skillsoptions[null] = get_string('select');
-
         $category = $this->_ajaxformdata['category'];
         if (!empty($category)) {
             $category_sql = "SELECT sc.id, sc.name
@@ -76,14 +56,12 @@ class skill_repository_form extends moodleform {
                 WHERE ls.id  = :skillid  ";
             $categories = $DB->get_records_sql_menu($category_sql, ['skillid' => $id]);
         }
-
         $catoptions = array(
             'ajax' => 'local_skillrepository/form-repository-selector',
             'multiple' => false,
             'data-contextid' => $context->id,
             'data-includes' => 'all',
         );
-
         $mform->addElement('autocomplete', 'category', get_string('category', 'local_skillrepository'), $categories, $catoptions);
 
 

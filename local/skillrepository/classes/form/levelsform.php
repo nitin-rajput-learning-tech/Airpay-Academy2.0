@@ -27,31 +27,14 @@ use context_system;
 require_once(dirname(__FILE__) . '/../../../../config.php');
 global $CFG;
 require_once("$CFG->libdir/formslib.php");
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 class levelsform extends \moodleform {
     public function definition() {
         global $USER, $CFG, $DB, $PAGE;
         $mform = $this->_form;
         $id = $this->_customdata['id'];
         $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
-        if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$context)) {
-            $options = array(
-                'ajax' => 'local_courses/form-options-selector',
-                'multiple' => false,
-                'data-action' => 'organizations',
-                'data-options' => json_encode(array('id' => 0)),
-                'placeholder' => get_string('organisations','local_costcenter')
-            );
-            $sql="SELECT id,fullname from {local_costcenter} where visible =1 AND parentid = 0";
-            $costcenters = $DB->get_records_sql_menu($sql);
-            $mform->addElement('autocomplete', 'costcenterid', get_string('organization', 'local_users'), [null => get_string('selectorg', 'local_courses')]+$costcenters,$options);
-            $mform->addRule('costcenterid', get_string('pleaseselectorganization', 'local_courses'), 'required', null, 'client');
-            $mform->setType('costcenterid', PARAM_TEXT);
-        } else {
-            $user_dept = $DB->get_field('user','open_costcenterid', array('id'=>$USER->id));
-            $mform->addElement('hidden', 'costcenterid', null);
-            $mform->setType('costcenterid', PARAM_INT);
-            $mform->setConstant('costcenterid', $user_dept);
-        }
+     local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1),false, 'local_skillrepository', $context, $multiple = false);
         $mform->addElement('text',  'name',  get_string('levelname','local_skillrepository'));
         $mform->addRule('name', get_string('levelnamereq', 'local_skillrepository'), 'required', null, 'client');
         $mform->setType('name', PARAM_TEXT);

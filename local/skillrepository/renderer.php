@@ -177,7 +177,8 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
         if(!is_siteadmin()){
-            $skill_categories = $DB->get_records_sql("SELECT lsc.* from {local_skill_categories} AS lsc where lsc.costcenterid={$USER->open_costcenterid} order by lsc.id desc");
+            $costcenterid=explode('/',$USER->open_path)[1];
+            $skill_categories = $DB->get_records_sql("SELECT lsc.* from {local_skill_categories} AS lsc where lsc.open_path={$costcenterid} order by lsc.id desc");
             $head = [];
         } else{
             $skill_categories = $DB->get_records_sql("SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON lc.id = lsc.costcenterid order by lsc.id desc");

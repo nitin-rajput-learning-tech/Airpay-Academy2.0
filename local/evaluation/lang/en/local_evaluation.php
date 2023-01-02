@@ -551,3 +551,4 @@ $string['evaluationname'] = 'Name';
 $string['actions'] = 'Actions';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
+$string['target_audiance'] ='Target Audiance';

@@ -42,7 +42,7 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
             var contextid;
             var organisation;
             contextid = parseInt($(selector).data('contextid'), 10);
-            organisation = parseInt($('#id_costcenterid').val());
+            organisation = parseInt($('#id_open_costcenterid_select').val());
             if(isNaN(organisation)){
                 organisation = 0;
             }

@@ -70,7 +70,7 @@ if ($evaluation->plugin === "classroom"){
     }
     if ((has_capability('local/classroom:manageclassroom', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
     )) {
-            if($classroom->costcenter!=$USER->open_costcenterid){
+            if(explode('/',$classroom->open_path)[1] != (new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
 
@@ -82,7 +82,7 @@ if ($evaluation->plugin === "classroom"){
     }
     if ((has_capability('local/program:manageprogram', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
         )) {
-            if($program->costcenter!=$USER->open_costcenterid){
+            if(explode('/',$classroom->open_path)[1] != (new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
 
