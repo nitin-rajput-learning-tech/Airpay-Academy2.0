@@ -143,7 +143,6 @@ class general_lib{
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             WHERE ue.userid = {$USER->id}
             AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) ";
-            // AND course.open_path = {$USER->open_path}
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }

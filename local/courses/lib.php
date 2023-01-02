@@ -425,7 +425,8 @@ function categorylist($requiredcapability = '', $excludeid = 0, $separator = ' /
 
     // Now build the array of strings to return, mind $separator and $excludeid.
     $names = array();
-    $category = $DB->get_field('local_costcenter', 'category' ,array('id' => $USER->open_path));
+    $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
+    $category = $DB->get_field('local_costcenter', 'category' ,array('path' => $open_path));
     foreach ($thislist as $id) {
 
         $path = preg_split('|/|', $baselist[$id]['path'], -1, PREG_SPLIT_NO_EMPTY);
@@ -961,7 +962,10 @@ function categories_filter($mform){
     if(is_siteadmin()){
         $categorylist = $DB->get_records_sql_menu("SELECT id, name FROM {course_categories} ");
     } else {
-        $categories = $catslib->get_categories($USER->open_path);
+
+        $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
+
+        $categories = $catslib->get_categories($open_path);
         list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'param', true, false);
         $categorylist = $DB->get_records_sql_menu("SELECT cc.id, cc.name FROM {course_categories} AS cc WHERE cc.id 
             $categoriessql ", $categoriesparams);

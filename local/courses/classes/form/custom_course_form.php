@@ -110,7 +110,7 @@ class custom_course_form extends moodleform {
           $courseid = $id = $course->id;
         }
 
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",(new \local_courses\lib\accesslib())::get_user_roleswitch_path());
 
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
@@ -271,7 +271,8 @@ class custom_course_form extends moodleform {
                   }
                   $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter' => $costcenter),'name', 'id,name');
                 }else{
-                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_path),'name', 'id,name');
+                 $costcenter=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
+                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenter),'name', 'id,name');
 
                }
                 $certificateslist = $select + $cert_templates;

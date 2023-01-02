@@ -36,7 +36,9 @@ class catslib {
         global $DB, $USER;
 
         if (is_null($costcenter) || empty($costcenter)) {
-            $category = $DB->get_field('local_costcenter', 'category', array('path' => $USER->open_path));
+
+            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
+            $category = $DB->get_field('local_costcenter', 'category', array('path' => $open_path));
         } else {
             $category = $DB->get_field('local_costcenter', 'category', array('path' => $costcenter));
         }
