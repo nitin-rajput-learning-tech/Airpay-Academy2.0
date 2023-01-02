@@ -73,7 +73,7 @@ if(is_siteadmin()){
 }
 else {
     $depth=($categorycontext->depth-1);   
-    $costcenterid=explode('/',$USER->open_path)[$depth];          
+    $costcenterid= (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth);
     $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
     $organization_string = get_string('orgStructure','local_costcenter');
 }

@@ -25,7 +25,6 @@
 
 require_once('../../config.php');
 require_once($CFG->dirroot . '/local/courses/filters_form.php');
-
  $id        = optional_param('id', 0, PARAM_INT);
 $deleteid = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);

@@ -333,5 +333,43 @@ class accesslib
         return $context;
 
     }
+    public static function get_user_roleswitch_path($depth=0){
+
+        global $USER;
+
+        $costcenterpath = 0;
+
+        if($depth > 0){
+
+            $costcenterpath = array();
+
+        }
+
+        if(!empty($USER->access['currentroleinfo']['contextinfo'])){
+
+            $firstrole =current($USER->access['currentroleinfo']['contextinfo']);
+
+            $costcenterpath =$firstrole['costcenterpath'];
+
+            if($depth > 0){
+
+                $costcenterpatharray =array_filter(explode('/',$costcenterpath));
+
+                if(isset($costcenterpatharray[$depth])){
+
+                    $costcenterpath=$costcenterpatharray[$depth];
+
+                }else{
+
+                   return self::get_user_roleswitch_path($depth-1);
+
+                }
+
+            }
+
+        }
+
+        return $costcenterpath;
+    }
 
 }

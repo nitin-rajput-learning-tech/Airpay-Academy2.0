@@ -45,7 +45,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         } else if(has_capability('local/costcenter:view', $categorycontext)){
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid = 0 AND id = ? ORDER BY s.sortorder";
             //$depth=$categorycontext->depth;   
-            $costcenterid=explode('/',$USER->open_path)[1];   
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
             $costcenters = $DB->get_records_sql($sql, [$costcenterid]);
         }
 
@@ -231,7 +231,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $deptexistsql = "SELECT id FROM {local_costcenter} WHERE depth = 2 ";
         if(!(is_siteadmin())){
-            $costcenterid=explode('/',$USER->open_path)[2];   
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);;
             $deptexistsql .= "AND parentid={$costcenterid} ";
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
@@ -246,7 +246,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $deptexistth = "SELECT id FROM {local_costcenter} WHERE depth = 3 ";
         if(!(is_siteadmin())){
-            $costcenterid=explode('/',$USER->open_path)[3];   
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=3);;
             $deptexistth .= " AND parentid={$costcenterid} ";
         }
         $deptexistone = $DB->record_exists_sql($deptexistth);
@@ -262,7 +262,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $deptexistfo = "SELECT id FROM {local_costcenter} WHERE depth = 4 ";
         if(!(is_siteadmin())){
-            $costcenterid=explode('/',$USER->open_path)[4];   
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=4);;
             $deptexistfo .= " AND parentid={$costcenterid} ";
         }
         $deptexisttwo = $DB->record_exists_sql($deptexistfo);
