@@ -64,13 +64,15 @@ $is_enrolled = $DB->record_exists('local_learningplan_user',  array('planid' => 
 if(!($is_enrolled || is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
 
     $is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
-    if($is_Oh && explode('/', $learningplan->open_path)[1] != explode('/', $USER->open_path)[1]){
+    $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+    if($is_Oh && explode('/', $learningplan->open_path)[1] != $costcenterid){
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
     }
     
     if ((has_capability('local/costcenter:manage_owndepartments', $systemcontext))) {
             $learningplans = $DB->get_record('local_learningplan',array('id'=>$id),$fields = 'id');
-            if(!in_array(explode('/', $learningplan->open_path)[2],explode(',',explode('/', $USER->open_path)[2]))){
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
+            if(!in_array(explode('/', $learningplan->open_path)[2],explode(',',$costcenterid))){
                  redirect($CFG->wwwroot . '/local/learningplan/index.php');  
              }
     }

@@ -46,11 +46,13 @@ $learningplan = $DB->get_record('local_learningplan',array('id' => $planid));
 if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
     $is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
     $is_Dh = has_capability('local/costcenter:manage_owndepartments',$systemcontext);
-    if($is_Oh && explode('/', $learningplan->open_path)[1] != explode('/', $USER->open_path)[1]){
+    $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+    if($is_Oh && explode('/', $learningplan->open_path)[1] != $costcenterid){
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
     }
     $learningplans = $DB->get_record('local_learningplan',array('id'=>$planid),$fields = 'id');
-    if($is_Dh && (!in_array(explode(',',$learningplans->open_path)) != explode('/', $USER->open_path)[2])){
+    $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
+    if($is_Dh && (!in_array(explode(',',$learningplans->open_path)) != $costcenterid)){
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
     }
 }

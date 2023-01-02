@@ -130,7 +130,8 @@ class lib
 	public function get_enrollable_users_to_learningplan($planid)
 	{
 		global $DB, $USER;
-			$orgpath = explode('/', $USER->open_path);
+		$orgpath=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+			// $orgpath = explode('/', $USER->open_path);
 
 		// if (!is_siteadmin()) {
 		// 	$siteadmin_sql = " AND u.suspended =0
@@ -194,7 +195,8 @@ class lib
 	public function get_enrollable_users_count_to_learningplan($planid)
 	{
 		global $DB, $USER;
-			$orgpath = explode('/', $USER->open_path);
+		$orgpath=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+			// $orgpath = explode('/', $USER->open_path);
 		// if (!is_siteadmin()) {
 		// 	$siteadmin_sql = " AND u.suspended =0
 		// 					AND u.deleted =0  AND concat('/',u.open_path,'/') LIKE concat('%/',$orgpath[1],'/%')";

@@ -151,11 +151,11 @@ $out .= "</ul>";
 echo $out;
 
 if(is_siteadmin()){
-    $thisfilters = array('learningplan', 'organizations', 'departments', 'subdepartment', 'status');
+    $thisfilters = array('learningplan', 'organizations', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status');
 }else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-    $thisfilters = array('learningplan','departments', 'subdepartment', 'status');
+    $thisfilters = array('learningplan','departments', 'subdepartment', 'department4level','department5level', 'status');
 }else if(has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
-    $thisfilters = array('subdepartment', 'learningplan',  'status');
+    $thisfilters = array('subdepartment', 'department4level','department5level', 'learningplan',  'status');
 }else {
     $thisfilters = array('learningplan', 'status');
 }
