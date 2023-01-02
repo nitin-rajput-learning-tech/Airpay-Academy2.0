@@ -221,8 +221,8 @@ class search implements renderable{
 
             $list->fileurl =   $coursefileurl;
             $list->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
-            $list->intro=searchlib::format_thesummary($list->description);
-            $list->summary=searchlib::format_thesummary($list->description);
+            $list->intro = searchlib::format_thesummary($list->description);
+            $list->summary = searchlib::format_thesummary($list->description);
             //------------------Date-----------------------
             $startdate = searchlib::get_thedateformat($list->startdate);
             $enddate = searchlib::get_thedateformat($list->enddate);

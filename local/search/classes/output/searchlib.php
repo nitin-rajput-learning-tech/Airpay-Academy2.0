@@ -90,7 +90,7 @@ use core_component;
         if(!empty($summary)){
             $trimmedsummary =  strip_tags(html_entity_decode(clean_text($summary)));
         }else{
-            $trimmedsummary = '<p class="alert alert-info">'.get_string('descriptionisnotavailable','local_search').'</p>';
+            $trimmedsummary = null;
         }
         return $trimmedsummary;
     } // end of format_thesummary

@@ -23,11 +23,11 @@
 <span class="courseimg_strip">Strip</span>
 <div class="row mt-2 mb-2">
     <div class=" card-img-top courseimg_container col-md-4">
-        <a ng-if="record.enroll == 0" title="<% record.coursename %>">
-            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.coursename %>" class=courseimg_bg></div>
+        <a ng-if="record.enroll == 0" title="<% record.fullname %>">
+            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class=courseimg_bg></div>
         </a>
-        <a ng-if="record.enroll == 1" title="<% record.coursename %>">
-            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.coursename %>" class=courseimg_bg></div>
+        <a ng-if="record.enroll == 1" title="<% record.fullname %>">
+            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class=courseimg_bg></div>
         </a>
     </div>
     <div class=" card-body readyCCnt coursecontent col-md-8">
@@ -36,12 +36,12 @@
                 <span class="CstripCntLt" ng-if="record.open_learningformat==2 && record.open_status != 2 && record.open_status" >
                     <span class="elearning"><% record.statusstring %></span> 
                 </span>
-                <a ng-if="record.enroll == 0" class="d-block C_titile link text-decoration-none" title="<% record.coursename %>">
+                <a ng-if="record.enroll == 0" class="d-block C_titile link text-decoration-none" title="<% record.fullname %>">
                     <h4 class="course_name m-y-1 card-title course-title">
                         <% record.course_shortname %>
                     </h4>
                 </a>
-                <a ng-if="record.enroll == 1" class="d-block C_titile link text-decoration-none" title="<% record.coursename %>">
+                <a ng-if="record.enroll == 1" class="d-block C_titile link text-decoration-none" title="<% record.fullname %>">
                     <h4 class="course_name m-y-1 card-title course-title">
                         <% record.course_shortname %>
                     </h4>
@@ -49,9 +49,15 @@
             </div>
         </div>
         <div class="card-text course-desc">
-            <div class="coursedesc w-full pull-left">
-                <div class="desc" ng-bind-html="record.summary | unsafe" ></div>
+            <div class="coursedesc w-full pull-left" ng-if="record.summary">
+                <div class="desc"  ng-bind-html="record.summary | unsafe" ></div>
             </div>
+            <div class="coursedesc w-full pull-left" ng-if="!record.summary">
+                <div  class="desc" >
+                    <p class="alert alert-info">{{# str}}descriptionisnotavailable, local_search{{/ str}}</p>
+                </div>
+            </div>
+
         </div>
      
         <div class=" justify-content-between align-items-center w-full">
