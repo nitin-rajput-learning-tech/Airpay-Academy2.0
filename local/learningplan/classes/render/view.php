@@ -58,20 +58,93 @@ class view extends plugin_renderer_base {
 			if(!empty($search)){
 				$sql .= " AND name LIKE '%%$search%%'";
 			}
+			$assign_users_sql = "SELECT id FROM {local_learningplan} l WHERE 1 = 1 ";
 			//added by revathi
     		if($filterdata){
-				if(!empty($filterdata->subdepartment)){
-					$selectedsubdepts = implode(',', $filterdata->subdepartment);
-					$sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				}
 				if(!empty(array_filter($filterdata->organizations))){
 					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
-					$sql .= " AND l.costcenter IN ($selectedorganizations) ";
+					$organizations = explode(',', $selectedorganizations);
+					$orgsql = [];
+			        foreach($organizations AS $organisation){
+			            $orgsql[] = " concat('/',l.open_path,'/') LIKE :organisationparam_{$organisation}";
+			            $lpparams["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+			            $userparams["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+			        }
+			        if(!empty($orgsql)){
+			            $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+			            $assign_users_sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+			        }
+					// $sql .= " AND l.costcenter IN ($selectedorganizations) ";
 				}
+
+				// if(!empty(array_filter($filterdata->departments))){
+				// 	$selecteddepartments = implode(',', array_filter($filterdata->departments));
+				// 	$sql .= " AND l.department IN ($selecteddepartments) ";
+				// }
 				if(!empty(array_filter($filterdata->departments))){
-					$selecteddepartments = implode(',', array_filter($filterdata->departments));
-					$sql .= " AND l.department IN ($selecteddepartments) ";
+					$selecteddepts = implode(',', array_filter($filterdata->departments));
+					$depts = explode(',', $selecteddepts);
+					$deptsql = [];
+			        foreach($depts AS $dept){
+			            $deptsql[] = " concat('/',l.open_path,'/') LIKE :deptparam_{$dept}";
+			            $lpparams["deptparam_{$dept}"] = '%/'.$dept.'/%';
+			            $userparams["deptparam_{$dept}"] = '%/'.$dept.'/%';
+			        }
+			        if(!empty($deptsql)){
+			            $sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+			            $assign_users_sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+			        }
 				}
+				// if(!empty(array_filter($filterdata->subdepartment))){
+				// 	$selectedsubdepts = implode(',', $filterdata->subdepartment);
+				// 	$sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
+				// }
+				if(!empty(array_filter($filterdata->subdepartment))){
+					$selectedsubdepts = implode(',', array_filter($filterdata->subdepartment));
+					$subdepts = explode(',', $selectedsubdepts);
+					$subdeptsql = [];
+			        foreach($subdepts AS $subdept){
+			            $subdeptsql[] = " concat('/',l.open_path,'/') LIKE :subdeptparam_{$subdept}";
+			            $lpparams["subdeptparam_{$subdept}"] = '%/'.$subdept.'/%';
+			            $userparams["subdeptparam_{$subdept}"] = '%/'.$subdept.'/%';
+			        }
+			        if(!empty($subdeptsql)){
+			            $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+			            $assign_users_sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+			        }
+					// $sql .= " AND l.costcenter IN ($selectedorganizations) ";
+				}
+
+				if(!empty(array_filter($filterdata->department4level))){
+					$selecteddepts4 = implode(',', array_filter($filterdata->department4level));
+					$depts4 = explode(',', $selecteddepts4);
+					$depts4sql = [];
+			        foreach($depts4 AS $dept4){
+			            $depts4sql[] = " concat('/',l.open_path,'/') LIKE :dept4param_{$dept4}";
+			            $lpparams["dept4param_{$dept4}"] = '%/'.$dept4.'/%';
+			            $userparams["dept4param_{$dept4}"] = '%/'.$dept4.'/%';
+			        }
+			        if(!empty($depts4sql)){
+			            $sql .= " AND ( ".implode(' OR ', $depts4sql)." ) ";
+			            $assign_users_sql .= " AND ( ".implode(' OR ', $depts4sql)." ) ";
+			        }
+				}
+
+				if(!empty(array_filter($filterdata->department5level))){
+					$selecteddepts5 = implode(',', array_filter($filterdata->department5level));
+					$depts5 = explode(',', $selecteddepts5);
+					$depts5sql = [];
+			        foreach($depts5 AS $dept5){
+			            $depts5sql[] = " concat('/',l.open_path,'/') LIKE :dept5param_{$dept5}";
+			            $lpparams["dept5param_{$dept5}"] = '%/'.$dept5.'/%';
+			            $userparams["dept5param_{$dept5}"] = '%/'.$dept5.'/%';
+			        }
+			        if(!empty($depts5sql)){
+			            $sql .= " AND ( ".implode(' OR ', $depts5sql)." ) ";
+			            $assign_users_sql .= " AND ( ".implode(' OR ', $depts5sql)." ) ";
+			        }
+				}
+
 				if(!empty($filterdata->learningplan)){
 					$selectedlearningplan = implode(',', $filterdata->learningplan);
 					$sql .= " AND l.id IN ($selectedlearningplan) ";
@@ -88,12 +161,13 @@ class view extends plugin_renderer_base {
 			}
     		//end
 			$sql .= " ORDER BY l.id DESC";
+			// echo $sql;
+			// print_r($lpparams);exit;
 			if(($tableenable)){
 				$learning_plans = $this->db->get_records_sql($sql, $lpparams, $start,$length);
 			}else{
 				$learning_plans = $this->db->get_records_sql($sql, $lpparams);
 			}
-			$assign_users_sql = "SELECT id FROM {local_learningplan} l WHERE 1 = 1 ";
 
 			if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             	$assign_users_sql .= "";
@@ -105,20 +179,20 @@ class view extends plugin_renderer_base {
 			}
 
 			if($filterdata){
-				if(!empty($filterdata->subdepartment)){
-					$selectedsubdepts = implode(',', $filterdata->subdepartment);
-					$assign_users_sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				}
+				// if(!empty($filterdata->subdepartment)){
+				// 	$selectedsubdepts = implode(',', $filterdata->subdepartment);
+				// 	$assign_users_sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
+				// }
 
-				if(!empty(array_filter($filterdata->organizations))){
-					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
-					$assign_users_sql .= " AND l.costcenter IN ($selectedorganizations) ";
-				}
+				// if(!empty(array_filter($filterdata->organizations))){
+				// 	$selectedorganizations = implode(',', array_filter($filterdata->organizations));
+				// 	$assign_users_sql .= " AND l.costcenter IN ($selectedorganizations) ";
+				// }
 
-				if(!empty(array_filter($filterdata->departments))){
-					$selecteddepartments = implode(',', array_filter($filterdata->departments));
-					$assign_users_sql .= " AND l.department IN ($selecteddepartments) ";
-				}
+				// if(!empty(array_filter($filterdata->departments))){
+				// 	$selecteddepartments = implode(',', array_filter($filterdata->departments));
+				// 	$assign_users_sql .= " AND l.department IN ($selecteddepartments) ";
+				// }
 
 				if(!empty($filterdata->learningplan)){
 					$selectedlearningplan = implode(',', $filterdata->learningplan);
