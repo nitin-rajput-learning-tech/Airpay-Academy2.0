@@ -76,6 +76,8 @@ class allcourses {
         // if specific page number is less than the elearning tab end page number
         // end page number - will be calculated based on 
         // total number of records of elarning courses/ per page courses
+        // print_r(searchlib::$page);
+        // print_r($firstlevelend_pageno-1);
         if(searchlib::$page <= ($firstlevelend_pageno-1)){
 
             // total number of records of eleaning courses is zero
@@ -245,7 +247,7 @@ class allcourses {
     $filterplugins = get_plugins_with_function('applicable_filters_for_search_page');
     $filterapplicable = [];
     $defaultPlugins = [];
-    foreach($filterplugins AS $filtertypes){
+    foreach($filterplugins AS $plugintype => $filtertypes){
         foreach($filtertypes AS $pluginname => $filtertype){
             $defaultPlugins[] = constant($pluginname);
             $filtertype($filterapplicable);
@@ -259,7 +261,7 @@ class allcourses {
             }
         }
         if($moduletype = $thisfilters['moduletype']){
-            foreach($moduletype AS $module ){
+            foreach($moduletype AS $module){
                 $ltype = constant($module);
                 if(!in_array($ltype, $standard_catalogtypes)){
                     $standard_catalogtypes[] = $ltype;
@@ -282,7 +284,7 @@ class allcourses {
     }
     asort($standard_catalogtypes);
     $sumofallrecords = 0;
-    // print_r($standard_catalogtypes);
+    // var_dump($standard_catalogtypes);
     // print_r($thisfilters);
     // exit;
     foreach($standard_catalogtypes as $key => $type){
@@ -322,6 +324,7 @@ class allcourses {
     } // end of foreach
    $response_array = array('totalrecords_ineachtype'=>$totalrecords_ineachtype,
                             'sumofallrecords'=>$sumofallrecords);
+
    return $response_array; 
 
    } // end of get_available_catalogtype  */
@@ -411,9 +414,6 @@ class allcourses {
 public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     global $DB;
     $othertagitems = array();
-    if($selectedlformats){
-       $selectedtag[] = ELE;
-    }
     $response = $this->get_available_catalogtypes($selectedfilter);
     $totalrecords_ineachtype = $response['totalrecords_ineachtype'];
     $sumofallrecords = $response['sumofallrecords'];
@@ -429,6 +429,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
             $iteration_endpageno  = $res['firstlevel_endpageno'];
             $iteration_space = $res['firstlevel_space'];
             $iteration_remainder = $res['firstlevel_remainder'];
+            // var_dump($record['numberofrecords']);exit;
             if($firstlvl_perpage){
                 $firstresult_ar = $this->to_finding_specific_catalogtype($record['type'], $firstlvl_perpage,$firstlvl_startlimit, $selectedfilter);
                 $finallist = $firstresult_ar + $finallist;
@@ -489,6 +490,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
                 }
             }
         }
+        // print_r($recordtype);
         switch($recordtype){
             case 'elearning' :
                 $classname = '\local_courses\output\search';

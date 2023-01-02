@@ -301,7 +301,7 @@ class search implements renderable{
             }
 
             $course->type = elearning;
-            $course->module = 'Course';
+            $course->module = 'local_courses';
             $coursecontext = context_course::instance($course->id);
 
             if(isset($course->open_learningformat)){
