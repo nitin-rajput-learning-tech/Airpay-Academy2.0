@@ -106,7 +106,7 @@ function local_search_get_itemlist_skill($start = 0, $limit = 6){
     }
 	$itemlist = [];
 	foreach($skill AS $skillid => $skillname){
-		$response = allcourses::get_available_catalogtypes([['filtername' => 'skill', 'filters' => [$skillid]]]);
+		$response = allcourses::get_available_catalogtypes([['type' => 'skill', 'values' => [$skillid]]]);
     	$sumofallrecords = $response['sumofallrecords'];
 		$itemlist[] = ['code' => $skillid, 'name' => $skillname, 'tagitemshortname' => $skillname, 'count' => $sumofallrecords];
 	}
@@ -135,7 +135,7 @@ function local_search_get_itemlist_level($start = 0, $limit = 6){
     }
     $itemlist = [];
     foreach($courselevel AS $levelid => $levelname){
-       $response = allcourses::get_available_catalogtypes([['filtername' => 'level', 'filters' => [$levelid]]]);
+       $response = allcourses::get_available_catalogtypes([['type' => 'level', 'values' => [$levelid]]]);
        $sumofallrecords = $response['sumofallrecords'];
        $itemlist[] = ['code' => $levelid,'name' => $levelname,'tagitemshortname' => $levelname, 'count' => $sumofallrecords];
     }
@@ -185,9 +185,9 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
             return ['type' => 'moduletype', 'name' => 'Module Type', 'options' => $itemslist, 'showviewmore' => false];
         break;
         case 'status':
-            $itemslist[] = ['code' => 'notenrolled', 'name' => 'Not Enrolled', 'tagitemshortname' => 'notenrolled_modules', 'count' => local_search_get_coursecount_for_status([['filtername' => 'status', 'filters' => ['notenrolled']]])];
-            $itemslist[] = ['code' => 'enrolled', 'name' => 'Enrolled', 'tagitemshortname' => 'enrolled_modules', 'count' => local_search_get_coursecount_for_status([['filtername' => 'status', 'filters' => ['enrolled']]])];
-            $itemslist[] = ['code' => 'completed', 'name' => 'Completed', 'tagitemshortname' => 'completed_modules', 'count' => local_search_get_coursecount_for_status([['filtername' => 'status', 'filters' => ['completed']]])];
+            $itemslist[] = ['code' => 'notenrolled', 'name' => 'Not Enrolled', 'tagitemshortname' => 'notenrolled_modules', 'count' => local_search_get_coursecount_for_status([['type' => 'status', 'values' => ['notenrolled']]])];
+            $itemslist[] = ['code' => 'enrolled', 'name' => 'Enrolled', 'tagitemshortname' => 'enrolled_modules', 'count' => local_search_get_coursecount_for_status([['type' => 'status', 'values' => ['enrolled']]])];
+            $itemslist[] = ['code' => 'completed', 'name' => 'Completed', 'tagitemshortname' => 'completed_modules', 'count' => local_search_get_coursecount_for_status([['type' => 'status', 'values' => ['completed']]])];
             return ['type' => 'status', 'name' => 'Status', 'options' => $itemslist, 'showviewmore' => false];
         break;
         case 'learningtype':
@@ -203,7 +203,7 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
                 }
             }
             foreach($ctypes AS $customtype){
-                $itemslist[] = ['code' => $customtype->id, 'name' => $customtype->name, 'tagitemshortname' => 'learningtype_'.$customtype->shortname, 'count' => local_search_get_coursecount_for_modules([['filtername' => 'learningtype', 'filters' => [$customtype->id]]])];
+                $itemslist[] = ['code' => $customtype->id, 'name' => $customtype->name, 'tagitemshortname' => 'learningtype_'.$customtype->shortname, 'count' => local_search_get_coursecount_for_modules([['type' => 'learningtype', 'values' => [$customtype->id]]])];
             }
             ksort($itemslist);
             return ['type' => 'learningtype', 'name' => 'Learning Type', 'options' => $itemslist, 'showviewmore' => $showviewmore];
@@ -221,7 +221,7 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
             }
             $itemslist = [];
             foreach($categories AS $catid => $catname){
-                $coursecount = local_search\output\allcourses::get_available_catalogtypes([['filtername' => 'categories', 'filters' => [$catid]]])['sumofallrecords'];
+                $coursecount = local_search\output\allcourses::get_available_catalogtypes([['type' => 'categories', 'values' => [$catid]]])['sumofallrecords'];
                 $itemslist[] = ['code' => $catid, 'name' => $catname, 'tagitemshortname' => $catname, 'count' => $coursecount];
             }
             return ['type' => 'categories', 'name' => 'Category ', 'options' => $itemslist, 'showviewmore' => $showviewmore];
