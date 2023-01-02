@@ -31,6 +31,7 @@ if(file_exists($CFG->dirroot . '/local/includes.php')){
 }
 
 searchlib::$page = $page;
+searchlib::$perpage = PERPAGE;
 searchlib::$includesobj = $includes;
 searchlib::$search = $search;
 searchlib::$category = $category;

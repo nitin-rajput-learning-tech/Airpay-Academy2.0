@@ -50,6 +50,7 @@ use core_component;
 
     /* To hold page number */
     static public $page;
+    static public $perpage;
 
     /* To hold search text */
     static public $search;

@@ -42,7 +42,7 @@ class local_search_external extends external_api {
             'query' => new external_value(PARAM_RAW, 'Search criteria for the modules', VALUE_OPTIONAL)
         ]);
     }
-    public static function get_available_modules($page, $filters = [], $contextid = SYSCONTEXTID, $pagelimit = 15, $query = ''){
+    public static function get_available_modules($page, $filters = [], $contextid = SYSCONTEXTID, $pagelimit = 50, $query = ''){
         global $CFG, $DB;
         $params = self::validate_parameters(self::get_available_modules_parameters(),
                                             ['page' => $page, 'filters' => $filters, 'contextid' => $contextid, 'pagelimit' => $pagelimit, 'query' => $query]);
@@ -52,6 +52,7 @@ class local_search_external extends external_api {
         if($page>=1)
             $page = $page-1;
         \local_search\output\searchlib::$page = $page;
+        \local_search\output\searchlib::$perpage = $pagelimit;
         \local_search\output\searchlib::$search = $search;
         if(file_exists($CFG->dirroot . '/local/includes.php')){
             require_once($CFG->dirroot . '/local/includes.php');

@@ -123,7 +123,6 @@ class allcourses {
     $std_perpage = $perpage;
     $secondlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords);
     $secondlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords);
-    
     if(searchlib::$page >=($firstlevelstart_pageno-1) && searchlib::$page <= ($secondlevelend_pageno-1)){
         //---- get learning plan courses---
         if($value == 0){
@@ -415,10 +414,11 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     global $DB;
     $othertagitems = array();
     $response = $this->get_available_catalogtypes($selectedfilter);
+
     $totalrecords_ineachtype = $response['totalrecords_ineachtype'];
     $sumofallrecords = $response['sumofallrecords'];
     $finallist= array();
-    foreach($totalrecords_ineachtype as $index => $record){ 
+    foreach($totalrecords_ineachtype as $index => $record){
         $totalrecords += $record['numberofrecords'];
         $remainder =  $totalrecords % $perpage;
         if($index == 0){
@@ -429,7 +429,6 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
             $iteration_endpageno  = $res['firstlevel_endpageno'];
             $iteration_space = $res['firstlevel_space'];
             $iteration_remainder = $res['firstlevel_remainder'];
-            // var_dump($record['numberofrecords']);exit;
             if($firstlvl_perpage){
                 $firstresult_ar = $this->to_finding_specific_catalogtype($record['type'], $firstlvl_perpage,$firstlvl_startlimit, $selectedfilter);
                 $finallist = $firstresult_ar + $finallist;
@@ -559,8 +558,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
         foreach($arraykeys as $key){
             $totalrecords = $totalrecords + $noofrecords[$key];     
         } */
-        
-        $std_perpage=15;
+        $std_perpage= searchlib::$perpage;
         if($totalrecords==0){
             $level_pageno=0;
         }else if($totalrecords<$std_perpage){
@@ -578,7 +576,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
 
  private function to_getlevel_endpagenumber($totalrecords){
 
-        $std_perpage=15;
+        $std_perpage=searchlib::$perpage;
         if($totalrecords==0){
             $level_pageno=0;
         }
