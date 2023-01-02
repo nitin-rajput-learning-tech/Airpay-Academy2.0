@@ -47,7 +47,7 @@ class states_form extends \moodleform {
         $systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
         $errors = array();
 
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        if(is_siteadmin()){
             $costcenterid = $data['costcenterid'];
         }else{
             $costcenterid = explode('/', $USER->open_path)[1];
