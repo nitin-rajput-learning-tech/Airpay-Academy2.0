@@ -305,5 +305,13 @@ $functions = array(
         'description' => 'get sessions list by day type',
         'type' => 'read',
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+    ),
+    'local_classroom_get_classroom_info' => array(
+        'classname' => 'local_classroom_external',
+        'methodname' => 'get_classroom_info',
+        'classpath' => 'local/classroom/externallib.php',
+        'description' => 'get classroom info',
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
     )
 );

@@ -3042,5 +3042,20 @@ public static function submit_instituteform_form_parameters() {
             )
         );
     }
-
+    public function get_classroom_info_parameters(){
+        return new external_function_parameters(
+            array(
+                'id' => new external_value(PARAM_INT, 'The id of the module'),
+            )
+        );
+    }
+    public function get_classroom_info($id){
+        global $DB;
+        return $DB->get_record('local_classroom', array('id' => $id));
+    }
+    public function get_classroom_info_returns(){
+        global $CFG;
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        return local_search_get_module_return_parameters('local_classroom', []);
+    }
 }

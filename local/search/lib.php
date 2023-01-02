@@ -237,5 +237,18 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
         break;
      }
 }
-
-
+function local_search_get_module_return_parameters($tablename , $columnsdata = []){
+    global $DB;
+    $columns = $DB->get_columns($tablename, false);
+    foreach($columns AS $columnname => $datatype){
+        if(strpos($datatype->type, 'int') !== false){
+            $datatype = PARAM_INT;
+        }else if(strpos($datatype->type, 'char') !== false){
+            $datatype = PARAM_TEXT;
+        }else{
+            $datatype = PARAM_RAW;
+        }
+        $columnsdata[$columnname] = new external_value($datatype, $columnname);
+    }
+    return new external_single_structure($columnsdata);
+}
