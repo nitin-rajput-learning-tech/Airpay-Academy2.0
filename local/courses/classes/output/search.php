@@ -347,6 +347,45 @@ class search implements renderable{
         $count  = $activities_count ? $activities_count : 0 ;
         return $count;
     }
+    public function enrol_user_to_component($enrolmethod, $moduleid){
+        global $DB, $USER;
+        $course = get_course($moduleid);
+        if(is_enrolled(context_course::instance($moduleid, $USER->id))){
+            throw new Exception("Already enrolled");
+        }
+        switch($enrolmethod){
+            case 'request':
+                if($course->approvalreqd != 1){
+                    throw new Exception("Enrollment method inactive");
+                }else{
+                    \local_request\api\requestapi::create('elearning', $moduleid);
+                }
+            break;
+            case 'self':
+                if($course->approvalreqd == 1 || $course->selfenrol != 1){
+                    throw new Exception("Enrollment method inactive");
+                }else{
+                    $self = enrol_get_plugin('self');
+                    $type = 'course_enrol';
+                    $dataobj = $id;
+                    $fromuserid = 2;
+                    $sql = "SELECT * from {enrol} where courseid = {$moduleid} and enrol = 'self' ";
+                    $instance = $DB->get_record_sql($sql);
+                    if($instance){
+                        $test =  $self->enrol_user($instance,$USER->id,$instance->roleid);
+                        $emaillogs = new \local_courses\notification();
+                        $notificationdata = $emaillogs->get_existing_notification($course, $type);
+                        if($notificationdata){
+                            $emaillogs->send_course_email($course, $USER, $type, $notificationdata);
+                        }
+                    }
+                }
+            break;
+            default:
+                throw new Exception("Unknown enrollment method");
+            break;
+        }
+    }
 
     public function get_enrollbutton($enroll, $courseinfo){
         global $DB,$CFG,$USER;
