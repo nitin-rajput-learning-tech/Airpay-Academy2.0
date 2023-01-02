@@ -30,37 +30,29 @@ namespace local_groups\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function groups_costcenterpath($userid = null) {
+    public static function groups_costcenterpath($groupid = null) {
 
         global $DB,$USER;
 
-        $endpathvalue=null;
+        $costcenterpath=null;
 
-        if($userid != null && $userid > 0){
+        if($groupid != null && $groupid > 0){
 
-            $costcenterpath=$DB->get_field('local_groups','open_path',  array('id'=> $userid));
-
-            if(!empty($costcenterpath)){
-
-                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
-
-                $endpathvalue=end($extractcostcenterpath);
-
-            }
+            $costcenterpath=$DB->get_field('local_groups','open_path',  array('id'=> $groupid));
         }
 
-        return $endpathvalue;
+        return $costcenterpath;
 
     }
-    public static function get_module_context($userid = null){
+    public static function get_module_context($groupid = null){
         global $USER;
 
-        return parent::get_module_context(self::groups_costcenterpath($userid));
+        return parent::get_module_context(self::groups_costcenterpath($groupid));
 
     }
-    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = NULL){
+    public static function get_costcenter_path_field_concatsql($columnname,$groupid = null, $datatype = NULL){
 
-        return parent::get_costcenter_path_field_concatsql($columnname, self::groups_costcenterpath($userid));
+        return parent::get_costcenter_path_field_concatsql($columnname, self::groups_costcenterpath($groupid));
 
     }
 }

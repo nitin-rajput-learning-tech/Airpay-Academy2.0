@@ -56,12 +56,15 @@ $PAGE->navbar->add(get_string('pluginname', 'local_users'), new moodle_url('/loc
 $PAGE->navbar->add(get_string('uploadusers', 'local_users'));
 $returnurl = new moodle_url('/local/users/index.php');
 
-$STD_FIELDS = array('organization', 'username', 'password', 'employee_id', 'employee_name', 'first_name', 'middle_name',
- 'last_name', 'department', 'address', 'zone_region', 'area', 'city', 'designation', 'group', 'discipline', 'team',
-  'client', 'grade', 'gender', 'mobileno', 'email', 'marital_status', 'dob', 'doj', 'state_name', 'employee_status',
-   'reportingmanager_code', 'reportingmanager_name', 'reportingmanager_email', 'reportingmanager_empid', 'dol', 'dor',
-    'country', 'officialmail', 'subdepartment', 'location', 'password', 'timezone', 'role', 'notify_logins',
-     'force_password_change');
+$STD_FIELDS = array(
+    'organization' => 'organization','username' => 'username','password' => 'password','learner_id' => 'learner_id',
+    'first_name' => 'first_name','last_name' => 'last_name','email' => 'email','country' => 'country',
+    'bussiness_unit' => 'bussiness_unit','commercial_unit' => 'commercial_unit','territory' => 'territory',    
+    'reportingmanager_empid' => 'reportingmanager_empid','language' => 'language','designation' => 'designation',
+    'state' => 'state','district' => 'district','subdistrict' => 'subdistrict','village' => 'village',
+    'discipline' => 'discipline','contactno' => 'contactno','employee_status' => 'employee_status',
+    'password' => 'password','timezone' => 'timezone','force_password_change' => 'force_password_change'
+    );
 
 
 $PRF_FIELDS = array();

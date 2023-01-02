@@ -20,9 +20,9 @@ class filters_form extends moodleform {
         $this->_form->_attributes['id'] = $submitid;
        
         foreach ($filterlist as $key => $value) {
-            if($value === 'organizations' || $value === 'departments' || $value == 'subdepartment'){
+            if($value === 'organizations' || $value === 'departments' || $value == 'subdepartment' || $value === 'department4level' || $value === 'department5level'){
                 $filter = 'costcenter';
-            }else if($value == 'status'){
+            }else if($value === 'categories' || $value == 'status'){
                 $filter = 'courses';
             }else if($value === 'learningplan'){
                 $filter = 'learningplan';

@@ -139,12 +139,34 @@ class local_search_external extends external_api {
     public static function enrol_user_to_module_parameters(){
         return new external_function_parameters(
             array(
-                'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID)
+                'moduleid' => new external_value(PARAM_INT, 'The id of the module'),
+                'type' => new external_value(PARAM_TEXT, 'Type of module'),
+                'enrolmethod' => new external_value(PARAM_TEXT, 'Enrollment method of the module'),
+                'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_DEFAULT, SYSCONTEXTID)
             )
         );
     }
-    public static function enrol_user_to_module(){}
-    public static function enrol_user_to_module_returns(){
+    public static function enrol_user_to_module($moduleid, $type, $enrolmethod, $contextid = SYSCONTEXTID){
+        $params = self::validate_parameters(self::enrol_user_to_module_parameters(),
+                                            ['moduleid' => $moduleid, 'type' => $type, 'enrolmethod' => $enrolmethod,'contextid' => $contextid]);
 
+        $context = context::instance_by_id($params['contextid'], MUST_EXIST);
+        // We always must call validate_context in a webservice.
+        self::validate_context($context);
+        $classname = '\\'.$type.'\output\search';
+        if(class_exists($classname)){
+            $class = new $classname();
+            if(method_exists($class, 'enrol_user_to_component')){
+                $class->enrol_user_to_component($enrolmethod, $moduleid);
+            }else{
+                throw new Exception("Enrollment not found");
+            }
+        }else{
+            throw new Exception("Type not found");
+        }
+        return true;
+    }
+    public static function enrol_user_to_module_returns(){
+        return new external_value(PARAM_BOOL, 'return');
     }
 }

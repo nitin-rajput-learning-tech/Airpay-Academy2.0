@@ -284,7 +284,39 @@ class search implements renderable{
 
         return $finallist;
     }
-
+    public function enrol_user_to_component($enrolmethod, $moduleid){
+        global $DB, $USER, $CFG;
+        if($this->get_enrollflag($moduleid)){
+            throw new Exception("Already enrolled");
+        }
+        $classroom = $DB->get_record('local_learningplan', array('id' => $moduleid));
+        switch($enrolmethod){
+            case 'request':
+                if($classroom->approvalreqd != 1){
+                    throw new Exception("Enrollment method inactive");
+                }else{
+                    \local_request\api\requestapi::create('learningplan', $moduleid);
+                }
+            break;
+            case 'self':
+                if($classroom->approvalreqd == 1 || $classroom->selfenrol != 1){
+                    throw new Exception("Enrollment method inactive");
+                }else{
+                    $record = new \stdClass();
+                    $record->planid = $moduleid;
+                    $record->userid = $USER->id;
+                    $record->timecreated = time();
+                    $record->usercreated = $USER->id;
+                    $record->timemodified = 0;
+                    $record->usermodified = 0;
+                    $create_record = $learningplan_lib->assign_users_to_learningplan($record);
+                }
+            break;
+            default:
+                throw new Exception("Unknown enrollment method");
+            break;
+        }
+    }
     private function get_enrollflag($certificationid){
         global $USER, $DB;
 

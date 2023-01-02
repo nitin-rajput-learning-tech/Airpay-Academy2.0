@@ -910,7 +910,7 @@ class classroom {
                 $classroomcostcenter = $DB->get_field('local_classroom', 'open_path', array(
                     'id' => $stable->classroomid
                 ));
-                if ($status == 1 && !$userenrolstatus && explode('/',$classroomcostcenter)[1] == explode('/',$USER->open_path)[1]) {
+                if ($status == 1 && !$userenrolstatus && explode('/',$classroomcostcenter)[1] == (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path(1)) {
                     $empty = 1;
                 } else {
                     if (!empty($myclassrooms)) {

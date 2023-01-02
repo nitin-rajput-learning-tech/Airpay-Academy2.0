@@ -274,7 +274,7 @@ class learningplan {
 
         }
 
-        $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1"; 
+        $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1 "; 
         $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='l.open_path');
         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $sql .= "";
@@ -288,7 +288,7 @@ class learningplan {
         $sql .= " ORDER BY l.id DESC"; 
         $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
         // if(is_siteadmin()){
-        //     $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1"; 
+        //     $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1 "; 
         //     if(!empty($search)){
         //         $sql .= " AND name LIKE '%%$search%%'";
         //     }

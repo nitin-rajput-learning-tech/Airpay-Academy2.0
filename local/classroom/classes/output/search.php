@@ -364,6 +364,33 @@ class search implements renderable{
         return $flag;
     } // end of get_the_enrollflag
 
+    public function enrol_user_to_component($enrolmethod, $moduleid){
+        global $DB, $USER, $CFG;
+        if($this->get_the_enrollflag($moduleid)){
+            throw new Exception("Already enrolled");
+        }
+        $classroom = $DB->get_record('local_classroom', array('id' => $moduleid));
+        switch($enrolmethod){
+            case 'request':
+                if($classroom->approvalreqd != 1){
+                    throw new Exception("Enrollment method inactive");
+                }else{
+                    \local_request\api\requestapi::create('classroom', $moduleid);
+                }
+            break;
+            case 'self':
+                if($classroom->approvalreqd == 1 || $classroom->selfenrol != 1){
+                    throw new Exception("Enrollment method inactive");
+                }else{
+                    require_once($CFG->dirroot.'/local/classroom/externallib.php');
+                    local_classroom_external::manageclassroomStatus_instance('selfenrol', $moduleid, true, $actionstatusmsg = '', $classroom->name);
+                }
+            break;
+            default:
+                throw new Exception("Unknown enrollment method");
+            break;
+        }
+    }
     private function get_enrollbtn($classroominfo){
         global $DB,$USER;
         $classroomid = $classroominfo->id;

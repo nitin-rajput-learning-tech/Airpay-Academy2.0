@@ -184,11 +184,11 @@ class learningplan extends moodleform {
 
 
                 $select = array(null => get_string('select_certificate','local_learningplan'));
-
+				$costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
                 if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>explode('/', $USER->open_path)[1]),'name', 'id,name');
+                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenterid),'name', 'id,name');
                 }
                 $certificateslist = $select + $cert_templates;
 
