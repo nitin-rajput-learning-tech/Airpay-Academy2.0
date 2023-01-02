@@ -931,7 +931,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
 
-            $enableallfield = ($firstelement && $depth == $level) || (is_siteadmin() && $level == 1) ? false : $allenable;
+            $enableallfield = ($USER->access['currentroleinfo']['depth'] > $level) || (is_siteadmin() && $level == 1) ? false : $allenable;
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
