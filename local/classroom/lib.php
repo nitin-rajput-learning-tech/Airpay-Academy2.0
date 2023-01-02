@@ -1401,7 +1401,7 @@ function local_classroom_search_page_filter_element(&$filterelements){
     global $CFG;
     if(file_exists($CFG->dirroot.'/local/search/lib.php')){
         require_once($CFG->dirroot.'/local/search/lib.php');
-        $filterelements['ilt'] = ['code' => 'classroom', 'name' => 'ILT', 'tagitemshortname' => 'classroom', 'count' => local_search_get_coursecount_for_modules([['filtername' => 'moduletype', 'filters' => ['classroom']]])];
+        $filterelements['ilt'] = ['code' => 'classroom', 'name' => 'ILT', 'tagitemshortname' => 'classroom', 'count' => local_search_get_coursecount_for_modules([['type' => 'moduletype', 'values' => ['classroom']]])];
     }
 }
 function local_classroom_enabled_search(){

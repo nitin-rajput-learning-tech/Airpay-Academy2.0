@@ -151,7 +151,7 @@ class search implements renderable{
             $numberofrecords = sizeof($DB->get_records_sql($finalcountquery, $params));
 
         $finalsql = $selectsql.$fromsql.$wheresql.$course_searchsql.$groupby;
-
+        // var_dump($finalsql);
         $finalsql .= "  ORDER by c.id DESC";
 
         $courseslist = $DB->get_records_sql($finalsql, $params, $startlimit, $perpage);
@@ -174,7 +174,6 @@ class search implements renderable{
    public function export_for_template($perpage,$startlimit,$selectedfilter = array()){
         global $DB, $USER,$CFG, $OUTPUT,$PAGE;
         $context = \local_costcenter\lib\accesslib::get_module_context();
-
         $courseslist_ar = $this->get_elearning_courselist_query($perpage,$startlimit, true, true, $selectedfilter);
 
         $courseslist=$courseslist_ar['list'];

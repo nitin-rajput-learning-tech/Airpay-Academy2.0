@@ -254,9 +254,10 @@ class allcourses {
     asort($defaultPlugins);
     if($selectedfilter){
         foreach ($selectedfilter as $filters) {
-            $thisfilters[$filters['type']] = $filters['values'];
+            if(!empty($filters['values'])){
+                $thisfilters[$filters['type']] = $filters['values'];
+            }
         }
-        ;
         if($moduletype = $thisfilters['moduletype']){
             foreach($moduletype AS $module ){
                 $ltype = constant($module);
@@ -281,7 +282,9 @@ class allcourses {
     }
     asort($standard_catalogtypes);
     $sumofallrecords = 0;
+    // print_r($standard_catalogtypes);
     // print_r($thisfilters);
+    // exit;
     foreach($standard_catalogtypes as $key => $type){
       switch($type){
        
@@ -479,12 +482,19 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
 
  private function to_finding_specific_catalogtype($recordtype, $level_perpage,$level_startlimit, $selectedfilter = array()){
         $finallist = array();
+        if($selectedfilter){
+            foreach ($selectedfilter as $filters) {
+                if(!empty($filters['values'])){
+                    $thisfilters[$filters['type']] = $filters['values'];
+                }
+            }
+        }
         switch($recordtype){
             case 'elearning' :
                 $classname = '\local_courses\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();
-                    $courselist = $class->export_for_template($level_perpage, $level_startlimit,$selectedfilter);
+                    $courselist = $class->export_for_template($level_perpage, $level_startlimit,$thisfilters);
                     $finallist = $this->get_array_format($courselist);
                 }
             break;
@@ -492,7 +502,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
                 $classname = '\local_learningplan\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();
-                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$selectedfilter);
+                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$thisfilters);
                     $finallist = $this->get_array_format($lplist);
                 }
             break;
@@ -500,7 +510,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
                 $classname = '\local_classroom\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();
-                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$selectedfilter);
+                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$thisfilters);
                     $finallist = $this->get_array_format($lplist);
                 }
             break;
