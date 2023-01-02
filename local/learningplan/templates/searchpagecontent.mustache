@@ -22,20 +22,20 @@
 }}
 
 <!--<div class="course-img">
-     <a ng-if="record.selfenroll == 1" title="<% record.iltformatname %>">
+     <a ng-if="record.selfenroll == 1" title="<% record.fullname %>">
         <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
     </a>
-    <a ng-if="record.selfenroll == 2" title="<% record.iltformatname %>" ng-href="<% record.learningplanlink %>">
+    <a ng-if="record.selfenroll == 2" title="<% record.fullname %>" ng-href="<% record.learningplanlink %>">
         <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
     </a>
 </div>
 <div class="coursepage-name">
-    <a ng-if="record.selfenroll == 1" class="coursesubtitle" title="<% record.iltformatname %>" >
-        <h5 class="cat-level-course"><% record.iltformatname %><br/></h5>
+    <a ng-if="record.selfenroll == 1" class="coursesubtitle" title="<% record.fullname %>" >
+        <h5 class="cat-level-course"><% record.fullname %><br/></h5>
     </a>
 
-    <a ng-if="record.selfenroll == 2" class="coursesubtitle" title="<% record.iltformatname %>" ng-href="<% record.learningplanlink %>">
-        <h5 class="cat-level-course"><% record.iltformatname %><br/></h5>
+    <a ng-if="record.selfenroll == 2" class="coursesubtitle" title="<% record.fullname %>" ng-href="<% record.learningplanlink %>">
+        <h5 class="cat-level-course"><% record.fullname %><br/></h5>
     </a>
     
     <div class="course-desc"  ng-bind-html="record.intro | unsafe" ></div>
@@ -69,10 +69,10 @@
             <span class="courseimg_strip">Strip</span>
             <div class="row mt-2 mb-2">
             <div class="card-img-top courseimg_container col-md-4">
-                <a ng-if="record.selfenroll == 1" title="<% record.iltformatname %>">
+                <a ng-if="record.selfenroll == 1" title="<% record.fullname %>">
                     <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
                 </a>
-                <a ng-if="record.selfenroll == 2" title="<% record.iltformatname %>">
+                <a ng-if="record.selfenroll == 2" title="<% record.fullname %>">
                     <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
                 </a>
 
@@ -82,23 +82,28 @@
                        
 
                     <div>
-                        <a ng-if="record.selfenroll == 1" class="d-block" title="<% record.iltfullformatname %>">
+                        <a ng-if="record.selfenroll == 1" class="d-block" title="<% record.fullname %>">
                             <h4 class="course_name m-y-1 card-title course-title">
-                            <% record.iltformatname %>
+                            <% record.fullname %>
                             </h4>
                         </a>
 
-                        <a ng-if="record.selfenroll == 2" class="d-block" title="<% record.iltfullformatname %>">
+                        <a ng-if="record.selfenroll == 2" class="d-block" title="<% record.fullname %>">
                             <h4 class="course_name m-y-1 card-title course-title">
-                            <% record.iltformatname %>
+                            <% record.fullname %>
                             </h4>
                         </a>
                     </div>
                     <span class="CstripCnt"> <span class="elearning">Learning Path</span> </span>
                 </div>
                 <div class="card-text course-desc">
-                    <div class="coursedesc w-full pull-left">
-                        <div class="course-desc"  ng-bind-html="record.intro | unsafe" ></div>
+                    <div class="coursedesc w-full pull-left" ng-if="record.summary">
+                        <div class="desc" ng-bind-html="record.summary | unsafe" ></div>
+                    </div>
+                    <div class="coursedesc w-full pull-left" ng-if="!record.summary">
+                        <div  class="desc" >
+                            <p class="alert alert-info">{{# str}}descriptionisnotavailable, local_search{{/ str}}</p>
+                        </div>
                     </div>
                 </div>
                 

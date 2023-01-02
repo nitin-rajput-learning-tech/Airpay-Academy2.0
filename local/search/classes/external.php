@@ -31,11 +31,11 @@ class local_search_external extends external_api {
             'page' => new external_value(PARAM_INT, 'The page number for the modules'),
             'filters' => new external_multiple_structure(
                 new external_single_structure([
-                    "type" => new external_value(PARAM_TEXT, 'The context id for the course', 'Filter type', VALUE_OPTIONAL),
+                    "type" => new external_value(PARAM_TEXT, 'The context id for the course', 'Filter type', VALUE_OPTIONAL, ''),
                     "values" => new external_multiple_structure(
-                         new external_value(PARAM_TEXT, 'The filter value'), 'Filter options', VALUE_OPTIONAL
+                         new external_value(PARAM_TEXT, 'The filter value'), 'Filter options', VALUE_OPTIONAL, ''
                     )
-                ], 'Filters',VALUE_OPTIONAL) ,'Filters' ,VALUE_OPTIONAL
+                ]) ,'Filters' ,VALUE_DEFAULT, []
             ),
             'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
             'pagelimit' => new external_value(PARAM_INT, 'Page length for the modules', VALUE_OPTIONAL, 15),
@@ -49,6 +49,8 @@ class local_search_external extends external_api {
         $context = context::instance_by_id($params['contextid'], MUST_EXIST);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
+        if($page>=1)
+            $page = $page-1;
         \local_search\output\searchlib::$page = $page;
         \local_search\output\searchlib::$search = $search;
         if(file_exists($CFG->dirroot . '/local/includes.php')){
@@ -72,6 +74,12 @@ class local_search_external extends external_api {
                 new external_single_structure([
                     'id' => new external_value(PARAM_INT, 'Module ID'),
                     'module' => new external_value(PARAM_TEXT, 'module'),
+                    'fullname' => new external_value(PARAM_TEXT, 'Category Code'),
+                    'shortname' => new external_value(PARAM_TEXT, 'Tag Category Name'),
+                    'bannerimage' => new external_value(PARAM_RAW, 'Banner image'),
+                    'summary' => new external_value(PARAM_RAW, 'Summary Information'),
+                    'startdate' => new external_value(PARAM_INT, 'Startdate Information'),
+                    'enddate' => new external_value(PARAM_INT, 'Endddate Information'),
                     'avgrating' => new external_value(PARAM_FLOAT, 'Average Ratings', VALUE_OPTIONAL),
                     'ratedusers' => new external_value(PARAM_INT, 'Rated Users', VALUE_OPTIONAL),
                     'likes' => new external_value(PARAM_INT, 'liked Users', VALUE_OPTIONAL, 0),
@@ -81,14 +89,8 @@ class local_search_external extends external_api {
                         new external_value(PARAM_TEXT, 'Module custom enrollment method', VALUE_OPTIONAL), //Self, Request
                             'Enrollment methods info', VALUE_OPTIONAL
                     ),
-                    'fullname' => new external_value(PARAM_TEXT, 'Category Code'),
-                    'shortname' => new external_value(PARAM_TEXT, 'Tag Category Name'),
-                    'bannerimage' => new external_value(PARAM_URL, 'Banner image'),
-                    'summary' => new external_value(PARAM_RAW, 'Summary Information'),
-                    'skill' => new external_value(PARAM_TEXT, 'SKill Information'),
-                    'level' => new external_value(PARAM_TEXT, 'level Information'),
-                    'startdate' => new external_value(PARAM_INT, 'Startdate Information'),
-                    'enddate' => new external_value(PARAM_INT, 'Endddate Information'),
+                    'skill' => new external_value(PARAM_TEXT, 'SKill Information', VALUE_OPTIONAL, ''),
+                    'level' => new external_value(PARAM_TEXT, 'level Information', VALUE_OPTIONAL, ''),
                 ])
             )
         ]);

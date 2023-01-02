@@ -237,23 +237,23 @@ class search implements renderable{
             $categoryname = $list->categoryname;
             $list->formattedcategoryname = searchlib::format_thestring($name);
             $list->iltfullformatname = searchlib::format_thestring($list->name);
+            $list->fullname = searchlib::format_thestring($list->name);
+            $list->shortnme = searchlib::format_thestring($list->shortname);
             $iltname = searchlib::format_thestring($list->name);
-            if (strlen($iltname)>64){
-                $iltname = substr($iltname, 0, 64)."...";
-                $list->iltformatname = $iltname ;
-            }else {
-                $list->iltformatname = searchlib::format_thestring($list->name);
-            }
+            $list->iltformatname = $iltname ;
             $list->duration = (empty($list->duration)) ? 'N/A':$list->duration;
             $list->price = (empty($list->price)) ? '-':$list->price;
 
             //-----classroom image file url-------
             if(is_object($coursefileurl)){
-                    $coursefileurl=$coursefileurl->out();
+                $coursefileurl=$coursefileurl->out();
             }
             $list->fileurl = $coursefileurl;
+            $list->bannerimage = $coursefileurl;
 
-            $list->intro=searchlib::format_thesummary($list->description);
+
+            $list->intro = searchlib::format_thesummary($list->description);
+            $list->summary = searchlib::format_thesummary($list->description);
 
              //------------------Date-----------------------
             $startdate =searchlib::get_thedateformat($list->startdate);
@@ -265,7 +265,7 @@ class search implements renderable{
 
             $list->bands=searchlib::trim_theband($list->bands);
             $list->type = classroom;
-            $list->module = 'classroom';
+            $list->module = 'local_classroom';
 
             $list->enroll=$this->get_the_enrollflag($classroomid);
 

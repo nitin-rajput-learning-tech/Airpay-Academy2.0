@@ -209,6 +209,8 @@ class search implements renderable{
             $list->categoryname = $name;
             $list->formattedcategoryname = searchlib::format_thestring($name);
             $list->iltfullformatname = searchlib::format_thestring($list->name);
+            $list->fullname = searchlib::format_thestring($list->name);
+            $list->shortname = searchlib::format_thestring($list->shortname);
             $iltname = searchlib::format_thestring($list->name);
             if (strlen($iltname)>60){
                 $iltname = substr($iltname, 0, 60)."...";
@@ -218,7 +220,9 @@ class search implements renderable{
             }
 
             $list->fileurl =   $coursefileurl;
-            $list->intro=searchlib::format_thesummary($list->description);
+            $list->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
+            $list->intro = searchlib::format_thesummary($list->description);
+            $list->summary = searchlib::format_thesummary($list->description);
             //------------------Date-----------------------
             $startdate = searchlib::get_thedateformat($list->startdate);
             $enddate = searchlib::get_thedateformat($list->enddate);
@@ -231,7 +235,7 @@ class search implements renderable{
             //-------bands----------------------------
             $list->bands = searchlib::trim_theband($list->bands);
             $list->type = learningplan;
-            $list->module = 'learningplan';
+            $list->module = 'local_learningplan';
             $list->enroll = $this->get_enrollflag($list->id);
             $userenrolstatus = $DB->record_exists('local_learningplan_user', array('planid' => $list->id, 'userid' => $USER->id));
             $return=false;
