@@ -51,6 +51,7 @@ class syncfunctionality
     private $warnings = array();
     private $wmfields = array();
     private $errorcount = 0;
+    private $orgcount = 0;
     private $warningscount = 0;
     private $updatesupervisor_warningscount = 0;
     private $errormessage;
@@ -131,14 +132,23 @@ class syncfunctionality
             // To hold countryid.
             $this->countryid = $this->get_org_hierarchyid($user->country, $parent = $this->costcenterid);
             if ($user->bussiness_unit) {
-                $this->level3_bussinessid = $this->get_bussiness_unitid($user->bussiness_unit, $this->countryid);
+                $this->level3_bussinessid = $this->get_bussiness_unitid($user->bussiness_unit, $this->countryid,$user);
             }
             if ($user->commercial_unit) {
-                $this->level4_commercialid = $this->get_commercial_unitid($user->commercial_unit, $this->level3_bussinessid);
+                $this->level4_commercialid = $this->get_commercial_unitid($user->commercial_unit, $this->level3_bussinessid,$user);
             }
             if ($user->territory) {
-                $this->level5_territoryid = $this->get_territoryid($user->territory, $this->level4_commercialid);
-                $profilefields = $this->get_profile_fields_values($user->state,$user->district,$user->subdistrict,$user->village);
+                $this->level5_territoryid = $this->get_territoryid($user->territory, $this->level4_commercialid,$user);
+                if($this->level5_territoryid && ($this->orgcount == 0)){
+                    $profilefields = $this->get_profile_fields_values($user);
+                    if(!empty($profilefields)){
+                        $this->open_states = $profilefields->state;
+                        $this->open_district = $profilefields->district;
+                        $this->open_subdistrict = $profilefields->subdistrict;
+                        $this->open_village = $profilefields->village;
+                    }
+                    
+                }                
             }
             if (!empty($user->organization)) {
 
@@ -146,12 +156,7 @@ class syncfunctionality
             }
             
             
-            
-            
-            $this->open_states = $profilefields->state;
-            $this->open_district = $profilefields->district;
-            $this->open_subdistrict = $profilefields->subdistrict;
-            $this->open_village = $profilefields->village;
+        
             // if (!empty($user->country)) {
             //     $this->countryvalidations($user);
             // }
@@ -359,12 +364,14 @@ class syncfunctionality
                 $this->errors[] = get_string('invalidnoorganizationidfound', 'local_users', $strings);
                 $this->mfields[] = $fieldvalue;
                 $this->errorcount++;
+                $this->orgcount++;
             }
         } else {
             echo '<div class=local_users_sync_error>' . get_string('noorganizationidfound', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('noorganizationidfound', 'local_users', $strings);
             $this->mfields[] = $fieldvalue;
             $this->errorcount++;
+            $this->orgcount++;
         }
     } //end of get_org_hierarchyid method
 
@@ -497,36 +504,44 @@ class syncfunctionality
         }
     }
 
-    public function get_bussiness_unitid($bussiness_unitid, $parentid)
+    public function get_bussiness_unitid($bussiness_unitid, $parentid,$user)
     {
         global $DB;
         $datalist = $this->organizations;
         $datal = $datalist[$bussiness_unitid];
         $strings = new \stdClass();
         $strings->bussiness_unitid = $bussiness_unitid;
+        $strings->parentid = $user->country;
         $strings->line = $this->excel_line_number;
-        if ($datal) {
-            if ($parentid == $datal->parentid) {
-                return $datal->id;
+        if($this->orgcount == 0){
+            if ($datal) {
+                if ($parentid == $datal->parentid) {
+                    return $datal->id;
+                } else {
+                    echo '<div class=local_users_sync_error>' . get_string('invalidbussinessunitgiven', 'local_users', $strings) . '</div>';
+                    $this->errors[] = get_string('invalidbussinessunitgiven', 'local_users', $strings);
+                    $this->errorcount++;
+                    $this->orgcount++;
+                }
             } else {
-                echo '<div class=local_users_sync_error>' . get_string('invalidbussinessunitgiven', 'local_users', $strings) . '</div>';
-                $this->errors[] = get_string('invalidbussinessunitgiven', 'local_users', $strings);
+                echo '<div class=local_users_sync_error>' . get_string('noorbussiness_unitfound', 'local_users', $strings) . '</div>';
+                $this->errors[] = get_string('noorbussiness_unitfound', 'local_users', $strings);
                 $this->errorcount++;
+                $this->orgcount++;
             }
-        } else {
-            echo '<div class=local_users_sync_error>' . get_string('noorbussiness_unitfound', 'local_users', $strings) . '</div>';
-            $this->errors[] = get_string('noorbussiness_unitfound', 'local_users', $strings);
-            $this->errorcount++;
         }
+        
     }
-    public function get_commercial_unitid($commercial_unitid, $parentid)
+    public function get_commercial_unitid($commercial_unitid, $parentid,$user)
     {
         global $DB;
         $datalist = $this->organizations;
         $datal = $datalist[$commercial_unitid];
         $strings = new \stdClass();
         $strings->commercial_unitid = $commercial_unitid;
+        $strings->parentid = $user->bussiness_unit;
         $strings->line = $this->excel_line_number;
+        if($this->orgcount == 0){
         if ($datal) {
             if ($parentid == $datal->parentid) {
                 return $datal->id;
@@ -534,21 +549,26 @@ class syncfunctionality
                 echo '<div class=local_users_sync_error>' . get_string('invalidcommercialunitgiven', 'local_users', $strings) . '</div>';
                 $this->errors[]  = get_string('invalidcommercialunitgiven', 'local_users', $strings);
                 $this->errorcount++;
+                $this->orgcount++;
             }
         } else {
-            echo '<div class=local_users_sync_error>' . get_string('noorbussiness_unitfound', 'local_users', $strings) . '</div>';
+            echo '<div class=local_users_sync_error>' . get_string('noorcommercial_unitfound', 'local_users', $strings) . '</div>';
             $this->errors[]  = get_string('noorcommercial_unitfound', 'local_users', $strings);
             $this->errorcount++;
+            $this->orgcount++;
         }
     }
-    public function get_territoryid($territoryid, $parentid)
+    }
+    public function get_territoryid($territoryid, $parentid,$user)
     {
         global $DB;
         $datalist = $this->organizations;
         $datal = $datalist[$territoryid];
         $strings = new \stdClass();
         $strings->territoryid = $territoryid;
+        $strings->parentid = $user->commercial_unit;
         $strings->line = $this->excel_line_number;
+        if($this->orgcount == 0){
         if ($datal) {
             if ($parentid == $datal->parentid) {
                 return $datal->id;
@@ -556,17 +576,20 @@ class syncfunctionality
                 echo '<div class=local_users_sync_error>' . get_string('invalidterritorygiven', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('invalidterritorygiven', 'local_users', $strings);
                 $this->errorcount++;
+                $this->orgcount++;
             }
         } else {
             echo '<div class=local_users_sync_error>' . get_string('noorterritoryfound', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('noorterritoryfound', 'local_users', $strings);
             $this->errorcount++;
+            $this->orgcount++;
         }
+    }
     }    
-    public function get_profile_fields_values($state, $district, $subdistrict, $village)
+    public function get_profile_fields_values($user)
     {
         global $DB;
-        $locationfields = array('state'=>$state,'district'=>$district,'subdistrict'=>$subdistrict,'village'=>$village);
+        $locationfields = array('state'=>$user->state,'district'=>$user->district,'subdistrict'=>$user->subdistrict,'village'=>$user->village);
         $strings = new \stdClass();
         foreach($locationfields as $key => $lfield){
             if(!empty($lfield)){
@@ -579,26 +602,35 @@ class syncfunctionality
             $params = array();
             if ($key =='state' ) {
                 $sql .= " AND ls.code = :state ";
-                $params[$key] = $state;
+                $params[$key] = $user->state;
+                $strings->state = $user->state;
+                $strings->parentid = $user->territory;
             }
             if ($key =='district' ) {
                 $sql .= " AND ld.code = :district ";
-                $params['district'] = $district;
+                $params['district'] = $user->district;
+                $strings->district = $user->district;
+                $strings->parentid = $user->state;
             }
             if ($key =='subdistrict' ) {
                 $sql .= " AND lsd.code = :subdistrict ";
-                $params['subdistrict'] = $subdistrict;
+                $params['subdistrict'] = $user->subdistrict;
+                $strings->subdistrict = $user->subdistrict;
+                $strings->parentid = $user->district;
             }
             if ($key =='village') {
                 $sql .= " AND lv.code = :village ";
-                $params['village'] = $village;
+                $params['village'] = $user->village;
+                $strings->village = $user->village;
+                $strings->parentid = $user->subdistrict;
             }
-            $data[$key] = $DB->get_record_sql($sql, $params);            
-            if(empty($data[$key])){
+            $data= $DB->get_record_sql($sql, $params);            
+            if(empty($data)){
                 $strings->line = $this->excel_line_number;
-                echo '<div class=local_users_sync_error>' . get_string('invalid'.$key.'value'.$this->excel_line_number, 'local_users', $strings) . '</div>';
+                echo '<div class=local_users_sync_error>' . get_string('invalid'.$key.'value', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('invalid'.$key.'value', 'local_users', $strings);
                 $this->errorcount++; 
+                break;
             }
         }
            

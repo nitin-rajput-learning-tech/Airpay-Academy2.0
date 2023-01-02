@@ -1231,7 +1231,7 @@ function org_dep_sql($categorycontext)
                 $gparams[] = '(' . $groupqueeryparams . ')';
             }
         }
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path());
         if (!empty($gparams))
             $opengroup = implode('AND', $gparams);
         else
