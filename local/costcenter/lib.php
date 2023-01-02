@@ -967,7 +967,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
     }
 }
 function local_costcenter_get_costcenter_path(&$data){
-    global $DB;
+    global $DB, $USER;
     $fields = local_costcenter_get_fields();
     $path = '';
     foreach($fields AS $field){
@@ -979,6 +979,20 @@ function local_costcenter_get_costcenter_path(&$data){
     if($value > 0){
         // finding the path mapped for the last element in the form to meet the data requirements for all head roles.
         $path = $DB->get_field('local_costcenter', 'path', array('id' => $value));
+        // updating the user path if the user belongs to the chlid path for the selected costcenter path.
+        if($USER->access['currentroleinfo']['contextinfo']){
+            $updatepath = true;
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                if(strpos($path, $contextinfo['costcenterpath']) === 0){
+                    $updatepath = false;
+                    break;
+                }
+                $rolepath = $contextinfo['costcenterpath'];
+            }
+            if($updatepath){
+                $path = $rolepath;
+            }
+        }
         $data->open_path = $path;
     }
 }
