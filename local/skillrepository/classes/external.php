@@ -23,6 +23,7 @@
  */
 defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
+require_once($CFG->dirroot . '/user/selector/lib.php');
 class local_skillrepository_external extends external_api {
 
     /**
@@ -60,7 +61,7 @@ class local_skillrepository_external extends external_api {
         $valdata->description=$valdata->description['text'];
         if($valdata){
             if($valdata->id>0){
-                $repositoryinsert->skillrepository_opertaions('local_skill', 'update', $valdata,'','');
+                $repositoryinsert->skillrepository_opertaions('local_Flikeill', 'update', $valdata,'','');
             } else {
                 $repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');
             }
@@ -97,7 +98,6 @@ class local_skillrepository_external extends external_api {
 
     public function submit_skill_category($contextid, $jsonformdata){
         global $PAGE, $CFG;
-
         require_once($CFG->dirroot . '/local/skillrepository/lib.php');
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_skill_category_parameters(), ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
@@ -118,6 +118,7 @@ class local_skillrepository_external extends external_api {
         $valdata = $mform->get_data();
 
         if($valdata){
+            local_costcenter_get_costcenter_path($valdata);
             $repositoryinsert->create_skill_category($valdata);
         } else {
             // Generate a warning.
@@ -172,11 +173,11 @@ class local_skillrepository_external extends external_api {
 
         $repositorysql = "SELECT id, name
             FROM {local_skill_categories}
-            WHERE costcenterid = :costcenterid ";
+            WHERE open_path LIKE  '/".$organisation."%'";
         if ($query) {
             $repositorysql .= " AND name LIKE '%$query%' ";
         }
-        $repos = $DB->get_records_sql($repositorysql, ['costcenterid' => $organisation]);
+        $repos = $DB->get_records_sql($repositorysql);
         return array('repos' => $repos);
     }
 
@@ -227,6 +228,7 @@ class local_skillrepository_external extends external_api {
         $valdata = $mform->get_data();
 
         if($valdata){
+            local_costcenter_get_costcenter_path($valdata);
             $levelid = $querylib->insert_update_level($valdata);
         } else {
             // Generate a warning.

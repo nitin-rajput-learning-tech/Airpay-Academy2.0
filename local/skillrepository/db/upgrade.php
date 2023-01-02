@@ -110,5 +110,23 @@ function xmldb_local_skillrepository_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true,2022101800, 'local', 'skillrepository');
     }
+    if ($oldversion < 2022101800.12) {
+        $table = new xmldb_table('local_skill');
+        $table1 = new xmldb_table('local_skill_categories');
+        $table2 = new xmldb_table('local_course_levels');
+
+        $field = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        if (!$dbman->field_exists($table1, $field)) {
+            $dbman->add_field($table1, $field);
+        }
+        if (!$dbman->field_exists($table2, $field)) {
+            $dbman->add_field($table2, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2022101800.12, 'local', 'skillrepository');
+    }
     return true;
 }

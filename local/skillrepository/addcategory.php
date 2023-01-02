@@ -35,6 +35,7 @@ $record = new stdClass();
 
 $record->name = $name;
 $record->shortname = $shortname;
+$record->open_path = $open_path;
 $record->usermodified = $USER->id;
 $record->timecreated = time();
 $record->timemodified = time();

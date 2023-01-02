@@ -94,9 +94,12 @@ function local_skillrepository_output_fragment_new_skill_repository_form($args){
         'subdirs' => false,
         'autosave' => false
     ];
+    $customdata = array(
+        'open_path' => $data->open_path,'id' => $args->repositoryid,'editoroptions' => $editoroptions);
+        local_costcenter_set_costcenter_path($customdata);
     $group = file_prepare_standard_editor($group, 'description', $editoroptions, $context, 'group', 'description', null);
 
-    $mform = new local_skillrepository\form\skill_repository_form(null, array('id' => $args->repositoryid, 'editoroptions' => $editoroptions), 'post', '', null, true, $formdata);
+    $mform = new local_skillrepository\form\skill_repository_form(null, $customdata, 'post', '', null, true, $formdata);
 
     $mform->set_data($data);
 
@@ -123,11 +126,16 @@ function local_skillrepository_output_fragment_skill_category_form($args){
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
-    $mform = new local_skillrepository\form\skill_category_form(null, array('id' => $args->categoryid), 'post', '', null, true, $formdata);
     if ($categoryid > 0) {
         $data = $DB->get_record('local_skill_categories', array('id'=>$categoryid));
-        $mform->set_data($data);
-    }
+        
+            
+}
+$customdata = array(
+    'open_path' => $data->open_path,'id' => $args->categoryid);
+    local_costcenter_set_costcenter_path($customdata);
+$mform = new local_skillrepository\form\skill_category_form(null, $customdata, 'post', '', null, true, $formdata);
+$mform->set_data($data);
     if (!empty($formdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
@@ -173,11 +181,14 @@ function local_skillrepository_output_fragment_level_form($args){
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
-    $mform = new \local_skillrepository\form\levelsform(null, array('id' => $args->levelid), 'post', '', null, true, $formdata);
     if ($levelid > 0) {
         $data = $DB->get_record('local_course_levels', array('id'=>$levelid));
-        $mform->set_data($data);
     }
+    $customdata = array(
+        'open_path' => $data->open_path,'id' => $args->levelid);
+        local_costcenter_set_costcenter_path($customdata);
+$mform = new \local_skillrepository\form\levelsform(null, $customdata, 'post', '', null, true, $formdata);
+$mform->set_data($data);
     if (!empty($formdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
@@ -197,15 +208,14 @@ function skill_details($tablelimits, $filtervalues){
     $countsql = "SELECT count(sk.id) FROM {local_skill} AS sk WHERE 1=1 ";
     $selectsql = "SELECT sk.*, lc.fullname as organisationname, lsc.name AS skill_catname
         FROM {local_skill} AS sk
-        JOIN {local_costcenter} AS lc ON lc.id = sk.costcenterid
+        JOIN {local_costcenter} AS lc ON concat('/',sk.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1 
         JOIN {local_skill_categories} AS lsc ON lsc.id = sk.category
         WHERE 1=1 ";
     $queryparam = array();
 
     if(!is_siteadmin()){
-        $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-        $concatsql .= " AND sk.costcenterid= :usercostcenter ";
-        $queryparam['usercostcenter'] = $costcenterid;
+        $costcenter_path=$DB->get_field('user','open_path',array('id'=>$USER->id));
+        $concatsql .= " AND sk.openpath LIKE  concat($costcenter_path,'/%') ";
     }
     if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
         $concatsql .= " AND (sk.name LIKE :search1 )";
@@ -245,19 +255,18 @@ function skill_details($tablelimits, $filtervalues){
 //////For display on level page//////////
 function skills_level_details($tablelimits, $filtervalues){
     global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-
+    $costcenterid=explode('/',$USER->open_path)[1];
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $countsql = "SELECT count(lcl.id) FROM {local_course_levels} AS lcl WHERE 1=1 ";
     $selectsql = "SELECT lcl.id,lcl.name,lcl.code, concat(u.firstname,' ', u.lastname) as username, lc.fullname as organisationname
         FROM {local_course_levels} AS lcl
         JOIN {user} AS u ON u.id=lcl.usercreated
-        JOIN {local_costcenter} AS lc ON lc.id = lcl.costcenterid
+        JOIN {local_costcenter} AS lc ON concat('/',lcl.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
         WHERE 1=1 ";
     $queryparam = array();
 
     if(!is_siteadmin()){
-        $concatsql .= " AND lcl.costcenterid= :usercostcenter ";
-        $queryparam['usercostcenter'] = $USER->open_costcenterid;
+        $concatsql .= " AND lcl.costcenterid= $costcenterid ";
     }
 
     if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
@@ -289,13 +298,12 @@ function skills_category_details($tablelimits, $filtervalues){
     global $DB, $PAGE,$USER,$CFG,$OUTPUT;
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $countsql = "SELECT count(lsc.id) FROM {local_skill_categories} AS lsc WHERE 1=1 ";
-
-    $selectsql = "SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON lc.id = lsc.costcenterid";
+    $costcenterid=explode('/',$USER->open_path)[1];
+    $selectsql = "SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON concat('/',lsc.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1";
     $queryparam = array();
 
     if(!is_siteadmin()){
-        $concatsql .= " AND lsc.costcenterid= :usercostcenter ";
-        $queryparam['usercostcenter'] = $USER->open_costcenterid;
+        $concatsql .= " AND lsc.open_path LIKE  concat('%'.$costcenterid)";
     }
     if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
         $concatsql .= " AND (lsc.name LIKE :search1 )";

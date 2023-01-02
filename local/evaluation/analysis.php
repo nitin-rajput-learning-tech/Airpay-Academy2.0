@@ -53,8 +53,8 @@ $PAGE->set_title($evaluation->name);
 $PAGE->navbar->add(get_string("manageevaluation", 'local_evaluation'), new moodle_url('index.php'));
 $PAGE->navbar->add($evaluation->name);
 echo $OUTPUT->header();
-if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)|| has_capability('local/evaluation:manage_multiorganizations', $context))){
-    if($evaluation->open_path != $USER->open_path){
+if(!(is_siteadmin())){
+    if(explode('/',$evaluation->open_path)[1] !=(new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
         print_error(get_string('cannotaccess', 'local_evaluation'));
     }
 }
