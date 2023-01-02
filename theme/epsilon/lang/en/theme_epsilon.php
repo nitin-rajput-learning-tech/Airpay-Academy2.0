@@ -213,3 +213,11 @@ $string['region-course-pre'] = 'Course Pre';
 $string['quickaccess'] = 'Quick Access';
 $string['home'] = 'Dashboard';
 $string['colorschemes'] = 'Colorschemes';
+$string['phonenumber'] = 'Mobile Number';
+$string['learnerlogin'] ='Enter Mobile Number';
+$string['show_more_less'] = 'Show more/less';
+
+$string['enterotp'] = 'Enter OTP';
+$string['resentotp'] = 'Resend OTP';
+$string['showhideblocks'] = 'Show/Hide blocks';
+$string['entermobileotp'] = 'Entered mobile number is not exists, please check';
