@@ -228,8 +228,14 @@ class search implements renderable{
             $coursecontext   = context_course::instance($course->id);
             $enroll=is_enrolled($coursecontext, $USER->id);
             $course->enroll = $enroll;
+            $course->isenrolled = $enroll;
 
             $course->selfenrol = $this->get_enrollbutton($enroll, $course);
+            if($course->approvalreqd == 1){
+                $course->enrolmethods[] = 'request';
+            }else if($course->selfenrol == 1){
+                $course->enrolmethods[] = 'self';
+            }
 
             $course->rating_element = '';
             $course->avgrating = 0;

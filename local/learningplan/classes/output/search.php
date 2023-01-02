@@ -237,10 +237,16 @@ class search implements renderable{
             $list->type = learningplan;
             $list->module = 'local_learningplan';
             $list->enroll = $this->get_enrollflag($list->id);
+            $list->isenrolled=$list->enroll;
             $userenrolstatus = $DB->record_exists('local_learningplan_user', array('planid' => $list->id, 'userid' => $USER->id));
             $return=false;
 
             $list->enrollmentbtn = $this->get_enrollbtn($list);
+            if($list->approvalreqd == 1){
+                $list->enrolmethods[] = 'request';
+            }else if($list->selfenrol == 1){
+                $list->enrolmethods[] = 'self';
+            }
 
             $list->rating_element = '';
             $list->avgrating = 0;

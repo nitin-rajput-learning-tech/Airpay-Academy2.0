@@ -268,8 +268,14 @@ class search implements renderable{
             $list->module = 'local_classroom';
 
             $list->enroll=$this->get_the_enrollflag($classroomid);
+            $list->isenrolled=$list->enroll;
 
             $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $list->id, 'userid' => $USER->id));
+            if($course->approvalreqd == 1){
+                $course->enrolmethods[] = 'request';
+            }else if($course->selfenrol == 1){
+                $course->enrolmethods[] = 'self';
+            }
             $list->userenrolstatus = $userenrolstatus;
             $return=false;
             if($list->id > 0 && ($list->nomination_startdate!=0 || $list->nomination_enddate!=0)){

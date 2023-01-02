@@ -53,7 +53,7 @@ class local_search_external extends external_api {
             $page = $page-1;
         \local_search\output\searchlib::$page = $page;
         \local_search\output\searchlib::$perpage = $pagelimit;
-        \local_search\output\searchlib::$search = $search;
+        \local_search\output\searchlib::$search = $query;
         if(file_exists($CFG->dirroot . '/local/includes.php')){
             require_once($CFG->dirroot . '/local/includes.php');
             $includes = new user_course_details();
