@@ -2597,13 +2597,92 @@ function get_listof_evalautions($stable, $filtervalues){
             }
         }
     }
+    $filterparams=array();
+    if (!empty($filtervalues->organizations)) {
 
+        $organizations = explode(',', $filtervalues->organizations);
+        $orgsql = [];
+        foreach($organizations AS $organisation){
+            $orgsql[] = " concat('/',a.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $filterparams["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+
+        }
+        if(!empty($orgsql)){
+            $fromsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        }
+    }
+    if (!empty($filtervalues->departments)) {
+
+        $departments = explode(',', $filtervalues->departments);
+        $departmentsql = [];
+        foreach($departments AS $department){
+            $departmentsql[] = "concat('/',a.open_path,'/') LIKE :departmentparam_{$department}";
+            $filterparams["departmentparam_{$department}"] = '%/'.$department.'/%';
+
+        }
+        if(!empty($departmentsql)){
+            $fromsql .= " AND ( ".implode(' OR ', $departmentsql)." ) ";
+        }
+    }
+    if (!empty($filtervalues->subdepartment)) {
+
+        $subdepartments = explode(',', $filtervalues->subdepartment);
+        $subdepartmentsql = [];
+        foreach($subdepartments AS $subdepartment){
+            $subdepartmentsql[] = "concat('/',a.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $filterparams["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
+        }
+        if(!empty($subdepartmentsql)){
+            $fromsql .= " AND ( ".implode(' OR ', $subdepartmentsql)." ) ";
+        }
+    }
+    if (!empty($filtervalues->department4level)) {
+
+        $department4levels = explode(',', $filtervalues->department4level);
+        $departmentlevel4sql = [];
+        foreach($department4levels AS $department4level){
+            $departmentlevel4sql[] = "concat('/',a.open_path,'/') LIKE :departmentlevel4param_{$department4level}";
+            $filterparams["departmentlevel4param_{$department4level}"] = '%/'.$department4level.'/%';
+        }
+        if(!empty($departmentlevel4sql)){
+            $fromsql .= " AND ( ".implode(' OR ', $departmentlevel4sql)." ) ";
+        }
+    }
+    if (!empty($filtervalues->department5level)) {
+
+        $department5level = explode(',', $filtervalues->department5level);
+        $departmentlevel5sql = [];
+        foreach($department5level AS $department5levels){
+
+            $departmentlevel5sql[] = "concat('/',a.open_path,'/') LIKE :departmentlevel5param_{$department5levels}";
+            $filterparams["departmentlevel5param_{$department5levels}"] = '%/'.$department5levels.'/%';
+        }
+        if(!empty($departmentlevel5sql)){
+            $fromsql .= " AND ( ".implode(' OR ', $departmentlevel5sql)." ) ";
+        }
+    }
+    if(isset($filtervalues->district) && !empty($filtervalues->district)){
+        $district = is_array($filtervalues->district) ? implode($filtervalues->district) : $filtervalues->district ;
+        $fromsql .= " AND a.open_district IN ($district) ";
+    }
+    if(isset($filtervalues->states) && !empty($filtervalues->states)){
+        $states = is_array($filtervalues->states) ? implode($filtervalues->states) : $filtervalues->states ;
+        $fromsql .= " AND a.open_states IN ($states) ";
+    }
+    if(isset($filtervalues->subdistrict) && !empty($filtervalues->subdistrict)){
+        $subdistrict = is_array($filtervalues->subdistrict) ? implode($filtervalues->subdistrict) : $filtervalues->subdistrict ;
+        $fromsql .= " AND a.open_subdistrict IN ($subdistrict) ";
+    }
+    if(isset($filtervalues->village) && !empty($filtervalues->village)){
+        $village = is_array($filtervalues->village) ? implode($filtervalues->village) : $filtervalues->village ;
+        $fromsql .= " AND a.open_village IN ($village) ";
+    }
     if ($userorder == 1)
     $ordersql = " order by eu.timecreated DESC ";
     else
     $ordersql = " order by a.id DESC ";
 
-    $params = array_merge($userarray);
+    $params = array_merge($userarray,$filterparams);
     $feedbackcount = $DB->count_records_sql($countsql.$fromsql, $params);
     $records = $DB->get_records_sql($sql.$fromsql.$ordersql, $params, $stable->start, $stable->length);
     foreach($records as $record) {

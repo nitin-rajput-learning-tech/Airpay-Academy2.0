@@ -9,7 +9,6 @@ class lib{
         $data->code         = $formdata->code;
         $data->costcenterid = $formdata->costcenterid;
         if($formdata->id){
-            $data = new \stdClass();
             $data->id           = $formdata->id;
             $data->timemodified = time();
             $data->usermodified = $USER->id;

@@ -61,8 +61,10 @@ class local_skillrepository_external extends external_api {
         $valdata->description=$valdata->description['text'];
         if($valdata){
             if($valdata->id>0){
+                local_costcenter_get_costcenter_path($valdata);
                 $repositoryinsert->skillrepository_opertaions('local_Flikeill', 'update', $valdata,'','');
             } else {
+                local_costcenter_get_costcenter_path($valdata);
                 $repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');
             }
         } else {

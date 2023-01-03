@@ -230,12 +230,12 @@ class search implements renderable{
             $course->enroll = $enroll;
             $course->isenrolled = $enroll;
 
-            $course->selfenrol = $this->get_enrollbutton($enroll, $course);
             if($course->approvalreqd == 1){
                 $course->enrolmethods[] = 'request';
             }else if($course->selfenrol == 1){
                 $course->enrolmethods[] = 'self';
             }
+            $course->selfenrol = $this->get_enrollbutton($enroll, $course);
 
             $course->rating_element = '';
             $course->avgrating = 0;
@@ -351,19 +351,19 @@ class search implements renderable{
         global $DB, $USER;
         $course = get_course($moduleid);
         if(is_enrolled(context_course::instance($moduleid, $USER->id))){
-            throw new Exception("Already enrolled");
+            throw new \Exception("Already enrolled");
         }
         switch($enrolmethod){
             case 'request':
                 if($course->approvalreqd != 1){
-                    throw new Exception("Enrollment method inactive");
+                    throw new \Exception("Enrollment method inactive");
                 }else{
                     \local_request\api\requestapi::create('elearning', $moduleid);
                 }
             break;
             case 'self':
                 if($course->approvalreqd == 1 || $course->selfenrol != 1){
-                    throw new Exception("Enrollment method inactive");
+                    throw new \Exception("Enrollment method inactive");
                 }else{
                     $self = enrol_get_plugin('self');
                     $type = 'course_enrol';
@@ -382,7 +382,7 @@ class search implements renderable{
                 }
             break;
             default:
-                throw new Exception("Unknown enrollment method");
+                throw new \Exception("Unknown enrollment method");
             break;
         }
     }

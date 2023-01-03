@@ -34,6 +34,7 @@
         <FIELD NAME="completionsubmit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="If this field is set to 1, then the activity will be automatically marked as 'complete' once the user submits their choice."/>
         <FIELD NAME="evaluationmode" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="SE" SEQUENCE="false" COMMENT=" plugin name"/>
         <FIELD NAME="open_path" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT=" open path for costcenter"/>
+        <FIELD NAME="open_group" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT=" open_group"/>
         <FIELD NAME="open_states" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT=" state"/>
         <FIELD NAME="open_district" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT=" district"/>
         <FIELD NAME="open_subdistrict" TYPE="char" LENGTH="200" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT=" sub-district"/>

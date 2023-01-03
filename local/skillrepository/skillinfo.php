@@ -41,11 +41,6 @@ if (!has_capability('local/skillrepository:create_skill',(new \local_skillreposi
     print_error('Sorry, You are not accessable to this page');
 }
 
-if (!has_capability('local/costcenter:manage_multiorganizations', (new \local_skillrepository\lib\accesslib())::get_module_context())) {
-        if($skill->costcenterid!=$USER->open_costcenterid){
-         print_error('Sorry, You are not accessable to this page');
-        }     
-}
 
 require_login();
 $PAGE->set_title(get_string('skillinfo', 'local_skillrepository'));

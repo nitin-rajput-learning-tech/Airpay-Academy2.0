@@ -54,7 +54,7 @@ $PAGE->navbar->add(get_string("manageevaluation", 'local_evaluation'), new moodl
 $PAGE->navbar->add($evaluation->name);
 echo $OUTPUT->header();
 if(!(is_siteadmin())){
-    if(explode('/',$evaluation->open_path)[1] !=(new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
+    if(explode('/',$evaluation->open_path)[1] !=explode('/',$USER->open_path)[1]){
         print_error(get_string('cannotaccess', 'local_evaluation'));
     }
 }

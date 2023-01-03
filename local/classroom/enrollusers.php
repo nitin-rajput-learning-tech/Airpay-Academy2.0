@@ -103,6 +103,14 @@ if ($classroomid) {
             }
             $organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
             $department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
+            $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
+            $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
+            $department5level = !empty($filterdata->department4level) ? implode(',', $filterdata->department5level) : null;
+            $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
+            $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
+            $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
+            $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
+            
             $email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
             $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
             $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
@@ -115,7 +123,7 @@ if ($classroomid) {
     }
 
     // Create the user selector objects.
-    $options = array('context' => $categorycontext->id, 'classroomid' => $classroomid, 'organization' => $organization, 'department' => $department, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
+    $options = array('context' => $categorycontext->id, 'classroomid' => $classroomid, 'organization' => $organization, 'department' => $department,'subdepartment' => $subdepartment,'department4level' => $department4level,'department5level' => $department5level,'states' => $states,'district' => $district,'subdistrict' => $subdistrict,'village' => $village, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
     //$potentialuserselector = new local_classroom_potential_users('addselect', $options);
     //$currentuserselector = new local_classroom_existing_users('removeselect', $options);
 

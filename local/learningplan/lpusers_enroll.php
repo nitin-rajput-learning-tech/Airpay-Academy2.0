@@ -43,8 +43,8 @@ $type=optional_param('type','', PARAM_RAW);
 $lastitem=optional_param('lastitem',0, PARAM_INT);
 $sesskey=sesskey();
 $learningplan = $DB->get_record('local_learningplan',array('id' => $planid));
-if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-    $is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
+if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext))){
+    /*$is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
     $is_Dh = has_capability('local/costcenter:manage_owndepartments',$systemcontext);
     $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
     if($is_Oh && explode('/', $learningplan->open_path)[1] != $costcenterid){
@@ -54,6 +54,14 @@ if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganization
     $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
     if($is_Dh && (!in_array(explode(',',$learningplans->open_path)) != $costcenterid)){
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
+    }*/
+    
+    $sql="SELECT lp.id ";
+    $sql.=" FROM {local_learningplan} lp WHERE id = :id "; 
+    $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
+    $learningplans=$DB->get_records_sql($sql .$costcenterpathconcatsql,array('id'=>$planid));
+    if(empty($learningplans)){
+        redirect($CFG->wwwroot . '/local/learningplan/index.php');  
     }
 }
 
@@ -114,6 +122,7 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
 	
 	
   	$filterdata =  $mform->get_data();
+    // print_r($filterdata);exit;
   	if($filterdata){
   		$collapse = false;
       $show = 'show';
@@ -123,6 +132,13 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
   	}
   	$organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
   	$department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
+    $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
+    $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
+    $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
+    $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
+    $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
+    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
+    $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
   	$email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
   	$idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
   	$uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
@@ -130,7 +146,7 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
     $location = !empty($filterdata->location) ? implode(',', $filterdata->location) : null;
   	$hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', $filterdata->hrmsrole) : null;
   }
-   $options = array('context' => $systemcontext->id, 'planid' => $planid, 'organization' => $organization, 'department' => $department, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
+   $options = array('context' => $systemcontext->id, 'planid' => $planid, 'organization' => $organization, 'department' => $department, 'subdepartment' => $subdepartment, 'department4level' => $department4level, 'department5level' => $department5level, 'states' => $states, 'district' => $district, 'subdistrict' => $subdistrict, 'village' => $village, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
 
   	// print_collapsible_region_start('', 'filters_form', get_string('filters'),false,$collapse);
   	// $mform->display();

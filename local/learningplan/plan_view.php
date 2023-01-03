@@ -60,21 +60,28 @@ $PAGE->navbar->add( get_string('pluginname', 'local_learningplan'), new moodle_u
 $PAGE->navbar->add($plan_record->name);
 $learningplan = $DB->get_record('local_learningplan',array('id' => $id));
 $is_enrolled = $DB->record_exists('local_learningplan_user',  array('planid' => $id, 'userid' => $USER->id));
+if(!($is_enrolled || is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext))){
 
-if(!($is_enrolled || is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-
-    $is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
-    $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-    if($is_Oh && explode('/', $learningplan->open_path)[1] != $costcenterid){
-        redirect($CFG->wwwroot . '/local/learningplan/index.php');
-    }
+    // $is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
+    // $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+    // if($is_Oh && explode('/', $learningplan->open_path)[1] != $costcenterid){
+    //     redirect($CFG->wwwroot . '/local/learningplan/index.php');
+    // }
     
-    if ((has_capability('local/costcenter:manage_owndepartments', $systemcontext))) {
-            $learningplans = $DB->get_record('local_learningplan',array('id'=>$id),$fields = 'id');
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
-            if(!in_array(explode('/', $learningplan->open_path)[2],explode(',',$costcenterid))){
-                 redirect($CFG->wwwroot . '/local/learningplan/index.php');  
-             }
+    // if ((has_capability('local/costcenter:manage_owndepartments', $systemcontext))) {
+    //         $learningplans = $DB->get_record('local_learningplan',array('id'=>$id),$fields = 'id');
+    //         $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
+    //         if(!in_array(explode('/', $learningplan->open_path)[2],explode(',',$costcenterid))){
+    //              redirect($CFG->wwwroot . '/local/learningplan/index.php');  
+    //          }
+    // }
+    // echo 'teting';exit;
+    $sql="SELECT lp.id ";
+    $sql.=" FROM {local_learningplan} lp WHERE id = :id "; 
+    $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
+    $learningplans=$DB->get_records_sql($sql .$costcenterpathconcatsql,array('id'=>$id));
+    if(empty($learningplans)){
+        redirect($CFG->wwwroot . '/local/learningplan/index.php');  
     }
  }
 if(!is_siteadmin()){
