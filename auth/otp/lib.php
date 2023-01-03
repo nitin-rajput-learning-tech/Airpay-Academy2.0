@@ -66,7 +66,7 @@ class otp {
       $appdetails->phonenumber = $validusers->phone1;
       $desc=get_string('notvalidphone', 'auth_otp', $appdetails);
       $this->local_logs('otp', 'User', 1, $desc, 'warning');
-		  return 4;
+		  return 2;
 	  } else {
       $string = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
       $string_shuffled = str_shuffle($string);
@@ -92,31 +92,11 @@ class otp {
           }
       }
 
-      $otpdetails = new stdClass();
-      $otpdetails->otpcode = (string)$otp;
-      $otpdetails->phonenumber = $phonenumber;
-      $otpdetails->username = $username;
-      $otpdetails->userid = $validusers->id;
-      $otpdetails->timecreated = time();
-
-      $exsql = "SELECT * FROM {local_otp} op WHERE
-      userid = ? AND inuse = 0 AND trystatus < 3 ORDER BY id DESC LIMIT 1 ";
-      $checkexist = $DB->get_record_sql($exsql, [$validusers->id]);
-
-      if ($checkexist) {
-        $otpdetails->id = $checkexist->id;
-        $otpdetails->trystatus = 0;
-        $otpdetails->timemodified = time();
-        $DB->update_record('local_otp', $otpdetails);
-      } else {
-        $DB->insert_record('local_otp', $otpdetails);
-      }
-      $appdetails->username = $validusers->username;
-      $appdetails->phonenumber = $phonenumber;
-      $appdetails->otp = $otpdetails->otpcode;
+      $this->update_otp($otp, $phonenumber, $username, $validusers->id);
+      $appdetails->otp = $otp;
       $desc = get_string('otpsendtomobile', 'auth_otp', $appdetails);
-      $this->local_logs('otp', 'User', 1, $desc, 'success');
-      return 5;
+      $this->local_logs('otp', 'User', 1, $desc, 'Success');
+      return 3;
 		}
     exit;
   }
@@ -136,7 +116,7 @@ class otp {
 			  $appdetails->otp = $otp;
 			  $desc=get_string('otpabovethree', 'auth_otp', $appdetails);
 			  $this->local_logs('otp', 'User', 1, $desc, 'moreotp');
-	      return 1;
+	      return 2;
 		  } else if ($validinfo->inuse == 1) {
 		    $appdetails->username=$username;
 			  $appdetails->otp = $otp;
@@ -154,8 +134,8 @@ class otp {
 				$appdetails->otp = $otp;
 				$appdetails->trycount = $otpdetails->trystatus;
 				$desc=get_string('validotpentered', 'auth_otp', $appdetails);
-				$this->local_logs('otp', 'User', 1, $desc, 'success');
-				return 2;
+				$this->local_logs('otp', 'User', 1, $desc, 'Success');
+				return 1;
       }
     } else {
 
@@ -171,7 +151,7 @@ class otp {
         $appdetails->otp = $otp;
         $desc=get_string('otpabovethree', 'auth_otp', $appdetails);
         $this->local_logs('otp', 'User', 1, $desc, 'warning');
-        return 1;
+        return 2;
       } else {
         $appdetails->username = $username;
         $appdetails->otp = $otp;
@@ -191,10 +171,6 @@ class otp {
 		global $DB, $CFG;
 		$appdetails = new stdClass();
 
-  	if (empty($username)) {
-  		return 2;
-    }
-
     $sql = "SELECT u.id, u.username, u.email, u.phone1 FROM {user} u WHERE u.username = ?  AND u.confirmed = 1 AND u.auth = 'otp' ";
     $validusers = $DB->get_record_sql($sql, [$username]);
 
@@ -212,7 +188,7 @@ class otp {
       $appdetails->phonenumber = $validusers->phone1;
       $desc = get_string('notvalidphone', 'auth_otp', $appdetails);
       $this->local_logs('otp', 'User', 1, $desc, 'warning');
-      return 3;
+      return 2;
     } else {
       $otp = mt_rand(1001, 9999);
 
@@ -237,31 +213,12 @@ class otp {
         }
       }
 
-      $otpdetails = new stdClass();
-      $otpdetails->otpcode = (string)$otp;
-      $otpdetails->phonenumber = $phonenumber;
-      $otpdetails->username = $username;
-      $otpdetails->userid = $validusers->id;
-      $otpdetails->timecreated = time();
+      $this->update_otp($otp, $phonenumber, $username, $validusers->id);
 
-      $exsql = "SELECT * FROM {local_otp} op WHERE userid = ? AND inuse = 0 AND trystatus < 3 ORDER BY id DESC LIMIT 1 ";
-      $checkexist = $DB->get_record_sql($exsql, [$validusers->id]);
-
-      if ($checkexist) {
-        $otpdetails->id = $checkexist->id;
-        $otpdetails->trystatus = 0;
-        $otpdetails->timemodified = time();
-        $DB->update_record('local_otp', $otpdetails);
-      } else {
-        $DB->insert_record('local_otp', $otpdetails);
-        
-      }
-      $appdetails->username = $validusers->username;
-      $appdetails->phonenumber = $phonenumber;
-      $appdetails->otp = $otpdetails->otpcode;
+      $appdetails->otp = $otp;
       $desc = get_string('otpsendtomobile', 'auth_otp', $appdetails);
-      $this->local_logs('otp', 'User', 1, $desc, 'success');
-      return 6;
+      $this->local_logs('otp', 'User', 1, $desc, 'Success');
+      return 3;
     }
     exit;
   }
@@ -287,5 +244,26 @@ class otp {
         "cache-control: no-cache",
       ),
     ];
+  }
+  private function update_otp($otp, $phonenumber, $username, $userid) {
+    global $DB;
+    $otpdetails = new stdClass();
+    $otpdetails->otpcode = $otp;
+    $otpdetails->phonenumber = $phonenumber;
+    $otpdetails->username = $username;
+    $otpdetails->userid = $userid;
+    $otpdetails->timecreated = time();
+
+    $exsql = "SELECT * FROM {local_otp} op WHERE userid = ? AND inuse = 0 AND trystatus < 3 ORDER BY id DESC LIMIT 1 ";
+    $checkexist = $DB->get_record_sql($exsql, [$userid]);
+
+    if ($checkexist) {
+      $otpdetails->id = $checkexist->id;
+      $otpdetails->trystatus = 0;
+      $otpdetails->timemodified = time();
+      $DB->update_record('local_otp', $otpdetails);
+    } else {
+      $DB->insert_record('local_otp', $otpdetails);
+    }
   }
 }

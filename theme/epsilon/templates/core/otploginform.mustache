@@ -174,6 +174,9 @@ require(['jquery', 'core/ajax'], function($, ajax) {
                 args: {username: application_id, otp: otppassword, type: type},
                 done: function(status) {
                     if(status == 1) {
+                        $("#login").submit();
+                        return true;
+                    } else if(status == 2) {
                         e.preventDefault();
                         var retVal =confirm("OTP entered incorrect more than 3 times. Please re-generate OTP");
                         if(retVal === true) {
@@ -182,9 +185,6 @@ require(['jquery', 'core/ajax'], function($, ajax) {
                     } else if(status == 3) {
                         e.preventDefault();
                         confirm("OTP incorrect, please enter correct OTP");
-                    } else if(status == 2) {
-                        $("#login").submit();
-                        return true;
                     } else if(status == 4) {
                         e.preventDefault();
                         confirm("OTP incorrect, please Regenerate OTP and try again");
@@ -214,7 +214,7 @@ require(['jquery', 'core/ajax'], function($, ajax) {
                 methodname: 'auth_otp_validateuserdetails',
                 args: {username: application_id, otp: 0, type: type},
                 done: function(status) {
-                    if (status == 5) {
+                    if (status == 3) {
                         if (flag == 1) {
                             alert("Successfully sent OTP to your Mobile.");
                         } else if (flag == 2) {
@@ -225,18 +225,13 @@ require(['jquery', 'core/ajax'], function($, ajax) {
                         $("#sentotplink").hide();
                         $("#loginpassdiv").show();
                         $('#loginbtn').removeClass('hiddennow');
-                    } else if(status == 3) {
-                        var retVal =confirm("Please login with email");
-                        if(retVal == true){
-                            document.location.reload();
-                        }
-                    } else if(status == 4) {
+                    } else if(status == 2) {
                         var retVal =confirm("Please check your account mobile number");
                         if(retVal == true){
                             document.location.reload();
                         }
                     } else if(status == 1) {
-                        var retVal =confirm("Entered email does not exists");
+                        var retVal =confirm("Entered username / email does not exists");
                         if(retVal == true){
                             document.location.reload();
                         }
