@@ -231,8 +231,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $deptexistsql = "SELECT id FROM {local_costcenter} WHERE depth = 2 ";
         if(!(is_siteadmin())){
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);;
-            $deptexistsql .= "AND parentid={$costcenterid} ";
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
+            $deptexistsql .= "AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
         if($deptexist && $depth != 3 && $depth != 4){
@@ -247,9 +247,12 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $deptexistth = "SELECT id FROM {local_costcenter} WHERE depth = 3 ";
         if(!(is_siteadmin())){
             $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=3);;
-            $deptexistth .= " AND parentid={$costcenterid} ";
+            $deptexistth .= " AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' )";
         }
+        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
+
         $deptexistone = $DB->record_exists_sql($deptexistth);
+
         if($deptexistone && $depth != 4 ){
             $headstring = 'addnewsubsubdept';
                 $title = get_string('createsubsubdepartment','local_costcenter');
@@ -262,8 +265,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $deptexistfo = "SELECT id FROM {local_costcenter} WHERE depth = 4 ";
         if(!(is_siteadmin())){
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=4);;
-            $deptexistfo .= " AND parentid={$costcenterid} ";
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=4);
+            $deptexistfo .= " AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
         }
         $deptexisttwo = $DB->record_exists_sql($deptexistfo);
         if($deptexisttwo){
@@ -283,6 +286,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             'create_sub_sub_department' => $create_sub_sub_department,
             'create_sub_sub_sub_department' => $create_sub_sub_sub_department
         );
+
     return $this->render_from_template('local_costcenter/viewbuttons', $buttons);
     }
 
