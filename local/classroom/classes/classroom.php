@@ -2565,6 +2565,114 @@ class classroom {
             $params = array_merge($params,$relatedidnumberparams);            
             $sql .= " AND u.id $relatedidnumbersql";
         }
+        if(!empty($params['organizations'])){
+            $organizations = explode(',', $params['organizations']);
+            $orgsql = [];
+            foreach($organizations AS $organisation){
+                $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
+                $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+            }
+            if(!empty($orgsql)){
+                $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";               
+            }
+            // $sql .= " AND l.costcenter IN ($selectedorganizations) ";
+        }
+        if(!empty($params['departments'])){
+            $depts = explode(',', $params['departments']);
+            $deptsql = [];
+            foreach($depts AS $dept){
+                $deptsql[] = " concat('/',u.open_path,'/') LIKE :deptparam_{$dept}";
+                $params["deptparam_{$dept}"] = '%/'.$dept.'/%';
+            }
+            if(!empty($deptsql)){
+                $sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+            }
+        }
+        // if(!empty(array_filter($filterdata->subdepartment))){
+        // 	$selectedsubdepts = implode(',', $filterdata->subdepartment);
+        // 	$sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
+        // }
+        if(!empty($params['subdepartment'])){
+            $subdepts = explode(',', $params['subdepartment']);
+            $subdeptsql = [];
+            foreach($subdepts AS $subdept){
+                $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdeptparam_{$subdept}";
+                $params["subdeptparam_{$subdept}"] = '%/'.$subdept.'/%';
+            }
+            if(!empty($subdeptsql)){
+                $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+            }
+            // $sql .= " AND l.costcenter IN ($selectedorganizations) ";
+        }
+
+        if(!empty($params['department4level'])){
+            $depts4 = explode(',', $params['department4level']);
+            $depts4sql = [];
+            foreach($depts4 AS $dept4){
+                $depts4sql[] = " concat('/',u.open_path,'/') LIKE :dept4param_{$dept4}";
+                $params["dept4param_{$dept4}"] = '%/'.$dept4.'/%';
+            }
+            if(!empty($depts4sql)){
+                $sql .= " AND ( ".implode(' OR ', $depts4sql)." ) ";
+            }
+        }
+
+        if(!empty($params['department5level'])){
+            $depts5 = explode(',', $params['department5level']);
+            $depts5sql = [];
+            foreach($depts5 AS $dept5){
+                $depts5sql[] = " concat('/',u.open_path,'/') LIKE :dept5param_{$dept5}";
+                $params["dept5param_{$dept5}"] = '%/'.$dept5.'/%';
+            }
+            if(!empty($depts5sql)){
+                $sql .= " AND ( ".implode(' OR ', $depts5sql)." ) ";
+            }
+        }
+        if(!empty($params['states'])){
+            $states = explode(',', $params['states']);
+            $statessql = [];
+            foreach($states AS $state){
+                $statessql[] = " concat('/',u.open_path,'/') LIKE :stateparam_{$state}";
+                $params["stateparam_{$state}"] = '%/'.$state.'/%';
+            }
+            if(!empty($statessql)){
+                $sql .= " AND ( ".implode(' OR ', $statessql)." ) ";
+            }
+        }
+        if(!empty($params['district'])){
+            $district = explode(',', $params['district']);
+            $districtsql = [];
+            foreach($district AS $dist){
+                $districtsql[] = " concat('/',u.open_path,'/') LIKE :districtparam_{$dist}";
+                $params["districtparam_{$dist}"] = '%/'.$dist.'/%';
+            }
+            if(!empty($districtsql)){
+                $sql .= " AND ( ".implode(' OR ', $districtsql)." ) ";
+            }
+        }
+        if(!empty($params['subdistrict'])){
+            $subdistrict = explode(',', $params['subdistrict']);
+            $subdistrictsql = [];
+            foreach($subdistrict AS $subdist){
+                $subdistrictsql[] = " concat('/',u.open_path,'/') LIKE :subdistrictparam_{$subdist}";
+                $params["subdistrictparam_{$subdist}"] = '%/'.$subdist.'/%';
+            }
+            if(!empty($subdistrictsql)){
+                $sql .= " AND ( ".implode(' OR ', $subdistrictsql)." ) ";
+            }
+        }
+        if(!empty($params['village'])){
+            $village = explode(',', $params['village']);
+            $villagesql = [];
+            foreach($village AS $vlg){
+                $villagesql[] = " concat('/',u.open_path,'/') LIKE :villageparam_{$vlg}";
+                $params["villageparam_{$vlg}"] = '%/'.$vlg.'/%';
+            }
+            if(!empty($villagesql)){
+                $sql .= " AND ( ".implode(' OR ', $villagesql)." ) ";
+            }
+        }
+
         if (!empty($params['groups'])) {
             $sql .= " AND u.id IN (select cm.userid from {cohort_members} cm, {user} u where u.id = cm.userid AND u.deleted = 0
             AND u.suspended = 0 AND cm.cohortid IN ({$params['groups']}))";

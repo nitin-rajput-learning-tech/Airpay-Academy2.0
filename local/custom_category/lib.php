@@ -44,6 +44,7 @@ function local_custom_category_output_fragment_new_custom_category_form($args){
     $mform = new local_custom_category\form\custom_category_form(null, array('id' => $args->repositoryid, 'editoroptions' => $editoroptions, 'open_costcenterid' => $data->costcenterid, 'parentid' => $data->parentid), 'post', '', null, true, $formdata);
 
     $data->name = $data->fullname;
+    $data->parentid = $data->parentid ? $data->parentid:'Top';
     $data->open_costcenterid = $data->costcenterid;
     $mform->set_data($data);
 
