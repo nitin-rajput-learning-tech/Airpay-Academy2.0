@@ -90,7 +90,7 @@ class learningplan extends moodleform {
 			}
 	        $mform->setType('shortname', PARAM_TEXT);
 			
-        if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
+        if((is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext))){
 
             $depsql = "SELECT lcc.id,lcc.fullname
                         FROM {local_custom_category} as lcc";
@@ -164,7 +164,7 @@ class learningplan extends moodleform {
 	        $mform->addHelpButton('description','descript','local_learningplan');
 			
 			$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
-			if (is_siteadmin($USER->id) || has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)) {
+			if (is_siteadmin($USER->id) || has_capability('local/learningplan:manage', $categorycontext)) {
 				$sql = "select id,fullname from {local_costcenter} where visible =1 and parentid IN(0,1)";
 				$costcenters = $DB->get_records_sql($sql);
 	        } else {
@@ -185,7 +185,7 @@ class learningplan extends moodleform {
 
                 $select = array(null => get_string('select_certificate','local_learningplan'));
 				$costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+                if(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenterid),'name', 'id,name');

@@ -50,7 +50,7 @@ class view extends plugin_renderer_base {
 		if(is_siteadmin() || has_capability('local/learningplan:view', $categorycontext)){
 			$sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1 "; //WHERE l.id > 0
 
-			if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+			if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
             $sql .= "";
 	        } else  {
 	            $sql .= $costcenterpathconcatsql;
@@ -169,7 +169,7 @@ class view extends plugin_renderer_base {
 				$learning_plans = $this->db->get_records_sql($sql, $lpparams);
 			}
 
-			if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+			if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
             	$assign_users_sql .= "";
 	        } else  {
 	            $assign_users_sql .= $costcenterpathconcatsql;
@@ -215,7 +215,7 @@ class view extends plugin_renderer_base {
 		// exit;
 			$assigned_users = $this->db->get_records_sql($assign_users_sql, $userparams);
 		}
-		/*elseif(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
+		/*elseif(has_capability('local/learningplan:manage',$categorycontext)){
 			$data=open::userdetails();
 			$sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$this->user->open_costcenterid},',%')";//FIND_IN_SET(".$this->user->open_costcenterid.",l.costcenter)
 			if(!empty($search)){
@@ -304,7 +304,7 @@ class view extends plugin_renderer_base {
             $assigned_users_sql .="ORDER BY l.id DESC";
 			$assigned_users = $this->db->get_records_sql($assigned_users_sql, $userparams);
 			$learning_plans=$learning_plans_depwise;
-		}elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
+		}elseif(has_capability('local/learningplan:manage',$categorycontext)){
 			$sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$this->user->open_costcenterid},',%') AND CONCAT(',',l.department,',') LIKE CONCAT('%,',{$this->user->open_departmentid},',%') AND l.id > 0 ";//(FIND_IN_SET(".$this->user->open_departmentid.",l.department))
 			if(!empty($search)){
 				$sql .= " AND name LIKE '%%$search%%'";
@@ -507,7 +507,7 @@ class view extends plugin_renderer_base {
 					$capability1 = true;
                 }
 
-                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))){
+                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
                 	$capability1 = false;
                 }
 
@@ -515,7 +515,7 @@ class view extends plugin_renderer_base {
                 	$capability2 = true;
 
                 }
-                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))){
+                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
                 	$capability2 = false;
                 }
 
@@ -523,7 +523,7 @@ class view extends plugin_renderer_base {
                     $capability3 = true;
                 }
 
-                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))){
+                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
                 	$capability3 = false;
                 }
 				$can_view = false;
@@ -1283,7 +1283,7 @@ class view extends plugin_renderer_base {
 		if($lastitem!=0){
            $sql.=" AND u.id > $lastitem";
         }
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+        if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
             $sql .= "";
         } else  {
             $sql .= $costcenterpathconcatsql;
@@ -1431,7 +1431,7 @@ class view extends plugin_renderer_base {
             $sql.=" AND u.id > $lastitem";
          }
     	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+        if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
             $sql .= "";
         } else  {
             $sql .= $costcenterpathconcatsql;
@@ -1634,7 +1634,7 @@ class view extends plugin_renderer_base {
 									</ul>';
 								 
 	   
-	   if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))){
+	   if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
 	    	$add_learningplancourses = '';
 	    }
 
@@ -1667,12 +1667,12 @@ class view extends plugin_renderer_base {
 		  $learningplaninfo['configpath'] = $CFG->wwwroot;
 		  $can_manage = has_capability('local/learningplan:manage', $categorycontext);
 		 $learningplaninfo['can_update'] = (is_siteadmin() || ($can_manage && has_capability('local/learningplan:update', $categorycontext)));
-          if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))){
+          if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
           	$learningplaninfo['can_update'] = '';
           }
 		    
 		  $learningplaninfo['can_publish'] = (is_siteadmin() || ($can_manage && has_capability('local/learningplan:publishplan', $categorycontext)));
-		  if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext))){
+		  if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
 		  	 $learningplaninfo['can_publish'] = '';
 		  }
          
@@ -1809,7 +1809,7 @@ class view extends plugin_renderer_base {
                    foreach($learningplans AS $learningplan) 
                     $departmentcount = count(array_filter(explode(',',$learningplan->department)));
  
-                     if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+                     if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext)) /*&& $departmentcount > 1*/){
                        $unassign_url = '';
                        $unassign_link = '';
                      } else {
@@ -1824,7 +1824,7 @@ class view extends plugin_renderer_base {
 					 
 					if($course->sortorder==0){ /**condtion to check the sortorder and make arrows of up and down for the first record ot course**/	
 						
-						if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+						if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext)) /*&& $departmentcount > 1*/){
                            $unassign_url1 = '';
                            $unassign_link1 = '';
 						} else {
@@ -1839,7 +1839,7 @@ class view extends plugin_renderer_base {
 						/*condition for the select the dropdown if already selected*/
 						/*Select box*/
 						
-                        if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+                        if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext)) /*&& $departmentcount > 1*/){
                            $buttons .= '';
                         } else {
 						$buttons .='<span class="switch_type">										
@@ -1859,7 +1859,7 @@ class view extends plugin_renderer_base {
 					}elseif($course->sortorder==isset($find->sortorder)){
 						/*condition to check the last course and make the up arrow*/
 
-						if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+						if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext)) /*&& $departmentcount > 1*/){
                           $unassign_url2 = '';
                           $unassign_link_up = '';
 						} else {
@@ -1871,7 +1871,7 @@ class view extends plugin_renderer_base {
 							$actions .=$unassign_link_up;
 						}
 
-						if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+						if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext)) /*&& $departmentcount > 1*/){
                          $buttons .= '';
 						} else {
 						  $buttons .='<span class="switch_type">										
@@ -1889,7 +1889,7 @@ class view extends plugin_renderer_base {
 							
 					} else { 
 					/*Else condition Not for first and last record should have the both arrows*/
-					    if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$categorycontext)) && $departmentcount > 1){
+					    if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext)) /*&& $departmentcount > 1*/){
                           $unassign_url = '';
                           $unassign_link1 = '';
                           $unassign_link_down = '';

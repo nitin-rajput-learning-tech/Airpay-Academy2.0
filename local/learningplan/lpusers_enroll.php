@@ -43,8 +43,8 @@ $type=optional_param('type','', PARAM_RAW);
 $lastitem=optional_param('lastitem',0, PARAM_INT);
 $sesskey=sesskey();
 $learningplan = $DB->get_record('local_learningplan',array('id' => $planid));
-if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
-    $is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
+if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext))){
+    /*$is_Oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
     $is_Dh = has_capability('local/costcenter:manage_owndepartments',$systemcontext);
     $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
     if($is_Oh && explode('/', $learningplan->open_path)[1] != $costcenterid){
@@ -54,6 +54,14 @@ if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganization
     $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
     if($is_Dh && (!in_array(explode(',',$learningplans->open_path)) != $costcenterid)){
         redirect($CFG->wwwroot . '/local/learningplan/index.php');
+    }*/
+    
+    $sql="SELECT lp.id ";
+    $sql.=" FROM {local_learningplan} lp WHERE id = :id "; 
+    $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
+    $learningplans=$DB->get_records_sql($sql .$costcenterpathconcatsql,array('id'=>$planid));
+    if(empty($learningplans)){
+        redirect($CFG->wwwroot . '/local/learningplan/index.php');  
     }
 }
 

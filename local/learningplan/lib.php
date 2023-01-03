@@ -159,14 +159,14 @@ function learningplan_filter($mform){
     $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $learningplan_params = array();
     $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+    if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
         $sql .= "";
     } else  {
         $sql .= $costcenterpathconcatsql;
     }
-   /* if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+   /* if(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
-    }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
+    }else if(has_capability('local/learningplan:manage', $categorycontext)){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE  costcenter = :costcenter ";
         $learningplan_params['costcenter'] = $USER->open_costcenterid;
     }else{
@@ -356,15 +356,14 @@ function orgsql($categorycontext){
     global $DB, $USER;
     $sql = '';
     $params =array();
-    if (has_capability('local/learningplan:manage', $categorycontext) && 
-        has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if (has_capability('local/learningplan:manage', $categorycontext)){
         // $sql = " AND  c.costcenter = :costcenter";
         // $params['costcenter'] = $USER->open_costcenterid;
         $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
         $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
          $sql = $costcenterpathconcatsql;
      }
-    // } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
+    // } else if (has_capability('local/learningplan:manage', $categorycontext)) {
     //     $sql = " AND  c.department = :department";
     //     $params['department'] = $USER->open_departmentid;
     // } else {
@@ -479,8 +478,7 @@ function get_learningplan_details($lpid) {
     $details = array();
     // $time = \local_costcenter\lib::get_userdate("d/m/Y H:i");
     $joinsql = '';
-    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$categorycontext) OR 
-        has_capability('local/costcenter:manage_owndepartments',$categorycontext) OR has_capability('local/learningplan:manage', $categorycontext)) {
+    if(is_siteadmin() OR has_capability('local/learningplan:manage',$categorycontext)) {
 
         $selectsql = "select c.*  ";
         $fromsql = " from  {local_learningplan} c ";
