@@ -1283,39 +1283,89 @@ class view extends plugin_renderer_base {
 		if($lastitem!=0){
            $sql.=" AND u.id > $lastitem";
         }
-        // if (( !is_siteadmin() && ( !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-        //         $sql .= " AND u.open_costcenterid = :costcenter";
-        //         $params['costcenter'] = $this->user->open_costcenterid;
-        //         if ((has_capability('local/costcenter:manage_owndepartments', $categorycontext))) {
-        //             $sql .= " AND u.open_departmentid = :department";
-        //             $params['department'] = $this->user->open_departmentid;
-        //          }
-        //  }
         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $sql .= "";
         } else  {
             $sql .= $costcenterpathconcatsql;
 
         }
-		// if($users->department !== null && $users->department !== '-1'&& $users->department !== 0){
-		// 		$sql.= ' AND u.open_departmentid IN('.$users->department.')';
-		// }
 		
 		$sql .=" AND u.id in(SELECT userid FROM {local_learningplan_user} WHERE planid=$planid)";
+
+    if (!empty($params['organization'])) {
+        $organizations = explode(',', $params['organization']);
+        $orgsql = [];
+        foreach($organizations AS $organisation){
+            $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+        }
+        if(!empty($orgsql)){
+            $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        }
+    }
+    if (!empty($params['department'])) {
+        $departments = explode(',', $params['department']);
+        $deptsql = [];
+        foreach($departments AS $department){
+            $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
+        }
+        if(!empty($deptsql)){
+            $sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+        }
+    }
+
+    if (!empty($params['subdepartment'])) {
+        $subdepartments = explode(',', $params['subdepartment']);
+        $subdeptsql = [];
+        foreach($subdepartments AS $subdepartment){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
+        }
+        if(!empty($subdeptsql)){
+            $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+    if (!empty($params['department4level'])) {
+        $depart4level = explode(',', $params['department4level']);
+        $department4levelsql = [];
+        foreach($depart4level AS $department4level){
+            $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+            $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
+        }
+        if(!empty($department4levelsql)){
+            $sql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
+        }
+    }
+    if (!empty($params['department5level'])) {
+        $depart5level = explode(',', $params['department5level']);
+        $department5levelsql = [];
+        foreach($depart5level AS $department5level){
+            $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+            $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
+        }
+        if(!empty($department5levelsql)){
+            $sql .= " AND ( ".implode(' OR ', $department5levelsql)." ) ";
+        }
+    }
+    if (!empty($params['states'])) {
+        $sql .= " AND u.open_states IN ({$params['states']}) ";
+    }
+    if (!empty($params['district'])) {
+        $sql .= " AND u.open_district IN ({$params['open_district']}) ";
+    }
+    if (!empty($params['subdistrict'])) {
+        $sql .= " AND u.open_subdistrict IN ({$params['subdistrict']}) ";
+    }
+    if (!empty($params['village'])) {
+        $sql .= " AND u.open_village IN ({$params['village']}) ";
+    }
 
 		if (!empty($params['email'])) {
 			$sql.=" AND u.id IN ({$params['email']})";
 		}
 		if (!empty($params['uname'])) {
 			$sql .=" AND u.id IN ({$params['uname']})";
-		}
-		if (!empty($params['department'])) {
-			$sql .=" AND concat('/',u.open_path,'/') LIKE concat('%/',{$params['department']},'/%')";
-			// $sql .=" AND u.open_path IN ({$params['department']})";
-		}
-		if (!empty($params['organization'])) {
-			$sql .=" AND concat('/',u.open_path,'/') LIKE concat('%/',{$params['organization']},'/%')";
-			// $sql .=" AND u.open_path IN ({$params['organization']})";
 		}
 		if (!empty($params['idnumber'])) {
 			$sql .=" AND u.id IN ({$params['idnumber']})";
@@ -1343,7 +1393,6 @@ class view extends plugin_renderer_base {
         if($perpage!=-1){
             // $order.="LIMIT $perpage";
         }
-		
 		if($total==0){
 			$users=$this->db->get_records_sql_menu($sql .$order,$params, '', $perpage);
 		}else{
@@ -1356,7 +1405,7 @@ class view extends plugin_renderer_base {
     
 	/*Function to called in the bulk users upload*/
 	public function select_to_users_of_learninplan($planid, $userid,$params,$total=0,$offset1=-1,$perpage=-1,$lastitem=0){
-		
+		// print_r($params);exit;
 		$users = $this->db->get_record('local_learningplan',array('id'=>$planid));
 		$us = $users->open_band;
 		$array=explode(',',$us);
@@ -1381,15 +1430,6 @@ class view extends plugin_renderer_base {
 
             $sql.=" AND u.id > $lastitem";
          }
-		// if (( !is_siteadmin() && ( !has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
-        //         $sql .= " AND u.open_costcenterid = :costcenter";
-        //         $params['costcenter'] = $this->user->open_costcenterid;
-        //         if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
-        //             $sql .= " AND u.open_departmentid = :department";
-        //             $params['department'] = $this->user->open_departmentid;
-        //          }
-        //  }
-
     	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $sql .= "";
@@ -1397,23 +1437,83 @@ class view extends plugin_renderer_base {
             $sql .= $costcenterpathconcatsql;
 
         }
-		// if($users->department !== null && $users->department !== '-1'&& $users->department !== 0){
-		// 		$sql.= ' AND u.open_departmentid IN('.$users->department.')';
-		// }
-		
-		
+
+    
+    if (!empty($params['organization'])) {
+        $organizations = explode(',', $params['organization']);
+        $orgsql = [];
+        foreach($organizations AS $organisation){
+            $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+        }
+        if(!empty($orgsql)){
+            $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        }
+    }
+    if (!empty($params['department'])) {
+        $departments = explode(',', $params['department']);
+        $deptsql = [];
+        foreach($departments AS $department){
+            $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
+        }
+        if(!empty($deptsql)){
+            $sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+        }
+    }
+
+    if (!empty($params['subdepartment'])) {
+        $subdepartments = explode(',', $params['subdepartment']);
+        $subdeptsql = [];
+        foreach($subdepartments AS $subdepartment){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
+        }
+        if(!empty($subdeptsql)){
+            $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+    if (!empty($params['department4level'])) {
+        $depart4level = explode(',', $params['department4level']);
+        $department4levelsql = [];
+        foreach($depart4level AS $department4level){
+            $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+            $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
+        }
+        if(!empty($department4levelsql)){
+            $sql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
+        }
+    }
+    if (!empty($params['department5level'])) {
+        $depart5level = explode(',', $params['department5level']);
+        $department5levelsql = [];
+        foreach($depart5level AS $department5level){
+            $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+            $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
+        }
+        if(!empty($department5levelsql)){
+            $sql .= " AND ( ".implode(' OR ', $department5levelsql)." ) ";
+        }
+    }
+    if (!empty($params['states'])) {
+        $sql .= " AND u.open_states IN ({$params['states']}) ";
+    }
+    if (!empty($params['district'])) {
+        $sql .= " AND u.open_district IN ({$params['open_district']}) ";
+    }
+    if (!empty($params['subdistrict'])) {
+        $sql .= " AND u.open_subdistrict IN ({$params['subdistrict']}) ";
+    }
+    if (!empty($params['village'])) {
+        $sql .= " AND u.open_village IN ({$params['village']}) ";
+    }
+
 		if (!empty($params['email'])) {
 			$sql.=" AND u.id IN ({$params['email']})";
 		}
 		if (!empty($params['uname'])) {
 			$sql .=" AND u.id IN ({$params['uname']})";
 		}
-		/*if (!empty($params['department'])) {
-			$sql .=" AND u.open_departmentid IN ({$params['department']})";
-		}
-		if (!empty($params['organization'])) {
-			$sql .=" AND u.open_costcenterid IN ({$params['organization']})";
-		}*/
 		if (!empty($params['idnumber'])) {
 			$sql .=" AND u.id IN ({$params['idnumber']})";
 		}

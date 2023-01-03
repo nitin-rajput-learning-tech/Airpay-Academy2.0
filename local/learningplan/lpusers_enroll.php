@@ -114,6 +114,7 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
 	
 	
   	$filterdata =  $mform->get_data();
+    // print_r($filterdata);exit;
   	if($filterdata){
   		$collapse = false;
       $show = 'show';
@@ -123,6 +124,13 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
   	}
   	$organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
   	$department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
+    $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
+    $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
+    $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
+    $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
+    $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
+    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
+    $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
   	$email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
   	$idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
   	$uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
@@ -130,7 +138,7 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
     $location = !empty($filterdata->location) ? implode(',', $filterdata->location) : null;
   	$hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', $filterdata->hrmsrole) : null;
   }
-   $options = array('context' => $systemcontext->id, 'planid' => $planid, 'organization' => $organization, 'department' => $department, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
+   $options = array('context' => $systemcontext->id, 'planid' => $planid, 'organization' => $organization, 'department' => $department, 'subdepartment' => $subdepartment, 'department4level' => $department4level, 'department5level' => $department5level, 'states' => $states, 'district' => $district, 'subdistrict' => $subdistrict, 'village' => $village, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
 
   	// print_collapsible_region_start('', 'filters_form', get_string('filters'),false,$collapse);
   	// $mform->display();
