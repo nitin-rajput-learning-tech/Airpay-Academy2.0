@@ -1242,7 +1242,7 @@ function local_courses_quicklink_node(){
     * @param int $department department
     * @return  array courses count of each type
 */
-function costcenterwise_courses_count($costcenter,$department = false){
+function costcenterwise_courses_count($costcenter,$department = false,$subdepartment = false){
     global $USER, $DB,$CFG;
     $params = array();
     $params['costcenterpath'] = '%/'.$costcenter.'/%';

@@ -77,16 +77,17 @@ class organization_form extends moodleform { /*costcenter creation form*/
                     JOIN {local_costcenter} AS llllc ON llllc.id=lllc.parentid
                     WHERE lc.depth = 4";
             }
+            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
             if($id){
-                $parentid = $DB->get_field('local_costcenter', 'parentid', array('id' => $id));
-                $departmentsql .= " AND lc.id = {$parentid} ";
+                $departmentsql .= " AND ( concat('/',lc.path,'/') LIKE '%/$id/%' )";
                 $subdepartmentsql .= $departmentsql;
                 $subsubdepartmentsql .= $departmentsql;
                 $subsubsubdepartmentsql .= $departmentsql;
             }
-            else{
-                list($zero, $org, $ctr, $bu, $cu, $territory) = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
-                $subdepartmentsql .= " AND lc.id = $org ";
+            elseif($costcenterid){
+
+                $departmentsql .= " AND ( concat('/',lc.path,'/') LIKE '%/$costcenterid/%' )";
+                $subdepartmentsql .= $departmentsql;
                 $subsubdepartmentsql .= $subdepartmentsql;
                 $subsubsubdepartmentsql .= $subdepartmentsql;
             }

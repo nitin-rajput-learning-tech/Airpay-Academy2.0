@@ -395,8 +395,9 @@ function departments_filter($mform,$query='',$searchanywhere=false, $page=0, $pe
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2";
     }else{
-        $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2 AND parentid = :usercostcenter ";
-        $userparam['usercostcenter'] = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
+        $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' )";
+
     }
     if(!empty($query)){ 
         if ($searchanywhere) {
@@ -453,13 +454,11 @@ function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $
     $params = array();
     if(is_siteadmin()){
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 ";
-    }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid = :usercostcenter) ";
-        $userparam['usercostcenter'] =(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-        ;
     }else{
-        $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND parentid = :userdepartment ";
-        $userparam['userdepartment'] = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=3);
+        $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
+
+        ;
     }
     if(!empty($query)){ 
         if ($searchanywhere) {
@@ -515,9 +514,11 @@ function department4level_filter($mform,$query='',$searchanywhere=false, $page=0
     $params = array();
     if(is_siteadmin()){
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 ";
-    }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM {local_costcenter} WHERE parentid =:usercostcenter)) ";
-        $userparam['usercostcenter'] = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+    }else{
+
+        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=4);
+
+        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
 
     }
     if(!empty($query)){
@@ -574,7 +575,10 @@ function department5level_filter($mform,$query='',$searchanywhere=false, $page=0
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 ";
     }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM {local_costcenter} WHERE parentid IN (SELECT id FROM {local_costcenter} WHERE parentid =:usercostcenter))) ";
+
+       $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=5);
+
+        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
 
         $userparam['usercostcenter'] = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
 
