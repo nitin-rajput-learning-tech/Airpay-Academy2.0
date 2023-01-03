@@ -195,16 +195,6 @@ class costcenter {
             return false;
         }
     }
-    // function get_costcenter_theme(){
-    //     global $USER, $DB;
-       
-       // $costcentercolor = $DB->get_record_sql('SELECT button_color,brand_color,hover_color FROM {local_costcenter}',array('id' => $USER->open_costcenterid,'visible' =>1));
-       //  $costcentercolor = $DB->get_record($table, array('id' => $USER->open_costcenterid,'visible' =>1), $fields='*');
-       // if(!empty($costcentercolor)){
-       //      return $costcentercolor;
-       // }else{
-       //  return false;
-       // }
     function get_costcenter_theme(){
         global $USER, $DB;
        

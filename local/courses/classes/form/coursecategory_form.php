@@ -52,10 +52,13 @@ class coursecategory_form extends moodleform {
             $options = $option+$options;
 
         }else if(has_capability('local/costcenter:manage_ownorganization',$context)){
-            $orgcategory = $DB->get_field('local_costcenter','category',array('id' => $USER->open_path));
+            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
+            $orgcategory = $DB->get_field('local_costcenter','category',array('path' => $open_path));
             $options = categorylist('local/courses:manage','','/',0,$orgcategory);
         }else if(has_capability('local/costcenter:manage_owndepartments',$context)){
-            $deptcategory = $DB->get_field('local_costcenter', 'category', array('id' => $USER->open_departmentid));
+
+            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=2);
+            $deptcategory = $DB->get_field('local_costcenter', 'category', array('id' => $open_path));
             $options = categorylist('local/courses:manage','','/',$deptcategory);
         } elseif ($categoryid) {
             // Editing an existing category.

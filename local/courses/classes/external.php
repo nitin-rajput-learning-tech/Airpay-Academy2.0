@@ -499,7 +499,8 @@ class local_courses_external extends external_api {
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
             } else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-                $orgcategories = $categorylib->get_categories($USER->open_path);
+                $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
+                $orgcategories = $categorylib->get_categories($open_path);
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
             } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
@@ -511,7 +512,8 @@ class local_courses_external extends external_api {
             $allcategories = $DB->get_records_sql_menu($sql);
 
         } else if($flag){
-            $parentcategory = $DB->get_field('local_costcenter','category',array('id'=>$USER->open_path));
+            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
+            $parentcategory = $DB->get_field('local_costcenter','category',array('id'=>$open_path));
             if(is_siteadmin())
                 $allcategories = $DB->get_records_sql_menu("select id,name from {course_categories} where visible=1");
             else
@@ -762,21 +764,6 @@ class local_courses_external extends external_api {
     $filtervalues = json_decode($filterdata);
 
 
-    // $data = array();
-    // // parse_str($filtervalues, $data);
-    // $data = is_object($filtervalues) ? (array)$filtervalues : parse_str($filtervalues, $data);
-    // // var_dump($data);
-    // $renderer = $PAGE->get_renderer('local_courses');
-    // $filterparams = $renderer->get_catalog_courses(true);
-    
-    
-    // $mform = courses_filters_form($filterparams, $data);
-    // $mform->set_data($data);
-    
-    // $submitteddata = (object)$mform->thisform->exportValues();
-    // var_dump($filtervalues);
-    // $submitteddata = $mform->get_data();
-    // $submitteddata->search_query = $filtervalues->search_query;
     $stable = new \stdClass();
     $stable->thead = false;
     $stable->start = $offset;

@@ -67,9 +67,11 @@ class coursetype_form extends moodleform {
 		}
 		else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
 
+        $orgid=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
+
 		$mform->addElement('hidden', 'orgid', null, array('id' => 'id_open_path', 'data-class' => 'organisationselect'));
 		$mform->setType('orgid', PARAM_INT);
-		$mform->setConstant('orgid', $USER->open_path);
+		$mform->setConstant('orgid', $orgid);
 		}
 	
         $mform->addElement('text', 'name', get_string('course_type','local_courses'), 'maxlength="100" size="10"');

@@ -111,8 +111,10 @@ class local_uploadcourse_step2_form extends tool_uploadcourse_base_form {
             $mform->addRule('defaults[open_path]', null, 'required');
             $mform->addHelpButton('defaults[open_path]', 'coursecategory');
         } else {
+
             $mform->addElement('hidden', 'defaults[open_path]');
-            $mform->setDefault('defaults[open_path]',  $USER->open_path);
+            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
+            $mform->setDefault('defaults[open_path]',  $open_path);
         }
         
         // Hidden fields.

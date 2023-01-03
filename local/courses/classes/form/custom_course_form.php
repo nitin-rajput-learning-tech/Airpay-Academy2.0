@@ -110,7 +110,7 @@ class custom_course_form extends moodleform {
           $courseid = $id = $course->id;
         }
 
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",(new \local_courses\lib\accesslib())::get_user_roleswitch_path());
 
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
@@ -232,7 +232,7 @@ class custom_course_form extends moodleform {
             $mform->addElement('autocomplete', 'identifiedtype', get_string('type','local_courses'), $coursetypes,$coursetype);
             $mform->addRule('identifiedtype', get_string('missingtype','local_courses'), 'required', null, 'client');
             $mform->addHelpButton('identifiedtype', 'open_identifiedascourse', 'local_courses');
-            $mform->setType('identifiedtype',PARAM_INT);
+            $mform->setType('identifiedtype',PARAM_RAW);
             
             //for course format
             $courseformats = get_sorted_course_formats(true);
@@ -271,7 +271,8 @@ class custom_course_form extends moodleform {
                   }
                   $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter' => $costcenter),'name', 'id,name');
                 }else{
-                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_path),'name', 'id,name');
+                 $costcenter=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
+                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenter),'name', 'id,name');
 
                }
                 $certificateslist = $select + $cert_templates;
@@ -438,6 +439,11 @@ class custom_course_form extends moodleform {
         if (isset($data['open_path']) && $data['form_status'] == 0){
             if($data['open_path'] == 0){
                 $errors['open_path'] = get_string('pleaseselectorganization', 'local_courses');
+            }
+        }
+        if (isset($data['identifiedtype']) && $data['form_status'] == 0){
+            if($data['identifiedtype'] == 0){
+                $errors['identifiedtype'] = get_string('pleaseselectidentifiedtype', 'local_courses');
             }
         }
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));

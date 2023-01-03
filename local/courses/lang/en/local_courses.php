@@ -402,3 +402,4 @@ $string['open_departmentlocal_courses'] = 'Country';
 $string['open_subdepartmentlocal_courses'] = 'Bussiness Unit';
 $string['open_level4departmentlocal_courses'] = 'Commercial Unit';
 $string['open_level5departmentlocal_courses'] = 'Territory';
+$string['pleaseselectidentifiedtype'] = 'Please Select Type';
