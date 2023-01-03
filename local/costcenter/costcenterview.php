@@ -36,7 +36,7 @@ global $DB,$OUTPUT,$CFG, $PAGE;
 require_login();
 /* ---Get the records from the database--- */
 
-$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
 $costcentersql = "SELECT lc.id, lc.fullname,lc.parentid,lc.depth
                     FROM {local_costcenter} AS lc WHERE lc.id = $id $costcenterpathconcatsql ";

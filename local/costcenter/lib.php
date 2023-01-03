@@ -189,7 +189,7 @@ class costcenter {
     function get_costcenter_icons(){
         global $USER, $DB;
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $costcentersql = "SELECT lc.shell
                     FROM {local_costcenter} AS lc WHERE lc.visible = 1 $costcenterpathconcatsql ";
@@ -202,7 +202,7 @@ class costcenter {
     function get_costcenter_theme(){
         global $USER, $DB;
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $costcentersql = "SELECT lc.theme
                     FROM {local_costcenter} AS lc WHERE lc.visible = 1 $costcenterpathconcatsql ";
@@ -341,7 +341,7 @@ function organizations_filter($mform,$query='',$searchanywhere=false, $page=0, $
         $organizationlist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth =1";
     }else{
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $organizationlist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=1 $costcenterpathconcatsql ";
 
@@ -400,7 +400,7 @@ function departments_filter($mform,$query='',$searchanywhere=false, $page=0, $pe
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2";
     }else{
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $departmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=2 $costcenterpathconcatsql ";
 
@@ -461,7 +461,7 @@ function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $
     if(is_siteadmin()){
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 ";
     }else{
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=3 $costcenterpathconcatsql ";
 
@@ -523,7 +523,7 @@ function department4level_filter($mform,$query='',$searchanywhere=false, $page=0
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 ";
     }else{
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=4 $costcenterpathconcatsql ";
 
@@ -584,7 +584,7 @@ function department5level_filter($mform,$query='',$searchanywhere=false, $page=0
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 ";
     }else{
 
-       $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+       $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=5 $costcenterpathconcatsql ";
 
@@ -758,7 +758,7 @@ function costcenter_items(){
 
     } else {
 
-         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
          $sql = "SELECT * FROM {local_costcenter} WHERE visible=1 $costcenterpathconcatsql   ORDER by sortorder,fullname";
 
@@ -784,7 +784,7 @@ function local_costcenter_leftmenunode(){
     else{
             $depth=($categorycontext->depth-1);
 
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
             $costcentersql = "SELECT lc.id
                                 FROM {local_costcenter} AS lc WHERE lc.depth=$depth $costcenterpathconcatsql ";

@@ -50,7 +50,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
 
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $costcentersql = "SELECT lc.id, lc.fullname
                     FROM {local_costcenter} AS lc WHERE 1=1 $costcenterpathconcatsql ";

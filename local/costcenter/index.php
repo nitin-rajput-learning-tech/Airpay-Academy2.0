@@ -45,7 +45,7 @@ if(!has_capability('local/costcenter:view', $categorycontext)) {
     print_error('nopermissiontoviewpage');
 }
 
-$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
 $costcentersql = "SELECT lc.id, lc.fullname,lc.parentid,lc.depth
                     FROM {local_costcenter} AS lc WHERE 1=1 $costcenterpathconcatsql ";

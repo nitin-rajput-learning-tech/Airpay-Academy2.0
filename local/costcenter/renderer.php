@@ -44,7 +44,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $costcenters = $DB->get_records_sql($sql);
         } else if(has_capability('local/costcenter:view', $categorycontext)){
 
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='s.path');
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='s.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
 
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid = 0  $costcenterpathconcatsql ORDER BY s.sortorder";
@@ -200,7 +200,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
     public function get_dept_view_btns($id = false) {
         global $PAGE, $USER, $DB;
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $exist_sql = "SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql ";
 
@@ -242,9 +242,10 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $deptexistsql = "SELECT id FROM {local_costcenter} WHERE depth = 2 ";
         if(!(is_siteadmin())){
 
-            $deptexistsql .= "AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
+            $deptexistsql .= $costcenterpathconcatsql ;
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
+
         if($deptexist && $depth != 3 && $depth != 4){
             $headstring = 'addnewsubdept';
                 $title = get_string('createsubdepartment','local_costcenter');
@@ -296,7 +297,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             'create_sub_sub_sub_department' => $create_sub_sub_sub_department
         );
 
-    return $this->render_from_template('local_costcenter/viewbuttons', $buttons);
+       return $this->render_from_template('local_costcenter/viewbuttons', $buttons);
     }
 
 
