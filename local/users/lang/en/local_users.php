@@ -130,7 +130,6 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 <tr><td>vilage</td><td>Enter Village Code. State must already exist under specified Sub District in system as part of organization hierarchy.</td></tr>
 <tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>role</td><td>Enter Role.</td></tr>
-<tr><td>discipline</td><td>Enter Discipline, avoid additional spaces.</td></tr>
 <tr><td>mobileno</td><td>Enter Numerics only.</td></tr>
 <tr><td>reportingmanager_empid</td><td>Enter Reporting Manger learnerid, avoid additional spaces..</td></tr>
 <tr><td>role_designation</td><td>Enter Designation for the user.</td></tr>
