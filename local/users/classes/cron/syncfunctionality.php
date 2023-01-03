@@ -105,7 +105,7 @@ class syncfunctionality
             $this->wmfields = array();
             $this->excel_line_number = $linenum;
             $mandatory_fields = [
-                'first_name', 'last_name', 'username', 'email', 'organization', 'learner_id',
+                'first_name', 'last_name', 'username', 'organization', 'learner_id',
                 'employee_status'
             ];
 
