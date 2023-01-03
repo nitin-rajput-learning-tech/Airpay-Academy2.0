@@ -55,42 +55,4 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_costcenter_path_field_concatsql($columnname, self::evaluation_costcenterpath($evaluationid));
 
     }
-    public static function get_user_roleswitch_path($depth=0){
-
-        global $USER;
-
-        $costcenterpath = 0;
-
-        if($depth > 0){
-
-            $costcenterpath = array();
-
-        }
-
-        if(!empty($USER->access['currentroleinfo']['contextinfo'])){
-
-            $firstrole =current($USER->access['currentroleinfo']['contextinfo']);
-
-            $costcenterpath =$firstrole['costcenterpath'];
-
-            if($depth > 0){
-
-                $costcenterpatharray =array_filter(explode('/',$costcenterpath));
-
-                if(isset($costcenterpatharray[$depth])){
-
-                    $costcenterpath=$costcenterpatharray[$depth];
-
-                }else{
-
-                   return self::get_user_roleswitch_path($depth-1);
-
-                }
-
-            }
-
-        }
-
-        return $costcenterpath;
-    }
 }

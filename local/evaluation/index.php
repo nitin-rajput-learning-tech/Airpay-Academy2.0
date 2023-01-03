@@ -87,9 +87,9 @@ $PAGE->navbar->add(get_string("pluginname", 'local_evaluation'));
 $renderer = $PAGE->get_renderer('local_evaluation');
 $filterparams = $renderer->get_evaluations(true,$formattype);
 if(is_siteadmin()){
-    $thisfilters = array('organizations', 'departments', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
+    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level','states','district','subdistrict','village', 'groups');
 }else {
-    $thisfilters = array('evaluation', 'evaluation_type');
+    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level','states','district','subdistrict','village', 'groups');
 }
 $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams));
      

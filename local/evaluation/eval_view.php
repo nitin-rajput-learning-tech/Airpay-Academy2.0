@@ -42,7 +42,6 @@ $PAGE->requires->js_call_amd('local_evaluation/newevaluation', 'load', array());
 if (($formdata = data_submitted()) AND !confirm_sesskey()) {
     print_error('invalidsesskey');
 }
-
 $do_show = optional_param('do_show', 'edit', PARAM_ALPHA);
 $switchitemrequired = optional_param('switchitemrequired', false, PARAM_INT);
 $deleteitem = optional_param('deleteitem', false, PARAM_INT);
@@ -58,7 +57,7 @@ if (!has_capability('local/evaluation:edititems', $context) OR !has_capability('
 }
 
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
-
+$costcenter=explode('/',$evaluation->open_path)[1];
 if (empty($evaluation)) {
   print_error(get_string('feedback_not_found', 'local_evaluation'));
 }
@@ -70,7 +69,7 @@ if ($evaluation->plugin === "classroom"){
     }
     if ((has_capability('local/classroom:manageclassroom', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
     )) {
-            if(explode('/',$classroom->open_path)[1] != (new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
+            if(explode('/',$classroom->open_path)[1] != $costcenter){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
 
@@ -82,7 +81,7 @@ if ($evaluation->plugin === "classroom"){
     }
     if ((has_capability('local/program:manageprogram', (new \local_evaluation\lib\accesslib())::get_module_context())) && (!is_siteadmin()
         )) {
-            if(explode('/',$classroom->open_path)[1] != (new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
+            if(explode('/',$classroom->open_path)[1] != $costcenter){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
 

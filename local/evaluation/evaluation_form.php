@@ -84,7 +84,10 @@ class evaluation_form extends moodleform {
         }
         $mform->addElement('hidden', 'instance', $instance);
         $mform->setType('instance', PARAM_INT);
-        
+       
+        $mform->addElement('hidden', 'id', $id);
+        $mform->setType('instance', PARAM_INT);
+
         $mform->addElement('hidden', 'plugin', $plugin);
         $mform->setType('plugin', PARAM_RAW);
             
