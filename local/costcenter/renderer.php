@@ -204,6 +204,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $costcenter = $DB->get_record('local_costcenter', array('id' => $id));
             $depth=$costcenter->depth;
             $costcenterpath=$costcenter->path;
+            $exist_sql .= "AND ( concat('/',path,'/') LIKE '%/$id/%' ) ";
         }else{
             $costcenterpath=null;
             $depth = 1;
@@ -604,7 +605,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;
             $departments_content[] = $departments_array+$deparray;
         }
-
+        $contextid = (new \local_costcenter\lib\accesslib())::get_module_context()->id;
         $costcenter_view_content = [
             'showrols_content' => true,
             'totalsubdepts' => $totalsubdepts,
