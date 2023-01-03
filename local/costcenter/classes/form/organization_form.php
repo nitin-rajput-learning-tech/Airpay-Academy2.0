@@ -49,57 +49,45 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $headstring = $this->_customdata['headstring'];
 
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+
+        $costcentersql = "SELECT lc.id, lc.fullname
+                    FROM {local_costcenter} AS lc WHERE 1=1 $costcenterpathconcatsql ";
        
         if($formtype != 'organization'){
             if($formtype == 'department'){
                 $parent_label = get_string('organization', 'local_costcenter');
-                $departmentsql = "SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} AS lc WHERE lc.depth = 1 ";
-            }else if($formtype == 'subdepartment'){
-                $parent_label = get_string('department', 'local_costcenter');
-                $subdepartmentsql = "SELECT lc.id, CONCAT(llc.fullname,' / ',lc.fullname) AS fullname 
-                    FROM {local_costcenter} AS lc 
-                    JOIN {local_costcenter} AS llc ON llc.id=lc.parentid 
-                    WHERE lc.depth = 2 ";
-            }else if($formtype == 'subsubdepartment'){
-                $parent_label = get_string('subdepartment', 'local_costcenter');
-                $subsubdepartmentsql = "SELECT lc.id, CONCAT(lllc.fullname, ' / ', llc.fullname,' / ',lc.fullname) AS fullname
-                    FROM {local_costcenter} AS lc
-                    JOIN {local_costcenter} AS llc ON llc.id=lc.parentid
-                    JOIN {local_costcenter} AS lllc ON lllc.id=llc.parentid
-                    WHERE lc.depth = 3 ";
-            }else if($formtype == 'subsubsubdepartment'){
-                $parent_label = get_string('subsubdepartment', 'local_costcenter');
-                $subsubsubdepartmentsql = "SELECT lc.id, CONCAT(llllc.fullname, ' / ', lllc.fullname, ' / ', llc.fullname,' / ',lc.fullname) AS fullname
-                    FROM {local_costcenter} AS lc
-                    JOIN {local_costcenter} AS llc ON llc.id=lc.parentid
-                    JOIN {local_costcenter} AS lllc ON lllc.id=llc.parentid
-                    JOIN {local_costcenter} AS llllc ON llllc.id=lllc.parentid
-                    WHERE lc.depth = 4";
-            }
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-            if($id){
-                $departmentsql .= " AND ( concat('/',lc.path,'/') LIKE '%/$id/%' )";
-                $subdepartmentsql .= $departmentsql;
-                $subsubdepartmentsql .= $departmentsql;
-                $subsubsubdepartmentsql .= $departmentsql;
-            }
-            elseif($costcenterid){
 
-                $departmentsql .= " AND ( concat('/',lc.path,'/') LIKE '%/$costcenterid/%' )";
-                $subdepartmentsql .= $departmentsql;
-                $subsubdepartmentsql .= $subdepartmentsql;
-                $subsubsubdepartmentsql .= $subdepartmentsql;
-            }
-            if($formtype == 'department'){
-                $options = $DB->get_records_sql_menu($departmentsql);
+                $costcentersql.=" AND lc.depth = 1 ";
+
             }else if($formtype == 'subdepartment'){
-                $options = $DB->get_records_sql_menu($subdepartmentsql);
+
+                $parent_label = get_string('department', 'local_costcenter');
+
+                $costcentersql.=" AND lc.depth = 2 ";
+
             }else if($formtype == 'subsubdepartment'){
-                $options = $DB->get_records_sql_menu($subsubdepartmentsql);
+
+                $parent_label = get_string('subdepartment', 'local_costcenter');
+
+                $costcentersql.=" AND lc.depth = 3 ";
+
             }else if($formtype == 'subsubsubdepartment'){
-                $options = $DB->get_records_sql_menu($subsubsubdepartmentsql);
+
+                $parent_label = get_string('subsubdepartment', 'local_costcenter');
+
+                $costcentersql.=" AND lc.depth = 4 ";
+
             }
+
+            if($id){
+                $costcentersql .= " AND lc.id = $id ";
+
+            }
+
+            $options = $DB->get_records_sql_menu($costcentersql);
+
             if(count($options) > 1){
 
                 $attributes = array(

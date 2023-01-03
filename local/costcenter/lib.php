@@ -188,8 +188,12 @@ class costcenter {
     }
     function get_costcenter_icons(){
         global $USER, $DB;
-        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-        if(!empty($costcentershell = $DB->get_field('local_costcenter', 'shell', array('id' => $costcenterid, 'visible' => 1)))){
+
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+
+        $costcentersql = "SELECT lc.shell
+                    FROM {local_costcenter} AS lc WHERE lc.visible = 1 $costcenterpathconcatsql ";
+        if(!empty($costcentershell = $DB->get_field_sql($costcentersql))){
             return $costcentershell;
         }else{
             return false;
@@ -197,16 +201,14 @@ class costcenter {
     }
     function get_costcenter_theme(){
         global $USER, $DB;
+
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+
+        $costcentersql = "SELECT lc.theme
+                    FROM {local_costcenter} AS lc WHERE lc.visible = 1 $costcenterpathconcatsql ";
        
-       $table = 'local_costcenter';
-       $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-       $costcentercolor = $DB->get_record($table, array('id' => $costcenterid,'visible' =>1), $fields='*');
-       if(!empty($costcentercolor)){
-            return $costcentercolor;
-       }else{
-        return false;
-       }
-        if(!empty($costcentertheme = $DB->get_field('local_costcenter', 'theme', array('id' => $costcenterid, 'visible' => 1)))){
+
+        if(!empty($costcentertheme = $DB->get_field_sql($costcentersql))){
             return $costcentertheme;
         }else{
             return false;
@@ -338,8 +340,11 @@ function organizations_filter($mform,$query='',$searchanywhere=false, $page=0, $
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $organizationlist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth =1";
     }else{
-        $organizationlist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth =1 AND id = :usercostcenter ";
-        $userparam['usercostcenter'] =(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);;
+
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+
+        $organizationlist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=1 $costcenterpathconcatsql ";
+
     }
     if(!empty($query)){ 
         if ($searchanywhere) {
@@ -395,8 +400,9 @@ function departments_filter($mform,$query='',$searchanywhere=false, $page=0, $pe
     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
         $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2";
     }else{
-        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
-        $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' )";
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+
+        $departmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=2 $costcenterpathconcatsql ";
 
     }
     if(!empty($query)){ 
@@ -455,8 +461,9 @@ function subdepartment_filter($mform,$query='',$searchanywhere=false, $page=0, $
     if(is_siteadmin()){
         $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 ";
     }else{
-        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=3);
-        $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 3 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+
+        $subdepartmentslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=3 $costcenterpathconcatsql ";
 
         ;
     }
@@ -516,9 +523,9 @@ function department4level_filter($mform,$query='',$searchanywhere=false, $page=0
         $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 ";
     }else{
 
-        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=4);
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
 
-        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 4 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
+        $department4levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=4 $costcenterpathconcatsql ";
 
     }
     if(!empty($query)){
@@ -572,15 +579,14 @@ function department5level_filter($mform,$query='',$searchanywhere=false, $page=0
     $userparam = array();
     $departmentparam = array();
     $params = array();
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if(is_siteadmin()){
+
         $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 ";
-    }else if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
+    }else{
 
-       $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=5);
+       $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
 
-        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth = 5 AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
-
-        $userparam['usercostcenter'] = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+        $department5levelslist_sql = "SELECT id, fullname FROM {local_costcenter} WHERE depth=5 $costcenterpathconcatsql ";
 
     }
     if(!empty($query)){
@@ -738,18 +744,25 @@ function costcenter_edit_instance($costcenterid, $newcostcenter){
  * @return [type] [description]
  */
 function costcenter_items(){
+
     global $DB, $USER;
+
     $assigned_costcenters = '';
+
     $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+
     if (is_siteadmin()) {
-                   $sql="SELECT * from {local_costcenter} where visible=1 AND depth <3 ORDER by sortorder,fullname ";
+
+        $sql="SELECT * from {local_costcenter} where visible=1 AND depth <5 ORDER by sortorder,fullname ";
         $assigned_costcenters = $DB->get_records_sql($sql);
+
     } else {
-         $sql="SELECT * from {local_costcenter} where visible = 1 and (id = ? or parentid = ?) ORDER by sortorder,fullname";
 
-         $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
 
-        $assigned_costcenters = $DB->get_records_sql($sql, [$costcenterid, $costcenterid]);
+         $sql = "SELECT * FROM {local_costcenter} WHERE visible=1 $costcenterpathconcatsql   ORDER by sortorder,fullname";
+
+        $assigned_costcenters = $DB->get_records_sql($sql);
     }
     return $assigned_costcenters;
 }
@@ -759,7 +772,7 @@ function costcenter_items(){
 * @return  [type] string  link for the leftmenu
 */
 function local_costcenter_leftmenunode(){
-    global $USER;
+    global $USER,$DB;
     $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $costcenternode = '';
     if(has_capability('local/costcenter:view', $categorycontext) || is_siteadmin()) { 
@@ -770,7 +783,15 @@ function local_costcenter_leftmenunode(){
         }
     else{
             $depth=($categorycontext->depth-1);
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth);
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+
+            $costcentersql = "SELECT lc.id
+                                FROM {local_costcenter} AS lc WHERE lc.depth=$depth $costcenterpathconcatsql ";
+
+            $costcenterid = $DB->get_field_sql($costcentersql);
+
+
             $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
             $organization_string = get_string('orgStructure','local_costcenter');
         }

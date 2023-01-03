@@ -35,8 +35,14 @@ global $DB,$OUTPUT,$CFG, $PAGE;
 /* ---First level of checking--- */
 require_login();
 /* ---Get the records from the database--- */
-if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
-    print_error('invalidschoolid');
+
+$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+
+$costcentersql = "SELECT lc.id, lc.fullname,lc.parentid,lc.depth
+                    FROM {local_costcenter} AS lc WHERE lc.id = $id $costcenterpathconcatsql ";
+
+if (!$depart = $DB->get_record_sql($costcentersql)) {
+    print_error('invalidcostcenterid');
 }
 
 
@@ -72,9 +78,7 @@ if(is_siteadmin()){
     $PAGE->navbar->add(get_string('orgmanage', 'local_costcenter'), new moodle_url('/local/costcenter/index.php'));
 }
 else {
-    $depth=($categorycontext->depth-1);   
-    $costcenterid= (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth);
-    $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
+    $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' =>$depart->id));
     $organization_string = get_string('orgStructure','local_costcenter');
 }
 $superparentfullname = "SELECT lllc.fullname AS fullname, lllc.id AS idd FROM {local_costcenter} AS lc
