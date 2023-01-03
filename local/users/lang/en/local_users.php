@@ -114,24 +114,26 @@ $string['help_1'] = '<div class="helpmanual_table"><table class="generaltable" b
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
 <tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
-<tr><td>country</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
-<tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
-
-<tr><td>location</td><td>Enter Location Name.</td></tr>';
+<tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>';
 $string['help_2'] = '</td></tr>
 <tr class="field_type_head"><td class="empty_column"></td><td class="field_type font-weight-bold" style="text-align:left;border-left:1px solid white;"><b  class="pad-md-l-50 hlep2-oh">Non-Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>password</td><td>Provide the password,Password must be at least 8 characters long,Password must have at least 1 digit(s),Password must have at least 1 upper case letter(s),
 Password must have at least 1 non-alphanumeric character(s) such as as *, -, or #..</td></tr>
-<tr><td>subdepartment</td><td>Enter Bussiness Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
+<tr><td>Country</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
+<tr><td>bussiness_unit</td><td>Enter Bussiness Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
+<tr><td>commercial_unit</td><td>Enter Commercial Unit Code. Commercial Unit must already exist under specified Bussiness Unit in system as part of organization hierarchy.</td></tr>
+<tr><td>territory</td><td>Enter Territory Code. Territory must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
+<tr><td>state</td><td>Enter State Code. State must already exist under specified Territory in system as part of organization hierarchy.</td></tr>
+<tr><td>district</td><td>Enter District Code. State must already exist under specified State in system as part of organization hierarchy.</td></tr>
+<tr><td>subdistrict</td><td>Enter Sub District Code. State must already exist under specified District in system as part of organization hierarchy.</td></tr>
+<tr><td>vilage</td><td>Enter Village Code. State must already exist under specified Sub District in system as part of organization hierarchy.</td></tr>
 <tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>role</td><td>Enter Role.</td></tr>
-<tr><td>discipline</td><td>Enter Discipline, avoid additional spaces.</td></tr>
 <tr><td>mobileno</td><td>Enter Numerics only.</td></tr>
 <tr><td>reportingmanager_empid</td><td>Enter Reporting Manger learnerid, avoid additional spaces..</td></tr>
 <tr><td>role_designation</td><td>Enter Designation for the user.</td></tr>
 <tr><td>force_password_change</td><td>Provide the value as 1 if need to enable force password or 0 to disable it..</td></tr>
-<tr><td>country</td><td>Enter country code. Refer dropdown for codes, avoid additional spaces. {$a->countries}</td></tr>
 <tr><td>timezone</td><td>Enter timezone code. Refer dropdown for codes, avoid additional spaces. {$a->timezones}</td></tr>
 </table>';
 
@@ -142,10 +144,7 @@ $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
 <tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
-<tr><td>Country</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
 <tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
-<tr><td>country</td><td>Enter Country Name.</td></tr>
-<tr><td>location</td><td>Enter Location Name.</td></tr>
 ';
 
 $string['help_1_dephead'] = '<table class="generaltable" border="1">
@@ -156,8 +155,6 @@ $string['help_1_dephead'] = '<table class="generaltable" border="1">
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
 <tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
 <tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
-<tr><td>country</td><td>Enter Country Name.</td></tr>
-<tr><td>location</td><td>Enter Location Name.</td></tr>
 ';
 
 $string['already_assignedstocostcenter'] = '{$a} already assigned to costcenter. Please unassign from costcenter to proceed further';

@@ -166,6 +166,14 @@ $functions = array(
         'description' => 'Update Course type status',
         'type'        => 'write',
         'ajax' => true,
+    ),
+    'local_courses_get_course_info' => array(
+        'classname' => 'local_courses_external',
+        'methodname' => 'get_course_info',
+        'classpath' => 'local/courses/classes/external.php',
+        'description' => 'get course info',
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
     )
 );
 

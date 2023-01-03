@@ -34,7 +34,7 @@ myModule.controller('courseController', function ($scope, $http,$location) {
                 values.push($(filtervalue).val());
             });
             if(!$.isEmptyObject(filters))
-                $scope.selectedfilters.push({type, values});;
+                $scope.selectedfilters.push({type, values});
         });
         // $.each(checkedfilters, function( index, value ) {
         //     $scope.selectedfilters.push($(value).val());

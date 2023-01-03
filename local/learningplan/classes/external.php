@@ -750,4 +750,20 @@ class local_learningplan_external extends external_api {
         )
     ]);
     }
+    public static function get_learningplan_info_parameters(){
+        return new external_function_parameters(
+            array(
+                'id' => new external_value(PARAM_INT, 'The id of the module'),
+            )
+        );
+    }
+    public static function get_learningplan_info(){
+        global $DB;
+        return $DB->get_record('local_learningplan', array('id' => $id));
+    }
+    public static function get_learningplan_info_returns(){
+        global $CFG;
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        return local_search_get_module_return_parameters('local_learningplan', []);
+    }
 }

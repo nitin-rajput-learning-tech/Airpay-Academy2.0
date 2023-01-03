@@ -50,7 +50,6 @@ if ($format) {
     'district' => 'district',
     'subdistrict' => 'subdistrict',
     'village' => 'village',
-    'discipline' => 'discipline',
     'contactno' => 'contactno',   
     'employee_status' => 'employee_status',
     'password' => 'password',
