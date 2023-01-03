@@ -1613,13 +1613,42 @@ class local_courses_external extends external_api {
             )
         );
     }
-    public static function get_course_info(){
+    public static function get_course_info($id){
         global $DB;
-        return $DB->get_record('course', array('id' => $id));
+        $params = self::validate_parameters(self::get_course_info(),
+            ['id' => $id]);
+        $course = $DB->get_record('course', array('id' => $id));
+
+        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_courses'));
+        if($ratinginfo){
+            $course->avgrating = $ratinginfo->module_rating;
+            $course->ratedusers = $ratinginfo->module_rating_users;
+            // $course->likes = $ratinginfo->module_like;
+            // $course->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+        }
+        if($course->open_skill)
+            $course->skill = ($DB->get_field('local_skill','name',array('id' => $course->open_skill))) ;
+
+        if($course->open_level)
+            $course->level = ($DB->get_field('local_course_levels','name',array('id' => $course->open_level))) ;
+
+        return $course;
     }
     public static function get_course_info_returns(){
-        global $CFG;
-        require_once($CFG->dirroot.'/local/search/lib.php');
-        return local_search_get_module_return_parameters('course', []);
+        return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'The id of the module'),
+            'fullname' => new external_value(PARAM_TEXT, 'fullname'),
+            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
+            'category' => new external_value(PARAM_TEXT, 'category'),
+            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_RAW, 'points'),
+            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
+            'startdate' => new external_value(PARAM_INT, 'startdate'),
+            'enddate' => new external_value(PARAM_INT, 'enddate'),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+            'skill' => new external_value(PARAM_TEXT, 'skill', VALUE_OPTIONAL, ''),
+            'level' => new external_value(PARAM_TEXT, 'level', VALUE_OPTIONAL, ''),
+        ));
     }
 }
