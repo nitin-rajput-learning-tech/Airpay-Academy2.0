@@ -48,6 +48,7 @@ $context = (new \local_evaluation\lib\accesslib())::get_module_context();
 $PAGE->set_context($context);
 require_login();
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));
+$costcenter=explode('/',$evaluation->open_path)[1];
 if (empty($evaluation)) {
   print_error(get_string('feedback_not_found', 'local_evaluation'));
 }
@@ -61,7 +62,7 @@ if ($evaluation->plugin === "classroom"){
         print_error(get_string('classroom_not_found', 'local_evaluation'));
     }
     if ((has_capability('local/classroom:manageclassroom', $context))) {
-            if(explode('/',$classroom->open_path)[1] != (new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
+            if(explode('/',$classroom->open_path)[1] != $costcenter){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
     }
@@ -72,7 +73,7 @@ if ($evaluation->plugin === "classroom"){
     }
     if ((has_capability('local/program:manageprogram', $context)) && (!is_siteadmin()
     )) {
-            if(explode('/',$program->open_path)[1]!=(new \local_evaluation\lib\accesslib())::get_user_roleswitch_path(1)){
+            if(explode('/',$program->open_path)[1]!=$costcenter){
              print_error(get_string('no_permissions', 'local_evaluation'));
             }
     }

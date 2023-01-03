@@ -82,7 +82,6 @@ class local_evaluation_external extends external_api {
         // We always must call validate_context in a webservice.
         self::validate_context($context);
         $serialiseddata = json_decode($params['jsonformdata']);
-
         $data = array();
         parse_str($serialiseddata, $data);
 
@@ -106,7 +105,12 @@ class local_evaluation_external extends external_api {
                 $validateddata->timeclose = $validateddata->timeclose;
             }
             if ($validateddata->id > 0) {
-
+                $validateddata->open_group = !empty($validateddata->open_group) ? implode(',', array_filter($validateddata->open_group)) : NULL;
+                if(!empty($validateddata->open_group)) {
+                $validateddata->open_group = $validateddata->open_group;
+                } else {
+                $validateddata->open_group = NULL;
+                }
                 $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
@@ -121,6 +125,12 @@ class local_evaluation_external extends external_api {
             } else{
                 local_costcenter_get_costcenter_path($validateddata);
                 local_users_get_userprofile_datafields($validateddata,$data);
+                $validateddata->open_group = !empty($validateddata->open_group) ? implode(',', array_filter($validateddata->open_group)) : NULL;
+                if(!empty($validateddata->open_group)) {
+                $validateddata->open_group = $validateddata->open_group;
+                } else {
+                $validateddata->open_group = NULL;
+                }
                 $validateddata->instance = $instance;
                 $validateddata->plugin = $plugin;
                 $validateddata->evaluationtype = ($evaluationtype) ? $evaluationtype: 0;
