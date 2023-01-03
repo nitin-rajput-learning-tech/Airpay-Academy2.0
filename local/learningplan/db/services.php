@@ -123,6 +123,14 @@ $functions = array(
         'description' => 'Get user learningplans for dashboard',
         'ajax' => true,
         'type' => 'read',
+    ),
+    'local_learningplan_get_learningplan_info' => array(
+        'classname' => 'local_learningplan_external',
+        'methodname' => 'get_learningplan_info',
+        'classpath' => 'local/learningplan/classes/external.php',
+        'description' => 'get learningplan info',
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
     )
 );
 

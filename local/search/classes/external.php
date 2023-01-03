@@ -37,12 +37,12 @@ class local_search_external extends external_api {
                     )
                 ]) ,'Filters' ,VALUE_DEFAULT, []
             ),
-            'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_OPTIONAL, SYSCONTEXTID),
-            'pagelimit' => new external_value(PARAM_INT, 'Page length for the modules', VALUE_OPTIONAL, 15),
+            'contextid' => new external_value(PARAM_INT, 'The context id for the course', VALUE_DEFAULT, SYSCONTEXTID),
+            'pagelimit' => new external_value(PARAM_INT, 'Page length for the modules', VALUE_DEFAULT, 15),
             'query' => new external_value(PARAM_RAW, 'Search criteria for the modules', VALUE_OPTIONAL)
         ]);
     }
-    public static function get_available_modules($page, $filters = [], $contextid = SYSCONTEXTID, $pagelimit = 50, $query = ''){
+    public static function get_available_modules($page, $filters = [], $contextid = SYSCONTEXTID, $pagelimit = 15, $query = ''){
         global $CFG, $DB;
         $params = self::validate_parameters(self::get_available_modules_parameters(),
                                             ['page' => $page, 'filters' => $filters, 'contextid' => $contextid, 'pagelimit' => $pagelimit, 'query' => $query]);
