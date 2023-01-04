@@ -50,7 +50,7 @@ class view extends plugin_renderer_base {
 		if(is_siteadmin() || has_capability('local/learningplan:view', $categorycontext)){
 			$sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1 "; //WHERE l.id > 0
 
-			if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
+			if (is_siteadmin()) {
             $sql .= "";
 	        } else  {
 	            $sql .= $costcenterpathconcatsql;
@@ -169,7 +169,7 @@ class view extends plugin_renderer_base {
 				$learning_plans = $this->db->get_records_sql($sql, $lpparams);
 			}
 
-			if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
+			if (is_siteadmin()) {
             	$assign_users_sql .= "";
 	        } else  {
 	            $assign_users_sql .= $costcenterpathconcatsql;
@@ -1283,7 +1283,7 @@ class view extends plugin_renderer_base {
 		if($lastitem!=0){
            $sql.=" AND u.id > $lastitem";
         }
-        if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
+        if (is_siteadmin()) {
             $sql .= "";
         } else  {
             $sql .= $costcenterpathconcatsql;
@@ -1431,7 +1431,7 @@ class view extends plugin_renderer_base {
             $sql.=" AND u.id > $lastitem";
          }
     	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-        if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
+        if (is_siteadmin()) {
             $sql .= "";
         } else  {
             $sql .= $costcenterpathconcatsql;

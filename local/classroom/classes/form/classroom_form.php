@@ -72,18 +72,14 @@ class classroom_form extends moodleform {
                 $mform->setType('name', PARAM_CLEANHTML);
             }
             $mform->addRule('name', null, 'required', null, 'client');
-            if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
+            if((is_siteadmin() )){
 
             $depsql = "SELECT lcc.id,lcc.fullname
                         FROM {local_custom_category} as lcc";
 
             $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
             // $parents[0] = 'Top';
-        }else{            
-            $sql = "SELECT id,fullname
-                    FROM {local_custom_category} WHERE costcenterid = ?";
-            $parents = $DB->get_records_sql_menu($sql, [$org]);
-        }        
+        }     
         $parents[0] = 'Select Category';       
         ksort($parents);
             $categoryinfo = array(

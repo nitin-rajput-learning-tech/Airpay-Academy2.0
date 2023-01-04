@@ -306,7 +306,7 @@ class lib
 		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1  "; 
 		$costcenterid = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
 		$orgpath = explode('/', $costcenterid);
-		if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
+		if (is_siteadmin()) {
 	        $sql .= "";
 	    } else  {
 	        $sql .= $costcenterpathconcatsql;

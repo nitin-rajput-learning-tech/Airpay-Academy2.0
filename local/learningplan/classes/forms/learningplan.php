@@ -73,10 +73,10 @@ class learningplan extends moodleform {
         $core_component = new core_component();
 
 		if($form_status == 0){
-			if (is_siteadmin($USER->id) || has_capability('local/users:manage',$categorycontext)) {
-				$sql="select id,fullname from {local_costcenter} where visible =1 and parentid=0 ";
-	            $costcenters = $DB->get_records_sql($sql);
-	        }
+			// if (is_siteadmin($USER->id) || has_capability('local/users:manage',$categorycontext)) {
+			// 	$sql="select id,fullname from {local_costcenter} where visible =1 and parentid=0 ";
+	        //     $costcenters = $DB->get_records_sql($sql);
+	        // }
 
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_learningplan', $categorycontext, $multiple = false);
 
@@ -90,21 +90,32 @@ class learningplan extends moodleform {
 			}
 	        $mform->setType('shortname', PARAM_TEXT);
 			
-        if((is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext))){
-
-            $depsql = "SELECT lcc.id,lcc.fullname
-                        FROM {local_custom_category} as lcc";
-
-            $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
-            // $parents[0] = 'Top';
-
-        }else{
-
-            $sql = "SELECT id,fullname
-                    FROM {local_custom_category} WHERE costcenterid = ?";
-            $userpath = $DB->get_field('user', 'open_path', array('id' => $USER->id));
-            $parents = $DB->get_records_sql_menu($sql, [explode('/', $userpath)[1]]);
+        // if(is_siteadmin()){
+        //     $depsql = "SELECT lcc.id,lcc.fullname
+        //                 FROM {local_custom_category} as lcc";
+        //     $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
+        // }else{
+        //     $sql = "SELECT id,fullname
+        //             FROM {local_custom_category} WHERE costcenterid = ?";
+        //     $userpath = $DB->get_field('user', 'open_path', array('id' => $USER->id));
+        //     $parents = $DB->get_records_sql_menu($sql, [explode('/', $userpath)[1]]);
+        // }
+	        
+        $parentsql = "SELECT lcc.id, lcc.fullname FROM {local_custom_category} AS lcc WHERE 1 = 1 AND lcc.depth = 1";
+        if(!is_siteadmin()){
+            $orgcond = [];
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                $orgcond[] = " lcc.costcenterid = {$costcenterid} ";
+            }
+            if(!empty($orgcond)){
+                $parentsql .= " AND".implode(' OR ', $orgcond);
+            }else{
+                $parentsql .= " AND 1 <> 1 ";
+            }
         }
+        $parents = $DB->get_records_sql_menu($parentsql);
+
         $parents[0] = 'Select Category';
         asort($parents);
         $coursetype = array(
@@ -164,12 +175,12 @@ class learningplan extends moodleform {
 	        $mform->addHelpButton('description','descript','local_learningplan');
 			
 			$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
-			if (is_siteadmin($USER->id) || has_capability('local/learningplan:manage', $categorycontext)) {
-				$sql = "select id,fullname from {local_costcenter} where visible =1 and parentid IN(0,1)";
-				$costcenters = $DB->get_records_sql($sql);
-	        } else {
+			// if (is_siteadmin($USER->id) || has_capability('local/learningplan:manage', $categorycontext)) {
+			// 	$sql = "select id,fullname from {local_costcenter} where visible =1 and parentid IN(0,1)";
+			// 	$costcenters = $DB->get_records_sql($sql);
+	        // } else {
 				
-	        }
+	        // }
 			
 			$mform->addElement('filemanager', 'summaryfile', get_string('learning_path_summary_file', 'local_learningplan'), null,array('maxbytes' => $maxbytes, 'accepted_types' => ['.jpg','.jpeg','.png','.gif']));
 			$mform->addHelpButton('summaryfile','learningpaths','local_learningplan');
@@ -185,7 +196,7 @@ class learningplan extends moodleform {
 
                 $select = array(null => get_string('select_certificate','local_learningplan'));
 				$costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-                if(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)){
+                if(is_siteadmin()){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenterid),'name', 'id,name');

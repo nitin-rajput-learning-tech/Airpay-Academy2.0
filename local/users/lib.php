@@ -1278,7 +1278,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
 
     foreach($fields as $field){
 
-        if($depth == 0 && $pluginname == 'local_users'){
+        if($depth == 0 ){
 
             $prev_element = 'locationfieldparentid_select';
 
