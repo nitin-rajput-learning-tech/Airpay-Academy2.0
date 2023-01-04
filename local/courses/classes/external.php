@@ -178,6 +178,13 @@ class local_courses_external extends external_api {
                     }
 
                     update_course($validateddata, $editoroptions);
+
+                    // purge appropriate caches in case fix_course_sortorder() did not change anything
+                    cache_helper::purge_by_event('changesincourse');
+                    if ($changesincoursecat) {
+                        cache_helper::purge_by_event('changesincoursecat');
+                    }
+
                     if(class_exists('\block_trending_modules\lib')){
                         $trendingclass = new \block_trending_modules\lib();
                         if(method_exists($trendingclass, 'trending_modules_crud')){
@@ -235,6 +242,12 @@ class local_courses_external extends external_api {
                     $data->summary_editor=array('format'=>1);
 
                     update_course($data, $editoroptions);
+
+                   // purge appropriate caches in case fix_course_sortorder() did not change anything
+                    cache_helper::purge_by_event('changesincourse');
+                    if ($changesincoursecat) {
+                        cache_helper::purge_by_event('changesincoursecat');
+                    }
 
                 }
             }
