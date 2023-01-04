@@ -18,7 +18,7 @@
  * List the tool provided 
  *
  * @package   usersprofilefields
- * @subpackage  district
+ * @subpackage  village
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -26,46 +26,46 @@ require_once(dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/config.php'
 require_once($CFG->dirroot . '/local/users/lib.php');
 
 global $OUTPUT, $DB, $USER, $CFG;
-$pageurl = $CFG->wwwroot.'/local/users/profilefields/district/createdistrict.php';
-$systemcontext = (new \usersprofilefields_district\lib\accesslib())::get_module_context();
+$pageurl = $CFG->wwwroot.'/local/users/profilefields/village/index.php';
+$systemcontext = (new \usersprofilefields_village\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url($pageurl);
 $PAGE->set_pagelayout('standard');
 
 //Header and the navigation bar
-$PAGE->set_heading(get_string('managedistrict', 'usersprofilefields_district'));
+$PAGE->set_heading(get_string('managevillage', 'usersprofilefields_village'));
 $PAGE->navbar->add(get_string('manage_users', 'local_users'),new \moodle_url('/local/users/index.php'));
-$PAGE->navbar->add(get_string('managedistrict', 'usersprofilefields_district'));
+$PAGE->navbar->add(get_string('managevillage', 'usersprofilefields_village'));
 
-$PAGE->requires->js_call_amd('usersprofilefields_district/createDistrict', 'load', array());
-$PAGE->requires->js_call_amd('usersprofilefields_district/createDistrict', 'profileTableDataTables', array('id' => 'district_table'));
+$PAGE->requires->js_call_amd('usersprofilefields_village/createVillage', 'load', array());
+$PAGE->requires->js_call_amd('usersprofilefields_village/createVillage', 'profileTableDataTables', array('id' => 'village_table'));
 
-$districtlib = new \usersprofilefields_district\lib();
+$villagelib = new \usersprofilefields_village\lib();
 echo $OUTPUT->header();
 
-//view district
-if(is_siteadmin() || has_capability('usersprofilefields/district:view',$systemcontext)){
-    $navbar = masterdata_capabilities('district');
+//view village
+if(is_siteadmin() || has_capability('usersprofilefields/village:view',$systemcontext)){
+    $navbar = masterdata_capabilities('village');
     echo $OUTPUT->render_from_template('local_users/navbar',$navbar);
 }else{
     echo print_error('No permission');
 }
 
-//create district
-if(is_siteadmin() || has_capability('usersprofilefields/district:create',$systemcontext)){
+//create village
+if(is_siteadmin() || has_capability('usersprofilefields/village:create',$systemcontext)){
     echo "<ul class='course_extended_menu_list'>
         <li>
             <div class='coursebackup course_extended_menu_itemcontainer'>
-                <a id='extended_menu_createusers' title='".get_string('createdistrict', 'usersprofilefields_district')."' class='course_extended_menu_itemlink' data-action='createdistrictmodal' onclick ='(function(e){ require(\"usersprofilefields_district/createDistrict\").init({selector:\"createdistrictmodal\", contextid:$systemcontext->id, districtid:0}) })(event)' ><i class='icon fa fa-globe'></i>
+                <a id='extended_menu_createusers' title='".get_string('createvillage', 'usersprofilefields_village')."' class='course_extended_menu_itemlink' data-action='createvillagemodal' onclick ='(function(e){ require(\"usersprofilefields_village/createVillage\").init({selector:\"createvillagemodal\", contextid:$systemcontext->id, villageid:0}) })(event)' ><i class='icon fa fa-globe'></i>
                 </a>
             </div>
         </li>
     </ul>";
 }
 
-//manage district
-if(is_siteadmin() || has_capability('usersprofilefields/district:manage',$systemcontext)){
-    $pagecontent = $districtlib->district_page_content();
+//manage village
+if(is_siteadmin() || has_capability('usersprofilefields/village:manage',$systemcontext)){
+    $pagecontent = $villagelib->village_page_content();
     echo $pagecontent;
 }
 echo $OUTPUT->footer();
