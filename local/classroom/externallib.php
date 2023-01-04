@@ -3051,33 +3051,9 @@ public static function submit_instituteform_form_parameters() {
     }
     public function get_classroom_info($id){
         global $DB;
-        $params = self::validate_parameters(self::get_learningplan_info(),
+        $params = self::validate_parameters(self::get_classroom_info(),
             ['id' => $id]);
-        $classroom = $DB->get_record('local_classroom', array('id' => $id));
-        $classroom->startdate = date('d-m-Y', $classroom->startdate);
-        $classroom->enddate = date('d-m-Y', $classroom->endate);
-        $classroom->summary = $classroom->description;
-        $classroom->points = $course->open_points;
-
-        if(file_exists($CFG->dirroot.'/local/includes.php')){
-            require_once($CFG->dirroot.'/local/includes.php');
-            $includes = new user_course_details();
-        }
-        $coursefileurl = (new \local_classroom\classroom)->classroom_logo($coursefileurl = $classroom->id);
-        if($coursefileurl == false){
-                    $coursefileurl = $includes->get_classes_summary_files($classroom);
-                }
-        $classroom->bannerimage = $coursefileurl;
-        $classroom->category = ($DB->get_field('local_custom_category','fullname',array('id' => $classroom->open_category))) ;
-
-        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $classroom->id, 'module_area' => 'local_learningplan'));
-        if($ratinginfo){
-            $classroom->avgrating = $ratinginfo->module_rating;
-            $classroom->ratedusers = $ratinginfo->module_rating_users;
-            // $classroom->likes = $ratinginfo->module_like;
-            // $classroom->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
-        }
-        return $classroom;
+        return (new \local_classroom\local\general_lib())->get_classroom_info($id);
     }
     public function get_classroom_info_returns(){
         return new external_single_structure(array(

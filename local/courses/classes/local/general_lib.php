@@ -301,8 +301,8 @@ class general_lib{
         global $DB;
         $course = $DB->get_record('course', array('id' => $id));
 
-        $course->startdate = date('d-m-Y', $course->startdate);
-        $course->enddate = date('d-m-Y', $course->endate);
+        // $course->startdate = date('d-m-Y', $course->startdate);
+        // $course->enddate = date('d-m-Y', $course->endate);
         $course->points = $course->open_points;
         $course->category = ($DB->get_field('local_custom_category','fullname',array('id' => $course->category))) ;
         $course->bannerimage = \local_search\output\searchlib::convert_urlobject_intoplainurl($course);
