@@ -276,7 +276,7 @@ class learningplan {
 
         $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1 "; 
         $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='l.open_path');
-        if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
+        if (is_siteadmin()) {
             $sql .= "";
         } else  {
             $sql .= $costcenterpathconcatsql;

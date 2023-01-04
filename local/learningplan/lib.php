@@ -159,12 +159,12 @@ function learningplan_filter($mform){
     $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $learningplan_params = array();
     $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
-    if (is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) {
+    if (is_siteadmin()) {
         $sql .= "";
     } else  {
         $sql .= $costcenterpathconcatsql;
     }
-   /* if(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)){
+   /* if(is_siteadmin()){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
     }else if(has_capability('local/learningplan:manage', $categorycontext)){
         $sql = " SELECT id, name FROM {local_learningplan} WHERE  costcenter = :costcenter ";
