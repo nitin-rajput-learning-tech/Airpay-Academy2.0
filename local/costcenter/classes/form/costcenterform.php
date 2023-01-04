@@ -50,7 +50,7 @@ class costcenterform extends moodleform { /*costcenter creation form*/
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
         if($formtype == 'createdeptmodal'){
-            if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
+            if((is_siteadmin())){
                 $depsql = "SELECT lc.id,lc.fullname 
                             FROM {local_costcenter} as lc 
                             WHERE parentid = :parentid";

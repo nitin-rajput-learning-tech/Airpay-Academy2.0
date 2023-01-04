@@ -110,7 +110,7 @@ function mass_enroll($cir, $course, $context, $data) {
         /*First Condition To validate users*/
         $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield='$fields[0]' ";
         //$sql
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
+        if(!(is_siteadmin())){
 
             $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             $sql .= " and u.id <> {$USER->id} ";
@@ -425,8 +425,6 @@ function categorylist($requiredcapability = '', $excludeid = 0, $separator = ' /
 
     // Now build the array of strings to return, mind $separator and $excludeid.
     $names = array();
-    $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-    $category = $DB->get_field('local_costcenter', 'category' ,array('path' => $open_path));
     foreach ($thislist as $id) {
 
         $path = preg_split('|/|', $baselist[$id]['path'], -1, PREG_SPLIT_NO_EMPTY);
@@ -963,9 +961,7 @@ function categories_filter($mform){
         $categorylist = $DB->get_records_sql_menu("SELECT id, name FROM {course_categories} ");
     } else {
 
-        $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-
-        $categories = $catslib->get_categories($open_path);
+        $categories = $catslib->get_categories();
         list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'param', true, false);
         $categorylist = $DB->get_records_sql_menu("SELECT cc.id, cc.name FROM {course_categories} AS cc WHERE cc.id 
             $categoriessql ", $categoriesparams);
@@ -1603,7 +1599,7 @@ function get_listof_courses($stable, $filterdata) {
                 $courseslist[$count]["enrollusers"] = $CFG->wwwroot."/local/courses/courseenrol.php?id=".$course->id."&enrolid=".$enrolid;
             }
 
-            if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context) || has_capability('local/costcenter:manage_ownorganization',$context))) {
+            if($departmentcount > 1 && !(is_siteadmin())) {
                   $courseslist[$count]["grade_view"] = false;
                   $courseslist[$count]["request_view"] = false;
              }   
@@ -1980,8 +1976,7 @@ function get_course_details($courseid) {
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
     $details = array();
     $joinsql = '';
-    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$context) OR 
-        has_capability('local/costcenter:manage_owndepartments',$context)) {
+    if(is_siteadmin()) {
         $sql = "select c.* from {course} c where c.id = ?";
 
         $selectsql = "select c.*  ";

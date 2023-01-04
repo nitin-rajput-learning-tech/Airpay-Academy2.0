@@ -118,7 +118,7 @@ class local_courses_external extends external_api {
             $category_id=$data['category'];
 
             $categorycontext=(new \local_courses\lib\accesslib())::get_module_context($course->id);
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
+            if(is_siteadmin()){
               $open_departmentid = implode(',',$data['open_departmentid']);
             }else {
               $open_departmentid = $data['open_departmentid'];
@@ -494,32 +494,33 @@ class local_courses_external extends external_api {
             $categorylib = new local_courses\catslib();
             $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
             
-            if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganizations',$categorycontext)){
-                $orgcategories = $categorylib->get_categories($orgid);
-                $orgcategoryids = implode(',',$orgcategories);
-                $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
-            } else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-                $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-                $orgcategories = $categorylib->get_categories($open_path);
-                $orgcategoryids = implode(',',$orgcategories);
-                $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
-            } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-                $deptcategories = $categorylib->get_categories($USER->open_departmentid);
-                $deptcategoryids = implode(',',$deptcategories);
-                $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($deptcategoryids)";
-            }
+
+            $orgcategories = $categorylib->get_categories();
+            $orgcategoryids = implode(',',$orgcategories);
+            $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
+
             $sql .= " ORDER BY c.id DESC";
             $allcategories = $DB->get_records_sql_menu($sql);
 
         } else if($flag){
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-            $parentcategory = $DB->get_field('local_costcenter','category',array('id'=>$open_path));
-            if(is_siteadmin())
+
+            if(is_siteadmin()){
+
                 $allcategories = $DB->get_records_sql_menu("select id,name from {course_categories} where visible=1");
-            else
-                $allcategories = $DB->get_records_sql_menu("select id,name from {course_categories}
-                where (path like '/$parentcategory/%' or path like '%/$parentcategory' or path like '%/$parentcategory/%')
-                AND visible=1");
+
+            }else{
+
+                $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+                $costcentersql = "SELECT lc.id,lc.name
+                                FROM {local_costcenter} AS lc
+                                WHERE lc.visible=1 $costcenterpathconcatsql ";
+
+                $allcategories = $DB->get_records_sql_menu($costcentersql);
+            }
+
+
+
             $departmentlist = array();
             $levelslist = array();
         }

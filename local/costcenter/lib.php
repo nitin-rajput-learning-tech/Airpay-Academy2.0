@@ -337,7 +337,7 @@ function organizations_filter($mform,$query='',$searchanywhere=false, $page=0, $
     $organizationparam = array();
     $params = array();
     
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if(is_siteadmin()){
         $organizationlist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth =1";
     }else{
 
@@ -397,7 +397,7 @@ function departments_filter($mform,$query='',$searchanywhere=false, $page=0, $pe
     $organizationparam = array();
     $params = array();
     
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if(is_siteadmin()){
         $departmentslist_sql="SELECT id, fullname FROM {local_costcenter} WHERE depth = 2";
     }else{
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');

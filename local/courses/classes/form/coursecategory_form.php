@@ -47,26 +47,29 @@ class coursecategory_form extends moodleform {
         if (has_capability('local/courses:manage', $context) || $parent == 0) {
             $option[0] = get_string('top');
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$context)){            
+        if(is_siteadmin()){
             $options = categorylist('local/courses:manage');
             $options = $option+$options;
 
-        }else if(has_capability('local/costcenter:manage_ownorganization',$context)){
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-            $orgcategory = $DB->get_field('local_costcenter','category',array('path' => $open_path));
-            $options = categorylist('local/courses:manage','','/',0,$orgcategory);
-        }else if(has_capability('local/costcenter:manage_owndepartments',$context)){
-
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=2);
-            $deptcategory = $DB->get_field('local_costcenter', 'category', array('id' => $open_path));
-            $options = categorylist('local/courses:manage','','/',$deptcategory);
-        } elseif ($categoryid) {
+        }elseif ($categoryid) {
             // Editing an existing category.
             $options = categorylist('local/courses:manage', $categoryid);
             if (empty($options[$parent])) {
                 // Ensure the the category parent has been included in the options.
                 $options[$parent] = $DB->get_field('course_categories', 'name', array('id'=>$parent));
             }
+        }else{
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+            $costcentersql = "SELECT lc.category
+                            FROM {local_costcenter} AS lc
+                            WHERE 1=1 $costcenterpathconcatsql ";
+
+            $category = $DB->get_field_sql($costcentersql);
+
+            $options = categorylist('local/courses:manage','','/',$category);
+
         }
 
         if (!$categoryid) {

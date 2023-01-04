@@ -103,19 +103,26 @@ class local_uploadcourse_step2_form extends tool_uploadcourse_base_form {
         $this->add_import_options();
 
         
-        if(is_siteadmin($USER)){
+        if(is_siteadmin()){
+
             $displaylist = $DB->get_records_menu('local_costcenter',  array('parentid' => 0),  $sort='',  $fields='id,fullname');
-            $options[null] = 'select organization';
-            $data = $options+$displaylist;
-            $mform->addElement('select', 'defaults[open_path]', get_string('organization', 'local_courses'), $data);
-            $mform->addRule('defaults[open_path]', null, 'required');
-            $mform->addHelpButton('defaults[open_path]', 'coursecategory');
+
         } else {
 
-            $mform->addElement('hidden', 'defaults[open_path]');
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-            $mform->setDefault('defaults[open_path]',  $open_path);
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+            $costcentersql = "SELECT lc.id,lc.fullname
+                            FROM {local_costcenter} AS lc
+                            WHERE 1=1 $costcenterpathconcatsql ";
+
+            $displaylist = $DB->get_records_sql_menu($costcentersql);
         }
+
+        $options[null] = 'select organization';
+        $data = $options+$displaylist;
+        $mform->addElement('select', 'defaults[open_path]', get_string('organization', 'local_courses'), $data);
+        $mform->addRule('defaults[open_path]', null, 'required');
+        $mform->addHelpButton('defaults[open_path]', 'coursecategory');
         
         // Hidden fields.
         $mform->addElement('hidden', 'importid', $this->_customdata['importid']);
