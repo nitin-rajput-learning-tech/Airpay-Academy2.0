@@ -243,10 +243,20 @@ class search implements renderable{
 
             $list->enrollmentbtn = $this->get_enrollbtn($list);
             $list->requeststatus = '';
+            if($list->isenrolled){
+                $list->requeststatus = MODULE_ENROLLED;
+            }else{
+                if($list->approvalreqd){
+                    $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                    $requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'learningplan', 'createdbyid'=>$USER->id));
+                    if($requeststatus == 'PENDING'){
+                        $list->requeststatus = MODULE_ENROLMENT_PENDING;
+                    }
+                }
+            }
             if($list->approvalreqd == 1){
                 $list->enrolmethods[] = 'request';
-                $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                $list->requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'learningplan', 'createdbyid'=>$USER->id));
+
             }else if($list->selfenrol == 1){
                 $list->enrolmethods[] = 'self';
             }

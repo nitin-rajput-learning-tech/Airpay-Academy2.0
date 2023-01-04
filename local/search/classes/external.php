@@ -93,6 +93,7 @@ class local_search_external extends external_api {
                     ),
                     'skill' => new external_value(PARAM_TEXT, 'SKill Information', VALUE_OPTIONAL, ''),
                     'level' => new external_value(PARAM_TEXT, 'level Information', VALUE_OPTIONAL, ''),
+                    'canenrolrequest' => new external_value(PARAM_BOOL, 'Can enrol Flag', VALUE_DEFAULT, true)
                 ])
             )
         ]);
