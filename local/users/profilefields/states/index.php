@@ -26,7 +26,7 @@ require_once(dirname(dirname(dirname(dirname(dirname(__FILE__))))).'/config.php'
 require_once($CFG->dirroot . '/local/users/lib.php');
 
 global $OUTPUT, $DB, $USER, $CFG;
-$pageurl = $CFG->wwwroot.'/local/users/profilefields/states/createstates.php';
+$pageurl = $CFG->wwwroot.'/local/users/profilefields/states/index.php';
 $systemcontext = (new \usersprofilefields_states\lib\accesslib())::get_module_context();
 $PAGE->set_context($systemcontext);
 $PAGE->set_url($pageurl);
