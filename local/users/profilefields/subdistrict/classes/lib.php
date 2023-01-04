@@ -11,12 +11,12 @@ class lib{
         $sql = $DB->get_record('local_district', array('id' => $formdata->districtid));
         $data->statesid = $sql->statesid;
         $data->costcenterid = $sql->costcenterid;
-
         if($formdata->id){
             $data->id           = $formdata->id;
             $data->timemodified = time();
             $data->usermodified = $USER->id;
             $subdistrictid = $DB->update_record('local_subdistrict', $data);
+            $DB->execute("UPDATE {local_village} SET districtid='{$data->districtid}',statesid ='{$data->statesid}', costcenterid='{$data->costcenterid}' WHERE subdistrictid ='{$data->id}'");
         }else{
             $data->timecreated  = time();
             $data->usercreated  = $USER->id;

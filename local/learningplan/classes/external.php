@@ -757,13 +757,43 @@ class local_learningplan_external extends external_api {
             )
         );
     }
-    public static function get_learningplan_info(){
+    public static function get_learningplan_info($id){
         global $DB;
-        return $DB->get_record('local_learningplan', array('id' => $id));
+        $params = self::validate_parameters(self::get_learningplan_info(),
+            ['id' => $id]);
+        $learningplans = $DB->get_record('local_learningplan', array('id' => $id));
+        $learningplans->startdate = date('d-m-Y', $learningplans->startdate);
+        $learningplans->enddate = date('d-m-Y', $learningplans->endate);
+        $learningplans->summary = $learningplans->description;
+        $learningplans->points = $learningplans->open_points;
+
+        $coursefileurl = (new \local_learningplan\lib\lib)->get_learningplansummaryfile($coursefileurl = $learningplans->id);
+        $learningplans->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
+        $learningplans->category = ($DB->get_field('local_custom_category','fullname',array('id' => $learningplans->open_category))) ;
+
+        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $learningplans->id, 'module_area' => 'local_learningplan'));
+        if($ratinginfo){
+            $learningplans->avgrating = $ratinginfo->module_rating;
+            $learningplans->ratedusers = $ratinginfo->module_rating_users;
+            // $learningplans->likes = $ratinginfo->module_like;
+            // $learningplans->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+        }
+        return $learningplans;
     }
     public static function get_learningplan_info_returns(){
-        global $CFG;
-        require_once($CFG->dirroot.'/local/search/lib.php');
-        return local_search_get_module_return_parameters('local_learningplan', []);
+        return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'The id of the module'),
+            'name' => new external_value(PARAM_TEXT, 'name'),
+            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
+            'summary' => new external_value(PARAM_HTML, 'summary'),
+            'category' => new external_value(PARAM_TEXT, 'category'),
+            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_RAW, 'points'),
+            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
+            'startdate' => new external_value(PARAM_INT, 'startdate'),
+            'enddate' => new external_value(PARAM_INT, 'enddate'),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+        ));
     }
 }
