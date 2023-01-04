@@ -2910,4 +2910,151 @@ public function learningplaninfo_for_employee($planid){
         $liTag = html_writer::tag('li', $container);
         return html_writer::tag('ul', $liTag, array('class' => 'course_extended_menu_list'));		
 	}
+	public function lpathinfo_for_employee($planid){
+        global $PAGE,$DB, $CFG,$USER;
+
+        $learningplan_lib = new lib();
+        $includeslib = new \user_course_details();
+        $learningplan_classes_lib = new lib();
+
+        $lplan = $this->db->get_record('local_learningplan', array('id'=>$planid),'*',MUST_EXIST);
+
+        $lpimgurl = $learningplan_classes_lib->get_learningplansummaryfile($planid);
+        $mandatarycourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'and');
+        $optionalcourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'or');
+        $lplanassignedcourses = lib::get_learningplan_assigned_courses($planid);
+
+
+        $description = $lplan->description;
+        $lpinfo = '';
+        if($lplan->learning_type == 1){
+            $plan_type = 'Core Courses';
+        }elseif($lplan->learning_type == 2){
+            $plan_type = 'Elective Courses';
+        }
+        if(!empty($lplan->startdate)){
+            $plan_startdate = date('d/m/Y', $lplan->startdate);
+        }else{
+            $plan_startdate = 'N/A';
+        }
+        if(!empty($lplan->enddate)){
+            $plan_enddate = date('d/m/Y', $lplan->enddate);
+        }else{
+            $plan_enddate = 'N/A';
+        }
+        $pathcourses = '';
+        if(count($lplanassignedcourses)>=2){
+            $i = 1;
+            $coursespath_context['pathcourses'] = array();
+            foreach($lplanassignedcourses as $assignedcourse){
+                $coursename = $assignedcourse->fullname;
+                $coursespath_context['pathcourses'][] = array('coursename'=>$coursename, 'coursename_string'=>'C'.$i);
+                $i++;
+                if($i>10){
+                    break;
+                }
+            }
+            $pathcourses .= $this->render_from_template('local_learningplan/cousrespath', $coursespath_context);
+        }
+		$enrolled=$this->db->get_field('local_learningplan_user','id',array('userid'=>$this->user->id,'planid'=>$planid));
+		$ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
+	    if($ratings_exist){
+	        require_once($CFG->dirroot.'/local/ratings/lib.php');
+	        $display_ratings .= display_rating($planid, 'local_learningplan');
+	        $display_like .= display_like_unlike($planid, 'local_learningplan');
+	        $display_like .= display_comment($planid, 'local_learningplan');
+	    }else{
+	        $display_ratings = $display_like = '';
+	    }
+
+	    if(!is_siteadmin()){
+            $switchedrole = $USER->access['rsw']['/1'];
+            if($switchedrole){
+                $userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
+            }else{
+                $userrole = null;
+            }
+        }
+        $lp_userview = array();
+        $lp_userview['planid'] = $planid;
+        $lp_userview['userid'] = $this->user->id;
+        $enrolled = $DB->record_exists('local_learningplan_user',array('planid'=>$planid, 'userid'=>$USER->id));
+        $selfenrol_check =  $DB->get_field('local_learningplan', 'selfenrol', array('id' => $planid));
+        if(!is_siteadmin() && !$enrolled && $selfenrol_check){
+            $lp_userview['needenroluser'] = true;
+        }
+
+		$lp_userview['component'] = $component = 'learningplan';
+		$lp_userview['action'] = 'add';
+		if($lplan->approvalreqd==1){
+			$requestsql = "SELECT status FROM {local_request_records}
+				WHERE componentid = :componentid AND compname LIKE :compname AND
+				createdbyid = :createdbyid ORDER BY id DESC ";
+			$request = $DB->get_field_sql($requestsql ,array('componentid' => $planid,'compname' => $component,'createdbyid'=>$USER->id));
+
+            if($request=='PENDING'){
+            	$lp_userview['pending'] = true;
+             }else{
+				$lp_userview['requestbtn'] = true;
+			}
+		}else{
+			$lp_userview['requestbtn'] = false;
+		}
+
+        $lp_userview['lpname'] = $lplan->name;
+        $lp_userview['lpimgurl'] = $lpimgurl;
+        $lp_userview['description_string'] = $description;
+        $lp_userview['lpcoursespath'] = $pathcourses;
+        $lp_userview['plan_learningplan_code'] = $lplan ->shortname ? $lplan ->shortname:'NA';
+        $lp_userview['mandatarycourses_count'] = $mandatarycourses_count;
+        $lp_userview['optionalcourses_count'] = $optionalcourses_count;
+        $lp_userview['display_ratings'] = $display_ratings;
+        $lp_userview['display_like'] = $display_like;
+        $lp_userview['lplancredits'] = ($lplan->open_points > 0) ? $lplan->open_points : 'N/A';
+        $challenge_exist = \core_component::get_plugin_directory('local', 'challenge');
+        if($challenge_exist){
+            $challenge_render = $PAGE->get_renderer('local_challenge');
+            $element = $challenge_render->render_challenge_object('local_learningplan', $planid);
+            $lp_userview['challenge_element'] = $element;
+        }else{
+            $lp_userview['challenge_element'] = false;
+        }
+        $lpinfo .= $this->render_from_template('local_learningplan/lpathview_user', $lp_userview);
+        $test = '';
+        $test .= '<div class="lp_course-wrapper w-100 pull-left">';
+        if($lplanassignedcourses){
+            $i = 1;
+            foreach($lplanassignedcourses as $assignedcourse){
+                $courseimgurl = $includeslib->course_summary_files($assignedcourse);
+                $lp_userviewcoures = array();
+                $coursesummary = strip_tags(html_entity_decode($assignedcourse->summary),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
+                $course_summary = empty($coursesummary) ? 'Course summary not provided' : $coursesummary;
+                $course_summary_string = strlen($course_summary) > 125 ? substr($course_summary, 0, 125)."..." : $course_summary;
+                    if($assignedcourse->next == 'and'){
+                        $optional_or_mandtry = "<span class='mandatory' title = 'Mandatory'>M</span>";
+                    }else{
+                        $optional_or_mandtry = "<span class='optional' title = 'Optional'>OP</span>";
+                    }
+
+                    $rname = format_string($assignedcourse->fullname);
+                    if($rname > substr(($rname),0,23)){
+                        $fullname = substr(($rname),0,23).'...';
+                    }else{
+                        $fullname =$rname;
+                    }
+                $course_name_string = strlen($fullname) > 125 ? substr($fullname, 0, 125)."..." : $fullname;
+                $enroldisable_class1 = 'enrolled';
+                $lp_userviewcoures['enroldisable_class1'] = $enroldisable_class1;
+                $lp_userviewcoures['courseimgurl'] = $courseimgurl;
+                $lp_userviewcoures['courselink'] = $course_name_string;
+                $lp_userviewcoures['optional_or_mandtry'] = $optional_or_mandtry;
+                $lp_userviewcoures['course_summary_string'] = $course_summary_string;
+                $test .= $this->render_from_template('local_learningplan/lpathcourse', $lp_userviewcoures);
+            }
+        }
+        $test .= '</div>';
+        $lpinfo .= $test;
+
+        return $lpinfo;
+	}
 }
