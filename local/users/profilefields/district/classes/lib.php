@@ -15,6 +15,8 @@ class lib{
             $data->timemodified = time();
             $data->usermodified = $USER->id;
             $districtid = $DB->update_record('local_district', $data);
+            $DB->execute("UPDATE {local_subdistrict} SET statesid ='{$data->statesid}', costcenterid='{$data->costcenterid}' WHERE districtid ='{$data->id}'");
+            $DB->execute("UPDATE {local_village} SET statesid ='{$data->statesid}', costcenterid='{$data->costcenterid}' WHERE districtid ='{$data->id}'");
         }else{
             $data->timecreated  = time();
             $data->usercreated  = $USER->id;

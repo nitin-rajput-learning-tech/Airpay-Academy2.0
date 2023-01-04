@@ -137,7 +137,7 @@ class local_courses_external extends external_api {
                     $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                 }
                 $courseid = create_course($validateddata, $editoroptions);
-               
+
                 // Update course tags.
                 if (isset($validateddata->tags)) {
                     $coursecontext = context_course::instance($courseid->id, MUST_EXIST);
@@ -1488,7 +1488,7 @@ class local_courses_external extends external_api {
             }else{
                 $data->shortname = $validateddata->shortname;
             }
-            
+
             $data->shortname = strtolower(str_replace(' ', '', trim($data->shortname)));
             if ($validateddata->id > 0) {
                 $data->id = $validateddata->id;
@@ -1578,12 +1578,12 @@ class local_courses_external extends external_api {
     public static function coursetype_update_status_parameters(){
         return new external_function_parameters(
              array(
-                'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),          
+                'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
                 'contextid' => new external_value(PARAM_INT, 'The context id for course type'),
                 'coursetypeid' => new external_value(PARAM_INT, 'The course type id'),
                 'status' => new external_value(PARAM_RAW, 'The status of course type'),
                 'name' => new external_value(PARAM_RAW, 'Course type name'),
-            )   
+            )
         );
     }
 
@@ -1597,7 +1597,7 @@ class local_courses_external extends external_api {
     */
     public static function coursetype_update_status($confirm, $contextid, $coursetypeid, $status, $name){
         global $DB,$USER;
-        
+
         /* $params = self::validate_parameters(self::coursetype_update_status_parameters(),
                                     ['contextid' => $contextid,'id' => $coursetypeid, 'status' => $status ,'name' => $name]);
          */$categorycontext = \context_system::instance();
@@ -1607,7 +1607,7 @@ class local_courses_external extends external_api {
         $coursetype->active = $coursetype->active ? 0 : 1;
         $coursetype->timemodified = time();
         $return = $DB->update_record('local_course_types', $coursetype);
-		
+
         return $return;
     }
 
@@ -1626,22 +1626,7 @@ class local_courses_external extends external_api {
         global $DB;
         $params = self::validate_parameters(self::get_course_info(),
             ['id' => $id]);
-        $course = $DB->get_record('course', array('id' => $id));
-
-        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_courses'));
-        if($ratinginfo){
-            $course->avgrating = $ratinginfo->module_rating;
-            $course->ratedusers = $ratinginfo->module_rating_users;
-            // $course->likes = $ratinginfo->module_like;
-            // $course->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
-        }
-        if($course->open_skill)
-            $course->skill = ($DB->get_field('local_skill','name',array('id' => $course->open_skill))) ;
-
-        if($course->open_level)
-            $course->level = ($DB->get_field('local_course_levels','name',array('id' => $course->open_level))) ;
-
-        return $course;
+        return (new \local_courses\local\general_lib())->get_course_info($id);
     }
     public static function get_course_info_returns(){
         return new external_single_structure(array(
@@ -1654,6 +1639,7 @@ class local_courses_external extends external_api {
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
             'startdate' => new external_value(PARAM_INT, 'startdate'),
             'enddate' => new external_value(PARAM_INT, 'enddate'),
+            'summary' => new external_value(PARAM_HTML, 'summary'),
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
             'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
             'skill' => new external_value(PARAM_TEXT, 'skill', VALUE_OPTIONAL, ''),
