@@ -130,6 +130,7 @@ class lib{
 		
 			$user_data = $DB->get_record('user' ,array('id' => $USER->id), 'open_path');
 			$open_path = explode('/',$user_data->open_path);
+            if(array_key_exists('1',$open_path))
 			$open_costcenterid = $open_path[1];
 			if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
 	        	if(!is_siteadmin()){
