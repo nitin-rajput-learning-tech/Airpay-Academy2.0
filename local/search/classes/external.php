@@ -172,4 +172,51 @@ class local_search_external extends external_api {
             "status" => new external_value(PARAM_BOOL, 'status of the request'),
         ]);
     }
+
+    public static function get_module_info_parameters(){
+        return new external_function_parameters(
+            array(
+                'id' => new external_value(PARAM_INT, 'The id of the module'),
+                'type' => new external_value(PARAM_TEXT, 'The type of the module'),
+            )
+        );
+    }
+    public static function get_module_info($id,$type){
+        global $DB;
+        $params = self::validate_parameters(self::get_module_info(),
+            ['id' => $id, 'type' => $type]);
+
+        switch($type) {
+            case 'local_courses':
+            return (new \local_courses\local\general_lib())->get_course_info($id);
+            break;
+
+            case 'local_classroom':
+            return (new \local_classroom\local\general_lib())->get_classroom_info($id);
+            break;
+
+            case 'local_learningpath':
+            return (new \local_learningplan\local\general_lib())->get_learningplan_info($id);
+            break;
+        }
+
+    }
+    public static function get_module_info_returns(){
+        return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'The id of the module'),
+            'fullname' => new external_value(PARAM_TEXT, 'fullname'),
+            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
+            'category' => new external_value(PARAM_TEXT, 'category'),
+            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_RAW, 'points'),
+            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
+            'startdate' => new external_value(PARAM_INT, 'startdate'),
+            'enddate' => new external_value(PARAM_INT, 'enddate'),
+            'summary' => new external_value(PARAM_HTML, 'summary'),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+            'skill' => new external_value(PARAM_TEXT, 'skill', VALUE_OPTIONAL, ''),
+            'level' => new external_value(PARAM_TEXT, 'level', VALUE_OPTIONAL, ''),
+        ));
+    }
 }
