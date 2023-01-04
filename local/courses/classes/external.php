@@ -233,7 +233,8 @@ class local_courses_external extends external_api {
                          }
                     }
 
-                    $DB->update_record('course', $data);
+                    update_course($data, $editoroptions);
+
                 }
             }
             $next = $form_status + 1;
