@@ -910,7 +910,7 @@ class classroom {
                 $classroomcostcenter = $DB->get_field('local_classroom', 'open_path', array(
                     'id' => $stable->classroomid
                 ));
-                if ($status == 1 && !$userenrolstatus && explode('/',$classroomcostcenter)[1] == (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path(1)) {
+                if ($status == 1 && !$userenrolstatus ) {
                     $empty = 1;
                 } else {
                     if (!empty($myclassrooms)) {
@@ -2577,8 +2577,8 @@ class classroom {
             }
             // $sql .= " AND l.costcenter IN ($selectedorganizations) ";
         }
-        if(!empty($params['departments'])){
-            $depts = explode(',', $params['departments']);
+        if(!empty($params['department'])){
+            $depts = explode(',', $params['department']);
             $deptsql = [];
             foreach($depts AS $dept){
                 $deptsql[] = " concat('/',u.open_path,'/') LIKE :deptparam_{$dept}";
@@ -2693,6 +2693,7 @@ class classroom {
         // if ($perpage != -1) {
         //     $order .= "LIMIT $perpage";
         // }
+
         if ($total == 0) {
             $availableusers = $DB->get_records_sql_menu($sql . $order, $params);
         

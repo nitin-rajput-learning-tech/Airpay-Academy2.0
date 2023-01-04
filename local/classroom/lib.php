@@ -1231,7 +1231,7 @@ function org_dep_sql($categorycontext)
                 $gparams[] = '(' . $groupqueeryparams . ')';
             }
         }
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path());
+       
         if (!empty($gparams))
             $opengroup = implode('AND', $gparams);
         else
@@ -1242,29 +1242,7 @@ function org_dep_sql($categorycontext)
                   CASE WHEN $opengroup
                     THEN 1
                     ELSE 0 END 
-                ELSE 1 END ";
-        if (!empty($ctr) && $ctr != "") {
-            $departmentlike = "'%,$ctr,%'";
-        } else {
-            $departmentlike = "''";
-        }
-        $fparams[] = " 1 = CASE WHEN c.department!='-1'
-          THEN 
-            CASE WHEN CONCAT(',',c.department,',') LIKE {$departmentlike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
-        if (!empty($bu) && $bu != "") {
-            $subdepartmentlike = "'%,$bu,%'";
-        } else {
-            $subdepartmentlike = "''";
-        }
-        $fparams[] = " 1 = CASE WHEN c.subdepartment!='-1'
-          THEN 
-            CASE WHEN CONCAT(',',c.subdepartment,',') LIKE {$subdepartmentlike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
+                ELSE 1 END ";       
       
         if (!empty($USER->open_designation) && $USER->open_designation != "") {
             $designationlike = "'%,$USER->open_designation,%'";
