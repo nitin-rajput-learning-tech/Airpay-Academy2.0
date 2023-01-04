@@ -34,7 +34,7 @@ $PAGE->set_pagelayout('standard');
 
 //Header and the navigation bar
 $PAGE->set_heading(get_string('managestates', 'usersprofilefields_states'));
-$PAGE->navbar->add(get_string('browseusers', 'local_users'),new \moodle_url('/local/users/index.php'));
+$PAGE->navbar->add(get_string('manage_users', 'local_users'),new \moodle_url('/local/users/index.php'));
 $PAGE->navbar->add(get_string('managestates', 'usersprofilefields_states'));
 
 $PAGE->requires->js_call_amd('usersprofilefields_states/createStates', 'load', array());

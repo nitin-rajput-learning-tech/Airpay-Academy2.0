@@ -50,5 +50,13 @@ $functions = array(
         'type' => 'write',
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+    ),
+    'local_search_get_module_info' => array(
+        'classname' => 'local_search_external',
+        'methodname' => 'get_module_info',
+        'classpath' => 'local/search/classes/external.php',
+        'description' => 'get module info',
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
     )
 );

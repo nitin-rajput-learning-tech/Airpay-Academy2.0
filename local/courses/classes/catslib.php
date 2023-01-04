@@ -32,16 +32,16 @@ class catslib {
 
     protected $categories = array();
     
-    public function get_categories($costcenter = null){
+    public function get_categories($costcenterpath=null){
         global $DB, $USER;
 
-        if (is_null($costcenter) || empty($costcenter)) {
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath,$datatype='lowerandsamepath');
 
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-            $category = $DB->get_field('local_costcenter', 'category', array('path' => $open_path));
-        } else {
-            $category = $DB->get_field('local_costcenter', 'category', array('path' => $costcenter));
-        }
+        $costcentersql = "SELECT lc.category
+                        FROM {local_costcenter} AS lc
+                        WHERE 1=1 $costcenterpathconcatsql ";
+
+        $category = $DB->get_field_sql($costcentersql);
         $data = $DB->get_records('course_categories',array('parent' => $category));
         $this->categories[] = $category;
         $cats = $this->get_lower_cats($data);

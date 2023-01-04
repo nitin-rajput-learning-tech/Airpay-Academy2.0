@@ -761,24 +761,7 @@ class local_learningplan_external extends external_api {
         global $DB;
         $params = self::validate_parameters(self::get_learningplan_info(),
             ['id' => $id]);
-        $learningplans = $DB->get_record('local_learningplan', array('id' => $id));
-        $learningplans->startdate = date('d-m-Y', $learningplans->startdate);
-        $learningplans->enddate = date('d-m-Y', $learningplans->endate);
-        $learningplans->summary = $learningplans->description;
-        $learningplans->points = $learningplans->open_points;
-
-        $coursefileurl = (new \local_learningplan\lib\lib)->get_learningplansummaryfile($coursefileurl = $learningplans->id);
-        $learningplans->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
-        $learningplans->category = ($DB->get_field('local_custom_category','fullname',array('id' => $learningplans->open_category))) ;
-
-        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $learningplans->id, 'module_area' => 'local_learningplan'));
-        if($ratinginfo){
-            $learningplans->avgrating = $ratinginfo->module_rating;
-            $learningplans->ratedusers = $ratinginfo->module_rating_users;
-            // $learningplans->likes = $ratinginfo->module_like;
-            // $learningplans->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
-        }
-        return $learningplans;
+        return (new \local_learningplan\local\general_lib())->get_learningplan_info($id);
     }
     public static function get_learningplan_info_returns(){
         return new external_single_structure(array(

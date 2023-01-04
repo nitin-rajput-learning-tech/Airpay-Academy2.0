@@ -63,20 +63,26 @@ class courses {
         global $DB, $CFG;
         $coursecontext = \context_course::instance($courseid, MUST_EXIST);
         if(!is_enrolled(\context_course::instance($COURSE->id))){
-            if (!(is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations', $coursecontext))) {
+            if (!(is_siteadmin())) {
 
-                $user_costcenter =$DB->get_record('user',array('id'=>$userid),  $fields='id,open_path,open_departmentid');
-                $course_costcenter =$DB->get_record('course',array('id'=>$courseid),  $fields='id,open_path,open_departmentid');
-                if (has_capability('local/costcenter:manage_ownorganization',$coursecontext)) {
-                    if (($user_costcenter->open_path != $course_costcenter->open_path)) {
-                        $message = get_string('notyourorgcourse_msg','local_courses');
-                        return ['status' => false, 'message' => $message];
-                    }
-                }elseif (has_capability('local/costcenter:manage_owndepartments',$categorycontext)) {
-                    if (($user_costcenter->open_path != $course_costcenter->open_path) || ($user_costcenter->open_departmentid != $course_costcenter->open_departmentid)) {
-                        $message = get_string('notyourdeptcourse_msg','local_courses');
-                        return ['status' => false, 'message' => $message];
-                    }
+                $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+                $usercostcentersql = "SELECT id FROM {user}
+                                WHERE 1=1 $costcenterpathconcatsql ";
+
+                $user_costcenter = $DB->record_exists_sql($usercostcentersql);
+
+                $coursecostcentersql = "SELECT id FROM {course}
+                                WHERE 1=1 $costcenterpathconcatsql ";
+
+                $course_costcenter = $DB->record_exists_sql($coursecostcentersql);
+
+
+                if (!$user_costcenter || !$course_costcenter) {
+
+                    $message = get_string('notyourdeptcourse_msg','local_courses');
+                    return ['status' => false, 'message' => $message];
+
                 }else{
                     return ['status' => false, 'message' => ''];
                 }

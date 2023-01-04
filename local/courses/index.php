@@ -106,35 +106,20 @@ if ($category && !has_any_capability($capabilities, $categorycontext)) {
     navigation_node::require_admin_tree();
     navigation_node::override_active_url(new moodle_url('/local/custom_category/index.php'));
 }
-// if($category !== null){
-//     $parents = coursecat::get_many($category->get_parents());
-//     $parents[] = $category;
-//     foreach ($parents as $parent) {
-//         $PAGE->navbar->add(get_string('leftmenu_browsecategories','local_courses'), $PAGE->url->out_omit_querystring());
-        // if(!empty($id)){
-        //     $catdepth = $DB->get_field('course_categories','idnumber',array('id'=>$id));
-        //     $catdepths = $DB->get_field('course_categories','name',array('id'=>$id));
-        //     $catdepth = $catdepth ? $catdepth :  $catdepths;
-        //     $PAGE->navbar->add(get_string('subcategories','local_courses'), $PAGE->url->out_omit_querystring());
-        //     $PAGE->navbar->add($catdepth);
-        // }
-//     }
-// }
+
 $renderer = $PAGE->get_renderer('local_courses');
 
 if($id == 0){
     $PAGE->navbar->add(get_string('leftmenu_browsecategories','local_courses'));
 }else{
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+    if(is_siteadmin()){
         $PAGE->navbar->add(get_string('leftmenu_browsecategories','local_courses'), $PAGE->url->out_omit_querystring());
     }
     $superparent_sql = "SELECT id,name FROM {course_categories} WHERE id = (SELECT parent FROM {course_categories} WHERE id = {$id}) ";
     if($superparent = $DB->get_record_sql($superparent_sql)){
-        // if(has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
-        //     $PAGE->navbar->add($superparent->name, new moodle_url('/local/custom_category/index.php', array('id' => $superparent->id)));
-        // }else{
-            $PAGE->navbar->add($superparent->name);
-        // }
+
+        $PAGE->navbar->add($superparent->name);
+
     }
     $parentcategory = $DB->get_field('course_categories','name',array('id'=>$id));
     $PAGE->navbar->add($parentcategory);
