@@ -304,7 +304,7 @@ class general_lib{
         // $course->startdate = date('d-m-Y', $course->startdate);
         // $course->enddate = date('d-m-Y', $course->endate);
         $course->points = $course->open_points;
-        $course->category = ($DB->get_field('local_custom_category','fullname',array('id' => $course->category))) ;
+        $course->category = ($DB->get_field('local_custom_category','fullname',array('id' => $course->open_category))) ;
         $course->bannerimage = \local_search\output\searchlib::convert_urlobject_intoplainurl($course);
 
         $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_courses'));
