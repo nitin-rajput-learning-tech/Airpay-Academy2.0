@@ -110,8 +110,6 @@ class custom_course_form extends moodleform {
           $courseid = $id = $course->id;
         }
 
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",(new \local_courses\lib\accesslib())::get_user_roleswitch_path());
-
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
 
@@ -122,39 +120,28 @@ class custom_course_form extends moodleform {
         $core_component = new core_component();
         if($formstatus == 0){
 
-            if(explode(',',(array)$this->_ajaxformdata['open_subdepartment'])){
-               $parentid = (int)$this->_ajaxformdata['open_subdepartment'];
-            }else if(explode(',',(array)$this->_ajaxformdata['open_departmentid'])){
-               $parentid = (int)$this->_ajaxformdata['open_departmentid'];
-            }else if((int)$this->_ajaxformdata['open_path']){
-               $parentid = (int)$this->_ajaxformdata['open_path'];
-            }
-             
-            if($parentid){
-                $parentcategory = $DB->get_field('local_costcenter', 'category', array('id' => $parentid));
-                $categorysql = "SELECT cc.id, cc.path FROM {course_categories} AS cc 
-                  WHERE (cc.path LIKE '%/{$parentcategory}/%' OR cc.id = {$parentcategory}) ";
-                $displaylist = $DB->get_records_sql_menu($categorysql);
+            $costcenterpath = $this->_ajaxformdata['open_path'];
 
-             }
+            if($costcenterpath){
 
-        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_courses', $categorycontext, $multiple = false);
+                $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lcc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
-        $mform->addElement('hidden','category', null);
-        $mform->setConstant('category', $category);
+                $costcentersql = "SELECT lcc.id,lcc.fullname
+                                FROM {local_custom_category} AS lcc
+                                WHERE 1=1 $costcenterpathconcatsql ";
 
+                $parents = $DB->get_records_sql_menu($categorysql);
 
-            if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
-
-                $depsql = "SELECT lcc.id,lcc.fullname
-                            FROM {local_custom_category} as lcc";
-
-                $parents = $DB->get_records_sql_menu($depsql);
             }else{
-                $sql = "SELECT id,fullname
-                        FROM {local_custom_category} WHERE costcenterid = ?";
-                $parents = $DB->get_records_sql_menu($sql, [$org]);
+
+                $parents = array();
             }
+
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_courses', $categorycontext, $multiple = false);
+
+            $mform->addElement('hidden','category', null);
+            $mform->setConstant('category', $category);
+
 
             $parents[0] = 'Select Category';
             ksort($parents);
@@ -253,35 +240,7 @@ class custom_course_form extends moodleform {
             $mform->addHelpButton('format', 'format');
             $mform->setDefault('format', $defaultformat);
 
-            $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
-            if($certificate_plugin_exist){
-                $checkboxes = array();
-                $checkboxes[] = $mform->createElement('advcheckbox', 'map_certificate', null, '', array(),array(0,1));
-                $mform->addGroup($checkboxes, 'map_certificate', get_string('add_certificate', 'local_courses'), array(' '), false);
-                $mform->addHelpButton('map_certificate', 'add_certificate', 'local_courses');
 
-
-                $select = array(null => get_string('select_certificate','local_courses'));
-
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
-                  if($this->_ajaxformdata['open_path'] > 0){
-                    $costcenter = (int) $this->_ajaxformdata['open_path'];
-                  }else{
-                    $costcenter = $org;
-                  }
-                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter' => $costcenter),'name', 'id,name');
-                }else{
-                 $costcenter=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
-                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenter),'name', 'id,name');
-
-               }
-                $certificateslist = $select + $cert_templates;
-
-                $mform->addElement('select',  'open_certificateid', get_string('certificate_template','local_courses'), $certificateslist);
-                $mform->addHelpButton('open_certificateid', 'certificate_template', 'local_courses');
-                $mform->setType('open_certificateid', PARAM_INT);
-                $mform->hideIf('open_certificateid', 'map_certificate', 'neq', 1);
-            }
             $mform->addElement('text', 'open_coursecompletiondays', get_string('coursecompday','local_courses'));
             $mform->setType('open_coursecompletiondays', PARAM_TEXT);
             $mform->addRule('open_coursecompletiondays', get_string('numeric','local_users'), 'numeric', 'numeric', 'client');
@@ -371,17 +330,36 @@ class custom_course_form extends moodleform {
 			$mform->addElement('date_time_selector', 'enddate', get_string('enddate','local_courses'), array('optional' => false));
             $mform->addHelpButton('enddate', 'enddate');
 
-            // $users_plugin_exist = $core_component::get_plugin_directory('local','users');
-            // if ($users_plugin_exist) {
-            //     require_once($CFG->dirroot . '/local/users/lib.php');
-            //     $functionname ='globaltargetaudience_elementlist';
-            //      if(function_exists($functionname)) {
-            //         $modulecostcenter = $DB->get_field('course', 'open_path',array('id' => $courseid));
+            $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
+            if($certificate_plugin_exist){
+                $checkboxes = array();
+                $checkboxes[] = $mform->createElement('advcheckbox', 'map_certificate', null, '', array(),array(0,1));
+                $mform->addGroup($checkboxes, 'map_certificate', get_string('add_certificate', 'local_courses'), array(' '), false);
+                $mform->addHelpButton('map_certificate', 'add_certificate', 'local_courses');
 
-            //         $mform->modulecostcenter = $modulecostcenter;
-            //         $functionname($mform,array('hrmsrole','location'));
-            //     }
-            // }
+
+                $select = array(null => get_string('select_certificate','local_courses'));
+
+                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+                  if($this->_ajaxformdata['open_path'] > 0){
+                    $costcenter = (int) $this->_ajaxformdata['open_path'];
+                  }else{
+                    $costcenter = $org;
+                  }
+                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter' => $costcenter),'name', 'id,name');
+                }else{
+                 $costcenter=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
+                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenter),'name', 'id,name');
+
+               }
+                $certificateslist = $select + $cert_templates;
+
+                $mform->addElement('select',  'open_certificateid', get_string('certificate_template','local_courses'), $certificateslist);
+                $mform->addHelpButton('open_certificateid', 'certificate_template', 'local_courses');
+                $mform->setType('open_certificateid', PARAM_INT);
+                $mform->hideIf('open_certificateid', 'map_certificate', 'neq', 1);
+            }
+
         }else if ($formstatus == 2) {
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_courses', $categorycontext, $multiple = false);
         }

@@ -579,8 +579,7 @@ class local_uploadcourse_course
         }
         $categorylib = new local_courses\catslib();
         if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext) && !isset($this->rawdata['department']) && isset($this->rawdata['category'])) {
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-            $categories = $categorylib->get_categories($open_path);
+            $categories = $categorylib->get_categories();
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
@@ -593,8 +592,7 @@ class local_uploadcourse_course
                 return false;
             }
         } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $categorycontext)  && isset($this->rawdata['category'])) {
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-            $categories = $categorylib->get_categories($open_path);
+            $categories = $categorylib->get_categories();
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;

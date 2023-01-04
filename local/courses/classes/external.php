@@ -499,8 +499,7 @@ class local_courses_external extends external_api {
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
             } else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-                $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-                $orgcategories = $categorylib->get_categories($open_path);
+                $orgcategories = $categorylib->get_categories();
                 $orgcategoryids = implode(',',$orgcategories);
                 $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
             } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
@@ -512,14 +511,24 @@ class local_courses_external extends external_api {
             $allcategories = $DB->get_records_sql_menu($sql);
 
         } else if($flag){
-            $open_path=(new \local_courses\lib\accesslib())::get_user_roleswitch_path();
-            $parentcategory = $DB->get_field('local_costcenter','category',array('id'=>$open_path));
-            if(is_siteadmin())
+
+            if(is_siteadmin()){
+
                 $allcategories = $DB->get_records_sql_menu("select id,name from {course_categories} where visible=1");
-            else
-                $allcategories = $DB->get_records_sql_menu("select id,name from {course_categories}
-                where (path like '/$parentcategory/%' or path like '%/$parentcategory' or path like '%/$parentcategory/%')
-                AND visible=1");
+
+            }else{
+
+                $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+                $costcentersql = "SELECT lc.id,lc.name
+                                FROM {local_costcenter} AS lc
+                                WHERE lc.visible=1 $costcenterpathconcatsql ";
+
+                $allcategories = $DB->get_records_sql_menu($costcentersql);
+            }
+
+
+
             $departmentlist = array();
             $levelslist = array();
         }
