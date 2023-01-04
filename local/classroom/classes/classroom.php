@@ -1051,17 +1051,20 @@ class classroom {
         if ($classroomid && $sessiondate) {
             $params                      = array();
             $params['classroomid']       = $classroomid;
-            $params['sessiondate_start'] = \local_costcenter\lib::get_userdate('d/m/Y H:i', $sessiondate);
-            $params['sessiondate_end']   = \local_costcenter\lib::get_userdate('d/m/Y H:i', $sessiondate);
+            // $params['sessiondate_start'] = \local_costcenter\lib::get_userdate('d/m/Y H:i', $sessiondate);
+            // $params['sessiondate_end']   = \local_costcenter\lib::get_userdate('d/m/Y H:i', $sessiondate);
             
-            $params['start']   = strtotime($params['sessiondate_end'].':00');
-            $params['ednd']   = strtotime($params['sessiondate_end'].':59');
+            // $params['start']   = strtotime($params['sessiondate_end'].':00');
+            // $params['ednd']   = strtotime($params['sessiondate_end'].':59');
 
-            $params['estart']   = strtotime($params['sessiondate_end'].':00');
-            $params['eend']   = strtotime($params['sessiondate_end'].':59');
+            // $params['estart']   = strtotime($params['sessiondate_end'].':00');
+            // $params['eend']   = strtotime($params['sessiondate_end'].':59');
 
+            // $sql  = "SELECT id FROM {local_classroom_sessions} where classroomid=:classroomid
+            // and ((timestart >=:start and timestart <=:ednd) or (timefinish >=:estart and timefinish <=:eend))";
+            $params['sessiondate'] =$sessiondate;
             $sql  = "SELECT id FROM {local_classroom_sessions} where classroomid=:classroomid
-            and ((timestart >=:start and timestart <=:ednd) or (timefinish >=:estart and timefinish <=:eend))";
+            and  (:sessiondate BETWEEN timestart and timefinish)";
             if ($sessionid > 0) {
                 $sql .= " AND id !=:sessionid ";
                 $params['sessionid'] = $sessionid;
@@ -1278,7 +1281,7 @@ class classroom {
                                 $emaillogs = $notification->classroom_notification($type, $touser, $USER, $localclassroom);
                                 foreach ($courses as $course) {
                                     if ($classroomuser->id) {
-                                        $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $adduser, 'employee', 'enrol');
+                                        $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $adduser, 'employee', 'enrol',$pluginname = 'classroom',$classroomid);
                                     }
                                 }
                             }
@@ -1327,7 +1330,7 @@ class classroom {
                                 $emaillogs = $notification->classroom_notification($type, $touser, $USER, $localclassroom);
                                 foreach ($courses as $course) {
                                     if ($classroomuser->id) {
-                                        $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $adduser, 'employee', 'enrol');
+                                        $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $adduser, 'employee', 'enrol',$pluginname = 'classroom',$classroomid);
                                     }
                                 }
                             }
@@ -1440,7 +1443,7 @@ class classroom {
                         if (!empty($courses)) {
                             foreach ($courses as $course) {
                                 if ($course > 0) {
-                                    $unenrolclassroomuser = $this->manage_classroom_course_enrolments($course, $removeuser, 'employee', 'unenrol');
+                                    $unenrolclassroomuser = $this->manage_classroom_course_enrolments($course, $removeuser, 'employee', 'unenrol',$pluginname = 'classroom',$classroomid);
                                 }
                             }
                         }
@@ -1487,7 +1490,7 @@ class classroom {
                         if (!empty($courses)) {
                             foreach ($courses as $course) {
                                 if ($course > 0) {
-                                    $unenrolclassroomuser = $this->manage_classroom_course_enrolments($course, $removeuser, 'employee', 'unenrol');
+                                    $unenrolclassroomuser = $this->manage_classroom_course_enrolments($course, $removeuser, 'employee', 'unenrol',$pluginname = 'classroom',$classroomid);
                                 }
                             }
                         }
@@ -1603,7 +1606,7 @@ class classroom {
                             $emaillogs = $classroom_notification->classroom_notification($type, $touser, $USER, $classroominstance);
                             if (!empty($classroomcourses)) {
                                 foreach ($classroomcourses as $course) {
-                                    $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $newtrainer, 'editingteacher', 'enrol');
+                                    $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $newtrainer, 'editingteacher', 'enrol',$pluginname = 'classroom',$classroomid);
                                 }
                             }
                         }
@@ -1630,7 +1633,7 @@ class classroom {
                         ));
                         if (!empty($classroomcourses)) {
                             foreach ($classroomcourses as $course) {
-                                $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $toremovetrainer, 'editingteacher', 'unenrol');
+                                $enrolclassroomuser = $this->manage_classroom_course_enrolments($course, $toremovetrainer, 'editingteacher', 'unenrol',$pluginname = 'classroom',$classroomid);
                             }
                         }
                         $feedbackid              = $DB->get_field('local_classroom_trainers', 'feedback_id', array(
@@ -1815,7 +1818,6 @@ class classroom {
             $params['customint1']=$classroomid;
         }
         $courseexist = $DB->record_exists('enrol', $params);
-
         if (!$courseexist) {
             $coursedata = $DB->get_record('course', array('id' => $cousre));
             $coursedata->open_identifiedas = '2';
@@ -1826,7 +1828,6 @@ class classroom {
         $roleid      = $DB->get_field('role', 'id', array(
             'shortname' => $roleshortname
         ));
-        
         $instance    = $DB->get_record('enrol',$params , '*', MUST_EXIST);
         if (!empty($instance)) {
             if ($type == 'enrol') {

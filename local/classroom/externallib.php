@@ -1722,9 +1722,7 @@ class local_classroom_external extends external_api {
                 $classroom_completiondata =$DB->get_record_sql("SELECT id,courseids
                                         FROM {local_classroom_completion}
                                         WHERE classroomid = $classroomid");
-
                 if($classroom_completiondata->courseids!=null){
-
                     $classroom_courseids=explode(',',$classroom_completiondata->courseids);
 
                     $array_diff=array_diff($classroom_courseids, array($course));
@@ -1756,7 +1754,7 @@ class local_classroom_external extends external_api {
                 if (!empty($classroomtrainers)) {
                     foreach ($classroomtrainers as $classroomtrainer) {
                         $unenrolclassroomtrainer = (new classroom)->manage_classroom_course_enrolments($course, $classroomtrainer,
-                            'editingteacher', 'unenrol');
+                            'editingteacher', 'unenrol','classroom',$classroomid);
                     }
                 }
                 $classroomusers = $DB->get_records_menu('local_classroom_users',
@@ -1764,7 +1762,7 @@ class local_classroom_external extends external_api {
                 if (!empty($classroomusers)) {
                     foreach ($classroomusers as $classroomuser) {
                         $unenrolclassroomuser = (new classroom)->manage_classroom_course_enrolments($course, $classroomuser,
-                            'employee', 'unenrol');
+                            'employee', 'unenrol','classroom',$classroomid);
                     }
                 }
                 $params = array(
@@ -1775,7 +1773,10 @@ class local_classroom_external extends external_api {
                 $event = \local_classroom\event\classroom_courses_deleted::create($params);
                 $event->add_record_snapshot('local_classroom', $classroomid);
                 $event->trigger();
-                $DB->delete_records('local_classroom_courses', array('id' => $id));
+                $status=$DB->delete_records('local_classroom_courses', array('id' => $id));
+                if($status){
+                    (new classroom)->update_enrol_status($course,$classroomid,$status=ENROL_INSTANCE_DISABLED);
+                }
                 $return = true;
             } else {
                 $return = false;
@@ -1896,7 +1897,7 @@ public static function submit_instituteform_form_parameters() {
                         if (!empty($courses)) {
                             foreach ($courses as $course) {
                                 if ($course > 0) {
-                                    $unenrolclassroomuser = $classroomclass->manage_classroom_course_enrolments($course, $USER->id, 'employee', 'unenrol');
+                                    $unenrolclassroomuser = $classroomclass->manage_classroom_course_enrolments($course, $USER->id, 'employee', 'unenrol',$pluginname = 'classroom',$classroomid);
                                 }
                             }
                         }
@@ -3051,24 +3052,11 @@ public static function submit_instituteform_form_parameters() {
     }
     public function get_classroom_info($id){
         global $DB;
-        $params = self::validate_parameters(self::get_classroom_info_parameters(),
-            ['id' => $id]);
-        return (new \local_classroom\local\general_lib())->get_classroom_info($id);
+        return $DB->get_record('local_classroom', array('id' => $id));
     }
     public function get_classroom_info_returns(){
-        return new external_single_structure(array(
-            'id' => new external_value(PARAM_INT, 'The id of the module'),
-            'name' => new external_value(PARAM_TEXT, 'name'),
-            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
-            'summary' => new external_value(PARAM_HTML, 'summary'),
-            'category' => new external_value(PARAM_TEXT, 'category'),
-            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
-            'points' => new external_value(PARAM_RAW, 'points'),
-            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
-            'startdate' => new external_value(PARAM_INT, 'startdate'),
-            'enddate' => new external_value(PARAM_INT, 'enddate'),
-            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
-        ));
+        global $CFG;
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        return local_search_get_module_return_parameters('local_classroom', []);
     }
 }

@@ -35,11 +35,11 @@ class session_form extends moodleform {
     public function definition() {
         global $CFG, $DB, $USER;
         $querieslib = new querylib();
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($cid);
+        
         $mform = &$this->_form;
         $cid = $this->_customdata['cid'];
         $sid = $this->_customdata['id'];
-
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($cid);
         $mform->addElement('hidden', 'id', $sid);
         $mform->setType('id', PARAM_INT);
 
@@ -134,8 +134,7 @@ class session_form extends moodleform {
 			$sessions_validation_start=(new classroom)->sessions_validation($data['classroomid'],$sessionstartdate,$data['id']);
 			
 			$sessions_validation_end=(new classroom)->sessions_validation($data['classroomid'],$sessionenddate,$data['id']);
-			
-			
+
             if ($sessionstartdate < $classroomstartdate) {
                 $errors["timestart"] = get_string('sessionstartdateerror1', 'local_classroom');
             } else if ($sessionstartdate > $classroomenddate) {
