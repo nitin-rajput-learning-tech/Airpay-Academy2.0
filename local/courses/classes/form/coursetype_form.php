@@ -44,35 +44,36 @@ class coursetype_form extends moodleform {
 		$orgid = (int)$this->_customdata['orgid'];
 		$orgname = $this->_customdata['orgname'];
 		$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-		if (is_siteadmin($USER->id) || has_capability('local/costcenter:manage_multiorganizations',$categorycontext)) {
-		$organisation_select = [null => get_string('selectorg','local_courses')];
-		if($id || $this->_ajaxformdata['orgid']){
-			$organisations = $organisation_select + $DB->get_records_menu('local_costcenter', array('id' => $orgid), '',  $fields='id, fullname'); 
-		}else{
-			$orgid = 0;
-			$organisations = $organisation_select;
-		}
-		$costcenteroptions = array(
-			'ajax' => 'local_costcenter/form-options-selector',
-			'data-contextid' => $categorycontext->id,
-			'data-action' => 'costcenter_organisation_selector',
-			'data-options' => json_encode(array('id' => $orgid)),
-			'class' => 'organisationnameselect',
-			'data-class' => 'organisationselect',
-			'multiple' => false,
-		);
-		$mform->addElement('autocomplete', 'orgid', get_string('organization','local_courses'), $organisations, $costcenteroptions);
-		$mform->setType('orgid', PARAM_INT);
-		$mform->addRule('orgid', get_string('required','local_courses'), 'required', null);
-		}
-		else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
+		// if (is_siteadmin($USER->id)) {
+    		$organisation_select = [null => get_string('selectorg','local_courses')];
+    		if($id || $this->_ajaxformdata['orgid']){
+    			$organisations = $organisation_select + $DB->get_records_menu('local_costcenter', array('id' => $orgid), '',  $fields='id, fullname');
+    		}else{
+    			$orgid = 0;
+    			$organisations = $organisation_select;
+    		}
+    		$costcenteroptions = array(
+    			'ajax' => 'local_costcenter/form-options-selector',
+    			'data-contextid' => $categorycontext->id,
+    			'data-action' => 'costcenter_organisation_selector',
+    			'data-options' => json_encode(array('id' => $orgid)),
+    			'class' => 'organisationnameselect',
+    			'data-class' => 'organisationselect',
+    			'multiple' => false,
+    		);
+    		$mform->addElement('autocomplete', 'orgid', get_string('organization','local_courses'), $organisations, $costcenteroptions);
+    		$mform->setType('orgid', PARAM_INT);
+    		$mform->addRule('orgid', get_string('required','local_courses'), 'required', null);
+		// }
+		// else{
 
-        $orgid=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
+  //           $orgid=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
 
-		$mform->addElement('hidden', 'orgid', null, array('id' => 'id_open_path', 'data-class' => 'organisationselect'));
-		$mform->setType('orgid', PARAM_INT);
-		$mform->setConstant('orgid', $orgid);
-		}
+  //   		$mform->addElement('hidden', 'orgid', null, array('id' => 'id_open_path', 'data-class' => 'organisationselect'));
+  //   		$mform->setType('orgid', PARAM_INT);
+  //   		$mform->setConstant('orgid', $orgid);
+
+		// }
 	
         $mform->addElement('text', 'name', get_string('course_type','local_courses'), 'maxlength="100" size="10"');
         $mform->addRule('name', get_string('required'), 'required', null);

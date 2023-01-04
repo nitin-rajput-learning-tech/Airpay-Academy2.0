@@ -32,10 +32,10 @@ class catslib {
 
     protected $categories = array();
     
-    public function get_categories(){
+    public function get_categories($costcenterpath=null){
         global $DB, $USER;
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath,$datatype='lowerandsamepath');
 
         $costcentersql = "SELECT lc.category
                         FROM {local_costcenter} AS lc

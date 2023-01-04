@@ -118,7 +118,7 @@ class local_courses_external extends external_api {
             $category_id=$data['category'];
 
             $categorycontext=(new \local_courses\lib\accesslib())::get_module_context($course->id);
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$categorycontext) || has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
+            if(is_siteadmin()){
               $open_departmentid = implode(',',$data['open_departmentid']);
             }else {
               $open_departmentid = $data['open_departmentid'];
@@ -494,19 +494,11 @@ class local_courses_external extends external_api {
             $categorylib = new local_courses\catslib();
             $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
             
-            if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganizations',$categorycontext)){
-                $orgcategories = $categorylib->get_categories($orgid);
-                $orgcategoryids = implode(',',$orgcategories);
-                $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
-            } else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-                $orgcategories = $categorylib->get_categories();
-                $orgcategoryids = implode(',',$orgcategories);
-                $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
-            } elseif(has_capability('local/costcenter:manage_owndepartments',$categorycontext)){
-                $deptcategories = $categorylib->get_categories($USER->open_departmentid);
-                $deptcategoryids = implode(',',$deptcategories);
-                $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($deptcategoryids)";
-            }
+
+            $orgcategories = $categorylib->get_categories();
+            $orgcategoryids = implode(',',$orgcategories);
+            $sql = "SELECT c.id,c.name FROM {course_categories} as c WHERE c.visible = 1 AND c.id IN ($orgcategoryids)";
+
             $sql .= " ORDER BY c.id DESC";
             $allcategories = $DB->get_records_sql_menu($sql);
 
