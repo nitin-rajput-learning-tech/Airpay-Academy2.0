@@ -1901,23 +1901,33 @@ function get_listof_categories($stable, $filterdata) {
     return array('totalrecords' => $categoriescount,'records' => $data);
 }
 function courses_filters_form($filterparams, $ajaxformdata = null){
-    global $CFG, $PAGE;
+
+    global $CFG, $PAGE,$USER;
+
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
-    $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+
     $action = isset($filterparams['action']) ? $filterparams['action'] : '';
-    // $renderer = $PAGE->get_renderer('local_courses');
-    // $filterparams = $renderer->get_catalog_courses(true,$formattype);
-    if(is_siteadmin()){
-        $thisfilters = array('courses', 'organizations', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status');
-    }else if(has_capability('local/costcenter:manage_ownorganization',$categorycontext)){
-        $thisfilters = array('courses', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status');
-    }else if(has_capability('local/costcenter:manage_owndepartments', $categorycontext)){
-        $thisfilters = array('subdepartment', 'department4level','department5level', 'courses', 'categories', 'status');
-    }else {
-        $thisfilters = array('courses', 'categories', 'status');
+
+    $thisfilters = array('courses', 'categories', 'status');
+
+
+    $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
+
+    $fields = [ 5 => 'organizations', 4 => 'departments', 3 => 'subdepartment', 2 => 'department4level', 1 => 'department5level'];
+
+    if($contextinfo[0]){
+
+        if(count($contextinfo) > 1){
+            $depth = $USER->access['currentroleinfo']['depth'];
+        }else{
+            $depth = $USER->access['currentroleinfo']['depth'] - 1;
+        }
+        for($i=$depth; $i>0; $i--){
+
+            $thisfilters[]=$fields[$i];
+
+        }
     }
-    // $thisfilters[] = 'hrmsrole';
-    // $thisfilters[] = 'location';
 
     $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
     return $mform;

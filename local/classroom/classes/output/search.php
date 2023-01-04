@@ -22,6 +22,7 @@
  */
 namespace local_classroom\output;
 require_once($CFG->dirroot.'/local/classroom/lib.php');
+require_once($CFG->dirroot.'/local/search/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 use renderable;
@@ -271,16 +272,28 @@ class search implements renderable{
             $list->isenrolled=$list->enroll;
 
             $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $list->id, 'userid' => $USER->id));
+
             if($list->approvalreqd == 1){
                 $list->enrolmethods[] = 'request';
-                $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                $list->requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'classroom', 'createdbyid'=>$USER->id));
             }else if($list->selfenrol == 1){
                 $list->enrolmethods[] = 'self';
             }
+
             $waitlist = $DB->get_field('local_classroom_waitlist','id',array('classroomid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
             if($waitlist > 0){
-                $list->requeststatus = 'WAITING LIST';
+                $list->requeststatus = MODULE_ENROLMENT_WAITING;
+            }else{
+                if($list->isenrolled){
+                    $list->requeststatus = MODULE_ENROLLED;
+                }else{
+                    if($list->approvalreqd == 1){
+                        $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                        $requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'classroom', 'createdbyid'=>$USER->id));
+                        if($requeststatus == 'PENDING'){
+                            $list->requeststatus = MODULE_ENROLMENT_PENDING;
+                        }
+                    }
+                }
             }
             $list->userenrolstatus = $userenrolstatus;
             $return=false;
@@ -311,13 +324,15 @@ class search implements renderable{
             }
 
             $list->selfenroll=1;
+            $list->canenrolrequest = false;
             if ($list->status == 1 && !$userenrolstatus && $return) {
                 $list->selfenroll=0;
+                $list->canenrolrequest = true;
             }
-              $classroom_capacity_check=(new clroom)->classroom_capacity_check( $list->id);
-              if($classroom_capacity_check&&$list->status == 1 && !$userenrolstatus&&  $list->allow_waitinglistusers==0){
-                  $list->selfenroll=2;
-              }
+            $classroom_capacity_check=(new clroom)->classroom_capacity_check( $list->id);
+            if($classroom_capacity_check&&$list->status == 1 && !$userenrolstatus&&  $list->allow_waitinglistusers==0){
+                $list->selfenroll=2;
+            }
 
             $list->enrollmentbtn= $this->get_enrollbtn($list);
             $list->rating_element = '';
