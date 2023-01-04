@@ -1140,7 +1140,9 @@ class core_renderer extends \core_renderer {
             if($highest_roleinfo->roleid){
                 $highest_roleid = $highest_roleinfo->roleid;
                 $contextid = $highest_roleinfo->contextid;
-                $this->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+                if($this->role_switch_basedon_userroles($highest_roleid, false, $contextid)){
+                    redirect($CFG->wwwroot);
+                }
             }
         // }elseif((isset($USER->access['rsw']) && $USER->access['rsw']) ){
         //     $highest_roleid = current($USER->access['rsw']);
@@ -1479,7 +1481,7 @@ class core_renderer extends \core_renderer {
             if($assignedrole->contextid != $context->id && $assignedrole->contextid != 1){
                 $othercontext = \context::instance_by_id($assignedrole->contextid);
                 // considering only category level role switches.
-                if($othercontext->__get('contextlevel') == 40){
+                if($othercontext->__get('contextlevel') == CONTEXT_COURSECAT){
                     $othercategorypath = \local_costcenter\lib\accesslib::get_category_info($othercontext->instanceid, 'path');
                     $othercategoryids = array_values(array_filter((explode('/', $othercategorypath))));
                     if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->access['currentroleinfo']['orgcatid'] && $roleid == $assignedrole->roleid){//in_array($roleid, $USER->access['ra'][$othercontext->path])
