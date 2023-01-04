@@ -98,32 +98,39 @@ class report_userprofile extends reportbase {
         } 
         $this->sql .=" WHERE user.confirmed = 1 AND user.deleted = 0 AND user.id IN ($userid)  
                         AND user.timecreated BETWEEN $this->ls_startdate AND $this->ls_enddate";
-        $systemcontext = \context_system::instance();
+        // $systemcontext = \context_system::instance();
+        $categorycontext =  (new \local_users\lib\accesslib())::get_module_context();
         // getscheduled report
-        if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            } else {
-                $ohs = 1;
-            }
-        }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $this->sql .= "";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-            $this->sql .= " AND user.open_costcenterid = :costcenterid ";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-            $this->sql .= " AND user.open_costcenterid = :costcenterid  AND user.open_departmentid = :departmentid";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-        }else{
-            $this->sql .= " AND user.open_costcenterid = :costcenterid  AND user.open_departmentid = :departmentid AND user.open_subdepartment";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-            $this->params['subdepartment']= $USER->open_subdepartment;
-        }
+        // if (!is_siteadmin()) {
+        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+        //     if (!empty($scheduledreport)) {
+        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+        //     } else {
+        //         $ohs = 1;
+        //     }
+        // }
+        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        //     $this->sql .= "";
+        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
+        //     $this->sql .= " AND user.open_costcenterid = :costcenterid ";
+        //     $this->params['costcenterid']= $USER->open_costcenterid;
+        // }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
+        //     $this->sql .= " AND user.open_costcenterid = :costcenterid  AND user.open_departmentid = :departmentid";
+        //     $this->params['costcenterid']= $USER->open_costcenterid;
+        //     $this->params['departmentid']= $USER->open_departmentid;
+        // }else{
+        //     $this->sql .= " AND user.open_costcenterid = :costcenterid  AND user.open_departmentid = :departmentid AND user.open_subdepartment";
+        //     $this->params['costcenterid']= $USER->open_costcenterid;
+        //     $this->params['departmentid']= $USER->open_departmentid;
+        //     $this->params['subdepartment']= $USER->open_subdepartment;
+        // }
+      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='user.open_path'); 
+      if (is_siteadmin()) {
+          $this->sql .= "";
+      } else  {
+          $this->sql .= $costcenterpathconcatsql;
+      }
         parent::where();
     }
 

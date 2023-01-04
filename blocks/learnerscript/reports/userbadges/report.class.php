@@ -126,34 +126,41 @@ class report_userbadges extends reportbase implements report {
         if($this->ls_startdate >= 0 && $this->ls_enddate) {
             $this->sql .= " AND bi.dateissued BETWEEN $this->ls_startdate AND $this->ls_enddate ";
         } 
-        $systemcontext = context_system::instance();
-        if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-            } else {
-                $ohs = $dhs = 1;
-            }
-        } 
-        if ($this->loggedinuserrole != 'dh') {
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-                $this->sql .= " ";
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-                $this->sql .= " AND c.open_costcenterid = :costcenterid ";
-                $this->params['costcenterid'] = $USER->open_costcenterid;
-            }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-                $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
-                $this->params['costcenterid'] = $USER->open_costcenterid;
-                $this->params['departmentid'] = $USER->open_departmentid;
-            } else if($this->loggedinuserrole != 'user') { 
-                $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND c.open_subdepartment";
-                $this->params['costcenterid'] = $USER->open_costcenterid;
-                $this->params['departmentid'] = $USER->open_departmentid;
-                $this->params['subdepartment'] = $USER->open_subdepartment;
-            } 
-        }
+        // $systemcontext = context_system::instance();
+        // if (!is_siteadmin()) {
+        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+        //     if (!empty($scheduledreport)) {
+        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+        //     $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+        //     } else {
+        //         $ohs = $dhs = 1;
+        //     }
+        // } 
+        // if ($this->loggedinuserrole != 'dh') {
+        //     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        //         $this->sql .= " ";
+        //     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
+        //         $this->sql .= " AND c.open_costcenterid = :costcenterid ";
+        //         $this->params['costcenterid'] = $USER->open_costcenterid;
+        //     }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
+        //         $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
+        //         $this->params['costcenterid'] = $USER->open_costcenterid;
+        //         $this->params['departmentid'] = $USER->open_departmentid;
+        //     } else if($this->loggedinuserrole != 'user') { 
+        //         $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid AND c.open_subdepartment";
+        //         $this->params['costcenterid'] = $USER->open_costcenterid;
+        //         $this->params['departmentid'] = $USER->open_departmentid;
+        //         $this->params['subdepartment'] = $USER->open_subdepartment;
+        //     } 
+        // }
+      $categorycontext =  (new \local_users\lib\accesslib())::get_module_context();
+      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path'); 
+      if (is_siteadmin()) {
+          $this->sql .= "";
+      } else  {
+          $this->sql .= $costcenterpathconcatsql;
+      }
         parent::where();
     }
 
@@ -177,16 +184,22 @@ class report_userbadges extends reportbase implements report {
             $this->sql .= " AND b.courseid = :courseid";
         } 
         if (!empty($this->params['filter_organization'])) {
-            $costcenterids = $this->params['filter_organization'];
-            $this->sql .= " AND c.open_costcenterid IN ($costcenterids) ";
+            $organization = $this->params['filter_organization'];
+            $filter_organization[] = " concat('/',c.open_path,'/') LIKE :organizationparam_{$organization}";
+            $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
         }
         if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-            $departmentids = $this->params['filter_departments'];
-            $this->sql .= " AND c.open_departmentid IN ($departmentids) ";
+            $department = $this->params['filter_departments'];
+            $filter_department[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
+            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
         }
         if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-            $subdepartmentids = $this->params['filter_subdepartments'];
-            $this->sql .= " AND c.open_subdepartment IN ($subdepartmentids) ";
+            $subdepartments = $this->params['filter_subdepartments'];
+            $filter_subdepartments[] = " concat('/',c.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+            $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
         }
         if (!empty($this->params['filter_contentprovider'])) {
             $contentproviderids = $this->params['filter_contentprovider']; 
