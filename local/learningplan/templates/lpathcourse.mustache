@@ -1,0 +1,59 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="lpcoursesuser_view_container lp_course_sortorder">
+<div class = "w-full pull-left lpcourses">
+    <div class="col-lg-12 col-md-12 pull-left p-0 lpcourses_container {{ disable_class1 }} {{ cmpltd_class }} {{ enroldisable_class1 }} " id = "course_info_{{ courseid }}">
+            <div class="vertical_brdr"></div>
+            <div class="w-full pull-left lpcourse_content mt-15 mb-15">
+                <div class="col-lg-2 col-md-3 pull-left p-0 course_progress_container">
+                    <div class="w-full pull-left middlline_div"></div>
+                    <div class="w-full pull-left middlline"></div>
+                </div>
+                <div class="col-lg-5 col-md-5 pull-left p-0 {{ disable_class1 }} lpcourseslist">
+                    <div class="col-lg-12 col-md-12 pull-left p-0 course_container">
+                        <div class="col-lg-3 col-md-3 pull-left p-0">
+                            <div style="background-image: url('{{ courseimgurl }}');height:179px;" alt="" title="" class="pvcourse_img lpimg_bg" ></div>
+                        </div>
+                        <div class="col-lg-9 col-md-9 pull-left summary_container">
+                            <div class="w-full pull-left p-15">
+                                <h5>{{{ courselink }}} {{{ optional_or_mandtry }}}</h5>
+                                <div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
+                            </div>
+                            {{# classroomcourse}}
+                                <span data-courseid={{courseid}} class="pull-right learningplan_classroom_icon" title="{{# str}} listofclassrooms, local_learningplan{{/ str}}"></span>
+                            {{/ classroomcourse}}
+<!--                            <div class="w-full pull-left pl-15 pr-15 mb-15 max_progress">
+                                <div class="progress">
+                                    <div class="progress-bar text-center" role="progressbar" style="width: {{ progressbar }}%;" aria-valuenow="{{ progressbar }}" aria-valuemin="0" aria-valuemax="100">{{ progressbar }}%</div>
+                                </div>
+                            </div>-->
+                        </div>
+                    </div>
+                </div>
+                {{^ needenrol}}
+                <div class="col-lg-5 col-md-4 pull-left">
+                {{#cmpltd_class}}
+                    <div class='completed'><span class='cmplt_icon {{cmpltd_class}}' title='Completed'><i class='fa fa-check' aria-hidden='true'></i></span><span cmplt_date>{{ completiondate }}</span></div>
+                {{/cmpltd_class}}
+                </div>
+                {{/ needenrol}}
+            </div>
+                <span class="lp_dot"></span>
+            </div>
+    </div>
+</div>
+

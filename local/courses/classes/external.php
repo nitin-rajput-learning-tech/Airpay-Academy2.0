@@ -1631,7 +1631,7 @@ class local_courses_external extends external_api {
     }
     public static function get_course_info($id){
         global $DB;
-        $params = self::validate_parameters(self::get_course_info(),
+        $params = self::validate_parameters(self::get_course_info_parameters(),
             ['id' => $id]);
         return (new \local_courses\local\general_lib())->get_course_info($id);
     }

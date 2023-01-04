@@ -280,7 +280,8 @@ class search implements renderable{
             if($list->enroll == 1){
                 $list->redirect='<a href ="'.$CFG->wwwroot.'/local/learningplan/view.php?id='.$list->id.'" ><button class="cat_btn viewmore_btn">'.get_string('gotolpath','local_search').'</button></a>';
             }else{
-                $list->redirect='<span data-action="learningplan'.$list->id.'" class="learningplaninfo d-block" onclick ="(function(e){ require(\'local_search/courseinfo\').learningplaninfo({selector:\'learningplan'.$list->id.'\', learningplanid:'.$list->id.'}) })(event)"><span>'.get_string('viewmore','local_search').'</span></span>';
+                // $list->redirect='<span data-action="learningplan'.$list->id.'" class="learningplaninfo d-block" onclick ="(function(e){ require(\'local_search/courseinfo\').learningplaninfo({selector:\'learningplan'.$list->id.'\', learningplanid:'.$list->id.'}) })(event)"><span>'.get_string('viewmore','local_search').'</span></span>';
+                $list->redirect='<a href ="'.$CFG->wwwroot.'/local/learningplan/lpathinfo.php?id='.$list->id.'" ><button class="cat_btn viewmore_btn">'.get_string('gotolpath','local_search').'</button></a>';
             }
             $list->copylink = '';
             if(is_siteadmin() || has_capability('local/learningplan:manage', $context)){
