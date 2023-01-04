@@ -289,17 +289,17 @@ class search implements renderable{
         if($this->get_enrollflag($moduleid)){
             throw new \Exception("Already enrolled");
         }
-        $classroom = $DB->get_record('local_learningplan', array('id' => $moduleid));
+        $learningplan = $DB->get_record('local_learningplan', array('id' => $moduleid));
         switch($enrolmethod){
             case 'request':
-                if($classroom->approvalreqd != 1){
+                if($learningplan->approvalreqd != 1){
                     throw new \Exception("Enrollment method inactive");
                 }else{
                     \local_request\api\requestapi::create('learningplan', $moduleid);
                 }
             break;
             case 'self':
-                if($classroom->approvalreqd == 1 || $classroom->selfenrol != 1){
+                if($learningplan->approvalreqd == 1 || $learningplan->selfenrol != 1){
                     throw new \Exception("Enrollment method inactive");
                 }else{
                     $record = new \stdClass();
