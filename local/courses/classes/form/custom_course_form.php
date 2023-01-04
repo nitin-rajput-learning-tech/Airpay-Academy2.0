@@ -146,10 +146,10 @@ class custom_course_form extends moodleform {
 
             if((is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext))){
 
-            $depsql = "SELECT lcc.id,lcc.fullname
-                        FROM {local_custom_category} as lcc";
+                $depsql = "SELECT lcc.id,lcc.fullname
+                            FROM {local_custom_category} as lcc";
 
-            $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
+                $parents = $DB->get_records_sql_menu($depsql);
             }else{
                 $sql = "SELECT id,fullname
                         FROM {local_custom_category} WHERE costcenterid = ?";

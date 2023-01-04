@@ -86,6 +86,7 @@ class local_search_external extends external_api {
                     'likes' => new external_value(PARAM_INT, 'liked Users', VALUE_OPTIONAL, 0),
                     'dislikes' => new external_value(PARAM_INT, 'Disliked Users', VALUE_OPTIONAL, 0),
                     'isenrolled' => new external_value(PARAM_BOOL, 'User enrollment to module', VALUE_OPTIONAL, FALSE),
+                    'requeststatus' => new external_value(PARAM_TEXT, 'User request status to module', VALUE_OPTIONAL, ''),
                     'enrolmethods' => new external_multiple_structure(
                         new external_value(PARAM_TEXT, 'Module custom enrollment method', VALUE_OPTIONAL), //Self, Request
                             'Enrollment methods info', VALUE_OPTIONAL
@@ -164,9 +165,11 @@ class local_search_external extends external_api {
         }else{
             throw new Exception("Type not found");
         }
-        return true;
+        return ['status' => true];
     }
     public static function enrol_user_to_module_returns(){
-        return new external_value(PARAM_BOOL, 'return');
+        return new external_single_structure([
+            "status" => new external_value(PARAM_BOOL, 'status of the request'),
+        ]);
     }
 }

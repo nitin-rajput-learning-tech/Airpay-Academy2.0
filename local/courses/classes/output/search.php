@@ -229,9 +229,11 @@ class search implements renderable{
             $enroll=is_enrolled($coursecontext, $USER->id);
             $course->enroll = $enroll;
             $course->isenrolled = $enroll;
-
+            $course->requeststatus = '';
             if($course->approvalreqd == 1){
                 $course->enrolmethods[] = 'request';
+                $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                $course->requeststatus = $DB->get_field_sql($sql, array('componentid' => $course->id,'compname' => 'elearning', 'createdbyid'=>$USER->id));
             }else if($course->selfenrol == 1){
                 $course->enrolmethods[] = 'self';
             }

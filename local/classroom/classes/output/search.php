@@ -215,7 +215,7 @@ class search implements renderable{
             $list->iltlocation=$iltlocation;
            }
 
-            $course=$DB->get_record('course', array('id'=>$list->course));
+
 
             $name="categoryname";
 
@@ -271,10 +271,16 @@ class search implements renderable{
             $list->isenrolled=$list->enroll;
 
             $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $list->id, 'userid' => $USER->id));
-            if($course->approvalreqd == 1){
-                $course->enrolmethods[] = 'request';
-            }else if($course->selfenrol == 1){
-                $course->enrolmethods[] = 'self';
+            if($list->approvalreqd == 1){
+                $list->enrolmethods[] = 'request';
+                $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                $list->requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'classroom', 'createdbyid'=>$USER->id));
+            }else if($list->selfenrol == 1){
+                $list->enrolmethods[] = 'self';
+            }
+            $waitlist = $DB->get_field('local_classroom_waitlist','id',array('classroomid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
+            if($waitlist > 0){
+                $list->requeststatus = 'WAITING LIST';
             }
             $list->userenrolstatus = $userenrolstatus;
             $return=false;
