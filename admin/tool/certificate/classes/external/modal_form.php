@@ -64,7 +64,6 @@ class modal_form extends \external_api {
         ]);
         $formclass = $params['form'];
         parse_str($params['formdata'], $formdata);
-
         if (!class_exists($formclass) || !is_subclass_of($formclass, \tool_certificate\modal_form::class)) {
             // For security reason we don't throw exception "class does not exist" but rather an access exception.
             throw new \moodle_exception('nopermissionform', 'tool_certificate');

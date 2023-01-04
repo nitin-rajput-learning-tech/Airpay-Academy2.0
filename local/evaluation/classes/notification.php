@@ -66,8 +66,7 @@
         $params['emailtype'] = $emailtype;
         if($costcenterexist){
             $costcenterid=explode('/',$evaluationinstance->open_path)[1];   
-            $notification_typesql .= " AND lni.open_costcenterid=:costcenterid";
-            $params['costcenterid'] = $costcenterid;
+            $notification_typesql .= " AND lni.open_path LIKE '%$costcenterid'";
         }
         $notification = $this->db->get_record_sql($notification_typesql, $params);
         if(empty($notification)){ // sends the default notification for the type.
@@ -79,8 +78,7 @@
             $params['emailtype'] = $emailtype;
             if($costcenterexist){
                 $costcenterid=explode('/',$evaluationinstance->open_path)[1];   
-                $notification_typesql .= " AND lni.open_costcenterid=:costcenterid";
-                $params['costcenterid'] = $costcenterid;
+                $notification_typesql .= " AND lni.open_path LIKE '%$costcenterid'";
             }
             $notification = $this->db->get_record_sql($notification_typesql, $params);
         }

@@ -294,7 +294,15 @@ function xmldb_tool_certificate_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2021020800.3, 'tool', 'certificate');   
     }
+    if($oldversion < 2021020800.4){
+        $table = new xmldb_table('tool_certificate_templates');
+        $field = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
 
+        upgrade_plugin_savepoint(true, 2021020800.4, 'tool', 'certificate');   
+    }
     
 
     return true;

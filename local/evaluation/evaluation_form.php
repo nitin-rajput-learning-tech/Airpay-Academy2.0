@@ -114,6 +114,48 @@ class evaluation_form extends moodleform {
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'evaluationhdr', get_string('target_audiance','local_evaluation'));
         local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_evoluation', $categorycontext, $multiple = false);
+     //-------------------------------------------------------------------------------
+     $mform->addElement('header', 'aftersubmithdr', get_string('questionandsubmission', 'local_evaluation'));
+
+     $options=array();
+     $options[1]  = get_string('anonymous', 'local_evaluation');
+     $options[2]  = get_string('non_anonymous', 'local_evaluation');
+     $mform->addElement('select',
+                        'anonymous',
+                        get_string('anonymous_edit', 'local_evaluation'),
+                        $options);
+     if ($instance != 0) {
+         $mform->setDefault('anonymous', 2);
+     }
+
+     // check if there is existing responses to this evaluation
+     if ( $evaluation = $DB->get_record("local_evaluations", array("id"=>$id))) {
+         $completed_evaluation_count = evaluation_get_completeds_group_count($evaluation);
+     } else {
+         $completed_evaluation_count = false;
+     }
+
+     if ($completed_evaluation_count) {
+         $multiple_submit_value = $evaluation->multiple_submit ? get_string('yes') : get_string('no');
+         $mform->addElement('text', 'multiple_submit_static', get_string('multiplesubmit', 'local_evaluation'),
+         array('size'=>'4', 'disabled'=>'disabled', 'value'=>$multiple_submit_value));
+         $mform->setType('multiple_submit_static', PARAM_RAW);
+
+         $mform->addElement('hidden', 'multiple_submit', '');
+         $mform->setType('multiple_submit', PARAM_INT);
+         $mform->addHelpButton('multiple_submit_static', 'multiplesubmit', 'local_evaluation');
+     } else {
+         $mform->addElement('selectyesno',
+                            'multiple_submit',
+                            get_string('multiplesubmit', 'local_evaluation'));
+         if ($instance != 0) {
+             $mform->setDefault('multiple_submit', 1);
+         }
+         
+
+         $mform->addHelpButton('multiple_submit', 'multiplesubmit', 'local_evaluation');
+     }
+    //---------------------------------------------------------------------------------------------------
     }
 
     public function data_preprocessing(&$default_values) {
@@ -191,8 +233,10 @@ class evaluation_form extends moodleform {
      **/
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
-
-        if (isset($data['type']) && empty($data['type'])) {
+        if(isset($data['name']) && empty(trim($data['name']))){
+            $errors['name'] = get_string('name_required','local_evaluation');
+        }
+        if (isset($data['type']) && empty(trim($data['type']))) {
             $errors['type'] = get_string('typemissing', 'local_evaluation');
         }
 

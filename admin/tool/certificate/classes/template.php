@@ -29,6 +29,7 @@ use core\output\inplace_editable;
 use core_user;
 use moodle_url;
 use tool_certificate\customfield\issue_handler;
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -78,10 +79,14 @@ class template {
      */
     public function save($data) {
         global $DB;
+        local_costcenter_get_costcenter_path($data);
         $this->persistent->set('name', $data->name);
         if($data->costcenter){
         $this->persistent->set('costcenter', $data->costcenter);
         }
+        if($data->open_path){
+            $this->persistent->set('open_path', $data->open_path);
+            }
         if (isset($data->contextid)) {
             $this->persistent->set('contextid', $data->contextid);
         }
@@ -308,10 +313,10 @@ class template {
         $data = new \stdClass();
         $data->name = get_string('certificatecopy', 'tool_certificate', $this->get_name());
         $data->costcenter = $this->get_costcenter();
+        $data->open_path = $this->get_open_path();
         $data->shared = $this->get_shared();
         $data->contextid = $context ? $context->id : $this->get_context()->id;
         $newtemplate = self::create($data);
-
         // Copy the data to the new template.
         foreach ($this->get_pages() as $page) {
             $page->duplicate($newtemplate);
@@ -429,6 +434,9 @@ class template {
 //	    mallikarjun added for costcenter in certificate
     public function get_costcenter() {
         return $this->persistent->get('costcenter');
+    }
+    public function get_open_path() {
+        return $this->persistent->get('open_path');
     }
     /**
      * Returns the shared setting of the template.
@@ -638,9 +646,11 @@ class template {
      */
     public static function create($formdata) {
         $template = new \stdClass();
+        local_costcenter_get_costcenter_path($formdata);
         $template->name = $formdata->name;
 //	    mallikarjun added for costcenter in certificate
-        $template->costcenter = $formdata->costcenter;
+        $template->costcenter = $formdata->open_costcenterid;
+        $template->open_path = $formdata->open_path;
         $template->shared = $formdata->shared ?? 0;
         if (!isset($formdata->contextid)) {
             debugging('Context is missing', DEBUG_DEVELOPER);
@@ -648,7 +658,6 @@ class template {
         } else {
             $template->contextid = $formdata->contextid;
         }
-
         $t = new self();
         $t->persistent = new \tool_certificate\persistent\template(0, $template);
         $t->persistent->save();

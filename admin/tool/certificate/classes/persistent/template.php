@@ -60,6 +60,9 @@ class template extends persistent {
             'costcenter' => array(
                 'type' => PARAM_INT
             ),
+            'open_path' => array(
+                'type' => PARAM_RAW
+            ),
         );
     }
 }

@@ -134,7 +134,7 @@ class local_evaluation_external extends external_api {
                 $validateddata->instance = $instance;
                 $validateddata->plugin = $plugin;
                 $validateddata->evaluationtype = ($evaluationtype) ? $evaluationtype: 0;
-                $evaluationid = evaluation_add_instance($validateddata);
+               $evaluationid = evaluation_add_instance($validateddata);
             }
         }
         return $evaluationid;

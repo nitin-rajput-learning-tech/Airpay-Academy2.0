@@ -27,6 +27,7 @@ namespace tool_certificate\form;
 use tool_certificate\permission;
 use tool_certificate\template;
 use tool_certificate\modal_form;
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -70,17 +71,8 @@ class details extends modal_form {
         $mform->setType('id', PARAM_INT);
 //mallikarjun added Organization list starts
         $context = \context_system::instance();
-
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)) {
-            $costcenterslist = $DB->get_records_menu('local_costcenter',
-                            array('visible' => 1, 'parentid' => 0),'fullname', 'id, fullname');
-
-            $costcenters = array(null => get_string('select')) + $costcenterslist;
-
-            $mform->addElement('autocomplete', 'costcenter',get_string('costcenter', 'tool_certificate'), $costcenters, array());
-            $mform->addRule('costcenter', null, 'required', null, 'client');
-            $mform->setType('costcenter', PARAM_INT);
-
+        if (is_siteadmin()) {
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1),false, 'tool_certificate', $context, $multiple = false);
         } else {
             $mform->addElement('hidden', 'costcenter', $USER->open_costcenterid);
             $mform->setType('costcenter', PARAM_INT);
@@ -203,6 +195,7 @@ class details extends modal_form {
                 'id' => $this->template->get_id(),
                 'name' => $this->template->get_name(),
                 'costcenter' => $this->template->get_costcenter(),
+                'open_path' => '/'.$this->template->get_costcenter(),
                 'shared' => $this->template->get_shared(),
                 'categoryid' => $this->template->get_category_id()]);
         } else {
