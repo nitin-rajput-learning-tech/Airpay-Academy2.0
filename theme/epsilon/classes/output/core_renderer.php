@@ -1052,7 +1052,6 @@ class core_renderer extends \core_renderer {
         /*Start of the role Switch */
         $systemcontext = context_system::instance();
         $roles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
-
         if (is_array($roles) && (count($roles) > 0)) {
 
             $switchrole = new stdClass(); /*Role for the Learner i.e user role */
@@ -1066,7 +1065,7 @@ class core_renderer extends \core_renderer {
 
 
             $depths = [];
-            // var_dump($roles);
+            // var_dump($roles);exit;
             array_values(array_filter(array_walk($roles, function(&$role, $rolekey)use(&$depths, &$roles){
                 $categoryids = array_values(array_filter((explode('/', $role->path))));
                 $category = \local_costcenter\lib\accesslib::get_category_info(end($categoryids), 'name');
@@ -1471,18 +1470,19 @@ class core_renderer extends \core_renderer {
         }
         //Fetching the category contexts where the role is assigned ans switching as user to those for achieving system level role switch starts.
         $userroleid = $DB->get_field('role', 'id', array('shortname' => 'user'));
-        $assignedcontexts = array_map(function($cxtpath){
-            return end(explode('/', $cxtpath));
-        }, array_unique(array_keys($USER->access['ra'])));
+        // $assignedcontexts = array_map(function($cxtpath){
+        //     return end(explode('/', $cxtpath));
+        // }, array_unique(array_keys($USER->access['ra'])));
+        $assignedroles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
         $contextdepth = $context->__get('depth');
-        foreach($assignedcontexts AS $contextid){
-            if($contextid != $context->id && $contextid != 1){
-                $othercontext = \context::instance_by_id($contextid);
+        foreach($assignedroles AS $assignedrole){
+            if($assignedrole->contextid != $context->id && $assignedrole->contextid != 1){
+                $othercontext = \context::instance_by_id($assignedrole->contextid);
                 // considering only category level role switches.
                 if($othercontext->__get('contextlevel') == 40){
                     $othercategorypath = \local_costcenter\lib\accesslib::get_category_info($othercontext->instanceid, 'path');
                     $othercategoryids = array_values(array_filter((explode('/', $othercategorypath))));
-                    if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->access['currentroleinfo']['orgcatid'] && in_array($roleid, $USER->access['ra'][$othercontext->path])){
+                    if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->access['currentroleinfo']['orgcatid'] && $roleid == $assignedrole->roleid){//in_array($roleid, $USER->access['ra'][$othercontext->path])
                         if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
                             $USER->access['rsw'][$othercontext->path] = $roleid;
                             $othercostcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($othercontext);
