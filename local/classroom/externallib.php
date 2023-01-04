@@ -3051,7 +3051,7 @@ public static function submit_instituteform_form_parameters() {
     }
     public function get_classroom_info($id){
         global $DB;
-        $params = self::validate_parameters(self::get_classroom_info(),
+        $params = self::validate_parameters(self::get_classroom_info_parameters(),
             ['id' => $id]);
         return (new \local_classroom\local\general_lib())->get_classroom_info($id);
     }

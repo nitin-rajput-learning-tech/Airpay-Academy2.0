@@ -759,7 +759,7 @@ class local_learningplan_external extends external_api {
     }
     public static function get_learningplan_info($id){
         global $DB;
-        $params = self::validate_parameters(self::get_learningplan_info(),
+        $params = self::validate_parameters(self::get_learningplan_info_parameters(),
             ['id' => $id]);
         return (new \local_learningplan\local\general_lib())->get_learningplan_info($id);
     }

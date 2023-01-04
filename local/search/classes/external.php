@@ -184,7 +184,7 @@ class local_search_external extends external_api {
     }
     public static function get_module_info($id,$type){
         global $DB;
-        $params = self::validate_parameters(self::get_module_info(),
+        $params = self::validate_parameters(self::get_module_info_parameters(),
             ['id' => $id, 'type' => $type]);
 
         switch($type) {
