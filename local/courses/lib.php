@@ -1438,7 +1438,7 @@ function get_listof_courses($stable, $filterdata) {
         $count = 0;
         foreach ($courses as $key => $course) {
             $course_in_list = new core_course_list_element($course);
-            $context =  \context_coursecat::instance($course->category);
+            $context =  \context_course::instance($course->id);
             $category = $DB->get_record('course_categories',array('id'=>$course->category));
             $departmentcount = 1;
             $subdepartmentcount = 1;
@@ -1638,7 +1638,7 @@ function get_listof_courses($stable, $filterdata) {
                   $courseslist[$count]["auto_enrol"] = '';
              }   
 
-           if(has_capability('local/courses:delete',$context)&&has_capability('local/courses:manage', $context)){
+           if(has_capability('local/courses:delete',$context)&&has_capability('local/courses:manage', $context)&&has_capability('moodle/course:delete', $context)){
                 $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')), array('title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_courses/courseAjaxform\').deleteConfirm({action:\'deletecourse\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
                 $courseslist[$count]["deleteaction"] = $deleteactionshtml;
            
@@ -1684,9 +1684,9 @@ function get_listof_courses($stable, $filterdata) {
                                 "enrol"=>((has_capability('local/courses:enrol',
                                 $maincheckcontext)  || is_siteadmin())&&has_capability('local/courses:manage', $maincheckcontext)) ? true : false,
                                 "update"=>((has_capability('local/courses:update',
-                                $context) || is_siteadmin())&&has_capability('local/courses:manage', $context)) ? true : false,
+                                $context) || is_siteadmin())&&has_capability('local/courses:manage', $context)&&has_capability('moodle/course:update', $context)) ? true : false,
                                 "delete"=>((has_capability('local/courses:delete',
-                                $context) || is_siteadmin())&&has_capability('local/courses:manage', $context)) ? true : false,
+                                $context) || is_siteadmin())&&has_capability('local/courses:manage', $context)&&has_capability('moodle/course:delete', $context)) ? true : false,
                                 "report_view"=>((has_capability('local/courses:report_view', $context) || is_siteadmin())&&has_capability('local/courses:manage', $context)) ? true : false
                             ));
 

@@ -175,5 +175,13 @@ function xmldb_local_courses_upgrade($oldversion)
         }
         upgrade_plugin_savepoint(true, 2022101800.08, 'local', 'courses');
     }
+    if ($oldversion < 2022101800.10) {
+        $table = new xmldb_table('course');
+        $field1 = new xmldb_field('open_categoryid', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.10, 'local', 'courses');
+    }
     return true;
 }

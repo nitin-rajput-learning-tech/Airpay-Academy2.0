@@ -120,17 +120,15 @@ class custom_course_form extends moodleform {
         $core_component = new core_component();
         if($formstatus == 0){
 
-            $costcenterpath = $this->_ajaxformdata['open_path'];
+            $opencategoryid = $this->_ajaxformdata['open_categoryid'];
 
-            if($costcenterpath){
-
-                $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lcc.path',$costcenterpath,$datatype='lowerandsamepath');
+            if($opencategoryid){
 
                 $costcentersql = "SELECT lcc.id,lcc.fullname
                                 FROM {local_custom_category} AS lcc
-                                WHERE 1=1 $costcenterpathconcatsql ";
+                                WHERE lcc.id=:id ";
 
-                $parents = $DB->get_records_sql_menu($categorysql);
+                $parents = $DB->get_records_sql_menu($costcentersql,array('id'=>$opencategoryid));
 
             }else{
 

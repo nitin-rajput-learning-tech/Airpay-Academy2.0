@@ -232,6 +232,7 @@ class local_courses_external extends external_api {
                             $data->category = $DB->get_field('local_costcenter', 'category', array('path' => $data->open_path));
                          }
                     }
+                    $data->summary_editor=array('format'=>1);
 
                     update_course($data, $editoroptions);
 
