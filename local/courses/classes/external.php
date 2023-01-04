@@ -181,9 +181,8 @@ class local_courses_external extends external_api {
 
                     // purge appropriate caches in case fix_course_sortorder() did not change anything
                     cache_helper::purge_by_event('changesincourse');
-                    if ($changesincoursecat) {
-                        cache_helper::purge_by_event('changesincoursecat');
-                    }
+                    cache_helper::purge_by_event('changesincoursecat');
+
 
                     if(class_exists('\block_trending_modules\lib')){
                         $trendingclass = new \block_trending_modules\lib();
@@ -245,9 +244,8 @@ class local_courses_external extends external_api {
 
                    // purge appropriate caches in case fix_course_sortorder() did not change anything
                     cache_helper::purge_by_event('changesincourse');
-                    if ($changesincoursecat) {
-                        cache_helper::purge_by_event('changesincoursecat');
-                    }
+                    cache_helper::purge_by_event('changesincoursecat');
+
 
                 }
             }
