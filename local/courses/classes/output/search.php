@@ -22,6 +22,7 @@
  */
 namespace local_courses\output;
 require_once($CFG->dirroot.'/local/courses/lib.php');
+require_once($CFG->dirroot.'/local/search/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 use renderable;
@@ -229,11 +230,21 @@ class search implements renderable{
             $enroll=is_enrolled($coursecontext, $USER->id);
             $course->enroll = $enroll;
             $course->isenrolled = $enroll;
-            $course->requeststatus = '';
+            if($enroll){
+                $course->requeststatus = MODULE_ENROLLED;
+            }else{
+                $course->requeststatus = MODULE_NOT_ENROLLED;
+                if($course->approvalreqd == 1){
+                    $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                    $requeststatus = $DB->get_field_sql($sql, array('componentid' => $course->id,'compname' => 'elearning', 'createdbyid'=>$USER->id));
+                    if($requeststatus == 'PENDING'){
+                        $course->requeststatus = MODULE_ENROLMENT_PENDING;
+                    }
+                }
+            }
+
             if($course->approvalreqd == 1){
                 $course->enrolmethods[] = 'request';
-                $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                $course->requeststatus = $DB->get_field_sql($sql, array('componentid' => $course->id,'compname' => 'elearning', 'createdbyid'=>$USER->id));
             }else if($course->selfenrol == 1){
                 $course->enrolmethods[] = 'self';
             }
@@ -295,8 +306,8 @@ class search implements renderable{
             }else{
                 $course->enrol_date = 'N/A';
             }
-            $course->skill = $course->open_skill ? searchlib::$skills[$course->open_skill] : 'N/A';
-            $course->level = $course->open_level ? searchlib::$levels[$course->open_level] : 'N/A';
+            $course->skill = $course->open_skill ? searchlib::$skills[$course->open_skill] : '';
+            $course->level = $course->open_level ? searchlib::$levels[$course->open_level] : '';
             if($enrolldata){
                 $course->redirect='<a href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'" class="viewmore_btn">'.get_string('resume','local_search').'</a>';
             }else{

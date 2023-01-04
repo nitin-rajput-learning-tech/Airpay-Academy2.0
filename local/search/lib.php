@@ -23,6 +23,11 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
+define('MODULE_NOT_ENROLLED', 0);
+define('MODULE_ENROLLED', 1);
+define('MODULE_ENROLMENT_REQUEST', 2);
+define('MODULE_ENROLMENT_PENDING', 3);
+define('MODULE_ENROLMENT_WAITING', 4);
 use local_search\output\allcourses as allcourses;
 
     /**
