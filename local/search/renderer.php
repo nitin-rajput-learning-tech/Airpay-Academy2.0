@@ -54,12 +54,11 @@ class local_search_renderer extends plugin_renderer_base {
         $section_names = '';
         $section_content = '';
         $sec_num = 1;
-
         foreach($course_sections as $course_section){
 
             $section_icon = 'fa-folder';
 
-			if($course_section->section_visible && !empty($course_section->sequence)){
+			if($course_section->section_visible /*&& !empty($course_section->sequence)*/){
 				$section_names .= '<li>
 										<a href="#section-'.$sec_num.'" role="tab" tabindex="0">
 												<i class="fa '.$section_icon.' course-icon"></i><br>

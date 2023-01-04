@@ -311,7 +311,7 @@ class search implements renderable{
             if($enrolldata){
                 $course->redirect='<a href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'" class="viewmore_btn">'.get_string('resume','local_search').'</a>';
             }else{
-                $course->redirect='<a href="'.$CFG->wwwroot.'/local/courses/details.php?id='.$course->id.'" class="viewmore_btn">'.get_string('view_details','local_search').'</a>';
+                $course->redirect='<a href="'.$CFG->wwwroot.'/local/search/coursedetails.php?id='.$course->id.'" class="viewmore_btn">'.get_string('view_details','local_search').'</a>';
             }
 
             $course->copylink = '';

@@ -35,7 +35,7 @@ $PAGE->navbar->add($course->fullname);
 echo $OUTPUT->header();
 echo '<div class="content_era_left">';
 
-	$course_category = $DB->get_field('course_categories', 'name', array('id'=>$course->category));
+	$course_category = $DB->get_field('local_custom_category', 'fullname', array('id'=>$course->open_categoryid));
 	$level = ($course->open_level) ? $course->open_level : 'NA';
 
 	if(is_null($course->open_grade) || $course->open_grade == '' || $course->open_grade == -1){
@@ -186,21 +186,21 @@ echo '<div class="content_era_left">';
         </div>
       </div>';
 	echo '</div>';
-
+	$renderer = $PAGE->get_renderer('local_search');
     echo '<div class="row">
 				<div class="col-md-9 pr-0">
 				<div id="coursedetails">
 		            <ul>
 		              <li><a href="#courseindex">Index</a></li>
-		              <li><a href="#courseilts">ILT Session</a></li>
+
 		            </ul>
-		            <div id="courseindex">'.course_sections($course->id).'</div>
-		            <div id="courseilts">'.course_batchesinfo($course->id).'</div>
+		            <div id="courseindex">'.$renderer->course_sections($course->id).'</div>
+
 		        </div>
 				</div>
 				<div class="col-md-3"></div>
 		  </div>';
-
+//<li><a href="#courseilts">ILT Session</a></li><div id="courseilts">'.' $renderer->course_batchesinfo($course->id)'.'</div>
     echo html_writer::script('$("#coursedetails").tabs();');
 
 echo $OUTPUT->footer();
