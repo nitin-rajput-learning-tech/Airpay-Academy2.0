@@ -1140,9 +1140,8 @@ class core_renderer extends \core_renderer {
             if($highest_roleinfo->roleid){
                 $highest_roleid = $highest_roleinfo->roleid;
                 $contextid = $highest_roleinfo->contextid;
-                if($this->role_switch_basedon_userroles($highest_roleid, false, $contextid)){
-                    redirect($CFG->wwwroot);
-                }
+                $this->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+
             }
         // }elseif((isset($USER->access['rsw']) && $USER->access['rsw']) ){
         //     $highest_roleid = current($USER->access['rsw']);

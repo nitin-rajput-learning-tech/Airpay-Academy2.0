@@ -63,6 +63,9 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             // Keep a reference to the modal.
             self.modal = modal;
 
+            // we want a big modal.
+            self.modal.setLarge();
+
             // We want to reset the form every time it is opened.
             this.modal.getRoot().on(ModalEvents.hidden, function() {
                 setTimeout(function(){
