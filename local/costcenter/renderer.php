@@ -43,10 +43,13 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid=0 ORDER BY s.sortorder DESC";
             $costcenters = $DB->get_records_sql($sql);
         } else if(has_capability('local/costcenter:view', $categorycontext)){
-            $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid = 0 AND id = ? ORDER BY s.sortorder";
-            //$depth=$categorycontext->depth;   
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
-            $costcenters = $DB->get_records_sql($sql, [$costcenterid]);
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='s.path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+
+            $sql = "SELECT distinct(s.id), s.* FROM {local_costcenter} s where parentid = 0  $costcenterpathconcatsql ORDER BY s.sortorder";
+
+            $costcenters = $DB->get_records_sql($sql);
         }
 
         if (!is_siteadmin() && empty($costcenters)) {
@@ -197,13 +200,20 @@ class local_costcenter_renderer extends plugin_renderer_base {
     public function get_dept_view_btns($id = false) {
         global $PAGE, $USER, $DB;
 
-        $exist_sql = "SELECT id FROM {local_costcenter} WHERE 1=1 ";
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+        $exist_sql = "SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql ";
 
         $costcenters_exist = $DB->record_exists_sql($exist_sql);
+
         if($id){
-            $costcenter = $DB->get_record('local_costcenter', array('id' => $id));
+
+            $exist_sql .= " AND id=$id ";
+
+            $costcenter = $DB->get_record_sql($exist_sql);
             $depth=$costcenter->depth;
             $costcenterpath=$costcenter->path;
+
         }else{
             $costcenterpath=null;
             $depth = 1;
@@ -217,7 +227,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
 
         if($costcenters_exist && $depth != 2 && $depth != 3 && $depth != 4){
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext) || has_capability('local/costcenter:manage_ownorganization', $categorycontext)){
+            if(is_siteadmin()){
                 $headstring = 'addnewdept';
                 $title = get_string('createdepartment','local_costcenter');
                 $create_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"department\", headstring:\"$headstring\"}) })(event)'>
@@ -231,10 +241,11 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $deptexistsql = "SELECT id FROM {local_costcenter} WHERE depth = 2 ";
         if(!(is_siteadmin())){
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=2);
-            $deptexistsql .= "AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
+
+            $deptexistsql .= $costcenterpathconcatsql ;
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
+
         if($deptexist && $depth != 3 && $depth != 4){
             $headstring = 'addnewsubdept';
                 $title = get_string('createsubdepartment','local_costcenter');
@@ -246,10 +257,9 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $deptexistth = "SELECT id FROM {local_costcenter} WHERE depth = 3 ";
         if(!(is_siteadmin())){
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=3);;
-            $deptexistth .= " AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' )";
+
+            $deptexistth .= $costcenterpathconcatsql ;
         }
-        $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
 
         $deptexistone = $DB->record_exists_sql($deptexistth);
 
@@ -265,8 +275,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $deptexistfo = "SELECT id FROM {local_costcenter} WHERE depth = 4 ";
         if(!(is_siteadmin())){
-            $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=4);
-            $deptexistfo .= " AND ( concat('/',path,'/') LIKE '%/$costcenterid/%' ) ";
+
+            $deptexistfo .= $costcenterpathconcatsql;
         }
         $deptexisttwo = $DB->record_exists_sql($deptexistfo);
         if($deptexisttwo){
@@ -287,7 +297,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             'create_sub_sub_sub_department' => $create_sub_sub_sub_department
         );
 
-    return $this->render_from_template('local_costcenter/viewbuttons', $buttons);
+       return $this->render_from_template('local_costcenter/viewbuttons', $buttons);
     }
 
 
@@ -604,7 +614,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;
             $departments_content[] = $departments_array+$deparray;
         }
-
+        $contextid = (new \local_costcenter\lib\accesslib())::get_module_context()->id;
         $costcenter_view_content = [
             'showrols_content' => true,
             'totalsubdepts' => $totalsubdepts,

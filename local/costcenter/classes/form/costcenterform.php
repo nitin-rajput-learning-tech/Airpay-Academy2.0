@@ -58,12 +58,13 @@ class costcenterform extends moodleform { /*costcenter creation form*/
 
 
             }else{
-                $sql = "SELECT id,fullname 
-                        FROM {local_costcenter} WHERE id = ? ";
 
-                $costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
+                $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
-                $parents = $DB->get_records_sql_menu($sql, [$costcenterid]);
+                $sql = "SELECT id,fullname
+                        FROM {local_costcenter} WHERE depth=1 $costcenterpathconcatsql ";
+
+                $parents = $DB->get_records_sql_menu($sql);
             }
             $mform->addElement('select', 'parentid', get_string('organisation','local_costcenter'), $parents);
             $mform->setType('parentid', PARAM_INT);

@@ -30,28 +30,14 @@ class insertrepository{
     function skillrepository_opertaions($table, $operation, $object, $column, $value) {
         global $DB, $CFG, $OUTPUT, $USER,$PAGE;
         $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-
-        if(in_array($operation, ['insert', 'update'])){
-            if (!is_siteadmin()){
-                $open_path=$DB->get_field('user','open_path',array('id'=>$USER->id));
-                $open_path='/'.explode('/',$open_path)[1];
-            } else {
-                $open_path = '/'.(int)$object->open_costcenterid;
-            }
-        }
-
         switch($operation){
             case 'insert':
                 $object->usercreated = $USER->id;
-                $object->open_path= $open_path;
-                $object->costcenterid= $costcenter;
                 $object->timecreated = time();
                 $process = $DB->insert_record($table, $object);
             break;
             case 'update':
                 $object->usermodified = $USER->id;
-                $object->costcenterid=$costcenter;
-                $object->open_path= $open_path;
                 $object->timemodified = time();
                 $process = $DB->update_record($table, $object);
             break;

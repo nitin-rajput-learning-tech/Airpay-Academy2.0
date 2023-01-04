@@ -270,7 +270,7 @@ class search implements renderable{
                 $list->redirect='<span data-action="learningplan'.$list->id.'" class="learningplaninfo d-block" onclick ="(function(e){ require(\'local_search/courseinfo\').learningplaninfo({selector:\'learningplan'.$list->id.'\', learningplanid:'.$list->id.'}) })(event)"><span>'.get_string('viewmore','local_search').'</span></span>';
             }
             $list->copylink = '';
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context) || has_capability('local/costcenter:manage_ownorganization', $context) || has_capability('local/costcenter:manage_owndepartments', $context)){
+            if(is_siteadmin() || has_capability('local/learningplan:manage', $context)){
                 $list->copylink = '<a data-action="courseinfo'.$course->id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').copy_url({module:\'learningplan\', moduleid:'.$list->id.'}) })(event)"><button class="cat_btn viewmore_btn">'.get_string('copyurl', 'local_search').'</button></a>';
             }
             $enrolled = $DB->get_field('local_learningplan_user','id', array('planid' => $list->id, 'userid' => $USER->id));

@@ -214,8 +214,8 @@ function skill_details($tablelimits, $filtervalues){
     $queryparam = array();
 
     if(!is_siteadmin()){
-        $costcenter_path=$DB->get_field('user','open_path',array('id'=>$USER->id));
-        $concatsql .= " AND sk.openpath LIKE  concat($costcenter_path,'/%') ";
+        $concatsql = (new \local_skillrepository\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='sk.open_path');
+        $concatsql .= " $concatsql ";
     }
     if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
         $concatsql .= " AND (sk.name LIKE :search1 )";
@@ -224,7 +224,6 @@ function skill_details($tablelimits, $filtervalues){
     $count = $DB->count_records_sql($countsql.$concatsql, $queryparam);
     $concatsql.=" order by sk.id desc";
     $records = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
-
     $list=array();
     $data=array();
     if ($records) {
@@ -255,7 +254,7 @@ function skill_details($tablelimits, $filtervalues){
 //////For display on level page//////////
 function skills_level_details($tablelimits, $filtervalues){
     global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-    $costcenterid=explode('/',$USER->open_path)[1];
+    $concatsql = (new \local_skillrepository\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lcl.open_path');
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $countsql = "SELECT count(lcl.id) FROM {local_course_levels} AS lcl WHERE 1=1 ";
     $selectsql = "SELECT lcl.id,lcl.name,lcl.code, concat(u.firstname,' ', u.lastname) as username, lc.fullname as organisationname
@@ -266,7 +265,7 @@ function skills_level_details($tablelimits, $filtervalues){
     $queryparam = array();
 
     if(!is_siteadmin()){
-        $concatsql .= " AND lcl.costcenterid= $costcenterid ";
+        $concatsql .= " $concatsql ";
     }
 
     if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
@@ -298,22 +297,21 @@ function skills_category_details($tablelimits, $filtervalues){
     global $DB, $PAGE,$USER,$CFG,$OUTPUT;
     $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
     $countsql = "SELECT count(lsc.id) FROM {local_skill_categories} AS lsc WHERE 1=1 ";
-    $costcenterid=explode('/',$USER->open_path)[1];
-    $selectsql = "SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON concat('/',lsc.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1";
+    $concatsql = (new \local_skillrepository\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lsc.open_path');
+    $selectsql = "SELECT lsc.*,lc.fullname as orginsationname from {local_skill_categories} AS lsc JOIN {local_costcenter} AS lc ON concat('/',lsc.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1 ";
     $queryparam = array();
 
     if(!is_siteadmin()){
-        $concatsql .= " AND lsc.open_path LIKE  concat('%'.$costcenterid)";
+        $concatsql .= " $concatsql ";
     }
     if (isset($filtervalues->search_query) && trim($filtervalues->search_query) != '') {
-        $concatsql .= " AND (lsc.name LIKE :search1 )";
+        $concatsql .= " AND (lsc.name LIKE :search1 ) ";
         $queryparam['search1'] = '%'.trim($filtervalues->search_query).'%';
     }
     $count = $DB->count_records_sql($countsql.$concatsql, $queryparam);
 
-    $concatsql.=" order by lsc.id desc";
+    $concatsql.=" order by lsc.id desc ";
     $records = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
-
     $list=array();
     $data=array();
     if ($records) {
