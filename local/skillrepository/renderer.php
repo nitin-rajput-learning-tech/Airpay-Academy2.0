@@ -38,7 +38,8 @@ class local_skillrepository_renderer extends plugin_renderer_base {
         if(is_siteadmin()){
             $skill = $repository->skillrepository_opertaions('local_skill', 'fetch-multiple','','','');
         } else {
-            $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+            $open_path=$DB->get_field('user','open_path',array('id'=>$USER->id));
+            $costcenterid=explode('/',$open_path)[1];
             $object=1;
             $skill = $repository->skillrepository_opertaions('local_skill', 'fetch-multiple',$object,'costcenterid',$costcenterid);
         }

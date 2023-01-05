@@ -29,13 +29,15 @@ class querylib {
         $contentsql = "SELECT lcl.id,lcl.name,lcl.code, concat(u.firstname,' ', u.lastname) as username, lc.fullname as organisationname
             FROM {local_course_levels} AS lcl
             JOIN {user} AS u ON u.id=lcl.usercreated
-            JOIN {local_costcenter} AS lc ON lc.id = lcl.costcenterid
+            JOIN {local_costcenter} AS lc ON concat('/',lcl.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
             WHERE 1=1 ";
 
         if(!is_siteadmin()){
+        $concatsql = (new \local_skillrepository\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='sk.open_path');
+
             //For Organization head show only those levels created by them.
-            $costcenterid=$this->user->open_costcenterid;
-            $contentsql .=" AND lcl.costcenterid = $costcenterid ";
+            //$costcenterid=$this->user->open_costcenterid;
+            $contentsql .=" $concatsql ";
         }
         if($params->search){
             $contentsql .= " AND (lcl.name LIKE '%%{$params->search}%%' OR lcl.code LIKE '%%{$params->search}%%')";

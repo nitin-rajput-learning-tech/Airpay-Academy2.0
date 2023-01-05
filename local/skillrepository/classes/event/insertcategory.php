@@ -36,9 +36,10 @@ class insertcategory{
         $newskill_category->shortname = $data->shortname;
 
         if (!is_siteadmin()){
-            $costcenter = $DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
+            $open_path = $DB->get_field('user','open_path',array('id'=>$USER->id));
+            $costcenter=explode('/',$open_path)[1];
         } else {
-            $costcenter = $data->costcenterid;
+            $costcenter = explode('/',$data->costcenterid)[1];
         }
 
         if($data->id > 0){
