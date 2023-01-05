@@ -267,10 +267,12 @@ class allcourses {
                 }
             }
         }else{
+            $standard_catalogtypes = $defaultPlugins;
             foreach($thisfilters AS $filtertype => $filter){
                 foreach($filterapplicable AS $plugin => $applicablefilters){
-                    if(in_array($filtertype, $applicablefilters) && !in_array($plugin, $standard_catalogtypes)){
-                        $standard_catalogtypes[] = $plugin;
+                    if(!in_array($filtertype, $applicablefilters) && in_array($plugin, $standard_catalogtypes)){
+                        unset($standard_catalogtypes[array_search($plugin, $standard_catalogtypes)]);
+                        // $standard_catalogtypes[] = $plugin;
                     }
                 }
             }

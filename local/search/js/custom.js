@@ -70,6 +70,7 @@ myModule.controller('courseController', function ($scope, $http,$location) {
     };
     $scope.moreitemslist = [];
     $scope.getitemslist= function (catid){
+
         var url = M.cfg.wwwroot + '/local/search/filterslist.php?catid='+catid+'&action=itemslist';
         var className = $('#viewmoreless_'+catid).attr('class');
         if(className == "viewmore"){
