@@ -56,7 +56,7 @@ class search implements renderable{
         $leftjoinsql = '';
 
         // added condition for not displaying retired ILT's.
-        $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 ";
+        $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 AND lc.selfenrol = 1 ";
 
         $searchsql = '';
         if(searchlib::$search && searchlib::$search != 'null'){
