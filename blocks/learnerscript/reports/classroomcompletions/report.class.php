@@ -62,7 +62,7 @@ class report_classroomcompletions extends reportbase implements report {
                             THEN 'Completed'
                             ELSE 'Not Completed'
                         END AS usercompletionstatus,
-                        lcu.completiondate AS usercompletiondate  ";
+                        lcu.completiondate AS usercompletiondate,CONCAT(u.firstname, ' ', u.lastname) AS fullname,username,firstname,lastname,email  ";
         parent::select();
     }
     function from() {

@@ -240,6 +240,7 @@ class local_courses_external extends external_api {
                     }
                     $data->summary_editor=array('format'=>1);
 
+
                     update_course($data, $editoroptions);
 
                    // purge appropriate caches in case fix_course_sortorder() did not change anything

@@ -355,6 +355,10 @@ class custom_course_form extends moodleform {
             }
 
         }else if ($formstatus == 2) {
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$this->course->open_path);
+            $mform->addElement('hidden', 'open_costcenterid');
+            $mform->setConstant('open_costcenterid', $org);
+
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_courses', $categorycontext, $multiple = false);
         }
         $mform->closeHeaderBefore('buttonar');
