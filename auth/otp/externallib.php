@@ -12,7 +12,8 @@ class auth_otp_external extends external_api {
                     );
     }
 
-    public static function auth_otp_generate($application_id) { //Don't forget to set it as static
+    public static function auth_otp_generate($application_id) { 
+    //Don't forget to set it as static
         global $CFG, $DB,$USER;
 
         $params = self::validate_parameters(self::auth_otp_generate_parameters(),

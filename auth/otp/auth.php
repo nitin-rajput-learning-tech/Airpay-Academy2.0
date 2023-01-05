@@ -63,7 +63,8 @@ class auth_plugin_otp extends auth_plugin_base {
 		
         //retrieve the user matching username
          if ($user = $DB->get_record('user', array('username'=>$username, 'mnethostid'=>$CFG->mnet_localhost_id, 'auth'=>$this->authtype))) {
-                $exsql="SELECT * from {local_otp} where userid={$user->id} AND otpcode = '{$extpassword}' AND inuse=0 order by id desc limit 1 ";
+            
+                $exsql="SELECT * from {local_otp} where userid={$user->id} AND inuse=0 order by id desc limit 1 ";
                 $checkexist=$DB->get_record_sql($exsql);
                 $otpdetails = new stdClass();
                     $otpdetails->id=18;

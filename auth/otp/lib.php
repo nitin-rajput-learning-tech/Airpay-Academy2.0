@@ -20,6 +20,8 @@ class otp {
   public function __construct() {
     $this->apiurl = get_config('auth_otp', 'otpserviceip');
     $this->senderid = get_config('auth_otp', 'senderid');
+    $this->authapi = get_config('auth_otp', 'authserviceip');
+
     $this->token = get_config('auth_otp', 'apikey');
   }
 
@@ -53,7 +55,7 @@ class otp {
     $sql = "SELECT u.id, u.username, u.email, u.phone1 FROM {user} u WHERE u.username= ? AND u.confirmed = 1 AND u.auth = 'otp'";
     $validusers = $DB->get_record_sql($sql, [$username]);
 
-    $phonenumber = preg_replace( '/[^0-9]/', '', $validusers->phone1 );
+   $phonenumber = "%2B".$validusers->phone1;
     $phonelength = strlen($phonenumber);
     $appdetails = new stdClass();
 	  if (empty($validusers)) {
@@ -61,38 +63,36 @@ class otp {
       $desc=get_string('notvalidapplicant', 'auth_otp', $appdetails);
       $this->local_logs('otp', 'User', 1, $desc, 'warning');
 		  return 1;
-	  } else if (empty($validusers->phone1) || $phonelength != 10) {
+	  } else if (empty($validusers->phone1)) {
 		  $appdetails->username = $username;
       $appdetails->phonenumber = $validusers->phone1;
       $desc=get_string('notvalidphone', 'auth_otp', $appdetails);
       $this->local_logs('otp', 'User', 1, $desc, 'warning');
 		  return 2;
 	  } else {
-      $string = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      $string_shuffled = str_shuffle($string);
-      $password = substr($string_shuffled, 1, 7);
-      $otp = mt_rand(1001, 9999);
-      $msg = "OTP to login into LMS is " . $otp . ". Do not share the OTP with anyone for security reasons.";
+     
       $curl = curl_init();
-      $curloptions = $this->get_curl_options($this->apiurl, $phonenumber, $this->token, $this->senderid, $msg);
+      $curloptions = $this->get_curl_options($this->apiurl, $phonenumber, $this->token);
       curl_setopt_array($curl, $curloptions);
 
       $appdetails->username = $validusers->username;
       $appdetails->phonenumber = $phonenumber;
-      $result = curl_exec($curl);
+      $response = curl_exec($curl);
+   
+      $result = json_decode($response);
+
       if(empty($result)) {
         return 0;
       } else {
-          $text = json_decode($result);
-          if($text->status != 'OK') {
-            $desc = get_string('errorcodefromservice', 'auth_otp', $appdetails) . $text->status;
+          if($result->statusReason != 'OK') {
+            $desc = get_string('errorcodefromservice', 'auth_otp', $appdetails, $result->errorDetails);
             $this->local_logs('otp', 'Server', 1, $desc, 'Error');
             curl_close($curl);
             return 0;
           }
       }
-
-      $this->update_otp($otp, $phonenumber, $username, $validusers->id);
+       
+      $this->update_otp($otp, $phonenumber, $username, $validusers->id,$result->vToken);
       $appdetails->otp = $otp;
       $desc = get_string('otpsendtomobile', 'auth_otp', $appdetails);
       $this->local_logs('otp', 'User', 1, $desc, 'Success');
@@ -101,65 +101,109 @@ class otp {
     exit;
   }
 
+  public function confirm_account($username,$otp,$vtoken){
+
+    global $DB, $CFG;
+
+      $curl = curl_init();
+      $curloptions = $this->auth_user_account($otp,$vtoken);
+      curl_setopt_array($curl, $curloptions);
+      $response = curl_exec($curl);
+   
+     
+    return $response;
+
+  }
+
 	public function validate_otp($username, $otp) {
 		global $DB, $CFG;
-    $sql = "SELECT u.id,u.username,u.email,u.phone1 FROM {user} u WHERE u.username = ? AND u.auth = 'otp' ";
+
+    $sql = "SELECT u.id,u.username,u.email FROM {user} u WHERE u.username = ? AND u.auth = 'otp' ";
     $validusers = $DB->get_record_sql($sql, [$username]);
 
-    $sql = "SELECT * FROM {local_otp} op WHERE op.userid = ?  AND op.otpcode = ? ORDER BY id DESC LIMIT 1 ";
+    $sql1 = "SELECT * FROM {local_otp} op WHERE op.userid = ? ORDER BY id DESC LIMIT 1 ";
 
-    $validinfo = $DB->get_record_sql($sql, [$validusers->id, $otp]);
+    $otptoken = $DB->get_record_sql($sql1, [$validusers->id]);
+
+   $validinfo= $this->confirm_account($username,$otp,$otptoken->vtoken);
+
+  
     $appdetails = new stdClass();
-		if (!empty($validinfo)) {
-	    if ($validinfo->trystatus > 3) {
-		    $appdetails->username = $username;
-			  $appdetails->otp = $otp;
-			  $desc=get_string('otpabovethree', 'auth_otp', $appdetails);
-			  $this->local_logs('otp', 'User', 1, $desc, 'moreotp');
-	      return 2;
-		  } else if ($validinfo->inuse == 1) {
-		    $appdetails->username=$username;
-			  $appdetails->otp = $otp;
-			  $desc = get_string('incorrectotp', 'auth_otp', $appdetails);
-			  $this->local_logs('otp', 'User', 1, $desc, 'warning');
-        return 4;
-      } else {
-				$trystatus = $validinfo->trystatus;
-				$otpdetails = new stdClass();
-				$otpdetails->id = $validinfo->id;
-				$otpdetails->trystatus = ++$trystatus;
-				$DB->update_record('local_otp', $otpdetails);
 
-				$appdetails->username = $username;
-				$appdetails->otp = $otp;
-				$appdetails->trycount = $otpdetails->trystatus;
-				$desc=get_string('validotpentered', 'auth_otp', $appdetails);
-				$this->local_logs('otp', 'User', 1, $desc, 'Success');
-				return 1;
-      }
-    } else {
+ if($validinfo->statusReason == 'OK'){
 
-      $sql = "SELECT * FROM {local_otp} op WHERE op.username = ? ORDER BY id DESC LIMIT 1 ";
-      $validinfo = $DB->get_record_sql($sql, [$username]);
       $trystatus = $validinfo->trystatus;
-      $otpdetails = new stdClass();
-      $otpdetails->id = $validinfo->id;
-      $otpdetails->trystatus = ++$trystatus;
-      $DB->update_record('local_otp', $otpdetails);
-      if($trystatus > 3){
+       $otpdetails = new stdClass();
+       $otpdetails->id = $validinfo->id;
+       $otpdetails->trystatus = ++$trystatus;
+       $DB->update_record('local_otp', $otpdetails);
+
+       $appdetails->username = $username;
+       $appdetails->otp = $otp;
+       $appdetails->trycount = $otpdetails->trystatus;
+       $desc=get_string('validotpentered', 'auth_otp', $appdetails);
+       $this->local_logs('otp', 'User', 1, $desc, 'Success');
+       return 1;
+
+ } else {
         $appdetails->username = $username;
         $appdetails->otp = $otp;
-        $desc=get_string('otpabovethree', 'auth_otp', $appdetails);
-        $this->local_logs('otp', 'User', 1, $desc, 'warning');
-        return 2;
-      } else {
-        $appdetails->username = $username;
-        $appdetails->otp = $otp;
-        $desc = get_string('otpnotvalid', 'auth_otp', $appdetails);
-        $this->local_logs('otp', 'User', 1, $desc, 'warning');
+       $desc = get_string('otpnotvalid', 'auth_otp', $appdetails);
+       $this->local_logs('otp', 'User', 1, $desc, 'warning');
         return 3;
       }
-    }
+
+
+		// if (!empty($validinfo)) {
+	  //   if ($validinfo->trystatus > 3) {
+		//     $appdetails->username = $username;
+		// 	  $appdetails->otp = $otp;
+		// 	  $desc=get_string('otpabovethree', 'auth_otp', $appdetails);
+		// 	  $this->local_logs('otp', 'User', 1, $desc, 'moreotp');
+	  //     return 2;
+		//   } else if ($validinfo->inuse == 1) {
+		//     $appdetails->username=$username;
+		// 	  $appdetails->otp = $otp;
+		// 	  $desc = get_string('incorrectotp', 'auth_otp', $appdetails);
+		// 	  $this->local_logs('otp', 'User', 1, $desc, 'warning');
+    //     return 4;
+    //   } else {
+		// 		$trystatus = $validinfo->trystatus;
+		// 		$otpdetails = new stdClass();
+		// 		$otpdetails->id = $validinfo->id;
+		// 		$otpdetails->trystatus = ++$trystatus;
+		// 		$DB->update_record('local_otp', $otpdetails);
+
+		// 		$appdetails->username = $username;
+		// 		$appdetails->otp = $otp;
+		// 		$appdetails->trycount = $otpdetails->trystatus;
+		// 		$desc=get_string('validotpentered', 'auth_otp', $appdetails);
+		// 		$this->local_logs('otp', 'User', 1, $desc, 'Success');
+		// 		return 1;
+    //   }
+    // } else {
+
+    //   $sql = "SELECT * FROM {local_otp} op WHERE op.username = ? ORDER BY id DESC LIMIT 1 ";
+    //   $validinfo = $DB->get_record_sql($sql, [$username]);
+    //   $trystatus = $validinfo->trystatus;
+    //   $otpdetails = new stdClass();
+    //   $otpdetails->id = $validinfo->id;
+    //   $otpdetails->trystatus = ++$trystatus;
+    //   $DB->update_record('local_otp', $otpdetails);
+    //   if($trystatus > 3){
+    //     $appdetails->username = $username;
+    //     $appdetails->otp = $otp;
+    //     $desc=get_string('otpabovethree', 'auth_otp', $appdetails);
+    //     $this->local_logs('otp', 'User', 1, $desc, 'warning');
+    //     return 2;
+    //   } else {
+    //     $appdetails->username = $username;
+    //     $appdetails->otp = $otp;
+    //     $desc = get_string('otpnotvalid', 'auth_otp', $appdetails);
+    //     $this->local_logs('otp', 'User', 1, $desc, 'warning');
+    //     return 3;
+    //   }
+    // }
   }
 
   /**
@@ -183,54 +227,57 @@ class otp {
       $desc = get_string('notvalidapplicant', 'auth_otp', $appdetails);
       $this->local_logs('otp', 'User', 1, $desc, 'warning');
       return 1;
-    } else if (empty($validusers->phone1) || $phonelength != 10) {
-
+    } else if (empty($validusers->phone1)) {
+     
       $appdetails->phonenumber = $validusers->phone1;
       $desc = get_string('notvalidphone', 'auth_otp', $appdetails);
       $this->local_logs('otp', 'User', 1, $desc, 'warning');
       return 2;
     } else {
-      $otp = mt_rand(1001, 9999);
-
-      $msg = "OTP to login into LMS is " . $otp . ". Do not share the OTP with anyone for security reasons.";
-      $curloptions = $this->get_curl_options($this->apiurl, $phonenumber, $this->token, $this->senderid, $msg);
+      
+      $curloptions = $this->get_curl_options($this->apiurl, $phonenumber, $this->token);
       $curl = curl_init();
       curl_setopt_array($curl, $curloptions);
 
       $appdetails->username = $validusers->username;
       $appdetails->phonenumber = $phonenumber;
-      $result = curl_exec($curl);
-      if(empty($result)) {
-        return 0;
-      } else {
-        $text = json_decode($result);
-        if ($text->status != 'OK') {
-          $desc = get_string('errorcodefromservice', 'auth_otp', $appdetails). $text->status;
+      $response = curl_exec($curl);
+
+    //$result = json_decode($response);
+
+       if ($response->statusReason == 'OK') {
+
+             $appdetails->otp = $otp;
+            $desc = get_string('otpsendtomobile', 'auth_otp', $appdetails);
+            $this->local_logs('otp', 'User', 1, $desc, 'Success');
+            return 3;
+
+        }else {
+          $desc = get_string('errorcodefromservice', 'auth_otp', $appdetails, $response->errorDetails);
           $this->local_logs('otp', 'Server', 1, $desc, 'Error');
           trigger_error(curl_error($curl));
           curl_close($curl);
           return 0;
         }
-      }
+      
 
-      $this->update_otp($otp, $phonenumber, $username, $validusers->id);
+      $this->update_otp($otp, $phonenumber, $username, $validusers->id,$response->vToken);
 
-      $appdetails->otp = $otp;
-      $desc = get_string('otpsendtomobile', 'auth_otp', $appdetails);
-      $this->local_logs('otp', 'User', 1, $desc, 'Success');
-      return 3;
+      // $appdetails->otp = $otp;
+      // $desc = get_string('otpsendtomobile', 'auth_otp', $appdetails);
+      // $this->local_logs('otp', 'User', 1, $desc, 'Success');
+      // return 3;
     }
     exit;
   }
 
-  private function get_curl_options($apiurl, $mobile, $token, $senderid, $msg) {
-    $postfields = [
-      'to' => $mobile,
-      'api_key' => $token,
-      'sender' => $senderid,
-      'method' => 'sms',
-      'message' => $msg,
-    ];
+  private function get_curl_options($apiurl, $mobile, $token) {
+    // $postfields = [
+    //   'phoneNumber' => $mobile,
+    //   'apikey' => $token,
+    // ];
+    $apiurl= $apiurl."&apikey=".$token."&phoneNumber=".$mobile;
+   // echo $apiurl;
     return [
       CURLOPT_URL => $apiurl,
       CURLOPT_RETURNTRANSFER => true,
@@ -238,21 +285,41 @@ class otp {
       CURLOPT_MAXREDIRS => 10,
       CURLOPT_TIMEOUT => 30,
       CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-      CURLOPT_CUSTOMREQUEST => "POST",
-      CURLOPT_POSTFIELDS => $postfields,
+      CURLOPT_CUSTOMREQUEST => "GET",
       CURLOPT_HTTPHEADER => array(
         "cache-control: no-cache",
       ),
     ];
   }
-  private function update_otp($otp, $phonenumber, $username, $userid) {
+
+  private function auth_user_account($otp,$vtoken) {
+   
+    $apikey= $this->token;
+    $authapi= $this->authapi;
+    $hosturl= $authapi."apikey=".$apikey."&code=".$otp."&vToken=".$vtoken;
+   // echo $hosturl;
+    return [
+      CURLOPT_URL => $hosturl,
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => "",
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_TIMEOUT => 30,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => "GET",
+      CURLOPT_HTTPHEADER => array(
+        "cache-control: no-cache",
+      ),
+    ];
+  }
+  private function update_otp($otp, $phonenumber, $username, $userid,$vtoken) {
     global $DB;
     $otpdetails = new stdClass();
-    $otpdetails->otpcode = $otp;
+ //   $otpdetails->otpcode = $otp;
     $otpdetails->phonenumber = $phonenumber;
     $otpdetails->username = $username;
     $otpdetails->userid = $userid;
     $otpdetails->timecreated = time();
+    $otpdetails->vtoken = $vtoken;
 
     $exsql = "SELECT * FROM {local_otp} op WHERE userid = ? AND inuse = 0 AND trystatus < 3 ORDER BY id DESC LIMIT 1 ";
     $checkexist = $DB->get_record_sql($exsql, [$userid]);
