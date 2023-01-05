@@ -697,9 +697,9 @@ class local_costcenter_external extends external_api {
                 break;
                 case 'costcenter_element_selector':
                     $fields = array("fullname");
-                    if($formoptions->depth < $USER->access['currentroleinfo']['depth']){
-                        $elements = $USER->access['currentroleinfo']['contextinfo'];
-                        if($USER->access['currentroleinfo']['depth']-1 > $formoptions->depth){
+                    if($formoptions->depth < $USER->useraccess['currentroleinfo']['depth']){
+                        $elements = $USER->useraccess['currentroleinfo']['contextinfo'];
+                        if($USER->useraccess['currentroleinfo']['depth']-1 > $formoptions->depth){
                             $elements = [$elements[0]];
                         }
 

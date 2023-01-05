@@ -93,8 +93,8 @@ class search implements renderable{
                             case 'notenrolled':
                                 $statussql[] = " c.id not in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
                             break;
-                            case 'enrolled':
-                                $statussql[] = " c.id in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) ";
+                            case 'inprogress':
+                                $statussql[] = " c.id in (SELECT e.courseid FROM {enrol} AS e JOIN {user_enrolments} AS ue on ue.enrolid = e.id AND ue.status = 0 where ue.userid = {$USER->id} AND e.status = 0) AND c.id NOT in (SELECT cc.course FROM {course_completions} AS cc where cc.userid = {$USER->id} AND cc.timecompleted IS NOT NULL) ";
                             break;
                             case 'completed':
                                 $statussql[] = " c.id in (SELECT cc.course FROM {course_completions} AS cc where cc.userid = {$USER->id} AND cc.timecompleted IS NOT NULL) ";

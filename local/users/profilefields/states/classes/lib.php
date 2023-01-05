@@ -31,7 +31,7 @@ class lib{
                 JOIN {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
         if(!is_siteadmin()){
             $territoriescond = [];
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
                 $territoriescond[] = " lc.id = {$costcenterid} ";
             }
@@ -62,18 +62,19 @@ class lib{
                 if(is_siteadmin() || has_capability('usersprofilefields/states:edit',$systemcontext) || has_capability('usersprofilefields/states:delete',$systemcontext)){
                     $actions= '';
 
-                    $userexist = $DB->record_exists('local_district', array('statesid'=>$states->id));
+                    $districtexist = $DB->record_exists('local_district', array('statesid'=>$states->id));
+                    $userexist = $DB->record_exists('user', array('open_states'=>$states->id));
                     $noredirecturl = 'javascript:void(0)';
                     if(is_siteadmin() || has_capability('usersprofilefields/states:edit',$systemcontext)){
-                        $editicon = '<i class="fa fa-pencil"></i>';
+                        $editicon = '<i class="fa fa-pencil" title="Edit"></i> ';
                         $actions .= \html_writer::link($noredirecturl ,$editicon,array('onclick' => '(function(e){ require("usersprofilefields_states/createStates").init({selector:"createstatesmodal", contextid:'.$systemcontext->id.', statesid:'.$states->id.' }) })(event)'));
                     }
-                    if($userexist){
-                        $delicon = '<i class="fa fa-trash"></i>';
+                    if($userexist || $districtexist){
+                        $delicon = '<i class="fa fa-trash" title="Delete"></i>';
                         $actions .= \html_writer::link($noredirecturl ,$delicon,array('onclick' => '(function(e){ require("usersprofilefields_states/createStates").nodeleteField({selector:"deletestatesmodal", contextid:'.$systemcontext->id.', compid:'.$states->id.', type:"states", name:"'.$states->states_name.'" }) })(event)'));
                     }else{
                         if(is_siteadmin() || has_capability('usersprofilefields/states:delete',$systemcontext)){
-                            $delicon = '<i class="fa fa-trash"></i>';
+                            $delicon = '<i class="fa fa-trash" title="Delete"></i>';
                             $actions .= \html_writer::link($noredirecturl ,$delicon,array('onclick' => '(function(e){ require("usersprofilefields_states/createStates").deleteField({selector:"deletestatesmodal", contextid:'.$systemcontext->id.', compid:'.$states->id.', type:"states", name:"'.$states->states_name.'" }) })(event)'));
                         }
                     }

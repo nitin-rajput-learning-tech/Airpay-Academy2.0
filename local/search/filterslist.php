@@ -15,7 +15,7 @@ $action = optional_param('action', '', PARAM_RAW);
 
 if($catid && $action == 'itemslist'){
     $tagitem_data = local_search_get_filter_itemlist($catid, 6, 0);
-    $tagitems = $tagitem_data['itemslist'];
+    $tagitems = $tagitem_data['options'];
     echo json_encode($tagitems);
     exit;
 }

@@ -1911,16 +1911,16 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
     $thisfilters = array('courses', 'categories', 'status');
 
 
-    $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
+    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
 
     $fields = [ 5 => 'organizations', 4 => 'departments', 3 => 'subdepartment', 2 => 'department4level', 1 => 'department5level'];
 
     if($contextinfo[0]){
 
         if(count($contextinfo) > 1){
-            $depth = $USER->access['currentroleinfo']['depth'];
+            $depth = $USER->useraccess['currentroleinfo']['depth'];
         }else{
-            $depth = $USER->access['currentroleinfo']['depth'] - 1;
+            $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
         }
         for($i=$depth; $i>0; $i--){
 

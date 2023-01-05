@@ -191,7 +191,7 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
         break;
         case 'status':
             $itemslist[] = ['code' => 'notenrolled', 'name' => 'Not Enrolled', 'tagitemshortname' => 'notenrolled_modules', 'count' => local_search_get_coursecount_for_status([['type' => 'status', 'values' => ['notenrolled']]])];
-            $itemslist[] = ['code' => 'enrolled', 'name' => 'Enrolled', 'tagitemshortname' => 'enrolled_modules', 'count' => local_search_get_coursecount_for_status([['type' => 'status', 'values' => ['enrolled']]])];
+            $itemslist[] = ['code' => 'inprogress', 'name' => 'In Progress', 'tagitemshortname' => 'enrolled_modules', 'count' => local_search_get_coursecount_for_status([['type' => 'status', 'values' => ['inprogress']]])];
             $itemslist[] = ['code' => 'completed', 'name' => 'Completed', 'tagitemshortname' => 'completed_modules', 'count' => local_search_get_coursecount_for_status([['type' => 'status', 'values' => ['completed']]])];
             return ['type' => 'status', 'name' => 'Status', 'options' => $itemslist, 'showviewmore' => false];
         break;

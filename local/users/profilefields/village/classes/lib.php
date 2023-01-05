@@ -36,7 +36,7 @@ class lib{
             JOIN {local_costcenter} AS lc ON lc.id=lv.costcenterid";
         if(!is_siteadmin()){
             $territoriescond = [];
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
                 $territoriescond[] = " lv.costcenterid = {$costcenterid} ";
             }
@@ -71,21 +71,21 @@ class lib{
                 $data[] = $village->costcentername;
                 if(is_siteadmin() || has_capability('usersprofilefields/village:edit',$systemcontext) || has_capability('usersprofilefields/village:delete',$systemcontext)){
                     $actions= '';
-                    // $userexist = $DB->record_exists('user', array('open_village' => $village->id));
+                    $userexist = $DB->record_exists('user', array('open_village' => $village->id));
                     $noredirecturl = 'javascript:void(0)';
                     if(is_siteadmin() || has_capability('usersprofilefields/village:edit',$systemcontext)){
-                        $editicon = '<i class="fa fa-pencil"></i>';
+                        $editicon = '<i class="fa fa-pencil" title="Edit"></i> ';
                         $actions .= \html_writer::link($noredirecturl ,$editicon,array('onclick' => '(function(e){ require("usersprofilefields_village/createVillage").init({selector:"createvillagemodal", contextid:'.$systemcontext->id.', villageid:'.$village->id.' }) })(event)'));
                     }
-                    /*if($userexist > 0){
-                        $delicon = '<i class="fa fa-trash"></i>';
+                    if($userexist > 0){
+                        $delicon = '<i class="fa fa-trash" title="Delete"></i>';
                         $actions .= \html_writer::link($noredirecturl ,$delicon,array('onclick' => '(function(e){ require("usersprofilefields_village/createVillage").nodeleteField({selector:"deletevillagemodal", contextid:'.$systemcontext->id.', compid:'.$village->id.', type:"village", name:"'.$village->village_name.'" }) })(event)'));
-                    }else{*/
+                    }else{
                         if(is_siteadmin() || has_capability('usersprofilefields/village:delete',$systemcontext)){
-                            $delicon = '<i class="fa fa-trash"></i>';
+                            $delicon = '<i class="fa fa-trash" title="Delete"></i>';
                             $actions .= \html_writer::link($noredirecturl ,$delicon,array('onclick' => '(function(e){ require("usersprofilefields_village/createVillage").deleteField({selector:"deletevillagemodal", contextid:'.$systemcontext->id.', compid:'.$village->id.', type:"village", name:"'.$village->village_name.'" }) })(event)'));
                         }
-                    // }
+                    }
                     $data[] = $actions;
 
                 }

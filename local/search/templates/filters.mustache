@@ -45,7 +45,7 @@
                         <label  class="col-sm p-0" for='<% item.tagitemshortname %>'><% item.name %><span class="pull-right"><% item.count %></span></label>
                     </div>
                     <div ng-if = 'cat.showviewmore'>
-                        <div ng-repeat='item in moreitemslist[cat.type]' class='checkbox_vm_item moreitemslist_<% cat.catcode %>' >
+                        <div ng-repeat='item in moreitemslist[cat.type]' class='checkbox-item checkbox_vm_item moreitemslist_<% cat.type %>' >
                         <div ng-if = 'tagcheckeddatas[item.code]' >
                             <input type='checkbox' name='tagitem'  value='<% item.code %>' ng-click='tabfunction(6,0,null)' id='<% item.tagitemshortname %>' checked>
                         </div>
@@ -54,7 +54,7 @@
                         </div> 
                         <label class="col-sm p-0" for='<% item.tagitemshortname %>'><% item.name %><span class="pull-right"><% item.count %></span></label>
                         </div>
-                        <a href='javaScript:void(0)' ng-click='getitemslist(cat.code)' id='viewmoreless_<% cat.type %>' class='viewmore' >View more</a>
+                        <a href='javaScript:void(0)' ng-click='getitemslist(cat.type)' id='viewmoreless_<% cat.type %>' class='viewmore' >View more</a>
                     </div>
                 </div>
             </div>

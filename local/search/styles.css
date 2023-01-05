@@ -12,7 +12,6 @@
     margin: 10px 0;
 }
 #page-local-search-allcourses .checkbox-item{
-	margin-left: 15px;
     display: flex;
 }
 #page-local-search-allcourses .checkbox-item label{
@@ -157,7 +156,6 @@
 .checkbox_vm_item {
     display: flex;
     clear: both;
-    margin-left: 15px;
 }
 #page-local-search-allcourses .readymainContainer .readyCContainer .readyCCnt .course_name a {
     word-break: break-all;
