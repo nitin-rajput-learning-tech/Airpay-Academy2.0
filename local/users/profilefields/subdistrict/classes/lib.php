@@ -67,18 +67,19 @@ class lib{
                 $data[] = $subdistrict->costcentername;
                 if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:edit',$systemcontext) || has_capability('usersprofilefields/subdistrict:delete',$systemcontext)){
                     $actions= '';
-                    $userexist = $DB->record_exists('local_village', array('subdistrictid'=>$subdistrict->id));
+                    $villageexist = $DB->record_exists('local_village', array('subdistrictid'=>$subdistrict->id));
+                    $userexist = $DB->record_exists('user', array('open_subdistrict'=>$subdistrict->id));
                     $noredirecturl = 'javascript:void(0)';
                     if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:edit',$systemcontext)){
-                        $editicon = '<i class="fa fa-pencil"></i>';
+                        $editicon = '<i class="fa fa-pencil" title="Edit"></i> ';
                         $actions .= \html_writer::link($noredirecturl ,$editicon,array('onclick' => '(function(e){ require("usersprofilefields_subdistrict/createSubdistrict").init({selector:"createsubdistrictmodal", contextid:'.$systemcontext->id.', subdistrictid:'.$subdistrict->id.' }) })(event)'));
                     }
-                    if($userexist){
-                        $delicon = '<i class="fa fa-trash"></i>';
+                    if($userexist || $villageexist){
+                        $delicon = '<i class="fa fa-trash" title="Delete"></i>';
                         $actions .= \html_writer::link($noredirecturl ,$delicon,array('onclick' => '(function(e){ require("usersprofilefields_subdistrict/createSubdistrict").nodeleteField({selector:"deletesubdistrictmodal", contextid:'.$systemcontext->id.', compid:'.$subdistrict->id.', type:"subdistrict", name:"'.$subdistrict->subdistrict_name.'" }) })(event)'));
                     }else{
                         if(is_siteadmin() || has_capability('usersprofilefields/subdistrict:delete',$systemcontext)){
-                            $delicon = '<i class="fa fa-trash"></i>';
+                            $delicon = '<i class="fa fa-trash" title="Delete"></i>';
                             $actions .= \html_writer::link($noredirecturl ,$delicon,array('onclick' => '(function(e){ require("usersprofilefields_subdistrict/createSubdistrict").deleteField({selector:"deletesubdistrictmodal", contextid:'.$systemcontext->id.', compid:'.$subdistrict->id.', type:"subdistrict", name:"'.$subdistrict->subdistrict_name.'" }) })(event)'));
                         }
                     }

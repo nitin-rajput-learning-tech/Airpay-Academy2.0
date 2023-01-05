@@ -10,23 +10,30 @@ class states_form extends \moodleform {
         $mform = $this->_form;
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
+        $orgnization = $this->_customdata['costcenterid'];
 
-        $organisationsql = "SELECT lc.id, lc.fullname FROM {local_costcenter} AS lc WHERE 1 = 1 AND lc.depth = 1 ";
-        if(!is_siteadmin()){
-            $orgcond = [];
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
-                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
-                $orgcond[] = " lc.id = {$costcenterid} ";
+        if($id){
+            $orgname = $DB->get_field('local_costcenter', 'fullname',array('id' => $orgnization));
+            $mform->addElement('static','costcentname', get_string('costcentername', 'usersprofilefields_states'),$orgname);
+            $mform->addElement('hidden', 'costcenterid');
+        } else {
+            $organisationsql = "SELECT lc.id, lc.fullname FROM {local_costcenter} AS lc WHERE 1 = 1 AND lc.depth = 1 ";
+            if(!is_siteadmin()){
+                $orgcond = [];
+                foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                    $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                    $orgcond[] = " lc.id = {$costcenterid} ";
+                }
+                if(!empty($orgcond)){
+                    $organisationsql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
+                }else{
+                    $organisationsql .= " AND 1 <> 1 ";
+                }
             }
-            if(!empty($orgcond)){
-                $organisationsql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
-            }else{
-                $organisationsql .= " AND 1 <> 1 ";
-            }
+            $organiasations = $DB->get_records_sql_menu($organisationsql);
+            $organiasations = [null => get_string('selectorganisation', 'usersprofilefields_states')] + $organiasations;
+            $mform->addElement('autocomplete', 'costcenterid',  get_string('costcentername', 'usersprofilefields_states'), $organiasations);
         }
-        $organiasations = $DB->get_records_sql_menu($organisationsql);
-        $organiasations = [null => get_string('organisation', 'local_users')] + $organiasations;
-        $mform->addElement('autocomplete', 'costcenterid',  get_string('organisation', 'local_users'), $organiasations);
         $mform->setType('costcenterid', PARAM_INT);
 
 
@@ -60,7 +67,7 @@ class states_form extends \moodleform {
         }
 
         if(empty($data['costcenterid'])){
-            $errors['costcenterid'] = get_string('selectorganisation', 'usersprofilefields_states');
+            $errors['costcenterid'] = get_string('requirorganisation', 'usersprofilefields_states');
         }
         return $errors;
     }

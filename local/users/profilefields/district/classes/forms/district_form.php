@@ -10,25 +10,32 @@ class district_form extends \moodleform {
         $mform = $this->_form;
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
+        $statesid = $this->_customdata['statesid'];
 
-        $statessql = "SELECT ls.id, ls.states_name FROM {local_states} AS ls WHERE 1 = 1 ";
-        if(!is_siteadmin()){
-            $orgcond = [];
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
-                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
-                $orgcond[] = " ls.costcenterid = {$costcenterid} ";
+        if($id){
+            $satatename = $DB->get_field('local_states', 'states_name',array('id' => $statesid));
+            $mform->addElement('static','satatename', get_string('costcentername', 'usersprofilefields_states'),$satatename);
+            $mform->addElement('hidden', 'statesid');
+        } else {
+            $statessql = "SELECT ls.id, ls.states_name FROM {local_states} AS ls WHERE 1 = 1 ";
+            if(!is_siteadmin()){
+                $orgcond = [];
+                foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                    $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                    $orgcond[] = " ls.costcenterid = {$costcenterid} ";
+                }
+                // print_r($costcenterid);die;
+                if(!empty($orgcond)){
+                    $statessql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
+                }else{
+                    $statessql .= " AND 1 <> 1 ";
+                }
             }
-            // print_r($costcenterid);die;
-            if(!empty($orgcond)){
-                $statessql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
-            }else{
-                $statessql .= " AND 1 <> 1 ";
-            }
+
+            $state = $DB->get_records_sql_menu($statessql);
+            $state = [null => get_string('selectstates', 'usersprofilefields_district')] + $state;
+            $mform->addElement('autocomplete', 'statesid',  get_string('statesname', 'usersprofilefields_district'), $state);
         }
-
-        $state = $DB->get_records_sql_menu($statessql);
-        $state = [null => get_string('states', 'local_users')] + $state;
-        $mform->addElement('autocomplete', 'statesid',  get_string('states', 'local_users'), $state);
         $mform->setType('statesid', PARAM_INT);
 
 
@@ -55,7 +62,7 @@ class district_form extends \moodleform {
             $errors['code'] = get_string('districtcodeexist', 'usersprofilefields_district');
         }
         if(empty($data['statesid'])){
-            $errors['statesid'] = get_string('selectstates', 'usersprofilefields_district');
+            $errors['statesid'] = get_string('requirestates', 'usersprofilefields_district');
         }
         return $errors;
     }

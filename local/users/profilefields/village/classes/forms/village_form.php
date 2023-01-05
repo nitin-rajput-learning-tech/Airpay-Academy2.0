@@ -10,25 +10,32 @@ class village_form extends \moodleform {
         $mform = $this->_form;
         $mform->disable_form_change_checker();
         $id = $this->_customdata['id'];
+        $subdistrictid = $this->_customdata['subdistrictid'];
 
-        $subdistrictsql = "SELECT lsd.id, lsd.subdistrict_name FROM {local_subdistrict} AS lsd WHERE 1 = 1 ";
-        if(!is_siteadmin()){
-            $orgcond = [];
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
-                $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
-                $orgcond[] = " lsd.costcenterid = {$costcenterid} ";
+        if($id){
+            $subdistrictname = $DB->get_field('local_subdistrict', 'subdistrict_name',array('id' => $subdistrictid));
+            $mform->addElement('static','subdistrictname', get_string('costcentername', 'usersprofilefields_states'),$subdistrictname);
+            $mform->addElement('hidden', 'subdistrictid');
+        } else {
+            $subdistrictsql = "SELECT lsd.id, lsd.subdistrict_name FROM {local_subdistrict} AS lsd WHERE 1 = 1 ";
+            if(!is_siteadmin()){
+                $orgcond = [];
+                foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                    $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
+                    $orgcond[] = " lsd.costcenterid = {$costcenterid} ";
+                }
+                // print_r($orgcond);die;
+                if(!empty($orgcond)){
+                    $subdistrictsql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
+                }else{
+                    $subdistrictsql .= " AND 1 <> 1 ";
+                }
             }
-            // print_r($orgcond);die;
-            if(!empty($orgcond)){
-                $subdistrictsql .= " AND ( ".implode(' OR ', $orgcond)." ) ";
-            }else{
-                $subdistrictsql .= " AND 1 <> 1 ";
-            }
+
+            $subdistricts = $DB->get_records_sql_menu($subdistrictsql);
+            $subdistricts = [null => get_string('selectsubdistrict', 'usersprofilefields_village')] + $subdistricts;
+            $mform->addElement('autocomplete', 'subdistrictid',  get_string('subdistrictname', 'usersprofilefields_village'), $subdistricts);
         }
-
-        $subdistricts = $DB->get_records_sql_menu($subdistrictsql);
-        $subdistricts = [null => get_string('subdistrict', 'local_users')] + $subdistricts;
-        $mform->addElement('autocomplete', 'subdistrictid',  get_string('subdistrict', 'local_users'), $subdistricts);
         $mform->setType('subdistrictid', PARAM_INT);
 
         $mform->addElement('text', 'village_name', get_string('villagename', 'usersprofilefields_village'));
@@ -55,7 +62,7 @@ class village_form extends \moodleform {
         }
 
         if(empty($data['subdistrictid'])){
-            $errors['subdistrictid'] = get_string('selectsubdistrict', 'usersprofilefields_village');
+            $errors['subdistrictid'] = get_string('requirsubdistrict', 'usersprofilefields_village');
         }
         return $errors;
     }
