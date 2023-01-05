@@ -533,7 +533,7 @@ function local_courses_output_fragment_custom_course_form($args){
         'returnto' => $returnto,
         'get_coursedetails'=>$get_coursedetails,
         'form_status' => $args->form_status,
-        'costcenterid' => $data->open_path
+        'costcenterid' => $data->open_path,
     );
     local_costcenter_set_costcenter_path($formdata);
     $mform = new custom_course_form(null, $params, 'post', '', null, true, $formdata);

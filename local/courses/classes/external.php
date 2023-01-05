@@ -162,11 +162,6 @@ class local_courses_external extends external_api {
                       $courseid->id=$data['id'];
                       $validateddata->category = $category_id;
 
-                    if($validateddata->map_certificate == 1){
-                        $validateddata->open_certificateid = $validateddata->open_certificateid;
-                    }else{
-                        $validateddata->open_certificateid = null;
-                    }
 
                     if($validateddata->open_costcenterid !=$org){
 
@@ -237,11 +232,20 @@ class local_courses_external extends external_api {
                          if($data->open_path){
                             $data->category = $DB->get_field('local_costcenter', 'category', array('path' => $data->open_path));
                          }
+                    }else{
+                        if($validateddata->map_certificate == 1){
+
+                            $data->open_certificateid = $validateddata->open_certificateid;
+
+                        }else{
+
+                            $data->open_certificateid = null;
+
+                        }
                     }
-                    $data->summary_editor=array('format'=>1);
 
 
-                    update_course($data, $editoroptions);
+                    update_course($data);
 
                    // purge appropriate caches in case fix_course_sortorder() did not change anything
                     cache_helper::purge_by_event('changesincourse');
