@@ -152,8 +152,8 @@ class search implements renderable{
                     case 'notenrolled':
                         $statussql[] = " lc.id not in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1) ";
                     break;
-                    case 'enrolled':
-                        $wheresql .= " AND lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id) AND lc.status in (1,3,4)";
+                    case 'inprogress':
+                        $wheresql .= " AND lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id AND completion_status <> 1) AND lc.status in (1,3,4)";
                     break;
                     case 'completed':
                         $statussql[] = " lc.id in (select distinct classroomid from {local_classroom_users} where userid=$USER->id AND completion_status = 1) AND lc.status in (1,3,4) ";
