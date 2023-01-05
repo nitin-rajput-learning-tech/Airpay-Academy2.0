@@ -20,7 +20,7 @@ class states_form extends \moodleform {
             $organisationsql = "SELECT lc.id, lc.fullname FROM {local_costcenter} AS lc WHERE 1 = 1 AND lc.depth = 1 ";
             if(!is_siteadmin()){
                 $orgcond = [];
-                foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
                     $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
                     $orgcond[] = " lc.id = {$costcenterid} ";
                 }

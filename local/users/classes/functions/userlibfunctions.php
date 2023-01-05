@@ -48,7 +48,7 @@ class userlibfunctions {
             if(!is_object($user)){
                 $user = \core_user::get_user($user);
                 $userpath = array_filter(explode('/',$user->open_path));
-                $depth = $USER->access['currentroleinfo']['depth'];
+                $depth = $USER->useraccess['currentroleinfo']['depth'];
                 if(is_siteadmin()){
                     $depth = 1;//getting first level id value
                 }

@@ -149,7 +149,7 @@ if (is_siteadmin() || (has_capability('local/learningplan:create', $categorycont
 
 $out .= "</ul>";
 echo $out;
-$depth = $USER->access['currentroleinfo']['depth'];
+$depth = $USER->useraccess['currentroleinfo']['depth'];
 if(is_siteadmin()){
     $thisfilters = array('learningplan', 'organizations', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status');
 }else if(has_capability('local/learningplan:manage',$categorycontext) && $depth = 2){

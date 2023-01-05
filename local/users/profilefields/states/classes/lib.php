@@ -31,7 +31,7 @@ class lib{
                 JOIN {local_costcenter} AS lc ON lc.id = ls.costcenterid WHERE lc.depth = 1 ";
         if(!is_siteadmin()){
             $territoriescond = [];
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
                 $territoriescond[] = " lc.id = {$costcenterid} ";
             }

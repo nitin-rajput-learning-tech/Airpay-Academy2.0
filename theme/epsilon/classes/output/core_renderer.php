@@ -1092,11 +1092,11 @@ class core_renderer extends \core_renderer {
                 $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];
             }
 
-            $current_roleid = isset($USER->access['currentroleinfo']['roleid']) ? $USER->access['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
+            $current_roleid = isset($USER->useraccess['currentroleinfo']['roleid']) ? $USER->useraccess['currentroleinfo']['roleid'] : $highest_roleinfo->roleid;
 
-            $current_orgcatid = isset($USER->access['currentroleinfo']['orgcatid']) ? $USER->access['currentroleinfo']['orgcatid'] : $highest_roleinfo->highest_catid;
+            $current_orgcatid = isset($USER->useraccess['currentroleinfo']['orgcatid']) ? $USER->useraccess['currentroleinfo']['orgcatid'] : $highest_roleinfo->highest_catid;
 
-            $current_depth = isset($USER->access['currentroleinfo']['depth']) ? $USER->access['currentroleinfo']['depth'] : $highest_roleinfo->depth;
+            $current_depth = isset($USER->useraccess['currentroleinfo']['depth']) ? $USER->useraccess['currentroleinfo']['depth'] : $highest_roleinfo->depth;
 
             if(!empty($learnerroleid)){
                 if($learnerroleid->id == $current_roleid){
@@ -1136,7 +1136,7 @@ class core_renderer extends \core_renderer {
             }
         }
         $highest_roleid = '';
-        if((count($roles) > 0) && (!isset($USER->access['currentroleinfo']) || empty($USER->access['currentroleinfo'])) ){
+        if((count($roles) > 0) && (!isset($USER->useraccess['currentroleinfo']) || empty($USER->useraccess['currentroleinfo'])) ){
             if($highest_roleinfo->roleid){
                 $highest_roleid = $highest_roleinfo->roleid;
                 $contextid = $highest_roleinfo->contextid;
@@ -1453,13 +1453,13 @@ class core_renderer extends \core_renderer {
 
         $costcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($context);
 
-        $USER->access['currentroleinfo']['roleid'] = $roleid;
+        $USER->useraccess['currentroleinfo']['roleid'] = $roleid;
         $categorypath = \local_costcenter\lib\accesslib::get_category_info($context->instanceid, 'path');
         $categoryids = array_values(array_filter((explode('/', $categorypath))));
-        $USER->access['currentroleinfo']['orgcatid'] = $categoryids[0];
-        $USER->access['currentroleinfo']['depth'] = $context->depth;
-        $USER->access['currentroleinfo']['contextinfo'] = [];
-        $USER->access['currentroleinfo']['contextinfo'][] = ['context' => $context,'costcenterpath' => $costcenterpath];
+        $USER->useraccess['currentroleinfo']['orgcatid'] = $categoryids[0];
+        $USER->useraccess['currentroleinfo']['depth'] = $context->depth;
+        $USER->useraccess['currentroleinfo']['contextinfo'] = [];
+        $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $context,'costcenterpath' => $costcenterpath];
        /* Get the relevant rolecaps into rdef
         * - relevant role caps
         *   - at ctx and above
@@ -1483,11 +1483,11 @@ class core_renderer extends \core_renderer {
                 if($othercontext->__get('contextlevel') == CONTEXT_COURSECAT){
                     $othercategorypath = \local_costcenter\lib\accesslib::get_category_info($othercontext->instanceid, 'path');
                     $othercategoryids = array_values(array_filter((explode('/', $othercategorypath))));
-                    if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->access['currentroleinfo']['orgcatid'] && $roleid == $assignedrole->roleid){//in_array($roleid, $USER->access['ra'][$othercontext->path])
+                    if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->useraccess['currentroleinfo']['orgcatid'] && $roleid == $assignedrole->roleid){//in_array($roleid, $USER->access['ra'][$othercontext->path])
                         if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
                             $USER->access['rsw'][$othercontext->path] = $roleid;
                             $othercostcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($othercontext);
-                            $USER->access['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
+                            $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
                         }
                     }else{
                         if($this->role_capability_assignments($userroleid, $othercontext, $accessdata))

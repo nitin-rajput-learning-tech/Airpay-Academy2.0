@@ -915,8 +915,8 @@ function blocks_add_default_org_blocks($costcenterid) {
 }
 function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false){
     global $DB, $USER;
-    $depth = $USER->access['currentroleinfo']['depth'];
-    $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
+    $depth = $USER->useraccess['currentroleinfo']['depth'];
+    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
     if(count($contextinfo) > 1){
         $depth--;
     }
@@ -946,7 +946,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->setConstant($fields[$level], $fieldvalue);
         }else{
 
-            $enableallfield = ($USER->access['currentroleinfo']['depth'] > $level) || (is_siteadmin() && $level == 1) ? false : $allenable;
+            $enableallfield = ($USER->useraccess['currentroleinfo']['depth'] > $level) || (is_siteadmin() && $level == 1) ? false : $allenable;
             $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
@@ -995,9 +995,9 @@ function local_costcenter_get_costcenter_path(&$data){
         // finding the path mapped for the last element in the form to meet the data requirements for all head roles.
         $path = $DB->get_field('local_costcenter', 'path', array('id' => $value));
         // updating the user path if the user belongs to the chlid path for the selected costcenter path.
-        if($USER->access['currentroleinfo']['contextinfo']){
+        if($USER->useraccess['currentroleinfo']['contextinfo']){
             $updatepath = true;
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
                 if(strpos($path, $contextinfo['costcenterpath']) === 0){
                     $updatepath = false;
                     break;
@@ -1014,7 +1014,7 @@ function local_costcenter_get_costcenter_path(&$data){
 function local_costcenter_set_costcenter_path(&$data){
     global $USER;
     $fields = local_costcenter_get_fields();
-    $contextinfo = $USER->access['currentroleinfo']['contextinfo'];
+    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
     if(isset($data['open_path']) && (strpos($data['open_path'], $contextinfo[0]['costcenterpath']) === 0 || !isset($contextinfo[0]['costcenterpath']))){
         $recordedpathids = explode('/', $data['open_path']);
         foreach($fields as $levelid => $field){
@@ -1026,9 +1026,9 @@ function local_costcenter_set_costcenter_path(&$data){
         $rolecontext = \local_costcenter\lib\accesslib::get_costcenterpath_context($contextinfo[0]['context']);
         $rolecontextids = explode('/',$rolecontext);
         if(count($contextinfo) > 1){
-            $depth = $USER->access['currentroleinfo']['depth'];
+            $depth = $USER->useraccess['currentroleinfo']['depth'];
         }else{
-            $depth = $USER->access['currentroleinfo']['depth'] - 1;
+            $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
         }
         for($i = 1; $i <= $depth; $i++){
             $data[$fields[$i]] = $rolecontextids[$i];

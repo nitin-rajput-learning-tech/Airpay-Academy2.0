@@ -91,9 +91,9 @@ class accesslib
 
         global $USER,$OUTPUT;
 
-        if(!empty($USER->access['currentroleinfo']['contextinfo'])){
+        if(!empty($USER->useraccess['currentroleinfo']['contextinfo'])){
 
-            $firstrole =current($USER->access['currentroleinfo']['contextinfo']);
+            $firstrole =current($USER->useraccess['currentroleinfo']['contextinfo']);
 
             $context =$firstrole['context'];
 
@@ -147,7 +147,7 @@ class accesslib
 
                     $highest_roleid = '';
 
-                    if((count($roles) > 0) && (!isset($USER->access['currentroleinfo']) || empty($USER->access['currentroleinfo'])) ){
+                    if((count($roles) > 0) && (!isset($USER->useraccess['currentroleinfo']) || empty($USER->useraccess['currentroleinfo'])) ){
 
                         if($highest_roleinfo->roleid){
 
@@ -238,10 +238,10 @@ class accesslib
 
         $sqlarray=array();
 
-        if(!empty($USER->access['currentroleinfo']['contextinfo'])){
+        if(!empty($USER->useraccess['currentroleinfo']['contextinfo'])){
 
 
-            $contextarray =$USER->access['currentroleinfo']['contextinfo'];
+            $contextarray =$USER->useraccess['currentroleinfo']['contextinfo'];
 
 
             foreach($contextarray as $context){
@@ -345,9 +345,9 @@ class accesslib
 
         }
 
-        if(!empty($USER->access['currentroleinfo']['contextinfo'])){
+        if(!empty($USER->useraccess['currentroleinfo']['contextinfo'])){
 
-            $firstrole =current($USER->access['currentroleinfo']['contextinfo']);
+            $firstrole =current($USER->useraccess['currentroleinfo']['contextinfo']);
 
             $costcenterpath =$firstrole['costcenterpath'];
 

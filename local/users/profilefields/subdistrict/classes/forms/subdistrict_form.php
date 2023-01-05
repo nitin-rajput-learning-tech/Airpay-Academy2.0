@@ -20,7 +20,7 @@ class subdistrict_form extends \moodleform {
             $districtsql = "SELECT ld.id, ld.district_name FROM {local_district} AS ld WHERE 1 = 1 ";
             if(!is_siteadmin()){
                 $orgcond = [];
-                foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+                foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
                     $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
                     $orgcond[] = " ld.costcenterid = {$costcenterid} ";
                 }
