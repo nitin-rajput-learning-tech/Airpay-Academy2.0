@@ -1012,7 +1012,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     global $DB, $USER;
 	$context = (new \local_courses\lib\accesslib())::get_module_context($course_id);
     $course = $DB->get_record('course', array('id' => $course_id));
-    $condition = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+    $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
     $params['suspended'] = 0;
     $params['deleted'] = 0;
  
