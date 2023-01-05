@@ -87,9 +87,9 @@ $PAGE->navbar->add(get_string("pluginname", 'local_evaluation'));
 $renderer = $PAGE->get_renderer('local_evaluation');
 $filterparams = $renderer->get_evaluations(true,$formattype);
 if(is_siteadmin()){
-    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level','states','district','subdistrict','village', 'groups');
+    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
 }else {
-    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level','states','district','subdistrict','village', 'groups');
+    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
 }
 $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams));
      
@@ -188,9 +188,11 @@ if(has_capability('local/evaluation:addinstance', $context)){
             </li>';
 }
 echo '</ul>';
+if(has_capability('local/evaluation:addinstance', $context)){
 echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse" title="Filters">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
+}
 echo  '<div class="collapse '.$show.' local_filter_collapse" id="local_courses-filter_collapse">
             <div id="filters_form" class="card card-body p-2">';
                 $mform->display();

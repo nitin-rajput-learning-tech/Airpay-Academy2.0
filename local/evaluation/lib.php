@@ -2661,22 +2661,6 @@ function get_listof_evalautions($stable, $filtervalues){
             $fromsql .= " AND ( ".implode(' OR ', $departmentlevel5sql)." ) ";
         }
     }
-    if(isset($filtervalues->district) && !empty($filtervalues->district)){
-        $district = is_array($filtervalues->district) ? implode($filtervalues->district) : $filtervalues->district ;
-        $fromsql .= " AND a.open_district IN ($district) ";
-    }
-    if(isset($filtervalues->states) && !empty($filtervalues->states)){
-        $states = is_array($filtervalues->states) ? implode($filtervalues->states) : $filtervalues->states ;
-        $fromsql .= " AND a.open_states IN ($states) ";
-    }
-    if(isset($filtervalues->subdistrict) && !empty($filtervalues->subdistrict)){
-        $subdistrict = is_array($filtervalues->subdistrict) ? implode($filtervalues->subdistrict) : $filtervalues->subdistrict ;
-        $fromsql .= " AND a.open_subdistrict IN ($subdistrict) ";
-    }
-    if(isset($filtervalues->village) && !empty($filtervalues->village)){
-        $village = is_array($filtervalues->village) ? implode($filtervalues->village) : $filtervalues->village ;
-        $fromsql .= " AND a.open_village IN ($village) ";
-    }
     if ($userorder == 1)
     $ordersql = " order by eu.timecreated DESC ";
     else

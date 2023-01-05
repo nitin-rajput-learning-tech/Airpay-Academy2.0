@@ -1015,14 +1015,30 @@ function local_costcenter_set_costcenter_path(&$data){
     global $USER;
     $fields = local_costcenter_get_fields();
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
-    if(isset($data['open_path']) && (strpos($data['open_path'], $contextinfo[0]['costcenterpath']) === 0 || !isset($contextinfo[0]['costcenterpath']))){
+    $pathnottracked = true;
+    if($contextinfo){
+        foreach($contextinfo AS $contextdata){
+            if(isset($data['open_path']) && (strpos($data['open_path'], $contextdata['costcenterpath']) === 0)){
+                $pathnottracked = false;
+                $recordedpathids = explode('/', $data['open_path']);
+                foreach($fields as $levelid => $field){
+                    if(isset($recordedpathids[$levelid]) && $recordedpathids[$levelid] > 0){
+                        $data[$field] = $recordedpathids[$levelid];
+                    }
+                }
+                break;
+            }
+        }
+    }else if(isset($data['open_path'])){
+        $pathnottracked = false;
         $recordedpathids = explode('/', $data['open_path']);
         foreach($fields as $levelid => $field){
             if(isset($recordedpathids[$levelid]) && $recordedpathids[$levelid] > 0){
                 $data[$field] = $recordedpathids[$levelid];
             }
         }
-    }else if($contextinfo[0]){
+    }
+    if($pathnottracked){
         $rolecontext = \local_costcenter\lib\accesslib::get_costcenterpath_context($contextinfo[0]['context']);
         $rolecontextids = explode('/',$rolecontext);
         if(count($contextinfo) > 1){

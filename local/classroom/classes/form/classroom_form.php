@@ -430,20 +430,16 @@ class classroom_form extends moodleform {
         }else if ($components->form_status == 3) {
              // OL-1042 Add Target Audience to Classrooms//
             $data = $DB->get_record_sql('SELECT id, open_group, subdepartment,open_hrmsrole,
-             open_designation, open_location,department
+             open_designation, open_location,department, open_path
              FROM {local_classroom} WHERE id = ' . $components->id);
-             
-            // if($data->subdepartment == -1){
-            //     // $data->subdepartment = null;   
-            // }else{
-            // $data->department = (!empty($data->department)) ? array_diff(explode(',',$data->department), array('')) :array(NULL=>NULL);
-            // $data->subdepartment = (!empty($data->subdepartment)) ? array_diff(explode(',',$data->subdepartment), array('')) :array(NULL=>NULL);
-            // }
+            $data =  (array)$data;
+            local_costcenter_set_costcenter_path($data);
+            $data = (object)$data;
             
             $data->open_group =(!empty($data->open_group)) ? array_diff(explode(',',$data->open_group), array('')) :array(NULL=>NULL);
-            $data->open_hrmsrole =(!empty($data->open_hrmsrole)) ? array_diff(explode(',',$data->open_hrmsrole), array('')) :array(NULL=>NULL);
+
             $data->open_designation =(!empty($data->open_designation)) ? array_diff(explode(',',$data->open_designation), array('')) :array(NULL=>NULL);
-            $data->open_location =(!empty($data->open_location)) ? array_diff(explode(',',$data->open_location), array('')) :array(NULL=>NULL);
+
              // OL-1042 Add Target Audience to Classrooms//
         }
         
