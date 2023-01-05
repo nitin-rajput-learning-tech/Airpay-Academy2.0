@@ -1913,7 +1913,7 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
 
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
 
-    $fields = [ 5 => 'organizations', 4 => 'departments', 3 => 'subdepartment', 2 => 'department4level', 1 => 'department5level'];
+    $fields = [ 1 => 'organizations', 2 => 'departments', 3 => 'subdepartment', 4 => 'department4level', 5 => 'department5level'];
 
     if($contextinfo[0]){
 
@@ -1922,11 +1922,13 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
         }else{
             $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
         }
-        for($i=$depth; $i>0; $i--){
 
-            $thisfilters[]=$fields[$i];
+        $thisfilters =array_merge($thisfilters,array_splice($fields, $depth));
 
-        }
+    }else{
+
+        $thisfilters =array_merge($thisfilters,$fields);
+
     }
 
     $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
