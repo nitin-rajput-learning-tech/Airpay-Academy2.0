@@ -84,7 +84,6 @@ class local_evaluation_external extends external_api {
         $serialiseddata = json_decode($params['jsonformdata']);
         $data = array();
         parse_str($serialiseddata, $data);
-
         $warnings = array();
         if ($data['instance'] == 0) {
             $instance = 0;
@@ -98,7 +97,6 @@ class local_evaluation_external extends external_api {
         // The last param is the ajax submitted data.
         $params = array('id' => $data['id'], 'instance'=>$instance, 'plugin'=>$plugin);
         $mform = new evaluation_form(null, $params, 'post', '', null, true, $data);
-
         $validateddata = $mform->get_data();
         if ($validateddata) {
             if($validateddata->timeclose){
@@ -137,6 +135,10 @@ class local_evaluation_external extends external_api {
                $evaluationid = evaluation_add_instance($validateddata);
             }
         }
+        else {
+			// Generate a warning.
+            throw new moodle_exception('Error in creation');
+		}
         return $evaluationid;
     }
 

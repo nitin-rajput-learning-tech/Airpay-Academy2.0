@@ -52,7 +52,7 @@ class local_groups_external extends external_api {
      * @return groups form submits
      */
 	public function submit_groupsform_form($id, $contextid, $jsonformdata){
-		global $PAGE, $CFG;
+		global $DB,$PAGE, $CFG;
 
 		require_once($CFG->dirroot . '/local/groups/lib.php');
         // We always must pass webservice params through validate_parameters.
@@ -69,8 +69,7 @@ class local_groups_external extends external_api {
         $valdata = $mform->get_data();
         if($valdata){
             if($valdata->id>0){
-
-                $open_path=$DB->get_field('local_groups', 'open_path', array('id' => $valdata->id));
+                $open_path=$DB->get_field('local_groups','open_path',array('id'=>$valdata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
                 if($valdata->open_costcenterid !=$org){

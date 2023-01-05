@@ -49,7 +49,7 @@ $deleteitem = optional_param('deleteitem', false, PARAM_INT);
 $url = new moodle_url('/local/evaluation/eval_view.php', array('id'=>$id, 'do_show'=>$do_show));
 
 $PAGE->set_pagelayout('standard');
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 require_login();
 $PAGE->set_context($context);
 if (!has_capability('local/evaluation:edititems', $context) OR !has_capability('local/evaluation:createpublictemplate', $context) ) {

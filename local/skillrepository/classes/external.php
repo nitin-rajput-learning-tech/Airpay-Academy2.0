@@ -41,7 +41,6 @@ class local_skillrepository_external extends external_api {
 
     public function submit_skill_repository_form_form($contextid, $jsonformdata){
         global $PAGE, $CFG;
-
         require_once($CFG->dirroot . '/local/skillrepository/lib.php');
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_skill_repository_form_form_parameters(), ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
@@ -62,7 +61,7 @@ class local_skillrepository_external extends external_api {
         if($valdata){
             if($valdata->id>0){
                 local_costcenter_get_costcenter_path($valdata);
-                $repositoryinsert->skillrepository_opertaions('local_Flikeill', 'update', $valdata,'','');
+                $repositoryinsert->skillrepository_opertaions('local_skill', 'update', $valdata,'','');
             } else {
                 local_costcenter_get_costcenter_path($valdata);
                 $repositoryinsert->skillrepository_opertaions('local_skill','insert', $valdata,'','');

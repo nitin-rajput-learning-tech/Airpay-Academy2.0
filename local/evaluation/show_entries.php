@@ -44,7 +44,7 @@ $baseurl = new moodle_url('/local/evaluation/show_entries.php', array('id' => $i
 $PAGE->set_url(new moodle_url($baseurl, array('userid' => $userid, 'showcompleted' => $showcompleted,
         'delete' => $deleteid)));
 $PAGE->set_pagelayout('standard');
-$context = (new \local_evaluation\lib\accesslib())::get_module_context();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context($id);
 $PAGE->set_context($context);
 require_login();
 $evaluation = $DB->get_record('local_evaluations', array('id'=>$id));

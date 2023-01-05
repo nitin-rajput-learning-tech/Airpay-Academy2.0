@@ -44,11 +44,11 @@ class evaluation_form extends moodleform {
         $instance = $this->_customdata['instance'];
         $plugin = $this->_customdata['plugin'];
         $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_evaluation', $categorycontext, $multiple = false);
         $mform->addElement('text', 'name', get_string('name', 'local_evaluation'), array('size'=>'64'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', get_string('feedbackname', 'local_evaluation'), 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');       
-       local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_evaluation', $categorycontext, $multiple = false);
         if ($instance == 0) {
             $type = array(null => get_string('selecttype', 'local_evaluation'),
                          '1'=>get_string('feedback', 'local_evaluation'),
@@ -113,6 +113,7 @@ class evaluation_form extends moodleform {
         }
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'evaluationhdr', get_string('target_audiance','local_evaluation'));
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), false, 'local_evaluation', $categorycontext, $multiple = false);
         local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_evoluation', $categorycontext, $multiple = false);
      //-------------------------------------------------------------------------------
      $mform->addElement('header', 'aftersubmithdr', get_string('questionandsubmission', 'local_evaluation'));
@@ -235,6 +236,9 @@ class evaluation_form extends moodleform {
         $errors = parent::validation($data, $files);
         if(isset($data['name']) && empty(trim($data['name']))){
             $errors['name'] = get_string('name_required','local_evaluation');
+        }
+        if(isset($data['open_costcenterid']) && empty(trim($data['open_costcenterid']))){
+            $errors['open_costcenterid'] = get_string('orgname_required','local_evaluation');
         }
         if (isset($data['type']) && empty(trim($data['type']))) {
             $errors['type'] = get_string('typemissing', 'local_evaluation');
