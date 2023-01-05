@@ -311,9 +311,20 @@ function states_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $stateslist_sql = "SELECT id, states_name FROM {local_states} ";
 
-    $stateslist = $DB->get_records_menu('local_states', array(),'states_name', 'id, states_name');
+    if(is_siteadmin()){
+
+        $stateslist_sql = "SELECT id, states_name FROM {local_states} ";
+
+    }else{
+
+       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+        $stateslist_sql = "SELECT id, states_name FROM {local_states} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+
+    }
+
+    $stateslist = $DB->get_records_sql_menu($stateslist_sql);
     $select = $mform->addElement('autocomplete', 'states', '',
      $stateslist, array('placeholder' => get_string('states', 'local_users')));
     $mform->setType('states', PARAM_RAW);
@@ -325,9 +336,20 @@ function district_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $districtlist_sql = "SELECT id, district_name FROM {local_district} ";
+    if(is_siteadmin()){
 
-    $districtlist = $DB->get_records_menu('local_district', array(),'district_name', 'id,district_name');
+        $districtlist_sql = "SELECT id, district_name FROM {local_district} ";
+
+    }else{
+
+       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+        $districtlist_sql = "SELECT id, district_name FROM {local_district} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+
+    }
+
+    $districtlist = $DB->get_records_sql_menu($districtlist_sql);
+
     $select = $mform->addElement('autocomplete', 'district', '',
      $districtlist, array('placeholder' => get_string('district', 'local_users')));
     $mform->setType('district', PARAM_RAW);
@@ -339,9 +361,22 @@ function subdistrict_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} ";
 
-    $subdistrictlist = $DB->get_records_menu('local_subdistrict', array(),'subdistrict_name', 'id, subdistrict_name');
+
+    if(is_siteadmin()){
+
+       $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} ";
+
+    }else{
+
+       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+        $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+
+    }
+
+    $subdistrictlist = $DB->get_records_sql_menu($subdistrictlist_sql);
+
     $select = $mform->addElement('autocomplete', 'subdistrict', '',
      $subdistrictlist, array('placeholder' => get_string('subdistrict', 'local_users')));
     $mform->setType('subdistrict', PARAM_RAW);
@@ -353,9 +388,21 @@ function village_filter($mform) {
 
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
-    $villagelist_sql = "SELECT id, village_name FROM {local_village} ";
 
-    $villagelist = $DB->get_records_menu('local_village', array(),'village_name', 'id,village_name');
+    if(is_siteadmin()){
+
+       $villagelist_sql = "SELECT id, village_name FROM {local_village} ";
+
+    }else{
+
+       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+        $villagelist_sql = "SELECT id, village_name FROM {local_village}  WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+
+    }
+
+    $villagelist = $DB->get_records_sql_menu($villagelist_sql);
+
     $select = $mform->addElement('autocomplete', 'village', '',
      $villagelist, array('placeholder' => get_string('village', 'local_users')));
     $mform->setType('village', PARAM_RAW);
