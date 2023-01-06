@@ -125,10 +125,13 @@ class otp {
 
     $otptoken = $DB->get_record_sql($sql1, [$validusers->id]);
 
-   $validinfo= $this->confirm_account($username,$otp,$otptoken->vtoken);
+    $validinfo= $this->confirm_account($username,$otp,$otptoken->vtoken);
 
     $appdetails = new stdClass();
   
+   echo "The " .$validinfo->isActive;
+   
+   echo $validinfo;
   
     if($validinfo->isActive){
 
