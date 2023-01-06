@@ -12,3 +12,27 @@
     font-size: 26px;
     color: #fff;
 }
+/*listclassrom css*/
+#page-local-classroom-index  .no_trainers,
+#page-local-classroom-index  .nocourses{
+    text-align: left !important;
+}
+#page-local-classroom-index ul.crcourseslist{
+    padding:0;
+}
+#page-local-classroom-index .trainer_details{
+    display:flex;
+}
+/*responsive*/
+@media only screen and (max-width: 768px){
+    #page-local-classroom-index .trainer_details{
+        display:block !important;
+    }
+    #page-local-classroom-index  #region-main .generaltable{
+        overflow-x: auto;
+        display:block;
+
+ 
+
+    }
+}

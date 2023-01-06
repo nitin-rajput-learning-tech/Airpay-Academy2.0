@@ -31,6 +31,7 @@ use moodleform;
 use core_component;
 require_once($CFG->dirroot . '/lib/formslib.php');
 require_once($CFG->dirroot . '/local/lib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 class coursetype_form extends moodleform {
 
     public function definition() {
@@ -41,40 +42,22 @@ class coursetype_form extends moodleform {
         $id = $this->_customdata['id'];
         $course_type = $this->_customdata['name'];
 		$shortname = $this->_customdata['shortname'];
-		$orgid = (int)$this->_customdata['orgid'];
-		$orgname = $this->_customdata['orgname'];
+		$costcenterid = $this->_customdata['orgid'];
 		$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-		// if (is_siteadmin($USER->id)) {
-    		$organisation_select = [null => get_string('selectorg','local_courses')];
-    		if($id || $this->_ajaxformdata['orgid']){
-    			$organisations = $organisation_select + $DB->get_records_menu('local_costcenter', array('id' => $orgid), '',  $fields='id, fullname');
-    		}else{
-    			$orgid = 0;
-    			$organisations = $organisation_select;
-    		}
-    		$costcenteroptions = array(
-    			'ajax' => 'local_costcenter/form-options-selector',
-    			'data-contextid' => $categorycontext->id,
-    			'data-action' => 'costcenter_organisation_selector',
-    			'data-options' => json_encode(array('id' => $orgid)),
-    			'class' => 'organisationnameselect',
-    			'data-class' => 'organisationselect',
-    			'multiple' => false,
-    		);
-    		$mform->addElement('autocomplete', 'orgid', get_string('organization','local_courses'), $organisations, $costcenteroptions);
-    		$mform->setType('orgid', PARAM_INT);
-    		$mform->addRule('orgid', get_string('required','local_courses'), 'required', null);
-		// }
-		// else{
 
-  //           $orgid=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
+        if($id && is_siteadmin()){
+            $orgname= $DB->get_field('local_costcenter','fullname',array('id'=>$costcenterid));
+            $mform->addElement('static','costcentername', get_string('organization', 'local_custom_category'), $orgname);
+            $mform->addElement('hidden','open_costcenterid');
+        }else{
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1, 1), false, 'local_courses', $categorycontext, $multiple = false);
+        }
+        if(!is_siteadmin()){
+            $costcenterid = explode('/', $USER->open_path)[1];
+            $mform->addElement('hidden','open_costcenterid');
+            $mform->setDefault('open_costcenterid', $costcenterid);
+        }
 
-  //   		$mform->addElement('hidden', 'orgid', null, array('id' => 'id_open_path', 'data-class' => 'organisationselect'));
-  //   		$mform->setType('orgid', PARAM_INT);
-  //   		$mform->setConstant('orgid', $orgid);
-
-		// }
-	
         $mform->addElement('text', 'name', get_string('course_type','local_courses'), 'maxlength="100" size="10"');
         $mform->addRule('name', get_string('required'), 'required', null);
         $mform->setType('name', PARAM_RAW);
@@ -93,7 +76,6 @@ class coursetype_form extends moodleform {
 		$mform->setType('contextid', PARAM_INT);
 		$mform->setDefault('contextid', $contextid);
 		$mform->disable_form_change_checker();
-		//$this->add_action_buttons($cancel = null,get_string('featured_course', 'local_courses'));
 	}
 
 	   /**
