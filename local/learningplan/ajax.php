@@ -21,6 +21,13 @@ $selected_subdepts = optional_param('subdepts', null, PARAM_RAW);
 $selectedcostcenterid = optional_param('costcenterid', null, PARAM_RAW);
 $selecteddepartmentid = optional_param('departmentid', null, PARAM_RAW);
 $selectedlearningplan = optional_param('learningplan', null, PARAM_RAW);
+
+$department4level = optional_param('department4level', null, PARAM_RAW);
+$department5level = optional_param('department5level', null, PARAM_RAW);
+$states = optional_param('states', null, PARAM_RAW);
+$district = optional_param('district', null, PARAM_RAW);
+$subdistrict = optional_param('subdistrict', null, PARAM_RAW);
+$village = optional_param('village', null, PARAM_RAW);
 $selectedstatus = optional_param('status', null, PARAM_RAW);
 // print_r($selectedstatus);
 // exit;
@@ -111,6 +118,13 @@ if($manage>0){
     $filterdata->organizations = !empty($selectedcostcenterid) ? explode(',', $selectedcostcenterid) : null;
     $filterdata->departments = !empty($selecteddepartmentid) ? explode(',', $selecteddepartmentid) : null;
     $filterdata->learningplan = !empty($selectedlearningplan) ? explode(',', $selectedlearningplan) : null;
+    
+    $filterdata->department4level = !empty($department4level) ? explode(',', $department4level) : null;
+    $filterdata->department5level = !empty($department5level) ? explode(',', $department5level) : null;
+    $filterdata->states = !empty($states) ? explode(',', $states) : null;
+    $filterdata->district = !empty($district) ? explode(',', $district) : null;
+    $filterdata->subdistrict = !empty($subdistrict) ? explode(',', $subdistrict) : null;
+    $filterdata->village = !empty($village) ? explode(',', $village) : null;
     $filterdata->status = !empty($selectedstatus) ? explode(',', $selectedstatus) : null;
     // if(!empty($costcenterid)){
     //     $filterdata->organizations = $costcenterid;

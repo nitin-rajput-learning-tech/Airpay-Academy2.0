@@ -1363,12 +1363,12 @@ class core_renderer extends \core_renderer {
         else
             $newpageurl = $pageurl;
 
-        // if($newpageurl == $CFG->wwwroot.'/enrol/index.php' || $newpageurl == $CFG->wwwroot.'/enrol/'){
-        //     redirect($CFG->wwwroot.'/my');
-        // }
-        // if($newpageurl == $CFG->wwwroot.'/course/management.php'){
-        //     redirect($CFG->wwwroot.'/local/courses/index.php');
-        // }
+        if($newpageurl == $CFG->wwwroot.'/enrol/index.php' || $newpageurl == $CFG->wwwroot.'/enrol/'){
+            redirect($CFG->wwwroot.'/my');
+        }
+        if($newpageurl == $CFG->wwwroot.'/course/management.php'){
+            redirect($CFG->wwwroot.'/local/courses/index.php');
+        }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
             if($_GET['id']){
                 $id = $_GET['id'];

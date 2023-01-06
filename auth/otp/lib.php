@@ -125,19 +125,20 @@ class otp {
 
     $otptoken = $DB->get_record_sql($sql1, [$validusers->id]);
 
-   $validinfo= $this->confirm_account($username,$otp,$otptoken->vtoken);
+    $validinfo= $this->confirm_account($username,$otp,$otptoken->vtoken);
+    
+    $validinfo=json_decode ($validinfo);
 
-  
     $appdetails = new stdClass();
+  
+   if($validinfo->isActive){
 
- if($validinfo->statusReason == 'OK'){
-
-      $trystatus = $validinfo->trystatus;
+    /*  $trystatus = $validinfo->trystatus;
        $otpdetails = new stdClass();
        $otpdetails->id = $validinfo->id;
        $otpdetails->trystatus = ++$trystatus;
        $DB->update_record('local_otp', $otpdetails);
-
+    */
        $appdetails->username = $username;
        $appdetails->otp = $otp;
        $appdetails->trycount = $otpdetails->trystatus;
@@ -145,7 +146,7 @@ class otp {
        $this->local_logs('otp', 'User', 1, $desc, 'Success');
        return 1;
 
- } else {
+    } else {
         $appdetails->username = $username;
         $appdetails->otp = $otp;
        $desc = get_string('otpnotvalid', 'auth_otp', $appdetails);

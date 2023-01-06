@@ -52,7 +52,7 @@ class accesslib extends \local_costcenter\lib\accesslib{
     }
     public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = self::PATH_MODULE_CONTENT){
 
-        return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid));
+        return parent::get_costcenter_path_field_concatsql($columnname, self::user_costcenterpath($userid), $datatype);
 
     }
     public static function get_userprofile_fields($requiredfields=null){

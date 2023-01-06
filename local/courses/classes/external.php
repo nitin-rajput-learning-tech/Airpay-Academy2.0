@@ -1492,14 +1492,8 @@ class local_courses_external extends external_api {
         if ($validateddata) {
             $data = new stdClass();
             $data->name = $validateddata->name;
-            $data->orgid=$validateddata->orgid;
-            if(empty($validateddata->shortname)){
-                $data->shortname = trim($data->name);
-            }else{
-                $data->shortname = $validateddata->shortname;
-            }
-
-            $data->shortname = strtolower(str_replace(' ', '', trim($data->shortname)));
+            $data->orgid=$validateddata->open_costcenterid;
+            $data->shortname = str_replace(' ', '', trim($validateddata->shortname));
             if ($validateddata->id > 0) {
                 $data->id = $validateddata->id;
                 $data->usermodified = $USER->id;
