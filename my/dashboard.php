@@ -36,7 +36,8 @@ if(is_siteadmin()){
     $categoryid=1;
     }
 else{
-    $orgid=explode('/',$USER->open_path)[1];
+    $path=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
+    $orgid=explode('/',$path)[1];
     $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
     }
 $PAGE->set_category_by_id($categoryid);

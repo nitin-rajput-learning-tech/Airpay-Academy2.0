@@ -556,7 +556,7 @@ function evaluation_get_incomplete_users($evaluation,
     global $DB;
 
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($evaluation);
     //first get all user who can complete this evaluation
     $cap = 'local/evaluation:complete';
@@ -2308,13 +2308,11 @@ function get_all_evaluations() {
 * @return [type]              [description]
 */
 function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $total=0, $offset=-1, $perpage=-1, $lastitem=0){
-
     global $DB, $USER;
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $evaluation = $DB->get_record('local_evaluations', array('id' => $evaluationid));
     $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($evaluation);
-
     $params['suspended'] = 0;
     $params['deleted'] = 0;
 
@@ -2561,8 +2559,6 @@ function get_listof_evalautions($stable, $filtervalues){
     $data = array();
     $userarray = array();
     $params = array();
-    
-    
     $filtervalues->organizations = (ltrim($filtervalues->organizations, ','));
     $countsql = "SELECT count(a.id) ";
     if (is_siteadmin() || has_capability('local/evaluation:edititems',$context)) {
@@ -2581,7 +2577,7 @@ function get_listof_evalautions($stable, $filtervalues){
     }
     if(isset($filtervalues->evaluation) && !empty($filtervalues->evaluation)){
         $evalids = is_array($filtervalues->evaluation) ? implode($filtervalues->evaluation) : $filtervalues->evaluation ;
-        $fromsql .= " AND a.id IN ($evalids) ";
+        $fromsql .= " AND a.id IN ($evalids)";
     }
     if(isset($filtervalues->eval_type) && !empty($filtervalues->eval_type)){
         $eval_types = is_array($filtervalues->eval_type) ? implode($filtervalues->eval_type) : $filtervalues->eval_type ;
