@@ -133,12 +133,12 @@ class otp {
   
    if($validinfo->isActive){
 
-      $trystatus = $validinfo->trystatus;
+    /*  $trystatus = $validinfo->trystatus;
        $otpdetails = new stdClass();
        $otpdetails->id = $validinfo->id;
        $otpdetails->trystatus = ++$trystatus;
        $DB->update_record('local_otp', $otpdetails);
-
+    */
        $appdetails->username = $username;
        $appdetails->otp = $otp;
        $appdetails->trycount = $otpdetails->trystatus;
