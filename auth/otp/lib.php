@@ -129,8 +129,13 @@ class otp {
 
   
     $appdetails = new stdClass();
+    
+    echo $validinfo;
+    
+    echo "Response Status".$validinfo->statusReason."<br/>";
+    echo "--Token".$otptoken->vtoken;
 
- if($validinfo->statusReason == 'OK'){
+    if($validinfo->statusReason == 'OK'){
 
       $trystatus = $validinfo->trystatus;
        $otpdetails = new stdClass();
