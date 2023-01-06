@@ -242,7 +242,7 @@ class search implements renderable{
             $return=false;
 
             $list->enrollmentbtn = $this->get_enrollbtn($list);
-            $list->requeststatus = '';
+            $list->requeststatus = MODULE_NOT_ENROLLED;
             if($list->isenrolled){
                 $list->requeststatus = MODULE_ENROLLED;
             }else{

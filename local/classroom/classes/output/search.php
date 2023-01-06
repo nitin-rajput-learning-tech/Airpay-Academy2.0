@@ -280,6 +280,7 @@ class search implements renderable{
             }
 
             $waitlist = $DB->get_field('local_classroom_waitlist','id',array('classroomid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
+            $list->requeststatus = MODULE_NOT_ENROLLED;
             if($waitlist > 0){
                 $list->requeststatus = MODULE_ENROLMENT_WAITING;
             }else{
@@ -420,6 +421,7 @@ class search implements renderable{
         }
     }
     public function is_classroom_accessible($classroom){
+        global $DB,$USER;
         $selectsql = "SELECT  lc.id FROM {local_classroom} lc  ";
 
         // added condition for not displaying retired ILT's.
