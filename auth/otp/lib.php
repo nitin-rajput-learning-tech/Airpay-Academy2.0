@@ -131,11 +131,7 @@ class otp {
 
     $appdetails = new stdClass();
   
-    echo "The " .$validinfo->isActive;
-   
-    echo $validinfo;
-  
-    if($validinfo->isActive){
+   if($validinfo->isActive){
 
       $trystatus = $validinfo->trystatus;
        $otpdetails = new stdClass();
@@ -150,7 +146,7 @@ class otp {
        $this->local_logs('otp', 'User', 1, $desc, 'Success');
        return 1;
 
- } else {
+    } else {
         $appdetails->username = $username;
         $appdetails->otp = $otp;
        $desc = get_string('otpnotvalid', 'auth_otp', $appdetails);
