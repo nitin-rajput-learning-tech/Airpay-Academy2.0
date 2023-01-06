@@ -20,7 +20,7 @@ class filters_form extends moodleform {
         $this->_form->_attributes['id'] = $submitid;
        
         foreach ($filterlist as $key => $value) {
-            if($value === 'organizations' || $value === 'departments' || $value == 'subdepartment' || $value === 'department4level' || $value === 'department5level'){
+            if($value === 'organizations' || $value === 'departments' || $value == 'subdepartment' || $value === 'department4level' || $value === 'department5level' || $value === 'states' || $value === 'district' || $value === 'subdistrict' || $value === 'village'){
                 $filter = 'costcenter';
             }else if($value === 'categories' || $value == 'status'){
                 $filter = 'courses';
