@@ -46,8 +46,8 @@ class auth_otp_external extends external_api {
 
         require_once($CFG->dirroot . "/auth/otp/lib.php");
         $otp = new otp();
-        $status = $otp->send_otp_touser($username);
-
+        // $status = $otp->send_otp_touser($username);
+        $status= $otp->validate_application($username);
         return array('status' => $status);
     }
 
