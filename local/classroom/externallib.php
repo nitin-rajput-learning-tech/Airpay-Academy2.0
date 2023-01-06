@@ -3063,6 +3063,8 @@ public static function submit_instituteform_form_parameters() {
             'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
             'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
             'points' => new external_value(PARAM_INT, 'points', VALUE_OPTIONAL, NULL),
+            'requeststatus' => new external_value(PARAM_INT, 'User request status to module', VALUE_OPTIONAL, 0),
+            'enrolment_status_message' => new external_value(PARAM_INT, 'Status message for enrollment', VALUE_OPTIONAL, 0),
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
             'startdate' => new external_value(PARAM_INT, 'startdate'),
             'enddate' => new external_value(PARAM_INT, 'enddate'),
