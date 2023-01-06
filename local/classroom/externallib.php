@@ -3051,12 +3051,24 @@ public static function submit_instituteform_form_parameters() {
         );
     }
     public function get_classroom_info($id){
-        global $DB;
-        return $DB->get_record('local_classroom', array('id' => $id));
+        $params = self::validate_parameters(self::get_classroom_info_parameters(),
+            ['id' => $id]);
+        return (new \local_classroom\local\general_lib())->get_classroom_info($id);
     }
     public function get_classroom_info_returns(){
-        global $CFG;
-        require_once($CFG->dirroot.'/local/search/lib.php');
-        return local_search_get_module_return_parameters('local_classroom', []);
+       return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'The id of the module'),
+            'fullname' => new external_value(PARAM_TEXT, 'fullname'),
+            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
+            'category' => new external_value(PARAM_TEXT, 'category'),
+            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_RAW, 'points'),
+            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
+            'startdate' => new external_value(PARAM_INT, 'startdate'),
+            'enddate' => new external_value(PARAM_INT, 'enddate'),
+            'summary' => new external_value(PARAM_HTML, 'summary'),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+        ));
     }
 }
