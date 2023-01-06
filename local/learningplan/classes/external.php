@@ -38,12 +38,13 @@ class local_learningplan_external extends external_api {
                 $open_path=$DB->get_field('local_learningplan', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
-                if($validateddata->open_costcenterid !=$org){
-
+                if(!empty($validateddata->open_costcenterid) != $org){
                     local_costcenter_get_costcenter_path($validateddata);
-
                 }
                 if($validateddata->form_status == 1){
+                if((!empty($validateddata->open_costcenterid) != $org) || ($validateddata->open_department !=$ctr) || ($validateddata->open_subdepartment !=$bu) || ($validateddata->open_level4department !=$cu) || ($validateddata->open_level5department !=$territory)){
+                    local_costcenter_get_costcenter_path($validateddata);
+                }
                     local_users_get_userprofile_datafields($validateddata);
                 }
                 $lepid = $leplib->update_learning_plan($validateddata);
@@ -651,7 +652,7 @@ class local_learningplan_external extends external_api {
             'filter_text' => new external_value(PARAM_TEXT, 'filtertext content',VALUE_OPTIONAL),
             'view_more_url' => new external_value(PARAM_URL, 'view_more_url for tab'),
             'viewMoreCard' => new external_value(PARAM_BOOL, 'More info card to display'),
-             'enrolled_url' => new external_value(PARAM_URL, 'enrolled_url for tab'),//added revathi
+            'enrolled_url' => new external_value(PARAM_URL, 'enrolled_url for tab'),//added revathi
             'inprogress_url' => new external_value(PARAM_URL, 'inprogress_url for tab'),
             'completed_url' => new external_value(PARAM_URL, 'completed_url for tab'),
         ));
@@ -768,15 +769,17 @@ class local_learningplan_external extends external_api {
             'id' => new external_value(PARAM_INT, 'The id of the module'),
             'name' => new external_value(PARAM_TEXT, 'name'),
             'shortname' => new external_value(PARAM_TEXT, 'shortname'),
-            'summary' => new external_value(PARAM_HTML, 'summary'),
-            'category' => new external_value(PARAM_TEXT, 'category'),
-            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
-            'points' => new external_value(PARAM_RAW, 'points'),
+            'summary' => new external_value(PARAM_HTML, 'summary', VALUE_OPTIONAL,
+                ''),
+            'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL,
+                ''),
+            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_RAW, 'points', VALUE_OPTIONAL, 0),
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
-            'startdate' => new external_value(PARAM_INT, 'startdate'),
-            'enddate' => new external_value(PARAM_INT, 'enddate'),
-            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+            'startdate' => new external_value(PARAM_INT, 'startdate', VALUE_OPTIONAL, ''),
+            'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, ''),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
         ));
     }
 }

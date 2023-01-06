@@ -3060,15 +3060,15 @@ public static function submit_instituteform_form_parameters() {
             'id' => new external_value(PARAM_INT, 'The id of the module'),
             'fullname' => new external_value(PARAM_TEXT, 'fullname'),
             'shortname' => new external_value(PARAM_TEXT, 'shortname'),
-            'category' => new external_value(PARAM_TEXT, 'category'),
-            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
-            'points' => new external_value(PARAM_RAW, 'points'),
+            'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
+            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_INT, 'points', VALUE_OPTIONAL, NULL),
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
             'startdate' => new external_value(PARAM_INT, 'startdate'),
             'enddate' => new external_value(PARAM_INT, 'enddate'),
-            'summary' => new external_value(PARAM_HTML, 'summary'),
-            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+            'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
         ));
     }
 }
