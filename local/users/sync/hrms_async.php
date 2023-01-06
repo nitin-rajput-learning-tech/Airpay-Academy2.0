@@ -57,12 +57,12 @@ $PAGE->navbar->add(get_string('uploadusers', 'local_users'));
 $returnurl = new moodle_url('/local/users/index.php');
 
 $STD_FIELDS = array(
-    'organization' => 'organization','username' => 'username','password' => 'password','learner_id' => 'learner_id',
-    'first_name' => 'first_name','last_name' => 'last_name','email' => 'email','country' => 'country',
-    'bussiness_unit' => 'bussiness_unit','commercial_unit' => 'commercial_unit','territory' => 'territory',    
+    'organization_code' => 'organization_code','username' => 'username','password' => 'password','learner_id' => 'learner_id',
+    'first_name' => 'first_name','last_name' => 'last_name','email' => 'email','country_code' => 'country_code',
+    'commercial_unit_code' => 'commercial_unit_code','commercial_area_code' => 'commercial_area_code','territory_code' => 'territory_code',    
     'reportingmanager_empid' => 'reportingmanager_empid','language' => 'language','designation' => 'designation',
     'state' => 'state','district' => 'district','subdistrict' => 'subdistrict','village' => 'village',
-    'discipline' => 'discipline','contactno' => 'contactno','employee_status' => 'employee_status',
+    'contactno' => 'contactno','employee_status' => 'employee_status',
     'password' => 'password','timezone' => 'timezone','force_password_change' => 'force_password_change'
     );
 

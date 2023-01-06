@@ -109,7 +109,7 @@ $string['serviceid'] = 'Learner ID';
 $string['help_1'] = '<div class="helpmanual_table"><table class="generaltable" border="1">
 <tr class="field_type_head"><td class="empty_column"></td><td class="field_type font-weight-bold" style="text-align:left;border-left:1px solid white;padding-left:50px;">Mandatory Fields</td><tr>
 <th>Field</th><th>Restriction</th>
-<tr><td>organization</td><td>Provide the organization</td></tr>
+<tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
@@ -120,10 +120,10 @@ $string['help_2'] = '</td></tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>password</td><td>Provide the password,Password must be at least 8 characters long,Password must have at least 1 digit(s),Password must have at least 1 upper case letter(s),
 Password must have at least 1 non-alphanumeric character(s) such as as *, -, or #..</td></tr>
-<tr><td>Country</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
-<tr><td>bussiness_unit</td><td>Enter Bussiness Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
-<tr><td>commercial_unit</td><td>Enter Commercial Unit Code. Commercial Unit must already exist under specified Bussiness Unit in system as part of organization hierarchy.</td></tr>
-<tr><td>territory</td><td>Enter Territory Code. Territory must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
+<tr><td>country_code</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
+<tr><td>commercial_unit_code</td><td>Enter Bussiness Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
+<tr><td>commercial_area_code</td><td>Enter Commercial Unit Code. Commercial Unit must already exist under specified Bussiness Unit in system as part of organization hierarchy.</td></tr>
+<tr><td>territory_code</td><td>Enter Territory Code. Territory must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
 <tr><td>state</td><td>Enter State Code. State must already exist under specified Territory in system as part of organization hierarchy.</td></tr>
 <tr><td>district</td><td>Enter District Code. State must already exist under specified State in system as part of organization hierarchy.</td></tr>
 <tr><td>subdistrict</td><td>Enter Sub District Code. State must already exist under specified District in system as part of organization hierarchy.</td></tr>
@@ -760,11 +760,11 @@ $string['open_level5departmentlocal_users'] = 'Territory';
 $string['managestates'] = 'Manage State';
 $string['states'] = 'State';
 $string['organisation'] = 'Organisation';
-$string['invalidnoorganizationidfound'] = 'Bussiness Unit "{$a->bussiness_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
-$string['noorbussiness_unitfound'] = 'No Bussiness Unit found with "{$a->bussiness_unitid}" at line {$a->line}.';
-$string['invalidbussinessunitgiven'] = 'Bussiness Unit "{$a->bussiness_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
-$string['noorcommercial_unitfound'] = 'No Commercial Unit found with "{$a->commercial_unitid}" at line {$a->line}.';
-$string['invalidcommercialunitgiven'] = 'Commercial Unit "{$a->commercial_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
+$string['invalidnoorganizationidfound'] = 'Bussiness Unit "{$a->commercial_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
+$string['noorcommercial_unitfound'] = 'No Bussiness Unit found with "{$a->commercial_unitid}" at line {$a->line}.';
+$string['invalidbussinessunitgiven'] = 'Bussiness Unit "{$a->commercial_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
+$string['noorcommercial_areafound'] = 'No Commercial Unit found with "{$a->commercial_areaid}" at line {$a->line}.';
+$string['invalidcommercialunitgiven'] = 'Commercial Unit "{$a->commercial_areaid}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['noorterritoryfound'] = 'No Territory found with "{$a->territoryid}" at line {$a->line}.';
 $string['invalidterritorygiven'] = 'Territory "{$a->territoryid}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['invalidstatevalue'] = 'State "{$a->state}" is not under "{$a->parentid}" at line {$a->line}.';
