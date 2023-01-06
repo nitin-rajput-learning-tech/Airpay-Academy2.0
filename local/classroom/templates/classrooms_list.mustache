@@ -19,12 +19,12 @@
 
     {{! card view }}
     {{#viewtypeCard}}
-        <div class="card-wrap m-0 p-0 pull-left w-100">
+        <div class="card-wrap  row w-100">
             {{#records}}
-                <div class="{{cardClass}} pull-left mt-3">
-                    <div class="classroom_container w-100 pull-left mb-2 {{classroomstatusclass}}">
-                        <div class="w-100 pull-left classroomname_status">
-                            <div class="pull-left classroom_name_info">
+                <div class="{{cardClass}} col-md-6">
+                    <div class="classroom_container w-100  mt-3 mb-2 {{classroomstatusclass}}">
+                        <div class="w-100 d-flex classroomname_status justify-content-between">
+                            <div class="classroom_name_info">
                                 <span class="fa fa-desktop mr-1"></span>
                                 <a href="{{ classroomurl }}" class="class_name" title = "{{ classname }}">{{ classname_string }}</a>
                                 <span class="bg_banner" title="{{ crstatustitle }}"></span>
@@ -62,8 +62,8 @@
                                 {{/ action}}
                             </div>
                         </div>
-                        <div class="w-100 pull-left p-10 classroomcontainer_top">
-                            <div class="dataContainer col-md-7 col-12 pull-left px-2 py-1">
+                        <div class="w-100 d-flex p-10 classroomcontainer_top">
+                            <div class="dataContainer col-md-7 col-12  px-2 py-1">
                                 <div class="datacontent">
                                     <div class="description">
                                         {{# isdescription}}
@@ -112,7 +112,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="classesimgContainer col-md-5 col-12 pull-left p-0">
+                            <div class="classesimgContainer col-md-5 col-12  p-0">
                                 <div class="classesimgContainer">
                                      <a href="{{ classroomurl }}" class="d-none d-md-block">
                                         <div style="background-image: url('{{{ classesimg }}}');" alt="{{ classname }}" title="{{ classname }}" class="classesimg courseimg_bg" ></div>
@@ -130,14 +130,14 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="w-100 pull-left classroomcontainer_btm">
-                            <div class="col-md-6 col-12 pull-left p-0">
-                                <div class="trainersContainer p-2 w-100 pull-left">
+                        <div class="w-100 d-flex classroomcontainer_btm">
+                            <div class="col-md-6 col-12 p-0">
+                                <div class="trainersContainer p-2 w-100 ">
                                     <h6 class="trainer_header">{{#str}}trainers, local_classroom{{/str}}</h6>
                                     {{# trainerslimit}}
                                         {{# trainers }}
                                         <div class="trainer_details">
-                                            <span class="trainerimg pr-2 pull-left">
+                                            <span class="trainerimg pr-2 ">
                                                
                                                     <img src="{{trainerpic}}" alt="Picture of {{trainername}}" title="Picture of {{trainername}}" class="trainer_img userpicture" width="30" height="30">
                                                
@@ -152,7 +152,7 @@
                                     {{^ trainerslimit }}
                                         {{# moretrainers}}
                                              <div class="trainer_details">
-                                                <span class="trainerimg pull-left">{{{ classroomtrainerpic }}}</span>
+                                                <span class="trainerimg ">{{{ classroomtrainerpic }}}</span>
                                                 <span class="trainerdetails"><span class="trainername">{{ trainername }}</span><span class="trainerdesignation">{{ trainerdesignation }}</span></span>
                                             </div>
                                         {{/ moretrainers}}
@@ -162,13 +162,13 @@
                                     {{/ trainers}}
                                 </div>
                             </div>
-                            <div class="col-md-6 col-12 pull-left p-0">
+                            <div class="col-md-6 col-12  p-0">
                                 <div class="coursesContainer p-2">
                                     <h6 class="trainer_header">{{#str}}courses{{/str}}</h6>
-                                    <ul class="crcourseslist pull-left m-0">
+                                    <ul class="crcourseslist  m-0">
                                         {{# courses }}
-                                            <li class="w-full pull-left">
-                                                <p class="contentlist pull-left">
+                                            <li class="w-full ">
+                                                <p class="contentlist ">
                                                     <a href="{{ courseurl }}" title="{{ coursetitle }}"> {{ coursename }} </a>
                                                 </p>
                                             </li>

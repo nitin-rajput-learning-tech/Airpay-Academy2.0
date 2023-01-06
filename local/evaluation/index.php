@@ -86,10 +86,17 @@ $PAGE->requires->strings_for_js(array_keys($strings), 'local_evaluation');
 $PAGE->navbar->add(get_string("pluginname", 'local_evaluation'));
 $renderer = $PAGE->get_renderer('local_evaluation');
 $filterparams = $renderer->get_evaluations(true,$formattype);
+$depth=$context->depth;
 if(is_siteadmin()){
     $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
-}else {
-    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
+}else if($depth==2) {
+    $thisfilters = array('departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
+}else if($depth==3){
+    $thisfilters = array('subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
+}else if($depth==4){
+    $thisfilters = array('evaluation', 'evaluation_type', 'status','department4level','department5level');
+}else if($depth==5){
+    $thisfilters = array('evaluation', 'evaluation_type', 'status','department5level');
 }
 $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams));
      

@@ -248,6 +248,7 @@ if ($course) {
 				$progress++;
 				if($instance->enrol=='manual'){
 					$manual=$enrol_manual->unenrol_user($instance, $removeuser);
+                    //\core\session\manager::kill_user_sessions($removeuser);
 				}
 				$data_self=$DB->get_record_sql("SELECT * FROM {user_enrolments} ue
                     JOIN {enrol} e ON ue.enrolid=e.id
@@ -255,6 +256,7 @@ if ($course) {
 				$enrol_self = enrol_get_plugin('self');
 				if($data_self->enrol=='self'){
 					$self=$enrol_self->unenrol_user($data_self, $removeuser);
+                    //\core\session\manager::kill_user_sessions($removeuser);
 				}
                 $notification = new \local_courses\notification();
                 $course = $DB->get_record('course', array('id' => $dataobj));

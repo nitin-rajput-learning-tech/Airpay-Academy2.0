@@ -827,8 +827,11 @@ body#page-local-courses-courses .actionicons a .icon {
 }
 .course_container .courseinfo_container .info_container{
     display: flex;
-    margin-right: 8px;
+    padding-right: 8px;
     align-items: center;
+    margin-bottom: 10px;
+    max-width: 50%;
+    flex: 0 0 50%;
 }
 .course_container .courseinfo_container .info_container .info_value{
     color: #008dcf;
@@ -964,4 +967,7 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
 }
 #page-local-courses-courses #filters_form{
     background-color: #fff;
+}
+#page-local-courses-courses .course_container .coursecontent span.text-muted {
+    white-space: nowrap;
 }
