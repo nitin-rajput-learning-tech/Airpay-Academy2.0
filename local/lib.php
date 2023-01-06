@@ -90,19 +90,31 @@ function get_mydepartment() {
 }
 
 function get_filterslist() {
-	$context = (new \local_costcenter\lib\accesslib())::get_module_context();
-	if (is_siteadmin() OR has_capability('local/costcenter:manage_multiorganizations', $context )) {
-		$filterlist = array('organizations', 'departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village','idnumber', 'email', 'groups','users');
-	}
-	else if (has_capability('local/costcenter:manage_ownorganization',$context) ) {
-		$filterlist = array('departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village','idnumber', 'email', 'groups','users');
-	} 
-	else if (has_capability('local/costcenter:manage_owndepartments',$context) ) {
-		$filterlist = array('states','district','subdistrict','village','idnumber', 'email', 'groups', 'users');
-	} 
-	else {
-		$filterlist = array('states','district','subdistrict','village','idnumber', 'email','users');
-	}
+
+	global $CFG, $PAGE,$USER;
+
+	$filterlist = array('states','district','subdistrict','village','idnumber', 'email','users');
+
+	$contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
+
+    $fields = [ 1 => 'organizations', 2 => 'departments', 3 => 'subdepartment', 4 => 'department4level', 5 => 'department5level'];
+
+    if($contextinfo[0]){
+
+        if(count($contextinfo) > 1){
+            $depth = $USER->useraccess['currentroleinfo']['depth'];
+        }else{
+            $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
+        }
+
+        $filterlist =array_merge(array_splice($fields, $depth),$filterlist);
+
+    }else{
+
+        $filterlist =array_merge($fields,$filterlist);
+
+    }
+
 	return $filterlist;
 }
 

@@ -533,7 +533,7 @@ function local_courses_output_fragment_custom_course_form($args){
         'returnto' => $returnto,
         'get_coursedetails'=>$get_coursedetails,
         'form_status' => $args->form_status,
-        'costcenterid' => $data->open_path
+        'costcenterid' => $data->open_path,
     );
     local_costcenter_set_costcenter_path($formdata);
     $mform = new custom_course_form(null, $params, 'post', '', null, true, $formdata);
@@ -1012,7 +1012,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     global $DB, $USER;
 	$context = (new \local_courses\lib\accesslib())::get_module_context($course_id);
     $course = $DB->get_record('course', array('id' => $course_id));
-    $condition = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+    $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
     $params['suspended'] = 0;
     $params['deleted'] = 0;
  
@@ -1446,7 +1446,7 @@ function get_listof_courses($stable, $filterdata) {
             $params = array('courseid'=>$course->id);
             if(is_siteadmin()){
                 $conditionsql = " ";
-            }           
+            }
             $enrolledusersssql = " SELECT COUNT(DISTINCT(ue.id)) as ccount
                                 FROM {course} c
                                 JOIN {course_categories} cat ON cat.id = c.category
@@ -1492,7 +1492,7 @@ function get_listof_courses($stable, $filterdata) {
             $catname = $category->name;
             $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12)."..." : $catname;
             $displayed_names = '<span class="pl-10 '.$course->coursetype.'">'.$course->coursetype.'</span>';
-            
+
             $courestypes_names = array('2'=>get_string('classroom','local_courses'),'3'=>get_string('elearning','local_courses'), '4'=> get_string('learningplan','local_courses'), '5' => get_string('program','local_courses'), '6' => get_string('certification','local_courses'));
             if($ratings_plugin_exist){
                 require_once($CFG->dirroot.'/local/ratings/lib.php');
@@ -1913,7 +1913,7 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
 
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
 
-    $fields = [ 5 => 'organizations', 4 => 'departments', 3 => 'subdepartment', 2 => 'department4level', 1 => 'department5level'];
+    $fields = [ 1 => 'organizations', 2 => 'departments', 3 => 'subdepartment', 4 => 'department4level', 5 => 'department5level'];
 
     if($contextinfo[0]){
 
@@ -1922,11 +1922,13 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
         }else{
             $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
         }
-        for($i=$depth; $i>0; $i--){
 
-            $thisfilters[]=$fields[$i];
+        $thisfilters =array_merge($thisfilters,array_splice($fields, $depth));
 
-        }
+    }else{
+
+        $thisfilters =array_merge($thisfilters,$fields);
+
     }
 
     $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
@@ -2202,26 +2204,26 @@ function local_courses_output_fragment_course_type($args) {
     if (empty($formdata) && !empty($coursetypeid)) {
         $data = $DB->get_record('local_course_types', array('id'=>$coursetypeid));
         $formdata = new stdClass();
-        $formdata->id = $data->id;  
+        $formdata->id = $data->id;
         $costcenterdata = $DB->get_record('local_costcenter', array('id'=>$data->orgid));
         $formdata->name = $data->name;
         $formdata->shortname = $data->shortname;
-        $formdata->orgid=$data->orgid;
+        $formdata->open_costcenterid=$data->orgid;
         $formdata->orgname = $costcenterdata->fullname;
 
-    } 
- 
+    }
+
     $params = array(
-        'orgid' => $formdata->orgid,
+        'orgid' => $formdata->open_costcenterid,
         'id' => $coursetypeid,
         'name' => $formdata->name,
         'shortname' => $formdata->shortname,
         'orgname' =>$formdata->orgname,
         'contextid' => $context
-    ); 
+    );
     $mform = new local_courses\form\coursetype_form(null, $params, 'post', '', null, true, (array)$formdata);
     $mform->set_data($formdata);
-    
+
     if (!empty($args->jsonformdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
@@ -2239,7 +2241,7 @@ function local_courses_output_fragment_course_type($args) {
 */
 function get_listof_coursetypes($stable, $filterdata) {
     global $DB, $CFG, $OUTPUT, $PAGE ,$USER;
-    
+
     $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $allcoursetypes=$DB->get_records('local_course_types');
     $coursesContext = array(

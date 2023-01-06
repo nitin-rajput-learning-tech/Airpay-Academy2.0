@@ -162,11 +162,6 @@ class local_courses_external extends external_api {
                       $courseid->id=$data['id'];
                       $validateddata->category = $category_id;
 
-                    if($validateddata->map_certificate == 1){
-                        $validateddata->open_certificateid = $validateddata->open_certificateid;
-                    }else{
-                        $validateddata->open_certificateid = null;
-                    }
 
                     if($validateddata->open_costcenterid !=$org){
 
@@ -237,11 +232,20 @@ class local_courses_external extends external_api {
                          if($data->open_path){
                             $data->category = $DB->get_field('local_costcenter', 'category', array('path' => $data->open_path));
                          }
+                    }else{
+                        if($validateddata->map_certificate == 1){
+
+                            $data->open_certificateid = $validateddata->open_certificateid;
+
+                        }else{
+
+                            $data->open_certificateid = null;
+
+                        }
                     }
-                    $data->summary_editor=array('format'=>1);
 
 
-                    update_course($data, $editoroptions);
+                    update_course($data);
 
                    // purge appropriate caches in case fix_course_sortorder() did not change anything
                     cache_helper::purge_by_event('changesincourse');
@@ -1488,14 +1492,8 @@ class local_courses_external extends external_api {
         if ($validateddata) {
             $data = new stdClass();
             $data->name = $validateddata->name;
-            $data->orgid=$validateddata->orgid;
-            if(empty($validateddata->shortname)){
-                $data->shortname = trim($data->name);
-            }else{
-                $data->shortname = $validateddata->shortname;
-            }
-
-            $data->shortname = strtolower(str_replace(' ', '', trim($data->shortname)));
+            $data->orgid=$validateddata->open_costcenterid;
+            $data->shortname = str_replace(' ', '', trim($validateddata->shortname));
             if ($validateddata->id > 0) {
                 $data->id = $validateddata->id;
                 $data->usermodified = $USER->id;
@@ -1639,15 +1637,15 @@ class local_courses_external extends external_api {
             'id' => new external_value(PARAM_INT, 'The id of the module'),
             'fullname' => new external_value(PARAM_TEXT, 'fullname'),
             'shortname' => new external_value(PARAM_TEXT, 'shortname'),
-            'category' => new external_value(PARAM_TEXT, 'category'),
-            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
+            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
             'points' => new external_value(PARAM_RAW, 'points'),
-            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
+            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled', VALUE_OPTIONAL, false),
             'startdate' => new external_value(PARAM_INT, 'startdate'),
-            'enddate' => new external_value(PARAM_INT, 'enddate'),
-            'summary' => new external_value(PARAM_HTML, 'summary'),
-            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+            'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, NULL),
+            'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
             'skill' => new external_value(PARAM_TEXT, 'skill', VALUE_OPTIONAL, ''),
             'level' => new external_value(PARAM_TEXT, 'level', VALUE_OPTIONAL, ''),
         ));

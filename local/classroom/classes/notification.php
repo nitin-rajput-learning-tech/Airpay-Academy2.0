@@ -222,8 +222,10 @@ class notification{
         //     }
         // }else{
             // print_r($datamailobject);die;
-            $this->log_email_notification($touser, $fromuser, $datamailobject);
-            if($superuser){
+            if($touser->suspended == 0 && $touser->deleted == 0){
+                $this->log_email_notification($touser, $fromuser, $datamailobject);
+            }           
+            if($superuser && $superuser->suspended == 0 && $superuser->deleted == 0){
                 $datamailobject->body = $notification->adminbody;
                 $datamailobject->touserid = $superuser->id;
                 $datamailobject->teammemberid = $touser->id;

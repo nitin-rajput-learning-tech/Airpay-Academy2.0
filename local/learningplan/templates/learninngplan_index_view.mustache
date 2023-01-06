@@ -48,14 +48,14 @@
 					{{# capability1}}
 						{{# hide}}
 						<li>
-							<a href='javascript:void(0)' title="{{title_hide_show}}" onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'visible', id:{{{learning_planid}}} }) })(event)">
+							<a href='javascript:void(0)' title="{{title_hide_show}}" onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'visible', name:'{{{learning_plan_name}}}', id:{{{learning_planid}}} }) })(event)">
 								<i class="fa fa-eye" title="{{title_hide_show}}"></i>
 							</a>
 						</li>
 						{{/ hide}}
 						{{^ hide}}
 						<li>
-							<a href='javascript:void(0)' title="{{title_hide_show}}"  onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'hidden', id:{{{learning_planid}}} }) })(event)">
+							<a href='javascript:void(0)' title="{{title_hide_show}}"  onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'hidden', name:'{{{learning_plan_name}}}', id:{{{learning_planid}}} }) })(event)">
 								<!--<img src="{{hide_show_icon_url}}" class="icon">-->
 								<i class="fa fa-eye-slash icon" title="{{title_hide_show}}"></i>
 							</a>

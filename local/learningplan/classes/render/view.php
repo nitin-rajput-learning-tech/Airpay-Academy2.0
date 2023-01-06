@@ -59,7 +59,6 @@ class view extends plugin_renderer_base {
 				$sql .= " AND name LIKE '%%$search%%'";
 			}
 			$assign_users_sql = "SELECT id FROM {local_learningplan} l WHERE 1 = 1 ";
-			//added by revathi
     		if($filterdata){
 				if(!empty(array_filter($filterdata->organizations))){
 					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
@@ -74,13 +73,7 @@ class view extends plugin_renderer_base {
 			            $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
 			            $assign_users_sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
 			        }
-					// $sql .= " AND l.costcenter IN ($selectedorganizations) ";
 				}
-
-				// if(!empty(array_filter($filterdata->departments))){
-				// 	$selecteddepartments = implode(',', array_filter($filterdata->departments));
-				// 	$sql .= " AND l.department IN ($selecteddepartments) ";
-				// }
 				if(!empty(array_filter($filterdata->departments))){
 					$selecteddepts = implode(',', array_filter($filterdata->departments));
 					$depts = explode(',', $selecteddepts);
@@ -95,10 +88,6 @@ class view extends plugin_renderer_base {
 			            $assign_users_sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
 			        }
 				}
-				// if(!empty(array_filter($filterdata->subdepartment))){
-				// 	$selectedsubdepts = implode(',', $filterdata->subdepartment);
-				// 	$sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				// }
 				if(!empty(array_filter($filterdata->subdepartment))){
 					$selectedsubdepts = implode(',', array_filter($filterdata->subdepartment));
 					$subdepts = explode(',', $selectedsubdepts);
@@ -112,7 +101,6 @@ class view extends plugin_renderer_base {
 			            $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
 			            $assign_users_sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
 			        }
-					// $sql .= " AND l.costcenter IN ($selectedorganizations) ";
 				}
 
 				if(!empty(array_filter($filterdata->department4level))){
@@ -145,9 +133,31 @@ class view extends plugin_renderer_base {
 			        }
 				}
 
+				if(!empty($filterdata->states)){
+					$selectedstates = implode(',', $filterdata->states);
+					$sql .= " AND l.open_states IN ($selectedstates) ";
+					$assign_users_sql .= " AND l.open_states IN ($selectedstates) ";
+				}
+				if(!empty($filterdata->district)){
+					$selecteddistrict = implode(',', $filterdata->district);
+					$sql .= " AND l.open_district IN ($selecteddistrict) ";
+					$assign_users_sql .= " AND l.open_district IN ($selecteddistrict) ";
+				}
+				if(!empty($filterdata->subdistrict)){
+					$selectedsubdistrict = implode(',', $filterdata->subdistrict);
+					$sql .= " AND l.open_subdistrict IN ($selectedsubdistrict) ";
+					$assign_users_sql .= " AND l.open_subdistrict IN ($selectedsubdistrict) ";
+				}
+				if(!empty($filterdata->village)){
+					$selectedvillage = implode(',', $filterdata->village);
+					$sql .= " AND l.open_village IN ($selectedvillage) ";
+					$assign_users_sql .= " AND l.open_village IN ($selectedvillage) ";
+				}
+
 				if(!empty($filterdata->learningplan)){
 					$selectedlearningplan = implode(',', $filterdata->learningplan);
 					$sql .= " AND l.id IN ($selectedlearningplan) ";
+					$assign_users_sql .= " AND l.id IN ($selectedlearningplan) ";
 				}
 				if(!empty($filterdata->status)){
 			         if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
@@ -473,34 +483,34 @@ class view extends plugin_renderer_base {
                 }else{
                     $plan_location = get_string('statusna');
                 }
-				if(!empty($learning_plan->department)){
+				// if(!empty($learning_plan->department)){
 
-                    $plan_departments= open::departments($learning_plan->department);
-					$plan_department = array();
-					foreach($plan_departments as $plan_dep){
-						$plan_department[] = $plan_dep->fullname;
-					}
-					$plan_department = implode(',', $plan_department);
-					$plan_department_string = strlen($plan_department) > 23 ? substr($plan_department, 0, 23)."..." : $plan_department;
-                }else{
-                    $plan_department = get_string('statusna');
-                }
-				if(!empty($learning_plan->subdepartment)){
-                    $plan_subdepartments=open::departments($learning_plan->subdepartment);
-					$plan_subdepartment = array();
-					foreach($plan_subdepartments as $plan_subdep) {
-						$plan_subdepartment[] = $plan_subdep->fullname;
-					}
-					$fullname = implode(',', $plan_subdepartment);
-					$str_len = strlen($fullname);
-					if($str_len > 32){
-						$sub_str = substr($fullname,0,32);
-					}else{
-						$plan_subdepartment = $fullname;
-					}
-                }else{
-                    $plan_subdepartment = get_string('statusna');
-                }
+                //     $plan_departments= open::departments($learning_plan->department);
+				// 	$plan_department = array();
+				// 	foreach($plan_departments as $plan_dep){
+				// 		$plan_department[] = $plan_dep->fullname;
+				// 	}
+				// 	$plan_department = implode(',', $plan_department);
+				// 	$plan_department_string = strlen($plan_department) > 23 ? substr($plan_department, 0, 23)."..." : $plan_department;
+                // }else{
+                //     $plan_department = get_string('statusna');
+                // }
+				// if(!empty($learning_plan->subdepartment)){
+                //     $plan_subdepartments=open::departments($learning_plan->subdepartment);
+				// 	$plan_subdepartment = array();
+				// 	foreach($plan_subdepartments as $plan_subdep) {
+				// 		$plan_subdepartment[] = $plan_subdep->fullname;
+				// 	}
+				// 	$fullname = implode(',', $plan_subdepartment);
+				// 	$str_len = strlen($fullname);
+				// 	if($str_len > 32){
+				// 		$sub_str = substr($fullname,0,32);
+				// 	}else{
+				// 		$plan_subdepartment = $fullname;
+				// 	}
+                // }else{
+                //     $plan_subdepartment = get_string('statusna');
+                // }
                 $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($learning_plan->id);
                 $action_icons = '';
                 if (is_siteadmin() || has_capability('local/learningplan:visible', $categorycontext)) {
@@ -675,7 +685,7 @@ class view extends plugin_renderer_base {
             }
             $table->data = $table_data;
             $return = html_writer::table($table);
-            $filtersubdepts = $filterorganizations = $filterdepartments = $filterstatus = $filterlearningplan ='';
+            $filtersubdepts = $filterorganizations = $filterdepartments = $filterstatus = $filterlearningplan = $filter4level = $filter5level = $filterstates = $filterdistrict = $filtersubdistrict = $filtervillage ='';
             if($filterdata){
 				if($filterdata->subdepartment){
 					$filtersubdepts = implode(',', $filterdata->subdepartment);
@@ -693,19 +703,56 @@ class view extends plugin_renderer_base {
 					$filterlearningplan = implode(',', $filterdata->learningplan);
 				}
 
+				if($filterdata->department4level){
+					$filter4level = implode(',', $filterdata->department4level);
+				}
+
+				if($filterdata->department5level){
+					$filter5level = implode(',', $filterdata->department5level);
+				}
+
+				if($filterdata->states){
+					$filterstates = implode(',', $filterdata->states);
+				}
+
+				if($filterdata->district){
+					$filterdistrict = implode(',', $filterdata->district);
+				}
+
+				if($filterdata->subdistrict){
+					$filtersubdistrict = implode(',', $filterdata->subdistrict);
+				}
+
+				if($filterdata->village){
+					$filtervillage = implode(',', $filterdata->village);
+				}
+
 				if($filterdata->status){
 					//print_r($filterdata->status);
 	        		$filterstatus = implode(',',$filterdata->status);			       
 	    		}
 			}
 			else{
-            	$filtersubdepts = $filterorganizations = $filterdepartments =$filterlearningplan = $filterstatus = null;
+            	$filtersubdepts = $filterorganizations = $filterdepartments =$filterlearningplan = $filterstatus = $filter4level = $filter5level = $filterstates = $filterdistrict = $filtersubdistrict = $filtervillage = null;
             }
             if(!empty($costcenterid)){
             	$filterorganizations = $costcenterid;
             }
             if(!empty($departmentid)){
             	$filterdepartments = $departmentid;
+            }
+
+            if(!empty($states)){
+            	$filterstates = $states;
+            }
+            if(!empty($district)){
+            	$filterdistrict = $district;
+            }
+            if(!empty($subdistrict)){
+            	$filtersubdistrict = $subdistrict;
+            }
+            if(!empty($village)){
+            	$filtervillage = $village;
             }
            
             if(!empty($status1)){
@@ -726,7 +773,7 @@ class view extends plugin_renderer_base {
                     									  "searchPlaceholder": "'.get_string('search','local_learningplan').'",
                     									  "emptyTable":     "<div class=\'w-100 alert alert-info\'>No Learning Paths Available </div>",
 													},
-													"ajax": "ajax.php?manage=1&subdepts='.$filtersubdepts.'&costcenterid='.$filterorganizations.'&departmentid='.$filterdepartments.'&learningplan='.$filterlearningplan.'&status='.$filterstatus.'&view_type='.$view_type.'",
+													"ajax": "ajax.php?manage=1&subdepts='.$filtersubdepts.'&costcenterid='.$filterorganizations.'&departmentid='.$filterdepartments.'&learningplan='.$filterlearningplan.'&status='.$filterstatus.'&view_type='.$view_type.'&department4level='.$filter4level.'&department5level='.$filter5level.'&states='.$filterstates.'&district='.$filterdistrict.'&subdistrict='.$filtersubdistrict.'&village='.$filtervillage.'",
 													"datatype": "json",
 													"pageLength": 8,
 													
@@ -965,7 +1012,9 @@ class view extends plugin_renderer_base {
 								'.get_string('target_audience_tab','local_learningplan').'
 							</a>
 						</li>';
-				if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
+
+        $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();	
+				if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
 					$request_renderer = $PAGE->get_renderer('local_request');
 					$requestdata = $request_renderer->render_requestview(TRUE, $id, 'learningplan');
 					$options = $requestdata['options'];
@@ -1352,7 +1401,7 @@ class view extends plugin_renderer_base {
         $sql .= " AND u.open_states IN ({$params['states']}) ";
     }
     if (!empty($params['district'])) {
-        $sql .= " AND u.open_district IN ({$params['open_district']}) ";
+        $sql .= " AND u.open_district IN ({$params['district']}) ";
     }
     if (!empty($params['subdistrict'])) {
         $sql .= " AND u.open_subdistrict IN ({$params['subdistrict']}) ";
@@ -1499,7 +1548,7 @@ class view extends plugin_renderer_base {
         $sql .= " AND u.open_states IN ({$params['states']}) ";
     }
     if (!empty($params['district'])) {
-        $sql .= " AND u.open_district IN ({$params['open_district']}) ";
+        $sql .= " AND u.open_district IN ({$params['district']}) ";
     }
     if (!empty($params['subdistrict'])) {
         $sql .= " AND u.open_subdistrict IN ({$params['subdistrict']}) ";

@@ -49,31 +49,61 @@ class general_lib{
 	}
 
 	public function get_classroom_info($id){
-        global $DB;
+        global $DB, $USER, $CFG;
+        require_once($CFG->dirroot.'/local/search/lib.php');
         $classroom = $DB->get_record('local_classroom', array('id' => $id));
-        // $classroom->startdate = date('d-m-Y', $classroom->startdate);
-        // $classroom->enddate = date('d-m-Y', $classroom->endate);
-        $classroom->summary = $classroom->description;
-        $classroom->points = $course->open_points;
+        if($classroom){
+            $classroom->fullname = $classroom->name;
+            $classroom->summary = $classroom->description;
+            $classroom->points = $course->open_points;
 
-        if(file_exists($CFG->dirroot.'/local/includes.php')){
-            require_once($CFG->dirroot.'/local/includes.php');
-            $includes = new user_course_details();
-        }
-        $coursefileurl = (new \local_classroom\classroom)->classroom_logo($coursefileurl = $classroom->id);
-        if($coursefileurl == false){
-                    $coursefileurl = $includes->get_classes_summary_files($classroom);
+            if(file_exists($CFG->dirroot.'/local/includes.php')){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new \user_course_details();
+            }
+            $coursefileurl = (new \local_classroom\classroom)->classroom_logo($coursefileurl = $classroom->id);
+            if($coursefileurl == false){
+                $coursefileurl = $includes->get_classes_summary_files($classroom);
+            }
+            $classroom->isenrolled = $DB->record_exists('local_classroom_users', array('classroomid' => $classroom->id, 'userid' => $USER->id));
+            $waitlist = $DB->get_field('local_classroom_waitlist','id',array('classroomid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
+            $classroom->requeststatus = MODULE_NOT_ENROLLED;
+            if($waitlist > 0){
+                $classroom->requeststatus = MODULE_ENROLMENT_WAITING;
+            }else{
+                if($classroom->isenrolled){
+                    $classroom->requeststatus = MODULE_ENROLLED;
+                }else{
+                    if($classroom->approvalreqd == 1){
+                        $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                        $requeststatus = $DB->get_field_sql($sql, array('componentid' => $classroom->id,'compname' => 'classroom', 'createdbyid'=>$USER->id));
+                        if($requeststatus == 'PENDING'){
+                            $classroom->requeststatus = MODULE_ENROLMENT_PENDING;
+                        }
+                    }
                 }
-        $classroom->bannerimage = $coursefileurl;
-        $classroom->category = ($DB->get_field('local_custom_category','fullname',array('id' => $classroom->open_category))) ;
+            }
+            $classroom->bannerimage = is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
+            $classroom->category = ($DB->get_field('local_custom_category','fullname',array('id' => $classroom->open_category))) ;
+            $classroom_capacity_check = (new local_classroom\classroom)->classroom_capacity_check( $classroom->id);
+            $classroom->enrolment_status_message = 0;
+            if($classroom_capacity_check && $classroom->status == 1 && !$classroom->isenrolled &&  $classroom->allow_waitinglistusers == 0){
+                $classroom->enrolment_status_message = 1;
+            }else if($classroom->nomination_startdate > 0 && $classroom->nomination_startdate <  time() && (($classroom->nomination_enddate > 0 && $classroom->nomination_enddate > time()) || $classroom->nomination_enddate == 0 )){
+                $classroom->enrolment_status_message = 2;
+            }
+            $classroom->coursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_classroom_courses} AS lcc ON lcc.courseid = c.id WHERE lcc.classroomid = :classroomid ", array('classroomid' => $classroom->id));
 
-        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $classroom->id, 'module_area' => 'local_learningplan'));
-        if($ratinginfo){
-            $classroom->avgrating = $ratinginfo->module_rating;
-            $classroom->ratedusers = $ratinginfo->module_rating_users;
-            // $classroom->likes = $ratinginfo->module_like;
-            // $classroom->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $classroom->id, 'module_area' => 'local_learningplan'));
+            if($ratinginfo){
+                $classroom->avgrating = $ratinginfo->module_rating;
+                $classroom->ratedusers = $ratinginfo->module_rating_users;
+                // $classroom->likes = $ratinginfo->module_like;
+                // $classroom->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+            }
+            return $classroom;
+        }else{
+            throw new \Exception("Classroom Not found");
         }
-        return $classroom;
     }
 }

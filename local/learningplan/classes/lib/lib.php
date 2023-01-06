@@ -141,41 +141,33 @@ class lib
 
 		$sql = "SELECT u.id FROM {user} AS u WHERE u.id > 2 {$siteadmin_sql} AND u.id not in ($USER->id) ";
 
-
-
-		if ($plan_info->department !== null && $plan_info->department !== '-1' && $plan_info->department !== 0) {
-			$sql .= ' AND u.open_departmentid IN(' . $plan_info->department . ')';
-		}
-		if ($plan_info->subdepartment !== null && $plan_info->subdepartment !== '-1' && $plan_info->subdepartment !== 0) {
-			$sql .= ' AND u.open_subdepartment IN(' . $plan_info->subdepartment . ')';
-		}
 		// OL-1042 Add Target Audience to Classrooms//
 		$params = array();
-		if (!empty($plan_info->open_group)) {
-			$group_list = $DB->get_records_sql_menu("SELECT cm.id, cm.userid from {cohort_members} cm, {user} u where u.id = cm.userid AND u.deleted = 0 AND u.suspended = 0 AND cm.cohortid IN ({$plan_info->open_group})");
+		// if (!empty($plan_info->open_group)) {
+		// 	$group_list = $DB->get_records_sql_menu("SELECT cm.id, cm.userid from {cohort_members} cm, {user} u where u.id = cm.userid AND u.deleted = 0 AND u.suspended = 0 AND cm.cohortid IN ({$plan_info->open_group})");
 
-			$groups_members = implode(',', $group_list);
-			if (!empty($groups_members))
-				$sql .= " AND u.id IN ({$groups_members})";
-			else
-				$sql .= " AND u.id =0";
-		}
-		if (!empty($plan_info->open_hrmsrole)) {
-			// $implode_result=implode("\",\"",explode(',',$plan_info->open_hrmsrole));
-			$params['hrmsrole_like'] = ',' . $plan_info->open_hrmsrole . ',';
-			$sql .= " AND :hrmsrole_like LIKE CONCAT('%,',u.open_hrmsrole,',%')";
-		}
-		if (!empty($plan_info->open_designation)) {
-			// $implode_result=implode("\",\"",explode(',',$plan_info->open_designation));
-			$params['designation_like'] = $plan_info->open_designation;
-			//             $sql .= " AND u.open_designation IN(\"{$implode_result}\")";
-			$sql .= " AND :designation_like LIKE CONCAT('%,',u.open_designation,',%')";
-		}
-		if (!empty($plan_info->open_location)) {
-			// $implode_result=implode("\",\"",explode(',',$plan_info->open_location));
-			$params['location_like'] = ',' . $plan_info->open_location . ',';
-			$sql .= " AND :location_like LIKE CONCAT('%,', u.city, ',%')";
-		}
+		// 	$groups_members = implode(',', $group_list);
+		// 	if (!empty($groups_members))
+		// 		$sql .= " AND u.id IN ({$groups_members})";
+		// 	else
+		// 		$sql .= " AND u.id =0";
+		// }
+		// if (!empty($plan_info->open_hrmsrole)) {
+		// 	// $implode_result=implode("\",\"",explode(',',$plan_info->open_hrmsrole));
+		// 	$params['hrmsrole_like'] = ',' . $plan_info->open_hrmsrole . ',';
+		// 	$sql .= " AND :hrmsrole_like LIKE CONCAT('%,',u.open_hrmsrole,',%')";
+		// }
+		// if (!empty($plan_info->open_designation)) {
+		// 	// $implode_result=implode("\",\"",explode(',',$plan_info->open_designation));
+		// 	$params['designation_like'] = $plan_info->open_designation;
+		// 	//             $sql .= " AND u.open_designation IN(\"{$implode_result}\")";
+		// 	$sql .= " AND :designation_like LIKE CONCAT('%,',u.open_designation,',%')";
+		// }
+		// if (!empty($plan_info->open_location)) {
+		// 	// $implode_result=implode("\",\"",explode(',',$plan_info->open_location));
+		// 	$params['location_like'] = ',' . $plan_info->open_location . ',';
+		// 	$sql .= " AND :location_like LIKE CONCAT('%,', u.city, ',%')";
+		// }
 		// OL-1042 Add Target Audience to Classrooms//
 		$sql .= " AND u.id NOT IN (SELECT userid FROM {local_learningplan_user} WHERE planid=$planid)";
 		$users_info = $DB->get_records_sql($sql, $params);

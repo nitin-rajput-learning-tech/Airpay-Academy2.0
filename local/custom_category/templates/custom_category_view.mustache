@@ -41,9 +41,16 @@
                             <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{custom_category_id}}" onclick="(function(e){ require('local_custom_category/newcustomcategory').init({selector:'createrepositorymodal', contextid:1, repositoryid:{{custom_category_id}}}) })(event)" style="cursor:pointer" title="Edit">
                                 <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>
                             </a>
-                            <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_custom_category/newcustomcategory').deleteskill({selector: 'deletecustomcategory' ,skillid:{{custom_category_id}},contextid:1}) })(event)">
+                            {{^ categoryexist}}
+                            <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_custom_category/newcustomcategory').deleteskill({selector: 'deletecustomcategory', skillid:{{custom_category_id}}, name: '{{custom_category_name}}' ,contextid:1}) })(event)">
                                 <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
                             </a>
+                            {{/ categoryexist}}
+                            {{# categoryexist}}
+                            <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_custom_category/newcustomcategory').nodelete({selector: 'deletecustomcategory', name: '{{custom_category_name}}',skillid:{{custom_category_id}},contextid:1}) })(event)">
+                                <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
+                            </a>
+                            {{/ categoryexist}}
                         </td>
                     </tr>
                 {{/records}}

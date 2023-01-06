@@ -68,24 +68,48 @@ class general_lib{
 	}
 
 	public function get_learningplan_info($id){
-        global $DB;
+        global $DB, $CFG;
+        require_once($CFG->dirroot.'/local/search/lib.php');
         $learningplans = $DB->get_record('local_learningplan', array('id' => $id));
-        // $learningplans->startdate = date('d-m-Y', $learningplans->startdate);
-        // $learningplans->enddate = date('d-m-Y', $learningplans->endate);
-        $learningplans->summary = $learningplans->description;
-        $learningplans->points = $learningplans->open_points;
+        if($learningplans){
+            $learningplans->fullname = $learningplans->name;
+            $learningplans->summary = $learningplans->description;
+            $learningplans->points = $learningplans->open_points;
 
-        $coursefileurl = (new \local_learningplan\lib\lib)->get_learningplansummaryfile($coursefileurl = $learningplans->id);
-        $learningplans->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
-        $learningplans->category = ($DB->get_field('local_custom_category','fullname',array('id' => $learningplans->open_category))) ;
+            $coursefileurl = (new \local_learningplan\lib\lib)->get_learningplansummaryfile($coursefileurl = $learningplans->id);
+            $learningplans->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
+            $learningplans->category = ($DB->get_field('local_custom_category','fullname',array('id' => $learningplans->open_category))) ;
+            $learningplans->isenrolled = $DB->record_exists('local_learningplan_user', array('planid' => $learningplans->id, 'userid' => $USER->id));
 
-        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $learningplans->id, 'module_area' => 'local_learningplan'));
-        if($ratinginfo){
-            $learningplans->avgrating = $ratinginfo->module_rating;
-            $learningplans->ratedusers = $ratinginfo->module_rating_users;
-            // $learningplans->likes = $ratinginfo->module_like;
-            // $learningplans->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+            $learningplans->requeststatus = MODULE_NOT_ENROLLED;
+            if($learningplans->isenrolled){
+                $learningplans->requeststatus = MODULE_ENROLLED;
+            }else{
+                if($learningplans->approvalreqd){
+                    $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                    $requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'learningplan', 'createdbyid'=>$USER->id));
+                    if($requeststatus == 'PENDING'){
+                        $learningplans->requeststatus = MODULE_ENROLMENT_PENDING;
+                    }
+                }
+            }
+
+            $learningplans->optionalcoursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'or' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
+
+            $learningplans->mandatorycoursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'and' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
+
+            $learningplans->coursecount = $learningplans->mandatorycoursecount + $learningplans->optionalcoursecount;
+
+            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $learningplans->id, 'module_area' => 'local_learningplan'));
+            if($ratinginfo){
+                $learningplans->avgrating = $ratinginfo->module_rating;
+                $learningplans->ratedusers = $ratinginfo->module_rating_users;
+                // $learningplans->likes = $ratinginfo->module_like;
+                // $learningplans->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+            }
+            return $learningplans;
+        }else{
+            throw new \Exception("Learningplan Not found");
         }
-        return $learningplans;
     }
 }

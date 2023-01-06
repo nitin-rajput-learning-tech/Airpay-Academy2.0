@@ -815,6 +815,38 @@ class core_renderer extends \core_renderer {
         }
         return $this->render_from_template('core/loginform', $context);
     }
+
+    /**
+     * Renders the otplogin form.
+     *
+     * @param \core_auth\output\otplogin $form The renderable.
+     * @return string
+     */
+    public function render_otplogin(\core_auth\output\otplogin $form) {
+        global $CFG, $SITE;
+
+        $context = $form->export_for_template($this);
+
+        // Override because rendering is not supported in template yet.
+        if ($CFG->rememberusername == 0) {
+            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabledonlysession');
+        } else {
+            $context->cookieshelpiconformatted = $this->help_icon('cookiesenabled');
+        }
+        $context->errorformatted = $this->error_text($context->error);
+
+        $context->sitename = format_string($SITE->fullname, true,
+            ['context' => \context_course::instance(SITEID), "escape" => false]);
+        $url = $this->get_logo_url();
+        if ($url) {
+            $url = $url->out(false);
+        }
+        $context->logourl = $url;
+        $context->loginlogo = $this->loginlogo();
+        $context->loginslider = $this->loginslider();
+
+        return $this->render_from_template('core/otploginform', $context);
+    }
     /**
      * Wrapper for header elements.
      *
@@ -1331,12 +1363,12 @@ class core_renderer extends \core_renderer {
         else
             $newpageurl = $pageurl;
 
-        // if($newpageurl == $CFG->wwwroot.'/enrol/index.php' || $newpageurl == $CFG->wwwroot.'/enrol/'){
-        //     redirect($CFG->wwwroot.'/my');
-        // }
-        // if($newpageurl == $CFG->wwwroot.'/course/management.php'){
-        //     redirect($CFG->wwwroot.'/local/courses/index.php');
-        // }
+        if($newpageurl == $CFG->wwwroot.'/enrol/index.php' || $newpageurl == $CFG->wwwroot.'/enrol/'){
+            redirect($CFG->wwwroot.'/my');
+        }
+        if($newpageurl == $CFG->wwwroot.'/course/management.php'){
+            redirect($CFG->wwwroot.'/local/courses/index.php');
+        }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
             if($_GET['id']){
                 $id = $_GET['id'];

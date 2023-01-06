@@ -26,7 +26,7 @@
 
 require_once('../../config.php');
 require_once($CFG->dirroot . '/local/courses/filters_form.php');
-
+global $DB,$USER;
 $id        = optional_param('id', 0, PARAM_INT);
 $deleteid = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
@@ -48,7 +48,13 @@ $PAGE->navbar->add(get_string('pluginname', 'local_courses'), new moodle_url('/l
 $PAGE->navbar->add(get_string('manage_courses', 'local_courses'));
 $renderer = $PAGE->get_renderer('local_courses');
 echo $OUTPUT->header();
-$result = $DB->get_records('local_course_types',array(),$sort='id DESC');
+if(is_siteadmin()){
+    $result = $DB->get_records('local_course_types',array(),$sort='id DESC');
+} else {
+    $costcenterid = explode('/', $USER->open_path)[1];
+    $sql = 'SELECT * FROM {local_course_types} WHERE orgid = 0 OR orgid ='.$costcenterid.' ORDER BY id DESC';
+    $result = $DB->get_records_sql($sql, array());
+}
 foreach($result as $res){
     if(in_array($res->id,array('1','2','3','4','5'))){
         $show = false;
@@ -57,10 +63,12 @@ foreach($result as $res){
     }
     $res->display = $show;
     $res->identifiedas = $DB->get_field('course','open_identifiedas',array('open_identifiedas'=>$res->id));
-
+    $organization = $DB->get_field('local_costcenter','fullname', array('id' => $res->orgid));
+    $res->organization = $organization ? $organization: 'All';
 }
 $data = (object)[
     'result' => array_values($result),
+    'is_admin' => is_siteadmin(),
 ];
 
 echo $OUTPUT->render_from_template('local_courses/coursetypes_table', $data);
