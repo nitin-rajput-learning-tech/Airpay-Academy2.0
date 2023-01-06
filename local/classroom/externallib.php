@@ -3066,6 +3066,7 @@ public static function submit_instituteform_form_parameters() {
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
             'startdate' => new external_value(PARAM_INT, 'startdate'),
             'enddate' => new external_value(PARAM_INT, 'enddate'),
+            'coursecount' => new external_value(PARAM_INT, 'coursecount', VALUE_OPTIONAL, 0),
             'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
             'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
