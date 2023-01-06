@@ -430,7 +430,7 @@ class search implements renderable{
             }
             $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
         }
-        return $DB->record_exists_sql($selectsql.$wheresql, array['courseid' => $course->id]);
+        return $DB->record_exists_sql($selectsql.$wheresql, ['courseid' => $course->id]);
     }
     public function get_enrollbutton($enroll, $courseinfo){
         global $DB,$CFG,$USER;
