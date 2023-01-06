@@ -23,6 +23,9 @@
         <tr>
             <th>{{#str}}name, local_courses{{/str}}</th>
             <th>{{#str}}course_type_shortname, local_courses{{/str}}</th>
+            {{# is_admin}}
+            <th>{{#str}}organization, local_courses{{/str}}</th>
+            {{/ is_admin}}
             <th>{{#str}}actions, local_courses{{/str}}</th>
         </tr>
     </thead>
@@ -31,6 +34,9 @@
       <tr>
         <td>{{name}}</td>
         <td>{{shortname}}</td>
+        {{# is_admin}}
+        <td>{{organization}}</td>
+        {{/ is_admin}}
         <td>
           {{#display}}
           <a href="javascript:void(0)"  onclick = '(function(e){ require("local_courses/createCoursetype").init({contextid:1, coursetypeid:{{id}} }) })(event)' ><i class="icon fa fa-pencil fa-fw " title="Edit" role="img" aria-label="Edit title"></i></i></a>
