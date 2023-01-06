@@ -211,8 +211,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $exist_sql .= " AND id=$id ";
 
             $costcenter = $DB->get_record_sql($exist_sql);
-            $depth=$costcenter->depth;
-            $costcenterpath=$costcenter->path;
+            $depth=isset($costcenter->depth);
+            $costcenterpath=isset($costcenter->path);
 
         }else{
             $costcenterpath=null;
@@ -439,7 +439,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['deptdelete'] = $deptdelete;
             $departments_array['deptid'] = $dept->id;
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;
-            $departments_array['headstring'] = 'update_costcenter';
+            $departments_array['headstring'] = 'update_dipartment';
             $departments_array['formtype'] = 'department';
 
             $departments_array['role_count'] = $rolescount;
@@ -630,15 +630,18 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "parentid" => $depart->parentid,
             "delete_message" => $del_confirmationmsg,
             "departments_content" => $departments_content,
-            "headstring" => 'update_costcenter',
+            "headstring" => 'update_dipartment',
             "formtype" => 'department',
             "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $categorycontext)),
         ];
         if($depart->depth == 4){
+            $costcenter_view_content['headstring'] = 'update_subsubsubdipartment';
             $costcenter_view_content['showsubsubsubdept_content'] = true;
         }else if($depart->depth == 3){
+            $costcenter_view_content['headstring'] = 'update_subsubdipartment';
             $costcenter_view_content['showsubsubdept_content'] = true;
         }else if($depart->depth == 2){
+            $costcenter_view_content['headstring'] = 'update_subdipartment';
             $costcenter_view_content['showsubdept_content'] = true;
         }
 
