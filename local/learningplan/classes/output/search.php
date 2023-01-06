@@ -300,10 +300,18 @@ class search implements renderable{
     }
     public function enrol_user_to_component($enrolmethod, $moduleid){
         global $DB, $USER, $CFG;
+        $learningplan_lib = new \local_learningplan\lib\lib();
+        $learningplan = $DB->get_record('local_learningplan', array('id' => $moduleid));
+        if(empty($learningplan)){
+            throw new \Exception("Learningplan not found");
+        }
+        $can_self_enrol = $this->is_plan_accessible($learningplan);
+        if(!$can_self_enrol){
+            throw new \Exception("You cannot enrol to this learningplan");
+        }
         if($this->get_enrollflag($moduleid)){
             throw new \Exception("Already enrolled");
         }
-        $learningplan = $DB->get_record('local_learningplan', array('id' => $moduleid));
         switch($enrolmethod){
             case 'request':
                 if($learningplan->approvalreqd != 1){
@@ -330,6 +338,31 @@ class search implements renderable{
                 throw new \Exception("Unknown enrollment method");
             break;
         }
+    }
+    public function is_plan_accessible($learningplan){
+        global $USER, $DB;
+        $selectsql = "SELECT llp.id  from {local_learningplan} llp  ";
+        $wheresql = " WHERE llp.id = :learningplanid and llp.visible=1  "; //AND llp.open_status <> 4
+        $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
+        $paths = [];
+        foreach($usercostcenterpaths AS $userpath){
+            $userpathinfo = $userpath->costcenterpath;
+            $paths[] = $userpathinfo.'%';
+            while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                $userpathinfo = rtrim($userpathinfo, '/');
+                if ($userpathinfo === '') {
+                  break;
+                }
+                $paths[] = $userpathinfo;
+            }
+        }
+        if(!empty($paths)){
+            foreach($paths AS $path){
+                $pathsql[] = " llp.open_path LIKE '{$path}' ";
+            }
+            $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+        }
+        return $DB->record_exists_sql($selectsql.$wheresql, array['learningplanid' => $learningplan->id]);
     }
     private function get_enrollflag($certificationid){
         global $USER, $DB;

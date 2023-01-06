@@ -363,6 +363,13 @@ class search implements renderable{
     public function enrol_user_to_component($enrolmethod, $moduleid){
         global $DB, $USER;
         $course = get_course($moduleid);
+        if(empty($course)){
+            throw new \Exception("Course not found");
+        }
+        $can_self_enrol = $this->is_course_accessible($course);
+        if(!$can_self_enrol){
+            throw new \Exception("You cannot enrol to this course");
+        }
         if(is_enrolled(context_course::instance($moduleid, $USER->id))){
             throw new \Exception("Already enrolled");
         }
@@ -400,7 +407,31 @@ class search implements renderable{
             break;
         }
     }
-
+    public function is_course_accessible($course){
+        global $DB, $USER;
+        $selectsql = " SELECT c.id FROM {course} c ";
+        $wheresql = " WHERE c.id > 1 AND c.visible = 1 AND c.selfenrol = 1 AND c.id = :courseid";
+        $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
+        $paths = [];
+        foreach($usercostcenterpaths AS $userpath){
+            $userpathinfo = $userpath->costcenterpath;
+            $paths[] = $userpathinfo.'%';
+            while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                $userpathinfo = rtrim($userpathinfo, '/');
+                if ($userpathinfo === '') {
+                  break;
+                }
+                $paths[] = $userpathinfo;
+            }
+        }
+        if(!empty($paths)){
+            foreach($paths AS $path){
+                $pathsql[] = " c.open_path LIKE '{$path}' ";
+            }
+            $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+        }
+        return $DB->record_exists_sql($selectsql.$wheresql, array['courseid' => $course->id]);
+    }
     public function get_enrollbutton($enroll, $courseinfo){
         global $DB,$CFG,$USER;
         $courseid = $courseinfo->id;

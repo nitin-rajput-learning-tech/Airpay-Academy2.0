@@ -387,10 +387,17 @@ class search implements renderable{
 
     public function enrol_user_to_component($enrolmethod, $moduleid){
         global $DB, $USER, $CFG;
+        $classroom = $DB->get_record('local_classroom', array('id' => $moduleid));
+        if(empty($classroom)){
+            throw new \Exception("Classroom not found");
+        }
+        $can_self_enrol = $this->is_classroom_accessible($classroom);
+        if(!$can_self_enrol){
+            throw new \Exception("You cannot enrol to this classroom");
+        }
         if($this->get_the_enrollflag($moduleid)){
             throw new \Exception("Already enrolled");
         }
-        $classroom = $DB->get_record('local_classroom', array('id' => $moduleid));
         switch($enrolmethod){
             case 'request':
                 if($classroom->approvalreqd != 1){
@@ -411,6 +418,94 @@ class search implements renderable{
                 throw new \Exception("Unknown enrollment method");
             break;
         }
+    }
+    public function is_classroom_accessible($classroom){
+        $selectsql = "SELECT  lc.id FROM {local_classroom} lc  ";
+
+        // added condition for not displaying retired ILT's.
+        $wheresql = " WHERE lc.visible=1 AND lc.status = 1 AND lc.selfenrol = 1 AND lc.id = ? ";
+
+        $sqlparams = array($classroom->id);
+        $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
+        $paths = [];
+        foreach($usercostcenterpaths AS $userpath){
+            $userpathinfo = $userpath->costcenterpath;
+            $paths[] = $userpathinfo.'%';
+            while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                $userpathinfo = rtrim($userpathinfo, '/');
+                if ($userpathinfo === '') {
+                  break;
+                }
+                $paths[] = $userpathinfo;
+            }
+        }
+        if(!empty($paths)){
+            foreach($paths AS $path){
+                $pathsql[] = " lc.open_path LIKE '{$path}' ";
+            }
+            $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+        }
+
+        $params = array();
+
+        $group_list = $DB->get_records_sql_menu("SELECT cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
+
+        if (!empty($group_list)){
+            $groups_members = implode(',', $group_list);
+            if(!empty($group_list)){
+                $grouquery = array();
+                foreach ($group_list as $key => $group) {
+                    $grouquery[] = " CONCAT(',',lc.open_group,',') LIKE CONCAT('%,',{$group},',%') ";
+                }
+                $groupqueeryparams =implode('OR',$grouquery);
+
+                $params[]= '('.$groupqueeryparams.')';
+            }
+        }
+
+        if(count($params) > 0){
+            $opengroup=implode('AND',$params);
+        }else{
+            $opengroup =  " 1 != 1 ";
+        }
+
+        $params = array();
+        $params[]= " 1 = CASE WHEN lc.open_group is NOT NULL
+                THEN
+                    CASE
+                        WHEN $opengroup
+                            THEN 1
+                            ELSE 0
+                    END
+                ELSE 1 END ";
+
+
+
+
+        if(!empty($USER->open_designation) && $USER->open_designation != ""){
+            $sqlparams[] = "%,$USER->open_designation,%";
+        }else{
+            $sqlparams[] = "";
+        }
+        $params[]= " 1 = CASE WHEN lc.open_designation IS NOT NULL
+                    THEN
+                        CASE
+                            WHEN CONCAT(',',lc.open_designation,',') LIKE ?
+                                THEN 1
+                                ELSE 0
+                        END
+                    ELSE 1 END ";
+
+
+        if(!empty($params)){
+            $finalparams = implode('AND',$params);
+        }else{
+            $finalparams= ' 1=1 ' ;
+        }
+
+        $joinsql = " AND ($finalparams) ";
+        $wheresql .= $joinsql;
+        return $DB->record_exists_sql($selectsql.$wheresql, $sqlparams)
     }
     private function get_enrollbtn($classroominfo){
         global $DB,$USER;
