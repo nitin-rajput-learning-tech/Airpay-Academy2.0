@@ -1401,7 +1401,7 @@ class view extends plugin_renderer_base {
         $sql .= " AND u.open_states IN ({$params['states']}) ";
     }
     if (!empty($params['district'])) {
-        $sql .= " AND u.open_district IN ({$params['open_district']}) ";
+        $sql .= " AND u.open_district IN ({$params['district']}) ";
     }
     if (!empty($params['subdistrict'])) {
         $sql .= " AND u.open_subdistrict IN ({$params['subdistrict']}) ";
@@ -1548,7 +1548,7 @@ class view extends plugin_renderer_base {
         $sql .= " AND u.open_states IN ({$params['states']}) ";
     }
     if (!empty($params['district'])) {
-        $sql .= " AND u.open_district IN ({$params['open_district']}) ";
+        $sql .= " AND u.open_district IN ({$params['district']}) ";
     }
     if (!empty($params['subdistrict'])) {
         $sql .= " AND u.open_subdistrict IN ({$params['subdistrict']}) ";

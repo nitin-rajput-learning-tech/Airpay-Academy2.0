@@ -17,10 +17,10 @@
         <!-- <FIELD NAME="credits" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/> -->
         <!-- <FIELD NAME="points" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/> -->
         <FIELD NAME="objective" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="costcenter" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+       <!--  <FIELD NAME="costcenter" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="department" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="subdepartment" TYPE="int" LENGTH="10"  NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="subsubdepartment" TYPE="int" LENGTH="10"  NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="subsubdepartment" TYPE="int" LENGTH="10"  NOTNULL="false" SEQUENCE="false"/> -->
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>

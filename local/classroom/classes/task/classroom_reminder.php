@@ -56,7 +56,7 @@ class classroom_reminder extends \core\task\scheduled_task{
 		$fromuser = \core_user::get_support_user();
         $day = $notification->reminderdays;
         // $Today = \local_costcenter\lib::get_userdate("d/m/Y H:i");
-        $starttime = strtotime(Date('d/m/Y', strtotime("+".$day." days")));
+        $starttime = strtotime(Date('d-m-Y', strtotime("+".$day." days")));
         $endtime = $starttime+86399;
         $params = array();
         $sql = "SELECT lcu.id as user_enrolid, lc.*, lcu.userid FROM {local_classroom} AS lc
@@ -66,7 +66,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $params['endtime'] = $endtime;
         if($costcenterexist){
             $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
-            $params['costcenterid'] = $notification->costcenterid;
+            $params['costcenterid'] =  '%'.$notification->costcenterid. '%';
         }
 		// echo $sql;
 		// print_r($params);
@@ -88,7 +88,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         $params['endtime'] = $endtime;
         if($costcenterexist){
             $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
-            $params['costcenterid'] = $notification->costcenterid;
+            $params['costcenterid'] = '%'.$notification->costcenterid. '%';
         }
 		// 	echo $sql;
 		// print_r($params);
@@ -110,7 +110,7 @@ class classroom_reminder extends \core\task\scheduled_task{
 		$fromuser = \core_user::get_support_user();
         $day = $notification->reminderdays;
         // $Today = \local_costcenter\lib::get_userdate("d/m/Y H:i");
-        $starttime = strtotime(Date('d/m/Y', strtotime("+".$day." days")));
+        $starttime = strtotime(Date('d-m-Y', strtotime("+".$day." days")));
         $endtime = $starttime+86399;
         $params = array();
         $sql = "SELECT lcu.id as user_enrolid, lc.*, lcu.userid FROM {local_classroom} AS lc
@@ -124,7 +124,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         // $params['moduleids'] = $moduleids;
         if($costcenterexist){
             $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
-            $params['costcenterid'] = $notification->costcenterid;
+            $params['costcenterid'] = '%'.$notification->costcenterid. '%';
         }
 		// 	echo $sql;
 		// print_r($params);
@@ -147,7 +147,7 @@ class classroom_reminder extends \core\task\scheduled_task{
         // $params['moduleids'] = $moduleids;
         if($costcenterexist){
             $sql .= " AND concat('/',lc.open_path,'/') LIKE :costcenterid ";
-            $params['costcenterid'] = $notification->costcenterid;
+            $params['costcenterid'] = '%'.$notification->costcenterid. '%';
         }
 		// 	echo $sql;
 		// print_r($params);
