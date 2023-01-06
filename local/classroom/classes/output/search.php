@@ -505,7 +505,7 @@ class search implements renderable{
 
         $joinsql = " AND ($finalparams) ";
         $wheresql .= $joinsql;
-        return $DB->record_exists_sql($selectsql.$wheresql, $sqlparams)
+        return $DB->record_exists_sql($selectsql.$wheresql, $sqlparams);
     }
     private function get_enrollbtn($classroominfo){
         global $DB,$USER;

@@ -362,7 +362,7 @@ class search implements renderable{
             }
             $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
         }
-        return $DB->record_exists_sql($selectsql.$wheresql, array['learningplanid' => $learningplan->id]);
+        return $DB->record_exists_sql($selectsql.$wheresql, ['learningplanid' => $learningplan->id]);
     }
     private function get_enrollflag($certificationid){
         global $USER, $DB;
