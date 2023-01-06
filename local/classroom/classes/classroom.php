@@ -557,10 +557,11 @@ class classroom {
             $condition .= " AND (c.name LIKE :search ) ";
             $params['search'] = '%' . $search . '%';
         }
-
+        $usercondition = '';
         $categorycontext = $maincategorycontext = (new \local_classroom\lib\accesslib())::get_module_context();        
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
             $condition .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+            $usercondition .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id
@@ -589,7 +590,8 @@ class classroom {
         $countsql = "SELECT COUNT(c.id) ";
             $fromsql = "SELECT c.*, (SELECT COUNT(DISTINCT cu.userid)
                                   FROM {local_classroom_users} AS cu
-                                  WHERE cu.classroomid = c.id
+                                  JOIN {user} AS u on u.id=cu.userid
+                                  WHERE cu.classroomid = c.id $usercondition
                               ) AS enrolled_users";
      
        $sql = " FROM {local_classroom} AS c

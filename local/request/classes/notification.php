@@ -60,8 +60,10 @@ class notification{
             WHERE lnt.shortname LIKE :emailtype AND lni.active=1 ";
         $params['emailtype'] = $emailtype;
         if($costcenterexist){
-            $notification_typesql .= " AND lni.costcenterid=:costcenterid";
-            $params['costcenterid'] = $touser->open_costcenterid;
+            if($costcenterexist){
+                $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE :costcenter";
+                $params['costcenter'] = '%'.$touser->costcenter.'%';
+            }   
         }
         $notification = $this->db->get_record_sql($notification_typesql, $params);
         if(empty($notification)){
