@@ -127,15 +127,10 @@ class otp {
 
    $validinfo= $this->confirm_account($username,$otp,$otptoken->vtoken);
 
-  
     $appdetails = new stdClass();
-    
-    echo $validinfo;
-    
-    echo "Response Status".$validinfo->statusReason."<br/>";
-    echo "--Token".$otptoken->vtoken;
-
-    if($validinfo->statusReason == 'OK'){
+  
+  
+    if($validinfo->isActive){
 
       $trystatus = $validinfo->trystatus;
        $otpdetails = new stdClass();
