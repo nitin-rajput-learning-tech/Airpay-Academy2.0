@@ -297,9 +297,14 @@ class custom_course_form extends moodleform {
             $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             $skillselect = array(0 => get_string('select_skill','local_courses'));
 
-            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$this->course->open_path);
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->course->open_path);
 
-            $skills = $DB->get_records_menu('local_skill',array('costcenterid' => $org),'','id,name');
+            $skillcostcentersql = "SELECT id,name FROM {local_skill}
+                                WHERE 1=1 $costcenterpathconcatsql ";
+
+
+            $skills = $DB->get_records_sql_menu($skillcostcentersql);
+
        
             if(!empty($skills)){
                 $skillselect = $skillselect+$skills;
@@ -310,10 +315,12 @@ class custom_course_form extends moodleform {
             $mform->setType('open_skill', PARAM_INT);
 
             $levelselect = array(0 => get_string('select_level','local_courses'));
-            $level ="SELECT cl.name FROM {local_course_levels} as cl 
-                    JOIN {local_costcenter} as c ON c.id = cl.costcenterid";
 
-            $levels = $DB->get_records_menu('local_course_levels',  array('costcenterid' => $org),'sortorder', 'id,name');
+            $levelsql = "SELECT id,name FROM {local_course_levels}
+                                WHERE 1=1 $costcenterpathconcatsql ";
+
+            $levels = $DB->get_records_sql_menu($levelsql);
+
             if(!empty($levels)){
                 $levelselect = $levelselect+$levels;
             }
@@ -338,14 +345,11 @@ class custom_course_form extends moodleform {
 
                 $select = array(null => get_string('select_certificate','local_courses'));
 
-                // if(is_siteadmin()){
+                $certificatesql = "SELECT id,name FROM {tool_certificate_templates}
+                                    WHERE 1=1 $costcenterpathconcatsql ";
 
-                  $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter' => $org),'name', 'id,name');
-               //  }else{
-               //   $costcenter=(new \local_courses\lib\accesslib())::get_user_roleswitch_path($depth=1);
-               //    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenter),'name', 'id,name');
+                $cert_templates = $DB->get_records_sql_menu($certificatesql);
 
-               // }
                 $certificateslist = $select + $cert_templates;
 
                 $mform->addElement('select',  'open_certificateid', get_string('certificate_template','local_courses'), $certificateslist);

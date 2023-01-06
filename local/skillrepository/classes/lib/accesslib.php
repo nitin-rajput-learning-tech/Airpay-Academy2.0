@@ -30,37 +30,29 @@ namespace local_skillrepository\lib;
  */
 class accesslib extends \local_costcenter\lib\accesslib{
 
-    public static function skillrepositery_costcenterpath($userid = null) {
+    public static function skillrepositery_costcenterpath($skillid = null) {
 
         global $DB,$USER;
 
-        $endpathvalue=null;
+        $costcenterpath=null;
 
-        if($userid != null && $userid > 0){
+        if($skillid != null && $skillid > 0){
 
-            $costcenterpath=$DB->get_field('local_evaluations','open_path',  array('id'=> $userid));
-
-            if(!empty($costcenterpath)){
-
-                $extractcostcenterpath=array_filter(explode('/',$costcenterpath));
-
-                $endpathvalue=end($extractcostcenterpath);
-
-            }
+            $costcenterpath=$DB->get_field('local_evaluations','open_path',  array('id'=> $skillid));
         }
 
-        return $endpathvalue;
+        return $costcenterpath;
 
     }
-    public static function get_module_context($userid = null){
+    public static function get_module_context($skillid = null){
         global $USER;
 
-        return parent::get_module_context(self::skillrepositery_costcenterpath($userid));
+        return parent::get_module_context(self::skillrepositery_costcenterpath($skillid));
 
     }
-    public static function get_costcenter_path_field_concatsql($columnname,$userid = null, $datatype = NULL){
+    public static function get_costcenter_path_field_concatsql($columnname,$skillid = null, $datatype = NULL){
 
-        return parent::get_costcenter_path_field_concatsql($columnname, self::skillrepositery_costcenterpath($userid));
+        return parent::get_costcenter_path_field_concatsql($columnname, self::skillrepositery_costcenterpath($skillid));
 
     }
 }
