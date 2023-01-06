@@ -17,7 +17,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         this.contextid = args.contextid;
         this.repositoryid = args.repositoryid;
         var self = this;
-        self.init();
+        self.init(args);
     };
 
     /**
@@ -61,7 +61,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             self.modal = modal;
             // Forms are big, we want a big modal.
             self.modal.setLarge();
-            this.modal.getRoot().addClass('openLMStransition local_skillrepository');
+            this.modal.getRoot().addClass('openLMStransition local_custom_category');
 
             // We want to reset the form every time it is opened.
              this.modal.getRoot().on(ModalEvents.hidden, function() {
@@ -235,6 +235,32 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                         modal.setBody('');
                         modal.hide();
                     });
+                    modal.show();
+                }.bind(this));
+            }.bind(this));
+        },
+
+        nodelete: function(args) {
+
+
+            return Str.get_strings([{
+                key: 'reason',
+                component: 'local_custom_category',
+                param :args
+            },
+            {
+                key: 'nodeletecategory',
+                component: 'local_custom_category',
+                param :args
+            }]).then(function(s) {
+                ModalFactory.create({
+                    title: s[0],
+                    type: ModalFactory.types.DEFAULT,
+                    body: s[1],
+                })
+
+                .done(function(modal) {
+                    this.modal = modal;
                     modal.show();
                 }.bind(this));
             }.bind(this));

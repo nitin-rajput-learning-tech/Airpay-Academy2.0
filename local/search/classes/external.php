@@ -199,6 +199,9 @@ class local_search_external extends external_api {
             case 'local_learningpath':
             return (new \local_learningplan\local\general_lib())->get_learningplan_info($id);
             break;
+            default:
+                throw new \Exception('Unknown Module');
+            break;
         }
 
     }
@@ -207,15 +210,15 @@ class local_search_external extends external_api {
             'id' => new external_value(PARAM_INT, 'The id of the module'),
             'fullname' => new external_value(PARAM_TEXT, 'fullname'),
             'shortname' => new external_value(PARAM_TEXT, 'shortname'),
-            'category' => new external_value(PARAM_TEXT, 'category'),
-            'bannarimage' => new external_value(PARAM_RAW, 'bannerimage'),
-            'points' => new external_value(PARAM_RAW, 'points'),
+            'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
+            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_RAW, 'points', VALUE_OPTIONAL, 0),
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
-            'startdate' => new external_value(PARAM_INT, 'startdate'),
-            'enddate' => new external_value(PARAM_INT, 'enddate'),
-            'summary' => new external_value(PARAM_HTML, 'summary'),
-            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers'),
+            'startdate' => new external_value(PARAM_INT, 'startdate', VALUE_OPTIONAL, ''),
+            'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, ''),
+            'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
             'skill' => new external_value(PARAM_TEXT, 'skill', VALUE_OPTIONAL, ''),
             'level' => new external_value(PARAM_TEXT, 'level', VALUE_OPTIONAL, ''),
         ));

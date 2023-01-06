@@ -300,28 +300,30 @@ class general_lib{
     public function get_course_info($id){
         global $DB;
         $course = $DB->get_record('course', array('id' => $id));
+        if($course){
+            $course->points = $course->open_points;
+            $course->category = ($DB->get_field('local_custom_category','fullname',array('id' => $course->open_category))) ;
+            $course->isenrolled = is_enrolled(\context_course::instance($course->id), $USER->id, '', true);
+            $course->bannerimage = \local_search\output\searchlib::convert_urlobject_intoplainurl($course);
 
-        // $course->startdate = date('d-m-Y', $course->startdate);
-        // $course->enddate = date('d-m-Y', $course->endate);
-        $course->points = $course->open_points;
-        $course->category = ($DB->get_field('local_custom_category','fullname',array('id' => $course->open_category))) ;
-        $course->bannerimage = \local_search\output\searchlib::convert_urlobject_intoplainurl($course);
+            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_courses'));
+            if($ratinginfo){
+                $course->avgrating = $ratinginfo->module_rating;
+                $course->ratedusers = $ratinginfo->module_rating_users;
+                // $course->likes = $ratinginfo->module_like;
+                // $course->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+            }
 
-        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_courses'));
-        if($ratinginfo){
-            $course->avgrating = $ratinginfo->module_rating;
-            $course->ratedusers = $ratinginfo->module_rating_users;
-            // $course->likes = $ratinginfo->module_like;
-            // $course->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+
+            if($course->open_skill)
+                $course->skill = ($DB->get_field('local_skill','name',array('id' => $course->open_skill))) ;
+
+            if($course->open_level)
+                $course->level = ($DB->get_field('local_course_levels','name',array('id' => $course->open_level))) ;
+
+            return $course;
+        }else{
+            throw new \Exception('Course not found');
         }
-
-
-        if($course->open_skill)
-            $course->skill = ($DB->get_field('local_skill','name',array('id' => $course->open_skill))) ;
-
-        if($course->open_level)
-            $course->level = ($DB->get_field('local_course_levels','name',array('id' => $course->open_level))) ;
-
-        return $course;
     }
 }

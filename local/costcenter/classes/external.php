@@ -658,6 +658,10 @@ class local_costcenter_external extends external_api {
                         $fields      = 'SELECT id, fullname';
                         $accountssql = " FROM {local_custom_category}
                                          WHERE 1=1 AND depth = 1 $concatsql AND costcenterid = :parentid ";
+                        if($formoptions->id > 0){
+                            $accountssql .= " AND id !=".$formoptions->id;
+                        }
+
 
                         $customcat = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
 

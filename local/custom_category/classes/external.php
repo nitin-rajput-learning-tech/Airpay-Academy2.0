@@ -165,6 +165,7 @@ class local_custom_category_external extends external_api {
                         'custom_category_name' => new external_value(PARAM_RAW, 'custom_category', VALUE_OPTIONAL),
                         'shortname' => new external_value(PARAM_RAW, 'shortname of custom_category', VALUE_OPTIONAL),
                         'parent' => new external_value(PARAM_RAW, 'category name in custom_category', VALUE_OPTIONAL),
+                        'categoryexist' => new external_value(PARAM_RAW, 'categoryexist in custom_category', VALUE_OPTIONAL),
                     )
                 )
             )

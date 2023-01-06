@@ -73,6 +73,14 @@ use core_component;
 
 
     public static function convert_urlobject_intoplainurl($course){
+        global $CFG;
+        if(!is_object(self::$includesobj)){
+            if(file_exists($CFG->dirroot . '/local/includes.php')){
+                require_once($CFG->dirroot . '/local/includes.php');
+                $includes = new \user_course_details();
+            }
+            self::$includesobj = $includes;
+        }
         $coursefileurl = self::$includesobj->course_summary_files($course);
         if(is_object($coursefileurl)){
             $coursefileurl=$coursefileurl->out();

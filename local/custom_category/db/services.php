@@ -19,7 +19,7 @@
  *
  * @author eabyas  <info@eabyas.in>
  * @package BizLMS
- * @subpackage local_skillrepository
+ * @subpackage local_custom_category
  */
 
 // We defined the web service functions to install.

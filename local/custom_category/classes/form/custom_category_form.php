@@ -34,20 +34,30 @@ class custom_category_form extends moodleform {
     public function definition() {
         global $DB,$USER;
         $mform = $this->_form;
-        // $parentid = $this->_customdata['parentid'];
+        $fid = $this->_customdata['id'];
+        $parentid = $this->_customdata['parentid'];
+        $costcenterid = $this->_customdata['open_costcenterid'];
 
         $id = optional_param('id', 0, PARAM_INT);
 
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
         $context =(new \local_custom_category\lib\accesslib())::get_module_context();
-
-        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1, 1), false, 'local_custom_category', $context, $multiple = false);
+        if($fid && is_siteadmin()){
+            $orgname= $DB->get_field('local_costcenter','fullname',array('id'=>$costcenterid));
+            $mform->addElement('static','costcentername', get_string('organization', 'local_custom_category'), $orgname);
+            $mform->addElement('hidden','open_costcenterid');
+        }else{
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1, 1), false, 'local_custom_category', $context, $multiple = false);
+        }
 
         $parentsql = "SELECT lcc.id, lcc.fullname FROM {local_custom_category} AS lcc WHERE 1 = 1 AND lcc.depth = 1";
+        if($fid){
+            $parentsql .= " AND lcc.id !=".$fid;
+        }
         if(!is_siteadmin()){
             $orgcond = [];
-            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
+            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
                 $orgcond[] = " lcc.costcenterid = {$costcenterid} ";
             }
@@ -64,17 +74,23 @@ class custom_category_form extends moodleform {
             'ajax' => 'local_costcenter/form-options-selector',
             'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
             'data-action' => 'custom_category_selector',
-            'data-options' => json_encode(array('id' => $identifiedtype)),
+            'data-options' => json_encode(array('id' => $fid)),
             'class' => 'idparentselect',
             'data-parentclass' => 'open_costcenterid_select',
             'data-class' => 'idparentselect',
             'multiple' => false,
         );
-
-        if(!is_siteadmin()){
-            $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents);
+        if($fid){
+            $parentname = $DB->get_field('local_custom_category','fullname', array('id'=>$parentid));
+            $parentname = $parentname ? $parentname : 'Top';
+            $mform->addElement('static','parentname', get_string('parent','local_costcenter'),$parentname);
+            $mform->addElement('hidden','parentid');
         } else {
+            if(!is_siteadmin()){
+                $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents);
+            } else {
             $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents,$coursetype);
+            }
         }
         $mform->setType('parentid', PARAM_INT);
 
