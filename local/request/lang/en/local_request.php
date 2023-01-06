@@ -147,7 +147,7 @@ $string['approverequest_Process'] = 'Handover process has begun';
 
 //misc
 $string['noPending'] = 'Sorry, nothing pending!';
-$string['Status'] = 'Status';
+$string['status'] = 'Status';
 $string['creationdate'] = 'Creation Date';
 $string['requesttype'] = 'Request Type';
 $string['originator'] = 'Originator';

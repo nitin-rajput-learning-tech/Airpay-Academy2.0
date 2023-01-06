@@ -32,17 +32,17 @@ if (!(has_capability('local/users:manage', $categorycontext) && has_capability('
 }
 if ($format) {
     $fields = array(
-    'organization' => 'organization',
+    'organization_code' => 'organization_code',
     'username' => 'username',
     'password' => 'password',
     'learner_id' => 'learner_id',
     'first_name' => 'first_name',
     'last_name' => 'last_name',
     'email' => 'email',
-    'country' => 'country',
-    'bussiness_unit' => 'bussiness_unit',
-    'commercial_unit' => 'commercial_unit',
-    'territory' => 'territory',    
+    'country_code' => 'country_code',
+    'commercial_unit_code' => 'commercial_unit_code',
+    'commercial_area_code' => 'commercial_area_code',
+    'territory_code' => 'territory_code',    
     'reportingmanager_empid' => 'reportingmanager_empid',
     'language' => 'language',
     'designation' => 'designation',

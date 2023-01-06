@@ -619,7 +619,7 @@ class view extends plugin_renderer_base {
                 	}
                 }
 
-                       	$actions .=  '<a href="'.$CFG->wwwroot.'"/local/learningplan/lpusers_enroll.php?lpid="'.$learning_plan->id.'" title = ' .get_string('le_enrol_users','local_learningplan'). '><i class="icon fa fa-user-plus fa-fw" aria-hidden="true"></i></a>' ;
+                       	$actions .=  '<a href="'.$CFG->wwwroot.'/local/learningplan/lpusers_enroll.php?lpid='.$learning_plan->id.'" title = ' .get_string('le_enrol_users','local_learningplan'). '><i class="icon fa fa-user-plus fa-fw" aria-hidden="true"></i></a>' ;
 
                 if($view_type == 'card'){
                     $row[] = $this->render_from_template('local_learningplan/learninngplan_index_view', $learningplan_content);

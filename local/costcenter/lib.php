@@ -299,9 +299,8 @@ function local_costcenter_output_fragment_new_costcenterform($args){
         file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_costcenter', 'costcenter_logo', $data->costcenter_logo, null);
         $data->costcenter_logo = $draftitemid;
     }
-    $mform = new local_costcenter\form\organization_form(null, array('id' => $args->id, 'formtype' => $args->formtype), 'post', '', null, true, $formdata);
+    $mform = new local_costcenter\form\organization_form(null, array('id' => $args->id, 'formtype' => $args->formtype, 'parentid' => $data->parentid), 'post', '', null, true, $formdata);
 
-    
     $mform->set_data($data);
  
     if (!empty($formdata)) {
@@ -775,7 +774,7 @@ function local_costcenter_leftmenunode(){
     global $USER,$DB;
     $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
     $costcenternode = '';
-    if(has_capability('local/costcenter:view', $categorycontext) || is_siteadmin()) { 
+    if(has_capability('local/costcenter:view', $categorycontext) || is_siteadmin()) {
     $costcenternode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_departments', 'class'=>'pull-left user_nav_div departments'));
     if(is_siteadmin()) {
             $organization_url = new moodle_url('/local/costcenter/index.php');

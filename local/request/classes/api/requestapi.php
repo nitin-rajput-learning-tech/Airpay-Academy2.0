@@ -244,10 +244,9 @@ use core_user;
         //     // }
         //   }
         // }
-        list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$requesteduser->open_path);
-          $requesteduser->open_costcenterid=$org_id;
-          $requesteduser->open_departmentid = $ctr_id;
         $touser = core_user::get_user($updaterecord->createdbyid);
+        list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$touser->open_path);
+          $touser->costcenter=$org_id;     
         $fromuserid = core_user::get_support_user();
         $logmail = $notification->request_notification($type, $requests, $touser, $fromuserid, $requesteduser);
       } else{
@@ -370,10 +369,10 @@ use core_user;
         //     // }
         //   }
         // }
-        list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$requesteduser->open_path);
-          $requesteduser->open_costcenterid=$org_id;
-          $requesteduser->open_departmentid = $ctr_id;
+
         $touser = core_user::get_user($updaterecord->createdbyid);
+        list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$touser->open_path);
+          $requesteduser->costcenter=$org_id;
         $fromuserid = core_user::get_support_user();
         $logmail = $notification->request_notification($type, $requests, $touser, $fromuserid, $requesteduser);
       }else{
