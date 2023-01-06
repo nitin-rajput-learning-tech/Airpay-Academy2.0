@@ -375,15 +375,16 @@ class search implements renderable{
                 }
             break;
             case 'self':
-                if($course->approvalreqd == 1 || $course->selfenrol != 1){
+                $sql = "SELECT * from {enrol} where courseid = {$moduleid} and enrol = 'self' AND status = 0 ";
+                $instance = $DB->get_record_sql($sql);
+                if($course->approvalreqd == 1 || $course->selfenrol != 1 || empty($instance)){
                     throw new \Exception("Enrollment method inactive");
                 }else{
                     $self = enrol_get_plugin('self');
                     $type = 'course_enrol';
                     $dataobj = $id;
                     $fromuserid = 2;
-                    $sql = "SELECT * from {enrol} where courseid = {$moduleid} and enrol = 'self' ";
-                    $instance = $DB->get_record_sql($sql);
+
                     if($instance){
                         $test =  $self->enrol_user($instance,$USER->id,$instance->roleid);
                         $emaillogs = new \local_courses\notification();

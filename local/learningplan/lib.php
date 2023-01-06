@@ -569,7 +569,7 @@ function local_learningplan_search_page_filter_element(&$filterelements){
     }
 }
 function local_learningplan_enabled_search(){
-    return ['pluginname' => 'local_learningplan', 'templatename' => 'local_learningplan/searchpagecontent', 'type' => learningplan];
+    return ['pluginname' => 'local_learningpath', 'templatename' => 'local_learningplan/searchpagecontent', 'type' => learningplan];
 }
 function  local_learningplan_applicable_filters_for_search_page(&$filterapplicable){
     $filterapplicable[learningplan] = [/*'learningtype',*/ 'status', 'categories'/*, 'level', 'skill'*/];
