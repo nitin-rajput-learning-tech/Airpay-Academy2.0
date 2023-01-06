@@ -42,12 +42,9 @@ class organization_form extends moodleform { /*costcenter creation form*/
 
         $mform = $this->_form;
         $id = $this->_customdata['id'];
-
- 
         $parentid = $this->_customdata['parentid']; 
         $formtype = $this->_customdata['formtype'];
         $headstring = $this->_customdata['headstring'];
-
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
@@ -58,38 +55,23 @@ class organization_form extends moodleform { /*costcenter creation form*/
         if($formtype != 'organization'){
             if($formtype == 'department'){
                 $parent_label = get_string('organization', 'local_costcenter');
-
                 $costcentersql.=" AND lc.depth = 1 ";
-
             }else if($formtype == 'subdepartment'){
-
                 $parent_label = get_string('department', 'local_costcenter');
-
                 $costcentersql.=" AND lc.depth = 2 ";
-
             }else if($formtype == 'subsubdepartment'){
-
                 $parent_label = get_string('subdepartment', 'local_costcenter');
-
                 $costcentersql.=" AND lc.depth = 3 ";
-
             }else if($formtype == 'subsubsubdepartment'){
-
                 $parent_label = get_string('subsubdepartment', 'local_costcenter');
-
                 $costcentersql.=" AND lc.depth = 4 ";
-
             }
 
             if($id){
                 $costcentersql .= " AND lc.id = $id ";
-
             }
-
             $options = $DB->get_records_sql_menu($costcentersql);
-
             if(count($options) > 1){
-
                 $attributes = array(
                     'data-contextid' => $categorycontext->id,
                     'data-action' => 'local_account_selector',
@@ -103,9 +85,10 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $mform->setType('parentid', PARAM_INT);
                 $mform->addRule('parentid', get_string('orgemptymsg', 'local_costcenter'), 'required', null, 'client');
             }else{
-                $parentid = array_keys($options)[0];
-                $parentname = $options[$parentid];
-                $mform->addElement('static',  'parentname', $parent_label, $parentname);
+                // $parentid = array_keys($options)[0];
+                // $parentname = $options[$parentid];
+                $parent = $DB->get_field('local_costcenter','fullname', array('id'=>$parentid));
+                $mform->addElement('static',  'parentname', $parent_label, $parent);
                 $mform->addElement('hidden',  'parentid', $parentid);
                 $mform->setType('parentid', PARAM_INT);
             }

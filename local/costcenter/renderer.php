@@ -202,7 +202,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
 
-        $exist_sql = "SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql ";
+        $exist_sql = "SELECT depth FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql ";
 
         $costcenters_exist = $DB->record_exists_sql($exist_sql);
 
@@ -211,8 +211,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $exist_sql .= " AND id=$id ";
 
             $costcenter = $DB->get_record_sql($exist_sql);
-            $depth=isset($costcenter->depth);
-            $costcenterpath=isset($costcenter->path);
+            $depth=$costcenter->depth;
+            // print_r($depth);die;
 
         }else{
             $costcenterpath=null;
@@ -226,16 +226,12 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $create_organisation = false;
         }
 
-        if($costcenters_exist && $depth != 2 && $depth != 3 && $depth != 4){
-            if(is_siteadmin()){
-                $headstring = 'addnewdept';
-                $title = get_string('createdepartment','local_costcenter');
-                $create_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"department\", headstring:\"$headstring\"}) })(event)'>
-                    <i class='icon fa fa-plus-square'></i>
-                </a>";
-            }else{
-                $create_department = false;
-            }
+        if($costcenters_exist && $depth<=1){
+            $headstring = 'addnewdept';
+            $title = get_string('createdepartment','local_costcenter');
+            $create_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"department\", headstring:\"$headstring\"}) })(event)'>
+                <i class='icon fa fa-plus-square'></i>
+            </a>";
         }else{
             $create_department = false;
         }
@@ -246,7 +242,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
 
-        if($deptexist && $depth != 3 && $depth != 4){
+        if($deptexist && $depth<=2){
             $headstring = 'addnewsubdept';
                 $title = get_string('createsubdepartment','local_costcenter');
                 $create_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"subdepartment\", headstring:\"$headstring\"}) })(event)'>
@@ -263,7 +259,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $deptexistone = $DB->record_exists_sql($deptexistth);
 
-        if($deptexistone && $depth != 4 ){
+        if($deptexistone && $depth<=3){
             $headstring = 'addnewsubsubdept';
                 $title = get_string('createsubsubdepartment','local_costcenter');
                 $create_sub_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"subsubdepartment\", headstring:\"$headstring\"}) })(event)'>
@@ -279,7 +275,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $deptexistfo .= $costcenterpathconcatsql;
         }
         $deptexisttwo = $DB->record_exists_sql($deptexistfo);
-        if($deptexisttwo){
+        if($deptexisttwo && $depth<=4){
             $headstring = 'addnewsubsubsubdept';
                 $title = get_string('createsubsubsubdepartment','local_costcenter');
                 $create_sub_sub_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"subsubsubdepartment\", headstring:\"$headstring\"}) })(event)'>
