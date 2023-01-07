@@ -823,7 +823,7 @@ class core_renderer extends \core_renderer {
      * @return string
      */
     public function render_otplogin(\core_auth\output\otplogin $form) {
-        global $CFG, $SITE;
+        global $CFG, $SITE, $OUTPUT;
 
         $context = $form->export_for_template($this);
 
@@ -842,6 +842,7 @@ class core_renderer extends \core_renderer {
             $url = $url->out(false);
         }
         $context->logourl = $url;
+        $context->output = $OUTPUT;
         $context->loginlogo = $this->loginlogo();
         $context->loginslider = $this->loginslider();
 
