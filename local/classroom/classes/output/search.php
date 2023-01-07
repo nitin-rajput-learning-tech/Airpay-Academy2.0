@@ -412,7 +412,7 @@ class search implements renderable{
                     throw new \Exception("Enrollment method inactive");
                 }else{
                     require_once($CFG->dirroot.'/local/classroom/externallib.php');
-                    local_classroom_external::manageclassroomStatus_instance('selfenrol', $moduleid, true, $actionstatusmsg = '', $classroom->name);
+                    \local_classroom_external::manageclassroomStatus_instance('selfenrol', $moduleid, true, $actionstatusmsg = '', $classroom->name);
                 }
             break;
             default:

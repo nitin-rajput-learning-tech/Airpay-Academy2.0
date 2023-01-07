@@ -89,8 +89,10 @@ class general_lib{
             $classroom->enrolment_status_message = 0;
             if($classroom_capacity_check && $classroom->status == 1 && !$classroom->isenrolled &&  $classroom->allow_waitinglistusers == 0){
                 $classroom->enrolment_status_message = 1;
-            }else if($classroom->nomination_startdate > 0 && $classroom->nomination_startdate <  time() && (($classroom->nomination_enddate > 0 && $classroom->nomination_enddate > time()) || $classroom->nomination_enddate == 0 )){
+            }else if($classroom->nomination_startdate > 0 && $classroom->nomination_startdate >  time()){
                 $classroom->enrolment_status_message = 2;
+            }else if($classroom->nomination_enddate > 0 && $classroom->nomination_enddate < time()){
+                $classroom->enrolment_status_message = 3;
             }
             $classroom->coursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_classroom_courses} AS lcc ON lcc.courseid = c.id WHERE lcc.classroomid = :classroomid ", array('classroomid' => $classroom->id));
 
