@@ -59,7 +59,7 @@ class allcourses {
         $std_perpage = $perpage; 
         $firsttotal= $value;
         $firstlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords, $perpage);
-        $firstlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords);
+        $firstlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords, $perpage);
 
         //if total number of records of elearning courses is greater than perpage,
         // so we are finding out number of remainder placeholder to append the next tab courses
