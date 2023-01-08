@@ -192,7 +192,7 @@ class allcourses {
 
         $std_perpage = $perpage;
         $thirdlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords, $perpage);
-        $thirdlevel_pageno = $this->to_getlevel_endpagenumber($totalrecords);
+        $thirdlevel_pageno = $this->to_getlevel_endpagenumber($totalrecords, $perpage);
                    
        if(searchlib::$page >=($secondlevelstart_pageno-1) && searchlib::$page <= ($thirdlevel_pageno-1)){
         //---- get learning plan courses---
@@ -576,9 +576,9 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     } // end of function
 
 
- private function to_getlevel_endpagenumber($totalrecords){
+ private function to_getlevel_endpagenumber($totalrecords, $perpage){
 
-        $std_perpage=searchlib::$perpage;
+        $std_perpage = $perpage;
         if($totalrecords==0){
             $level_pageno=0;
         }

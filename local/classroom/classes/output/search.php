@@ -334,6 +334,14 @@ class search implements renderable{
             if($classroom_capacity_check&&$list->status == 1 && !$userenrolstatus&&  $list->allow_waitinglistusers==0){
                 $list->selfenroll=2;
             }
+            $list->enrolment_status_message = 0;
+            if($classroom_capacity_check && $list->status == 1 && !$list->isenrolled &&  $list->allow_waitinglistusers == 0){
+                $list->enrolment_status_message = 1;
+            }else if($list->nomination_startdate > 0 && $list->nomination_startdate >  time()){
+                $list->enrolment_status_message = 2;
+            }else if($list->nomination_enddate > 0 && $list->nomination_enddate < time()){
+                $list->enrolment_status_message = 3;
+            }
 
             $list->enrollmentbtn= $this->get_enrollbtn($list);
             $list->rating_element = '';
