@@ -211,6 +211,7 @@ class local_search_external extends external_api {
             'fullname' => new external_value(PARAM_TEXT, 'fullname'),
             'shortname' => new external_value(PARAM_TEXT, 'shortname'),
             'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
+            'module' => new external_value(PARAM_TEXT, 'module'),
             'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
             'points' => new external_value(PARAM_RAW, 'points', VALUE_OPTIONAL, 0),
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),

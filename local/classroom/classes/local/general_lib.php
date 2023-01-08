@@ -103,6 +103,7 @@ class general_lib{
                 // $classroom->likes = $ratinginfo->module_like;
                 // $classroom->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
             }
+            $classroom->module = 'local_classroom';
             return $classroom;
         }else{
             throw new \Exception("Classroom Not found");

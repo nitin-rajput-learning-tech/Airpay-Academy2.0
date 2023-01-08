@@ -107,6 +107,7 @@ class general_lib{
                 // $learningplans->likes = $ratinginfo->module_like;
                 // $learningplans->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
             }
+            $learningplans->module = 'local_learningpath';
             return $learningplans;
         }else{
             throw new \Exception("Learningplan Not found");
