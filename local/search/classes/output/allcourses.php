@@ -122,7 +122,7 @@ class allcourses {
 
     $std_perpage = $perpage;
     $secondlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords, $perpage);
-    $secondlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords);
+    $secondlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords, $perpage);
     if(searchlib::$page >=($firstlevelstart_pageno-1) && searchlib::$page <= ($secondlevelend_pageno-1)){
         //---- get learning plan courses---
         if($value == 0){
