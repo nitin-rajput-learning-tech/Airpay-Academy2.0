@@ -111,12 +111,12 @@ class search implements renderable{
                     $wheresql .= " AND c.open_identifiedas $learningtypesql ";
                     $params = array_merge($params, $learningtypeparams);
                 break;
-                // case 'categories':
-                //     $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
-                //     list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
-                //     $wheresql .= " AND c.customcategory $categoriessql ";
-                //     $params = array_merge($params, $categoriesparams);
-                // break;
+                case 'categories':
+                    $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
+                    $wheresql .= " AND c.open_categoryid $categoriessql ";
+                    $params = array_merge($params, $categoriesparams);
+                break;
                 case 'level':
                     $level = is_array($filtervalues) ? $filtervalues : [$filtervalues];
                     list($levelsql, $levelparams) = $DB->get_in_or_equal($level, SQL_PARAMS_NAMED, 'level');
