@@ -22,7 +22,7 @@
  * @subpackage local_users
  */
  
-//define('AJAX_SCRIPT', true);
+define('AJAX_SCRIPT', true);
 require_once(dirname(__FILE__) . '/../../config.php');
 
 global $CFG, $USER,$PAGE,$OUTPUT,$DB;
@@ -46,7 +46,7 @@ $table->head[] = get_string('enrollments','local_courses');
 $table->head[] = get_string('points','local_courses');
 $table->head[] = get_string('completed','local_courses');
 $table->head[] = get_string('skill','local_courses');
-// $table->head[] = get_string('ratings','local_courses');
+$table->head[] = get_string('ratings','local_courses');
 $table->head[] = get_string('tags','local_courses');
 $table->head[] = get_string('summary','local_courses');
 $table->head[] = get_string('format','local_courses');
@@ -59,8 +59,8 @@ $stable->length = 0;
 $coursedata = get_listof_courses($stable, $filtervalues);
 $data = [];
 foreach($coursedata['hascourses'] AS $course){
-
-     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_departmentid'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['points'], $course['completed_count'], $course['skillname'], $course['tagstringtotal'],$course['coursesummary'],$course['format'],$course['selfenrol']];
+    //  local_costcenter_set_costcenter_path($course);
+     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_department'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['points'], $course['completed_count'], $course['skillname'], $course['ratings_value'], $course['tagstringtotal'],$course['coursesummary'],$course['format'],$course['selfenrol']];
 }
 $table->id = "users";
 $table->data = $data;
@@ -78,10 +78,8 @@ $table->data = $data;
     if (!empty($table->data)) {
         foreach ($table->data as $rkey => $row) {
             foreach ($row as $key => $item) {
-                if($key !== 10){
                     $item = is_array($item) ? implode(',', $item) : $item;
                     $matrix[$rkey + 1][$key] = str_replace("\n", ' ', htmlspecialchars_decode(strip_tags(nl2br($item))));
-                }               
             }
         }
     }
@@ -90,6 +88,7 @@ $table->data = $data;
     foreach ($matrix as $ri => $col) {
         $csvexport->add_data($col);
     }
+    ob_clean();
     $csvexport->download_file();
     exit;
 
