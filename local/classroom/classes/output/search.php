@@ -173,7 +173,7 @@ class search implements renderable{
             switch($filtertype){
                 case 'categories':
                     $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
-                    list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
+                    list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_QM, '');
                     $wheresql .= " AND lc.open_categoryid $categoriessql ";
                     $sqlparams = array_merge($sqlparams, $categoriesparams);
                 break;
