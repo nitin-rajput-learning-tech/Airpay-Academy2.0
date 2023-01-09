@@ -101,6 +101,11 @@ class edit_form extends moodleform {
                 $errors['costcenterid'] = get_string('pleaseselectorganization', 'local_groups');
             }
         }
+        if (isset($data['idnumber'])){
+            if($data['idnumber'] == ''){
+                $errors['idnumber'] = get_string('pleaseselectidnumber', 'local_groups');
+            }
+        }
 
         return $errors;
     }

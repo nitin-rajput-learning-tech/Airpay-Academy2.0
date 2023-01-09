@@ -292,10 +292,10 @@ if ($evaluationid) {
     $selectfromuserstotal = evaluation_enrolled_users('remove',$evaluationid,$options,true,$offset1=-1,$perpage=-1);
 
     $selectallenrolledusers='&nbsp&nbsp<button type="button" id="select_add" name="select_all" value="Select All" title="Select All"/ class="btn btn-default">'.get_string('select_all', 'local_evaluation').'</button>';
-    $selectallenrolledusers.='&nbsp&nbsp<button type="button" id="add_select" name="remove_all" value="Remove All" title="Remove All" class="btn btn-default"/>'.get_string('remove_all', 'local_evaluation').'</button>';
+    $selectallenrolledusers.='&nbsp&nbsp<button type="button" id="add_select" name="remove_all" value="Remove All" title="Un-select All" class="btn btn-default"/>'.get_string('remove_all', 'local_evaluation').'</button>';
     
     $selectallnotenrolledusers='&nbsp&nbsp<button type="button" id="select_remove" name="select_all" value="Select All" title="Select All" class="btn btn-default"/>'.get_string('select_all', 'local_evaluation').'</button>';
-    $selectallnotenrolledusers.='&nbsp&nbsp<button type="button" id="remove_select" name="remove_all" value="Remove All" title="Remove All" class="btn btn-default"/>'.get_string('remove_all', 'local_evaluation').'</button>';
+    $selectallnotenrolledusers.='&nbsp&nbsp<button type="button" id="remove_select" name="remove_all" value="Remove All" title="Un-select All" class="btn btn-default"/>'.get_string('remove_all', 'local_evaluation').'</button>';
     
     
    $content='<div class="bootstrap-duallistbox-container">
@@ -312,10 +312,10 @@ if ($evaluationid) {
     }
 
    $content.='</select>';
-   $content.='</div><div class="box3 col-md-2 pull-left actions"><button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="Remove Selected Users" name="submitvalue" value="Remove Selected Users" id="user_unassign_all"/>
+   $content.='</div><div class="box3 col-md-2 pull-left actions"><button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="Un Enroll Users" name="submitvalue" value="Remove Selected Users" id="user_unassign_all"/>
        '.get_string('remove_selected_users', 'local_evaluation').'
         </button></form>';
-   $content.='<form  method="post" name="form_name" id="user_un_assign" class="form_class" ><button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="Add Selected Users" name="submitvalue" value="Add Selected Users" id="user_assign_all" />
+   $content.='<form  method="post" name="form_name" id="user_un_assign" class="form_class" ><button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="Enroll Users" name="submitvalue" value="Add Selected Users" id="user_assign_all" />
        '.get_string('add_selected_users', 'local_evaluation').'
         </button></div><div class="box1 col-md-5 pull-left">
     <input type="hidden" name="id" value="'.$evaluationid.'"/>
