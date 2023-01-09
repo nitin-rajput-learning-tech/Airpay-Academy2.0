@@ -142,6 +142,7 @@ class search implements renderable{
             }
             $wheresql .= " AND ($finalparams)";
         }
+        $sqlparams = [];
         foreach($filters AS $filtertype => $filtervalues){
             switch($filtertype){
                 // case 'categories':
@@ -165,6 +166,12 @@ class search implements renderable{
                         $wheresql .= " AND (".implode('OR', $statussql).' ) ';
                     }
                 break;
+                case 'categories':
+                    $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
+                    $wheresql .= " AND llp.open_categoryid $categoriessql ";
+                    $sqlparams = array_merge($sqlparams, $categoriesparams);
+                break;
             }
         }
 
@@ -173,12 +180,12 @@ class search implements renderable{
         $countquery .= " GROUP BY llp.id";
         $numberofrecords = 0;
         if($return_noofrecords)
-            $numberofrecords = sizeof($DB->get_records_sql($countquery));
+            $numberofrecords = sizeof($DB->get_records_sql($countquery, $sqlparams));
 
         $finalsql = $selectsql.$fromsql.$leftjoinsql.$wheresql.$searchsql;
         $finalsql .= " GROUP BY llp.id ORDER by llp.id DESC ";
 
-        $learningplanlist = $DB->get_records_sql($finalsql, array(), $startlimit, $perpage);
+        $learningplanlist = $DB->get_records_sql($finalsql, $sqlparams, $startlimit, $perpage);
 
         if($return_noofrecords && !$returnobjectlist){
             return  array('numberofrecords'=>$numberofrecords);

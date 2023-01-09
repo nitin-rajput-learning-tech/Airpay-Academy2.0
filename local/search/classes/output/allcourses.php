@@ -173,7 +173,6 @@ class allcourses {
         } // end of else statement 
 
     }
-
         $res =array('secondlvl_perpage'=> $lpperpage,
           'secondlvl_startlimit' => $lpstartlimit,
           'secondlvl_startpageno'=>$secondlevelstart_pageno,
@@ -420,6 +419,7 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     $totalrecords_ineachtype = $response['totalrecords_ineachtype'];
     $sumofallrecords = $response['sumofallrecords'];
     $finallist= array();
+    // print_r($totalrecords_ineachtype);
     foreach($totalrecords_ineachtype as $index => $record){
         $totalrecords += $record['numberofrecords'];
         $remainder =  $totalrecords % $perpage;
