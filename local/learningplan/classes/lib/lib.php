@@ -292,18 +292,17 @@ class lib
 	function learningplan_courses_list($id)
 	{
 		global $DB, $USER;
-		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
-
-		$costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1  "; 
+		// $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
+		// $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1  AND c.open_path LIKE :pathvalue "; 
 		$costcenterid = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
-		$orgpath = explode('/', $costcenterid);
-		if (is_siteadmin()) {
-	        $sql .= "";
-	    } else  {
+		$params = array('pathvalue'=> $costcenterid.'%');
+		// if (is_siteadmin()) {
+	    //     $sql .= "";
+	    // } else  {
 	        $sql .= $costcenterpathconcatsql;
-	    }
-	    $courses = $DB->get_records_sql_menu($sql);
+	    // }
+	    $courses = $DB->get_records_sql_menu($sql,$params);
 		return $courses;
 	}
 	function assign_courses_to_learningplan($data)
