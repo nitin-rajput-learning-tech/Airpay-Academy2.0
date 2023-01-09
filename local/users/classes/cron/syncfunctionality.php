@@ -89,6 +89,7 @@ class syncfunctionality
         $this->allusers = $this->get_allusers();
         $categorylib = new \local_courses\catslib();
         while ($line = $cir->next()) {
+            $this->orgcount =0;
             $linenum++;
             $user = new \stdClass();
             foreach ($line as $keynum => $value) {
@@ -131,23 +132,29 @@ class syncfunctionality
             // To hold costcenterid.
             $this->costcenterid = $this->get_org_hierarchyid($user->organization_code, $parent = 0, $orgid);
             // To hold countryid.
-            $this->countryid = $this->get_country_hierarchyid($user->country_code, $parent = $this->costcenterid, $countryid);
-            if ($user->commercial_unit_code) {
-                $this->level3_bussinessid = $this->get_commercial_unitid($user->commercial_unit_code, $this->countryid, $user, $buid);
+            if ($user->country_code && ($this->orgcount == 0)) {
+                $country_code = $user->organization_code."_".$user->country_code;
+                $this->countryid = $this->get_country_hierarchyid($country_code, $parent = $this->costcenterid, $countryid,$user);
             }
-            if ($user->commercial_area_code) {
-                $this->level4_commercialid = $this->get_commercial_areaid($user->commercial_area_code, $this->level3_bussinessid, $user, $cuid);
+            if ($user->commercial_unit_code && ($this->orgcount == 0)) {
+                $commercial_unit_code = $user->organization_code."_".$user->country_code."_".$user->commercial_unit_code;
+                $this->level3_bussinessid = $this->get_commercial_unitid($commercial_unit_code, $this->countryid, $user, $buid);
             }
-            if ($user->territory_code) {
-                $this->level5_territoryid = $this->get_territoryid($user->territory_code, $this->level4_commercialid, $user, $territoryid);
-                if ($this->level5_territoryid && ($this->orgcount == 0)) {
-                    $profilefields = $this->get_profile_fields_values($user);
-                    if (!empty($profilefields)) {
-                        $this->open_states = $profilefields->state;
-                        $this->open_district = $profilefields->district;
-                        $this->open_subdistrict = $profilefields->subdistrict;
-                        $this->open_village = $profilefields->village;
-                    }
+            if ($user->commercial_area_code && ($this->orgcount == 0)) {
+                $commercial_area_code = $user->organization_code."_".$user->country_code."_".$user->commercial_unit_code."_".$user->commercial_area_code;
+                $this->level4_commercialid = $this->get_commercial_areaid($commercial_area_code, $this->level3_bussinessid, $user, $cuid);
+            }
+            if ($user->territory_code && ($this->orgcount == 0)) {
+                $territory_code = $user->organization_code."_".$user->country_code."_".$user->commercial_unit_code."_".$user->commercial_area_code."_".$user->territory_code;
+                $this->level5_territoryid = $this->get_territoryid($territory_code, $this->level4_commercialid, $user, $territoryid);
+            }
+            if ($this->costcenterid && ($this->orgcount == 0)) {
+                $profilefields = $this->get_profile_fields_values($user);
+                if (!empty($profilefields)) {
+                    $this->open_states = $profilefields->state;
+                    $this->open_district = $profilefields->district;
+                    $this->open_subdistrict = $profilefields->subdistrict;
+                    $this->open_village = $profilefields->village;
                 }
             }
             // if (!empty($user->organization_code)) {
@@ -373,14 +380,14 @@ class syncfunctionality
             $this->orgcount++;
         }
     } //end of get_org_hierarchyid method
-    public function get_country_hierarchyid($fieldvalue, $parent, $orgid)
+    public function get_country_hierarchyid($fieldvalue, $parent, $orgid,$user)
     {
         global $DB;
         $datalist = $this->organizations;
         $datal = $datalist[$fieldvalue];
         $strings = new stdClass;
         $strings->identifier = 'country';
-        $strings->orgid = $fieldvalue;
+        $strings->orgid = $user->country_code;
 
         $strings->line = $this->excel_line_number;
         if ($datal) {
@@ -546,10 +553,10 @@ class syncfunctionality
         $datalist = $this->organizations;
         $datal = $datalist[$commercial_unitid];
         $strings = new \stdClass();
-        $strings->commercial_unitid = $commercial_unitid;
-        $strings->orgid = $commercial_unitid;
-        $strings->parentid = $user->country;
-        $strings->identifier = 'Bussiness Unit';
+        $strings->commercial_unitid = $user->commercial_unit_code;
+        $strings->orgid = $user->commercial_unit_code;
+        $strings->parentid = $user->country_code;
+        $strings->identifier = 'Commercial Unit';
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
@@ -581,9 +588,9 @@ class syncfunctionality
         $datalist = $this->organizations;
         $datal = $datalist[$commercial_areaid];
         $strings = new \stdClass();
-        $strings->commercial_areaid = $commercial_areaid;
-        $strings->orgid = $commercial_areaid;
-        $strings->identifier = 'Commercial Unit';
+        $strings->commercial_areaid = $user->commercial_area_code;
+        $strings->orgid = $user->commercial_area_code;
+        $strings->identifier = 'Commercial Area';
         $strings->parentid = $user->commercial_unit_code;
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
@@ -616,8 +623,8 @@ class syncfunctionality
         $datalist = $this->organizations;
         $datal = $datalist[$territoryid];
         $strings = new \stdClass();
-        $strings->territoryid = $territoryid;
-        $strings->orgid = $territoryid;
+        $strings->territoryid = $user->territory_code;
+        $strings->orgid = $user->territory_code;
         $strings->identifier = 'Territory';
         $strings->parentid = $user->commercial_area_code;
         $strings->line = $this->excel_line_number;
@@ -657,13 +664,13 @@ class syncfunctionality
             JOIN {local_district} as ld ON ld.statesid=ls.id
             JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
             JOIN {local_village} as lv ON lv.subdistrictid=lv.id
-            WHERE 1=1 AND ls.costcenterid = $this->level5_territoryid";
+            WHERE 1=1 AND ls.costcenterid = $this->costcenterid";
                 $params = array();
                 if ($key == 'state') {
                     $sql .= " AND ls.code = :state ";
                     $params[$key] = $user->state;
                     $strings->state = $user->state;
-                    $strings->parentid = $user->territory_code;
+                    $strings->parentid = $user->organization_code;
                 }
                 if ($key == 'district') {
                     $sql .= " AND ld.code = :district ";
