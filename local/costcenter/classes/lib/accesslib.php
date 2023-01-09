@@ -44,18 +44,26 @@ class accesslib
         $concatsql="";
 
         if(is_siteadmin() && $costcenterpath == null){
-
             return $concatsql;
 
         }else{
 
-            if($costcenterpath == null || $costcenterpath == 0){
+            if($costcenterpath === null || $costcenterpath === 0){
 
                 $concatsql =self::get_user_roleswitch_costcenterpath_concatsql($matchcolumnname,$datatype);
 
-            }elseif($costcenterpath > 0){
+            }else{
+
+                 $first_character = substr($costcenterpath, 0, 1);
+
+                 if($first_character !== '/'){
+
+                    $costcenterpath = "/".$costcenterpath."";
+
+                 }
 
                 $concatsql=self::costcenterpath_match_sql($costcenterpath,$matchcolumnname,$datatype);
+                $concatsql="AND (".$concatsql.")";
 
             }
 
