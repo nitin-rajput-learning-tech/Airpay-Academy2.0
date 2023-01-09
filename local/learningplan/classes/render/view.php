@@ -2953,7 +2953,7 @@ public function learningplaninfo_for_employee($planid){
 		if(!$selfenrolled){
 			return null;
 		}
-		$categorycontext = ((new \local_learningplan\lib\accesslib())::get_module_context($planid))::get_module_context();
+		$categorycontext = ((new \local_learningplan\lib\accesslib())::get_module_context($planid));
         $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol', 'local_learningplan').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_learningplan/courseenrol\').unEnrolUser({planid: '.$planid.', userid:'.$USER->id.', planname:\''.$planname.'\'}) })(event)'));
         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
         $liTag = html_writer::tag('li', $container);
