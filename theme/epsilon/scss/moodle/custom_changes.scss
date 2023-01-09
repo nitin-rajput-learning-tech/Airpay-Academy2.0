@@ -2886,3 +2886,14 @@ body .que .info>div {
         }
     }
 }
+.navbar.fixed-top #language_dropdown{
+    margin-top: 0px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    border-radius: 50%;
+    background-color: #F6F6F6;
+    margin-right: 15px;
+    justify-content: center;
+}
