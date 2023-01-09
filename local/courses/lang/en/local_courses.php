@@ -22,6 +22,7 @@
  * @subpackage local_courses
  */
 $string['pluginname'] = 'Courses';
+$string['course'] = 'Course';
 $string['organization']='Organization';
 $string['mooc'] = 'MOOC';
 $string['classroom'] = 'Classroom';

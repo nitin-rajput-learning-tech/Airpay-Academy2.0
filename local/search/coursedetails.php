@@ -36,7 +36,11 @@ echo $OUTPUT->header();
 echo '<div class="content_era_left">';
 
 	$course_category = $DB->get_field('local_custom_category', 'fullname', array('id'=>$course->open_categoryid));
-	$level = ($course->open_level) ? $course->open_level : 'NA';
+	$course_category = $course_category ? $course_category : 'NA';
+	$open_level = $DB->get_field('local_course_levels', 'name', array('id' => $course->open_level));
+	$level = $open_level ? $open_level : 'NA';
+	$open_skill = $DB->get_field('local_skill', 'name', array('id' => $course->open_skill));
+	$skill = $open_skill ? $open_skill : 'NA';
 
 	if(is_null($course->open_grade) || $course->open_grade == '' || $course->open_grade == -1){
 		$course_grade = get_string('all');
@@ -142,14 +146,7 @@ echo '<div class="content_era_left">';
 		   }
 
 		  } else if($course->expirydate == 0){
-		  	  $udemyprovider_shortname = $DB->get_field('local_course_providers','shortname',array('id' => $course->open_courseprovider));
-		  	  if($udemyprovider_shortname == 'udemy'){
-		  	  	    echo '<div class="content_era_right">
-                         <div class="enrol">
-                           <a data-action="courseselfenrol'.$id.'" class="courseselfenrol enrolled'.$id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').test({selector:\'courseselfenrol'.$id.'\', courseid:'.$id.', enroll:1, coursename: \''.$course->fullname.'\' }) })(event)"><button class="crs_content btn btn-lg btn-primary w-full ng-binding mb-2">Enrol</button></a>
-                         </div>
-                         </div>';
-		  	  } else {
+
 		  	  	   echo '<div class="content_era_right">
 					<div class="enrol">
 						<form action="'.$CFG->wwwroot.'/enrol/index.php" method="post" id="mform1" class="mform" accept-charset="utf-8" autocomplete="off">
@@ -162,22 +159,18 @@ echo '<div class="content_era_left">';
 	                    </form>
                    	</div>
                    	</div>';
-		  	  }
+
 		  	}
 		} 
 
      echo '<div class="coursebrieflist col-12 p-0 mt-2">';
-    	$careertrack = !empty($course->open_careertrack) ? $course->open_careertrack : "NA";
         $credits = !empty($course->open_points) ? $course->open_points : "NA";
     	  echo'<ul class="crse_details">
-    	        <li class="my-1 incentives__text">'.get_string('career_track_tag','local_users').': <b class="iteminfo">'.$careertrack.'</b>
-    	        </li>
-				<li class="my-1 incentives__text">Category: <b class="iteminfo">'.$course_category.'</b>
+				<li class="my-1 incentives__text">'.get_string('category', 'local_courses').': <b class="iteminfo">'.$course_category.'</b>
 				</li>
-				<li class="my-1 incentives__text">Level: <b class="iteminfo">'.$level.'</b></li>
-				<li class="my-1 incentives__text">Grade: <b class="iteminfo">'.$course_grade.'</b>
-				</li>
-				<li class="my-1 incentives__text">Credits: <b class="iteminfo">'.$credits.'</b>
+				<li class="my-1 incentives__text">'.get_string('skill', 'local_courses').': <b class="iteminfo">'.$skill.'</b></li>
+				<li class="my-1 incentives__text">'.get_string('open_levelcourse', 'local_courses').': <b class="iteminfo">'.$level.'</b></li>
+				<li class="my-1 incentives__text">'.get_string('open_pointscourse', 'local_courses').': <b class="iteminfo">'.$credits.'</b>
 				</li>
 				</ul>
 	            </div>

@@ -224,7 +224,13 @@ class learningplan_courses implements \renderable, \templatable {
             $lp_params['lplanid'] = $planid;
             $coursecompletions = $DB->get_records_sql_menu($coursesql,$lp_params);
             $completetedcoursecount = count($coursecompletions);
-        return $completetedcoursecount/$coursescount * 100;
+            $complete_percent = (($completetedcoursecount/$coursescount) * 100);
+            if($complete_percent > 0){
+                return $complete_percent;
+            }else{
+                return 0;
+            }
+        // return $completetedcoursecount/$coursescount * 100;
     }
 
     private function get_coursesummary($course_record){

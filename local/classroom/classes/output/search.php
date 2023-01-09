@@ -169,12 +169,16 @@ class search implements renderable{
             $wheresql .= " AND lc.status in (1,3,4) ";
         }
 
-        // foreach($filters AS $filtertype => $filtervalues){
-        //     switch($filtertype){
-        //         case 'categories':
-        //         break;
-        //     }
-        // }
+        foreach($filters AS $filtertype => $filtervalues){
+            switch($filtertype){
+                case 'categories':
+                    $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'categories');
+                    $wheresql .= " AND lc.open_categoryid $categoriessql ";
+                    $sqlparams = array_merge($sqlparams, $categoriesparams);
+                break;
+            }
+        }
         $groupby = " GROUP BY lc.id ";
 
         $countsql = "SELECT lc.id ";
