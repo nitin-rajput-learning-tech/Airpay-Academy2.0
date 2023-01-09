@@ -51,15 +51,16 @@
             <div class="coursedesc w-full pull-left">
                 <div class="course-desc" ng-bind-html="record.intro | unsafe"></div>
             </div>
-        </div>
-        <div class=" justify-content-between align-items-center w-full">
-            <div class="action_div">
-                <span ng-if='record.selfenroll == 0' class='catcr_enrol' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</span>
-                <span ng-if='record.selfenroll == 2'>
+             <span ng-if='record.selfenroll == 2'>
                     <span class="all-seats-filled txt-red">
                         {{#str}}capacity_check,local_search{{/str}}
                     </span>
                 </span>
+        </div>
+        <div class=" justify-content-between align-items-center w-full">
+            <div class="action_div">
+                <span ng-if='record.selfenroll == 0' class='catcr_enrol' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</span>
+               
                 <span ng-if="record.userenrolstatus == 1">
                     <a class="as_button_in_anchor" ng-href="<% record.classroomlink %>">
                         <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_classroom{{/str}}</span>

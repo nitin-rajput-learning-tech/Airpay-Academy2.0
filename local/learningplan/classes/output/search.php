@@ -400,7 +400,7 @@ class search implements renderable{
                     }
                 }
                 else{
-                    $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn fakebtn btn-primary" alt = ' . get_string('enroll','local_search'). ' title = ' .get_string('enroll','local_search'). ' onclick="(function(e){ require(\'local_learningplan/courseenrol\').enrolUser({planid:'.$planid.', userid:'.$USER->id.', planname:\''.$planname.'\' }) })(event)" ><button class="cat_btn btn-primary catbtn_request viewmore_btn">'.get_string('enroll','local_classroom').'</button></a>';
+                    $enrollmentbtn = '<a href="javascript:void(0);" class="fakebtn " alt = ' . get_string('enroll','local_search'). ' title = ' .get_string('enroll','local_search'). ' onclick="(function(e){ require(\'local_learningplan/courseenrol\').enrolUser({planid:'.$planid.', userid:'.$USER->id.', planname:\''.$planname.'\' }) })(event)" ><button class="cat_btn btn-primary catbtn_request viewmore_btn">'.get_string('enroll','local_classroom').'</button></a>';
                 }
         }
         return $enrollmentbtn;
