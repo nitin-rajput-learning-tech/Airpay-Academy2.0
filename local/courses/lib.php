@@ -1299,6 +1299,7 @@ function get_listof_courses($stable, $filterdata) {
     $core_component = new core_component();
      //require_once($CFG->libdir. '/coursecatlib.php');
     require_once($CFG->dirroot.'/course/renderer.php');
+    require_once($CFG->dirroot . '/local/costcenter/lib.php');
     require_once($CFG->dirroot . '/enrol/locallib.php');
     $autoenroll_plugin_exist = $core_component::get_plugin_directory('enrol','auto');
     if(!empty($autoenroll_plugin_exist)){
@@ -1317,7 +1318,7 @@ function get_listof_courses($stable, $filterdata) {
     $filtercategoriesparams= array();
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
-    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill FROM {course} AS c";
+    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
@@ -1430,16 +1431,21 @@ function get_listof_courses($stable, $filterdata) {
 
     $formsql .=" ORDER BY c.id DESC";
     $courses = $DB->get_records_sql($selectsql.$formsql, $params, $stable->start,$stable->length);
-    // var_dump($selectsql.$formsql);
-    // var_dump($params);exit;
     $ratings_plugin_exist = $core_component::get_plugin_directory('local', 'ratings');
     $courseslist = array();
     if(!empty($courses)){
         $count = 0;
         foreach ($courses as $key => $course) {
+
+            $course=(array)$course;
+
+            local_costcenter_set_costcenter_path($course);
+
+            $course=(object)$course;
+
             $course_in_list = new core_course_list_element($course);
             $context =  \context_course::instance($course->id);
-            $category = $DB->get_record('course_categories',array('id'=>$course->category));
+            $categoryname = $DB->get_field('local_custom_category','fullname',array('id'=>$course->open_categoryid));
             $departmentcount = 1;
             $subdepartmentcount = 1;
           
@@ -1489,7 +1495,7 @@ function get_listof_courses($stable, $filterdata) {
                 $coursenameCut = substr($coursename, 0, 23)."...";
                 $courseslist[$count]["coursenameCut"] = $coursenameCut;
             }
-            $catname = $category->name;
+            $catname = $categoryname;
             $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12)."..." : $catname;
             $displayed_names = '<span class="pl-10 '.$course->coursetype.'">'.$course->coursetype.'</span>';
 
@@ -1518,6 +1524,7 @@ function get_listof_courses($stable, $filterdata) {
             }else{
                 $tagenable = False;
                 $tagstring = '';
+                $tagstringtotal = $tagstring;
             }
 
             if($course->open_skill > 0){
@@ -1557,10 +1564,10 @@ function get_listof_courses($stable, $filterdata) {
             $courseslist[$count]["format"] = $format;
             
             
-             if($course->open_departmentid > 0 ){
+             if($course->open_department > 0 ){
                  $courseslist[$count]["open_departmentid"] = $DB->get_records_sql_menu('SELECT id,fullname 
                 FROM {local_costcenter}
-                WHERE id IN('.$course->open_departmentid.')');
+                WHERE id IN('.$course->open_department.')');
              } else {
                  $courseslist[$count]["open_departmentid"] = get_string('all');
              }
@@ -1573,6 +1580,22 @@ function get_listof_courses($stable, $filterdata) {
              } else {
                  $courseslist[$count]["open_subdepartment"] = get_string('all');
              }
+
+            if($course->open_level4department > 0) {
+                 $courseslist[$count]["open_level4department"] = $DB->get_records_sql_menu('SELECT id,fullname
+                FROM {local_costcenter}
+                WHERE id IN('.$course->open_level4department.')');
+            } else {
+                 $courseslist[$count]["open_level4department"] = get_string('all');
+            }
+
+            if($course->open_level5department > 0) {
+                 $courseslist[$count]["open_level5department"] = $DB->get_records_sql_menu('SELECT id,fullname
+                FROM {local_costcenter}
+                WHERE id IN('.$course->open_level5department.')');
+            } else {
+                 $courseslist[$count]["open_level5department"] = get_string('all');
+            }
 
              if($course->selfenrol == 1){
                 $courseslist[$count]["selfenrol"] = get_string('yes');

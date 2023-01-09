@@ -22,7 +22,7 @@
  * @subpackage local_users
  */
  
-define('AJAX_SCRIPT', true);
+//define('AJAX_SCRIPT', true);
 require_once(dirname(__FILE__) . '/../../config.php');
 
 global $CFG, $USER,$PAGE,$OUTPUT,$DB;
@@ -60,9 +60,7 @@ $coursedata = get_listof_courses($stable, $filtervalues);
 $data = [];
 foreach($coursedata['hascourses'] AS $course){
 
-     local_costcenter_set_costcenter_path($course);
-
-     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_department'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['points'], $course['completed_count'], $course['skillname'], $course['ratings_value'], $course['tagstringtotal'],$course['coursesummary'],$course['format'],$course['selfenrol']];
+     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_departmentid'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['points'], $course['completed_count'], $course['skillname'], $course['tagstringtotal'],$course['coursesummary'],$course['format'],$course['selfenrol']];
 }
 $table->id = "users";
 $table->data = $data;
