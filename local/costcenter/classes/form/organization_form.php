@@ -126,6 +126,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $shortname[] = $mform->createElement('static',  'shortnamestatic','','<span class="shortnamestatic">'.$shortnamestatic.'</span>_');
                 $shortname[] = $mform->createElement('text', 'shortname','', 'maxlength="100" size="20"');
                 $mform->addGroup($shortname,  'groupshortname',  get_string('shortname','local_costcenter'),  array(''),  false);
+                $mform->addRule('groupshortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');
 
 
             }

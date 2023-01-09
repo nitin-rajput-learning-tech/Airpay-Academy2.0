@@ -37,6 +37,8 @@ if(is_siteadmin()){
     $categoryid=1;
     }else if($org_id){
     $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $org_id));
+    }else if($orgid){
+        $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
     }else{
     $orgid=explode('/',$USER->open_path)[1];
     $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));  

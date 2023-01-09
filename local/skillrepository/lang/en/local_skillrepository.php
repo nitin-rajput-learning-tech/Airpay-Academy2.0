@@ -144,6 +144,6 @@ $string['skillrepository:update_level'] = 'Update level';
 $string['skillrepository:view_level'] = 'View level';
 $string['shortnamelengthexceeds'] = 'Code length exceeds 150 Charecter\'s ';
 $string['parentcategory'] = 'Parent Category';
-
+$string['open_costcenteridlocal_skillrepository'] = 'Organization';
 $string['reason'] = 'Reason';
 $string['deletenotconfirm'] = 'You cannot delete this skill catagory as it is currently mapped to a skill. Please unmap to delete.';

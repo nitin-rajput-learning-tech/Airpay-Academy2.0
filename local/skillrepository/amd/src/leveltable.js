@@ -180,7 +180,7 @@ define([
                     title: s[0],
                     type: ModalFactory.types.DEFAULT,
                     body: s[1],
-                    footer: '<button type="button" class="btn btn-primary" data-action="save">Yes! Delete</button>&nbsp;' +
+                    footer: '<button type="button" class="btn btn-primary" data-action="save">Yes</button>&nbsp;' +
                     '<button type="button" class="btn btn-secondary" data-action="cancel">No</button>'
                 }).done(function(modal) {
                     this.modal = modal;
