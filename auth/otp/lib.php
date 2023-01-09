@@ -50,12 +50,11 @@ class otp {
       $result = $DB->insert_record('local_logs', $log_data);
   }
 
-  public function validate_application($username) {
+  public function validate_application($username,$countrycode) {
     global $DB,$CFG;
     $sql = "SELECT u.id, u.username, u.email, u.phone1 FROM {user} u WHERE u.username= ? AND u.confirmed = 1 AND u.auth = 'otp'";
     $validusers = $DB->get_record_sql($sql, [$username]);
-
-   $phonenumber = "%2B".$validusers->phone1;
+    $phonenumber = "%2B".$countrycode.$validusers->phone1;
     $phonelength = strlen($phonenumber);
     $appdetails = new stdClass();
 	  if (empty($validusers)) {
