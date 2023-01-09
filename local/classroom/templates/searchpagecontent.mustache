@@ -20,183 +20,53 @@
     Displays classroom
    
 }}
-<!--
-<div class="course-img">
-    <a ng-if="record.selfenroll == 0" title="<% record.fullname %>">
-        <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
-    </a>
-    <a ng-if="record.selfenroll == 1" title="<% record.fullname %>" ng-href="<% record.classroomlink %>">
-        <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
-    </a>
-    <a ng-if="record.selfenroll == 2" title="<% record.fullname %>">
-        <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
-    </a>
-</div>
-<div class="coursepage-name">
-    <a ng-if="record.userenrolstatus == 0 || record.selfenroll == 2" class="coursesubtitle" title="<% record.fullname %>" >
-        <h5 class="cat-level-course"><% record.fullname %><br/></h5>
-    </a>
-    <div class="pull-right" ng-bind-html="record.classroom_avgrating | unsafe" ></div>
-
-
-    <a ng-if="record.userenrolstatus == 1" class="coursesubtitle" title="<% record.fullname %>" ng-href="<% record.classroomlink %>">
-        <h5 class="cat-level-course"><% record.fullname %><br/></h5>
-    </a>
-
-    <div class="coursedesc w-full pull-left" ng-if="record.summary">
-        <div class="desc" ng-bind-html="record.summary | unsafe" ></div>
-    </div>
-    <div class="coursedesc w-full pull-left" ng-if="!record.summary">
-        <div  class="desc" >
-            <p class="alert alert-info">{{# str}}descriptionisnotavailable, local_search{{/ str}}</p>
-        </div>
-    </div>
-
-    <span class="pull-left w-full cls-rating" ng-bind-html="record.rating_element | unsafe"></span>
-    <div class="pull-left w-full mt-2 cls-tags" ng-bind-html="record.tags | unsafe"></div></br>
-    <div class="course-author">
-        <div class="row">
-            <div class="col-md-12 pull-left author-name">
-                <div class='course_maindetails pull-right'>
-                    <span  class='course_details_new'>
-                        <span ng-if='record.selfenroll == 0' class='catcr_enrol' ng-bind-html='record.enrollmentbtn | unsafe'></span>
-                        <span ng-if='record.selfenroll == 2'>
-                            <span class="all-seats-filled txt-red">
-                                {{#str}}capacity_check,local_search{{/str}}
-                            </span>
-                        </span>
-                        <span ng-if="record.userenrolstatus == 1">
-                            <a class="as_button_in_anchor" ng-href="<% record.classroomlink %>">
-                                <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_search{{/str}}</span>
-                            </a>
-                        </span>
-                        <span ng-bind-html="record.redirect | unsafe"></span>
-                    </span>
-                </div>{{! end of class course_maindetails div}}
-            </div> {{! end of class author-name div}}
-        </div>{{! end of class row div }}
-    </div>{{! end of class course-author div }}
-</div>-->{{! end of class coursepage-name div }}
-
 <!-- Versatile cards view-->
-<!--<div class="readymainContainer clearfix">
-    <div class="col-md-4 col-12 readyCContainer pull-left catcourses_list active ">
-        <div class="col-12 pull-left course_container readycourse_container">-->
-            <span class="courseimg_strip">Strip</span>
-            <div class="row mt-2 mb-2">
-            <div class=" card-img-top courseimg_container col-md-4">
-                <!-- <a ng-if="record.selfenroll == 0" title="<% record.fullname %>">
-                    <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
+<span class="courseimg_strip">Strip</span>
+<div class="row mt-2 mb-2">
+    <div class=" card-img-top courseimg_container col-md-4">
+        <a title="<% record.fullname %>">
+            <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
+        </a>
+    </div>
+    <div class="card-body readyCCnt coursecontent col-md-8">
+        <div class="d-flex w-full course_name_container ">
+            <div>
+                <a ng-if="record.userenrolstatus == 0 || record.selfenroll == 2" class="d-block link text-decoration-none" title="<% record.fullname %>" >
+                    <h4 class="course_name m-y-1 card-title course-title">
+                        <% record.fullname %>
+                    </h4>
                 </a>
-                <a ng-if="record.selfenroll == 1" title="<% record.fullname %>">
-                    <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
-                </a>
-                <a ng-if="record.selfenroll == 2" title="<% record.fullname %>">
-                    <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
-                </a> -->
-
-                 <a title="<% record.fullname %>">
-                    <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
+                <a ng-if="record.userenrolstatus == 1" class="d-block link text-decoration-none" title="<% record.fullname %>">
+                    <h4 class="course_name m-y-1 card-title course-title">
+                        <% record.fullname %>
+                    </h4>
                 </a>
             </div>
-            
-            <div class="card-body readyCCnt coursecontent col-md-8">
-                <div class="d-flex w-full course_name_container ">
-                    <div>
-                
-                        <a ng-if="record.userenrolstatus == 0 || record.selfenroll == 2" class="d-block link text-decoration-none" title="<% record.fullname %>" >
-                        <h4 class="course_name m-y-1 card-title course-title">
-                            <% record.fullname %>
-                        </h4>
-                        
-                        </a>
-                        <a ng-if="record.userenrolstatus == 1" class="d-block link text-decoration-none" title="<% record.fullname %>">
-                        
-                            <h4 class="course_name m-y-1 card-title course-title">
-                                <% record.fullname %>
-                            </h4>
-                        </a>
-                    </div>
-                    <span class="CstripCnt"> <span class="elearning">Instructor-led Course</span> </span>
-                   
-                </div>
-                <div class="card-text course-desc">
-                    <div class="coursedesc w-full pull-left">
-                        <div class="course-desc" ng-bind-html="record.intro | unsafe"></div>
-                    </div>
-                </div>
-                <!-- <hr> -->
-                <div class=" justify-content-between align-items-center w-full">
-                    <div class="endrolled_details_div">
-                        {{! <span class="d-block"><small> Enrollments </small></span>
-                        <span class="d-block"><big><strong>238</strong></big></span> }}
-                    </div>
-                    <div class="action_div">
-                      <!-- <button class="btn"> -->
-                        <span ng-if='record.selfenroll == 0' class='catcr_enrol' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</span>
-                            <span ng-if='record.selfenroll == 2'>
-                                <span class="all-seats-filled txt-red">
-                                        {{#str}}capacity_check,local_search{{/str}}
-                                </span>
-                            </span>
-                            <span ng-if="record.userenrolstatus == 1">
-                                <a class="as_button_in_anchor" ng-href="<% record.classroomlink %>">
-                                    <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_classroom{{/str}}</span>
-                                </a>
-                            </span> 
-                            <span ng-bind-html="record.redirect | unsafe"></span>
-                        <!-- </button> -->
-                       
-                        <!-- <button class="btn btn-info">View more</button> -->
-                    </div>
-                </div>
+            <span class="CstripCnt">
+                <span class="elearning">Instructor-led Course</span>
+            </span>
+
+        </div>
+        <div class="card-text course-desc">
+            <div class="coursedesc w-full pull-left">
+                <div class="course-desc" ng-bind-html="record.intro | unsafe"></div>
             </div>
         </div>
-            <!-- <div class="cat_btmContainer col-12 mb-2 pt-2  pull-left">
-                <div class="w-full cat_btm">
-                    <span class="text-muted">Course Provided by<span class="pl-2">:</span></span><span><img src="<% record.course_provider %>" height="50px" width="110px" /></span>
-                </div>
-            </div> -->
-            <!-- <div class="cat_btmContainer col-12 mb-2 pt-2  pull-left">
-                <div class="w-full pull-left cat_btm d-flex justify-content-between">
-                    <div class="pull-left d-flex flex-row flex-wrap align-items-center">
-                        <span class="text-muted pull-left catbtm_colon  d-flex flex-row flex-wrap align-items-center"><span class="icon-clock-o"></span>Duration <span class="colon_align">:</span> </span>
-                        <span ng-if="record.duration > 0" class="text-muted catbtm_info ng-binding" title=""><% record.duration %> Days</span>
-                        <span ng-if="record.duration <= 0" class="text-muted catbtm_info ng-binding" title="">N/A</span>
-                    </div>
-                </div>
-            </div> -->
-            <!-- <div class="cat_btmContainer col-12 mb-2 pt-2  pull-left">
-                <div class="w-full pull-left cat_btm d-flex justify-content-between">
-                    <div class="pull-left d-flex flex-row flex-wrap align-items-center">
-                        <span class="text-muted pull-left catbtm_colon  d-flex flex-row flex-wrap align-items-center"><span class="icon-clock-o"></span>{{# str }} duration, block_courselister {{/ str }} <span class="colon_align">:</span> </span><span class="text-muted catbtm_info" title="{{duration}}">2</span>
-                    </div>
-                    <div class="pull-left d-flex flex-row flex-wrap align-items-center">
-                        <span class="text-muted d-flex flex-row flex-wrap align-items-center justify-content-end"><span class="icon-window-restore"></span>{{# str }} managemodules, block_courselister {{/ str }} 
-                            <span class="colon_align">:</span> </span>
-                        <span class="text-muted catbtm_info">2</span>
-                    </div>
-                </div> -->
-                <!--<div class="crse-s-meta row-fluid {{^completebefore}}novisible{{/completebefore}}">
-                    <i class="fa fa-calendar"></i> {{# str }} completebefore, block_courselister {{/ str }}: {{completebefore}}
-                </div>
-            </div>-->
-            <!--<div class="cat_btmContainer col-12 mb-2 pt-2  pull-left px-4">
-                <div class="w-full cat_btm">
-                    <span class="text-muted">Course Provided by<span class="mr-3 pl-2">:</span></span><span><img src="" height="50px" /></span>
-                </div>
-            </div>-->
-            <!--<div class="cat_btmContainer col-12 mb-2 pt-2  pull-left px-4">
-                <div class="w-full pull-left cat_btm">
-                    <span class="pull-left w-full cls-rating" ng-bind-html="record.rating_element | unsafe"></span>
-                </div>
+        <div class=" justify-content-between align-items-center w-full">
+            <div class="action_div">
+                <span ng-if='record.selfenroll == 0' class='catcr_enrol' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</span>
+                <span ng-if='record.selfenroll == 2'>
+                    <span class="all-seats-filled txt-red">
+                        {{#str}}capacity_check,local_search{{/str}}
+                    </span>
+                </span>
+                <span ng-if="record.userenrolstatus == 1">
+                    <a class="as_button_in_anchor" ng-href="<% record.classroomlink %>">
+                        <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_classroom{{/str}}</span>
+                    </a>
+                </span>
+                <span ng-bind-html="record.redirect | unsafe"></span>
             </div>
-            <div class="cat_btmContainer col-12 p-b-1 p-t-1 pull-left px-4">
-                <div class="w-full pull-left cat_btm">
-                    <div class="pull-left w-full mt-2 cls-tags" ng-bind-html="record.tags | unsafe"></div>
-                </div>
-            </div>-->
-            
-        <!--</div>
+        </div>
     </div>
-</div>-->
+</div>

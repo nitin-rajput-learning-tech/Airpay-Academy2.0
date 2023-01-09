@@ -79,8 +79,9 @@
             <div class="action_div">
                 
                 <span ng-bind-html="record.selfenrol | unsafe" class="enrolled<% record.id %>"></span>
-                <span ng-bind-html="record.redirect | unsafe"></span>
-                
+                <span ng-if="record.redirect">
+                    <span ng-bind-html="record.redirect | unsafe"></span>
+                </span>
             </div>
         </div>
     </div>

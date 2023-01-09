@@ -94,11 +94,11 @@ class general_lib{
                 }
             }
 
-            $learningplans->optionalcoursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'or' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
+            $learningplans->optional = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'or' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
 
-            $learningplans->mandatorycoursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'and' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
+            $learningplans->mandatory = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'and' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
 
-            $learningplans->coursecount = $learningplans->mandatorycoursecount + $learningplans->optionalcoursecount;
+            $learningplans->totalcourses = $learningplans->mandatory + $learningplans->optional;
 
             $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $learningplans->id, 'module_area' => 'local_learningplan'));
             if($ratinginfo){
@@ -107,6 +107,7 @@ class general_lib{
                 // $learningplans->likes = $ratinginfo->module_like;
                 // $learningplans->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
             }
+            $learningplans->module = 'local_learningpath';
             return $learningplans;
         }else{
             throw new \Exception("Learningplan Not found");

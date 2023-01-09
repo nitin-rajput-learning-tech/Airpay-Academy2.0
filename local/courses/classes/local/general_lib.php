@@ -335,6 +335,7 @@ class general_lib{
             if($course->open_level)
                 $course->level = ($DB->get_field('local_course_levels','name',array('id' => $course->open_level))) ;
 
+            $course->module = 'local_courses';
             return $course;
         }else{
             throw new \Exception('Course not found');

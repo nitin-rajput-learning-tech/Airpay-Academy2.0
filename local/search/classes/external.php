@@ -93,7 +93,8 @@ class local_search_external extends external_api {
                     ),
                     'skill' => new external_value(PARAM_TEXT, 'SKill Information', VALUE_OPTIONAL, ''),
                     'level' => new external_value(PARAM_TEXT, 'level Information', VALUE_OPTIONAL, ''),
-                    'canenrolrequest' => new external_value(PARAM_BOOL, 'Can enrol Flag', VALUE_DEFAULT, true)
+                    'canenrolrequest' => new external_value(PARAM_BOOL, 'Can enrol Flag', VALUE_DEFAULT, true),
+                    'enrolment_status_message' => new external_value(PARAM_INT, 'Status message for enrollment', VALUE_OPTIONAL, 0),
                 ])
             )
         ]);
@@ -211,14 +212,15 @@ class local_search_external extends external_api {
             'fullname' => new external_value(PARAM_TEXT, 'fullname'),
             'shortname' => new external_value(PARAM_TEXT, 'shortname'),
             'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
+            'module' => new external_value(PARAM_TEXT, 'module'),
             'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
             'points' => new external_value(PARAM_RAW, 'points', VALUE_OPTIONAL, 0),
             'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
             'requeststatus' => new external_value(PARAM_INT, 'User request status to module', VALUE_OPTIONAL, ''),
             'enrolment_status_message' => new external_value(PARAM_INT, 'Status message for enrollment', VALUE_OPTIONAL, ''),
-            'coursecount' => new external_value(PARAM_INT, 'coursecount', VALUE_OPTIONAL, 0),
-            'optionalcoursecount' => new external_value(PARAM_INT, 'optionalcoursecount', VALUE_OPTIONAL, 0),
-            'mandatorycoursecount' => new external_value(PARAM_INT, 'mandatorycoursecount', VALUE_OPTIONAL, 0),
+            'totalcourses' => new external_value(PARAM_INT, 'totalcourses', VALUE_OPTIONAL, 0),
+            'optional' => new external_value(PARAM_INT, 'optional', VALUE_OPTIONAL, 0),
+            'mandatory' => new external_value(PARAM_INT, 'mandatory', VALUE_OPTIONAL, 0),
             'startdate' => new external_value(PARAM_INT, 'startdate', VALUE_OPTIONAL, ''),
             'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, ''),
             'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),

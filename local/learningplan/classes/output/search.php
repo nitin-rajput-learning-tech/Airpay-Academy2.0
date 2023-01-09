@@ -235,7 +235,7 @@ class search implements renderable{
             //-------bands----------------------------
             $list->bands = searchlib::trim_theband($list->bands);
             $list->type = learningplan;
-            $list->module = 'local_learningplan';
+            $list->module = 'local_learningpath';
             $list->enroll = $this->get_enrollflag($list->id);
             $list->isenrolled=$list->enroll;
             $userenrolstatus = $DB->record_exists('local_learningplan_user', array('planid' => $list->id, 'userid' => $USER->id));

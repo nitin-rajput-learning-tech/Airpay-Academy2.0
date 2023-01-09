@@ -58,8 +58,8 @@ class allcourses {
 
         $std_perpage = $perpage; 
         $firsttotal= $value;
-        $firstlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords);
-        $firstlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords);
+        $firstlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords, $perpage);
+        $firstlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords, $perpage);
 
         //if total number of records of elearning courses is greater than perpage,
         // so we are finding out number of remainder placeholder to append the next tab courses
@@ -121,8 +121,8 @@ class allcourses {
   private function toset_secondlevel_perpage_andstartlimit($totalrecords, $perpage, $value, $firstlevel_space, $firstlevel_remainder, $firstlevelstart_pageno ){
 
     $std_perpage = $perpage;
-    $secondlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords);
-    $secondlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords);
+    $secondlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords, $perpage);
+    $secondlevelend_pageno = $this->to_getlevel_endpagenumber($totalrecords, $perpage);
     if(searchlib::$page >=($firstlevelstart_pageno-1) && searchlib::$page <= ($secondlevelend_pageno-1)){
         //---- get learning plan courses---
         if($value == 0){
@@ -191,8 +191,8 @@ class allcourses {
     private function toset_generic_perpage_andstartlimit($totalrecords, $perpage, $secondlevelstart_pageno, $secondlevel_pageno, $secondlevel_remainder, $value ){
 
         $std_perpage = $perpage;
-        $thirdlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords);
-        $thirdlevel_pageno = $this->to_getlevel_endpagenumber($totalrecords);
+        $thirdlevelstart_pageno = $this->to_getlevel_startpagenumber($totalrecords, $perpage);
+        $thirdlevel_pageno = $this->to_getlevel_endpagenumber($totalrecords, $perpage);
                    
        if(searchlib::$page >=($secondlevelstart_pageno-1) && searchlib::$page <= ($thirdlevel_pageno-1)){
         //---- get learning plan courses---
@@ -555,12 +555,12 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     * @param array $noofrecords- It holds total number of each level/tab 
     * @return int starting page number of specific tab   
     */
-    private function to_getlevel_startpagenumber($totalrecords){
+    private function to_getlevel_startpagenumber($totalrecords, $perpage){
        /* $totalrecords=0;
         foreach($arraykeys as $key){
             $totalrecords = $totalrecords + $noofrecords[$key];     
         } */
-        $std_perpage= searchlib::$perpage;
+        $std_perpage = $perpage;
         if($totalrecords==0){
             $level_pageno=0;
         }else if($totalrecords<$std_perpage){
@@ -576,9 +576,9 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     } // end of function
 
 
- private function to_getlevel_endpagenumber($totalrecords){
+ private function to_getlevel_endpagenumber($totalrecords, $perpage){
 
-        $std_perpage=searchlib::$perpage;
+        $std_perpage = $perpage;
         if($totalrecords==0){
             $level_pageno=0;
         }
