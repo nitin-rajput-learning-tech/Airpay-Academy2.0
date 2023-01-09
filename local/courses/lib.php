@@ -1564,15 +1564,16 @@ function get_listof_courses($stable, $filterdata) {
             $courseslist[$count]["format"] = $format;
             
             
-             if($course->open_department > 0 ){
-                 $courseslist[$count]["open_departmentid"] = $DB->get_records_sql_menu('SELECT id,fullname 
+            $course =  (array)$course;
+            local_costcenter_set_costcenter_path($course);
+            $course = (object)$course;
+             if($course->open_department > 0){
+                 $courseslist[$count]["open_department"] = $DB->get_records_sql_menu('SELECT id,fullname 
                 FROM {local_costcenter}
                 WHERE id IN('.$course->open_department.')');
              } else {
-                 $courseslist[$count]["open_departmentid"] = get_string('all');
+                 $courseslist[$count]["open_department"] = get_string('all');
              }
-
-
             if($course->open_subdepartment > 0) {
                  $courseslist[$count]["open_subdepartment"] = $DB->get_records_sql_menu('SELECT id,fullname 
                 FROM {local_costcenter}
@@ -1580,21 +1581,19 @@ function get_listof_courses($stable, $filterdata) {
              } else {
                  $courseslist[$count]["open_subdepartment"] = get_string('all');
              }
-
-            if($course->open_level4department > 0) {
-                 $courseslist[$count]["open_level4department"] = $DB->get_records_sql_menu('SELECT id,fullname
-                FROM {local_costcenter}
-                WHERE id IN('.$course->open_level4department.')');
+             if($course->open_level4department > 0) {
+                $courseslist[$count]["open_level4department"] = $DB->get_records_sql_menu('SELECT id,fullname 
+               FROM {local_costcenter}
+               WHERE id IN('.$course->open_level4department.')');
             } else {
-                 $courseslist[$count]["open_level4department"] = get_string('all');
+                $courseslist[$count]["open_level4department"] = get_string('all');
             }
-
             if($course->open_level5department > 0) {
-                 $courseslist[$count]["open_level5department"] = $DB->get_records_sql_menu('SELECT id,fullname
-                FROM {local_costcenter}
-                WHERE id IN('.$course->open_level5department.')');
+                $courseslist[$count]["open_level5department"] = $DB->get_records_sql_menu('SELECT id,fullname 
+               FROM {local_costcenter}
+               WHERE id IN('.$course->open_level5department.')');
             } else {
-                 $courseslist[$count]["open_level5department"] = get_string('all');
+                $courseslist[$count]["open_level5department"] = get_string('all');
             }
 
              if($course->selfenrol == 1){

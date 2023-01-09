@@ -37,9 +37,10 @@ $lastitem=optional_param('lastitem',0, PARAM_INT);
 require_login();
 $sesskey=sesskey();
 $groups = $DB->get_record('cohort', array('id'=>$id), '*', MUST_EXIST);
-$context = context::instance_by_id($groups->contextid, MUST_EXIST);
+$groupsdetails = $DB->get_record('local_groups', array('cohortid'=>$id));
+$context_cat= (new \local_groups\lib\accesslib())::get_module_context();
 
-require_capability('moodle/cohort:assign', $context);
+require_capability('moodle/cohort:assign', $context_cat);
 
 $PAGE->set_context($context);
 $PAGE->set_url('/local/groups/assign.php', array('id'=>$id));
@@ -59,8 +60,6 @@ if (!empty($groups->component)) {
 
 
 
-$groupsdetails = $DB->get_record('local_groups', array('cohortid'=>$id));
-$context_cat= (new \local_groups\lib\accesslib())::get_module_context();
 //i.e other than admin eg:Org.Head
 
 

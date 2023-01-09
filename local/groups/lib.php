@@ -716,7 +716,7 @@ function local_groups_edit_controls(context $context, moodle_url $currenturl) {
     if (($searchquery = $currenturl->get_param('search'))) {
         $viewurl->param('search', $searchquery);
     }
-    if ($context->contextlevel == CONTEXT_SYSTEM) {
+    if ($context->contextlevel ==(new \local_groups\lib\accesslib())::get_module_context()) {
         $tabs[] = new tabobject('view', new moodle_url($viewurl, array('showall' => 0)), get_string('cohorts', 'local_groups'));
     } else {
         $tabs[] = new tabobject('view', $viewurl, get_string('cohort', 'local_groups'));

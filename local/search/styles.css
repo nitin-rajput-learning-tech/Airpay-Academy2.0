@@ -13,6 +13,7 @@
 }
 #page-local-search-allcourses .checkbox-item{
     display: flex;
+    align-items: center;
 }
 #page-local-search-allcourses .checkbox-item label{
 	margin-left: 7px;
@@ -626,7 +627,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 #page-local-search-allcourses #allcourses_section .icon-header {
     padding: 0 !important;
-    font-weight: 600!important;
+    font-weight: 600 !important;
     align-items: center;
 }
 
@@ -638,6 +639,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 #page-local-search-allcourses #allcourses_section .collapsed_settings_div .collapse_content {
     padding-left: 8px !important;
+    margin:0 !important;
 }
 #page-local-search-allcourses #allcourses_section .collapsed_settings_div  .collapseicon {
     display: none;
@@ -664,4 +666,56 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 #page-local-search-allcourses .card .card-body {
     padding: 1rem !important;
 }
+}
+
+/*search page allignments*/
+#page-local-search-allcourses .coursecontent .viewmore_btn,
+#page-local-search-allcourses .coursecontent .cat_btn{
+    padding: 10px;
+    max-width: 168px;
+    margin:0;
+    background-color: var(--buttonbgcolor);
+    color: var(--btntextcolor);
+    border-color: var(--btnbordercolor);
+    border-radius: 0.25rem;
+}
+#page-local-search-allcourses .action_div .viewmore_btn{
+    line-height: 26px;
+}
+#page-local-search-allcourses .coursecontent .coursedesc .desc{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+#page-local-search-allcourses .coursedesc .course-desc{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;    
+}
+#page-local-search-allcourses .req_button button{
+    padding:10px !important;
+    margin-right:5px !important;
+}
+#page-local-search-allcourses #allcourses_section .icon-header{
+    padding: 5px !important;
+}
+#page-local-search-allcourses #allcourses_section .ng-scope hr{
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    margin-left: -4px;
+    width: 95%;
+} 
+#page-local-search-allcourses .as_button_in_anchor{
+    display: inline-flex;
+    width: auto;
+}
+#page-local-search-allcourses .as_button_in_anchor .appear_as_button{
+    padding: 10px 26px !important;
+    max-width: 168px !important;
+    margin-right:10px;
+    line-height: 23px;
 }
