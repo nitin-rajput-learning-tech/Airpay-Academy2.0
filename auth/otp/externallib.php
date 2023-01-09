@@ -96,7 +96,6 @@ class auth_otp_external extends external_api {
             'otp' => new external_value(PARAM_RAW, 'otp'),
             'type' => new external_value(PARAM_INT, 'type'),
 			'countrycode' => new external_value(PARAM_RAW, 'countrycode')
-
             )
         );
     }

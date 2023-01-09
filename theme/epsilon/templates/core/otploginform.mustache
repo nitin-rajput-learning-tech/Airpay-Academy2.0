@@ -164,7 +164,6 @@ require(['jquery', 'core/ajax'], function($, ajax) {
     $("#resendotplink").click(function(e){
         var application_id = $("#applicationid").val();
 		var countrycode =$("#countrycode").val();
-
         var type = 1;
         sendotp(application_id, type, 2,countrycode);
     });
@@ -209,7 +208,7 @@ require(['jquery', 'core/ajax'], function($, ajax) {
                 alert("Please enter email");
             } else {
                 if ($('#loginbtn').hasClass('hiddennow')) {
-                    sendotp(application_id, 4, 1);
+                    sendotp(application_id, 4, 1,countrycode);
                 } else {
                     alert("Please enter OTP");
                 }
@@ -217,7 +216,7 @@ require(['jquery', 'core/ajax'], function($, ajax) {
         }
     });
 
-    function sendotp(application_id, type, flag) {
+    function sendotp(application_id, type, flag,countrycode) {
         if(application_id !='') {
             ajax.call([{
                 methodname: 'auth_otp_validateuserdetails',
