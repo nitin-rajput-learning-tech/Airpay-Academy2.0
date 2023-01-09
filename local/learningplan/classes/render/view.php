@@ -1703,8 +1703,8 @@ class view extends plugin_renderer_base {
 		$learningplan = $DB->get_records('local_learningplan');
 
 		foreach($learningplan AS $plan){
-	      $departmentcount = count(array_filter(explode(',',$plan->department)));
-		  $subdepartmentcount = count(array_filter(explode(',',$plan->subdepartment)));
+	      // $departmentcount = count(array_filter(explode(',',$plan->department)));
+		  // $subdepartmentcount = count(array_filter(explode(',',$plan->subdepartment)));
 		  $plan_name = $DB->get_field('local_learningplan', 'name', array('id' => $planid));
 		  $learningplan_lib = new lib;
 		  $userscount = $learningplan_lib->get_enrollable_users_count_to_learningplan($planid);
@@ -1716,12 +1716,12 @@ class view extends plugin_renderer_base {
 		  $learningplaninfo['configpath'] = $CFG->wwwroot;
 		  $can_manage = has_capability('local/learningplan:manage', $categorycontext);
 		 $learningplaninfo['can_update'] = (is_siteadmin() || ($can_manage && has_capability('local/learningplan:update', $categorycontext)));
-          if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
+          if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
           	$learningplaninfo['can_update'] = '';
           }
 		    
 		  $learningplaninfo['can_publish'] = (is_siteadmin() || ($can_manage && has_capability('local/learningplan:publishplan', $categorycontext)));
-		  if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
+		  if(!(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
 		  	 $learningplaninfo['can_publish'] = '';
 		  }
          

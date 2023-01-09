@@ -131,18 +131,18 @@ class lib
 	{
 		global $DB, $USER;
 		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
-		if (is_siteadmin()) {
-			$siteadmin_sql .= "";
-		} else  {
+		// if (is_siteadmin()) {
+		// 	$siteadmin_sql .= "";
+		// } else  {
 			$siteadmin_sql .= " AND u.suspended = 0 AND u.deleted = 0 ".$costcenterpathconcatsql;
-		}
+		// }
 
 		$plan_info = $DB->get_record('local_learningplan', array('id' => $planid));
 
-		$sql = "SELECT u.id FROM {user} AS u WHERE u.id > 2 {$siteadmin_sql} AND u.id not in ($USER->id) ";
+		$sql = "SELECT u.id FROM {user} AS u WHERE u.id > 2 {$siteadmin_sql} AND u.id not in ($USER->id) AND u.open_path LIKE :pathvalue ";
 
+		$params = array('pathvalue'=> $plan_info->open_path.'%');
 		// OL-1042 Add Target Audience to Classrooms//
-		$params = array();
 		// if (!empty($plan_info->open_group)) {
 		// 	$group_list = $DB->get_records_sql_menu("SELECT cm.id, cm.userid from {cohort_members} cm, {user} u where u.id = cm.userid AND u.deleted = 0 AND u.suspended = 0 AND cm.cohortid IN ({$plan_info->open_group})");
 
@@ -180,17 +180,17 @@ class lib
 		global $DB, $USER;
 
 		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
-		if (is_siteadmin()) {
-			$siteadmin_sql .= "";
-		} else  {
+		// if (is_siteadmin()) {
+		// 	$siteadmin_sql .= "";
+		// } else  {
 			$siteadmin_sql .= " AND u.suspended = 0 AND u.deleted = 0 ".$costcenterpathconcatsql;
-		}
+		// }
 		$plan_info = $DB->get_record('local_learningplan', array('id' => $planid));
 
 		$sql = "SELECT count(u.id) FROM {user} AS u 
-	    		WHERE u.id > 2 $siteadmin_sql AND u.id not in ($USER->id) ";
+	    		WHERE u.id > 2 $siteadmin_sql AND u.id not in ($USER->id) and u.open_path LIKE :pathvalue ";
 
-		$params = array();
+		$params = array('pathvalue'=> $plan_info->open_path.'%');
 		// if ($plan_info->department !== null && $plan_info->department !== '-1' && $plan_info->department !== 0 && !empty($plan_info->department)) {
 		// 	$params['dept'] = '%,' . $plan_info->department . ',%';
 		// 	$sql .= " AND :dept LIKE CONCAT('%,',u.open_departmentid,',%') ";
