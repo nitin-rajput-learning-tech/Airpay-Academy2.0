@@ -154,18 +154,18 @@ $mform->set_data($data);
 */
 function local_skillrepository_leftmenunode(){
 
-    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-    $skillreponode = '';
-    if(has_capability('local/skillrepository:manage', $systemcontext) || is_siteadmin()) {
-        $skillreponode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_skills', 'class'=>'pull-left user_nav_div skills'));
-        $skills_url = new moodle_url('/local/skillrepository/index.php');
-        $skill_icon = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
-        $courses = html_writer::link($skills_url, $skill_icon.'<span class="user_navigation_link_text">'.get_string('manage_skills','local_skillrepository').'</span>',array('class'=>'user_navigation_link'));
-        $skillreponode .= $courses;
-        $skillreponode .= html_writer::end_tag('li');
-    }
+    // $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+    // $skillreponode = '';
+    // if(has_capability('local/skillrepository:manage', $systemcontext) || is_siteadmin()) {
+    //     $skillreponode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_skills', 'class'=>'pull-left user_nav_div skills'));
+    //     $skills_url = new moodle_url('/local/skillrepository/index.php');
+    //     $skill_icon = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
+    //     $courses = html_writer::link($skills_url, $skill_icon.'<span class="user_navigation_link_text">'.get_string('manage_skills','local_skillrepository').'</span>',array('class'=>'user_navigation_link'));
+    //     $skillreponode .= $courses;
+    //     $skillreponode .= html_writer::end_tag('li');
+    // }
 
-    return array('18' => $skillreponode);
+    // return array('18' => $skillreponode);
 }
 
 //Level related functions
