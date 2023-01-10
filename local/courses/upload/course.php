@@ -26,6 +26,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/local/courses/upload/processor.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
 /**
  * Course class.
@@ -105,7 +106,7 @@ class local_uploadcourse_course
     );
 
     /** @var array fields required on course creation. */
-    static protected $mandatoryfields = array('fullname', 'category', 'coursetype');
+    static protected $mandatoryfields = array('fullname', 'coursetype');
 
     /** @var array fields which are considered as options. */
     static protected $optionfields = array(
@@ -578,17 +579,27 @@ class local_uploadcourse_course
             }
         }
         $categorylib = new local_courses\catslib();
-       if (isset($this->defaults['open_path'])){
-            $categories = $categorylib->get_categories($this->defaults['open_path']);
+       if (isset($this->defaults['open_costcenterid']) && !empty($this->rawdata['category'])){
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lcc.path',$this->defaults['open_costcenterid'],$datatype='lowerandsamepath');
+
+            $costcentersql = "SELECT lcc.id,lcc.fullname
+                                FROM {local_custom_category} AS lcc
+                                WHERE 1=1 $costcenterpathconcatsql ";
+
+            $categories = $DB->get_records_sql_menu($costcentersql);
+
             if (!in_array($this->rawdata['category'], $categories)) {
                 $this->error('canonlycreatecourseincategoryofsameorganisationwithargs', new lang_string('canonlycreatecourseincategoryofsameorganisationwithargs', 'local_courses', $this->rawdata['categoryname']));
                 return false;
             }
-        } else {
-            if (!is_siteadmin()) {
-                return false;
-            }
         }
+
+        // else {
+        //     if (!is_siteadmin()) {
+        //         return false;
+        //     }
+        // }
         if (empty($this->rawdata['coursetype'])) {
             $this->error('cannotemptycoursetype', new lang_string('cannotemptycoursetype', 'local_courses', $this->rawdata['coursetype']));
             return false;
@@ -1015,6 +1026,20 @@ class local_uploadcourse_course
             }
             return true;
         } else if ($this->do === self::DO_CREATE) {
+
+            $this->data=(object)$this->data;
+
+            local_costcenter_get_costcenter_path($this->data);
+
+            if($this->data->open_path){
+                $this->data->category = $DB->get_field('local_costcenter', 'category', array('path' => $this->data->open_path));
+            }
+
+            $this->data=(array)$this->data;
+
+            if($this->defaults['open_costcenterid']){
+                $this->data['category'] = $DB->get_field('local_costcenter', 'category', array('id' => $this->defaults['open_costcenterid']));
+            }
             $this->data['open_identifiedas'] = $coursetype->id;
             $course = create_course((object) $this->data);
             $coursedata = $DB->get_record('course', array('id' => $course->id));
@@ -1022,6 +1047,17 @@ class local_uploadcourse_course
             $this->id = $course->id;
             $this->status('coursecreated', new lang_string('coursecreated', 'tool_uploadcourse'));
         } else if ($this->do === self::DO_UPDATE) {
+
+            $this->data=(object)$this->data;
+
+            local_costcenter_get_costcenter_path($this->data);
+
+            if($this->data->open_path){
+                $this->data->category = $DB->get_field('local_costcenter', 'category', array('path' => $this->data->open_path));
+            }
+
+            $this->data=(array)$this->data;
+
             $this->data['open_identifiedas'] = $coursetype->id;
             $course = (object) $this->data;
             update_course($course);

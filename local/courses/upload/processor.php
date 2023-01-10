@@ -212,7 +212,6 @@ class local_uploadcourse_processor {
         while ($line = $this->cir->next()) {
             $this->linenb++;
             $total++;
-
             $data = $this->parse_line($line);
             // for adding points for specified course.
             $data['open_points'] = $data['points'];
@@ -220,6 +219,10 @@ class local_uploadcourse_processor {
             $data['open_coursecompletiondays'] = $data['completiondays'];
             unset($data['completiondays']);
             // for getting department of the course.
+
+
+            $data['open_costcenterid'] =$this->defaults['open_costcenterid'];
+
             $data['open_departmentid'] = $DB->get_field('local_costcenter', 'id', array('shortname' => $data['department']));
             $subdepartmentparams = array('shortname' => $data['subdepartment']);
 
