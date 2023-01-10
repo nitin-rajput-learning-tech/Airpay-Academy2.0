@@ -39,8 +39,10 @@ if ($format) {
         'summary' => 'summary',
         'points' => 'points',
         'cost' => 'cost',
-        'department' => 'department',
-        'subdepartment' => 'subdepartment',
+        'department' => 'country',
+        'subdepartment' => 'commercialunit',
+        'level4department' => 'commercialarea',
+        'level5department' => 'territory',
         'completiondays' => 'completiondays',
         'format' => 'format',
     );
