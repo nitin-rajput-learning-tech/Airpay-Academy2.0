@@ -1498,3 +1498,29 @@ body#page-local-evaluation-userdashboard .card_list_view {
     display: none;
 }
 
+
+/*filterform*/
+#page-local-evaluation-index  form#filteringform {
+    display: flex;
+    flex-wrap: wrap;
+}
+#page-local-evaluation-index  .form-autocomplete-selection [data-active-selection=true]{
+    padding: 0.25em 0.4em !important;
+    font-size:100% !important;
+}
+
+@media (max-width:1059px){
+    #page-local-evaluation-index  #filters_form .mform .autocomplete .form-autocomplete-downarrow {
+        position: absolute;
+        top: 5px !important;
+    }
+}
+@media (max-width:767px){
+    #page-local-evaluation-index  #filters_form .mform .autocomplete .form-autocomplete-downarrow {
+        position: absolute;
+        top: 26px !important;
+    }
+    #page-local-evaluation-index  #filters_form .mform .autocomplete .form-autocomplete-downarrow {
+        left:180px;
+    }
+}
