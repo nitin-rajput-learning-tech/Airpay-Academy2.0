@@ -116,7 +116,7 @@ class syncfunctionality
             }
 
             // To check for existing user record.
-            $sql = "SELECT u.id,u.username,u.open_path, u.email FROM {user} u WHERE (u.open_employeeid = :open_employeeid) AND u.deleted = 0";
+            $sql = "SELECT u.id,u.username,u.open_path, u.email FROM {user} u WHERE (u.open_employeeid = :open_employeeid) AND (u.username = :username) AND u.deleted = 0";
             $params = array();
             $params['username'] = $user->username;
             $params['open_employeeid'] = $user->learner_id;
@@ -127,7 +127,20 @@ class syncfunctionality
                 $this->errors[] = get_string('multiple_user', 'local_users');
             } else {
                 $this->existing_user = null;
+                $exists=$DB->record_exists('user',array('username'=>$user->username));
+                if($exists){          
+                    $strings = new stdClass;
+                    $strings->excel_line_number = $this->excel_line_number;
+                    $strings->username = $user->username;         
+                    echo "<div class='local_users_sync_error'>".get_string('usernamealeadyexists', 'local_users', $strings)."</div>";
+                    $this->errors[] = get_string('usernamealeadyexists', 'local_users', $strings);
+                    $this->mfields[] = "username";
+                    $this->errorcount++;
+                    continue;
+                }
             }
+            
+                   
             list($zero, $orgid, $countryid, $buid, $cuid, $territoryid) = explode('/', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path());
             // To hold costcenterid.
             $this->costcenterid = $this->get_org_hierarchyid($user->organization_code, $parent = 0, $orgid);
