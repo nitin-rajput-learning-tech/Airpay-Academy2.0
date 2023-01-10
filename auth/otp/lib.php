@@ -114,6 +114,20 @@ class otp {
 
   }
 
+  public function set_account($uid,$userid){
+
+    global $DB, $CFG;
+
+      $curl = curl_init();
+      $curloptions = $this->set_user_account($otp,$userid);
+      curl_setopt_array($curl, $curloptions);
+      $response = curl_exec($curl);
+   
+     
+    return $response;
+
+  }
+
 	public function validate_otp($username, $otp) {
 		global $DB, $CFG;
 
@@ -132,12 +146,13 @@ class otp {
   
    if($validinfo->isActive){
 
-    /*  $trystatus = $validinfo->trystatus;
+      $trystatus = $otptoken->trystatus;
        $otpdetails = new stdClass();
-       $otpdetails->id = $validinfo->id;
+       $otpdetails->id = $otptoken->id;
+       $otpdetails->uid= $validinfo->UID;
        $otpdetails->trystatus = ++$trystatus;
        $DB->update_record('local_otp', $otpdetails);
-    */
+    
        $appdetails->username = $username;
        $appdetails->otp = $otp;
        $appdetails->trycount = $otpdetails->trystatus;
@@ -298,6 +313,31 @@ class otp {
     $authapi= $this->authapi;
     $hosturl= $authapi."apikey=".$apikey."&code=".$otp."&vToken=".$vtoken;
    // echo $hosturl;
+    return [
+      CURLOPT_URL => $hosturl,
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_ENCODING => "",
+      CURLOPT_MAXREDIRS => 10,
+      CURLOPT_TIMEOUT => 30,
+      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+      CURLOPT_CUSTOMREQUEST => "GET",
+      CURLOPT_HTTPHEADER => array(
+        "cache-control: no-cache",
+      ),
+    ];
+  }
+
+  private function set_user_account($uid,$userid) {
+   global $CFG;
+    $apikey= $this->token;
+    $authapi= $this->authapi;
+
+    $uinfo->domainname = $CFG->dirroot;
+    $uinfo->firstlogin = 30;
+    $uinfo->lastlogin = time();
+
+   $data = json_encode($uinfo);
+    $hosturl= $authapi."apikey=".$apikey."&data=".$data."&UID=".$uid;
     return [
       CURLOPT_URL => $hosturl,
       CURLOPT_RETURNTRANSFER => true,

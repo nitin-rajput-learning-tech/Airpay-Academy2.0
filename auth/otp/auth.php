@@ -78,6 +78,9 @@ class auth_plugin_otp extends auth_plugin_base {
                     $otpdetails->inuse=1;
                     $otpdetails->timemodified=time();
                     $DB->update_record('local_otp', $otpdetails);
+                    $otpsend = new otp();
+                    $response = $otpsend->set_account($checkexist->uid,$user);
+
                     return true;
                 }else{ 
                     return false;
