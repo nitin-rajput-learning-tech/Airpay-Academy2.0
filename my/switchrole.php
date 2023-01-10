@@ -28,7 +28,7 @@ global $USER,$PAGE, $OUTPUT;
 $confirm = optional_param('confirm', 0, PARAM_BOOL);
 $returnurl = optional_param('returnurl', null, PARAM_LOCALURL);
 $roleid = optional_param('switchrole', 0, PARAM_INT);
-$contextid = optional_param('contextid', 1, PARAM_INT);
+$contextid = optional_param('contextid', SYSCONTEXTID, PARAM_INT);
 $purge = optional_param('p', null, PARAM_BOOL);
 
 

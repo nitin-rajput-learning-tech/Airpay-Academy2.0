@@ -1091,7 +1091,7 @@ class core_renderer extends \core_renderer {
             $switchrole->itemtype = 'link';
             $learner_record_sql = "SELECT id, name, shortname
                                     FROM {role}
-                                    WHERE shortname = 'user' AND archetype = 'user' ";
+                                    WHERE shortname = 'employee' AND archetype = 'student' ";
             $learnerroleid = $DB->get_record_sql($learner_record_sql);
 
             $rolename = get_string('employee','theme_epsilon');
@@ -1503,7 +1503,11 @@ class core_renderer extends \core_renderer {
             return;
         }
         //Fetching the category contexts where the role is assigned ans switching as user to those for achieving system level role switch starts.
-        $userroleid = $DB->get_field('role', 'id', array('shortname' => 'user'));
+        if($context->id == SYSCONTEXTID){
+            $userroleid = $DB->get_field('role', 'id', array('archetype' => 'student'));
+        }else{
+            $userroleid = $DB->get_field('role', 'id', array('archetype' => 'user'));
+        }
         // $assignedcontexts = array_map(function($cxtpath){
         //     return end(explode('/', $cxtpath));
         // }, array_unique(array_keys($USER->access['ra'])));
