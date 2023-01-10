@@ -291,13 +291,14 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 });
             });
         },
-        deleteevaluation: function(elem) {
+        deleteevaluation: function(elem,name) {
             return Str.get_strings([{
                 key: 'deleteevalaution',
                 component: 'local_evaluation'
             }, {
                 key: 'confirmdelete',
-                component: 'local_evaluation'
+                component: 'local_evaluation',
+                param:name
             }]).then(function(s) {
                 ModalFactory.create({
                     title: s[0],

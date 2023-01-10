@@ -753,7 +753,7 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
     $context =  (new \local_groups\lib\accesslib())::get_module_context();
     $group = $DB->get_record('cohort', array('id' => $groupid));
     $cohort_group  = $DB->get_record('local_groups', array('cohortid' => $groupid));
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $costcenterpathconcatsql = (new \local_groups\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($group);
     $params['suspended'] = 0;
     $params['deleted'] = 0;

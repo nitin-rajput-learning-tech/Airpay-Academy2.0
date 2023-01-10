@@ -140,6 +140,7 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-oh">Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
+<tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
@@ -150,6 +151,7 @@ $string['help_1_orghead'] = '<table class="generaltable" border="1">
 $string['help_1_dephead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-dh">Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
+<tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
@@ -592,7 +594,7 @@ $string['previous'] = 'Previous';
 $string['cancel'] = 'Cancel';
 $string['emailaleadyexists'] = 'User with email {$a->email} already exist at line {$a->excel_line_number}.';
 
-$string['usernamealeadyexists'] = 'User with email {$a->email} already exist at line {$a->excel_line_number}.';
+$string['usernamealeadyexists'] = 'User with username {$a->username} already exist at line {$a->excel_line_number}.';
 
 $string['employeeid_alreadyexists'] = 'User with learner id {$a->employee_id} already exist at line {$a->excel_line_number}.';
 

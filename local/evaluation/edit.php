@@ -38,7 +38,6 @@ if (($formdata = data_submitted()) AND !confirm_sesskey()) {
 $do_show = optional_param('do_show', 'edit', PARAM_ALPHA);
 $switchitemrequired = optional_param('switchitemrequired', false, PARAM_INT);
 $deleteitem = optional_param('deleteitem', false, PARAM_INT);
-
 $url = new moodle_url('/local/evaluation/eval_view.php', array('id'=>$id, 'do_show'=>$do_show));
 
 $PAGE->set_pagelayout('standard');

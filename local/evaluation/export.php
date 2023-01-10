@@ -49,7 +49,7 @@ require_capability('local/evaluation:edititems', $context);
 
 if ($action == 'exportfile') {
     if (!$exportdata = evaluation_get_xml_data($evaluation->id)) {
-        print_error('nodata');
+        throw new moodle_exception('noquestionsavailable', 'local_evaluation');
     }
     @evaluation_send_xml_data($exportdata, 'evaluation_'.$evaluation->id.'.xml');
     exit;

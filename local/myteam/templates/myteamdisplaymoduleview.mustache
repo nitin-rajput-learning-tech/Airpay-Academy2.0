@@ -36,13 +36,6 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            {{# evaluation}}
-                                <th>{{# str}}type, local_myteam{{/ str}}</th>
-                            {{/ evaluation}}
-
-                            <!-- {{^ evaluation}}
-                                <th>Code</th>
-                            {{/ evaluation}} -->
 
                             <th>{{# str}}enrolldate, local_myteam{{/ str}}</th>
 
@@ -59,8 +52,6 @@
                         {{#records}}
                         <tr>
                             <td>{{name}}</td>
-
-                  
 
                             <td>{{enrolldate}}</td>
 
