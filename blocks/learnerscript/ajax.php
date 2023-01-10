@@ -800,13 +800,13 @@ case 'orgdepts':
 	}
 	break;
 case 'orglearningpath': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
 	if ($orgid > 0) {
 		$sql = "SELECT lp.id, lp.name 
                 FROM {local_learningplan} lp
-                WHERE 1 = 1 AND lp.costcenter = $orgid";
+                WHERE 1 = 1 AND concat('/',lp.open_path,'/') LIKE :costcenterpath";
 				
-		$departments = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid));
+		$departments = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid, 'costcenterpath'=>'%'.$orgid.'%'));
         if (!empty($departments)) {
             $return = array('0' => 'Select Learning path') + $departments;
         } else {
@@ -1012,15 +1012,15 @@ case 'depclassrooms':
 	}
 	break;
 case 'deplearningpath': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
 	if ($orgid > 0) {
 		$sql = "SELECT lp.id, lp.name 
                 FROM {local_learningplan} lp
-                WHERE 1 = 1 AND lp.costcenter = $orgid";
+                WHERE 1 = 1 AND concat('/',lp.open_path,'/') LIKE :costcenterpath";
 		if ($departmentid > 0) {
 			$sql .= " AND lp.department = $departmentid";
 		}
-		$departments = $DB->get_records_sql_menu($sql, array());
+		$departments = $DB->get_records_sql_menu($sql, array('costcenterpath'=>'%'.$orgid.'%'));
         if (!empty($departments)) {
             $return = array('0' => 'Select Learning path') + $departments;
         } else {
