@@ -370,7 +370,8 @@ class search implements renderable{
             if (!$userenrolstatus){
               $list->redirect = '<a href="'.$list->classroomlink.'" class="classroominfo" ><button class="cat_btn viewmore_btn">'.get_string('viewmore','local_search').'</button></a>';
             } else {
-              $list->redirect = '<a href="'.$list->classroomlink.'" class="classroominfo" ><button class="cat_btn viewmore_btn">'.get_string('start_now','local_classroom').'</button></a>';
+                $list->redirect = '';
+              // $list->redirect = '<a href="'.$list->classroomlink.'" class="classroominfo" ><button class="cat_btn viewmore_btn">'.get_string('start_now','local_classroom').'</button></a>';
             }
 
             $context = \local_costcenter\lib\accesslib::get_module_context();
