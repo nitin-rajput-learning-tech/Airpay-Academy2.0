@@ -2706,7 +2706,7 @@ function get_listof_evalautions($stable, $filtervalues){
               $OUTPUT->pix_icon('i/delete', get_string('delete'), 'moodle', array('class' => 'iconsmall', 'title' => '')),
               array('id' => 'deleteconfirm' . $record->id . '', 'onclick' => '(
                   function(e){
-                  require("local_evaluation/newevaluation").deleteevaluation("' . $record->id . '")
+                  require("local_evaluation/newevaluation").deleteevaluation("' . $record->id . '","'.$record->name.'")
                   })(event)')).'</li>';
             }
             $completedurl = new moodle_url('/local/evaluation/show_entries.php', array('id' => $record->id, 'sesskey' => sesskey()));

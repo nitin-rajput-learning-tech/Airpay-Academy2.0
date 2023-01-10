@@ -247,7 +247,6 @@ class local_skillrepository_renderer extends plugin_renderer_base {
         $skilldata .= html_writer:: end_tag('tr');
         $skilldata .= html_writer:: start_tag('tr', array());
         $skilldata .= html_writer:: tag('td', get_string('category').': <b>'.$subskill_category->name.'</b>', array());
-        $skilldata .= html_writer:: tag('td', get_string('parentcategory', 'local_skillrepository').': <b>'.isset($parent_skill_category->name).'</b>', array());
         $skilldata .= html_writer:: end_tag('tr');
         $skilldata .= html_writer:: end_tag('table');
         if(!empty($skillrecord->description)){

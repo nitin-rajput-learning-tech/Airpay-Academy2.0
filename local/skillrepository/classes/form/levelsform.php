@@ -50,7 +50,8 @@ class levelsform extends \moodleform {
     public function validation($data, $files) {
         $errors = array();
         global $DB, $CFG;
-
+        $code = $data['code'];
+        $name = $data['name'];
         if(empty($data['name'])){
             $error['name'] = get_string('nonemptyname', 'local_skillrepository');
         }
@@ -61,6 +62,12 @@ class levelsform extends \moodleform {
             if (empty($data['id']) || $levelid != $data['id']) {
                 $errors['code'] = get_string('codeexists', 'local_skillrepository');
             }
+        }
+        if(strlen($code) > 150){
+            $errors['code'] = get_string('shortnamelengthexceeds', 'local_skillrepository');
+        }
+        if(strlen($name) > 150){
+            $errors['name'] = get_string('namelengthexceeds', 'local_skillrepository');
         }
         return $errors;
     }
