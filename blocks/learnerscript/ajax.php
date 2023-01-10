@@ -1034,15 +1034,15 @@ case 'departmentcourses':
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
 	if ($orgid > 0) { 
         $orgsql .= " SELECT c.id FROM {course} c WHERE c.visible = 1 "; 
-        if ($orgid > 0) {
-            $orgsql .= " AND c.open_costcenterid = " .$orgid;
-        }
-        if ($departmentid > 0) {
-            $orgsql .= " AND c.open_departmentid = " .$departmentid;
-        } 
-        if ($subdepartmentid > 0) {
-            $orgsql .= " AND c.open_subdepartment = " .$subdepartmentid;
-        }
+        // if ($orgid > 0) {
+        //     $orgsql .= " AND c.open_costcenterid = " .$orgid;
+        // }
+        // if ($departmentid > 0) {
+        //     $orgsql .= " AND c.open_departmentid = " .$departmentid;
+        // } 
+        // if ($subdepartmentid > 0) {
+        //     $orgsql .= " AND c.open_subdepartment = " .$subdepartmentid;
+        // }
         $userssql = " ";
         $userssql .= " SELECT c.id FROM {course} c 
                     JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
@@ -1051,18 +1051,18 @@ case 'departmentcourses':
                   JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
                   JOIN {context} ctx ON ctx.instanceid = c.id 
                   JOIN {user} AS u ON u.id = ue.userid 
-                  JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid 
+                  JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
                   AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1 
                   WHERE 1 = 1 ";
-        if ($orgid > 0) {
-            $userssql .= " AND u.open_costcenterid = " .$orgid;
-        }
-        if ($departmentid > 0) {
-            $userssql .= " AND u.open_departmentid = " .$departmentid;
-        }          
-        if ($subdepartmentid > 0) {
-            $userssql .= " AND u.open_subdepartment = " .$subdepartmentid;
-        }
+        // if ($orgid > 0) {
+        //     $userssql .= " AND u.open_costcenterid = " .$orgid;
+        // }
+        // if ($departmentid > 0) {
+        //     $userssql .= " AND u.open_departmentid = " .$departmentid;
+        // }          
+        // if ($subdepartmentid > 0) {
+        //     $userssql .= " AND u.open_subdepartment = " .$subdepartmentid;
+        // }
 
         $orgcourses = $DB->get_records_sql($orgsql); 
         $usercourses = $DB->get_records_sql($userssql); 
@@ -1094,14 +1094,14 @@ case 'departmentcourses':
 case 'departmentusers':
 	if ($orgid > 0) { 
             $sql = "SELECT u.id, CONCAT(u.firstname,' ',u.lastname) as employeename 
-	                FROM {user} u WHERE u.deleted = 0 AND u.suspended = 0 AND u.id > 2 AND u.open_costcenterid = $orgid"; 
-            if ($departmentid > 0) {
-                $sql .= " AND u.open_departmentid = $departmentid ";
-            }
-            if ($subdepartmentid > 0) {
-                $sql .= " AND u.open_subdepartment = $subdepartmentid ";
-            }
-            $courses = $DB->get_records_sql_menu($sql);
+	                FROM {user} u WHERE u.deleted = 0 AND u.suspended = 0 AND u.id > 2 AND concat('/',u.open_path,'/') LIKE :costcenterpath"; 
+            // if ($departmentid > 0) {
+            //     $sql .= " AND u.open_departmentid = $departmentid ";
+            // }
+            // if ($subdepartmentid > 0) {
+            //     $sql .= " AND u.open_subdepartment = $subdepartmentid ";
+            // }
+            $courses = $DB->get_records_sql_menu($sql, array('costcenterpath'=>'%'.$orgid.'%'));
             if (!empty($courses)) {
                 $return = array('0' => 'Select user') + $courses;
             } else {

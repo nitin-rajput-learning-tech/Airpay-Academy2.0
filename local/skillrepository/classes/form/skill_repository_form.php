@@ -86,6 +86,7 @@ class skill_repository_form extends moodleform {
         $errors = parent::validation($data, $files);
 
         $shortname = $data['shortname'];
+        $name = $data['name'];
         $id = $data['id'];
         $category = $data['category'];
         $record = $DB->get_record_sql('SELECT * FROM {local_skill} WHERE shortname = ? AND  id <> ?', array($shortname, $id));
@@ -94,6 +95,9 @@ class skill_repository_form extends moodleform {
         }
         if(strlen($shortname) > 150){
             $errors['shortname'] = get_string('shortnamelengthexceeds', 'local_skillrepository');
+        }
+        if(strlen($name) > 150){
+            $errors['name'] = get_string('namelengthexceeds', 'local_skillrepository');
         }
         if($category <= 0){
             $errors['category'] = get_string('selectcategory', 'local_skillrepository');
