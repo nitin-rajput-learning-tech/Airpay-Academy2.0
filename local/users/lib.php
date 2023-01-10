@@ -555,27 +555,26 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
     $params = array();
     $params['deleted'] = 0;
     $params['suspended'] = 0;
-    if ($mform->modulecostcenterpath == 0 && (is_siteadmin()||has_capability('local/costcenter:manage_multiorganizations', $context))) {
+    if ($mform->modulecostcenterpath == 0 ) {
         $main_sql = "";
     } else  {
         $costcenterpath = $mform->modulecostcenterpath ? $mform->modulecostcenterpath : $USER->open_path;
 
-        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted  AND u.open_path = :open_path ";
-        $params['open_path'] = $costcenterpath;
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$costcenterpath);
+
+        $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted $costcenterpathconcatsql ";
     }
     $dbman = $DB->get_manager();
     if (in_array('group', $elementlist)) {
         $groupslist[null] = get_string('all');
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context) ) {
-            if ($dbman->table_exists('local_groups')) {
-                $groupslist += $DB->get_records_sql_menu("SELECT c.id, c.name FROM {local_groups} g, {cohort}
-                 c  WHERE c.visible = :visible AND c.id = g.cohortid ", array('visible' => 1));
-            }
-        } else {
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='g.open_path',$costcenterpath);
+
+
             $groupslist += $DB->get_records_sql_menu("SELECT c.id, c.name FROM {local_groups} g, {cohort} c
-              WHERE c.visible = :visible AND c.id = g.cohortid AND g.open_path = :open_path ",
-               array('open_path' => $costcenterpath, 'visible' => 1));
-        }
+              WHERE c.visible = :visible AND c.id = g.cohortid $costcenterpathconcatsql ",
+               array( 'visible' => 1));
+
         $selectgroup = $mform->addElement('autocomplete', 'open_group', get_string('open_group', 'local_users')
             , $groupslist);
         $mform->setType('open_group', PARAM_RAW);

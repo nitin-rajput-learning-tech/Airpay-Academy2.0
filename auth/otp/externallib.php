@@ -94,21 +94,22 @@ class auth_otp_external extends external_api {
             array(
             'username' => new external_value(PARAM_RAW, 'username'),
             'otp' => new external_value(PARAM_RAW, 'otp'),
-            'type' => new external_value(PARAM_INT, 'type')
+            'type' => new external_value(PARAM_INT, 'type'),
+			'countrycode' => new external_value(PARAM_RAW, 'countrycode')
             )
         );
     }
 
-    public static function validateuserdetails($username, $otp = 0, $type) {
+    public static function validateuserdetails($username, $otp = 0, $type,$countrycode) {
         global $CFG, $DB,$USER;
         $params = self::validate_parameters(self::validateuserdetails_parameters(),
-            array('username' => $username, 'otp' => $otp, 'type' => $type));
+            array('username' => $username, 'otp' => $otp, 'type' => $type,'countrycode'=>$countrycode));
         require_once($CFG->dirroot . "/auth/otp/lib.php");
         $otpsend = new otp();
         if (!empty($username) && $type == 1) {
-           $response = $otpsend->validate_application($username);
+           $response = $otpsend->validate_application($username,$countrycode);
         } else if (!empty($username) && $type == 2 && !empty($otp)) {
-           $response = $otpsend->validate_otp($username, $otp);
+           $response = $otpsend->validate_otp($username, $otp,$countrycode);
         } else {
             $response = '';
         }

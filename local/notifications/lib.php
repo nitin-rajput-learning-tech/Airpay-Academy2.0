@@ -236,16 +236,16 @@ class notifications {
                 break;
             case 'learningplan_enrol':
                 $strings = "[lep_name], [lep_course], [lep_enroluserfulname],
-                            [lep_department], [lep_type],
+                            [lep_type],
                             [lep_enroluseremail],[lep_creator],[lep_link]";
                 break;
             case 'learningplan_unenrol':
                 $strings = "[lep_name], [lep_course], [lep_enroluserfulname],
-                            [lep_department], [lep_type],
+                            [lep_type],
                             [lep_enroluseremail],[lep_creator],[lep_unenroldate]";
                 break;
             case 'learningplan_completion':
-                $strings = "[lep_name], [lep_course], [lep_department],
+                $strings = "[lep_name], [lep_course],
                             [lep_status], [lep_enroluserfulname],
                             [lep_enroluseremail], [lep_completiondate],[lep_creator],[lep_link]";
                 break;

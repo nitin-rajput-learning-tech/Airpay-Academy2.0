@@ -32,11 +32,11 @@ class notification {
 		switch($emailtype){
 			case 'learningplan_enrol':
                 $strings = "[lep_name], [lep_course], [lep_enroluserfulname],
-                            [lep_department], [lep_type],
+                            [lep_type],
                             [lep_enroluseremail],[lep_creator],[lep_link]";
             break;
             case 'learningplan_completion':
-                $strings = "[lep_name], [lep_course], [lep_department],
+                $strings = "[lep_name], [lep_course],
                             [lep_status], [lep_enroluserfulname],
                             [lep_enroluseremail], [lep_completiondate],[lep_creator],[lep_link]";
             break;
@@ -51,14 +51,15 @@ class notification {
     	$corecomponent = new \core_component();
         $costcenterexist = $corecomponent::get_plugin_directory('local','costcenter');
         $params = array();
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$learningplaninstance->open_path);
         $notification_typesql = "SELECT lni.* FROM {local_notification_info} AS lni 
             JOIN {local_notification_type} AS lnt ON lnt.id=lni.notificationid
-            WHERE concat(',',lni.moduleid,',') LIKE concat('%,',:moduleid,',%') AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
+            WHERE concat(',',lni.moduleid,',') LIKE concat('%',:moduleid,'%') AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
         $params['moduleid'] = $learningplaninstance->id;
         $params['emailtype'] = $emailtype;
         if($costcenterexist){
             $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE :costcenter ";
-            $params['costcenter'] = $learningplaninstance->costcenter;
+            $params['costcenter'] = $org;
         }
         $notification = $this->db->get_record_sql($notification_typesql, $params);
         if(empty($notification)){ // sends the default notification for the type.
@@ -69,8 +70,8 @@ class notification {
                 AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
             $params['emailtype'] = $emailtype;
             if($costcenterexist){
-                $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE :costcenter ";
-                $params['costcenter'] = $learningplaninstance->costcenter;
+                $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE  concat('%',:costcenter,'%') ";
+                $params['costcenter'] = $org;
             }
             $notification = $this->db->get_record_sql($notification_typesql, $params);
         }
