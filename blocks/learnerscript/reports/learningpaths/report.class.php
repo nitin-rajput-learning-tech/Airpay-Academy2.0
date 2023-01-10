@@ -41,7 +41,7 @@ class report_learningpaths extends reportbase implements report {
         $this->orderable = array('learner','learningplan','enrolmentdate','progress', 'completiondeadline','completiondate', 'upcomingdeadline', 'overduedeadline');
         $this->defaultcolumn = 'bll.id';
         $this->basicparams = array(['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments']);
-        $this->filters = array('learningpath', 'contentprovider', 'learningtype',  'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole');        
+        $this->filters = array('learningpath',  'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole');        
         $this->searchable = array('bll.name');
     }
     function init() {
@@ -95,26 +95,26 @@ class report_learningpaths extends reportbase implements report {
             }
         }
         if (!$this->scheduling) {
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)){ 
-                if ($this->params['filter_organization']>0) {
-                    $this->sql .= " AND bll.costcenterid IN (" .$this->params['filter_organization'].", 0) AND bll.user_costcenterid=".$this->params['filter_organization'];
-                }
-                if ($this->params['filter_departments'] > 0) {
-                    $this->sql .= " AND bll.departmentid IN (".$this->params['filter_departments'].", 0) AND bll.user_departmentid=".$this->params['filter_departments'];
-                }
-            } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $context) && $ohs) { 
-                $this->sql .= " AND bll.costcenterid IN (" .$USER->open_costcenterid.", 0) AND bll.user_costcenterid=".$USER->open_costcenterid;
-                if ($this->params['filter_departments'] > 0) {
-                    $this->sql .= " AND bll.departmentid IN (".$this->params['filter_departments'].", 0) AND bll.user_departmentid=".$this->params['filter_departments'];
-                }
-            }else if(has_capability('local/costcenter:manage_owndepartments', $context) && $dhs) { 
-                $this->sql .= " AND bll.costcenterid IN (" .$USER->open_costcenterid .", 0)  AND bll.user_costcenterid=".$USER->open_costcenterid." AND bll.user_departmentid = ". $USER->open_departmentid ." AND bll.departmentid IN (".$USER->open_departmentid.", 0)" ;
-            } else {
-                $this->sql .= " AND bll.costcenterid IN (" .$USER->open_costcenterid .", 0)  AND bll.user_costcenterid=".$USER->open_costcenterid." AND bll.user_departmentid = ". $USER->open_departmentid ." AND bll.departmentid IN (".$USER->open_departmentid.", 0) AND bll.subdepartment IN (" .$USER->open_subdepartment .",0) AND bll.user_departmentid =".$USER->open_subdepartment ;
-            }
-            if ($this->params['filter_subdepartments'] > 0) {
-                $this->sql .= " AND bll.subdepartment IN (".$this->params['filter_subdepartments'].", 0) AND bll.user_subdepartment=".$this->params['filter_subdepartments'];
-            } 
+            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)){ 
+            //     if ($this->params['filter_organization']>0) {
+            //         $this->sql .= " AND bll.costcenterid IN (" .$this->params['filter_organization'].", 0) AND bll.user_costcenterid=".$this->params['filter_organization'];
+            //     }
+            //     if ($this->params['filter_departments'] > 0) {
+            //         $this->sql .= " AND bll.departmentid IN (".$this->params['filter_departments'].", 0) AND bll.user_departmentid=".$this->params['filter_departments'];
+            //     }
+            // } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $context) && $ohs) { 
+            //     $this->sql .= " AND bll.costcenterid IN (" .$USER->open_costcenterid.", 0) AND bll.user_costcenterid=".$USER->open_costcenterid;
+            //     if ($this->params['filter_departments'] > 0) {
+            //         $this->sql .= " AND bll.departmentid IN (".$this->params['filter_departments'].", 0) AND bll.user_departmentid=".$this->params['filter_departments'];
+            //     }
+            // }else if(has_capability('local/costcenter:manage_owndepartments', $context) && $dhs) { 
+            //     $this->sql .= " AND bll.costcenterid IN (" .$USER->open_costcenterid .", 0)  AND bll.user_costcenterid=".$USER->open_costcenterid." AND bll.user_departmentid = ". $USER->open_departmentid ." AND bll.departmentid IN (".$USER->open_departmentid.", 0)" ;
+            // } else {
+            //     $this->sql .= " AND bll.costcenterid IN (" .$USER->open_costcenterid .", 0)  AND bll.user_costcenterid=".$USER->open_costcenterid." AND bll.user_departmentid = ". $USER->open_departmentid ." AND bll.departmentid IN (".$USER->open_departmentid.", 0) AND bll.subdepartment IN (" .$USER->open_subdepartment .",0) AND bll.user_departmentid =".$USER->open_subdepartment ;
+            // }
+            // if ($this->params['filter_subdepartments'] > 0) {
+            //     $this->sql .= " AND bll.subdepartment IN (".$this->params['filter_subdepartments'].", 0) AND bll.user_subdepartment=".$this->params['filter_subdepartments'];
+            // } 
         }        
         if ($this->ls_startdate >= 0 && $this->ls_enddate) {
             $this->sql .= " AND bll.timecreated BETWEEN $this->ls_startdate AND $this->ls_enddate ";

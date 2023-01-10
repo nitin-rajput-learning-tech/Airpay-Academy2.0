@@ -41,9 +41,9 @@ class report_users extends reportbase {
             'completed', 'grade', 'badges', 'progress', 'status', 'upcomingdeadline', 'overduedeadline'));
         $this->orderable = array('fullname', 'email', 'enrolled', 'inprogress', 'completed','grade','progress',
                             'badges', 'upcomingdeadline', 'overduedeadline'); 
-        if ($this->loggedinuserrole != 'dh') {
-            $this->basicparams = array(['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments']);
-        }
+        // if ($this->loggedinuserrole != 'dh') {
+        //     $this->basicparams = array(['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments']);
+        // }
         $this->filters = array('users', 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country');
         $this->defaultcolumn = 'u.id';
         $this->excludedroles = array("'employee'");
@@ -119,45 +119,45 @@ class report_users extends reportbase {
         //     }
         // }
 
-        if(isset($this->params['filter_status'])) {
-          if($this->params['filter_status'] == 'enrolled') {
-            $this->sql .= " AND u.id IN (SELECT DISTINCT u.id
-                        FROM {user} as u
-                        JOIN {user_enrolments} as ue on ue.userid = u.id
-                        JOIN {enrol} as e on e.id = ue.enrolid 
-                        JOIN {course} as c on c.id = e.courseid
-                        WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
-          } else if($this->params['filter_status'] == 'completed') {
-            $this->sql .= " AND u.id IN (SELECT DISTINCT cc.userid AS completed 
-                        FROM {user_enrolments} ue   
-                        JOIN {user} as u on u.id = ue.userid
-                        JOIN {enrol} e ON ue.enrolid = e.id 
-                        JOIN {role_assignments} ra ON ra.userid = ue.userid
-                        JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-                        JOIN {context} AS ctx ON ctx.id = ra.contextid
-                        JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                        JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-                        WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
-                         AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  ";
-          } else if($this->params['filter_status'] == 'inprogress') {
-              $this->sql .= " AND u.id NOT IN (SELECT DISTINCT cc.userid AS completed 
-                        FROM {user_enrolments} ue   
-                        JOIN {user} as u on u.id = ue.userid
-                        JOIN {enrol} e ON ue.enrolid = e.id 
-                        JOIN {role_assignments} ra ON ra.userid = ue.userid
-                        JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-                        JOIN {context} AS ctx ON ctx.id = ra.contextid
-                        JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                        JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-                        WHERE 1 AND cc.timecompleted IS NULL AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
-                         AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  AND u.id IN (SELECT DISTINCT u.id
-                        FROM {user} as u
-                        JOIN {user_enrolments} as ue on ue.userid = u.id
-                        JOIN {enrol} as e on e.id = ue.enrolid 
-                        JOIN {course} as c on c.id = e.courseid
-                        WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
-          }
-        }
+        // if(isset($this->params['filter_status'])) {
+        //   if($this->params['filter_status'] == 'enrolled') {
+        //     $this->sql .= " AND u.id IN (SELECT DISTINCT u.id
+        //                 FROM {user} as u
+        //                 JOIN {user_enrolments} as ue on ue.userid = u.id
+        //                 JOIN {enrol} as e on e.id = ue.enrolid 
+        //                 JOIN {course} as c on c.id = e.courseid
+        //                 WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
+        //   } else if($this->params['filter_status'] == 'completed') {
+        //     $this->sql .= " AND u.id IN (SELECT DISTINCT cc.userid AS completed 
+        //                 FROM {user_enrolments} ue   
+        //                 JOIN {user} as u on u.id = ue.userid
+        //                 JOIN {enrol} e ON ue.enrolid = e.id 
+        //                 JOIN {role_assignments} ra ON ra.userid = ue.userid
+        //                 JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+        //                 JOIN {context} AS ctx ON ctx.id = ra.contextid
+        //                 JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
+        //                 JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
+        //                 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
+        //                  AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  ";
+        //   } else if($this->params['filter_status'] == 'inprogress') {
+        //       $this->sql .= " AND u.id NOT IN (SELECT DISTINCT cc.userid AS completed 
+        //                 FROM {user_enrolments} ue   
+        //                 JOIN {user} as u on u.id = ue.userid
+        //                 JOIN {enrol} e ON ue.enrolid = e.id 
+        //                 JOIN {role_assignments} ra ON ra.userid = ue.userid
+        //                 JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+        //                 JOIN {context} AS ctx ON ctx.id = ra.contextid
+        //                 JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
+        //                 JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
+        //                 WHERE 1 AND cc.timecompleted IS NULL AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
+        //                  AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  AND u.id IN (SELECT DISTINCT u.id
+        //                 FROM {user} as u
+        //                 JOIN {user_enrolments} as ue on ue.userid = u.id
+        //                 JOIN {enrol} as e on e.id = ue.enrolid 
+        //                 JOIN {course} as c on c.id = e.courseid
+        //                 WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
+        //   }
+        // }
         parent::where();
     }
 
@@ -172,18 +172,18 @@ class report_users extends reportbase {
 
     function filters() {
         global $DB; 
-        if (!empty($this->params['filter_organization'])) {
-            $costcenterids = $this->params['filter_organization'];
-            $this->sql .= " AND u.open_costcenterid IN ($costcenterids) ";
-        } 
-        if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-            $departmentids = $this->params['filter_departments'];
-            $this->sql .= " AND u.open_departmentid IN ($departmentids) ";
-        }
-        if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-            $subdepartmentids = $this->params['filter_subdepartments'];
-            $this->sql .= " AND u.open_subdepartment IN ($subdepartmentids) ";
-        }
+        // if (!empty($this->params['filter_organization'])) {
+        //     $costcenterids = $this->params['filter_organization'];
+        //     $this->sql .= " AND u.open_costcenterid IN ($costcenterids) ";
+        // } 
+        // if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
+        //     $departmentids = $this->params['filter_departments'];
+        //     $this->sql .= " AND u.open_departmentid IN ($departmentids) ";
+        // }
+        // if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
+        //     $subdepartmentids = $this->params['filter_subdepartments'];
+        //     $this->sql .= " AND u.open_subdepartment IN ($subdepartmentids) ";
+        // }
         if (isset($this->params['filter_users'])
             && $this->params['filter_users'] >0
             && $this->params['filter_users'] != '_qf__force_multiselect_submission') {

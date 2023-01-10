@@ -37,7 +37,7 @@ class report_usersdata extends reportbase {
         parent::__construct($report, $reportproperties);
         $this->components = array('columns', 'conditions', 'ordering', 'permissions', 'filters', 'plot');
         $this->parent = true;
-        $this->columns = ['userfield' => ['userfield']];
+        $this->columns = ['userfield' => ['fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus']];
         $this->orderable = array('fullname', 'email', 'enrolled', 'inprogress', 'completed','grade','progress',
                             'badges');
         $this->filters = array('users');
@@ -49,7 +49,7 @@ class report_usersdata extends reportbase {
     }
 
     function select() {
-      $this->sql = " SELECT u.id as userid";
+      $this->sql = " SELECT u.id as userid, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*";
       parent::select();
     }
     
@@ -59,7 +59,7 @@ class report_usersdata extends reportbase {
 
     function joins() {
       // $this->sql .= " JOIN {local_costcenter} as c ON c.id = u.open_costcenterid ";
-      $this->sql .= " JOIN {local_costcenter} as c ON concat('/',c.id,'/') LIKE concat('%/',u.open_path,'/%') AND c.depth = 1 ";
+      $this->sql .= " JOIN {local_costcenter} as c ON concat('/',c.id,'/') LIKE concat(u.open_path,'/%') AND c.depth = 1 ";
 
       parent::joins();
     }
@@ -102,7 +102,7 @@ class report_usersdata extends reportbase {
       } else  {
           $this->sql .= $costcenterpathconcatsql;
       }
-        //echo $this->sql;
+        // echo $this->sql; exit;
          parent::where();
     }
 

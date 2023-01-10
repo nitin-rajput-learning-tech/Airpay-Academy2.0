@@ -71,7 +71,7 @@ class report_learningpathcourseusers extends reportbase implements report {
   function where() {
     global $USER, $DB;
     $courseid = $this->params['filter_course'];
-    $this->sql .= " where c.id IN (select lcc.courseid from {local_learningplan_courses} lcc where lcc.planid = lcu.planid AND moduletype = 'local_courses' ) AND u.deleted = 0  ";
+    $this->sql .= " where c.id IN (select lcc.courseid from {local_learningplan_courses} lcc where lcc.planid = lcu.planid AND lcc.moduletype = 'local_courses' ) AND u.deleted = 0  ";
 
     $systemcontext = context_system::instance();
     // getscheduled report
@@ -85,17 +85,18 @@ class report_learningpathcourseusers extends reportbase implements report {
             $ohs = 1;
         }
     }
-    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-      $this->sql .= " ";
-    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-      $this->sql .= " AND c.open_costcenterid = :costcenterid ";
-      $this->params['costcenterid'] = $USER->open_costcenterid;
-    }else{
-      $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
-      $this->params['costcenterid'] = $USER->open_costcenterid;
-      $this->params['departmentid'] = $USER->open_departmentid;
-    }
-
+    // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+    //   $this->sql .= " ";
+    // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
+    //   $this->sql .= " AND c.open_costcenterid = :costcenterid ";
+    //   $this->params['costcenterid'] = $USER->open_costcenterid;
+    // }else{
+    //   $this->sql .= " AND c.open_costcenterid = :costcenterid AND c.open_departmentid = :departmentid ";
+    //   $this->params['costcenterid'] = $USER->open_costcenterid;
+    //   $this->params['departmentid'] = $USER->open_departmentid;
+    // }
+// echo $this->sql;
+// print_r($this->params);exit;
     parent::where();
   }
 

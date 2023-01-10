@@ -35,7 +35,7 @@ class report_userdata extends reportbase implements report {
       parent::__construct($report);
       $this->parent = true;
       $this->components = array('columns', 'filters', 'permissions');
-      $this->columns = ['userfield'=>['userfield']];
+      $this->columns = ['userfield'=>['userfield','fullname','username','firstname','lastname','email']];
       $this->filters = ['user'];
       $this->defaultcolumn = 'u.id';
       $this->orderable = array('');
@@ -47,7 +47,7 @@ class report_userdata extends reportbase implements report {
       $this->sql = "SELECT count(u.id)";
     }
     function select() {
-      $this->sql = "SELECT u.id as userid";
+      $this->sql = "SELECT u.id as userid,CONCAT(u.firstname, ' ', u.lastname) AS fullname,username,firstname,lastname,email";
       parent::select();
     }
     function from() {
@@ -55,7 +55,8 @@ class report_userdata extends reportbase implements report {
     }
     function joins() {
       // $this->sql .= " JOIN {local_costcenter} as c ON c.id = u.open_costcenterid ";
-      $this->sql .= " JOIN {local_costcenter} as c ON concat('/',c.id,'/') LIKE concat('%/',u.open_path,'/%') AND c.depth = 1 ";
+      $this->sql .= " JOIN {local_costcenter} c ON concat('/',u.open_path,'/') LIKE concat('%/',c.id,'/%') AND c.depth = 1 ";
+      // $this->sql .= " JOIN {local_costcenter} as c ON concat('/',c.id,'/') LIKE concat('%/',u.open_path,'/%') AND c.depth = 1 ";
       parent::joins();
     }
     function where(){

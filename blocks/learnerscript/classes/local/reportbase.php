@@ -93,8 +93,8 @@ class reportbase {
     public $conditionfinalelements = array();
     function __construct($report, $properties = null) {
         global $DB, $CFG, $USER;
-        $user_costcenterid = explode('/',$USER->open_path)[1];
-        $user_departmentid = explode('/',$USER->open_path)[2];
+        // $user_costcenterid = explode('/',$USER->open_path)[1];
+        // $user_departmentid = explode('/',$USER->open_path)[2];
         $systemcontext = \context_system::instance();
         if (empty($report)) {
              return false;

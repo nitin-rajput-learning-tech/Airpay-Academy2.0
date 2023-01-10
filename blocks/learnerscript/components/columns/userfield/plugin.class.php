@@ -116,20 +116,20 @@ class plugin_userfield extends pluginbase {
             case 'branch':
                 $userrecord->{$data->column} = ($row->open_branch) ? $row->open_branch : '--';
                 break;
-            case 'organization':
-                $org = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_costcenterid));
-                $userrecord->{$data->column} = $org;
-                break;
-            case 'department':
-                $dept = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_departmentid));
-                $userrecord->{$data->column} = $dept;
-                break;
-            case 'subdepartment':
-                if(!empty($userrecord->open_subdepartment)){
-                    $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_subdepartment));
-                }else{
-                    $userrecord->{$data->column} = 'NA';
-                }
+            // case 'organization':
+            //     $org = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_costcenterid));
+            //     $userrecord->{$data->column} = $org;
+            //     break;
+            // case 'department':
+            //     $dept = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_departmentid));
+            //     $userrecord->{$data->column} = $dept;
+            //     break;
+            // case 'subdepartment':
+            //     if(!empty($userrecord->open_subdepartment)){
+            //         $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_subdepartment));
+            //     }else{
+            //         $userrecord->{$data->column} = 'NA';
+            //     }
                 break;
             case 'location':
                 $userrecord->{$data->column} = ($row->city) ? $row->city : 'NA';

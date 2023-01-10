@@ -1224,3 +1224,5 @@ $string['report_complianceprograms'] = 'Compliance Data';
 $string['complianceprogramscolumns'] = 'Compliance Programs Columns';
 $string['report_compliancelearningpath'] = 'Compliance Data';
 $string['compliancelearningpathcolumns'] = 'Compliance Learning Path Columns';
+$string['report_classroomcourseusers'] = 'Classroom courses users';
+$string['report_learningpathcourseusers'] = 'Learningpath courses users';

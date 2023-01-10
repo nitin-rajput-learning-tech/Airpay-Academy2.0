@@ -1463,7 +1463,7 @@ class view extends plugin_renderer_base {
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
     	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 		if(!is_siteadmin()){
-			$siteadmin_sql= $$costcenterpathconcatsql;
+			$siteadmin_sql= $costcenterpathconcatsql;
 		}else{
 			$siteadmin_sql="";
 		}
