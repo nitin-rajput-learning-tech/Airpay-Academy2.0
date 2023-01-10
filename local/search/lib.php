@@ -96,10 +96,14 @@ function local_search_get_itemlist_grade($start = 0, $limit = 5){
 
 function local_search_get_itemlist_skill($start = 0, $limit = 6){
 	global $DB, $USER;
-	$selectsql = "SELECT id, name as value ";
-	$countsql = "SELECT count(name) ";
-	$sql .= " FROM {local_skill_categories} AS u WHERE 1=1";
+	$selectsql = "SELECT s.id, s.name as value ";
+	$countsql = "SELECT count(s.id) ";
+	$sql .= " FROM {local_skill} AS s WHERE 1=1 ";
 	$params = [];
+    if(!is_siteadmin() && $USER->open_path){
+        $sql .= " AND :openpathlike = concat(s.open_path,'/%') ";
+        $params['openpathlike'] = $USER->open_path.'/';
+    }
     $skill = $DB->get_records_sql_menu($selectsql.$sql, $params, $start, $limit);
     if($start == 0){
         if(count($skill) == $limit){
@@ -121,13 +125,13 @@ function local_search_get_itemlist_skill($start = 0, $limit = 6){
 
 function local_search_get_itemlist_level($start = 0, $limit = 6){
 	global $DB, $USER;
-	$selectsql = "SELECT id, name as value ";
-	$countsql = "SELECT count(id) ";
-	$sql .= " FROM {local_course_levels} AS u WHERE 1=1 ";
+	$selectsql = "SELECT cl.id, cl.name as value ";
+	$countsql = "SELECT count(cl.id) ";
+	$sql .= " FROM {local_course_levels} AS cl WHERE 1=1 ";
 	$params = [];
-    if(!is_siteadmin() && $USER->open_costcenterid){
-        $sql .= " AND u.costcenterid = :costcenterid ";
-        $params['costcenterid'] = $USER->open_costcenterid;
+    if(!is_siteadmin() && $USER->open_path){
+        $sql .= " AND :openpathlike = concat(cl.open_path,'/%') ";
+        $params['openpathlike'] = $USER->open_path.'/';
     }
     $courselevel = $DB->get_records_sql_menu($selectsql.$sql, $params, $start, $limit);
     if($start == 0){
@@ -170,13 +174,23 @@ function local_search_get_filters(){
     $filter_array[] = local_search_get_filter_itemlist('moduletype',0, 0);
     $filter_array[] = local_search_get_filter_itemlist('status',0, 0);
     $filter_array[] = local_search_get_filter_itemlist('learningtype',0, 0);
-    $filter_array[] = local_search_get_filter_itemlist('categories',0, 0);
-    $filter_array[] = local_search_get_filter_itemlist('level',0, 0);
-    $filter_array[] = local_search_get_filter_itemlist('skill',0, 0);
+    $categories = local_search_get_filter_itemlist('categories',0, 0);
+    if(count($categories['options']) > 0){
+        $filter_array[] = $categories;
+    }
+    $levels = local_search_get_filter_itemlist('level',0, 0);
+    if(count($levels['options']) > 0){
+        $filter_array[] = $levels;
+    }
+    $skills = local_search_get_filter_itemlist('skill',0, 0);
+    // var_dump(count($skills['options']));
+    if(count($skills['options']) > 0){
+        $filter_array[] = $skills;
+    }
     return $filter_array;
 }
 function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
-    global $DB;
+    global $DB, $USER;
     switch($catid){
         case 'moduletype':
             $itemslist = [];
@@ -215,7 +229,12 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
         break;
         case 'categories':
             $categorySql = "SELECT id, fullname FROM {local_custom_category} WHERE 1 = 1 ";
-            $categories = $DB->get_records_sql_menu($categorySql, [], $start, $limit);
+            $params = [];
+            if(!is_siteadmin() && !empty($USER->open_path)){
+                $categorySql .= " AND :pathlike LIKE concat('%/',costcenterid,'/%') ";
+                $params['pathlike'] = $USER->open_path.'/';
+            }
+            $categories = $DB->get_records_sql_menu($categorySql, $params, $start, $limit);
             if($start == 0){
                 if(count($categories) == 7){
                     array_pop($categories);
@@ -238,7 +257,7 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
 
         case 'skill':
             list($itemslist, $showviewmore) = local_search_get_itemlist_skill($start, $limit);
-            return ['type' => 'skill', 'name' => 'Skill Category', 'options' => $itemslist, 'showviewmore' => $showviewmore];
+            return ['type' => 'skill', 'name' => 'Skill', 'options' => $itemslist, 'showviewmore' => $showviewmore];
         break;
      }
 }

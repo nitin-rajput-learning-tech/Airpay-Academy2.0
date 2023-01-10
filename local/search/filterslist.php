@@ -26,10 +26,18 @@ $final_array['categoriesall'] = [];
 $final_array['categoriesall'][] = local_search_get_filter_itemlist('moduletype');
 $final_array['categoriesall'][] = local_search_get_filter_itemlist('status');
 $final_array['categoriesall'][] = local_search_get_filter_itemlist('learningtype');
-$final_array['categoriesall'][] = local_search_get_filter_itemlist('categories');
-$final_array['categoriesall'][] = local_search_get_filter_itemlist('level');
-$final_array['categoriesall'][] = local_search_get_filter_itemlist('skill');
-
+$categories = local_search_get_filter_itemlist('categories',0, 0);
+if(count($categories['options']) > 0){
+    $final_array['categoriesall'][] = $categories;
+}
+$levels = local_search_get_filter_itemlist('level',0, 0);
+if(count($levels['options']) > 0){
+    $final_array['categoriesall'][] = $levels;
+}
+$skills = local_search_get_filter_itemlist('skill',0, 0);
+if(count($skills['options']) > 0){
+    $final_array['categoriesall'][] = $skills;
+}
 $final = array();
 $final['finallist'] = $final_array;
 echo json_encode($final);
