@@ -858,6 +858,8 @@ class core_renderer extends \core_renderer {
         $pagetype = $this->page->pagetype;
         $homepage = get_home_page();
         $homepagetype = null;
+        $context = $this->page->context;
+        $courseid = $this->page->course->id;
         // Add a special case since /my/courses is a part of the /my subsystem.
         if ($homepage == HOMEPAGE_MY || $homepage == HOMEPAGE_MYCOURSES) {
             $homepagetype = 'my-index';
@@ -875,11 +877,16 @@ class core_renderer extends \core_renderer {
                 ['id' => 'region-main-settings-menu']
             ));
         }
-
+        if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1) {
+            $course_extended_menu = $this->course_context_header_settings_menu();
+        }else{
+            $course_extended_menu = $this->context_header_settings_menu();
+        }
         $header = new stdClass();
-        $header->settingsmenu = $this->context_header_settings_menu();
-        if(!$data->hideheader)
-            $header->contextheader = $this->context_header();
+        $header->settingsmenu = $course_extended_menu;
+
+        // if(!$data->hideheader)
+        $header->contextheader = $this->context_header();
         $header->hasnavbar = empty($this->page->layout_options['nonavbar']);
         $header->navbar = $this->navbar();
         $header->pageheadingbutton = $this->page_heading_button();
@@ -888,7 +895,143 @@ class core_renderer extends \core_renderer {
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
         }
-        return $this->render_from_template('core/full_header', $header);
+        return $this->render_from_template('theme_epsilon/full_header', $header);
+    }
+        /**
+     * return custom course page header buttons to show only on course pages
+     *
+     * @return HTML
+     */
+    public function course_context_header_settings_menu(){
+        global $PAGE, $COURSE, $DB, $USER;
+
+        $courseid = $COURSE->id;
+        $sesskey = sesskey();
+        if($courseid < 2){
+            return '';
+        }
+        $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'init');
+        $return = '';
+
+        $systemcontext = context_system::instance();
+         if(has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext) || is_siteadmin()) {
+            $admin_default_menu = true;
+        }
+        $useredit = '';
+        if ($PAGE->user_is_editing() && $PAGE->user_allowed_editing()) {
+            $useredit = 'off';
+        }else{
+            $useredit = 'on';
+        }
+        if($this->page->pagetype!='local-catalog-courseinfo') {
+            $departments = explode(',', $COURSE->open_departmentid);
+            $manage = true;
+            if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_ownorganization', 'local/costcenter:manage_multiorganizations'], $systemcontext)) && count($departments) > 1){
+                $manage = false;
+                $USER->editing = 0;
+            }
+            if ($PAGE->user_allowed_editing() && $manage){
+                    $categorycontext = context_coursecat::instance($COURSE->category);
+                    $allow_editing = true;
+                $editing_url = new moodle_url('/course/view.php', array('id' => $courseid, 'sesskey'=> $sesskey, 'edit'=>$useredit));
+            }
+            if((has_capability('moodle/course:create',$systemcontext) || is_siteadmin() ||
+                                            has_capability('local/courses:enrol', $systemcontext)) && $manage) {
+                $is_courseedit_icon = true;
+                $course_reports =  true;
+                $course_complition = true;
+            }
+
+            if((has_capability('moodle/backup:backupcourse',$systemcontext) || is_siteadmin()) && $manage) {
+                $coursebackup = true;
+            }
+            if(is_siteadmin() || has_capability('enrol/manual:manage', $systemcontext)) {
+                $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
+                $userenrollment = true;
+            }
+        }
+        // if($this->page->pagetype === 'blocks-gamification-index'){
+        //     $gamificationpage = true;
+        // }else{
+        //     $gamificationpage = false;
+        // }
+        $challenge_plugin_exist = \core_component::get_plugin_directory('local', 'challenge');
+        $challenge_element = false;
+        $enabled =  (int)get_config('', 'local_challenge_enable_challenge');
+        if($enabled){
+            if(!empty($challenge_plugin_exist)){
+                $render_class = $PAGE->get_renderer('local_challenge');
+                if(method_exists($render_class, 'render_challenge_object')){
+                    $element = $render_class->render_challenge_object('local_courses', $courseid);
+                    $challenge_element = $element;
+                }
+            }
+        }
+        $gamification_plugin_exist = \core_component::get_plugin_directory('block', 'gamification');
+        $gamification_element = false;
+        if(!empty($gamification_plugin_exist)){
+            $gamification_element = true;
+        }
+
+        
+        $course_context = [
+            "courseid" => $courseid,
+            "admin_default_menu" => $admin_default_menu,
+            "default_menu" => $this->context_header_settings_menu(),
+            "allow_editing" => $allow_editing,
+            "editing_url" => $editing_url,
+            "useredit" => $useredit,
+            "is_courseedit_icon" => $is_courseedit_icon,
+            "course_reports" => $course_reports,
+            "course_complition" => $course_complition,
+            "coursebackup" => $coursebackup,
+            "enrolid" => $enrolid,
+            "userenrollment" => $userenrollment,
+            "categorycontextid" =>$categorycontext->id,
+            // "gamificationpage" => $gamificationpage,
+            "challenge_element" => $challenge_element,
+            "gamification_element" => $gamification_element,
+            "manage" => $manage,
+            'isenrolled' => is_enrolled(context_course::instance($COURSE->id)),
+        ];
+
+        if(!is_siteadmin()){
+            $switchedrole = $USER->access['rsw']['/1'];
+            if($switchedrole){
+                $userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
+            }else{
+                $userrole = null;
+            }
+            
+//            if(is_null($userrole) || $userrole == 'user'){
+             if(is_null($userrole) || $userrole == 'employee'){
+                $core_component = new core_component();
+                $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
+                if($certificate_plugin_exist){
+                    if(!empty($COURSE->open_certificateid)){
+                        $course_context['certificate_exists'] = true;
+                        $sql = "SELECT id 
+                                FROM {course_completions} 
+                                WHERE course = :courseid AND userid = :userid 
+                                AND timecompleted IS NOT NULL ";
+
+                        $completed = $DB->record_exists_sql($sql, array('courseid'=>$COURSE->id, 'userid'=>$USER->id));
+                        if($completed){
+                            
+            $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$COURSE->id,'userid'=>$USER->id,'templateid'=>$COURSE->open_certificateid,'moduletype'=>'course'));
+                            $course_context['certificate_download'] = true;
+                            $course_context['certificateid'] = $certcode; //$COURSE->open_certificateid;
+                            $course_context['moduletype'] = 'course';
+                            $course_context['moduleid'] = $COURSE->id;
+                        }else{
+                            $course_context['certificate_download'] = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->render_from_template('theme_epsilon/course_context_header', $course_context);
     }
     function theme_epsilon_user_get_user_navigation_info($user, $page, $options = array()) {
         global $OUTPUT, $DB, $SESSION, $CFG;
