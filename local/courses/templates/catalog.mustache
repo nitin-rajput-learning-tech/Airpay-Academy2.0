@@ -29,8 +29,8 @@
             {{#records}}
                 {{# hascourses}}
                         <div class="{{cardClass}} catcourses_list {{course_class}} ">
-                            <div class="row course_container">
-                                <div class="courseimg_container d-flex col-12 col-md-4">
+                            <div class="d-flex course_container">
+                                <div class="courseimg_container ">
                                     <div style="background-image: url('{{{ courseimage }}}');" alt="{{ coursename }}" class="courseimg courseimg_bg h-100" >
                                         <!-- <div class="course_progress_container d-flex align-items-center">
                                             <div class="progress_circular" style="background-image:conic-gradient(white 0%,transparent 0%);">
@@ -40,7 +40,7 @@
                                         </div> -->
                                     </div>
                                 </div>
-                                <div class="coursecontent col-12 col-md-8 d-flex flex-column justify-content-between">
+                                <div class="coursecontent   d-flex flex-column justify-content-between">
 
                                     <div class="d-flex mt-1">
                                         <h5 class="flex-grow-1 course_name m-0">
@@ -113,12 +113,12 @@
                                         <span class="text-muted">{{#str}}category, local_courses{{/str}} : </span> <span class="ml-1">{{catnamestring}}</span>
                                     </div>
                                     <div class="row">
-                                        <!-- <div class="col-6">
+                                        <div class="col-6">
                                             <div class="d-flex">
                                                 <span class="text-muted">{{#str}}open_skillcourse, local_courses{{/str}} : </span> <span class="ml-1">{{skillname}}</span>
                                             </div>
-                                        </div> -->
-                                        <div class="col-12">
+                                        </div>
+                                        <div class="col-6">
                                             <div class="d-flex">
                                                 <span class="text-muted">Tags : </span> <span class="ml-1">{{{tagstring}}}</span>
                                             </div>
