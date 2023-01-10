@@ -140,6 +140,9 @@ define(['jquery',
     requestconfirm.prototype.getbodystring= function(args){
        
        var string ='';
+       if(args.component == 'learningplan'){
+            args.component = 'Learning path';
+       }
        if(args.action && args.component){
         var string= Str.get_string('confirmmsgfor_'+args.action, 'local_request', args);
        }
