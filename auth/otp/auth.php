@@ -21,6 +21,7 @@ if (!defined('MOODLE_INTERNAL')) {
 }
 
 require_once($CFG->libdir.'/authlib.php');
+require_once($CFG->dirroot . "/auth/otp/lib.php");
 
 /**
  * AD Webservice authentication plugin.
