@@ -95,6 +95,14 @@ class report_coursescompletions extends reportbase implements report {
                 $ohs = $dhs=1;
             }
         }
+
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path'); 
+
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else  {
+            $this->sql .= $costcenterpathconcatsql;
+        }
         // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
         //     $this->sql .= " ";
         // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
@@ -142,6 +150,26 @@ class report_coursescompletions extends reportbase implements report {
         //     $this->sql .= " AND c.open_subdepartment = :subdepartmentid ";
         //     $this->params['subdepartmentid'] = $subdepartmentid;
         // }
+
+         if ($this->params['filter_organization'] > 0) {
+            $organization = $this->params['filter_organization'];
+            $filter_organization[] = " concat('/',c.open_path,'/') LIKE :organizationparam_{$organization}";
+            $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
+        }
+        if ($this->params['filter_departments'] > 0) {
+            $department = $this->params['filter_departments'];
+            $filter_department[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
+            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
+        }
+
+        if ($this->params['filter_subdepartments'] > 0) {
+            $subdepartments = $this->params['filter_subdepartments'];
+            $filter_subdepartments[] = " concat('/',c.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+            $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
+        }
 
         if (!empty($this->params['filter_course'])) {
             $courseid = $this->params['filter_course'];
