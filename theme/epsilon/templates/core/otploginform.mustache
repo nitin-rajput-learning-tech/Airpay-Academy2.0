@@ -79,7 +79,7 @@
                         <input type="text" name="username" id="applicationid"
                             class="form-control custom_control"
                             value="{{username}}"
-                            placeholder={{#quote}}{{^canloginbyemail}}XXX XXX XXXX{{/canloginbyemail}}{{#canloginbyemail}}{{#str}}usernameemail{{/str}}{{/canloginbyemail}}{{/quote}}
+                            placeholder={{#quote}}{{^canloginbyemail}}XXX XXX XXXX{{/canloginbyemail}}{{#canloginbyemail}}{{#str}}phonenumber, theme_epsilon{{/str}}{{/canloginbyemail}}{{/quote}}
                             autocomplete="username">
                     </div>
                     <div class="forgetpass text-center">
@@ -205,7 +205,7 @@ require(['jquery', 'core/ajax'], function($, ajax) {
         } else {
             e.preventDefault();
             if (application_id == '') {
-                alert("Please enter email");
+                alert("Please enter mobile number");
             } else {
                 if ($('#loginbtn').hasClass('hiddennow')) {
                     sendotp(application_id, 4, 1,countrycode);
@@ -239,7 +239,7 @@ require(['jquery', 'core/ajax'], function($, ajax) {
                             document.location.reload();
                         }
                     } else if(status == 1) {
-                        var retVal =confirm("Entered username / email does not exists");
+                        var retVal =confirm("Entered mobile number does not exists");
                         if(retVal == true){
                             document.location.reload();
                         }
@@ -255,7 +255,7 @@ require(['jquery', 'core/ajax'], function($, ajax) {
             }]);
         }
         else {
-            alert("Please enter email");
+            alert("Please enter phone number");
         }
     }
 });
