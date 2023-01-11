@@ -70,7 +70,7 @@ class auth_otp_external extends external_api {
         );
     }
 
-    public static function validate_otp($username, $password) {
+    public static function validate_otp($country, $username, $password) {
         global $CFG, $DB, $USER;
 
         $params = self::validate_parameters(self::validate_otp_parameters(),
