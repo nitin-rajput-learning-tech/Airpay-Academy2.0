@@ -95,7 +95,8 @@ $string['type'] = 'Type';
 $string['select_category'] = '--Select Category--';
 $string['deleteconfirm'] = 'Are you sure you want to delete this "<b>{$a}</b>" classroom?';
 $string['deleteallconfirm'] = 'Are you sure you want to delete this "<b>{$a}</b>" session?';
-$string['deletecourseconfirm'] = 'Are you sure you want to un-assign?';
+$string['deletecourseconfirm'] = 'Are you sure you want to un-assign this "<b>{$a}</b>" course?';
+$string['deletefeedbackconfirm'] = 'Are you sure you want to delete this "<b>{$a}</b>" feedback?';
 $string['createclassroom'] = '<span class="fa fa-desktop icon">
         </span> Create Classroom <div class="popupstring">Here you will create classrooms based upon the Country </div>';
 $string['updateclassroom']= '<span class="fa fa-desktop icon">

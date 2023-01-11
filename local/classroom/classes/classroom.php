@@ -2568,8 +2568,8 @@ class classroom {
             $params = array_merge($params,$relatedidnumberparams);            
             $sql .= " AND u.id $relatedidnumbersql";
         }
-        if(!empty($params['organizations'])){
-            $organizations = explode(',', $params['organizations']);
+        if(!empty($params['organization'])){
+            $organizations = explode(',', $params['organization']);
             $orgsql = [];
             foreach($organizations AS $organisation){
                 $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";

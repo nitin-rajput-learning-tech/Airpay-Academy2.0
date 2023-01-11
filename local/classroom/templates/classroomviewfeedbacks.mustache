@@ -73,7 +73,7 @@
                     </a>
                     {{/preview}}
                     {{#deleteicon}}
-                    <a href="javascript:void(0);" alt = "{{#str}}delete{{/str}}" title = "{{#str}}delete{{/str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroomevaluation', classroomid: {{classroomid}}, id: {{id}} }) })(event)" >
+                    <a href="javascript:void(0);" alt = "{{#str}}delete{{/str}}" title = "{{#str}}delete{{/str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroomevaluation', classroomid: {{classroomid}}, id: {{id}}, feedbackname: '{{{name}}}' }) })(event)" >
                         <i class="fa fa-trash fa-fw" ></i>
                     </a>
                     {{/deleteicon}}
