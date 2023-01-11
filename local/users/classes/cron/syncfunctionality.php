@@ -92,11 +92,7 @@ class syncfunctionality
             'first_name', 'last_name', 'username', 'organization_code', 'learner_id',
             'employee_status'
         ];
-
-        foreach ($mandatory_fields as $field) {
-            // Mandatory field validation.
-            $this->mandatory_field_validation($user, $field);
-        }
+        
         while ($line = $cir->next()) {
             $this->orgcount =0;
             $linenum++;
@@ -114,7 +110,10 @@ class syncfunctionality
             $this->mfields = array();
             $this->wmfields = array();
             $this->excel_line_number = $linenum;
-            
+            foreach ($mandatory_fields as $field) {
+                // Mandatory field validation.
+                $this->mandatory_field_validation($user, $field);
+            }
 
             // To check for existing user record.
             $sql = "SELECT u.id,u.username,u.open_path, u.email FROM {user} u WHERE (u.open_employeeid = :open_employeeid) AND (u.username = :username) AND u.deleted = 0";
@@ -225,8 +224,12 @@ class syncfunctionality
                 $this->updatesupervisor_warningscount = count($this->warnings);
             }
         }
-
-        if ($this->data) {
+        if(empty($line = $cir->next())){
+            foreach ($mandatory_fields as $field) {
+                // Mandatory field validation.
+                $this->mandatory_field_validation($user, $field);
+            }
+        }
             $upload_info = '<div class="critera_error1"><h3 style="text-decoration: underline;">'
                 . get_string('empfile_syncstatus', 'local_users') . '</h3>';
             $upload_info .= '<div class=local_users_sync_success>' . get_string(
@@ -271,7 +274,7 @@ class syncfunctionality
             $sync_data->timemodified = time();
             $sync_data->costcenterid = $orgid;
             $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
-        } 
+        
     } //end of main_hrms_frontendform_method
 
     public function get_organizations()

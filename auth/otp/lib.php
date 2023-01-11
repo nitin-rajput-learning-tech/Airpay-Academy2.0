@@ -53,6 +53,7 @@ class otp {
   public function validate_application($username,$countrycode) {
     global $DB,$CFG;
     $sql = "SELECT u.id, u.username, u.email, u.phone1 FROM {user} u WHERE u.username= ? AND u.confirmed = 1 AND u.auth = 'otp'";
+    $username= $countrycode.$username;
     $validusers = $DB->get_record_sql($sql, [$username]);
     $phonenumber = "%2B".$countrycode.$validusers->phone1;
     $phonelength = strlen($phonenumber);
@@ -128,8 +129,10 @@ class otp {
 
   }
 
-	public function validate_otp($username, $otp) {
+	public function validate_otp($username, $otp,$countrycode) {
 		global $DB, $CFG;
+
+    $username= $countrycode.$username;
 
     $sql = "SELECT u.id,u.username,u.email FROM {user} u WHERE u.username = ? AND u.auth = 'otp' ";
     $validusers = $DB->get_record_sql($sql, [$username]);

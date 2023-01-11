@@ -41,3 +41,4 @@ $string['no'] = 'No';
 $string['top'] = 'Top';
 $string['organization'] = 'Organization';
 $string['open_costcenteridlocal_custom_category'] = 'Organization';
+$string['custom_category:view_custom_category'] = 'custom_category:view_custom_category';
