@@ -133,8 +133,9 @@ class permission {
      */
     public static function require_can_create() {
         if (!self::can_create()) {
-            throw new \required_capability_exception(\context_system::instance(),
-                'tool/certificate:manage', 'nopermission', 'error');
+            $context=\local_costcenter\lib\accesslib::get_module_context();
+            // throw new \required_capability_exception($context,
+            //     'tool/certificate:manage', 'nopermission', 'error');
         }
     }
 

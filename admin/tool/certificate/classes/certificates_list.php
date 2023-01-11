@@ -296,18 +296,20 @@ class certificates_list extends \table_sql {
         global $DB, $USER;
 
         [$ctxsql, $ctxparams] = $this->cateogriescontextssql;
-        $sql = "SELECT c.id, c.name AS name, c.contextid, c.shared, ctx.id AS coursecategory, ctx.path, ctx.depth,lc.fullname as ccname,
-                    ctx.contextlevel, ctx.instanceid, ctx.locked, coursecat.name AS categoryname
-                FROM {tool_certificate_templates} c
-                JOIN {local_costcenter} as lc ON c.costcenter = lc.id 
-                JOIN {context} ctx
-                ON ctx.id = c.contextid AND $ctxsql
-                LEFT JOIN {course_categories} coursecat
-                ON coursecat.id = ctx.instanceid
-                WHERE 1 = 1 ";
-        if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', \context_system::instance())) && $USER->open_costcenterid){
-            $sql .= " AND lc.id = :costcenterid ";
-            $ctxparams['costcenterid'] = $USER->open_costcenterid;
+        // $sql = "SELECT c.id, c.name AS name, c.contextid, c.shared, ctx.id AS coursecategory, ctx.path, ctx.depth,lc.fullname as ccname,
+        //             ctx.contextlevel, ctx.instanceid, ctx.locked, coursecat.name AS categoryname
+        //         FROM {tool_certificate_templates} c
+        //         JOIN {local_costcenter} as lc ON concat('/',c.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
+        //         JOIN {context} ctx
+        //         ON ctx.id = c.contextid AND $ctxsql
+        //         LEFT JOIN {course_categories} coursecat
+        //         ON coursecat.id = ctx.instanceid
+        //         WHERE 1 = 1 ";
+
+        $sql="SELECT c.id, c.name AS name, c.contextid, c.shared,lc.fullname as ccname FROM mdl_tool_certificate_templates c JOIN mdl_local_costcenter as lc ON concat('/',c.open_path,'/') LIKE concat('%/',lc.id,'/%')";        
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+        if(!(is_siteadmin())){
+            $sql .= "$costcenterpathconcatsql";
         }
         $sql .= " ORDER BY {$this->get_sql_sort()} ";
         if (!$this->is_downloading()) {

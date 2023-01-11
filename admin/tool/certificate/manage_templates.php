@@ -32,12 +32,13 @@ $perpage = optional_param('perpage', \tool_certificate\certificate::TEMPLATES_PE
 $pageurl = new moodle_url('/admin/tool/certificate/manage_templates.php', ['page' => $page, 'perpage' => $perpage]);
 
 $title = get_string('managetemplates', 'tool_certificate');
-admin_externalpage_setup('tool_certificate/managetemplates');
-$context = context_system::instance();
+//admin_externalpage_setup('category','tool_certificate/managetemplates');
+//$context = context_system::instance();
+$context = (new \local_evaluation\lib\accesslib())::get_module_context();
 
-if (!\tool_certificate\permission::can_view_admin_tree()) {
-    print_error('managenotallowed', 'tool_certificate');
-}
+// if (!\tool_certificate\permission::can_view_admin_tree()) {
+//     print_error('managenotallowed', 'tool_certificate');
+// }
 
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
@@ -55,11 +56,11 @@ $renderer = $PAGE->get_renderer('tool_certificate');
 $tablecontents = $renderer->render_table($table);
 
 $data = ['content' => $tablecontents];
-if (\tool_certificate\permission::can_create()) {
+//if (\tool_certificate\permission::can_create()) {
     $data += ['addbutton' => true, 'addbuttontitle' => get_string('createtemplate', 'tool_certificate'),
         'addbuttonurl' => null, 'addbuttonattrs' => ['name' => 'data-contextid', 'value' => $context->id],
         'addbuttonicon' => true];
-}
+//}
 $PAGE->requires->js_call_amd('tool_certificate/templates-list', 'init');
 
 echo $OUTPUT->header();

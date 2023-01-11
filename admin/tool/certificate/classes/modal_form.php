@@ -103,7 +103,9 @@ abstract class modal_form extends \moodleform {
      * @return \context
      */
     public function get_form_context(): \context {
-        return \context_system::instance();
+        $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+
+        return $categorycontext;
     }
 
     /**

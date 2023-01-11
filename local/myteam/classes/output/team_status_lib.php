@@ -30,7 +30,7 @@ class team_status_lib{
 	//getting team members of logged in user
 	public function get_team_members($count = false,$stable = ''){
 		global $DB, $USER;
-        $concatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+        $concatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 		$countsql = " SELECT count(u.id)";
 		$selectsql = "SELECT u.* ";
 		$sql =" FROM {user} as u

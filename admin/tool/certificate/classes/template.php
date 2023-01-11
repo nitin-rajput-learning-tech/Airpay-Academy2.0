@@ -480,7 +480,7 @@ class template {
      * @return \context the context
      */
     public function get_context() {
-        return \context::instance_by_id($this->persistent->get('contextid'));
+        return (new \local_evaluation\lib\accesslib())::get_module_context();
     }
 
     /**
