@@ -51,15 +51,15 @@ class learningplan extends moodleform {
         $mform = $this->_form;
 		
         $id = $this->_customdata['id'];
-		$org = $this->_customdata['costcenterid'];
-		$dept = $this->_customdata['department'];
-		$sub_dept = $this->_customdata['subdepartment'];
-		$sub_sub_dept = $this->_customdata['sub_sub_department'];
+		// $org = $this->_customdata['costcenterid'];
+		// $dept = $this->_customdata['department'];
+		// $sub_dept = $this->_customdata['subdepartment'];
+		// $sub_sub_dept = $this->_customdata['sub_sub_department'];
 		$editoroptions = $this->customdata['editoroptions'];
 		$form_status = $this->_customdata['form_status'];
 		$open_path = $this->_customdata['open_path'];
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
-		
+   		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 		$mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
 
@@ -89,17 +89,6 @@ class learningplan extends moodleform {
 			$mform->addRule('shortname', get_string('missing_plan_learningplan', 'local_learningplan'), 'required', null, 'client');
 			}
 	        $mform->setType('shortname', PARAM_TEXT);
-			
-        // if(is_siteadmin()){
-        //     $depsql = "SELECT lcc.id,lcc.fullname
-        //                 FROM {local_custom_category} as lcc";
-        //     $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
-        // }else{
-        //     $sql = "SELECT id,fullname
-        //             FROM {local_custom_category} WHERE costcenterid = ?";
-        //     $userpath = $DB->get_field('user', 'open_path', array('id' => $USER->id));
-        //     $parents = $DB->get_records_sql_menu($sql, [explode('/', $userpath)[1]]);
-        // }
 	        
         $parentsql = "SELECT lcc.id, lcc.fullname FROM {local_custom_category} AS lcc WHERE 1 = 1 AND lcc.depth = 1";
         if(!is_siteadmin()){
@@ -185,6 +174,8 @@ class learningplan extends moodleform {
 			$mform->addElement('filemanager', 'summaryfile', get_string('learning_path_summary_file', 'local_learningplan'), null,array('maxbytes' => $maxbytes, 'accepted_types' => ['.jpg','.jpeg','.png','.gif']));
 			$mform->addHelpButton('summaryfile','learningpaths','local_learningplan');
 
+
+		}else if($form_status == 1){
 			//certificate
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
             if($certificate_plugin_exist){
@@ -192,14 +183,11 @@ class learningplan extends moodleform {
                 $checkboxes[] = $mform->createElement('advcheckbox', 'map_certificate', null, '', array(),array(0,1));
                 $mform->addGroup($checkboxes, 'map_certificate', get_string('add_certificate', 'local_learningplan'), array(' '), false);
                 $mform->addHelpButton('map_certificate', 'add_certificate', 'local_learningplan');
-
-
                 $select = array(null => get_string('select_certificate','local_learningplan'));
-				$costcenterid=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path($depth=1);
                 if(is_siteadmin()){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$costcenterid),'name', 'id,name');
+                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$org),'name', 'id,name');
                 }
                 $certificateslist = $select + $cert_templates;
 
@@ -208,8 +196,6 @@ class learningplan extends moodleform {
                 $mform->setType('certificateid', PARAM_INT);
                 $mform->hideIf('certificateid', 'map_certificate', 'neq', 1);
             }
-
-		}else if($form_status == 1){
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
 			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
     	}

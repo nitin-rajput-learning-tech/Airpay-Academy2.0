@@ -3445,8 +3445,8 @@ function user_not_fully_set_up($user, $strict = true) {
     if (isguestuser($user)) {
         return false;
     }
-
-    if (empty($user->firstname) or empty($user->lastname) or empty($user->email) or over_bounce_threshold($user)) {
+    //BAYER-376 Custom changes of removal of 'or empty($user->email)' condition as email is non mandatory for users.
+    if (empty($user->firstname) or empty($user->lastname)  or over_bounce_threshold($user)) {
         return true;
     }
 
