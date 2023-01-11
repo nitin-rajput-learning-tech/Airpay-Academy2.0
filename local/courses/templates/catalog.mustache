@@ -109,13 +109,14 @@
                                             <p class="alert alert-info text-center mt-1">{{#str}}nocoursedesc, local_courses{{/str}}</p>
                                         {{/ coursesummary }}
                                     </div>
-                                    <div class="d-flex mb-2">
-                                        <span class="text-muted">{{#str}}category, local_courses{{/str}} : </span> <span class="ml-1">{{catnamestring}}</span>
-                                    </div>
+                                    <!--<div class="d-flex mb-2">
+                                        <span class="text-muted">{{#str}}category, local_courses{{/str}} : </span> <span class="ml-1">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
+                                    </div>-->
                                     <div class="row">
                                         <div class="col-6">
                                             <div class="d-flex">
-                                                <span class="text-muted">{{#str}}open_skillcourse, local_courses{{/str}} : </span> <span class="ml-1">{{skillname}}</span>
+                                                <!--<span class="text-muted">{{#str}}open_skillcourse, local_courses{{/str}} : </span> <span class="ml-1">{{skillname}}</span>-->
+                                                <span class="text-muted">{{#str}}category, local_courses{{/str}} : </span> <span class="ml-1">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
                                             </div>
                                         </div>
                                         <div class="col-6">
