@@ -321,7 +321,6 @@ class local_uploadcourse_processor {
             'shortnametemplate' => $this->shortnametemplate
         );
         
-        // print_object($data);exit;
     return new local_uploadcourse_course($this->mode, $this->updatemode, $data, $this->defaults, $importoptions);
     }
 
