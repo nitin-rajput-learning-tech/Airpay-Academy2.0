@@ -752,6 +752,7 @@ $string['selectopen_district'] = 'Select District';
 $string['selectopen_subdistrict'] = 'Select Sub District';
 $string['selectopen_village'] = 'Select Village';
 $string['commercialunit'] = 'Commercial Unit';
+$string['commercialarea'] = 'Commercial Area';
 $string['territory'] = 'Territory';
 $string['addressinfo'] = 'Address Info :';
 $string['open_costcenteridlocal_users'] = 'Organisation';

@@ -380,6 +380,8 @@ class local_users_external extends external_api {
 
                                     'deptstring' => new external_value(PARAM_RAW, 'dept string challenge', VALUE_OPTIONAL),
                                     'dept' => new external_value(PARAM_RAW, 'dept of user', VALUE_OPTIONAL),
+                                    'commercialunit' => new external_value(PARAM_RAW, 'dept of user', VALUE_OPTIONAL),
+                                    'commercialarea' => new external_value(PARAM_RAW, 'dept of user', VALUE_OPTIONAL),
                                     'group' => new external_value(PARAM_RAW, 'group of the user', VALUE_OPTIONAL),
                                     'phno' => new external_value(PARAM_RAW, 'phone no of user', VALUE_OPTIONAL),
 

@@ -1014,7 +1014,14 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         if (!$dept) {
             $dept = 'All';
         }
-
+        $commercialunit = $organisationnames[3];
+        if (!$commercialunit) {
+            $commercialunit = 'All';
+        }
+        $commercialarea = $organisationnames[4];
+        if (!$commercialarea) {
+            $commercialarea = 'All';
+        }
         $orgstring = strlen($organization) > 24 ? substr($organization, 0, 24)."..." : $organization;
         $list['org'] = $organization;
         $list['orgstring'] = $orgstring;
@@ -1025,6 +1032,8 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
 
         $list['deptstring'] = $deptstring;
         $list['dept'] = $dept;
+        $list['commercialunit'] = $commercialunit;
+        $list['commercialarea'] = $commercialarea;
         $list['group'] = $user->open_group ? $user->open_group : 'N/A';
         $list['level'] = $user->open_level ? $user->open_level : 'N/A';
         $list['phno'] = ($user->phone1) ? $user->phone1 : '--';
