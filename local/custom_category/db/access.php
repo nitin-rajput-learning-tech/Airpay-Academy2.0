@@ -1,9 +1,8 @@
 <?php
-
 /**
- * This file is part of moodle India
+ * This file is part of eAbyas
  *
- *
+ * Copyright eAbyas Info Solutons Pvt Ltd, India
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +17,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- * @author moodle India
- * @package Bayer
+ * @author eabyas  <info@eabyas.in>
+ * @package BizLMS
  * @subpackage local_custom_category
  */
-
 defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2022101300.18;          // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2017050505;        // Requires this Moodle version
-$plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'local_custom_category';
+
+$capabilities = array(
+    'local/custom_category:view_custom_category' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+    ),
+);
