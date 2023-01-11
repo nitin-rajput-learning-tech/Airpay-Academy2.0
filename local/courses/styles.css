@@ -827,8 +827,12 @@ body#page-local-courses-courses .actionicons a .icon {
 }
 .course_container .courseinfo_container .info_container{
     display: flex;
-    margin-right: 8px;
     align-items: center;
+    padding-right: 5px;
+    max-width: 50%;
+    margin-bottom: 2px;
+    flex: 0 0 50%;
+    min-width: 50%;
 }
 .course_container .courseinfo_container .info_container .info_value{
     color: #008dcf;
@@ -839,8 +843,10 @@ body#page-local-courses-courses .actionicons a .icon {
     width: 25px;
     height: 25px;
     background-size: 100%;
-    background-position: center;
+    background-position: center center;
     margin-right: 7px;
+    background-repeat: no-repeat;
+
 }
 .course_container .courseinfo_container .info_container.enrolment_info .icon{
     background-image: url('[[pix:local_courses|courseinfo_icons/enrollments]]');
@@ -906,7 +912,7 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
     padding: 10px!important;
 }
 #page-local-courses-courses .course_container{
-    padding: 18px 0 18px 6px !important;
+    padding: 6px !important;
     height: calc( 100% - 20px );
 }
 /*progress bar code*/
@@ -980,5 +986,31 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
 }
 }
 
+/*coursecard changes*/
 
+#page-local-courses-courses .course_container .courseimg_container{
+    width: 100%;
+    max-width: 220px;
+    padding: 15px ;
+}
+#page-local-courses-courses .course_container .coursecontent{
+    padding: 10px;
+}
+#page-local-courses-courses .quick_actions_list6.options_container:hover,
+#page-local-courses-courses .quick_actions_list6.opened .options_container{
+    top: -3px !important;
+    right: -11px !important;
+}
 
+@media(max-width:1023px){
+#page-local-courses-courses .course_container{
+    flex-direction: column;
+} 
+#page-local-courses-courses .course_container .courseimg_container{
+    max-width: 100%;
+    height: 200px;
+}
+#page-local-courses-courses .courseimg_bg{
+    display: block;
+}
+}
