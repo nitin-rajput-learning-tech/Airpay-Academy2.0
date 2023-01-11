@@ -48,6 +48,7 @@ class plugin_classroomfield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB; 
         $classroomrecord = $DB->get_record('local_classroom',array('id'=>$row->classroomid));
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroomrecord->open_path);
 
         switch ($data->column) {
             case 'classroomname':
@@ -63,18 +64,18 @@ class plugin_classroomfield extends pluginbase {
                 $classroomrecord->{$data->column} = ($classroomrecord->capacity) ? $classroomrecord->capacity : 'NA';
                 break;
             case 'classroomorg':
-                $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$classroomrecord->costcenter));
+                $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
                 break;
             case 'classroomdept':
-                if($classroomrecord->department > 0){
-                    $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$classroomrecord->department));
+                if($ctr > 0){
+                    $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
                 }else{
                    $classroomrecord->{$data->column} = get_string('all'); 
                 }
                 break;   
             case 'classroom_subdept':
-                if(!empty($classroomrecord->subdepartment) && ($classroomrecord->subdepartment != -1)){
-                    $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$classroomrecord->subdepartment));
+                if(!empty($bu) && ($bu != -1)){
+                    $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$bu));
                 }else{
                    $classroomrecord->{$data->column} = get_string('all'); 
                 }
