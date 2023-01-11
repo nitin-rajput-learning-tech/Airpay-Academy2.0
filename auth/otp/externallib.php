@@ -65,7 +65,7 @@ class auth_otp_external extends external_api {
             array(
                 'country' => new external_value(PARAM_RAW, 'country'),
                 'username' => new external_value(PARAM_RAW, 'username'),
-                'password' => new external_value(PARAM_INT, 'password')
+                'password' => new external_value(PARAM_RAW, 'password')
             )
         );
     }
