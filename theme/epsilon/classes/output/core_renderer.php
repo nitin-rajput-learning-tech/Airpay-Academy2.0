@@ -115,6 +115,10 @@ class core_renderer extends \core_renderer {
         return $this->render_from_template('core/navbar', $newnav);
     }
 
+    public function custom_language_menu(){
+        $select = (new \core\output\language_menu($this->page))->export_for_single_select($this);
+        return $this->render_from_template('core/single_select', $select);
+    }
     /**
      * Renders the context header for the page.
      *
@@ -973,7 +977,7 @@ class core_renderer extends \core_renderer {
             $gamification_element = true;
         }
 
-        
+
         $course_context = [
             "courseid" => $courseid,
             "admin_default_menu" => $admin_default_menu,
@@ -1002,7 +1006,7 @@ class core_renderer extends \core_renderer {
             }else{
                 $userrole = null;
             }
-            
+
 //            if(is_null($userrole) || $userrole == 'user'){
              if(is_null($userrole) || $userrole == 'employee'){
                 $core_component = new core_component();
@@ -1010,14 +1014,14 @@ class core_renderer extends \core_renderer {
                 if($certificate_plugin_exist){
                     if(!empty($COURSE->open_certificateid)){
                         $course_context['certificate_exists'] = true;
-                        $sql = "SELECT id 
-                                FROM {course_completions} 
-                                WHERE course = :courseid AND userid = :userid 
+                        $sql = "SELECT id
+                                FROM {course_completions}
+                                WHERE course = :courseid AND userid = :userid
                                 AND timecompleted IS NOT NULL ";
 
                         $completed = $DB->record_exists_sql($sql, array('courseid'=>$COURSE->id, 'userid'=>$USER->id));
                         if($completed){
-                            
+
             $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$COURSE->id,'userid'=>$USER->id,'templateid'=>$COURSE->open_certificateid,'moduletype'=>'course'));
                             $course_context['certificate_download'] = true;
                             $course_context['certificateid'] = $certcode; //$COURSE->open_certificateid;
