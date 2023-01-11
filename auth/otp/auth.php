@@ -61,7 +61,7 @@ class auth_plugin_otp extends auth_plugin_base {
 		 if (!$username or !$password) {    // Don't allow blank usernames or passwords
             return false;
         }
-		
+		$username= "91".$username;
         //retrieve the user matching username
          if ($user = $DB->get_record('user', array('username'=>$username, 'mnethostid'=>$CFG->mnet_localhost_id, 'auth'=>$this->authtype))) {
             
