@@ -22,7 +22,7 @@
 <div class='col-md-3 col-lg-3 col-xl-2 col-sm-3 pt-3 pl-0 d-none d-md-block bg-white border-right filter_section'>
     <div>
         <div class="icon-header float-left">
-            <span class="icon_img"> <img src="pix/filters.png" alt=""> </span> Filters
+            <span class="icon_img"> <img src="pix/filters.png" alt=""> </span> {{#str}}filters,local_search{{/str}}
         </div>
         <div class="clearfix"></div>
     </div>
@@ -54,11 +54,10 @@
                         </div> 
                         <label class="col-sm p-0" for='<% item.tagitemshortname %>'><% item.name %><span class="pull-right"><% item.count %></span></label>
                         </div>
-                        <a href='javaScript:void(0)' ng-click='getitemslist(cat.type)' id='viewmoreless_<% cat.type %>' class='viewmore' >View more</a>
+                        <a href='javaScript:void(0)' ng-click='getitemslist(cat.type)' id='viewmoreless_<% cat.type %>' class='viewmore' >{{#str}}view_more,local_search{{/str}}</a>
                     </div>
                 </div>
             </div>
-
         </section>
     </div>
 </div>

@@ -75,3 +75,6 @@ $string['resume'] = 'Resume';
 $string['course_self_enrol_license'] = 'As you don’t have an existing Udemy license, please register for the license in the first week of every month when the registration opens. Reach out to faahelpdesk@fractal.ai for any further queries/assistance.';
 $string['course_self_enrol_percipio_license'] = 'As you don’t have an existing Percipio license, please register for the license in the first week of every month when the registration opens. Reach out to faahelpdesk@fractal.ai for any further queries/assistance.';
 $string['course_expiry_user'] = 'Your Course "<b>{$a->coursename}</b>" has been Expired! Please Contact the Site Administrator.';
+$string['filters'] = 'filters';
+$string['view_more'] = 'View more';
+$string['search_for_courses'] = 'Search for courses';
