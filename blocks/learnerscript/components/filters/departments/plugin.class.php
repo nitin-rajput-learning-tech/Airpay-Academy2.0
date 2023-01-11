@@ -130,7 +130,7 @@ class plugin_departments extends pluginbase {
         //$deptoptions[] = 'All';
         $selectdept = array(); 
         if(empty($this->reportclass->basicparams)){
-            $selectdept[-1] = 'Select Department'; 
+            $selectdept[-1] = 'Select Country'; 
         }else{
             $deptoptions[-1] = 'All';
         }

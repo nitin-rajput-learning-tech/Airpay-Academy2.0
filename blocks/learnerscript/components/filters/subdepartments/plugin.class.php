@@ -109,7 +109,7 @@ class plugin_subdepartments extends pluginbase {
         $selectsubdept = array(); 
         // $selectsubdept[-1] = 'Select SubDepartment';
         if(empty($this->reportclass->basicparams)){
-            $subdepartmentoptions[-1] = 'All'; 
+            $subdepartmentoptions[-1] = 'Commercial Unit'; 
         }else{
             $subdepartmentoptions[-1] = 'All';
         }

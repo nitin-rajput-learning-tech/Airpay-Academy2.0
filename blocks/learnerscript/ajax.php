@@ -852,75 +852,75 @@ case 'deptcohorts':
         $return = array('-1' => 'Select Cohort');
     }
 	break;
-case 'deponlinecourses': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
-	if ($orgid > 0) {
-		$sql = "SELECT c.id, c.fullname AS onlinecourse
-                FROM {course} c 
-                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-                WHERE 1 = 1 AND clf.name = 'Online Course' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
-		if ($departmentid > 0) {
-			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
-		}
-		if ($subdepartmentid > 0) {
-			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
-		}		
-		$onlinecourses = $DB->get_records_sql_menu($sql, array());
-        if (!empty($onlinecourses)) {
-            $return = array('0' => 'Select Online course') + $onlinecourses;
-        } else {
-            $return = array('-1' => 'Select Online course');
-        }
-	} else {
-		$return = array('' => 'Select Online course');
-	}
-	break;
-case 'deplabs': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
-	if ($orgid > 0) {
-		$sql = "SELECT c.id, c.fullname AS onlinecourse
-                FROM {course} c 
-                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-                WHERE 1 = 1 AND clf.name = 'Lab' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
-		if ($departmentid > 0) {
-			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
-		}
-		if ($subdepartmentid > 0) {
-			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
-		}		
-		$labs = $DB->get_records_sql_menu($sql, array());
-        if (!empty($labs)) {
-            $return = array('0' => 'Select Lab') + $labs;
-        } else {
-            $return = array('-1' => 'Select Lab');
-        }
-	} else {
-		$return = array('' => 'Select Lab');
-	}
-	break;
-case 'depassessments': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
-	if ($orgid > 0) {
-		$sql = "SELECT c.id, c.fullname AS onlinecourse
-                FROM {course} c 
-                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-                WHERE 1 = 1 AND clf.name = 'Assessment' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
-		if ($departmentid > 0) {
-			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
-		}
-		if ($subdepartmentid > 0) {
-			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
-		}		
-		$assessments = $DB->get_records_sql_menu($sql, array());
-        if (!empty($assessments)) {
-            $return = array('0' => 'Select Assessment') + $assessments;
-        } else {
-            $return = array('-1' => 'Select Assessment');
-        }
-	} else {
-		$return = array('' => 'Select Assessment');
-	}
-	break;
+// case 'deponlinecourses': 
+// 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+// 	if ($orgid > 0) {
+// 		$sql = "SELECT c.id, c.fullname AS onlinecourse
+//                 FROM {course} c 
+//                 JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+//                 WHERE 1 = 1 AND clf.name = 'Online Course' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
+// 		if ($departmentid > 0) {
+// 			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
+// 		}
+// 		if ($subdepartmentid > 0) {
+// 			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
+// 		}		
+// 		$onlinecourses = $DB->get_records_sql_menu($sql, array());
+//         if (!empty($onlinecourses)) {
+//             $return = array('0' => 'Select Online course') + $onlinecourses;
+//         } else {
+//             $return = array('-1' => 'Select Online course');
+//         }
+// 	} else {
+// 		$return = array('' => 'Select Online course');
+// 	}
+// 	break;
+// case 'deplabs': 
+// 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+// 	if ($orgid > 0) {
+// 		$sql = "SELECT c.id, c.fullname AS onlinecourse
+//                 FROM {course} c 
+//                 JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+//                 WHERE 1 = 1 AND clf.name = 'Lab' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
+// 		if ($departmentid > 0) {
+// 			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
+// 		}
+// 		if ($subdepartmentid > 0) {
+// 			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
+// 		}		
+// 		$labs = $DB->get_records_sql_menu($sql, array());
+//         if (!empty($labs)) {
+//             $return = array('0' => 'Select Lab') + $labs;
+//         } else {
+//             $return = array('-1' => 'Select Lab');
+//         }
+// 	} else {
+// 		$return = array('' => 'Select Lab');
+// 	}
+// 	break;
+// case 'depassessments': 
+// 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+// 	if ($orgid > 0) {
+// 		$sql = "SELECT c.id, c.fullname AS onlinecourse
+//                 FROM {course} c 
+//                 JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+//                 WHERE 1 = 1 AND clf.name = 'Assessment' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid IN ($orgid, 0) ";
+// 		if ($departmentid > 0) {
+// 			$sql .= " AND c.open_departmentid IN ($departmentid, 0) ";
+// 		}
+// 		if ($subdepartmentid > 0) {
+// 			$sql .= " AND c.open_subdepartment IN ($subdepartmentid, 0) ";
+// 		}		
+// 		$assessments = $DB->get_records_sql_menu($sql, array());
+//         if (!empty($assessments)) {
+//             $return = array('0' => 'Select Assessment') + $assessments;
+//         } else {
+//             $return = array('-1' => 'Select Assessment');
+//         }
+// 	} else {
+// 		$return = array('' => 'Select Assessment');
+// 	}
+// 	break;
 case 'depusergroups': 
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
 	if ($orgid > 0) {
@@ -944,29 +944,29 @@ case 'depusergroups':
 		$return = array('' => 'Select User group');
 	}
 	break;	
-case 'depwebinars': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
-	if ($orgid > 0) {
-		$sql = "SELECT c.id, c.fullname AS webinar
-                FROM {course} c 
-                JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-                WHERE 1 = 1 AND clf.name = 'Webinar' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid = $orgid";
-		if ($departmentid > 0) {
-			$sql .= " AND c.open_departmentid = $departmentid";
-		}
-		if ($subdepartmentid > 0) {
-			$sql .= " AND c.open_subdepartment = $subdepartmentid";
-		}		
-		$webinars = $DB->get_records_sql_menu($sql, array());
-        if (!empty($webinars)) {
-            $return = array('0' => 'Select Webinar') + $webinars;
-        } else {
-            $return = array('-1' => 'Select Webinar');
-        }
-	} else {
-		$return = array('' => 'Select Webinar');
-	}
-	break;
+// case 'depwebinars': 
+// 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+// 	if ($orgid > 0) {
+// 		$sql = "SELECT c.id, c.fullname AS webinar
+//                 FROM {course} c 
+//                 JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
+//                 WHERE 1 = 1 AND clf.name = 'Webinar' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND c.open_costcenterid = $orgid";
+// 		if ($departmentid > 0) {
+// 			$sql .= " AND c.open_departmentid = $departmentid";
+// 		}
+// 		if ($subdepartmentid > 0) {
+// 			$sql .= " AND c.open_subdepartment = $subdepartmentid";
+// 		}		
+// 		$webinars = $DB->get_records_sql_menu($sql, array());
+//         if (!empty($webinars)) {
+//             $return = array('0' => 'Select Webinar') + $webinars;
+//         } else {
+//             $return = array('-1' => 'Select Webinar');
+//         }
+// 	} else {
+// 		$return = array('' => 'Select Webinar');
+// 	}
+// 	break;
 case 'depprograms': 
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
 	if ($orgid > 0) {
