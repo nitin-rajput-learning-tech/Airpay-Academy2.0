@@ -116,8 +116,11 @@ class core_renderer extends \core_renderer {
     }
 
     public function custom_language_menu(){
-        $select = (new \core\output\language_menu($this->page))->export_for_single_select($this);
-        return $this->render_from_template('core/single_select', $select);
+        $langs = get_string_manager()->get_list_of_translations();
+        if(count($langs) > 1){
+            $select = (new \core\output\language_menu($this->page))->export_for_single_select($this);
+            return $this->render_from_template('core/single_select', $select);
+        }
     }
     /**
      * Renders the context header for the page.
