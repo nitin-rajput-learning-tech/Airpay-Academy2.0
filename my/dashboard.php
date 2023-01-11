@@ -30,16 +30,17 @@ $orgid  = optional_param('orgid', 0, PARAM_INT);
 global $USER,$DB;
 $site = get_site();
 require_login();
-$path=(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
-$org_id=explode('/',$path)[1];
+$path=(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+$org_id=explode('/',$path[0])[1];
 $heading = $site->fullname;
 if(is_siteadmin()){
     $categoryid=1;
-    }else if($org_id){
+    if($orgid){
+        $categoryid = $DB->get_field('local_costcenter', 'category', array('id' => $orgid));
+    }
+}else if($org_id){
     $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $org_id));
-    }else if($orgid){
-        $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));
-    }else{
+}else{
     $orgid=explode('/',$USER->open_path)[1];
     $categoryid=$DB->get_field('local_costcenter', 'category', array('id' => $orgid));  
 }
