@@ -140,11 +140,15 @@ class syncfunctionality
                 }
             }
             
-                   
-            list($zero, $orgid, $countryid, $buid, $cuid, $territoryid) = explode('/', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path());
+            $patharr =(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+            // echo $path =(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
+            // print_r($patharr); die;
+            foreach($patharr as $path){
+                list($zero[], $orgid[], $countryid[], $buid[], $cuid[], $territoryid[]) = explode('/', $path);                
+            }
             // To hold costcenterid.
             if(($this->orgcount == 0)){
-                $this->costcenterid = $this->get_org_hierarchyid($user->organization_code, $parent = 0, $orgid);
+                $this->costcenterid = $this->get_org_hierarchyid($user->organization_code, $parent = 0, array_unique($orgid));
             }            
             // To hold countryid.
             if ($user->country_code && ($this->orgcount == 0)) {
@@ -272,7 +276,7 @@ class syncfunctionality
             $sync_data->usermodified = $USER->id;
             $sync_data->timecreated = time();
             $sync_data->timemodified = time();
-            $sync_data->costcenterid = $orgid;
+            $sync_data->costcenterid = $this->costcenterid;
             $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
         
     } //end of main_hrms_frontendform_method
@@ -371,7 +375,7 @@ class syncfunctionality
         }
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if ($datal->id !== $orgid && !empty($orgid)) {
+            if (!in_array($datal->id,$orgid) && !empty(array_filter($orgid))) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = $fieldvalue;
@@ -407,7 +411,7 @@ class syncfunctionality
         $strings->orgid = $user->country_code;
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if ($datal->id !== $orgid && !empty($orgid)) {
+            if (!in_array($datal->id,$orgid) && !empty($orgid)) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = $fieldvalue;
@@ -577,7 +581,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if ($datal->id !== $buid  && !empty($buid)) {
+                if (!in_array($datal->id,$buid)  && !empty(array_filter($buid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -612,7 +616,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if ($datal->id !== $cuid && !empty($cuid)) {
+                if (!in_array($datal->id,$cuid) && !empty(array_filter($cuid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -647,7 +651,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if ($datal->id !== $terrid && !empty($terrid)) {
+                if (!in_array($datal->id,$terrid) && !empty(array_filter($terrid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -680,7 +684,7 @@ class syncfunctionality
             FROM {local_states} as ls
             JOIN {local_district} as ld ON ld.statesid=ls.id
             JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
-            JOIN {local_village} as lv ON lv.subdistrictid=lv.id
+            JOIN {local_village} as lv ON lv.subdistrictid=lsd.id
             WHERE 1=1 AND ls.costcenterid = $this->costcenterid";
                 $params = array();
                 if ($key == 'state') {
