@@ -318,9 +318,21 @@ function states_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+       $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $stateslist_sql = "SELECT id, states_name FROM {local_states} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $stateslist_sql = "SELECT id, states_name FROM {local_states} WHERE costcenterid in ($implodeorgids) ";
+
 
     }
 
@@ -342,9 +354,20 @@ function district_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+       $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $districtlist_sql = "SELECT id, district_name FROM {local_district} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $districtlist_sql = "SELECT id, district_name FROM {local_district} WHERE costcenterid in ($implodeorgids) ";
 
     }
 
@@ -369,9 +392,20 @@ function subdistrict_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+        $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} WHERE costcenterid in ($implodeorgids) ";
 
     }
 
@@ -395,9 +429,20 @@ function village_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+       $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $villagelist_sql = "SELECT id, village_name FROM {local_village}  WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $villagelist_sql = "SELECT id, village_name FROM {local_village}  WHERE costcenterid in ($implodeorgids) ";
 
     }
 
