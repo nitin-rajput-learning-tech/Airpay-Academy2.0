@@ -117,7 +117,7 @@ class create_user extends moodleform {
             $mform->setType('lastname', PARAM_RAW);
 
             $mform->addElement('text', 'email', get_string('email', 'local_users'));
-            $mform->addRule('email', get_string('emailerror', 'local_users'), 'required', null, 'client');
+            // $mform->addRule('email', get_string('emailerror', 'local_users'), 'required', null, 'client');
             $mform->setType('email', PARAM_RAW);
 
 
@@ -274,11 +274,13 @@ class create_user extends moodleform {
                     }
                 }
             }
-            if (!empty($data['email']) && !validate_email($data['email'])) {
-                $errors['email'] = get_string('emailerror', 'local_users');
-            }
-            if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $data['email'])) {
-                $errors['email'] = get_string('invalidemail', 'local_users');
+            if(!empty($data['email'])){
+                if (!validate_email($data['email'])) {
+                    $errors['email'] = get_string('emailerror', 'local_users');
+                }
+                if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $data['email'])) {
+                    $errors['email'] = get_string('invalidemail', 'local_users');
+                }
             }
             $auths = \core_component::get_plugin_list('auth');
             $cannotchangepass = [];

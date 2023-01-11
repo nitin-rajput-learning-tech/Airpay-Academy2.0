@@ -161,10 +161,10 @@ $string['help_2'] = '</td></tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>Summary</td><td>Summary of the course.</td></tr>
 <tr><td>Cost</td><td>Cost of the course.</td></tr>
-<tr><td>Country</td><td>Shortname of the Country.</td></tr>
-<tr><td>Commercial Unit</td><td>Shortname of the Commercial Unit.</td></tr>
-<tr><td>Commercial Area</td><td>Shortname of the Commercial Area.</td></tr>
-<tr><td>Territory</td><td>Shortname of the Territory.</td></tr>
+<tr><td>country_code</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
+<tr><td>commercial_unit_code</td><td>Enter Commercial Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
+<tr><td>commercial_area_code</td><td>Enter Commercial Unit Code. Commercial Unit must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
+<tr><td>territory_code</td><td>Enter Territory Code. Territory must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
 <tr><td>Points</td><td>Points for the course.</td></tr>
 <tr><td>completiondays</td><td>completiondays should be greater than \'0\'. i.e, 1,2,3..etc</td></tr>
 </table>';
