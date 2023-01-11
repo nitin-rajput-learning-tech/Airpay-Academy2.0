@@ -85,7 +85,7 @@ class report_learningplansoverview extends reportbase implements report {
 
         $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path'); 
 
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+        if (is_siteadmin()) {
             $this->sql .= "";
         } else  {
             $this->sql .= $costcenterpathconcatsql;

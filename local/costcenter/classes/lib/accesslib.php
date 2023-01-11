@@ -379,6 +379,24 @@ class accesslib
 
         return $costcenterpath;
     }
+    public static function get_user_role_switch_path(){
+
+        global $USER;
+
+
+        $costcenterpath = array();
+
+
+        if(!empty($USER->useraccess['currentroleinfo']['contextinfo'])){
+
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
+
+                $costcenterpath[] = $contextinfo['costcenterpath'];
+            }
+        }
+
+        return $costcenterpath;
+    }
 
 }
 

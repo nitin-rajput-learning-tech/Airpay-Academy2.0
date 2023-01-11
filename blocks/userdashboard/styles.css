@@ -2027,3 +2027,46 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 .block.block_userdashboard .userdashbard_slider_navs.course-prev {
     margin-left: 5px;
 }
+
+/*my courses in employee login new css*/
+
+#page-local-courses-userdashboard  .usertabs_individual_pages .courseimg{
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 6px 0 #0000003b;
+}
+#page-local-courses-userdashboard .course_container {
+    padding: 15px 0 15px 0px!important;
+}
+#page-local-courses-userdashboard  .course_name a{
+    font-size: 18px;
+    word-break: break-word;
+    color: #000;
+    font-weight:600;
+    text-decoration: none;
+}
+#page-local-courses-userdashboard  .ctype_elearning .coursedesc span{
+    border:none !important;
+    text-align: left;
+    padding:0 !important;
+    font-size:13px;
+}
+#page-local-courses-userdashboard  .progress {
+    border-radius: 8px !important;
+}
+#page-local-courses-userdashboard .jq-ry-container>.jq-ry-group-wrapper>.jq-ry-group i{
+    color:#000 !important;
+}
+#page-local-courses-userdashboard  #region-main {
+    background-color: transparent;
+}
+#page-local-courses-userdashboard  .userdashboard_content.userdashboard_ctype_elearning {
+        margin-left: 3px;
+}
+@media(max-width:767px) {
+    #page-local-courses-userdashboard  .userdashboard_content.userdashboard_ctype_elearning {
+        margin-left: 20px;
+    }
+}

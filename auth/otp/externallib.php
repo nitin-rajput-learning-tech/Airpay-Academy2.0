@@ -33,21 +33,22 @@ class auth_otp_external extends external_api {
     public static function request_otp_parameters() {
         return new external_function_parameters(
             array(
+                'country' => new external_value(PARAM_RAW, 'country'),
                 'username' => new external_value(PARAM_RAW, 'username')
             )
         );
     }
 
-    public static function request_otp($username) {
+    public static function request_otp($country, $username) {
         global $CFG, $DB, $USER;
 
         $params = self::validate_parameters(self::request_otp_parameters(),
-        array('username' => $username));
+        array('country' => $country, 'username' => $username));
 
         require_once($CFG->dirroot . "/auth/otp/lib.php");
         $otp = new otp();
         // $status = $otp->send_otp_touser($username);
-        $status= $otp->validate_application($username);
+        $status= $otp->validate_application($username, $country);
         return array('status' => $status);
     }
 
@@ -62,21 +63,22 @@ class auth_otp_external extends external_api {
     public static function validate_otp_parameters() {
         return new external_function_parameters(
             array(
+                'country' => new external_value(PARAM_RAW, 'country'),
                 'username' => new external_value(PARAM_RAW, 'username'),
-                'password' => new external_value(PARAM_INT, 'password')
+                'password' => new external_value(PARAM_RAW, 'password')
             )
         );
     }
 
-    public static function validate_otp($username, $password) {
+    public static function validate_otp($country, $username, $password) {
         global $CFG, $DB, $USER;
 
         $params = self::validate_parameters(self::validate_otp_parameters(),
-                                 array('username' => $username, 'password' => $password));
+                                 array('country' => $country, 'username' => $username, 'password' => $password));
 
         require_once($CFG->dirroot . "/auth/otp/lib.php");
         $otp = new otp();
-        $status = $otp->validate_otp($username, $password);
+        $status = $otp->validate_otp($username, $password, $country);
 
         return array('status' => $status);
     }

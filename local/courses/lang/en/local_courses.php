@@ -41,8 +41,8 @@ $string['empnumber']='Learner ID';
 $string['email']='Email';
 $string['band'] = 'Band';
 $string['departments']='Countries';
-$string['sub_departments']='Bussiness Unit';
-$string['sub-sub-departments']='Sub Bussiness Units';
+$string['sub_departments']='Commercial Unit';
+$string['sub-sub-departments']='Sub Commercial Units';
 $string['designation'] = 'Designation';
 $string['im:already_in'] = 'The user "{$a}" was already enroled to this course';
 $string['im:enrolled_ok'] = 'The user "{$a}" has successfully enroled to this course ';
@@ -161,8 +161,10 @@ $string['help_2'] = '</td></tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>Summary</td><td>Summary of the course.</td></tr>
 <tr><td>Cost</td><td>Cost of the course.</td></tr>
-<tr><td>Country</td><td>Shortname of the Country.</td></tr>
-<tr><td>Subdepartment</td><td>Shortname of the Bussiness Unit.</td></tr>
+<tr><td>country_code</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
+<tr><td>commercial_unit_code</td><td>Enter Commercial Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
+<tr><td>commercial_area_code</td><td>Enter Commercial Unit Code. Commercial Unit must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
+<tr><td>territory_code</td><td>Enter Territory Code. Territory must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
 <tr><td>Points</td><td>Points for the course.</td></tr>
 <tr><td>completiondays</td><td>completiondays should be greater than \'0\'. i.e, 1,2,3..etc</td></tr>
 </table>';
@@ -178,7 +180,7 @@ $string['course_filters'] = 'Course Filters';
 $string['back'] = 'Back';
 $string['sample'] = 'Sample';
 $string['selectdept'] = '--Select Country--';
-$string['selectsubdept'] = '--Select Bussiness Unit--';
+$string['selectsubdept'] = '--Select Commercial Unit--';
 $string['selectorg'] = '--Select Organization--';
 $string['selectcat'] = '--Select Category--';
 $string['select_cat'] = '--Select Categories--';
@@ -270,8 +272,8 @@ $string['tagarea_courses'] = 'Courses';
 $string['subcategories'] = 'Subcategories';
 $string['tag'] = 'Tag';
 $string['tag_help'] = 'tag';
-$string['open_subdepartmentcourse_help'] = 'Bussiness Unit of the course';
-$string['open_subdepartmentcourse'] = 'Bussiness Unit';
+$string['open_subdepartmentcourse_help'] = 'Commercial Unit of the course';
+$string['open_subdepartmentcourse'] = 'Commercial Unit';
 $string['suspendconfirm'] = 'Confirmation';
 $string['activeconfirm'] = 'Are you sure to make category active ?';
 $string['inactiveconfirm'] = 'Are you sure to make category inactive ?';
@@ -339,10 +341,10 @@ $string['missingfullname'] = 'Please Enter Valid Course Name';
 $string['missingshortname'] = 'Please Enter Valid Course Code';
 $string['missingtype'] = 'Please Select Type';
 $string['course_reports'] = 'Course Reports';
-$string['cannotuploadcoursewithlob'] = 'With out Country cannot upload a course with Bussiness Unit';
+$string['cannotuploadcoursewithlob'] = 'With out Country cannot upload a course with Commercial Unit';
 $string['categorycodeshouldbedepcode'] = 'Category Code should be under the Country i.e \'{$a}\'';
-$string['categorycodeshouldbesubdepcode'] = 'Category Code should be short name of Bussiness Unit i.e \'{$a}\'';
-$string['subdeptshouldunderdepcode'] = 'Subdepartment should be under the Country i.e \'{$a}\'';
+$string['categorycodeshouldbesubdepcode'] = 'Category Code should be short name of Commercial Unit i.e \'{$a}\'';
+$string['subdeptshouldunderdepcode'] = 'Commercial Unit should be under the Country i.e \'{$a}\'';
 $string['course_name_help'] = 'Name for the Course';
 $string['coursecode_help'] = 'Code for the Course';
 $string['enrolled_courses'] = 'My Courses';
@@ -361,7 +363,7 @@ $string['enrollments'] = 'Enrolled';
 $string['skill'] = 'Skill';
 $string['ratings'] = 'Ratings';
 $string['tags'] = 'Tags';
-$string['subdepartment'] = 'Subdepartment';
+$string['subdepartment'] = 'Commercial Unit';
 $string['summary'] = 'Summary';
 $string['format'] = 'Course Format';
 $string['selfenrol'] = 'Self Enrol';
@@ -400,7 +402,24 @@ $string['deletecoursetypenotconfirm'] = 'You cannot delete <b>{$a->name}</b> as 
 $string['reason'] = 'Reason';
 $string['open_costcenteridlocal_courses'] = 'Organisation';
 $string['open_departmentlocal_courses'] = 'Country';
-$string['open_subdepartmentlocal_courses'] = 'Bussiness Unit';
-$string['open_level4departmentlocal_courses'] = 'Commercial Unit';
+$string['open_subdepartmentlocal_courses'] = 'Commercial Unit';
+$string['open_level4departmentlocal_courses'] = 'Commercial Area';
 $string['open_level5departmentlocal_courses'] = 'Territory';
 $string['pleaseselectidentifiedtype'] = 'Please Select Type';
+
+$string['open_departmentlocal_courses_help'] = 'Country of the course';
+$string['open_subdepartmentlocal_courses_help'] = 'Commercial Unit of the course';
+$string['open_level4departmentlocal_courses_help'] = 'Commercial Area of the course';
+$string['open_level5departmentlocal_courses_help'] = 'Territory of the course';
+
+$string['cannotuploadcoursewithsubdepartment'] = 'With out Commercial Unit cannot upload a course with Commercial Area';
+$string['categorycodeshouldbesubdepcode'] = 'Category Code should be under the Commercial Unit i.e \'{$a}\'';
+$string['categorycodeshouldbesubsubdepcode'] = 'Category Code should be short name of Commercial Area i.e \'{$a}\'';
+$string['subdeptshouldundersubdepcode'] = 'Commercial Area should be under the Commercial Unit i.e \'{$a}\'';
+$string['subdepartmentnotfound'] ='Commercial Unit not found i.e \'{$a}\'';
+
+$string['cannotuploadcoursewithsubsubdepartment'] = 'With out Commercial Area cannot upload a course with Territory';
+$string['categorycodeshouldbesubsubdepcode'] = 'Category Code should be under the Commercial Area i.e \'{$a}\'';
+$string['categorycodeshouldbesubsubsubdepcode'] = 'Category Code should be short name of Territory i.e \'{$a}\'';
+$string['subdeptshouldundersubsubdepcode'] = 'Territory should be under the Commercial Area i.e \'{$a}\'';
+$string['subsubdepartmentnotfound'] ='Commercial Area not found i.e \'{$a}\'';

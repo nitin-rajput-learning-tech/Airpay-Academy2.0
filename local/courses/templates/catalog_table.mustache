@@ -42,7 +42,7 @@
                 {{/ coursenameCut}}
             </td>            
             <td>{{shortname}}</td>
-            <td>{{catnamestring}}</td>
+            <td>{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</td>
             <td>
                 {{# enrolled_count }} {{enrolled_count}} {{/ enrolled_count }} 
                 {{^ enrolled_count }} N/A {{/ enrolled_count }}
@@ -74,7 +74,7 @@
                    
                 {{/grade_view}}
                 {{#request_view}}            
-                     <a href="{{ requestlink }}" title= "{{#str}}requestforenroll, local_courses{{/str}}">
+                     <a href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
                          <i class="fa fa-share-square" aria-hidden="true"></i>
                      </a>             
                 {{/request_view}}      

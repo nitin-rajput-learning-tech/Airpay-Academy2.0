@@ -34,7 +34,8 @@ $course_id = optional_param('courseid', 0,PARAM_INT);
 $filterpage = optional_param('filterpage', '', PARAM_RAW);
 $departments = optional_param('depts', '', PARAM_RAW);
 $subdepartments = optional_param('subdepts', '', PARAM_RAW);
-
+$department4levelid = optional_param('department4levelid', '', PARAM_RAW);
+$department5levelid = optional_param('department5levelid', '', PARAM_RAW);
 $page = optional_param('page', 0,PARAM_INT);
 
 if(is_array($departments)){
@@ -48,6 +49,16 @@ if(is_array($subdepartments)){
     $subdepartments = $subdepartments;
 }
 
+if(is_array($department4levelid)){
+    $department4levelid = implode(',', $department4levelid);
+}else{
+    $department4levelid = $department4levelid;
+}
+if(is_array($department5levelid)){
+    $department5levelid = implode(',', $department5levelid);
+}else{
+    $department5levelid = $department5levelid;
+}
 
 $PAGE->set_context((new \local_courses\lib\accesslib())::get_module_context($course_id));
 $costcenterlib = new costcenter();
@@ -85,8 +96,12 @@ if(($action == 'courseenroll')){
             echo json_encode($subdepartments);
         break;
         case 'department4level':
-            $subdepartments = $costcenterlib->get_enrolledcoursefilter_users_department4level($costcenter,$like,$page,$course_id, $filterpage,$departments);
-            echo json_encode($subdepartments);
+            $department4level = $costcenterlib->get_enrolledcoursefilter_users_department4level($costcenter,$like,$page,$course_id, $filterpage,$department4level);
+            echo json_encode($department4level);
+        break;
+        case 'department5level':
+            $department5level = $costcenterlib->get_enrolledcoursefilter_users_department5level($costcenter,$like,$page,$course_id, $filterpage,$department5level);
+            echo json_encode($department5level);
         break;
         case 'costcenter':
             $costcenters = $costcenterlib->get_enrolledcoursefilter_users_costcenters($like,$page,$course_id, $filterpage);

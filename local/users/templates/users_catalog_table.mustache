@@ -47,9 +47,9 @@
             <th>{{#str}}email, local_users{{/str}}</th>
             <th>{{#str}}organization, local_users{{/str}}</th>
             <th>{{#str}}department, local_users{{/str}}</th>
-            <th>{{#str}}discipline, local_users{{/str}}</th>
+            <th>{{#str}}commercialunit, local_users{{/str}}</th>
+            <th>{{#str}}commercialarea, local_users{{/str}}</th>
             <th>{{#str}}designation, local_users{{/str}}</th>
-            <th>{{#str}}supervisor,local_users{{/str}}</th>
             <th>{{#str}}actions, local_users{{/str}}</th>
         </tr>
     </thead>
@@ -67,9 +67,10 @@
             </td>
             <td> {{org}}</td>
             <td> {{dept}}</td>
-            <td>{{level}}</td>
+            <td> {{commercialunit}}</td>
+            <td> {{commercialarea}}</td>
             <td>{{designationstring}}</td>
-            <td>{{supervisiorstring}}</td>
+
 
             <td>
                 {{# delcap }}
