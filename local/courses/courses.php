@@ -143,11 +143,11 @@ if(is_siteadmin() ||(
 }              
 if(((has_capability('local/costcenter:create', $categorycontext)&&has_capability('local/courses:bulkupload', $categorycontext)&&has_capability('local/courses:manage', $categorycontext)&&has_capability('moodle/course:create', $categorycontext)&&has_capability('moodle/course:update', $categorycontext)))|| is_siteadmin()){
 
-    $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
-                                <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('uploadcourses','local_courses').'" href = '.$CFG->wwwroot.'/local/courses/upload/index.php>
-                                    <i class="icon fa fa-upload" aria-hidden="true"></i>
-                                </a>
-                            </div></li>';
+    // $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
+    //                             <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('uploadcourses','local_courses').'" href = '.$CFG->wwwroot.'/local/courses/upload/index.php>
+    //                                 <i class="icon fa fa-upload" aria-hidden="true"></i>
+    //                             </a>
+    //                         </div></li>';
 }if(is_siteadmin() ||(
         has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
         $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">

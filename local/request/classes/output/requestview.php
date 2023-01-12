@@ -90,27 +90,29 @@ class requestview implements renderable, templatable {
            $sql = "SELECT $fields FROM {local_request_records} AS req 
            JOIN {user} as u ON u.id=req.createdbyid
            WHERE 1=1";
-        }else if(has_capability('local/classroom:manageclassroom',$systemcontext)||
-                has_capability('local/program:manageprogram',$systemcontext)||
-                has_capability('local/certification:managecertification',$systemcontext)){
-            $trainerclassrooms = $DB->get_records_menu('local_classroom_trainers',array('trainerid' => $USER->id),'','id,classroomid');
-            array_push($trainerclassrooms,0);
-            $classroomids = implode(',', $trainerclassrooms);
+        }
+        // else if(has_capability('local/classroom:manageclassroom',$systemcontext)||
+        //         has_capability('local/program:manageprogram',$systemcontext)||
+        //         has_capability('local/certification:managecertification',$systemcontext)){
+        //     $trainerclassrooms = $DB->get_records_menu('local_classroom_trainers',array('trainerid' => $USER->id),'','id,classroomid');
+        //     array_push($trainerclassrooms,0);
+        //     $classroomids = implode(',', $trainerclassrooms);
 
-            $trainerprograms = $DB->get_records_menu('local_program_trainers',array('trainerid' => $USER->id),'','id,programid');
-            array_push($trainerprograms,0);
-            $programids = implode(',', $trainerprograms);
+        //     $trainerprograms = $DB->get_records_menu('local_program_trainers',array('trainerid' => $USER->id),'','id,programid');
+        //     array_push($trainerprograms,0);
+        //     $programids = implode(',', $trainerprograms);
 
-            $trainercertifications = $DB->get_records_menu('local_certification_trainers',array('trainerid' => $USER->id),'','id,certificationid');
-            array_push($trainercertifications,0);
-            $certificationids = implode(',', $trainercertifications);
+        //     $trainercertifications = $DB->get_records_menu('local_certification_trainers',array('trainerid' => $USER->id),'','id,certificationid');
+        //     array_push($trainercertifications,0);
+        //     $certificationids = implode(',', $trainercertifications);
 
-            $sql = "SELECT req.* FROM {local_request_records} AS req
-                JOIN {user} AS u ON u.id=req.createdbyid
-                WHERE ((req.compname='classroom' AND req.componentid IN($classroomids)) OR
-                (req.compname='program' AND req.componentid IN($programids)) OR
-                (req.compname='certification' AND req.componentid IN($programids))) AND req.compname!='elearning' $costcenterpathconcatsql";
-        }else{
+        //     $sql = "SELECT req.* FROM {local_request_records} AS req
+        //         JOIN {user} AS u ON u.id=req.createdbyid
+        //         WHERE ((req.compname='classroom' AND req.componentid IN($classroomids)) OR
+        //         (req.compname='program' AND req.componentid IN($programids)) OR
+        //         (req.compname='certification' AND req.componentid IN($programids))) AND req.compname!='elearning' $costcenterpathconcatsql";
+        // }
+        else{
               $sql = "SELECT req.* FROM {local_request_records} AS req
                   JOIN {user} AS u ON u.id=req.createdbyid
                   WHERE 1=1 $costcenterpathconcatsql";

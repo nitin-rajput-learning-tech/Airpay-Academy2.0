@@ -37,13 +37,13 @@
                                     <th class="certification_col text-center">{{certification}}</th>
                                 {{/certification}}
 
-                                {{#classroom}}
-                                    <th class="classroom_col text-center">{{classroom}}</th>
-                                {{/classroom}}
-
                                 {{#courses}}
                                     <th class="courses_col text-center">{{courses}}</th>
                                 {{/courses}}
+
+                                {{#classroom}}
+                                    <th class="classroom_col text-center">{{classroom}}</th>
+                                {{/classroom}}
 
                                 {{#learningplan}}
                                     <th class="learningplan_col text-center">{{learningplan}}</th>
@@ -57,7 +57,7 @@
                                     <th class="program_col text-center">{{program}}</th>
                                 {{/program}}
 
-                                {{#supervisorevaluation}}
+                                <!-- {{#supervisorevaluation}}
                                     <th class="program_col text-center">{{supervisorevaluation}}</th>
                                 {{/supervisorevaluation}}
 
@@ -67,7 +67,7 @@
 
                                 {{#badges}}
                                     <th class="badges_col text-center">{{badges}}</th>
-                                {{/badges}}
+                                {{/badges}} -->
                             {{/headers}}
                            
                         </tr>
@@ -85,13 +85,14 @@
                                 <td class="certification_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
                             {{/certification}}
 
-                            {{#classroom}}
-                                <td class="classroom_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
-                            {{/classroom}}
 
                             {{#courses}}
                                 <td class="courses_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
                             {{/courses}}
+
+                            {{#classroom}}
+                                <td class="classroom_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
+                            {{/classroom}}
 
                             {{#learningplan}}
                                 <td class="learningplan_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
@@ -104,7 +105,7 @@
                             {{#program}}
                                 <td class="program_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
                             {{/program}}
-                            {{#supervisorevaluation}}
+                            <!-- {{#supervisorevaluation}}
                                 <td class="courses_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
                             {{/supervisorevaluation}}
                             {{# evaluation}}
@@ -112,11 +113,8 @@
                             {{/ evaluation}}
 
                             {{#badgescount}}
-
-                                 <!--<td class="badges_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{issuedbadges}} / {{totalbadges}}</span></td>-->
-
                                 <td class="badges_col text-center"><span class="label_colored_info label_{{elementcolor}}" data-action="popupmodalbadge{{userid}}">{{issuedbadges}} / {{totalbadges}}</span></td>
-                            {{/badgescount}}
+                            {{/badgescount}} -->
                         </tr>
                         {{/records}}
                     </tbody>

@@ -141,6 +141,8 @@ $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['organisation'] ='Organisation';
 $string['pleaseselectidnumber'] ='Please add group id';
+$string['open_costcenteridlocal_groups'] = 'Organisation';
+$string['open_costcenteridlocal_groups_help'] = 'Search and select an Organization';
 
 
 

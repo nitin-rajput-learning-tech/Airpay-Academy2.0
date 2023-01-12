@@ -1433,6 +1433,7 @@ function get_listof_courses($stable, $filterdata) {
     $courses = $DB->get_records_sql($selectsql.$formsql, $params, $stable->start,$stable->length);
     $ratings_plugin_exist = $core_component::get_plugin_directory('local', 'ratings');
     $courseslist = array();
+    $employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
     if(!empty($courses)){
         $count = 0;
         foreach ($courses as $key => $course) {
@@ -1449,40 +1450,27 @@ function get_listof_courses($stable, $filterdata) {
             $departmentcount = 1;
             $subdepartmentcount = 1;
           
-            $params = array('courseid'=>$course->id);
-            if(is_siteadmin()){
-                $conditionsql = " ";
-            }
-            $enrolledusersssql = " SELECT COUNT(DISTINCT(ue.id)) as ccount
+            $params = array('courseid'=>$course->id, 'employeerole' => $employeerole);
+
+            $enrolledusersssql = " SELECT COUNT(u.id) as ccount
                                 FROM {course} c
-                                JOIN {course_categories} cat ON cat.id = c.category
-                                JOIN {enrol} e ON e.courseid = c.id AND 
-                                            (e.enrol = 'manual' OR e.enrol = 'self') 
-                                JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                                JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
                                                 AND u.deleted = 0 AND u.suspended = 0
-                                JOIN {local_costcenter} lc ON lc.id = u.open_path
-                                JOIN {role_assignments} as ra ON ra.userid = u.id
-                                JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
-                                WHERE c.id = :courseid {$conditionsql} $open_path";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole";
 
             $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
 
 
-            $completedusersssql = " SELECT COUNT(DISTINCT(cc.id)) as ccount
+            $completedusersssql = " SELECT COUNT(u.id) as ccount
                                 FROM {course} c
-                                JOIN {course_categories} cat ON cat.id = c.category
-                                JOIN {enrol} e ON e.courseid = c.id AND 
-                                            (e.enrol = 'manual' OR e.enrol = 'self') 
-                                JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                                JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
                                                 AND u.deleted = 0 AND u.suspended = 0
-                                JOIN {local_costcenter} lc ON lc.id = u.open_path
-                                JOIN {role_assignments} as ra ON ra.userid = u.id
-                                JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
-                                JOIN {course_completions} as cc 
-                                        ON cc.course = c.id AND u.id = cc.userid
-                                WHERE c.id = :courseid AND cc.timecompleted IS NOT NULL {$conditionsql} $open_path";
+                                JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL ";
 
             $completed_count = $DB->count_records_sql($completedusersssql,$params);
 
