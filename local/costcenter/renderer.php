@@ -226,7 +226,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $create_organisation = false;
         }
 
-        if($costcenters_exist && $depth<=1){
+        if($costcenters_exist && $depth<=1 && has_capability('local/costcenter:create', $categorycontext)){
             $headstring = 'addnewdept';
             $title = get_string('createdepartment','local_costcenter');
             $create_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"department\", headstring:\"$headstring\"}) })(event)'>
@@ -242,7 +242,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $deptexist = $DB->record_exists_sql($deptexistsql);
 
-        if($deptexist && $depth<=2){
+        if($deptexist && $depth<=2 && has_capability('local/costcenter:create', $categorycontext)){
             $headstring = 'addnewsubdept';
                 $title = get_string('createsubdepartment','local_costcenter');
                 $create_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"subdepartment\", headstring:\"$headstring\"}) })(event)'>
@@ -259,7 +259,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $deptexistone = $DB->record_exists_sql($deptexistth);
 
-        if($deptexistone && $depth<=3){
+        if($deptexistone && $depth<=3 && has_capability('local/costcenter:create', $categorycontext)){
             $headstring = 'addnewsubsubdept';
                 $title = get_string('createsubsubdepartment','local_costcenter');
                 $create_sub_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"subsubdepartment\", headstring:\"$headstring\"}) })(event)'>
@@ -275,7 +275,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $deptexistfo .= $costcenterpathconcatsql;
         }
         $deptexisttwo = $DB->record_exists_sql($deptexistfo);
-        if($deptexisttwo && $depth<=4){
+        if($deptexisttwo && $depth<=4 && has_capability('local/costcenter:create', $categorycontext)){
             $headstring = 'addnewsubsubsubdept';
                 $title = get_string('createsubsubsubdepartment','local_costcenter');
                 $create_sub_sub_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"subsubsubdepartment\", headstring:\"$headstring\"}) })(event)'>

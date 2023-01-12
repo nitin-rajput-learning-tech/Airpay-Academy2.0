@@ -776,3 +776,4 @@ $string['invalidstatevalue'] = 'State "{$a->state}" is not under "{$a->parentid}
 $string['invaliddistrictvalue'] = 'District "{$a->district}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['invalidsubdistrictvalue'] = 'Sub district "{$a->subdistrict}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['invalidvillagevalue'] = 'Village "{$a->village}" is not under "{$a->parentid}" at line {$a->line}.';
+$string['managegeographyfields'] = 'Geography Location Master';
