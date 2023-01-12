@@ -88,9 +88,11 @@
                                 </li>
                             {{/ assignroles}}
                             {{# contextid}}
+                                {{# managepermissions}}
                                 <li>
                                 <a href='{{config.wwwroot}}/admin/roles/permissions.php?contextid={{contextid}}' title="{{# str}}permissions,local_costcenter{{/ str}}"><i class="fa fa-cogs"></i></a>
                                 </li>
+                                {{/ managepermissions}}
                             {{/ contextid}}
                             </ul>
                         </div>
