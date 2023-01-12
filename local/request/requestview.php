@@ -29,10 +29,6 @@ require_once($CFG->dirroot . '/local/courses/filters_form.php');
 $component = optional_param('component', null, PARAM_RAW);
 $courseid = optional_param('courseid', '', PARAM_INT);
 global $OUTPUT, $PAGE, $USER;
-
-//$pagecontextid = optional_param('pagecontextid',1, PARAM_INT);  // Reference to the context we came from.
-//$search = optional_param('search', '', PARAM_RAW);
-
 require_login(); 
 $title = get_string('viewrequest', 'local_request');
 
@@ -59,7 +55,6 @@ echo $output->header();
     if ($mform->is_cancelled()) {
         redirect($CFG->wwwroot . '/local/request/index.php');
     } else if ($filterdata =  $mform->get_data()){
-        // $filterdata =  $mform->get_data();
         if($filterdata){
             $collapse = false;
             $show = 'show';
@@ -84,11 +79,6 @@ echo $output->header();
         $show = '';
         $list=null;
     }
-
-    // $heading = '<span class="filter-lebel">'.get_string('filters').'</span>';
-    // print_collapsible_region_start(' ', 'filters_form', ' '.' '.$heading, false, $collapse);
-    // $mform->display();
-    // print_collapsible_region_end(); 
         echo '<a class="btn-link btn-sm" title="'.get_string('filters','local_request').'" href="javascript:void(0);" data-toggle="collapse" data-target="#local_request-filter_collapse" aria-expanded="false" aria-controls="local_request-filter_collapse">
                 <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
               </a>';
@@ -97,11 +87,6 @@ echo $output->header();
                         $mform->display();
         echo        '</div>
                 </div>';
-        //$renderable = new local_request\output\requestview();
-    //  $data = $renderable->export_for_template($output);
-     //  echo   $res= $output->render_from_template('local_request/requestview', $data);
-       
-       // $list=null;
        echo $output->render_requestview(new local_request\output\requestview($list, $list_comp, $sorting,true));
     }
     else{

@@ -331,18 +331,18 @@ class querylib {
 						JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.userid = ra.userid AND ue.status = 0
 						JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
 						WHERE u.id = $userid AND c.visible = 1 ";
-			if (!empty($filterdata) && !empty($filterdata['filter_organization']) ) {
-	            $sql .= " AND u.open_costcenterid = " . $filterdata['filter_organization'];
-	            $params['selectedorg'] = $filterdata['filter_organization'];
-	        }
-
-	        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > 0) {
-	            $sql .= " AND u.open_departmentid = " . $filterdata['filter_departments'];
-	            // $params['selecteddept'] = $filterdata['filter_departments'];
-	        }
-	        if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) ) {
-	            $sql .= " AND u.open_subdepartment = " . $filterdata['filter_subdepartments'];
-	        }
+			// if (!empty($filterdata) && !empty($filterdata['filter_organization']) ) {
+	        //     $sql .= " AND u.open_costcenterid = " . $filterdata['filter_organization'];
+	        //     $params['selectedorg'] = $filterdata['filter_organization'];
+	        // }
+	        // if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > 0) {
+	        //     $sql .= " AND u.open_departmentid = " . $filterdata['filter_departments'];
+	        //     // $params['selecteddept'] = $filterdata['filter_departments'];
+	        // }
+	        // if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) ) {
+	        //     $sql .= " AND u.open_subdepartment = " . $filterdata['filter_subdepartments'];
+	        // }
+				$userssql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
         } else {
 
@@ -353,27 +353,27 @@ class querylib {
 	    	$systemcontext = \context_system::instance();
 
 		    $params = array(); 
-		    if ($pluginclass->reportclass->role == 'dh') {
-		        if (!empty($pluginclass->reportclass->courseslist)) {
-		        	$sql .= " AND c.id IN (" . $pluginclass->reportclass->courseslist .")";
-		        } 
-		    } else {
-			    if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){ 
-			    	$coursesql  = $this->getcourseslist($pluginclass->courseorganizationid, $filterdata['filter_departments'], $filterdata['filter_subdepartments']);
-			    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-			        $coursesql  = $this->getcourseslist($USER->open_costcenterid, $filterdata['filter_departments'], $filterdata['filter_subdepartments']);
-			    }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){ 
-			    	$coursesql  = $this->getcourseslist($USER->open_costcenterid, $USER->open_departmentid, $filterdata['filter_subdepartments']);
-			    } else {
-			    	$coursesql = $this->getcourseslist($USER->open_costcenterid, $USER->open_departmentid, $USER->open_subdepartment);
-			    }
+		    // if ($pluginclass->reportclass->role == 'dh') {
+		    //     if (!empty($pluginclass->reportclass->courseslist)) {
+		    //     	$sql .= " AND c.id IN (" . $pluginclass->reportclass->courseslist .")";
+		    //     } 
+		    // } else {
+			//     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){ 
+			//     	$coursesql  = $this->getcourseslist($pluginclass->courseorganizationid, $filterdata['filter_departments'], $filterdata['filter_subdepartments']);
+			//     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+			//         $coursesql  = $this->getcourseslist($USER->open_costcenterid, $filterdata['filter_departments'], $filterdata['filter_subdepartments']);
+			//     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){ 
+			//     	$coursesql  = $this->getcourseslist($USER->open_costcenterid, $USER->open_departmentid, $filterdata['filter_subdepartments']);
+			//     } else {
+			//     	$coursesql = $this->getcourseslist($USER->open_costcenterid, $USER->open_departmentid, $USER->open_subdepartment);
+			//     }
 
-			    if (!empty($coursesql)) { 
-	                $sql .= " AND c.id IN (".$coursesql.")";
-	            } else {
-	                $sql .= " AND c.id IN (0)";
-	            }
-			}
+			//     if (!empty($coursesql)) { 
+	        //         $sql .= " AND c.id IN (".$coursesql.")";
+	        //     } else {
+	        //         $sql .= " AND c.id IN (0)";
+	        //     }
+			// }
 
 	    // if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
      //        $sql .= " AND c.open_costcenterid = " . $filterdata['filter_organization'];
@@ -548,38 +548,56 @@ class querylib {
 		        $params['deleted'] = 0;
 		        $params['suspended'] = 0;
 
-		        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-		            $sql .= " ";
-		        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-		            $sql .= " AND u.open_costcenterid = :costcenterid ";
-		            $params['costcenterid'] = $USER->open_costcenterid;
-		        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-		            $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
-		            $params['costcenterid'] = $USER->open_costcenterid;
-		            $params['departmentid'] = $USER->open_departmentid;
-		        } else {
-		        	$sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartmentid";
-		            $params['costcenterid'] = $USER->open_costcenterid;
-		            $params['departmentid'] = $USER->open_departmentid;
-		            $params['subdepartmentid'] = $USER->open_subdepartment;
-		        } 
-		        if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
-		            $sql .= " AND u.open_costcenterid = :selectedorg ";
-		            $params['selectedorg'] = $filterdata['filter_organization'];
-		        }
+		        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+		        //     $sql .= " ";
+		        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+		        //     $sql .= " AND u.open_costcenterid = :costcenterid ";
+		        //     $params['costcenterid'] = $USER->open_costcenterid;
+		        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+		        //     $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
+		        //     $params['costcenterid'] = $USER->open_costcenterid;
+		        //     $params['departmentid'] = $USER->open_departmentid;
+		        // } else {
+		        // 	$sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartmentid";
+		        //     $params['costcenterid'] = $USER->open_costcenterid;
+		        //     $params['departmentid'] = $USER->open_departmentid;
+		        //     $params['subdepartmentid'] = $USER->open_subdepartment;
+		        // } 
+		        $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+		        // if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
+		        //     $sql .= " AND u.open_costcenterid = :selectedorg ";
+		        //     $params['selectedorg'] = $filterdata['filter_organization'];
+		        // }
+		        // if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > -1) {
+		        //     $sql .= " AND u.open_departmentid = :selecteddept ";
+		        //     $params['selecteddept'] = $filterdata['filter_departments'];
+		        // } 
+		        // if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) && $filterdata['filter_subdepartments'] > -1) {
+		        // 	$sql .= " AND u.open_subdepartment = :selectedsubdept";
+		        // 	$params['selectedsubdept'] = $filterdata['filter_subdepartments'];
+		        // }
+		        // if (!empty($pluginclass->courseorganizationid)) {
+        		// 	$sql .= " AND u.open_costcenterid = " . $pluginclass->courseorganizationid;
+        		// }
 
-		        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > -1) {
-		            $sql .= " AND u.open_departmentid = :selecteddept ";
-		            $params['selecteddept'] = $filterdata['filter_departments'];
-		        } 
-		        if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) && $filterdata['filter_subdepartments'] > -1) {
-		        	$sql .= " AND u.open_subdepartment = :selectedsubdept";
-		        	$params['selectedsubdept'] = $filterdata['filter_subdepartments'];
-		        }
-		        if (!empty($pluginclass->courseorganizationid)) {
-        			$sql .= " AND u.open_costcenterid = " . $pluginclass->courseorganizationid;
-        		}
-
+	        if (!empty($filterdata) && (!empty($filterdata['filter_organization']) || !empty($pluginclass->courseorganizationid))) {
+	            $organization = $filterdata['filter_organization'];
+	            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
+	            $params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
+	            $sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
+	        }
+	        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > -1)
+	            $department = $filterdata['filter_departments'];
+	            $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+	            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
+	            $sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
+	        }
+	        if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) && $filterdata['filter_subdepartments'] > -1) {
+	            $subdepartments = $filterdata['filter_subdepartments'];
+	            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+	            $params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
+	            $sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
+	        }
 		        // if (!empty($filterdata) && !empty($filterdata['filter_users'])) {
           //           $sql .= " AND u.id = :userfilter ";
           //           $params['userfilter'] = $filterdata['filter_users'];
@@ -587,7 +605,6 @@ class querylib {
 
 		        $sql .= " ORDER BY u.firstname ASC ";
 		        $userslist = $DB->get_records_sql($sql,$params);
-			}
 		} else {
 
 			$params = array(); 
@@ -599,41 +616,61 @@ class querylib {
 	        $params['deleted'] = 0;
 	        $params['suspended'] = 0;
 	        
-	        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-	            $sql .= " ";
-	        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-	            $sql .= " AND u.open_costcenterid = :costcenterid ";
-	            $params['costcenterid'] = $USER->open_costcenterid;
-	        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-	            $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
-	            $params['costcenterid'] = $USER->open_costcenterid;
-	            $params['departmentid'] = $USER->open_departmentid;
-	        } else {
-		        	$sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartmentid";
-		            $params['costcenterid'] = $USER->open_costcenterid;
-		            $params['departmentid'] = $USER->open_departmentid;
-		            $params['subdepartmentid'] = $USER->open_subdepartment;
-		        }
+	        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+	        //     $sql .= " ";
+	        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+	        //     $sql .= " AND u.open_costcenterid = :costcenterid ";
+	        //     $params['costcenterid'] = $USER->open_costcenterid;
+	        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+	        //     $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
+	        //     $params['costcenterid'] = $USER->open_costcenterid;
+	        //     $params['departmentid'] = $USER->open_departmentid;
+	        // } else {
+		    //     	$sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartmentid";
+		    //         $params['costcenterid'] = $USER->open_costcenterid;
+		    //         $params['departmentid'] = $USER->open_departmentid;
+		    //         $params['subdepartmentid'] = $USER->open_subdepartment;
+		    //     }
+		    $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 	        // if (!empty($filterdata) && !empty($filterdata['filter_users'])) {
          //        $sql .= " AND u.id = :userfilter ";
          //        $params['userfilter'] = $filterdata['filter_users'];
          //    }
-            if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
-	            $sql .= " AND u.open_costcenterid = :selectedorg ";
-	            $params['selectedorg'] = $filterdata['filter_organization'];
-	        }
+            // if (!empty($filterdata) && !empty($filterdata['filter_organization'])) {
+	        //     $sql .= " AND u.open_costcenterid = :selectedorg ";
+	        //     $params['selectedorg'] = $filterdata['filter_organization'];
+	        // }
 
-	        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > 0) {
-	            $sql .= " AND u.open_departmentid = :selecteddept ";
-	            $params['selecteddept'] = $filterdata['filter_departments'];
-	        } 
+	        // if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > 0) {
+	        //     $sql .= " AND u.open_departmentid = :selecteddept ";
+	        //     $params['selecteddept'] = $filterdata['filter_departments'];
+	        // } 
+	        // if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) && $filterdata['filter_subdepartments'] > -1) {
+		    //     	$sql .= " AND u.open_subdepartment = :selectedsubdept";
+		    //     	$params['selectedsubdept'] = $filterdata['filter_subdepartments'];
+		    //     }
+	        // if (!empty($pluginclass->courseorganizationid)) {
+        	// 	$sql .= " AND u.open_costcenterid = " . $pluginclass->courseorganizationid;
+        	// }
+
+	        if (!empty($filterdata) && (!empty($filterdata['filter_organization']) || !empty($pluginclass->courseorganizationid))) {
+	            $organization = $filterdata['filter_organization'];
+	            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
+	            $params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
+	            $sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
+	        }
+	        if (!empty($filterdata) && !empty($filterdata['filter_departments']) && $filterdata['filter_departments'] > -1){
+	            $department = $filterdata['filter_departments'];
+	            $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+	            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
+	            $sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
+	        }
 	        if (!empty($filterdata) && !empty($filterdata['filter_subdepartments']) && $filterdata['filter_subdepartments'] > -1) {
-		        	$sql .= " AND u.open_subdepartment = :selectedsubdept";
-		        	$params['selectedsubdept'] = $filterdata['filter_subdepartments'];
-		        }
-	        if (!empty($pluginclass->courseorganizationid)) {
-        		$sql .= " AND u.open_costcenterid = " . $pluginclass->courseorganizationid;
-        	}
+	            $subdepartments = $filterdata['filter_subdepartments'];
+	            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+	            $params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
+	            $sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
+	        }
 	        $sql .= " ORDER BY u.firstname ASC ";
 	        $userslist = $DB->get_records_sql($sql,$params);
 		}
@@ -770,7 +807,7 @@ class querylib {
 		// if($subdeptid > 0){
 		// 	$userssql .= " AND u.open_subdepartment = " .$subdeptid;
 		// }
-                  $userssql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+                  $userssql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
                   // echo $userssql;exit;
 		$orgcourses = $DB->get_records_sql($orgsql); 
 		$usercourses = $DB->get_records_sql($userssql); 

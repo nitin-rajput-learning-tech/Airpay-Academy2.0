@@ -45,11 +45,6 @@ class renderer extends plugin_renderer_base {
      *
      * @return string html for the page
      */
-    // public function render_requestview(\local_request\output\requestview $page) {
-    //     $data = $page->export_for_template($this);
-
-    //     return parent::render_from_template('local_request/requestview', $data);
-    // }
     public function render_requestview($filter, $courseid=null,$component=null){
         global $USER;
         $systemcontext = (new \local_request\lib\accesslib())::get_module_context();

@@ -68,7 +68,6 @@ class local_request_external extends external_api {
           $filtervalues->request = $decodedata->component;
         }
 
-
         try{
           $stable = new \stdClass();
           $stable->thead = true;

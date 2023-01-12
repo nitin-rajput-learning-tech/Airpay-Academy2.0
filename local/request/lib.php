@@ -31,20 +31,16 @@ function request_filter($mform){
     global $DB,$USER;
     
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
-    // $sql = "SELECT id, name FROM {local_classroom} WHERE id > 1";
 if ((has_capability('local/request:approverecord', (new \local_request\lib\accesslib())::get_module_context()) || is_siteadmin())) {
-        // $requestlist = $DB->get_records_sql_menu("SELECT id, compname FROM {local_request_records} GROUP BY compname");
         $requestlist = $DB->get_records_sql_menu("SELECT distinct(compname), id FROM {local_request_records}");
         $requestlist = array_flip($requestlist);
 
         
         $customrequestlist = array();
         $trainer_user = ((has_capability('local/classroom:manageclassroom',$systemcontext)||
-                has_capability('local/program:manageprogram',$systemcontext)||
-                has_capability('local/certification:managecertification',$systemcontext)) && !is_siteadmin() && !has_capability('local/costcenter:manage_ownorganization',$systemcontext) && !has_capability('local/costcenter:manage_owndepartments',$systemcontext));
+                has_capability('local/certification:managecertification',$systemcontext)) && !is_siteadmin());
         foreach($requestlist as $key => $value){
         	if($trainer_user && ($value == 'elearning' || $value == 'learningplan')){
-        		// $value = 'E-Learning';
                 continue;    
         	}
 
@@ -58,12 +54,10 @@ if ((has_capability('local/request:approverecord', (new \local_request\lib\acces
          
 }
 function sorting_filter($mform){
-	global $DB, $USER;
-	
+	global $DB, $USER;	
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
 	$sortinglist = array(false => get_string('firstrequestedfirst', 'local_request'), true => get_string('latestfirst', 'local_request'));
-	$select = $mform->addElement('autocomplete', 'sorting', '', $sortinglist, array('placeholder' => get_string('sorting', 'local_request')));
-    
+	$select = $mform->addElement('autocomplete', 'sorting', '', $sortinglist, array('placeholder' => get_string('sorting', 'local_request')));   
     $mform->setType('request', PARAM_INT);
 }
 function requeststatus_filter($mform){
@@ -75,17 +69,15 @@ function requeststatus_filter($mform){
          $statuslist = array_flip($statuslist);
          $customrequestlist = array();
          $trainer_user = ((has_capability('local/classroom:manageclassroom',$systemcontext)||
-                has_capability('local/program:manageprogram',$systemcontext)||
-                has_capability('local/certification:managecertification',$systemcontext)) && !is_siteadmin() && !has_capability('local/costcenter:manage_ownorganization',$systemcontext) && !has_capability('local/costcenter:manage_owndepartments',$systemcontext));
+                has_capability('local/certification:managecertification',$systemcontext)) && !is_siteadmin());
          foreach($statuslist as $key => $value){
             if($trainer_user && ($value == 'APPROVED' || $value == 'PENDING' || $value == 'REJECTED')){
-                // $value = 'E-Learning';
                 continue;    
             }
             $customrequestlist[$value] = get_string($value, 'local_request');
         }
         $statuslist = $customrequestlist;
-        $select = $mform->addElement('autocomplete', 'status', '', $statuslist, array('placeholder' => get_string('Status', 'local_request')));
+        $select = $mform->addElement('autocomplete', 'status', '', $statuslist, array('placeholder' => get_string('status', 'local_request')));
         $mform->setType('status', PARAM_RAW);
         $select->setMultiple(true);
 }

@@ -70,11 +70,6 @@ class requestview implements renderable, templatable {
                     $this->requestlist = $this->get_specific_costcenter_requests($component,$sorting,$componentid);
                 }
             }
-        // }
-        // else{
-
-        //     $this->requestlist = $list;
-        // }  // end of else statement
           $this->tab = $tab;
         return $this;
     }// end of constructors
@@ -86,33 +81,11 @@ class requestview implements renderable, templatable {
         $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
         $fields = " req.id, req.createdbyid, req.compname, req.compcode, req.compkey, req.componentid, req.status, req.responder, req.respondeddate, req.usermodified, req.timecreated, req.timemodified ";
-        if(has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || is_siteadmin()){
+        if(is_siteadmin()){
            $sql = "SELECT $fields FROM {local_request_records} AS req 
            JOIN {user} as u ON u.id=req.createdbyid
            WHERE 1=1";
-        }
-        // else if(has_capability('local/classroom:manageclassroom',$systemcontext)||
-        //         has_capability('local/program:manageprogram',$systemcontext)||
-        //         has_capability('local/certification:managecertification',$systemcontext)){
-        //     $trainerclassrooms = $DB->get_records_menu('local_classroom_trainers',array('trainerid' => $USER->id),'','id,classroomid');
-        //     array_push($trainerclassrooms,0);
-        //     $classroomids = implode(',', $trainerclassrooms);
-
-        //     $trainerprograms = $DB->get_records_menu('local_program_trainers',array('trainerid' => $USER->id),'','id,programid');
-        //     array_push($trainerprograms,0);
-        //     $programids = implode(',', $trainerprograms);
-
-        //     $trainercertifications = $DB->get_records_menu('local_certification_trainers',array('trainerid' => $USER->id),'','id,certificationid');
-        //     array_push($trainercertifications,0);
-        //     $certificationids = implode(',', $trainercertifications);
-
-        //     $sql = "SELECT req.* FROM {local_request_records} AS req
-        //         JOIN {user} AS u ON u.id=req.createdbyid
-        //         WHERE ((req.compname='classroom' AND req.componentid IN($classroomids)) OR
-        //         (req.compname='program' AND req.componentid IN($programids)) OR
-        //         (req.compname='certification' AND req.componentid IN($programids))) AND req.compname!='elearning' $costcenterpathconcatsql";
-        // }
-        else{
+        }else{
               $sql = "SELECT req.* FROM {local_request_records} AS req
                   JOIN {user} AS u ON u.id=req.createdbyid
                   WHERE 1=1 $costcenterpathconcatsql";
@@ -132,10 +105,7 @@ class requestview implements renderable, templatable {
             $sql .=" and req.componentid=$componentid ";
 
           }
-          // if($sorting){
-            // $sql .= " ORDER by req.id DESC";
             $sql .= " ORDER by req.timemodified DESC";
-          // }
           $requestlist = $DB->get_records_sql($sql);
         }
 
@@ -232,15 +202,8 @@ else{
             $params = array_merge($params,$componentlistparams);
 
             $sql .=" and req.status $componentlistsql ";
-            // echo $sql;
         }
         if($filtervalues->request){
-            // if(is_array($filtervalues->request)){
-            //     $userids =  /*"'".*/implode("\",\"", $filtervalues->request)/*."'"*/;
-            // }else{
-            //     $userids ="'".$filtervalues->request."'";
-            // }
-            // $sql .=" and req.compname IN ($userids) ";
             $componentlist = explode(',',$filtervalues->request);
 
             list($componentlistsql, $componentlistparams) = $DB->get_in_or_equal($componentlist, SQL_PARAMS_NAMED, 'componentlist');
@@ -248,19 +211,11 @@ else{
 
             $sql .=" and req.compname $componentlistsql ";
         }
-          // if($componentid){
-          //   $sql .=" and req.componentid=$componentid ";
-
-          // }
-          // if($sorting){
         $requestcount = $DB->count_records_sql($countsql.$sql,$params);
-            // $sql .= " ORDER by req.timecreated ASC ";
         $sql .= "ORDER BY CASE WHEN (req.status LIKE 'PENDING') THEN 1 
                 WHEN (req.status LIKE 'REJECTED') THEN 2
                 WHEN (req.status LIKE 'APPROVED') THEN 3
                 ELSE 4 END ASC , req.id DESC ";
-          // }
-        // echo $requestsql.$sql;
         $requestlist = $DB->get_records_sql($requestsql.$sql,$params, $stable->start, $stable->length);
 
         $record = array();
@@ -320,7 +275,6 @@ else{
 
             $presentdate = time();
 
-            // if ($reqesteddate > $presentdate){
               $checkdate = $responddate ? $responddate : time(); 
               $diff = $checkdate - $reqesteddate;
               $days = (int)($diff/(60*60*24));
@@ -343,88 +297,12 @@ else{
                         );
             $onerow['componenticonclass'] = $pluginshelper[$request->compname]['componenticonclass'];
             $onerow['customimage_required'] = $pluginshelper[$request->compname]['customimage_required'];
-      //       switch ($request->compname) {
-      //           case "elearning":
-      //               $reqname = $DB->get_field('course', 'fullname', array('id'=>$componentid));
-      //               if(strlen($reqname) >20){
-      //                $reqname = substr($reqname, 0,20).'...';
-      //               }
-      //               $onerow['componentname'] = $reqname;
-      //               if(!$onerow['componentname']){
-      //                   $onerow['componentname'] = get_string('deleted_course', 'local_courses');
-      //                   $deleted = True;
-      //               }
-      //               $onerow['componenticonclass'] = 'fa fa-book';
-      //               $onerow['customimage_required'] = FALSE;
-      //               break;
-      //           case "classroom":
-      //                   $reqname = $DB->get_field('local_classroom', 'name', array('id'=>$componentid));
-
-      //                if(strlen($reqname) >20){
-      //                $reqname = substr($reqname, 0,20).'...';
-      //               }
-      //               $onerow['componentname'] = $reqname;
-		    // if(!$onerow['componentname']){
-      //                   $onerow['componentname'] = get_string('deleted_classroom', 'local_classroom');
-      //                   $deleted = True;
-      //               }
-      //               $onerow['componenticonclass'] = 'classroom_icon';
-
-      //               $onerow['customimage_required'] = TRUE;
-      //               break;
-      //           case "certification":
-
-      //               $reqname= $DB->get_field('local_certification', 'name', array('id'=>$componentid));
-      //                if(strlen($reqname) >20){
-      //                $reqname = substr($reqname, 0,20).'...';
-      //               }
-      //               $onerow['componentname'] = $reqname;
-		    // if(!$onerow['componentname']){
-      //                   $onerow['componentname'] = get_string('deleted_certification', 'local_certification');
-      //                   $deleted = True;
-      //               }
-
-      //               $onerow['componenticonclass'] = 'fa fa-graduation-cap';
-      //               $onerow['customimage_required'] = FALSE;
-      //               break;
-      //          case "learningplan":
-
-      //                $reqname = $DB->get_field('local_learningplan', 'name', array('id'=>$componentid));
-      //                 if(strlen($reqname) >20){
-      //                $reqname = substr($reqname, 0,20).'...';
-      //               }
-      //               $onerow['componentname'] = $reqname;
-		    // if(!$onerow['componentname']){
-      //                   $onerow['componentname'] = get_string('deleted_learningplan', 'local_learningplan');
-      //                   $deleted = True;
-      //               }
-      //               $onerow['componenticonclass'] = 'fa fa-map';
-      //               $onerow['customimage_required'] = FALSE;
-      //               break;
-      //           case "program":
-      //               $reqname = $DB->get_field('local_program', 'name', array('id'=>$componentid));
-      //                if(strlen($reqname) >20){
-      //                $reqname = substr($reqname, 0,20).'...';
-      //               }
-      //               $onerow['componentname'] = $reqname;
-		    // if(!$onerow['componentname']){
-      //                   $onerow['componentname'] = get_string('deleted_program', 'local_program');
-      //                   $deleted = True;
-      //               }
-      //               $onerow['componenticonclass'] = 'program_icon';
-      //               $onerow['customimage_required'] = true;
-      //               break;
-      //           default:
-      //               $onerow['componentname'] ='N/A';
-      //       }
             $onerow['componentname'] = strlen($request->actualcomponentname) > 20 ? substr($request->actualcomponentname, 0,20).'...' : $request->actualcomponentname;
             if($deleted){
-                // $onerow['enablebutton'] = 0;
                 $onerow['responded'] = 1;
             }
 
             $record[] = $onerow;
-            // $data['requests'][]= $record;
         }
         $approve_capability=0;
         if(has_capability('local/request:approverecord',$systemcontext)){
@@ -457,89 +335,3 @@ else{
 
 
 } // end of class
-
-
-      /*  $outputhtml = '';
-        $data = new stdClass();
-        $usercontext = context_user::instance($USER->id);
-        foreach ($this->requestlist as  $request) {
-
-            $onerow['status']=  $request->status;
-
-            if($request->status =='APPROVED'){
-              $onerow['approvestatus'] =1;
-            }
-            else{
-               $onerow['approvestatus'] =0;
-            }
-
-            if($request->status =='REJECTED'){
-              $onerow['rejectstatus'] =1;
-            }
-            else{
-               $onerow['rejectstatus'] =0;
-            }
-
-
-
-            $onerow['compname'] =$request->compname;
-            $onerow['requestedby'] =$request->createdbyid;
-            $onerow['requesteddate'] = \local_costcenter\lib::get_userdate('Y M d',$request->timecreated);
-            $onerow['componentid'] = $request->componentid;
-            $onerow['id'] = $request->id;
-            if($request->createdbyid){
-              $user =$DB->get_record('user', array('id'=>$request->createdbyid));
-              $onerow['requesteduser'] = fullname($user);
-            }
-
-            $record['request'] = $onerow;
-           $data->requests[]= $record;
-        } // end of foreach
-       // $data->requests = $data->requests;
-        $data->capability=  $this->get_capabilitycheck_list();
-        return $data; */
-
-   // } // end of  function
-
-
-   /* public static function get_capabilitycheck_list(){
-        global $USER;
-        $usercontext =(new \local_request\lib\accesslib())::get_module_context();
-        $viewrecord_capability=0;
-            if(has_capability('local/request:viewrecord',$usercontext)){
-              $viewrecord_capability=1;
-            }
-
-
-            $approve_capability=0;
-            if(has_capability('local/request:approverecord',$usercontext)){
-              $approve_capability=1;
-            }
-
-            $deny_capability=0;
-            if(has_capability('local/request:denyrecord',$usercontext)){
-              $deny_capability=1;
-            }
-
-            $addrecord_capability=0;
-            if(has_capability('local/request:addrecord',$usercontext)){
-              $addrecord_capability=1;
-            }
-
-            $deleterecord_capability=0;
-            if(has_capability('local/request:deleterecord',$usercontext)){
-              $deleterecord_capability=1;
-            }
-
-            $addcomment_capability=0;
-            if(has_capability('local/request:addcomment',$usercontext)){
-              $addcomment_capability=1;
-            }
-
-        return $list= array('viewrecord_capability'=>$viewrecord_capability,
-                            'approve_capability'=> $approve_capability,
-                            'deny_capability'=>  $deny_capability,
-                            'addrecord_capability'=>$addrecord_capability,
-                            'deleterecord_capability'=>$deleterecord_capability,
-                             'addcomment_capability' =>$addcomment_capability );
-    } // end of function */

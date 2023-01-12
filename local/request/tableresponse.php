@@ -55,7 +55,6 @@ if($component && $componentid && $action){
     case 'delete':  echo $updatedid =requestapi::delete($id); 
                        break;                   
     }
-    //echo $newrequestid; 
  }
  else {
 

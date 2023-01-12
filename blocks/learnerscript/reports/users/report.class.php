@@ -39,12 +39,12 @@ class report_users extends reportbase {
         $this->parent = true;
         $this->columns = array('userfield' => array('userfield'), 'usercolumns' => array('enrolled', 'inprogress',
             'completed', 'grade', 'badges', 'progress', 'status', 'upcomingdeadline', 'overduedeadline'));
-        $this->orderable = array('fullname', 'email', 'enrolled', 'inprogress', 'completed','grade','progress',
-                            'badges', 'upcomingdeadline', 'overduedeadline'); 
+        $this->orderable = array('fullname', 'email', 'enrolled'/*, 'inprogress', 'completed','grade','progress',
+                            'badges', 'upcomingdeadline', 'overduedeadline'*/); 
         // if ($this->loggedinuserrole != 'dh') {
         //     $this->basicparams = array(['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments']);
         // }
-        $this->filters = array('users', 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country');
+        $this->filters = array('users'/*, 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country'*/);
         $this->defaultcolumn = 'u.id';
         $this->excludedroles = array("'employee'");
 
@@ -68,7 +68,7 @@ class report_users extends reportbase {
 
     function where() { 
         global $DB, $USER;
-        $this->sql .= " WHERE u.confirmed = 1 AND u.deleted = 0 AND u.id > 2";
+        $this->sql .= " WHERE u.confirmed = 1 AND u.deleted = 0 AND u.id > 2 ";
         // $systemcontext = \context_system::instance();
         $categorycontext =  (new \local_users\lib\accesslib())::get_module_context();
         // getscheduled report

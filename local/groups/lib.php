@@ -279,14 +279,8 @@ function local_groups_update_groups($groups) {
 
     $groups->timemodified = time();
     $DB->update_record('cohort', $groups);
-
     $cohort_group = $DB->get_record('local_groups', array('cohortid'=>$groups->id));
-    $departmentid = $groups->departmentid;
-    if(!empty($departmentid)){
-        $cohort_group->departmentid = $departmentid;
-    }
-
-    $DB->update_record('local_groups', $cohort_group);
+    $DB->update_record('local_groups', $groups);
     $event = \core\event\cohort_updated::create(array(
         'context' =>(new \local_groups\lib\accesslib())::get_module_context(),
        'objectid' => $groups->id,

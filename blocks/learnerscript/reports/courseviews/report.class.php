@@ -48,11 +48,11 @@ class report_courseviews extends reportbase implements report {
         $this->excludedroles = array("'student'");
     }
     public function init() {
-        // if (!isset($this->params['filter_course'])) {
-        //     $this->initial_basicparams('courses');
-        //     $coursedata = array_keys($this->filterdata);
-        //     $this->params['filter_course'] = array_shift($coursedata);
-        // } 
+        if (!isset($this->params['filter_course'])) {
+            $this->initial_basicparams('courses');
+            $coursedata = array_keys($this->filterdata);
+            $this->params['filter_course'] = array_shift($coursedata);
+        } 
         if (!$this->scheduling && isset($this->basicparams) && !empty($this->basicparams)) {
             $basicparams = array_column($this->basicparams, 'name');
             foreach ($basicparams as $basicparam) {

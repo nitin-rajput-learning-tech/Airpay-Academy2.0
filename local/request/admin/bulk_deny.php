@@ -128,8 +128,6 @@ class block_request_bulk_deny extends moodleform {
 							$replaceValues = array();
 						    $replaceValues['[course_code'] = $currentRecord->modcode;
 						    $replaceValues['[course_name]'] = $currentRecord->modname;
-						    //$replaceValues['[p_code]'] = $currentRecord->progcode;
-						    //$replaceValues['[p_name]'] = $currentRecord->progname;
 						    $replaceValues['[e_key]'] = '';
 						    $replaceValues['[full_link]'] = $CFG->wwwroot .'/blocks/request/comment.php?id=' . $cid;
 						    $replaceValues['[loc]'] = '';
