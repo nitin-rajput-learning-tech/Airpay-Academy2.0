@@ -28,7 +28,6 @@ use tool_certificate\permission;
 use tool_certificate\template;
 use tool_certificate\modal_form;
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
-
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -70,14 +69,15 @@ class details extends modal_form {
         $mform->addElement('hidden', 'id');
         $mform->setType('id', PARAM_INT);
 //mallikarjun added Organization list starts
-        $context = \context_system::instance();
-        if (is_siteadmin()) {
+        //$context = \context_system::instance();
+        $context=\local_costcenter\lib\accesslib::get_module_context();
+       // if (is_siteadmin()) {
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1),false, 'tool_certificate', $context, $multiple = false);
-        } else {
-            $mform->addElement('hidden', 'costcenter', $USER->open_costcenterid);
-            $mform->setType('costcenter', PARAM_INT);
-            // $mform->setDefault('costcenter', $USER->open_costcenterid);
-        }
+        // } else {
+        //     $mform->addElement('hidden', 'costcenter', $USER->open_costcenterid);
+        //     $mform->setType('costcenter', PARAM_INT);
+        //     // $mform->setDefault('costcenter', $USER->open_costcenterid);
+        // }
 //mallikarjun added Organization list ends
         
         $mform->addElement('text', 'name', get_string('name', 'tool_certificate'), 'maxlength="255"');

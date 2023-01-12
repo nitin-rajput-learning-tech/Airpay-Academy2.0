@@ -21,6 +21,7 @@ if (!defined('MOODLE_INTERNAL')) {
 }
 
 require_once($CFG->libdir.'/authlib.php');
+require_once($CFG->dirroot . "/auth/otp/lib.php");
 
 /**
  * AD Webservice authentication plugin.
@@ -60,7 +61,7 @@ class auth_plugin_otp extends auth_plugin_base {
 		 if (!$username or !$password) {    // Don't allow blank usernames or passwords
             return false;
         }
-		
+		$username= "91".$username;
         //retrieve the user matching username
          if ($user = $DB->get_record('user', array('username'=>$username, 'mnethostid'=>$CFG->mnet_localhost_id, 'auth'=>$this->authtype))) {
             
@@ -78,6 +79,9 @@ class auth_plugin_otp extends auth_plugin_base {
                     $otpdetails->inuse=1;
                     $otpdetails->timemodified=time();
                     $DB->update_record('local_otp', $otpdetails);
+                    $otpsend = new otp();
+                    $response = $otpsend->set_account($checkexist->uid,$user);
+
                     return true;
                 }else{ 
                     return false;

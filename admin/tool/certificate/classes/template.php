@@ -480,7 +480,7 @@ class template {
      * @return \context the context
      */
     public function get_context() {
-        return \context::instance_by_id($this->persistent->get('contextid'));
+        return (new \local_evaluation\lib\accesslib())::get_module_context();
     }
 
     /**
@@ -646,11 +646,20 @@ class template {
      */
     public static function create($formdata) {
         $template = new \stdClass();
+        if(!empty($formdata->open_costcenterid)){
         local_costcenter_get_costcenter_path($formdata);
-        $template->name = $formdata->name;
-//	    mallikarjun added for costcenter in certificate
         $template->costcenter = $formdata->open_costcenterid;
         $template->open_path = $formdata->open_path;
+             }
+        else{
+            $path=(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+            $org_id=explode('/',$path[0])[1];
+            $template->costcenter = $org_id;
+            $template->open_path = '/'.$org_id;
+        }
+       // print_r($formdata);exit;
+        $template->name = $formdata->name;
+//	    mallikarjun added for costcenter in certificate
         $template->shared = $formdata->shared ?? 0;
         if (!isset($formdata->contextid)) {
             debugging('Context is missing', DEBUG_DEVELOPER);

@@ -107,17 +107,26 @@ define([
             },
             {
                 key: 'deletecourseconfirm',
-                component: 'local_classroom'
+                component: 'local_classroom',
+                param: args.name,
             },
             {
                 key: 'unenrollclassroom',
                 component: 'local_classroom',
                 param: args.classroomname,
             },
+            
             {
                 key: 'requestprocessing',
                 component: 'local_classroom'
-            }
+            },
+            {
+                key: 'deletefeedbackconfirm',
+                component: 'local_classroom',
+                param: args.feedbackname,
+            },
+
+
             ]).then(function(s) {
                  if(args.action=="deleteclassroom"){
                     s[1]=s[1];
@@ -127,7 +136,11 @@ define([
                  }
                  else if(args.action=="deleteclassroomcourse"){
                     s[1]=s[4];
-                 }else{
+                 }
+                 else if(args.action=="deleteclassroomevaluation"){
+                    s[1]=s[7];
+                 }
+                 else{
                      s[1]=s[2];
                  }
                 ModalFactory.create({

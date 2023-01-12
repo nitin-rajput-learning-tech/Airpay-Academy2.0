@@ -61,7 +61,7 @@ class syncfunctionality
     private $existing_user;
     private $username_exist;
     private $employeeid_exist;
-    private $mobileno;
+    private $contactno;
 
     public function __construct($data = null)
     {
@@ -88,6 +88,11 @@ class syncfunctionality
         }
         $this->allusers = $this->get_allusers();
         $categorylib = new \local_courses\catslib();
+        $mandatory_fields = [
+            'first_name', 'last_name', 'username', 'organization_code', 'learner_id',
+            'employee_status'
+        ];
+        
         while ($line = $cir->next()) {
             $this->orgcount =0;
             $linenum++;
@@ -105,11 +110,6 @@ class syncfunctionality
             $this->mfields = array();
             $this->wmfields = array();
             $this->excel_line_number = $linenum;
-            $mandatory_fields = [
-                'first_name', 'last_name', 'username', 'organization_code', 'learner_id',
-                'employee_status'
-            ];
-
             foreach ($mandatory_fields as $field) {
                 // Mandatory field validation.
                 $this->mandatory_field_validation($user, $field);
@@ -140,10 +140,16 @@ class syncfunctionality
                 }
             }
             
-                   
-            list($zero, $orgid, $countryid, $buid, $cuid, $territoryid) = explode('/', (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path());
+            $patharr =(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+            // echo $path =(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
+            // print_r($patharr); die;
+            foreach($patharr as $path){
+                list($zero[], $orgid[], $countryid[], $buid[], $cuid[], $territoryid[]) = explode('/', $path);                
+            }
             // To hold costcenterid.
-            $this->costcenterid = $this->get_org_hierarchyid($user->organization_code, $parent = 0, $orgid);
+            if(($this->orgcount == 0)){
+                $this->costcenterid = $this->get_org_hierarchyid($user->organization_code, $parent = 0, array_unique($orgid));
+            }            
             // To hold countryid.
             if ($user->country_code && ($this->orgcount == 0)) {
                 $country_code = $user->organization_code."_".$user->country_code;
@@ -186,7 +192,7 @@ class syncfunctionality
             // Validation for employee status.
             $this->employee_status_validation($user);
             //validation for mobile number
-            if (!empty($user->mobileno)) {
+            if (!empty($user->contactno)) {
                 $this->mobilenumber_validation($user);
             }
             if (!empty($user->email)) {
@@ -222,8 +228,12 @@ class syncfunctionality
                 $this->updatesupervisor_warningscount = count($this->warnings);
             }
         }
-
-        if ($this->data) {
+        if(empty($line = $cir->next())){
+            foreach ($mandatory_fields as $field) {
+                // Mandatory field validation.
+                $this->mandatory_field_validation($user, $field);
+            }
+        }
             $upload_info = '<div class="critera_error1"><h3 style="text-decoration: underline;">'
                 . get_string('empfile_syncstatus', 'local_users') . '</h3>';
             $upload_info .= '<div class=local_users_sync_success>' . get_string(
@@ -266,11 +276,9 @@ class syncfunctionality
             $sync_data->usermodified = $USER->id;
             $sync_data->timecreated = time();
             $sync_data->timemodified = time();
-            $sync_data->costcenterid = $orgid;
+            $sync_data->costcenterid = $this->costcenterid;
             $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
-        } else {
-            echo '<div class="critera_error">' . get_string('filenotavailable', 'local_users') . '</div>';
-        }
+        
     } //end of main_hrms_frontendform_method
 
     public function get_organizations()
@@ -367,7 +375,7 @@ class syncfunctionality
         }
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if ($datal->id !== $orgid && !empty($orgid)) {
+            if (!in_array($datal->id,$orgid) && !empty(array_filter($orgid))) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = $fieldvalue;
@@ -401,10 +409,9 @@ class syncfunctionality
         $strings = new stdClass;
         $strings->identifier = 'country';
         $strings->orgid = $user->country_code;
-
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if ($datal->id !== $orgid && !empty($orgid)) {
+            if (!in_array($datal->id,$orgid) && !empty($orgid)) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = $fieldvalue;
@@ -441,6 +448,7 @@ class syncfunctionality
             echo '<div class=local_users_sync_error>' . get_string('missing', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('missing', 'local_users', $strings);
             $this->mfields[] = $field;
+            $this->orgcount++;
             $this->errorcount++;
         }
     } //end of mandatory_field_validation
@@ -573,7 +581,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if ($datal->id !== $buid  && !empty($buid)) {
+                if (!in_array($datal->id,$buid)  && !empty(array_filter($buid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -608,7 +616,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if ($datal->id !== $cuid && !empty($cuid)) {
+                if (!in_array($datal->id,$cuid) && !empty(array_filter($cuid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -643,7 +651,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if ($datal->id !== $terrid && !empty($terrid)) {
+                if (!in_array($datal->id,$terrid) && !empty(array_filter($terrid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -676,7 +684,7 @@ class syncfunctionality
             FROM {local_states} as ls
             JOIN {local_district} as ld ON ld.statesid=ls.id
             JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
-            JOIN {local_village} as lv ON lv.subdistrictid=lv.id
+            JOIN {local_village} as lv ON lv.subdistrictid=lsd.id
             WHERE 1=1 AND ls.costcenterid = $this->costcenterid";
                 $params = array();
                 if ($key == 'state') {
@@ -739,7 +747,7 @@ class syncfunctionality
         $user->firstname = $excel->first_name;
         $user->lastname = $excel->last_name;
         $user->middlename = $excel->middle_name ? $excel->middle_name : ' ';
-        $user->phone1 = $excel->mobileno ? $excel->mobileno : '';
+        $user->phone1 = $excel->contactno ? $excel->contactno : '';
         $user->email = strtolower($excel->email);
         $user->country = $excel->country_code ? $excel->country_code : 'IN';
         $user->open_group = $excel->discipline ? $excel->discipline : ' ';
@@ -753,7 +761,7 @@ class syncfunctionality
         $user->open_team = $excel->team ? $excel->team : null;
         $user->open_grade = $excel->grade ? $excel->grade : null;
         $user->open_level = $excel->discipline ? $excel->discipline : null;
-        $user->open_designation = $excel->role_designation ? $excel->role_designation : '';
+        $user->open_designation = $excel->designation ? $excel->designation : '';
         $user->open_costcenterid = $this->costcenterid;
         $user->open_departmentid = $this->countryid;
         $user->open_subdepartment = $this->level3_bussinessid;
@@ -835,9 +843,9 @@ class syncfunctionality
             $user->country = $excel->country_code;
             $user->open_hrmsrole = $excel->role;
             $user->institution = $excel->country_code;
-            $user->phone1 = $excel->mobileno ? $excel->mobileno : '';
+            $user->phone1 = $excel->contactno ? $excel->contactno : '';
             $user->open_state = $excel->state_name;
-            $user->open_designation = $excel->role_designation;
+            $user->open_designation = $excel->designation;
             $user->usermodified = $USER->id;
             $user->open_group = $excel->discipline;
             $user->open_client = $excel->client;
@@ -904,13 +912,13 @@ class syncfunctionality
         $strings = new StdClass();
         $strings->learner_id = $excel->learner_id;
         $strings->excel_line_number = $this->excel_line_number;
-        $this->mobileno = $excel->mobileno;
-        if (!is_numeric($this->mobileno)) {
+        $this->contactno = $excel->contactno;
+        if (!is_numeric($this->contactno)) {
             echo '<div class=local_users_sync_error>' . get_string('mobileno_error', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('mobileno_error', 'local_users', $strings);
             $this->mfields[] = 'mobileno';
             $this->errorcount++;
-        } else if (($this->mobileno < 999999999 || $this->mobileno > 10000000000)) {
+        } else if (($this->contactno < 999999999 || $this->contactno > 10000000000)) {
             echo '<div class=local_users_sync_error>' . get_string('validmobileno_error', 'local_users', $strings) . '</div>';
             $this->errors[] = get_string('validmobileno_error', 'local_users', $strings);
             $this->mfields[] = 'mobileno';

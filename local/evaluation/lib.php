@@ -2451,51 +2451,51 @@ function user_evaluations($userid, $tabstatus) {
 * Displays a node in left side menu
 * @return  [type] string  link for the leftmenu
 */
-function local_evaluation_leftmenunode(){
-    $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
-    $evaluationnode = '';
-    if(has_capability('local/evaluation:view',$systemcontext) || is_siteadmin()){
-        $evaluationnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browseevaluations', 'class'=>'pull-left user_nav_div browseevaluations'));
-            $eval_url = new moodle_url('/local/evaluation/index.php');
-            if(has_capability('local/evaluation:edititems', $systemcontext)) {
-                $eval_label = get_string('left_menu_evaluations','local_evaluation');
-            }else{
-                $eval_label = get_string('left_menu_myevaluations','local_evaluation');
-            }
-            $eval = html_writer::link($eval_url, '<i class="fa fa-clipboard" aria-hidden="true"></i><span class="user_navigation_link_text">'.$eval_label.'</span>',array('class'=>'user_navigation_link'));
-            $evaluationnode .= $eval;
-        $evaluationnode .= html_writer::end_tag('li');
-    }
+// function local_evaluation_leftmenunode(){
+//     $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
+//     $evaluationnode = '';
+//     if(has_capability('local/evaluation:view',$systemcontext) || is_siteadmin()){
+//         $evaluationnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browseevaluations', 'class'=>'pull-left user_nav_div browseevaluations'));
+//             $eval_url = new moodle_url('/local/evaluation/index.php');
+//             if(has_capability('local/evaluation:edititems', $systemcontext)) {
+//                 $eval_label = get_string('left_menu_evaluations','local_evaluation');
+//             }else{
+//                 $eval_label = get_string('left_menu_myevaluations','local_evaluation');
+//             }
+//             $eval = html_writer::link($eval_url, '<i class="fa fa-clipboard" aria-hidden="true"></i><span class="user_navigation_link_text">'.$eval_label.'</span>',array('class'=>'user_navigation_link'));
+//             $evaluationnode .= $eval;
+//         $evaluationnode .= html_writer::end_tag('li');
+//     }
 
-    return array('13' => $evaluationnode);
-}
-function local_evaluation_quicklink_node(){
-    global $CFG, $PAGE, $OUTPUT;
-    $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
-    $content = '';
-    if (is_siteadmin() || has_capability('local/evaluation:view',$systemcontext)) {
-            $evalid = -1; //default for local/evaluation/index.php
-            $classid = 0; //default for local/evaluation/index.php
-            $eval_plugin = 'site'; //default for local/evaluation/index.php
-            $PAGE->requires->js_call_amd('local_evaluation/newevaluation', 'init', array('[data-action=createevaluationmodal]', $systemcontext->id, $evalid, $classid, $eval_plugin));
-        $evaldata = array();
-        $evaldata['node_header_string'] = get_string('manage_br_evaluation', 'local_evaluation');
-        $evaldata['pluginname'] = 'feedbacks';
-        $evaldata['plugin_icon_class'] = 'fa fa-clipboard';
-        if(has_capability('local/evaluation:addinstance', $systemcontext) ||  is_siteadmin()){
-            $evaldata['create'] = TRUE;
-            $evaldata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('class' => 'quick_nav_link goto_local_evaluations', 'data-action' => "createevaluationmodal"));
-        }
-        if(has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext)){
-            $evaldata['viewlink_url'] = $CFG->wwwroot.'/local/evaluation/index.php';
-            $evaldata['view'] = TRUE;
-            $evaldata['viewlink_title'] = get_string("view_feedbacks", "local_evaluation");
-        }
-        $evaldata['space_count'] = 'one';
-        $content = $OUTPUT->render_from_template('block_quick_navigation/quicklink_node', $evaldata);
-    }
-    return array('2' => $content);
-}
+//     return array('13' => $evaluationnode);
+// }
+// function local_evaluation_quicklink_node(){
+//     global $CFG, $PAGE, $OUTPUT;
+//     $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
+//     $content = '';
+//     if (is_siteadmin() || has_capability('local/evaluation:view',$systemcontext)) {
+//             $evalid = -1; //default for local/evaluation/index.php
+//             $classid = 0; //default for local/evaluation/index.php
+//             $eval_plugin = 'site'; //default for local/evaluation/index.php
+//             $PAGE->requires->js_call_amd('local_evaluation/newevaluation', 'init', array('[data-action=createevaluationmodal]', $systemcontext->id, $evalid, $classid, $eval_plugin));
+//         $evaldata = array();
+//         $evaldata['node_header_string'] = get_string('manage_br_evaluation', 'local_evaluation');
+//         $evaldata['pluginname'] = 'feedbacks';
+//         $evaldata['plugin_icon_class'] = 'fa fa-clipboard';
+//         if(has_capability('local/evaluation:addinstance', $systemcontext) ||  is_siteadmin()){
+//             $evaldata['create'] = TRUE;
+//             $evaldata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('class' => 'quick_nav_link goto_local_evaluations', 'data-action' => "createevaluationmodal"));
+//         }
+//         if(has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext)){
+//             $evaldata['viewlink_url'] = $CFG->wwwroot.'/local/evaluation/index.php';
+//             $evaldata['view'] = TRUE;
+//             $evaldata['viewlink_title'] = get_string("view_feedbacks", "local_evaluation");
+//         }
+//         $evaldata['space_count'] = 'one';
+//         $content = $OUTPUT->render_from_template('block_quick_navigation/quicklink_node', $evaldata);
+//     }
+//     return array('2' => $content);
+// }
 
 /*
 * return count of feedbacks under selected costcenter
@@ -2706,7 +2706,7 @@ function get_listof_evalautions($stable, $filtervalues){
               $OUTPUT->pix_icon('i/delete', get_string('delete'), 'moodle', array('class' => 'iconsmall', 'title' => '')),
               array('id' => 'deleteconfirm' . $record->id . '', 'onclick' => '(
                   function(e){
-                  require("local_evaluation/newevaluation").deleteevaluation("' . $record->id . '")
+                  require("local_evaluation/newevaluation").deleteevaluation("' . $record->id . '","'.$record->name.'")
                   })(event)')).'</li>';
             }
             $completedurl = new moodle_url('/local/evaluation/show_entries.php', array('id' => $record->id, 'sesskey' => sesskey()));

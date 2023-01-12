@@ -25,6 +25,7 @@ require_once(dirname(__FILE__) . '/../../config.php');
 global $USER, $CFG, $PAGE, $OUTPUT, $DB;
 require_once($CFG->dirroot . '/lib/formslib.php');
 require_once($CFG->dirroot . '/local/custom_category/lib.php');
+$categorycontext = (new \local_custom_category\lib\accesslib())::get_module_context();
 
 $id = optional_param('id', 0, PARAM_INT);
 $delete_id = optional_param('delete_id', 0, PARAM_INT);
@@ -33,8 +34,11 @@ $confirm = optional_param('confirm', 0, PARAM_INT);
 $submitbutton = optional_param('submitbutton', '', PARAM_RAW);
 
 require_login();
+if(!has_capability('local/custom_category:view_custom_category',$categorycontext)) {
+    print_error('nopermissiontoviewpage');
+}
 $PAGE->set_url('/local/custom_category/index.php');
-$PAGE->set_context((new \local_custom_category\lib\accesslib())::get_module_context());
+$PAGE->set_context($categorycontext);
 $PAGE->set_pagelayout('standard');
 
 $PAGE->set_title(get_string('pluginname', 'local_custom_category'));

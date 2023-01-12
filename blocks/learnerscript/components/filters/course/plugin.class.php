@@ -99,14 +99,14 @@ class plugin_course extends pluginbase {
         } else {
             $this->courseuserid = null;
         } 
-        $systemcontext = context_system::instance();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $this->courseorganizationid = isset($courseorganizationid) ? $courseorganizationid : 0;
-        } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $this->courseorganizationid = $USER->open_costcenterid;
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            $this->courseorganizationid = $USER->open_costcenterid;
-        }
+        // $systemcontext = context_system::instance();
+        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        //     $this->courseorganizationid = isset($courseorganizationid) ? $courseorganizationid : 0;
+        // } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        //     $this->courseorganizationid = $USER->open_costcenterid;
+        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+        //     $this->courseorganizationid = $USER->open_costcenterid;
+        // }
         
         $this->filtercoursesid = isset($filtercourses) ? $filtercourses : 0;
         $querylib = new \block_learnerscript\local\querylib(); 

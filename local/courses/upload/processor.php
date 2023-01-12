@@ -212,7 +212,6 @@ class local_uploadcourse_processor {
         while ($line = $this->cir->next()) {
             $this->linenb++;
             $total++;
-
             $data = $this->parse_line($line);
             // for adding points for specified course.
             $data['open_points'] = $data['points'];
@@ -220,12 +219,22 @@ class local_uploadcourse_processor {
             $data['open_coursecompletiondays'] = $data['completiondays'];
             unset($data['completiondays']);
             // for getting department of the course.
+
+
+            $data['open_costcenterid'] =$this->defaults['open_costcenterid'];
+
             $data['open_departmentid'] = $DB->get_field('local_costcenter', 'id', array('shortname' => $data['department']));
             $subdepartmentparams = array('shortname' => $data['subdepartment']);
-            // if($data['open_departmentid']){
-            //     $subdepartmentparams['parentid'] = $data['open_departmentid'];
-            // }
+
             $data['open_subdepartment'] = $DB->get_field('local_costcenter', 'id', $subdepartmentparams);
+
+            $level4departmentparams = array('shortname' => $data['level4department']);
+            $data['open_level4department'] = $DB->get_field('local_costcenter', 'id', $level4departmentparams);
+
+
+            $level5departmentparams = array('shortname' => $data['level5department']);
+            $data['open_level5department'] = $DB->get_field('local_costcenter', 'id', $level5departmentparams);
+
             // for getting startdate and enddate of the course.
             $startdate = isset($data['startdate']) ? $data['startdate'] : 0;
             $enddate = isset($data['enddate']) ? $data['enddate'] : 0;
@@ -312,7 +321,6 @@ class local_uploadcourse_processor {
             'shortnametemplate' => $this->shortnametemplate
         );
         
-        // print_object($data);exit;
     return new local_uploadcourse_course($this->mode, $this->updatemode, $data, $this->defaults, $importoptions);
     }
 

@@ -72,14 +72,22 @@ class plugin_certificates extends pluginbase {
                 WHERE 1 = 1 ";
 
         $systemcontext = context_system::instance();
-        if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $sql .= " AND costcenter = :costcenterid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            $sql .= " AND costcenter = :costcenterid AND department = :departmentid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-            $params['departmentid'] = $USER->open_departmentid;
-        }
+        // if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        //     $sql .= " AND costcenter = :costcenterid ";
+        //     $params['costcenterid'] = $USER->open_costcenterid;
+        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+        //     $sql .= " AND costcenter = :costcenterid AND department = :departmentid ";
+        //     $params['costcenterid'] = $USER->open_costcenterid;
+        //     $params['departmentid'] = $USER->open_departmentid;
+        // }
+
+          $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context(); //context_system::instance();
+          $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path'); 
+          if (is_siteadmin()) {
+              $sql .= "";
+          } else  {
+              $sql .= $costcenterpathconcatsql;
+          }
         $sql .= " ORDER BY name ASC ";
 
         $certoptions = $DB->get_records_sql_menu($sql, $params);

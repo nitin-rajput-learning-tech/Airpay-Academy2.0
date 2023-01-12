@@ -64,19 +64,26 @@ class plugin_feedbacks extends pluginbase {
                 WHERE le.instance = 0 AND le.deleted  = 0 ";
 
         $params = array();
-        $systemcontext = \context_system::instance();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $sql .= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $sql .= " AND le.costcenterid = :costcenterid ";
-            $params['costcenterid'] = $USER->open_costcenterid; 
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            $sql .= " AND le.costcenterid = :costcenterid 
-                    AND le.departmentid = :departmentid ";
-            $params['costcenterid'] = $USER->open_costcenterid; 
-            $params['departmentid'] = $USER->open_departmentid; 
-        }
+        // $systemcontext = \context_system::instance();
+        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        //     $sql .= " ";
+        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        //     $sql .= " AND le.costcenterid = :costcenterid ";
+        //     $params['costcenterid'] = $USER->open_costcenterid; 
+        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+        //     $sql .= " AND le.costcenterid = :costcenterid 
+        //             AND le.departmentid = :departmentid ";
+        //     $params['costcenterid'] = $USER->open_costcenterid; 
+        //     $params['departmentid'] = $USER->open_departmentid; 
+        // }
 
+      $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context(); //context_system::instance();
+      $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path'); 
+      if (is_siteadmin()) {
+          $sql .= "";
+      } else  {
+          $sql .= $costcenterpathconcatsql;
+      }
         $sql .= " ORDER BY le.name ASC ";
 
         $feedbacks = $DB->get_records_sql_menu($sql, $params);

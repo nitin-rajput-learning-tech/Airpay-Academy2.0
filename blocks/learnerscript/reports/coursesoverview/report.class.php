@@ -93,16 +93,16 @@ class report_coursesoverview extends reportbase implements report {
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         // getscheduled report
-        if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-            } else {
-                $ohs = $dh=1;
-            }
-        }
+        // if (!is_siteadmin()) {
+        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+        //     if (!empty($scheduledreport)) {
+        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+        //     $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+        //     } else {
+        //         $ohs = $dh=1;
+        //     }
+        // }
         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $this->sql .= "";
         } else  {
@@ -122,20 +122,79 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function filters() {
+    if(isset($this->params['filter_organization']) && $this->params['filter_organization'] > 0) {
+        $organizations = explode(',', $this->params['filter_organization']);
+        $orgsql = [];
+        foreach($organizations AS $organisation){
+            $orgsql[] = " concat('/',c.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $this->params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+        }
+        if(!empty($orgsql)){
+            $this->sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        }
+    }
 
-        if(isset($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-            $this->sql .= " AND c.open_departmentid = :departmentid ";
-            $this->params['departmentid'] = $this->params['filter_departments'];
+    if(isset($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
+        $departments = explode(',', $this->params['filter_departments']);
+        $deptsql = [];
+        foreach($departments AS $department){
+            $deptsql[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
+            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
         }
-        if(isset($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-            $this->sql .= " AND c.open_subdepartment = :subdepartmentid ";
-            $this->params['subdepartmentid'] = $this->params['filter_subdepartments'];
+        if(!empty($deptsql)){
+            $this->sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
         }
+    }
+
+    if(isset($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
+        $subdepartments = explode(',', $this->params['filter_subdepartments']);
+        $subdeptsql = [];
+        foreach($subdepartments AS $subdepartment){
+            $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $this->params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
+        }
+        if(!empty($subdeptsql)){
+            $this->sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+
+    // if (!empty($params['department4level'])) {
+    //     $depart4level = explode(',', $params['department4level']);
+    //     $department4levelsql = [];
+    //     foreach($depart4level AS $department4level){
+    //         $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+    //         $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
+    //     }
+    //     if(!empty($department4levelsql)){
+    //         $sql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
+    //     }
+    // }
+    // if (!empty($params['department5level'])) {
+    //     $depart5level = explode(',', $params['department5level']);
+    //     $department5levelsql = [];
+    //     foreach($depart5level AS $department5level){
+    //         $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+    //         $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
+    //     }
+    //     if(!empty($department5levelsql)){
+    //         $sql .= " AND ( ".implode(' OR ', $department5levelsql)." ) ";
+    //     }
+    // }
+        // if(isset($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
+        //     $this->sql .= " AND c.open_departmentid = :departmentid ";
+        //     $this->params['departmentid'] = $this->params['filter_departments'];
+        // }
+        // if(isset($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
+        //     $this->sql .= " AND c.open_subdepartment = :subdepartmentid ";
+        //     $this->params['subdepartmentid'] = $this->params['filter_subdepartments'];
+        // }
 
         if(isset($this->params['filter_course']) && $this->params['filter_course'] > 0) {
             $this->sql .= " AND c.id = :courseid ";
             $this->params['courseid'] = $this->params['filter_course'];
         }
+        // echo $this->sql;
+        // print_r($this->params);exit;
         // if ($this->ls_startdate > 0 && $this->ls_enddate) {
         //     $this->sql .= " AND u.timecreated BETWEEN $this->ls_startdate AND $this->ls_enddate ";
         // }

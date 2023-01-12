@@ -20,7 +20,7 @@
  *
  * @author eabyas  <info@eabyas.in>
  */
-$string['costcenter'] = 'Organisation';
+$string['costcenter'] = 'Organization';
 $string['employeesearch'] = 'Filter';
 $string['subsubdepartment'] = 'subsubdepartment';
 $string['msg_pwd_change'] = 'Hi {$a->username}<br>Your password changed successfully!';
@@ -53,7 +53,7 @@ $string['role'] = 'Role Assigned';
 $string['browseusers'] = 'Browse Users';
 $string['browseuserspage'] = 'This page allows the user to view the list of users with their profile details which also includes the login summary.';
 $string['deleteuser'] = 'Delete User';
-$string['delconfirm'] = 'Are you sure? you really want  to delete "{$a->name}" ?';
+$string['delconfirm'] = 'Are you sure? you really want  to delete <b>"{$a->name}"</b> ?';
 $string['deletesuccess'] = 'User "{$a->name}" deleted successfully.';
 $string['usercreatesuccess'] = 'User "{$a->name}" created Successfully.';
 $string['userupdatesuccess'] = 'User "{$a->name}" updated Successfully.';
@@ -140,6 +140,7 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-oh">Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
+<tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
@@ -150,6 +151,7 @@ $string['help_1_orghead'] = '<table class="generaltable" border="1">
 $string['help_1_dephead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-dh">Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
+<tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
@@ -429,9 +431,11 @@ $string['adnewuser']='<i class="fa fa-user-plus popupstringicon" aria-hidden="tr
 $string['empnumber']='Learner ID';
 $string['departments']='Countries';
 $string['sub_departments']='Bussiness Unit';
-$string['department_help']='This setting determines the category in which the Country will appear.';
-$string['subdepartment_help']='This setting determines the category in which the Bussiness Unit  will appear in the list of Countries.';
-$string['subsubdepartment_help']='This setting determines the category in which the sub bussiness unit will appear in the list of Bussiness Unit.';
+$string['open_costcenteridlocal_users_help'] = 'Organization of the User';
+$string['open_departmentlocal_users_help'] = 'Country of the User';
+$string['open_subdepartmentlocal_users_help'] = 'Commercial Unit of the User';
+$string['open_level4departmentlocal_users_help'] = 'Commercial Area of the User';
+$string['open_level5departmentlocal_users_help'] = 'Territory of the User';
 $string['errordept']='Please select Country';
 $string['errorsubdept']='Please select Bussiness Unit';
 $string['errorsubsubdept']='Please select Sub Bussiness Unit';
@@ -474,11 +478,11 @@ $string['multipleedituseremailupdateerror'] = 'Multiple learners with email {$a}
 $string['multipleedituserusernameediterror'] = 'Multiple learners with username {$a} exist';
 $string['cannotedituserusernameediterror'] = 'Learner with username {$a} doesn\'t exist in update mode';
 $string['cannotcreateuserusernameadderror'] = 'Learner with username {$a->username} already exist cannot create user in add mode at line {$a->linenumber}';
-$string['deleteconfirm'] = 'Are you sure you want to delete "{$a->fullname}" learner ?';
+$string['deleteconfirm'] = 'Are you sure you want to delete <b>"{$a->fullname}"</b> learner ?';
 $string['local_users_table_footer_content'] = 'Showing {$a->start_count} to {$a->end_count} of {$a->total_count} entries';
 $string['suspendconfirm'] = 'Are you sure you want to change status of {$a->fullname} ?';
-$string['suspendconfirmenable'] = 'Are you sure to make learner \'{$a->fullname}\' inactive ?';
-$string['suspendconfirmdisable'] = 'Are you sure to make learner \'{$a->fullname}\' active ?';
+$string['suspendconfirmenable'] = 'Are you sure to make learner <b>\'{$a->fullname}\'</b> inactive ?';
+$string['suspendconfirmdisable'] = 'Are you sure to make learner <b>\'{$a->fullname}\'</b> active ?';
 $string['firstname_surname'] = 'First Name / Surname';
 $string['employeeid'] = 'Learner id';
 $string['emailaddress'] = 'Email Address';
@@ -592,7 +596,7 @@ $string['previous'] = 'Previous';
 $string['cancel'] = 'Cancel';
 $string['emailaleadyexists'] = 'User with email {$a->email} already exist at line {$a->excel_line_number}.';
 
-$string['usernamealeadyexists'] = 'User with email {$a->email} already exist at line {$a->excel_line_number}.';
+$string['usernamealeadyexists'] = 'User with username {$a->username} already exist at line {$a->excel_line_number}.';
 
 $string['employeeid_alreadyexists'] = 'User with learner id {$a->employee_id} already exist at line {$a->excel_line_number}.';
 
@@ -750,6 +754,7 @@ $string['selectopen_district'] = 'Select District';
 $string['selectopen_subdistrict'] = 'Select Sub District';
 $string['selectopen_village'] = 'Select Village';
 $string['commercialunit'] = 'Commercial Unit';
+$string['commercialarea'] = 'Commercial Area';
 $string['territory'] = 'Territory';
 $string['addressinfo'] = 'Address Info :';
 $string['open_costcenteridlocal_users'] = 'Organisation';
@@ -759,7 +764,7 @@ $string['open_level4departmentlocal_users'] = 'Commercial Unit';
 $string['open_level5departmentlocal_users'] = 'Territory';
 $string['managestates'] = 'Manage State';
 $string['states'] = 'State';
-$string['organisation'] = 'Organisation';
+$string['organisation'] = 'Organization';
 $string['invalidnoorganizationidfound'] = 'Bussiness Unit "{$a->commercial_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['noorcommercial_unitfound'] = 'No Bussiness Unit found with "{$a->commercial_unitid}" at line {$a->line}.';
 $string['invalidbussinessunitgiven'] = 'Bussiness Unit "{$a->commercial_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
@@ -771,3 +776,4 @@ $string['invalidstatevalue'] = 'State "{$a->state}" is not under "{$a->parentid}
 $string['invaliddistrictvalue'] = 'District "{$a->district}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['invalidsubdistrictvalue'] = 'Sub district "{$a->subdistrict}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['invalidvillagevalue'] = 'Village "{$a->village}" is not under "{$a->parentid}" at line {$a->line}.';
+$string['managegeographyfields'] = 'Geography Location Master';

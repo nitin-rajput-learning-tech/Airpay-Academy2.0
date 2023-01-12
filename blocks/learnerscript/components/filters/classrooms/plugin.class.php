@@ -60,45 +60,49 @@ class plugin_classrooms extends pluginbase {
     public function filter_data(){
         global $DB, $USER;
         $context = context_system::instance();
-        if($this->reportclass->basicparams){
-            $basicparams = array_column($this->reportclass->basicparams, 'name');
-            if (has_capability('local/costcenter:manage_ownorganization', $context) && !is_siteadmin()) {
-                $deptorgid = $USER->open_costcenterid;
-            } else {
-                if ($basicparams[0] == 'organization') {
-                    // $orgoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC"); 
-                    // $orgids = array_keys($orgoptions);
-                    // if (empty($request['filter_organization'])) {
-                    //     $deptorgid = array_shift($orgids);
-                    // } else {
-                    //     $deptorgid = $request['filter_organization'];
-                    // }
-                     $deptorgid = null;
-                }else {
-                    $deptorgid = null;
-                } 
-            }
-        } else {
-            $deptorgid = null;
-        }
-        $sql = "SELECT lc.id, lc.name 
-                FROM {local_classroom} lc 
-                WHERE 1 = 1 ";
-        if (!empty($deptorgid)) {
-            $sql .= " AND lc.costcenter = " . $deptorgid;
-        } else {
-            $systemcontext = context_system::instance();
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-                $sql .= "";
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-                $sql .= " AND lc.costcenter = :costcenterid ";
-                $params['costcenterid'] = $USER->open_costcenterid;
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-                $sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid";
-                $params['costcenterid'] = $USER->open_costcenterid;
-                $params['departmentid'] = $USER->open_departmentid;
-            }
-        }
+        // if($this->reportclass->basicparams){
+        //     $basicparams = array_column($this->reportclass->basicparams, 'name');
+        //     if (has_capability('local/costcenter:manage_ownorganization', $context) && !is_siteadmin()) {
+        //         $deptorgid = $USER->open_costcenterid;
+        //     } else {
+        //         if ($basicparams[0] == 'organization') {
+        //              $deptorgid = null;
+        //         }else {
+        //             $deptorgid = null;
+        //         } 
+        //     }
+        // } else {
+        //     $deptorgid = null;
+        // }
+        // $sql = "SELECT lc.id, lc.name 
+        //         FROM {local_classroom} lc 
+        //         WHERE 1 = 1 ";
+        // if (!empty($deptorgid)) {
+        //     $sql .= " AND lc.costcenter = " . $deptorgid;
+        // } else {
+        //     $systemcontext = context_system::instance();
+        //     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        //         $sql .= "";
+        //     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        //         $sql .= " AND lc.costcenter = :costcenterid ";
+        //         $params['costcenterid'] = $USER->open_costcenterid;
+        //     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+        //         $sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid";
+        //         $params['costcenterid'] = $USER->open_costcenterid;
+        //         $params['departmentid'] = $USER->open_departmentid;
+        //     }
+        // }
+
+      $sql = "SELECT lc.id, lc.name 
+                 FROM {local_classroom} lc 
+                 WHERE 1 = 1 ";
+      $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context(); //context_system::instance();
+      $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path'); 
+      if (is_siteadmin()) {
+          $sql .= "";
+      } else  {
+          $sql .= $costcenterpathconcatsql;
+      }
         $sql .= " ORDER BY lc.name ASC";
 
         $classrooms = $DB->get_records_sql_menu($sql, $params);

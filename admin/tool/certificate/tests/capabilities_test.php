@@ -104,7 +104,7 @@ class tool_certificate_capabilities_test_testcase extends advanced_testcase {
 
         $this->assertFalse(\tool_certificate\permission::can_view_admin_tree());
 
-        $managerrole = $DB->get_record('role', array('shortname' => 'manager'));
+        $managerrole = $DB->get_record('role', array('shortname' => 'oh'));
         $manager = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->role_assign($managerrole->id, $manager->id);
 

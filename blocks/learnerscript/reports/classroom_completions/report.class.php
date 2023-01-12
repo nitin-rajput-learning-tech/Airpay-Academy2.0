@@ -85,30 +85,6 @@ class report_classroom_completions extends reportbase implements report {
         global $USER, $DB;
 
         $systemcontext = context_system::instance();
-        // getscheduled report
-        // if (!is_siteadmin()) {
-        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-        //     if (!empty($scheduledreport)) {
-        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-        //     $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-        //     } else {
-        //         $ohs = $dhs = 1;
-        //     }
-        // }
-        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //     $this->sql .= " ";
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-        //     $this->sql .= " AND lc.costcenter = :costcenterid ";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid;
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-        //     $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid ";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid;
-        //     $this->params['departmentid'] = $USER->open_departmentid;
-        // }else{
-        //     $this->sql .= " AND lcu.userid = :loggedinuserid ";
-        //     $this->params['loggedinuserid'] = $USER->id;
-        // }
 
         parent::where();
     }

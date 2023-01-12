@@ -26,7 +26,7 @@
                         <div alt="{{course_fullname}}" class="courseimg courseimg_bg" style="background-image:url('{{course_image_url}}')">
                                 <div class="course_progress_container d-flex align-items-center">
                                     <div class="progress_circular" style="background-image: conic-gradient(white {{progress}}%, transparent 0%);"> </div>
-                                    <div class="progress_status">Completed</div>
+                                    <div class="progress_status">{{#str}}completed,block_userdashboard{{/str}} </div>
                                     <div class="progress_percentage">{{progress}}%</div>
                                 </div>
                          </div>
@@ -44,7 +44,7 @@
                             {{/ coursesummary}} 
                         </div>
                         <div>
-                            <div class="lastopend_label my-2">Last opened : <strong>{{{lastaccessdate}}}</strong></div>
+                            <div class="lastopend_label my-2">{{#str}}last_opened, block_userdashboard{{/str}} : <strong>{{{lastaccessdate}}}</strong></div>
                             <a href="{{{course_url}}}" class="">
                                 <button class="btn btn-primary my-2 launch_btn">{{label_name}}</button>
                             </a>

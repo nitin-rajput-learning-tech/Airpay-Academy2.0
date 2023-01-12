@@ -49,13 +49,28 @@ class plugin_usercolumns extends pluginbase{
 		$userbadgeid = $DB->get_field('block_learnerscript', 'id', array('type' => 'userbadges'), IGNORE_MULTIPLE);
         $courseoverviewpermissions = empty($reportid) ? false : (new reportbase($reportid))->check_permissions($USER->id, $context);
         if ($this->reportfilterparams['filter_organization']) {
-            $costcenter = " AND u.open_costcenterid = " .$this->reportfilterparams['filter_organization'];
+            $organization = $this->reportfilterparams['filter_organization'];
+            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
+            $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
+            $costcenter .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
+
+            // $costcenter = " AND u.open_costcenterid = " .$this->reportfilterparams['filter_organization'];
         }
         if ($this->reportfilterparams['filter_departments'] > 0) {
-            $dept = " AND u.open_departmentid = ".$this->reportfilterparams['filter_departments'];
+            $department = $this->reportfilterparams['filter_departments'];
+            $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
+
+            // $dept = " AND u.open_departmentid = ".$this->reportfilterparams['filter_departments'];
         }
         if ($this->reportfilterparams['filter_subdepartments'] > 0) {
-            $subdept = " AND u.open_subdepartment = ".$this->reportfilterparams['filter_subdepartments'];
+            $subdepartments = $this->reportfilterparams['filter_subdepartments'];
+            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+            $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
+            $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
+
+            // $subdept = " AND u.open_subdepartment = ".$this->reportfilterparams['filter_subdepartments'];
         }         
 		switch ($data->column) {
 			case 'enrolled':

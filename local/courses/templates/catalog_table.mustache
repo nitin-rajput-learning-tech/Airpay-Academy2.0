@@ -23,7 +23,7 @@
             <th>{{#str}}coursecode, local_courses{{/str}}</th>
             <th>{{#str}}category, local_courses{{/str}}</th>
             <th>{{#str}}enrolled, local_courses{{/str}}</th>
-            <th>{{#str}}points, local_courses{{/str}}</th>
+            <!-- <th>{{#str}}points, local_courses{{/str}}</th> -->
             <th>{{#str}}completed, local_courses{{/str}}</th>
             <th>{{#str}}coursetype, local_courses{{/str}}</th>
             <th>{{#str}}actions, local_courses{{/str}}</th>
@@ -42,12 +42,12 @@
                 {{/ coursenameCut}}
             </td>            
             <td>{{shortname}}</td>
-            <td>{{catnamestring}}</td>
+            <td>{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</td>
             <td>
                 {{# enrolled_count }} {{enrolled_count}} {{/ enrolled_count }} 
                 {{^ enrolled_count }} N/A {{/ enrolled_count }}
             </td>
-            <td>{{points}}</td>
+            <!-- <td>{{points}}</td> -->
             <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</td>
             <td>{{{coursetype}}}</td>
             <td>
@@ -74,7 +74,7 @@
                    
                 {{/grade_view}}
                 {{#request_view}}            
-                     <a href="{{ requestlink }}" title= "{{#str}}requestforenroll, local_courses{{/str}}">
+                     <a href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
                          <i class="fa fa-share-square" aria-hidden="true"></i>
                      </a>             
                 {{/request_view}}      

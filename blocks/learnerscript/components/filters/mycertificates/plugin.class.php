@@ -63,20 +63,26 @@ class plugin_mycertificates extends pluginbase {
                 JOIN {user} as u ON u.id = lu.userid
                 WHERE 1 = 1 AND lc.status IN(1,4) ";
          //echo $sql;exit;
-        $systemcontext = context_system::instance();
          if(!is_siteadmin()){
          $sql .=" AND u.id = $USER->id";
          }
-         if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $sql .= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $sql .= " AND u.open_costcenterid = :costcenterid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-            $params['departmentid'] = $USER->open_departmentid;
-        }
+        //  if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        //     $sql .= " ";
+        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        //     $sql .= " AND u.open_costcenterid = :costcenterid ";
+        //     $params['costcenterid'] = $USER->open_costcenterid;
+        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+        //     $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
+        //     $params['costcenterid'] = $USER->open_costcenterid;
+        //     $params['departmentid'] = $USER->open_departmentid;
+        // }
+          $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context(); //context_system::instance();
+          $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
+          if (is_siteadmin()) {
+              $sql .= "";
+          } else  {
+              $sql .= $costcenterpathconcatsql;
+          }
         $sql .= " ORDER BY lc.name ASC ";
         $mycertificates = $DB->get_records_sql_menu($sql,$params);
 

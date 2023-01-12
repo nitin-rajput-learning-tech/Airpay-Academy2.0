@@ -160,11 +160,20 @@
                                     </span>
                                 </p>
                                 <p class="mb-2 w-fullt">
-                                    <span class="pull-left user_info_lable">{{# str}} open_level, local_users{{/ str}}
+                                    <span class="pull-left user_info_lable">{{# str}} commercialunit, local_users{{/ str}}
                                         <span class="pull-right mr-2">:</span>
                                     </span>
                                     <span>
-                                        <b>{{ level }}</b>
+                                        <b>{{ commercialunit }}</b>
+                                    </span>
+                                </p>
+
+                                <p class="mb-2 w-full">
+                                    <span class="pull-left user_info_lable">{{# str}} commercialarea, local_users{{/ str}}
+                                        <span class="pull-right mr-2">:</span>
+                                    </span>
+                                    <span title="{{ supervisor }}">
+                                        <b>{{ commercialarea }}</b>
                                     </span>
                                 </p>
                                 <p class="mb-2 w-full">
@@ -173,14 +182,6 @@
                                     </span>
                                     <span title="{{ designation }}">
                                         <b>{{ designationstring }}</b>
-                                    </span>
-                                </p>
-                                <p class="mb-2 w-full">
-                                    <span class="pull-left user_info_lable">{{# str}} supervisor, local_users{{/ str}}
-                                        <span class="pull-right mr-2">:</span>
-                                    </span>
-                                    <span title="{{ supervisor }}">
-                                        <b>{{ supervisiorstring }}</b>
                                     </span>
                                 </p>
                             </div>

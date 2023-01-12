@@ -33,6 +33,8 @@ $status = optional_param('status', '', PARAM_RAW);
 $costcenterid = optional_param('costcenterid', '', PARAM_INT);
 $departmentid = optional_param('departmentid', '', PARAM_INT);
 $subdepartmentid = optional_param('subdepartmentid','',PARAM_INT);
+$department4levelid = optional_param('department4levelid', '', PARAM_INT);
+$department5levelid = optional_param('department5levelid','',PARAM_INT);
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
 if ($formattype == 'card') {
     $formattype_url = 'table';
@@ -141,11 +143,11 @@ if(is_siteadmin() ||(
 }              
 if(((has_capability('local/costcenter:create', $categorycontext)&&has_capability('local/courses:bulkupload', $categorycontext)&&has_capability('local/courses:manage', $categorycontext)&&has_capability('moodle/course:create', $categorycontext)&&has_capability('moodle/course:update', $categorycontext)))|| is_siteadmin()){
 
-    $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
-                                <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('uploadcourses','local_courses').'" href = '.$CFG->wwwroot.'/local/courses/upload/index.php>
-                                    <i class="icon fa fa-upload" aria-hidden="true"></i>
-                                </a>
-                            </div></li>';
+    // $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
+    //                             <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('uploadcourses','local_courses').'" href = '.$CFG->wwwroot.'/local/courses/upload/index.php>
+    //                                 <i class="icon fa fa-upload" aria-hidden="true"></i>
+    //                             </a>
+    //                         </div></li>';
 }if(is_siteadmin() ||(
         has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
         $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
@@ -188,11 +190,13 @@ if(empty($filterdata) && !empty($jsonparam)){
     }
     $mform->set_data($filterdata);
 }
-if(!empty($costcenterid) || !empty($status) || !empty($departmentid) || !empty($subdepartmentid)){   
+if(!empty($costcenterid) || !empty($status) || !empty($departmentid) || !empty($subdepartmentid) || !empty($department4levelid) || !empty($department5levelid)){
         $formdata = new stdClass();
         $formdata->organizations = $costcenterid;
         $formdata->departments = $departmentid;
         $formdata->subdepartment = $subdepartmentid;
+         $formdata->department4level = $department4levelid;
+        $formdata->department5level = $department5levelid;
         $formdata->status = $status;
         $mform->set_data($formdata);
 }
@@ -225,6 +229,12 @@ if (is_siteadmin() || (
    }
    if($subdepartmentid){
     $display_url->param('subdepartmentid',$subdepartmentid);
+   }
+    if($department4levelid){
+    $display_url->param('department4levelid',$department4levelid);
+   }
+   if($department5levelid){
+    $display_url->param('department5levelid',$department5levelid);
    }
    if($status){
     $display_url->param('status',$status);

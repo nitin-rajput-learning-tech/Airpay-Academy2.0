@@ -48,6 +48,7 @@ class plugin_learningpathfield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG; 
         $lpathrecord = $DB->get_record('local_learningplan',array('id'=>$row->learningpathid));
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$lpathrecord->open_path);
         switch ($data->column) {
             case 'learningpath_name':
                     $lpathrecord->{$data->column} = $lpathrecord->name;
@@ -56,18 +57,32 @@ class plugin_learningpathfield extends pluginbase {
                 $lpathrecord->{$data->column} = $lpathrecord->shortname; 
                 break;               
             case 'learningpath_org':
-                $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$lpathrecord->costcenter));
+                $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
                 break;
             case 'learningpath_dept':
-                if(!empty($lpathrecord->department) && ($lpathrecord->department != -1)){
-                    $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$lpathrecord->department));
+                if(!empty($ctr) && ($ctr != -1)){
+                    $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
                 }else{
                    $lpathrecord->{$data->column} = get_string('all'); 
                 }
                 break;   
             case 'learningpath_subdept':
-                if(!empty($lpathrecord->subdepartment) && ($lpathrecord->subdepartment != -1)){
-                    $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$lpathrecord->subdepartment));
+                if(!empty($bu) && ($bu != -1)){
+                    $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$bu));
+                }else{
+                   $lpathrecord->{$data->column} = get_string('all'); 
+                }
+                break;
+            case 'learningpath_commercialunit':
+                if(!empty($cu) && ($cu != -1)){
+                    $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$cu));
+                }else{
+                   $lpathrecord->{$data->column} = get_string('all'); 
+                }
+                break;
+            case 'learningpath_territory':
+                if(!empty($territory) && ($territory != -1)){
+                    $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$territory));
                 }else{
                    $lpathrecord->{$data->column} = get_string('all'); 
                 }

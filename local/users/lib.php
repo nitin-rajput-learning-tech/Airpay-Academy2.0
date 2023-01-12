@@ -318,9 +318,21 @@ function states_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+       $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $stateslist_sql = "SELECT id, states_name FROM {local_states} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $stateslist_sql = "SELECT id, states_name FROM {local_states} WHERE costcenterid in ($implodeorgids) ";
+
 
     }
 
@@ -342,9 +354,20 @@ function district_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+       $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $districtlist_sql = "SELECT id, district_name FROM {local_district} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $districtlist_sql = "SELECT id, district_name FROM {local_district} WHERE costcenterid in ($implodeorgids) ";
 
     }
 
@@ -369,9 +392,20 @@ function subdistrict_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+        $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $subdistrictlist_sql = "SELECT id, subdistrict_name FROM {local_subdistrict} WHERE costcenterid in ($implodeorgids) ";
 
     }
 
@@ -395,9 +429,20 @@ function village_filter($mform) {
 
     }else{
 
-       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+       $costcenterpaths = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 
-        $villagelist_sql = "SELECT id, village_name FROM {local_village}  WHERE costcenterid in (SELECT id FROM {local_costcenter} WHERE 1=1 $costcenterpathconcatsql) ";
+       $orgids=array();
+
+       foreach($costcenterpaths as $costcenterpath){
+
+         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$costcenterpath);
+
+         $orgids[$org]=$org;
+
+       }
+       $implodeorgids=implode(',',$orgids);
+
+        $villagelist_sql = "SELECT id, village_name FROM {local_village}  WHERE costcenterid in ($implodeorgids) ";
 
     }
 
@@ -1014,7 +1059,14 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         if (!$dept) {
             $dept = 'All';
         }
-
+        $commercialunit = $organisationnames[3];
+        if (!$commercialunit) {
+            $commercialunit = 'All';
+        }
+        $commercialarea = $organisationnames[4];
+        if (!$commercialarea) {
+            $commercialarea = 'All';
+        }
         $orgstring = strlen($organization) > 24 ? substr($organization, 0, 24)."..." : $organization;
         $list['org'] = $organization;
         $list['orgstring'] = $orgstring;
@@ -1025,6 +1077,8 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
 
         $list['deptstring'] = $deptstring;
         $list['dept'] = $dept;
+        $list['commercialunit'] = $commercialunit;
+        $list['commercialarea'] = $commercialarea;
         $list['group'] = $user->open_group ? $user->open_group : 'N/A';
         $list['level'] = $user->open_level ? $user->open_level : 'N/A';
         $list['phno'] = ($user->phone1) ? $user->phone1 : '--';
@@ -1065,24 +1119,37 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
 * return filterform
 */
 function users_filters_form($filterparams) {
-    global $CFG;
+    global $CFG, $USER;
 
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
 
     $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+    if (is_siteadmin()) {
         $mform = new filters_form(null, array('filterlist' => array('organizations', 'departments',
             'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status'), 'courseid' => 1,
              'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
-    } else if (has_capability('local/costcenter:manage_ownorganization', $categorycontext)) {
-        $mform = new filters_form(null, array('filterlist' => array('departments', 'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status'), 'courseid' => 1, 'enrolid' => 0,
-        'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
-    } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)) {
-        $mform = new filters_form(null, array('filterlist' => array('subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid',
-         'status'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users',
-         'costcenter'), 'filterparams' => $filterparams));
     } else {
-        $mform = new filters_form(null, array('filterlist' => array('states','district','subdistrict','village','email', 'employeeid', 'status'), 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
+        $filters = array('states','district','subdistrict','village','email', 'employeeid', 'status');
+        $depth = $USER->useraccess['currentroleinfo']['depth'];
+        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+            $depth--;
+        }
+        if($depth < 6){
+            array_unshift($filters, 'department5level');
+        }
+        if($depth < 5){
+            array_unshift($filters, 'department4level');
+        }
+        if($depth < 4){
+            array_unshift($filters, 'subdepartment');
+        }
+        if($depth < 3){
+            array_unshift($filters, 'departments');
+        }
+        if($depth < 2){
+            array_unshift($filters, 'organizations');
+        }
+        $mform = new filters_form(null, array('filterlist' => $filters, 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
           => $filterparams));
     }
     return $mform;

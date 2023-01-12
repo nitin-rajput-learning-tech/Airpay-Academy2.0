@@ -220,11 +220,10 @@ class user{
                     JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=course.id
                     JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                     LEFT JOIN {course_completions} as cc ON cc.course = course.id AND u.id = cc.userid
-                    WHERE course.id > 1 AND ue.userid = ?
-                    AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
-        if ($source) {
-            $fromsql .= " AND course.open_securecourse != 1 ";
-        }
+                    WHERE course.id > 1 AND ue.userid = ? ";
+        // if ($source) {
+        //     $fromsql .= " AND course.open_securecourse != 1 ";
+        // }
         $ordersql = " ORDER BY ue.id DESC ";
         if ($limityesno)
             $records = $DB->get_records_sql($coursessql.$fromsql.$ordersql, [$userid], $start, $limit);

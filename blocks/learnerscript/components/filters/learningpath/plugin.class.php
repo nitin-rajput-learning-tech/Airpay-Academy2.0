@@ -66,43 +66,43 @@ class plugin_learningpath extends pluginbase {
     public function filter_data($selectoption = true, $request){
         global $DB, $USER;
         $context = context_system::instance();
-        if($this->reportclass->basicparams){
-            $basicparams = array_column($this->reportclass->basicparams, 'name');
-            if (has_capability('local/costcenter:manage_ownorganization', $context) && !is_siteadmin()) {
-                $deptorgid = $USER->open_costcenterid;
-            } else {
-                if ($basicparams[0] == 'organization') {
-                    // $orgoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC"); 
-                    // $orgids = array_keys($orgoptions);
-                    // if (empty($request['filter_organization'])) {
-                    //     $deptorgid = array_shift($orgids);
-                    // } else {
-                    //     $deptorgid = $request['filter_organization'];
-                    // }
-                    $deptorgid = null;
-                }else {
-                    $deptorgid = null;
-                } 
-            }
-        } else {
-            $deptorgid = null;
-        }
+        // if($this->reportclass->basicparams){
+        //     $basicparams = array_column($this->reportclass->basicparams, 'name');
+        //     if (has_capability('local/costcenter:manage_ownorganization', $context) && !is_siteadmin()) {
+        //         $deptorgid = $USER->open_costcenterid;
+        //     } else {
+        //         if ($basicparams[0] == 'organization') {
+        //             $deptorgid = null;
+        //         }else {
+        //             $deptorgid = null;
+        //         } 
+        //     }
+        // } else {
+        //     $deptorgid = null;
+        // }
         $sql = "SELECT lp.id, lp.name 
                 FROM {local_learningplan} lp
                 WHERE 1 = 1 ";
-        if (!empty($deptorgid)) {
-            $sql .= " AND lp.costcenter = " . $deptorgid;
-        } else {
-            $systemcontext = context_system::instance();
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-                $sql .= " ";
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-                $sql .= " AND lp.costcenter = $USER->open_costcenterid ";
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-                $sql .= " AND lp.costcenter = $USER->open_costcenterid 
-                        AND lp.department = $USER->open_departmentid";
-            }
-        }
+        // if (!empty($deptorgid)) {
+        //     $sql .= " AND lp.costcenter = " . $deptorgid;
+        // } else {
+        //     $systemcontext = context_system::instance();
+        //     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        //         $sql .= " ";
+        //     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        //         $sql .= " AND lp.costcenter = $USER->open_costcenterid ";
+        //     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
+        //         $sql .= " AND lp.costcenter = $USER->open_costcenterid 
+        //                 AND lp.department = $USER->open_departmentid";
+        //     }
+        // }
+      $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context(); //context_system::instance();
+      $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path'); 
+      if (is_siteadmin()) {
+          $sql .= "";
+      } else  {
+          $sql .= $costcenterpathconcatsql;
+      }
         $sql .= " ORDER BY lp.name ASC ";
 
         $learningpaths = $DB->get_records_sql_menu($sql);

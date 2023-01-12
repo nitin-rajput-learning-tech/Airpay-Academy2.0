@@ -35,7 +35,7 @@ class courseallocation_lib{
         } else {
             $condition = "";
         }
- $concatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+ $concatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         $departmentmyteamsql = "SELECT u.* FROM {user} as u
                                     WHERE u.open_supervisorid = $USER->id AND u.id != $USER->id
                                     AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2 $concatsql".$condition ;
@@ -67,13 +67,29 @@ class courseallocation_lib{
 		}else{
 			$condition = " ";
 		}
-		$open_path = $DB->get_field('user', 'open_path', array('id' => $user));
-		if($open_path > 0){
-			$condition .= " AND c.open_path = ".$open_path;
-		}
+		$usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $user));
+		$paths = [];
+        foreach($usercostcenterpaths AS $userpath){
+            $userpathinfo = $userpath->costcenterpath;
+            $paths[] = $userpathinfo.'%';
+            while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                $userpathinfo = rtrim($userpathinfo, '/');
+                if ($userpathinfo === '') {
+                  break;
+                }
+                $paths[] = $userpathinfo;
+            }
+        }
+        $condition = '';
+        if(!empty($paths)){
+            foreach($paths AS $path){
+                $pathsql[] = " c.open_path LIKE '{$path}' ";
+            }
+            $condition = " AND ( ".implode(' OR ', $pathsql).' ) ';
+        }
 		$courses_sql = "SELECT c.id, c.fullname 
 										FROM {course} as c
-										WHERE c.id > 1 AND CONCAT(',',c.open_identifiedas,',') LIKE '%,3,%' AND c.visible = 1".$condition;//FIND_IN_SET(3, c.open_identifiedas)
+										WHERE c.id <> 1 AND c.visible = 1 AND c.selfenrol = 1 ".$condition;//FIND_IN_SET(3, c.open_identifiedas)
 		$courses = $DB->get_records_sql_menu($courses_sql);
 		return $courses;
 	}
@@ -89,14 +105,29 @@ class courseallocation_lib{
 		}else{
 			$condition = " ";
 		}
-		$open_path = $DB->get_field('user', 'open_path', array('id' => $user));
-		if($open_path > 0){
-			$condition .= " AND c.open_path = ".$open_path;
-		}
-		$classrooms_sql = "SELECT c.id, c.name 
-							FROM {local_classroom} as c
-							JOIN {local_classroom_users} as cu
-							WHERE c.visible = 1 AND c.status = 1".$condition;
+		$usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $user));
+		$paths = [];
+        foreach($usercostcenterpaths AS $userpath){
+            $userpathinfo = $userpath->costcenterpath;
+            $paths[] = $userpathinfo.'%';
+            while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                $userpathinfo = rtrim($userpathinfo, '/');
+                if ($userpathinfo === '') {
+                  break;
+                }
+                $paths[] = $userpathinfo;
+            }
+        }
+        $condition = '';
+        if(!empty($paths)){
+            foreach($paths AS $path){
+                $pathsql[] = " lc.open_path LIKE '{$path}' ";
+            }
+            $condition = " AND ( ".implode(' OR ', $pathsql).' ) ';
+        }
+		$classrooms_sql = "SELECT lc.id, lc.name
+							FROM {local_classroom} as lc
+							WHERE lc.visible = 1 AND lc.status = 1 ".$condition;
 		$classrooms = $DB->get_records_sql_menu($classrooms_sql);
 
 		return $classrooms;

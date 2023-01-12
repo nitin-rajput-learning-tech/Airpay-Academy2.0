@@ -24,7 +24,7 @@
  */
 
 defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2022101300.15;          // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version = 2022101300.18;          // The current plugin version (Date: YYYYMMDDXX)
 $plugin->requires  = 2017050505;        // Requires this Moodle version
 $plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'local_custom_category';

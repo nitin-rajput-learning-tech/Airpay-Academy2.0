@@ -1,19 +1,19 @@
 <?php
 namespace local_evaluation\local;
 class userdashboard_content extends \block_userdashboard\content{
-	public function userdashboard_menu_content(){
-		$returndata = array();
-		$returndata['id'] = 'evaluation_courses';
-		$returndata['order'] = 6;
-		$returndata['pluginname'] = 'local_evaluation';
-		$returndata['tabname'] = 'inprogress';
-		$returndata['status'] = 'inprogress';
-		$returndata['class'] = 'userdashboard_menu_link';
-		$returndata['iconclass'] = 'fa fa-clipboard';
-		$returndata['label'] = get_string('feedbacks', 'block_userdashboard');
-		$returndata['templatename'] = 'local_evaluation/userdashboard_content';
-		return $returndata;
-	}
+	// public function userdashboard_menu_content(){
+	// 	$returndata = array();
+	// 	$returndata['id'] = 'evaluation_courses';
+	// 	$returndata['order'] = 6;
+	// 	$returndata['pluginname'] = 'local_evaluation';
+	// 	$returndata['tabname'] = 'inprogress';
+	// 	$returndata['status'] = 'inprogress';
+	// 	$returndata['class'] = 'userdashboard_menu_link';
+	// 	$returndata['iconclass'] = 'fa fa-clipboard';
+	// 	$returndata['label'] = get_string('feedbacks', 'block_userdashboard');
+	// 	$returndata['templatename'] = 'local_evaluation/userdashboard_content';
+	// 	return $returndata;
+	// }
 	public static function inprogress_evaluations($filter_text='', $offset, $limit) {
         global $DB, $USER;
         $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');

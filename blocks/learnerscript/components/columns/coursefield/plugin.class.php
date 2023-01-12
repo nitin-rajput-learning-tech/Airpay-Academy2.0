@@ -48,6 +48,7 @@ class plugin_coursefield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG; 
         $courserecord = $DB->get_record('course',array('id'=>$row->courseid)); 
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$courserecord->open_path);
         $coursereportid = $DB->get_field('block_learnerscript', 'id', array('type'=>'courseprofile'), IGNORE_MULTIPLE);
         switch ($data->column) { 
             case 'coursename': 
@@ -65,7 +66,8 @@ class plugin_coursefield extends pluginbase {
                 $courserecord->{$data->column} = $courserecord->shortname;
                 break;
             case 'coursecategory':
-                $courserecord->{$data->column} = $DB->get_field('course_categories', 'name', array('id' =>$courserecord->category));
+            $coursecategory = $DB->get_field('local_custom_category', 'fullname', array('id' =>$courserecord->open_categoryid));
+                $courserecord->{$data->column} = $coursecategory ? $coursecategory: 'NA';
             break;
             case 'coursevisible':
                 $courserecord->{$data->column} = ($courserecord->visible) ?
@@ -73,18 +75,32 @@ class plugin_coursefield extends pluginbase {
                                             '<span class="label label-warning">' . get_string('inactive'). '</span';
             break;                
             case 'courseorg':
-                $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$courserecord->open_costcenterid));
+                $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
                 break;
             case 'coursedept':
-                if($courserecord->open_departmentid){
-                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$courserecord->open_departmentid));
+                if($ctr){
+                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }
                 break;
             case 'course_subdept':
-                if($courserecord->open_subdepartment){
-                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$courserecord->open_subdepartment));
+                if($bu){
+                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$bu));
+                }else{
+                   $courserecord->{$data->column} = get_string('all'); 
+                }
+                break;
+            case 'department4level':
+                if($cu){
+                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$cu));
+                }else{
+                   $courserecord->{$data->column} = get_string('all'); 
+                }
+                break;
+            case 'department5level':
+                if($territory){
+                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$territory));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }

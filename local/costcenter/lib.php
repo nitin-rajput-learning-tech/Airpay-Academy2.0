@@ -972,7 +972,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
             if($level == 1){
 
-                $mform->addRule($fields[$level], get_string('required'),  'required',  '', 'client');
+                $mform->addRule($fields[$level], get_string('required'.$fields[$level], 'local_costcenter'),  'required',  '', 'client');
             }
 
             $firstelement = false;
