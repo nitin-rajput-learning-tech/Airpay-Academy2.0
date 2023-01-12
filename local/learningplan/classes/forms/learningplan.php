@@ -142,14 +142,14 @@ class learningplan extends moodleform {
 				array('&nbsp;&nbsp;'), false);
 			$mform->addHelpButton('approvalreqd','need_manager_approval','local_learningplan');
 
-			$mform->addElement('text', 'open_points', get_string('points','local_learningplan'));
-	        $mform->addHelpButton('open_points', 'open_pointslearningpath', 'local_learningplan');
-	        $mform->setType('open_points', PARAM_INT);
+			// $mform->addElement('text', 'open_points', get_string('points','local_learningplan'));
+	        // $mform->addHelpButton('open_points', 'open_pointslearningpath', 'local_learningplan');
+	        // $mform->setType('open_points', PARAM_INT);
 
-	        $mform->setType('credits', PARAM_RAW);
+	        // $mform->setType('credits', PARAM_RAW);
 
-	        // tags
-	        $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'learningplan', 'component' => 'local_learningplan'));
+	        // // tags
+	        // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'learningplan', 'component' => 'local_learningplan'));
 
 	        $editoroption = [
 	        'maxfiles' => EDITOR_UNLIMITED_FILES,
@@ -226,15 +226,15 @@ class learningplan extends moodleform {
                 $errors['certificateid'] = get_string('err_certificate','local_learningplan');
 			}
 		}
-		if(isset($data['open_points']) && $data['open_points']){
-          $value = $data['open_points'];
-          $intvalue = (int)$value;
+		// if(isset($data['open_points']) && $data['open_points']){
+        //   $value = $data['open_points'];
+        //   $intvalue = (int)$value;
 
-          if(!("$intvalue" === "$value") || $intvalue < 0){
-            $errors['open_points'] = get_string('numeric', 'local_learningplan'); 
-          }
+        //   if(!("$intvalue" === "$value") || $intvalue < 0){
+        //     $errors['open_points'] = get_string('numeric', 'local_learningplan'); 
+        //   }
           
-        }
+        // }
 	
 		return $errors;
     }
