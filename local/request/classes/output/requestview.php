@@ -83,25 +83,13 @@ class requestview implements renderable, templatable {
    public function get_specific_costcenter_requests($component=null, $sorting=false, $componentid=false){
       global $USER, $DB;
         $requestlist = array();
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
-
         $fields = " req.id, req.createdbyid, req.compname, req.compcode, req.compkey, req.componentid, req.status, req.responder, req.respondeddate, req.usermodified, req.timecreated, req.timemodified ";
-
         if(has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || is_siteadmin()){
            $sql = "SELECT $fields FROM {local_request_records} AS req 
            JOIN {user} as u ON u.id=req.createdbyid
            WHERE 1=1";
-        }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
-            $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-            if($costcenterid){
-                $sql = "SELECT req.* FROM {local_request_records} AS req
-                    JOIN {user} AS u ON u.id=req.createdbyid
-                    WHERE u.open_costcenterid= {$costcenterid} ";
-            }
-        }else if(has_capability('local/costcenter:manage_owndepartments',$systemcontext)){
-            $sql = "SELECT req.* FROM {local_request_records} AS req
-                JOIN {user} AS u ON u.id=req.createdbyid
-                WHERE u.open_costcenterid= {$USER->open_costcenterid} AND u.open_departmentid = {$USER->open_departmentid} ";
         }else if(has_capability('local/classroom:manageclassroom',$systemcontext)||
                 has_capability('local/program:manageprogram',$systemcontext)||
                 has_capability('local/certification:managecertification',$systemcontext)){
@@ -121,8 +109,12 @@ class requestview implements renderable, templatable {
                 JOIN {user} AS u ON u.id=req.createdbyid
                 WHERE ((req.compname='classroom' AND req.componentid IN($classroomids)) OR
                 (req.compname='program' AND req.componentid IN($programids)) OR
-                (req.compname='certification' AND req.componentid IN($programids))) AND req.compname!='elearning'";
-        }
+                (req.compname='certification' AND req.componentid IN($programids))) AND req.compname!='elearning' $costcenterpathconcatsql";
+        }else{
+              $sql = "SELECT req.* FROM {local_request_records} AS req
+                  JOIN {user} AS u ON u.id=req.createdbyid
+                  WHERE 1=1 $costcenterpathconcatsql";
+                        }
         if($sql){
           $sql .= " AND u.deleted = 0 AND u.suspended = 0 ";
           if($component){
@@ -149,7 +141,7 @@ class requestview implements renderable, templatable {
       } // end of  get_specific_costcenter_requests
     public function get_requestdetails($stable,$filtervalues){
         global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         $params=array();
 
         $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
@@ -178,18 +170,11 @@ class requestview implements renderable, templatable {
            $sql = " FROM {local_request_records} AS req 
             JOIN {user} AS u ON u.id=req.createdbyid 
             WHERE 1=1";
-        }else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
-            // $costcenterid=$DB->get_field('user','open_costcenterid',array('id'=>$USER->id));
-            $costcenterid=$USER->open_costcenterid;
-            if($costcenterid){
-                $sql = " FROM {local_request_records} AS req
-                    JOIN {user} AS u ON u.id=req.createdbyid
-                    WHERE u.open_costcenterid= {$costcenterid}  ";
-            }
-        }else /*if(has_capability('local/costcenter:manage_owndepartments',$systemcontext))*/{
+        }
+else{
             $sql = " FROM {local_request_records} AS req
                 JOIN {user} AS u ON u.id=req.createdbyid
-                WHERE u.open_costcenterid= {$USER->open_costcenterid} AND u.open_departmentid = {$USER->open_departmentid} ";
+                WHERE 1=1 $costcenterpathconcatsql";
                 // CASE WHEN req.compname LIKE 'certification'
                   // THEN JOIN (local_certification) AS requesttable
         }
