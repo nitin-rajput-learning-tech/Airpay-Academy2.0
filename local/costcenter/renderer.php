@@ -631,6 +631,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "headstring" => 'update_dipartment',
             "formtype" => 'department',
             "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $categorycontext)),
+            "managepermissions" => (is_siteadmin() || has_capability('local/costcenter:managepermissions', $categorycontext)),
         ];
         if($depart->depth == 4){
             $costcenter_view_content['headstring'] = 'update_subsubsubdipartment';
