@@ -145,9 +145,9 @@ class classroom_form extends moodleform {
                    $mform->addHelpButton('allow_waitinglistusers','allowuserswaitinglist','local_classroom');
              }
            
-            $mform->addElement('text', 'open_points', get_string('points','local_classroom'));
-            $mform->addHelpButton('open_points', 'open_pointsclassroom', 'local_classroom');
-            $mform->setType('open_points', PARAM_INT);
+            // $mform->addElement('text', 'open_points', get_string('points','local_classroom'));
+            // $mform->addHelpButton('open_points', 'open_pointsclassroom', 'local_classroom');
+            // $mform->setType('open_points', PARAM_INT);
 
             $trainers = array();
             $trainerslist = $this->_ajaxformdata['trainers'];
@@ -184,7 +184,7 @@ class classroom_form extends moodleform {
                 'local_classroom'), array('optional' => false));
             $mform->addRule('enddate', null, 'required', null, 'client');
             // tags
-            $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'classroom', 'component' => 'local_classroom'));
+            // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'classroom', 'component' => 'local_classroom'));
 
             //certificate
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
@@ -377,15 +377,15 @@ class classroom_form extends moodleform {
                 $errors['costcenter'] = get_string('pleaseselectorganization', 'local_classroom');
             }
         }
-        if(isset($data['open_points']) && $data['open_points']){
-            $value = $data['open_points'];
-            $intvalue = (int)$value;
+        // if(isset($data['open_points']) && $data['open_points']){
+        //     $value = $data['open_points'];
+        //     $intvalue = (int)$value;
   
-            if(!("$intvalue" === "$value") || $intvalue < 0){
-              $errors['open_points'] = get_string('numeric', 'local_classroom'); 
-            }
+        //     if(!("$intvalue" === "$value") || $intvalue < 0){
+        //       $errors['open_points'] = get_string('numeric', 'local_classroom'); 
+        //     }
             
-          }
+        //   }
 
         return $errors;
     }
