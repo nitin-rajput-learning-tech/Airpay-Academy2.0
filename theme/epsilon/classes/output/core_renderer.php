@@ -884,8 +884,11 @@ class core_renderer extends \core_renderer {
                 ['id' => 'region-main-settings-menu']
             ));
         }
+        $show_course_header = false;
         if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1) {
             $course_extended_menu = $this->course_context_header_settings_menu();
+            $show_course_header = true;
+            
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
         }
@@ -902,7 +905,7 @@ class core_renderer extends \core_renderer {
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
         }
-        return $this->render_from_template('theme_epsilon/full_header', $header);
+        return $this->render_from_template($show_course_header? 'theme_epsilon/course_full_header' : 'theme_epsilon/full_header', $header);
     }
         /**
      * return custom course page header buttons to show only on course pages
