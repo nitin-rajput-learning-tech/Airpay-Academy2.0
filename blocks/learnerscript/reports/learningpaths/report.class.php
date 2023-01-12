@@ -84,17 +84,17 @@ class report_learningpaths extends reportbase implements report {
     function filters(){
         global $DB, $USER;
         $context = context_system::instance();
-        if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-            } else {
-                $ohs = $dhs = 1;
-            }
-        }
-        if (!$this->scheduling) {
+        // if (!is_siteadmin()) {
+        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+        //     if (!empty($scheduledreport)) {
+        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+        //     $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+        //     } else {
+        //         $ohs = $dhs = 1;
+        //     }
+        // }
+        // if (!$this->scheduling) {
             // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)){ 
             //     if ($this->params['filter_organization']>0) {
             //         $this->sql .= " AND bll.costcenterid IN (" .$this->params['filter_organization'].", 0) AND bll.user_costcenterid=".$this->params['filter_organization'];
@@ -115,7 +115,7 @@ class report_learningpaths extends reportbase implements report {
             // if ($this->params['filter_subdepartments'] > 0) {
             //     $this->sql .= " AND bll.subdepartment IN (".$this->params['filter_subdepartments'].", 0) AND bll.user_subdepartment=".$this->params['filter_subdepartments'];
             // } 
-        }        
+        // }        
         if ($this->ls_startdate >= 0 && $this->ls_enddate) {
             $this->sql .= " AND bll.timecreated BETWEEN $this->ls_startdate AND $this->ls_enddate ";
         }

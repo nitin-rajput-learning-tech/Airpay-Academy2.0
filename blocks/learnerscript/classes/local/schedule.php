@@ -880,28 +880,35 @@ class schedule {
                                FROM {user} u
                                JOIN {role_assignments} ra
                               WHERE u.id = ra.userid $role_sql $search_sql AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0"; 
-        if ($orgid > 0) { 
-        	if (!empty($roleshortname)) {
-	        	if ($roleshortname == 'admin') {
-	        		$rolewiseuserssql .= " ";
-	        	} else if ($roleshortname == 'oh') {
-	            	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid"; 
-	            } else if ($roleshortname == 'dh') {
-	            	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid ";
-	            	if ($deptid > 0) {
-	                	$rolewiseuserssql .= " AND u.open_departmentid = $deptid";
-		            } 
-		        } else {
-		        	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid ";
-	            	if ($deptid > 0) {
-	                	$rolewiseuserssql .= " AND u.open_departmentid = $deptid";
-		            } 
-		            if ($subdeptid > 0) {
-		            	$rolewiseuserssql .= " AND u.open_subdepartment = $subdeptid";
-		            }
-		        }
-		    }
-        }
+        // if ($orgid > 0) { 
+        // 	if (!empty($roleshortname)) {
+	    //     	if ($roleshortname == 'admin') {
+	    //     		$rolewiseuserssql .= " ";
+	    //     	} else if ($roleshortname == 'oh') {
+	    //         	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid"; 
+	    //         } else if ($roleshortname == 'dh') {
+	    //         	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid ";
+	    //         	if ($deptid > 0) {
+	    //             	$rolewiseuserssql .= " AND u.open_departmentid = $deptid";
+		//             } 
+		//         } else {
+		//         	$rolewiseuserssql .= " AND u.open_costcenterid = $orgid ";
+	    //         	if ($deptid > 0) {
+	    //             	$rolewiseuserssql .= " AND u.open_departmentid = $deptid";
+		//             } 
+		//             if ($subdeptid > 0) {
+		//             	$rolewiseuserssql .= " AND u.open_subdepartment = $subdeptid";
+		//             }
+		//         }
+		//     }
+        // }
+      	$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
+
+      if (is_siteadmin()) {
+          $rolewiseuserssql .= "";
+      } else  {
+          $rolewiseuserssql .= $costcenterpathconcatsql;
+      }
 		$rolewiseusers = $DB->get_records_sql($rolewiseuserssql);
 
 		$reportclass = (new ls)->create_reportclass($reportid);

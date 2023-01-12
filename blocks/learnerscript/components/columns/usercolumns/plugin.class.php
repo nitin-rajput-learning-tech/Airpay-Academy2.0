@@ -200,8 +200,7 @@ class plugin_usercolumns extends pluginbase{
 						JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
 						JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
 						JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
-						JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat
-						WHERE ue.completiondate != 0 AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND ue.completiondate > UNIX_TIMESTAMP() AND ue.id NOT IN (SELECT DISTINCT ue.id 
+						WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND ue.id NOT IN (SELECT DISTINCT ue.id 
 						FROM {user_enrolments} ue
 						JOIN {enrol} e ON e.id = ue.enrolid 
 						JOIN {role_assignments} ra ON ra.userid = ue.userid
@@ -210,7 +209,6 @@ class plugin_usercolumns extends pluginbase{
 						JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
 						JOIN {course_completions} as cc ON cc.course = ct.instanceid AND cc.timecompleted > 0 AND cc.userid = ue.userid 
 						JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
-						JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat
 						WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') {$costcenter} {$dept} {$subdept} AND ue.userid = {$row->userid}) {$costcenter} {$dept} {$subdept} AND ue.userid = {$row->userid} ";
 					$upcomingdeadline =  $DB->get_field_sql($sql);
 		        }
@@ -228,8 +226,7 @@ class plugin_usercolumns extends pluginbase{
 						JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
 						JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
 						JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
-						JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat 
-						WHERE ue.completiondate !=0 AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND ue.completiondate < UNIX_TIMESTAMP() AND ue.id NOT IN (SELECT DISTINCT ue.id 
+						WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND ue.id NOT IN (SELECT DISTINCT ue.id 
 						FROM {user_enrolments} ue
 						JOIN {enrol} e ON e.id = ue.enrolid 
 						JOIN {role_assignments} ra ON ra.userid = ue.userid
@@ -238,7 +235,6 @@ class plugin_usercolumns extends pluginbase{
 						JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
 						JOIN {course_completions} as cc ON cc.course = ct.instanceid AND cc.timecompleted > 0 AND cc.userid = ue.userid 
 						JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
-						JOIN {local_courses_learningformat} clf ON clf.id = c.open_learningformat 
 						WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') {$costcenter} {$dept} {$subdept} AND ue.userid = {$row->userid} ) {$costcenter} {$dept} {$subdept} AND ue.userid = {$row->userid} ";
 					$overduedeadline =  $DB->get_field_sql($sql);
 		        }

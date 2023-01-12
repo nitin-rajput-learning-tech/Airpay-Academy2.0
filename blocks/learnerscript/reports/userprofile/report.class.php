@@ -37,14 +37,14 @@ class report_userprofile extends reportbase {
         parent::__construct($report, $reportproperties);
         $this->components = array('columns', 'conditions', 'ordering', 'filters', 'permissions');
         $this->parent = false; 
-        if ($this->loggedinuserrole != 'dh') {
-            $this->basicparams = [['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments'], ['name' => 'users', 'singleselection' =>false, 'placeholder' => false, 'maxlength' => 5]]; 
-        } else {
-            $this->basicparams = [['name' => 'users', 'singleselection' =>false, 'placeholder' => false, 'maxlength' => 5]];
-        }
+        // if ($this->loggedinuserrole != 'dh') {
+        //     $this->basicparams = [['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments'], ['name' => 'users', 'singleselection' =>false, 'placeholder' => false, 'maxlength' => 5]]; 
+        // } else {
+        //     $this->basicparams = [['name' => 'users', 'singleselection' =>false, 'placeholder' => false, 'maxlength' => 5]];
+        // }
         $this->columns = array('userfield' => array('userfield'), 'userprofile' => array('enrolled', 'inprogress',
             'completed', 'completedcoursesgrade', 'quizes', 'assignments', 'scorms', 'badges', 'progress', 'status'));
-        $this->filters = array('contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole');
+        $this->filters = array(/*'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole'*/);
         $this->exports = false;
         $this->orderable = array();
         $this->defaultcolumn = 'user.id';
