@@ -266,7 +266,7 @@ class custom_course_form extends moodleform {
   			$mform->setDefault('enablecompletion', 1);
 
             // tags
-            $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'courses', 'component' => 'local_courses'));            
+            // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'courses', 'component' => 'local_courses'));
 
             $mform->addElement('editor','summary_editor', get_string('coursesummary','local_courses'), null, $editoroptions);
             $mform->addHelpButton('summary_editor', 'coursesummary');

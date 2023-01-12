@@ -78,24 +78,24 @@ function local_tags_inplace_editable($itemtype, $itemid, $newvalue) {
 * Displays a node in left side menu
 * @return  [type] string  link for the leftmenu
 */
-function local_tags_leftmenunode(){
+// function local_tags_leftmenunode(){
     
-    $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
-    $tagnode = '';
-    if(has_capability('local/tags:view',$systemcontext) || is_siteadmin()){
-        $tagnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsetags', 'class'=>'pull-left user_nav_div browsetags'));
+//     $systemcontext =(new \local_tags\lib\accesslib())::get_module_context();
+//     $tagnode = '';
+//     if(has_capability('local/tags:view',$systemcontext) || is_siteadmin()){
+//         $tagnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsetags', 'class'=>'pull-left user_nav_div browsetags'));
             
-            if(has_capability('local/tags:manage',$systemcontext)){
-                $tag_url = new moodle_url('/local/tags/manage.php?tc=1');
-                $lable = get_string('managetags','local_tags');
-            } else {
-                $tag_url = new moodle_url('/local/tags/index.php');
-                $lable = get_string('tags','local_tags');
-            }
-            $tags = html_writer::link($tag_url, '<i class="fa fa-tags" aria-hidden="true"></i><span class="user_navigation_link_text">'.$lable.'</span>',array('class'=>'user_navigation_link'));
-            $tagnode .= $tags;
-        $tagnode .= html_writer::end_tag('li');
-    }
+//             if(has_capability('local/tags:manage',$systemcontext)){
+//                 $tag_url = new moodle_url('/local/tags/manage.php?tc=1');
+//                 $lable = get_string('managetags','local_tags');
+//             } else {
+//                 $tag_url = new moodle_url('/local/tags/index.php');
+//                 $lable = get_string('tags','local_tags');
+//             }
+//             $tags = html_writer::link($tag_url, '<i class="fa fa-tags" aria-hidden="true"></i><span class="user_navigation_link_text">'.$lable.'</span>',array('class'=>'user_navigation_link'));
+//             $tagnode .= $tags;
+//         $tagnode .= html_writer::end_tag('li');
+//     }
 
-    return array('16' => $tagnode);
-}
+//     return array('16' => $tagnode);
+// }
