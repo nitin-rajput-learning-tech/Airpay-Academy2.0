@@ -41,11 +41,22 @@ class custom_course_form extends moodleform {
     protected $context;
     public $formstatus;
     public function __construct($action = null, $customdata = null, $method = 'post', $target = '', $attributes = null, $editable = true, $formdata = null) {
+
+        global $USER;
+
         $this->formstatus = array(
             'manage_course' => get_string('manage_course', 'local_courses'),
             'other_details' => get_string('courseother_details', 'local_courses'),
-            'target_audience' => get_string('target_audience', 'local_users'),
         );
+        $costcenterdepth=local_costcenter_get_fields();
+
+        $depth=count($costcenterdepth);
+
+        if($USER->useraccess['currentroleinfo']['depth'] < $depth){
+
+            $this->formstatus['target_audience']=get_string('target_audience', 'local_users');
+
+        }
         parent::__construct($action, $customdata, $method, $target, $attributes, $editable, $formdata);
     }
     /**
