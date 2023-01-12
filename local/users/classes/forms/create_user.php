@@ -131,7 +131,7 @@ class create_user extends moodleform {
                              $this->_customdata['open_costcenterid'] : $this->_ajaxformdata['open_costcenterid'];
 
 
-            $reportingmanger = array(null => get_string('select_reportingto', 'local_users'));
+            $reportingmanger[0] =get_string('select_reportingto', 'local_users');
             if($id){
                 $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} WHERE id = (SELECT open_supervisorid FROM {user} WHERE id = :id) ", ['id' => $id]);
             }

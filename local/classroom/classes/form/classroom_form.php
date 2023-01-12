@@ -64,7 +64,7 @@ class classroom_form extends moodleform {
         if ($formstatus == 0) {
             $querieslib = new querylib();           
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_users', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_classroom', $categorycontext, $multiple = false);
             $mform->addElement('text', 'name', get_string('classroom_name', 'local_classroom'), array());
             if (!empty($CFG->formatstringstriptags)) {
                 $mform->setType('name', PARAM_TEXT);

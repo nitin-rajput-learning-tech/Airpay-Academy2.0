@@ -54,16 +54,17 @@ class team_status_lib{
 	
 	public function get_colorcode_tm_dashboard($score, $total){
 		if($total == 0){
-			$total = 1;
+			$totalpercentage = 100;
+		}else{
+			$totalpercentage = ($score/$total)*100;
 		}
-		$totalpercentage = ($score/$total)*100;
 		
 		if($totalpercentage == 100){
-			$color = 'indianred';
-		}elseif($totalpercentage < 50){
 			$color = 'green';
-		}else{
+		}elseif($totalpercentage >= 75){
 			$color = 'yellow';
+		}else{
+			$color = 'indianred';
 		}
 		return $color;
 	}

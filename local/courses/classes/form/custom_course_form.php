@@ -266,7 +266,7 @@ class custom_course_form extends moodleform {
   			$mform->setDefault('enablecompletion', 1);
 
             // tags
-            $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'courses', 'component' => 'local_courses'));            
+            // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'courses', 'component' => 'local_courses'));
 
             $mform->addElement('editor','summary_editor', get_string('coursesummary','local_courses'), null, $editoroptions);
             $mform->addHelpButton('summary_editor', 'coursesummary');
@@ -417,15 +417,15 @@ class custom_course_form extends moodleform {
         }
         
         if ($data['open_enablepoints'] == 1){
-
+            
             if(isset($data['open_points']) && $data['open_points']){
                 $value = $data['open_points'];
                 $intvalue = (int)$value;
-
+      
                 if(!("$intvalue" === "$value") || $intvalue < 0){
-                  $errors['pointsArr'] = get_string('numeric', 'local_classroom');
+                  $errors['pointsArr'] = get_string('numeric', 'local_classroom'); 
                 }
-
+                
               }else{
                 $errors['pointsArr'] = get_string('err_points', 'local_courses');
               }
@@ -443,21 +443,21 @@ class custom_course_form extends moodleform {
         if(isset($data['open_coursecompletiondays']) && $data['open_coursecompletiondays']){
             $value = $data['open_coursecompletiondays'];
             $intvalue = (int)$value;
-
+  
             if(!("$intvalue" === "$value") || $intvalue < 0){
-              $errors['open_coursecompletiondays'] = get_string('numeric', 'local_classroom');
+              $errors['open_coursecompletiondays'] = get_string('numeric', 'local_classroom'); 
             }
-
+            
           }
 
         if(isset($data['open_cost']) && $data['open_cost']){
             $value = $data['open_cost'];
             $intvalue = (int)$value;
-
+  
             if(!("$intvalue" === "$value") || $intvalue < 0){
-              $errors['open_cost'] = get_string('numeric', 'local_classroom');
+              $errors['open_cost'] = get_string('numeric', 'local_classroom'); 
             }
-
+            
           }
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));
         return $errors;
