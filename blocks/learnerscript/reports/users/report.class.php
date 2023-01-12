@@ -68,7 +68,7 @@ class report_users extends reportbase {
 
     function where() { 
         global $DB, $USER;
-        $this->sql .= " WHERE u.confirmed = 1 AND u.deleted = 0 AND u.id > 2";
+        $this->sql .= " WHERE u.confirmed = 1 AND u.deleted = 0 AND u.id > 2 ";
         // $systemcontext = \context_system::instance();
         $categorycontext =  (new \local_users\lib\accesslib())::get_module_context();
         // getscheduled report
