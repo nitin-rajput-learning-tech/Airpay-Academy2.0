@@ -95,3 +95,4 @@ $string['xse'] = 'xseed';
 $string['completed_course'] = 'Completed Course';
 $string['continue_course'] = 'Continue Course';
 $string['start_course'] = 'Launch';
+$string['last_opened'] = 'Last accessed';
