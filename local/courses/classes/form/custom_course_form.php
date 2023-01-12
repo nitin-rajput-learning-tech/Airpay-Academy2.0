@@ -281,21 +281,21 @@ class custom_course_form extends moodleform {
 
         } elseif($formstatus == 1){
 
-            $pointsArr = array();
-            $pointsArr[] = $mform->createElement('text',  'open_points',  '',  get_string('points','local_courses'));
-            $pointsArr[] = $mform->createElement('advcheckbox', 'open_enablepoints',  '',  '', 0);
-            $mform->hideIf('open_points', 'open_enablepoints', 'neq', 1);
-            $mform->addGroup($pointsArr, 'pointsArr',
-                get_string('points','local_courses'),
-                array('&nbsp;&nbsp;'), false);
-            $mform->addHelpButton('pointsArr', 'open_pointscourse', 'local_courses');
-            $mform->setType('open_points', PARAM_INT);
+            // $pointsArr = array();
+            // $pointsArr[] = $mform->createElement('text',  'open_points',  '',  get_string('points','local_courses'));
+            // $pointsArr[] = $mform->createElement('advcheckbox', 'open_enablepoints',  '',  '', 0);
+            // $mform->hideIf('open_points', 'open_enablepoints', 'neq', 1);
+            // $mform->addGroup($pointsArr, 'pointsArr',
+            //     get_string('points','local_courses'),
+            //     array('&nbsp;&nbsp;'), false);
+            // $mform->addHelpButton('pointsArr', 'open_pointscourse', 'local_courses');
+            // $mform->setType('open_points', PARAM_INT);
             // $mform->addRule('open_points', get_string('numeric','local_classroom'), 'numeric', null, 'client');
 
-            $mform->addElement('text',  'open_cost', get_string('open_costcourse','local_courses'));
-            $mform->addHelpButton('open_cost', 'open_costcourse', 'local_courses');
-            $mform->setType('open_cost', PARAM_INT);
-            $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
+            // $mform->addElement('text',  'open_cost', get_string('open_costcourse','local_courses'));
+            // $mform->addHelpButton('open_cost', 'open_costcourse', 'local_courses');
+            // $mform->setType('open_cost', PARAM_INT);
+            // $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             // $skillselect = array(0 => get_string('select_skill','local_courses'));
 
             // $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->course->open_path);
@@ -416,20 +416,20 @@ class custom_course_form extends moodleform {
             $errors['open_certificateid'] = get_string('err_certificate', 'local_courses');
         }
         
-        if ($data['open_enablepoints'] == 1){
+        // if ($data['open_enablepoints'] == 1){
             
-            if(isset($data['open_points']) && $data['open_points']){
-                $value = $data['open_points'];
-                $intvalue = (int)$value;
+        //     if(isset($data['open_points']) && $data['open_points']){
+        //         $value = $data['open_points'];
+        //         $intvalue = (int)$value;
       
-                if(!("$intvalue" === "$value") || $intvalue < 0){
-                  $errors['pointsArr'] = get_string('numeric', 'local_classroom'); 
-                }
+        //         if(!("$intvalue" === "$value") || $intvalue < 0){
+        //           $errors['pointsArr'] = get_string('numeric', 'local_classroom');
+        //         }
                 
-              }else{
-                $errors['pointsArr'] = get_string('err_points', 'local_courses');
-              }
-        }
+        //       }else{
+        //         $errors['pointsArr'] = get_string('err_points', 'local_courses');
+        //       }
+        // }
         if (isset($data['open_path']) && $data['form_status'] == 0){
             if($data['open_path'] == 0){
                 $errors['open_path'] = get_string('pleaseselectorganization', 'local_courses');
@@ -450,15 +450,15 @@ class custom_course_form extends moodleform {
             
           }
 
-        if(isset($data['open_cost']) && $data['open_cost']){
-            $value = $data['open_cost'];
-            $intvalue = (int)$value;
+        // if(isset($data['open_cost']) && $data['open_cost']){
+        //     $value = $data['open_cost'];
+        //     $intvalue = (int)$value;
   
-            if(!("$intvalue" === "$value") || $intvalue < 0){
-              $errors['open_cost'] = get_string('numeric', 'local_classroom'); 
-            }
+        //     if(!("$intvalue" === "$value") || $intvalue < 0){
+        //       $errors['open_cost'] = get_string('numeric', 'local_classroom');
+        //     }
             
-          }
+        //   }
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));
         return $errors;
     }
