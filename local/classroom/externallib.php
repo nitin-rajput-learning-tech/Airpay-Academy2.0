@@ -1708,11 +1708,12 @@ class local_classroom_external extends external_api {
                 'id' => new external_value(PARAM_INT, 'ID of the record', 0),
                 'classroomid' => new external_value(PARAM_INT, 'Classroom ID', 0),
                 'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
+                'name' => new external_value(PARAM_BOOL, 'name', false),
             )
         );
     }
 
-    public static function delete_classroomcourse_instance($action, $id, $classroomid, $confirm) {
+    public static function delete_classroomcourse_instance($action, $id, $classroomid, $confirm,$name) {
         global $DB;
         try {
             if ($confirm) {
