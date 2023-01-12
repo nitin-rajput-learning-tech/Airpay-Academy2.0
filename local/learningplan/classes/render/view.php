@@ -513,13 +513,13 @@ class view extends plugin_renderer_base {
                 // }
                 $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($learning_plan->id);
                 $action_icons = '';
-                if (is_siteadmin() || has_capability('local/learningplan:visible', $categorycontext)) {
+                if (is_siteadmin() || (has_capability('local/learningplan:visible', $categorycontext) && has_capability('local/learningplan:manage',$categorycontext))) {
 					$capability1 = true;
                 }
 
-                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
-                	$capability1 = false;
-                }
+                // if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage',$categorycontext))){
+                // 	$capability1 = false;
+                // }
 
                 if (has_capability('local/learningplan:update', $categorycontext)) {
                 	$capability2 = true;

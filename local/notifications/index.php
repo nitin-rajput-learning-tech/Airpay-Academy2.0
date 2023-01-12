@@ -40,6 +40,7 @@ $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->css('/local/notifications/css/jquery.dataTables.min.css', true);
 $renderer = $PAGE->get_renderer('local_notifications');
+require_capability('local/notifications:manage', $sitecontext);
 
 echo $OUTPUT->header();
 if($deleteid && $confirm && confirm_sesskey()){	

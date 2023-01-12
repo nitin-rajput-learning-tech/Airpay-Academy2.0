@@ -22,6 +22,10 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT
     ),
+    'local/learningplan:exportplans' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSECAT
+    ),
     'local/learningplan:view' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT

@@ -35,7 +35,15 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
-     'local/courses:unenrol' => array(
+    'local/courses:unenrol' => array(
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+    ),
+    'local/courses:exportcourses' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,

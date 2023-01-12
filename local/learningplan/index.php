@@ -121,13 +121,15 @@ if(is_siteadmin() ||(
         $out .= implode('<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>', $reports_info);
         $out .= '</div></div></li>';
     }
-    $out .= "<li>
-        <div class='coursebackup course_extended_menu_itemcontainer'>
-            <a id='extended_menu_downloadusers' title='".get_string('exportlearningplans','local_learningplan')."' class='course_extended_menu_itemlink custom_content_download' data-href='$CFG->wwwroot/local/learningplan/exportcsv.php' href='javascript:void(0);'>
-                <i class='icon fa fa-download fa-fw' aria-hidden='true' aria-label=''></i>
-            </a>
-        </div>
-    </li>";
+    if(is_siteadmin() || has_capability('local/learningplan:exportplans', $categorycontext)){
+        $out .= "<li>
+            <div class='coursebackup course_extended_menu_itemcontainer'>
+                <a id='extended_menu_downloadusers' title='".get_string('exportlearningplans','local_learningplan')."' class='course_extended_menu_itemlink custom_content_download' data-href='$CFG->wwwroot/local/learningplan/exportcsv.php' href='javascript:void(0);'>
+                    <i class='icon fa fa-download fa-fw' aria-hidden='true' aria-label=''></i>
+                </a>
+            </div>
+        </li>";
+    }
 }
 if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
         $out .= "<li>    

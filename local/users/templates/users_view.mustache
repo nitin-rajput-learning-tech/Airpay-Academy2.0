@@ -61,7 +61,6 @@
                                             <i class="fa fa-pencil fa-fw"></i>
                                         </a>
                                     </li>
-                                    {{/ editcap }}
                                         {{# visible}}
                                         <li>
                                             <a href="javascript:void(0)" title="{{# str}}makeactive,local_users{{/ str}}" onclick="(function(e){ require('local_users/newuser').userSuspend({ id:{{userid}},context:1, fullname:'{{fullname}}', status: 'disable' }) })(event)">
@@ -75,6 +74,7 @@
                                                 <i class="fa fa-eye"></i></a>
                                         </li>
                                         {{/ visible}}
+                                    {{/ editcap }}
                                 </ul>
                             </div>
                             <div class="pull-left p-0 user_image">

@@ -115,13 +115,15 @@ $extended_menu_links .= '<div class="dropdown-menu dropdown-menu-right menu  ali
 
    }
 $extended_menu_links .= '</div></div></li>';
-$extended_menu_links .= "<li>
-        <div class='coursebackup course_extended_menu_itemcontainer'>
-            <a id='extended_menu_downloadusers' title='".get_string('exportcourses','local_courses')."' class='course_extended_menu_itemlink custom_content_download' data-href='$CFG->wwwroot/local/courses/exportcsv.php' href='javascript:void(0);'>
-                <i class='icon fa fa-download fa-fw' aria-hidden='true' aria-label=''></i>
-            </a>
-        </div>
-    </li>";
+    if ((has_capability('local/courses:exportcourses', $categorycontext) || is_siteadmin())) {
+        $extended_menu_links .= "<li>
+            <div class='coursebackup course_extended_menu_itemcontainer'>
+                <a id='extended_menu_downloadusers' title='".get_string('exportcourses','local_courses')."' class='course_extended_menu_itemlink custom_content_download' data-href='$CFG->wwwroot/local/courses/exportcsv.php' href='javascript:void(0);'>
+                    <i class='icon fa fa-download fa-fw' aria-hidden='true' aria-label=''></i>
+                </a>
+            </div>
+        </li>";
+    }
 }
 if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
     $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
