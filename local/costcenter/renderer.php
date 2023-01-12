@@ -182,6 +182,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "headstring" => 'editcostcen',
             "formtype" => 'organization',
             "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $categorycontext)),
+            "managepermissions" => (is_siteadmin() || has_capability('local/costcenter:managepermissions', $categorycontext)),
         ];
 
 

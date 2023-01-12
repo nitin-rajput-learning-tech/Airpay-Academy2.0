@@ -47,6 +47,13 @@ $capabilities = array(
         'archetypes' => array(
         )
     ),
+    'local/costcenter:managepermissions' => array(
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => array(
+        )
+    ),
     'local/costcenter:updatesubdepartment' => array(
         'riskbitmask' => RISK_SPAM,
         'captype' => 'write',
