@@ -79,20 +79,8 @@ class notification{
         }else{
         	$comp_name = $this->db->get_field('local_'.$requestcomponent->compname,'name',array('id'=>$requestcomponent->componentid));
         }
-		// elseif($requestcomponent->compname == 'learningplan'){
-  //           $comp_name = $DB->get_field('local_learningplan','name',array('id'=>$data->componentid));
-  //       }elseif($requestcomponent->compname == 'classroom'){
-  //           $comp_name = $DB->get_field('local_classroom','name',array('id'=>$data->componentid));
-  //       }elseif($requestcomponent->compname == 'program'){
-  //           $comp_name = $DB->get_field('local_program','name',array('id'=>$data->componentid));
-  //       }elseif($requestcomponent->compname == 'elearning'){
-  //           $comp_name = $DB->get_field('course','fullname',array('id'=>$data->componentid));
-  //       }
 		$datamailobject->req_component = $requestcomponent->compname;
 		$datamailobject->req_componentname = $comp_name;
-		// $datamailobject->req_userfulname = fullname($touser);
-		// $datamailobject->req_useremail = $touser->email;
-
         $datamailobject->req_userfulname = fullname($requesteduser);
         $datamailobject->req_useremail = $requesteduser->email;
 		$datamailobject->body = $notification->body;

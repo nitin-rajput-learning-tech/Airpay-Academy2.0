@@ -86,14 +86,7 @@ use core_user;
       $dataobj = $componentid;
       $exists=$DB->record_exists('local_request_records', array('componentid'=>$componentid, 'compname'=>$component, 'createdbyid'=>$USER->id));
       $exist_req=$DB->get_record('local_request_records', array('componentid'=>$componentid, 'compname'=>$component, 'createdbyid'=>$USER->id));
-      // if(!$exists){
        $newrecordid=$DB->insert_record('local_request_records',$record);
-      // } else {
-      //   $exist_req->status = 'PENDING'; 
-      //   $exist_req->usermodified = $USER->id; 
-      //   $exist_req->timemodified = time();
-      //   $newrecordid=$DB->update_record('local_request_records',$exist_req);
-      // }
        $lpcreated_id = get_users_by_capability($context,
                             'local/request:approverecord',
                             '',
@@ -121,29 +114,15 @@ use core_user;
           $requesteduser->open_costcenterid=$org_id;
           $requesteduser->open_departmentid = $ctr_id;          
           foreach($lpcreated_id as $created_id){
-          // $org = $DB->get_field('local_costcenter','fullname',array('id'=>$org_id));
           $costcenterid=explode('/',$created_id->open_path)[1];
           $countryid=explode('/',$created_id->open_path)[2];
           if($costcenterid == $org_id){
-            if(has_capability('local/costcenter:manage_owndepartments', $systemcontext, $created_id) && !(has_capability('local/costcenter:manage_ownorganization', $systemcontext, $created_id) || has_capability('local/costcenter:manage_multiorganizations', $systemcontext, $created_id))){
-              if($countryid != $ctr_id){
+               if($countryid != $ctr_id){
                 continue;
               }
-            }
-            // $touserid = new stdClass();
-            // $touserid = $record->createdbyid;
-            // $touserid = $created_id->id;
-            // $lpcreatedid = 2;
             $lpcreatedid = core_user::get_support_user();
             $touser = core_user::get_user($created_id->id);
             $logmail = $notification->request_notification($type, $requests, $touser, $lpcreatedid, $requesteduser);
-            // $emaillogs = new reqnotifications_emails();
-            // if($touserid == $record->createdbyid){
-            //    $email_logs = $emaillogs->requests_emaillogs($type,$dataobj,$record->createdbyid,$lpcreatedid);
-            // }
-            // if($touserid == $created_id->id){
-            //     $email_logs = $emaillogs->requests_emaillogs($type,$dataobj,$created_id->id,$lpcreatedid);
-            // }
           }
         }
       
@@ -176,7 +155,6 @@ use core_user;
   public static function approve($id){     
     global $DB, $USER, $CFG;
     require_once($CFG->dirroot . '/local/lib.php'); 
-    // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
     $notification = new \local_request\notification();
     
     $context =(new \local_skillrepository\lib\accesslib())::get_module_context();
@@ -202,15 +180,6 @@ use core_user;
         if($enroll_to_component !=-1){
           $updated_recordid = $DB->update_record('local_request_records', $updaterecord);
         }
-        // $lpcreated_id = get_users_by_capability($context,
-        //                     'local/request:approverecord',
-        //                     '',
-        //                     'lastname',
-        //                     '',
-        //                     '',
-        //                     '',
-        //                     '',
-        //                     false);
         // Trigger request approved event.
         $params = array(
               'context' => (new \local_skillrepository\lib\accesslib())::get_module_context(),
@@ -224,26 +193,6 @@ use core_user;
         $event->add_record_snapshot('local_request_records', $requests);
         $event->trigger();
         $requesteduser = \core_user::get_user($requests->createdbyid);
-        // $org_id = $DB->get_field('user','open_costcenterid',array('id'=>$updaterecord->createdbyid));
-        // foreach($lpcreated_id as $created_id){
-        //   // $org = $DB->get_field('local_costcenter','fullname',array('id'=>$org_id));
-        //   if($created_id->open_costcenterid == $org_id){
-        //     $touserid = new stdClass();
-        //     $touserid = $updaterecord->createdbyid;
-        //     $touserid = $created_id->id;
-        //     // $lpcreatedid = 2;
-        //     $lpcreatedid = core_user::get_support_user();
-        //     // $emaillogs = new reqnotifications_emails();
-        //     // if($touserid == $updaterecord->createdbyid){
-        //        // $email_logs = $emaillogs->requests_emaillogs($type,$dataobj,$updaterecord->createdbyid,$lpcreatedid);
-        //     $touser = core_user::get_user($created_id->id);
-        //     $logmail = $notification->request_notification($type, $requests, $touser, $lpcreatedid);
-        //     // }
-        //     // if($touserid == $created_id->id){
-        //     //     $email_logs = $emaillogs->requests_emaillogs($type,$dataobj,$created_id->id,$lpcreatedid);
-        //     // }
-        //   }
-        // }
         $touser = core_user::get_user($updaterecord->createdbyid);
         list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$touser->open_path);
           $touser->costcenter=$org_id;     
@@ -259,12 +208,6 @@ use core_user;
       if($enroll_to_component > 0){
 
           $params=array();        
-          // $sql = "SELECT lw.sortorder as classroomwaitinglistno,c.name as classroom,concat(u.firstname,'',u.lastname) as username,
-          //                                   (select GROUP_CONCAT(lcw.id) FROM {local_classroom_waitlist} as lcw where lcw.classroomid=lw.classroomid and lcw.enrolstatus=0) as active
-          //                                   FROM {local_classroom_waitlist} as lw
-          //                                   JOIN {local_classroom} AS c ON c.id = lw.classroomid
-          //                                   JOIN {user} as u ON u.id=lw.userid
-          //                                   where lw.id=:waitlistid";
             $sql = "SELECT lw.sortorder as classroomwaitinglistno,c.name as classroom,concat(u.firstname,'',u.lastname) as username, c.id AS classroomid
                 FROM {local_classroom_waitlist} as lw
                 JOIN {local_classroom} AS c ON c.id = lw.classroomid
@@ -274,7 +217,6 @@ use core_user;
           $stringobj=$DB->get_record_sql($sql, $params);
           $activesql = "SELECT lcw.id FROM {local_classroom_waitlist} as lcw where lcw.classroomid=:classroomid and lcw.enrolstatus=0 ";
           $active = $DB->get_fieldset_sql($activesql, array('classroomid' => $stringobj->classroomid));
-          // $active=explode(',',$stringobj->active);
           $classroomwaitinglistno=array_search ($enroll_to_component, $active);
           $stringobj->classroomwaitinglistno=($classroomwaitinglistno+1) ? ($classroomwaitinglistno+1) : $stringobj->classroomwaitinglistno ;
           $return_status=get_string("otherclassroomwaitlistinfo",'local_classroom',$stringobj);
@@ -297,7 +239,6 @@ use core_user;
   public static function deny($id){     
     global $DB, $USER, $CFG;
     require_once($CFG->dirroot . '/local/lib.php');
-    // require_once($CFG->dirroot.'/local/request/notifications_emails.php');
     $notification = new \local_request\notification(); 
     $previousrecord = new stdclass();
      
@@ -328,15 +269,6 @@ use core_user;
         }
 
         $updated_recordid = $DB->update_record('local_request_records', $updaterecord);
-        // $lpcreated_id = get_users_by_capability($context,
-        //                     'local/request:approverecord',
-        //                     '',
-        //                     'lastname',
-        //                     '',
-        //                     '',
-        //                     '',
-        //                     '',
-        //                     false);
         // Trigger request approved event.
         $params = array(
               'context' => (new \local_skillrepository\lib\accesslib())::get_module_context(),
@@ -350,26 +282,6 @@ use core_user;
         $event->add_record_snapshot('local_request_records', $requests);
         $event->trigger();
         $requesteduser = \core_user::get_user($requests->createdbyid);
-        // foreach($lpcreated_id as $created_id){
-        //   $org_id = $DB->get_field('user','open_costcenterid',array('id'=>$updaterecord->createdbyid));
-        //   // $org = $DB->get_field('local_costcenter','fullname',array('id'=>$org_id));
-        //   if($created_id->open_costcenterid == $org_id){
-        //     $touserid = new stdClass();
-        //     $touserid = $updaterecord->createdbyid;
-        //     $touserid = $created_id->id;
-        //     // $lpcreatedid = 2;
-        //     $lpcreatedid = core_user::get_support_user();
-        //     $notification->request_notification($emailtype, $requests, $touser, $fromuser);
-        //     // $emaillogs = new reqnotifications_emails();
-        //     // if($touserid == $updaterecord->createdbyid){
-        //        // $email_logs = $emaillogs->requests_emaillogs($type,$dataobj,$updaterecord->createdbyid,$lpcreatedid);
-        //     // }
-        //     // if($touserid == $created_id->id){
-        //     //     $email_logs = $emaillogs->requests_emaillogs($type,$dataobj,$created_id->id,$lpcreatedid);
-        //     // }
-        //   }
-        // }
-
         $touser = core_user::get_user($updaterecord->createdbyid);
         list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$touser->open_path);
           $requesteduser->costcenter=$org_id;
@@ -443,15 +355,7 @@ use core_user;
       case 'classroom' : 
         $newrecordid=(new classroom)->classroom_remove_assignusers($componentid, array($userid), $request=1);
         return $newrecordid;
-        break;
-      case 'program' :  
-        $newrecordid=(new program)->program_remove_assignusers($componentid, array($userid));
-        return $newrecordid;
-        break;
-      case 'certification' :
-        $newrecordid=(new certification)->certification_remove_assignusers($componentid, array($userid), $request=1);         
-        return $newrecordid;
-        break;  
+        break; 
       case 'learningplan' :  
         $newrecord = new stdClass();
         $newrecord->planid= $componentid;
@@ -472,7 +376,6 @@ use core_user;
               $instance = $DB->get_record('enrol', array('id'=>$enrolid->enrolid, 'enrol'=>'self'), '*', MUST_EXIST);
               $employee = $DB->get_record('role', array('shortname' => 'employee'));
               $enrolplugin = enrol_get_plugin('self');
-              // $courseinstance = get_record('course', array('id'=>$componentid ));
               $enrolledid= $enrolplugin->unenrol_user($instance, $userid);
             }
           }

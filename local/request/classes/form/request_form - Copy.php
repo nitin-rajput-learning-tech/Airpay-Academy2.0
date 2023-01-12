@@ -113,8 +113,7 @@ class request_form extends moodleform {
                 $mform->setDefault('costcenter', $USER->open_costcenterid);
             }
 
-           if ((!is_siteadmin() && (((!has_capability('local/classroom:manage_multiorganizations', (new \local_request\lib\accesslib())::get_module_context()) &&! has_capability('local/costcenter:manage_multiorganizations', (new \local_request\lib\accesslib())::get_module_context()))) && has_capability('local/classroom:manageclassroom', $context)&&(!has_capability('local/classroom:manage_owndepartments',$context)&&
-                                         !has_capability('local/costcenter:manage_owndepartments',$context))))) {
+           if ((!is_siteadmin() && has_capability('local/classroom:manageclassroom', $context))) {
                 $departments = array();
                 $departmentslist = $this->_ajaxformdata['department'];
 
@@ -160,7 +159,7 @@ class request_form extends moodleform {
                     'local_classroom'), $departments, $options);
                 $mform->setType('department', PARAM_INT);
                 
-            }elseif (is_siteadmin() || ((!has_capability('local/classroom:manage_multiorganizations', (new \local_request\lib\accesslib())::get_module_context()) &&! has_capability('local/costcenter:manage_multiorganizations', (new \local_request\lib\accesslib())::get_module_context())) && has_capability('local/classroom:manageclassroom', $context)&&(has_capability('local/classroom:manage_owndepartments',$context)||has_capability('local/costcenter:manage_owndepartments',$context)))) {
+            }elseif (is_siteadmin() || has_capability('local/classroom:manageclassroom', $context)) {
                 
                 $mform->addElement('hidden', 'department', get_string('department',
                     'local_classroom'));
