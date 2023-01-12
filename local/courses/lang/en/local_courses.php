@@ -407,6 +407,7 @@ $string['open_level4departmentlocal_courses'] = 'Commercial Area';
 $string['open_level5departmentlocal_courses'] = 'Territory';
 $string['pleaseselectidentifiedtype'] = 'Please Select Type';
 
+$string['open_costcenteridlocal_courses_help'] = 'Organization of the course';
 $string['open_departmentlocal_courses_help'] = 'Country of the course';
 $string['open_subdepartmentlocal_courses_help'] = 'Commercial Unit of the course';
 $string['open_level4departmentlocal_courses_help'] = 'Commercial Area of the course';
@@ -423,3 +424,7 @@ $string['categorycodeshouldbesubsubdepcode'] = 'Category Code should be under th
 $string['categorycodeshouldbesubsubsubdepcode'] = 'Category Code should be short name of Territory i.e \'{$a}\'';
 $string['subdeptshouldundersubsubdepcode'] = 'Territory should be under the Commercial Area i.e \'{$a}\'';
 $string['subsubdepartmentnotfound'] ='Commercial Area not found i.e \'{$a}\'';
+$string['open_states_help'] = 'Search and select an available or existing state as target audience';
+$string['open_district_help'] = 'Search and select an available or existing district as target audience';
+$string['open_subdistrict_help'] = 'Search and select an available or existing subdistrict as target audience';
+$string['open_village_help'] = 'Search and select an available or existing village as target audience';
