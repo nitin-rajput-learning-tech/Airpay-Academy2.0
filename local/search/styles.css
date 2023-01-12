@@ -303,6 +303,9 @@
 }
 .coursecard .card-body{
     padding-top: 6px;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
 }
 .coursecard .endrolled_details_div span:nth-child(2){
     font-size: 20px;
@@ -513,7 +516,7 @@ body#page-local-search-allcourses .courseimg_bg {
 body#page-local-search-allcourses .card-img-top.courseimg_container{
     padding: 10px 15px;
     width: 100%;
-    max-width: 250px;
+    
 }
 #page-local-search-allcourses #allcourses_section .catcourses_list{
     border-bottom: 1px solid #dcdcdc;
@@ -571,6 +574,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 #page-local-search-allcourses .cat_btn, 
 #page-local-search-allcourses .viewmore_btn {
+    max-width: 150px;
     width: 100%;
     padding: 8px 10px;
     margin: 0 5px;
@@ -670,8 +674,8 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 /*search page allignments*/
 #page-local-search-allcourses .coursecontent .viewmore_btn,
 #page-local-search-allcourses .coursecontent .cat_btn{
-    padding: 6px 8px !important;
-    margin-bottom:10px;
+    padding: 4px 0 !important;
+    margin: 0 10px 0 0 !important;
     min-width: 120px;
     font-weight: 500 !important;
     background-color: var(--buttonbgcolor);
@@ -717,18 +721,27 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 #page-local-search-allcourses .fakebtn{
     padding:0 !important;
 }
-#page-local-search-allcourses .coursecontent .action_div span.ng-scope{
+/* #page-local-search-allcourses .coursecontent .action_div span.ng-scope{
     margin-right: 10px !important;
-}
+} */
 
 #page-local-search-allcourses #region-main .card{
     margin-bottom: 0 !important;
 }
-@media(max-width:767px){
+
+/*search page course card changes*/
+#page-local-search-allcourses .courseimg_bg{
+    min-height: 214px;
+}
+#page-local-search-allcourses .card-img-top.courseimg_container{
+    max-width: 180px ;
+    height: 100% ;
+}
+@media(max-width: 600px){
 #page-local-search-allcourses .coursecard_container{
     flex-direction: column;
 }
-body#page-local-search-allcourses .card-img-top.courseimg_container{
+#page-local-search-allcourses .card-img-top.courseimg_container{
     max-width: 100%;
     height: 200px;
 }
@@ -738,3 +751,5 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     flex-direction: column;
    } 
 }
+
+
