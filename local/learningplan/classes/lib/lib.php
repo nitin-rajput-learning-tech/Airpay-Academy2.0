@@ -98,12 +98,13 @@ class lib
 					$data->subdepartment = !empty($data->subdepartment) ? $data->subdepartment : -1;
 				}
 			}
-		} else {
+			
 			if ($data->map_certificate == 1 || !empty($existinfsecr->certificateid)) {
 				$data->certificateid = $data->certificateid;
 			} else {
 				$data->certificateid = null;
 			}
+		// } else {
 		}
 		$data->usermodified =  $this->user->id;
 		$data->timemodified = time();
