@@ -873,6 +873,8 @@ class syncfunctionality
             }
             if ($user->force_password_change == 1) {
                 set_user_preference('auth_forcepasswordchange', $user->force_password_change, $user->id);
+            }else if($user->force_password_change == 0){
+                set_user_preference('auth_forcepasswordchange', 0, $user->id);
             }
             $this->updatedcount++;
         }

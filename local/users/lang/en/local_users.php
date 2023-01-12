@@ -642,9 +642,9 @@ $string['usernameempty_error'] = 'Provide username for learner id \'{$a->employe
 
 $string['empstatusempty_error'] = 'Provide learner status for  learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['mobileno_error'] = 'Enter a valid mobilenumber for learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['mobileno_error'] = 'Enter a valid mobilenumber for learner id \'{$a->learner_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['validmobileno_error'] = 'Enter a valid mobilenumber of 10 digits for learner id \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['validmobileno_error'] = 'Enter a valid mobilenumber of 10 digits for learner id \'{$a->learner_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
 $string['select_org'] = '--Select Organization--';
 $string['select_dept'] = '--Select Country--';
