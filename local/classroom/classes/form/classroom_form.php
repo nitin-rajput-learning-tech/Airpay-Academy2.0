@@ -168,6 +168,8 @@ class classroom_form extends moodleform {
                 'data-action' => 'classroom_trainer_selector',
                 'data-options' => json_encode(array('id' => $id,'organizationselect' => 'organizationselect')),
                 'class' => 'trainerselect',
+                'data-parentclass' => 'open_costcenterid_select',
+                'data-class' => 'idparentselect',
             );
              
             $mform->addElement('autocomplete', 'trainers', get_string('trainers', 'local_classroom'), $trainers, $options);
