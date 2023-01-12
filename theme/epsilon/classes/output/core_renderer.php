@@ -1241,9 +1241,9 @@ class core_renderer extends \core_renderer {
             $switchrole->itemtype = 'link';
             $learner_record_sql = "SELECT id, name, shortname
                                     FROM {role}
-                                    WHERE shortname = 'employee' AND archetype = 'student' ";
+                                    WHERE shortname = 'user' AND archetype = 'user' ";
             $learnerroleid = $DB->get_record_sql($learner_record_sql);
-
+            $USER->access['rsw']['/1'] = $learnerroleid->id;
             $rolename = get_string('employee','theme_epsilon');
 
 
@@ -1609,11 +1609,11 @@ class core_renderer extends \core_renderer {
         }
         $context = \context::instance_by_id($contextid);
         $roles = get_user_roles($context, $USER->id);
-        $userroles = array();
+        // $userroles = array();
 
-        foreach($roles as $r){
-            $userroles[$r->roleid] = $r->shortname;
-        }
+        // foreach($roles as $r){
+        //     $userroles[$r->roleid] = $r->shortname;
+        // }
 
         $accessdata = get_empty_accessdata();
         if($this->roleswitch($roleid, $context, $accessdata)){
