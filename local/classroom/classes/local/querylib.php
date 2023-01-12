@@ -90,8 +90,8 @@ class querylib {
         }
         if (!empty(array_filter($costcenters))) {
             $costcenters = implode(',', $costcenters);
-            $concatsql .= " AND concat('/',u.open_path,'/') in ( $costcenters ) ";
-            //$params['costcenterid'] = $costcenters;
+            $concatsql .= " AND concat('/',u.open_path,'/') LIKE :costcenter ";
+            $params['costcenter'] = '%'.$costcenters.'%';
         }
          if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && ( !is_siteadmin() )) {
             $concatsql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
@@ -113,10 +113,11 @@ class querylib {
         $fields = "SELECT u.id , CONCAT(u.firstname,' ', u.lastname) AS fullname ";
         $sql = "FROM {role_capabilities} as rc
                   JOIN {role_assignments} ra ON ra.roleid=rc.roleid
+                  JOIN mdl_role mr ON mr.id = rc.roleid
                   JOIN {user} u ON u.id = ra.userid
                  WHERE u.confirmed = :confirmed
                   AND u.suspended = :suspended AND u.deleted = :deleted AND u.id > 2
-                       AND rc.capability LIKE '%trainer_viewclassroom%' and rc.permission=1 ";
+                       AND rc.capability LIKE '%trainer_viewclassroom%' and rc.permission=1 AND shortname = 'trainer' ";
         if (!empty($trainers)) {
             $sql .= " AND u.id $trainerslistsql";
         }

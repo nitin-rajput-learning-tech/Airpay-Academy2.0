@@ -1269,7 +1269,7 @@ class local_classroom_external extends external_api {
         $courses = array();
         // if ($query) {
             $queryparams = array();
-            $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($classroomid);            
+            // $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($classroomid);        
             if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
                 $concatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
            }
@@ -1415,6 +1415,7 @@ class local_classroom_external extends external_api {
                 'id' => new external_value(PARAM_INT, 'ID of the record', 0),
                 'classroomid' => new external_value(PARAM_INT, 'Classroom ID', 0),
                 'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
+                'feedbackname'=>new external_value(PARAM_RAW, 'feedbackname', false),
             )
         );
     }
@@ -1492,7 +1493,6 @@ class local_classroom_external extends external_api {
         if (!empty($options)) {
             $formoptions = json_decode($options);
         }
-
         // $limitfrom = $params['limitfrom'];
         // $limitnum = $params['limitnum'];
         //
@@ -1503,8 +1503,7 @@ class local_classroom_external extends external_api {
 
             switch($action) {
                 case 'classroom_trainer_selector':
-                    $parentid = $formoptions->parnetid;
-                    //print_R($query);exit;
+                    $parentid = $formoptions->parentid;
                     $return = $querieslib->get_user_department_trainerslist(true,array($parentid), array(), $query);
                 break;
                 case 'classroom_institute_selector':
