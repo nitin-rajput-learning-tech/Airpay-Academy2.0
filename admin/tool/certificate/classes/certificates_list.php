@@ -189,10 +189,10 @@ class certificates_list extends \table_sql {
         if ($template->can_manage()) {
             // Duplicate.
             $link = new \moodle_url('#');
-            $icon = new \pix_icon('e/manage_files', get_string('duplicate'), 'core');
-            $attributes = ['data-action' => 'duplicate', 'data-id' => $template->get_id(),
-                'data-name' => $template->get_formatted_name(), 'data-selectcategory' => (int)$this->canchangecategory];
-            $actions .= $OUTPUT->action_icon($link, $icon, null, $attributes);
+            // $icon = new \pix_icon('e/manage_files', get_string('duplicate'), 'core');
+            // $attributes = ['data-action' => 'duplicate', 'data-id' => $template->get_id(),
+            //     'data-name' => $template->get_formatted_name(), 'data-selectcategory' => (int)$this->canchangecategory];
+            // $actions .= $OUTPUT->action_icon($link, $icon, null, $attributes);
             // Delete.
 //            mallikarjun added start
                 $systemcontext = \context_system::instance();

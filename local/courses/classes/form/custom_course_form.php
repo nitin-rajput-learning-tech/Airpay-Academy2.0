@@ -309,7 +309,7 @@ class custom_course_form extends moodleform {
             // $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             // $skillselect = array(0 => get_string('select_skill','local_courses'));
 
-            // $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->course->open_path);
+         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->course->open_path);
 
             // $skillcostcentersql = "SELECT id,name FROM {local_skill}
             //                     WHERE 1=1 $costcenterpathconcatsql ";
@@ -361,7 +361,6 @@ class custom_course_form extends moodleform {
                                     WHERE 1=1 $costcenterpathconcatsql ";
 
                 $cert_templates = $DB->get_records_sql_menu($certificatesql);
-
                 $certificateslist = $select + $cert_templates;
 
                 $mform->addElement('select',  'open_certificateid', get_string('certificate_template','local_courses'), $certificateslist);
