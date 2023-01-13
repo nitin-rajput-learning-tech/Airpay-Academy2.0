@@ -32,7 +32,7 @@ $PAGE->set_title($course->fullname);
 //$PAGE->set_heading($course->fullname);
 $userrolecontext = local_costcenter\lib\accesslib::get_module_context();
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
-if(!is_siteadmin() && array_search(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true)){
+if(!is_siteadmin() && in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true)){
 	$switchedrole = false;
 	$PAGE->navbar->add(get_string('e_learning_courses','local_search'), $catalogurl);
 }else{
