@@ -57,7 +57,7 @@ class custom_category_form extends moodleform {
         }
         if(!is_siteadmin()){
             $orgcond = [];
-            foreach($USER->access['currentroleinfo']['contextinfo'] AS $contextinfo){
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
                 $costcenterid = explode('/', $contextinfo['costcenterpath'])[1];
                 $orgcond[] = " lcc.costcenterid = {$costcenterid} ";
             }

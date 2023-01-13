@@ -93,13 +93,18 @@ function custom_category_details($tablelimits, $filtervalues){
             $list=array();
             $id = $c->id;
             $categoryexist = $DB->record_exists('course', array('open_categoryid'=>$c->id));
+            $categorparent = $DB->record_exists('local_custom_category', array('parentid'=>$c->id));
             $parent = $DB->get_field('local_custom_category', 'fullname', array('id' => $c->parentid));
             $list['custom_category_name'] = $c->fullname;
             $list['organisationname'] = $c->organisationname;
             $list['custom_category_id'] = $c->id;
             $list['shortname']=$c->shortname;
             $list['parent']=$parent ? $parent : 'N/A';
-            $list['categoryexist'] = $categoryexist;
+            if($categorparent){
+                $list['categoryexist'] = $categorparent;
+            } elseif($categoryexist) {
+                $list['categoryexist'] = $categoryexist;
+            }
             $data[] = $list;
         }
     }
