@@ -884,8 +884,11 @@ class core_renderer extends \core_renderer {
                 ['id' => 'region-main-settings-menu']
             ));
         }
+        $show_course_header = false;
         if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1) {
             $course_extended_menu = $this->course_context_header_settings_menu();
+            $show_course_header = true;
+            
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
         }
@@ -902,7 +905,7 @@ class core_renderer extends \core_renderer {
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
         }
-        return $this->render_from_template('theme_epsilon/full_header', $header);
+        return $this->render_from_template($show_course_header? 'theme_epsilon/course_full_header' : 'theme_epsilon/full_header', $header);
     }
         /**
      * return custom course page header buttons to show only on course pages
@@ -1241,9 +1244,9 @@ class core_renderer extends \core_renderer {
             $switchrole->itemtype = 'link';
             $learner_record_sql = "SELECT id, name, shortname
                                     FROM {role}
-                                    WHERE shortname = 'employee' AND archetype = 'student' ";
+                                    WHERE shortname = 'user' AND archetype = 'user' ";
             $learnerroleid = $DB->get_record_sql($learner_record_sql);
-
+            $USER->access['rsw']['/1'] = $learnerroleid->id;
             $rolename = get_string('employee','theme_epsilon');
 
 
@@ -1609,11 +1612,11 @@ class core_renderer extends \core_renderer {
         }
         $context = \context::instance_by_id($contextid);
         $roles = get_user_roles($context, $USER->id);
-        $userroles = array();
+        // $userroles = array();
 
-        foreach($roles as $r){
-            $userroles[$r->roleid] = $r->shortname;
-        }
+        // foreach($roles as $r){
+        //     $userroles[$r->roleid] = $r->shortname;
+        // }
 
         $accessdata = get_empty_accessdata();
         if($this->roleswitch($roleid, $context, $accessdata)){

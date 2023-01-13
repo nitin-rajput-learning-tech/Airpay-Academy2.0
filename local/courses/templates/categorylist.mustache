@@ -40,7 +40,7 @@
                                  <span class="pull-right showoptions" data-action="showoptions{{catgoryid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{catgoryid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{catgoryid}}' }) })(event)">
                                         <i class="fa fa-ellipsis-h options"></i>
                                 </span>
-                                <ul class="col-md-12 col-sm-12 col-12 p-0 options_container" id="showoptions{{catgoryid}}">
+                                <ul class="options_container" id="showoptions{{catgoryid}}">
                                 {{# delete_enable}}
                                     <li>
                                         <a href="javascript:void(0)" data-action = "deletecategorymodal{{catgoryid}}" data-value = "{{ catgoryid }}" class="deletecategorymodal" title = "{{# str}} delete {{/ str}}" onclick="(function(e){require('local_courses/deletecategory').init({contextid:{{ contextid }}, categoryid:{{ catgoryid }}, })})(event)">

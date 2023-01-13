@@ -73,7 +73,6 @@ class report_classroom_completions extends reportbase implements report {
         $this->sql .= " FROM {local_classroom} lc ";
     }
 
-
     function joins() {
         $this->sql .=" JOIN {local_classroom_users} lcu ON lc.id = lcu.classroomid
                         JOIN {user} u ON u.id = lcu.userid ";
@@ -86,6 +85,7 @@ class report_classroom_completions extends reportbase implements report {
 
         $systemcontext = context_system::instance();
 
+        $this->sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path'); 
         parent::where();
     }
 

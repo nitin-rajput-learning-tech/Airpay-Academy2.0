@@ -41,11 +41,22 @@ class custom_course_form extends moodleform {
     protected $context;
     public $formstatus;
     public function __construct($action = null, $customdata = null, $method = 'post', $target = '', $attributes = null, $editable = true, $formdata = null) {
+
+        global $USER;
+
         $this->formstatus = array(
             'manage_course' => get_string('manage_course', 'local_courses'),
             'other_details' => get_string('courseother_details', 'local_courses'),
-            'target_audience' => get_string('target_audience', 'local_users'),
         );
+        $costcenterdepth=local_costcenter_get_fields();
+
+        $depth=count($costcenterdepth);
+
+        if($USER->useraccess['currentroleinfo']['depth'] < $depth){
+
+            $this->formstatus['target_audience']=get_string('target_audience', 'local_users');
+
+        }
         parent::__construct($action, $customdata, $method, $target, $attributes, $editable, $formdata);
     }
     /**
@@ -298,7 +309,7 @@ class custom_course_form extends moodleform {
             // $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
             // $skillselect = array(0 => get_string('select_skill','local_courses'));
 
-            // $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->course->open_path);
+         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->course->open_path);
 
             // $skillcostcentersql = "SELECT id,name FROM {local_skill}
             //                     WHERE 1=1 $costcenterpathconcatsql ";
@@ -350,7 +361,6 @@ class custom_course_form extends moodleform {
                                     WHERE 1=1 $costcenterpathconcatsql ";
 
                 $cert_templates = $DB->get_records_sql_menu($certificatesql);
-
                 $certificateslist = $select + $cert_templates;
 
                 $mform->addElement('select',  'open_certificateid', get_string('certificate_template','local_courses'), $certificateslist);
