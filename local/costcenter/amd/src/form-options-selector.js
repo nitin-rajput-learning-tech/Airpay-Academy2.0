@@ -76,8 +76,8 @@
                 var subdeptartmentselect = '<span><span>'+s[1]+'</span></span>';
                 var categoryselect = '<span><span>'+s[2]+'</span></span>';
                 var course_typeselect = '<span><span>'+s[3]+'</span></span>';
-                if (action === 'costcenter_organisation_selector') {
-                    $("#id_open_costcenterid").on('change', function() {
+                if (action === 'costcenter_organisation_selector' || action === 'costcenter_element_selector') {
+                    $("#id_open_costcenterid_select").on('change', function() {
                         var department = $('#id_open_departmentid').val();
                         if(parseInt(department) >= 0){
                             $('#id_open_departmentid').html('');
@@ -92,6 +92,11 @@
                         if(parseInt(category) > 0){
                             $('#id_category').html('');
                             $('.categoryselect .form-autocomplete-selection').html(categoryselect);
+                        }
+                        var category = $('#id_open_categoryid').val();
+                        if(parseInt(category) > 0){
+                            $('#id_open_categoryid').html('');
+                            $('.idparentselect .form-autocomplete-selection').html(categoryselect);
                         }
                         var identifiedas = $('#id_identifiedtype').val();
                         if(parseInt(identifiedas) > 0){
