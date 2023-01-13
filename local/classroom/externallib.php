@@ -2605,6 +2605,7 @@ public static function submit_instituteform_form_parameters() {
             $primarytrainer = $DB->get_records_sql($sqlquery . $sql, array(), $page * $perpage, $perpage);
             $total = $DB->count_records_sql($sqlcount . $sql);
             $trainerlist = array();
+            $res =array();
             foreach ($primarytrainer as $trainer) {
                 $trainerlist['id'] = $trainer->id;
                 $trainerlist['profilename'] = fullname($trainer);
