@@ -2,7 +2,7 @@
  {{#response}}
 {{#viewtypeCard}}
  {{#records}}
-  <div class="{{cardClass}} pull-left ">
+  <div class="{{cardClass}} pull-left {{^ visible}} inactive {{ /visible}}">
              <div class="card-page">
               {{ # groupname }}
                <div class="card-title"><b>{{ groupname }}</b>                  

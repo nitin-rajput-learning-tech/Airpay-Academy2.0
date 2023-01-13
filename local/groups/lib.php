@@ -56,7 +56,7 @@ function manage_groups_count($stable,$filterdata){
      $sql = " FROM {cohort} c, {local_groups} g
               WHERE g.cohortid = c.id";
      $context =  (new \local_groups\lib\accesslib())::get_module_context();
-     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+     $costcenterpathconcatsql = (new \local_groups\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         $sql .=" $costcenterpathconcatsql";
     $params = array();
 
@@ -638,7 +638,7 @@ function local_groups_get_all_groups($context,$page = 0, $perpage = 10, $search 
              JOIN {context} ctx ON ctx.id = c.contextid
              JOIN {local_groups} g ON g.cohortid = c.id ";
      $context = (new \local_groups\lib\accesslib())::get_module_context();
-     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+     $costcenterpathconcatsql = (new \local_groups\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $sql .="$costcenterpathconcatsql";
     $params = array();
     $wheresql = '';
@@ -747,8 +747,7 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
     $context =  (new \local_groups\lib\accesslib())::get_module_context();
     $group = $DB->get_record('cohort', array('id' => $groupid));
     $cohort_group  = $DB->get_record('local_groups', array('cohortid' => $groupid));
-    $costcenterpathconcatsql = (new \local_groups\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
-    $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($group);
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
     $params['suspended'] = 0;
     $params['deleted'] = 0;
   
@@ -758,7 +757,7 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
         $sql = "SELECT count(u.id) as total";
     }
     $sql.=" FROM {user} AS u 
-            WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql $userprofilesql";
+            WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql";
     if($lastitem!=0){
         $sql.= " AND u.id > $lastitem";
     }
@@ -775,7 +774,7 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
         $query = "SELECT usr.id 
                 FROM {user} AS usr 
                 JOIN {cohort_members} AS cm ON cm.userid=usr.id 
-                WHERE cm.cohortid IN ({$params['groups']}) ";
+                WHERE cm.cohortid IN ({$params['groups']}) $costcenterpathconcatsql ";
         
         $groupusers = $DB->get_records_sql_menu($query);
 

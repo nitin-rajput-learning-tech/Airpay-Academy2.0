@@ -719,45 +719,15 @@ span:first-of-type>.icon {
     margin-left: 0
 }
 
-body#page-local-courses-courses .actionicons.opened .options_container,
-body#page-local-courses-courses .quick_actions_list5.options_container:hover {
-    top: -32px;
-    right: -35px
-}
-
 body#page-local-courses-courses .quick_actions_list5.options_container:hover::after {
     text-align: center;
     left: 20px
 }
 
-body#page-local-courses-courses .actionicons.opened .quick_actions_list6.options_container::after {
-    left: inherit;
-    right: 50px
-}
-
-body#page-local-courses-courses .actionicons.quick_actions_list6.opened .options_container,
-body#page-local-courses-courses .quick_actions_list6.options_container:hover {
-    top: -33px;
-    right: -27px
-}
 
 .quick_actions_list6.options_container:hover {
     display: inline-flex
 }
-
-body#page-local-courses-courses .actionicons.quick_actions_list5.opened .options_container {
-    min-width: 150px
-}
-
-body#page-local-courses-courses .actionicons.quick_actions_list5.opened .options_container,
-body#page-local-courses-courses .options_container {
-    min-width: 150px
-}
-
-body#page-local-courses-courses .quick_actions_list5.options_container:hover {
-    min-width: 150px
-}
-
 body#page-local-courses-courses .actionicons a .icon {
     font-size: initial;
     width: initial;
@@ -890,14 +860,7 @@ body#page-local-courses-courses .actionicons a .icon {
 body#page-local-courses-userdashboard .card_list_view {
     display: none;
 }
-body#page-local-courses-courses .actionicons.quick_actions_list1 .options_container{
-    min-width: 30px;
-}
-body#page-local-courses-courses .actionicons.quick_actions_list1.opened .options_container, 
-body#page-local-courses-courses .quick_actions_list1.options_container:hover{
-    right: 15px;
-}
- .ctype_elearning .coursedesc span{
+.ctype_elearning .coursedesc span{
     text-align:center;
     background-color: inherit;
     border: 1px solid #d1edf6;
@@ -997,12 +960,6 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
     padding: 10px;
     flex-grow: 1;
 }
-#page-local-courses-courses .quick_actions_list6.options_container:hover,
-#page-local-courses-courses .quick_actions_list6.opened .options_container{
-    top: -3px !important;
-    right: -11px !important;
-}
-
 @media(max-width:1023px){
 #page-local-courses-courses .course_container{
     flex-direction: column;

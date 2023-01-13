@@ -80,7 +80,8 @@ class general_lib{
             $learningplans->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
             $learningplans->category = ($DB->get_field('local_custom_category','fullname',array('id' => $learningplans->open_category))) ;
             $learningplans->isenrolled = $DB->record_exists('local_learningplan_user', array('planid' => $learningplans->id, 'userid' => $USER->id));
-
+            $certificate_code = ($DB->get_field('tool_certificate_issues','code',array('moduletype'=> 'learningplan','moduleid' => $learningplans->id, 'userid' => $USER->id))) ;
+            $learningplans->certificateid = $certificate_code ? $certificate_code : '';
             $learningplans->requeststatus = MODULE_NOT_ENROLLED;
             if($learningplans->isenrolled){
                 $learningplans->requeststatus = MODULE_ENROLLED;

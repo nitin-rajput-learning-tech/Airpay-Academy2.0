@@ -784,7 +784,7 @@ class local_learningplan_external extends external_api {
             'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, ''),
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
             'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
-            'certificateid' => new external_value(PARAM_INT, 'certificateid', VALUE_OPTIONAL, 0),
+            'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
         ));
     }
 }

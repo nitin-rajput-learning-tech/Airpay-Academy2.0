@@ -923,7 +923,8 @@ class core_renderer extends \core_renderer {
         $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'init');
         $return = '';
 
-        $systemcontext = context_system::instance();
+        // $systemcontext = context_system::instance();
+        $systemcontext = \context_course::instance($courseid);
          if(has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext) || is_siteadmin()) {
             $admin_default_menu = true;
         }
@@ -936,7 +937,7 @@ class core_renderer extends \core_renderer {
         if($this->page->pagetype!='local-catalog-courseinfo') {
             $departments = explode(',', $COURSE->open_departmentid);
             $manage = true;
-            if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_ownorganization', 'local/costcenter:manage_multiorganizations'], $systemcontext)) && count($departments) > 1){
+            if(!(is_siteadmin() || has_any_capability(['moodle/course:view'], $systemcontext)) && count($departments) > 1){
                 $manage = false;
                 $USER->editing = 0;
             }

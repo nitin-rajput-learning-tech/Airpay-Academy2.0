@@ -1602,11 +1602,15 @@ function get_listof_courses($stable, $filterdata) {
                 }                
             }            
 
-            $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
             $enrolid = $DB->get_field('enrol','id',array('enrol'=>'manual','courseid'=>$course->id));
             
             if(has_capability('local/courses:enrol',$maincheckcontext)&&has_capability('local/courses:manage', $maincheckcontext)){
                 $courseslist[$count]["enrollusers"] = $CFG->wwwroot."/local/courses/courseenrol.php?id=".$course->id."&enrolid=".$enrolid;
+            }
+            if(has_capability('moodle/course:view', $context) || is_enrolled($context)){
+                $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
+            }else{
+                $courseslist[$count]["courseurl"] = $CFG->wwwroot."/local/search/coursedetails.php?id=".$course->id;
             }
 
             if($departmentcount > 1 && !(is_siteadmin())) {
