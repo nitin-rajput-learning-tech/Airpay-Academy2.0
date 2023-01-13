@@ -407,20 +407,26 @@ class local_ratings_external extends external_api{
             ]
         );
 
-        if(is_null($ratingvalue)){
-            $modulerating = $DB->get_field('local_ratings_likes', 'module_rating', array('module_id' => $componentid, 'module_area' => $componentname));
-        }else{
-            $modulerating = $ratingvalue;
-        }
-        $avgratings = get_rating($componentid, $componentname);
-        $avgrating = $avgratings->avg;
-        return array('rating' => $modulerating, 'avgrating' => $avgrating);
+        // if(is_null($ratingvalue)){
+        //     $modulerating = $DB->get_field('local_ratings_likes', 'module_rating', array('module_id' => $componentid, 'module_area' => $componentname));
+        // }else{
+        //     $modulerating = $ratingvalue;
+        // }
+        // $avgratings = get_rating($componentid, $componentname);
+        // $avgrating = $avgratings->avg;
+        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $componentid, 'module_area' => $componentname));
+        $userrating = $DB->get_field('local_rating', 'rating', array('ratearea' => $componentname, 'userid' => $USER->id, 'itemid' => $componentid));
+        $userrating = $userrating ? $userrating : 0;
+        $avgrating = $ratinginfo->module_rating ? $ratinginfo->module_rating : 0;
+        $ratingusers = $ratinginfo->module_rating_users ? $ratinginfo->module_rating_users : 0;
+        return array('rating' => $userrating, 'avgrating' => $avgrating, 'ratingusers' => $ratingusers);
     }
     public static function get_ratings_returns(){
         return new external_single_structure(
             array(
                 'rating' => new external_value(PARAM_INT, 'rating'),
-                'avgrating' => new external_value(PARAM_FLOAT, 'avgrating')
+                'avgrating' => new external_value(PARAM_FLOAT, 'avgrating'),
+                'ratingusers' => new external_value(PARAM_INT, 'ratingusers', VALUE_OPTIONAL)
             )
         );
     }
