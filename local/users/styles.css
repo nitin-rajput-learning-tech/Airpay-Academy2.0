@@ -356,28 +356,18 @@ body#page-local-users-index .userscontainer.invisible_user {
     opacity: .5
 }
 
-#page-local-users-index .actionicons.quick_actions_list3.opened .options_container:hover {
-    min-width: 101px
-}
-
 #page-local-users-index .actionicons.quick_actions_list1.opened .options_container {
     top: -39px;
-    right: -1px
+    right: 0px
 }
-
-#page-local-users-index .quick_actions_list1.options_container:hover {
-    top: -39px;
-    right: -1px
-}
-
 #page-local-users-index .actionicons.quick_actions_list2.opened .options_container {
     top: -39px;
-    right: -18px
+    right: 0px
 }
 
 #page-local-users-index .quick_actions_list2.options_container:hover {
     top: -39px;
-    right: -18px
+    right: 0px
 }
 
 body#page-local-users-index .userscontainer .userdetails_left .user_info_lable {
