@@ -187,6 +187,8 @@ class classroom_form extends moodleform {
             // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'classroom', 'component' => 'local_classroom'));
 
             //certificate
+           
+        } else if ($formstatus == 1) {
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
             if($certificate_plugin_exist){
                 $checkboxes = array();
@@ -196,7 +198,7 @@ class classroom_form extends moodleform {
 
 
                 $select = array(null => get_string('select_certificate','local_classroom'));
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)){
+                if(is_siteadmin()){
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
                 }else{
                     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$org),'name', 'id,name');
@@ -208,7 +210,6 @@ class classroom_form extends moodleform {
                 $mform->setType('certificateid', PARAM_INT);
                 $mform->hideIf('certificateid', 'map_certificate', 'neq', 1);
             }
-        } else if ($formstatus == 1) {
 
             $allowmultisession = array();
             $allowmultisession[] = $mform->createElement('radio', 'institute_type', '',
@@ -406,17 +407,18 @@ class classroom_form extends moodleform {
                      WHERE c.id = :classroomid";
             $trainers = $DB->get_records_sql_menu($sql, $params);
             $data->trainers = $trainers;
-            if(!empty($data->certificateid)){
-                $data->map_certificate = 1;
-            }
+            
 
         } else if ($components->form_status == 1) {
          
             $data = $DB->get_record_sql('SELECT id, institute_type, instituteid,
-                nomination_startdate, nomination_enddate,startdate,enddate FROM {local_classroom}
+                nomination_startdate, nomination_enddate,startdate,enddate,certificateid FROM {local_classroom}
                 WHERE id = ' . $components->id);
             if($data->instituteid==0){
                 $data->instituteid=null;
+            }
+            if(!empty($data->certificateid)){
+                $data->map_certificate = 1;
             }
 
         } else if ($components->form_status == 2) {
