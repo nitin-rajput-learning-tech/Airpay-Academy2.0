@@ -958,13 +958,12 @@ function categories_filter($mform){
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $catslib = new local_courses\catslib();
     if(is_siteadmin()){
-        $categorylist = $DB->get_records_sql_menu("SELECT id, name FROM {course_categories} ");
+        $categorylist = $DB->get_records_sql_menu("SELECT id, fullname FROM {local_custom_category} ");
     } else {
 
-        $categories = $catslib->get_categories();
-        list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_NAMED, 'param', true, false);
-        $categorylist = $DB->get_records_sql_menu("SELECT cc.id, cc.name FROM {course_categories} AS cc WHERE cc.id 
-            $categoriessql ", $categoriesparams);
+       $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname="CONCAT('/',cc.costcenterid,'')",$costcenterpath=null,$datatype='lowerandsamepath');
+
+        $categorylist = $DB->get_records_sql_menu("SELECT cc.id, cc.fullname FROM {local_custom_category} AS cc WHERE 1=1 $costcenterpathconcatsql");
     }
 
 
