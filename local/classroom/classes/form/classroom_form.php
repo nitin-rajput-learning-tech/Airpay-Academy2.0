@@ -270,6 +270,9 @@ class classroom_form extends moodleform {
             $mform->addHelpButton('cr_description', 'description', 'local_classroom');
 
         }else if ($formstatus == 3) {
+            $mform->addElement('hidden', 'open_costcenterid');
+            $mform->setType('open_costcenterid', PARAM_INT);
+            
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_classroom', $categorycontext, $multiple = false);
            
 			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_classroom', $categorycontext, $multiple = false);

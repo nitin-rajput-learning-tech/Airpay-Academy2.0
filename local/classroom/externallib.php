@@ -1018,6 +1018,7 @@ class local_classroom_external extends external_api {
         // The last param is the ajax submitted data.
         $mform = new classroom_form(null, array('form_status' => $form_status, 'id' => $id), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
+        // var_dump($validateddata);
         if ($validateddata) {            
             // Do the action.
             $formheaders = array_keys($mform->formstatus);
