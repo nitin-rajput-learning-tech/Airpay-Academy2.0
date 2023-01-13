@@ -60,7 +60,7 @@
                         <div class="showoptions{{{ deptid }}} actionicons pull-right">
                             <span  class="pull-right showoptions" data-action="showoptions{{{ deptid }}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{deptid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{deptid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
                             </span>
-                            <ul class="col-md-12 col-sm-12 col-12 p-0 options_container" id = "showoptions{{{ deptid }}}">
+                            <ul class="options_container" id = "showoptions{{{ deptid }}}">
                             {{# deptdelete}}
                             <li>
                                 <a href="javascript:void(0)" title ="{{# str}} delete {{/str}}"  onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ deptid }}} ,confirm: {{{deptstatus}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ deptdel_confirmationmsg }}}' }) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i></a>

@@ -1231,3 +1231,4 @@ $string['filter_customcategories'] = 'Select Category';
 $string['customcategories'] = 'Custom Categories';
 $string['filtercustomcategories'] = 'Select Category';
 $string['filtercustomcategories_summary'] = 'Filter courses by their any parent category';
+$string['calendar'] = 'Calendar';
