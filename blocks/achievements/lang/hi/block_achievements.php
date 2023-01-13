@@ -39,6 +39,4 @@ $string['achievements:view']='राय';
 $string['badge_name'] = 'बिल्ले का नाम';
 $string['issued_by'] = 'जारीकर्ता';
 $string['issued_on'] = 'जारी करनेका दिन';
-
-
-
+$string['points_scored'] = 'अंक बना';

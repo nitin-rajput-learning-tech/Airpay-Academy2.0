@@ -42,6 +42,14 @@ $PAGE->set_context($categorycontext);
 $PAGE->requires->js_call_amd('local_users/newuser', 'load', array());
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'downloadtrigger', array());
+$PAGE->requires->js_call_amd('local_users/rolepopup', 'init',
+                                            array(
+                                                array(
+                                                    'contextid' => $categorycontext->id,
+                                                    'selector' => '.userpopup'
+                                                )
+                                            )
+                                        );
 
 // set url and layout and title
 $pageurl = new moodle_url('/local/users/index.php');

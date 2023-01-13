@@ -1034,7 +1034,6 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = $users['users'];
     $data = array();
-
     foreach ($userslist as $user) {
 
         $list = array();
@@ -1083,6 +1082,15 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $list['level'] = $user->open_level ? $user->open_level : 'N/A';
         $list['phno'] = ($user->phone1) ? $user->phone1 : '--';
         $list['designation'] = $designation;
+        $rolecount = $DB->get_record_sql("SELECT COUNT(ra.id) AS role
+            FROM {role_assignments} AS ra
+            JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
+            WHERE userid =".$user->id);
+        if($rolecount->role > 0){
+            $list['rolecount'] = $rolecount->role;
+        } else {
+            $list['rolecount'] = false;
+        }
         $list['designationstring'] = ($designationstring) ? $designationstring : '--';
         if (!empty($user->open_supervisorid)) {
             $supervisior = $DB->get_field_sql("SELECT CONCAT(firstname,' ',lastname) AS fullname
@@ -1479,4 +1487,40 @@ function local_users_set_userprofile_datafields(&$customdata,$data){
         }
 
     }
+}
+function local_users_output_fragment_userrole_display($args)
+{
+    global $DB, $CFG, $PAGE, $OUTPUT, $USER;
+
+    $args = (object) $args;
+    $context = $args->context;
+    $userid = $args->id;
+
+    $sql = "SELECT ra.id,r.name,ra.timemodified,cc.name as costcenter,cc.depth
+        FROM mdl_role_assignments AS ra
+        JOIN mdl_context AS c ON c.id = ra.contextid AND c.contextlevel = 40
+        JOIN mdl_course_categories AS cc ON cc.id = c.instanceid
+        JOIN mdl_role AS r ON r.id = ra.roleid
+        WHERE ra.userid =:userid";
+    $roles = $DB->get_records_sql($sql, array('userid'=> $userid));
+
+
+    $templatedata = array();
+    if ($roles) {
+        $templatedata['enabletable'] = true;
+        foreach ($roles as $role) {
+            $rowdata = array();
+            $rowdata['id'] = $role->id;
+            $rowdata['role'] = $role->name;
+            $rowdata['timeassign'] = date("d M Y", $role->timemodified);
+            $rowdata['costcenter'] = $role->costcenter;
+            $rowdata['depth'] = $role->depth;
+            $templatedata['rowdata'][] = $rowdata;
+
+        }
+    } else {
+        $templatedata['enabletable'] = false;
+    }
+    $output = $OUTPUT->render_from_template('local_users/roledetails', $templatedata);
+    return $output;
 }

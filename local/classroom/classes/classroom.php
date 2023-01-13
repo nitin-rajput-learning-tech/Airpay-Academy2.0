@@ -92,11 +92,7 @@ class classroom {
                     where id= :classroomid",array('classroomid' => $classroom->id));
                 $allowmultisession       = $localclassroom->allow_multi_session;
 
-                if($classroom->map_certificate == 1){
-                    $classroom->certificateid = $classroom->certificateid;
-                }else{
-                    $classroom->certificateid = null;
-                }
+                
                 $open_path=$DB->get_field('local_classroom', 'open_path', array('id' => $classroom->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
@@ -517,11 +513,17 @@ class classroom {
     }
     public function location_date($data) {
         global $DB, $USER;
+        if($data->map_certificate == 1){
+            $data->certificateid = $data->certificateid;
+        }else{
+            $data->certificateid = null;
+        }
         $location                       = new stdClass();
         $location->institute_type       = $data->institute_type;
         $location->instituteid          = $data->instituteid;
         $location->nomination_startdate = $data->nomination_startdate;
         $location->nomination_enddate   = $data->nomination_enddate;
+        $location->certificateid        = $data->certificateid;
         try {
             $localclassroom = $DB->get_record_sql("SELECT id,instituteid FROM {local_classroom} where id = :id ",array('id' => $data->id));
             if (isset($location->instituteid) && ($location->instituteid != $localclassroom->instituteid) && ($localclassroom->instituteid != 0)) {

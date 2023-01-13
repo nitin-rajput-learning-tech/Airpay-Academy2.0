@@ -42,3 +42,6 @@ $string['response_view'] = 'विस्तार से देखें';
 $string['response_nr'] = 'प्रतिक्रिया संख्या';
 $string['viewresponse'] = 'प्रतिक्रिया देखें';
 $string['anonymous_entries'] = 'अनाम प्रविष्टियाँ ({$a})';
+$string['modulename'] = 'फीडबैक';
+$string['modulenameplural'] = 'फीडबैक';
+$string['feedback'] = 'फीडबैक';

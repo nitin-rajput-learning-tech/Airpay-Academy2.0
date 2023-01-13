@@ -166,7 +166,9 @@ class learningplan_courses implements \renderable, \templatable {
                 $onerow['plan_image_url'] = learninngplan_lib::get_learningplansummaryfile($inprogress_coursename->id);
 
                 //-------- get the course summary------------------------
-                $onerow['planSummary']= $this->get_coursesummary($inprogress_coursename);
+                $description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($inprogress_coursename->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
+                $description_string = strlen($description) > 220 ? substr($description, 0, 220)."..." : $description;
+                $onerow['planSummary']= $description_string; //$this->get_coursesummary($inprogress_coursename);
 
 
                 //---------get course fullname-----
