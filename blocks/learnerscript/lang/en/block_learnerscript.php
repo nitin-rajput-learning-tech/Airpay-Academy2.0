@@ -1226,7 +1226,6 @@ $string['report_compliancelearningpath'] = 'Compliance Data';
 $string['compliancelearningpathcolumns'] = 'Compliance Learning Path Columns';
 $string['report_classroomcourseusers'] = 'Classroom courses users';
 $string['report_learningpathcourseusers'] = 'Learningpath courses users';
-
 $string['filter_customcategories'] = 'Select Category';
 $string['customcategories'] = 'Custom Categories';
 $string['filtercustomcategories'] = 'Select Category';
