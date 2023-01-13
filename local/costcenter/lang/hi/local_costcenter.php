@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -14,12 +15,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Language strings
+ *
+ * @package    local
+ * @subpackage costcenter
+ * @copyright  2015 Naveen <naveen@eabyas.in>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
-$string['start_plan'] = 'शुरू करें';
-$string['learningplan'] = 'सीखने का रास्ता कोड';
-$string['mandatory'] = 'अनिवार्य';
-$string['optional'] = 'वैकल्पिक';
-$string['learningplan_index_credits'] = 'क्रेडिट';
-$string['assign_users_to_see_path'] = 'पथ देखने के लिए 2 या अधिक पाठ्यक्रम निर्दिष्ट करें';
-$string['coure_summary_not_provided'] = 'पाठ्यक्रम सारांश प्रदान नहीं किया गया';
-$string['enrol'] = 'नामंकन';
+$string['no_data_available'] = 'कोई डेटा उपलब्ध नहीं है';
