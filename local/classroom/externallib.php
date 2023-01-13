@@ -1018,7 +1018,8 @@ class local_classroom_external extends external_api {
         // The last param is the ajax submitted data.
         $mform = new classroom_form(null, array('form_status' => $form_status, 'id' => $id), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
-        if ($validateddata) {
+        // var_dump($validateddata);
+        if ($validateddata) {            
             // Do the action.
             $formheaders = array_keys($mform->formstatus);
             if (method_exists(new classroom, $formheaders[$form_status])) {
@@ -2604,6 +2605,7 @@ public static function submit_instituteform_form_parameters() {
             $primarytrainer = $DB->get_records_sql($sqlquery . $sql, array(), $page * $perpage, $perpage);
             $total = $DB->count_records_sql($sqlcount . $sql);
             $trainerlist = array();
+            $res =array();
             foreach ($primarytrainer as $trainer) {
                 $trainerlist['id'] = $trainer->id;
                 $trainerlist['profilename'] = fullname($trainer);

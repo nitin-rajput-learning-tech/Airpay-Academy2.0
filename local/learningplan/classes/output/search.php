@@ -55,7 +55,7 @@ class search implements renderable{
         $leftjoinsql = '';
 
         // added condition for not displaying retired learningplans.
-        $wheresql = " where llp.id > 0 and llp.visible=1  "; //AND llp.open_status <> 4
+        $wheresql = " where llp.id > 0 and llp.visible=1 and llp.selfenrol=1  "; //AND llp.open_status <> 4
 
         //------if not site admin sessions list will be filter by location or bands
         if(searchlib::$search && searchlib::$search!='null'){
