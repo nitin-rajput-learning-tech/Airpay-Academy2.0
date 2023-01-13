@@ -995,6 +995,7 @@ body#page-local-courses-courses .quick_actions_list1.options_container:hover{
 }
 #page-local-courses-courses .course_container .coursecontent{
     padding: 10px;
+    flex-grow: 1;
 }
 #page-local-courses-courses .quick_actions_list6.options_container:hover,
 #page-local-courses-courses .quick_actions_list6.opened .options_container{
