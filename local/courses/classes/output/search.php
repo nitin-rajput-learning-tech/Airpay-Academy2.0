@@ -317,7 +317,7 @@ class search implements renderable{
 
             $course->copylink = '';
             if(is_siteadmin()){
-                $course->copylink = '<a data-action="courseinfo'.$course->id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').copy_url({module:\'course\', moduleid:'.$course->id.'}) })(event)"><button class="cat_btn viewmore_btn">'.get_string('copyurl', 'local_search').'</button></a>';
+                $course->copylink = '<a data-action="courseinfo'.$course->id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').copy_url({module:\'course\', moduleid:'.$course->id.'}) })(event)" class="cat_btn viewmore_btn">'.get_string('copyurl', 'local_search').'</a>';
             }
 
             $course->type = elearning;
@@ -439,7 +439,7 @@ class search implements renderable{
         $coursename = $courseinfo->coursename;
         if(!is_siteadmin()){
             if($enroll){
-                $selfenrolbutton = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$courseid.'" class=""><button class="cat_btn viewmore_btn btn">'.get_string('start_now','local_search').'</button></a>';
+                $selfenrolbutton = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$courseid.'" class="cat_btn viewmore_btn btn">'.get_string('start_now','local_search').'</a>';
             }else{
                 if($courseinfo->approvalreqd==1){
                     $componentid =$courseid;
@@ -460,7 +460,7 @@ class search implements renderable{
                     }else{
                        $string = get_string('selfenrol','local_search');
                     }
-                    $selfenrolbutton = '<a data-action="courseselfenrol'.$courseid.'" class="courseselfenrol enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1, coursename: \''.$courseinfo->fullname.'\' }) })(event)"><button class="cat_btn viewmore_btn btn">'.$string.'</button></a>';
+                    $selfenrolbutton = '<a data-action="courseselfenrol'.$courseid.'" class="courseselfenrol cat_btn viewmore_btn  enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1, coursename: \''.$courseinfo->fullname.'\' }) })(event)">'.$string.'</a>';
                 } else {
                     $selfenrolbutton = '';
                 }

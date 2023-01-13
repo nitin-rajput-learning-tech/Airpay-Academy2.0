@@ -122,18 +122,18 @@
                             <span class="d-block"><big><strong>238</strong></big></span> }}
                         </div>
                         <div class="action_div d-flex">
-                            <span ng-if='record.selfenroll == 0' class='catcr_enrol ng-scope' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</span>
-                                    <span ng-if='record.selfenroll == 2'>
-                                        <span class="all-seats-filled txt-red">
+                            <div ng-if='record.selfenroll == 0' class='catcr_enrol ng-scope' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</div>
+                                    <div ng-if='record.selfenroll == 2'>
+                                        <div class="all-seats-filled txt-red">
                                             {{#str}}capacity_check,local_search{{/str}}
-                                        </span>
-                                    </span>
-                                     <span ng-if="record.userenrolstatus == 1">
+                                        </div>
+                                    </div>
+                                     <div ng-if="record.userenrolstatus == 1">
                                         <a class="as_button_in_anchor" ng-href="<% record.classroomlink %>">
-                                            <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_classroom{{/str}}</span>
+                                            <div class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_classroom{{/str}}</div>
                                         </a>
-                                    </span> 
-                                    <span ng-bind-html="record.redirect | unsafe"></span>
+                                    </div> 
+                                    <div ng-bind-html="record.redirect | unsafe"></div>
                      
                             <!-- <button class="btn btn-info">View more</button> -->
                         </div>

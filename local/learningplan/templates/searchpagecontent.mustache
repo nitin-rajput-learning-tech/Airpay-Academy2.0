@@ -127,9 +127,9 @@
                     </div>
                     <div class="action_div d-flex mt-auto">
                         
-                        <span ng-if="record.selfenroll == 1" class="catcr_enrol" ng-bind-html="record.enrollmentbtn | unsafe"></span>
+                        <div ng-if="record.selfenroll == 1" class="catcr_enrol" ng-bind-html="record.enrollmentbtn | unsafe"></div>
                                
-                        <span ng-bind-html="record.redirect | unsafe"></span>
+                        <div ng-bind-html="record.redirect | unsafe"></div>
                       
                         <!-- <button class="btn btn-info">View more</button> -->
 
