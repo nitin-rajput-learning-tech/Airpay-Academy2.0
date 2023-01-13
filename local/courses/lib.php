@@ -1549,6 +1549,7 @@ function get_listof_courses($stable, $filterdata) {
                     array('overflowdiv' => false, 'noclean' => false, 'para' => false)));
             $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100)."..." : $coursesummary;
             $courseslist[$count]["coursesummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
+            $courseslist[$count]["fullcoursesummary"] = $coursesummary;
             $courseslist[$count]["format"] = $format;
             
             

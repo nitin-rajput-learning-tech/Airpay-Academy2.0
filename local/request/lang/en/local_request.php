@@ -40,7 +40,6 @@ $string['Enabled'] = 'Enabled';
 $string['Disabled'] = 'Disabled';
 $string['clickhere'] = 'Click here';
 $string['update'] = 'Update';
-$string['Request'] = 'Request';
 $string['request'] = 'Request';
 
 //block_request_config.php

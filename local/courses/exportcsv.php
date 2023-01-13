@@ -44,11 +44,11 @@ $table->head[] = get_string('open_level4departmentlocal_courses','local_courses'
 $table->head[] = get_string('open_level5departmentlocal_courses','local_courses');
 $table->head[] = get_string('category','local_courses');
 $table->head[] = get_string('enrollments','local_courses');
-$table->head[] = get_string('points','local_courses');
+//$table->head[] = get_string('points','local_courses');
 $table->head[] = get_string('completed','local_courses');
-$table->head[] = get_string('skill','local_courses');
+//$table->head[] = get_string('skill','local_courses');
 $table->head[] = get_string('ratings','local_courses');
-$table->head[] = get_string('tags','local_courses');
+//$table->head[] = get_string('tags','local_courses');
 $table->head[] = get_string('summary','local_courses');
 $table->head[] = get_string('format','local_courses');
 $table->head[] = get_string('selfenrol','local_courses');
@@ -61,7 +61,8 @@ $coursedata = get_listof_courses($stable, $filtervalues);
 $data = [];
 foreach($coursedata['hascourses'] AS $course){
     //  local_costcenter_set_costcenter_path($course);
-     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_department'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['points'], $course['completed_count'], $course['skillname'], $course['ratings_value'], $course['tagstringtotal'],$course['coursesummary'],$course['format'],$course['selfenrol']];
+    //, $course['points'], $course['skillname'], $course['tagstringtotal']
+     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_department'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['completed_count'], $course['ratings_value'],$course['fullcoursesummary'],$course['format'],$course['selfenrol']];
 }
 $table->id = "users";
 $table->data = $data;
