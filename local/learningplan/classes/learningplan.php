@@ -196,7 +196,7 @@ class learningplan {
                  $modulerating = 0;
             }
             $ccompletion = $DB->get_records_sql('SELECT timecompleted FROM {course_completions} WHERE course=:courseid AND userid=:userid', array('courseid'=> $userlearningplancourse->id, 'userid'=>$USER->id));
-            $completedon = $ccompletion ? $ccompletion: 'NA';
+            $completedon = $ccompletion ? $ccompletion: '';
             $likes = $DB->count_records('local_like', array('likearea'=> 'local_learningplan', 'itemid'=>$userlearningplancourse->id, 'likestatus'=>'1'));
             $dislikes = $DB->count_records('local_like', array('likearea'=> 'local_learningplan', 'itemid'=>$userlearningplancourse->id, 'likestatus'=>'2'));
             $lpcourses['id'] = $userlearningplancourse->id;
