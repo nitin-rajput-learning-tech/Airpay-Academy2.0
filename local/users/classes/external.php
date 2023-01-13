@@ -339,7 +339,6 @@ class local_users_external extends external_api {
         $inactiveusercount = $totalusers['inactiveusercount'];
         $stable->thead = false;
         $data = manage_users_content($stable, $totalusers/*$filtervalues*/);
-
         return [
             'totalcount' => $totalcount,
             'activeusercount' => $activeusercount,
@@ -394,6 +393,7 @@ class local_users_external extends external_api {
 
                                     'delcap' => new external_value(PARAM_RAW, 'delcap', VALUE_OPTIONAL),
                                     'level' => new external_value(PARAM_RAW, 'delcap', VALUE_OPTIONAL),
+                                    'rolecount' => new external_value(PARAM_RAW, 'delcap', VALUE_OPTIONAL),
                                 )
                             )
                         )

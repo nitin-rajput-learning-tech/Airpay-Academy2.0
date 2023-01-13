@@ -55,6 +55,7 @@ class edit_form extends moodleform {
 
         $mform->addElement('text', 'idnumber', get_string('idnumber', 'local_groups'), 'maxlength="254" size="50"');
         $mform->setType('idnumber', PARAM_RAW); // Idnumbers are plain text, must not be changed.
+        $mform->addRule('idnumber', get_string('idnumber','local_groups'), 'required', null, 'client');
 
         $mform->addElement('advcheckbox', 'visible', get_string('visible', 'local_groups'));
         $mform->setDefault('visible', 1);

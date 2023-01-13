@@ -38,7 +38,6 @@ use core_component;
 use local_search\output\searchlib;
 use local_request\api\requestapi;
 use core_completion\progress;
-use local_udemysync\plugin;
 
 /**
  * Class containing data for search

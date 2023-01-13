@@ -255,6 +255,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                 }
 
                 $groupid  =$cohort->idnumber;
+                $visible = $cohort->visible;
                 if(strlen($groupid) >8){
                      $groupid = substr($groupid, 0,8).'...';
                 }
@@ -266,6 +267,8 @@ class local_groups_renderer extends plugin_renderer_base  {
                 $line['groupname'] = $groupname;
                 $line['groupid'] = $groupid;               
                 $line['orgname'] = $orgname;
+                if($visible==1){
+                $line['visible'] = $visible;}
                 $buttons = array();
 
 

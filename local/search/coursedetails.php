@@ -9,6 +9,7 @@ $PAGE->requires->js_call_amd('local_classroom/classroom', 'load');
 $PAGE->requires->js_call_amd('local_search/courseinfo', 'load');
 
 require_once $CFG->libdir.'/gradelib.php';
+require_once $CFG->dirroot.'/local/search/lib.php';
 require_once $CFG->dirroot.'/grade/lib.php';
 require_once $CFG->dirroot.'/grade/report/user/lib.php';
 require_once($CFG->dirroot.'/local/includes.php');
@@ -21,7 +22,7 @@ $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
 require_login();
 $PAGE->set_pagelayout('course');
 $PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_catalog'), 'callbacks' => array()));
-
+local_search_include_search_js();
 $course = $DB->get_record('course', array('id'=>$id));
 if(!$course){
 	print_error('invalidcourseid');
@@ -37,16 +38,16 @@ echo '<div class="content_era_left">';
 
 	$course_category = $DB->get_field('local_custom_category', 'fullname', array('id'=>$course->open_categoryid));
 	$course_category = $course_category ? $course_category : 'NA';
-	$open_level = $DB->get_field('local_course_levels', 'name', array('id' => $course->open_level));
-	$level = $open_level ? $open_level : 'NA';
-	$open_skill = $DB->get_field('local_skill', 'name', array('id' => $course->open_skill));
-	$skill = $open_skill ? $open_skill : 'NA';
+	// $open_level = $DB->get_field('local_course_levels', 'name', array('id' => $course->open_level));
+	// $level = $open_level ? $open_level : 'NA';
+	// $open_skill = $DB->get_field('local_skill', 'name', array('id' => $course->open_skill));
+	// $skill = $open_skill ? $open_skill : 'NA';
 
-	if(is_null($course->open_grade) || $course->open_grade == '' || $course->open_grade == -1){
-		$course_grade = get_string('all');
-	}else{
-		$course_grade = $course->open_grade;
-	}
+	// if(is_null($course->open_grade) || $course->open_grade == '' || $course->open_grade == -1){
+	// 	$course_grade = get_string('all');
+	// }else{
+	// 	$course_grade = $course->open_grade;
+	// }
 	$Courseullnfame = $course->fullname;
   	$includes = new user_course_details();
 	$courseurl = $includes->course_summary_files($course);
@@ -107,60 +108,22 @@ echo '<div class="content_era_left">';
         		</div>';
         	echo '<div class="view_gradeslink"><a class="view_links btn btn-block mb-2" href="'.$CFG->wwwroot.'/grade/report/user/index.php?id='.$course->id.'">View Grades</a></div>';
         }else{
-        	$enrol = $DB->get_record('enrol', array('courseid'=>$id, 'enrol'=>'self'));
-        	echo '';
-		    
-		  $currenttime = time();
-           
-		 if($course->expirydate != 0){
-		     if($course->expirydate > $currenttime){
-		     	//udemy courseprovider sync
-		      $provider_shortname = $DB->get_field('local_course_providers','shortname',array('id' => $course->open_courseprovider));
-		       
-		      if($provider_shortname == 'udemy'){
-		       echo '<div class="content_era_right">
-                         <div class="enrol">
-                           <a data-action="courseselfenrol'.$id.'" class="courseselfenrol enrolled'.$id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').test({selector:\'courseselfenrol'.$id.'\', courseid:'.$id.', enroll:1, coursename: \''.$course->fullname.'\' }) })(event)"><button class="crs_content btn btn-lg btn-primary w-full ng-binding mb-2">Enrol</button></a>
-                         </div>
-                         </div>';
-            } else {
-               echo '<div class="content_era_right">
-					<div class="enrol">
-						<form action="'.$CFG->wwwroot.'/enrol/index.php" method="post" id="mform1" class="mform" accept-charset="utf-8" autocomplete="off">
-	            		<input type="hidden" value="'.$id.'" name="id">
-	                    <input name="instance" value="'.$enrol->id.'" type="hidden">
-	                    <input name="sesskey" value="'.sesskey().'" type="hidden">
-	                    <input name="_qf__'.$enrol->id.'_enrol_self_enrol_form" value="1" type="hidden">
-	                    <input name="mform_isexpanded_id_selfheader" value="1" type="hidden">
-	                    <input type="submit" id="id_submitbutton" class="crs_content btn btn-lg btn-primary w-full ng-binding mb-2" value="Enrol" name="submitbutton">
-	                    </form>
-                   	</div>
-                   	</div>';
-            }
-		   } else if($course->expirydate < $currenttime){
-		   	   echo '<div class="content_era_right">
-                         <div class="enrol">
-                           <a data-action="courseselfenrol'.$id.'" class="courseselfenrol enrolled'.$id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').courseexpiry({selector:\'courseselfenrol'.$id.'\', courseid:'.$id.', enroll:1, coursename: \''.$course->fullname.'\' }) })(event)"><button class="crs_content btn btn-lg btn-primary w-full ng-binding mb-2">Enrol</button></a>
-                         </div>
-                         </div>';
-		   }
+        	// $enrol = $DB->get_record('enrol', array('courseid'=>$id, 'enrol'=>'self'));
+        	$coursesearchlib = new \local_courses\output\search();
+        	echo $coursesearchlib->get_enrollbutton(false,$course);
+	  	  	   // echo '<div class="content_era_right">
+			// 	<div class="enrol">
+			// 		<form action="'.$CFG->wwwroot.'/enrol/index.php" method="post" id="mform1" class="mform" accept-charset="utf-8" autocomplete="off">
+	        // 		<input type="hidden" value="'.$id.'" name="id">
+	           //      <input name="instance" value="'.$enrol->id.'" type="hidden">
+	           //      <input name="sesskey" value="'.sesskey().'" type="hidden">
+	           //      <input name="_qf__'.$enrol->id.'_enrol_self_enrol_form" value="1" type="hidden">
+	           //      <input name="mform_isexpanded_id_selfheader" value="1" type="hidden">
+	           //      <input type="submit" id="id_submitbutton" class="crs_content btn btn-lg btn-primary w-full ng-binding mb-2" value="Enrol" name="submitbutton">
+	           //      </form>
+	           // 	</div>
+	           // 	</div>';
 
-		  } else if($course->expirydate == 0){
-
-		  	  	   echo '<div class="content_era_right">
-					<div class="enrol">
-						<form action="'.$CFG->wwwroot.'/enrol/index.php" method="post" id="mform1" class="mform" accept-charset="utf-8" autocomplete="off">
-	            		<input type="hidden" value="'.$id.'" name="id">
-	                    <input name="instance" value="'.$enrol->id.'" type="hidden">
-	                    <input name="sesskey" value="'.sesskey().'" type="hidden">
-	                    <input name="_qf__'.$enrol->id.'_enrol_self_enrol_form" value="1" type="hidden">
-	                    <input name="mform_isexpanded_id_selfheader" value="1" type="hidden">
-	                    <input type="submit" id="id_submitbutton" class="crs_content btn btn-lg btn-primary w-full ng-binding mb-2" value="Enrol" name="submitbutton">
-	                    </form>
-                   	</div>
-                   	</div>';
-
-		  	}
 		} 
 
      echo '<div class="coursebrieflist col-12 p-0 mt-2">';
