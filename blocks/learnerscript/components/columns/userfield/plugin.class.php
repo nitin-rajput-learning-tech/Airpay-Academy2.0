@@ -49,7 +49,8 @@ class plugin_userfield extends pluginbase {
         global $DB, $CFG, $OUTPUT;
         $row->id = isset($row->userid) ? $row->userid : 2;
 
-        // $userrecord = $DB->get_record('user',array('id'=>$row->id));
+        $userrecord = $DB->get_record('user',array('id'=>$row->id));
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userrecord->open_path);
         // $userrecord->fullname = '<span class = "userdp_name">';
         // $userrecord->fullname .= $OUTPUT->user_picture($userrecord);
         // $userrecord->fullname .= html_writer::tag('a', fullname($userrecord),
@@ -116,44 +117,89 @@ class plugin_userfield extends pluginbase {
             case 'branch':
                 $userrecord->{$data->column} = ($row->open_branch) ? $row->open_branch : '--';
                 break;
-            // case 'organization':
-            //     $org = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_costcenterid));
-            //     $userrecord->{$data->column} = $org;
+            case 'organization':
+                $u_org = $DB->get_field('local_costcenter', 'fullname', array('id'=>$org));
+                $userrecord->{$data->column} = $u_org;
+                break;
+            case 'department':
+                if(!empty($ctr)){
+                    $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$ctr));
+                }else{
+                    $userrecord->{$data->column} = 'All';
+                }
+                break;
+            case 'subdepartment':
+                if(!empty($bu)){
+                    $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$bu));
+                }else{
+                    $userrecord->{$data->column} = 'All';
+                }
+                break;
+            // case 'location':
+            //     $userrecord->{$data->column} = ($row->city) ? $row->city : 'NA';
             //     break;
-            // case 'department':
-            //     $dept = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_departmentid));
-            //     $userrecord->{$data->column} = $dept;
+            // case 'team':
+            //     $userrecord->{$data->column} = ($row->open_team) ? $row->open_team : 'NA';
             //     break;
-            // case 'subdepartment':
-            //     if(!empty($userrecord->open_subdepartment)){
-            //         $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$row->open_subdepartment));
-            //     }else{
-            //         $userrecord->{$data->column} = 'NA';
-            //     }
+            // case 'client':
+            //     $userrecord->{$data->column} = ($row->open_client) ? $row->open_client : 'NA';
+            //     break;
+            // case 'hrmsrole':
+            //     $userrecord->{$data->column} = ($row->open_hrmsrole) ? $row->open_hrmsrole : 'NA';
+            //     break;
+            // case 'zone':
+            //     $userrecord->{$data->column} = ($row->open_zone) ? $row->open_zone : 'NA';
+            //     break;
+            // case 'region':
+            //     $userrecord->{$data->column} = ($row->open_region) ? $row->open_region : 'NA';
+            //     break;
+            // case 'grade':
+            //     $userrecord->{$data->column} = ($row->open_grade) ? $row->open_grade : 'NA';
+            //     break;            
+            // case 'country':
+            //     $userrecord->{$data->column} = ($row->country) ? $row->country  : '--';
+            //     break;
+            case 'depart4level':
+                if(!empty($cu)){
+                    $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$cu));
+                }else{
+                    $userrecord->{$data->column} = 'All';
+                }
                 break;
-            case 'location':
-                $userrecord->{$data->column} = ($row->city) ? $row->city : 'NA';
+            case 'depart5level':
+                if(!empty($territory)){
+                    $userrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id'=>$territory));
+                }else{
+                    $userrecord->{$data->column} = 'All';
+                }
                 break;
-            case 'team':
-                $userrecord->{$data->column} = ($row->open_team) ? $row->open_team : 'NA';
+            case 'open_states':
+                if(!empty($row->open_states)){
+                    $userrecord->{$data->column} = $DB->get_field('local_states', 'states_name', array('id'=>$bu));
+                }else{
+                    $userrecord->{$data->column} = 'NA';
+                }
                 break;
-            case 'client':
-                $userrecord->{$data->column} = ($row->open_client) ? $row->open_client : 'NA';
+            case 'open_district':
+                if(!empty($row->open_district)){
+                    $userrecord->{$data->column} = $DB->get_field('local_district', 'district_name', array('id'=>$bu));
+                }else{
+                    $userrecord->{$data->column} = 'NA';
+                }
                 break;
-            case 'hrmsrole':
-                $userrecord->{$data->column} = ($row->open_hrmsrole) ? $row->open_hrmsrole : 'NA';
+            case 'open_subdistrict':
+                if(!empty($row->open_subdistrict)){
+                    $userrecord->{$data->column} = $DB->get_field('local_subdistrict', 'subdistrict_name', array('id'=>$bu));
+                }else{
+                    $userrecord->{$data->column} = 'NA';
+                }
                 break;
-            case 'zone':
-                $userrecord->{$data->column} = ($row->open_zone) ? $row->open_zone : 'NA';
-                break;
-            case 'region':
-                $userrecord->{$data->column} = ($row->open_region) ? $row->open_region : 'NA';
-                break;
-            case 'grade':
-                $userrecord->{$data->column} = ($row->open_grade) ? $row->open_grade : 'NA';
-                break;            
-            case 'country':
-                $userrecord->{$data->column} = ($row->country) ? $row->country  : '--';
+            case 'open_village':
+                if(!empty($row->open_village)){
+                    $userrecord->{$data->column} = $DB->get_field('local_village', 'village_name', array('id'=>$bu));
+                }else{
+                    $userrecord->{$data->column} = 'NA';
+                }
                 break;
             default:
                 $userrecord->{$data->column} = isset($row->{$data->column}) ? $row->{$data->column} : $row->{$data->column};
