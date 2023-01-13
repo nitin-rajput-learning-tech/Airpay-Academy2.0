@@ -108,4 +108,4 @@ $templatecontext = [
     'addblockbutton' => $addblockbutton
 ];
 
-echo $OUTPUT->render_from_template('theme_epsilon/drawers', $templatecontext);
+echo $OUTPUT->render_from_template('theme_epsilon/course', $templatecontext);

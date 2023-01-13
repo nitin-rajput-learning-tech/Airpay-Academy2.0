@@ -356,28 +356,18 @@ body#page-local-users-index .userscontainer.invisible_user {
     opacity: .5
 }
 
-#page-local-users-index .actionicons.quick_actions_list3.opened .options_container:hover {
-    min-width: 101px
-}
-
 #page-local-users-index .actionicons.quick_actions_list1.opened .options_container {
     top: -39px;
-    right: -1px
+    right: 0px
 }
-
-#page-local-users-index .quick_actions_list1.options_container:hover {
-    top: -39px;
-    right: -1px
-}
-
 #page-local-users-index .actionicons.quick_actions_list2.opened .options_container {
     top: -39px;
-    right: -18px
+    right: 0px
 }
 
 #page-local-users-index .quick_actions_list2.options_container:hover {
     top: -39px;
-    right: -18px
+    right: 0px
 }
 
 body#page-local-users-index .userscontainer .userdetails_left .user_info_lable {
@@ -1339,55 +1329,71 @@ body#page-local-users-index .field_required .icon {
 .userdetails_left p span,.userdetails_right p span{
     display: inline-block;
 }
-#page-local-users-index .openLMStransition.local_users .modal-body .form-group{
+
+/*update users & manage users page ui*/
+
+#page-local-users-index .local_users .modal-body .form-group,
+#page-local-users-profile .local_users .modal-body .form-group{
     max-width: 50%;
     flex: 0 0 50%;
     margin-right: 0!important;
     min-height: auto !important;
     max-height: auto !important;
 }
-#page-local-users-index .modal.openLMStransition .modal-content .mform{
+#page-local-users-index .openLMStransition .modal-content .mform,
+#page-local-users-profile .openLMStransition .modal-content .mform{
     width: 100%;
     display: flex;
     flex-wrap: wrap;
     float:none!important;
      padding:15px 15px 15px 30px;
 }
-#page-local-users-index .modal-content .badge-info{
+#page-local-users-index .modal-content .badge-info,
+#page-local-users-profile .modal-content .badge-info{
     margin-bottom: 0!important;
 }
-#page-local-users-index .openLMStransition.local_users .modal-body .form-group>div.col-md-3 {
+#page-local-users-index .local_users .modal-body .form-group>div.col-md-3,
+#page-local-users-profile .local_users .modal-body .form-group>div.col-md-3 {
     display: flex;
+    align-items: baseline;
+
 }
-#page-local-users-index .mform .form-inline input[type=text].form-control{
+#page-local-users-index .mform .form-inline input[type=text].form-control,
+#page-local-users-profile .mform .form-inline input[type=text].form-control{
     position: relative;
     max-width: 100%;
 }
+#page-local-users-index .local_users  .form-group,
+#page-local-users-profile .local_users  .form-group{
+    margin-bottom: 2rem;
+}
+#page-local-users-index .openLMStransition .form_status,
+#page-local-users-profile .openLMStransition .form_status{
+    margin-bottom: 0 !important;
+}
 @media (max-width: 992px){
 
-    #page-local-users-index .openLMStransition.local_users .modal-body .form-group{
+    #page-local-users-index .local_users .modal-body .form-group,
+    #page-local-users-profile .local_users .modal-body .form-group{
         max-width: 100%;
         flex: 0 0 100%;
         margin-right: 0 !important; 
        
     }
-    #page-local-users-index .openLMStransition.local_users .modal-body .form-autocomplete-downarrow{
+    #page-local-users-index .local_users .modal-body .form-autocomplete-downarrow,
+    #page-local-users-profile .local_users .modal-body .form-autocomplete-downarrow{
         bottom: 2px;
     }
-    #page-local-users-index .mform .form-inline select.custom-select{
+    #page-local-users-index .mform .form-inline select.custom-select,
+    #page-local-users-profile .mform .form-inline select.custom-select{
         max-width: 100%;
     }
 }
 @media (max-width: 1293px){
-    #page-local-users-index .openLMStransition.local_users .modal-body .form-autocomplete-downarrow {
+    #page-local-users-index .local_users .modal-body .form-autocomplete-downarrow,
+    #page-local-users-profile .local_users .modal-body .form-autocomplete-downarrow{
         bottom: 3px;
         right: 3px;
     }
-}
-#page-local-users-index .openLMStransition.local_users .modal-body .form-group{
-    margin-bottom: 2rem;
-}
-#page-local-users-index .openLMStransition .form_status{
-    margin-bottom: 0 !important;
 }
 

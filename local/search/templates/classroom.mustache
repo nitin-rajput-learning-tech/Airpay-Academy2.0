@@ -75,8 +75,8 @@
     <div class="col-md-4 col-12 readyCContainer pull-left catcourses_list active ">
         <div class="col-12 pull-left course_container readycourse_container">-->
             <span class="courseimg_strip">Strip</span>
-            <div class="row mb-2 mt-2">
-                <div class=" card-img-top courseimg_container col-md-4 ">
+            <div class="d-flex my-3 coursecard_container">
+                <div class=" card-img-top courseimg_container p-0 ">
                     <!-- <a ng-if="record.selfenroll == 0" title="<% record.iltformatname %>">
                         <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
                     </a>
@@ -92,7 +92,7 @@
                     </a>
                 </div>
             
-                <div class="card-body readyCCnt coursecontent col-md-8">
+                <div class="card-body readyCCnt coursecontent ">
                     <div class="d-flex w-full course_name_container ">
                         <div>
                             <a ng-if="record.userenrolstatus == 0 || record.selfenroll == 2" class="d-block link text-decoration-none" title="<% record.iltfullformatname %>" >
@@ -111,18 +111,18 @@
                             <span class="CstripCnt"> <span class="elearning">Instructor-led Course</span> </span>
                     </div>
                     <div class="card-text course-desc">
-                        <div class="coursedesc w-full pull-left">
+                        <div class="coursedesc w-full">
                             <div class="course-desc" ng-bind-html="record.intro | unsafe"></div>
                         </div>
                     </div>
                     <!-- <hr> -->
-                    <div class=" justify-content-between align-items-center w-full">
+                    <div class="w-full">
                         <div class="endrolled_details_div">
                             {{! <span class="d-block"><small> Enrollments </small></span>
                             <span class="d-block"><big><strong>238</strong></big></span> }}
                         </div>
-                        <div class="action_div">
-                            <span ng-if='record.selfenroll == 0' class='catcr_enrol' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</span>
+                        <div class="action_div d-flex">
+                            <span ng-if='record.selfenroll == 0' class='catcr_enrol ng-scope' ng-bind-html='record.enrollmentbtn | unsafe'>kasdksad</span>
                                     <span ng-if='record.selfenroll == 2'>
                                         <span class="all-seats-filled txt-red">
                                             {{#str}}capacity_check,local_search{{/str}}

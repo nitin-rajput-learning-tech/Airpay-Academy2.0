@@ -166,7 +166,7 @@ class learningplan_courses implements \renderable, \templatable {
                 $onerow['plan_image_url'] = learninngplan_lib::get_learningplansummaryfile($inprogress_coursename->id);
 
                 //-------- get the course summary------------------------
-                $onerow['planSummary']= get_string('nodecscriptionprovided','block_userdashboard');//$this->get_coursesummary($inprogress_coursename);
+                $onerow['planSummary']= $this->get_coursesummary($inprogress_coursename);
 
 
                 //---------get course fullname-----

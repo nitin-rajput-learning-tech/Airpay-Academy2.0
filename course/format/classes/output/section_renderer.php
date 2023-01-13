@@ -200,9 +200,10 @@ abstract class section_renderer extends core_course_renderer {
      * @return String the course index HTML.
      */
     public function course_index_drawer(course_format $format): ?String {
+        global $OUTPUT;
         if ($format->uses_course_index()) {
             include_course_editor($format);
-            return $this->render_from_template('core_courseformat/local/courseindex/drawer', []);
+            return $this->render_from_template('core_courseformat/local/courseindex/drawer', ['output' => $OUTPUT]);
         }
         return '';
     }
