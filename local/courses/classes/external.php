@@ -1146,6 +1146,8 @@ class local_courses_external extends external_api {
             if ($userinfo->enablecompletion) {
                 $progress = \core_completion\progress::get_course_progress_percentage($userinfo, $userid);
             }
+            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $userinfo->id, 'module_area' => 'local_courses'));
+            $userrating = $DB->get_field('local_rating', 'rating', array('ratearea' => 'local_courses', 'userid' => $USER->id, 'itemid' => $userinfo->id));
             $result[] = array(
                 'id' => $userinfo->id,
                 'fullname' => $userinfo->fullname,
@@ -1164,6 +1166,9 @@ class local_courses_external extends external_api {
                 'enablecompletion' => $userinfo->enablecompletion,
                 'category' => $userinfo->category,
                 'progress' => $progress,
+                'rating' => $userrating ? $userrating : 0,
+                'avgrating' => $ratinginfo->module_rating ? $ratinginfo->module_rating : 0,
+                'ratingusers' => $ratinginfo->module_rating_users ? $ratinginfo->module_rating_users : 0,
             );
         }
         if(empty($result)){
@@ -1193,7 +1198,10 @@ class local_courses_external extends external_api {
                             'lang' => new external_value(PARAM_RAW, 'course language'),
                             'enablecompletion' => new external_value(PARAM_RAW, 'course completion'),
                             'category' => new external_value(PARAM_RAW, 'course category'),
-                            'progress' => new external_value(PARAM_FLOAT, 'Progress percentage')
+                            'progress' => new external_value(PARAM_FLOAT, 'Progress percentage'),
+                            'rating' => new external_value(PARAM_INT, 'Course rating', VALUE_OPTIONAL),
+                            'avgrating' => new external_value(PARAM_FLOAT, 'Course avgrating', VALUE_OPTIONAL),
+                            'ratingusers' => new external_value(PARAM_INT, 'Course rating users',VALUE_OPTIONAL)
                         )
                     )
                  ),

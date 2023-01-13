@@ -30,8 +30,22 @@ if(!$course){
 
 $PAGE->set_title($course->fullname);
 //$PAGE->set_heading($course->fullname);
+$userrolecontext = local_costcenter\lib\accesslib::get_module_context();
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
-$PAGE->navbar->add(get_string('e_learning_courses','local_search'), $catalogurl);
+if(!is_siteadmin() && array_search(0, local_costcenter\lib\accesslib::get_user_role_switch_path())){
+	$switchedrole = false;
+	$PAGE->navbar->add(get_string('e_learning_courses','local_search'), $catalogurl);
+}else{
+	$switchedrole = true;
+	if(has_capability('local/courses:manage', $userrolecontext) || is_siteadmin()){
+		$managecourseurl = new moodle_url('/local/courses/courses.php');
+	}else{
+		$managecourseurl = new moodle_url('/my/dashboard.php');
+	}
+	$PAGE->navbar->add(get_string('manage_courses','local_courses'), $managecourseurl);
+
+}
+
 $PAGE->navbar->add($course->fullname);
 echo $OUTPUT->header();
 echo '<div class="content_era_left">';
