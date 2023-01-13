@@ -38,7 +38,7 @@ class local_learningplan_external extends external_api {
                 $open_path=$DB->get_field('local_learningplan', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
-                if(!empty($validateddata->open_costcenterid) != $org){
+                if( !($validateddata->open_costcenterid == $org) && ($validateddata->form_status == 0)){
                     local_costcenter_get_costcenter_path($validateddata);
                 }
                 if($validateddata->form_status == 1){

@@ -14,7 +14,7 @@ class subdistrict_form extends \moodleform {
 
         if($id){
             $districtname = $DB->get_field('local_district', 'district_name',array('id' => $districtid));
-            $mform->addElement('static','districtname', get_string('costcentername', 'usersprofilefields_states'),$districtname);
+            $mform->addElement('static','districtname', get_string('district', 'usersprofilefields_subdistrict'),$districtname);
             $mform->addElement('hidden', 'districtid');
         } else {
             $districtsql = "SELECT ld.id, ld.district_name FROM {local_district} AS ld WHERE 1 = 1 ";

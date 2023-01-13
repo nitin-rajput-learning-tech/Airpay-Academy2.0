@@ -14,7 +14,7 @@ class district_form extends \moodleform {
 
         if($id){
             $satatename = $DB->get_field('local_states', 'states_name',array('id' => $statesid));
-            $mform->addElement('static','satatename', get_string('costcentername', 'usersprofilefields_states'),$satatename);
+            $mform->addElement('static','satatename', get_string('statesname', 'usersprofilefields_district'),$satatename);
             $mform->addElement('hidden', 'statesid');
         } else {
             $statessql = "SELECT ls.id, ls.states_name FROM {local_states} AS ls WHERE 1 = 1 ";

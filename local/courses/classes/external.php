@@ -1510,6 +1510,7 @@ class local_courses_external extends external_api {
             } else {
                 $data->usercreated = $USER->id;
                 $data->timecreated = time();
+                $data->active = 1;
                 $coursetypeinsert = $DB->insert_record('local_course_types', $data);
             }
         } else {
