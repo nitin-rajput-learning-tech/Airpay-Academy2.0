@@ -124,7 +124,9 @@ echo '<div class="content_era_left">';
         }else{
         	// $enrol = $DB->get_record('enrol', array('courseid'=>$id, 'enrol'=>'self'));
         	$coursesearchlib = new \local_courses\output\search();
-        	echo $coursesearchlib->get_enrollbutton(false,$course);
+        	if(!$switchedrole){
+        		echo $coursesearchlib->get_enrollbutton(false,$course);
+        	}
 	  	  	   // echo '<div class="content_era_right">
 			// 	<div class="enrol">
 			// 		<form action="'.$CFG->wwwroot.'/enrol/index.php" method="post" id="mform1" class="mform" accept-charset="utf-8" autocomplete="off">
