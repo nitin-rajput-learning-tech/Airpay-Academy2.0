@@ -295,13 +295,25 @@ class local_groups_renderer extends plugin_renderer_base  {
                             $visibleimg = $OUTPUT->pix_icon('t/hide', get_string('inactive'));
 
                             $buttons[] = html_writer::start_tag('li'); 
-                                $buttons[] = html_writer::link($showhideurl, $visibleimg, array('title' => get_string('hide')));
-                            $buttons[] = html_writer::end_tag('li');
+                               $buttons[]= html_writer::link(
+                                "javascript:void(0)",
+                                $OUTPUT->pix_icon('t/hide', get_string('hide'), 'moodle', array('title' => '')),
+                                array('id' => 'confirmhide' . $cohort->id . '', 'onclick' => '(
+                                      function(e){
+                                require("local_groups/renderselections").hideshow_cohort(' . $cohort->id . ', "' . $cohort->name . '")
+                                })(event)'));
+                               $buttons[] = html_writer::end_tag('li');
                         } else {
                             $showhideurl->param('show', 1);
                             $visibleimg = $OUTPUT->pix_icon('t/show', get_string('active'));
                             $buttons[] = html_writer::start_tag('li'); 
-                                $buttons[] = html_writer::link($showhideurl, $visibleimg, array('title' => get_string('show')));
+                            $buttons[]= html_writer::link(
+                                "javascript:void(0)",
+                                $OUTPUT->pix_icon('t/show', get_string('show'), 'moodle', array('title' => '')),
+                                array('id' => 'confirmshow' . $cohort->id . '', 'onclick' => '(
+                                      function(e){
+                                ("local_groups/renderselections").showhide_cohort(' . $cohort->id . ', "' . $cohort->name . '")
+                                })(event)'));
                             $buttons[] = html_writer::end_tag('li');
                         }
                     }
