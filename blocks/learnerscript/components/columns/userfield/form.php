@@ -36,7 +36,7 @@ class userfield_form extends moodleform {
         $mform->addElement('header', 'crformheader', get_string('userfield', 'block_learnerscript'), '');
         // $columns = $DB->get_columns('user');
         $columns = array('fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus','designation','level','state','branch','organization','department'
-            ,'subdepartment','location','team','client','hrmsrole','zone','region','grade','country');
+            ,'subdepartment', 'depart4level', 'depart5level','open_states','open_district','open_subdistrict','open_village');
         $customfields = $DB->get_fieldset_sql("SELECT concat('profile_',name) FROM {user_info_field} WHERE 1");
 
         $columns = array_merge($columns,$customfields);
@@ -58,7 +58,7 @@ class userfield_form extends moodleform {
     public function advanced_columns() {
         global $DB;
         $columns = array('fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus','designation','level','state','branch','organization','department'
-            ,'subdepartment','location','team','client','hrmsrole','zone','region','grade','country');
+            ,'subdepartment', 'depart4level', 'depart5level','open_states','open_district','open_subdistrict','open_village');
         $customfields = $DB->get_fieldset_sql("SELECT concat('profile_',name) FROM {user_info_field} WHERE 1");
         $columns = $columns+$customfields;
 

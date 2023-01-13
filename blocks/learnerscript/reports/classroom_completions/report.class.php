@@ -52,7 +52,7 @@ class report_classroom_completions extends reportbase implements report {
     }
 
     function select() {
-        $this->sql = " SELECT lcu.id , lc.id AS classroomid, lcu.userid,
+        $this->sql = " SELECT lcu.id as userenrolid , lc.id AS classroomid, lcu.userid, u.*,
                         (SELECT COUNT(lcs.id) 
                         FROM {local_classroom_sessions} lcs 
                         WHERE lcs.classroomid = lc.id) AS totalsessions,

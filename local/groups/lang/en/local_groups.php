@@ -143,6 +143,9 @@ $string['organisation'] ='Organisation';
 $string['pleaseselectidnumber'] ='Please add group id';
 $string['open_costcenteridlocal_groups'] = 'Organisation';
 $string['open_costcenteridlocal_groups_help'] = 'Search and select an Organization';
-
+$string['hidecohort'] ='Make Inactive';
+$string['confirmhide'] ='Do you really want to inactive group "<b>{$a}</b>"?';
+$string['showcohort'] ='Make Active';
+$string['confirmshow'] ='Do you really want to active group "<b>{$a}</b>"?';
 
 

@@ -75,7 +75,7 @@ if (!$manager) {
 
 $strcohorts = get_string('cohorts', 'local_groups');
 $PAGE->set_url($CFG->wwwroot . '/local/groups/index.php');
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($context);
 $PAGE->set_title($strcohorts);
 $PAGE->set_heading(get_string('cohorts', 'local_groups'));
 $PAGE->navbar->add(get_string("pluginname", 'local_groups'));
