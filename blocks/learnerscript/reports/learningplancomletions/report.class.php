@@ -49,7 +49,7 @@ class report_learningplancomletions extends reportbase implements report {
         $this->sql = "SELECT COUNT(llu.id)";
     }
     function select() {
-        $this->sql = "SELECT llu.id,lp.id as learningpathid,u.id as userid,lp.name as learningpathname,
+        $this->sql = "SELECT llu.id AS learningplanuserid,lp.id as learningpathid,u.id as userid, u.*,lp.name as learningpathname,
                         llu.status AS completionstatus,CONCAT(u.firstname, ' ', u.lastname) AS fullname,username,firstname,lastname,email,
                         llu.completiondate as completiondate ";
         parent::select();
@@ -118,21 +118,21 @@ class report_learningplancomletions extends reportbase implements report {
     function filters() {
         if (isset($this->params['filter_organization']) && !empty($this->params['filter_organization'])) {
             $organization = $this->params['filter_organization'];
-            $filter_organization[] = " concat('/',lp.open_path,'/') LIKE :organizationparam_{$organization}";
+            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
             $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
         }
 
         if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
             $department = $this->params['filter_departments'];
-            $filter_department[] = " concat('/',lp.open_path,'/') LIKE :departmentparam_{$department}";
+            $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
             $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
         }
 
         if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
             $subdepartments = $this->params['filter_subdepartments'];
-            $filter_subdepartments[] = " concat('/',lp.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
             $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
         }

@@ -102,7 +102,7 @@ class report_classroom_completions extends reportbase implements report {
 
         if (!empty($this->params['filter_organization']) && $this->params['filter_organization'] > 0) {
             $organization = $this->params['filter_organization'];
-            $filter_organization[] = " concat('/',lc.open_path,'/') LIKE :organizationparam_{$organization}";
+            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
             $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
         }
@@ -110,14 +110,14 @@ class report_classroom_completions extends reportbase implements report {
         
         if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
             $department = $this->params['filter_departments'];
-            $filter_department[] = " concat('/',lc.open_path,'/') LIKE :departmentparam_{$department}";
+            $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
             $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
         }
 
         if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
             $subdepartments = $this->params['filter_subdepartments'];
-            $filter_subdepartments[] = " concat('/',lc.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
             $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
         }

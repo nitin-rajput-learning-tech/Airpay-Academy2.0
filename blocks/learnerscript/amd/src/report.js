@@ -656,7 +656,6 @@ define(['block_learnerscript/select2',
                 },
                 "lengthMenu": lengthoptions
             });
-
             $("#page-blocks-learnerscript-viewreport #reporttable_" + args.reportid + "_wrapper div.report_header_showhide").
             html($('#export_options' + args.reportid).html());
             if ($('.reportcalculation' + args.reportid).length > 0) {

@@ -30,7 +30,7 @@ class report_coursescompletions extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         global $DB;
         parent::__construct($report, $reportproperties);
-        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays','daystaken']];
+        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
         $this->filters = array('organization', 'departments','subdepartments','course','user','completionstatus');
         $this->parent = true;
@@ -53,7 +53,7 @@ class report_coursescompletions extends reportbase implements report {
                         , ra.timemodified as enrolstarted
                         , c.id as courseid 
                         , c.fullname as coursename
-                        , c.open_coursecompletiondays as completiondays " ;
+                        , c.open_coursecompletiondays as completiondays, cc.timecompleted as completiondate " ;
 //        $this->sql = " SELECT ue.id, c.id as courseid, u.id as userid,c.fullname as coursename,
  //                   cc.timecompleted AS completionstatus, cc.timecompleted AS completiondate " ;
 
@@ -153,20 +153,20 @@ class report_coursescompletions extends reportbase implements report {
 
          if ($this->params['filter_organization'] > 0) {
             $organization = $this->params['filter_organization'];
-            $filter_organization[] = " concat('/',c.open_path,'/') LIKE :organizationparam_{$organization}";
+            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
             $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
         }
         if ($this->params['filter_departments'] > 0) {
             $department = $this->params['filter_departments'];
-            $filter_department[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
+            $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
             $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
         }
 
         if ($this->params['filter_subdepartments'] > 0) {
             $subdepartments = $this->params['filter_subdepartments'];
-            $filter_subdepartments[] = " concat('/',c.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
+            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
             $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
             $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
         }

@@ -52,7 +52,7 @@ class plugin_coursescompletionscolumns extends pluginbase{
 	        	// }
           //       break;
             case 'completionstatus':
-                if(!empty($row->completionstatus)){
+                if(!is_null($row->completiondate)){
 		            $row->{$data->column} = 'Completed';
 		        }else{
 		            $row->{$data->column} = 'Not Completed';
@@ -61,6 +61,9 @@ class plugin_coursescompletionscolumns extends pluginbase{
             case 'completiondate':
                 $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : 'NA';
                 break;
+            case 'enrolledon':
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : 'NA';
+            break;
             case 'skill':
             	if(!empty($row->{$data->column})){
             		$skill = $DB->get_field('local_skill', 'name', array('id'=>$row->skill));
