@@ -175,28 +175,28 @@ class plugin_userfield extends pluginbase {
                 break;
             case 'open_states':
                 if(!empty($row->open_states)){
-                    $userrecord->{$data->column} = $DB->get_field('local_states', 'states_name', array('id'=>$bu));
+                    $userrecord->{$data->column} = $DB->get_field('local_states', 'states_name', array('id'=>$row->open_states));
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }
                 break;
             case 'open_district':
                 if(!empty($row->open_district)){
-                    $userrecord->{$data->column} = $DB->get_field('local_district', 'district_name', array('id'=>$bu));
+                    $userrecord->{$data->column} = $DB->get_field('local_district', 'district_name', array('id'=>$row->open_district));
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }
                 break;
             case 'open_subdistrict':
                 if(!empty($row->open_subdistrict)){
-                    $userrecord->{$data->column} = $DB->get_field('local_subdistrict', 'subdistrict_name', array('id'=>$bu));
+                    $userrecord->{$data->column} = $DB->get_field('local_subdistrict', 'subdistrict_name', array('id'=>$row->open_district));
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }
                 break;
             case 'open_village':
                 if(!empty($row->open_village)){
-                    $userrecord->{$data->column} = $DB->get_field('local_village', 'village_name', array('id'=>$bu));
+                    $userrecord->{$data->column} = $DB->get_field('local_village', 'village_name', array('id'=>$row->open_district));
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }
