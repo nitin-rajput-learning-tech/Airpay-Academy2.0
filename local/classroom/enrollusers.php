@@ -105,7 +105,7 @@ if ($classroomid) {
             $department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
             $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
             $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
-            $department5level = !empty($filterdata->department4level) ? implode(',', $filterdata->department5level) : null;
+            $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
             $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
             $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
             $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
