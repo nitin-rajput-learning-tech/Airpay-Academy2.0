@@ -48,7 +48,7 @@ class plugin_coursefield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG; 
         $courserecord = $DB->get_record('course',array('id'=>$row->courseid)); 
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$courserecord->course_open_path);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$courserecord->open_path);
         $coursereportid = $DB->get_field('block_learnerscript', 'id', array('type'=>'courseprofile'), IGNORE_MULTIPLE);
         switch ($data->column) { 
             case 'coursename': 

@@ -48,7 +48,7 @@ class plugin_classroomfield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB; 
         $classroomrecord = $DB->get_record('local_classroom',array('id'=>$row->classroomid));
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroomrecord->class_open_path);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroomrecord->open_path);
 
         switch ($data->column) {
             case 'classroomname':

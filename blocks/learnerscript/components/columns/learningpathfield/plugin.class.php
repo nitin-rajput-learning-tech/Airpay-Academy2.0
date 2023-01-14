@@ -48,7 +48,7 @@ class plugin_learningpathfield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG; 
         $lpathrecord = $DB->get_record('local_learningplan',array('id'=>$row->learningpathid));
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$lpathrecord->lp_open_path);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$lpathrecord->open_path);
         switch ($data->column) {
             case 'learningpath_name':
                     $lpathrecord->{$data->column} = $lpathrecord->name;
