@@ -76,6 +76,7 @@ class plugin_organization extends pluginbase {
 
         $organizations = $DB->get_records_sql_menu($sql);
         $organizations =array_replace(array(0=>'Select Organization'),$organizations);
+        ksort($organizations);
         return $organizations;
     }
 

@@ -118,7 +118,7 @@ class plugin_subdepartments extends pluginbase {
         }else{
             $subdepartmentoptions[-1] = 'All';
         }
-        asort($subdepartmentoptions);
+        ksort($subdepartmentoptions);
 
         return $subdepartmentoptions;
     }
