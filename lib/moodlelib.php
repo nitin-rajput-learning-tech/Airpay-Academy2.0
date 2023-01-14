@@ -4336,12 +4336,16 @@ function authenticate_user_login($username, $password, $ignorelockout=false, &$f
         ])->trigger();
 
         error_log('[client '.getremoteaddr()."]  $CFG->wwwroot  Invalid Login Token:  $username  ".$_SERVER['HTTP_USER_AGENT']);
+
+        echo '[client '.getremoteaddr()."]  $CFG->wwwroot  Invalid Login Token:  $username  ".$_SERVER['HTTP_USER_AGENT'];
+
         return false;
     }
 
     $authsenabled = get_enabled_auth_plugins();
 
     if ($user) {
+      
         // Use manual if auth not set.
         $auth = empty($user->auth) ? 'manual' : $user->auth;
 
@@ -4361,6 +4365,7 @@ function authenticate_user_login($username, $password, $ignorelockout=false, &$f
             return false;
         }
         if ($auth=='nologin' or !is_enabled_auth($auth)) {
+
             // Legacy way to suspend user.
             $failurereason = AUTH_LOGIN_SUSPENDED;
 
@@ -4375,6 +4380,7 @@ function authenticate_user_login($username, $password, $ignorelockout=false, &$f
 
     } else {
         // Check if there's a deleted record (cheaply), this should not happen because we mangle usernames in delete_user().
+
         if ($DB->get_field('user', 'id', array('username' => $username, 'mnethostid' => $CFG->mnet_localhost_id,  'deleted' => 1))) {
             $failurereason = AUTH_LOGIN_NOUSER;
 
@@ -4397,7 +4403,10 @@ function authenticate_user_login($username, $password, $ignorelockout=false, &$f
         // or this function is called from a SSO script.
     } else if ($user->id) {
         // Verify login lockout after other ways that may prevent user login.
+
         if (login_is_lockedout($user)) {
+                                echo "Validated with token---77777777777";
+
             $failurereason = AUTH_LOGIN_LOCKOUT;
 
             // Trigger login failed event.
@@ -4420,6 +4429,7 @@ function authenticate_user_login($username, $password, $ignorelockout=false, &$f
             continue;
         }
 
+        
         // Before performing login actions, check if user still passes password policy, if admin setting is enabled.
         if (!empty($CFG->passwordpolicycheckonlogin)) {
             $errmsg = '';
@@ -4457,6 +4467,7 @@ function authenticate_user_login($username, $password, $ignorelockout=false, &$f
         }
 
         // Successful authentication.
+       
         if ($user->id) {
             // User already exists in database.
             if (empty($user->auth)) {
