@@ -21,6 +21,7 @@ class otp {
     $this->apiurl = get_config('auth_otp', 'otpserviceip');
     $this->senderid = get_config('auth_otp', 'senderid');
     $this->authapi = get_config('auth_otp', 'authserviceip');
+    $this->accountset = get_config('auth_otp', 'accountset');
 
     $this->token = get_config('auth_otp', 'apikey');
   }
@@ -120,12 +121,11 @@ class otp {
     global $DB, $CFG;
 
       $curl = curl_init();
-      $curloptions = $this->set_user_account($otp,$userid);
+      $curloptions = $this->set_user_account($uid,$userid);
       curl_setopt_array($curl, $curloptions);
       $response = curl_exec($curl);
-   
-     
-    return $response;
+
+      return $response;
 
   }
 
@@ -154,6 +154,8 @@ class otp {
        $otpdetails->id = $otptoken->id;
        $otpdetails->uid= $validinfo->UID;
        $otpdetails->trystatus = ++$trystatus;
+       $otpdetails->uid= $validinfo->UID;
+    
        $DB->update_record('local_otp', $otpdetails);
     
        $appdetails->username = $username;
@@ -332,14 +334,15 @@ class otp {
 
   private function set_user_account($uid,$userid) {
    global $CFG;
+    $authapi= $this->accountset;
     $apikey= $this->token;
-    $authapi= $this->authapi;
 
     $uinfo->domainname = $CFG->dirroot;
     $uinfo->firstlogin = 30;
     $uinfo->lastlogin = time();
 
    $data = json_encode($uinfo);
+
     $hosturl= $authapi."apikey=".$apikey."&data=".$data."&UID=".$uid;
     return [
       CURLOPT_URL => $hosturl,

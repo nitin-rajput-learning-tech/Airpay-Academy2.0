@@ -34,7 +34,7 @@ if ($ADMIN->fulltree) {
             '','', PARAM_RAW));
     $settings->add(new admin_setting_configtext('auth_otp/authserviceip', get_string('auth_authserviceip', 'auth_otp'),
             '','', PARAM_RAW));
-    $settings->add(new admin_setting_configtext('auth_otp/entityid', get_string('auth_entityid', 'auth_otp'),
+    $settings->add(new admin_setting_configtext('auth_otp/accountset', get_string('auth_accountset', 'auth_otp'),
             '','', PARAM_RAW));
  
 

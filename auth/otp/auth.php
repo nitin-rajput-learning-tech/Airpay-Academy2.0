@@ -61,11 +61,13 @@ class auth_plugin_otp extends auth_plugin_base {
 		 if (!$username or !$password) {    // Don't allow blank usernames or passwords
             return false;
         }
-		$username= "91".$username;
+		$username= $username;
         //retrieve the user matching username
          if ($user = $DB->get_record('user', array('username'=>$username, 'mnethostid'=>$CFG->mnet_localhost_id, 'auth'=>$this->authtype))) {
             
-                $exsql="SELECT * from {local_otp} where userid={$user->id} AND inuse=0 order by id desc limit 1 ";
+                $exsql="SELECT * from {local_otp} where userid={$user->id} order by id desc limit 1 ";
+
+                echo $exsql;
                 $checkexist=$DB->get_record_sql($exsql);
                 $otpdetails = new stdClass();
                     $otpdetails->id=18;
