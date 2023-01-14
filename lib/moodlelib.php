@@ -2640,8 +2640,8 @@ function dayofweek($day, $month, $year) {
  */
 function get_login_url() {
     global $CFG;
-
-    return "$CFG->wwwroot/login/index.php";
+    //core change for making the login page redirected to OTP LOGIN.
+    return "$CFG->wwwroot/login/otp_login.php";
 }
 
 /**
