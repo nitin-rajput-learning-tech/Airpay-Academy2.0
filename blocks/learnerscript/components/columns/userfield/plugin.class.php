@@ -189,7 +189,7 @@ class plugin_userfield extends pluginbase {
                 break;
             case 'open_subdistrict':
                 if(!empty($row->open_subdistrict)){
-                    $userrecord->{$data->column} = $DB->get_field('local_subdistrict', 'subdistrict_name', array('id'=>$row->open_district));
+                    $userrecord->{$data->column} = $DB->get_field('local_subdistrict', 'subdistrict_name', array('id'=>$row->open_subdistrict));
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }

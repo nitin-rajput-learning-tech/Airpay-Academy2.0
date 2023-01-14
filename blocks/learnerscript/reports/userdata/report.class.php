@@ -47,7 +47,7 @@ class report_userdata extends reportbase implements report {
       $this->sql = "SELECT count(u.id)";
     }
     function select() {
-      $this->sql = "SELECT u.id as userid,CONCAT(u.firstname, ' ', u.lastname) AS fullname,username,firstname,lastname,email";
+      $this->sql = "SELECT u.id as userid,CONCAT(u.firstname, ' ', u.lastname) AS fullname,u.* ";
       parent::select();
     }
     function from() {
