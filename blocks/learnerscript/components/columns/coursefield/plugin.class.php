@@ -91,14 +91,14 @@ class plugin_coursefield extends pluginbase {
                    $courserecord->{$data->column} = get_string('all'); 
                 }
                 break;
-            case 'department4level':
+            case 'course_commercialarea':
                 if($cu){
                     $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$cu));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }
                 break;
-            case 'department5level':
+            case 'course_territory':
                 if($territory){
                     $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$territory));
                 }else{
