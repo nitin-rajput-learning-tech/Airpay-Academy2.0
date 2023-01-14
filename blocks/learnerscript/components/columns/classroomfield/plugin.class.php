@@ -80,6 +80,20 @@ class plugin_classroomfield extends pluginbase {
                    $classroomrecord->{$data->column} = get_string('all'); 
                 }
                 break;
+            case 'classroom_commercialarea':
+                if(!empty($cu) && ($cu != -1)){
+                    $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$cu));
+                }else{
+                   $classroomrecord->{$data->column} = get_string('all');
+                }
+                break;
+            case 'classroom_territory':
+                if(!empty($territory) && ($territory != -1)){
+                    $classroomrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$territory));
+                }else{
+                   $classroomrecord->{$data->column} = get_string('all');
+                }
+                break;
             case 'location':
                if($classroomrecord->instituteid){
                     $location = $DB->get_field('local_location_institutes', 'fullname', array('id' =>$classroomrecord->instituteid));

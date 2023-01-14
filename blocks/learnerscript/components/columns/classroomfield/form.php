@@ -37,7 +37,7 @@ class classroomfield_form extends moodleform {
 
         $mform->addElement('header', 'crformheader', get_string('classroomfield', 'block_learnerscript'), '');
 
-        $columns = array('classroomname','startdate','enddate','capacity','classroomorg','classroomdept','classroom_subdept','location','trainers','points');
+        $columns = array('classroomname','startdate','enddate','capacity','classroomorg','classroomdept','classroom_subdept','classroom_commercialarea' ,'classroom_territory','location','trainers','points');
         $classroomcolumns = array_map('ucfirst', $columns);
         $classroomcolumns = array_combine($columns, $classroomcolumns);
 
