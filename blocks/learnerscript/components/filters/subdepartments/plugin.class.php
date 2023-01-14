@@ -68,43 +68,48 @@ class plugin_subdepartments extends pluginbase {
     public function filter_data($selectoption = true, $request){
         global $DB, $USER;
         $filter_subdepartments = '';
-        $fsubdepartments = isset($request['filter_subdepartments']) ? $request['filter_subdepartments'] : 0;
-        $filtersubdepartments = optional_param('filter_subdepartments', $fsubdepartments, PARAM_RAW);
-        if (empty($this->reportclass->basicparams)) {
-            $cohortoptions = array(get_string('filter_subdepartments', 'block_learnerscript'));
-        } 
-        $filtersubdepartment = $this->reportclass->filters;
+        $filtersubdepartments = optional_param('filter_subdepartments', 0, PARAM_INT);
+        $filterdepartment = $this->reportclass->filters;
+        // $filteruserid = $filtercourse['filter_users'];
         if($this->reportclass->basicparams){
-            $basicparams = array_column($this->reportclass->basicparams, 'name'); 
-            if (in_array('organization', $basicparams) && $basicparams[0] == 'organization') {
-                $organizationoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC");
-                $organizationids = array_keys($organizationoptions);
-                if (empty($request['filter_organization'])) {
-                    $organizationid = array_shift($organizationids);
+            $basicparams = array_column($this->reportclass->basicparams, 'name');
+            if ($basicparams[0] == 'department') {
+                $orgoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 2 ORDER BY id ASC");
+                $orgids = array_keys($orgoptions);
+                if (empty($request['filter_departments'])) {
+                    $deptid = array_shift($orgids);
                 } else {
-                    $organizationid = $request['filter_organization'];
+                    $deptid = $request['filter_departments'];
                 }
-            } else {
-                $organizationid = 0;
+            }else {
+                $subdeptid = null;
             }
         } else {
-            $this->cohortid = null;
-        } 
+            $subdeptid = null;
+        }
+        $concatsql = " ";
+
+        $params = array();
+        $sql = "SELECT id, fullname
+                FROM {local_costcenter}
+                WHERE depth = :depth ";
+        $params['depth'] = 3;
+
         $systemcontext = context_system::instance();
         if(is_siteadmin()){
-            $this->organizationid = isset($organizationid) ? $organizationid : 0;
-        } else {
-            $this->organizationid = $USER->open_costcenterid;
+            if (!empty($deptid)) {
+                $concatsql .= " AND parentid = $deptid ";
+            }
+        } else if(!is_siteadmin()){
+            // $sql .= " AND parentid = :costcenterid ";
+            // $params['costcenterid'] = $USER->open_costcenterid;
+            $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
         }
-        
-        $this->filtersubdeptid = isset($filtersubdepartments) ? $filtersubdepartments : 0;
-        $departmentid = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE parentid = $this->organizationid AND depth = 2 ORDER BY id ASC LIMIT 0, 1"); //print_object($this);exit;
-        $this->departmentid = isset($departmentid) ? $departmentid : 0;
-        $querylib = new \block_learnerscript\local\querylib();
-        $subdepartmentoptions = array(); 
-        if(!empty($departmentid)){
-            $subdepartmentoptions = $DB->get_records_sql_menu("SELECT lc.id, lc.fullname FROM {local_costcenter} lc WHERE lc.parentid = $this->departmentid AND lc.depth = 3");
-        }
+        $sql .= $concatsql;
+        $sql .= " ORDER BY id ASC ";
+
+        $subdepartmentoptions = $DB->get_records_sql_menu($sql, $params);
+
 
         $selectsubdept = array(); 
         // $selectsubdept[-1] = 'Select SubDepartment';
@@ -113,7 +118,8 @@ class plugin_subdepartments extends pluginbase {
         }else{
             $subdepartmentoptions[-1] = 'All';
         }
-        $subdepartmentoptions = $subdepartmentoptions;   
+        asort($subdepartmentoptions);
+
         return $subdepartmentoptions;
     }
 

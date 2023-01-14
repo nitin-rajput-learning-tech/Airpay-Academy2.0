@@ -133,7 +133,7 @@ class plugin_departments extends pluginbase {
         }
                 
         $deptoptions = $selectdept + $deptoptions;   
-        return $deptoptions;
+        asort($deptoptions);
         
         return $deptoptions;
     }
