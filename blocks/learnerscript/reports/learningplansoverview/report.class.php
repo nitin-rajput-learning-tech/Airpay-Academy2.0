@@ -50,7 +50,7 @@ class report_learningplansoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lp.id)";
     }
     function select() {
-        $this->sql  = "SELECT lp.id as learningpathid,lp.name as learningplanname,
+        $this->sql  = "SELECT lp.id as learningpathid,lp.name as learningplanname,lp.open_path as lp_open_path,
                     (SELECT count(llu.id) 
                         FROM {local_learningplan_user} as llu 
                         JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0

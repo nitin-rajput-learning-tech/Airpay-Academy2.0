@@ -51,7 +51,7 @@ class report_learningplancomletions extends reportbase implements report {
     function select() {
         $this->sql = "SELECT llu.id AS learningplanuserid,lp.id as learningpathid,u.id as userid, u.*,lp.name as learningpathname,
                         llu.status AS completionstatus,CONCAT(u.firstname, ' ', u.lastname) AS fullname,username,firstname,lastname,email,
-                        llu.completiondate as completiondate ";
+                        llu.completiondate as completiondate, lp.open_path as lp_open_path ";
         parent::select();
     }
     function from() {

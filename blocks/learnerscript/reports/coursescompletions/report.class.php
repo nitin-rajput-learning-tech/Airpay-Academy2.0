@@ -53,7 +53,7 @@ class report_coursescompletions extends reportbase implements report {
                         , ra.timemodified as enrolstarted
                         , c.id as courseid 
                         , c.fullname as coursename
-                        , c.open_coursecompletiondays as completiondays, cc.timecompleted as completiondate " ;
+                        , c.open_coursecompletiondays as completiondays, cc.timecompleted as completiondate, c.open_path as course_open_path " ;
 //        $this->sql = " SELECT ue.id, c.id as courseid, u.id as userid,c.fullname as coursename,
  //                   cc.timecompleted AS completionstatus, cc.timecompleted AS completiondate " ;
 

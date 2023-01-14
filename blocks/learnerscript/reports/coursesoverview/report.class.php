@@ -45,7 +45,7 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function select() {
-        $this->sql = "SELECT c.id courseid, c.fullname as coursename,
+        $this->sql = "SELECT c.id courseid, c.fullname as coursename, c.open_path as course_open_path,
                     (SELECT COUNT(DISTINCT(ue.id))
                         FROM {user_enrolments} ue
                         JOIN {user} u ON ue.userid = u.id 

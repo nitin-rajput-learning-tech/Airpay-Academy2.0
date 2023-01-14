@@ -47,7 +47,7 @@ class report_classroomsoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lc.id) ";
     }
      function select() {
-        $this->sql = "SELECT lc.id as classroomid,lc.name as classroomname";
+        $this->sql = "SELECT lc.id as classroomid,lc.name as classroomname, lc.open_path AS class_open_path";
       parent::select();
     }
     function from() {
