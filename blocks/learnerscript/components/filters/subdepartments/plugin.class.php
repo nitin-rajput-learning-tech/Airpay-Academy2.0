@@ -91,7 +91,7 @@ class plugin_subdepartments extends pluginbase {
             $this->cohortid = null;
         } 
         $systemcontext = context_system::instance();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        if(is_siteadmin()){
             $this->organizationid = isset($organizationid) ? $organizationid : 0;
         } else {
             $this->organizationid = $USER->open_costcenterid;
@@ -123,9 +123,13 @@ class plugin_subdepartments extends pluginbase {
     }
 
     public function print_filter(&$mform, $selectoption = true) {
-        
-        $systemcontext = context_system::instance();
-        if((has_capability('local/costcenter:manage_owndepartments', $systemcontext)) || (has_capability('local/costcenter:manage_ownorganization', $systemcontext))){
+        global $USER;
+        $depth = $USER->useraccess['currentroleinfo']['depth'];
+        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+            $depth--;
+        }
+
+        if(is_siteadmin() || $depth < 4){
             $request = array_merge($_POST, $_GET);
             $subdeptoptions = $this->filter_data(true, $request);
             if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($subdeptoptions) > 1) {

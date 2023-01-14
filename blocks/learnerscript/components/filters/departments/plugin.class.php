@@ -110,17 +110,14 @@ class plugin_departments extends pluginbase {
         $params['depth'] = 2;
 
         $systemcontext = context_system::instance(); 
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        if(is_siteadmin()){
             if (!empty($deptorgid)) {
                 $concatsql .= " AND parentid = $deptorgid";
             }
-        } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $sql .= " AND parentid = :costcenterid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            $sql .= " AND parentid = :costcenterid AND id = :departmentid ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-            $params['departmentid'] = $USER->open_departmentid;
+        } else if(!is_siteadmin()){
+            // $sql .= " AND parentid = :costcenterid ";
+            // $params['costcenterid'] = $USER->open_costcenterid;
+            $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
         } 
         $sql .= $concatsql;
         $sql .= " ORDER BY id ASC ";
@@ -147,9 +144,12 @@ class plugin_departments extends pluginbase {
     }
 
     public function print_filter(&$mform, $selectoption = true) {
-        
-        $systemcontext = context_system::instance();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
+        global $USER;
+        $depth = $USER->useraccess['currentroleinfo']['depth'];
+        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+            $depth--;
+        }
+        if(is_siteadmin() || $depth < 3){
             $request = array_merge($_POST, $_GET);
             $deptoptions = $this->filter_data(false, $request); 
             if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($deptoptions) > 1) { 
