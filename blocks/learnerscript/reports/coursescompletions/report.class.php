@@ -96,7 +96,7 @@ class report_coursescompletions extends reportbase implements report {
         //     }
         // }
 
-        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path'); 
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
         if (is_siteadmin()) {
             $this->sql .= "";

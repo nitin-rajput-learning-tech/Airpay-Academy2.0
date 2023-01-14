@@ -97,7 +97,7 @@ class report_learningplancomletions extends reportbase implements report {
         //     $this->params['departmentid']= $USER->open_departmentid;
         //     $this->params['subdepartment']= $USER->open_subdepartment;
         // }
-        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path'); 
+        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {
