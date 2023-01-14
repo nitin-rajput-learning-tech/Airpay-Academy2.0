@@ -37,7 +37,7 @@ class learningpathfield_form extends moodleform {
 
         $mform->addElement('header', 'crformheader', get_string('learningpathfield', 'block_learnerscript'), '');
 
-        $columns = array('learningpath_name','learningpath_code','learningpath_org','learningpath_dept','learningpath_subdept','location','points');
+        $columns = array('learningpath_name','learningpath_code','learningpath_org','learningpath_dept','learningpath_subdept','learningpath_commercialarea' ,'learningpath_territory','location','points');
         $lpathcolumns = array_map('ucfirst', $columns);
         $lpathcolumns = array_combine($columns, $lpathcolumns);
 

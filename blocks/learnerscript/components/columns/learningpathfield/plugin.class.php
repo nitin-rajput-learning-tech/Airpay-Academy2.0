@@ -73,7 +73,7 @@ class plugin_learningpathfield extends pluginbase {
                    $lpathrecord->{$data->column} = get_string('all'); 
                 }
                 break;
-            case 'learningpath_commercialunit':
+            case 'learningpath_commercialarea':
                 if(!empty($cu) && ($cu != -1)){
                     $lpathrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$cu));
                 }else{
