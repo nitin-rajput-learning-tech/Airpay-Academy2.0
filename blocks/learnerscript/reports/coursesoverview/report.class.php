@@ -45,6 +45,7 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function select() {
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         $this->sql = "SELECT c.id courseid, c.fullname as coursename, c.open_path as course_open_path,
                     (SELECT COUNT(DISTINCT(ue.id))
                         FROM {user_enrolments} ue
@@ -55,7 +56,7 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN {role} r ON r.id = ra.roleid    
                         WHERE u.deleted = 0 
                             AND u.suspended = 0 AND r.shortname = 'employee' 
-                            AND e.courseid = c.id ) as noofenrollments,
+                            AND e.courseid = c.id {$costcenterpathconcatsql} ) as noofenrollments,
                     (SELECT COUNT(DISTINCT(ue.id))
                         FROM {user_enrolments} ue
                         JOIN {user} u ON ue.userid = u.id 
@@ -67,7 +68,7 @@ class report_coursesoverview extends reportbase implements report {
                             AND cc.userid = u.id AND cc.timecompleted IS NOT NULL
                         WHERE u.deleted = 0 
                             AND u.suspended = 0 AND r.shortname = 'employee' 
-                            AND e.courseid = c.id ) as noofcompletions " ;
+                            AND e.courseid = c.id {$costcenterpathconcatsql} ) as noofcompletions " ;
 
         parent::select();
     }
