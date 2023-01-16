@@ -156,6 +156,9 @@ class local_search_external extends external_api {
         $context = context::instance_by_id($params['contextid'], MUST_EXIST);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
+        if($type == 'local_learningpath'){
+            $type = 'local_learningplan';
+        }
         $classname = '\\'.$type.'\output\search';
         if(class_exists($classname)){
             $class = new $classname();
