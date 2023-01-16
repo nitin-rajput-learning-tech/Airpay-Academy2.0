@@ -50,15 +50,16 @@ class report_learningplansoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lp.id)";
     }
     function select() {
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         $this->sql  = "SELECT lp.id as learningpathid,lp.name as learningplanname,lp.open_path as lp_open_path,
                     (SELECT count(llu.id) 
                         FROM {local_learningplan_user} as llu 
                         JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0
-                        WHERE llu.planid = lp.id) as enrolledcount,
+                        WHERE llu.planid = lp.id {$costcenterpathconcatsql} ) as enrolledcount,
                     (SELECT count(llu.id) 
                         FROM {local_learningplan_user} as llu 
                         JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0
-                        WHERE llu.planid = lp.id AND llu.status = 1) as completedcount ";
+                        WHERE llu.planid = lp.id AND llu.status = 1 {$costcenterpathconcatsql} ) as completedcount ";
          parent::select();                
     }
     function from() {

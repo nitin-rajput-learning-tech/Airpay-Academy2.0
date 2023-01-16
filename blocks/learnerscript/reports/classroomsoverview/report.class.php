@@ -114,11 +114,12 @@ class report_classroomsoverview extends reportbase implements report {
         global $DB;
         $data = array();
         if($classroominfo){
+            $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             $sql = "SELECT COUNT(lcu.id)
                     FROM {local_classroom_users} as lcu
                     JOIN {user} as u ON u.id = lcu.userid 
                     WHERE lcu.classroomid = :classroomid 
-                    AND u.deleted =:deleted AND u.suspended =:suspended ";
+                    AND u.deleted =:deleted AND u.suspended =:suspended {$costcenterpathconcatsql} ";
 
             $completionscount = ' AND lcu.completion_status = :status ';
             
