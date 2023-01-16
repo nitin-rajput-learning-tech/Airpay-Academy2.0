@@ -953,6 +953,7 @@ class renderer extends plugin_renderer_base
             }
         }
         $return = "";
+        $usermodulecontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $classroom->userenrolmentcap = (has_capability('local/classroom:manageclassroom', $categorycontext) && has_capability('local/classroom:manageusers', $categorycontext) && $classroom->status == 0) ? true : false;
         $classroom->selfenrolmentcap = false;
         $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $classroom->id, 'userid' => $USER->id));
@@ -1014,7 +1015,7 @@ class renderer extends plugin_renderer_base
             $action  = false;
         }
 
-        if ((has_capability('local/classroom:classroomcompletion', $categorycontext) || is_siteadmin()) || $userenrolstatus) {
+        if ((has_capability('local/classroom:classroomcompletion', $categorycontext) || is_siteadmin())) {// || $userenrolstatus
             $classroomcompletion =  true;
         }else {
             $classroomcompletion =  false;
@@ -1028,7 +1029,7 @@ class renderer extends plugin_renderer_base
         }
 
 
-        if ((has_capability('local/classroom:manageusers', $categorycontext) || is_siteadmin())) {
+        if ((has_capability('local/classroom:manageusers', $usermodulecontext) || is_siteadmin())) {
             $assignusers =  true;
             $assignusersurl = new moodle_url("/local/classroom/enrollusers.php?cid=" . $classroomid . "");
         }

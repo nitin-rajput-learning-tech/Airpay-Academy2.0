@@ -16,15 +16,15 @@
 }}
 {{# action}}
     <ul class="course_extended_menu_list">
-        <li>
-            {{# assignusers}}
+        {{# assignusers}}
+            <li>
                 <div class="courseedit course_extended_menu_itemcontainer">
                     <a title="{{# str}} edit_course,local_classroom {{/ str}}" class="course_extended_menu_itemlink" href="{{ assignusersurl }}"><i class="icon fa fa-user-plus fa-fw" aria-hidden="true" aria-label="" title ="{{# str}} assignusers,local_classroom {{/ str}}"></i></a>
                 </div>
-            {{/ assignusers}}
-            
-        </li>
-       
+            </li>
+        {{/ assignusers}}
+
+        {{^ assignusers}}
         {{# unenroll}}
             <li>
                 <div class="coursebackup course_extended_menu_itemcontainer">
@@ -33,22 +33,23 @@
                 </div>
             </li>
         {{/ unenroll}}
-        <li>
-            {{# edit}}
+        {{/ assignusers}}
+        {{# edit}}
+            <li>
                 <div class="coursebackup course_extended_menu_itemcontainer">
                     <a title="{{# str}}  user_enrollments, local_classroom {{/ str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_classroom/ajaxforms').init({contextid:1, component:'local_classroom', callback:'classroom_form', form_status:0, plugintype: 'local', pluginname: 'classroom', id: {{ classroomid }} }) })(event)"><i class="icon fa fa-pencil fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} edit {{/str}}"></i>
                     </a>         
                 </div>
-            {{/ edit}}
             </li>
+        {{/ edit}}
+        {{# classroomcompletion}}
             <li>
-            {{# classroomcompletion}}
                 <div class="coursebackup course_extended_menu_itemcontainer">
                     <a title="{{# str}}  classroom_completion, local_classroom {{/ str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" title = "{{# str}} classroomcompletion, local_classroom {{/str}}" onclick="(function(e){ require('local_classroom/ajaxforms').init({contextid:1, component:'local_classroom', callback:'classroom_completion_form', form_status:0, plugintype: 'local', pluginname: 'classroom_completion_settings', id: {{ classroomcompletion_id }}, cid: {{ classroomid }} }) })(event)"><i class="icon fa fa-tags fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} classroomcompletion , local_classroom{{/str}}"></i>
                     </a>         
                 </div>
-            {{/ classroomcompletion}}
-        </li>
+            </li>
+        {{/ classroomcompletion}}
          {{#classroom_actionstatus}}
                 <li>
                       <div class="coursebackup course_extended_menu_itemcontainer">
