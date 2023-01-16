@@ -67,7 +67,7 @@ class auth_plugin_otp extends auth_plugin_base {
             
                 $exsql="SELECT * from {local_otp} where userid={$user->id} order by id desc limit 1 ";
 
-                echo $exsql;
+                // echo $exsql;
                 $checkexist=$DB->get_record_sql($exsql);
                 $otpdetails = new stdClass();
                     $otpdetails->id=18;
