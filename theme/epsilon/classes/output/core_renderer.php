@@ -1247,7 +1247,9 @@ class core_renderer extends \core_renderer {
                                     FROM {role}
                                     WHERE shortname = 'user' AND archetype = 'user' ";
             $learnerroleid = $DB->get_record_sql($learner_record_sql);
-            $USER->access['rsw']['/1'] = $learnerroleid->id;
+            if(!empty($USER->access['rsw'])){
+                $USER->access['rsw']['/1'] = $learnerroleid->id;
+            }
             $rolename = get_string('employee','theme_epsilon');
 
 
@@ -1636,7 +1638,12 @@ class core_renderer extends \core_renderer {
     function roleswitch($roleid, $context, &$accessdata){
 
         global $DB, $ACCESSLIB_PRIVATE, $USER;
-        $USER->access['rsw'][$context->path] = $roleid;
+        if($context->path == '/1'){
+            $USER->access['rsw'] = [];
+        }else{
+            $USER->access['rsw'][$context->path] = $roleid;
+        }
+
 
         $costcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($context);
 
@@ -1680,7 +1687,7 @@ class core_renderer extends \core_renderer {
                             $othercostcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($othercontext);
                             $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
                         }
-                    }else{
+                    }else if($context->path != '/1'){//if user is assigned at system context we unset the rsw variable.
                         if($this->role_capability_assignments($userroleid, $othercontext, $accessdata))
                             $USER->access['rsw'][$othercontext->path] = $userroleid;
                     }

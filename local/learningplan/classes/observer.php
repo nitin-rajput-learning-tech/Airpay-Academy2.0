@@ -31,11 +31,21 @@ class local_learningplan_observer extends \core\event\course_viewed {
 
     public static function course_enrolments_trigger(\core\event\course_completed $event){
         global $DB;
-        $learningplandetails = $DB->get_record('local_learningplan',  array('id' => $event->courseid));
-        $userinfo = core_user::get_user($event->relateduserid);
-        if(class_exists('\local_learningplan\notification')){
-            $notification = new \local_learningplan\notification($DB);
-            $notification->send_course_completion_notification($learningplandetails, $userinfo);
+        // $userinfo = core_user::get_user($event->relateduserid);
+        $learningplan_courses = $DB->get_records_sql("SELECT lpc.*
+            FROM {local_learningplan_courses} AS lpc
+            JOIN {local_learningplan_user} AS llu ON llu.planid = lpc.planid
+            WHERE lpc.courseid = :courseid AND lower(lpc.nextsetoperator) LIKE 'and' AND llu.userid = :userid ", array('courseid' => $event->courseid, 'userid' => $event->relateduserid));
+
+        if($learningplan_courses){
+
+            foreach($learningplan_courses AS $lpcourse){
+                $courseid = $DB->get_field_sql("SELECT llc.courseid FROM {local_learningplan_courses} as llc WHERE llc.planid = :planid AND llc.sortorder > :sortorder AND lower(llc.nextsetoperator) LIKE 'and' ", ['planid' => $lpcourse->planid, 'sortorder' => $lpcourse->sortorder]);
+                if($courseid){
+                    $learningplan_lib = new local_learningplan\lib\lib();
+                    $enrol=$learningplan_lib->to_enrol_users($lpcourse->planid, $event->relateduserid, $courseid);
+                }
+            }
         }
     }
 }
