@@ -25,6 +25,10 @@ use core_text;
 define('ONLY_ADD', 1);
 define('ONLY_UPDATE', 2);
 define('ADD_UPDATE', 3);
+define('MANUAL_ENROLL', 1);
+define('LDAP_ENROLL', 2);
+define('SAML2', 3);
+define('ADWEBSERVICE', 4);
 class hrms_async extends moodleform {
 
 
@@ -39,8 +43,13 @@ class hrms_async extends moodleform {
         $mform->addElement('hidden',  'encoding');
         $mform->setType('encoding', PARAM_RAW);
         $mform->setDefault('encoding',  'UTF-8');
-        $mform->addElement('hidden', 'enrollmentmethod');
-        $mform->setType('enrollmentmethod', PARAM_INT);
+        // $mform->addElement('hidden', 'enrollmentmethod');
+        // $mform->setType('enrollmentmethod', PARAM_INT);
+
+        $enrollmentmethod = array(null=>'---Select---',LDAP_ENROLL=>'Ldap',MANUAL_ENROLL=>'Manual');
+		$mform->addElement('select', 'enrollmentmethod', get_string('authenticationmethods', 'local_users'), $enrollmentmethod);
+        $mform->addRule('enrollmentmethod', null, 'required', null, 'client');
+		$mform->setType('enrollmentmethod', PARAM_INT);
         $mform->setDefault('enrollmentmethod', MANUAL_ENROLL);
         $mform->addElement('advcheckbox', 'createpassword', get_string('createpassword', 'auth'));
         $mform->addElement('hidden', 'option', ADD_UPDATE);

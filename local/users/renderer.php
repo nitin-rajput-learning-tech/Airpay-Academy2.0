@@ -135,6 +135,10 @@ class local_users_renderer extends plugin_renderer_base {
         }
         $badgecount = $DB->count_records_sql("SELECT count(id) FROM {badge_issued} WHERE
          userid = :userid", array('userid' => $userrecord->id));
+        $stat = $DB->get_field('local_states','states_name',array('id'=>$userrecord->open_states));
+        $dist = $DB->get_field('local_district','district_name',array('id'=>$userrecord->open_district));
+        $subdist = $DB->get_field('local_subdistrict','subdistrict_name',array('id'=>$userrecord->open_subdistrict));
+        $vill = $DB->get_field('local_village','village_name',array('id'=>$userrecord->open_village));
         $certificatecount = 0;
         $options = array('targetID' => 'display_modulesdata');
         $usersviewContext = [
@@ -159,7 +163,7 @@ class local_users_renderer extends plugin_renderer_base {
             "region" => ! empty(trim($userrecord->open_region)) ? $userrecord->open_region : 'N/A',
             "level" => ! empty(trim($userrecord->open_level)) ? $userrecord->open_level : 'N/A',
             "branch" => ! empty(trim($userrecord->open_branch)) ? $userrecord->open_branch : 'N/A',
-            "userstate" => ! empty(trim($userrecord->open_states)) ? $userrecord->open_states : 'N/A',
+            "userstate" => $stat ? $stat : 'N/A',
             "phnumber" => $contact,
             "badgesimg" => $OUTPUT->image_url('badgeicon', 'local_users'),
             "certimg" => $OUTPUT->image_url('certicon', 'local_users'),
@@ -177,9 +181,9 @@ class local_users_renderer extends plugin_renderer_base {
             "pluginslist" => $pluginarray,
             "userterritory" => $userterritory ? $userterritory : 'All',
             "usercu" => $usercu ? $usercu : 'All',
-            "userdistrict" => ! empty(trim($userrecord->open_district)) ? $userrecord->open_district : 'N/A',
-            "usersubdistrict" => ! empty(trim($userrecord->open_subdistrict)) ? $userrecord->open_subdistrict : 'N/A',
-            "uservillage" => ! empty(trim($userrecord->open_village)) ? $userrecord->open_village : 'N/A',
+            "userdistrict" => $dist ? $dist : 'N/A',
+            "usersubdistrict" => $subdist ? $subdist : 'N/A',
+            "uservillage" => $vill ? $vill : 'N/A',
         ];
         $value = $this->render_from_template('local_users/profile', $usersviewContext);
 

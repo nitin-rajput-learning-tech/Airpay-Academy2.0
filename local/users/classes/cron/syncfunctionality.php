@@ -716,7 +716,7 @@ class syncfunctionality
             JOIN {local_district} as ld ON ld.statesid=ls.id
             JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
             JOIN {local_village} as lv ON lv.subdistrictid=lsd.id
-            WHERE 1=1 AND ls.costcenterid = $this->costcenterid $where";
+            WHERE 1=1 AND ls.costcenterid = $this->costcenterid $where ";
                 $data = $DB->get_record_sql($sql, $params);
                 if (empty($data)) {
                     $strings->line = $this->excel_line_number;
@@ -741,7 +741,7 @@ class syncfunctionality
     {
         global $USER, $DB, $CFG;
         $user = new \stdclass();
-        $user->auth = "manual"; //by default accepts manual
+        // $user->auth = "manual"; //by default accepts manual
         $user->mnethostid = 1;
         $user->confirmed = 1;
         $user->suspended = $this->activestatus;
@@ -794,6 +794,22 @@ class syncfunctionality
             $user->username = time() . $user->username;
             $user->email = time() . $user->email;
             $user->open_employeeid = time() . $user->open_employeeid;
+        }
+        if($formdata){ 
+            switch($formdata->enrollmentmethod){
+                case MANUAL_ENROLL:
+                      $user->auth = "manual";
+                      break;
+                case LDAP_ENROLL:
+                      $user->auth = "ldap";
+                      break;
+                case SAML2:
+                      $user->auth = "saml2";
+                      break; 
+                case ADwebservice:
+                      $user->auth = "adwebservice";
+                      break; 				     
+            }
         }
         $user->force_password_change = (empty($excel->force_password_change)) ? 0 : $excel->force_password_change;
         return $user;
