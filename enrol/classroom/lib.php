@@ -601,9 +601,14 @@ class enrol_classroom_plugin extends enrol_plugin {
         global $DB;
         $sqlclass = "SELECT classroomid FROM {local_classroom_courses} as lcc  WHERE lcc.courseid =:courseid ";
         $classroomidsarr = $DB->get_fieldset_sql($sqlclass,array("courseid"=>$instance->courseid));
-        list($insql, $inparams) = $DB->get_in_or_equal($classroomidsarr);
-        $sql = "SELECT id,name FROM {local_classroom}  WHERE id $insql";
-        $classroomoptions=$DB->get_records_sql_menu($sql,  $inparams, $sort='', $fields='*', $limitfrom=0, $limitnum=0);
+        if(!empty($classroomidsarr)){
+            list($insql, $inparams) = $DB->get_in_or_equal($classroomidsarr);
+            $sql = "SELECT id,name FROM {local_classroom}  WHERE id $insql";
+            $classroomoptions=$DB->get_records_sql_menu($sql,  $inparams, $sort='', $fields='*', $limitfrom=0, $limitnum=0);
+        }else{
+            $classroomoptions = array();
+        }
+        
         return $classroomoptions;
     }
 }
