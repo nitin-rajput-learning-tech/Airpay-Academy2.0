@@ -885,14 +885,73 @@ class core_renderer extends \core_renderer {
             ));
         }
         $show_course_header = false;
+
+        $header = new stdClass();
+
         if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1) {
             $course_extended_menu = $this->course_context_header_settings_menu();
             $show_course_header = true;
+
+            global $DB;
+
+            $employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
+
+            $params = array('courseid'=>$courseid, 'employeerole' => $employeerole);
+
+            $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
+            $totalusersssql = " SELECT COUNT(u.id) as ccount
+                                FROM {user} u
+                                WHERE u.confirmed = 1 AND u.deleted = 0 AND u.suspended = 0 $costcenterpathconcatsql";
+
+            $total_count =  $DB->count_records_sql($totalusersssql);
+
+            $header->total_count=$total_count ? $total_count : 0;
+
+            $enrolledusersssql = " SELECT COUNT(u.id) as ccount
+                                FROM {course} c
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
+                                                AND u.deleted = 0 AND u.suspended = 0
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql";
+
+            $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
+
+            $header->enrolled_count=$enrolled_count ? $enrolled_count : 0;
+
+
+            $header->enrolled_percentage=($header->enrolled_count / $header->total_count) * 100;
+
+            if (!is_null($header->enrolled_percentage)) {
+
+                $header->enrolled_percentage=  floor($header->enrolled_percentage);
+            }
+
+
+            $completedusersssql = " SELECT COUNT(u.id) as ccount
+                                FROM {course} c
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
+                                                AND u.deleted = 0 AND u.suspended = 0
+                                JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL $costcenterpathconcatsql";
+
+            $completed_count = $DB->count_records_sql($completedusersssql,$params);
+
+            $header->completed_count=$completed_count ? $completed_count : 0;
+
+            $header->completed_percentage=($header->completed_count / $header->total_count) * 100;
+
+            if (!is_null($header->completed_percentage)) {
+
+                    $header->completed_percentage=  floor($header->completed_percentage);
+            }
             
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
         }
-        $header = new stdClass();
         $header->settingsmenu = $course_extended_menu;
 
         // if(!$data->hideheader)

@@ -1451,13 +1451,15 @@ function get_listof_courses($stable, $filterdata) {
           
             $params = array('courseid'=>$course->id, 'employeerole' => $employeerole);
 
+            $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
             $enrolledusersssql = " SELECT COUNT(u.id) as ccount
                                 FROM {course} c
                                 JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
                                 JOIN {role_assignments} as ra ON ra.contextid = cot.id
                                 JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
                                                 AND u.deleted = 0 AND u.suspended = 0
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql";
 
             $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
 
@@ -1469,7 +1471,7 @@ function get_listof_courses($stable, $filterdata) {
                                 JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
                                                 AND u.deleted = 0 AND u.suspended = 0
                                 JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL ";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL $costcenterpathconcatsql";
 
             $completed_count = $DB->count_records_sql($completedusersssql,$params);
 
