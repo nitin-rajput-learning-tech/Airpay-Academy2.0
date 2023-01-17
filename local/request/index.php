@@ -46,10 +46,10 @@ $PAGE->requires->js_call_amd('local_request/requestconfirm', 'load', array());
 
 $output = $PAGE->get_renderer('local_request');
 if($courseid){
-    if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $sitecontext))){
+    if(!(is_siteadmin() || has_capability('local/request:approverecord', $sitecontext))){
         $coursedata = get_course($courseid);
-        if($USER->open_costcenterid != $coursedata->open_costcenterid){
-            redirect($CFG->wwwroot.'/local/courses/courses.php');
+        $usercostcenterid = explode('/',$USER->open_path)[1];
+        if($usercostcenterid != $coursedata->open_costcenterid){
             redirect($CFG->wwwroot.'/local/courses/courses.php');
         }
     }
