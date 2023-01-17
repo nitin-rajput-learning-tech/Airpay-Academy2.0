@@ -1524,3 +1524,7 @@ body#page-local-evaluation-userdashboard .card_list_view {
         left:180px;
     }
 }
+#page-local-evaluation-eval_view .dropdown-menu [data-method="addnew_question"]{
+    margin-bottom: 0 !important;
+    float: none;
+}
