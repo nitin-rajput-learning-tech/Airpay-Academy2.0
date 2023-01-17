@@ -312,7 +312,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                                 $OUTPUT->pix_icon('t/show', get_string('show'), 'moodle', array('title' => '')),
                                 array('id' => 'confirmshow' . $cohort->id . '', 'onclick' => '(
                                       function(e){
-                                ("local_groups/renderselections").showhide_cohort(' . $cohort->id . ', "' . $cohort->name . '")
+                                require("local_groups/renderselections").showhide_cohort(' . $cohort->id . ', "' . $cohort->name . '")
                                 })(event)'));
                             $buttons[] = html_writer::end_tag('li');
                         }

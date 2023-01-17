@@ -162,7 +162,7 @@ class accesslib
                             $highest_roleid = $highest_roleinfo->roleid;
                             $contextid = $highest_roleinfo->contextid;
 
-                            $OUTPUT->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+                            // $OUTPUT->role_switch_basedon_userroles($highest_roleid, false, $contextid);
 
                             $context =\context::instance_by_id($contextid);
                         }

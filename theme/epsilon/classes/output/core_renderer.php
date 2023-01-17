@@ -1328,6 +1328,7 @@ class core_renderer extends \core_renderer {
                 $highest_roleid = $highest_roleinfo->roleid;
                 $contextid = $highest_roleinfo->contextid;
                 $this->role_switch_basedon_userroles($highest_roleid, false, $contextid);
+                 redirect(new moodle_url('/'));
 
             }
         // }elseif((isset($USER->access['rsw']) && $USER->access['rsw']) ){
@@ -1522,7 +1523,7 @@ class core_renderer extends \core_renderer {
             redirect($CFG->wwwroot.'/my');
         }
         if($newpageurl == $CFG->wwwroot.'/course/management.php'){
-            redirect($CFG->wwwroot.'/local/courses/index.php');
+            redirect($CFG->wwwroot.'/local/custom_category/index.php');//Category page redirection
         }
         if($newpageurl == $CFG->wwwroot.'/user/view.php' || $newpageurl == $CFG->wwwroot.'/user/profile.php'){
             if($_GET['id']){
