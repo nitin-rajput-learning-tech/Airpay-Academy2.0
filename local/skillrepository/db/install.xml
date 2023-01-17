@@ -22,7 +22,6 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
             <INDEXES>
-                <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
                 <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
             </INDEXES>
         </TABLE>
@@ -45,7 +44,6 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
             <INDEXES>
-                <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
                 <INDEX NAME="parentid" UNIQUE="false" FIELDS="parentid"/>
             </INDEXES>
         </TABLE>
@@ -64,9 +62,7 @@
             <KEYS>
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
-            <INDEXES>
-                <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
-            </INDEXES>
+          
         </TABLE>
         <TABLE NAME="local_skillmatrix" COMMENT="local_course_levels table">
             <FIELDS>
@@ -87,7 +83,6 @@
                 <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
             </KEYS>
             <INDEXES>
-                <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
                 <INDEX NAME="skill_categoryid" UNIQUE="false" FIELDS="skill_categoryid"/>
                 <INDEX NAME="skillid" UNIQUE="false" FIELDS="skillid"/>
                 <INDEX NAME="positionid" UNIQUE="false" FIELDS="positionid"/>
