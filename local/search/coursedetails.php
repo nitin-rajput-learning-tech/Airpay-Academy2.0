@@ -32,7 +32,7 @@ $PAGE->set_title($course->fullname);
 //$PAGE->set_heading($course->fullname);
 $userrolecontext = local_costcenter\lib\accesslib::get_module_context();
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
-if(!is_siteadmin() && in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true)){
+if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switch_path()) || in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true))){
 	$switchedrole = false;
 	$PAGE->navbar->add(get_string('e_learning_courses','local_search'), $catalogurl);
 }else{
@@ -146,10 +146,6 @@ echo '<div class="content_era_left">';
         $credits = !empty($course->open_points) ? $course->open_points : "NA";
     	  echo'<ul class="crse_details">
 				<li class="my-1 incentives__text">'.get_string('category', 'local_courses').': <b class="iteminfo">'.$course_category.'</b>
-				</li>
-				<li class="my-1 incentives__text">'.get_string('skill', 'local_courses').': <b class="iteminfo">'.$skill.'</b></li>
-				<li class="my-1 incentives__text">'.get_string('open_levelcourse', 'local_courses').': <b class="iteminfo">'.$level.'</b></li>
-				<li class="my-1 incentives__text">'.get_string('open_pointscourse', 'local_courses').': <b class="iteminfo">'.$credits.'</b>
 				</li>
 				</ul>
 	            </div>
