@@ -33,9 +33,9 @@ define(['jquery'],
                 var div = $("."+subtab)[0];
                 // console.log($(div).hasClass('dashboardCard8'));
                 if(showMore)
-                    var limit = index-1;
-                else
                     var limit = index-2;
+                else
+                    var limit = index-3;
 
                 if($(div).data('index') == limit){
                     // console.log($('.divslide .course-next'));
