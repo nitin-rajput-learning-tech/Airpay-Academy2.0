@@ -680,37 +680,43 @@ class syncfunctionality
         $strings = new \stdClass();
         foreach ($locationfields as $key => $lfield) {
             if (!empty($lfield)) {
-                $sql = " SELECT ls.id as state, ld.id as district,lsd.id as subdistrict,lv.id as village
-            FROM {local_states} as ls
-            JOIN {local_district} as ld ON ld.statesid=ls.id
-            JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
-            JOIN {local_village} as lv ON lv.subdistrictid=lsd.id
-            WHERE 1=1 AND ls.costcenterid = $this->costcenterid";
+                $select = '';
+                $where = '';
                 $params = array();
                 if ($key == 'state') {
-                    $sql .= " AND ls.code = :state ";
+                    $select .= " ls.id as state";
+                    $where .= " AND ls.code = :state ";
                     $params[$key] = $user->state;
                     $strings->state = $user->state;
                     $strings->parentid = $user->organization_code;
                 }
                 if ($key == 'district') {
-                    $sql .= " AND ld.code = :district ";
+                    $select .= " ls.id as state, ld.id as district";
+                    $where .= " AND ld.code = :district ";
                     $params['district'] = $user->district;
                     $strings->district = $user->district;
                     $strings->parentid = $user->state;
                 }
                 if ($key == 'subdistrict') {
-                    $sql .= " AND lsd.code = :subdistrict ";
+                    $select .= " ls.id as state, ld.id as district,lsd.id as subdistrict";
+                    $where .= " AND lsd.code = :subdistrict ";
                     $params['subdistrict'] = $user->subdistrict;
                     $strings->subdistrict = $user->subdistrict;
                     $strings->parentid = $user->district;
                 }
                 if ($key == 'village') {
-                    $sql .= " AND lv.code = :village ";
+                    $select .= " ls.id as state, ld.id as district,lsd.id as subdistrict,lv.id as village ";
+                    $where .= " AND lv.code = :village ";
                     $params['village'] = $user->village;
                     $strings->village = $user->village;
                     $strings->parentid = $user->subdistrict;
                 }
+                $sql = " SELECT $select
+            FROM {local_states} as ls
+            JOIN {local_district} as ld ON ld.statesid=ls.id
+            JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
+            JOIN {local_village} as lv ON lv.subdistrictid=lsd.id
+            WHERE 1=1 AND ls.costcenterid = $this->costcenterid $where";
                 $data = $DB->get_record_sql($sql, $params);
                 if (empty($data)) {
                     $strings->line = $this->excel_line_number;
@@ -721,8 +727,6 @@ class syncfunctionality
                 }
             }
         }
-
-
         return $data;
     }
     public function get_prfilefield_validations()
