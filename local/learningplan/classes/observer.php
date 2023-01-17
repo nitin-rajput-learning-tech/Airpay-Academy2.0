@@ -41,7 +41,7 @@ class local_learningplan_observer extends \core\event\course_viewed {
                     $courseid = $DB->get_field_sql("SELECT llc.courseid FROM {local_learningplan_courses} as llc WHERE llc.planid = :planid AND llc.sortorder > :sortorder AND lower(llc.nextsetoperator) LIKE 'and' ", ['planid' => $lpcourse->planid, 'sortorder' => $lpcourse->sortorder]);
                     if($courseid){
                         $learningplan_lib = new local_learningplan\lib\lib();
-                        $enrol=$learningplan_lib->to_enrol_users($lpcourse->planid, $event->relateduserid, $courseid);
+                        $enrol=$learningplan_lib->to_enrol_users($lpcourse->planid, $event->relateduserid, $courseid, false);
                     }
                 }
             }
