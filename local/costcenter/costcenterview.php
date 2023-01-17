@@ -141,6 +141,11 @@ else{
 
 echo $OUTPUT->header();
 
+$url = new moodle_url('/local/costcenter/costcenterview.php', array('sesskey'=>sesskey()));
+$costcenterpath = (new \local_costcenter\lib\accesslib())::get_user_role_switch_select_option($url,'id');
+
+echo $costcenterpath;
+
 $renderer = $PAGE->get_renderer('local_costcenter');
 echo $renderer->get_dept_view_btns($id);
 if($depart->parentid){ // display department page

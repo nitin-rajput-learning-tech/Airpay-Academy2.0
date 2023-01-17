@@ -21,3 +21,10 @@ require_once('../../config.php');
 //         $depth=count($costcenterdepth);
 //         var_dump($depth);
 // var_dump($USER->useraccess['currentroleinfo']['depth']);
+echo $OUTPUT->header();
+ $url = new moodle_url('/local/costcenter/test.php', array('sesskey'=>sesskey()));
+$costcenterpath = (new \local_costcenter\lib\accesslib())::get_user_role_switch_select_option($url);
+
+echo $costcenterpath;
+echo $OUTPUT->footer();
+die;
