@@ -16,3 +16,6 @@ body#page-local-learningplan-userdashboard .card_list_view {
 #page-local-learningplan-view .page-header-image ,#page-local-learningplan-view .header-button-group{
     display: none;
 }
+#page-local-learningplan-index #all_learning_plans_table tbody td span a{
+    margin-right: 10px;
+}

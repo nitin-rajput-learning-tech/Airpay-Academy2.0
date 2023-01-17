@@ -572,6 +572,9 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 #page-local-search-allcourses .coursecard .action_div {
     margin: 8px 0;
 }
+#page-local-search-allcourses .coursecard .action_div>div{
+    display:inline-flex;
+}
 #page-local-search-allcourses .cat_btn, 
 #page-local-search-allcourses .viewmore_btn {
     max-width: 150px;
@@ -675,7 +678,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 #page-local-search-allcourses .coursecontent .viewmore_btn,
 #page-local-search-allcourses .coursecontent .cat_btn{
     padding: 4px 0 !important;
-    margin: 0 10px 0 0 !important;
+    margin: 0 10px 10px 0 !important;
     min-width: 120px;
     font-weight: 500 !important;
     background-color: var(--buttonbgcolor);

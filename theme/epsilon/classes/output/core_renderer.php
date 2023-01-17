@@ -1865,6 +1865,9 @@ class core_renderer extends \core_renderer {
         global $CFG;
         return $CFG->wwwroot."/theme/epsilon/style/site_color.css?v=".date('Ymdhis');
     }
+    public function courseformat_drawer_content(){
+        return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', []);
+    }
 
 
 }
