@@ -683,6 +683,7 @@ class syncfunctionality
                 $select = '';
                 $where = '';
                 $params = array();
+                $join = ''; 
                 if ($key == 'state') {
                     $select .= " ls.id as state";
                     $where .= " AND ls.code = :state ";
@@ -692,6 +693,7 @@ class syncfunctionality
                 }
                 if ($key == 'district') {
                     $select .= " ls.id as state, ld.id as district";
+                    $join .=" JOIN {local_district} as ld ON ld.statesid=ls.id ";
                     $where .= " AND ld.code = :district ";
                     $params['district'] = $user->district;
                     $strings->district = $user->district;
@@ -700,6 +702,8 @@ class syncfunctionality
                 if ($key == 'subdistrict') {
                     $select .= " ls.id as state, ld.id as district,lsd.id as subdistrict";
                     $where .= " AND lsd.code = :subdistrict ";
+                    $join .=" JOIN {local_district} as ld ON ld.statesid=ls.id
+                    JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id ";
                     $params['subdistrict'] = $user->subdistrict;
                     $strings->subdistrict = $user->subdistrict;
                     $strings->parentid = $user->district;
@@ -707,15 +711,15 @@ class syncfunctionality
                 if ($key == 'village') {
                     $select .= " ls.id as state, ld.id as district,lsd.id as subdistrict,lv.id as village ";
                     $where .= " AND lv.code = :village ";
+                    $join .=" JOIN {local_district} as ld ON ld.statesid=ls.id
+                    JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
+                    JOIN {local_village} as lv ON lv.subdistrictid=lsd.id ";
                     $params['village'] = $user->village;
                     $strings->village = $user->village;
                     $strings->parentid = $user->subdistrict;
                 }
                 $sql = " SELECT $select
-            FROM {local_states} as ls
-            JOIN {local_district} as ld ON ld.statesid=ls.id
-            JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
-            JOIN {local_village} as lv ON lv.subdistrictid=lsd.id
+            FROM {local_states} as ls  $join
             WHERE 1=1 AND ls.costcenterid = $this->costcenterid $where ";
                 $data = $DB->get_record_sql($sql, $params);
                 if (empty($data)) {
