@@ -46,7 +46,6 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="costcenter" UNIQUE="false" FIELDS="costcenter"/>
         <INDEX NAME="department" UNIQUE="false" FIELDS="department"/>
         <INDEX NAME="subdepartment" UNIQUE="false" FIELDS="subdepartment"/>
         <INDEX NAME="subsubdepartment " UNIQUE="false" FIELDS="subsubdepartment "/>
