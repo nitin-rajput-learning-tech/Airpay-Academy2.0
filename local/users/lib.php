@@ -1514,7 +1514,17 @@ function local_users_output_fragment_userrole_display($args)
             $rowdata['role'] = $role->name;
             $rowdata['timeassign'] = date("d M Y", $role->timemodified);
             $rowdata['costcenter'] = $role->costcenter;
-            $rowdata['depth'] = $role->depth;
+            if($role->depth == 1){
+                $rowdata['depth'] = get_string('organization','local_users');
+            } elseif($role->depth == 2){
+                $rowdata['depth'] = get_string('department','local_users');
+            } elseif($role->depth == 3){
+                $rowdata['depth'] = get_string('commercialunit','local_users');
+            } elseif($role->depth == 4){
+                $rowdata['depth'] = get_string('commercialarea','local_users');
+            } elseif($role->depth == 5){
+                $rowdata['depth'] = get_string('territory','local_users');
+            }
             $templatedata['rowdata'][] = $rowdata;
 
         }

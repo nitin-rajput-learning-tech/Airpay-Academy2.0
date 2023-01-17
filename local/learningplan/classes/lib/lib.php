@@ -780,7 +780,7 @@ class lib
 			}
 		}
 	}
-	public function to_enrol_users($planid, $userid, $course_enrol)
+	public function to_enrol_users($planid, $userid, $course_enrol, $redirect = true)
 	{
 		$sql = "SELECT * from {local_learningplan_courses} where planid=$planid and courseid=$course_enrol";
 		$record = $this->db->get_record_sql($sql);
@@ -799,8 +799,10 @@ class lib
 				echo "Please contact the admin and enrol the course";
 			}
 		}
-		$plan_url = new \moodle_url('/course/view.php', array('id' => $course_enrol));
-		redirect($plan_url);
+		if($redirect){
+			$plan_url = new \moodle_url('/course/view.php', array('id' => $course_enrol));
+			redirect($plan_url);
+		}
 	}
 	public function to_send_request_notification($data, $emailtype, $status, $planid)
 	{
