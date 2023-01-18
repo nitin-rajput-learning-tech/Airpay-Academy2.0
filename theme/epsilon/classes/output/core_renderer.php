@@ -861,6 +861,9 @@ class core_renderer extends \core_renderer {
      * @return string HTML to display the main header.
      */
     public function full_header() {
+
+        global $USER,$COURSE;
+
         $data = $this->custom_secured_redirection();
         $pagetype = $this->page->pagetype;
         $homepage = get_home_page();
@@ -886,69 +889,25 @@ class core_renderer extends \core_renderer {
         }
         $show_course_header = false;
 
-        $header = new stdClass();
+        $header=new stdClass();
 
-        if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1) {
-            $course_extended_menu = $this->course_context_header_settings_menu();
-            $show_course_header = true;
+        if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1){
 
-            global $DB;
+            if ($this->courseviewmenu_hidden()) {
 
-            $employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
+                $course_extended_menu = $this->course_context_header_settings_menu();
 
-            $params = array('courseid'=>$courseid, 'employeerole' => $employeerole);
+                $show_course_header = true;
 
-            $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+                $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);;
 
-            $totalusersssql = " SELECT COUNT(u.id) as ccount
-                                FROM {user} u
-                                WHERE u.confirmed = 1 AND u.deleted = 0 AND u.suspended = 0 $costcenterpathconcatsql";
+                $header=(object)array_merge((array)$header,$usercourseprogress);
 
-            $total_count =  $DB->count_records_sql($totalusersssql);
+            }else{
 
-            $header->total_count=$total_count ? $total_count : 0;
-
-            $enrolledusersssql = " SELECT COUNT(u.id) as ccount
-                                FROM {course} c
-                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
-                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
-                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
-                                                AND u.deleted = 0 AND u.suspended = 0
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql";
-
-            $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
-
-            $header->enrolled_count=$enrolled_count ? $enrolled_count : 0;
-
-
-            $header->enrolled_percentage=($header->enrolled_count / $header->total_count) * 100;
-
-            if (!is_null($header->enrolled_percentage)) {
-
-                $header->enrolled_percentage=  floor($header->enrolled_percentage);
+                 $course_extended_menu = $this->context_header_settings_menu();
             }
 
-
-            $completedusersssql = " SELECT COUNT(u.id) as ccount
-                                FROM {course} c
-                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
-                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
-                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
-                                                AND u.deleted = 0 AND u.suspended = 0
-                                JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL $costcenterpathconcatsql";
-
-            $completed_count = $DB->count_records_sql($completedusersssql,$params);
-
-            $header->completed_count=$completed_count ? $completed_count : 0;
-
-            $header->completed_percentage=($header->completed_count / $header->total_count) * 100;
-
-            if (!is_null($header->completed_percentage)) {
-
-                    $header->completed_percentage=  floor($header->completed_percentage);
-            }
-            
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
         }
@@ -1933,7 +1892,55 @@ class core_renderer extends \core_renderer {
         return $CFG->wwwroot."/theme/epsilon/style/site_color.css?v=".date('Ymdhis');
     }
     public function courseformat_drawer_content(){
-        return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', []);
+
+        global $COURSE,$CFG,$USER;
+
+        require_once("$CFG->libdir/externallib.php");
+
+        if (!$this->courseviewmenu_hidden()) {
+
+            $course = $COURSE;
+
+            $context = \context_course::instance($course->id, IGNORE_MISSING);
+
+            list($course->summary, $course->summaryformat) =
+                external_format_text($course->summary, $course->summaryformat, $context->id, 'course', 'summary', null);
+            $course->fullname = external_format_string($course->fullname, $context->id);
+            $course->shortname = external_format_string($course->shortname, $context->id);
+
+             $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($course->id,$USER->id);;
+
+            $course=array_merge((array)$course,$usercourseprogress);
+
+
+            return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', $course);
+        }
+    }
+
+     public function courseviewmenu_hidden(){
+
+       if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+        $pageurl = "https";
+        else
+            $pageurl = "http";
+        $pageurl .= "://";
+        $pageurl .= $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+        $string = strpos($pageurl, '?');
+        if($string)
+            $newpageurl = substr($pageurl,0 , $string);
+        else
+            $newpageurl = $pageurl;
+
+        $checkingcourseurl = new moodle_url('/course/view.php');
+
+        $courseviewmenu=false;
+
+        if ($newpageurl == $checkingcourseurl) {
+
+            $courseviewmenu=true;
+        }
+
+        return $courseviewmenu;
     }
 
 

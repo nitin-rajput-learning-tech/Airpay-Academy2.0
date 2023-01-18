@@ -54,4 +54,113 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_costcenter_path_field_concatsql($columnname, self::course_costcenterpath($courseid));
 
     }
+    public static function get_user_course_progress_percentage($courseid, $userid = 0,
+                              $enrolid = 0){
+
+        global $CFG, $USER, $DB;
+
+        $sameuser = $USER->id == $userid;
+
+
+        $maincheckcontext=$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+
+        // If viewing details of another user, then we must be able to view participants as well as profile of that user.
+
+
+        if ($sameuser && ((has_capability('local/courses:enrol',
+                                $maincheckcontext)  || is_siteadmin())&&has_capability('local/courses:manage', $maincheckcontext))) {
+
+
+            $context = \context_course::instance($courseid, IGNORE_MISSING);
+
+            $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
+            $totalusersssql = " SELECT COUNT(u.id)
+                                    FROM {user} u
+                                    WHERE u.confirmed = 1 AND u.deleted = 0 AND u.suspended = 0 $costcenterpathconcatsql";
+
+            $totaluserscount =  $DB->count_records_sql($totalusersssql);
+
+
+            list($enrolledsqlselect, $enrolledparams) = self::get_course_enrolled_sql($context, $withcapability = '', $groupid = 0, $onlyactive = false, $onlysuspended = false,$enrolid);
+            $enrolledsql = "SELECT COUNT('x') FROM ($enrolledsqlselect) enrolleduserids";
+            $enrolledusercount = $DB->count_records_sql($enrolledsql, $enrolledparams);
+
+            $enrolledpercentage=($enrolledusercount / $totaluserscount) * 100;
+
+            if (!is_nan($enrolledpercentage)) {
+
+                $enrolledpercentage = floor($enrolledpercentage);
+            }else{
+                $enrolledpercentage=0;
+            }
+
+            list($completedsqlselect, $completedparams) = self::get_course_completed_sql($context,$enrolledsqlselect, $enrolledparams);
+
+            $completedsql = "SELECT COUNT('x') FROM ($completedsqlselect) completeduserids";
+            $completedusercount = $DB->count_records_sql($completedsql, $completedparams);
+
+            $completedpercentage=($completedusercount / $enrolledusercount) * 100;
+
+            if (!is_nan($completedpercentage)) {
+
+                $completedpercentage= floor($completedpercentage);
+            }else{
+                $completedpercentage=0;
+            }
+
+            return array('totaluserscount'=>$totaluserscount,'enrolledusercount'=>$enrolledusercount,'completedusercount'=>$completedusercount,'enrolledpercentage'=>$enrolledpercentage,'completedpercentage'=>$completedpercentage,'courseprogresspercent'=>false);
+
+        }else{
+
+            $fullcourse = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
+            $progress = \core_completion\progress::get_course_progress_percentage($fullcourse, $userid);
+            $coursehasprogress = $progress !== null;
+            $courseprogresspercent = $coursehasprogress ? $progress : 0;
+
+            if (!is_nan($courseprogresspercent)) {
+
+                $courseprogresspercent= floor($courseprogresspercent);
+            }else{
+                $courseprogresspercent=0;
+            }
+
+            return array('usercourseprogresspercent'=>$courseprogresspercent,'courseprogresspercent'=>true);
+        }
+
+    }
+    public static function get_course_enrolled_sql($context, $withcapability = '', $groupid = 0, $onlyactive = false, $onlysuspended = false,$enrolid = 0) {
+
+        // Use unique prefix just in case somebody makes some SQL magic with the result.
+        static $i = 0;
+        $i++;
+        $prefix = 'eu' . $i . '_';
+
+        $columnname=$prefix.'u.open_path';
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname);
+
+        $capjoin = get_enrolled_with_capabilities_join(
+                $context, $prefix, $withcapability, $groupid, $onlyactive, $onlysuspended, $enrolid);
+
+        $sql = "SELECT DISTINCT {$prefix}u.id
+                  FROM {user} {$prefix}u
+                $capjoin->joins
+                 WHERE $capjoin->wheres $costcenterpathconcatsql";
+
+        return array($sql, $capjoin->params);
+    }
+    public static function get_course_completed_sql($context,$enrolledsqlselect,$enrolledparams) {
+
+        // Use unique prefix just in case somebody makes some SQL magic with the result.
+        static $i = 0;
+        $i++;
+        $prefix = 'cu' . $i . '_';
+
+         $sql = " SELECT DISTINCT {$prefix}cc.id
+                            FROM {course_completions} as {$prefix}cc
+                            WHERE {$prefix}cc.course = $context->instanceid AND {$prefix}cc.userid in ($enrolledsqlselect) AND {$prefix}cc.timecompleted IS NOT NULL ";
+
+
+        return array($sql,$enrolledparams);
+    }
 }

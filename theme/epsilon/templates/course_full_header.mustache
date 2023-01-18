@@ -37,6 +37,7 @@
                     <div class="heading">
                         {{{contextheader}}}
                     </div>
+                    {{^courseprogresspercent}}
                     <div class="user_enrollment row  my-4">
                         <div class="col-md-3 d-flex">
                             <div class="seats_icon">
@@ -44,16 +45,16 @@
                             </div>
                             <div class="enroll_details d-flex">
                                 <span class="details_content">User Enrollements :</span>
-                                <span class="enroll_number">{{enrolled_count}}/{{total_count}}</span>
+                                <span class="enroll_number">{{enrolledusercount}}/{{totaluserscount}}</span>
                             </div>
                         </div>
                         <div class="col-md-9 d-flex">
                             <div class="max-progress d-flex align-items-center">
                                 <div class="progress flexgrow-1">
-                                    <div class="progress-bar text-center" role="progressbar" style="width:{{enrolled_percentage}}%;"
-                                        aria-valuenow="{{enrolled_percentage}}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div class="progress-bar text-center" role="progressbar" style="width:{{enrolledpercentage}}%;"
+                                        aria-valuenow="{{enrolledpercentage}}" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
-                                <span>{{enrolled_percentage}}%</span>
+                                <span>{{enrolledpercentage}}%</span>
                             </div>
                         </div>
                     </div>
@@ -64,19 +65,33 @@
                             </div>
                             <div class="enroll_details d-flex">
                                 <span class="details_content">User Completion :</span>
-                                <span class="enroll_number">{{completed_count}}/{{total_count}}</span>
+                                <span class="enroll_number">{{completedusercount}}/{{enrolledusercount}}</span>
                             </div>
                         </div>
                         <div class="col-md-9 d-flex">
                             <div class="max-progress  d-flex align-items-center">
                                 <div class="progress flexgrow-1">
-                                    <div class="progress-bar text-center" role="progressbar" style="width: {{completed_percentage}}%;"
-                                        aria-valuenow="{{completed_percentage}}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div class="progress-bar text-center" role="progressbar" style="width: {{completedpercentage}}%;"
+                                        aria-valuenow="{{completedpercentage}}" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
-                                <span>{{completed_percentage}}%</span>
+                                <span>{{completedpercentage}}%</span>
                             </div>
                         </div>
                     </div>
+                    {{/courseprogresspercent}}
+                    {{#courseprogresspercent}}
+                    <div class="user_enrollment row  my-4">
+                        <div class="col-md-9 d-flex">
+                            <div class="max-progress d-flex align-items-center">
+                                <div class="progress flexgrow-1">
+                                    <div class="progress-bar text-center" role="progressbar" style="width:{{usercourseprogresspercent}}%;"
+                                        aria-valuenow="{{usercourseprogresspercent}}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <span>{{usercourseprogresspercent}}%</span>
+                            </div>
+                        </div>
+                    </div>
+                    {{/courseprogresspercent}}
                 </div>
                 {{#settingsmenu}}
                 <div class="context-header-settings-menu">
