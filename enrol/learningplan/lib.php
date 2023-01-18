@@ -133,10 +133,10 @@ class enrol_learningplan_plugin extends enrol_plugin {
             return false;
         }
 		
-		 if ($DB->record_exists('enrol', array('courseid'=>$courseid, 'enrol'=>'learningplan'))) {
-            // Multiple instances not supported.
-            return false;
-        }
+		//  if ($DB->record_exists('enrol', array('courseid'=>$courseid, 'enrol'=>'learningplan'))) {
+        //     // Multiple instances not supported.
+        //     return false;
+        // }
 
         return true;
     }
