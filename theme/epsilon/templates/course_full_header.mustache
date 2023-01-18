@@ -92,12 +92,15 @@
                         </div>
                     </div>
                     {{/courseprogresspercent}}
+
                 </div>
-                {{#settingsmenu}}
+
                 <div class="context-header-settings-menu">
-                    {{{settingsmenu}}}
+                    <a href="{{cfg.wwwroot}}/course/view.php?id={{courseid}}" title="Start">   <button type='button' class='btn btn-secondary' title="Start">
+                            Start
+                        </button>
+                    </a>
                 </div>
-                {{/settingsmenu}}
             </div>
             
         </div>
