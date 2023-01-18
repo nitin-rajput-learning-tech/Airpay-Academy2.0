@@ -22,6 +22,9 @@ class otp {
     $this->senderid = get_config('auth_otp', 'senderid');
     $this->authapi = get_config('auth_otp', 'authserviceip');
     $this->accountset = get_config('auth_otp', 'accountset');
+    $this->userkey = get_config('auth_otp', 'userkey');
+    $this->secret = get_config('auth_otp', 'secret');
+
 
     $this->token = get_config('auth_otp', 'apikey');
   }
@@ -124,7 +127,7 @@ class otp {
       $curloptions = $this->set_user_account($uid,$userid);
       curl_setopt_array($curl, $curloptions);
       $response = curl_exec($curl);
-
+     
       return $response;
 
   }
@@ -336,14 +339,15 @@ class otp {
    global $CFG;
     $authapi= $this->accountset;
     $apikey= $this->token;
+    $userkey= $this->userkey;
+    $secret= $this->secret;
+    $timestamp= time();
+     $hostname = $CFG->wwwroot;
+     $firstlogin = gmdate("Y-m-d\TH:i:s\Z", $timestamp);
+     $lastlogin = gmdate("Y-m-d\TH:i:s\Z", $timestamp);
+     $data =' {"bc_accessApplications":["{\"hostname\":\"'.$hostname.'\",\"firstLogin\":\"'.$firstlogin.'\",\"lastLogin\":\"'.$lastlogin.'\"}"]}';
 
-    $uinfo->domainname = $CFG->dirroot;
-    $uinfo->firstlogin = 30;
-    $uinfo->lastlogin = time();
-
-   $data = json_encode($uinfo);
-
-    $hosturl= $authapi."apikey=".$apikey."&data=".$data."&UID=".$uid;
+    $hosturl= $authapi."apikey=".$apikey."&data=".$data."&UID=".$uid."&userKey=".$userkey."&secret=".$secret;
     return [
       CURLOPT_URL => $hosturl,
       CURLOPT_RETURNTRANSFER => true,

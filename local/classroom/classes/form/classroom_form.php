@@ -52,6 +52,7 @@ class classroom_form extends moodleform {
         $mform = &$this->_form;
         $renderer = $PAGE->get_renderer('local_classroom');
         $formstatus = $this->_customdata['form_status'];
+        $open_path = $this->_customdata['open_path'];
         $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
         $formheaders = array_keys($this->formstatus);
         $formheader = $formheaders[$formstatus];
@@ -187,8 +188,10 @@ class classroom_form extends moodleform {
             // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'classroom', 'component' => 'local_classroom'));
 
             //certificate
-           
+
         } else if ($formstatus == 1) {
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$open_path);
+
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
             if($certificate_plugin_exist){
                 $checkboxes = array();
@@ -198,11 +201,15 @@ class classroom_form extends moodleform {
 
 
                 $select = array(null => get_string('select_certificate','local_classroom'));
-                if(is_siteadmin()){
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
-                }else{
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$org),'name', 'id,name');
-                }
+                // if(is_siteadmin()){
+                    /*$cert_templates = $DB->get_records_menu('tool_certificate_templates',array('open_path'=>'LIKE'),'name', 'id,name');*/
+                    $certificatesql = "SELECT id,name FROM {tool_certificate_templates}
+                                    WHERE 1=1 $costcenterpathconcatsql ";
+
+                $cert_templates = $DB->get_records_sql_menu($certificatesql);
+                // }else{
+                //     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$org),'name', 'id,name');
+                // }
                 $certificateslist = $select + $cert_templates;
 
                 $mform->addElement('select',  'certificateid', get_string('certificate_template','local_classroom'), $certificateslist);
@@ -272,7 +279,7 @@ class classroom_form extends moodleform {
         }else if ($formstatus == 3) {
             $mform->addElement('hidden', 'open_costcenterid');
             $mform->setType('open_costcenterid', PARAM_INT);
-            
+
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_classroom', $categorycontext, $multiple = false);
            
 			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_classroom', $categorycontext, $multiple = false);
@@ -386,7 +393,7 @@ class classroom_form extends moodleform {
         //     $intvalue = (int)$value;
   
         //     if(!("$intvalue" === "$value") || $intvalue < 0){
-        //       $errors['open_points'] = get_string('numeric', 'local_classroom'); 
+        //       $errors['open_points'] = get_string('numeric', 'local_classroom');
         //     }
             
         //   }
@@ -410,7 +417,7 @@ class classroom_form extends moodleform {
                      WHERE c.id = :classroomid";
             $trainers = $DB->get_records_sql_menu($sql, $params);
             $data->trainers = $trainers;
-            
+
 
         } else if ($components->form_status == 1) {
          

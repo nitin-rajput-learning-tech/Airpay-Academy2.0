@@ -24,6 +24,7 @@
 define('AJAX_SCRIPT', true);
 require_once('../../config.php');
 require_once($CFG->dirroot . '/blocks/learnerscript/lib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 use block_learnerscript\local\ls;
 use block_learnerscript\local\reportbase;
 use block_learnerscript\local\schedule;
@@ -225,6 +226,16 @@ if (empty($requests['subdepartmentid'])) {
 	$subdepartmentid = 0;
 } else {
 	$subdepartmentid = $requests['subdepartmentid'];
+}
+if (empty($requests['currentl4depid'])) {
+	$currentl4depid = 0;
+} else {
+	$currentl4depid = $requests['currentl4depid'];
+}
+if (empty($requests['currentl5depid'])) {
+	$currentl5depid = 0;
+} else {
+	$currentl5depid = $requests['currentl5depid'];
 }
 
 $action = $requests['action'];
@@ -830,6 +841,32 @@ case 'deptsubdepartments':
         $return = array('-1' => 'All');
     }
 	break;
+	case 'deptl4departments':
+		if ($subdepartmentid > 0) {
+	        $sql = "SELECT lc.id, lc.fullname FROM {local_costcenter} lc WHERE lc.parentid = $subdepartmentid AND lc.depth = 4 ";
+	        $l4departments = $DB->get_records_sql_menu($sql);
+	        if (!empty($l4departments)) {
+	            $return = array('0' => 'All') + $l4departments;
+	        } else {
+	            $return = array('-1' => 'All');
+	        }
+	    } else {
+	        $return = array('-1' => 'All');
+	    }
+	break;
+	case 'deptl5departments':
+		if ($currentl4depid > 0) {
+	        $sql = "SELECT lc.id, lc.fullname FROM {local_costcenter} lc WHERE lc.parentid = $currentl4depid AND lc.depth = 5 ";
+	        $l5departments = $DB->get_records_sql_menu($sql);
+	        if (!empty($l5departments)) {
+	            $return = array('0' => 'All') + $l5departments;
+	        } else {
+	            $return = array('-1' => 'All');
+	        }
+	    } else {
+	        $return = array('-1' => 'All');
+	    }
+	break;
 case 'deptcohorts':
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
 	// $departmentid = isset($departmentid) && $departmentid > 0 ? $departmentid : $USER->open_departmentid;
@@ -1093,23 +1130,24 @@ case 'departmentcourses':
 	break; 
 case 'departmentusers':
 	if ($orgid > 0) { 
-            $sql = "SELECT u.id, CONCAT(u.firstname,' ',u.lastname) as employeename 
-	                FROM {user} u WHERE u.deleted = 0 AND u.suspended = 0 AND u.id > 2 AND concat('/',u.open_path,'/') LIKE :costcenterpath"; 
-            // if ($departmentid > 0) {
-            //     $sql .= " AND u.open_departmentid = $departmentid ";
-            // }
-            // if ($subdepartmentid > 0) {
-            //     $sql .= " AND u.open_subdepartment = $subdepartmentid ";
-            // }
-            $courses = $DB->get_records_sql_menu($sql, array('costcenterpath'=>'%'.$orgid.'%'));
-            if (!empty($courses)) {
-                $return = array('0' => 'Select user') + $courses;
-            } else {
-                $return = array('1' => 'Select user');
-            }
+		$pathdetails = new \stdClass();
+		$pathdetails->open_costcenterid = $orgid;
+		$pathdetails->open_department = $departmentid;
+		$pathdetails->open_subdepartment = $subdepartmentid;
+		$pathdetails->open_level4department = $currentl4depid;
+		$pathdetails->open_level5department = $currentl5depid;
+		local_costcenter_get_costcenter_path($pathdetails);
+        $sql = "SELECT u.id, CONCAT(u.firstname,' ',u.lastname) as employeename
+	                FROM {user} u WHERE u.deleted = 0 AND u.suspended = 0 AND u.id > 2 AND concat(u.open_path,'/') LIKE :costcenterpath";
+        $courses = $DB->get_records_sql_menu($sql, array('costcenterpath'=>$pathdetails->open_path.'/%'));
+        if (!empty($courses)) {
+            $return = array('0' => 'Select user') + $courses;
         } else {
-            $return = array('' => 'Select user');
+            $return = array('1' => 'Select user');
         }
+    } else {
+        $return = array('' => 'Select user');
+    }
 	break;
 case 'designdata':
 	$return = array();
