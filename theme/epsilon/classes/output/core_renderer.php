@@ -892,7 +892,6 @@ class core_renderer extends \core_renderer {
         $header=new stdClass();
 
         if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1){
-
             if ($this->courseviewmenu_hidden()) {
 
                 $course_extended_menu = $this->course_context_header_settings_menu();
@@ -914,9 +913,10 @@ class core_renderer extends \core_renderer {
         $header->settingsmenu = $course_extended_menu;
 
         // if(!$data->hideheader)
-        $header->contextheader = $this->context_header();
+        $header->contextheader = $this->context_header().$this->course_summary_data();
         $header->hasnavbar = empty($this->page->layout_options['nonavbar']);
         $header->navbar = $this->navbar();
+        $header->coursebannerimage = $this->course_bannerimage();
         $header->pageheadingbutton = $this->page_heading_button();
         $header->courseheader = $this->course_header();
         $header->headeractions = $this->page->get_header_actions();
@@ -1903,16 +1903,13 @@ class core_renderer extends \core_renderer {
 
             $context = \context_course::instance($course->id, IGNORE_MISSING);
 
-            list($course->summary, $course->summaryformat) =
-                external_format_text($course->summary, $course->summaryformat, $context->id, 'course', 'summary', null);
-            $course->fullname = external_format_string($course->fullname, $context->id);
-            $course->shortname = external_format_string($course->shortname, $context->id);
 
+            $course->fullname = external_format_string($course->fullname, $context->id);
              $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($course->id,$USER->id);;
 
             $course=array_merge((array)$course,$usercourseprogress);
 
-
+            $course['coursebannerimage']=$this->course_bannerimage();
             return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', $course);
         }
     }
@@ -1942,6 +1939,46 @@ class core_renderer extends \core_renderer {
 
         return $courseviewmenu;
     }
+    public function course_bannerimage(){
 
+        global $COURSE,$CFG;
+             //course image
+        if(file_exists($CFG->dirroot.'/local/includes.php')){
+            require_once($CFG->dirroot.'/local/includes.php');
+            $includes = new \user_course_details();
+            $courseimage = $includes->course_summary_files($COURSE);
+            if(is_object($courseimage)){
+                $courseimage = $courseimage->out();
+            }else{
+                $courseimage = $courseimage;
+            }
+        }
+        return $courseimage;
+    }
+    public function course_summary_data(){
+
+        global $COURSE,$CFG;
+
+        require_once("$CFG->libdir/externallib.php");
+
+        $course = $COURSE;
+
+        $context = \context_course::instance($course->id, IGNORE_MISSING);
+
+        list($course->summary, $course->summaryformat) =
+            external_format_text($course->summary, $course->summaryformat, $context->id, 'course', 'summary', null);
+        return $course->summary;
+    }
+    public function hasrmaincontenthidden(){
+
+        $hasrmaincontenthidden=false;
+
+        if ($this->courseviewmenu_hidden()) {
+
+            $hasrmaincontenthidden=true;
+        }
+
+        return $hasrmaincontenthidden;
+    }
 
 }

@@ -139,7 +139,7 @@
                         <div> {{{ regionmainsettingsmenu }}} </div>
                     </div>
                     {{/hasregionmainsettingsmenu}}
-                    <section id="region-main" aria-label="{{#str}}content{{/str}}">
+                    <section id="region-main" aria-label="{{#str}}content{{/str}}" {{#output.hasrmaincontenthidden}}hidden{{/output.hasrmaincontenthidden}}>
 
                         {{#hasregionmainsettingsmenu}}
                             <div class="region_main_settings_menu_proxy"></div>
