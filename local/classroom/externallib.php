@@ -1708,7 +1708,7 @@ class local_classroom_external extends external_api {
                 'id' => new external_value(PARAM_INT, 'ID of the record', 0),
                 'classroomid' => new external_value(PARAM_INT, 'Classroom ID', 0),
                 'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
-                'name' => new external_value(PARAM_BOOL, 'name', false),
+                'name' => new external_value(PARAM_RAW, 'name', false),
             )
         );
     }
