@@ -47,6 +47,7 @@ $PAGE->set_heading($classroom->name);
 
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js_call_amd('local_classroom/ajaxforms', 'load');
+$PAGE->requires->js_call_amd('local_request/requestconfirm', 'load');
 $PAGE->requires->js_call_amd('local_classroom/classroom', 'sessionsData',array('classroomid' => $classroomid));
 
 $PAGE->requires->js_call_amd('local_evaluation/newevaluation','load');

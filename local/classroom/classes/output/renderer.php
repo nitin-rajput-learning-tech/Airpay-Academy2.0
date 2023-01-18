@@ -973,10 +973,15 @@ class renderer extends plugin_renderer_base
                 $return = true;
             }
 
+            $pending = $DB->record_exists('local_request_records',array('createdbyid'=>$USER->id, 'componentid'=>$classroom->id,'status'=>'PENDING'));
+            if ($classroom->approvalreqd == 1 && !$userenrolstatus && $return ) {
+                if($pending){
+                    $classroom->selfenrolmentcap = '<i title = '.get_string('processing', 'local_classroom').' class="" aria-hidden="true">' . get_string('processing', 'local_classroom').'</i>';
+                } else {
+                    $classroom->selfenrolmentcap = '<a href="javascript:void(0);" class="" alt = ' . get_string('requestforenroll', 'local_classroom') . ' title = ' . get_string('requestforenroll', 'local_classroom') . ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$classroom->id.', component:\'classroom\',componentname:\''.$classroom->name .'\'}) })(event)" ><i class="fa fa-share" aria-hidden="true"></i>' . get_string('requestforenroll', 'local_classroom') . '</a>';
+                }
 
-            if ($classroom->status == 1 && !$userenrolstatus && $return) {
-                $classroom->selfenrolmentcap = true;
-                $url = new moodle_url('/local/classroom/view.php', array('cid' => $classroom->id, 'action' => 'selfenrol'));
+            } elseif($classroom->approvalreqd == 0 && !$userenrolstatus && $return) {
                 $classroom->selfenrolmentcap = '<a href="javascript:void(0);" class="" alt = ' . get_string('enroll', 'local_classroom') . ' title = ' . get_string('enroll', 'local_classroom') . ' onclick="(function(e){ require(\'local_classroom/classroom\').ManageclassroomStatus({action:\'selfenrol\', id: ' . $classroom->id . ', classroomid:' . $classroom->id . ',actionstatusmsg:\'classroom_self_enrolment\',classroomname:\'' . $classroom->name . '\'}) })(event)" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>' . get_string('enroll', 'local_classroom') . '</a>';
             }
             $classroom_capacity_check = (new classroom)->classroom_capacity_check($classroomid);
