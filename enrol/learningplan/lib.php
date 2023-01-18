@@ -72,15 +72,25 @@ class enrol_learningplan_plugin extends enrol_plugin {
     public function get_instance_name($instance) {
         global $DB;
 
-        if (empty($instance->name)) {
-            if (!empty($instance->roleid) and $role = $DB->get_record('role', array('id'=>$instance->roleid))) {
-                $role = ' (' . role_get_name($role, context_course::instance($instance->courseid, IGNORE_MISSING)) . ')';
-            } else {
-                $role = '';
-            }
+        if (empty($instance)) {
             $enrol = $this->get_name();
-            return get_string('pluginname', 'enrol_'.$enrol) . $role;
-        } else {
+            return get_string('pluginname', 'enrol_'.$enrol);
+
+        } else if (empty($instance->name)) {
+            $enrol = $this->get_name();
+            $learningplan = $DB->get_record('local_learningplan', array('id'=>$instance->customint1));
+            if (!$learningplan) {
+                return get_string('pluginname', 'enrol_'.$enrol);
+            }
+           
+            if ($role = $DB->get_record('role', array('id'=>$instance->roleid))) {
+                $role = role_get_name($role, context_course::instance($instance->courseid, IGNORE_MISSING), ROLENAME_BOTH);
+                return get_string('pluginname', 'enrol_'.$enrol) . ' (' . $learningplan->name . ' - ' . $role .')';
+            } else {
+                return get_string('pluginname', 'enrol_'.$enrol) . ' (' . $learningplan->name . ')';
+            }
+
+        }else {
             return format_string($instance->name);
         }
     }
@@ -473,9 +483,20 @@ class enrol_learningplan_plugin extends enrol_plugin {
      */
     public function edit_instance_form($instance, MoodleQuickForm $mform, $context) {
         global $CFG;
-
+        $options = $this->get_status_options();
+        $mform->addElement('select', 'status', get_string('status', 'enrol_learningplan'), $options);
         $roles = $this->extend_assignable_roles($context, $instance->roleid);
         $mform->addElement('select', 'roleid', get_string('role', 'enrol_learningplan'), $roles);
+        $classroomoptions = $this->get_learninplan_options($context,$instance);
+        $classrooms = array(null => get_string('select_learningplan',
+                        'enrol_learningplan')) + $classroomoptions;
+        $mform->addElement('select', 'customint1', get_string('learningplan', 'enrol_learningplan'), $classrooms);
+        if ($instance->id) {
+            $mform->setConstant('customint1', $instance->customint1);
+            $mform->hardFreeze('customint1', $instance->customint1);
+        } else {
+            $mform->addRule('customint1', get_string('required'), 'required', null, 'client');
+        }
 
     }
 
@@ -488,7 +509,11 @@ class enrol_learningplan_plugin extends enrol_plugin {
         return true;
     }
 
-  
+    protected function get_status_options() {
+        $options = array(ENROL_INSTANCE_ENABLED  => get_string('yes'),
+                         ENROL_INSTANCE_DISABLED => get_string('no'));
+        return $options;
+    }
 
  
     /**
@@ -534,5 +559,19 @@ class enrol_learningplan_plugin extends enrol_plugin {
             }
         }
         return $roles;
+    }
+    public function get_learninplan_options($context,$instance){
+        global $DB;
+        $sqlclass = "SELECT planid FROM {local_learningplan_courses} as lcc  WHERE lcc.courseid =:courseid ";
+        $learningplanidsarr = $DB->get_fieldset_sql($sqlclass,array("courseid"=>$instance->courseid));
+        if(!empty($learningplanidsarr)){
+            list($insql, $inparams) = $DB->get_in_or_equal($learningplanidsarr);
+            $sql = "SELECT id,name FROM {local_learningplan}  WHERE id $insql";
+            $learningplanoptions=$DB->get_records_sql_menu($sql,  $inparams, $sort='', $fields='*', $limitfrom=0, $limitnum=0);
+        }else{
+            $learningplanoptions = array();
+        }
+        
+        return $learningplanoptions;
     }
 }

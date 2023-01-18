@@ -322,6 +322,9 @@ class lib
 		$get_coures = $this->db->get_records('local_learningplan_courses', array('planid' => $data->planid));
 		$i = 0;
 		$courseid =  $data->courseid;
+		if($deletecourse){
+			$this->update_enrol_status($data->courseid,$data->planid,ENROL_INSTANCE_DISABLED);
+		}
 		foreach ($get_coures as $get) {
 
 			$data = new stdClass();
@@ -339,15 +342,7 @@ class lib
 			$this->db->update_record('local_learningplan_courses', $data);
 			$i++;
 		}	
-		if($deletecourse){
-			$params = array('courseid'=>$courseid,'enrol'=>'learningplan');
-			$enrolid = $this->db->get_field('enrol', 'id', $params);
-			$enrolobj = new stdClass;
-			$enrolobj->id = $enrolid;
-			$enrolobj->status = ENROL_INSTANCE_DISABLED;
-			$enrolobj->timemodified = time();		
-			$this->db->update_record('enrol', $enrolobj);
-		}
+		
 		
 	}
 
@@ -962,12 +957,13 @@ class lib
 					$enrolobj->roleid = 5;
 					$enrolobj->timecreated = time();
 					$enrolobj->timemodified = time();
-					$params = array('courseid'=>$plan_course,'enrol'=>'learningplan');
+					$enrolobj->customint1 = $planid;
+					$params = array('courseid'=>$plan_course,'enrol'=>'learningplan','customint1'=> $planid);
 					if(!$DB->record_exists('enrol', $params)){
 						$enrolid = $DB->insert_record('enrol', $enrolobj);
+						$this->to_enrol_users($planid, $userid, $course_enrol, $redirect = true);
 					}else{
-						$enrolobj->id= $this->db->get_field('enrol', 'id', $params);
-						$enrolid = $DB->update_record('enrol', $enrolobj);
+						$enrolid = $this->update_enrol_status($plan_course,$planid,ENROL_INSTANCE_ENABLED);
 					}
 					
         			\core\event\enrol_instance_created::create_from_record($enrolobj)->trigger();	
@@ -998,4 +994,18 @@ class lib
 		$learningplans = $DB->get_records_sql($learningplan_sql, array('userid' => $userid));
 		return $learningplans;
 	}
+	public function update_enrol_status($course,$planid,$status){
+        global $DB;
+        $params =array('courseid' => $course, 'enrol' => 'learningplan','customint1'=>$planid,'roleid'=>$DB->get_field('role','id',array('shortname' => 'employee')));
+        $fields = array('customint1'=>$planid);
+        $enrolid= $DB->get_field('enrol', 'id', $params);
+        if(!empty($enrolid)){
+            $arrayfields = array("id"=>$enrolid,"status"=>$status);
+            $fields =array_merge($fields,$arrayfields);
+            $update = $DB->update_record('enrol', $fields);
+        }else{
+            $update = false;
+        }        
+        return  $update;
+    }
 }
