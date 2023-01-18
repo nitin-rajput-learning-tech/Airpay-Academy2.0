@@ -920,7 +920,6 @@ class core_renderer extends \core_renderer {
         }
         $header->courseid = $COURSE->id;
         $header->activityurl =$this->activityurl_get_course();
-
         return $this->render_from_template($show_course_header? 'theme_epsilon/course_full_header' : 'theme_epsilon/full_header', $header);
     }
         /**
@@ -1894,7 +1893,9 @@ class core_renderer extends \core_renderer {
         global $COURSE,$CFG,$USER;
 
 
-        if ($this->courseviewmenu_hidden()) {
+        if (!$this->courseviewmenu_hidden()) {
+
+            require_once("$CFG->libdir/externallib.php");
 
             $course = $COURSE;
 
