@@ -397,7 +397,7 @@ class accesslib
 
         return $costcenterpath;
     }
-    public static function get_user_role_switch_select_option($url,$paramname='dptid'){
+    public static function get_user_role_switch_select_option($url,$paramname='id'){
 
         global $OUTPUT,$USER,$DB;
 
@@ -424,8 +424,14 @@ class accesslib
 
             $datatype = optional_param($paramname, $optionkey, PARAM_INT);
 
+            if (array_key_exists($datatype,$options)){
 
-            $selectdropdown=$OUTPUT->single_select($url,$paramname, $options,$datatype, array('' => get_string('choosedots')), 'roleswitchfieldform',
+                $USER->useraccess['currentroleinfo']['roleswitch_selected_option']=$datatype ;
+            }
+
+            $cachedatatype =$USER->useraccess['currentroleinfo']['roleswitch_selected_option'];
+
+            $selectdropdown=$OUTPUT->single_select($url,$paramname, $options,$cachedatatype,null, 'roleswitchfieldform',
                     array('label' => get_string('selectedrole', 'local_costcenter',$currentroleinfo) . ':'));
 
 

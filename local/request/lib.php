@@ -54,10 +54,10 @@ if ((has_capability('local/request:approverecord', (new \local_request\lib\acces
          
 }
 function sorting_filter($mform){
-	global $DB, $USER;	
+	global $DB, $USER;
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
 	$sortinglist = array(false => get_string('firstrequestedfirst', 'local_request'), true => get_string('latestfirst', 'local_request'));
-	$select = $mform->addElement('autocomplete', 'sorting', '', $sortinglist, array('placeholder' => get_string('sorting', 'local_request')));   
+	$select = $mform->addElement('autocomplete', 'sorting', '', $sortinglist, array('placeholder' => get_string('sorting', 'local_request')));
     $mform->setType('request', PARAM_INT);
 }
 function requeststatus_filter($mform){
@@ -68,12 +68,12 @@ function requeststatus_filter($mform){
     $statuslist = $DB->get_records_sql_menu("SELECT distinct(status), id FROM {local_request_records}");
          $statuslist = array_flip($statuslist);
          $customrequestlist = array();
-         $trainer_user = ((has_capability('local/classroom:manageclassroom',$systemcontext)||
-                has_capability('local/certification:managecertification',$systemcontext)) && !is_siteadmin());
+         // $trainer_user = ((has_capability('local/classroom:manageclassroom',$systemcontext)/*||
+         //        has_capability('local/certification:managecertification',$systemcontext)*/) && !is_siteadmin());
          foreach($statuslist as $key => $value){
-            if($trainer_user && ($value == 'APPROVED' || $value == 'PENDING' || $value == 'REJECTED')){
-                continue;    
-            }
+            // if($trainer_user && ($value == 'APPROVED' || $value == 'PENDING' || $value == 'REJECTED')){
+            //     continue;
+            // }
             $customrequestlist[$value] = get_string($value, 'local_request');
         }
         $statuslist = $customrequestlist;
