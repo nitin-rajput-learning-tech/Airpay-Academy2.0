@@ -891,21 +891,15 @@ class core_renderer extends \core_renderer {
 
         $header=new stdClass();
 
-        if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1){
-            if ($this->courseviewmenu_hidden()) {
+        if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1 && $this->courseviewmenu_hidden()){
 
-                $course_extended_menu = $this->course_context_header_settings_menu();
+            $course_extended_menu = $this->course_context_header_settings_menu();
 
-                $show_course_header = true;
+            $show_course_header = true;
 
-                $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);;
+            $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);;
 
-                $header=(object)array_merge((array)$header,$usercourseprogress);
-
-            }else{
-
-                 $course_extended_menu = $this->context_header_settings_menu();
-            }
+            $header=(object)array_merge((array)$header,$usercourseprogress);
 
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
@@ -913,7 +907,8 @@ class core_renderer extends \core_renderer {
         $header->settingsmenu = $course_extended_menu;
 
         // if(!$data->hideheader)
-        $header->contextheader = $this->context_header().$this->course_summary_data();
+        $header->contextheader = $this->context_header();
+        $header->course_summary_data = $this->course_summary_data();
         $header->hasnavbar = empty($this->page->layout_options['nonavbar']);
         $header->navbar = $this->navbar();
         $header->coursebannerimage = $this->course_bannerimage();
@@ -924,6 +919,8 @@ class core_renderer extends \core_renderer {
             $header->welcomemessage = \core_user::welcome_message();
         }
         $header->courseid = $COURSE->id;
+        $header->activityurl =$this->activityurl_get_course();
+
         return $this->render_from_template($show_course_header? 'theme_epsilon/course_full_header' : 'theme_epsilon/full_header', $header);
     }
         /**
@@ -1896,9 +1893,8 @@ class core_renderer extends \core_renderer {
 
         global $COURSE,$CFG,$USER;
 
-        require_once("$CFG->libdir/externallib.php");
 
-        if (!$this->courseviewmenu_hidden()) {
+        if ($this->courseviewmenu_hidden()) {
 
             $course = $COURSE;
 
@@ -1980,6 +1976,20 @@ class core_renderer extends \core_renderer {
         }
 
         return $hasrmaincontenthidden;
+    }
+    public function activityurl_get_course() {
+
+        global $COURSE;
+
+        $courseformat = course_get_format($COURSE);
+
+        if($COURSE->format == 'singleactivity'){
+            $cm = $courseformat->reorder_activities();
+
+            return $cm->url;
+
+        }
+
     }
 
 }

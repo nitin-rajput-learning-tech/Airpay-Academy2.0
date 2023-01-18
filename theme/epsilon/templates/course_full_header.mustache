@@ -34,8 +34,11 @@
         <div class="courseheader" style="background-image: url('{{coursebannerimage}}');">
             <div class="row">
                 <div class="course_header_container col-md-8">
-                    <div class="heading">
+                    <div class="heading" >
                         {{{contextheader}}}
+                        {{#activityurl}}
+                            {{{course_summary_data}}}
+                        {{/activityurl}}
                     </div>
                     {{^courseprogresspercent}}
                     <div class="user_enrollment row  my-4">
@@ -92,15 +95,21 @@
                         </div>
                     </div>
                     {{/courseprogresspercent}}
-
                 </div>
-
+                {{#settingsmenu}}
                 <div class="context-header-settings-menu">
-                    <a href="{{cfg.wwwroot}}/course/view.php?id={{courseid}}" title="Start">   <button type='button' class='btn btn-secondary' title="Start">
+                    {{{settingsmenu}}}
+                </div>
+                {{/settingsmenu}}
+                {{#activityurl}}
+                <div class="context-header-settings-menu">
+                    <a href="{{activityurl}}" title="Start">
+                        <button type='button' class='btn btn-secondary' title="Start">
                             Start
                         </button>
                     </a>
                 </div>
+                {{/activityurl}}
             </div>
             
         </div>
