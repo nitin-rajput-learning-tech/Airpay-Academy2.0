@@ -23,33 +23,39 @@ define(['block_learnerscript/select2',
     $, RadiosToSlider, flatpickr, templates) {
     var report;
     var BasicparamCourse = $('.basicparamsform #id_filter_course');
-    var BasicparamUser = $('.basicparamsform #id_filter_users');
+    var BasicparamUsers = $('.basicparamsform #id_filter_users');
+    var BasicparamUser = $('.basicparamsform #id_filter_user');
     var BasicparamActivity = $('.basicparamsform #id_filter_activities'); 
     var BasicparamOrganization = $('.basicparamsform #id_filter_organization'); 
     var BasicparamDepartments = $('.basicparamsform #id_filter_departments'); 
-    var BasicparamSubdepartments = $('.basicparamsform #id_filter_subdepartments'); 
+    var BasicparamSubdepartments = $('.basicparamsform #id_filter_subdepartments');
+    var Basicparaml4departments = $('.basicparamsform #id_filter_level4department');
+    var Basicparaml5departments = $('.basicparamsform #id_filter_level5department');
     var BasicparamLearningpath = $('.basicparamsform #id_filter_learningpath'); 
     var BasicparamOnlinecourses = $('.basicparamsform #id_filter_onlinecourses'); 
     var BasicparamLabs = $('.basicparamsform #id_filter_labs'); 
     var BasicparamAssessments = $('.basicparamsform #id_filter_assessments');
-    var BasicparamUsergroups = $('.basicparamsform #id_filter_usergroup');     
+    var BasicparamUsersgroups = $('.basicparamsform #id_filter_usergroup');
     var BasicparamWebinars = $('.basicparamsform #id_filter_webinars'); 
     var BasicparamClassrooms = $('.basicparamsform #id_filter_classrooms'); 
     var BasicparamPrograms = $('.basicparamsform #id_filter_programs');     
     var BasicparamCohort = $('.basicparamsform #id_filter_cohort');     
 
     var FilterCourse = $('.filterform #id_filter_course');
-    var FilterUser = $('.filterform #id_filter_users');
+    var FilterUsers = $('.filterform #id_filter_users');
+    var FilterUser = $('.filterform #id_filter_user');
     var FilterActivity = $('.filterform #id_filter_activities');
     var FilterModule = $('.filterform #id_filter_modules');
     var FilterOrganization = $('.filterform #id_filter_organization');
     var FilterDepartments = $('.filterform #id_filter_departments');
     var FilterSubdepartments = $('.filterform #id_filter_subdepartments');
+    var Filterl4departments = $('.filterform #id_filter_level4department');
+    var Filterl5departments = $('.filterform #id_filter_level5department');
     var FilterLearningpath = $('.filterform #id_filter_learningpath');
     var FilterOnlinecourses = $('.filterform #id_filter_onlinecourses');
     var FilterLabs = $('.filterform #id_filter_labs');
     var FilterAssessments = $('.filterform #id_filter_assessments');
-    var FilterUsergroups = $('.filterform #id_filter_usergroup');    
+    var FilterUsersgroups = $('.filterform #id_filter_usergroup');
     var FilterWebinars = $('.filterform #id_filter_webinars');
     var FilterClassrooms = $('.filterform #id_filter_classrooms');
     var FilterPrograms = $('.filterform #id_filter_programs');
@@ -136,7 +142,7 @@ define(['block_learnerscript/select2',
             $('#id_filter_users').change(function() {
                 var userid = $(this).find(":selected").val();
                 if (userid > 0 && (FilterCourse.length > 0 || BasicparamCourse.length > 0)) {
-                    if(BasicparamUser.length > 0){
+                    if(BasicparamUsers.length > 0){
                    // FirstElementActive = true;
                     smartfilter.UserCourses({ userid: userid, reporttype: args.reporttype, reportid: args.reportid, 
                                               firstelementactive: FirstElementActive, triggercourseactivities: true });
@@ -150,19 +156,27 @@ define(['block_learnerscript/select2',
              */
             $('#id_filter_organization').change(function() {
                 var organizationid = $(this).find(":selected").val();
-                if (organizationid > 0 && (FilterDepartments.length > 0 || BasicparamDepartments.length > 0)) {
-                    if(BasicparamDepartments.length > 0){
-                        FirstElementActive = true;
+                if(organizationid > 0){
+                    if ((FilterDepartments.length > 0 || BasicparamDepartments.length > 0)) {
+                        if(BasicparamDepartments.length > 0){
+                            FirstElementActive = true;
+                        }
+                        var departmentid = args.filterrequests.filter_departments;
+                        smartfilter.orgdepartments({ organizationid: organizationid, reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid });
                     }
-                    var departmentid = args.filterrequests.filter_departments;
-                    smartfilter.orgdepartments({ organizationid: organizationid, reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid });
-                }
-                if (organizationid > 0 && (FilterLearningpath.length > 0 || BasicparamLearningpath.length > 0)) {
-                    if(BasicparamLearningpath.length > 0){
-                        FirstElementActive = true;
+                    if ((FilterLearningpath.length > 0 || BasicparamLearningpath.length > 0)) {
+                        if(BasicparamLearningpath.length > 0){
+                            FirstElementActive = true;
+                        }
+                        var departmentid = args.filterrequests.filter_departments;
+                        smartfilter.orglearningpath({ organizationid: organizationid, reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid });
                     }
-                    var departmentid = args.filterrequests.filter_departments;
-                    smartfilter.orglearningpath({ organizationid: organizationid, reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid });
+                    if (FilterUser.length > 0 || BasicparamUser.length > 0) {
+                        if(BasicparamUser.length > 0){
+                            FirstElementActive = true;
+                        }
+                        smartfilter.DepartmentUser({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                    }
                 }
             }); 
 
@@ -183,24 +197,36 @@ define(['block_learnerscript/select2',
                     var cohortid = args.filterrequests.filter_cohort;
                     smartfilter.DepartmentCohorts({ organizationid: organizationid, departmentid: departmentid, reporttype: args.reporttype, firstelementactive: FirstElementActive, cohortid: cohortid });
                 }
+                if (FilterUser.length > 0 || BasicparamUser.length > 0) {
+                    if(BasicparamUser.length > 0){
+                        FirstElementActive = true;
+                    }
+                    smartfilter.DepartmentUser({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                }
             }); 
 
             $('#id_filter_subdepartments').change(function() { 
                 var subdepartmentid = $(this).find(":selected").val();
                 var departmentid = $('#id_filter_departments').find(":selected").val();
                 var organizationid = $('#id_filter_organization').find(":selected").val(); 
-                // if (FilterUser.length > 0 && args.basicparams) {
+                // if (FilterUsers.length > 0 && args.basicparams) {
                 //     if (args.basicparams.length == 3 && args.basicparams[2].name == 'course') {
                 //         // return false;
                 //     }
                 // } else { 
-                    // if (BasicparamUser.length > 0) {    
-                        if ((FilterUser.length > 0 || BasicparamUser.length > 0)) {
-                            if(BasicparamUser.length > 0){
+                    // if (BasicparamUsers.length > 0) {
+                        if ((FilterUsers.length > 0 || BasicparamUsers.length > 0)) {
+                            if(BasicparamUsers.length > 0){
                                 FirstElementActive = true;
                             }
                             var userid = args.filterrequests.filter_users;
                             smartfilter.DepartmentUsers({ organizationid: organizationid, departmentid: departmentid, subdepartmentid: subdepartmentid, reporttype: args.reporttype, firstelementactive: FirstElementActive, userid: userid });
+                        }
+                        if ((FilterUser.length > 0 || BasicparamUser.length > 0)) {
+                            if(BasicparamUser.length > 0){
+                                FirstElementActive = true;
+                            }
+                            smartfilter.DepartmentUser({ organizationid: organizationid, departmentid: departmentid, subdepartmentid: subdepartmentid, reporttype: args.reporttype, firstelementactive: FirstElementActive, userid: userid });
                         }
                     // }
                 // }
@@ -219,6 +245,12 @@ define(['block_learnerscript/select2',
                         }
                     }
                 // } 
+                if ((Filterl4departments.length > 0 || Basicparaml4departments.length > 0)) {
+                    if(Basicparaml4departments.length > 0){
+                        FirstElementActive = true;
+                    }
+                    smartfilter.Departmentl4depts({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                }
                 if ((FilterLearningpath.length > 0 || BasicparamLearningpath.length > 0)) {
                     if(BasicparamLearningpath.length > 0){
                         FirstElementActive = true;
@@ -251,8 +283,8 @@ define(['block_learnerscript/select2',
                     var subdepartmentid = args.filterrequests.filter_subdepartments;
                     smartfilter.depassessments({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
                 }
-                if ((FilterUsergroups.length > 0 || BasicparamUsergroups.length > 0)) {
-                    if(BasicparamUsergroups.length > 0){
+                if ((FilterUsersgroups.length > 0 || BasicparamUsersgroups.length > 0)) {
+                    if(BasicparamUsersgroups.length > 0){
                         FirstElementActive = true;
                     }
                     var departmentid = args.filterrequests.filter_departments;
@@ -283,6 +315,27 @@ define(['block_learnerscript/select2',
                     var subdepartmentid = args.filterrequests.filter_subdepartments;
                     smartfilter.depprograms({reporttype: args.reporttype, firstelementactive: FirstElementActive, departmentid: departmentid, subdepartmentid: subdepartmentid });
                 }                
+            });
+
+            $('#id_filter_level4department').change(function() {
+                var l4departmentid = $(this).find(":selected").val();
+                var subdepartmentid = $('#id_filter_subdepartments').find(":selected").val();
+                var departmentid = $('#id_filter_departments').find(":selected").val();
+                var organizationid = $('#id_filter_organization').find(":selected").val();
+
+                if ((FilterUsers.length > 0 || BasicparamUsers.length > 0)) {
+                    if(BasicparamUsers.length > 0){
+                        FirstElementActive = true;
+                    }
+                    var userid = args.filterrequests.filter_users;
+                    smartfilter.DepartmentUsers({ organizationid: organizationid, departmentid: departmentid, subdepartmentid: subdepartmentid, reporttype: args.reporttype, firstelementactive: FirstElementActive, userid: userid });
+                }
+                if ((Filterl5departments.length > 0 || Basicparaml5departments.length > 0)) {
+                    if(Basicparaml5departments.length > 0){
+                        FirstElementActive = true;
+                    }
+                    smartfilter.Departmentl5depts({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                }
             });
 
             $('#id_filter_coursecategories').change(function() {
@@ -334,7 +387,7 @@ define(['block_learnerscript/select2',
                 var NumberOfBasicParams = 0;
                 $(".filterform" + args.reportid).trigger("reset");
                 var activityelement = $(this).parent().find('#id_filter_activities');
-                if (FilterUser.length > 0) {
+                if (FilterUsers.length > 0) {
                     if (FilterCourse.length > 0 || BasicparamCourse.length > 0) {
                         if(BasicparamCourse.length > 0){
                             FirstElementActive = true;
@@ -344,7 +397,7 @@ define(['block_learnerscript/select2',
                     // $("select[data-select2='1']").select2("destroy").select2({ theme: "classic" });
                 }
                 if (FilterCourse.length > 0) {
-                    if (FilterUser.length > 0 || BasicparamUser.length > 0) {
+                    if (FilterUsers.length > 0 || BasicparamUsers.length > 0) {
                         // smartfilter.EnrolledUsers({ courseid: 0, reportid: args.reportid, reporttype: args.reporttype, components: args.components });
                     }
 
@@ -354,13 +407,13 @@ define(['block_learnerscript/select2',
                     // $("select[data-select2='1']").select2("destroy").select2({ theme: "classic" });
                 }
                 if (FilterActivity.length > 0 || FilterModule.length > 0) {
-                    if ((FilterCourse.length > 0 || BasicparamCourse.length > 0) && BasicparamUser.length == 0) {
-                        if(BasicparamCourse.length > 0 && BasicparamUser.length == 0){
+                    if ((FilterCourse.length > 0 || BasicparamCourse.length > 0) && BasicparamUsers.length == 0) {
+                        if(BasicparamCourse.length > 0 && BasicparamUsers.length == 0){
                             FirstElementActive = true;
                         }
                         // smartfilter.UserCourses({ userid: 0, reportid: args.reportid, reporttype: args.reporttype, firstelementactive: FirstElementActive });
                     }
-                    if (BasicparamCourse.length > 0 && BasicparamUser.length > 0) {
+                    if (BasicparamCourse.length > 0 && BasicparamUsers.length > 0) {
                             $(".basicparamsform #id_filter_apply").trigger('click', [true]);
                     }
                     // $("select[data-select2='1']").select2("destroy").select2({ theme: "classic" });
