@@ -397,6 +397,41 @@ class accesslib
 
         return $costcenterpath;
     }
+    public static function get_user_role_switch_select_option($url,$paramname='dptid'){
+
+        global $OUTPUT,$USER,$DB;
+
+
+        $options = array();
+
+
+        if(!empty($USER->useraccess['currentroleinfo']['contextinfo'])){
+
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
+
+
+                $optionkey=end(explode('/',$contextinfo['costcenterpath']));
+
+                $costcenterinfo = $DB->get_field('local_costcenter', 'fullname', array('id' => $optionkey));
+
+                $options[$optionkey] = $costcenterinfo;
+            }
+        }
+
+        if (count($options) > 1) {
+
+            $currentroleinfo = $DB->get_field('role', 'name', array('id' => $USER->useraccess['currentroleinfo']['roleid']));
+
+            $datatype = optional_param($paramname, $optionkey, PARAM_INT);
+
+
+            $selectdropdown=$OUTPUT->single_select($url,$paramname, $options,$datatype, array('' => get_string('choosedots')), 'roleswitchfieldform',
+                    array('label' => get_string('selectedrole', 'local_costcenter',$currentroleinfo) . ':'));
+
+
+            return $selectdropdown;
+        }
+    }
 
 }
 
