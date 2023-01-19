@@ -66,6 +66,7 @@ class local_courses_external extends external_api {
     public static function submit_create_course_form($contextid, $form_status, $id, $jsonformdata) {
         global $DB, $CFG, $USER;
         require_once($CFG->dirroot.'/course/lib.php');
+        require_once($CFG->libdir.'/formslib.php');
         require_once($CFG->dirroot . '/local/courses/lib.php');
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_create_course_form_parameters(),
@@ -108,9 +109,17 @@ class local_courses_external extends external_api {
                 file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, null, 'course', 'overviewfiles', 0);
             }
         }
-
+        $params = array(
+            'course' => $course,
+            'editoroptions' => $editoroptions,
+            'returnto' => $returnto,
+            'get_coursedetails'=>$get_coursedetails,
+            'form_status' => $form_status,
+            'costcenterid' => $data->open_path,
+            'courseid' => $data['id'],
+        );
         // The last param is the ajax submitted data.
-        $mform = new custom_course_form(null, array('form_status' => $form_status,'courseid'=>$data['id']), 'post', '', null, true, $data);
+        $mform = new custom_course_form(null, $params, 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
         if ($validateddata) {
 
