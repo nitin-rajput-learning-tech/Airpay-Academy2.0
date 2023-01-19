@@ -38,7 +38,7 @@ class report_classroom_completions extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],
                                 'userfield'=>['userfield'],
                                 'classroomcompletionscolumns'=>['attendedsessions','totalsessions','usercompletionstatus','usercompletiondate']);
-        $this->filters = array('organization','departments', 'subdepartments', 'user','classrooms','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'user','classrooms','completionstatus');
         $this->defaultcolumn = 'lcu.id';
     }
 
@@ -100,26 +100,43 @@ class report_classroom_completions extends reportbase implements report {
 
     function filters() {
 
-        if (!empty($this->params['filter_organization']) && $this->params['filter_organization'] > 0) {
-            $organization = $this->params['filter_organization'];
-            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
-            $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
+        if ($this->params['filter_organization'] > 0) {
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND u.open_path like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
+        }
+        if ($this->params['filter_departments'] > 0) {
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND u.open_path like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
         }
 
-        
-        if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-            $department = $this->params['filter_departments'];
-            $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
-            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
+        if ($this->params['filter_subdepartments'] > 0) {
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND u.open_path like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
         }
-
-        if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-            $subdepartments = $this->params['filter_subdepartments'];
-            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
-            $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND u.open_path like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        }
+        if ($this->params['filter_level5department'] > 0) {
+            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
+            $this->sql .= " AND u.open_path like :l5dept ";
+            $this->params['l5dept'] = $l5dept.'/%';
+        }
+        if ($this->params['filter_geostate'] > 0) {
+            $this->sql .= " AND u.open_states = :filter_geostate ";
+        }
+        if ($this->params['filter_geodistrict'] > 0) {
+            $this->sql .= " AND u.open_district = :filter_geodistrict ";
+        }
+        if ($this->params['filter_geosubdistrict'] > 0) {
+            $this->sql .= " AND u.open_subdistrict = :filter_geosubdistrict ";
+        }
+        if ($this->params['filter_geovillage'] > 0) {
+            $this->sql .= " AND u.open_village = :filter_geovillage ";
         }
 
         if (!empty($this->params['filter_classrooms']) && $this->params['filter_classrooms'] > 0) {
