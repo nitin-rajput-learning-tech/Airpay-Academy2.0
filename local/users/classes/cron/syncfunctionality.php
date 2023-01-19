@@ -758,6 +758,7 @@ class syncfunctionality
         $user->phone1 = $excel->contactno ? $excel->contactno : '';
         $user->email = strtolower($excel->email);
         $user->country = $excel->country_code ? $excel->country_code : 'IN';
+        $user->lang = $excel->language ? $excel->language : 'en';
         $user->open_group = $excel->discipline ? $excel->discipline : ' ';
         $user->employee_status = $excel->employee_status;
         $user->open_location = $excel->location ? $excel->location : ' ';
