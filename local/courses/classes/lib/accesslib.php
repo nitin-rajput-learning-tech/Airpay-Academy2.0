@@ -54,12 +54,11 @@ class accesslib extends \local_costcenter\lib\accesslib{
         return parent::get_costcenter_path_field_concatsql($columnname, self::course_costcenterpath($courseid));
 
     }
-    public static function get_user_course_progress_percentage($courseid, $userid = 0,
+    public static function get_user_course_progress_percentage($courseid, $userid,
                               $enrolid = 0){
 
         global $CFG, $USER, $DB;
 
-        $sameuser = $USER->id == $userid;
 
 
         $maincheckcontext=$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
@@ -67,8 +66,8 @@ class accesslib extends \local_costcenter\lib\accesslib{
         // If viewing details of another user, then we must be able to view participants as well as profile of that user.
 
 
-        if ($sameuser && ((has_capability('local/courses:enrol',
-                                $maincheckcontext)  || is_siteadmin())&&has_capability('local/courses:manage', $maincheckcontext))) {
+        if (((has_capability('local/courses:enrol',
+                                $maincheckcontext,$userid)  || is_siteadmin())&&has_capability('local/courses:manage', $maincheckcontext,$userid))) {
 
 
             $context = \context_course::instance($courseid, IGNORE_MISSING);
