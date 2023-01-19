@@ -33,6 +33,7 @@ class states_form extends \moodleform {
             $organiasations = $DB->get_records_sql_menu($organisationsql);
             $organiasations = [null => get_string('selectorganisation', 'usersprofilefields_states')] + $organiasations;
             $mform->addElement('autocomplete', 'costcenterid',  get_string('costcentername', 'usersprofilefields_states'), $organiasations);
+            $mform->addRule('costcenterid', '', 'required', null, 'client');
         }
         $mform->setType('costcenterid', PARAM_INT);
 
