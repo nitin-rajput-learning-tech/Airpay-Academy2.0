@@ -19,7 +19,7 @@
 
     {{! card view }}
     {{#viewtypeCard}}
-        <div class="card-wrap  row w-100">
+        <div class="card-wrap  row m-0 w-100">
             {{#records}}
                 <div class="{{cardClass}} col-md-6">
                     <div class="classroom_container w-100  mt-3 mb-2 {{classroomstatusclass}}">
@@ -29,10 +29,10 @@
                                 <a href="{{ classroomurl }}" class="class_name" title = "{{ classname }}">{{ classname_string }}</a>
                                 <span class="bg_banner" title="{{ crstatustitle }}"></span>
                             </div>
-                            <div class="pull-right showoptions{{classroomid}} actionicons">
+                            <div class="showoptions{{classroomid}} actionicons">
                                 {{# action}}
                                     {{# mouse_overicon}}
-                                        <span  class="pull-right showoptions" data-action="showoptions{{classroomid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)">
+                                        <span  class="showoptions" data-action="showoptions{{classroomid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)">
                                             <i class="fa fa-ellipsis-h options" aria-hidden="true" title="" aria-label=""></i>
                                         </span>
                                         <ul class="options_container" id="showoptions{{classroomid}}">
@@ -62,7 +62,7 @@
                                 {{/ action}}
                             </div>
                         </div>
-                        <div class="w-100 d-flex p-10 classroomcontainer_top">
+                        <div class="row p-10 classroomcontainer_top m-0">
                             <div class="dataContainer col-md-7 col-12  px-2 py-1">
                                 <div class="datacontent">
                                     <div class="description">
@@ -130,7 +130,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="w-100 d-flex classroomcontainer_btm">
+                        <div class="row classroomcontainer_btm m-0">
                             <div class="col-md-6 col-12 p-0">
                                 <div class="trainersContainer p-2 w-100 ">
                                     <h6 class="trainer_header">{{#str}}trainers, local_classroom{{/str}}</h6>
@@ -167,7 +167,7 @@
                                     <h6 class="trainer_header">{{#str}}courses{{/str}}</h6>
                                     <ul class="crcourseslist  m-0">
                                         {{# courses }}
-                                            <li class="w-full ">
+                                            <li class="w-full d-flex">
                                                 <p class="contentlist ">
                                                     <a href="{{ courseurl }}" title="{{ coursetitle }}"> {{ coursename }} </a>
                                                 </p>

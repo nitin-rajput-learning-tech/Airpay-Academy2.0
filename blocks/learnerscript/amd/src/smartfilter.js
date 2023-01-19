@@ -653,7 +653,122 @@ define(['jquery',
                     });
                 // }
             },
-
+        GeoState: function(args){
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var requesteduserid = args.userid;
+            var promise = ajax.call({
+                args: {
+                    action: 'geostates',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    var selected = '';
+                    template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                });
+                $("#id_filter_geostate").html(template);
+                var currentstate = $('.basicparamsform #id_filter_geostate').find(":selected").val();
+                if (currentstate == 0 || currentstate == null) {
+                    $('.basicparamsform #id_filter_geostate').val($('.basicparamsform #id_filter_geostate option:eq(1)').val());
+                }
+                $("#id_filter_geostate").trigger('change');
+            });
+        },
+        GeoDistrict: function(args){
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var currentstate = $('#id_filter_geostate').find(":selected").val();
+            var requesteduserid = args.userid;
+            var promise = ajax.call({
+                args: {
+                    action: 'geodistrict',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    orgid: currentorganization,
+                    currentstate: currentstate
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    var selected = '';
+                    template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                });
+                $("#id_filter_geodistrict").html(template);
+                var currentdistrict = $('.basicparamsform #id_filter_geodistrict').find(":selected").val();
+                if (currentdistrict == 0 || currentdistrict == null) {
+                    $('.basicparamsform #id_filter_geodistrict').val($('.basicparamsform #id_filter_geodistrict option:eq(1)').val());
+                }
+                $("#id_filter_geodistrict").trigger('change');
+            });
+        },
+        GeoSubdistrict: function(args){
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var currentstate = $('#id_filter_geostate').find(":selected").val();
+            var currentdistrict = $('#id_filter_geodistrict').find(":selected").val();
+            var requesteduserid = args.userid;
+            var promise = ajax.call({
+                args: {
+                    action: 'geosubdistrict',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    orgid: currentorganization,
+                    currentstate: currentstate,
+                    currentdistrict: currentdistrict
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    var selected = '';
+                    template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                });
+                $("#id_filter_geosubdistrict").html(template);
+                var currentsubdistrict = $('.basicparamsform #id_filter_geosubdistrict').find(":selected").val();
+                if (currentsubdistrict == 0 || currentsubdistrict == null) {
+                    $('.basicparamsform #id_filter_geosubdistrict').val($('.basicparamsform #id_filter_geosubdistrict option:eq(1)').val());
+                }
+                $("#id_filter_geosubdistrict").trigger('change');
+            });
+        },
+        GeoVillage: function(args){
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var currentstate = $('#id_filter_geostate').find(":selected").val();
+            var currentdistrict = $('#id_filter_geodistrict').find(":selected").val();
+            var currentsubdistrict = $('#id_filter_geosubdistrict').find(":selected").val();
+            var requesteduserid = args.userid;
+            var promise = ajax.call({
+                args: {
+                    action: 'geovillage',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    orgid: currentorganization,
+                    currentstate: currentstate,
+                    currentdistrict: currentdistrict,
+                    currentsubdistrict: currentsubdistrict
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    var selected = '';
+                    template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                });
+                $("#id_filter_geovillage").html(template);
+                var currentstate = $('.basicparamsform #id_filter_geovillage').find(":selected").val();
+                if (currentstate == 0 || currentstate == null) {
+                    $('.basicparamsform #id_filter_geovillage').val($('.basicparamsform #id_filter_geovillage option:eq(1)').val());
+                }
+                $("#id_filter_geovillage").trigger('change');
+            });
+        },
         CourseActivities: function(args) {
             var nearelement = args.element || $('#id_filter_activities');
             activityid = parseInt(args.activityid) || 0;

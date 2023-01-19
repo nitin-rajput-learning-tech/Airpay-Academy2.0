@@ -1397,3 +1397,18 @@ body#page-local-users-index .field_required .icon {
     }
 }
 
+/*filterform css*/
+#page-local-users-index form#filteringform{
+    display: flex;
+  flex-wrap: wrap;
+}  
+#page-local-users-index .form-autocomplete-selection [data-active-selection=true]{
+  padding: 0.25em 0.4em !important;
+  font-size:100% !important;
+}
+#page-local-users-index #filters_form .mform .autocomplete .form-autocomplete-downarrow{
+  right: 9px !important;
+  left: auto !important;
+  bottom: 3px !important;
+  top: auto !important;
+}

@@ -285,10 +285,10 @@ class search implements renderable{
                 }
             }
             if($list->enroll == 1){
-                $list->redirect='<a href ="'.$CFG->wwwroot.'/local/learningplan/view.php?id='.$list->id.'" ><button class="cat_btn viewmore_btn">'.get_string('start_now','local_search').'</button></a>';
+                $list->redirect='<a class="cat_btn viewmore_btn" href ="'.$CFG->wwwroot.'/local/learningplan/view.php?id='.$list->id.'" >'.get_string('start_now','local_search').'</a>';
             }else{
                 // $list->redirect='<span data-action="learningplan'.$list->id.'" class="learningplaninfo d-block" onclick ="(function(e){ require(\'local_search/courseinfo\').learningplaninfo({selector:\'learningplan'.$list->id.'\', learningplanid:'.$list->id.'}) })(event)"><span>'.get_string('viewmore','local_search').'</span></span>';
-                $list->redirect='<a href ="'.$CFG->wwwroot.'/local/learningplan/lpathinfo.php?id='.$list->id.'" ><button class="cat_btn viewmore_btn">'.get_string('gotolpath','local_search').'</button></a>';
+                $list->redirect='<a class="cat_btn viewmore_btn" href ="'.$CFG->wwwroot.'/local/learningplan/lpathinfo.php?id='.$list->id.'" >'.get_string('gotolpath','local_search').'</a>';
             }
             $list->copylink = '';
             if(is_siteadmin() || has_capability('local/learningplan:manage', $context)){
@@ -400,7 +400,7 @@ class search implements renderable{
                     }
                 }
                 else{
-                    $enrollmentbtn = '<a href="javascript:void(0);" class="fakebtn " alt = ' . get_string('enroll','local_search'). ' title = ' .get_string('enroll','local_search'). ' onclick="(function(e){ require(\'local_learningplan/courseenrol\').enrolUser({planid:'.$planid.', userid:'.$USER->id.', planname:\''.$planname.'\' }) })(event)" ><button class="cat_btn btn-primary catbtn_request viewmore_btn">'.get_string('enroll','local_classroom').'</button></a>';
+                    $enrollmentbtn = '<a href="javascript:void(0);" class="fakebtn cat_btn btn-primary catbtn_request viewmore_btn" alt = ' . get_string('enroll','local_search'). ' title = ' .get_string('enroll','local_search'). ' onclick="(function(e){ require(\'local_learningplan/courseenrol\').enrolUser({planid:'.$planid.', userid:'.$USER->id.', planname:\''.$planname.'\' }) })(event)" >'.get_string('enroll','local_classroom').'</a>';
                 }
         }
         return $enrollmentbtn;
