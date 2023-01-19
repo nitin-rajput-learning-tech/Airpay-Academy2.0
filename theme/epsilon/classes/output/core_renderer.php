@@ -22,7 +22,7 @@ use get_string;
 use context_system;
 use core_component;
 use context_course;
-
+use core_completion\progress;
 use coding_exception;
 use tabobject;
 use tabtree;
@@ -862,7 +862,7 @@ class core_renderer extends \core_renderer {
      */
     public function full_header() {
 
-        global $USER,$COURSE;
+        global $USER,$COURSE,$DB;
 
         $data = $this->custom_secured_redirection();
         $pagetype = $this->page->pagetype;
@@ -897,9 +897,15 @@ class core_renderer extends \core_renderer {
 
             $show_course_header = true;
 
-            $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);;
-
+            $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);
+            $ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
+            if ($ratings_exist) {
+                $display_ratings = display_rating($courseid, 'local_courses');
+            } else {
+                $display_ratings = null;
+            }
             $header=(object)array_merge((array)$header,$usercourseprogress);
+            $header->display_ratings=$display_ratings;
 
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
@@ -1890,25 +1896,35 @@ class core_renderer extends \core_renderer {
     }
     public function courseformat_drawer_content(){
 
-        global $COURSE,$CFG,$USER;
+        global $DB,$COURSE,$CFG,$USER;
 
 
         if (!$this->courseviewmenu_hidden()) {
 
-            require_once("$CFG->libdir/externallib.php");
+        $course = $DB->get_record('course',array('id' => $COURSE->id));
+        $completion = new \completion_info($course);
 
-            $course = $COURSE;
-
-            $context = \context_course::instance($course->id, IGNORE_MISSING);
-
-
-            $course->fullname = external_format_string($course->fullname, $context->id);
-             $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($course->id,$USER->id);;
-
-            $course=array_merge((array)$course,$usercourseprogress);
-
-            $course['coursebannerimage']=$this->course_bannerimage();
-            return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', $course);
+            // First, let's make sure completion is enabled.
+            if ($completion->is_enabled()) {
+                
+                $percentage = progress::get_course_progress_percentage($course, $USER->id);
+            }
+        $ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
+        if ($ratings_exist) {
+            require_once($CFG->dirroot . '/local/ratings/lib.php');
+            $display_ratings = display_rating($COURSE->id, 'local_courses');
+        } else {
+            $display_ratings =  null;
+        }
+        if(empty($percentage)){
+            $percentage=0;}
+            $coursedata=array();
+            $coursedata['coursename']=$COURSE->fullname;
+            $coursedata['display_ratings']=$display_ratings;
+            $coursedata['percentage']=$percentage;
+            $coursedata['coursebannerimage']=$this->course_bannerimage();
+            //print
+            return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', $coursedata);
         }
     }
 

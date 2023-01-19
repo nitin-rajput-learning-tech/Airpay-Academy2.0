@@ -127,7 +127,7 @@ class otp {
       $curloptions = $this->set_user_account($uid,$userid);
       curl_setopt_array($curl, $curloptions);
       $response = curl_exec($curl);
-     
+
       return $response;
 
   }
@@ -320,7 +320,6 @@ class otp {
     $apikey= $this->token;
     $authapi= $this->authapi;
     $hosturl= $authapi."apikey=".$apikey."&code=".$otp."&vToken=".$vtoken;
-   // echo $hosturl;
     return [
       CURLOPT_URL => $hosturl,
       CURLOPT_RETURNTRANSFER => true,
@@ -345,11 +344,11 @@ class otp {
      $hostname = $CFG->wwwroot;
      $firstlogin = gmdate("Y-m-d\TH:i:s\Z", $timestamp);
      $lastlogin = gmdate("Y-m-d\TH:i:s\Z", $timestamp);
-     $data =' {"bc_accessApplications":["{\"hostname\":\"'.$hostname.'\",\"firstLogin\":\"'.$firstlogin.'\",\"lastLogin\":\"'.$lastlogin.'\"}"]}';
+     $data ='{"bc_accessApplications":["{\"hostname\":\"'.$hostname.'\",\"firstLogin\":\"'.$firstlogin.'\",\"lastLogin\":\"'.$lastlogin.'\"}"]}';
 
     $hosturl= $authapi."apikey=".$apikey."&data=".$data."&UID=".$uid."&userKey=".$userkey."&secret=".$secret;
     return [
-      CURLOPT_URL => $hosturl,
+      CURLOPT_URL =>$hosturl,
       CURLOPT_RETURNTRANSFER => true,
       CURLOPT_ENCODING => "",
       CURLOPT_MAXREDIRS => 10,
