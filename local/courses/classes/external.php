@@ -1016,6 +1016,10 @@ class local_courses_external extends external_api {
             $avgratings = get_rating($userinfo->id, 'local_courses');
             $avgrating = $avgratings->avg;
             $ratingusers = $avgratings->count;
+            $certificateid = $DB->get_field('tool_certificate_issues', 'code', array('userid' => $USER->id, 'moduletype' => 'course', 'moduleid' => $userinfo->id));
+            if(!$certificateid){
+                $certificateid = null;
+            }
             $result[] = array(
                 'id' => $userinfo->id,
                 'fullname' => $userinfo->fullname,
@@ -1038,7 +1042,8 @@ class local_courses_external extends external_api {
                 'avgrating' => $avgrating,
                 'ratingusers' => $ratingusers,
                 'likes' => $likes,
-                'dislikes' => $dislikes
+                'dislikes' => $dislikes,
+                'certificateid' => $certificateid
             );
         }
         if ($total > $perpage) {
@@ -1076,6 +1081,7 @@ class local_courses_external extends external_api {
                             'ratingusers' => new external_value(PARAM_INT, 'Course rating users'),
                             'likes' => new external_value(PARAM_INT, 'Course Likes'),
                             'dislikes' => new external_value(PARAM_INT, 'Course Dislikes'),
+                            'certificateid' => new external_value(PARAM_RAW, 'Certifictate Code', VALUE_OPTIONAL),
                         )
                     )
                 ),
@@ -1148,6 +1154,10 @@ class local_courses_external extends external_api {
             }
             $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $userinfo->id, 'module_area' => 'local_courses'));
             $userrating = $DB->get_field('local_rating', 'rating', array('ratearea' => 'local_courses', 'userid' => $USER->id, 'itemid' => $userinfo->id));
+            $certificateid = $DB->get_field('tool_certificate_issues', 'code', array('userid' => $USER->id, 'moduletype' => 'course', 'moduleid' => $userinfo->id));
+            if(!$certificateid){
+                $certificateid = null;
+            }
             $result[] = array(
                 'id' => $userinfo->id,
                 'fullname' => $userinfo->fullname,
@@ -1169,6 +1179,7 @@ class local_courses_external extends external_api {
                 'rating' => $userrating ? $userrating : 0,
                 'avgrating' => $ratinginfo->module_rating ? $ratinginfo->module_rating : 0,
                 'ratingusers' => $ratinginfo->module_rating_users ? $ratinginfo->module_rating_users : 0,
+                'certificateid' => $certificateid,
             );
         }
         if(empty($result)){
@@ -1201,7 +1212,8 @@ class local_courses_external extends external_api {
                             'progress' => new external_value(PARAM_FLOAT, 'Progress percentage'),
                             'rating' => new external_value(PARAM_INT, 'Course rating', VALUE_OPTIONAL),
                             'avgrating' => new external_value(PARAM_FLOAT, 'Course avgrating', VALUE_OPTIONAL),
-                            'ratingusers' => new external_value(PARAM_INT, 'Course rating users',VALUE_OPTIONAL)
+                            'ratingusers' => new external_value(PARAM_INT, 'Course rating users',VALUE_OPTIONAL),
+                            'certificateid' => new external_value(PARAM_RAW, 'Certifictate Code', VALUE_OPTIONAL),
                         )
                     )
                  ),
