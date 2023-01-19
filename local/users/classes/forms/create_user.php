@@ -283,6 +283,9 @@ class create_user extends moodleform {
                 if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $data['email'])) {
                     $errors['email'] = get_string('invalidemail', 'local_users');
                 }
+                if ($data['email'] != strtolower($data['email'])) {
+                    $errors['email'] = get_string('onlylowercase', 'local_users');
+                }
             }
             $auths = \core_component::get_plugin_list('auth');
             $cannotchangepass = [];
