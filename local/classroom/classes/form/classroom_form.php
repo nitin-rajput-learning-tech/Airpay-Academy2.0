@@ -275,7 +275,16 @@ class classroom_form extends moodleform {
             
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_classroom', $categorycontext, $multiple = false);
            
-			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_classroom', $categorycontext, $multiple = false);
+			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_classroom', $categorycontext, $multiple = false);
+            $functionname = 'globaltargetaudience_elementlist';
+
+            if(function_exists($functionname)) {
+                $costcenterfields = local_costcenter_get_fields();
+                $firstdepth = current($costcenterfields);
+                $mform->modulecostcenterpath = $this->_customdata[$firstdepth];
+
+                $functionname($mform,array('group','designation'));
+            }
         }
         $mform->disable_form_change_checker();
     }
