@@ -480,7 +480,7 @@ class format_singleactivity extends core_courseformat\base {
                 // Activity is set but not visible to current user or does not have url.
                 // Display course page (either empty or with availability restriction info).
                 return;
-            } else {
+            }else {
                 // Everything is set up and accessible, redirect to the activity page!
                 redirect($cm->url);
             }

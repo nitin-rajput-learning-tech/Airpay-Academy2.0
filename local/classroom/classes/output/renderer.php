@@ -1219,7 +1219,7 @@ class renderer extends plugin_renderer_base
             'isdescription' => $isdescription,
             'seats_progress' => $seats_progress,
             'completion_seats_progress' => $completion_seats_progress,
-            'feedback_tab' => $feedback_tab,
+            'feedback_tab' => false,//$feedback_tab,
             'completion_settings_tab' => $classroomcompletion,
             'target_audience_tab' => true,
             'requested_users_tab' => $requested_users_tab,

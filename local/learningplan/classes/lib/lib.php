@@ -961,7 +961,7 @@ class lib
 					$params = array('courseid'=>$plan_course,'enrol'=>'learningplan','customint1'=> $planid);
 					if(!$DB->record_exists('enrol', $params)){
 						$enrolid = $DB->insert_record('enrol', $enrolobj);
-						$this->to_enrol_users($planid, $userid, $course_enrol, $redirect = true);
+						// $this->to_enrol_users($planid, $userid, $course_enrol, $redirect = true);
 					}else{
 						$enrolid = $this->update_enrol_status($plan_course,$planid,ENROL_INSTANCE_ENABLED);
 					}
