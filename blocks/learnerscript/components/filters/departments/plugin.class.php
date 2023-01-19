@@ -127,12 +127,12 @@ class plugin_departments extends pluginbase {
         //$deptoptions[] = 'All';
         $selectdept = array(); 
         if(empty($this->reportclass->basicparams)){
-            $selectdept[-1] = 'Select Country'; 
+            $selectdept[0] = 'Select Country';
         }else{
-            $deptoptions[-1] = 'All';
+            $deptoptions[0] = 'All';
         }
                 
-        $deptoptions = $selectdept + $deptoptions;   
+        $deptoptions = $selectdept + $deptoptions;
         ksort($deptoptions);
         
         return $deptoptions;

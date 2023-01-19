@@ -39,7 +39,11 @@ define(['block_learnerscript/select2',
     var BasicparamWebinars = $('.basicparamsform #id_filter_webinars'); 
     var BasicparamClassrooms = $('.basicparamsform #id_filter_classrooms'); 
     var BasicparamPrograms = $('.basicparamsform #id_filter_programs');     
-    var BasicparamCohort = $('.basicparamsform #id_filter_cohort');     
+    var BasicparamCohort = $('.basicparamsform #id_filter_cohort');
+    var BasicparamGeostate = $('.basicparamsform #id_filter_geostate');
+    var BasicparamGeodistrict = $('.basicparamsform #id_filter_geodistrict');
+    var BasicparamGeosubdistrict = $('.basicparamsform #id_filter_geosubdistrict');
+    var BasicparamGeovillage = $('.basicparamsform #id_filter_geovillage');
 
     var FilterCourse = $('.filterform #id_filter_course');
     var FilterUsers = $('.filterform #id_filter_users');
@@ -60,6 +64,10 @@ define(['block_learnerscript/select2',
     var FilterClassrooms = $('.filterform #id_filter_classrooms');
     var FilterPrograms = $('.filterform #id_filter_programs');
     var FilterCohort = $('.filterform #id_filter_cohort');
+    var FilterGeostate = $('.filterform #id_filter_geostate');
+    var FilterGeodistrict = $('.filterform #id_filter_geodistrict');
+    var FilterGeosubdistrict = $('.filterform #id_filter_geosubdistrict');
+    var FilterGeovillage = $('.filterform #id_filter_geovillage');
 
     var NumberOfBasicParams = 0;
 
@@ -177,9 +185,41 @@ define(['block_learnerscript/select2',
                         }
                         smartfilter.DepartmentUser({reporttype: args.reporttype, firstelementactive: FirstElementActive});
                     }
+                    if (FilterGeostate.length > 0 || BasicparamGeostate.length > 0) {
+                        if(BasicparamGeostate.length > 0){
+                            FirstElementActive = true;
+                        }
+                        smartfilter.GeoState({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                    }
                 }
             }); 
-
+            $('#id_filter_geostate').change(function() {
+                var geostate = $(this).find(":selected").val();
+                if (FilterGeodistrict.length > 0 || BasicparamGeodistrict.length > 0) {
+                    if(BasicparamGeodistrict.length > 0){
+                        FirstElementActive = true;
+                    }
+                    smartfilter.GeoDistrict({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                }
+            });
+            $('#id_filter_geodistrict').change(function() {
+                var geostate = $(this).find(":selected").val();
+                if (FilterGeosubdistrict.length > 0 || BasicparamGeosubdistrict.length > 0) {
+                    if(BasicparamGeosubdistrict.length > 0){
+                        FirstElementActive = true;
+                    }
+                    smartfilter.GeoSubdistrict({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                }
+            });
+            $('#id_filter_geosubdistrict').change(function() {
+                var geostate = $(this).find(":selected").val();
+                if (FilterGeovillage.length > 0 || BasicparamGeovillage.length > 0) {
+                    if(BasicparamGeovillage.length > 0){
+                        FirstElementActive = true;
+                    }
+                    smartfilter.GeoVillage({reporttype: args.reporttype, firstelementactive: FirstElementActive});
+                }
+            });
             $('#id_filter_departments').change(function() { 
                 var departmentid = $(this).find(":selected").val();
                 var organizationid = $('#id_filter_organization').find(":selected").val(); 
