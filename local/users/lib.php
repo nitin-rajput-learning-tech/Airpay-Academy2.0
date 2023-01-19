@@ -206,6 +206,7 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
         $userslist_sql .= " AND id $mailsql ";
         $userslistparams = $mailparam + $userslistparams;
     }
+    $userslist_sql .= " AND email != ''";
     if (!empty($query)||empty($mform)) {
         $userslist = $DB->get_records_sql($userslist_sql, $userslistparams, $page, $perpage);
         return $userslist;
