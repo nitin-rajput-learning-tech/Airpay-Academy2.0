@@ -341,8 +341,8 @@ class create_user extends moodleform {
             if ($phone) {
                 if (!is_numeric($phone)) {
                     $errors['phone1'] = get_string('numeric', 'local_users');
-                } else if ($phone < 0 && $phone) {
-                    $errors['phone1'] = get_string('invalidnumber', 'local_users');
+                } else if ($phone < 1000000000 && $phone) {
+                    $errors['phone1'] = get_string('phonenumvalidate', 'local_users');
                 }
             }
         }

@@ -467,7 +467,7 @@ $string['sync_stats'] = 'Sync statistics';
 $string['view_users'] = 'view users';
 $string['nodepartmenterror'] = 'Country cannot be empty';
 $string['syncstatistics'] = 'Sync Statistics';
-$string['phonenumvalidate']='Please enter a 10 digit valid number';
+$string['phonenumvalidate']='10 digit positive numbers only';
 
 $string['cannotcreateuseremployeeidadderror'] = 'Learner with learnerid {$a->employee_id} already exist so cannot create user in adduser mode at line {$a->linenumber}';
 $string['cannotfinduseremployeeidupdateerror'] = 'Learner with learnerid {$a->employee_id} doesn\'t exist';
@@ -785,4 +785,3 @@ $string['level'] = 'Level';
 $string['na'] = 'N/A';
 $string['managegeographyfields'] = 'Geography Location Master';
 $string['onlylowercase'] = 'Only small letter accept';
-$string['invalidnumber'] = '10 digit positive numbers only';
