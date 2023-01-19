@@ -137,6 +137,8 @@ class external extends external_api {
     public static function get_public_config_returns() {
         return new external_single_structure(
             array(
+                'manualauth' => new external_value(PARAM_BOOL, 'Manual auth flag'),
+                'otptoken' => new external_value(PARAM_RAW, 'Otp Token info ', VALUE_OPTIONAL),
                 'wwwroot' => new external_value(PARAM_RAW, 'Site URL.'),
                 'httpswwwroot' => new external_value(PARAM_RAW, 'Site https URL (if httpslogin is enabled).'),
                 'sitename' => new external_value(PARAM_RAW, 'Site name.'),

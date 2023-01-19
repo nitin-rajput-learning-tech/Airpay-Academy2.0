@@ -1480,8 +1480,8 @@ function get_listof_courses($stable, $filterdata) {
           
             $format = $course->format;
 
-            if (strlen($coursename)>23){
-                $coursenameCut = substr($coursename, 0, 23)."...";
+            if (strlen($coursename)>35){
+                $coursenameCut = substr($coursename, 0, 35)."...";
                 $courseslist[$count]["coursenameCut"] = $coursenameCut;
             }
             $catname = $categoryname;

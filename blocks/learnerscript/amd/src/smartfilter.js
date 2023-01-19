@@ -222,6 +222,68 @@ define(['jquery',
 
         },
 
+        Departmentl4depts: function(args) {
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'deptl4departments',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_level4department").html(template);
+                var currentsubdepartment = $('.basicparamsform #id_filter_level4department').find(":selected").val();
+                if (currentsubdepartment == 0 || currentsubdepartment == null) {
+                    $('.basicparamsform #id_filter_level4department').val($('.basicparamsform #id_filter_level4department option:eq(1)').val());
+                }
+                $("#id_filter_level4department").trigger('change');
+            });
+
+        },
+
+        Departmentl5depts: function(args) {
+            var currentl4depid = $('#id_filter_level4department').find(":selected").val();
+            var currentsubdepid = $('#id_filter_subdepartments').find(":selected").val();
+            var currentdepid = $('#id_filter_departments').find(":selected").val();
+            var currentorganization = $('#id_filter_organization').find(":selected").val();
+            var promise = ajax.call({
+                args: {
+                    action: 'deptl5departments',
+                    basicparam: true,
+                    reporttype: args.reporttype,
+                    currentl4depid: currentl4depid,
+                    subdepartmentid: currentsubdepid,
+                    departmentid: currentdepid,
+                    orgid: currentorganization
+                },
+                url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+            });
+            promise.done(function(response) {
+                var template = '';
+                $.each(response, function(key, value) {
+                    template += '<option value = ' + key + '>' + value + '</option>';
+                });
+                $("#id_filter_level5department").html(template);
+                var currentsubdepartment = $('.basicparamsform #id_filter_level5department').find(":selected").val();
+                if (currentsubdepartment == 0 || currentsubdepartment == null) {
+                    $('.basicparamsform #id_filter_level5department').val($('.basicparamsform #id_filter_level5department option:eq(1)').val());
+                }
+                $("#id_filter_level5department").trigger('change');
+            });
+
+        },
+
         DepartmentCohorts: function(args) {
             var currentdepid = $('#id_filter_departments').find(":selected").val();
             var currentorganization = $('#id_filter_organization').find(":selected").val();
@@ -512,6 +574,8 @@ define(['jquery',
             }, 
 
             DepartmentUsers: function(args) { 
+                var currentl5department = $('#id_filter_level5department').find(":selected").val();
+                var currentl4department = $('#id_filter_level4department').find(":selected").val();
                 var currentsubdepartment = $('#id_filter_subdepartments').find(":selected").val();
                 var currentdepartment = $('#id_filter_departments').find(":selected").val();
                 var currentorganization = $('#id_filter_organization').find(":selected").val();
@@ -522,6 +586,8 @@ define(['jquery',
                             action: 'departmentusers',
                             basicparam: true,
                             reporttype: args.reporttype,
+                            currentl5depid: args.currentl5department,
+                            currentl4depid: args.currentl4department,
                             subdepartmentid: args.subdepartmentid,
                             departmentid: args.departmentid,
                             orgid: args.organizationid
@@ -544,6 +610,46 @@ define(['jquery',
                             $('.basicparamsform #id_filter_users').val($('.basicparamsform #id_filter_users option:eq(1)').val());
                         }
                         $("#id_filter_users").trigger('change');
+                    });
+                // }
+            },
+        DepartmentUser: function(args) {
+                var currentl5department = $('#id_filter_level5department').find(":selected").val();
+                var currentl4department = $('#id_filter_level4department').find(":selected").val();
+                var currentsubdepartment = $('#id_filter_subdepartments').find(":selected").val();
+                var currentdepartment = $('#id_filter_departments').find(":selected").val();
+                var currentorganization = $('#id_filter_organization').find(":selected").val();
+                var requesteduserid = args.userid;
+                // if (currentorganization > 0) {
+                    var promise = ajax.call({
+                        args: {
+                            action: 'departmentusers',
+                            basicparam: true,
+                            reporttype: args.reporttype,
+                            currentl5depid: args.currentl5department,
+                            currentl4depid: args.currentl4department,
+                            subdepartmentid: args.subdepartmentid,
+                            departmentid: args.departmentid,
+                            orgid: args.organizationid
+
+                        },
+                        url: M.cfg.wwwroot + "/blocks/learnerscript/ajax.php",
+                    });
+                    promise.done(function(response) {
+                        var template = '';
+                        $.each(response, function(key, value) {
+                            var selected = '';
+                            if (key == requesteduserid) {
+                                selected = 'selected';
+                            }
+                            template += '<option value = ' + key + ' ' + selected + ' >' + value + '</option>';
+                        });
+                        $("#id_filter_user").html(template);
+                        var currentcourse = $('.basicparamsform #id_filter_user').find(":selected").val();
+                        if (currentcourse == 0 || currentcourse == null) {
+                            $('.basicparamsform #id_filter_user').val($('.basicparamsform #id_filter_user option:eq(1)').val());
+                        }
+                        $("#id_filter_user").trigger('change');
                     });
                 // }
             },

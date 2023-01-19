@@ -1708,7 +1708,7 @@ class local_classroom_external extends external_api {
                 'id' => new external_value(PARAM_INT, 'ID of the record', 0),
                 'classroomid' => new external_value(PARAM_INT, 'Classroom ID', 0),
                 'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
-                'name' => new external_value(PARAM_BOOL, 'name', false),
+                'name' => new external_value(PARAM_RAW, 'name', false),
             )
         );
     }
@@ -3074,6 +3074,7 @@ public static function submit_instituteform_form_parameters() {
             'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
             'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
+            'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
         ));
     }
 }

@@ -68,6 +68,8 @@ class general_lib{
             $classroom->isenrolled = $DB->record_exists('local_classroom_users', array('classroomid' => $classroom->id, 'userid' => $USER->id));
             $waitlist = $DB->get_field('local_classroom_waitlist','id',array('classroomid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
             $classroom->requeststatus = MODULE_NOT_ENROLLED;
+            $certificate_code = ($DB->get_field('tool_certificate_issues','code',array('moduletype'=> 'classroom','moduleid' => $classroom->id, 'userid' => $USER->id))) ;
+            $classroom->certificateid = $certificate_code ? $certificate_code : '';
             if($waitlist > 0){
                 $classroom->requeststatus = MODULE_ENROLMENT_WAITING;
             }else{

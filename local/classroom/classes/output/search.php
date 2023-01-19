@@ -272,7 +272,7 @@ class search implements renderable{
             $list->type = classroom;
             $list->module = 'local_classroom';
 
-            $list->enroll=$this->get_the_enrollflag($classroomid);
+            $list->enroll=$this->get_the_enrollflag($list->id);
             $list->isenrolled=$list->enroll;
 
             $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $list->id, 'userid' => $USER->id));

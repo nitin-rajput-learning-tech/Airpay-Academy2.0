@@ -134,6 +134,8 @@ class create_user extends moodleform {
             $reportingmanger[0] =get_string('select_reportingto', 'local_users');
             if($id){
                 $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} WHERE id = (SELECT open_supervisorid FROM {user} WHERE id = :id) ", ['id' => $id]);
+            }else{
+                $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} ",[]);
             }
             $supervisoroptions = array(
             'class' => 'supervisor_select',
@@ -280,6 +282,9 @@ class create_user extends moodleform {
                 }
                 if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $data['email'])) {
                     $errors['email'] = get_string('invalidemail', 'local_users');
+                }
+                if ($data['email'] != strtolower($data['email'])) {
+                    $errors['email'] = get_string('onlylowercase', 'local_users');
                 }
             }
             $auths = \core_component::get_plugin_list('auth');

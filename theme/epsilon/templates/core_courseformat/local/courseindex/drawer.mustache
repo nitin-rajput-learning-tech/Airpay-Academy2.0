@@ -25,6 +25,7 @@
     Example context (json):
     {}
 }}
+{{#output.courseformat_drawer_content }}
 <nav id="courseindex" class="courseindex">
     {{{ output.courseformat_drawer_content }}}
     <div id="courseindex-content">
@@ -36,3 +37,4 @@ require(['core_courseformat/local/courseindex/drawer'], function(component) {
     component.init('courseindex');
 });
 {{/js}}
+{{/output.courseformat_drawer_content }}

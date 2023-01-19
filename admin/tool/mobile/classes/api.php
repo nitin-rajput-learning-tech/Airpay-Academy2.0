@@ -160,7 +160,7 @@ class api {
      * @return array with the settings and warnings
      */
     public static function get_public_config() {
-        global $CFG, $SITE, $PAGE, $OUTPUT;
+        global $CFG, $SITE, $PAGE, $OUTPUT, $DB;
         require_once($CFG->libdir . '/authlib.php');
 
         $context = context_system::instance();
@@ -170,6 +170,11 @@ class api {
         list($authinstructions, $notusedformat) = external_format_text($CFG->auth_instructions, FORMAT_MOODLE, $context->id);
         list($maintenancemessage, $notusedformat) = external_format_text($CFG->maintenance_message, FORMAT_MOODLE, $context->id);
         $settings = array(
+            'manualauth' => true,
+            'otptoken' => $DB->get_field_sql("SELECT t.token
+                FROM {external_tokens} AS t
+                JOIN {external_services} AS e ON e.id = t.externalserviceid
+                WHERE e.shortname LIKE 'otplogin' "),
             'wwwroot' => $CFG->wwwroot,
             'httpswwwroot' => $CFG->wwwroot,
             'sitename' => external_format_string($SITE->fullname, $context->id, true),
