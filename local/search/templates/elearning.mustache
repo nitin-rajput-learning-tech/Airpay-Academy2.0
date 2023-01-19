@@ -61,14 +61,14 @@
                 <span class = "course_skill_category"><% record.open_skillcategory %></span>
                 </span>
 
-                <span ng-if="record.enrol_date != 'N/A'">
-                <div class="progress-status">
-                    <div><big><strong><% record.progressbarpercent %> %</strong></big></div>
-                    <div class="w-full pull-left progress">
-                        <div class="progress-bar" role="progressbar" style="width: <% record.progressbarpercent %>%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                <div ng-if="record.enrol_date != 'N/A'">
+                    <div class="progress-status">
+                        <div><big><strong><% record.progressbarpercent %> %</strong></big></div>
+                        <div class="w-full  progress">
+                            <div class="progress-bar" role="progressbar" style="width: <% record.progressbarpercent %>%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
                     </div>
                 </div>
-                </span>
             </div>
             <div class="action_div d-flex">
                 
