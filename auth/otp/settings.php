@@ -30,11 +30,14 @@ if ($ADMIN->fulltree) {
             '','', PARAM_RAW));
     $settings->add(new admin_setting_configtext('auth_otp/apikey', get_string('auth_apikey', 'auth_otp'),
             '','', PARAM_RAW));
-    $settings->add(new admin_setting_configtext('auth_otp/ipusername', get_string('auth_ipusername', 'auth_otp'),
-            '','', PARAM_RAW));
+  
     $settings->add(new admin_setting_configtext('auth_otp/authserviceip', get_string('auth_authserviceip', 'auth_otp'),
             '','', PARAM_RAW));
     $settings->add(new admin_setting_configtext('auth_otp/accountset', get_string('auth_accountset', 'auth_otp'),
+            '','', PARAM_RAW));
+    $settings->add(new admin_setting_configtext('auth_otp/userkey', get_string('auth_userkey', 'auth_otp'),
+            '','', PARAM_RAW));
+    $settings->add(new admin_setting_configtext('auth_otp/secret', get_string('auth_secret', 'auth_otp'),
             '','', PARAM_RAW));
  
 

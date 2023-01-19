@@ -861,6 +861,9 @@ class core_renderer extends \core_renderer {
      * @return string HTML to display the main header.
      */
     public function full_header() {
+
+        global $USER,$COURSE;
+
         $data = $this->custom_secured_redirection();
         $pagetype = $this->page->pagetype;
         $homepage = get_home_page();
@@ -886,69 +889,18 @@ class core_renderer extends \core_renderer {
         }
         $show_course_header = false;
 
-        $header = new stdClass();
+        $header=new stdClass();
 
-        if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1) {
+        if (($context->contextlevel == CONTEXT_COURSE) && $courseid > 1 && $this->courseviewmenu_hidden()){
+
             $course_extended_menu = $this->course_context_header_settings_menu();
+
             $show_course_header = true;
 
-            global $DB;
+            $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);;
 
-            $employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
+            $header=(object)array_merge((array)$header,$usercourseprogress);
 
-            $params = array('courseid'=>$courseid, 'employeerole' => $employeerole);
-
-            $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-
-            $totalusersssql = " SELECT COUNT(u.id) as ccount
-                                FROM {user} u
-                                WHERE u.confirmed = 1 AND u.deleted = 0 AND u.suspended = 0 $costcenterpathconcatsql";
-
-            $total_count =  $DB->count_records_sql($totalusersssql);
-
-            $header->total_count=$total_count ? $total_count : 0;
-
-            $enrolledusersssql = " SELECT COUNT(u.id) as ccount
-                                FROM {course} c
-                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
-                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
-                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
-                                                AND u.deleted = 0 AND u.suspended = 0
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql";
-
-            $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
-
-            $header->enrolled_count=$enrolled_count ? $enrolled_count : 0;
-
-
-            $header->enrolled_percentage=($header->enrolled_count / $header->total_count) * 100;
-
-            if (!is_null($header->enrolled_percentage)) {
-
-                $header->enrolled_percentage=  floor($header->enrolled_percentage);
-            }
-
-
-            $completedusersssql = " SELECT COUNT(u.id) as ccount
-                                FROM {course} c
-                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
-                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
-                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
-                                                AND u.deleted = 0 AND u.suspended = 0
-                                JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL $costcenterpathconcatsql";
-
-            $completed_count = $DB->count_records_sql($completedusersssql,$params);
-
-            $header->completed_count=$completed_count ? $completed_count : 0;
-
-            $header->completed_percentage=($header->completed_count / $header->total_count) * 100;
-
-            if (!is_null($header->completed_percentage)) {
-
-                    $header->completed_percentage=  floor($header->completed_percentage);
-            }
-            
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
         }
@@ -956,14 +908,18 @@ class core_renderer extends \core_renderer {
 
         // if(!$data->hideheader)
         $header->contextheader = $this->context_header();
+        $header->course_summary_data = $this->course_summary_data();
         $header->hasnavbar = empty($this->page->layout_options['nonavbar']);
         $header->navbar = $this->navbar();
+        $header->coursebannerimage = $this->course_bannerimage();
         $header->pageheadingbutton = $this->page_heading_button();
         $header->courseheader = $this->course_header();
         $header->headeractions = $this->page->get_header_actions();
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
         }
+        $header->courseid = $COURSE->id;
+        $header->activityurl =$this->activityurl_get_course();
         return $this->render_from_template($show_course_header? 'theme_epsilon/course_full_header' : 'theme_epsilon/full_header', $header);
     }
         /**
@@ -1933,8 +1889,108 @@ class core_renderer extends \core_renderer {
         return $CFG->wwwroot."/theme/epsilon/style/site_color.css?v=".date('Ymdhis');
     }
     public function courseformat_drawer_content(){
-        return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', []);
+
+        global $COURSE,$CFG,$USER;
+
+
+        if (!$this->courseviewmenu_hidden()) {
+
+            require_once("$CFG->libdir/externallib.php");
+
+            $course = $COURSE;
+
+            $context = \context_course::instance($course->id, IGNORE_MISSING);
+
+
+            $course->fullname = external_format_string($course->fullname, $context->id);
+             $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($course->id,$USER->id);;
+
+            $course=array_merge((array)$course,$usercourseprogress);
+
+            $course['coursebannerimage']=$this->course_bannerimage();
+            return $this->render_from_template('theme_epsilon/core_courseformat/local/courseindex/course_drawer_header', $course);
+        }
     }
 
+     public function courseviewmenu_hidden(){
+
+       if(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on')
+        $pageurl = "https";
+        else
+            $pageurl = "http";
+        $pageurl .= "://";
+        $pageurl .= $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+        $string = strpos($pageurl, '?');
+        if($string)
+            $newpageurl = substr($pageurl,0 , $string);
+        else
+            $newpageurl = $pageurl;
+
+        $checkingcourseurl = new moodle_url('/course/view.php');
+
+        $courseviewmenu=false;
+
+        if ($newpageurl == $checkingcourseurl) {
+
+            $courseviewmenu=true;
+        }
+
+        return $courseviewmenu;
+    }
+    public function course_bannerimage(){
+
+        global $COURSE,$CFG;
+             //course image
+        if(file_exists($CFG->dirroot.'/local/includes.php')){
+            require_once($CFG->dirroot.'/local/includes.php');
+            $includes = new \user_course_details();
+            $courseimage = $includes->course_summary_files($COURSE);
+            if(is_object($courseimage)){
+                $courseimage = $courseimage->out();
+            }else{
+                $courseimage = $courseimage;
+            }
+        }
+        return $courseimage;
+    }
+    public function course_summary_data(){
+
+        global $COURSE,$CFG;
+
+        require_once("$CFG->libdir/externallib.php");
+
+        $course = $COURSE;
+
+        $context = \context_course::instance($course->id, IGNORE_MISSING);
+
+        list($course->summary, $course->summaryformat) =
+            external_format_text($course->summary, $course->summaryformat, $context->id, 'course', 'summary', null);
+        return $course->summary;
+    }
+    public function hasrmaincontenthidden(){
+
+        $hasrmaincontenthidden=false;
+
+        if ($this->courseviewmenu_hidden()) {
+
+            $hasrmaincontenthidden=true;
+        }
+
+        return $hasrmaincontenthidden;
+    }
+    public function activityurl_get_course() {
+
+        global $COURSE;
+
+        $courseformat = course_get_format($COURSE);
+
+        if($COURSE->format == 'singleactivity'){
+            $cm = $courseformat->reorder_activities();
+
+            return $cm->url;
+
+        }
+
+    }
 
 }
