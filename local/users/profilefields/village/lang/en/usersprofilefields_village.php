@@ -23,3 +23,4 @@ $string['districtname'] = 'District';
 $string['selectsubdistrict'] = 'Select Sub District';
 $string['statesname'] = 'State';
 $string['costcentername'] = 'Organization';
+$string['selectvillage'] = 'Select Village';
