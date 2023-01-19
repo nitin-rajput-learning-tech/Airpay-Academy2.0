@@ -106,7 +106,9 @@ class create_user extends moodleform {
             $mform->hideIf('password', 'createpassword', 'eq', 1);
             $mform->hideIf('password', 'auth', 'in', $cannotchangepass);
             $mform->addElement('advcheckbox', 'preference_auth_forcepasswordchange', get_string('forcepasswordchange'));
+            $mform->hideIf('preference_auth_forcepasswordchange', 'auth', 'in', $cannotchangepass);
             $mform->addElement('advcheckbox', 'createpassword', get_string('createpassword', 'auth'));
+            $mform->hideIf('createpassword', 'auth', 'in', $cannotchangepass);
             $mform->disabledIf('createpassword', 'auth', 'in', $cannotchangepass);
             $mform->addElement('text', 'firstname', get_string('firstname', 'local_users'));
             $mform->addRule('firstname', get_string('errorfirstname', 'local_users'), 'required', null, 'client');

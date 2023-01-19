@@ -122,7 +122,7 @@ class auth_plugin_otp extends auth_plugin_base {
      * @return bool
      */
     function can_change_password() {
-        return true;
+        return false;
     }
 
    
