@@ -1092,41 +1092,41 @@ class view extends plugin_renderer_base {
                 $territory = get_string('audience_terriroty','local_learningplan',$territory_list);
             }
 
-            if($data->open_states > 0){
-                $sql = "SELECT id,states_name FROM {local_states} WHERE id IN ($data->open_states)";
-                $open_states = $DB->get_records_sql_menu($sql);
-                $states = implode(", ", $open_states);
-                $state = get_string('audience_state','local_learningplan',$states);
-            }else{
-                $state=get_string('audience_state','local_learningplan','All');
-            }
+            // if($data->open_states > 0){
+            //     $sql = "SELECT id,states_name FROM {local_states} WHERE id IN ($data->open_states)";
+            //     $open_states = $DB->get_records_sql_menu($sql);
+            //     $states = implode(", ", $open_states);
+            //     $state = get_string('audience_state','local_learningplan',$states);
+            // }else{
+            //     $state=get_string('audience_state','local_learningplan','All');
+            // }
 
-            if($data->open_district > 0){
-                $sql = "SELECT id,district_name FROM {local_district} WHERE id IN ($data->open_district)";
-                $open_districts = $DB->get_records_sql_menu($sql);
-                $districts = implode(", ", $open_districts);
-                $district = get_string('audience_district','local_learningplan',$districts);
-            }else{
-                $district=get_string('audience_district','local_learningplan','All');
-            }
+            // if($data->open_district > 0){
+            //     $sql = "SELECT id,district_name FROM {local_district} WHERE id IN ($data->open_district)";
+            //     $open_districts = $DB->get_records_sql_menu($sql);
+            //     $districts = implode(", ", $open_districts);
+            //     $district = get_string('audience_district','local_learningplan',$districts);
+            // }else{
+            //     $district=get_string('audience_district','local_learningplan','All');
+            // }
 
-            if($data->open_subdistrict > 0){
-                $sql = "SELECT id,subdistrict_name FROM {local_subdistrict} WHERE id IN ($data->open_subdistrict)";
-                $open_subdistricts = $DB->get_records_sql_menu($sql);
-                $subdistricts = implode(", ", $open_subdistricts);
-                $subdistrict = get_string('audience_sub_disctrict','local_learningplan',$subdistricts);
-            }else{
-                $subdistrict=get_string('audience_sub_disctrict','local_learningplan','All');
-            }
+            // if($data->open_subdistrict > 0){
+            //     $sql = "SELECT id,subdistrict_name FROM {local_subdistrict} WHERE id IN ($data->open_subdistrict)";
+            //     $open_subdistricts = $DB->get_records_sql_menu($sql);
+            //     $subdistricts = implode(", ", $open_subdistricts);
+            //     $subdistrict = get_string('audience_sub_disctrict','local_learningplan',$subdistricts);
+            // }else{
+            //     $subdistrict=get_string('audience_sub_disctrict','local_learningplan','All');
+            // }
 
-            if($data->open_village > 0){
-                $sql = "SELECT id,village_name FROM {local_village} WHERE id IN ($data->open_village)";
-                $open_villages = $DB->get_records_sql_menu($sql);
-                $villages = implode(", ", $open_villages);
-                $village = get_string('audience_village','local_learningplan',$villages);
-            }else{
-                $village=get_string('audience_village','local_learningplan','All');
-            }
+            // if($data->open_village > 0){
+            //     $sql = "SELECT id,village_name FROM {local_village} WHERE id IN ($data->open_village)";
+            //     $open_villages = $DB->get_records_sql_menu($sql);
+            //     $villages = implode(", ", $open_villages);
+            //     $village = get_string('audience_village','local_learningplan',$villages);
+            // }else{
+            //     $village=get_string('audience_village','local_learningplan','All');
+            // }
 /*            if(empty($data->open_group)){
                  $group=get_string('audience_group','local_learningplan','All');
             }else{

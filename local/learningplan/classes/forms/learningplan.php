@@ -197,7 +197,7 @@ class learningplan extends moodleform {
                 $mform->hideIf('certificateid', 'map_certificate', 'neq', 1);
             }
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
-			local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
+			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
     	}
         $mform->disable_form_change_checker();
     }
