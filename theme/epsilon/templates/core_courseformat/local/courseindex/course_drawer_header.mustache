@@ -1,21 +1,12 @@
 <div class="course_drawer_header_container">
     <div class="course_image d-flex flex-column align-items-start justify-content-end" style="background-image: url('{{coursebannerimage}}');">
-        <div class="course_title text-white"><a href="{{cfg.wwwroot}}/course/view.php?id={{id}}" title="{{fullname}}">{{fullname}}</a></div>
+        <div class="course_title text-white"><a href="{{cfg.wwwroot}}/course/view.php?id={{id}}" title="{{coursename}}">{{coursename}}</a></div>
     </div>
     <div class="content">
         <div class="progress">
-            <div class="progress-bar" role="progressbar" style="width: {{completedpercentage}}%" aria-valuenow="{{completedpercentage}}" aria-valuemin="0" aria-valuemax="100"></div>
-      </div>
-      <div class="course_icons  d-flex justify-content-between align-items-center">
-          <div  class="star_icons">
-              <i class="fa fa-star" aria-hidden="true"></i>
-              <i class="fa fa-star" aria-hidden="true"></i>
-              <i class="fa fa-star" aria-hidden="true"></i>
-              <i class="fa fa-star-o" aria-hidden="true"></i>
-              <i class="fa fa-star-o" aria-hidden="true"></i>
-          </div>
-          <span class="percentage text-white ">60%</span>
-      </div>
+            <div class="progress-bar" role="progressbar" style="width: {{{percentage}}}%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>         
+        </div>
+    <span class="percentage text-white ">{{{percentage}}}%</span>
     </div>
-    
+    {{{display_ratings}}}
 </div>
