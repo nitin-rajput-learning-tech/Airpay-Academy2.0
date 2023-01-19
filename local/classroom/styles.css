@@ -31,8 +31,8 @@
     #page-local-classroom-index  #region-main .generaltable{
         overflow-x: auto;
         display:block;
-
- 
-
     }
+}
+.dataContainer .description {
+	word-break: break-word !important;
 }
