@@ -779,17 +779,40 @@ class lib
 	{
 		$sql = "SELECT * from {local_learningplan_courses} where planid=$planid and courseid=$course_enrol";
 		$record = $this->db->get_record_sql($sql);
-
 		foreach ($record as $single) {
 
 			$enrol_manual = enrol_get_plugin('learningplan');
-			$sql = "SELECT * from {enrol} where courseid=" . $course_enrol . " and enrol='learningplan'";
+			$sql = "SELECT * from {enrol} where courseid=" . $course_enrol . " and enrol='learningplan' and customint1 = $planid ";
 			$instance = $this->db->get_record_sql($sql);
 			if ($instance) {
 				$roleid = $instance->roleid;
 				$timestart = $this->db->get_field('course', 'startdate', array('id' => $course_enrol));
 				$timeend = 0;
 				$enrol_manual->enrol_user($instance, $userid, $roleid, $timestart, $timeend);
+			} else {
+				echo "Please contact the admin and enrol the course";
+			}
+		}
+		if($redirect){
+			$plan_url = new \moodle_url('/course/view.php', array('id' => $course_enrol));
+			redirect($plan_url);
+		}
+	}
+	public function to_unenrol_users($planid, $userid, $course_enrol, $redirect = true)
+	{
+		$sql = "SELECT * from {local_learningplan_courses} where planid=$planid and courseid=$course_enrol";
+		$record = $this->db->get_record_sql($sql);
+
+		foreach ($record as $single) {
+
+			$enrol_manual = enrol_get_plugin('learningplan');
+			$sql = "SELECT * from {enrol} where courseid=" . $course_enrol . " and enrol='learningplan' and customint1 = $planid ";
+			$instance = $this->db->get_record_sql($sql);
+			if ($instance) {
+				$roleid = $instance->roleid;
+				$timestart = $this->db->get_field('course', 'startdate', array('id' => $course_enrol));
+				$timeend = 0;
+				$enrol_manual->unenrol_user($instance, $userid);
 			} else {
 				echo "Please contact the admin and enrol the course";
 			}
