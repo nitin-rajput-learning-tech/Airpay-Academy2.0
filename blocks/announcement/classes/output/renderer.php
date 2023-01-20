@@ -51,7 +51,6 @@ class renderer extends plugin_renderer_base {
         if(!empty($announcements)){
             $data = array();
             foreach($announcements as $announce){
-                // print_object($announce);
                 $row = array();
                 $buttons = [];
                 $user_name = $DB->get_field_sql("SELECT CONCAT(firstname,' ',lastname) as fullname FROM {user} WHERE id=:id AND confirmed=:confirmed AND deleted=:deleted AND suspended=:suspended ", array('id' => $announce->usermodified, 'confirmed' => 1, 'deleted' => 0, 'suspended' => 0));                                     
@@ -96,7 +95,7 @@ class renderer extends plugin_renderer_base {
                 }
                 if(isloggedin() && is_siteadmin($USER->id)){
                     $display_buttons = true;
-                }else if(has_capability('block/announcement:manage_announcements',$systemcontext) && $announce->costcenterid==$open_costcenterid){
+                }else if(has_capability('block/announcement:manage_announcements',$systemcontext) && $announce->costcenterid==$open_costcenterid && $announce->usermodified==$USER->id){
                     $display_buttons = true;
                 }else{
                     $display_buttons = false;
