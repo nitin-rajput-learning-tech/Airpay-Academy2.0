@@ -82,13 +82,12 @@ if(!$haveaccess) {
 if ($roleid < 0) {
     $roleid = $instance->roleid;
 }
-$roles = get_assignable_roles($context);
-$roles = array('0'=>get_string('none')) + $roles;
-
-if (!isset($roles[$roleid])) {
-    //Weird - security always first!
-    $roleid = 0;
-}
+// $roles = get_assignable_roles($context);
+// $roles = array('0'=>get_string('none')) + $roles;
+// if (!isset($roles[$roleid])) {
+//     //Weird - security always first!
+//     $roleid = 0;
+// }
 
 if (!$enrol_manual = enrol_get_plugin('manual')) {
     throw new coding_exception('Can not instantiate enrol_manual');
@@ -195,6 +194,7 @@ if ($course) {
 			$progress++;
 			$timeend = 0;
 			$timestart=0;
+
 			$enrol_manual->enrol_user($instance, $adduser, $roleid, $timestart, $timeend);
             $notification = new \local_courses\notification();
             $course = $DB->get_record('course', array('id' => $dataobj));

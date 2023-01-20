@@ -229,7 +229,7 @@ $subpagepatterntype = $dashboardurl;
 $PAGE->set_url($seturl);
 $PAGE->set_pagetype($pagepattentype);
 $PAGE->set_subpage($subpagepatterntype);
-$PAGE->set_pagelayout('admin');
+// $PAGE->set_pagelayout('admin');
 $PAGE->add_body_class('reportdashboard'); 
 if ($dashboardurl == 'Maindashboard') {
   $dashboardhname = 'Main Dashboard';

@@ -270,22 +270,5 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
 
             }.bind(this));
         },
-        profileTableDataTables: function(args){
-            $("#"+args).dataTable({
-                "searching": true,
-                "autoWidth":false,
-                "responsive": false,
-                "language": {
-                    "paginate": {
-                        "previous": "<",
-                        "next": ">"
-                    }
-                },
-                "aaSorting": [],
-                "pageLength": 10,
-            });
-        },
-        load: function(){
-        }
     };
 });
