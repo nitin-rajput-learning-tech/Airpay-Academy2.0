@@ -244,7 +244,7 @@ class message_airnotifier_external extends external_api {
 
         $context = context_system::instance();
         self::validate_context($context);
-
+        print_object($appid);
         if (empty($params['userid'])) {
             $user = $USER;
         } else {
@@ -266,6 +266,9 @@ class message_airnotifier_external extends external_api {
                 'warningcode' => 'systemnotconfigured',
                 'message' => 'Mobile notifications are not configured'
             );
+        print_object('$warnings1');
+        print_object($warnings);
+
         } else {
             // We catch exceptions here because get_user_devices may try to connect to Airnotifier.
             try {
@@ -279,6 +282,9 @@ class message_airnotifier_external extends external_api {
                     'message' => $e->getMessage()
                 );
             }
+        print_object('$warnings2');
+        print_object($warnings);
+
         }
 
         return array(

@@ -85,6 +85,9 @@ class message_airnotifier_manager {
         // First, we look all the devices registered for this user in the Moodle core.
         // We are going to allow only ios devices (since these are the ones that supports PUSH notifications).
         $userdevices = $DB->get_records('user_devices', $params);
+        print_object('userdevices');
+        print_object($userdevices);
+
         foreach ($userdevices as $device) {
             if (core_text::strtolower($device->platform)) {
                 // Check if the device is known by airnotifier.
@@ -95,7 +98,8 @@ class message_airnotifier_manager {
                     if (! $this->create_token($device->pushid, $device->platform)) {
                         continue;
                     }
-
+                            print_object('device');
+                            print_object($deivice);
                     $airnotifierdev = new stdClass;
                     $airnotifierdev->userdeviceid = $device->id;
                     $airnotifierdev->enable = 1;
@@ -177,6 +181,7 @@ class message_airnotifier_manager {
                 return $token['status'] == 'ok' || $token['status'] == 'token exists';
             }
         }
+        print_object("Unexpected response from the Airnotifier server: $resp");
         debugging("Unexpected response from the Airnotifier server: $resp");
         return false;
     }
