@@ -28,7 +28,7 @@ use block_learnerscript\output;
 global $PAGE, $USER, $DB;
 
 $PAGE->set_url('/blocks/learnerscript/reportsview.php');
-$PAGE->set_pagelayout('admin');
+// $PAGE->set_pagelayout('admin');
 $PAGE->requires->css('/blocks/learnerscript/css/responsive.bootstrap.min.css');
 $title = get_string('managereports', 'block_learnerscript');
 
