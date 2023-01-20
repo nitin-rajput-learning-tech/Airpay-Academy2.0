@@ -812,7 +812,7 @@ class lib
 				$roleid = $instance->roleid;
 				$timestart = $this->db->get_field('course', 'startdate', array('id' => $course_enrol));
 				$timeend = 0;
-				$enrol_manual->unenrol_user($instance, $userid, $roleid, $timestart, $timeend);
+				$enrol_manual->unenrol_user($instance, $userid);
 			} else {
 				echo "Please contact the admin and enrol the course";
 			}
