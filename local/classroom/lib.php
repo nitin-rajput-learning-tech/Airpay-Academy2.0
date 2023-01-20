@@ -1133,12 +1133,17 @@ function costcenterwise_classroom_count($costcenter, $department = false, $subde
     $cancelledsql .= " AND status = 3 ";
     $completedsql .= " AND status = 4 ";
 
+    $holdsql .= " AND status = 2 ";
+
     $newclassroomscount = $DB->count_records_sql($sql . $newsql, $params);
 
     $activeclassroomscount = $DB->count_records_sql($sql . $activesql, $params);
     $cancelledclassroomscount = $DB->count_records_sql($sql . $cancelledsql, $params);
     $completedclassroomscount = $DB->count_records_sql($sql . $completedsql, $params);
-    return array('classroom_plugin_exist' => true, 'allclassroomcount' => $count, 'newclassroomcount' => $newclassroomscount, 'activeclassroomcount' => $activeclassroomscount, 'cancelledclassroomcount' => $cancelledclassroomscount, 'completedclassroomcount' => $completedclassroomscount);
+
+    $holdclassroomscount = $DB->count_records_sql($sql . $holdsql, $params);
+
+    return array('classroom_plugin_exist' => true, 'allclassroomcount' => $count, 'newclassroomcount' => $newclassroomscount, 'activeclassroomcount' => $activeclassroomscount, 'cancelledclassroomcount' => $cancelledclassroomscount, 'completedclassroomcount' => $completedclassroomscount, 'holdclassroomscount' => $holdclassroomscount);
 }
 
 /*
