@@ -944,10 +944,14 @@ class core_renderer extends \core_renderer {
         $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'init');
         $return = '';
 
-        // $systemcontext = context_system::instance();
         $systemcontext = \context_course::instance($courseid);
-         if(has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext) || is_siteadmin()) {
+
+        $categorycontext = context_coursecat::instance($COURSE->category);
+
+
+         if(has_capability('moodle/course:view', $systemcontext) || has_capability('moodle/course:create', $systemcontext) || is_siteadmin()) {
             $admin_default_menu = true;
+            $manage = true;
         }
         $useredit = '';
         if ($PAGE->user_is_editing() && $PAGE->user_allowed_editing()) {
@@ -956,15 +960,14 @@ class core_renderer extends \core_renderer {
             $useredit = 'on';
         }
         if($this->page->pagetype!='local-catalog-courseinfo') {
-            $departments = explode(',', $COURSE->open_departmentid);
             $manage = true;
-            if(!(is_siteadmin() || has_any_capability(['moodle/course:view'], $systemcontext)) && count($departments) > 1){
+            if(!(is_siteadmin() || has_any_capability(['moodle/course:view'], $systemcontext))){
                 $manage = false;
                 $USER->editing = 0;
             }
             if ($PAGE->user_allowed_editing() && $manage){
-                    $categorycontext = context_coursecat::instance($COURSE->category);
-                    $allow_editing = true;
+
+                $allow_editing = true;
                 $editing_url = new moodle_url('/course/view.php', array('id' => $courseid, 'sesskey'=> $sesskey, 'edit'=>$useredit));
             }
             if((has_capability('moodle/course:create',$systemcontext) || is_siteadmin() ||
@@ -977,7 +980,9 @@ class core_renderer extends \core_renderer {
             if((has_capability('moodle/backup:backupcourse',$systemcontext) || is_siteadmin()) && $manage) {
                 $coursebackup = true;
             }
-            if(is_siteadmin() || has_capability('enrol/manual:manage', $systemcontext)) {
+            $maincheckcontext = (new \local_courses\lib\accesslib())::get_module_context();
+            if(is_siteadmin() || ((has_capability('local/courses:enrol',
+                                $maincheckcontext)  || is_siteadmin())&&has_capability('local/courses:manage', $maincheckcontext))) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
                 $userenrollment = true;
             }
