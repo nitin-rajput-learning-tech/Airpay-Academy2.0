@@ -1321,7 +1321,7 @@ class view extends plugin_renderer_base {
 		$users = $this->db->get_record('local_learningplan',array('id'=>$planid));
 		if($total==0){
 
-			$sql="SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.email,')') as fullname ";
+			$sql="SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname ";
 	    }else{
                 $sql = "SELECT count(u.id) as total";
         }  
@@ -1468,7 +1468,7 @@ class view extends plugin_renderer_base {
 			$siteadmin_sql="";
 		}
 		if($total==0){
-			$sql = "SELECT  u.id,concat(u.firstname,' ',u.lastname,' ','(',u.email,')') as fullname ";
+			$sql = "SELECT  u.id,concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname ";
 		}else{
 			 $sql = "SELECT count(u.id) as total";
 		}
