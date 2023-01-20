@@ -31,7 +31,7 @@ class report_coursesoverview extends reportbase implements report {
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
         $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions']);   
         $this->columns = $columns;
-        $this->filters = array('organization','departments', 'subdepartments', 'course');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'course');
         $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions');
         $this->defaultcolumn = 'c.id';
     }
@@ -123,82 +123,39 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function filters() {
-    if(isset($this->params['filter_organization']) && $this->params['filter_organization'] > 0) {
-        $organizations = explode(',', $this->params['filter_organization']);
-        $orgsql = [];
-        foreach($organizations AS $organisation){
-            $orgsql[] = " concat('/',c.open_path,'/') LIKE :organisationparam_{$organisation}";
-            $this->params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+        if ($this->params['filter_organization'] > 0) {
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
         }
-        if(!empty($orgsql)){
-            $this->sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        if ($this->params['filter_departments']  > 0) {
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
         }
-    }
+        if ($this->params['filter_subdepartments'] > 0) {
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
+        }
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        }
+        if ($this->params['filter_level5department'] > 0) {
+            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :l5dept ";
+            $this->params['l5dept'] = $l5dept.'/%';
+        }
 
-    if(isset($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-        $departments = explode(',', $this->params['filter_departments']);
-        $deptsql = [];
-        foreach($departments AS $department){
-            $deptsql[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
-            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
-        }
-        if(!empty($deptsql)){
-            $this->sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
-        }
-    }
-
-    if(isset($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-        $subdepartments = explode(',', $this->params['filter_subdepartments']);
-        $subdeptsql = [];
-        foreach($subdepartments AS $subdepartment){
-            $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
-            $this->params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
-        }
-        if(!empty($subdeptsql)){
-            $this->sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
-        }
-    }
-
-    // if (!empty($params['department4level'])) {
-    //     $depart4level = explode(',', $params['department4level']);
-    //     $department4levelsql = [];
-    //     foreach($depart4level AS $department4level){
-    //         $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
-    //         $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
-    //     }
-    //     if(!empty($department4levelsql)){
-    //         $sql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
-    //     }
-    // }
-    // if (!empty($params['department5level'])) {
-    //     $depart5level = explode(',', $params['department5level']);
-    //     $department5levelsql = [];
-    //     foreach($depart5level AS $department5level){
-    //         $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
-    //         $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
-    //     }
-    //     if(!empty($department5levelsql)){
-    //         $sql .= " AND ( ".implode(' OR ', $department5levelsql)." ) ";
-    //     }
-    // }
-        // if(isset($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-        //     $this->sql .= " AND c.open_departmentid = :departmentid ";
-        //     $this->params['departmentid'] = $this->params['filter_departments'];
-        // }
-        // if(isset($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-        //     $this->sql .= " AND c.open_subdepartment = :subdepartmentid ";
-        //     $this->params['subdepartmentid'] = $this->params['filter_subdepartments'];
-        // }
 
         if(isset($this->params['filter_course']) && $this->params['filter_course'] > 0) {
             $this->sql .= " AND c.id = :courseid ";
             $this->params['courseid'] = $this->params['filter_course'];
         }
         // echo $this->sql;
-        // print_r($this->params);exit;
-        // if ($this->ls_startdate > 0 && $this->ls_enddate) {
-        //     $this->sql .= " AND u.timecreated BETWEEN $this->ls_startdate AND $this->ls_enddate ";
-        // }
+
     }
 
     public function get_rows($courses) {

@@ -38,7 +38,7 @@ $PAGE->navbar->add(get_string('manage_users', 'local_users'),new \moodle_url('/l
 $PAGE->navbar->add(get_string('managevillage', 'usersprofilefields_village'));
 
 $PAGE->requires->js_call_amd('usersprofilefields_village/createVillage', 'load', array());
-$PAGE->requires->js_call_amd('usersprofilefields_village/createVillage', 'profileTableDataTables', array('id' => 'village_table'));
+$PAGE->requires->js_call_amd('usersprofilefields_states/createStates', 'profileTableDataTables', array('id' => 'village_table'));
 
 $villagelib = new \usersprofilefields_village\lib();
 echo $OUTPUT->header();

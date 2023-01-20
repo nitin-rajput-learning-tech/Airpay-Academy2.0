@@ -120,12 +120,15 @@ class learningplan extends moodleform {
 
         $mform->addElement('autocomplete', 'open_categoryid', get_string('open_categoryid','local_learningplan'), $parents, $coursetype);
         $mform->setType('open_categoryid', PARAM_INT);
-	       	$sequence = array();
-			$sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('yes'), 1, $attributes);
-			$sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('no'), 0, $attributes);
-			$mform->addGroup($sequence, 'lpsequence',get_string('lp_sequence', 'local_learningplan'),
-				array('&nbsp;&nbsp;'), false);
-	        $mform->addHelpButton('lpsequence','sequence','local_learningplan');
+	       	// $sequence = array();
+			// $sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('yes'), 1, $attributes);
+			// $sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('no'), 0, $attributes);
+			// $mform->addGroup($sequence, 'lpsequence',get_string('lp_sequence', 'local_learningplan'),
+			// 	array('&nbsp;&nbsp;'), false);
+	        // $mform->addHelpButton('lpsequence','sequence','local_learningplan');
+			$mform->addElement('hidden', 'lpsequence', 1);
+			$mform->setType('lpsequence', PARAM_INT);
+			$mform->setConstant('lpsequence', 1);
 
 			$manageselfenrol = array();
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
