@@ -93,6 +93,55 @@ function export_reportdata($writer,$reportdata, $reportclass){
 	             $departments[] = $department ? $department : '--';
 	             $writer->addRow($departments);
 	             break;
+	             case 'filter_subdepartments':
+				 $subdepartment = $DB->get_field('local_costcenter','fullname',array('id'=>$value));
+				 $subdepartments = array();
+	             $subdepartments[] = get_string('subdepartments','block_learnerscript');
+	             $subdepartments[] = $subdepartment ? $subdepartment : '--';
+	             $writer->addRow($subdepartments);
+	             break;
+	             case 'filter_level4department':
+				 $level4department = $DB->get_field('local_costcenter','fullname',array('id'=>$value));
+				 $level4departments = array();
+	             $level4departments[] = get_string('level4department','block_learnerscript');
+	             $level4departments[] = $level4department ? $level4department : '--';
+	             $writer->addRow($level4departments);
+	             break;
+	             case 'filter_level5department':
+				 $level5department = $DB->get_field('local_costcenter','fullname',array('id'=>$value));
+				 $level5departments = array();
+	             $level5departments[] = get_string('level5department','block_learnerscript');
+	             $level5departments[] = $level5department ? $level5department : '--';
+	             $writer->addRow($level5departments);
+	             break;
+	             case 'filter_geostate':
+				 $geostate = $DB->get_field('local_states','states_name',array('id'=>$value));
+				 $geostates = array();
+	             $geostates[] = get_string('geostate','block_learnerscript');
+	             $geostates[] = $geostate ? $geostate : '--';
+	             $writer->addRow($geostates);
+	             break;
+	             case 'filter_geodistrict':
+				 $geodistrict = $DB->get_field('local_district','district_name',array('id'=>$value));
+				 $geodistricts = array();
+	             $geodistricts[] = get_string('geodistrict','block_learnerscript');
+	             $geodistricts[] = $geodistrict ? $geodistrict : '--';
+	             $writer->addRow($geodistricts);
+	             break;
+	             case 'filter_geosubdistrict':
+				 $geosubdistrict = $DB->get_field('local_subdistrict','subdistrict_name',array('id'=>$value));
+				 $geosubdistricts = array();
+	             $geosubdistricts[] = get_string('geosubdistrict','block_learnerscript');
+	             $geosubdistricts[] = $geosubdistrict ? $geosubdistrict : '--';
+	             $writer->addRow($geosubdistricts);
+	             break;
+	             case 'filter_geovillage':
+				 $geovillage = $DB->get_field('local_village','village_name',array('id'=>$value));
+				 $geovillages = array();
+	             $geovillages[] = get_string('geovillage','block_learnerscript');
+	             $geovillages[] = $geovillage ? $geovillage : '--';
+	             $writer->addRow($geovillages);
+	             break;
 	             case 'filter_course':
 				 $course = $DB->get_field('course','fullname',array('id'=>$value));
 				 $coursefilter = array();

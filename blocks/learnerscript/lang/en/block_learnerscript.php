@@ -1237,3 +1237,4 @@ $string['geostate'] = 'State';
 $string['geodistrict'] = 'District';
 $string['geosubdistrict'] = 'Sub District';
 $string['geovillage'] = 'Village';
+$string['employe'] = 'User';

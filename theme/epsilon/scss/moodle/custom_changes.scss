@@ -2916,15 +2916,13 @@ body .que .info>div {
             font-size: 16px;
         }
     }
+    .rating_container{
+        max-width: 90%;
+        margin: 0 auto;
+    }
     .content{
         max-width: 90%;
         margin: 0 auto;
-        i.fa.fa-star{
-            color:#FFFF00 !important;
-        }
-        i.fa.fa-star-o{
-            color:#ffffff6e !important;
-        }
         .progress {
             display: flex;
             height: 10px !important;
@@ -2934,8 +2932,7 @@ body .que .info>div {
             background-color: #e9ecef;
             border-radius: 0.5rem !important;
             padding: 1px;
-            margin-bottom: 5px !important;
-            
+            margin-right: 10px !important;
             .progress-bar{
                 border-radius: 0.5rem !important; 
             }
@@ -2966,11 +2963,39 @@ body .que .info>div {
     .heading .page-header-headings h1{
         color: #fff !important;
     }
-    .course_extended_menu_list{
-        top:20px !important
+    .context-header-settings-menu, .region-main-settings-menu{
+        width: auto !important;
+        height: auto !important;
+        max-width: 100% !important;
     }
+    .course_extended_menu_list{
+        top:10px !important
+    }
+    .rating_container {
+        .radiostars , .overall_users {
+            margin-top: 0 !important;
+        }
+        .radiostars{
+            min-width: none;
+            width: auto !important;
+            margin-right: 15px;
+        }
+        .overall_users {
+            i.fa-star{
+                color: #ffc107 !important; 
+                &::before{
+                margin-right: 5px;
+                }
+            }
+        }
+    }
+    .start_btn{
+        min-width: 150px;
+        font-weight: 600;
+        font-size: 18px;
+    } 
 }
-.courseheader:after{
+.courseheader::before{
     background-color: #305D94;
     content:"";
     top:0;
@@ -3007,25 +3032,25 @@ body .que .info>div {
 .courseheader .user_completion .user_icon :before{
     content: " ";
 }
-.courseheader .course_header_container .progress {
-    max-width: 200px;
+.courseheader  .progress {
+    max-width: 100%;
     margin: 0;
     height: 8px !important;
     width: 100%;
     border-radius: 5px !important;
     border: 1px solid #96aecb;
 }
-.courseheader .course_header_container .progress .progress-bar {
+.courseheader .progress .progress-bar {
     background-color: #1f67b7;
 }
-.courseheader .course_header_container .max-progress span{
+.courseheader .max-progress span{
     margin-left: 10px;
 }
-.courseheader .course_header_container .max-progress{
-    width: 200px;
+.courseheader .max-progress{
+    width: 100%;
     margin-left: 20px;
 }
-.courseheader .course_header_container .progress-bar[aria-valuenow="0"]{
+.courseheader .progress-bar[aria-valuenow="0"]{
     width: 0 !important;
 }
 
