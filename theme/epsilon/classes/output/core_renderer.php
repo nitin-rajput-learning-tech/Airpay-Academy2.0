@@ -447,10 +447,6 @@ class core_renderer extends \core_renderer {
             $costcenter = new costcenter();
             $costcenter_scheme = $costcenter->get_costcenter_theme();
             return $costcenter_scheme;
-            //$costcenter_scheme_url = get_css_for_costcenter_scss($costcenter_scheme);
-            // if(!empty($costcenter_scheme_url)){
-            //     $return = html_writer::empty_tag('link', array('href' => $costcenter_scheme_url, "rel"=> "stylesheet", "type" => "text/css"));
-            // }
         }
         return $return;
     }
