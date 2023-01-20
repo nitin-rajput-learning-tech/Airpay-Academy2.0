@@ -263,10 +263,11 @@ function costcenterwise_learningplan_count($costcenter,$department = false){
     global $USER, $DB,$CFG;
         $params = array();
         $params['costcenterpath'] = '%'.$costcenter.'%';
-        // $countlpql = "SELECT count(u.id) FROM {user} u WHERE concat('/',u.open_path,'/') LIKE :costcenterpath  AND deleted = 0";
-        $countlpql = "SELECT count(lp.id) FROM {local_learningplan} lp WHERE concat('/',lp.open_path,'/') LIKE :costcenterpath";
+
+        $countlpql = "SELECT count(lp.id) FROM {local_learningplan} lp WHERE concat('/',lp.open_path,'/') LIKE :costcenterpath ";
         if($department){
-            $countlpql .= "AND CONCAT(',',lp.department,',') LIKE CONCAT('%,',{$department},',%')";
+            $countlpql .= "  AND concat('/',lp.open_path,'/') LIKE :departmentpath  ";
+            $params['departmentpath'] = '%'.$department.'%';
         }
         $activesql = " AND visible = 1 ";
         $inactivesql = " AND visible = 0 ";
