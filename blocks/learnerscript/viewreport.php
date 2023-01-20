@@ -171,6 +171,12 @@ $PAGE->requires->css('/blocks/learnerscript/css/responsive.dataTables.min.css');
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->css('/blocks/learnerscript/css/select2.min.css', true);
 $PAGE->requires->css('/blocks/learnerscript/css/jquery.dataTables.min.css', true);
+$PAGE->requires->css('/blocks/learnerscript/css/jquery.dataTables.min.css', true);
+
+
+
+
+
 
 $PAGE->requires->js_call_amd('block_learnerscript/dependencyfilter', 'load',array());
 // No download, build navigation header etc.

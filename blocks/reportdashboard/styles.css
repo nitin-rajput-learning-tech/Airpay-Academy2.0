@@ -2459,7 +2459,7 @@ body.path-blocks-reportdashboard .dataTables_wrapper .dataTables_paginate .pagin
 
 /*css related to tables*/
 /*body.path-blocks div[role="main"] .dataTables_wrapper table.dataTable > thead > tr{background-color: #eff0f2;color: #333;border: none !important;}*/
-body#page-blocks-learnerscript-viewreport.path-blocks .generaltable.dataTable{width: 99% !important;border-bottom: none;display: table;    margin: auto;border-left: none;border-right: none;}
+body#page-blocks-learnerscript-viewreport.path-blocks .generaltable.dataTable{width: 100% !important; display:block; border-bottom: none;  margin: auto;border-left: none;border-right: none;}
 
 /*body.path-blocks-reportdashboard table.dataTable{border-bottom: none;}
 body.path-blocks-reportdashboard table.dataTable thead > tr > th{border: none;}
