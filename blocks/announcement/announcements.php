@@ -34,7 +34,7 @@ $courseid = 1;
 require_login();
 
 $PAGE->set_context((new \block_announcement\lib\accesslib())::get_module_context());
-$PAGE->set_pagelayout('admin');
+// $PAGE->set_pagelayout('admin');
 $pageurl = new moodle_url('/blocks/announcement/announcements.php', array('courseid' => $courseid));
 $PAGE->set_url($pageurl);
 $PAGE->set_title(get_string('pluginname', 'block_announcement'));
