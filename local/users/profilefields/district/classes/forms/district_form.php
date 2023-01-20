@@ -35,6 +35,7 @@ class district_form extends \moodleform {
             $state = $DB->get_records_sql_menu($statessql);
             $state = [null => get_string('selectstates', 'usersprofilefields_district')] + $state;
             $mform->addElement('autocomplete', 'statesid',  get_string('statesname', 'usersprofilefields_district'), $state);
+            $mform->addRule('statesid', '', 'required', null, 'client');
         }
         $mform->setType('statesid', PARAM_INT);
 

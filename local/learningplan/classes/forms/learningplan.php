@@ -120,12 +120,15 @@ class learningplan extends moodleform {
 
         $mform->addElement('autocomplete', 'open_categoryid', get_string('open_categoryid','local_learningplan'), $parents, $coursetype);
         $mform->setType('open_categoryid', PARAM_INT);
-	       	$sequence = array();
-			$sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('yes'), 1, $attributes);
-			$sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('no'), 0, $attributes);
-			$mform->addGroup($sequence, 'lpsequence',get_string('lp_sequence', 'local_learningplan'),
-				array('&nbsp;&nbsp;'), false);
-	        $mform->addHelpButton('lpsequence','sequence','local_learningplan');
+	       	// $sequence = array();
+			// $sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('yes'), 1, $attributes);
+			// $sequence[] = $mform->createElement('radio', 'lpsequence', '', get_string('no'), 0, $attributes);
+			// $mform->addGroup($sequence, 'lpsequence',get_string('lp_sequence', 'local_learningplan'),
+			// 	array('&nbsp;&nbsp;'), false);
+	        // $mform->addHelpButton('lpsequence','sequence','local_learningplan');
+			$mform->addElement('hidden', 'lpsequence', 1);
+			$mform->setType('lpsequence', PARAM_INT);
+			$mform->setConstant('lpsequence', 1);
 
 			$manageselfenrol = array();
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
@@ -178,17 +181,21 @@ class learningplan extends moodleform {
 		}else if($form_status == 1){
 			//certificate
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$open_path);
             if($certificate_plugin_exist){
                 $checkboxes = array();
                 $checkboxes[] = $mform->createElement('advcheckbox', 'map_certificate', null, '', array(),array(0,1));
                 $mform->addGroup($checkboxes, 'map_certificate', get_string('add_certificate', 'local_learningplan'), array(' '), false);
                 $mform->addHelpButton('map_certificate', 'add_certificate', 'local_learningplan');
                 $select = array(null => get_string('select_certificate','local_learningplan'));
-                if(is_siteadmin()){
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
-                }else{
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$org),'name', 'id,name');
-                }
+                $certificatesql = "SELECT id,name FROM {tool_certificate_templates}
+                                    WHERE 1=1 $costcenterpathconcatsql ";
+                $cert_templates = $DB->get_records_sql_menu($certificatesql);
+                // if(is_siteadmin()){
+                //     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
+                // }else{
+                //     $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$org),'name', 'id,name');
+                // }
                 $certificateslist = $select + $cert_templates;
 
                 $mform->addElement('select',  'certificateid', get_string('certificate_template','local_learningplan'), $certificateslist);

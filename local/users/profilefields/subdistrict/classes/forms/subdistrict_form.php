@@ -35,6 +35,7 @@ class subdistrict_form extends \moodleform {
             $districts = $DB->get_records_sql_menu($districtsql);
             $districts = [null => get_string('selectdistrict', 'usersprofilefields_subdistrict')] + $districts;
             $mform->addElement('autocomplete', 'districtid',  get_string('district', 'usersprofilefields_subdistrict'), $districts);
+            $mform->addRule('districtid', '', 'required', null, 'client');
         }
         $mform->setType('districtid', PARAM_INT);
 

@@ -38,7 +38,7 @@ $PAGE->navbar->add(get_string('manage_users', 'local_users'),new \moodle_url('/l
 $PAGE->navbar->add(get_string('managesubdistrict', 'usersprofilefields_subdistrict'));
 
 $PAGE->requires->js_call_amd('usersprofilefields_subdistrict/createSubdistrict', 'load', array());
-$PAGE->requires->js_call_amd('usersprofilefields_subdistrict/createSubdistrict', 'profileTableDataTables', array('id' => 'subdistrict_table'));
+$PAGE->requires->js_call_amd('usersprofilefields_states/createStates', 'profileTableDataTables', array('id' => 'subdistrict_table'));
 
 $subdistrictlib = new \usersprofilefields_subdistrict\lib();
 echo $OUTPUT->header();

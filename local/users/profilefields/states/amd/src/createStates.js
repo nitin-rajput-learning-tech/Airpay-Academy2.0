@@ -6,8 +6,9 @@
  * @package
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/fragment', 'core/ajax', 'core/yui'],
-        function($, Str, ModalFactory, ModalEvents, Fragment, Ajax, Y) {
+define(['local_courses/jquery.dataTables', 'jquery', 'core/str',
+    'core/modal_factory', 'core/modal_events', 'core/fragment', 'core/ajax', 'core/yui'],
+        function(DataTable ,$, Str, ModalFactory, ModalEvents, Fragment, Ajax, Y) {
 
     /**
      * Constructor
@@ -271,18 +272,20 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             }.bind(this));
         },
         profileTableDataTables: function(args){
-            $("#"+args).dataTable({
-                "searching": true,
-                "autoWidth":false,
-                "responsive": false,
-                "language": {
-                    "paginate": {
-                        "previous": "<",
-                        "next": ">"
-                    }
-                },
-                "aaSorting": [],
-                "pageLength": 10,
+            $(document).ready(function(){
+                $("#"+args).DataTable({
+                    "searching": true,
+                    "autoWidth":false,
+                    "responsive": false,
+                    "language": {
+                        "paginate": {
+                            "previous": "<",
+                            "next": ">"
+                        }
+                    },
+                    "aaSorting": [],
+                    "pageLength": 10,
+                });
             });
         },
         load: function(){

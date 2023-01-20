@@ -92,7 +92,7 @@ class classroom {
                     where id= :classroomid",array('classroomid' => $classroom->id));
                 $allowmultisession       = $localclassroom->allow_multi_session;
 
-                
+
                 $open_path=$DB->get_field('local_classroom', 'open_path', array('id' => $classroom->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
@@ -1714,9 +1714,9 @@ class classroom {
             list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
             // if($classroom->open_costcenterid !=$org){
-                
+
                  local_costcenter_get_costcenter_path($classroom);
-                 
+
 
             // }
             local_users_get_userprofile_datafields($classroom);
@@ -2526,7 +2526,7 @@ class classroom {
         $params['suspended'] = 0;
         $params['deleted']   = 0;
         if ($total == 0) {
-            $sql = "SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.email,')') as fullname";
+            $sql = "SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname";
         } else {
             $sql = "SELECT count(u.id) as total";
         }

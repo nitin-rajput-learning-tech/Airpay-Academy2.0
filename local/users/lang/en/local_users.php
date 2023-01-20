@@ -130,8 +130,9 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 <tr><td>vilage</td><td>Enter Village Code. State must already exist under specified Sub District in system as part of organization hierarchy.</td></tr>
 <tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>role</td><td>Enter Role.</td></tr>
-<tr><td>mobileno</td><td>Enter Numerics only.</td></tr>
+<tr><td>contactno</td><td>Enter Numerics only.</td></tr>
 <tr><td>reportingmanager_empid</td><td>Enter Reporting Manger learnerid, avoid additional spaces..</td></tr>
+<tr><td>language</td><td>Enter Language code for the user.</td></tr>
 <tr><td>role_designation</td><td>Enter Designation for the user.</td></tr>
 <tr><td>force_password_change</td><td>Provide the value as 1 if need to enable force password or 0 to disable it..</td></tr>
 <tr><td>timezone</td><td>Enter timezone code. Refer dropdown for codes, avoid additional spaces. {$a->timezones}</td></tr>
@@ -213,8 +214,8 @@ $string['userdob']='Date of Birth';
 $string['phone']='Mobile';
 $string['email']='Email';
 $string['emailerror']='Enter valid Email ID';
-$string['phoneminimum']='Please Enter Minimum 10 Digits';
-$string['phonemaximum']='You Can\' t Enter More Than 15 digits';
+$string['phoneminimum']='Please enter minimum 10 digits';
+$string['phonemaximum']='Please enter maximum 10 digits';
 $string['country_error']='Please select a country';
 $string['numeric'] = 'Only numeric values';
 $string['pcountry']='Country';
@@ -467,7 +468,7 @@ $string['sync_stats'] = 'Sync statistics';
 $string['view_users'] = 'view users';
 $string['nodepartmenterror'] = 'Country cannot be empty';
 $string['syncstatistics'] = 'Sync Statistics';
-$string['phonenumvalidate']='Please enter a 10 digit valid number';
+$string['phonenumvalidate']='10 digit positive numbers only';
 
 $string['cannotcreateuseremployeeidadderror'] = 'Learner with learnerid {$a->employee_id} already exist so cannot create user in adduser mode at line {$a->linenumber}';
 $string['cannotfinduseremployeeidupdateerror'] = 'Learner with learnerid {$a->employee_id} doesn\'t exist';
@@ -728,11 +729,11 @@ $string['cardtype'] = 'CARD';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['exportusers'] = 'Export Users to Excel';
-$string['employeeid_nospecialcharacters'] = 'User with learner id {$a->employee_id} connot contain special characters at line {$a->excel_line_number}.';
-$string['deptcheckwithorg'] = ' User with learner id {$a->employee_id} the department \'{$a->dept}\' not belongs to \'{$a->org}\'   at line \'{$a->excel_line_number}\' ';
-$string['subdeptcheckwithdept'] = ' User with learner id {$a->employee_id} the business unit \'{$a->subdept}\' not belongs to \'{$a->dept}\'   at line \'{$a->excel_line_number}\' ';
-$string['invalidtimezone'] = 'Invalid Timezone - User with learner id {$a->employee_id} at line {$a->excel_line_number}';
-$string['invalidcountrycode'] = 'Invalid Country code - User with learner id {$a->employee_id} at line {$a->excel_line_number}';
+$string['employeeid_nospecialcharacters'] = 'User with learner id {$a->learner_id} connot contain special characters at line {$a->excel_line_number}.';
+$string['deptcheckwithorg'] = ' User with learner id {$a->learner_id} the department \'{$a->dept}\' not belongs to \'{$a->org}\'   at line \'{$a->excel_line_number}\' ';
+$string['subdeptcheckwithdept'] = ' User with learner id {$a->learner_id} the business unit \'{$a->subdept}\' not belongs to \'{$a->dept}\'   at line \'{$a->excel_line_number}\' ';
+$string['invalidtimezone'] = 'Invalid Timezone - User with learner id {$a->learner_id} at line {$a->excel_line_number}';
+$string['invalidcountrycode'] = 'Invalid Country code - User with learner id {$a->learner_id} at line {$a->excel_line_number}';
 $string['orgcheckwithdhoh'] = ' Dont have permissions to {$a->identifier} \'{$a->orgid}\' at line \'{$a->line}\' ';
 $string['invalidemail'] = "Invalid Email id entered ";
 $string['village'] = "Village";

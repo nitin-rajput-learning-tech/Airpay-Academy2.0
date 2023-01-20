@@ -106,7 +106,9 @@ class create_user extends moodleform {
             $mform->hideIf('password', 'createpassword', 'eq', 1);
             $mform->hideIf('password', 'auth', 'in', $cannotchangepass);
             $mform->addElement('advcheckbox', 'preference_auth_forcepasswordchange', get_string('forcepasswordchange'));
+            $mform->hideIf('preference_auth_forcepasswordchange', 'auth', 'in', $cannotchangepass);
             $mform->addElement('advcheckbox', 'createpassword', get_string('createpassword', 'auth'));
+            $mform->hideIf('createpassword', 'auth', 'in', $cannotchangepass);
             $mform->disabledIf('createpassword', 'auth', 'in', $cannotchangepass);
             $mform->addElement('text', 'firstname', get_string('firstname', 'local_users'));
             $mform->addRule('firstname', get_string('errorfirstname', 'local_users'), 'required', null, 'client');
@@ -171,7 +173,7 @@ class create_user extends moodleform {
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));
             $mform->addRule('phone1', get_string('numeric', 'local_users'), 'numeric', null, 'client');
             $mform->addRule('phone1', get_string('phoneminimum', 'local_users'), 'minlength', 10, 'client');
-            $mform->addRule('phone1', get_string('phonemaximum', 'local_users'), 'maxlength', 15, 'client');
+            $mform->addRule('phone1', get_string('phonemaximum', 'local_users'), 'maxlength', 10, 'client');
             $mform->setType('phone1', PARAM_RAW);
 
             if (isset($CFG->forcetimezone) && $CFG->forcetimezone != 99) {
@@ -341,7 +343,7 @@ class create_user extends moodleform {
             if ($phone) {
                 if (!is_numeric($phone)) {
                     $errors['phone1'] = get_string('numeric', 'local_users');
-                } else if (($phone < 999999999 || $phone > 10000000000) && $phone) {
+                } else if ($phone < 1000000000 && $phone) {
                     $errors['phone1'] = get_string('phonenumvalidate', 'local_users');
                 }
             }

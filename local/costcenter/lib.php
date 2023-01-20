@@ -201,14 +201,20 @@ class costcenter {
     }
     function get_costcenter_theme(){
         global $USER, $DB;
-
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
-
-        $costcentersql = "SELECT lc.theme
-                    FROM {local_costcenter} AS lc WHERE lc.visible = 1 $costcenterpathconcatsql ";
-       
-
-        if(!empty($costcentertheme = $DB->get_field_sql($costcentersql))){
+       $path=(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+       $oh_orgid=explode('/',$path[0])[1];
+       $user_orgid=explode('/',$USER->open_path)[1];
+        if($oh_orgid){
+       $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
+       FROM {local_costcenter} AS lc WHERE lc.visible = 1 AND lc.id= $oh_orgid";
+        }else if($user_orgid){
+        $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
+        FROM {local_costcenter} AS lc WHERE lc.visible = 1 AND lc.id= $user_orgid";
+        }else{
+            $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
+            FROM {local_costcenter} AS lc WHERE lc.visible = 1";
+        }
+        if(!empty($costcentertheme = $DB->get_record_sql($costcentersql))){
             return $costcentertheme;
         }else{
             return false;

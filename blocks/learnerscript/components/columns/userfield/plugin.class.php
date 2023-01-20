@@ -196,7 +196,7 @@ class plugin_userfield extends pluginbase {
                 break;
             case 'open_village':
                 if(!empty($row->open_village)){
-                    $userrecord->{$data->column} = $DB->get_field('local_village', 'village_name', array('id'=>$row->open_district));
+                    $userrecord->{$data->column} = $DB->get_field('local_village', 'village_name', array('id'=>$row->open_village));
                 }else{
                     $userrecord->{$data->column} = 'NA';
                 }

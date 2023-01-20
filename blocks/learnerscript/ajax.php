@@ -216,6 +216,22 @@ if (empty($requests['orgid'])) {
 } else {
 	$orgid = $requests['orgid'];
 } 
+if (empty($requests['currentstate'])) {
+	$stateid = 0;
+} else {
+	$stateid = $requests['currentstate'];
+}
+if (empty($requests['currentdistrict'])) {
+	$districtid = 0;
+} else {
+	$districtid = $requests['currentdistrict'];
+}
+if (empty($requests['currentsubdistrict'])) {
+	$subdistrictid = 0;
+} else {
+	$subdistrictid = $requests['currentsubdistrict'];
+}
+
 
 if (empty($requests['departmentid'])) {
 	$departmentid = 0;
@@ -793,14 +809,13 @@ case 'categorycourses':
 		$return = array('' => 'Select Course');
 	}
 	break;
-case 'orgdepts': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+case 'orgdepts':
 	if ($orgid > 0) {
 		$sql = "SELECT id, fullname 
 				FROM {local_costcenter} 
 				WHERE parentid = :parentid AND visible = 1 AND depth = 2";
 				
-		$departments = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid));
+		$departments = $DB->get_records_sql_menu($sql, array('parentid' => $orgid));
         if (!empty($departments)) {
             $return = array('-1' => 'All') + $departments;
         } else {
@@ -809,6 +824,7 @@ case 'orgdepts':
 	} else {
 		$return = array('' => 'Select Department');
 	}
+	$return = ksort($return);
 	break;
 case 'orglearningpath': 
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
@@ -1529,6 +1545,58 @@ case 'configureplot':
     $plot[formdata]->limit = null;
 
      $return['plot'] = $plot;
+	break;
+	case 'geostates':
+		if ($orgid > 0) {
+	        $sql = "SELECT ls.id, ls.states_name FROM {local_states} ls WHERE ls.costcenterid = $orgid ";
+	        $states = $DB->get_records_sql_menu($sql);
+	        if (!empty($states)) {
+	            $return = array('0' => 'All') + $states;
+	        } else {
+	            $return = array('-1' => 'All');
+	        }
+	    } else {
+	        $return = array('-1' => 'All');
+	    }
+	break;
+	case 'geodistrict':
+		if ($stateid > 0) {
+	        $sql = "SELECT ld.id, ld.district_name FROM {local_district} ld WHERE ld.statesid = $stateid ";
+	        $districts = $DB->get_records_sql_menu($sql);
+	        if (!empty($districts)) {
+	            $return = array('0' => 'All') + $districts;
+	        } else {
+	            $return = array('-1' => 'All');
+	        }
+	    } else {
+	        $return = array('-1' => 'All');
+	    }
+	break;
+	case 'geosubdistrict':
+		if ($districtid > 0) {
+	        $sql = "SELECT lsd.id, lsd.subdistrict_name FROM {local_subdistrict} lsd WHERE lsd.districtid = $districtid ";
+	        $subdistricts = $DB->get_records_sql_menu($sql);
+	        if (!empty($subdistricts)) {
+	            $return = array('0' => 'All') + $subdistricts;
+	        } else {
+	            $return = array('-1' => 'All');
+	        }
+	    } else {
+	        $return = array('-1' => 'All');
+	    }
+	break;
+	case 'geovillage':
+		if ($subdistrictid > 0) {
+	        $sql = "SELECT lv.id, lv.village_name FROM {local_village} lv WHERE lv.subdistrictid = $subdistrictid ";
+	        $villages = $DB->get_records_sql_menu($sql);
+	        if (!empty($villages)) {
+	            $return = array('0' => 'All') + $villages;
+	        } else {
+	            $return = array('-1' => 'All');
+	        }
+	    } else {
+	        $return = array('-1' => 'All');
+	    }
 	break;
 }
 

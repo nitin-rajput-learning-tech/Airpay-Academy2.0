@@ -206,6 +206,7 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
         $userslist_sql .= " AND id $mailsql ";
         $userslistparams = $mailparam + $userslistparams;
     }
+    $userslist_sql .= " AND email != ''";
     if (!empty($query)||empty($mform)) {
         $userslist = $DB->get_records_sql($userslist_sql, $userslistparams, $page, $perpage);
         return $userslist;
@@ -1176,7 +1177,7 @@ function manage_syncerrors_count($stable, $filterdata) {
     $countsql = " SELECT count(id) ";
     $selectsql = "SELECT * ";
     $fromsql = " FROM {local_syncerrors} ls where 1=1";
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+    if (is_siteadmin()) {
         $fromsql .= " ";
     } else {
         $fromsql .= " AND modified_by = :modified_by ";

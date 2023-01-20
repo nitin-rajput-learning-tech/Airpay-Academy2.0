@@ -1016,7 +1016,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, 
     $params['deleted'] = 0;
  
     if($total==0){
-         $sql = "SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.email,')') as fullname";
+         $sql = "SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname";
     }else{
         $sql = "SELECT count(u.id) as total";
     }

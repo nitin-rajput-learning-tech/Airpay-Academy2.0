@@ -17,5 +17,5 @@ $string['selectorganisation'] = 'Select Organization';
 $string['deletefieldconfirmstates'] = 'Are you sure you want to delete <b>{$a->name}</b>?';
 $string['reason'] = 'Reason';
 $string['deletenotconfirm'] = 'You cannot delete <b>{$a->name}</b> as it has linked districts or mapped to user. Please unmap to delete.';
-$string['yesdelete'] = 'Yes! Delete';
-$string['no'] = 'No';
+$string['yesdelete'] = 'Delete';
+$string['no'] = 'Cancel';

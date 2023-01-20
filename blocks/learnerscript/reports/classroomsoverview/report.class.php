@@ -35,7 +35,7 @@ class report_classroomsoverview extends reportbase implements report {
         parent::__construct($report);
         $this->components = array('columns','filters', 'permissions', 'plot', 'orderable');
         $this->columns = ['classroomfield'=>['classroomfield'],'classroomsoverviewcolumns' => ['classroomname','enrollmentscount','completionscount']];
-        $this->filters = array('organization','departments', 'subdepartments', 'classrooms','classroomstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'classrooms','classroomstatus');
         $this->orderable = array('classroomname','enrollmentscount','completionscount');
         $this->defaultcolumn = 'lc.id';
     }
@@ -79,25 +79,30 @@ class report_classroomsoverview extends reportbase implements report {
         }
     }
     function filters() {
-        if (!empty($this->params['filter_organization'])  && $this->params['filter_organization'] > 0) {
-            $organization = $this->params['filter_organization'];
-            $filter_organization[] = " concat('/',lc.open_path,'/') LIKE :organizationparam_{$organization}";
-            $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
+        if ($this->params['filter_organization'] > 0) {
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
         }
-
-        if ($this->params['filter_departments'] > 0) {
-            $department = $this->params['filter_departments'];
-            $filter_department[] = " concat('/',lc.open_path,'/') LIKE :departmentparam_{$department}";
-            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
+        if ($this->params['filter_departments']  > 0) {
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
         }
-
         if ($this->params['filter_subdepartments'] > 0) {
-            $subdepartments = $this->params['filter_subdepartments'];
-            $filter_subdepartments[] = " concat('/',lc.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
-            $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
+        }
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        }
+        if ($this->params['filter_level5department'] > 0) {
+            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :l5dept ";
+            $this->params['l5dept'] = $l5dept.'/%';
         }
 
         if ($this->params['filter_classrooms'] > 0) {
