@@ -237,11 +237,11 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
           $sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid AND nextsetoperator =:nextsetoperator order by sortorder ASC LIMIT 1 ";
           $lpcourseman =$DB->get_record_sql($sql, array('planid'=>$planid,'nextsetoperator'=>'and'));
           if($lpcourseman){
-            $enrol=$learningplan_lib->to_unenrol_users($planid,$remove_user,$lpcourseman->courseid,false);
+            $unenrol=$learningplan_lib->to_unenrol_users($planid,$remove_user,$lpcourseman->courseid,false);
           }                
           $lpcoursesop = $DB->get_records('local_learningplan_courses', array('planid'=>$planid,'nextsetoperator'=>'or'));
           foreach($lpcoursesop as $key => $opcourse){
-            $enrol=$learningplan_lib->to_unenrol_users($planid,$remove_user,$opcourse->courseid,false);
+            $unenrol=$learningplan_lib->to_unenrol_users($planid,$remove_user,$opcourse->courseid,false);
           }
           //Unenrolment notification//
           $touser = \core_user::get_user($remove_user);

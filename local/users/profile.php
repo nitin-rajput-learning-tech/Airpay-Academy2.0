@@ -41,25 +41,15 @@ require_login();
 
 $strheading = get_string('viewprofile', 'local_users');
 $PAGE->set_title(get_string('viewprofile', 'local_users'));
-if (($id != $USER->id) && (!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)))) {
+if (($id != $USER->id) && (!is_siteadmin())) {
     $issupervisor = $DB->record_exists('user', array('id' => $id, 'open_supervisorid' => $USER->id));
-    if (has_capability('local/users:create', $categorycontext) || $issupervisor) {
-        $usercostcenterpath = $DB->get_field('user', 'open_path', array('id' => $id));
-        $userpathdata = explode('/', $usercostcenterpath);
-        $managerpathdata = explode('/', $USER->open_path);
-        $usercostcenter = $userpathdata[1];
-        $managercostcenter = $managerpathdata[1];
-
-        $userdepartment = $userpathdata[2];
-        $managerdepartment = $managerpathdata[2];
-        if ($usercostcenter != $managercostcenter) {
-            throw new moodle_exception(get_string('nopermission', 'local_users'));
-        } else if (has_capability('local/costcenter:manage_owndepartments', $categorycontext)
-            &&$userdepartment != $managerdepartment) {
+    if (!(has_capability('local/users:create', $categorycontext) || $issupervisor)) {
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');  
+        $selectsql = "SELECT  u.id  FROM {user} AS u
+            WHERE u.id > 2 AND u.deleted = 0 ".$costcenterpathconcatsql;
+        if(!$DB->record_exists_sql($selectsql)){
             throw new moodle_exception(get_string('nopermission', 'local_users'));
         }
-    } else {
-        throw new moodle_exception(get_string('nopermission', 'local_users'));
     }
 }
 echo $OUTPUT->header();
