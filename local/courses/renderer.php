@@ -294,7 +294,7 @@ class local_courses_renderer extends plugin_renderer_base {
                         (e.enrol = 'manual' OR e.enrol = 'self') 
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             JOIN {user} u ON u.id = ue.userid AND u.deleted = 0
-            JOIN {local_costcenter} lc ON lc.id = u.open_path
+            JOIN {local_costcenter} lc ON lc.path = u.open_path
             JOIN {role_assignments} as ra ON ra.userid = u.id
             JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=c.id
             JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
