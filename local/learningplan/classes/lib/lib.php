@@ -41,10 +41,21 @@ class lib
 		// 	$data->department = $USER->open_departmentid;
 		// }
 		$return = $this->db->insert_record('local_learningplan', $data);
+
+		$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$return");
+		$params = array(
+            'context' => $systemcontext,
+            'objectid' => $return,
+            'other' => array('lpname'=>$learningplan_name)
+        );
+        $event = \local_learningplan\event\learningplan_created::create($params);
+        $event->add_record_snapshot('local_learningplan', $return);
+        $event->trigger();
+
 		// Update evaluation tags.
-		if (isset($data->tags)) {
-			\local_tags_tag::set_item_tags('local_learningplan', 'learningplan', $return, $systemcontext, $data->tags, 0, $data->costcenter, $data->department);
-		}
+		// if (isset($data->tags)) {
+		// 	\local_tags_tag::set_item_tags('local_learningplan', 'learningplan', $return, $systemcontext, $data->tags, 0, $data->costcenter, $data->department);
+		// }
 		return $return;
 	}
 
@@ -109,12 +120,21 @@ class lib
 		$data->usermodified =  $this->user->id;
 		$data->timemodified = time();
 		$existingsummaryfile = $this->db->get_field('local_learningplan', 'summaryfile', array('id' => $data->id));
+		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 		if ($data->summaryfile) {
-			$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 			file_save_draft_area_files($data->summaryfile, $systemcontext->id, 'local_learningplan', 'summaryfile', $data->summaryfile);
 		}
 		if (!empty($data->id)) {
 			$return = $this->db->update_record('local_learningplan', $data);
+			$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$data->id");
+			$params = array(
+                'context' => $systemcontext,
+                'objectid' => $data->id,
+                'other' => array('lpname'=>$learningplan_name)
+            );
+            $event         = \local_learningplan\event\learningplan_updated::create($params);
+            $event->add_record_snapshot('local_learningplan', $data->id);
+            $event->trigger();
 		}
 		// Update evaluation tags.
 		if (isset($data->tags)) {
@@ -273,20 +293,22 @@ class lib
 	{
 
 		if ($id > 0) {
-			$this->db->delete_records('local_learningplan', array('id' => $id));
-			$this->db->delete_records('local_learningplan_user', array('planid' => $id));
-			$this->db->delete_records('local_learningplan_courses', array('planid' => $id));
 
+			$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$id");
 			$params = array(
 				'context' => (new \local_learningplan\lib\accesslib())::get_module_context($id),
 				'objectid' => $id,
 				'userid' => $USER->id,
 				'relateduserid' => $USER->id,
-				'other' => array('userid' => $userid, 'learningplanid' => $id)
+                'other' => array('userid' => $userid, 'learningplanid' => $id,'lpname'=>$learningplan_name)
 			);
 			$event = \local_learningplan\event\learningplan_deleted::create($params);
 			$event->add_record_snapshot('local_learningplan', $id);
 			$event->trigger();
+
+			$this->db->delete_records('local_learningplan', array('id' => $id));
+			$this->db->delete_records('local_learningplan_user', array('planid' => $id));
+			$this->db->delete_records('local_learningplan_courses', array('planid' => $id));
 		}
 	}
 
@@ -309,7 +331,16 @@ class lib
 	function assign_courses_to_learningplan($data)
 	{
 
-		$this->db->insert_record('local_learningplan_courses', $data);
+		$lp_courseid = $this->db->insert_record('local_learningplan_courses', $data);
+		$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$data->planid");
+		$params = array(
+                'context' => context_system::instance(),
+                'objectid' => $lp_courseid,
+                'other' =>  array('courseid'=>$data->courseid,'learningplan_id'=>$data->planid,'lpname'=>$learningplan_name)
+            );
+        $event = \local_learningplan\event\learningplan_courses_created::create($params);
+        $event->add_record_snapshot('local_learningplan', $data->planid);
+        $event->trigger();
 		return 'courses added to learningplan';
 	}
 
@@ -318,6 +349,17 @@ class lib
 
 
 		$get = $this->db->get_records('local_learningplan_courses', array('planid' => $data->planid));
+		$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$data->planid");
+		$learningplan_courses_name=$this->db->get_field_sql("SELECT fullname FROM {course} where id=$data->courseid");
+		$params = array(
+                    'context' => context_system::instance(),
+                    'objectid' => $data->id,
+                    'other' =>  array('coursename'=>$learningplan_courses_name,'courseid'=>$data->courseid,'learningplan_id'=>$data->planid,'lpname'=>$learningplan_name)
+                );
+		$event = \local_learningplan\event\learningplan_courses_deleted::create($params);
+        $event->add_record_snapshot('local_learningplan', $data->planid);
+        $event->trigger();
+
 		$deletecourse = $this->db->delete_records('local_learningplan_courses', array('id' => $data->id, 'planid' => $data->planid, 'courseid' => $data->courseid));
 		$get_coures = $this->db->get_records('local_learningplan_courses', array('planid' => $data->planid));
 		$i = 0;
@@ -401,6 +443,15 @@ class lib
 			$data->timemodified = time();
 			$data->timecreated = time();
 			$user = $this->db->insert_record('local_learningplan_user', $data);
+			$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$data->planid");
+			$params = array(
+	                        'context' => context_system::instance(),
+	                        'objectid' => $user,
+	                        'other' =>  array('userid'=>$data->userid,'learningplan_id'=>$data->planid,'lpname'=>$learningplan_name)
+	                    );
+	        $event = \local_learningplan\event\learningplan_users_created::create($params);
+	        $event->add_record_snapshot('local_learningplan', $data->planid);
+	        $event->trigger();
 			// $emaillogs = new learningplannotifications_emails();
 			//     	$email_logs = $emaillogs->learningplan_emaillogs($type,$dataobj,$data->userid,$fromuserid);
 			$notification = new \local_learningplan\notification();
@@ -425,6 +476,16 @@ class lib
 
 	function delete_users_to_learningplan($data)
 	{
+		$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$data->planid");
+		$params = array(
+		            'context' => context_system::instance(),
+		            'objectid' => $data->id,
+		            'other' =>  array('userid'=>$data->userid,'learningplan_id'=>$data->planid,'lpname'=>$learningplan_name)
+		        );
+		$event  = \local_learningplan\event\learningplan_users_deleted::create($params);
+		$event->add_record_snapshot('local_learningplan', $data->planid);
+		$event->trigger();
+
 		if ($data->id) {
 
 			$this->db->delete_records('local_learningplan_user', array('id' => $data->id, 'planid' => $data->planid, 'userid' => $data->userid));
@@ -717,7 +778,7 @@ class lib
 								'courseid' => 1,
 								'userid' => $user,
 								'relateduserid' => $user,
-							);
+                    			'other' => array('lpname'=>$learningplan_name));
 							$event = \local_learningplan\event\learningplan_user_completed::create($params);
 							$event->add_record_snapshot('local_learningplan', $planid);
 							$event->trigger();
