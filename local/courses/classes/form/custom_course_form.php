@@ -205,15 +205,19 @@ class custom_course_form extends moodleform {
             $program_plugin_exist = $core_component::get_plugin_directory('local', 'program');
             $certification_plugin_exist = $core_component::get_plugin_directory('local', 'certification');
           
-            if($id || $this->_ajaxformdata['open_identifiedas']){
-            $identifiedtype = $coursetype;  
-            $identifiedtype = is_array($identifiedtype) ? $identifiedtype : explode(',', $identifiedtype);
-            list($coursetypesql, $coursetypeparams) = $DB->get_in_or_equal($identifiedtype, SQL_PARAMS_NAMED, 'name');
-            $coursetypeql = "SELECT id, name FROM {local_course_types} WHERE id {$coursetypesql} ";
-            $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams);   
-            }else{
-                $open_subdepartment = 0;
-            } 
+
+            if(!empty($this->_ajaxformdata['open_identifiedas'])){
+                $identifiedtype  = $this->_ajaxformdata['open_identifiedas'];
+            }elseif(!empty($this->_ajaxformdata['identifiedtype'])){
+                 $identifiedtype  = $this->_ajaxformdata['identifiedtype'];
+            }
+            if($identifiedtype){
+
+                $identifiedtype = is_array($identifiedtype) ? $identifiedtype : explode(',', $identifiedtype);
+                list($coursetypesql, $coursetypeparams) = $DB->get_in_or_equal($identifiedtype, SQL_PARAMS_NAMED, 'name');
+                $coursetypeql = "SELECT id, name FROM {local_course_types} WHERE id {$coursetypesql} ";
+                $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams);
+            }
 
             $coursetype = array(
                 'ajax' => 'local_costcenter/form-options-selector',
@@ -387,6 +391,18 @@ class custom_course_form extends moodleform {
         }
         if(!empty($course->open_certificateid)){
             $course->map_certificate = 1;
+        }
+
+        if(!empty($this->_ajaxformdata['open_categoryid'])){
+            $course->open_categoryid = $this->_ajaxformdata['open_categoryid'];
+        }else{
+            $course->open_categoryid =0;
+        }
+
+        if(empty($this->_ajaxformdata['open_identifiedas'])&&!empty($this->_ajaxformdata['identifiedtype'])){
+            $course->identifiedtype = $this->_ajaxformdata['identifiedtype'];
+        }elseif(empty($this->_ajaxformdata['open_identifiedas'])&&empty($this->_ajaxformdata['identifiedtype'])){
+            $course->identifiedtype ='';
         }
         $this->set_data($course);
 		$mform->disable_form_change_checker();
