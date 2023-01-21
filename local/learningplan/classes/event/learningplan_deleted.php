@@ -50,8 +50,11 @@ class learningplan_deleted extends \core\event\base {
      */
     public function get_description() {
         global $DB;
+        $firstname=$DB->get_field_sql("SELECT concat(firstname,' ',lastname) FROM {user} where id=$this->userid");
+        $userid = $this->other['userid'];
         $lplanid = $this->other['learningplanid'];
-        return "The user with id '$this->userid' deleted the Learning Path with id '$lplanid' ";
+        $lpname = $this->other['lpname'];
+        return "The user with id '$firstname ($this->userid)' has deleted the Learning Path '$lpname'  with id '$lplanid' ";
     }
 
     /**
