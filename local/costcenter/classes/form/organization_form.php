@@ -85,10 +85,10 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $mform->setType('parentid', PARAM_INT);
                 $mform->addRule('parentid', get_string('orgemptymsg', 'local_costcenter'), 'required', null, 'client');
             }else{
-                // $parentid = array_keys($options)[0];
-                // $parentname = $options[$parentid];
-                $parent = $DB->get_field('local_costcenter','fullname', array('id'=>$parentid));
-                $mform->addElement('static',  'parentname', $parent_label, $parent);
+                $parentid = array_keys($options)[0];
+                $parentname = $options[$parentid];
+                // $parent = $DB->get_field('local_costcenter','fullname', array('id'=>$parentid));
+                $mform->addElement('static',  'parentname', $parent_label, $parentname);
                 $mform->addElement('hidden',  'parentid', $parentid);
                 $mform->setType('parentid', PARAM_INT);
             }
