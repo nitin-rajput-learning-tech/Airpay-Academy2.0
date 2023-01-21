@@ -961,7 +961,7 @@ function categories_filter($mform){
         $categorylist = $DB->get_records_sql_menu("SELECT id, fullname FROM {local_custom_category} ");
     } else {
 
-       $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname="CONCAT('/',cc.costcenterid,'')",$costcenterpath=null,$datatype='lowerandsamepath');
+       $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname="CONCAT('/',cc.costcenterid,'')");
 
         $categorylist = $DB->get_records_sql_menu("SELECT cc.id, cc.fullname FROM {local_custom_category} AS cc WHERE 1=1 $costcenterpathconcatsql");
     }
@@ -1334,7 +1334,7 @@ function get_listof_courses($stable, $filterdata) {
     if(!empty($filterdata->categories)){
         $filtercategories = explode(',', $filterdata->categories);
         list($filtercategoriessql, $filtercategoriesparams) = $DB->get_in_or_equal($filtercategories, SQL_PARAMS_NAMED, 'param', true, false);
-        $formsql .= " AND cc.id $filtercategoriessql";
+        $formsql .= " AND c.open_categoryid $filtercategoriessql";
     }
     if(!empty($filterdata->courses)){
         $filtercourses = explode(',', $filterdata->courses);
