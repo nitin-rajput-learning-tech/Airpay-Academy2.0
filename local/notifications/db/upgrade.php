@@ -85,14 +85,14 @@ function xmldb_local_notifications_upgrade($oldversion) {
         
      upgrade_plugin_savepoint(true, 2022101800, 'local', 'notification_info');
    }
-   if ($oldversion < 2022101800.02) {
+   if ($oldversion < 2022101800.03) {
     $table = new xmldb_table('local_notification_info');
     if ($dbman->table_exists($table)) {
         $field = new xmldb_field('open_path', XMLDB_TYPE_CHAR, '255', null, null, null, null);
         if(!$dbman->field_exists($table, $field)){
             $dbman->add_field($table, $field);
         }
-        upgrade_plugin_savepoint(true, 2022101800.02, 'local', 'notifications');
+        upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'notifications');
     }
 }
 
