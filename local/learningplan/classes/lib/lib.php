@@ -513,10 +513,11 @@ class lib
 	function get_learningplan_assigned_users($planid, $requestData)
 	{
 		global $DB;
+		$userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
 		$sql = "SELECT u.*,lu.completiondate,lu.status,lu.timecreated
 					FROM {local_learningplan_user} lu
 					JOIN {user} u ON u.id = lu.userid
-					WHERE lu.planid = " . $planid . " AND u.deleted=0 ";
+					WHERE lu.planid = " . $planid . " AND u.deleted=0 $userpathconcatsql";
 		$param = [];
 		if ($requestData['search']['value'] != "") {
 			// $likesql = $this->db->sql_like('(concat(u.firstname," ",u.lastname) ', ':search',  false);

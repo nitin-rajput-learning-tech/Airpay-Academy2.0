@@ -151,14 +151,14 @@ if (is_siteadmin() || (has_capability('local/learningplan:create', $categorycont
 
 $out .= "</ul>";
 echo $out;
-$depth = $USER->useraccess['currentroleinfo']['depth'];
+$depth=$categorycontext->depth-1;
 if(is_siteadmin()){
     $thisfilters = array('learningplan', 'organizations', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status', 'states', 'district', 'subdistrict', 'village');
-}else if(has_capability('local/learningplan:manage',$categorycontext) && $depth = 2){
+}else if(has_capability('local/learningplan:manage',$categorycontext) && $depth == 2){
     $thisfilters = array('learningplan','departments', 'subdepartment', 'department4level','department5level', 'status', 'states', 'district', 'subdistrict', 'village');
-}else if(has_capability('local/learningplan:manage', $categorycontext) && $depth = 3){
+}else if(has_capability('local/learningplan:manage', $categorycontext) && $depth == 3){
     $thisfilters = array('department4level','department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
-}else if(has_capability('local/learningplan:manage', $categorycontext) && $depth = 4){
+}else if(has_capability('local/learningplan:manage', $categorycontext) && $depth == 4){
     $thisfilters = array('department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
 }else {
     $thisfilters = array('learningplan', 'status', 'states', 'district', 'subdistrict', 'village');

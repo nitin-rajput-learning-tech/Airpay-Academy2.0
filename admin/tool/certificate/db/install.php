@@ -33,9 +33,6 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_tool_certificate_install() {
         global $CFG, $OUTPUT, $DB;
 
-    if (!defined('BEHAT_SITE_RUNNING') && !(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
-        \tool_certificate\certificate::create_demo_template();
-    }
     $dbman = $DB->get_manager(); // loads ddl manager and xmldb classes
     
     $table = new xmldb_table('course');

@@ -15,7 +15,9 @@ $id = optional_param('id', 0, PARAM_INT);
 $action = required_param('action', PARAM_TEXT);
 
 use local_request\api\requestapi;
-
+if($component=='Learning path'){
+  $component='learningplan';
+}
 if($component && $componentid && $action){
   switch($action){
     case 'add' :  

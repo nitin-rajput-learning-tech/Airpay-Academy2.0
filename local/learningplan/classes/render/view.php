@@ -795,9 +795,10 @@ class view extends plugin_renderer_base {
 		$plan_description = !empty($plan_record->description) ?  \local_costcenter\lib::strip_tags_custom(html_entity_decode($plan_record->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false)) : 'No Description available';
 		$plan_objective = !empty($plan_record->objective) ? $plan_record->objective : 'No Objective available';
 		/*Count of the enrolled users to LEP*/
+        $userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
 		$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu 
 			JOIN {user} as u ON u.id=llu.userid 
-			WHERE llu.planid = :planid AND u.deleted != :deleted GROUP BY llu.planid ";
+			WHERE llu.planid = :planid AND u.deleted != :deleted $userpathconcatsql GROUP BY llu.planid ";
 		$total_enroled_users=$this->db->get_record_sql($totaluser_sql, array('planid' => $planid, 'deleted' => 1));
 		/*Count of the requested users to LEP*/
 		$total_completed_users=$this->db->get_records_sql("SELECT id FROM {local_learningplan_user} WHERE completiondate IS NOT NULL
@@ -1327,7 +1328,7 @@ class view extends plugin_renderer_base {
         }  
 
 		$sql.=" FROM {user} u WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 "; 
-
+        $userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
     	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 		if($lastitem!=0){
            $sql.=" AND u.id > $lastitem";
@@ -1335,7 +1336,7 @@ class view extends plugin_renderer_base {
         if (is_siteadmin()) {
             $sql .= "";
         } else  {
-            $sql .= $costcenterpathconcatsql;
+            $sql .= $costcenterpathconcatsql." ".$userpathconcatsql;
 
         }
 		
@@ -1461,7 +1462,8 @@ class view extends plugin_renderer_base {
 		$list=implode("','",$array);
 		$loginuser= $this->user;
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
-    	$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+        $userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
+		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 		if(!is_siteadmin()){
 			$siteadmin_sql= $costcenterpathconcatsql;
 		}else{
@@ -1473,7 +1475,7 @@ class view extends plugin_renderer_base {
 			 $sql = "SELECT count(u.id) as total";
 		}
 		$sql.=" FROM {user} u WHERE u.id >2 AND u.suspended =0
-								 AND u.deleted =0  $siteadmin_sql AND u.id not in ($loginuser->id) ";
+								 AND u.deleted =0  $siteadmin_sql AND u.id not in ($loginuser->id) $userpathconcatsql";
 
 		if($lastitem!=0){
 
@@ -1483,7 +1485,7 @@ class view extends plugin_renderer_base {
         if (is_siteadmin()) {
             $sql .= "";
         } else  {
-            $sql .= $costcenterpathconcatsql;
+            $sql .= $costcenterpathconcatsql." ".$userpathconcatsql;
 
         }
 
@@ -2122,6 +2124,7 @@ class view extends plugin_renderer_base {
 					if($user->status==1){
 						$completed="Completed";
 					}  
+					$userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
 					$user_url = new \moodle_url('/local/users/profile.php', array('id'=>$user->id));
 					$user_profile_link = html_writer::link($user_url, fullname($user), array());
 					$employee_id = empty($user->open_employeeid) ? 'N/A' : $user->open_employeeid;
@@ -2192,7 +2195,7 @@ class view extends plugin_renderer_base {
 
 					$table_data[] = $table_row;
 				}
-				$sql="SELECT count(lu.id) as total FROM {local_learningplan_user} as lu JOIN {user} u ON u.id = lu.userid WHERE lu.planid = $planid AND u.deleted=0 AND u.suspended=0 ";
+				$sql="SELECT count(lu.id) as total FROM {local_learningplan_user} as lu JOIN {user} u ON u.id = lu.userid WHERE lu.planid = $planid AND u.deleted=0 AND u.suspended=0 $userpathconcatsql";
 				if ( $requestData['search']['value'] != "" )
 				{
 					$sql .= " and ((CONCAT(u.firstname, ' ',u.lastname) LIKE '%".$requestData['search']['value']."%'))";

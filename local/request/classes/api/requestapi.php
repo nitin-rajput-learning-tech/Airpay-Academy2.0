@@ -62,7 +62,7 @@ use core_user;
     }
 
     public static function create($component, $componentid){
-      global $DB, $USER, $CFG;      
+      global $DB, $USER, $CFG;  
       if(file_exists($CFG->dirroot . '/local/lib.php')){
           require_once($CFG->dirroot . '/local/lib.php');
       }

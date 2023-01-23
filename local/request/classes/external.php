@@ -147,7 +147,6 @@ class local_request_external extends external_api {
         $action,
         $id = 0){
     global $OUTPUT, $CFG, $DB,$USER,$PAGE;
-
     $params = self::validate_parameters(
             self::enrol_component_parameters(),
             [
