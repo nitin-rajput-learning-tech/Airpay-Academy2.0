@@ -67,7 +67,7 @@ function xmldb_local_learningplan_install(){
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
+        // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('notificationid'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('notificationid'));
         $result = $dbman->create_table($table);
