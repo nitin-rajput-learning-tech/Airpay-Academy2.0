@@ -1170,7 +1170,7 @@ function local_courses_leftmenunode(){
     global $DB, $USER;
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
-    if(has_capability('local/courses:manage', $categorycontext) || is_siteadmin()) {
+    if(has_capability('local/custom_category:view_custom_category', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_categories', 'class'=>'pull-left user_nav_div categories usernavdep'));
         $categories_url = new moodle_url('/local/custom_category/index.php');
         $categories = html_writer::link($categories_url, '<i class="fa fa-book" aria-hidden="true" aria-label=""></i><i class="fa fa-book secbook" aria-hidden="true" aria-label=""></i><span class="user_navigation_link_text">'.get_string('leftmenu_browsecategories','local_courses').'</span>',array('class'=>'user_navigation_link'));
