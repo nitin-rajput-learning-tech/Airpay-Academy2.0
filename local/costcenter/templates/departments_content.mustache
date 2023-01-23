@@ -29,10 +29,12 @@
                                     <div class="col-12">
 
                                         <a class="rolescostcenterpopup" href="javascript:void(0)" data-costcenterid="{{deptid}}"  data-costcentername="{{departmentfullname}}" data-action="popupmodal{{deptid}}"  data-value={{role_count}}><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}assignroleusers,local_assignroles{{/ str}}</button></a>
+                                        {{# assignroles}}
+                                        <a href='javascript:void(0)' data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{deptid}},costcentername:'{{departmentfullname}}', formtype:'{{formtype}}'}) })(event)"><button class="btn btn-danger btn-sm mr-1 my-1">{{# str}}assignrole,local_assignroles{{/ str}}</button></a>
+                                        {{/ assignroles}}
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                         {{# enablesubdepartment_link}}
                         <span class="pull-right subdepartment_link">
@@ -81,12 +83,12 @@
                             <a href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({selector:'createcostcentermodal', contextid:1, id:{{ deptid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i></a>
                             </li>
                             {{/ deptedit}}
-                            {{# assignroles}}
+                            <!-- {{# assignroles}}
                                 <li>
                                     <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{deptid}},costcentername:'{{departmentfullname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-plus"></i></a>
 
                                 </li>
-                            {{/ assignroles}}
+                            {{/ assignroles}} -->
                             {{# contextid}}
                                 {{# managepermissions}}
                                 <li>

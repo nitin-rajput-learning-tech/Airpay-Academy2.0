@@ -764,7 +764,7 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
     $params['deleted'] = 0;
   
     if($total==0){
-        $sql = "SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.email,')') as fullname";
+        $sql = "SELECT u.id,concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname";
     }else{
         $sql = "SELECT count(u.id) as total";
     }
