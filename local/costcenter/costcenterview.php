@@ -132,6 +132,10 @@ else if($depart->parentid && $depart->depth == 4){
     $PAGE->set_heading(get_string('subsubdepartment_structure', 'local_costcenter'));
     $PAGE->set_title(get_string('subsubdepartment_structure', 'local_costcenter'));
 }
+else if($depart->parentid && $depart->depth == 5){
+    $PAGE->set_heading(get_string('territory_structure', 'local_costcenter'));
+    $PAGE->set_title(get_string('territory_structure', 'local_costcenter'));
+}
 else{
 	$PAGE->navbar->add(get_string('viewcostcenter', 'local_costcenter'));
     $PAGE->set_heading(get_string('orgStructure', 'local_costcenter'));
