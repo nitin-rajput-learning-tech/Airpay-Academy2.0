@@ -1924,30 +1924,37 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
 
     $action = isset($filterparams['action']) ? $filterparams['action'] : '';
 
-    $thisfilters = array('courses', 'categories', 'status');
 
+     $fields =array('organizations', 'departments',
+            'subdepartment', 'department4level','department5level','courses','categories','status');
 
-    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
+    if(!is_siteadmin()) {
 
-    $fields = [ 1 => 'organizations', 2 => 'departments', 3 => 'subdepartment', 4 => 'department4level', 5 => 'department5level'];
+        $fields =array('courses','categories','status');
 
-    if($contextinfo[0]){
-
-        if(count($contextinfo) > 1){
-            $depth = $USER->useraccess['currentroleinfo']['depth'];
-        }else{
-            $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
+        $depth = $USER->useraccess['currentroleinfo']['depth'];
+        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+            $depth--;
         }
-
-        $thisfilters =array_merge($thisfilters,array_splice($fields, $depth));
-
-    }else{
-
-        $thisfilters =array_merge($thisfilters,$fields);
+        if($depth < 6){
+            array_unshift($fields, 'department5level');
+        }
+        if($depth < 5){
+            array_unshift($fields, 'department4level');
+        }
+        if($depth < 4){
+            array_unshift($fields, 'subdepartment');
+        }
+        if($depth < 3){
+            array_unshift($fields, 'departments');
+        }
+        if($depth < 2){
+            array_unshift($fields, 'organizations');
+        }
 
     }
 
-    $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
+    $mform = new filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
     return $mform;
 }
 /*

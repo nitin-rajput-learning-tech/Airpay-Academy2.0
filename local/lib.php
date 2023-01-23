@@ -93,25 +93,32 @@ function get_filterslist() {
 
 	global $CFG, $PAGE,$USER;
 
-	$filterlist = array('states','district','subdistrict','village','idnumber', 'email','users');
+	$filterlist = array('organizations', 'departments',
+            'subdepartment', 'department4level','department5level','states','district','subdistrict','village','idnumber', 'email','users');
 
-	$contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
+	if(!is_siteadmin()) {
 
-    $fields = [ 1 => 'organizations', 2 => 'departments', 3 => 'subdepartment', 4 => 'department4level', 5 => 'department5level'];
+        $filterlist = array('states','district','subdistrict','village','idnumber', 'email','users');
 
-    if($contextinfo[0]){
-
-        if(count($contextinfo) > 1){
-            $depth = $USER->useraccess['currentroleinfo']['depth'];
-        }else{
-            $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
+        $depth = $USER->useraccess['currentroleinfo']['depth'];
+        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+            $depth--;
         }
-
-        $filterlist =array_merge(array_splice($fields, $depth),$filterlist);
-
-    }else{
-
-        $filterlist =array_merge($fields,$filterlist);
+        if($depth < 6){
+            array_unshift($filterlist, 'department5level');
+        }
+        if($depth < 5){
+            array_unshift($filterlist, 'department4level');
+        }
+        if($depth < 4){
+            array_unshift($filterlist, 'subdepartment');
+        }
+        if($depth < 3){
+            array_unshift($filterlist, 'departments');
+        }
+        if($depth < 2){
+            array_unshift($filterlist, 'organizations');
+        }
 
     }
 
