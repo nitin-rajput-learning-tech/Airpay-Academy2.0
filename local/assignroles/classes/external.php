@@ -206,12 +206,12 @@ class local_assignroles_external extends external_api {
                         $costcenterpath = '/'.explode('/', $costcenterpath)[1];
 
                         if(is_siteadmin()){
-                          $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
+                          $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname
                             FROM {user} AS u
                             WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser   AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid) AND CONCAT('',u.open_path,'/') LIKE '%$costcenterpath/%'";
                         }else{
 
-                            $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
+                            $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname
                             FROM {user} AS u
                             WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid) AND CONCAT('',u.open_path,'/') LIKE '%$costcenterpath/%'";
 
