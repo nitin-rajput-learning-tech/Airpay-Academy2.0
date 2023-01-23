@@ -391,3 +391,5 @@ $string['department5levelt'] = 'Territory';
 $string['requiredopen_costcenterid'] = 'Please select an Organization';
 $string['selectedrole'] = 'Selected {$a}';
 $string['select_level5department'] = 'Select Territory';
+$string['hold'] = 'Hold';
+$string['territory_structure'] = 'Territory Structure';

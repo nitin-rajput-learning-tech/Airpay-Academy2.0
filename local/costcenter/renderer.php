@@ -309,8 +309,6 @@ class local_costcenter_renderer extends plugin_renderer_base {
         if (!$depart = $DB->get_record('local_costcenter', array('id' => $id))) {
             print_error('invalidschoolid');
         }
-
-
         $edit = false;
         $delete = false;
         if (has_capability('local/costcenter:manage', $categorycontext)) {
@@ -435,6 +433,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['deptstatus'] = $dept->visible;
             $departments_array['deptdelete'] = $deptdelete;
             $departments_array['deptid'] = $dept->id;
+            $departments_array['deptcontextid'] = $contextid;
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;
             $departments_array['headstring'] = 'update_dipartment';
             $departments_array['formtype'] = 'department';

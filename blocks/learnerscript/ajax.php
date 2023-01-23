@@ -824,7 +824,7 @@ case 'orgdepts':
 	} else {
 		$return = array('' => 'Select Department');
 	}
-	$return = ksort($return);
+	ksort($return);
 	break;
 case 'orglearningpath': 
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
