@@ -813,7 +813,10 @@ class syncfunctionality
                       break; 
                 case ADwebservice:
                       $user->auth = "adwebservice";
-                      break; 				     
+                      break;
+                case OTP_ENROLL:
+                      $user->auth = "otp";
+                      break;        
             }
         }
         $user->force_password_change = (empty($excel->force_password_change)) ? 0 : $excel->force_password_change;
