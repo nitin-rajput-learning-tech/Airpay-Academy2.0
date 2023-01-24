@@ -47,7 +47,7 @@ class local_custom_category_renderer extends plugin_renderer_base {
     public function custom_category_content($filter = false){
         global $USER;
         $systemcontext =(new \local_custom_category\lib\accesslib())::get_module_context();
-        $options = array('targetID' => 'manage_skills','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
+        $options = array('targetID' => 'manage_custom_category','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
 
         $options['methodName']='local_custom_category_custom_category_view';
         $options['templateName']='local_custom_category/custom_category_view';
@@ -57,7 +57,7 @@ class local_custom_category_renderer extends plugin_renderer_base {
         $filterdata = json_encode(array());
 
         $context = [
-            'targetID' => 'manage_skills',
+            'targetID' => 'manage_custom_category',
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata
