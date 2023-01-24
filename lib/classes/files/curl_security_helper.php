@@ -201,6 +201,7 @@ class curl_security_helper extends curl_security_helper_base {
             return true;
         }
         $allowedports = $this->get_allowed_ports();
+        $allowedports = array_merge($allowedports, array(8801, 8802));
         return !empty($allowedports) && !in_array($portnum, $allowedports);
     }
 

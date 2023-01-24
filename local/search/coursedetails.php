@@ -20,7 +20,7 @@ $coursecontext = get_context_instance(CONTEXT_COURSE, $id);
 $PAGE->set_context($coursecontext);
 $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
 require_login();
-$PAGE->set_pagelayout('course');
+// $PAGE->set_pagelayout('course');
 $PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_catalog'), 'callbacks' => array()));
 local_search_include_search_js();
 $course = $DB->get_record('course', array('id'=>$id));

@@ -943,6 +943,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             'data-selectstring' => get_string('select'.$fields[$level], 'local_costcenter'),
             'data-depth' => $level,
             'data-class' => $fields[$level].'_select',
+            'onchange' => '(function(e){ require("local_costcenter/newcostcenter").changeElement(event) })(event)',
         );
         $prev_element = $fields[$level].'_select';
         $fieldvalue = $ajaxformdata[$fields[$level]] ? $ajaxformdata[$fields[$level]] : $customdata[$fields[$level]];

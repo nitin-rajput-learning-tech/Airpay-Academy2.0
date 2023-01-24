@@ -212,7 +212,16 @@ function local_search_get_filter_itemlist($catid, $start = 0, $limit = 7){
         case 'learningtype':
             $itemslist = [];
             $sql = "SELECT id, name, shortname FROM {local_course_types} WHERE active = 1 ";
-            $ctypes = $DB->get_records_sql($sql, [], $start, $limit);
+            $params = [];
+            if(!is_siteadmin()){
+                $organisationdata = array_filter(explode('/', $USER->open_path));
+                $organisationid = $organisationdata[1];
+                if($organisationid){
+                    $params['orgid'] = $organisationid;
+                    $sql .= " AND (orgid = 0 OR orgid = :orgid) ";
+                }
+            }
+            $ctypes = $DB->get_records_sql($sql, $params, $start, $limit);
             if($start == 0){
                 if(count($ctypes) == $limit){
                     array_pop($ctypes);

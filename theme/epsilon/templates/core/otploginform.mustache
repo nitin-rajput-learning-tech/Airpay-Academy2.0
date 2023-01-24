@@ -26,7 +26,7 @@
         {{/ output.should_display_navbar_logo }}
     </a>
     <div class="ml-auto">
-        <a class="btn btn-secondary btn-rounded login_btn" href="{{{ config.wwwroot }}}/login/">Admin Login</a>
+        <a class="btn btn-secondary  login_btn bold" href="{{{ config.wwwroot }}}/login/">Admin Login</a>
     </div>
 </nav>
 <div class="otp_login_container">
@@ -75,9 +75,9 @@
                                 {{#str}} phonenumber, theme_epsilon {{/str}}
                             {{/canloginbyemail}}
                         </label>
-                        <div class="input-group mb-3">
-                            <div class="input-group-prepend">
-                                <select name="countrycode" id="countrycode" class="custom_lable rounded-right-0 rounded-left">
+                        <div class="d-flex mb-3">
+                            <div class="country_select_container mr-2">
+                                <select name="countrycode" id="countrycode" class="custom_lable form-control">
                                     <option value="91">India(91)</option>
                                 </select> 
                             </div>

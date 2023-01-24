@@ -61,7 +61,6 @@ function xmldb_local_classroom_install(){
     $table = new xmldb_table('local_notification_info');
     if (!$dbman->table_exists($table)) {
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         $table->add_field('open_path', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
         $table->add_field('notificationid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
         
@@ -85,7 +84,7 @@ function xmldb_local_classroom_install(){
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
+        // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('notificationid'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('notificationid'));
         $result = $dbman->create_table($table);

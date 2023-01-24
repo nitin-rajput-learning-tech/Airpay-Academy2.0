@@ -262,12 +262,12 @@ function local_learningplan_quicklink_node(){
 function costcenterwise_learningplan_count($costcenter,$department = false){
     global $USER, $DB,$CFG;
         $params = array();
-        $params['costcenterpath'] = '%'.$costcenter.'%';
+        $params['costcenterpath'] = '%/'.$costcenter.'/%';
 
         $countlpql = "SELECT count(lp.id) FROM {local_learningplan} lp WHERE concat('/',lp.open_path,'/') LIKE :costcenterpath ";
         if($department){
             $countlpql .= "  AND concat('/',lp.open_path,'/') LIKE :departmentpath  ";
-            $params['departmentpath'] = '%'.$department.'%';
+            $params['departmentpath'] = '%/'.$department.'/%';
         }
         $activesql = " AND visible = 1 ";
         $inactivesql = " AND visible = 0 ";
