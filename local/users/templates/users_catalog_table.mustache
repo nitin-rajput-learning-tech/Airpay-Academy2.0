@@ -84,7 +84,7 @@
                     <a href="javascript:void(0)" title="{{#str}}edit{{/str}}" data-action="createusermodal" class="createusermodal" data-value="{{userid}}" onclick="(function(e){ require('local_users/newuser').init({selector:'createusermodal', context:1, id:{{userid}}, form_status:0}) })(event)" style="cursor:pointer" title="Edit">
                     <i class="fa fa-pencil fa-fw"></i>
                     </a>
-               {{/ editcap }}
+
                {{# visible}}
                     <a href="javascript:void(0)" title="{{# str}}makeactive,local_users{{/ str}}" onclick="(function(e){ require('local_users/newuser').userSuspend({ id:{{userid}},context:1, fullname:'{{fullname}}', status: 'disable' }) })(event)">
                      <i class="fa fa-eye-slash"></i></a>
@@ -93,6 +93,7 @@
                     <a href="javascript:void(0)" title="{{# str}} makeinactive,local_users{{/ str}}" onclick="(function(e){ require('local_users/newuser').userSuspend({ id:{{userid}},context:1, fullname:'{{fullname}}', status: 'enable'}) })(event)">
                      <i class="fa fa-eye"></i></a>
                  {{/ visible}}
+                 {{/ editcap }}
                  {{{ copyaction }}}
             </td>
         </tr>
