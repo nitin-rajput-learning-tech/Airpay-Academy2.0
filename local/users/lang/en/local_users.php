@@ -144,8 +144,8 @@ $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
-<tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
-<tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
+<tr><td>firstname</td><td>Enter the first name.</td></tr>
+<tr><td>lastname</td><td>Enter the last name.</td></tr>
 <tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
 ';
 
@@ -155,8 +155,8 @@ $string['help_1_dephead'] = '<table class="generaltable" border="1">
 <tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
-<tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
-<tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
+<tr><td>firstname</td><td>Enter the first name.</td></tr>
+<tr><td>lastname</td><td>Enter the last name.</td></tr>
 <tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
 ';
 
