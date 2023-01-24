@@ -134,7 +134,7 @@
                         }
                     });
                 }else if(action === 'costcenter_element_selector'){
-                    $('[data-action="costcenter_element_selector"]').on('change', function(){
+                    $(document).on('change', '[data-action="costcenter_element_selector"]', function(){
                         var elemvalue = $(this).val();
                         if(parseInt(elemvalue) > 0){
                             var depth = $(this).data('depth');
