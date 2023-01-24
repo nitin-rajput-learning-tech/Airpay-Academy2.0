@@ -46,7 +46,6 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $formtype = $this->_customdata['formtype'];
         $headstring = $this->_customdata['headstring'];
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
-
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
         $costcentersql = "SELECT lc.id, lc.fullname
@@ -68,7 +67,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
             }
 
             if($id){
-                $costcentersql .= " AND lc.id = $id ";
+                $costcentersql .= " AND lc.id = $parentid ";
             }
             $options = $DB->get_records_sql_menu($costcentersql);
             if(count($options) > 1){
