@@ -1107,6 +1107,9 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $list['fullname'] = fullname($user);
         if (has_capability('local/users:manage', (new \local_users\lib\accesslib())::get_module_context()) || is_siteadmin()) {
             $list['visible'] = $user->suspended;
+            $list['activeicon'] = 1;
+        }else{
+            $list['activeicon'] = 0;
         }
         if (is_siteadmin() || has_capability('local/users:edit', (new \local_users\lib\accesslib())::get_module_context())) {
                 $list['editcap'] = 1;

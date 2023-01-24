@@ -112,8 +112,8 @@ $string['help_1'] = '<div class="helpmanual_table"><table class="generaltable" b
 <tr><td>organization_code</td><td>Provide the organization</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
 <tr><td>learner_id</td><td>Enter the learner id, avoid additional spaces.</td></tr>
-<tr><td>firstname</td><td>Enter the first name, avoid additional spaces.</td></tr>
-<tr><td>lastname</td><td>Enter the last name, avoid additional spaces.</td></tr>
+<tr><td>firstname</td><td>Enter the first name.</td></tr>
+<tr><td>lastname</td><td>Enter the last name.</td></tr>
 <tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>';
 $string['help_2'] = '</td></tr>
 <tr class="field_type_head"><td class="empty_column"></td><td class="field_type font-weight-bold" style="text-align:left;border-left:1px solid white;"><b  class="pad-md-l-50 hlep2-oh">Non-Mandatory Fields</b></td><tr>
