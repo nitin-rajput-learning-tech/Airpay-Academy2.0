@@ -18,7 +18,7 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
      * Each call to init gets it's own instance of this class.
      */
     var courseAjaxform = function(args) {
-        this.contextid = args.contextid || 1;
+        this.contextid = args.contextid ? args.contextid : 1;
         this.args = args;
         this.init(args);
     };
