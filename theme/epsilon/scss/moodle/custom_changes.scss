@@ -2851,9 +2851,20 @@ body .que .info>div {
     }
 }
 #page-login-otp_login{
+    overflow: hidden;
+    #region-main{
+        height: 100%;
+        >div[role='main']{
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;  
+        }
+    }
     .navbar .login_btn{
         min-width: 150px;
-        border-radius: 20px;
+        border-radius: 8px;
     }
     .otp_login_container{
         max-width: 500px;
@@ -2871,6 +2882,9 @@ body .que .info>div {
                 max-width: 100%;
                 height: 85px;
             }
+        }
+        .country_select_container {
+            width: 35%;
         }
     }
 }

@@ -864,3 +864,8 @@ body#page-local-courses-index .catlisticons i {
     background-color:var(--sitehighlight);
     color: #fff;
 }
+
+/* learner script ui colors */
+body.path-blocks-reportdashboard table.dataTable tr th.header {
+    background-color: var(--sitehighlight) !important;
+}
