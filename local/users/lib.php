@@ -798,15 +798,15 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
     global $USER, $DB, $CFG;
         $params = array();
 
-        $params['costcenterpath'] = '%'.$costcenter.'%';
+        $params['costcenterpath'] = '%/'.$costcenter.'/%';
         $countusersql = "SELECT count(u.id) FROM {user} u WHERE concat('/',u.open_path,'/') LIKE :costcenterpath  AND deleted = 0";
     if ($department) {
             $countusersql .= " AND concat('/',u.open_path,'/') LIKE :departmentpath ";
-            $params['departmentpath'] = '%'.$department.'%';
+            $params['departmentpath'] = '%/'.$department.'/%';
     }
     if ($subdepartment) {
             $countusersql .= " AND concat('/',u.open_path,'/') LIKE :subdepartmentpath ";
-            $params['subdepartmentpath'] = '%'.$subdepartment.'%';
+            $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
     }
         $activesql = " AND suspended = 0 ";
         $inactivesql = " AND suspended = 1 ";
@@ -905,7 +905,7 @@ function manage_users_count($stable, $filterdata) {
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
-            $params["organisationparam_{$organisation}"] = '%'.$organisation.'%';
+            $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
         }
         if(!empty($orgsql)){
             $formsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
@@ -920,7 +920,7 @@ function manage_users_count($stable, $filterdata) {
         $deptsql = [];
         foreach($departments AS $department){
             $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
-            $params["departmentparam_{$department}"] = '%'.$department.'%';
+            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
         }
         if(!empty($deptsql)){
             $formsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
@@ -935,7 +935,7 @@ function manage_users_count($stable, $filterdata) {
         $subdeptsql = [];
         foreach($subdepartments AS $subdepartment){
             $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
-            $params["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartment.'%';
+            $params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
         }
         if(!empty($subdeptsql)){
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -946,7 +946,7 @@ function manage_users_count($stable, $filterdata) {
         $department4levelsql = [];
         foreach($depart4level AS $department4level){
             $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
-            $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
+            $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
         }
         if(!empty($department4levelsql)){
             $formsql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
@@ -957,7 +957,7 @@ function manage_users_count($stable, $filterdata) {
         $department5levelsql = [];
         foreach($depart5level AS $department5level){
             $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
-            $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
+            $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
         }
         if(!empty($department5levelsql)){
             $formsql .= " AND ( ".implode(' OR ', $department5levelsql)." ) ";
