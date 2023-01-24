@@ -1115,16 +1115,16 @@ function costcenterwise_classroom_count($costcenter, $department = false, $subde
     global $USER, $DB;
     $newsql = $activesql = $cancelledsql = $completedsql = '';
     $params = array();
-    $params['costcenterpath'] = '%'.$costcenter.'%';
+    $params['costcenterpath'] = '%/'.$costcenter.'/%';
     $sql = "SELECT count(id) FROM {local_classroom} WHERE concat('/',open_path,'/') LIKE :costcenterpath";
 
     if ($department) {
         $sql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
-        $params['departmentpath'] = '%'.$department.'%';
+        $params['departmentpath'] = '%/'.$department.'/%';
     }
     if ($subdepartment) {
         $sql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
-        $params['subdepartmentpath'] = '%'.$subdepartment.'%';
+        $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
     }
     $count = $DB->count_records_sql($sql, $params);
 

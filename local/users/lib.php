@@ -798,15 +798,15 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
     global $USER, $DB, $CFG;
         $params = array();
 
-        $params['costcenterpath'] = '%'.$costcenter.'%';
+        $params['costcenterpath'] = '%/'.$costcenter.'/%';
         $countusersql = "SELECT count(u.id) FROM {user} u WHERE concat('/',u.open_path,'/') LIKE :costcenterpath  AND deleted = 0";
     if ($department) {
             $countusersql .= " AND concat('/',u.open_path,'/') LIKE :departmentpath ";
-            $params['departmentpath'] = '%'.$department.'%';
+            $params['departmentpath'] = '%/'.$department.'/%';
     }
     if ($subdepartment) {
             $countusersql .= " AND concat('/',u.open_path,'/') LIKE :subdepartmentpath ";
-            $params['subdepartmentpath'] = '%'.$subdepartment.'%';
+            $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
     }
         $activesql = " AND suspended = 0 ";
         $inactivesql = " AND suspended = 1 ";
