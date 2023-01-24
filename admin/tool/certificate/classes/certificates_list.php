@@ -306,7 +306,7 @@ class certificates_list extends \table_sql {
         //         ON coursecat.id = ctx.instanceid
         //         WHERE 1 = 1 ";
 
-        $sql="SELECT c.id, c.name AS name, c.contextid, c.shared,lc.fullname as ccname FROM mdl_tool_certificate_templates c JOIN mdl_local_costcenter as lc ON concat('/',c.open_path,'/') LIKE concat('%/',lc.id,'/%')";        
+        $sql="SELECT c.id, c.name AS name, c.contextid, c.shared,lc.fullname as ccname FROM {tool_certificate_templates} c JOIN {local_costcenter} as lc ON concat('/',c.open_path,'/') LIKE concat('%/',lc.id,'/%')";        
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
         if(!(is_siteadmin())){
             $sql .= "$costcenterpathconcatsql";

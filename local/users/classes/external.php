@@ -394,6 +394,8 @@ class local_users_external extends external_api {
                                     'delcap' => new external_value(PARAM_RAW, 'delcap', VALUE_OPTIONAL),
                                     'level' => new external_value(PARAM_RAW, 'delcap', VALUE_OPTIONAL),
                                     'rolecount' => new external_value(PARAM_RAW, 'delcap', VALUE_OPTIONAL),
+                                    'activeicon' => new external_value(PARAM_INT, 'Active/Iactive icon user', VALUE_OPTIONAL),
+                                    
                                 )
                             )
                         )
