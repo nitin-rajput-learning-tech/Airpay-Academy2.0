@@ -155,7 +155,7 @@ class search implements renderable{
                                 $statussql[] = " llp.id not in (select distinct planid from {local_learningplan_user} where userid=$USER->id) ";
                             break;
                             case 'inprogress':
-                                $statussql[] = " llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id AND status <> 1)";
+                                $statussql[] = " llp.id in (select distinct planid from {local_learningplan_user} where userid={$USER->id} AND (status <> 1 OR status IS NULL))";
                             break;
                             case 'completed':
                                 $statussql[] = "  llp.id in (select distinct planid from {local_learningplan_user} where userid=$USER->id AND status = 1) ";
