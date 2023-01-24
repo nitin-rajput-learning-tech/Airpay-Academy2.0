@@ -1244,11 +1244,11 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
     $countcoursesql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath";
     if ($department) {
         $countcoursesql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
-        $params['departmentpath'] = '%'.$department.'%';
+        $params['departmentpath'] = '%/'.$department.'/%';
     }
     if ($subdepartment) {
         $countcoursesql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
-        $params['subdepartmentpath'] = '%'.$subdepartment.'%';
+        $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
     }
     $activesql = " AND visible = 1 ";
     $inactivesql = " AND visible = 0 ";

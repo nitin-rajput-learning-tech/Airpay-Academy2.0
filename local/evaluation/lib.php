@@ -2504,11 +2504,11 @@ function user_evaluations($userid, $tabstatus) {
 function costcenterwise_evaluation_count($costcenter, $department = false){
     global $USER, $DB,$CFG;
         $params = array();
-        $params['costcenter'] = $costcenter;
+        $params['costcenter'] = '%/'.$costcenter.'/%';
         $countfeedbacksql = "SELECT count(id) FROM {local_evaluations} WHERE concat('/',open_path,'/') LIKE :costcenter ";
         if($department){
             $countfeedbacksql .= " AND concat('/',open_path,'/') LIKE  :department ";
-            $params['department'] = $department;
+            $params['department'] = '%/'.$department.'/%';
         }
         $activesql = " AND visible = 1 ";
         $inactivesql = " AND visible= 0 ";
