@@ -15,19 +15,28 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 
-<div class="w-full pull-left planview_container">
-	<div class="col-lg-12 col-md-12 pull-left p-0 planview_topcontent">
-		<div class="col-lg-3 col-md-3 pull-left d-none-1023 p-0">
-			<div style="background-image: url('{{ lpnameimg }}');" alt="{{ lpname }}" title="{{ lpname }}" class="lpimg_bg" ></div>
-			{{#ratings_exist}}
-				{{{display_ratings}}}
-			{{/ratings_exist}}
-		</div>
-		<div class="col-lg-9 col-md-9 d-block-1023 pull-left">
-			<!--<h4 class='pull-left mb-5 lp_name'>{{ lpname }}</h4>-->	
-			<div class="w-full pull-left pb-10">
-				<span class="w-full pull-left"><b>{{#str}}description, local_learningplan{{/str}} :</b></span>
-				<div class="w-full pull-left description">
+<div class="w-full p-3 planview_container">
+	<div class="  planview_topcontent px-5">
+		<div class="border-top"></div>
+		<div class="d-flex mx-0 my-4 planview_topcontainer">
+			<div class="courseimg_container  d-none-1023 ">
+				<div style="background-image: url('{{ lpnameimg }}');" alt="{{ lpname }}" title="{{ lpname }}" class="lpimg_bg" ></div>
+				<!-- {{#ratings_exist}}
+					{{{display_ratings}}}
+				{{/ratings_exist}} -->
+			</div>
+			<div class="desc_container d-block-1023 p-4">
+				<!--<h4 class='pull-left mb-5 lp_name'>{{ lpname }}</h4>-->	
+				<div class="row  align-items-center justify-content-between">
+					<div class="col-md-6 ">
+						<h5 class="coursepath_name">{{ lpname }}</h5>
+					</div>
+					<div class="col-md-6 d-flex ">
+						{{{display_ratings}}}
+		            </div>
+				</div>
+				<!-- <span class="w-full "><b>{{#str}}description, local_learningplan{{/str}} :</b></span> -->
+				<div class="w-full  mt-2 description">
 					{{# description }}
 						<p class="m-0">{{{ description }}}</p>
 					{{/ description }}
@@ -35,80 +44,90 @@
 						<p class="alert alert-info text-center m-0">{{#str}}nocoursedesc, local_courses{{/str}}</p>
 					{{/ description }}
 				</div>
-			</div>
-			<!--<div class="w-full pull-left mt-5 mb-5"><img src="{{ lpcoursespath }}" class="w-full" height="40"/></div>-->
-			<div class="w-full pull-left coursepath"> {{{lpcoursespath}}} </div>
-			<div class="col-lg-12 col-md-12 pull-left p-0">
-				<div class="col-lg-6 col-md-6 pull-left p-0">
-					<div class="w-full pull-left mb-1">
-						<span class="w-full pull-left"><b>{{#str}} details {{/str}} :</b></span>
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}learningplan, local_learningplan{{/str}}
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ plan_learningplancode }}</strong></span>
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} department, local_users {{/ str }} 
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;" title="{{ plandpt }}"><strong>{{ plandpt }}</strong></span> 
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} subdepartment, local_users {{/ str }}
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ plansubdpt }}</strong></span>
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} commercialunit, local_users {{/ str }}
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ plancu }}</strong></span>
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} territory, local_users {{/ str }}
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ planterritory }}</strong></span>
-					</div>
-					<!--<div class="w-full pull-left">
-						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}} learningplan_index_credits, local_learningplan{{/str}} 
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ plan_credits }}</strong></span>
-					</div>-->
-				</div>
-				<div class="col-lg-3 col-md-3 pull-left pl-0">
-					<div class="w-full pull-left mb-1">
-						<span class="w-full pull-left"><b>{{#str}}assigned_courses, local_learningplan{{/str}} :</b></span>
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}assigned, local_learningplan{{/str}} 
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ total_assigned_course }}</strong></span>
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}mandatory, local_learningplan{{/str}}
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ mandatory }}</strong></span>
-					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}optional,local_learningplan{{/str}}
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ optional }}</strong></span>
+				<div class="progress_bar mt-4">
+					<h6 class="mb-0">Progress</h6>
+					<div class="max_progress d-flex align-items-baseline">
+						<div class="progress flexgrow-1">
+			            	<div class="progress-bar text-center" role="progressbar" style="width: 74%;" aria-valuenow="74%" aria-valuemin="0" aria-valuemax="100"></div>
+			        	</div>
+			        	<span class="progress_percentage ml-2">74%</span>
 					</div>
 				</div>
-				<div class="col-lg-3 col-md-3 pull-left pl-0">
-					<div class="w-full pull-left mb-1">
-						<span class="w-full pull-left "><b>{{#str}}users{{/str}} :</b></span>
+				
+				<!--<div class="w-full pull-left mt-5 mb-5"><img src="{{ lpcoursespath }}" class="w-full" height="40"/></div>-->
+				<!-- <div class="w-full pull-left coursepath"> {{{lpcoursespath}}} </div> -->
+				<!-- <div class="col-lg-12 col-md-12 pull-left p-0">
+					<div class="col-lg-6 col-md-6 pull-left p-0">
+						<div class="w-full pull-left mb-1">
+							<span class="w-full pull-left"><b>{{#str}} details {{/str}} :</b></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}learningplan, local_learningplan{{/str}}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plan_learningplancode }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} department, local_users {{/ str }} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;" title="{{ plandpt }}"><strong>{{ plandpt }}</strong></span> 
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} subdepartment, local_users {{/ str }}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plansubdpt }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} commercialunit, local_users {{/ str }}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plancu }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted"  style="min-width: 100px;float: left;">{{# str }} territory, local_users {{/ str }}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ planterritory }}</strong></span>
+						</div>
+						<!--<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}} learningplan_index_credits, local_learningplan{{/str}} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ plan_credits }}</strong></span>
+						</div>-->
+					<!-- </div>
+					<div class="col-lg-3 col-md-3 pull-left pl-0">
+						<div class="w-full pull-left mb-1">
+							<span class="w-full pull-left"><b>{{#str}}assigned_courses, local_learningplan{{/str}} :</b></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}assigned, local_learningplan{{/str}} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ total_assigned_course }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}mandatory, local_learningplan{{/str}}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ mandatory }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}optional,local_learningplan{{/str}}
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ optional }}</strong></span>
+						</div>
 					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}planview_enrolled, local_learningplan{{/str}}  
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ total_enroled_users }}</strong></span>
+					<div class="col-lg-3 col-md-3 pull-left pl-0">
+						<div class="w-full pull-left mb-1">
+							<span class="w-full pull-left "><b>{{#str}}users{{/str}} :</b></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}planview_enrolled, local_learningplan{{/str}}  
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ total_enroled_users }}</strong></span>
+						</div>
+						<div class="w-full pull-left">
+							<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}learningplancompleted, local_learningplan{{/str}} 
+							<span style="margin-right: 10px;float: right;">:</span> 
+							</span><span style="color:#333;"><strong>{{ cmpltd }}</strong></span>
+						</div>
 					</div>
-					<div class="w-full pull-left">
-						<span class="text-muted" style="min-width: 100px;float: left;">{{#str}}learningplancompleted, local_learningplan{{/str}} 
-						<span style="margin-right: 10px;float: right;">:</span> 
-						</span><span style="color:#333;"><strong>{{ cmpltd }}</strong></span>
-					</div>
-				</div>
+				</div> -->
 			</div>
 		</div>
 	</div>

@@ -175,32 +175,32 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
             $dataobj = $planid;
             $fromuserid = $USER->id;
             foreach($userstoassign as $key=>$add_user){
-			  $progressbar->progress($progress);
-			  $progress++;
-              $submitted->userid = $add_user;
-              $submitted->planid = $planid;
-              $submitted->usercreated = $USER->id;
-              $exist = $DB->record_exists('local_learningplan_user',array('userid'=>$add_user,'planid'=>$planid));
-              if(empty($exist)) {
-                $insert = $DB->insert_record('local_learningplan_user',$submitted);
-                // $lpcourseman = $DB->get_record('local_learningplan_courses', array('planid'=>$planid,'nextsetoperator'=>'and'),'sortorder,asc','*',0,1);
-                $sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid AND nextsetoperator =:nextsetoperator order by sortorder ASC LIMIT 1 ";
-                $lpcourseman =$DB->get_record_sql($sql, array('planid'=>$planid,'nextsetoperator'=>'and'));
-                if($lpcourseman){
-                  $enrol=$learningplan_lib->to_enrol_users($planid,$add_user,$lpcourseman->courseid,false);
-                }                
-                $lpcoursesop = $DB->get_records('local_learningplan_courses', array('planid'=>$planid,'nextsetoperator'=>'or'));
-                foreach($lpcoursesop as $key => $opcourse){
-                  $enrol=$learningplan_lib->to_enrol_users($planid,$add_user,$opcourse->courseid,false);
-                }
-                // $emaillogs = new learningplannotifications_emails();$emailtype, $touser, $fromuser,                 // $email_logs = $emaillogs->learningplan_emaillogs($type,$dataobj,$add_user,$fromuserid);
-                $touser = \core_user::get_user($add_user);
-                $emaillogs = new local_learningplan\notification();
-                $logmail = $emaillogs->learningplan_notification($type, $touser, $USER, $learningplaninstance);
-              }else{
-				$progress--;
-				continue;
-			  }
+              $progressbar->progress($progress);
+              $progress++;
+              // $submitted->userid = $add_user;
+              // $submitted->planid = $planid;
+              // $submitted->usercreated = $USER->id;
+              $record = new \stdClass();
+              $record->planid = $planid;
+              $record->userid = $add_user;
+              $record->timecreated = time();
+              $record->usercreated = $USER->id;
+              $record->timemodified = 0;
+              $record->usermodified = 0;
+              $create_record = $learningplan_lib->assign_users_to_learningplan($record);
+              // $exist = $DB->record_exists('local_learningplan_user',array('userid'=>$add_user,'planid'=>$planid));
+              // if(empty($exist)) {
+                // $insert = $DB->insert_record('local_learningplan_user',$submitted);
+                // // $lpcourseman = $DB->get_record('local_learningplan_courses', array('planid'=>$planid,'nextsetoperator'=>'and'),'sortorder,asc','*',0,1);
+                
+                // // $emaillogs = new learningplannotifications_emails();$emailtype, $touser, $fromuser,                 // $email_logs = $emaillogs->learningplan_emaillogs($type,$dataobj,$add_user,$fromuserid);
+                // $touser = \core_user::get_user($add_user);
+                // $emaillogs = new local_learningplan\notification();
+                // $logmail = $emaillogs->learningplan_notification($type, $touser, $USER, $learningplaninstance);
+        //       }else{
+				// $progress--;
+				// continue;
+			  // }
             }
 			$progressbar->end_html();
             $result=new stdClass();
@@ -234,12 +234,8 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
 					$progress++;
 					$get_record = $DB->get_record('local_learningplan_user',array('planid'=>$planid,'userid'=>$remove_user));
 					$deleterecord = $DB->delete_records('local_learningplan_user',array('id'=>$get_record->id));
-          $sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid AND nextsetoperator =:nextsetoperator order by sortorder ASC LIMIT 1 ";
-          $lpcourseman =$DB->get_record_sql($sql, array('planid'=>$planid,'nextsetoperator'=>'and'));
-          if($lpcourseman){
-            $unenrol=$learningplan_lib->to_unenrol_users($planid,$remove_user,$lpcourseman->courseid,false);
-          }                
-          $lpcoursesop = $DB->get_records('local_learningplan_courses', array('planid'=>$planid,'nextsetoperator'=>'or'));
+          $sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid ";               
+          $lpcourses = $DB->get_records('local_learningplan_courses', array('planid'=>$planid));
           foreach($lpcoursesop as $key => $opcourse){
             $unenrol=$learningplan_lib->to_unenrol_users($planid,$remove_user,$opcourse->courseid,false);
           }

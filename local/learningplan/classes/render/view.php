@@ -1049,7 +1049,7 @@ class view extends plugin_renderer_base {
 			$return .= $this->learningplans_assign_courses_form($planid,$condition);
 		}
 		$return .='';
-		$return .= '<div class="lp_course-wrapper w-100 pull-left">'.$this->assigned_learningplans_courses($planid).'</div>';
+		$return .= '<div class="row lp_course-wrapper w-100 ">'.$this->assigned_learningplans_courses($planid).'</div>';
 		$return .='';
 		$return .= '</div>';
 		return $return;
@@ -1799,6 +1799,7 @@ class view extends plugin_renderer_base {
 		//$courses = lib::get_learningplan_assigned_courses($planid);
 		
 		$return = '';
+		$return .= html_writer::start_tag('div',array('class'=>'col-md-9'));
 		$return .= '<form class ="l_form" action="assign_courses_users.php" method="post">';
 
 		if(empty($courses)){
@@ -2062,6 +2063,8 @@ class view extends plugin_renderer_base {
 		 
 			$return .= $lpcourse_data;
 			$return .= '</form>';
+			$return .= html_writer::end_tag('div');
+			$return .= $this->render_from_template('local_learningplan/rightcontainer', []);
 		}
         
 	
@@ -2781,7 +2784,8 @@ public function learningplaninfo_for_employee($planid){
 		}
 		$lpinfo .= $this->render_from_template('local_learningplan/planview_user', $lp_userview);
 	$test = '';
-	$test .= '<div class="lp_course-wrapper w-100 pull-left">';
+	$test .='<div class="row p-4">';
+	$test .= '<div class="col-md-9 lp_course-wrapper w-100 ">';
 		if($lplanassignedcourses){
 			$i=1;
 			foreach($lplanassignedcourses as $assignedcourse){
@@ -2946,6 +2950,10 @@ public function learningplaninfo_for_employee($planid){
 		$test .= $this->render_from_template('local_learningplan/planview_usercourses', $lp_userviewcoures);
 			}
 		}
+		$test .= '</div>';
+		$test .='<div class="col-md-3 lp_bottom_container">';
+		$test .=$this->render_from_template('local_learningplan/lprightcontainer', []);
+		$test .='</div>';
 		$test .= '</div>';
 		$lpinfo .= $test;
 		return $lpinfo;

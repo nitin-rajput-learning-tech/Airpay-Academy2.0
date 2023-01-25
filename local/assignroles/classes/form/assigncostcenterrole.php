@@ -39,6 +39,7 @@ class assigncostcenterrole extends moodleform {
 
 		$mform = & $this->_form;
         $costcenterid = $this->_customdata['costcenterid'];
+        $hierarchyid = $this->_customdata['hierarchyid'];
 		$formtype = $this->_customdata['formtype'];
 		
 		
@@ -46,11 +47,15 @@ class assigncostcenterrole extends moodleform {
 		$mform->setType('open_costcenterid', PARAM_INT);
 		$mform->setDefault('open_costcenterid', $costcenterid);
 
+        $mform->addElement('hidden', 'hierarchyid');
+        $mform->setType('hierarchyid', PARAM_INT);
+        $mform->setDefault('hierarchyid', $hierarchyid);
+
 
 		$options = array(
             'ajax' => 'local_assignroles/form-options-selector',
             'data-action' => 'role_ids',
-            'data-options' => json_encode(array('id' => 0,'costcenterid' => $costcenterid,'formtype' => $formtype)),
+            'data-options' => json_encode(array('id' => 0,'costcenterid' => $costcenterid,'hierarchyid' => $hierarchyid,'formtype' => $formtype)),
         );
 
 		$roles =array();
@@ -72,7 +77,7 @@ class assigncostcenterrole extends moodleform {
             'ajax' => 'local_assignroles/form-options-selector',
             'multiple' => true,
             'data-action' => 'role_costcenterusers',
-            'data-options' => json_encode(array('id' => 0, 'costcenterid' => $costcenterid,'formtype' => $formtype)),
+            'data-options' => json_encode(array('id' => 0, 'costcenterid' => $costcenterid,'hierarchyid' => $hierarchyid,'formtype' => $formtype)),
         );
 
 		$users =array();
