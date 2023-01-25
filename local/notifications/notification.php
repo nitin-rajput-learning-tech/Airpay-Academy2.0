@@ -87,7 +87,8 @@ class notification_triger
             if (empty($touser)) { // check for not sending emails to deleted users
                 continue;
             }
-            $from_user = $DB->get_record('user', array('id' => $record->from_userid));
+         //   $from_user = $DB->get_record('user', array('id' => $record->from_userid));
+          $from_user= $supportuser;
 
             $get_notification_infoid = $DB->get_field('local_notification_info', 'notificationid', array('id' => $email_log->notification_infoid));
             $get_local_notification_type = $DB->get_record('local_notification_type', array('id' => $get_notification_infoid));

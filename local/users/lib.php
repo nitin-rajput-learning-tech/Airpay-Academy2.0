@@ -874,7 +874,7 @@ function manage_users_count($stable, $filterdata) {
     $formsql = " FROM {user} AS u
          WHERE u.id > 2 AND u.deleted = 0 ";
     $params = array();
-    if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+    if (is_siteadmin()) {
         $formsql .= "";
     } else  {
         $formsql .= $costcenterpathconcatsql;
@@ -1043,7 +1043,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $user_picture = $user_picture->get_url($PAGE);
         $userpic = $user_picture->out();
         $list['userpic'] = $userpic;
-
+        $list['username'] = $user->username;
         $list['empid'] = ($user->open_employeeid) ? $user->open_employeeid : '--';
         $useremail = $user->email;
         if (strlen($useremail) > 24) {
