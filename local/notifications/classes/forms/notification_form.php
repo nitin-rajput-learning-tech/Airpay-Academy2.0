@@ -42,7 +42,7 @@ class notification_form extends moodleform {
         $mform = $this->_form;
         $lib = new \notifications();
         $form_status = $this->_customdata['form_status'];
-        $org = $this->_customdata['org'];
+        $org = $this->_customdata['open_costcenterid'];
         $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
 		$context =(new \local_notifications\lib\accesslib())::get_module_context();
 		$moduleid = $this->_customdata['moduleid'];
@@ -98,12 +98,13 @@ class notification_form extends moodleform {
 			$datamodule_label="Courses";
 			$strings = 'None';
 			$notification_selected = $this->_ajaxformdata['notificationid'];
-			$organization_selected = $this->_ajaxformdata['costcenterid'];
+			$organization_selected = $this->_ajaxformdata['open_costcenterid'];
             if($id > 0 || ($notificationid&&is_array($moduleid)&&!empty($moduleid))){
 				if($id > 0){
 					$notifyid = $DB->get_record('local_notification_info',  array('id'=>$id));
 					
 					$notif_type = $DB->get_field('local_notification_type', 'shortname', array('id'=>$notifyid->notificationid));
+					$notifyid->costcenterid=explode('/',$notifyid->open_path)[1];
 				}else{
 
 					$notif_type = $DB->get_field('local_notification_type', 'shortname', array('id'=>$notificationid));
@@ -198,7 +199,7 @@ class notification_form extends moodleform {
 			break;	
 			case 'classroom':	
 				$sql = "SELECT c.id, c.name FROM {local_classroom} c                           
-				WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath  ";                    
+				WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath  ";
 				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Classrooms";

@@ -63,14 +63,14 @@ switch($page){
 			break;	
 			case 'classroom':	
 			$sql = "SELECT c.id, c.name FROM {local_classroom} c                           
-                            WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath  ";													                  
+                            WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath  ";									                  
         	$datamoduleids = $DB->get_records_sql($sql,$params);
         	$datamodule_label="Classrooms";
 
 			break;
 			case 'onlinetest':	
 			$sql = "SELECT c.id, c.name FROM {local_onlinetests} c                           
-                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath ";                    
+                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath ";                  
         	$datamoduleids = $DB->get_records_sql($sql,$params);
 
         	$datamodule_label="Onlinetests";
