@@ -198,24 +198,50 @@ class local_assignroles_external extends external_api {
                     if($formoptions->roleid){
 
 
-                        $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ";
+                        $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:costcenterid ";
 
-                        $costcenterpath = $DB->get_field_sql($sql,array('organisationid'=>$formoptions->organisationid));
+                        $costcenterpath = $DB->get_field_sql($sql,array('costcenterid'=>$formoptions->costcenterid));
                         $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterpath);
 
-                        $costcenterpath = '/'.explode('/', $costcenterpath)[1];
+
+                        $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
                         if(is_siteadmin()){
                           $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname
                             FROM {user} AS u
-                            WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser   AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid) AND CONCAT('',u.open_path,'/') LIKE '%$costcenterpath/%'";
+                            WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id <> :loginuser   AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid) ";
                         }else{
 
                             $userssql =  "SELECT u.id, concat(u.firstname,' ',u.lastname,' ','(',u.idnumber,')') as fullname
                             FROM {user} AS u
-                            WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid) AND CONCAT('',u.open_path,'/') LIKE '%$costcenterpath/%'";
+                            WHERE u.id > 2 AND u.deleted = 0 AND u.suspended = 0 AND u.id NOT IN (SELECT userid FROM {role_assignments} WHERE contextid=:context AND roleid=:roleid)  $condition ";
 
                         }
+
+                        if($formoptions->hierarchyid){
+
+                            $hierarchysql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:hierarchyid ";
+
+                            $hierarchypath = $DB->get_field_sql($hierarchysql,array('hierarchyid'=>$formoptions->hierarchyid));
+
+                            $userpath = array_filter(explode('/',$hierarchypath));
+                        }else{
+
+                            $userpath = array_filter(explode('/',$costcenterpath));
+                        }
+
+
+                        $depth = $USER->useraccess['currentroleinfo']['depth'];
+                        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+                            $depth--;
+                        }
+                        if(is_siteadmin()){
+                            $depth = 1;//getting first level id value
+                        }
+                        $pathlike = '/'.implode('/', array_slice($userpath, 0, $depth)).'%';
+
+                        $userssql .=" AND u.open_path LIKE '{$pathlike}'";
+
 
                         $params = array('loginuser' =>$USER->id, 'context' => $context->id, 'roleid' => $formoptions->roleid);
                         if(!empty($query)){
@@ -227,8 +253,6 @@ class local_assignroles_external extends external_api {
                                 $params['query'] = "$query%";
                             }
                         }
-
-                        // echo $userssql;
                         $return = $DB->get_records_sql($userssql, $params, $page, $perpage);
                     }
 
