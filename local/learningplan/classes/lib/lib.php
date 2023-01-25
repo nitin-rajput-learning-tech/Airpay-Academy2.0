@@ -453,7 +453,12 @@ class lib
 			}
 			// list($coursesql, $coursesparams) = $DB->get_in_or_equal($optionalcourseids, SQL_PARAMS_NAMED,'courseid');
 			$courseids = implode(',',$optionalcourseids);
-			$sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid AND nextsetoperator =:nextsetoperator AND courseid NOT IN ($courseids)  order by sortorder ASC LIMIT 1 ";
+			if($courseids){
+				$cond = " AND courseid NOT IN ($courseids)	";
+			}elsE{
+				$cond = " ";
+			}
+			$sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid AND nextsetoperator =:nextsetoperator $cond  order by sortorder ASC LIMIT 1 ";
 			$lpcourseman =$this->db->get_record_sql($sql, array('planid'=>$data->planid,'nextsetoperator'=>'and'));
 			if($lpcourseman){
 				$this->to_enrol_users($data->planid,$data->userid,$lpcourseman->courseid,false);

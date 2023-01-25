@@ -405,9 +405,13 @@ $( document ).ready(function() {
 });
     </script>";
 
-
+$lpcheck =has_capability('local/learningplan:manage', $systemcontext);
 $continue='<div class="col-md-12 pull-right text-right mt-15">';
-$continue.='<a href='.$CFG->wwwroot.'/local/learningplan/plan_view.php?id='.$planid.' class="singlebutton"><button class="btn">'.get_string('continue').'</button></a>';
+if($lpcheck){
+  $continue.='<a href='.$CFG->wwwroot.'/local/learningplan/plan_view.php?id='.$planid.' class="singlebutton"><button class="btn">'.get_string('continue').'</button></a>';
+}else{
+  $continue.='<a href='.$CFG->wwwroot.'/local/learningplan/lpathinfo.php?id='.$planid.' class="singlebutton"><button class="btn">'.get_string('continue').'</button></a>';
+}
 $continue.='</div>';
 echo $continue;
 
