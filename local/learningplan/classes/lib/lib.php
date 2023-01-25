@@ -433,16 +433,31 @@ class lib
 		global $DB, $CFG, $USER;
 		if (file_exists($CFG->dirroot . '/local/lib.php')) {
 			require_once($CFG->dirroot . '/local/lib.php');
-		}
+		}		
 		// require_once($CFG->dirroot.'/local/learningplan/notifications_emails.php');
 		$check = $this->db->get_records('local_learningplan_user', array('userid' => $data->userid, 'planid' => $data->planid));
 		$type = 'learningplan_enrol';
-		$dataobj = $data->planid;
-		$fromuserid = 2;
 		if (!$check) {
 			$data->timemodified = time();
 			$data->timecreated = time();
 			$user = $this->db->insert_record('local_learningplan_user', $data);
+			
+			$optionalcoursesql = " SELECT lpc.courseid FROM {local_learningplan_courses} as lpc
+			LEFT JOIN {course_completions} as cc ON cc.course = lpc.courseid AND cc.userid = :userid
+			WHERE planid =:planid AND (nextsetoperator =:nextsetoperator OR cc.timecompleted IS NOT NULL) ";      
+			$optionalcourseids = [];
+			$lpcoursesop = $this->db->get_records_sql($optionalcoursesql, array('planid'=>$data->planid,'nextsetoperator'=>'or', 'userid' => $data->userid));
+			foreach($lpcoursesop as $key => $opcourse){
+				$this->to_enrol_users($data->planid,$data->userid,$opcourse->courseid,false);
+				$optionalcourseids[] = $opcourse->courseid;
+			}
+			// list($coursesql, $coursesparams) = $DB->get_in_or_equal($optionalcourseids, SQL_PARAMS_NAMED,'courseid');
+			$courseids = implode(',',$optionalcourseids);
+			$sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid AND nextsetoperator =:nextsetoperator AND courseid NOT IN ($courseids)  order by sortorder ASC LIMIT 1 ";
+			$lpcourseman =$this->db->get_record_sql($sql, array('planid'=>$data->planid,'nextsetoperator'=>'and'));
+			if($lpcourseman){
+				$this->to_enrol_users($data->planid,$data->userid,$lpcourseman->courseid,false);
+			}
 			$learningplan_name=$this->db->get_field_sql("SELECT name FROM {local_learningplan} where id=$data->planid");
 			$params = array(
 	                        'context' => context_system::instance(),
@@ -450,7 +465,7 @@ class lib
 	                        'other' =>  array('userid'=>$data->userid,'learningplan_id'=>$data->planid,'lpname'=>$learningplan_name)
 	                    );
 	        $event = \local_learningplan\event\learningplan_users_created::create($params);
-	        $event->add_record_snapshot('local_learningplan', $data->planid);
+	        // $event->add_record_snapshot('local_learningplan', $data->planid);
 	        $event->trigger();
 			// $emaillogs = new learningplannotifications_emails();
 			//     	$email_logs = $emaillogs->learningplan_emaillogs($type,$dataobj,$data->userid,$fromuserid);
@@ -458,7 +473,7 @@ class lib
 			$touser = \core_user::get_user($data->userid);
 			$fromuser = \core_user::get_user(2);
 			$learningplaninstance = $DB->get_record('local_learningplan', array('id' => $data->planid));
-			$email_logs = $notification->learningplan_notification($type, $touser, $fromuser, $learningplaninstance);
+			$notification->learningplan_notification($type, $touser, $fromuser, $learningplaninstance);
 			if ($user) {
 				$approvalid = $this->db->get_record('local_learningplan_approval', array('planid' => $data->planid, 'userid' => $data->userid));
 				if ($approvalid) {
