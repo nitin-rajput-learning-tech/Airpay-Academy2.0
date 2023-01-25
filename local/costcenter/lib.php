@@ -211,8 +211,7 @@ class costcenter {
         $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
         FROM {local_costcenter} AS lc WHERE lc.visible = 1 AND lc.id= $user_orgid";
         }else{
-            $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
-            FROM {local_costcenter} AS lc WHERE lc.visible = 1";
+            return false;
         }
         if(!empty($costcentertheme = $DB->get_record_sql($costcentersql))){
             return $costcentertheme;
