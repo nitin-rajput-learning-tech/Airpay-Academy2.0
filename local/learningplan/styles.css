@@ -19,3 +19,610 @@ body#page-local-learningplan-userdashboard .card_list_view {
 #page-local-learningplan-index #all_learning_plans_table tbody td span a{
     margin-right: 10px;
 }
+
+
+/* Admin login Planview topcontent css*/
+#page-local-learningplan-plan_view .planview_container{
+	background-image: linear-gradient(106deg, #4688d5, #043b72);
+	color: #fff;
+}
+#page-local-learningplan-plan_view .planview_topcontainer .desc_container{
+	flex-grow: 1;
+}
+
+#page-local-learningplan-plan_view .planview_container .courseimg_container{
+	width: 100%;
+    max-width: 160px;
+}
+#page-local-learningplan-plan_view .planview_container .courseimg_container .lpimg_bg{
+	height: 100%;
+	min-height: 200px;
+}
+#page-local-learningplan-plan_view .planview_container .ratings_users i{
+	color: #fff !important;
+	font-size: 15px !important;
+}
+#page-local-learningplan-plan_view .planview_container .description p{
+	color: #f7f9fb;
+    font-size: 15px;
+}
+#page-local-learningplan-plan_view .planview_container .description .alert-info {
+	padding:0 !important;
+	border:none !important;
+	text-align: left !important;
+}
+#page-local-learningplan-plan_view .planview_container .progress_bar .progress{
+	width: 50%;
+	margin:15px 0;
+	height: 8px !important;
+}
+#page-local-learningplan-plan_view .planview_container  .progress-bar {
+    background-color: #1f67b7;
+    border: 1px solid #fff;
+    border-radius: 5px;
+}
+
+#page-local-learningplan-plan_view .planview_container  .progress_percentage{
+	font-weight: 500;
+}
+body#page-local-learningplan-plan_view .course_extended_menu_list {
+    top: -50px;
+    right: 50px;
+}
+#page-local-learningplan-plan_view div[role="main"]>.course_extended_menu_list .course_extended_menu_itemlink .icon{
+	border-radius: 0 !important;
+	background-color: transparent;
+	border: none;
+	box-shadow: none;
+	color: #fff !important;
+	font-size: 23px;
+}
+#page-local-learningplan-plan_view .course_extended_menu_list li {
+	margin:0;
+}
+#page-local-learningplan-plan_view #region-main{
+	padding:0 !important;
+}
+#page-local-learningplan-plan_view #region-main #maincontent{
+	height: 0;
+}
+#page-local-learningplan-plan_view .breadcrumb-item+.breadcrumb-item::before {
+    color: #fff!important;
+    content: ">";
+    font-size: 16px;
+}
+#page-local-learningplan-plan_view .borderbottom {
+    border-bottom: 1px solid #efecec30;
+    width: 93%;
+    margin: auto;
+}
+#page-local-learningplan-plan_view .header-maxwidth>div{
+	display: flex;
+	flex-direction: column-reverse;
+	margin-top: 1rem;
+}
+#page-local-learningplan-plan_view .header-maxwidth{
+	background-image: linear-gradient(45deg, #4688d5, #043b72);
+	padding-left: 3.5rem;
+	padding-right: 3.5rem;
+}
+#page-local-learningplan-plan_view  .page-header-headings h1:after {
+     border-bottom: none !important; 
+}
+#page-local-learningplan-plan_view .page-context-header .page-header-headings h1{
+	font-size: 21px;
+	color: #fff;
+	margin-bottom: 0;
+	font-weight: 600 !important;
+}
+#page-local-learningplan-plan_view .header-maxwidth .breadcrumb{
+	padding:0;
+}
+#page-local-learningplan-plan_view .header-maxwidth  .breadcrumb-item a{
+	color: #fff !important;
+	font-size: 16px;
+}
+#page-local-learningplan-plan_view .header-maxwidth  .breadcrumb-item span{
+	color: #fff;
+	font-weight: 600;
+	text-decoration: underline;
+	font-size: 16px;
+}
+
+#page-local-learningplan-plan_view .planview_topcontent .overall_users{
+	margin-top:0;
+}
+#page-local-learningplan-plan_view .planview_topcontent .overall_users i{
+	font-size: 16px !important;
+	color: #fff !important;
+	font-weight: 600;
+}
+#page-local-learningplan-plan_view .planview_topcontent .border-top{
+	border-top:1px solid #dee5ea33!important;
+}
+#page-local-learningplan-plan_view .planview_topcontent .overall_users i:before{
+	margin-right: 7px;
+}
+#page-local-learningplan-plan_view .planview_topcontent .radiostars i{
+	display: none;
+}
+
+
+/*learningplan view container css*/
+#page-local-learningplan-plan_view  .courseprogress_container .course_line{
+	width: 1px;
+    background-color: #c8c8c8;
+    align-self: stretch;
+    margin: 10px auto 10px auto;
+    flex: 1;
+}
+
+#page-local-learningplan-plan_view  .courseprogress_container.completed .check_circle_icon:before{
+	background-image: url([[pix:local_learningplan|lp]]);
+}
+
+#page-local-learningplan-plan_view  .courseprogress_container .check_circle_icon{
+	background-image: url([[pix:local_learningplan|lp]]);
+	width:45px;
+	height: 45px;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+#page-local-learningplan-plan_view .lp_course_sortorder .courseprogress_container{
+	min-width: 90px;
+}
+#page-local-learningplan-plan_view .courseprogress_container .date,
+#page-local-learningplan-plan_view .courseprogress_container .time{
+   font-size: 14px;
+   color: #8f959b !important;
+}
+#page-local-learningplan-plan_view .planview_tabscontainer {
+    background-color: #f6f6f6 !important; 
+    margin-top: 0 !important;
+    border:none;
+}
+#page-local-learningplan-plan_view .planview_tabscontainer  .nav-link:hover,
+#page-local-learningplan-plan_view .planview_tabscontainer  .nav-link:focus{
+	border:none;
+}
+#page-local-learningplan-plan_view .lp_course-wrapper .l_form:before{
+	content: none !important;
+}
+#page-local-learningplan-plan_view .planview_tabscontainer .nav-tabs{
+	border-bottom: none ;
+}
+#page-local-learningplan-plan_view .tab-content {
+    background-color: transparent !important;
+}
+#page-local-learningplan-plan_view .lpcourses{
+	border-left: 0 !important;
+}
+#page-local-learningplan-plan_view  .lp_course_sortorder{
+	padding-left: 0;
+}
+#page-local-learningplan-plan_view .lpcourseslist{
+	height: 100%;
+}
+#page-local-learningplan-plan_view .lpcourseslist .course_container{
+	box-shadow: 0 0 1px 1px #fff;
+	border-radius: 15px;
+}
+#page-local-learningplan-plan_view  .summary_container{
+	border-right: none !important;
+	width: 100%;
+}
+#page-local-learningplan-plan_view  .summary_container:after {
+   border-right: none !important;
+   content: none !important;
+   border-left-color: none !important;
+   display: none ;
+}
+
+#page-local-learningplan-plan_view .summary_container .lp_course_desc{
+	min-height: 40px;
+	text-overflow: ellipsis;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    color: #828d9a;
+}
+#page-local-learningplan-plan_view  .bottom_right_container .details_block,
+#page-local-learningplan-plan_view  .bottom_right_container .courses_block{
+	border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 1rem;
+    box-shadow: 0px 1px 2px 0px #ddd;
+    margin-bottom: 2rem !important;
+    background-color: #fff;
+
+}
+#page-local-learningplan-plan_view .summary_container .desc_block a{
+    color: #2a364a;
+    font-size: 17px;
+}
+#page-local-learningplan-plan_view .summary_container  .course_rating{
+	font-size: 17px;
+	color: #2a364a;
+}
+#page-local-learningplan-plan_view .course_img{
+    width: 100%;
+    max-width: 180px;
+}
+#page-local-learningplan-plan_view .course_img  .pvcourse_img{
+	border-radius: 8px !important;
+	height: 100%;
+    min-height: 190px;
+}
+#page-local-learningplan-plan_view  .progressbar_container{
+	margin:0;
+}
+#page-local-learningplan-plan_view  .progressbar_container h6{
+    color: #2a364a;
+}
+#page-local-learningplan-plan_view  .progressbar_container .progress{
+	width: 60%;
+	margin:0;
+	height: 8px !important;
+	background-color: #efefef;
+}
+#page-local-learningplan-plan_view  .progressbar_container .progress-bar {
+    background-color: #1f67b7;
+    border-radius: 8px;
+    
+}
+#page-local-learningplan-plan_view  .progressbar_container .progress-bar[aria-valuenow="0"] {
+	width: 0 !important;
+}
+#page-local-learningplan-plan_view  .progressbar_container .progress_percentage{
+	font-weight: 500;
+	color: #2f3a4e;
+}
+#page-local-learningplan-plan_view  .bottom_content .language_option{
+	text-align: right;
+}
+#page-local-learningplan-plan_view  .bottom_content .language_option i{
+	color:#908c8c ;
+}
+#page-local-learningplan-plan_view  .bottom_content .language_option strong{
+	font-size: 14px;
+	color: #2a364ad6;
+}
+
+#page-local-learningplan-plan_view  .summary_container .couse_status{
+    font-weight: 600;
+    font-size: 14px;
+}
+body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link.active{
+	border-bottom: 0 !important;
+	box-shadow: none ;
+	font-size: 20px;
+	font-weight: 600;
+	color: #2c384c;
+}
+#page-local-learningplan-plan_view .bottom_right_container .block_heading{
+    border-bottom: 1px solid #ededed;
+    padding-bottom: 10px;
+    font-size: 15px !important;
+    color:#2a364a;
+}
+#page-local-learningplan-plan_view .bottom_right_container .block_content{
+    margin-top: 10px;
+}
+#page-local-learningplan-plan_view .bottom_right_container  .content_name{
+	color: #2e3a4d!important;
+    font-weight: 600;
+    font-size: 13px;
+    flex-grow: 1;
+}
+
+@media (max-width: 767px){
+#page-local-learningplan-plan_view .course_container {
+    flex-direction: column;
+}
+#page-local-learningplan-plan_view .course_img {
+    max-width: 100%;
+    height: 200px;
+}
+#page-local-learningplan-plan_view  .lpimg_bg {
+    display: block;
+}
+#page-local-learningplan-plan_view .summary_container {
+	max-width: 100%;
+}
+#page-local-learningplan-plan_view .planview_container .planview_topcontainer{
+	flex-direction: column;
+}
+
+#page-local-learningplan-plan_view .bottom_content .language_option{
+	text-align: left;
+}
+#page-local-learningplan-plan_view #region-main-box{
+	padding: 0 !important;
+}
+}
+@media (max-width: 1023px){
+#page-local-learningplan-plan_view .courseimg_container .lpimg_bg {
+    display: block !important;
+}
+#page-local-learningplan-plan_view .course_img .pvcourse_img{
+	display: block ;
+}
+#page-local-learningplan-plan_view .planview_topcontainer .courseimg_container{
+	display: block !important;
+	max-width: 100%;
+}
+#page-local-learningplan-plan_view .planview_topcontent .border-top{
+	display: none;
+}
+}
+
+
+
+/*user learning path css*/
+#page-local-learningplan-view .planview_topcontent .learningpath_img {
+    width: 100%;
+    max-width: 180px;
+}
+#page-local-learningplan-view .planview_topcontent .learningpath_img .lpimg_bg{
+    height: 100%;
+    max-height: 220px;
+}
+#page-local-learningplan-view .planview_topcontent .learningpath_desc{
+    flex-grow: 1;
+}
+#page-local-learningplan-view .header-maxwidth {
+    background-image: linear-gradient(45deg,#4688d5,#043b72);
+    padding-left: 3.5rem;
+    padding-right: 3.5rem;
+}
+#page-local-learningplan-view .header-maxwidth>div {
+    display: flex;
+    flex-direction: column-reverse;
+    margin-top: 1rem;
+}
+#page-local-learningplan-view  .page-header-headings h1 {
+    font-size: 21px;
+    color: #fff;
+    margin-bottom: 0;
+    font-weight: 600!important;
+}
+#page-local-learningplan-view  .page-header-headings h1:after {
+    border-bottom: none!important;
+}
+#page-local-learningplan-view .planview_container {
+    background-image: linear-gradient(106deg,#4688d5,#043b72);
+    color: #fff;
+}
+#page-local-learningplan-view #region-main {
+    padding: 0!important;
+    background-color: #f6f6f6;
+}
+#page-local-learningplan-view .planview_topcontent .radiostars{
+	display: none;
+}
+
+#page-local-learningplan-view .planview_topcontent .overall_users,
+#page-local-learningplan-view .planview_topcontent .like_unlike{
+    margin-top: 0;
+}
+
+#page-local-learningplan-view .planview_topcontent .overall_users i{
+    font-size: 14px!important;
+    color: #fff!important;
+    font-weight: 600;
+}
+#page-local-learningplan-view .planview_topcontent .overall_users i:before {
+    margin-right: 7px;
+}
+#page-local-learningplan-view .planview_topcontent .description .alert-info {
+    padding: 0!important;
+    border: none!important;
+    text-align: left!important;
+} 
+#page-local-learningplan-view .planview_topcontent .description p {
+    color: #f7f9fb;
+    font-size: 15px;
+}
+#page-local-learningplan-view .planview_topcontent .progress_bar .progress {
+    width: 50%;
+    margin: 15px 0;
+    height: 8px!important;
+}
+#page-local-learningplan-view .planview_container .progress_bar .progress-bar {
+    background-color: #1f67b7;
+    border: 1px solid #fff;
+    border-radius: 5px;
+}
+#page-local-learningplan-view .planview_topcontent .border-top {
+    border-top: 1px solid #dee5ea33!important;
+}
+#page-local-learningplan-view #region-main #maincontent {
+    height: 0;
+}
+#page-local-learningplan-view .lpcoursesuser_view_container {
+    background-color: #f6f6f6!important;
+    margin-top: 0!important;
+    border: none;
+}
+#page-local-learningplan-view .course_img {
+    width: 100%;
+    max-width: 180px;
+}
+#page-local-learningplan-view .course_img .pvcourse_img {
+    border-radius: 8px !important;
+    height: 100%;
+    min-height: 190px;
+}
+#page-local-learningplan-view .lpcourseslist .course_container {
+    box-shadow: 0 0 1px 1px #fff;
+    border-radius: 15px;
+}
+#page-local-learningplan-view .summary_container {
+    border-right: none!important;
+    width: 100%;
+}
+#page-local-learningplan-view .summary_container .desc_block a {
+    color: #2a364a;
+    font-size: 17px;
+}
+#page-local-learningplan-view .summary_container .desc_block .course_rating {
+    font-size: 17px;
+    color: #2a364a;
+}
+#page-local-learningplan-view .summary_container .lp_course_desc {
+    min-height: 40px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    color: #828d9a;
+}
+#page-local-learningplan-view .max_progress h6 {
+    color: #2a364a;
+}
+#page-local-learningplan-view .max_progress .progress {
+    width: 60%;
+    margin: 0;
+    height: 8px!important;
+    background-color: #efefef;
+    flex-grow: 1;
+}
+#page-local-learningplan-view .max_progress .progress_percentage {
+    font-weight: 500;
+    
+}
+#page-local-learningplan-view .bottom_content .language_option {
+    text-align: right;
+}
+#page-local-learningplan-view .summary_container .couse_status {
+    font-weight: 600;
+    font-size: 14px;
+}
+#page-local-learningplan-view .lpcourseslist {
+    height: 100%;
+}
+#page-local-learningplan-view .lpcourses {
+    border-left: 0!important;
+}
+#page-local-learningplan-view  .summary_container:after {
+   border-right: none !important;
+   content: none !important;
+   border-left-color: none !important;
+   
+}
+#page-local-learningplan-view .lp_course_sortorder {
+    padding-right: 0;
+
+}
+#page-local-learningplan-view .lp_course-wrapper{
+	background-color: #f6f6f6;
+    margin-top: 0;
+}
+#page-local-learningplan-view .lp_bottom_container{
+	margin-top:1rem;
+}
+#page-local-learningplan-view .lp_bottom_container .learningpath_details, 
+#page-local-learningplan-view .lp_bottom_container .learningpath_courses {
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px 0 #ddd;
+    margin-bottom: 2rem!important;
+    background-color: #fff;
+}
+#page-local-learningplan-view .lp_bottom_container .block_heading {
+    border-bottom: 1px solid #ededed;
+    padding-bottom: 10px;
+    font-size: 15px!important;
+    color: #2a364a;
+}
+#page-local-learningplan-view .lp_bottom_container .block_content {
+    margin-top: 10px;
+}
+#page-local-learningplan-view .lp_bottom_container .content_name {
+    color: #2e3a4d!important;
+    font-weight: 600;
+    font-size: 13px;
+    flex-grow: 1;
+}
+#page-local-learningplan-view .lp_course_sortorder .courseprogress_container {
+    min-width: 90px;
+}
+#page-local-learningplan-view .courseprogress_container .check_circle_icon {
+    background-image: url([[pix:local_learningplan|lp]]);
+    width: 45px;
+    height: 45px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+#page-local-learningplan-view  .courseprogress_container.completed .check_circle_icon{
+	background-image: url([[pix:local_learningplan|lp]]) !important;
+}
+#page-local-learningplan-view  .courseprogress_container .course_line {
+    width: 1px;
+    background-color: #c8c8c8;
+    align-self: stretch;
+    margin: 2px auto 2px auto;
+    flex: 1;
+}
+#page-local-learningplan-view .bottom_content .language_option i {
+    color: #908c8c;
+}
+#page-local-learningplan-view .bottom_content .language_option strong {
+    font-size: 14px;
+    color: #2a364ad6;
+}
+#page-local-learningplan-view .courseprogress_container .date, 
+#page-local-learningplan-view .courseprogress_container .time {
+    font-size: 14px;
+    color: #8f959b!important;
+}
+
+
+@media (max-width: 767px){
+#page-local-learningplan-view .course_container {
+    flex-direction: column;
+}
+#page-local-learningplan-view .learningpath_img {
+    max-width: 100%;
+    height: 200px;
+}
+#page-local-learningplan-view  .lpimg_bg {
+    display: block;
+}
+#page-local-learningplan-view .summary_container {
+	max-width: 100%;
+}
+#page-local-learningplan-view .planview_container .planview_topcontent{
+	flex-direction: column;
+}
+
+#page-local-learningplan-view .bottom_content .language_option{
+	text-align: left;
+}
+#page-local-learningplan-view #region-main-box{
+	padding: 0 !important;
+}
+}
+@media (max-width: 1023px){
+#page-local-learningplan-view .learningpath_img .lpimg_bg {
+    display: block !important;
+}
+
+#page-local-learningplan-view .planview_topcontent .learningpath_img{
+	display: block !important;
+	max-width: 100%;
+}
+#page-local-learningplan-view .planview_topcontent .border-top{
+	display: none;
+}
+}
+#page-local-learningplan-plan_view #learningplantabs .tab-content .tab-pane:not(#plan_courses) {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+}
