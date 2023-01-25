@@ -59,7 +59,7 @@ class notification {
         $params['emailtype'] = $emailtype;
         if($costcenterexist){
             $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE :costcenter ";
-            $params['costcenter'] = $org;
+            $params['costcenter'] = "%".$org."%";
         }
         $notification = $this->db->get_record_sql($notification_typesql, $params);
         if(empty($notification)){ // sends the default notification for the type.
@@ -71,7 +71,7 @@ class notification {
             $params['emailtype'] = $emailtype;
             if($costcenterexist){
                 $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE  concat('%',:costcenter,'%') ";
-                $params['costcenter'] = $org;
+                $params['costcenter'] = "%".$org."%";
             }
             $notification = $this->db->get_record_sql($notification_typesql, $params);
         }
