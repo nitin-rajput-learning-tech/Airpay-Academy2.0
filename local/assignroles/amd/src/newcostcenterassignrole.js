@@ -24,6 +24,8 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         
         this.costcenterid = args.costcenterid;
 
+        this.hierarchyid = args.hierarchyid;
+
         this.costcentername = args.costcentername;
         var self = this;
         self.init(args.selector);
@@ -108,7 +110,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             formdata = {};
         }
         // Get the content of the modal.
-        var params = {costcenterid:this.costcenterid,formtype:this.formtype, jsonformdata: JSON.stringify(formdata)};
+        var params = {costcenterid:this.costcenterid,hierarchyid:this.hierarchyid,formtype:this.formtype, jsonformdata: JSON.stringify(formdata)};
         return Fragment.loadFragment('local_assignroles', 'new_costcenterassignrole', this.contextid, params);
     };
 

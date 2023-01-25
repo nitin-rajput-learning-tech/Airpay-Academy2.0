@@ -102,9 +102,9 @@
                     <div class="row">
                         <div class="col-12">
 
-                            <a class="rolescostcenterpopup"  href="javascript:void(0)" data-costcenterid="{{recordid}}"  data-costcentername="{{orgname}}" data-action="popupmodal{{recordid}}"  data-value={{role_count}}><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}assignroleusers,local_assignroles{{/ str}}</button></a>
+                            <a class="rolescostcenterpopup"  href="javascript:void(0)" data-costcenterid="{{recordid}}" data-hierarchyid="{{hierarchyid}}" data-costcentername="{{orgname}}" data-action="popupmodal{{recordid}}"  data-value={{role_count}} ><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}assignroleusers,local_assignroles{{/ str}}</button></a>
                             {{# assignroles}}
-                            <a href='javascript:void(0)'  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}'}) })(event)"><button class="btn btn-danger btn-sm mr-1 my-1">{{# str}}assignrole,local_assignroles{{/ str}}</button></a>
+                            <a href='javascript:void(0)'  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}',hierarchyid:{{hierarchyid}}}) })(event)"><button class="btn btn-danger btn-sm mr-1 my-1">{{# str}}assignrole,local_assignroles{{/ str}}</button></a>
                             {{/ assignroles}}
 
                             {{^ showsubdept_content}}

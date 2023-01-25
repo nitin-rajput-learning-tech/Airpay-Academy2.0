@@ -53,7 +53,6 @@ define(['jquery', 'core/ajax', 'core/templates'], function ($, Ajax, Templates) 
 
             if (action === 'role_costcenterusers') {
 
-                formoptions.organisationid = formoptions.costcenterid;
 
                 if (formoptions.roleid){
 

@@ -79,6 +79,7 @@ function local_assignroles_output_fragment_new_costcenterassignrole($args)
     $args = (object) $args;
     $context = $args->context;
     $costcenterid = $args->costcenterid;
+    $hierarchyid = $args->hierarchyid;
     $formtype = $args->formtype;
     $o = '';
     $formdata = [];
@@ -88,7 +89,7 @@ function local_assignroles_output_fragment_new_costcenterassignrole($args)
     }
     $users = array();
    
-    $mform = new local_assignroles\form\assigncostcenterrole(null, array('costcenterid' => $costcenterid,'formtype' => $formtype), 'post', '', null, true, $formdata);
+    $mform = new local_assignroles\form\assigncostcenterrole(null, array('costcenterid' => $costcenterid,'formtype' => $formtype,'hierarchyid' => $hierarchyid), 'post', '', null, true, $formdata);
     $mform->set_data($formdata);
     if (!empty($formdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
@@ -198,16 +199,22 @@ function local_assignroles_output_fragment_costcenterroleusers_display($args)
     $args = (object) $args;
     $context = $args->context;
     $costcenterid = $args->costcenterid;
+    $hierarchyid = $args->hierarchyid;
 
     $sql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ";
 
     $costcenterpath = $DB->get_field_sql($sql,array('organisationid'=>$costcenterid));
    
-
     $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterpath);
 
+    $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
     $sql = "SELECT u.id,u.firstname,u.lastname,u.email,u.open_employeeid,ra.roleid,ra.contextid FROM {role_assignments} AS ra JOIN {user} AS u on u.id=ra.userid 
-            WHERE  ra.contextid=:contextid ";
+            WHERE  ra.contextid=:contextid $condition ";
+
+    if($hierarchyid){
+        $sql .=" AND CONCAT('/',u.open_path,'/') LIKE '%/$hierarchyid/%'";
+    }
     $users = $DB->get_records_sql($sql, array('contextid' => $context->id));
     
 

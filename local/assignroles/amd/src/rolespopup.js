@@ -51,6 +51,7 @@ define(['local_assignroles/jquery.dataTables', 'jquery', 'core/str', 'core/modal
         $(selector).click(function(){
             self.costcenterid = $(this).data('costcenterid');
             self.costcentername = $(this).data('costcentername');
+            self.hierarchyid = $(this).data('hierarchyid');
 
             Str.get_string('costcenterassignedrole', 'local_costcenter', self).then(function(title) {
             
@@ -140,7 +141,7 @@ define(['local_assignroles/jquery.dataTables', 'jquery', 'core/str', 'core/modal
         
         // Get the content of the modal.
         if(typeof this.costcenterid != 'undefined'){
-            var params = {costcenterid:this.costcenterid, jsonformdata: JSON.stringify(formdata)};
+            var params = {costcenterid:this.costcenterid,hierarchyid:this.hierarchyid, jsonformdata: JSON.stringify(formdata)};
         }else{
             var params = {};
         }
