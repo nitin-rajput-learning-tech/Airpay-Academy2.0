@@ -60,7 +60,6 @@ class classroom_form extends moodleform {
 
         $mform->addElement('hidden', 'id', $id, array('id' => 'classroomid'));
         $mform->setType('id', PARAM_INT);
-        $org = (new \local_costcenter\lib\accesslib())::get_user_roleswitch_path(1);
         $core_component = new core_component();
         if ($formstatus == 0) {
             $querieslib = new querylib();           
