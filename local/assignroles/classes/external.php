@@ -219,8 +219,29 @@ class local_assignroles_external extends external_api {
                         }
 
                         if($formoptions->hierarchyid){
-                            $userssql .=" AND CONCAT('/',u.open_path,'/') LIKE '%/$formoptions->hierarchyid/%'";
+
+                            $hierarchysql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:hierarchyid ";
+
+                            $hierarchypath = $DB->get_field_sql($hierarchysql,array('hierarchyid'=>$formoptions->hierarchyid));
+
+                            $userpath = array_filter(explode('/',$hierarchypath));
+                        }else{
+
+                            $userpath = array_filter(explode('/',$costcenterpath));
                         }
+
+
+                        $depth = $USER->useraccess['currentroleinfo']['depth'];
+                        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+                            $depth--;
+                        }
+                        if(is_siteadmin()){
+                            $depth = 1;//getting first level id value
+                        }
+                        $pathlike = '/'.implode('/', array_slice($userpath, 0, $depth)).'%';
+
+                        $userssql .=" AND u.open_path LIKE '{$pathlike}'";
+
 
                         $params = array('loginuser' =>$USER->id, 'context' => $context->id, 'roleid' => $formoptions->roleid);
                         if(!empty($query)){
@@ -232,8 +253,6 @@ class local_assignroles_external extends external_api {
                                 $params['query'] = "$query%";
                             }
                         }
-
-                        // echo $userssql;
                         $return = $DB->get_records_sql($userssql, $params, $page, $perpage);
                     }
 

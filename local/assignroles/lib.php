@@ -213,8 +213,29 @@ function local_assignroles_output_fragment_costcenterroleusers_display($args)
             WHERE  ra.contextid=:contextid $condition ";
 
     if($hierarchyid){
-        $sql .=" AND CONCAT('/',u.open_path,'/') LIKE '%/$hierarchyid/%'";
+
+        $hierarchysql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:hierarchyid ";
+
+        $hierarchypath = $DB->get_field_sql($hierarchysql,array('hierarchyid'=>$hierarchyid));
+
+        $userpath = array_filter(explode('/',$hierarchypath));
+    }else{
+
+        $userpath = array_filter(explode('/',$costcenterpath));
     }
+
+
+    $depth = $USER->useraccess['currentroleinfo']['depth'];
+    if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+        $depth--;
+    }
+    if(is_siteadmin()){
+        $depth = 1;//getting first level id value
+    }
+    $pathlike = '/'.implode('/', array_slice($userpath, 0, $depth)).'%';
+
+    $sql .=" AND u.open_path LIKE '{$pathlike}'";
+
     $users = $DB->get_records_sql($sql, array('contextid' => $context->id));
     
 
