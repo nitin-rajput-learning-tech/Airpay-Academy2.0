@@ -94,8 +94,9 @@ function manage_groups_count($stable,$filterdata){
                 if(strlen($groupid) >8){
                      $groupid = substr($groupid, 0,8).'...';
                 }
+        $cohortcontext =  (new \local_groups\lib\accesslib())::get_module_context();
 
-                $cohortcontext = context::instance_by_id($cohort->contextid);
+               // $cohortcontext = context::instance_by_id($cohort->contextid);
                 $urlparams = array('id' => $cohort->id, 'returnurl' => $baseurl->out_as_local_url());
                 $group_members_count = $DB->count_records('cohort_members', array('cohortid'=>$cohort->id));
                 $line['groupname'] = $groupname;

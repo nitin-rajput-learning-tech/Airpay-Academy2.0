@@ -105,7 +105,9 @@ class local_groups_renderer extends plugin_renderer_base  {
         foreach($groups['groups'] as $cohort) {
             $line = array();
             $urlparams = array('id' => $cohort->id, 'returnurl' => $baseurl->out_as_local_url());
-            $cohortcontext = context::instance_by_id($cohort->contextid);
+            $cohortcontext =  (new \local_groups\lib\accesslib())::get_module_context();
+           
+           // $cohortcontext = context::instance_by_id($cohort->contextid);
             $cohort->description = file_rewrite_pluginfile_urls($cohort->description, 'pluginfile.php', $cohortcontext->id,
                     'cohort', 'description', $cohort->id);
             if ($showall) {
@@ -273,7 +275,9 @@ class local_groups_renderer extends plugin_renderer_base  {
                 }
                 $orgname = $DB->get_field_sql("SELECT cc.fullname FROM {local_costcenter} AS cc 
                 JOIN {local_groups} AS lg ON  concat('/',lg.open_path,'/') LIKE concat('%/',cc.id,'/%') AND cc.depth = 1 WHERE lg.cohortid=".$cohort->id);
-                $cohortcontext = context::instance_by_id($cohort->contextid);
+        $cohortcontext =  (new \local_groups\lib\accesslib())::get_module_context();
+                
+             //   $cohortcontext = context::instance_by_id($cohort->contextid);
                 $urlparams = array('id' => $cohort->id, 'returnurl' => $baseurl->out_as_local_url());
                 $group_members_count = $DB->count_records('cohort_members', array('cohortid'=>$cohort->id));
                 $line['groupname'] = $groupname;
