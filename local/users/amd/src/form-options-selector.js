@@ -56,23 +56,18 @@
 
             if(action === 'userprofile_element_selector'){
 
+                $(document).on('change', '[data-action="userprofile_element_selector"]', function(){
+                        var depth = $(this).data('depth');
 
-                $('[data-action="userprofile_element_selector"]').on('change', function(){
-                        var elemvalue = $(this).val();
-                        if(parseInt(elemvalue) > 0){
+                        $.each($('[data-action="userprofile_element_selector"]'), function(index, value){
 
-                            var depth = $(this).data('depth');
+                            if($(value).data('depth') > depth){
 
-                            $.each($('[data-action="userprofile_element_selector"]'), function(index, value){
+                                $(value).html('');
+                                $(value).parent().find('.form-autocomplete-selection').html($(value).data('selectstring'));
+                            }
 
-                                if($(value).data('depth') > depth){
-
-                                    $(value).html('');
-                                    $(value).parent().find('.form-autocomplete-selection').html($(value).data('selectstring'));
-                                }
-
-                            });
-                        }
+                        });
                 });
 
                 var parentid = $('[data-class="' + $(selector).data('parentclass') + '"]').val();

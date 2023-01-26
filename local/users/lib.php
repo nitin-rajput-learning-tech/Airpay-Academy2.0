@@ -1417,6 +1417,8 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
             'data-selectstring' => get_string('select'.$field, 'local_users'),
             'data-depth' => $depth,
             'data-class' => $field.'_select',
+            'onchange' => '(function(e){ require("local_users/newuser").changeElement(event) })(event)',
+
         );
         $prev_element = $field.'_select';
 

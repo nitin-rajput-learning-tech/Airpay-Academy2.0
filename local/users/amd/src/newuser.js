@@ -465,6 +465,15 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 $('#id_open_positionid').trigger('change');    
             });
         },
+        changeElement: function(event){
+            var depth = $(event.target).data('depth');
+            $.each($('[data-action="userprofile_element_selector"]'), function(index, value){
+                if($(value).data('depth') > depth){
+                    $(value).html('');
+                    $(value).parent().find('.form-autocomplete-selection').html($(value).data('selectstring'));
+                }
+            });
+        },
         deleteConfirm: function(args) {
             return Str.get_strings([{
                 key: 'confirm'
