@@ -358,3 +358,4 @@ $string['skip'] = 'Skip';
 $string['cancel'] = 'Cancel';
 $string['has_requested_for_enrolling_to'] = 'has requested for enrolling to';
 $string['error_in_fetching_listofrequests'] = 'Invalid parameters sent';
+$string['requestforenroll'] = 'Request';

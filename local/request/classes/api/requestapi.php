@@ -306,7 +306,7 @@ use core_user;
   public static function get_requestbutton($componentid, $component, $componentname){
     $action = 'add';
     //  $component = '".$component."';
-    $enrollmentbtn = '<a href="javascript:void(0);" class="req_button cat_btn btn-primary viewmore_btn" alt = ' . get_string('requestforenroll','local_catalog'). ' title = ' .get_string('enroll','local_catalog'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({componentid:'.$componentid.', component:\''.$component.'\', action:\''.$action.'\', componentname:\''.$componentname.'\' }) })(event)" >'.get_string('requestforenroll','local_classroom').'</a>'; 
+    $enrollmentbtn = '<a href="javascript:void(0);" class="req_button cat_btn btn-primary viewmore_btn" alt = ' . get_string('requestforenroll','local_request'). ' title = ' .get_string('requestforenroll','local_request'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({componentid:'.$componentid.', component:\''.$component.'\', action:\''.$action.'\', componentname:\''.$componentname.'\' }) })(event)" >'.get_string('requestforenroll','local_classroom').'</a>';
     return $enrollmentbtn;
 
    } // end of  get_requestbutton function
