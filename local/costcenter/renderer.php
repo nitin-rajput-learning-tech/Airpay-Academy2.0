@@ -380,6 +380,9 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $deptedit = false;
             $deptdelete = false;
 
+            $deptdel_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$dept->fullname);
+
+
             if(has_capability('local/costcenter:update', $categorycontext))
                 $deptedit = true;
             if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0)
@@ -511,6 +514,8 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $deptedit = false;
             $deptdelete = false;
 
+
+            $deptdel_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$dept->fullname);
 
             if(has_capability('local/costcenter:update', $categorycontext))
                 $deptedit = true;
