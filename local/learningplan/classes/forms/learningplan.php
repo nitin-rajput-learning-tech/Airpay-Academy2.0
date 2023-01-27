@@ -203,6 +203,9 @@ class learningplan extends moodleform {
                 $mform->setType('certificateid', PARAM_INT);
                 $mform->hideIf('certificateid', 'map_certificate', 'neq', 1);
             }
+			$mform->addElement('hidden', 'open_costcenterid');
+            // $mform->setType('open_costcenterid', PARAM_INT);
+			$mform->setConstant('open_costcenterid', $org);
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
 			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
     	}
