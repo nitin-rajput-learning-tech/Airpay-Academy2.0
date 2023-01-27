@@ -72,7 +72,7 @@ $string['firstcolumn'] = 'First column contains';
 $string['creategroups'] = 'Create group(s) if needed';
 $string['creategroupings'] = 'Create  grouping(s) if needed';
 $string['enroll'] = 'Enrol them to my course';
-$string['im:user_unknown'] = 'The user with an email "{$a}" doesn\'t exists in the System';
+$string['im:user_unknown'] = 'The user with an username "{$a}" doesn\'t exists in the System';
 $string['points'] = 'Points';
 $string['createnewcourse'] = '<i class="icon popupstringicon fa fa-book" aria-hidden="true"></i>Create Course <div class="popupstring">Here you can create course</div>';
 $string['editcourse'] = '<i class="icon popupstringicon fa fa-book" aria-hidden="true"></i>Update Course <div class="popupstring">Here you can update course</div>';
@@ -428,3 +428,4 @@ $string['open_states_help'] = 'Search and select an available or existing state 
 $string['open_district_help'] = 'Search and select an available or existing district as target audience';
 $string['open_subdistrict_help'] = 'Search and select an available or existing subdistrict as target audience';
 $string['open_village_help'] = 'Search and select an available or existing village as target audience';
+$string['username'] = 'Username';
