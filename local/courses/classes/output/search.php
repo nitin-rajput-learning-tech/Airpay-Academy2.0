@@ -63,21 +63,21 @@ class search implements renderable{
         $params = [];
         if(!is_siteadmin()){
 
-            $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
-            $paths = [];
-            foreach($usercostcenterpaths AS $userpath){
-                $userpathinfo = $userpath->costcenterpath;
-                $paths[] = $userpathinfo.'%';
-                while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
-                    $userpathinfo = rtrim($userpathinfo, '/');
-                    if ($userpathinfo === '') {
-                      break;
-                    }
-                    $paths[] = $userpathinfo;
-                }
-            }
-            if(!empty($paths)){
-                foreach($paths AS $path){
+            $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            // $paths = [];
+            // foreach($usercostcenterpaths AS $userpath){
+            //     $userpathinfo = $userpath->costcenterpath;
+            //     $paths[] = $userpathinfo.'%';
+            //     while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+            //         $userpathinfo = rtrim($userpathinfo, '/');
+            //         if ($userpathinfo === '') {
+            //           break;
+            //         }
+            //         $paths[] = $userpathinfo;
+            //     }
+            // }
+            if(!empty($usercostcenterpaths)){
+                foreach($usercostcenterpaths AS $path){
                     $pathsql[] = " c.open_path LIKE '{$path}' ";
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
@@ -411,21 +411,21 @@ class search implements renderable{
         global $DB, $USER;
         $selectsql = " SELECT c.id FROM {course} c ";
         $wheresql = " WHERE c.id > 1 AND c.visible = 1 AND c.selfenrol = 1 AND c.id = :courseid";
-        $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
-        $paths = [];
-        foreach($usercostcenterpaths AS $userpath){
-            $userpathinfo = $userpath->costcenterpath;
-            $paths[] = $userpathinfo.'%';
-            while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
-                $userpathinfo = rtrim($userpathinfo, '/');
-                if ($userpathinfo === '') {
-                  break;
-                }
-                $paths[] = $userpathinfo;
-            }
-        }
-        if(!empty($paths)){
-            foreach($paths AS $path){
+        $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        // $paths = [];
+        // foreach($usercostcenterpaths AS $userpath){
+        //     $userpathinfo = $userpath->costcenterpath;
+        //     $paths[] = $userpathinfo.'%';
+        //     while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+        //         $userpathinfo = rtrim($userpathinfo, '/');
+        //         if ($userpathinfo === '') {
+        //           break;
+        //         }
+        //         $paths[] = $userpathinfo;
+        //     }
+        // }
+        if(!empty($usercostcenterpaths)){
+            foreach($usercostcenterpaths AS $path){
                 $pathsql[] = " c.open_path LIKE '{$path}' ";
             }
             $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
