@@ -38,7 +38,7 @@ $PAGE->set_context($categorycontext);
 $PAGE->set_title(get_string('classrooms', 'local_classroom'));
 
 $renderer = $PAGE->get_renderer('local_classroom');
-
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $classroom=$renderer->classroomview_check($classroomid);
 
 $PAGE->navbar->add(get_string("pluginname", 'local_classroom'), new moodle_url('index.php'));
