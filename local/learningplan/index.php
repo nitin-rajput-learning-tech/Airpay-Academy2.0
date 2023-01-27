@@ -61,6 +61,7 @@ if(!empty($epsilon_plugin_exist)){
 $return_url = new moodle_url('/local/learningplan/managelearningplan.php');
 $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 $PAGE->requires->js_call_amd('local_learningplan/lpcreate', 'load', array());
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'downloadtrigger',array());
 
 //check the context level of the user and check whether the user is login to the system or not
