@@ -1128,13 +1128,13 @@ class core_renderer extends \core_renderer {
         $returnobject->navitems[] = $myhome;
 
         // Links: My Profile.
-        // $myprofile = new stdClass();
-        // $myprofile->itemtype = 'link';
-        // $myprofile->url = new moodle_url('/local/users/profile.php', array('id' => $user->id));
-        // $myprofile->title = get_string('profile');
-        // $myprofile->titleidentifier = 'profile,moodle';
+        $myprofile = new stdClass();
+        $myprofile->itemtype = 'link';
+        $myprofile->url = new moodle_url('/local/users/profile.php', array('id' => $user->id));
+        $myprofile->title = get_string('profile');
+        $myprofile->titleidentifier = 'profile,moodle';
         // $myprofile->pix = "i/user";
-        // $returnobject->navitems[] = $myprofile;
+        $returnobject->navitems[] = $myprofile;
 
         $returnobject->metadata['asotherrole'] = false;
 
