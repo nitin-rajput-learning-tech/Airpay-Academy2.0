@@ -68,10 +68,14 @@ use core_user;
       }
       $notification = new \local_request\notification();
       if($component=='classroom'){
-      $context =(new \local_classroom\lib\accesslib())::get_module_context($componentid);
+        $context =(new \local_classroom\lib\accesslib())::get_module_context($componentid);
       }else if($component=='learningplan'){
-      $context =(new \local_learningplan\lib\accesslib())::get_module_context($componentid);
-      } 
+        $context =(new \local_learningplan\lib\accesslib())::get_module_context($componentid);
+      }else if($component=='elearning'){
+        $context = context_course::instance($componentid);
+      }else{
+        $context = context_system::instance();
+      }
       $record = new stdClass();
       $record->compname = $component;
       $record->componentid  = $componentid;
