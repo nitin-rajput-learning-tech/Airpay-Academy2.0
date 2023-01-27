@@ -83,7 +83,7 @@ class report_coursescompletions extends reportbase implements report {
         $this->sql .= " WHERE c.id <> :siteid   ";
         $this->params['siteid'] = SITEID;
 
-        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
             $this->sql .= "";

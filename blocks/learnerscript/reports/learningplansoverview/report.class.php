@@ -50,16 +50,8 @@ class report_learningplansoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lp.id)";
     }
     function select() {
-        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-        $this->sql  = "SELECT lp.id as learningpathid,lp.name as learningplanname,lp.open_path as lp_open_path,
-                    (SELECT count(llu.id) 
-                        FROM {local_learningplan_user} as llu 
-                        JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0
-                        WHERE llu.planid = lp.id {$costcenterpathconcatsql} ) as enrolledcount,
-                    (SELECT count(llu.id) 
-                        FROM {local_learningplan_user} as llu 
-                        JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0
-                        WHERE llu.planid = lp.id AND llu.status = 1 {$costcenterpathconcatsql} ) as completedcount ";
+
+        $this->sql  = "SELECT lp.id as learningpathid,lp.name as learningplanname,lp.open_path as lp_open_path ";
          parent::select();                
     }
     function from() {
@@ -127,6 +119,25 @@ class report_learningplansoverview extends reportbase implements report {
         // echo $this->sql;exit;
     }
     public function get_rows($learningpaths) {
-        return $learningpaths;
+        global $DB;
+        $data = array();
+        if($learningpaths){
+            $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+            $sql = "SELECT count(llu.id)
+                    FROM {local_learningplan_user} as llu
+                    JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0
+                    WHERE llu.planid = :planid {$costcenterpathconcatsql} ";
+
+            $completionscount = ' AND llu.status = :status ';
+
+            foreach ($learningpaths as $learningpath) {
+                $learningpath->enrolledcount = $DB->count_records_sql($sql, array('planid' => $learningpath->learningpathid,'deleted' => 0, 'suspended' => 0));
+
+                $learningpath->completedcount = $DB->count_records_sql($sql.$completionscount, array('planid' => $learningpath->learningpathid,'deleted' => 0,'suspended' => 0,'status' => 1));
+
+                $data[] = $learningpath;
+            }
+        }
+        return $data;
     }
 }

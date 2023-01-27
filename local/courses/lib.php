@@ -112,10 +112,9 @@ function mass_enroll($cir, $course, $context, $data) {
         //$sql
         if(!(is_siteadmin())){
 
-            $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-            $sql .= " and u.id <> {$USER->id} ";
+            $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$costcenterpath = null, $datatype = 'lowerandsamepath');
         }
-
+        $sql .= " and u.id <> {$USER->id} ";
         if (!$user = $DB->get_record_sql($sql)) {
             $result .= '<div class="alert alert-error">'.get_string('im:user_unknown', 'local_courses', $fields[0] ). '</div>';
             continue;
@@ -125,10 +124,11 @@ function mass_enroll($cir, $course, $context, $data) {
         /** The below code is for the AH checking condtion if AH any user can be enrolled else if OH only his costcenter users enrol **/
         if(!is_siteadmin()  && has_capability('local/costcenter:assign_multiple_departments_manage', $categorycontext)){
 
-            $sql=" ";
+            $pathlike = $id.'/%';
+            $sql=" open_path like '{$pathlike}' AND ";
         }else{
 
-            $sql=" open_path=$id AND ";
+            $sql=" ";
         }
         /*Second Condition To validate users*/
         if(!$DB->record_exists_sql("select id from {user} where $sql  id=$user->id")){

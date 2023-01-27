@@ -131,7 +131,7 @@ class plugin_level5department extends pluginbase {
             $depth--;
         }
 
-        if(is_siteadmin() || $depth < 4){
+        if(is_siteadmin() || $depth < 6){
             $request = array_merge($_POST, $_GET);
             $subdeptoptions = $this->filter_data(true, $request);
             if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($subdeptoptions) > 1) {
