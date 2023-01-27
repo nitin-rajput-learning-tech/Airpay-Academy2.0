@@ -47,8 +47,7 @@ $PAGE->requires->js_call_amd('local_learningplan/lpcreate', 'load', array());
 $PAGE->requires->js_call_amd('local_learningplan/courseenrol', 'tabsFunction', array('id' => $id));
 //This js added by sharath for moduletypw selection in assigning courses
 //$PAGE->requires->js_call_amd('local_learningplan/module', 'init', array());
-
-
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $PAGE->set_url('/local/learningplan/plan_view.php', array('id' => $id));
 $PAGE->set_title(get_string('pluginname', 'local_learningplan'));
 $PAGE->set_pagelayout('standard');

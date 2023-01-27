@@ -39,7 +39,7 @@ $PAGE->requires->jquery();
 //$PAGE->requires->jquery_plugin('ui');
 //$PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js_call_amd('local_learningplan/courseenrol', 'load');
-
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $id = optional_param('id', null, PARAM_INT);
 $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context($id);
 $PAGE->set_context($systemcontext);

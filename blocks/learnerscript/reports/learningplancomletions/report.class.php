@@ -37,7 +37,7 @@ class report_learningplancomletions extends reportbase implements report {
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot','orderable');
         $this->columns = ['learningpathfield'=>['learningpathfield'], 'userfield'=>['userfield'],'learningplancompletionscolumns'=>['learningpathname','completionstatus','completiondate']];
         $this->parent = true;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'learningpath','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'learningpath','user','completionstatus');
         $this->orderable = array('learningpathname');
         $this->defaultcolumn = 'llu.id';
 
@@ -67,7 +67,7 @@ class report_learningplancomletions extends reportbase implements report {
          $this->sql .= " WHERE u.deleted = 0 AND u.suspended = 0 ";
          $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 
-        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {
@@ -131,8 +131,7 @@ class report_learningplancomletions extends reportbase implements report {
 
         }
         if (!empty($this->params['filter_user'])) {
-            $userid = $this->params['filter_user'];
-            $this->sql .= " AND u.id = $userid ";
+            $this->sql .= " AND u.id = :filter_user ";
         }
        if ((isset($this->params['filter_completionstatus'])) && ($this->params['filter_completionstatus'] != -1)) {
             $lpid = $this->params['filter_completionstatus'];

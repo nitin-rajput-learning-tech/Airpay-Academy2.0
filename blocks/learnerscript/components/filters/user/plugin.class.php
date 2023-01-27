@@ -75,12 +75,12 @@ class plugin_user extends pluginbase {
         //     $params['departmentid'] = $USER->open_departmentid;
         // }
 
-      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
+      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
 
       if (is_siteadmin()) {
-          $this->sql .= "";
+          $sql .= "";
       } else  {
-          $this->sql .= $costcenterpathconcatsql;
+          $sql .= $costcenterpathconcatsql;
       }
         $sql .= " ORDER BY u.firstname ASC ";
         $users = $DB->get_records_sql_menu($sql,$params);
