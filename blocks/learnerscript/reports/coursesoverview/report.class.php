@@ -45,30 +45,8 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function select() {
-        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-        $this->sql = "SELECT c.id courseid, c.fullname as coursename, c.open_path as course_open_path,
-                    (SELECT COUNT(DISTINCT(ue.id))
-                        FROM {user_enrolments} ue
-                        JOIN {user} u ON ue.userid = u.id 
-                        JOIN {enrol} e ON e.id = ue.enrolid
-                        JOIN {role_assignments} ra ON ra.userid = ue.userid
-                        JOIN {context} cxt ON cxt.id = ra.contextid
-                        JOIN {role} r ON r.id = ra.roleid    
-                        WHERE u.deleted = 0 
-                            AND u.suspended = 0 AND r.shortname = 'employee' 
-                            AND e.courseid = c.id {$costcenterpathconcatsql} ) as noofenrollments,
-                    (SELECT COUNT(DISTINCT(ue.id))
-                        FROM {user_enrolments} ue
-                        JOIN {user} u ON ue.userid = u.id 
-                        JOIN {enrol} e ON e.id = ue.enrolid
-                        JOIN {role_assignments} ra ON ra.userid = ue.userid
-                        JOIN {context} cxt ON cxt.id = ra.contextid
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {course_completions} cc ON e.courseid = cc.course 
-                            AND cc.userid = u.id AND cc.timecompleted IS NOT NULL
-                        WHERE u.deleted = 0 
-                            AND u.suspended = 0 AND r.shortname = 'employee' 
-                            AND e.courseid = c.id {$costcenterpathconcatsql} ) as noofcompletions " ;
+
+        $this->sql = "SELECT c.id courseid, c.fullname as coursename, c.open_path as course_open_path " ;
 
         parent::select();
     }
@@ -93,17 +71,7 @@ class report_coursesoverview extends reportbase implements report {
 
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-        // getscheduled report
-        // if (!is_siteadmin()) {
-        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-        //     if (!empty($scheduledreport)) {
-        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-        //     $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-        //     } else {
-        //         $ohs = $dh=1;
-        //     }
-        // }
+
         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
             $this->sql .= "";
         } else  {
@@ -159,6 +127,37 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     public function get_rows($courses) {
-        return $courses;
+        global $DB;
+        $data = array();
+        if($courses){
+            $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+            $enrolsql = "SELECT COUNT(ra.id)
+                        FROM {role_assignments} ra
+                        JOIN {context} cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
+                        JOIN {role} r ON r.id = ra.roleid
+                        JOIN {user} u ON ra.userid = u.id
+                        WHERE u.deleted = 0
+                            AND u.suspended = 0 AND r.shortname = 'employee'
+                            AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
+            $completedsql = "SELECT COUNT(ra.id)
+                        FROM {role_assignments} ra
+                        JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
+                        JOIN {role} r ON r.id = ra.roleid
+                        JOIN {user} u ON ra.userid = u.id
+                        JOIN {course_completions} cc ON cxt.instanceid = cc.course
+                            AND cc.userid = u.id AND cc.timecompleted IS NOT NULL
+                        WHERE u.deleted = 0
+                            AND u.suspended = 0 AND r.shortname = 'employee'
+                            AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
+
+            foreach ($courses as $course) {
+                $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid));
+
+                $course->noofcompletions = $DB->count_records_sql($completedsql, array('courseid' => $course->courseid));
+
+                $data[] = $course;
+            }
+        }
+        return $data;
     }
 }
