@@ -37,7 +37,7 @@ if ($formattype == 'card') {
     $formattype_url = 'card';
     $display_text = get_string('cardtype','local_classroom');
 }
-
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 if (!is_siteadmin() && !(has_capability('local/classroom:manageclassroom', $categorycontext))) {
 	$PAGE->set_title(get_string('my_classrooms', 'local_classroom'));
 	$PAGE->set_heading(get_string('my_classrooms', 'local_classroom'));
