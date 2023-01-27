@@ -189,20 +189,7 @@ class view extends plugin_renderer_base {
 			}
 
 			if($filterdata){
-				// if(!empty($filterdata->subdepartment)){
-				// 	$selectedsubdepts = implode(',', $filterdata->subdepartment);
-				// 	$assign_users_sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				// }
-
-				// if(!empty(array_filter($filterdata->organizations))){
-				// 	$selectedorganizations = implode(',', array_filter($filterdata->organizations));
-				// 	$assign_users_sql .= " AND l.costcenter IN ($selectedorganizations) ";
-				// }
-
-				// if(!empty(array_filter($filterdata->departments))){
-				// 	$selecteddepartments = implode(',', array_filter($filterdata->departments));
-				// 	$assign_users_sql .= " AND l.department IN ($selecteddepartments) ";
-				// }
+				
 
 				if(!empty($filterdata->learningplan)){
 					$selectedlearningplan = implode(',', $filterdata->learningplan);
@@ -225,218 +212,7 @@ class view extends plugin_renderer_base {
 		// exit;
 			$assigned_users = $this->db->get_records_sql($assign_users_sql, $userparams);
 		}
-		/*elseif(has_capability('local/learningplan:manage',$categorycontext)){
-			$data=open::userdetails();
-			$sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$this->user->open_costcenterid},',%')";//FIND_IN_SET(".$this->user->open_costcenterid.",l.costcenter)
-			if(!empty($search)){
-				$sql .= " AND name LIKE '%%$search%%'";
-			}
-
-			if($filterdata){
-				if(!empty($filterdata->subdepartment)){
-					$selectedsubdepts = implode(',', $filterdata->subdepartment);
-					$sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				}
-
-				if(!empty(array_filter($filterdata->organizations))){
-					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
-					$sql .= " AND l.costcenter IN ($selectedorganizations) ";
-				}
-
-				if(!empty(array_filter($filterdata->departments))){
-					$selecteddepartments = implode(',', array_filter($filterdata->departments));
-					$sql .= " AND l.department IN ($selecteddepartments) ";
-				}
-
-				if(!empty($filterdata->learningplan)){
-					$selectedlearningplan = implode(',', $filterdata->learningplan);
-					$sql .= " AND l.id IN ($selectedlearningplan) ";
-				}
-
-				if(!empty($filterdata->status)){
-	        		//$status = explode(',',$filterdata->status);
-			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
-			            if(in_array('active' ,$filterdata->status)){
-			                $sql .= " AND l.visible = 1 ";
-			            }else if(in_array('inactive' ,$filterdata->status)){
-			                $sql .= " AND l.visible = 0 ";
-			            }
-			        }
-	    		}
-
-		}
-
-			$sql .= " ORDER BY l.id DESC";
-			if(($tableenable)){
-				// $sql .= " LIMIT $start,$length";
-				$learning_plans_depwise = $this->db->get_records_sql($sql, $lpparams, $start,$length);
-			}else{
-				$learning_plans_depwise = $this->db->get_records_sql($sql, $lpparams);
-			}
-			$assigned_users_sql = "SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$this->user->open_costcenterid},',%')";//FIND_IN_SET(".$this->user->open_costcenterid.",l.costcenter)
-			if(!empty($search)){
-				$assign_users_sql .= " WHERE name LIKE '%%$search%%'";
-			}
-
-			if($filterdata){
-				if(!empty($filterdata->subdepartment)){
-					$selectedsubdepts = implode(',', $filterdata->subdepartment);
-					$assign_users_sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				}
-
-				if(!empty(array_filter($filterdata->organizations))){
-					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
-					$assign_users_sql .= " AND l.costcenter IN ($selectedorganizations) ";
-				}
-
-				if(!empty(array_filter($filterdata->departments))){
-					$selecteddepartments = implode(',', array_filter($filterdata->departments));
-					$assign_users_sql .= " AND l.department IN ($selecteddepartments) ";
-				}
-
-				if(!empty($filterdata->learningplan)){
-					$selectedlearningplan = implode(',', $filterdata->learningplan);
-					$assign_users_sql .= " AND l.id IN ($selectedlearningplan) ";
-				}
-
-				if(!empty($filterdata->status)){
-	        		//$status = explode(',',$filterdata->status);
-			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
-			            if(in_array('active' ,$filterdata->status)){
-			                $assign_users_sql .= " AND l.visible = 1 ";
-			            }else if(in_array('inactive' ,$filterdata->status)){
-			                $assign_users_sql .= " AND l.visible = 0 ";
-			            }
-			        }
-	    		}
-
-		}
-            $assigned_users_sql .="ORDER BY l.id DESC";
-			$assigned_users = $this->db->get_records_sql($assigned_users_sql, $userparams);
-			$learning_plans=$learning_plans_depwise;
-		}elseif(has_capability('local/learningplan:manage',$categorycontext)){
-			$sql="SELECT l.* FROM {local_learningplan} AS l WHERE concat(',',l.costcenter,',') LIKE concat('%,',{$this->user->open_costcenterid},',%') AND CONCAT(',',l.department,',') LIKE CONCAT('%,',{$this->user->open_departmentid},',%') AND l.id > 0 ";//(FIND_IN_SET(".$this->user->open_departmentid.",l.department))
-			if(!empty($search)){
-				$sql .= " AND name LIKE '%%$search%%'";
-			}
-
-			if($filterdata){
-				if(!empty($filterdata->subdepartment)){
-					$selectedsubdepts = implode(',', $filterdata->subdepartment);
-					$sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				}
-
-				if(!empty(array_filter($filterdata->organizations))){
-					$selectedorganizations = implode(',', $filterdata->organizations);
-					$sql .= " AND l.costcenter IN ($selectedorganizations) ";
-				}
-
-				if(!empty(array_filter($filterdata->departments))){
-					$selecteddepartments = implode(',', array_filter($filterdata->departments));
-					$sql .= " AND l.department IN ($selecteddepartments) ";
-				}
-
-				if(!empty($filterdata->learningplan)){
-					$selectedlearningplan = implode(',', $filterdata->learningplan);
-					$sql .= " AND l.id IN ($selectedlearningplan) ";
-				}
-
-				if(!empty($filterdata->status)){
-	        		//$status = explode(',',$filterdata->status);
-			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
-			            if(in_array('active' ,$filterdata->status)){
-			                $sql .= " AND l.visible = 1 ";
-			            }else if(in_array('inactive' ,$filterdata->status)){
-			                $sql .= " AND l.visible = 0 ";
-			            }
-			        }
-	    		}
-
-		}
-
-			$sql .= "  ORDER BY l.id DESC";
-			if(($tableenable)){
-				// $sql .= " LIMIT $start,$length";
-				$learning_plans_depwise = $this->db->get_records_sql($sql, $lpparams, $start,$length);
-			}else{
-				$learning_plans_depwise = $this->db->get_records_sql($sql, $lpparams);
-			}
-			$assigned_users_sql = "SELECT l.* FROM {local_learningplan} AS l WHERE l.costcenter={$this->user->open_costcenterid} AND (CONCAT(',',l.department,',') LIKE CONCAT('%,',{$this->user->open_departmentid},',%')) AND
-			l.id > 0";//(FIND_IN_SET(".$this->user->open_departmentid.",l.department)
-			//  or l.department=-1
-			if(!empty($search)){
-				$assign_users_sql .= " WHERE name LIKE '%%$search%%'";
-			}
-
-			if($filterdata){
-				if(!empty($filterdata->subdepartment)){
-					$selectedsubdepts = implode(',', $filterdata->subdepartment);
-					$assign_users_sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-				}
-
-				if(!empty(array_filter($filterdata->organizations))){
-					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
-					$assign_users_sql .= " AND l.costcenter IN ($selectedorganizations) ";
-				}
-
-				if(!empty(array_filter($filterdata->departments))){
-					$selecteddepartments = implode(',', array_filter($filterdata->departments));
-					$assign_users_sql .= " AND l.department IN ($selecteddepartments) ";
-				}
-
-				if(!empty($filterdata->learningplan)){
-					$selectedlearningplan = implode(',', $filterdata->learningplan);
-					$assign_users_sql .= " AND l.id IN ($selectedlearningplan) ";
-				}
-
-				if(!empty($filterdata->status)){
-	        		//$status = explode(',',$filterdata->status);
-			        if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
-			            if(in_array('active' ,$filterdata->status)){
-			                $assign_users_sql .= " AND l.visible = 1 ";
-			            }else if(in_array('inactive' ,$filterdata->status)){
-			                $assign_users_sql .= " AND l.visible = 0 ";
-			            }
-			        }
-	    		}
-
-			}
-
-			$assign_users_sql .= " ORDER BY l.id DESC";
-			$assigned_users = $this->db->get_records_sql($assigned_users_sql, $userparams);
-			$learning_plans=$learning_plans_depwise;
-		}else{
-			$data=open::userdetails();
-
-			$sql="SELECT * FROM {local_learningplan} AS l WHERE
-			CONCAT(',',l.costcenter,',') LIKE CONCAT('%,',$data->open_costcenterid,',%')
-			CONCAT(',',l.open_group,',') LIKE CONCAT('%,',$data->open_group,',%')
-			CONCAT(',',l.department,',') LIKE CONCAT('%,',$data->open_departmentid,',%')
-			CONCAT(',',l.subdepartment,',') LIKE CONCAT('%,',$data->open_subdepartment,',%')
-			AND l.id > 0";
-			// FIND_IN_SET('.$data->open_costcenterid.',l.costcenter) AND
-			// FIND_IN_SET("'.$data->open_group.'",l.open_group) AND
-			// FIND_IN_SET('.$data->open_departmentid.',l.department) AND
-			// FIND_IN_SET('.$data->open_subdepartment.',l.subdepartment )
-			if(!empty($search)){
-				$sql .= " AND name LIKE '%%$search%%'";
-			}
-			$sql .= ' AND l.visible=1 ORDER BY l.timemodified DESC';
-			if(($tableenable)){
-				// $sql .= " LIMIT $start,$length";
-				$limitstart = $start;
-				$limitend = $length;
-			}else{
-				$limitstart = 0;
-				$limitend = 0;
-			}
-			$learning_plans_depwise = $this->db->get_records_sql($sql, array(), $limitstart, $limitend);
-			// if(!empty($search)){
-			// 	$assigned_users_sql .= " AND name LIKE '%%$search%%'";
-			// }
-			// $assigned_users_sql .= ' ORDER BY l.timemodified DESC';
-			$learning_plans = $learning_plans_depwise;
-		}*/
+		
         if(empty($learning_plans)){
         	if($tableenable){
 	        	return $output = array(
@@ -455,6 +231,8 @@ class view extends plugin_renderer_base {
 
             foreach($learning_plans as $learning_plan){
                 $row = array();
+				$capability1 =$capability2=$capability3 =false;
+				$actions = ''; 
                 $departmentcount = count(array_filter(explode(',',$learning_plan->department)));
                 $subdepartmentcount = count(array_filter(explode(',',$learning_plan->subdepartment)));
                 $plan_url = new \moodle_url('/local/learningplan/plan_view.php', array('id' => $learning_plan->id));
@@ -471,46 +249,13 @@ class view extends plugin_renderer_base {
 					$user = $this->db->get_record_sql("SELECT id, firstname, lastname, firstnamephonetic, lastnamephonetic, middlename, alternatename FROM {user} WHERE id = :plan_usercreated", array('plan_usercreated' => $plan_usercreated));
 					$created_user = fullname($user);
 				}
-              /*  if($learning_plan->learning_type == 1){
-                    $plan_type = 'Core Courses';
-                }elseif($learning_plan->learning_type == 2){
-                    $plan_type = 'Elective Courses';
-                }else{
-                	$plan_type = 'N/A';
-                }*/
+            
                 if(!empty($learning_plan->location)){
                     $plan_location = $learning_plan->location;
                 }else{
                     $plan_location = get_string('statusna');
                 }
-				// if(!empty($learning_plan->department)){
-
-                //     $plan_departments= open::departments($learning_plan->department);
-				// 	$plan_department = array();
-				// 	foreach($plan_departments as $plan_dep){
-				// 		$plan_department[] = $plan_dep->fullname;
-				// 	}
-				// 	$plan_department = implode(',', $plan_department);
-				// 	$plan_department_string = strlen($plan_department) > 23 ? substr($plan_department, 0, 23)."..." : $plan_department;
-                // }else{
-                //     $plan_department = get_string('statusna');
-                // }
-				// if(!empty($learning_plan->subdepartment)){
-                //     $plan_subdepartments=open::departments($learning_plan->subdepartment);
-				// 	$plan_subdepartment = array();
-				// 	foreach($plan_subdepartments as $plan_subdep) {
-				// 		$plan_subdepartment[] = $plan_subdep->fullname;
-				// 	}
-				// 	$fullname = implode(',', $plan_subdepartment);
-				// 	$str_len = strlen($fullname);
-				// 	if($str_len > 32){
-				// 		$sub_str = substr($fullname,0,32);
-				// 	}else{
-				// 		$plan_subdepartment = $fullname;
-				// 	}
-                // }else{
-                //     $plan_subdepartment = get_string('statusna');
-                // }
+				
                 $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($learning_plan->id);
                 $action_icons = '';
                 if (is_siteadmin() || (has_capability('local/learningplan:visible', $categorycontext) && has_capability('local/learningplan:manage',$categorycontext))) {
@@ -603,7 +348,7 @@ class view extends plugin_renderer_base {
 
 
                if($capability3){
-                	$actions = '<a href="javascript:void(0);" title = ' .get_string('delete','local_learningplan'). ' onclick="(function(e){ require(\'local_learningplan/lpcreate\').deleteConfirm({action:\'deleteplan\', id: '.$learning_plan->id.',name:\''.$learning_plan_pathname.'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
+                	$actions .= '<a href="javascript:void(0);" title = ' .get_string('delete','local_learningplan'). ' onclick="(function(e){ require(\'local_learningplan/lpcreate\').deleteConfirm({action:\'deleteplan\', id: '.$learning_plan->id.',name:\''.$learning_plan_pathname.'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
                 }
 
                 if($capability2){
