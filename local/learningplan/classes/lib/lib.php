@@ -1009,6 +1009,7 @@ class lib
 		}
 
 		$coursescount = $DB->count_records_sql($sql);
+		echo $coursescount;
 		return $coursescount;
 	}
 

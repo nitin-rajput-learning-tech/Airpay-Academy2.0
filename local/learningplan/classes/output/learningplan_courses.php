@@ -181,7 +181,7 @@ class learningplan_courses implements \renderable, \templatable {
                 }else{
                     $onerow['rating_element'] = '';
                 }
-                $planpercent = $this->planpercent($inprogress_coursename->id);
+                $planpercent = $this->planpercent($inprogress_coursename->id,$USER->id);
                 if($lastaccessstime){
                     $onerow['label_name'] = get_string('continue_plan','local_learningplan');
                 }else{                    
@@ -208,31 +208,99 @@ class learningplan_courses implements \renderable, \templatable {
         $data->nodata_string = get_string('nolearningplansavailable','block_userdashboard');
         return $data;
     } // end of export_for_template function.
-    private function planpercent($planid){
+    public function planpercent($planid,$userid){
         global $DB,$USER;
-        $sql = "SELECT c.* FROM {local_learningplan_courses} as lpc inner join {course} as c on c.id= lpc.courseid where lpc.planid=:planid";
-        $params =array("planid"=>$planid);
-        $courses = $DB->get_records_sql($sql,$params);
-        $coursescount= count($courses);
-        // foreach($courses as $course){
-        //     $cinfo = new \completion_info($course);
-        //     $completetedcoursecount += $cinfo->is_course_complete($USER->id) ? 0 : 1; 
-        // }
-            $lp_params = array();
-            $coursesql = "SELECT  cc.id,cc.course FROM {course_completions} AS cc
-                          JOIN {local_learningplan_courses} AS llc ON llc.courseid = cc.course
-                          WHERE cc.userid = :userid AND llc.planid = :lplanid  AND cc.timecompleted IS NOT NULL";
-            $lp_params['userid'] = $USER->id;
-            $lp_params['lplanid'] = $planid;
-            $coursecompletions = $DB->get_records_sql_menu($coursesql,$lp_params);
-            $completetedcoursecount = count($coursecompletions);
-            $complete_percent = (($completetedcoursecount/$coursescount) * 100);
-            if($complete_percent > 0){
-                return $complete_percent;
-            }else{
-                return 0;
-            }
+        // $sql = "SELECT c.* FROM {local_learningplan_courses} as lpc inner join {course} as c on c.id= lpc.courseid where lpc.planid=:planid";
+        // $params =array("planid"=>$planid);
+        // $courses = $DB->get_records_sql($sql,$params);
+        // $coursescount= count($courses);
+        // // foreach($courses as $course){
+        // //     $cinfo = new \completion_info($course);
+        // //     $completetedcoursecount += $cinfo->is_course_complete($USER->id) ? 0 : 1; 
+        // // }
+        //     $lp_params = array();
+        //     $coursesql = "SELECT  cc.id,cc.course FROM {course_completions} AS cc
+        //                   JOIN {local_learningplan_courses} AS llc ON llc.courseid = cc.course
+        //                   WHERE cc.userid = :userid AND llc.planid = :lplanid  AND cc.timecompleted IS NOT NULL";
+        //     $lp_params['userid'] = $USER->id;
+        //     $lp_params['lplanid'] = $planid;
+
+
+
+            // $coursecompletions = $DB->get_records_sql_menu($coursesql,$lp_params);
+            // $completetedcoursecount = count($coursecompletions);
+            // $complete_percent = (($completetedcoursecount/$coursescount) * 100);
+            // if($complete_percent > 0){
+            //     return $complete_percent;
+            // }else{
+            //     return 0;
+            // }
         // return $completetedcoursecount/$coursescount * 100;
+        if ($planid) {
+			$sql = "SELECT llc.courseid as id, llc.courseid 
+						FROM {local_learningplan_courses} as llc 
+						JOIN {course} as c ON llc.courseid = c.id
+						JOIN {local_learningplan_user} as llu ON llc.planid = llu.planid 
+						WHERE llc.planid=$planid AND llc.nextsetoperator='and' 
+						AND llu.userid = $userid ";
+			$courses = $DB->get_records_sql_menu($sql);
+			$check = array();
+			$completed = array();
+			$optional_completed = array();
+			if ($courses) {
+				foreach ($courses as $course) {
+					$sql = "SELECT id 
+						FROM {course_completions} 
+						WHERE course={$course} AND userid= $userid 
+						AND timecompleted IS NOT NULL";
+					$check = $DB->get_record_sql($sql);
+					if ($check) {
+						$completed['completed'] = 1;
+					} else {
+						$completed['notcompleted'] = 0;
+					}
+				}
+			} else {
+				$sql = "SELECT llc.courseid as id, llc.courseid 
+						FROM {local_learningplan_courses} as llc 
+						JOIN {course} as c ON llc.courseid = c.id
+						JOIN {local_learningplan_user} as llu on llc.planid=llu.planid 
+						WHERE llc.planid = $planid AND llu.userid=$userid ";
+				$courses = $DB->get_records_sql_menu($sql);
+				foreach ($courses as $course) {
+					$sql = "SELECT id 
+							FROM {course_completions} 
+							WHERE course=:course AND userid=:user 
+							AND timecompleted IS NOT NULL";
+					$check = $DB->get_record_sql($sql, array('course' => (int)$course, 'user' => (int) $user));
+					if ($check) {
+						$optional_completed['completed'][] = 1;
+					} else {
+						$optional_completed['notcompleted'][] = 0;
+					}
+				}
+			}
+            if ($completed) {
+                $notcompletedcount = count($completed['notcompleted']);
+                $completedcount = isset($completed['completed']) ? count($completed['completed']) : 0;
+                $totalcount = $notcompletedcount+$completedcount;
+				if ($notcompletedcount  == 0) {
+                    $percent = 100;
+                    echo "Hi";
+				}else{
+                    echo "Ammu";
+                    $percent = $completedcount/$totalcount * 100;
+                }
+            } else
+            if ($optional_completed) {
+				if (in_array("1", $optional_completed['completed'])) {
+                    $percent = 100;
+                }else{
+                    $percent = 0;
+                }
+            }
+            return $percent;
+        }
     }
 
     private function get_coursesummary($course_record){
