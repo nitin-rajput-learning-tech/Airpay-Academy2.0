@@ -1820,11 +1820,12 @@ class view extends plugin_renderer_base
 		} else {
 			$avgrating  = '';
 		}
+				$shortname = $this->db->get_field('local_learningplan', 'shortname', array('id' => $planid));
 				$lpcourses_context['total_assigned_course'] = $total_assigned_course;
 				$lpcourses_context['mandatory'] = count($mandatory);
 				$lpcourses_context['optional'] = count($optional);
 				$lpcourses_context['avgrating'] = $avgrating;
-				$lpcourses_context['plan_learningplancode'] = $planid;
+				$lpcourses_context['plan_learningplancode'] = $shortname;
 				$lpcourses_context['planorg'] = $planorg ? $planorg : 'All';
 				$lpcourses_context['plandpt'] = $plandpt ? $plandpt : 'All';
 				$lpcourses_context['plansubdpt'] = $plansubdpt ? $plansubdpt : 'All';
@@ -2773,7 +2774,7 @@ class view extends plugin_renderer_base
 				$lp_userviewcoures['course_summary_string'] = $course_summary_string;
 				$lp_userviewcoures['mandatarycourses_count'] = isset($mandatarycourses_count) ? $mandatarycourses_count : 0;
 				$lp_userviewcoures['optionalcourses_count'] = isset($optionalcourses_count) ? $optionalcourses_count : 0;
-				$lp_userviewcoures['planid'] = $planid;
+				$lp_userviewcoures['plan_learningplan_code'] = $lplan->shortname ? $lplan->shortname : 'NA';
 				$lp_userviewcoures['lplancredits'] = isset($lplan->credits) ? $lplan->credits : 'N/A';
 				$lp_userviewcoures['completeflag'] = $completeflag;
 				$lp_userviewcoures['avgrating'] =$avgrating;
