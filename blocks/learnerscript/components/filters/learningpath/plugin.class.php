@@ -66,36 +66,11 @@ class plugin_learningpath extends pluginbase {
     public function filter_data($selectoption = true, $request){
         global $DB, $USER;
         $context = context_system::instance();
-        // if($this->reportclass->basicparams){
-        //     $basicparams = array_column($this->reportclass->basicparams, 'name');
-        //     if (has_capability('local/costcenter:manage_ownorganization', $context) && !is_siteadmin()) {
-        //         $deptorgid = $USER->open_costcenterid;
-        //     } else {
-        //         if ($basicparams[0] == 'organization') {
-        //             $deptorgid = null;
-        //         }else {
-        //             $deptorgid = null;
-        //         } 
-        //     }
-        // } else {
-        //     $deptorgid = null;
-        // }
+
         $sql = "SELECT lp.id, lp.name 
                 FROM {local_learningplan} lp
                 WHERE 1 = 1 ";
-        // if (!empty($deptorgid)) {
-        //     $sql .= " AND lp.costcenter = " . $deptorgid;
-        // } else {
-        //     $systemcontext = context_system::instance();
-        //     if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //         $sql .= " ";
-        //     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-        //         $sql .= " AND lp.costcenter = $USER->open_costcenterid ";
-        //     }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-        //         $sql .= " AND lp.costcenter = $USER->open_costcenterid 
-        //                 AND lp.department = $USER->open_departmentid";
-        //     }
-        // }
+
       $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context(); //context_system::instance();
       $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path'); 
       if (is_siteadmin()) {
@@ -110,7 +85,6 @@ class plugin_learningpath extends pluginbase {
         $selectoption[0] = get_string('selectlearningplan', 'block_learnerscript');
 
         $learningpathlist = $selectoption + $learningpaths;
-
         return $learningpathlist;
     }
 
@@ -122,9 +96,9 @@ class plugin_learningpath extends pluginbase {
     public function print_filter(&$mform, $selectoption = true) {
         $request = array_merge($_POST, $_GET);
         $learningpathlist = $this->filter_data(false, $request);
-        if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($learningpathlist) > 1) { 
-            unset($learningpathlist[0]);
-        }
+        // if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($learningpathlist) > 1) {
+        //     unset($learningpathlist[0]);
+        // }
         $array = array('data-select2'=>true,'data-maximum-selection-length' => $this->maxlength);
         $select = $mform->addElement('select', 'filter_learningpath', null, $learningpathlist, $array);
         $mform->setType('filter_learningpath', PARAM_INT);

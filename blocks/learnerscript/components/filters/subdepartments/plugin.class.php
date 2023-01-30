@@ -114,7 +114,7 @@ class plugin_subdepartments extends pluginbase {
         $selectsubdept = array(); 
         // $selectsubdept[-1] = 'Select SubDepartment';
         if(empty($this->reportclass->basicparams)){
-            $subdepartmentoptions[-1] = 'Commercial Unit'; 
+            $subdepartmentoptions[-1] = get_string('selectopen_subdepartment', 'local_costcenter');
         }else{
             $subdepartmentoptions[-1] = 'All';
         }

@@ -58,7 +58,7 @@ class report_classroomsoverview extends reportbase implements report {
     }
      function where() {
          global $USER, $DB;
-      $this->sql .= " WHERE 1=1 ";
+      $this->sql .= " WHERE lc.status <> 0 "; //Not considering the new classrooms.
       $systemcontext = context_system::instance();
       $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path'); 
 
