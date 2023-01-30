@@ -61,7 +61,6 @@ class notification_triger
         //         WHERE status = 0 AND timecreated BETWEEN {$starttime} AND {$endtime}";
         // $logs = $DB->get_records_sql($sql);
         $logs = $DB->get_records('local_emaillogs', array('status' => 0), '', '*', 0, 50);
-
         $supportuser = \core_user::get_support_user();
         foreach ($logs as $email_log) {
             $record = new stdClass();
@@ -85,6 +84,7 @@ class notification_triger
 
             $touser = $DB->get_record('user', array('id' => $record->to_userid, 'deleted' => 0));
             if (empty($touser)) { // check for not sending emails to deleted users
+                $DB->update_record('local_emaillogs', $record);
                 continue;
             }
          //   $from_user = $DB->get_record('user', array('id' => $record->from_userid));
@@ -109,6 +109,7 @@ class notification_triger
           
             $messageid = message_send($message);
             // }
+
             if ($messageid) {
                 $DB->update_record('local_emaillogs', $record);
             }
