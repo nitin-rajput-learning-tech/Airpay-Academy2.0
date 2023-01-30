@@ -249,7 +249,7 @@ class report_users extends reportbase {
                           JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                          WHERE 1=1 AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider"; 
+                          WHERE e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'inprogress':
                 $identy = "ue.userid";
@@ -261,7 +261,7 @@ class report_users extends reportbase {
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                      LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-                         WHERE 1 = 1 AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider";
+                         WHERE e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'completed':
                 $identy = "cc.userid";
@@ -272,7 +272,7 @@ class report_users extends reportbase {
                           JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                          JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider";
+                          JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 WHERE e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'progress':
                 $identy = "ra.userid";
@@ -284,7 +284,7 @@ class report_users extends reportbase {
                             JOIN {context} AS ctx ON ctx.id = ra.contextid
                             JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                        LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid 
-                             AND cc.timecompleted > 0 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider";
+                             AND cc.timecompleted > 0 WHERE  e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'badges':
                 $identy = "bi.userid";
@@ -303,7 +303,7 @@ class report_users extends reportbase {
                            JOIN {course} AS c ON cc.course = c.id AND c.visible=1 
                           WHERE gi.itemtype = 'course' AND cc.course = gi.courseid
                             AND cc.timecompleted IS NOT NULL 
-                            AND gg.userid = cc.userid AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
+                            AND gg.userid = cc.userid
                              $where $coursefilter $contentprovider";
                 break;
             default:
