@@ -325,7 +325,7 @@ class querylib {
     	$systemcontext = \context_system::instance();
 
 	    $params = array();
-	    $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+	    $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
 
 	    if (!empty($filterdata) && !empty($filterdata['filter_coursecategories'])) {
             $sql .= " AND c.category = " . $filterdata['filter_coursecategories'];

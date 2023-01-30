@@ -291,7 +291,7 @@ class local_courses_renderer extends plugin_renderer_base {
     $sql = " FROM {course} c
             JOIN {course_categories} cat ON cat.id = c.category
             JOIN {enrol} e ON e.courseid = c.id AND 
-                        (e.enrol = 'manual' OR e.enrol = 'self') 
+                        (e.enrol = 'manual' OR e.enrol = 'self' OR e.enrol = 'classroom')
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             JOIN {user} u ON u.id = ue.userid AND u.deleted = 0
             JOIN {local_costcenter} lc ON lc.path = u.open_path
@@ -380,7 +380,7 @@ class local_courses_renderer extends plugin_renderer_base {
                   'alt'=>get_string('delete'),
                   'onclick'=>"(function(e){ require('local_courses/courses').deleteuser({ action:'delete_user',userid:".$userenrol->id.",id:".$dataobj->courseid."}) })(event)");
           $delete = html_writer::link($deleteurl, $deleteicon, $array);
-          $enrolmethod[] = $courseedit.$delete.$this->render(new local_courses\output\courseevidenceview($dataobj->courseid,$enroluser->userid,'userview'));
+          $enrolmethod[] = $courseedit.$delete/*.$this->render(new local_courses\output\courseevidenceview($dataobj->courseid,$enroluser->userid,'userview'))*/;
        }
         }
         $userinfo[] = implode('<br />',$enroll);
