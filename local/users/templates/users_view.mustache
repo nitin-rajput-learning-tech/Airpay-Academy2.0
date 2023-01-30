@@ -44,8 +44,33 @@
                         <div class="{{cardClass}} mb-4">
                                 <div class="userscontainer {{# visible}} invisible_user {{/ visible}}">
                             <div>
-                                    <div class="pull-right text-right actionicons showoptions{{userid}}">
-                                <span  class="pull-right showoptions" data-action="showoptions{{userid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
+                                    <div class="pull-right text-right">
+                                    <div class="dropdown action_menu_dropdown">
+                                        <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
+                                            <i class="fa fa-ellipsis-h"></i>
+                                        </span>
+                                        <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                            {{# delcap }}
+                                            <a href="javascript:void(0)" class="dropdown-item" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">
+                                                <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i> Delete
+                                            </a>
+                                            {{/ delcap }}
+                                            {{# editcap }}
+                                            <a href="javascript:void(0)" class="dropdown-item" title="{{#str}}edit{{/str}}" data-action="createusermodal" class="createusermodal" data-value="{{userid}}" onclick="(function(e){ require('local_users/newuser').init({selector:'createusermodal', context:1, id:{{userid}}, form_status:0}) })(event)" style="cursor:pointer" title="Edit">
+                                                <i class="fa fa-pencil fa-fw"></i> Edit
+                                            </a>
+                                              {{# visible}}
+                                                <a href="javascript:void(0)" class="dropdown-item" title="{{# str}}makeactive,local_users{{/ str}}" onclick="(function(e){ require('local_users/newuser').userSuspend({ id:{{userid}},context:1, fullname:'{{fullname}}', status: 'disable' }) })(event)">
+                                                <i class="fa fa-eye-slash"></i> Active</a>
+                                              {{/ visible}}
+                                              {{^ visible}}
+                                                 <a href="javascript:void(0)" class="dropdown-item" title="{{# str}} makeinactive,local_users{{/ str}}" onclick="(function(e){ require('local_users/newuser').userSuspend({ id:{{userid}},context:1, fullname:'{{fullname}}', status: 'enable'}) })(event)">
+                                                <i class="fa fa-eye"></i> Inactive</a>
+                                                {{/ visible}}
+                                            {{/ editcap }}
+                                        </div>
+                                    </div>
+                                <!--  <span  class="pull-right showoptions" data-action="showoptions{{userid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
                                 </span>
                                 <ul class=" options_container" id = "showoptions{{userid}}">
                                     {{# delcap }}
@@ -75,7 +100,7 @@
                                         </li>
                                         {{/ visible}}
                                     {{/ editcap }}
-                                </ul>
+                                </ul> -->
                             </div>
                             <div class="pull-left p-0 user_image">
                                 <div>
