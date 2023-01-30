@@ -63,17 +63,6 @@ class plugin_user extends pluginbase {
         $params['deleted'] = 0;
         $params['suspended'] = 0;
 
-        // $systemcontext = context_system::instance(); 
-        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //     $sql .= " ";
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-        //     $sql .= " AND u.open_costcenterid = :costcenterid ";
-        //     $params['costcenterid'] = $USER->open_costcenterid;
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-        //     $sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid ";
-        //     $params['costcenterid'] = $USER->open_costcenterid;
-        //     $params['departmentid'] = $USER->open_departmentid;
-        // }
 
       $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
 
