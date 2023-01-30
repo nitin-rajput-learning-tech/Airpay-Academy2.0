@@ -312,29 +312,18 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $edit = false;
         $delete = false;
-        if (has_capability('local/costcenter:manage', $categorycontext)) {
-            $pathcount = $depart->depth;
-            $del_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$depart->fullname);
-            if($pathcount == 1){
-                if(is_siteadmin()){
-                    if(count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
-                        $delete = true;
-                    $edit = true;
-                }else if(has_capability('local/costcenter:update', $categorycontext)){
-                    $edit = true;
-                }
-            }else if($pathcount == 2){
-                if(is_siteadmin() || has_capability('local/costcenter:updatedepartment', $categorycontext))
-                    $edit = true;
-                if((is_siteadmin() || has_capability('local/costcenter:deletedepartment', $categorycontext)) && count($depart) == 0 && $pluginnavs['totalusers'] == 0)
-                    $delete = true;
-            }else{
-                if(is_siteadmin() || has_capability('local/costcenter:updatesubdepartment', $categorycontext))
-                    $edit = true;
-                if((is_siteadmin() || has_capability('local/costcenter:deletesubdepartment', $categorycontext)) && count($depart) == 0 && $pluginnavs['totalusers'] == 0)
-                    $delete = true;
-            }
-        }
+
+        $pluginnavs = local_costcenter_plugins_count($id);
+
+        $pathcount = $depart->depth;
+        $del_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$depart->fullname);
+
+        if(has_capability('local/costcenter:update', $categorycontext))
+            $edit = true;
+        if((has_capability('local/costcenter:delete', $categorycontext)) && count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
+            $delete = true;
+
+
         $dept_count_link = '';
         $subdepartment = '';
         $departments_sql="SELECT id,id AS id_val FROM {local_costcenter} WHERE parentid=:parent";
@@ -390,27 +379,14 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             $deptedit = false;
             $deptdelete = false;
-            if (has_capability('local/costcenter:manage', $categorycontext)) {
-                $deptdel_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$dept->fullname);
-                if($dept->depth == 1){
-                    if(is_siteadmin()){
-                        $deptedit = true;
-                        if($deparray['totalusers'] == 0)
-                            $deptdelete = true;
-                    }
-                }else if($dept->depth == 2){
-                    if(is_siteadmin() || has_capability('local/costcenter:updatedepartment', $categorycontext))
-                        $deptedit = true;
-                    if((is_siteadmin() || has_capability('local/costcenter:deletedepartment', $categorycontext)) && $deparray['totalusers'] == 0)
-                        $deptdelete = true;
-                }else{
-                    if(is_siteadmin() || has_capability('local/costcenter:updatesubdepartment', $categorycontext))
-                        $deptedit = true;
-                    if((is_siteadmin() || has_capability('local/costcenter:deletesubdepartment', $categorycontext)) && $deparray['totalusers'] == 0)
-                        $deptdelete = true;
-                }
 
-            }
+            $deptdel_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$dept->fullname);
+
+
+            if(has_capability('local/costcenter:update', $categorycontext))
+                $deptedit = true;
+            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0)
+                $deptdelete = true;
 
            $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);
 
@@ -477,28 +453,19 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
         $edit = false;
         $delete = false;
-        if (has_capability('local/costcenter:manage', $categorycontext)) {
-            // $pathcount = count(array_filter(explode('/',$depart->path)));
-            $pathcount = $depart->depth;
-            $del_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$depart->fullname);
-            if($pathcount == 1){
-                if(is_siteadmin()){
-                    if(count($depart) == 0 && $pluginnavs['totalusers'] == 0)
-                        $delete = true;
-                    $edit = true;
-                }
-            }else if($pathcount == 2 || 3 || 4){
-                if(is_siteadmin() || has_capability('local/costcenter:updatedepartment', $categorycontext))
-                    $edit = true;
-                if((is_siteadmin() || has_capability('local/costcenter:deletedepartment', $categorycontext)) && count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
-                    $delete = true;
-            }else{
-                if(is_siteadmin() || has_capability('local/costcenter:updatesubdepartment', $categorycontext))
-                    $edit = true;
-                if((is_siteadmin() || has_capability('local/costcenter:deletesubdepartment', $categorycontext)) && count($depart) == 0 && $pluginnavs['totalusers'] == 0)
-                    $delete = true;
-            }
-        }
+
+        $pluginnavs = local_costcenter_plugins_count($id);
+
+        $pathcount = $depart->depth;
+        $del_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$depart->fullname);
+
+
+        if(has_capability('local/costcenter:update', $categorycontext))
+            $edit = true;
+        if((has_capability('local/costcenter:delete', $categorycontext)) && count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
+            $delete = true;
+
+
         $organisationid = $DB->get_field('local_costcenter', 'parentid', array('id' => $id));
         $subdepartment_link = '';
         $subdepartment = '';
@@ -546,27 +513,14 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             $deptedit = false;
             $deptdelete = false;
-            if (has_capability('local/costcenter:manage', $categorycontext)) {
-                $deptdel_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$dept->fullname);
-                if($dept->depth == 1){
-                    if(is_siteadmin()){
-                        $deptedit = true;
-                        if($deparray['totalusers'] == 0)
-                            $deptdelete = true;
-                    }
-                }else if($dept->depth == 2 || 3 || 4){
-                    if(is_siteadmin() || has_capability('local/costcenter:updatedepartment', $categorycontext))
-                        $deptedit = true;
-                    if((is_siteadmin() || has_capability('local/costcenter:deletedepartment', $categorycontext)) && $deparray['totalusers'] == 0)
-                        $deptdelete = true;
-                }else{
-                    if(is_siteadmin() || has_capability('local/costcenter:updatesubdepartment', $categorycontext))
-                        $deptedit = true;
-                    if((is_siteadmin() || has_capability('local/costcenter:deletesubdepartment', $categorycontext)) && $deparray['totalusers'] == 0)
-                        $deptdelete = true;
-                }
 
-            }
+
+            $deptdel_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$dept->fullname);
+
+            if(has_capability('local/costcenter:update', $categorycontext))
+                $deptedit = true;
+            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0)
+                $deptdelete = true;
 
             $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);
 

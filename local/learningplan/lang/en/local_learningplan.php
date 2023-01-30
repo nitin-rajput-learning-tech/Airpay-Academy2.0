@@ -259,3 +259,6 @@ $string['eventlearningplancourses_created'] = 'Learning Path courses created';
 $string['eventlearningplancourses_deleted'] = 'Learning Path courses deleted';
 $string['eventlearningplanusers_created'] = 'Learning Path users created';
 $string['eventlearningplanusers_deleted'] = 'Learning Path users deleted';
+$string['progress'] = 'Progress';
+$string['mandatory'] = 'Mandatory';
+$string['completed'] = 'Completed';

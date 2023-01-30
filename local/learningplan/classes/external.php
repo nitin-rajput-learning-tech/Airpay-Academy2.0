@@ -13,7 +13,8 @@ class local_learningplan_external extends external_api {
         );
     }
     public function submit_learningplan($id, $contextid, $jsonformdata, $form_status){
-        global $DB;
+        global $DB, $CFG;
+        require_once($CFG->dirroot.'/local/costcenter/lib.php');
 		$categorycontext  = (new \local_learningplan\lib\accesslib())::get_module_context($id);
         // We always must call validate_context in a webservice.
 		self::validate_context($categorycontext);
@@ -21,7 +22,11 @@ class local_learningplan_external extends external_api {
 
 		$data = array();
         parse_str($serialiseddata, $data);
-        $mform = new local_learningplan\forms\learningplan(null, array('form_status' => $form_status, 'id' => $data['id'],'costcenterid' => $data['costcenter']), 'post', '', null, true, $data);
+        $customdata = (object)$data;
+        local_costcenter_get_costcenter_path($customdata);
+        $data = (array)$customdata;
+
+        $mform = new local_learningplan\forms\learningplan(null, array('form_status' => $form_status, 'id' => $data['id'],'costcenterid' => $data['costcenter'], 'open_path' => $data['open_path']), 'post', '', null, true, $data);
 		$validateddata = $mform->get_data();
         $leplib = new local_learningplan\lib\lib();
         if($validateddata){
@@ -42,11 +47,13 @@ class local_learningplan_external extends external_api {
                     local_costcenter_get_costcenter_path($validateddata);
                 }
                 if($validateddata->form_status == 1){
-                if((!empty($validateddata->open_costcenterid) != $org) || ($validateddata->open_department !=$ctr) || ($validateddata->open_subdepartment !=$bu) || ($validateddata->open_level4department !=$cu) || ($validateddata->open_level5department !=$territory)){
-                    local_costcenter_get_costcenter_path($validateddata);
-                }
-                    local_users_get_userprofile_datafields($validateddata);
-                }
+                    // if((!empty($validateddata->open_costcenterid) != $org) || ($validateddata->open_department !=$ctr) || ($validateddata->open_subdepartment !=$bu) || ($validateddata->open_level4department !=$cu) || ($validateddata->open_level5department !=$territory)){
+                        
+                    // }
+
+                        local_costcenter_get_costcenter_path($validateddata);
+                        local_users_get_userprofile_datafields($validateddata);
+                    }
                 $lepid = $leplib->update_learning_plan($validateddata);
             } else{
                 local_costcenter_get_costcenter_path($validateddata);
