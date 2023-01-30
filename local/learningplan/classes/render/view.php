@@ -2390,7 +2390,6 @@ class view extends plugin_renderer_base
 
 		$mandatarycourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'and');
 		$optionalcourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'or');
-		die;
 		$lplanassignedcourses = lib::get_learningplan_assigned_courses($planid);
 
 		// $catalogrenderer = $this->page->get_renderer('local_catalog');
