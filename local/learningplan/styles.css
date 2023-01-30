@@ -229,7 +229,8 @@ body#page-local-learningplan-plan_view .course_extended_menu_list {
     color: #828d9a;
 }
 #page-local-learningplan-plan_view  .bottom_right_container .details_block,
-#page-local-learningplan-plan_view  .bottom_right_container .courses_block{
+#page-local-learningplan-plan_view  .bottom_right_container .courses_block,
+#page-local-learningplan-plan_view  .bottom_right_container .users_block {
 	border: 1px solid #ddd;
     padding: 15px;
     border-radius: 1rem;
@@ -552,15 +553,18 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link.active{
     min-width: 90px;
 }
 #page-local-learningplan-view .courseprogress_container .check_circle_icon {
-    background-image: url([[pix:local_learningplan|lp]]);
-    width: 45px;
-    height: 45px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+     border: 1px solid #c7c7c7;
+     border-radius: 50px;
+     width: 45px;
+     height: 45px;
+     background-size: cover;
+     background-position: center;
+     background-repeat: no-repeat;
 }
 #page-local-learningplan-view  .courseprogress_container.completed .check_circle_icon{
-	background-image: url([[pix:local_learningplan|lp]]) !important;
+	background-image: url([[pix:local_learningplan|lp]]) ;
+    border:none;
+    border-radius: 0;
 }
 #page-local-learningplan-view  .courseprogress_container .course_line {
     width: 1px;
@@ -625,4 +629,19 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link.active{
     background-color: #fff;
     padding: 10px;
     border-radius: 8px;
+}
+#page-local-learningplan-view  .summary_container{
+     border-right: none !important;
+    }
+#page-local-learningplan-view .course_img .pvcourse_img .optional,
+#page-local-learningplan-view .course_img .pvcourse_img .mandatory{
+     font-size: 10px;
+     background-color: #fff;
+     padding: 0 15px;
+     top: 10px;
+     right: 12px;
+     box-shadow: 0 1px 2px #dfdfdf;
+     font-weight: 600;
+     position: absolute;
+     color: #000;
 }

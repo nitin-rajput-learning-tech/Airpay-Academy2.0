@@ -50,11 +50,11 @@
 				<div class="col-md-12 p-0 {{ disable_class1 }} lpcourseslist">
 					<div class="d-flex course_container">
 						<div class="course_img p-3">
-							<div style="background-image: url('{{ courseimgurl }}');height:179px;" alt="" title="" class="pvcourse_img lpimg_bg" ></div>
+							<div style="background-image: url('{{ courseimgurl }}');height:179px;" alt="" title="" class="pvcourse_img lpimg_bg" >{{{optional_or_mandtry}}}</div>
 						</div>
 						<div class="summary_container w-full d-flex flex-column p-3">
 							<div class="w-full desc_block my-2">
-								<h5 class="d-flex justify-content-between">{{{ courselink }}} {{{ optional_or_mandtry }}}<span class="course_rating"><i class="fa fa-star mr-2"></i>{{avgrating}}</span></h5>
+								<h5 class="d-flex justify-content-between">{{{ courselink }}} <span class="course_rating"><i class="fa fa-star mr-2"></i>{{avgrating}}</span></h5>
 								<div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
 							</div>
 							<div class="bottom_content row align-items-center my-2">
