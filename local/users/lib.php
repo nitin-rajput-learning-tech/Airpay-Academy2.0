@@ -1137,30 +1137,30 @@ function users_filters_form($filterparams) {
 
     $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
     if (is_siteadmin()) {
-        $mform = new filters_form(null, array('filterlist' => array('organizations', 'departments',
-            'subdepartment', 'department4level','department5level','states','district','subdistrict','village', 'email', 'employeeid', 'status'), 'courseid' => 1,
+        $mform = new filters_form(null, array('filterlist' => array(/*'organizations', 'departments',
+            'subdepartment', 'department4level','department5level'*/'hierarchy_fields','states','district','subdistrict','village', 'email', 'employeeid', 'status'), 'courseid' => 1,
              'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
     } else {
-        $filters = array('states','district','subdistrict','village','email', 'employeeid', 'status');
-        $depth = $USER->useraccess['currentroleinfo']['depth'];
-        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
-            $depth--;
-        }
-        if($depth < 6){
-            array_unshift($filters, 'department5level');
-        }
-        if($depth < 5){
-            array_unshift($filters, 'department4level');
-        }
-        if($depth < 4){
-            array_unshift($filters, 'subdepartment');
-        }
-        if($depth < 3){
-            array_unshift($filters, 'departments');
-        }
-        if($depth < 2){
-            array_unshift($filters, 'organizations');
-        }
+        $filters = array('hierarchy_fields', 'states','district','subdistrict','village','email', 'employeeid', 'status');
+        // $depth = $USER->useraccess['currentroleinfo']['depth'];
+        // if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+        //     $depth--;
+        // }
+        // if($depth < 6){
+        //     array_unshift($filters, 'department5level');
+        // }
+        // if($depth < 5){
+        //     array_unshift($filters, 'department4level');
+        // }
+        // if($depth < 4){
+        //     array_unshift($filters, 'subdepartment');
+        // }
+        // if($depth < 3){
+        //     array_unshift($filters, 'departments');
+        // }
+        // if($depth < 2){
+        //     array_unshift($filters, 'organizations');
+        // }
         $mform = new filters_form(null, array('filterlist' => $filters, 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
           => $filterparams));
     }

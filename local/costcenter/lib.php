@@ -936,10 +936,11 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
     $firstelement = true;
     foreach($elements as $level){
         $levelelementoptions = array(
-            'class' => $fields[$level].'_select',
+            'class' => $fields[$level].'_select custom_form_field',
             'id' => 'id_'.$fields[$level].'_select',
             'data-parentclass' => $prev_element,
             'data-selectstring' => get_string('select'.$fields[$level], 'local_costcenter'),
+            'placeholder' => get_string('select'.$fields[$level], 'local_costcenter'),
             'data-depth' => $level,
             'data-class' => $fields[$level].'_select',
             'onchange' => '(function(e){ require("local_costcenter/newcostcenter").changeElement(event) })(event)',

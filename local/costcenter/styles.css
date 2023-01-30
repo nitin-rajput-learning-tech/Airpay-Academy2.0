@@ -15,3 +15,6 @@
     padding: 8px;
     border-radius: 8px;
 }
+#filters_form .custom_form_field .col-md-3 {
+    display: none;
+}
