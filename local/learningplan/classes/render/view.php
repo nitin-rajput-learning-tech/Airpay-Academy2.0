@@ -1761,10 +1761,12 @@ class view extends plugin_renderer_base
 					$completeflag = true;
 					$completedtime = $this->db->get_field('course_completions', 'timecompleted', array('course' => $course->id, 'userid' => $this->user->id));
 					if($completedtime){
-						$completed_date = \local_costcenter\lib::get_userdate("d/m/Y H:i",$completedtime);
+						$completed_date = \local_costcenter\lib::get_userdate("d/m/Y",$completedtime);
+						$ctime = \local_costcenter\lib::get_userdate("h:i a", $completedtime);
 					}else{
 						$completed_date = '';
 						$completeflag = false;
+						$ctime ='';
 					}
 
 				}else{
@@ -1790,6 +1792,8 @@ class view extends plugin_renderer_base
 				$lpcourses_context['date'] = $completed_date;
 				$lpcourses_context['cmpltd_class'] = $cmpltd_class;
 				$lpcourses_context['completeflag'] = $completeflag;
+				$lpcourses_context['ctime'] = $ctime;
+				
 				$openpath = $this->db->get_field('local_learningplan', 'open_path', array('id' => $planid));
 				list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $openpath);
 				$planorg = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
@@ -2565,7 +2569,7 @@ class view extends plugin_renderer_base
 				}
 			}
 		}
-
+		$planpercent = output::planpercent($planid,$USER->id);
 		$lp_userview = array();
 		$lp_userview['planid'] = $planid;
 		$lp_userview['userid'] = $this->user->id;
@@ -2723,15 +2727,18 @@ class view extends plugin_renderer_base
 					$cmpltd_class = 'course_completed';
 					$completeflag = true;
 					if ($completed->timecompleted) {
-						$completiondate = \local_costcenter\lib::get_userdate("d/m/Y  H:i", $completed->timecompleted);
+						$completiondate = \local_costcenter\lib::get_userdate("d/m/Y", $completed->timecompleted);
+						$ctime = \local_costcenter\lib::get_userdate("h:i a", $completed->timecompleted);
 					} else {
 						$completed_date = '';
 						$completeflag = false;
+						$ctime = '';
 					}
 				} else {
 					$cmpltd_class = '';
 					$completiondate = '';
 					$completeflag = false;
+					$ctime = '';
 				}
 				if ($assignedcourse->sortorder > 0 && $assignedcourse->next == 'and') {/*Condition to check the sortorder and disable the course */
 					/**** Function to get the all the course details like the nextsetoperator,sortorder
@@ -2761,7 +2768,7 @@ class view extends plugin_renderer_base
 				} else {
 					$avgrating  = '';
 				}
-                $planpercent = output::planpercent($inprogress_coursename->id,$USER->id);
+                
 				$lp_userviewcoures['disable_class1'] = $disable_class1;
 				$lp_userviewcoures['needenrol'] = $needenrol;
 				$lp_userviewcoures['enroldisable_class1'] = $enroldisable_class1;
@@ -2778,6 +2785,7 @@ class view extends plugin_renderer_base
 				$lp_userviewcoures['lplancredits'] = isset($lplan->credits) ? $lplan->credits : 'N/A';
 				$lp_userviewcoures['completeflag'] = $completeflag;
 				$lp_userviewcoures['avgrating'] =$avgrating;
+				$lp_userviewcoures['ctime'] =$ctime;
 				
 				/**To disable the The status like Launch || Enrolled || Completed || before enrol to plan**/
 				$check = $this->db->get_field('local_learningplan_user', 'id', array('userid' => $this->user->id, 'planid' => $planid));
