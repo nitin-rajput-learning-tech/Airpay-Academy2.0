@@ -54,7 +54,7 @@
 						</div>
 						<div class="summary_container w-full d-flex flex-column p-3">
 							<div class="w-full desc_block my-2">
-								<h5 class="d-flex justify-content-between">{{{ courselink }}}<span class="course_rating"><i class="fa fa-star mr-2"></i>{{avgrating}}</span></h5>
+								<h5 class="d-flex justify-content-between">{{{ courselink }}} {{{ optional_or_mandtry }}}<span class="course_rating"><i class="fa fa-star mr-2"></i>{{avgrating}}</span></h5>
 								<div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
 							</div>
 							<div class="bottom_content row align-items-center my-2">
@@ -72,7 +72,7 @@
 
 							</div>
 							{{# completeflag}}
-							<div class="couse_status text-muted">Completed</div>
+							<div class="couse_status text-muted">{{#str}}completed, local_learningplan{{/str}}</div>
 							{{/ completeflag}}
 						</div>
 					</div>
