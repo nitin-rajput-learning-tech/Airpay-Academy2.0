@@ -72,15 +72,17 @@ class plugin_coursescompletionscolumns extends pluginbase{
             		$row->{$data->column} = 'NA';
             	}
                 break;
-            // case 'reportingto':
-            // 	if(!empty($row->{$data->column})){
-            // 		$fields = 'id,firstname,lastname';
-            // 		$reportingto = $DB->get_record('user', array('id'=>$row->{$data->column}),$fields);
-            // 		$row->{$data->column} = $reportingto->firstname.' '.$reportingto->lastname;
-            // 	}else{
-            // 		$row->{$data->column} = 'NA';
-            // 	}
-            //     break;
+            case 'completion_percentage':
+                $fullcourse = get_course($row->courseid);
+                $progress = \core_completion\progress::get_course_progress_percentage($fullcourse, $row->userid);
+                $coursehasprogress = $progress !== null;
+                $courseprogresspercent = $coursehasprogress ? $progress : 0;
+                if (!is_nan($courseprogresspercent)) {
+                    $row->{$data->column} = floor($courseprogresspercent);
+                }else{
+                    $row->{$data->column} = 0;
+                }
+            break;
             default:
             	break;
         }
