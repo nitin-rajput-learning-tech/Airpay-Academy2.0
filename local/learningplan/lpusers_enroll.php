@@ -236,7 +236,8 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
 					$deleterecord = $DB->delete_records('local_learningplan_user',array('id'=>$get_record->id));
           $sql = " SELECT * FROM {local_learningplan_courses} WHERE planid =:planid ";               
           $lpcourses = $DB->get_records('local_learningplan_courses', array('planid'=>$planid));
-          foreach($lpcoursesop as $key => $opcourse){
+
+          foreach($lpcourses as $key => $opcourse){
             $unenrol=$learningplan_lib->to_unenrol_users($planid,$remove_user,$opcourse->courseid,false);
           }
           //Unenrolment notification//
