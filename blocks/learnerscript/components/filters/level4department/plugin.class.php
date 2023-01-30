@@ -110,7 +110,7 @@ class plugin_level4department extends pluginbase {
         $selectsubdept = array(); 
         // $selectsubdept[-1] = 'Select SubDepartment';
         if(empty($this->reportclass->basicparams)){
-            $level4departmentoptions[-1] = get_string('subsubdepartment', 'local_costcenter');
+            $level4departmentoptions[-1] = get_string('selectopen_level4department', 'local_costcenter');
         }else{
             $level4departmentoptions[-1] = 'All';
         }
