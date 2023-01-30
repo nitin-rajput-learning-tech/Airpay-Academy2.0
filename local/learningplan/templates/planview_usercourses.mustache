@@ -17,8 +17,8 @@
 <div class="d-flex lpcoursesuser_view_container lp_course_sortorder ">
 	<div class="courseprogress_container d-flex align-items-center flex-column mt-3">
 		<div class="check_circle_icon"></div>
-		<span class="text-muted date"><strong>23 Jan 2023</strong></span>
-		<span class="text-muted time">6.30 PM</span>
+		<span class="text-muted date"><strong>{{completiondate}}</strong></span>
+		{{! <span class="text-muted time">6.30 PM</span> }}
 		<div class="course_line flexgrow-1"></div>
 	</div>
 	<div class = "w-full m-0 lpcourses flexgrow-1">
@@ -54,7 +54,7 @@
 						</div>
 						<div class="summary_container w-full d-flex flex-column p-3">
 							<div class="w-full desc_block my-2">
-								<h5 class="d-flex justify-content-between">{{{ courselink }}}<span class="course_rating"><i class="fa fa-star mr-2"></i>4.5</span></h5>
+								<h5 class="d-flex justify-content-between">{{{ courselink }}}<span class="course_rating"><i class="fa fa-star mr-2"></i>{{avgrating}}</span></h5>
 								<div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
 							</div>
 							<div class="bottom_content row align-items-center my-2">
@@ -63,15 +63,17 @@
 									<div class="progress ">
 	            						<div class="progress-bar text-center" role="progressbar" style="width: {{ progressbar }}%;" aria-valuenow="{{ progressbar }}" aria-valuemin="0" aria-valuemax="100"></div>
 	        						</div>
-	        						<span class="progress_percentage ml-2">{{ progress }}%</span>
+	        						<span class="progress_percentage ml-2">{{ progressbar }}%</span>
 								</div>
-								<div class="language_option col-md-4">
+								{{! <div class="language_option col-md-4">
 		        					<i class="fa fa-tags"></i>
 		        					<span class="text-muted"><strong>English, Basics</strong></span>
-		        				</div>
+		        				</div> }}
 
 							</div>
+							{{# completeflag}}
 							<div class="couse_status text-muted">Completed</div>
+							{{/ completeflag}}
 						</div>
 					</div>
 				</div>

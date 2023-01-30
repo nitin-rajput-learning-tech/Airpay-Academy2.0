@@ -4,6 +4,7 @@ namespace local_learningplan\render;
 
 use context_module;
 use local_learningplan\lib\lib as lib;
+use local_learningplan\output\learningplan_courses as output;
 use renderable;
 use renderer_base;
 use stdClass;
@@ -1757,16 +1758,19 @@ class view extends plugin_renderer_base
 				}
 				if($progress==100){
 					$cmpltd_class = 'course_completed';
+					$completeflag = true;
 					$completedtime = $this->db->get_field('course_completions', 'timecompleted', array('course' => $course->id, 'userid' => $this->user->id));
 					if($completedtime){
 						$completed_date = \local_costcenter\lib::get_userdate("d/m/Y H:i",$completedtime);
 					}else{
 						$completed_date = '';
+						$completeflag = false;
 					}
 
 				}else{
 				$cmpltd_class = '';
 				$completed_date = '';
+				$completeflag = false;
 				}			
 				if ($course->sortorder == 0) {/*Condtion to set the enable to first sortorder*/
 					$disable_class1 = ' '; /*Empty has been sent to class*/
@@ -1785,6 +1789,7 @@ class view extends plugin_renderer_base
 				$lpcourses_context['progress'] = $user_completions;
 				$lpcourses_context['date'] = $completed_date;
 				$lpcourses_context['cmpltd_class'] = $cmpltd_class;
+				$lpcourses_context['completeflag'] = $completeflag;
 				$openpath = $this->db->get_field('local_learningplan', 'open_path', array('id' => $planid));
 				list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $openpath);
 				$planorg = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
@@ -2581,6 +2586,7 @@ class view extends plugin_renderer_base
 		$lp_userview['certificate_exists'] = $certificate_exists;
 		$lp_userview['certificate_download'] = $certificate_download;
 		$lp_userview['certificateid'] = $certificateid;
+		$lp_userview['planpercent'] = isset($planpercent) ? $planpercent : 0;
 		$challenge_exist = \core_component::get_plugin_directory('local', 'challenge');
 		if ($challenge_exist) {
 			$enabled =  (int)get_config('', 'local_challenge_enable_challenge');
@@ -2714,14 +2720,17 @@ class view extends plugin_renderer_base
 				}
 				if ($progressbarval == 100) {
 					$cmpltd_class = 'course_completed';
+					$completeflag = true;
 					if ($completed->timecompleted) {
 						$completiondate = \local_costcenter\lib::get_userdate("d/m/Y  H:i", $completed->timecompleted);
 					} else {
 						$completed_date = '';
+						$completeflag = false;
 					}
 				} else {
 					$cmpltd_class = '';
 					$completiondate = '';
+					$completeflag = false;
 				}
 				if ($assignedcourse->sortorder > 0 && $assignedcourse->next == 'and') {/*Condition to check the sortorder and disable the course */
 					/**** Function to get the all the course details like the nextsetoperator,sortorder
@@ -2744,8 +2753,14 @@ class view extends plugin_renderer_base
 				if ($needenrol) {
 					$enroldisable_class1 = 'not_enrolled course_disabled';
 				}
-
-                $planpercent = $this->planpercent($inprogress_coursename->id,$USER->id);
+				if ($ratings_exist) {
+					require_once($CFG->dirroot . '/local/ratings/lib.php');
+					$avgratings = get_rating($assignedcourse->id, 'local_courses');
+					$avgrating = $avgratings->avg;
+				} else {
+					$avgrating  = '';
+				}
+                $planpercent = output::planpercent($inprogress_coursename->id,$USER->id);
 				$lp_userviewcoures['disable_class1'] = $disable_class1;
 				$lp_userviewcoures['needenrol'] = $needenrol;
 				$lp_userviewcoures['enroldisable_class1'] = $enroldisable_class1;
@@ -2758,7 +2773,11 @@ class view extends plugin_renderer_base
 				$lp_userviewcoures['course_summary_string'] = $course_summary_string;
 				$lp_userviewcoures['mandatarycourses_count'] = isset($mandatarycourses_count) ? $mandatarycourses_count : 0;
 				$lp_userviewcoures['optionalcourses_count'] = isset($optionalcourses_count) ? $optionalcourses_count : 0;
-
+				$lp_userviewcoures['planid'] = $planid;
+				$lp_userviewcoures['lplancredits'] = isset($lplan->credits) ? $lplan->credits : 'N/A';
+				$lp_userviewcoures['completeflag'] = $completeflag;
+				$lp_userviewcoures['avgrating'] =$avgrating;
+				
 				/**To disable the The status like Launch || Enrolled || Completed || before enrol to plan**/
 				$check = $this->db->get_field('local_learningplan_user', 'id', array('userid' => $this->user->id, 'planid' => $planid));
 				/*End of query*/
