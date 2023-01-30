@@ -286,9 +286,7 @@ class learningplan_courses implements \renderable, \templatable {
                 $totalcount = $notcompletedcount+$completedcount;
 				if ($notcompletedcount  == 0) {
                     $percent = 100;
-                    echo "Hi";
 				}else{
-                    echo "Ammu";
                     $percent = $completedcount/$totalcount * 100;
                 }
             } else
