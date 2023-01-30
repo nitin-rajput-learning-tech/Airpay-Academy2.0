@@ -54,7 +54,6 @@
 						
 						<div class="d-flex course_container">
 							<div class="course_img p-3 ">
-								<div class="w-full pull-right actions">{{{ actions }}} {{{ buttons }}}</div>
 								<div style="background-image: url('{{ course_summary_image_url }}');" alt="" title="" class="pvcourse_img lpimg_bg" ></div>
 								
 							</div>
@@ -77,7 +76,9 @@
 		        						<span class="text-muted"><strong>English, Basics</strong></span>
 		        					</div> }}
 								</div>
-								<div class="couse_status text-muted">{{#str}}completed, local_learningplan{{/str}}</div>
+								{{# completeflag}}
+							<div class="couse_status text-muted">{{#str}}completed, local_learningplan{{/str}}</div>
+							{{/ completeflag}}
 							</div>
 						</div>
 					
