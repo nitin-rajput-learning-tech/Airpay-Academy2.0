@@ -255,9 +255,9 @@ class learningplan_courses implements \renderable, \templatable {
 						AND timecompleted IS NOT NULL";
 					$check = $DB->get_record_sql($sql);
 					if ($check) {
-						$completed['completed'] = 1;
+						$completed['completed'][] = 1;
 					} else {
-						$completed['notcompleted'] = 0;
+						$completed['notcompleted'][] = 0;
 					}
 				}
 			} else {
@@ -272,7 +272,7 @@ class learningplan_courses implements \renderable, \templatable {
 							FROM {course_completions} 
 							WHERE course=:course AND userid=:user 
 							AND timecompleted IS NOT NULL";
-					$check = $DB->get_record_sql($sql, array('course' => (int)$course, 'user' => (int) $user));
+					$check = $DB->get_record_sql($sql, array('course' => (int)$course, 'user' => (int) $userid));
 					if ($check) {
 						$optional_completed['completed'][] = 1;
 					} else {
@@ -282,8 +282,8 @@ class learningplan_courses implements \renderable, \templatable {
 			}
             if ($completed) {
                 $notcompletedcount = count($completed['notcompleted']);
-                $completedcount = isset($completed['completed']) ? count($completed['completed']) : 0;
-                $totalcount = $notcompletedcount+$completedcount;
+                 $completedcount = isset($completed['completed']) ? count($completed['completed']) : 0;
+                 $totalcount = $notcompletedcount+$completedcount."count";
 				if ($notcompletedcount  == 0) {
                     $percent = 100;
 				}else{
@@ -297,7 +297,7 @@ class learningplan_courses implements \renderable, \templatable {
                     $percent = 0;
                 }
             }
-            return $percent;
+            return round($percent);
         }
     }
 
