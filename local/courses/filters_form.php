@@ -22,6 +22,7 @@ class filters_form extends moodleform {
        // $submitid =  $this->_customdata['submitid'] ? $this->_customdata['submitid'] : 'filteringform';
 
         $this->_form->_attributes['id'] = $submitid;
+        $this->_form->_attributes['class'] = $submitid;
         //$this->_form->_attributes['onsubmit'] = '(function(e){ require("local_costcenter/cardPaginate").filteringData(e,"'.$submitid.'") })(event)';
 
         if(in_array("enrolid",$filterlist)){
@@ -54,7 +55,13 @@ class filters_form extends moodleform {
                 $filter = 'request';
             }else if($value === 'evaluation_type'){
                 $filter = 'evaluation';
-            } else{
+            } else if($value = 'hierarchy_fields'){
+                require_once($CFG->dirroot.'/local/costcenter/lib.php');
+                $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+                local_costcenter_set_costcenter_path($this->_customdata);
+                local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_users', $categorycontext, $multiple = true, $prefix = 'filter');
+                continue;
+            }else{
                 $filter = $value;
             }
             $core_component = new \core_component();

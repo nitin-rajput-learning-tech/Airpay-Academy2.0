@@ -817,12 +817,12 @@ case 'orgdepts':
 				
 		$departments = $DB->get_records_sql_menu($sql, array('parentid' => $orgid));
         if (!empty($departments)) {
-            $return = array('-1' => 'All') + $departments;
+            $return = array(0 => 'All') + $departments;
         } else {
-            $return = array('-1' => 'Select Department');
+            $return = array(0 => 'Select Department');
         }
 	} else {
-		$return = array('' => 'Select Department');
+		$return = array(0 => 'Select Department');
 	}
 	ksort($return);
 	break;

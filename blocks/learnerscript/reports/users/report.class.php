@@ -44,7 +44,7 @@ class report_users extends reportbase {
         // if ($this->loggedinuserrole != 'dh') {
         //     $this->basicparams = array(['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments']);
         // }
-        $this->filters = array('users'/*, 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country'*/);
+        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'users'/*, 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country'*/);
         $this->defaultcolumn = 'u.id';
         $this->excludedroles = array("'employee'");
 
@@ -69,35 +69,9 @@ class report_users extends reportbase {
     function where() { 
         global $DB, $USER;
         $this->sql .= " WHERE u.confirmed = 1 AND u.deleted = 0 AND u.id > 2 ";
-        // $systemcontext = \context_system::instance();
-        $categorycontext =  (new \local_users\lib\accesslib())::get_module_context();
-        // getscheduled report
-        // if (!is_siteadmin()) {
-        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-        //     if (!empty($scheduledreport)) {
-        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-        //     } else {
-        //         $ohs = 1;
-        //     }
-        // }
-        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //     $this->sql .= "";
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-        //     $this->sql .= " AND u.open_costcenterid = :costcenterid ";
-        //     $this->params['costcenterid']= $USER->open_costcenterid;
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-        //     $this->sql .= " AND u.open_costcenterid = :costcenterid  AND u.open_departmentid = :departmentid";
-        //     $this->params['costcenterid']= $USER->open_costcenterid;
-        //     $this->params['departmentid']= $USER->open_departmentid;
-        // }else{
-        //     $this->sql .= " AND u.open_costcenterid = :costcenterid  AND u.open_departmentid = :departmentid AND open_subdepartment = :subdepartment";
-        //     $this->params['costcenterid']= $USER->open_costcenterid;
-        //     $this->params['departmentid']= $USER->open_departmentid;
-        //     $this->params['subdepartment']= $USER->open_subdepartment;
-        // }
 
-      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
+
+      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
       if (is_siteadmin()) {
           $this->sql .= "";
       } else  {
@@ -111,53 +85,7 @@ class report_users extends reportbase {
             }
             $this->sql .= " AND u.id IN ( $conditions )";
         }
-        // if (!is_siteadmin($this->userid)  && !(new ls)->is_manager($this->userid)) {
-        //     if ($this->rolewisecourses != '') {
-        //         $this->sql .= " AND c.id IN ($this->rolewisecourses) ";
-        //     } else {
-        //         return array(array(), 0);
-        //     }
-        // }
 
-        // if(isset($this->params['filter_status'])) {
-        //   if($this->params['filter_status'] == 'enrolled') {
-        //     $this->sql .= " AND u.id IN (SELECT DISTINCT u.id
-        //                 FROM {user} as u
-        //                 JOIN {user_enrolments} as ue on ue.userid = u.id
-        //                 JOIN {enrol} as e on e.id = ue.enrolid 
-        //                 JOIN {course} as c on c.id = e.courseid
-        //                 WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
-        //   } else if($this->params['filter_status'] == 'completed') {
-        //     $this->sql .= " AND u.id IN (SELECT DISTINCT cc.userid AS completed 
-        //                 FROM {user_enrolments} ue   
-        //                 JOIN {user} as u on u.id = ue.userid
-        //                 JOIN {enrol} e ON ue.enrolid = e.id 
-        //                 JOIN {role_assignments} ra ON ra.userid = ue.userid
-        //                 JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-        //                 JOIN {context} AS ctx ON ctx.id = ra.contextid
-        //                 JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-        //                 JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-        //                 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
-        //                  AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  ";
-        //   } else if($this->params['filter_status'] == 'inprogress') {
-        //       $this->sql .= " AND u.id NOT IN (SELECT DISTINCT cc.userid AS completed 
-        //                 FROM {user_enrolments} ue   
-        //                 JOIN {user} as u on u.id = ue.userid
-        //                 JOIN {enrol} e ON ue.enrolid = e.id 
-        //                 JOIN {role_assignments} ra ON ra.userid = ue.userid
-        //                 JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-        //                 JOIN {context} AS ctx ON ctx.id = ra.contextid
-        //                 JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-        //                 JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-        //                 WHERE 1 AND cc.timecompleted IS NULL AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id
-        //                  AND u.open_costcenterid = ". $this->params['filter_organization'] ." )  AND u.id IN (SELECT DISTINCT u.id
-        //                 FROM {user} as u
-        //                 JOIN {user_enrolments} as ue on ue.userid = u.id
-        //                 JOIN {enrol} as e on e.id = ue.enrolid 
-        //                 JOIN {course} as c on c.id = e.courseid
-        //                 WHERE u.open_costcenterid = ". $this->params['filter_organization'] .") ";
-        //   }
-        // }
         parent::where();
     }
 
@@ -172,18 +100,45 @@ class report_users extends reportbase {
 
     function filters() {
         global $DB; 
-        // if (!empty($this->params['filter_organization'])) {
-        //     $costcenterids = $this->params['filter_organization'];
-        //     $this->sql .= " AND u.open_costcenterid IN ($costcenterids) ";
-        // } 
-        // if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-        //     $departmentids = $this->params['filter_departments'];
-        //     $this->sql .= " AND u.open_departmentid IN ($departmentids) ";
-        // }
-        // if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-        //     $subdepartmentids = $this->params['filter_subdepartments'];
-        //     $this->sql .= " AND u.open_subdepartment IN ($subdepartmentids) ";
-        // }
+        if ($this->params['filter_organization'] > 0) {
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
+        }
+        if ($this->params['filter_departments'] > 0) {
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
+        }
+
+        if ($this->params['filter_subdepartments'] > 0) {
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
+        }
+
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        }
+        if ($this->params['filter_level5department'] > 0) {
+            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
+            $this->params['l5dept'] = $l5dept.'/%';
+        }
+        if ($this->params['filter_geostate'] > 0) {
+            $this->sql .= " AND u.open_states = :filter_geostate ";
+        }
+        if ($this->params['filter_geodistrict'] > 0) {
+            $this->sql .= " AND u.open_district = :filter_geodistrict ";
+        }
+        if ($this->params['filter_geosubdistrict'] > 0) {
+            $this->sql .= " AND u.open_subdistrict = :filter_geosubdistrict ";
+        }
+        if ($this->params['filter_geovillage'] > 0) {
+            $this->sql .= " AND u.open_village = :filter_geovillage ";
+        }
         if (isset($this->params['filter_users'])
             && $this->params['filter_users'] >0
             && $this->params['filter_users'] != '_qf__force_multiselect_submission') {
@@ -203,41 +158,41 @@ class report_users extends reportbase {
     }
     public function column_queries($column, $userid){
         $where = " AND %placeholder% = $userid";
-        if (!is_siteadmin($this->userid) && !(new ls)->is_manager($this->userid, $this->contextlevel, $this->role)) {
-            if ($this->rolewisecourses != '') {
-                $coursefilter = " AND c.id IN ($this->rolewisecourses) ";
-            } 
-        }else{
+        // if (!is_siteadmin($this->userid) && !(new ls)->is_manager($this->userid, $this->contextlevel, $this->role)) {
+        //     if ($this->rolewisecourses != '') {
+        //         $coursefilter = " AND c.id IN ($this->rolewisecourses) ";
+        //     }
+        // }else{
           $coursefilter = "";
-        } 
+        // }
         $contentprovider = '';
-        if (!empty($this->params['filter_contentprovider']) && $this->params['filter_contentprovider'] > 0) {
-            $contentproviderids = $this->params['filter_contentprovider'];
-            $contentprovider .= " AND c.open_contentvendor IN ($contentproviderids) ";
-        }
+        // if (!empty($this->params['filter_contentprovider']) && $this->params['filter_contentprovider'] > 0) {
+        //     $contentproviderids = $this->params['filter_contentprovider'];
+        //     $contentprovider .= " AND c.open_contentvendor IN ($contentproviderids) ";
+        // }
 
-        $learningtype = isset($this->params['filter_learningtype']) ? implode(',', $this->params['filter_learningtype']) : 0; 
-        $certification = isset($this->params['filter_certification']) ? implode(',', $this->params['filter_certification']) : 0;
-        $certificationlevel = isset($this->params['filter_certificationlevel']) ? implode(',', $this->params['filter_certificationlevel']) : 0;
-        $exam = isset($this->params['filter_exam']) ? implode(',', $this->params['filter_exam']) : 0;
-        $solutionarea = isset($this->params['filter_solutionarea']) ? implode(',', $this->params['filter_solutionarea']) : 0;
-        $technology = isset($this->params['filter_technology']) ? implode(',', $this->params['filter_technology']) : 0;
-        $topic = isset($this->params['filter_topic']) ? implode(',', $this->params['filter_topic']) : 0;
-        $vendor = isset($this->params['filter_vendor']) ? implode(',', $this->params['filter_vendor']) : 0;
-        $level = isset($this->params['filter_level']) ? implode(',', $this->params['filter_level']) : 0;
-        $language = isset($this->params['filter_language']) ? implode(',', $this->params['filter_language']) : 0;
-        $jobrole = isset($this->params['filter_jobrole']) ? implode(',', $this->params['filter_jobrole']) : 0;
+        // $learningtype = isset($this->params['filter_learningtype']) ? implode(',', $this->params['filter_learningtype']) : 0;
+        // $certification = isset($this->params['filter_certification']) ? implode(',', $this->params['filter_certification']) : 0;
+        // $certificationlevel = isset($this->params['filter_certificationlevel']) ? implode(',', $this->params['filter_certificationlevel']) : 0;
+        // $exam = isset($this->params['filter_exam']) ? implode(',', $this->params['filter_exam']) : 0;
+        // $solutionarea = isset($this->params['filter_solutionarea']) ? implode(',', $this->params['filter_solutionarea']) : 0;
+        // $technology = isset($this->params['filter_technology']) ? implode(',', $this->params['filter_technology']) : 0;
+        // $topic = isset($this->params['filter_topic']) ? implode(',', $this->params['filter_topic']) : 0;
+        // $vendor = isset($this->params['filter_vendor']) ? implode(',', $this->params['filter_vendor']) : 0;
+        // $level = isset($this->params['filter_level']) ? implode(',', $this->params['filter_level']) : 0;
+        // $language = isset($this->params['filter_language']) ? implode(',', $this->params['filter_language']) : 0;
+        // $jobrole = isset($this->params['filter_jobrole']) ? implode(',', $this->params['filter_jobrole']) : 0;
 
-        $tagslist = array($learningtype, $certification, $certificationlevel, $exam, $solutionarea, $technology, $topic, $vendor, $level, $language, $jobrole); 
-        if (array_sum($tagslist) > 0) {
-            $tagslist = implode(',', $tagslist); 
-            $tagcoursesql  = (new querylib)->gettagcourses($tagslist);
-            if (!empty($tagcoursesql) && $tagcoursesql > 0) { 
-                $contentprovider .= " AND c.id IN (".$tagcoursesql.")";
-            } else {
-                $contentprovider .= " AND c.id IN (0)";
-            } 
-        }
+        // $tagslist = array($learningtype, $certification, $certificationlevel, $exam, $solutionarea, $technology, $topic, $vendor, $level, $language, $jobrole);
+        // if (array_sum($tagslist) > 0) {
+        //     $tagslist = implode(',', $tagslist);
+        //     $tagcoursesql  = (new querylib)->gettagcourses($tagslist);
+        //     if (!empty($tagcoursesql) && $tagcoursesql > 0) {
+        //         $contentprovider .= " AND c.id IN (".$tagcoursesql.")";
+        //     } else {
+        //         $contentprovider .= " AND c.id IN (0)";
+        //     }
+        // }
         
         switch ($column) {
             case 'enrolled':
@@ -249,7 +204,7 @@ class report_users extends reportbase {
                           JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                          WHERE 1=1 AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider"; 
+                          WHERE e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'inprogress':
                 $identy = "ue.userid";
@@ -261,7 +216,7 @@ class report_users extends reportbase {
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                      LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-                         WHERE 1 = 1 AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider";
+                         WHERE e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'completed':
                 $identy = "cc.userid";
@@ -272,7 +227,7 @@ class report_users extends reportbase {
                           JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                          JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider";
+                          JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 WHERE e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'progress':
                 $identy = "ra.userid";
@@ -284,7 +239,7 @@ class report_users extends reportbase {
                             JOIN {context} AS ctx ON ctx.id = ra.contextid
                             JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                        LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid 
-                             AND cc.timecompleted > 0 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND e.courseid = c.id $where $coursefilter $contentprovider";
+                             AND cc.timecompleted > 0 WHERE  e.courseid = c.id $where $coursefilter $contentprovider";
                 break;
             case 'badges':
                 $identy = "bi.userid";
@@ -303,7 +258,7 @@ class report_users extends reportbase {
                            JOIN {course} AS c ON cc.course = c.id AND c.visible=1 
                           WHERE gi.itemtype = 'course' AND cc.course = gi.courseid
                             AND cc.timecompleted IS NOT NULL 
-                            AND gg.userid = cc.userid AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
+                            AND gg.userid = cc.userid
                              $where $coursefilter $contentprovider";
                 break;
             default:

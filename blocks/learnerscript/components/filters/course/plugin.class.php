@@ -75,38 +75,31 @@ class plugin_course extends pluginbase {
         } 
         $filtercourse = $this->reportclass->filters;
         // $filteruserid = $filtercourse['filter_users'];
-        if($this->reportclass->basicparams){
-            $basicparams = array_column($this->reportclass->basicparams, 'name');
-            if ($basicparams[0] == 'users') {
-                $useroptions = (new \block_learnerscript\local\querylib)->filter_get_users($this,
-                            false, false, false, false, false);
-                $userids = array_keys($useroptions);
-                $this->courseuserid = array_shift($userids);
-            }else {
-                $this->courseuserid = null;
-            } 
-            if (in_array('organization', $basicparams) && $basicparams[0] == 'organization') {
-                $organizationoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC");
-                $organizationids = array_keys($organizationoptions);
-                if (empty($request['filter_organization'])) {
-                    $courseorganizationid = array_shift($organizationids);
-                } else {
-                    $courseorganizationid = $request['filter_organization'];
-                }
-            } else {
-                $courseorganizationid = 0;
-            }
-        } else {
-            $this->courseuserid = null;
-        } 
-        // $systemcontext = context_system::instance();
-        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //     $this->courseorganizationid = isset($courseorganizationid) ? $courseorganizationid : 0;
-        // } else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-        //     $this->courseorganizationid = $USER->open_costcenterid;
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-        //     $this->courseorganizationid = $USER->open_costcenterid;
+        // if($this->reportclass->basicparams){
+        //     $basicparams = array_column($this->reportclass->basicparams, 'name');
+        //     if ($basicparams[0] == 'users') {
+        //         $useroptions = (new \block_learnerscript\local\querylib)->filter_get_users($this,
+        //                     false, false, false, false, false);
+        //         $userids = array_keys($useroptions);
+        //         $this->courseuserid = array_shift($userids);
+        //     }else {
+        //         $this->courseuserid = null;
+        //     }
+        //     if (in_array('organization', $basicparams) && $basicparams[0] == 'organization') {
+        //         $organizationoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC");
+        //         $organizationids = array_keys($organizationoptions);
+        //         if (empty($request['filter_organization'])) {
+        //             $courseorganizationid = array_shift($organizationids);
+        //         } else {
+        //             $courseorganizationid = $request['filter_organization'];
+        //         }
+        //     } else {
+        //         $courseorganizationid = 0;
+        //     }
+        // } else {
+        //     $this->courseuserid = null;
         // }
+
         
         $this->filtercoursesid = isset($filtercourses) ? $filtercourses : 0;
         $querylib = new \block_learnerscript\local\querylib(); 

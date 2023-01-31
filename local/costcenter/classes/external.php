@@ -715,7 +715,18 @@ class local_costcenter_external extends external_api {
                         },$elements);
 
                     }else{
-                        $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
+                        $parentids = [];
+                        if(is_array($formoptions->parentid)){
+                            $parentids = $formoptions->parentid;
+                            if(empty($parentids)){
+                                array_push($parentids, 0);
+                            }
+                        }else{
+                            $parentid = $formoptions->parentid ? $formoptions->parentid : 0;
+                            array_push($parentids, $parentid);
+                        }
+                        list($parentsql, $parentparams) = $DB->get_in_or_equal($parentids, SQL_PARAMS_NAMED, 'organisationid');
+                        // $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
                         $sqlparams['depth'] = $formoptions->depth;
                         $likesql = array();
                         $i = 0;
@@ -730,11 +741,12 @@ class local_costcenter_external extends external_api {
                         }
                         $fields      = 'SELECT id, fullname';
                         $accountssql = " FROM {local_costcenter}
-                                         WHERE 1=1 $concatsql AND parentid = :parentid AND depth = :depth ";
+                                         WHERE 1=1 $concatsql AND parentid {$parentsql} AND depth = :depth ";
                         if ($formoptions->id == 0) {
                             $accountssql .= ' AND visible = 1';
                         }
-                        $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                        $accounts = $DB->get_records_sql($fields.$accountssql, array_merge($parentparams, $sqlparams), ($page * $perpage) -0, $perpage + 1);
+
                         if($formoptions->enableallfield){
                             $accounts = $allobjectarr + $accounts;
                         }

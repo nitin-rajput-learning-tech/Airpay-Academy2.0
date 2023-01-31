@@ -2970,7 +2970,7 @@ body .que .info>div {
     padding: 20px;
     position: relative;
     width: 100%;
-    height: 300px;
+    height: 240px;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -3070,4 +3070,20 @@ body .que .info>div {
 
 .actionicons {
    position: relative;
+}
+.action_menu_dropdown{
+    font-size: 18px;
+    .dropdown-item {
+        padding: 0.25rem 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        i{
+            width: 20px;
+            flex: 0 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
