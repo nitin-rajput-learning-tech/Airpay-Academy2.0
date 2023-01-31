@@ -782,8 +782,8 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
     if (!empty($params['idnumber'])) {
         $sql .=" AND u.id IN ({$params['idnumber']})";
     }
-    if (!empty($params['organizations'])) {
-        $organizations = explode(',', $params['organizations']);
+    if (!empty($params['organization'])) {
+        $organizations = explode(',', $params['organization']);
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
