@@ -900,8 +900,8 @@ function manage_users_count($stable, $filterdata) {
         $params = array_merge($params, $relatedemailparams);
         $formsql .= " AND u.id $relatedemailsql";
     }
-    if (!empty($filterdata->organizations)) {
-        $organizations = explode(',', $filterdata->organizations);
+    if (!empty($filterdata->filteropen_costcenterid)) {
+        $organizations = explode(',', $filterdata->filteropen_costcenterid);
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
@@ -911,8 +911,8 @@ function manage_users_count($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
         }
     }
-    if (!empty($filterdata->departments)) {
-        $departments = explode(',', $filterdata->departments);
+    if (!empty($filterdata->filteropen_department)) {
+        $departments = explode(',', $filterdata->filteropen_department);
         // list($relatededepartmentssql, $relateddepartmentsparams) = $DB->get_in_or_equal($departments,
         //  SQL_PARAMS_NAMED, 'departments');
         // $params = array_merge($params, $relateddepartmentsparams);
@@ -926,8 +926,8 @@ function manage_users_count($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
         }
     }
-    if (!empty($filterdata->subdepartment)) {
-        $subdepartments = explode(',', $filterdata->subdepartment);
+    if (!empty($filterdata->filteropen_subdepartment)) {
+        $subdepartments = explode(',', $filterdata->filteropen_subdepartment);
         // list($relatedesubdepartmentsql, $relatedsubdepartmentparams) = $DB->get_in_or_equal($subdepartment,
         //  SQL_PARAMS_NAMED, 'subdepartment');
         // $params = array_merge($params, $relatedsubdepartmentparams);
@@ -941,8 +941,8 @@ function manage_users_count($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
         }
     }
-    if (!empty($filterdata->department4level)) {
-        $depart4level = explode(',', $filterdata->department4level);
+    if (!empty($filterdata->filteropen_level4department)) {
+        $depart4level = explode(',', $filterdata->filteropen_level4department);
         $department4levelsql = [];
         foreach($depart4level AS $department4level){
             $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
@@ -952,8 +952,8 @@ function manage_users_count($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
         }
     }
-    if (!empty($filterdata->department5level)) {
-        $depart5level = explode(',', $filterdata->department5level);
+    if (!empty($filterdata->filteropen_level5department)) {
+        $depart5level = explode(',', $filterdata->filteropen_level5department);
         $department5levelsql = [];
         foreach($depart5level AS $department5level){
             $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";

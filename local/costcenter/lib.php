@@ -917,7 +917,7 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
-function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false){
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false, $prefix = ''){
     global $DB, $USER;
     $depth = $USER->useraccess['currentroleinfo']['depth'];
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
@@ -936,24 +936,24 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
     $firstelement = true;
     foreach($elements as $level){
         $levelelementoptions = array(
-            'class' => $fields[$level].'_select custom_form_field',
-            'id' => 'id_'.$fields[$level].'_select',
+            'class' => $prefix.$fields[$level].'_select custom_form_field',
+            'id' => 'id_'.$prefix.$fields[$level].'_select',
             'data-parentclass' => $prev_element,
             'data-selectstring' => get_string('select'.$fields[$level], 'local_costcenter'),
             'placeholder' => get_string('select'.$fields[$level], 'local_costcenter'),
             'data-depth' => $level,
-            'data-class' => $fields[$level].'_select',
+            'data-class' => $prefix.$fields[$level].'_select',
             'onchange' => '(function(e){ require("local_costcenter/newcostcenter").changeElement(event) })(event)',
         );
-        $prev_element = $fields[$level].'_select';
+        $prev_element = $prefix.$fields[$level].'_select';
         $fieldvalue = $ajaxformdata[$fields[$level]] ? $ajaxformdata[$fields[$level]] : $customdata[$fields[$level]];
         if($depth > $level){
-            $mform->addElement('hidden', $fields[$level], null, $levelelementoptions);
-            $mform->setConstant($fields[$level], $fieldvalue);
+            $mform->addElement('hidden', $prefix.$fields[$level], null, $levelelementoptions);
+            $mform->setConstant($prefix.$fields[$level], $fieldvalue);
         }else{
 
             $enableallfield = ($USER->useraccess['currentroleinfo']['depth'] > $level) || (is_siteadmin() && $level == 1) ? false : $allenable;
-            $levelelementoptions['multiple'] = $firstelement ? false : $multiple;
+            $levelelementoptions['multiple'] = ($firstelement && $prefix == '') ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
             $levelelementoptions['data-action'] = 'costcenter_element_selector';
@@ -975,16 +975,16 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
                     $levelelements += $DB->get_records_sql_menu($levelsql, $idparams);
                 }
             }
-            $mform->addElement('autocomplete', $fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
-            $mform->addHelpButton($fields[$level], $fields[$level].$pluginname, $pluginname);
+            $mform->addElement('autocomplete', $prefix.$fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
+            $mform->addHelpButton($prefix.$fields[$level], $fields[$level].$pluginname, $pluginname);
             if($level == 1){
 
-                $mform->addRule($fields[$level], get_string('required'.$fields[$level], 'local_costcenter'),  'required',  '', 'client');
+                $mform->addRule($prefix.$fields[$level], get_string('required'.$fields[$level], 'local_costcenter'),  'required',  '', 'client');
             }
 
             $firstelement = false;
         }
-        $mform->setType($fields[$level], PARAM_RAW);
+        $mform->setType($prefix.$fields[$level], PARAM_RAW);
     }
 }
 function local_costcenter_get_costcenter_path(&$data){

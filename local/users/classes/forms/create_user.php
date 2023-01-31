@@ -54,6 +54,8 @@ class create_user extends moodleform {
         $admin = $this->_customdata['admin'];
         $open_positionid = $this->_customdata['open_positionid'];
         $open_domainid = $this->_customdata['open_domainid'];
+        $this->_form->_attributes['id'] = 'create_user_form';
+        $this->_form->_attributes['class'] = 'create_user_form';
         if ($form_status == 0) {
 
 
