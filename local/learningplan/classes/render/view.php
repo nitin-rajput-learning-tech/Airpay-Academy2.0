@@ -1780,8 +1780,8 @@ class view extends plugin_renderer_base
 					$disable_class1 = ' '; /*Empty has been sent to class*/
 				}
 				$userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
-				$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu 
-				JOIN {user} as u ON u.id=llu.userid 
+				$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu
+				JOIN {user} as u ON u.id=llu.userid
 				WHERE llu.planid = :planid AND u.deleted != :deleted $userpathconcatsql GROUP BY llu.planid ";
 				$total_enroled_users = $this->db->get_record_sql($totaluser_sql, array('planid' => $planid, 'deleted' => 1));
 				/*Count of the requested users to LEP*/
@@ -1808,13 +1808,9 @@ class view extends plugin_renderer_base
 				$lpcourses_context['cmpltd_class'] = $cmpltd_class;
 				$lpcourses_context['completeflag'] = $completeflag;
 				$lpcourses_context['ctime'] = $ctime;
-<<<<<<< HEAD
-
-=======
 				$lpcourses_context['total_enroled_users'] = $total_enroled_users->data;
 				$lpcourses_context['cmpltd'] =count($cmpltd);
-				
->>>>>>> 0a8b8d2d543a3ed265ea72691b973017609b06d2
+
 				$openpath = $this->db->get_field('local_learningplan', 'open_path', array('id' => $planid));
 				list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $openpath);
 				$planorg = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
