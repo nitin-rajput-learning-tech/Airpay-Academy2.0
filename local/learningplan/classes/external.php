@@ -306,6 +306,7 @@ class local_learningplan_external extends external_api {
             $ratingusers = $avgratings->count;
             $learningplans['avgrating'] = $avgrating;
             $learningplans['ratingusers'] = $ratingusers;
+            $learningplans['certificateid'] = $lp->certificateid;
             $result[] = $learningplans;
         }
         return array('lps' => $result, 'total' => $total);
@@ -335,6 +336,7 @@ class local_learningplan_external extends external_api {
                             'ratingusers' => new external_value(PARAM_INT, 'Course rating users'),
                             'likes' => new external_value(PARAM_INT, 'LearningPath Likes'),
                             'dislikes' => new external_value(PARAM_INT, 'LearningPath Dislikes'),
+                            'certificateid'=> new external_value(PARAM_INT, 'LearningPath Certificate id'),
                             ), 'Learning Paths'
                         )
                 ),

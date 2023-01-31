@@ -506,9 +506,9 @@ class view extends plugin_renderer_base
 			}
 
 			$return .= html_writer::script('$(document).ready(function(){
-
+										  	
 												$("#' . $table->id . '").DataTable({
-
+												
 												    "serverSide": true,
 												    "language": {
 														paginate: {
@@ -522,7 +522,7 @@ class view extends plugin_renderer_base
 													"ajax": "ajax.php?manage=1&subdepts=' . $filtersubdepts . '&costcenterid=' . $filterorganizations . '&departmentid=' . $filterdepartments . '&learningplan=' . $filterlearningplan . '&status=' . $filterstatus . '&view_type=' . $view_type . '&department4level=' . $filter4level . '&department5level=' . $filter5level . '&states=' . $filterstates . '&district=' . $filterdistrict . '&subdistrict=' . $filtersubdistrict . '&village=' . $filtervillage . '",
 													"datatype": "json",
 													"pageLength": 8,
-
+													
 												});
 												$("table#all_learning_plans thead").css("display" , "none");
 												$("#all_learning_plans_length").css("display" , "none");
@@ -543,8 +543,8 @@ class view extends plugin_renderer_base
 		$plan_objective = !empty($plan_record->objective) ? $plan_record->objective : 'No Objective available';
 		/*Count of the enrolled users to LEP*/
 		$userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
-		$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu
-			JOIN {user} as u ON u.id=llu.userid
+		$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu 
+			JOIN {user} as u ON u.id=llu.userid 
 			WHERE llu.planid = :planid AND u.deleted != :deleted $userpathconcatsql GROUP BY llu.planid ";
 		$total_enroled_users = $this->db->get_record_sql($totaluser_sql, array('planid' => $planid, 'deleted' => 1));
 		/*Count of the requested users to LEP*/
@@ -707,7 +707,7 @@ class view extends plugin_renderer_base
 		$planview_context['cmpltd'] = count($cmpltd);
 		$planview_context['points'] = $plan_record->open_points ? $plan_record->open_points : 0;
 		$planview_context['percent'] =  $percent;
-
+		
 		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $plan_record->open_path);
 		$planorg = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
 		$plandpt = $this->db->get_field('local_costcenter', 'fullname', array('id' => $ctr));
@@ -881,18 +881,18 @@ class view extends plugin_renderer_base
                  $group=get_string('audience_group','local_learningplan','All');
             }else{
                 $sql = "SELECT id,name
-                 		FROM {cohort}
+                 		FROM {cohort} 
                  		WHERE id IN ($data->open_group)";
 
                 $groupslist = $DB->get_records_sql_menu($sql);
                 $groups = implode(", ", $groupslist);
                 $group = get_string('audience_group','local_learningplan',$groups);
             }
-
+            
             $data->open_hrmsrole =(!empty($data->open_hrmsrole)) ? $hrmsrole=get_string('audience_hrmsrole','local_learningplan',$data->open_hrmsrole) :$hrmsrole=get_string('audience_hrmsrole','local_learningplan','All');
-
+            
             $data->open_designation =(!empty($data->open_designation)) ? $designation=get_string('audience_designation','local_learningplan',$data->open_designation) :$designation=get_string('audience_designation','local_learningplan','All');
-
+            
             $data->open_location =(!empty($data->open_location)) ? $location=get_string('audience_location','local_learningplan',$data->open_location) :$location=get_string('audience_location','local_learningplan','All');*/
 
 		return '<div class="tab-pane active mt-15 ml-15" id="plan_courses" role="tabpanel">' . $department . $subdepartment . $commercial . $territory . $state . $district . $subdistrict . $village . '</div>';
@@ -917,14 +917,14 @@ class view extends plugin_renderer_base
 					<input type="hidden"  name="planid" value=' . $planid . ' >
 					<fieldset>
 					<ul class="button_ul">
-
+					
 					<li style="padding:18px; display:none"><label>' . get_string('search', 'local_learningplan') . '</label>
 					<input id="textbox" type="text"/>
 					</li>
 					<li><input type="button" id="select_remove" name="select_all" value="Select All">
 					<input type="button" id="remove_select" name="remove_all" value="Remove All">
 					</li>
-
+					
 					<li>';
 
 		$return .= '<select name="add_users[]" id="select-from" multiple size="15">';
@@ -960,11 +960,11 @@ class view extends plugin_renderer_base
 		$return .=	'</select></li>
 					</ul>
 					<ul class="button_ul">
-
-					<li><input type="submit" name="submit_users" value="add users" id="btn_add" style="width:98px;"></li>
+						
+					<li><input type="submit" name="submit_users" value="add users" id="btn_add" style="width:98px;"></li>                    
 					<li><input type="submit" name="submit_users" value="remove users" id="btn_remove"></li>
 					</ul>
-
+					
 					<ul class="button_ul">
 					<li><input type="button" id="select_add" name="select_all" value="Select All">
 					<input type="button" id="add_select" name="remove_all" value="Remove All">
@@ -1002,7 +1002,7 @@ class view extends plugin_renderer_base
 		$return .= "<script>
 						$('#btn_add').prop('disabled', true);
 						  $('#select-to').on('change', function() {
-
+						  
 							 if(this.value!=''){
 							  $('#btn_add').prop('disabled', false);
 							  $('#btn_remove').prop('disabled', true);
@@ -1019,8 +1019,8 @@ class view extends plugin_renderer_base
 								 $('#select-to option').prop('selected',false);
 								 $('#btn_remove').prop('disabled', true);
 								 $('#btn_add').prop('disabled', true);
-							});
-
+							}); 
+						
 						$('#btn_remove').prop('disabled', true);
 						  $('#select-from').on('change', function() {
 							 if(this.value!=''){
@@ -1040,8 +1040,8 @@ class view extends plugin_renderer_base
 								 $('#btn_add').prop('disabled', true);
 								 $('#btn_remove').prop('disabled', true);
 							});
-
-
+						
+						
 					</script>";
 		/*to check courses has the Learning plan enrolment or not*/
 		$courses = $this->db->get_records('local_learningplan_courses', array('planid' => $planid));
@@ -1416,7 +1416,6 @@ class view extends plugin_renderer_base
 		global $DB;
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 		$learningplan  = $DB->get_records('local_learningplan');
-		$lpuserexist = $DB->record_exists('local_learningplan_user',array('planid'=>$planid));
 		foreach ($learningplan as $plan)
 			$departmentcount = count(array_filter(explode(',', $plan->department)));
 		$subdepartmentcount = count(array_filter(explode(',', $plan->subdepartment)));
@@ -1424,18 +1423,17 @@ class view extends plugin_renderer_base
 		$learningplan_lib = new lib;
 		$userscount = $learningplan_lib->get_enrollable_users_count_to_learningplan($planid);
 		$return = '';
-		if(!$lpuserexist){
-			$add_learningplancourses = '<ul class="course_extended_menu_list learningplan">
-				<li>
-				    <div class="course_extended_menu_itemcontainer">
-				        <a title="' . get_string('assign_courses', 'local_learningplan') . '" class="course_extended_menu_itemlink" href="javascript:void(0);"
-							onclick="(function(e){ require(\'local_learningplan/courseenrol\').init({selector:\'createcourseenrolmodal\', contextid:' . $categorycontext->id . ', planid:' . $planid . ', condition:\'manage\'}) })(event)">
-								<i class="icon fa fa-plus" aria-hidden="true"></i>
-						</a>
-					</div>
-				</li>
-			</ul>';
-		}
+
+		$add_learningplancourses = '<ul class="course_extended_menu_list learningplan">
+							    		<li>
+									        <div class="course_extended_menu_itemcontainer">
+									            <a title="' . get_string('assign_courses', 'local_learningplan') . '" class="course_extended_menu_itemlink" href="javascript:void(0);"
+									            	onclick="(function(e){ require(\'local_learningplan/courseenrol\').init({selector:\'createcourseenrolmodal\', contextid:' . $categorycontext->id . ', planid:' . $planid . ', condition:\'manage\'}) })(event)">
+									            	<i class="icon fa fa-plus" aria-hidden="true"></i>
+									            </a>
+									        </div>
+									    </li>
+									</ul>';
 
 
 		if ($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext))) {
@@ -1623,7 +1621,7 @@ class view extends plugin_renderer_base
 					if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
 						$unassign_url = '';
 						$unassign_link = '';
-					} elseif ($disbaled_button == "") {
+					} else {
 
 						$unassign_url = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid, 'unassigncourse' => $course->lepid));
 						$unassign_link = html_writer::link(
@@ -1650,23 +1648,23 @@ class view extends plugin_renderer_base
 
 						if ($disbaled_button == "") {
 							$actions .= $unassign_link1; /*Arrows down for first course*/
+						}
 						/*condition for the select the dropdown if already selected*/
 						/*Select box*/
 
-							if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
-								$buttons .= '';
-							} else {
-								$buttons .= '<span class="switch_type">
-									<label class="switch">
-										<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
-										<span class="switch-label" data-on="Man" data-off="Opt"></span>
-											<span class="switch-handle"></span>
-									</label>
-
-									<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
-									<input type="hidden" value="' . $planid . '" name="plan">
-								</span>';
-							}
+						if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
+							$buttons .= '';
+						} else {
+							$buttons .= '<span class="switch_type">										
+										<label class="switch">
+											<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
+											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
+											<span class="switch-handle"></span> 
+										</label>
+							
+										<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
+										<input type="hidden" value="' . $planid . '" name="plan">
+									</span>';
 						}
 
 						/*End of the select box*/
@@ -1684,21 +1682,21 @@ class view extends plugin_renderer_base
 						}
 						if ($disbaled_button == "") {
 							$actions .= $unassign_link_up;
+						}
 
-							if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
-								$buttons .= '';
-							} else {
-								$buttons .= '<span class="switch_type">
-									<label class="switch">
-										<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
-										<span class="switch-label" data-on="Man" data-off="Opt"></span>
-											<span class="switch-handle"></span>
+						if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
+							$buttons .= '';
+						} else {
+							$buttons .= '<span class="switch_type">										
+										<label class="switch">
+											<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
+											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
+											<span class="switch-handle"></span> 
 										</label>
-
-									<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
-									<input type="hidden" value="' . $planid . '" name="plan">
-								</span>';
-							}
+						
+						<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
+						<input type="hidden" value="' . $planid . '" name="plan">
+						</span>';
 						}
 					} else {
 						/*Else condition Not for first and last record should have the both arrows*/
@@ -1717,17 +1715,17 @@ class view extends plugin_renderer_base
 							if ($disbaled_button == "") {
 								$actions .= $unassign_link_down;
 								$actions .= $unassign_link1;
-							/*select box*/
-								$buttons .= '<span class="switch_type">
-									<label class="switch">
-										<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
-										<span class="switch-label" data-on="Man" data-off="Opt"></span>
-										<span class="switch-handle"></span>
-									</label>
-
-									<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
-								</span>';
 							}
+							/*select box*/
+							$buttons .= '<span class="switch_type">										
+										<label class="switch">
+											<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
+											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
+											<span class="switch-handle"></span> 
+										</label>
+						
+										<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
+									</span>';
 						}
 						/*end of the select box*/
 						$courseid_condition[] = $course->lepid;
@@ -1775,13 +1773,13 @@ class view extends plugin_renderer_base
 				$cmpltd_class = '';
 				$completed_date = '';
 				$completeflag = false;
-				}
+				}			
 				if ($course->sortorder == 0) {/*Condtion to set the enable to first sortorder*/
 					$disable_class1 = ' '; /*Empty has been sent to class*/
 				}
 				$userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
-				$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu
-				JOIN {user} as u ON u.id=llu.userid
+				$totaluser_sql = "SELECT llu.planid,count(llu.userid) as data FROM {local_learningplan_user} as llu 
+				JOIN {user} as u ON u.id=llu.userid 
 				WHERE llu.planid = :planid AND u.deleted != :deleted $userpathconcatsql GROUP BY llu.planid ";
 				$total_enroled_users = $this->db->get_record_sql($totaluser_sql, array('planid' => $planid, 'deleted' => 1));
 				/*Count of the requested users to LEP*/
@@ -1810,7 +1808,7 @@ class view extends plugin_renderer_base
 				$lpcourses_context['ctime'] = $ctime;
 				$lpcourses_context['total_enroled_users'] = $total_enroled_users->data;
 				$lpcourses_context['cmpltd'] =count($cmpltd);
-
+				
 				$openpath = $this->db->get_field('local_learningplan', 'open_path', array('id' => $planid));
 				list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $openpath);
 				$planorg = $this->db->get_field('local_costcenter', 'fullname', array('id' => $org));
@@ -1855,13 +1853,13 @@ class view extends plugin_renderer_base
 				$lpcourse_data .= $this->render_from_template('local_learningplan/courestab_content', $lpcourses_context);
 				$lpcourse_data .= html_writer::script("$('#next_val" . $course->id . "').click(function() {
 											var checked = $(this).is(':checked');
-
+											
 										if(checked){
 											   var checkbox_value = '';
 											   var plan=$planid;
 											   var value='and';
 											  checkbox_value = $(this).val();
-
+											 
 										}else{
 										    var plan=$planid;
 											var checkbox_value = '';
@@ -1873,12 +1871,12 @@ class view extends plugin_renderer_base
 											url: M.cfg.wwwroot + '/local/learningplan/ajax.php?course='+checkbox_value+'&planid='+plan+'&value='+value,
 											data: { checked : checked },
 											success: function(data) {
-
+										
 											},
 											error: function() {
 											},
 											complete: function() {
-
+										
 											}
 											});
 										});
@@ -2008,7 +2006,7 @@ class view extends plugin_renderer_base
 				// }
 				$icon = '<i class="icon fa fa-download" aria-hidden="true"></i>';
 				if ($user->completiondate) {
-					//                        mallikarjun added to download default certificate
+					//                        mallikarjun added to download default certificate 
 					//						$array = array('ctid'=>$certid, 'mtype'=>'learningplan','mid'=>$planid,'uid'=>$user->id);
 					//						$url = new moodle_url('/local/certificates/view.php',$array);
 					$certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid' => $planid, 'userid' => $user->id, 'moduletype' => 'learningplan'));
@@ -2481,7 +2479,7 @@ class view extends plugin_renderer_base
 						$check_users = $learningplan_lib->check_courses_assigned_target_audience($this->user->id, $plan_record->id);
 
 						// if($check_users==1){
-						// 	$back_url = new moodle_url('/local/learningplan/index.php', array('approval' => $plan_record->id));
+						// 	$back_url = new moodle_url('/local/learningplan/index.php', array('approval' => $plan_record->id));	
 						// 	$approve=  html_writer::link('Send Request', array('class' => 'pull-right enrol_to_plan nourl','id'=>'request'));
 						// 	$notify_info = new stdClass();
 						// 	$notify_info->name = $plan_record->name;
@@ -2567,7 +2565,7 @@ class view extends plugin_renderer_base
 				if ($certificate_plugin_exist) {
 					if (!empty($lplan->certificateid)) {
 						$certificate_exists = true;
-						$sql = "SELECT id
+						$sql = "SELECT id 
 		                        FROM {local_learningplan_user}
 		                        WHERE planid = :planid AND userid = :userid
 		                        AND status = 1 ";
@@ -2785,7 +2783,7 @@ class view extends plugin_renderer_base
 				} else {
 					$avgrating  = '';
 				}
-
+                
 				$lp_userviewcoures['disable_class1'] = $disable_class1;
 				$lp_userviewcoures['needenrol'] = $needenrol;
 				$lp_userviewcoures['enroldisable_class1'] = $enroldisable_class1;
@@ -2803,7 +2801,7 @@ class view extends plugin_renderer_base
 				$lp_userviewcoures['completeflag'] = $completeflag;
 				$lp_userviewcoures['avgrating'] =$avgrating;
 				$lp_userviewcoures['ctime'] =$ctime;
-
+				
 				/**To disable the The status like Launch || Enrolled || Completed || before enrol to plan**/
 				$check = $this->db->get_field('local_learningplan_user', 'id', array('userid' => $this->user->id, 'planid' => $planid));
 				/*End of query*/
