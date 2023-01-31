@@ -38,7 +38,7 @@ class local_users_renderer extends plugin_renderer_base {
         $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         $userrecord = $DB->get_record('user', array('id' => $id));
         /*user image*/
-        $user_image = $OUTPUT->user_picture($userrecord, array('size' => 80, 'link' => false));
+        $user_image = $OUTPUT->user_picture($userrecord, array('size' => 35, 'link' => false));
 
         /*user roles*/
         $userroles = get_user_roles($categorycontext, $id);
