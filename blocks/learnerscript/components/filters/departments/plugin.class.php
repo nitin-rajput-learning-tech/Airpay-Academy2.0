@@ -65,7 +65,7 @@ class plugin_departments extends pluginbase {
         return $finalelements;
     }
 
-    public function filter_data($selectoption = true, $request){
+    public function filter_data($selectoption = true, $request = []){
         global $DB, $USER;
         $filter_departments = '';
         $filterdepartments = optional_param('filter_departments', 0, PARAM_INT);
@@ -137,7 +137,9 @@ class plugin_departments extends pluginbase {
         
         return $deptoptions;
     }
-
+    public function enabledepth(){
+        return 3;
+    }
     public function selected_filter($selected, $request = array()) {
         $filterdata = $this->filter_data(false, $request);
         return $filterdata[$selected];

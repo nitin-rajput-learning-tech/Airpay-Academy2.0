@@ -65,7 +65,7 @@ class plugin_subdepartments extends pluginbase {
         return $finalelements;
     }
 
-    public function filter_data($selectoption = true, $request){
+    public function filter_data($selectoption = true, $request = []){
         global $DB, $USER;
         $filter_subdepartments = '';
         $filtersubdepartments = optional_param('filter_subdepartments', 0, PARAM_INT);
@@ -122,7 +122,9 @@ class plugin_subdepartments extends pluginbase {
 
         return $subdepartmentoptions;
     }
-
+    public function enabledepth(){
+        return 4;
+    }
     public function selected_filter($selected, $request = array()) {
         $filterdata = $this->filter_data(true, $request);
         return $filterdata[$selected];

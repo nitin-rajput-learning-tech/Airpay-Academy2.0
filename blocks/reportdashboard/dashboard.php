@@ -82,7 +82,7 @@ if (!is_siteadmin()) {
     //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
     //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
     // } else {
-        $ohs = $dhs = 1;
+        // $ohs = $dhs = 1;
     // }
         
 
@@ -90,6 +90,8 @@ if (!is_siteadmin()) {
 $dashboardcostcenterid = 0;
 $dashboarddepartmentid = 0;
 $dashboardsubdepartmentid = 0;
+$dashboardl4departmentid = 0;
+$dashboardl5departmentid = 0;
 $dashboardcourseid=0;
 $complianceid=0;
     if (is_siteadmin()  || ($_SESSION['role'] == 'manager')) {
@@ -103,114 +105,14 @@ $complianceid=0;
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
         $dashboarddepartment = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE visible = 1 AND depth = 2 AND parentid = $dashboardcostcenterid ORDER BY id ASC LIMIT 0, 1");
         $dashboarddepartmentid = $dashboarddepartment;
-    } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs) {
+    } else /*if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs)*/ {
         $dashboarddepartment = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE visible = 1 AND depth = 2 AND parentid = $user_costcenterid ORDER BY id ASC LIMIT 0, 1");
         $dashboarddepartmentid = $dashboarddepartment;
-    } else {
-        $dashboarddepartment = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE visible = 1 AND depth = 2 AND parentid = $user_costcenterid AND id = :department ORDER BY id ASC LIMIT 0, 1", array('department' => $user_departmentid));
-        $dashboarddepartmentid = $dashboarddepartment;
+    // } else {
+    //     $dashboarddepartment = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE visible = 1 AND depth = 2 AND parentid = $user_costcenterid AND id = :department ORDER BY id ASC LIMIT 0, 1", array('department' => $user_departmentid));
+    //     $dashboarddepartmentid = $dashboarddepartment;
     }
-if ($dashboardurl == 'Course') {
-    if ($_SESSION['role'] != 'dh') {
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
-            $depcourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c WHERE c.open_costcenterid IN ($dashboardcostcenterid)");
-            $learnercourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c
-                JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
-              JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
-              JOIN {role_assignments}  ra ON ra.userid = ue.userid
-              JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-              JOIN {context} ctx ON ctx.instanceid = c.id
-              JOIN {user} AS u ON u.id = ue.userid
-              JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
-              AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1
-              WHERE u.open_costcenterid = $dashboardcostcenterid ");
-            if (empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = $depcourseslist;
-            } else if (!empty($learnercourseslist) && empty($depcourseslist)) {
-                $totalcourses = $learnercourseslist;
-            } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = array_merge($learnercourseslist, $depcourseslist);
-            } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = array();
-            }
-        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs) {
-            $depcourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c WHERE c.open_costcenterid IN ($dashboardcostcenterid) ");
-            $learnercourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c
-                JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
-              JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
-              JOIN {role_assignments}  ra ON ra.userid = ue.userid
-              JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-              JOIN {context} ctx ON ctx.instanceid = c.id
-              JOIN {user} AS u ON u.id = ue.userid
-              JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
-              AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1
-              WHERE u.open_costcenterid = $dashboardcostcenterid ");
-            if (empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = $depcourseslist;
-            } else if (!empty($learnercourseslist) && empty($depcourseslist)) {
-                $totalcourses = $learnercourseslist;
-            } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = array_merge($learnercourseslist, $depcourseslist);
-            } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = array();
-            }
-        }else {
-            $depcourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c WHERE c.open_costcenterid IN ($dashboardcostcenterid) AND c.open_departmentid = $user_departmentid ");
-            $learnercourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c
-                JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
-              JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
-              JOIN {role_assignments}  ra ON ra.userid = ue.userid
-              JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-              JOIN {context} ctx ON ctx.instanceid = c.id
-              JOIN {user} AS u ON u.id = ue.userid
-              JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
-              AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1
-              WHERE u.open_costcenterid = $dashboardcostcenterid AND u.open_departmentid = $user_departmentid");
-            if (empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = $depcourseslist;
-            } else if (!empty($learnercourseslist) && empty($depcourseslist)) {
-                $totalcourses = $learnercourseslist;
-            } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = array_merge($learnercourseslist, $depcourseslist);
-            } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-                $totalcourses = array();
-            }
-        }
-    } else {
-        $depcourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c WHERE c.visible = 1 AND c.open_costcenterid = $user_costcenterid AND c.open_departmentid = $user_departmentid");
-        $learnercourseslist = $DB->get_records_sql("SELECT c.id FROM {course} c
-            JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
-          JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
-          JOIN {role_assignments}  ra ON ra.userid = ue.userid
-          JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-          JOIN {context} ctx ON ctx.instanceid = c.id
-          JOIN {user} AS u ON u.id = ue.userid
-          JOIN {local_costcenter} lc ON lc.id = u.open_costcenterid
-          AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1
-          WHERE u.open_costcenterid = $user_costcenterid AND u.open_departmentid = $user_departmentid");
-        if (empty($learnercourseslist) && !empty($depcourseslist)) {
-            $totalcourses = $depcourseslist;
-        } else if (!empty($learnercourseslist) && empty($depcourseslist)) {
-            $totalcourses = $learnercourseslist;
-        } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-            $totalcourses = array_merge($learnercourseslist, $depcourseslist);
-        } else if (!empty($learnercourseslist) && !empty($depcourseslist)) {
-            $totalcourses = array();
-        }
-    }
-    foreach ($totalcourses as $totalcourse) {
-        $list[] = $totalcourse->id;
-    }
-    $courseslist = !empty($totalcourses) ? implode(',', array_unique($list)) : 0;
-    $dashboardcourse = $DB->get_field_sql("SELECT c.id FROM {course} c WHERE c.id IN ($courseslist) ORDER BY id DESC LIMIT 0, 1");
-    if ($dashboardcourse == SITEID || $dashboardcourse == 0) {
-        $dashboardcourseid = SITEID;
-    } else {
-        $dashboardcourseid = $dashboardcourse;
-    }
-    $coursels = true;
-    $parentcheck = false;
-}
+
 
 $coursels = true;
 $parentcheck = false;
@@ -362,95 +264,7 @@ if (!empty($role) || is_siteadmin()) {
         echo $OUTPUT->blocks('side-db-four', 'width-default width-3');
         echo html_writer::end_tag('div');
 
-        if ($dashboardurl == 'Compliances') {
-           $sql = "SELECT lc.id FROM {local_compliance} lc
-                    JOIN {local_courses_orgwisevendors} lco ON lco.contentvendorid = lc.contentvendor WHERE 1 = 1 ";
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-                $costid = '';
-                $dashboarddepartmentid = -1;
-                $dashboardsubdepartmentid = -1;
-                $csql = "SELECT id FROM {local_costcenter} WHERE 1 = 1 AND depth = 1 ";
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if($_SESSION['costcenter'] > 0){
-                        $csql .= " AND id = ".$_SESSION['costcenter']."";
-                        $costid = $_SESSION['costcenter'];
-                    }else{
-                      $dashboardcostcenterid = -1;
-                    }
-                    if($_SESSION['departments'] > 0){
-                        $dashboarddepartmentid = $_SESSION['departments'];
-                    }
-                }else{
-                  $costid = 0;
-                }
 
-                $costcenter = $DB->get_record_sql($csql);
-                $costcenterid = ($costid !='' && $costid !=0) ? $costid : $costcenter->id;
-                if(!empty($costid)){
-                  $sql .= " AND lc.costcenter IN (". $costcenterid.", 0) AND lco.costcenterid = " . $costcenterid;
-                  $dashboardcostcenterid = $costcenterid;
-                }else if($dashboardcostcenterid == -1){
-                  $dashboardcostcenterid = $dashboardcostcenterid;
-                }else{
-                  $sql .= " AND lc.costcenter IN (". $costcenter->id .", 0) AND lco.costcenterid = " . $costcenter->id;
-                  $dashboardcostcenterid = $costcenter->id;
-                }                
-
-            } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $_SESSION['role'] == 'oh') {
-                $dashboardcostcenterid = $user_costcenterid;
-                $dashboarddepartmentid = -1;
-                $dashboardsubdepartmentid = -1;  
-                $sql .= " AND lc.costcenter IN (". $user_costcenterid.", 0) AND lco.costcenterid = " . $user_costcenterid;
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if($_SESSION['departments'] > 0){
-                        $dashboarddepartmentid = $_SESSION['departments'];
-                        $sql .= " AND lc.department IN (".$_SESSION['departments'].",-1) ";
-                    }
-                    if($_SESSION['subdepartment'] > 0){
-                        $dashboardsubdepartmentid = $_SESSION['subdepartment'];
-                        $sql .= " AND lc.subdepartment IN (".$_SESSION['subdepartment'].",-1) ";
-                    }
-                }
-                
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $_SESSION['role'] == 'dh'){
-                $dashboardcostcenterid = $user_costcenterid;
-                $dashboarddepartmentid = $user_departmentid;
-                $dashboardsubdepartmentid = -1;
-                $sql .= " AND lc.costcenter IN (". $user_costcenterid .", 0) AND lc.department IN (". $user_departmentid.", -1) AND lco.costcenterid = " . $user_costcenterid;
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if($_SESSION['subdepartment'] > 0){
-                        $dashboardsubdepartmentid = $_SESSION['subdepartment'];
-                        $sql .= " AND lc.subdepartment IN (".$_SESSION['subdepartment'].",-1) ";
-                    }
-                }
-            }else {
-                $sql .= " AND lc.costcenter IN (". $user_costcenterid .", 0) AND lc.department IN (". $user_departmentid.", -1) AND lc.subdepartment IN (". $user_subdepartmentid .", -1) AND lco.costcenterid = " . $user_costcenterid;
-                $dashboardcostcenterid = $user_costcenterid;
-                $dashboarddepartmentid = $user_departmentid;
-                $dashboardsubdepartmentid = $user_subdepartmentid; 
-            } 
-            // if (!empty($this->params['filter_departments']) && ($this->params['filter_departments'] > 0)) {
-            //     $sql .= " AND lcc.department IN (" .$this->params['filter_departments'] .",-1)";
-            // }
-            // if (!empty($this->params['filter_subdepartments']) && ($this->params['filter_subdepartments'] > 0)) {
-            //     $sql .= " AND lcc.subdepartment IN (" .$this->params['filter_subdepartments'] .", -1)";
-            // }
-          if(!empty($_SESSION['compliance_id_array'])) {
-              $sql .= " AND lc.id IN (". $_SESSION['compliance_id_array'] .") ";
-          }
-          $sql .= " ORDER BY lc.id ASC LIMIT 1 ";
-          $complianceid = $DB->get_field_sql($sql);
-          if(empty($complianceid)) {
-              echo "<div class='alert alert-info'>". get_string('createcompliance', 'block_reportdashboard') ."</div>";
-          } else {
-              $compliances = $PAGE->get_renderer('block_reportdashboard');
-              echo $compliances->compliances($complianceid, $dashboardcostcenterid, $dashboarddepartmentid, $dashboardsubdepartmentid);
-              $style = 'display:none;';
-              echo html_writer::start_tag('div', array('class' => 'width-container', 'style' => $style));
-              echo $OUTPUT->blocks('compliance-first', 'width-default width-12');
-              echo html_writer::end_tag('div');          
-          }
-        }
        
         echo html_writer::start_tag('div', array('class' => 'width-container'));
         echo $OUTPUT->blocks('learning-first', 'width-default width-2');
@@ -476,35 +290,7 @@ if (!empty($role) || is_siteadmin()) {
         echo html_writer::end_tag('div');
         $style = '';
         $class = '';
-        if ($dashboardurl == 'Learnerdashboard') {
-            // $onlinecoursesql = "SELECT c.id, c.fullname AS onlinecourse
-            //     FROM {course} c
-            //     JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-            //     WHERE 1 = 1 AND clf.name = 'Online Course' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
-            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            //   if($dashboardcostcenterid>0){
-            //     $onlinecoursesql .= " AND c.open_costcenterid IN ($dashboardcostcenterid, 0) ";
-            //   }
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            //     $onlinecoursesql .= " AND c.open_costcenterid IN ($user_costcenterid, 0) ";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            //     $onlinecoursesql .= " AND c.open_costcenterid IN ($user_costcenterid, 0) AND c.open_departmentid IN ($user_departmentid, 0) ";
-            // }
-            // $onlinecourses = $DB->get_records_sql($onlinecoursesql);
-            // $onlinecourseslist[0] = 'Filter by course';
-            // foreach ($onlinecourses as $onlinecourse) {
-            //     $onlinecourseslist[$onlinecourse->id] = $onlinecourse->onlinecourse;
-            // }
-            // if (!$onlinecourses) {
-            //   $style .= 'display:none;';
-            // }
-            // $class = 'region-onlinecourses';
-            // echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs region-onlinecourses-filter', 'style' => $style));
-           // echo html_writer::label('<b>Online courses:</b> ', 'filter_onlinecourses', false, array());
-            // echo html_writer::select($onlinecourseslist, 'filter_onlinecourses', '', array(), array('id' => 'ls_onlinecourseid', 'class' => 'report_onlinecourse','data-select2'=>'1'));
-            // echo '<br>';
-            // echo html_writer::end_tag('div');
-        }
+
         echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs ' . $class, 'style' => $style));
         echo $OUTPUT->blocks('ol-one', 'width-default width-2 ml0');
         echo $OUTPUT->blocks('ol-second', 'width-default width-2');
@@ -553,35 +339,7 @@ if (!empty($role) || is_siteadmin()) {
         $style = '';
         $class = '';
 
-        // Added for Learnerdashboard
-        if ($dashboardurl == 'Learnerdashboard') {
-            // $learnerpathsql = "SELECT lp.id, lp.name
-            //     FROM {local_learningplan} lp
-            //     WHERE 1 = 1 ";
-            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            //   if($dashboardcostcenterid>0){
-            //     $learnerpathsql .= " AND lp.costcenter IN ($dashboardcostcenterid, 0) ";
-            //   }
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            //     $learnerpathsql .= " AND lp.costcenter IN ($user_costcenterid, 0) ";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            //     $learnerpathsql .= " AND lp.costcenter IN ($user_costcenterid, 0) AND lp.department IN ($user_departmentid, -1) ";
-            // }
-            // $learningpaths = $DB->get_records_sql($learnerpathsql);
-            // $learningpathslist[0] = 'Filter by course';
-            // foreach ($learningpaths as $learningpath) {
-            //     $learningpathslist[$learningpath->id] = $learningpath->name;
-            // }
-            // if (!$learningpaths) {
-            //   $style .= 'display:none;';
-            // }
-            // $class = 'region-learningpath';
-            // echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs region-learningpath-filter', 'style' => $style));
-          //  echo html_writer::label('<b>Learning path:</b> ', 'filter_learningpath', false, array());
-            // echo html_writer::select($learningpathslist, 'filter_learningpath', '', array(), array('id' => 'ls_learningpathid', 'class' => 'report_learningpath','data-select2'=>'1'));
-            // echo '<br>';
-            // echo html_writer::end_tag('div');
-        }
+
 
         echo html_writer::start_tag('div', array('class' => 'width-container ' . $class, 'style' => $style));
         echo $OUTPUT->blocks('lp-one', 'width-default width-2 ml0');
@@ -603,33 +361,6 @@ if (!empty($role) || is_siteadmin()) {
         echo html_writer::end_tag('div');
         $style = '';
         $class = '';
-        if ($dashboardurl == 'Learnerdashboard') {
-            // $programsql = "SELECT lp.id, lp.name AS program
-            //     FROM {local_program} lp WHERE 1 = 1 ";
-            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            //   if($dashboardcostcenterid>0){
-            //     $programsql .= " AND lp.costcenter IN ($dashboardcostcenterid, 0) ";
-            //   }
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            //     $programsql .= " AND lp.costcenter IN ($user_costcenterid, 0) ";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            //     $programsql .= " AND lp.costcenter IN ($user_costcenterid, 0) AND lp.department IN ($user_departmentid, -1) ";
-            // }
-            // $programs = $DB->get_records_sql($programsql);
-            // $classroomslist[0] = 'Filter by course';
-            // foreach ($programs as $program) {
-            //     $classroomslist[$program->id] = $program->program;
-            // }
-            // if (!$programs) {
-            //   $style .= 'display:none;';
-            // }
-            // $class = 'region-program';
-           // echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs region-classroom-filter', 'style' => $style));
-          //  echo html_writer::label('<b>Instructor-led Course:</b> ', 'filter_classrooms', false, array());
-            // echo html_writer::select($classroomslist, 'filter_classrooms', '', array(), array('id' => 'ls_classroomid', 'class' => 'report_classrooms','data-select2'=>'1'));
-            // echo '<br>';
-            // echo html_writer::end_tag('div');
-        }
         echo html_writer::start_tag('div', array('class' => 'width-container ' . $class, 'style' => $style));
         echo $OUTPUT->blocks('program-one', 'width-default width-2 ml0');
         echo $OUTPUT->blocks('program-second', 'width-default width-2');
@@ -643,35 +374,7 @@ if (!empty($role) || is_siteadmin()) {
         echo $OUTPUT->blocks('program-main', 'width-default width-12');
         echo html_writer::end_tag('div');
 
-        if ($dashboardurl == 'Learnerdashboard') {
-            // $labsql = "SELECT c.id, c.fullname AS lab
-            //     FROM {course} c
-            //     JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-            //     WHERE 1 = 1 AND clf.name = 'Lab' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
-            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            //     if($dashboardcostcenterid>0){
-            //       $labsql .= " AND c.open_costcenterid IN ($dashboardcostcenterid, 0) ";
-            //     } 
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            //     $labsql .= " AND c.open_costcenterid IN ($user_costcenterid, 0) ";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            //     $labsql .= " AND c.open_costcenterid IN ($user_costcenterid, 0) AND c.open_departmentid IN ($user_departmentid, 0) ";
-            // }
-            // $labs = $DB->get_records_sql($labsql);
-            // $labslist[0] = 'Filter by course';
-            // foreach ($labs as $lab) {
-            //     $labslist[$lab->id] = $lab->lab;
-            // }
-            // if (!$labs) {
-            //   $style .= 'display:none;';
-            // }
-            // $class = 'region-labs';
-//            echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs region-labs-filter', 'style' => $style));
-          //  echo html_writer::label('<b>Labs:</b> ', 'filter_labs', false, array());
-            // echo html_writer::select($labslist, 'filter_labs', '', array(), array('id' => 'ls_labid', 'class' => 'report_lab','data-select2'=>'1'));
-            // echo '<br>';
-            // echo html_writer::end_tag('div');
-        }
+
 
         echo html_writer::start_tag('div', array('class' => 'width-container ' . $class, 'style' => $style));
         echo $OUTPUT->blocks('labs-one', 'width-default width-2 ml0');
@@ -692,35 +395,7 @@ if (!empty($role) || is_siteadmin()) {
         echo html_writer::end_tag('div');
         $style = '';
         $class = '';
-        if ($dashboardurl == 'Learnerdashboard') {
-            // $assessmentsql = "SELECT c.id, c.fullname AS assessment
-            //     FROM {course} c
-            //     JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-            //     WHERE 1 = 1 AND clf.name = 'Assessment' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
-            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            //   if($dashboardcostcenterid>0){
-            //     $assessmentsql .= " AND c.open_costcenterid IN ($dashboardcostcenterid, 0) ";
-            //   }
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            //     $assessmentsql .= " AND c.open_costcenterid IN ($user_costcenterid, 0) ";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            //     $assessmentsql .= " AND c.open_costcenterid IN ($user_costcenterid, 0) AND c.open_departmentid IN ($user_departmentid, 0) ";
-            // }
-            // $assessments = $DB->get_records_sql($assessmentsql);
-            // $assessmentslist[0] = 'Filter by course';
-            // foreach ($assessments as $assessment) {
-            //     $assessmentslist[$assessment->id] = $assessment->assessment;
-            // }
-            // if (!$assessments) {
-            //   $style .= 'display:none;';
-            // }
-            // $class = 'region-assessments';
-//            echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs region-assessments-filter', 'style' => $style));
-          //  echo html_writer::label('<b>Assessments:</b> ', 'filter_assessments', false, array());
-            // echo html_writer::select($assessmentslist, 'filter_assessments', '', array(), array('id' => 'ls_assessmentid', 'class' => 'report_assessments','data-select2'=>'1'));
-            // echo '<br>';
-            // echo html_writer::end_tag('div');
-        }
+
         echo html_writer::start_tag('div', array('class' => 'width-container ' . $class, 'style' => $style));
         echo $OUTPUT->blocks('assess-one', 'width-default width-2 ml0');
         echo $OUTPUT->blocks('assess-second', 'width-default width-2');
@@ -745,33 +420,7 @@ if (!empty($role) || is_siteadmin()) {
         echo html_writer::end_tag('div');
         $style = '';
         $class = '';
-        if ($dashboardurl == 'Learnerdashboard') {
-            // $webinarsql = "SELECT c.id, c.fullname AS webinar
-            //     FROM {course} c
-            //     JOIN {local_courses_learningformat} AS clf ON clf.id = c.open_learningformat
-            //     WHERE 1 = 1 AND clf.name = 'Webinar' AND CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
-            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            //     $webinarsql .= " AND c.open_costcenterid = $dashboardcostcenterid";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            //     $webinarsql .= " AND c.open_costcenterid = $user_costcenterid ";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            //     $webinarsql .= " AND c.open_costcenterid = $user_costcenterid AND c.open_departmentid = $user_departmentid";
-            // }
-            // $webinars = $DB->get_records_sql($webinarsql);
-            // $webinarslist[0] = 'Filter by course';
-            // foreach ($webinars as $webinar) {
-            //     $webinarslist[$webinar->id] = $webinar->webinar;
-            // }
-            // if (!$webinars) {
-            //   $style .= 'display:none;';
-            // }
-            // $class = 'region-webinars';
-          //  echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs region-webinars-filter', 'style' => $style));
-          //  echo html_writer::label('<b>Webinars:</b> ', 'filter_webinars', false, array());
-            // echo html_writer::select($webinarslist, 'filter_webinars', '', array(), array('id' => 'ls_webinarid', 'class' => 'report_webinars','data-select2'=>'1'));
-            // echo '<br>';
-            // echo html_writer::end_tag('div');
-        }
+
         echo html_writer::start_tag('div', array('class' => 'width-container ' . $class, 'style' => $style));
         echo $OUTPUT->blocks('webinars-one', 'width-default width-2 ml0');
         echo $OUTPUT->blocks('webinars-second', 'width-default width-2');
@@ -792,33 +441,7 @@ if (!empty($role) || is_siteadmin()) {
         echo html_writer::end_tag('div');
         $style = '';
         $class = '';
-        if ($dashboardurl == 'Learnerdashboard') {
-            // $classroomssql = "SELECT lc.id, lc.name AS classroom
-            //     FROM {local_classroom} lc WHERE 1 = 1 ";
-            // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            //   if($dashboardcostcenterid>0){
-            //     $classroomssql .= " AND lc.costcenter IN ($dashboardcostcenterid, 0) ";
-            //   }
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            //     $classroomssql .= " AND lc.costcenter IN ($user_costcenterid, 0) ";
-            // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            //     $classroomssql .= " AND lc.costcenter IN ($user_costcenterid, 0) AND lc.department IN ($user_departmentid, -1) ";
-            // }
-            // $classrooms = $DB->get_records_sql($classroomssql);
-            // $classroomslist[0] = 'Filter by course';
-            // foreach ($classrooms as $classroom) {
-            //     $classroomslist[$classroom->id] = $classroom->classroom;
-            // }
-            // if (!$classrooms) {
-            //   $style .= 'display:none;';
-            // }
-            // $class = 'region-classroom';
-           // echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs region-classroom-filter', 'style' => $style));
-          //  echo html_writer::label('<b>Instructor-led Course:</b> ', 'filter_classrooms', false, array());
-            // echo html_writer::select($classroomslist, 'filter_classrooms', '', array(), array('id' => 'ls_classroomid', 'class' => 'report_classrooms','data-select2'=>'1'));
-            // echo '<br>';
-            // echo html_writer::end_tag('div');
-        }
+
         echo html_writer::start_tag('div', array('class' => 'width-container ' . $class, 'style' => $style));
         echo $OUTPUT->blocks('classroom-one', 'width-default width-3 ml0');
         echo $OUTPUT->blocks('classroom-second', 'width-default width-3');
