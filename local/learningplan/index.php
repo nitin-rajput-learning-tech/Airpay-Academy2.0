@@ -158,15 +158,14 @@ if(is_siteadmin()){
 }else if(has_capability('local/learningplan:manage',$categorycontext) && $depth == 2){
     $thisfilters = array('learningplan','departments', 'subdepartment', 'department4level','department5level', 'status', 'states', 'district', 'subdistrict', 'village');
 }else if(has_capability('local/learningplan:manage', $categorycontext) && $depth == 3){
-    $thisfilters = array('department4level','department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
+    $thisfilters = array('subdepartment','department4level','department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
 }else if(has_capability('local/learningplan:manage', $categorycontext) && $depth == 4){
-    $thisfilters = array('department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
+    $thisfilters = array('department4level','department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
 }else {
-    $thisfilters = array('learningplan', 'status', 'states', 'district', 'subdistrict', 'village');
+    $thisfilters = array('learningplan','department5level','status', 'states', 'district', 'subdistrict', 'village');
 }
 
 $mform = new filters_form(null, array('filterlist'=> $thisfilters));
-//$filterdata = null;     
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/learningplan/index.php');
 } else{
