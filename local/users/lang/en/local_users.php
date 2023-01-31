@@ -786,3 +786,4 @@ $string['level'] = 'Level';
 $string['na'] = 'N/A';
 $string['managegeographyfields'] = 'Geography Location Master';
 $string['onlylowercase'] = 'Only small letter accept';
+$string['action'] = 'Action';
