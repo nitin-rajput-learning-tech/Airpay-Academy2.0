@@ -275,7 +275,7 @@ class dashboardheader implements renderable, templatable {
             require_once($CFG->dirroot.'/blocks/learnerscript/components/filters/'.$filter.'/plugin.class.php');
             $class = 'plugin_'.$filter;
             $filterclass = new $class($firstreport);
-            if($admin || $depth < $class->enabledepth()){
+            if($admin || $depth < $filterclass->enabledepth()){
                 // var_dump();
                 // var_dump($filter);
                 ${$filter.'_options'} = $filterclass->filter_data();
