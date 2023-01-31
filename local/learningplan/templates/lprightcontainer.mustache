@@ -18,15 +18,17 @@
     <div class="learningpath_details  mb-2">
         <div class="block_heading "><b>{{#str}}details{{/str}}</b></div>
         <div class="block_content">
-            <div class="d-flex">            
+            <div class="d-flex ">            
                 <span class="content_name" >{{#str}}learningplan,local_learningplan{{/str}}</span>
-                <span class="coln-align">: 
-                <span class="text-muted">{{ plan_learningplan_code }}</span></span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ plan_learningplan_code }}</span>
+                </span>
             </div>
             <div class="d-flex ">
                 <span class="content_name" >{{#str}}learningplan_index_credits, local_learningplan {{/str}} </span>
-                <span class="coln-align">: 
-                <span class="text-muted">{{ lplancredits }}</span></span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ lplancredits }}</span>
+                </span>
             </div>
         </div>
     </div>
@@ -34,14 +36,16 @@
        <div class="block_heading "><b>{{#str}} assigned_courses, local_learningplan {{/str}} </b></div>
        <div class="block_content">
             <div class="d-flex ">
-                <span class="content_name" >{{#str}}mandatory, local_learningplan {{/str}}</span>   
-                <span class="coln-align">:
-                <span class="text-muted">{{ mandatarycourses_count }}</span></span> 
+                <span class="content_name" >{{#str}}mandatory, local_learningplan {{/str}}</span>
+                <span class="conent_code">   
+                    <span class="coln-align text-muted">: {{ mandatarycourses_count }}</span>
+                </span> 
             </div>
             <div class="d-flex ">
                 <span class="content_name" >{{#str}}optional,local_learningplan{{/str}}</span>
-                <span class="coln-align">:
-                <span class="text-muted">{{ optionalcourses_count }}</span></span> 
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ optionalcourses_count }}</span>
+                </span>
             </div>
         </div>
     </div>
