@@ -1158,7 +1158,9 @@ class renderer extends plugin_renderer_base
         }
 
         if (!is_siteadmin()) {
-            $switchedrole = $USER->access['rsw']['/1'];
+            $patharr =(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+            $context =(new \local_costcenter\lib\accesslib())::costcenterpath_contextdata($patharr[0]);
+            $switchedrole = $USER->access['rsw'][$context->path];
             if ($switchedrole) {
                 $userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
             } else {
