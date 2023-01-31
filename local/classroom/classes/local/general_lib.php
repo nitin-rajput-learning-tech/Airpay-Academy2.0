@@ -61,7 +61,7 @@ class general_lib{
                 require_once($CFG->dirroot.'/local/includes.php');
                 $includes = new \user_course_details();
             }
-            $coursefileurl = (new \local_classroom\classroom)->classroom_logo($coursefileurl = $classroom->id);
+            $coursefileurl = (new \local_classroom\classroom)->classroom_logo($coursefileurl = $classroom->classroomlogo);
             if($coursefileurl == false){
                 $coursefileurl = $includes->get_classes_summary_files($classroom);
             }
