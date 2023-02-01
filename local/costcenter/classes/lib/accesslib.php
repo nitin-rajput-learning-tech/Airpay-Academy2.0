@@ -420,7 +420,6 @@ class accesslib
 
         if (count($options) > 1) {
 
-            $currentroleinfo = $DB->get_field('role', 'name', array('id' => $USER->useraccess['currentroleinfo']['roleid']));
 
             $datatype = optional_param($paramname, $optionkey, PARAM_INT);
 
@@ -431,8 +430,24 @@ class accesslib
 
             $cachedatatype =$USER->useraccess['currentroleinfo']['roleswitch_selected_option'];
 
+            $depth = $USER->useraccess['currentroleinfo']['depth'];
+            if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+                 $depth--;
+            }
+            if($depth < 2){
+                $rowdatadepth = get_string('organization','local_users');
+            } elseif($depth < 3){
+                $rowdatadepth = get_string('department','local_users');
+            } elseif($depth < 4){
+                $rowdatadepth = get_string('commercialunit','local_users');
+            } elseif($depth < 5){
+                $rowdatadepth = get_string('commercialarea','local_users');
+            } elseif($depth < 6){
+                $rowdatadepth = get_string('territory','local_users');
+            }
+
             $selectdropdown=$OUTPUT->single_select($url,$paramname, $options,$cachedatatype,null, 'roleswitchfieldform',
-                    array('label' => get_string('selectedrole', 'local_costcenter',$currentroleinfo) . ':'));
+                    array('label' => $rowdatadepth . ':'));
 
 
             return $selectdropdown;
