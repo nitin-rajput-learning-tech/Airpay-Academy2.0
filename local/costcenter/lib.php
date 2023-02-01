@@ -977,8 +977,7 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             }
             $mform->addElement('autocomplete', $prefix.$fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
             $mform->addHelpButton($prefix.$fields[$level], $fields[$level].$pluginname, $pluginname);
-            if($level == 1){
-
+            if($level == 1 && $prefix != 'filter'){
                 $mform->addRule($prefix.$fields[$level], get_string('required'.$fields[$level], 'local_costcenter'),  'required',  '', 'client');
             }
 
