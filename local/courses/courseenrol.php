@@ -105,6 +105,7 @@ $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->js('/local/courses/js/jquery.bootstrap-duallistbox.js',true);
 $PAGE->requires->css('/local/courses/css/bootstrap-duallistbox.css');
 $PAGE->set_title($enrol_manual->get_instance_name($instance));
+$data_submitted=data_submitted();
 
 if(!$add&&!$remove){
 $PAGE->set_heading($course->fullname);
@@ -130,7 +131,7 @@ if ($course) {
   $village   = null;
   $filterlist = get_filterslist();
   $filterparams = array('options'=>null, 'dataoptions'=>null);
-  $mform = new filters_form($PAGE->url, array('filterlist'=>$filterlist,'enrolid'=>$enrolid, 'courseid'=>$course_id,'filterparams' => $filterparams, 'action' => 'user_enrolment'));
+  $mform = new filters_form($PAGE->url, array('filterlist'=>$filterlist,'enrolid'=>$enrolid, 'courseid'=>$course_id,'filterparams' => $filterparams, 'action' => 'user_enrolment')+(array)$data_submitted);
   if ($mform->is_cancelled()) {
     redirect($PAGE->url);
   } else {
