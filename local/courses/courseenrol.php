@@ -142,11 +142,11 @@ if ($course) {
         $collapse = true;
         $show = '';
     }
-    $organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
-    $department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
-    $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
-    $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
-    $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
+    $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
+    $department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
+    $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
+    $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', $filterdata->filteropen_level4department) : null;
+    $department5level = !empty($filterdata->filteropen_level5department) ? implode(',', $filterdata->filteropen_level5department) : null;
 
     $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
     $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
