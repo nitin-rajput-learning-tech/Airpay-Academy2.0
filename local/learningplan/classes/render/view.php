@@ -66,8 +66,8 @@ class view extends plugin_renderer_base
 			}
 			$assign_users_sql = "SELECT id FROM {local_learningplan} l WHERE 1 = 1 ";
 			if ($filterdata) {
-				if (!empty(array_filter($filterdata->organizations))) {
-					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
+				if (!empty(array_filter($filterdata->filteropen_costcenterid))) {
+					$selectedorganizations = implode(',', array_filter($filterdata->filteropen_costcenterid));
 					$organizations = explode(',', $selectedorganizations);
 					$orgsql = [];
 					foreach ($organizations as $organisation) {
@@ -94,8 +94,8 @@ class view extends plugin_renderer_base
 						$assign_users_sql .= " AND ( " . implode(' OR ', $deptsql) . " ) ";
 					}
 				}
-				if (!empty(array_filter($filterdata->subdepartment))) {
-					$selectedsubdepts = implode(',', array_filter($filterdata->subdepartment));
+				if (!empty(array_filter($filterdata->filteropen_subdepartment))) {
+					$selectedsubdepts = implode(',', array_filter($filterdata->filteropen_subdepartment));
 					$subdepts = explode(',', $selectedsubdepts);
 					$subdeptsql = [];
 					foreach ($subdepts as $subdept) {
@@ -109,8 +109,8 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->department4level))) {
-					$selecteddepts4 = implode(',', array_filter($filterdata->department4level));
+				if (!empty(array_filter($filterdata->filteropen_department4level))) {
+					$selecteddepts4 = implode(',', array_filter($filterdata->filteropen_department4level));
 					$depts4 = explode(',', $selecteddepts4);
 					$depts4sql = [];
 					foreach ($depts4 as $dept4) {
@@ -124,8 +124,8 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->department5level))) {
-					$selecteddepts5 = implode(',', array_filter($filterdata->department5level));
+				if (!empty(array_filter($filterdata->filteropen_department5level))) {
+					$selecteddepts5 = implode(',', array_filter($filterdata->filteropen_department5level));
 					$depts5 = explode(',', $selecteddepts5);
 					$depts5sql = [];
 					foreach ($depts5 as $dept5) {
@@ -1205,7 +1205,6 @@ class view extends plugin_renderer_base
 	/*Function to called in the bulk users upload*/
 	public function select_to_users_of_learninplan($planid, $userid, $params, $total = 0, $offset1 = -1, $perpage = -1, $lastitem = 0)
 	{
-		// print_r($params);exit;
 		$users = $this->db->get_record('local_learningplan', array('id' => $planid));
 		$us = $users->open_band;
 		$array = explode(',', $us);
