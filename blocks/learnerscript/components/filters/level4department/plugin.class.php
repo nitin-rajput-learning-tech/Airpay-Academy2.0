@@ -65,7 +65,7 @@ class plugin_level4department extends pluginbase {
         return $finalelements;
     }
 
-    public function filter_data($selectoption = true, $request){
+    public function filter_data($selectoption = true, $request =[]){
         global $DB, $USER;
         $filter_level4department = '';
         $filterlevel4department = optional_param('filter_level4department', 0, PARAM_INT);
@@ -118,7 +118,9 @@ class plugin_level4department extends pluginbase {
 
         return $level4departmentoptions;
     }
-
+    public function enabledepth(){
+        return 5;
+    }
     public function selected_filter($selected, $request = array()) {
         $filterdata = $this->filter_data(true, $request);
         return $filterdata[$selected];

@@ -66,7 +66,7 @@ class plugin_organization extends pluginbase {
         return $finalelements;
     }
 
-    public function filter_data($selectoption = true, $request){
+    public function filter_data($selectoption = true, $request = false){
         global $DB;
 
         $sql = " SELECT id,fullname
@@ -84,7 +84,9 @@ class plugin_organization extends pluginbase {
         $filterdata = $this->filter_data(false, $request);
         return $filterdata[$selected];
     }
-
+    public function enabledepth(){
+        return 2;
+    }
     public function print_filter(&$mform) {
         global $USER;
         $depth = $USER->useraccess['currentroleinfo']['depth'];

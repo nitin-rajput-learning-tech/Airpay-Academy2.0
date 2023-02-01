@@ -49,7 +49,8 @@ class dashboardheader implements renderable, templatable {
      * @return stdClass
      */
     public function export_for_template(renderer_base $output) {
-        global $DB, $PAGE, $USER;
+        global $DB, $PAGE, $USER, $CFG;
+
         $data = array();
         $systemcontext = context_system::instance(); 
         $userroleid = isset($USER->access['rsw']['/1']) ? $USER->access['rsw']['/1'] : 0; 
@@ -98,19 +99,9 @@ class dashboardheader implements renderable, templatable {
         $data['configuredinstances'] = $this->configuredinstances;
         $dashboardlist = $this->get_dashboard_reportscount();
         foreach ($dashboardlist as $dlist) {
-            if ($dlist['name'] == 'Examdashboard') {
-               $dlist['dashboardname'] = 'Exam Dashboard';
-            } else if ($dlist['name'] == 'Learnerdashboard') {
-               $dlist['dashboardname'] = 'Learning Dashboard';
-            } else if ($dlist['name'] == 'Maindashboard') {
-               $dlist['dashboardname'] = 'Main Dashboard';
-            } else if ($dlist['name'] == 'Certification') {
-               $dlist['dashboardname'] = 'Certification Dashboard';
-            } else if ($dlist['name'] == 'Compliances') {
-               $dlist['dashboardname'] = 'Compliance Dashboard';
-            } else {
-               $dlist['dashboardname'] = $dlist['name'];
-            } 
+
+            $dlist['dashboardname'] = $dlist['name'];
+
             $distarray[] = $dlist; 
         }
         $data['sesskey'] = sesskey();
@@ -127,259 +118,212 @@ class dashboardheader implements renderable, templatable {
         $data['departmentslist'] = array();
         // if (!is_siteadmin() && has_capability('block/learnerscript:managereports',$systemcontext)) {  
         if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-            } else {
+            // $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+            // if (!empty($scheduledreport)) {
+            // $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+            // $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
+            // $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+            // } else {
                 $ohs = $dhs = 1;
+            // }
+        }
+        // if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
+        //     $costcentersql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = 0
+        //             AND lc.depth = 1 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $costcenters = $DB->get_records_sql($costcentersql);
+        //     if($this->dashboardurl == 'Compliances'){
+        //         if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
+        //             if(isset($_SESSION['costcenter']) && !empty($_SESSION['costcenter'])){
+        //                 $deptcostcenterid = $_SESSION['costcenter'];
+        //             }else{
+        //                 $deptcostcenterid = key($costcenters);
+        //             }
+        //         }else{
+        //             $deptcostcenterid = key($costcenters);
+        //         }
+        //     }else{
+        //         $deptcostcenterid = key($costcenters);
+        //     }
+        //     if (empty($deptcostcenterid)) {
+        //         $deptcostcenterid = 0;
+        //     }
+        //     $sql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $deptcostcenterid AND
+        //             lc.depth = 2 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $departments = $DB->get_records_sql($sql);
+        //     if($this->dashboardurl == 'Compliances'){
+        //         if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
+        //             if(isset($_SESSION['departments']) && !empty($_SESSION['departments'])){
+        //                 $subdeptdeptid = $_SESSION['departments'];
+        //             }else{
+        //                 $subdeptdeptid = key($departments);
+        //             }
+        //         }else{
+        //              $subdeptdeptid = key($departments);
+        //         }
+        //     }else{
+        //         $subdeptdeptid = key($departments);
+        //     }
+        //     $subsql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $subdeptdeptid AND
+        //             lc.depth = 3 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $subdepartments = $DB->get_records_sql($subsql);
+        //     $data['departmentfilter'] = 1;
+        //     $data['costcenterfilter'] = 1;
+        //     $data['subdepartmentfilter'] = 1;
+        // } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $_SESSION['role'] == 'oh') {
+        //     $costcentersql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.id = $user_costcenterid
+        //             AND lc.depth = 1 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $costcenters = $DB->get_records_sql($costcentersql);
+        //     $deptcostcenterid = key($costcenters);
+        //     $sql = "SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $deptcostcenterid
+        //             AND lc.depth = 2 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $departments = $DB->get_records_sql($sql);
+        //     if($this->dashboardurl == 'Compliances'){
+        //         if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
+        //             if($_SESSION['departments'] > 0){
+        //                 $subdeptdeptid = $_SESSION['departments'];
+        //             }else{
+        //                 $subdeptdeptid = '';
+        //             }
+        //         }else{
+        //             $subdeptdeptid = '';
+        //         }
+        //     }else{
+        //         $subdeptdeptid = key($departments);
+        //     }
+        //     if (empty($subdeptdeptid)) {
+        //         $subdeptdeptid = 0;
+        //     }
+        //     //$subdeptdeptid = key($departments);
+        //     $subsql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $subdeptdeptid AND
+        //             lc.depth = 3 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $subdepartments = $DB->get_records_sql($subsql);
+        //     $data['departmentfilter'] = 1;
+        //     $data['subdepartmentfilter'] = 1;
+        // } else if ((!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $_SESSION['role'] == 'dh')) {
+        //     $costcentersql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.id = $user_costcenterid
+        //             AND lc.depth = 1 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $costcenters = $DB->get_records_sql($costcentersql);
+        //     $deptcostcenterid = key($costcenters);
+        //     $sql = "SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $deptcostcenterid
+        //             AND lc.depth = 2 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $departments = $DB->get_records_sql($sql);
+        //     $subdeptdeptid = key($departments);
+        //     $subsql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $subdeptdeptid AND
+        //             lc.depth = 3 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $subdepartments = $DB->get_records_sql($subsql);
+        //     $data['subdepartmentfilter'] = 1;
+        // } else {
+        //     $costcentersql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.id = $user_costcenterid
+        //             AND lc.depth = 1 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $costcenters = $DB->get_records_sql($costcentersql);
+        //     $deptcostcenterid = key($costcenters);
+        //     $sql = "SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $deptcostcenterid
+        //             AND lc.depth = 2 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $departments = $DB->get_records_sql($sql);
+        //     $subdeptdeptid = key($departments);
+        //     if(!empty($subdeptdeptid)){
+        //     $subsql = " SELECT lc.id, lc.fullname
+        //             FROM {local_costcenter} lc
+        //             WHERE lc.parentid = $subdeptdeptid AND
+        //             lc.depth = 3 AND lc.visible = 1
+        //             ORDER BY lc.id ASC ";
+        //     $subdepartments = $DB->get_records_sql($subsql);
+        // }else{
+        //      $subdepartments =array();
+        // }
+        $filtersarray = ['organization', 'departments', 'subdepartments', 'level4department', 'level5department'];
+        $depth = $USER->useraccess['currentroleinfo']['depth'];
+        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+            $depth--;
+        }
+        $admin = is_siteadmin();
+        $firstreport = $DB->get_record('block_learnerscript', []);
+        foreach($filtersarray AS $filter){
+            require_once($CFG->dirroot.'/blocks/learnerscript/components/filters/'.$filter.'/plugin.class.php');
+            $class = 'plugin_'.$filter;
+            $filterclass = new $class($firstreport);
+            if($admin || $depth < $filterclass->enabledepth()){
+                // var_dump();
+                // var_dump($filter);
+                ${$filter.'_options'} = $filterclass->filter_data();
+                $data['enable_'.$filter] = true;
+            }else{
+                $data['enable_'.$filter] = false;
+
             }
         }
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) { 
-            $costcentersql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = 0
-                    AND lc.depth = 1 AND lc.visible = 1
-                    ORDER BY lc.id ASC "; 
-            $costcenters = $DB->get_records_sql($costcentersql);
-            if($this->dashboardurl == 'Compliances'){
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if(isset($_SESSION['costcenter']) && !empty($_SESSION['costcenter'])){
-                        $deptcostcenterid = $_SESSION['costcenter'];
-                    }else{
-                        $deptcostcenterid = key($costcenters);
-                    }
-                }else{
-                    $deptcostcenterid = key($costcenters);
-                }   
-            }else{
-                $deptcostcenterid = key($costcenters);
-            }
-            if (empty($deptcostcenterid)) {
-                $deptcostcenterid = 0;
-            }
-            $sql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $deptcostcenterid AND 
-                    lc.depth = 2 AND lc.visible = 1
-                    ORDER BY lc.id ASC ";  
-            $departments = $DB->get_records_sql($sql);
-            if($this->dashboardurl == 'Compliances'){
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if(isset($_SESSION['departments']) && !empty($_SESSION['departments'])){
-                        $subdeptdeptid = $_SESSION['departments'];
-                    }else{
-                        $subdeptdeptid = key($departments);
-                    }
-                }else{
-                     $subdeptdeptid = key($departments);
-                }    
-            }else{
-                $subdeptdeptid = key($departments);
-            }            
-            $subsql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $subdeptdeptid AND 
-                    lc.depth = 3 AND lc.visible = 1
-                    ORDER BY lc.id ASC ";  
-            $subdepartments = $DB->get_records_sql($subsql);
-            $data['departmentfilter'] = 1; 
-            $data['costcenterfilter'] = 1;
-            $data['subdepartmentfilter'] = 1;
-        } else if (!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $_SESSION['role'] == 'oh') { 
-            $costcentersql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.id = $user_costcenterid
-                    AND lc.depth = 1 AND lc.visible = 1
-                    ORDER BY lc.id ASC "; 
-            $costcenters = $DB->get_records_sql($costcentersql); 
-            $deptcostcenterid = key($costcenters);
-            $sql = "SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $deptcostcenterid 
-                    AND lc.depth = 2 AND lc.visible = 1
-                    ORDER BY lc.id ASC "; 
-            $departments = $DB->get_records_sql($sql);
-            if($this->dashboardurl == 'Compliances'){
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if($_SESSION['departments'] > 0){
-                        $subdeptdeptid = $_SESSION['departments'];
-                    }else{
-                        $subdeptdeptid = '';
-                    }
-                }else{
-                    $subdeptdeptid = '';
-                }   
-            }else{
-                $subdeptdeptid = key($departments);
-            }
-            if (empty($subdeptdeptid)) {
-                $subdeptdeptid = 0;
-            }
-            //$subdeptdeptid = key($departments);
-            $subsql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $subdeptdeptid AND 
-                    lc.depth = 3 AND lc.visible = 1
-                    ORDER BY lc.id ASC ";  
-            $subdepartments = $DB->get_records_sql($subsql);
-            $data['departmentfilter'] = 1;
-            $data['subdepartmentfilter'] = 1;
-        } else if ((!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $_SESSION['role'] == 'dh')) {
-            $costcentersql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.id = $user_costcenterid
-                    AND lc.depth = 1 AND lc.visible = 1
-                    ORDER BY lc.id ASC "; 
-            $costcenters = $DB->get_records_sql($costcentersql); 
-            $deptcostcenterid = key($costcenters);
-            $sql = "SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $deptcostcenterid 
-                    AND lc.depth = 2 AND lc.visible = 1
-                    ORDER BY lc.id ASC "; 
-            $departments = $DB->get_records_sql($sql);
-            $subdeptdeptid = key($departments);
-            $subsql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $subdeptdeptid AND 
-                    lc.depth = 3 AND lc.visible = 1
-                    ORDER BY lc.id ASC ";  
-            $subdepartments = $DB->get_records_sql($subsql);
-            $data['subdepartmentfilter'] = 1;
-        } else {
-            $costcentersql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.id = $user_costcenterid
-                    AND lc.depth = 1 AND lc.visible = 1
-                    ORDER BY lc.id ASC "; 
-            $costcenters = $DB->get_records_sql($costcentersql); 
-            $deptcostcenterid = key($costcenters);
-            $sql = "SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $deptcostcenterid 
-                    AND lc.depth = 2 AND lc.visible = 1
-                    ORDER BY lc.id ASC "; 
-            $departments = $DB->get_records_sql($sql);
-            $subdeptdeptid = key($departments);
-            if(!empty($subdeptdeptid)){
-            $subsql = " SELECT lc.id, lc.fullname 
-                    FROM {local_costcenter} lc 
-                    WHERE lc.parentid = $subdeptdeptid AND 
-                    lc.depth = 3 AND lc.visible = 1
-                    ORDER BY lc.id ASC ";  
-            $subdepartments = $DB->get_records_sql($subsql);
-        }else{
-             $subdepartments =array();
-        }
-        }
+        // }
         $costcenterslist = array();
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
-            if($this->dashboardurl == 'Compliances'){
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if($_SESSION['costcenter'] == -1){
-                        $costcenterslist[0] = ['id' => -1, 'fullname' => 'All']; 
-                    }
-                }        
-               
-            }
-        }
-        if($costcenters){
-            foreach ($costcenters as $id => $value) {
-                if($this->dashboardurl == 'Compliances'){
-                    if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                       if(isset($_SESSION['costcenter']) && !empty($_SESSION['costcenter'])){
-                            if($id == $_SESSION['costcenter']){
-                                $costcenterslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => 'selected'];  
-                            }else{
-                                 $costcenterslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];  
-                            } 
-                        }else{
-                            $costcenterslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                        }
-                    }else{
-                        $costcenterslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                    } 
-                }else{
-                    $costcenterslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                }                
+
+        if($organization_options){
+            foreach ($organization_options as $id => $value) {
+                $organisationlist[] = ['id' => $id, 'fullname' => $value, 'selected' => ''];
             }
         } 
-        // $lastid = COUNT($costcenters) + 1;
-         if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {
-            if($this->dashboardurl == 'Compliances'){
-                if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                    if($_SESSION['costcenter'] > 0){
-                        $costcenterslist[] = ['id' => -1, 'fullname' => 'All']; 
-                    }
-                }else{
-                    $costcenterslist[] = ['id' => -1, 'fullname' => 'All']; 
-                }        
-               
-            }else{
-                 $costcenterslist[] = ['id' => -1, 'fullname' => 'All']; 
+
+        if(empty($departments_options)){
+            $departmentslist[0] = ['id' => -1, 'fullname' => 'Select Department'];
+        } else {
+            foreach ($departments_options as $id => $value) {
+                $departmentslist[] = ['id' => $id, 'fullname' => $value, 'selected' => ''];
             }
         }
-            if(empty($departments)){
-                $departmentslist[0] = ['id' => -1, 'fullname' => 'Select Department'];   
-            }else{
-                 $departmentslist[0] = ['id' => -1, 'fullname' => 'All']; 
+
+        if($subdepartments_options){
+            foreach ($subdepartments_options as $id => $value) {
+                $subdepartmentslist[] = ['id' => $id, 'fullname' => $value, 'selected' => ''];
             }
-            if($departments){
-                foreach ($departments as $id => $value) {
-                    if($this->dashboardurl == 'Compliances'){
-                        if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                            if(isset($_SESSION['departments']) && !empty($_SESSION['departments'])){
-                                if($id == $_SESSION['departments']){
-                                  $departmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => 'selected'];  
-                                }else{
-                                    $departmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];  
-                                }                        
-                            }else{
-                                $departmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                            }
-                        }else{
-                                $departmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                            }
-                    }else{
-                        $departmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                    } 
-                }
-            }
-	   if(empty($subdepartments) && $_SESSION['role'] == 'dh'){
-            $subdepartmentslist[0] = ['id' => -1, 'fullname' => 'All'];   
-        }else if(empty($subdepartments)){
-            $subdepartmentslist[0] = ['id' => -1, 'fullname' => 'All']; 
-        }else{
-            $subdepartmentslist[0] = ['id' => -1, 'fullname' => 'All'];
         }
-        if($subdepartments){
-            foreach ($subdepartments as $id => $value) { 
-                if($this->dashboardurl == 'Compliances'){
-                    if(isset($_SESSION['compliance_id_array']) && !empty($_SESSION['compliance_id_array'])){
-                        if(isset($_SESSION['subdepartment']) && !empty($_SESSION['subdepartment'])){
-                           if($id == $_SESSION['subdepartment']){
-                                $subdepartmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => 'selected'];  
-                            }else{
-                                 $subdepartmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];  
-                            } 
-                        }else{
-                            $subdepartmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                        }
-                    }else{
-                            $subdepartmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => ''];
-                        }
-                }else{
-                    $subdepartmentslist[] = ['id' => $id, 'fullname' => $value->fullname, 'selected' => '']; 
-                } 
+        if($level4department_options){
+            foreach ($level4department_options as $id => $value) {
+                $level4departmentlist[] = ['id' => $id, 'fullname' => $value, 'selected' => ''];
+            }
+        }
+        if($level5department_options){
+            foreach ($level5department_options as $id => $value) {
+                $level5departmentlist[] = ['id' => $id, 'fullname' => $value, 'selected' => ''];
             }
         }
         $coursedepartmentid = key($departments);        
 
         $data['departmentslist'] = $departmentslist;
-        $data['costcenterslist'] = $costcenterslist; 
+        $data['costcenterslist'] = $organisationlist;
         $data['subdepartmentslist'] = $subdepartmentslist;
+        $data['level4departmentlist'] = $level4departmentlist;
+        $data['level5departmentlist'] = $level5departmentlist;
         // $session_costcenter = array(); $session_department = array(); $session_subdepartment = array();
         // $session_costcenter = $_SESSION['costcenter'] ? $_SESSION['costcenter'] : '';
         // $session_department = $_SESSION['department'] ? $_SESSION['department'] : '';
