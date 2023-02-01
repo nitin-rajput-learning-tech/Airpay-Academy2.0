@@ -89,7 +89,7 @@ if ($classroomid) {
         $filterlist = get_filterslist();
     }
     if(!empty($courses_plugin_exists)){
-        $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment')+array($data_submitted));
+        $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment')+(array)$data_submitted);
         if ($mform->is_cancelled()) {
             redirect($PAGE->url);
         } else{

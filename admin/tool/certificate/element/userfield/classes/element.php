@@ -45,10 +45,10 @@ class element extends \tool_certificate\element {
         $userfields = array(
             'fullname' => get_user_field_name('fullname'),
             'firstname' => get_user_field_name('firstname'),
-//            'lastname' => get_user_field_name('lastname'),
+            //'lastname' => get_user_field_name('lastname'),
             'email' => get_user_field_name('email'),
-            'city' => get_user_field_name('city'),
-            'country' => get_user_field_name('country'),
+            // 'city' => get_user_field_name('city'),
+            // 'country' => get_user_field_name('country'),
 //            'url' => get_user_field_name('url'),
 //            'icq' => get_user_field_name('icq'),
 //            'skype' => get_user_field_name('skype'),
@@ -57,10 +57,10 @@ class element extends \tool_certificate\element {
 //            'msn' => get_user_field_name('msn'),
 //            'idnumber' => get_user_field_name('idnumber'),
 //            'institution' => get_user_field_name('institution'),
-            'department' => get_user_field_name('department'),
+            // 'department' => get_user_field_name('department'),
             'phone1' => get_user_field_name('phone1'),
             'phone2' => get_user_field_name('phone2'),
-            'address' => get_user_field_name('address')
+            // 'address' => get_user_field_name('address')
         );
         // Get the user custom fields.
         $arrcustomfields = \availability_profile\condition::get_custom_profile_fields();
