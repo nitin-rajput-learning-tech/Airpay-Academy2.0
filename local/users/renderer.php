@@ -224,6 +224,8 @@ class local_users_renderer extends plugin_renderer_base {
         $costcenterid = optional_param('costcenterid', '', PARAM_INT);
         $departmentid = optional_param('departmentid', '', PARAM_INT);
         $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
+        $l4department = optional_param('l4department', '', PARAM_INT);
+        $l5department = optional_param('l5department', '', PARAM_INT);
         $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 
         $templateName = 'local_users/users_view';
@@ -241,10 +243,10 @@ class local_users_renderer extends plugin_renderer_base {
         $options = json_encode($options);
 
         $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $categorycontext->id,
-         'status' => $status, 'costcenterid' => $costcenterid, 'departmentid' => $departmentid,
-          'subdepartmentid' => $subdepartmentid));
-        $filterdata = json_encode(array('status' => $status, 'organizations' => $costcenterid, 'departments' =>
-         $departmentid, 'subdepartment' => $subdepartmentid));
+         'status' => $status, 'filteropen_costcenterid' => $costcenterid, 'filteropen_department' => $departmentid,
+          'filteropen_subdepartment' => $subdepartmentid, 'filteropen_level4department' => $l4department, 'filteropen_level5department' => $l5department));
+        $filterdata = json_encode(array('status' => $status, 'filteropen_costcenterid' => $costcenterid, 'filteropen_department' =>
+         $departmentid, 'filteropen_subdepartment' => $subdepartmentid, 'filteropen_level4department' => $l4department, 'filteropen_level5department' => $l5department));
 
         $context = [
                 'targetID' => 'manage_users1',

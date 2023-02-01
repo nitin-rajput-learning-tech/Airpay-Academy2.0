@@ -1716,7 +1716,10 @@ class local_users_external extends external_api {
                 case 'userprofile_element_selector':
 
                     $fields = array("fullname");
+                    $isfilter = strpos($formoptions->columnname, 'filter');
 
+                    $formoptions->columnname = str_replace('filter', '', $formoptions->columnname);
+                    $formoptions->parentidcolumn = str_replace('filter', '', $formoptions->parentidcolumn);
                     $tablename=$DB->get_prefix().str_replace("open","local",$formoptions->columnname);
 
                     $fieldname=str_replace("open_","",$formoptions->columnname).'_name';
@@ -1736,8 +1739,9 @@ class local_users_external extends external_api {
                         $concatsql .= " AND $parentidcolumn  $relatedparentidsql";
 
                     }else{
-
-                       $concatsql .= " AND $parentidcolumn=0 ";
+                        if($isfilter === false){
+                            $concatsql .= " AND $parentidcolumn=0 ";
+                        }
                     }
 
                     $likesql = array();

@@ -84,6 +84,9 @@ $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->js('/local/learningplan/js/jquery.bootstrap-duallistbox.js',true);
 $PAGE->requires->css('/local/learningplan/css/bootstrap-duallistbox.css');
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load');
+$PAGE->requires->js_call_amd('local_users/newuser', 'load');
+
 echo $OUTPUT->header();
 $learningplan_lib = new local_learningplan\lib\lib();
 $actionpage =$CFG->wwwroot.'/local/learningplan/lpusers_enroll.php?lpid='.$planid;
@@ -95,7 +98,8 @@ $core_component = new core_component();
 $courses_plugin_exists = $core_component::get_plugin_directory('local', 'courses');
 if(!empty($courses_plugin_exists)&&!$add&&!$remove){
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
-    $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment'));
+    $datasubmitted = data_submitted();
+    $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment')+(array)$datasubmitted);
     $organization = null;
     $department   = null;
     $email        = null;

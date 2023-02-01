@@ -43,7 +43,7 @@ class filters_form extends moodleform {
         $mform->setType('dataoptions', PARAM_RAW);
 
         
-       
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         foreach ($filterlist as $key => $value) {
             if($value === 'categories' || $value === 'elearning' || $value === 'status'){
                 $filter = 'courses';
@@ -57,10 +57,14 @@ class filters_form extends moodleform {
                 $filter = 'evaluation';
             } else if($value === 'hierarchy_fields'){
                 require_once($CFG->dirroot.'/local/costcenter/lib.php');
-                $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
                 local_costcenter_set_costcenter_path($this->_customdata);
                 local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_users', $categorycontext, $multiple = true, $prefix = 'filter');
                 continue;
+            } else if($value === 'geographyfields'){
+                require_once($CFG->dirroot.'/local/users/lib.php');
+                local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, $allenable = false, 'local_users', $categorycontext, $multiple = true, $prefix = 'filter');
+                continue;
+
             }else{
                 $filter = $value;
             }

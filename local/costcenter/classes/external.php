@@ -718,14 +718,19 @@ class local_costcenter_external extends external_api {
                         $parentids = [];
                         if(is_array($formoptions->parentid)){
                             $parentids = $formoptions->parentid;
-                            if(empty($parentids)){
+                            if(empty($parentids) && $formoptions->prefix != 'filter'){
                                 array_push($parentids, 0);
                             }
                         }else{
                             $parentid = $formoptions->parentid ? $formoptions->parentid : 0;
                             array_push($parentids, $parentid);
                         }
-                        list($parentsql, $parentparams) = $DB->get_in_or_equal($parentids, SQL_PARAMS_NAMED, 'organisationid');
+                        if(!empty($parentids)){
+                            list($parentsql, $parentparams) = $DB->get_in_or_equal($parentids, SQL_PARAMS_NAMED, 'organisationid');
+                        }else{
+                            $parentsql = '';
+                            $parentparams = [];
+                        }
                         // $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
                         $sqlparams['depth'] = $formoptions->depth;
                         $likesql = array();
