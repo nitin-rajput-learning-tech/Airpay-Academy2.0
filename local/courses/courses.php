@@ -220,8 +220,8 @@ echo        '</div>
         </div>';
 $filterparams['submitid'] = 'form#filteringform';
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
-if (is_siteadmin() || (
-        has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/courses:manage', $categorycontext))) {
+// if (is_siteadmin() || (
+//         has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/courses:manage', $categorycontext))) {
    $display_url = new moodle_url('/local/courses/courses.php');
    if($costcenterid){
     $display_url->param('costcenterid', $costcenterid);  
@@ -251,7 +251,7 @@ if (is_siteadmin() || (
     $displaytype_div .= '</div>';
 
         echo $displaytype_div;
-    }
+    // }
 echo $renderer->get_catalog_courses(false,$formattype);
 
 echo $OUTPUT->footer();
