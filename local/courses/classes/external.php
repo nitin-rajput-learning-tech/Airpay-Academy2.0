@@ -145,6 +145,10 @@ class local_courses_external extends external_api {
                 if($validateddata->open_path){
                     $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                 }
+
+                $validateddata->startdate=time();
+                $validateddata->enddate=0;
+
                 $courseid = create_course($validateddata, $editoroptions);
 
                 // Update course tags.
