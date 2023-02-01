@@ -1502,7 +1502,7 @@ function local_users_output_fragment_userrole_display($args)
     $context = $args->context;
     $userid = $args->id;
 
-    $sql = "SELECT ra.id,r.name,ra.timemodified,cc.name as costcenter,cc.depth
+    $sql = "SELECT ra.id,r.name,ra.timemodified,cc.name as costcenter,cc.depth, ra.contextid,ra.roleid
         FROM mdl_role_assignments AS ra
         JOIN mdl_context AS c ON c.id = ra.contextid AND c.contextlevel = 40
         JOIN mdl_course_categories AS cc ON cc.id = c.instanceid
@@ -1510,13 +1510,15 @@ function local_users_output_fragment_userrole_display($args)
         WHERE ra.userid =:userid";
     $roles = $DB->get_records_sql($sql, array('userid'=> $userid));
 
-
     $templatedata = array();
     if ($roles) {
         $templatedata['enabletable'] = true;
         foreach ($roles as $role) {
             $rowdata = array();
+            $rowdata['userid'] = $userid;
+            $rowdata['ctxid'] = $role->contextid;
             $rowdata['id'] = $role->id;
+            $rowdata['roleid'] = $role->roleid;
             $rowdata['role'] = $role->name;
             $rowdata['timeassign'] = date("d M Y", $role->timemodified);
             $rowdata['costcenter'] = $role->costcenter;

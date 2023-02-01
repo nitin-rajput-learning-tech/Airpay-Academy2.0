@@ -1342,11 +1342,11 @@ function get_listof_courses($stable, $filterdata) {
         $formsql .= " AND c.id $filtercoursessql";
     }
     $filterparams=array();
-    if (!empty($filterdata->organizations)) {
+    if (!empty($filterdata->filteropen_costcenterid)) {
 
-        $organizations = explode(',', $filterdata->organizations);
+        $filteropen_costcenterid = explode(',', $filterdata->filteropen_costcenterid);
         $orgsql = [];
-        foreach($organizations AS $organisation){
+        foreach($filteropen_costcenterid AS $organisation){
             $orgsql[] = " concat('/',c.open_path,'/') LIKE :organisationparam_{$organisation}";
             $filterparams["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
         }
@@ -1354,11 +1354,11 @@ function get_listof_courses($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
         }
     }
-    if (!empty($filterdata->departments)) {
-        $departments = explode(',', $filterdata->departments);
+    if (!empty($filterdata->filteropen_department)) {
+        $filteropen_department = explode(',', $filterdata->filteropen_department);
 
         $deptsql = [];
-        foreach($departments AS $department){
+        foreach($filteropen_department AS $department){
             $deptsql[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
             $filterparams["departmentparam_{$department}"] = '%/'.$department.'/%';
         }
@@ -1366,8 +1366,8 @@ function get_listof_courses($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
         }
     }
-    if (!empty($filterdata->subdepartment)) {
-        $subdepartments = explode(',', $filterdata->subdepartment);
+    if (!empty($filterdata->filteropen_subdepartment)) {
+        $subdepartments = explode(',', $filterdata->filteropen_subdepartment);
 
         $subdeptsql = [];
         foreach($subdepartments AS $subdepartment){
@@ -1378,27 +1378,27 @@ function get_listof_courses($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
         }
     }
-    if (!empty($filterdata->department4level)) {
-        $subdepartments = explode(',', $filterdata->department4level);
+    if (!empty($filterdata->filteropen_level4department)) {
+        $subsubdepartments = explode(',', $filterdata->filteropen_level4department);
 
-        $subdeptsql = [];
-        foreach($subdepartments AS $department4level){
-            $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :department4levelparam_{$department4level}";
+        $subsubdeptsql = [];
+        foreach($subsubdepartments AS $department4level){
+            $subsubdeptsql[] = " concat('/',c.open_path,'/') LIKE :department4levelparam_{$department4level}";
             $filterparams["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
         }
-        if(!empty($subdeptsql)){
-            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        if(!empty($subsubdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subsubdeptsql)." ) ";
         }
     }
-    if (!empty($filterdata->department5level)) {
-        $subdepartments = explode(',', $filterdata->department5level);
-        $subdeptsql = [];
-        foreach($subdepartments AS $department5level){
-            $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :department5levelparam_{$department5level}";
+    if (!empty($filterdata->filteropen_level5department)) {
+        $subsubsubdepartments = explode(',', $filterdata->filteropen_level5department);
+        $subsubsubdeptsql = [];
+        foreach($subsubsubdepartments AS $department5level){
+            $subsubsubdeptsql[] = " concat('/',c.open_path,'/') LIKE :department5levelparam_{$department5level}";
             $filterparams["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
         }
-        if(!empty($subdeptsql)){
-            $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        if(!empty($subsubsubdeptsql)){
+            $formsql .= " AND ( ".implode(' OR ', $subsubsubdeptsql)." ) ";
         }
     }
     if(!empty($filterdata->hrmsrole)){
@@ -1925,10 +1925,10 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
     $action = isset($filterparams['action']) ? $filterparams['action'] : '';
 
 
-     $fields =array('organizations', 'departments',
-            'subdepartment', 'department4level','department5level','courses','categories','status');
+     $fields =array(/*'organizations', 'departments',
+            'subdepartment', 'department4level','department5level',*/'hierarchy_fields','courses','categories','status');
 
-    if(!is_siteadmin()) {
+    /*if(!is_siteadmin()) {
 
         $fields =array('courses','categories','status');
 
@@ -1952,7 +1952,7 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
             array_unshift($fields, 'organizations');
         }
 
-    }
+    }*/
 
     $mform = new filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
     return $mform;
