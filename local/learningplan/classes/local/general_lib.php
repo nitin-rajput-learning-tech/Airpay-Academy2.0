@@ -68,7 +68,7 @@ class general_lib{
 	}
 
 	public function get_learningplan_info($id){
-        global $DB, $CFG;
+        global $DB, $CFG,$USER;
         require_once($CFG->dirroot.'/local/search/lib.php');
         $learningplans = $DB->get_record('local_learningplan', array('id' => $id));
         if($learningplans){
@@ -80,7 +80,7 @@ class general_lib{
             $learningplans->bannerimage =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
             $learningplans->category = ($DB->get_field('local_custom_category','fullname',array('id' => $learningplans->open_category))) ;
             $learningplans->isenrolled = $DB->record_exists('local_learningplan_user', array('planid' => $learningplans->id, 'userid' => $USER->id));
-            $certificate_code = ($DB->get_field('tool_certificate_issues','code',array('moduletype'=> 'learningplan','moduleid' => $learningplans->id, 'userid' => $USER->id))) ;
+            $certificate_code = ($DB->get_field('tool_certificate_issues','code',array('moduletype'=> 'learningplan','moduleid' => $learningplans->id, 'userid' => $USER->id)));
             $learningplans->certificateid = $certificate_code ? $certificate_code : '';
             $learningplans->requeststatus = MODULE_NOT_ENROLLED;
             if($learningplans->isenrolled){
