@@ -2552,7 +2552,9 @@ class view extends plugin_renderer_base
 		}
 
 		if (!is_siteadmin()) {
-			$switchedrole = isset($USER->access['rsw']['/1']);
+
+ 	  	    $switchedrole = $USER->useraccess['currentroleinfo']['roleid'];
+			// $switchedrole = isset($USER->access['rsw']['/1']);
 			if ($switchedrole) {
 				$userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
 			} else {
@@ -2571,14 +2573,17 @@ class view extends plugin_renderer_base
 		                        WHERE planid = :planid AND userid = :userid
 		                        AND status = 1 ";
 						$completed = $DB->record_exists_sql($sql, array('userid' => $USER->id, 'planid' => $planid));
+						//            Mallikarjun added to get tool certificate
+						$gcertificateid = $DB->get_field('local_learningplan', 'certificateid', array('id' => $planid));
 						if ($completed) {
+							$certificateid = $DB->get_field('tool_certificate_issues', 'code', array('moduleid' => $planid, 'userid' => $USER->id, 'moduletype' => 'learningplan'));
+							if($certificateid == 0){
+	                            			$certificate_exists = false;
+							}
 							$certificate_download = true;
 						} else {
 							$certificate_download = false;
 						}
-						//            Mallikarjun added to get tool certificate
-						$gcertificateid = $DB->get_field('local_learningplan', 'certificateid', array('id' => $planid));
-						$certificateid = $DB->get_field('tool_certificate_issues', 'code', array('moduleid' => $planid, 'userid' => $USER->id, 'moduletype' => 'learningplan'));
 						//		                $certificateid = $lplan->certificateid;
 						// $certificate_download['moduletype'] = 'learningplan';
 					}
