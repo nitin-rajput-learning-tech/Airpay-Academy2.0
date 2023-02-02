@@ -129,11 +129,10 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 <tr><td>subdistrict</td><td>Enter Sub District Code. State must already exist under specified District in system as part of organization hierarchy.</td></tr>
 <tr><td>vilage</td><td>Enter Village Code. State must already exist under specified Sub District in system as part of organization hierarchy.</td></tr>
 <tr><td>email</td><td>Enter valid email.</td></tr>
-<tr><td>role</td><td>Enter Role.</td></tr>
 <tr><td>contactno</td><td>Enter Numerics only.</td></tr>
 <tr><td>reportingmanager_empid</td><td>Enter Reporting Manger learnerid, avoid additional spaces..</td></tr>
 <tr><td>language</td><td>Enter Language code for the user.</td></tr>
-<tr><td>role_designation</td><td>Enter Designation for the user.</td></tr>
+<tr><td>designation</td><td>Enter Designation for the user.</td></tr>
 <tr><td>force_password_change</td><td>Provide the value as 1 if need to enable force password or 0 to disable it..</td></tr>
 <tr><td>timezone</td><td>Enter timezone code. Refer dropdown for codes, avoid additional spaces. {$a->timezones}</td></tr>
 </table>';
