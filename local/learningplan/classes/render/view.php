@@ -377,7 +377,7 @@ class view extends plugin_renderer_base
 					if ($learning_plan->visible == 0) {
 						$class = 'disabled';
 					}
-					$row = [html_writer::tag('a', $learning_plan_name, array('href' => $CFG->wwwroot . '/local/learningplan/plan_view.php?id=' . $learning_plan->id, 'class' => $class)), html_writer::span($learningplan_content['plan_shortname_string'], $class), html_writer::span($learningplan_content['plan_department_string'], $class), html_writer::span($learningplan_content['lpcoursescount'], $class), html_writer::span($actions,  $class)];
+					$row = [html_writer::tag('a', $learning_plan_name, array('href' => $CFG->wwwroot . '/local/learningplan/plan_view.php?id=' . $learning_plan->id, 'class' => $class)), html_writer::span($learningplan_content['plan_shortname_string'], $class), html_writer::span($learningplan_content['plandpt'], $class), html_writer::span($learningplan_content['lpcoursescount'], $class), html_writer::span($actions,  $class)];
 				}
 				$table_data[] = $row;
 			}
@@ -2552,7 +2552,9 @@ class view extends plugin_renderer_base
 		}
 
 		if (!is_siteadmin()) {
-			$switchedrole = isset($USER->access['rsw']['/1']);
+
+ 	  	    $switchedrole = $USER->useraccess['currentroleinfo']['roleid'];
+			// $switchedrole = isset($USER->access['rsw']['/1']);
 			if ($switchedrole) {
 				$userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
 			} else {
@@ -2571,14 +2573,17 @@ class view extends plugin_renderer_base
 		                        WHERE planid = :planid AND userid = :userid
 		                        AND status = 1 ";
 						$completed = $DB->record_exists_sql($sql, array('userid' => $USER->id, 'planid' => $planid));
+						//            Mallikarjun added to get tool certificate
+						$gcertificateid = $DB->get_field('local_learningplan', 'certificateid', array('id' => $planid));
 						if ($completed) {
+							$certificateid = $DB->get_field('tool_certificate_issues', 'code', array('moduleid' => $planid, 'userid' => $USER->id, 'moduletype' => 'learningplan'));
+							if($certificateid == 0){
+	                            			$certificate_exists = false;
+							}
 							$certificate_download = true;
 						} else {
 							$certificate_download = false;
 						}
-						//            Mallikarjun added to get tool certificate
-						$gcertificateid = $DB->get_field('local_learningplan', 'certificateid', array('id' => $planid));
-						$certificateid = $DB->get_field('tool_certificate_issues', 'code', array('moduleid' => $planid, 'userid' => $USER->id, 'moduletype' => 'learningplan'));
 						//		                $certificateid = $lplan->certificateid;
 						// $certificate_download['moduletype'] = 'learningplan';
 					}
@@ -2623,7 +2628,7 @@ class view extends plugin_renderer_base
 		}
 		$lpinfo .= $this->render_from_template('local_learningplan/planview_user', $lp_userview);
 		$test = '';
-		$test .= '<div class="row p-4">';
+		$test .= '<div class="row my-4">';
 		$test .= '<div class="col-md-9 lp_course-wrapper w-100 ">';
 		if ($lplanassignedcourses) {
 			$i = 1;
