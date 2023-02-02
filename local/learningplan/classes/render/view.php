@@ -2623,7 +2623,7 @@ class view extends plugin_renderer_base
 		}
 		$lpinfo .= $this->render_from_template('local_learningplan/planview_user', $lp_userview);
 		$test = '';
-		$test .= '<div class="row p-4">';
+		$test .= '<div class="row my-4">';
 		$test .= '<div class="col-md-9 lp_course-wrapper w-100 ">';
 		if ($lplanassignedcourses) {
 			$i = 1;

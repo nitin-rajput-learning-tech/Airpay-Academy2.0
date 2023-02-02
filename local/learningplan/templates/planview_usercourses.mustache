@@ -54,7 +54,7 @@
 						</div>
 						<div class="summary_container w-full d-flex flex-column p-3">
 							<div class="w-full desc_block my-2">
-								<h5 class="d-flex justify-content-between">{{{ courselink }}} <span class="course_rating"><i class="fa fa-star mr-2"></i>{{avgrating}}</span></h5>
+								<h5 class="d-flex justify-content-between">{{{ courselink }}} <span class="course_rating d-flex"><i class="fa fa-star mr-1"></i>{{avgrating}}</span></h5>
 								<div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
 							</div>
 							<div class="bottom_content row align-items-center my-2">
@@ -78,11 +78,11 @@
 					</div>
 				</div>
 				{{^ needenrol}}
-				<div class="col-lg-5 col-md-4 ">
+				<!-- <div class="col-lg-5 col-md-4 ">
 				{{#cmpltd_class}}
 					<div class='completed'><span class='cmplt_icon {{cmpltd_class}}' title='Completed'><i class='fa fa-check' aria-hidden='true'></i></span><span cmplt_date>{{ completiondate }}</span></div>
 				{{/cmpltd_class}}
-				</div>
+				</div> -->
 				{{/ needenrol}}
 			</div>
 				<!-- <span class="lp_dot"></span> -->

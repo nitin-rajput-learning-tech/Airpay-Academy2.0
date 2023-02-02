@@ -15,78 +15,89 @@
     @author eabyas  <info@eabyas.in>
 }}
 <div class="col-lg-3 col-md-3  bottom_right_container">
-                    <div class="details_block mb-2">
-                        <div class="block_heading "><b>{{#str}} details {{/str}} </b></div>
-                        <div class="block_content">
-                            <div class="d-flex">
-                                <span class="content_name" >{{#str}}learningplan, local_learningplan{{/str}}</span>
-                                <span class="coln-align">:
-                                
-                                <span class="text-muted">{{ plan_learningplancode }}</span></span> 
-                            </div>
-                            <div class="d-flex">
-                                <span class="content_name">{{# str }} department, local_users {{/ str }} </span>
-                                <span class="coln-align">:
-                                
-                                <span  class="text-muted" title="{{ plandpt }}">{{ plandpt }}</span></span> 
-                            </div> 
-                            <div class="d-flex">
-                                <span class="content_name">{{# str }} commercialunit, local_users {{/ str }}</span>
-                                <span class="coln-align">: 
-                                
-                                <span class="text-muted">{{ plansubdpt }}</span></span>
-                            </div>
-                            <div class="d-flex">
-                                <span class="content_name">{{# str }} commercialarea, local_users {{/ str }}</span>
-                                <span class="coln-align">:
-                                
-                                <span class="text-muted">{{ plancu }}</span></span> 
-                            </div>
-                            <div class="d-flex">
-                                <span class="content_name">{{# str }} territory, local_users {{/ str }}</span>
-                                <span class="coln-align">:
-                                
-                                <span class="text-muted">{{ planterritory }}</span></span> 
-                            </div>
-                        </div>
-                    </div>
-                    <div class="courses_block">
-                       
-                        <div class="block_heading"><b>{{#str}}assigned_courses, local_learningplan{{/str}} </b></span></div>
-                        <div class="block_content"> 
-                            <div class="d-flex">
-                                <span class="content_name">{{#str}}assigned, local_learningplan{{/str}}</span>
-                                <span class="conent_code"> 
-                                    <span class="coln-align">:</span> 
-                                    <span class="text-muted">{{ total_assigned_course }}</span>
-                                </span>
-                            </div>
-                            <div class="d-flex">
-                                <span class="content_name" >{{#str}}mandatory, local_learningplan{{/str}}</span>
-                                <span class="conent_code"> 
-                                    <span class="coln-align">: 
-                                    <span class="text-muted">{{ mandatory }}</span></span>
-                                </span>
-                            </div>
-                            <div class="d-flex">
-                                <span class="content_name" >{{#str}}optional,local_learningplan{{/str}}</span>
-                                <span class="conent_code"> 
-                                    <span class="coln-align">: 
-                                    <span class="text-muted">{{ optional }}</span></span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+    <div class="details_block mb-2">
+        <div class="block_heading "><b>{{#str}} details {{/str}} </b></div>
+        <div class="block_content">
+            <div class="d-flex ">
+                <span class="content_name" >{{#str}}learningplan, local_learningplan{{/str}}</span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ plan_learningplancode }}</span>
+                    
+                </span> 
+                 
+            </div>
+            <div class="d-flex ">
+                <span class="content_name">{{# str }} department, local_users {{/ str }} </span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted" title="{{ plandpt }}">: {{ plandpt }}</span>
+                    
+                </span>
+            </div> 
+            <div class="d-flex ">
+                <span class="content_name">{{# str }} subdepartment, local_users {{/ str }}</span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ plansubdpt }}</span> 
+                    
+                </span>
+            </div>
+            <div class="d-flex ">
+                <span class="content_name">{{# str }} commercialunit, local_users {{/ str }}</span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ plancu }}</span>
+                    
+                </span>
 
-		<div class="users_block">
-		    <div class="block_heading "><b>{{#str}}users{{/str}}</b></div>
-		    <div class="block_content"> <div class="d-flex"><span class="content_name">{{#str}}planview_enrolled,
-		                local_learningplan{{/str}}</span><span class="conent_code">  <span
-		                    class="coln-align">:</span> <span class="text-muted">{{ total_enroled_users }}</span></span>
-		        </div>
-		        <div class="d-flex"><span class="content_name">{{#str}}learningplancompleted, local_learningplan{{/str}}
-		            </span><span class="conent_code"> <span class="coln-align">:</span><span class="text-muted">{{
-		                    cmpltd }}</span></span></div>
+            </div>
+            <div class="d-flex">
+                <span class="content_name">{{# str }} territory, local_users {{/ str }}</span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{ planterritory }}</span>
+                    
+                </span> 
+            </div>
+        </div>
+    </div>
+    <div class="courses_block">
+        <div class="block_heading"><b>{{#str}}assigned_courses, local_learningplan{{/str}} </b></span></div>
+        <div class="block_content"> 
+            <div class="d-flex">
+                <span class="content_name">{{#str}}assigned, local_learningplan{{/str}}</span>
+                <span class="conent_code"> 
+                    <span class="coln-align text-muted">: {{ total_assigned_course }}</span> 
+                    
+                </span>
+            </div>
+            <div class="d-flex">
+                <span class="content_name" >{{#str}}mandatory, local_learningplan{{/str}}</span>
+                <span class="conent_code"> 
+                    <span class="coln-align text-muted">: {{ mandatory }}
+                    </span>
+                </span>
+            </div>
+            <div class="d-flex ">
+                <span class="content_name" >{{#str}}optional,local_learningplan{{/str}}</span>
+                <span class="conent_code"> 
+                    <span class="coln-align text-muted">: {{ optional }} </span>
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="users_block">
+		<div class="block_heading "><b>{{#str}}users{{/str}}</b></div>
+		<div class="block_content">
+            <div class="d-flex ">
+                <span class="content_name">{{#str}}planview_enrolled,local_learningplan{{/str}}</span>
+                <span class="conent_code">
+                   <span class="coln-align text-muted">: {{ total_enroled_users }}</span>
+                </span>
 		    </div>
+		    <div class="d-flex ">
+                <span class="content_name">{{#str}}learningplancompleted, local_learningplan{{/str}}</span>
+                <span class="conent_code">
+                    <span class="coln-align text-muted">: {{cmpltd }}</span>
+                    
+                </span>
+            </div>
 		</div>
-                </div>
+	</div>
+</div>
