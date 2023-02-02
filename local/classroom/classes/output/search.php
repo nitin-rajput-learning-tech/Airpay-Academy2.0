@@ -66,24 +66,31 @@ class search implements renderable{
         $sqlparams = array();
         if(!is_siteadmin()){
             $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
-            // $paths = [];
-            // foreach($usercostcenterpaths AS $userpath){
-            //     $userpathinfo = $userpath->costcenterpath;
-            //     $paths[] = $userpathinfo.'%';
-            //     while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
-            //         $userpathinfo = rtrim($userpathinfo, '/');
-            //         if ($userpathinfo === '') {
-            //           break;
-            //         }
-            //         $paths[] = $userpathinfo;
-            //     }
-            // }
-            if(!empty($usercostcenterpaths)){
-                foreach($usercostcenterpaths AS $path){
+            $paths = [];
+            foreach($usercostcenterpaths AS $userpath){
+                $userpathinfo = $userpath;
+                $paths[] = $userpathinfo.'/%';
+                $paths[] = $userpathinfo;
+                while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                    $userpathinfo = rtrim($userpathinfo, '/');
+                    if ($userpathinfo === '') {
+                      break;
+                    }
+                    $paths[] = $userpathinfo;
+                }
+            }
+            if(!empty($paths)){
+                foreach($paths AS $path){
                     $pathsql[] = " lc.open_path LIKE '{$path}' ";
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }
+            // if(!empty($usercostcenterpaths)){
+            //     foreach($usercostcenterpaths AS $path){
+            //         $pathsql[] = " lc.open_path LIKE '{$path}' ";
+            //     }
+            //     $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+            // }
 
             $params = array();
 

@@ -119,7 +119,18 @@ class core_renderer extends \core_renderer {
         $langs = get_string_manager()->get_list_of_translations();
         if(count($langs) > 1){
             $select = (new \core\output\language_menu($this->page))->export_for_single_select($this);
-            return $this->render_from_template('core/single_select', $select);
+            $select->hasparams = count($_GET);
+            $action_url = $select->action."?";
+            if(!empty($select->params)){
+                foreach($select->params as $key=>$param){
+                   if($param['name']=='lang'){
+                     continue;
+                   }
+                   $action_url.=($key==0?"":"&").$param['name'].'='.$param['value']; 
+                }
+            }
+            $select->actionurl = $action_url;
+            return $this->render_from_template('theme_epsilon/language_menu_dropdown', $select);
         }
     }
     /**
@@ -1051,7 +1062,10 @@ class core_renderer extends \core_renderer {
                         $completed = $DB->record_exists_sql($sql, array('courseid'=>$COURSE->id, 'userid'=>$USER->id));
                         if($completed){
 
-            $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$COURSE->id,'userid'=>$USER->id,'templateid'=>$COURSE->open_certificateid,'moduletype'=>'course'));
+                $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$COURSE->id,'userid'=>$USER->id,'templateid'=>$COURSE->open_certificateid,'moduletype'=>'course'));
+                            if($certcode == 0){
+                                $course_context['certificate_exists'] = false;
+                            }
                             $course_context['certificate_download'] = true;
                             $course_context['certificateid'] = $certcode; //$COURSE->open_certificateid;
                             $course_context['moduletype'] = 'course';

@@ -89,7 +89,7 @@ if ($classroomid) {
         $filterlist = get_filterslist();
     }
     if(!empty($courses_plugin_exists)){
-        $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment'));
+        $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment')+(array)$data_submitted);
         if ($mform->is_cancelled()) {
             redirect($PAGE->url);
         } else{
@@ -101,11 +101,11 @@ if ($classroomid) {
                 $collapse = true;
                 $show = '';
             }
-            $organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
-            $department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
-            $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
-            $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
-            $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
+            $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
+            $department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
+            $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
+            $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', $filterdata->filteropen_level4department) : null;
+            $department5level = !empty($filterdata->filteropen_level5department) ? implode(',', $filterdata->filteropen_level5department) : null;
             $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
             $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
             $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
@@ -115,8 +115,8 @@ if ($classroomid) {
             $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
             $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
             $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
-            $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
-            $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
+            // $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
+            // $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
             $location = !empty($filterdata->location) ? implode(',', $filterdata->location) : null;
             $hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', $filterdata->hrmsrole) : null;
         }

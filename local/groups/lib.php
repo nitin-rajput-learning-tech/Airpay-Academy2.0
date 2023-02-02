@@ -754,7 +754,6 @@ function local_groups_edit_controls(context $context, moodle_url $currenturl) {
 * @return [type]              [description]
 */
 function local_group_users($type = null, $groupid = 0, $params, $total=0, $offset1=-1, $perpage=-1, $lastitem=0){
-
     global $DB, $USER;
     
     $context =  (new \local_groups\lib\accesslib())::get_module_context();
@@ -782,6 +781,98 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
     }
     if (!empty($params['idnumber'])) {
         $sql .=" AND u.id IN ({$params['idnumber']})";
+    }
+    if (!empty($params['organization'])) {
+        $organizations = explode(',', $params['organization']);
+        $orgsql = [];
+        foreach($organizations AS $organisation){
+            $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+        }
+        if(!empty($orgsql)){
+            $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+        }
+    }
+    if (!empty($params['department'])) {
+        $departments = explode(',', $params['department']);
+        $deptsql = [];
+        foreach($departments AS $department){
+            $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
+        }
+        if(!empty($deptsql)){
+            $sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+        }
+    }
+    if (!empty($params['subdepartment'])) {
+        $subdepartments = explode(',', $params['subdepartment']);
+        $subdeptsql = [];
+        foreach($subdepartments AS $subdepartment){
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
+        }
+        if(!empty($subdeptsql)){
+            $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+        }
+    }
+    if (!empty($params['department4level'])) {
+        $depart4level = explode(',',$params['department4level']);
+        $department4levelsql = [];
+        foreach($depart4level AS $department4level){
+            $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+            $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
+        }
+        if(!empty($department4levelsql)){
+            $sql .= " AND ( ".implode(' OR ', $department4levelsql)." ) ";
+        }
+    }
+    if (!empty($params['department5level'])) {
+        $depart5level = explode(',', $params['department5level']);
+        $department5levelsql = [];
+        foreach($depart5level AS $department5level){
+            $department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+            $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
+        }
+        if(!empty($department5levelsql)){
+            $sql .= " AND ( ".implode(' OR ', $department5levelsql)." ) ";
+        }
+    }
+    if (!empty($params['location'])) {
+        $locations = explode(',', $params['location']);
+        list($locationsql, $locationparams) = $DB->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'location');
+        $params = array_merge($params, $locationparams);
+        $sql .= " AND u.open_location {$locationsql} ";
+    }
+
+    if (!empty($params['hrmsrole'])) {
+        $hrmsroles = explode(',', $params['hrmsrole']);
+        list($hrmsrolesql, $hrmsroleparams) = $DB->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'hrmsrole');
+        $params = array_merge($params, $hrmsroleparams);
+        $sql .= " AND u.open_hrmsrole {$hrmsrolesql} ";
+    }
+    if (!empty($params['village'])) {
+        $villages = explode(',', $params['village']);
+        list($villagesql, $villageparam) = $DB->get_in_or_equal($villages, SQL_PARAMS_NAMED, 'village');
+        $params = array_merge($params, $villageparam);
+        $sql .= " AND u.open_village {$villagesql} ";
+    }
+    if (!empty($params['subdistrict'])) {
+        $subdistricts = explode(',', $params['subdistrict']);
+        list($subdistrictsql, $subdistrictparam) = $DB->get_in_or_equal($subdistricts, SQL_PARAMS_NAMED, 'subdistrict');
+        $params = array_merge($params, $subdistrictparam);
+        $sql .= " AND u.open_subdistrict {$subdistrictsql} ";
+    }
+    if (!empty($params['district'])) {
+        $districts = explode(',', $params['district']);
+        list($districtsql, $districtparam) = $DB->get_in_or_equal($districts, SQL_PARAMS_NAMED, 'district');
+        $params = array_merge($params, $districtparam);
+        $sql .= " AND u.open_district {$districtsql} ";
+    }
+    if (!empty($params['states'])) {
+        $state = explode(',', $params['states']);
+        list($statessql, $statesparam) = $DB->get_in_or_equal($state, SQL_PARAMS_NAMED, 'states');
+        $params = array_merge($params, $statesparam);
+        $sql .= " AND u.open_states {$statessql} ";
     }
     if (!empty($params['groups'])) {
         $query = "SELECT usr.id 

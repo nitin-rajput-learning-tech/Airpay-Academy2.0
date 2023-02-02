@@ -97,6 +97,13 @@ if ($groups) {
   $email        = null;
   $idnumber     = null;
   $uname        = null;
+  $subdepartment=null;
+  $department4level=null;
+  $department5level=null;
+  $states=null;
+  $district=null;
+  $subdistrict=null;
+  $village=null;
   $filterlist = get_filterslist();
   $mform = new filters_form($url, array('filterlist'=>$filterlist,'enrolid'=>0, 'courseid'=>$id, 'action' => 'user_enrolment'));
   if ($mform->is_cancelled()) {
@@ -116,10 +123,18 @@ if ($groups) {
     $filtergroup = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
     $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
     $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
+    $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
+    $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
+    $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
+    $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
+    $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
+    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
+    $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
   }
 
     // Create the user selector objects.
-    $options = array('context' => $context->id, 'groupsid' => $id, 'organization' => $organization, 'department' => $department, 'email' => $email, 'groups' => $filtergroup, 'idnumber' => $idnumber, 'uname' => $uname);
+    $options = array('context' => $context->id, 'groupsid' => $id, 'organization' => $organization, 'department' => $department,'subdepartment'=>$subdepartment,'department4level'=>$department4level,'department5level'=>$department5level,
+    'states'=>$states,'district'=>$district,'subdistrict'=>$subdistrict,'village'=>$village, 'email' => $email, 'groups' => $filtergroup, 'idnumber' => $idnumber, 'uname' => $uname);
     
     if ( $add AND confirm_sesskey()) {        
         if($submit_value == "Add_All_Users"){

@@ -18,7 +18,7 @@
                 id="customrange" placeholder="Start Date - End Date">
         </span>
     </div>  
-    {{# costcenterfilter }} 
+    {{# enable_organization }}
         <span class="costcenterfilter">
             <label class="d-inline-block mb-0"><b>{{#str}}organization, block_learnerscript{{/str}}</b></label>
             <select name="filter_organization" class = "dashboardcostcenters" id = "dashboardcostcenters" data-select2="1"  data-role="{{dashboardrole}}">
@@ -27,8 +27,8 @@
                 {{/ costcenterslist }}
             </select>
         </span>
-    {{/ costcenterfilter }}
-    {{# departmentfilter }}
+    {{/ enable_organization }}
+    {{# enable_departments }}
         <span class="departmentfilter">
             <label class="d-inline-block mb-0"><b>{{#str}}departments, block_learnerscript{{/str}}</b></label>
             <select name="filter_departments" class = "dashboarddepartment" id = "dashboarddepartment" data-select2="1"  data-role="{{dashboardrole}}">
@@ -37,8 +37,8 @@
                 {{/ departmentslist }}
             </select>
         </span>
-    {{/ departmentfilter }} 
-    {{# subdepartmentfilter }}
+    {{/ enable_departments }}
+    {{# enable_subdepartments }}
         <span class="subdepartmentfilter">
             <label class="d-inline-block mb-0"><b>{{#str}}subdepartments, block_learnerscript{{/str}}</b></label>
             <select name="filter_subdepartments" class = "dashboardsubdepartment" id = "dashboardsubdepartment" data-select2="1"  data-role="{{dashboardrole}}">
@@ -47,7 +47,27 @@
                 {{/ subdepartmentslist }}
             </select>
         </span>
-    {{/ subdepartmentfilter }}
+    {{/ enable_subdepartments }}
+    {{# enable_level4department }}
+        <span class="departmentl4filter">
+            <label class="d-inline-block mb-0"><b>{{#str}}level4department, block_learnerscript{{/str}}</b></label>
+            <select name="filter_subdepartments" class = "dashboardsubdepartment" id = "dashboardsubdepartment" data-select2="1"  data-role="{{dashboardrole}}">
+                {{# level4departmentlist }}
+                    <option value = "{{id}}" {{selected}}>{{fullname}}</option>
+                {{/ level4departmentlist }}
+            </select>
+        </span>
+    {{/ enable_level4department }}
+    {{# enable_level5department }}
+        <span class="departmentl5filter">
+            <label class="d-inline-block mb-0"><b>{{#str}}level5department, block_learnerscript{{/str}}</b></label>
+            <select name="filter_subdepartments" class = "dashboardsubdepartment" id = "dashboardsubdepartment" data-select2="1"  data-role="{{dashboardrole}}">
+                {{# level5departmentlist }}
+                    <option value = "{{id}}" {{selected}}>{{fullname}}</option>
+                {{/ level5departmentlist }}
+            </select>
+        </span>
+    {{/ enable_level5department }}
     {{# coursedashboard }}
         {{# courselist.0 }}
             <span class="coursefilter1">

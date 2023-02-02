@@ -42,6 +42,7 @@ $PAGE->set_context($categorycontext);
 $PAGE->requires->js_call_amd('local_users/newuser', 'load', array());
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'downloadtrigger', array());
+$PAGE->requires->js_call_amd('local_assignroles/popup', 'Datatable', array());
 $PAGE->requires->js_call_amd('local_users/rolepopup', 'init',
                                             array(
                                                 array(
@@ -61,6 +62,8 @@ $status = optional_param('status', '', PARAM_RAW);
 $costcenterid = optional_param('costcenterid', '', PARAM_INT);
 $departmentid = optional_param('departmentid', '', PARAM_INT);
 $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
+$l4department = optional_param('l4department', '', PARAM_INT);
+$l5department = optional_param('l5department', '', PARAM_INT);
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
 if ($formattype == 'card') {
     $formattype_url = 'table';
@@ -104,15 +107,18 @@ if (!empty($coursespluginexist)) {
     $filterparams = $userrenderer->manageusers_content(true, $formattype);
 
     // for filtering users we are providing form
-    $mform = users_filters_form($filterparams);
+    $formdata = new stdClass();
+    $formdata->filteropen_costcenterid = $costcenterid;
+    $formdata->filteropen_department = $departmentid;
+    $formdata->filteropen_subdepartment = $subdepartmentid;
+    $formdata->filteropen_level4department = $l4department;
+    $formdata->filteropen_level5department = $l5department;
+
+    $mform = users_filters_form($filterparams, (array)$formdata);
     if ($mform->is_cancelled()) {
         redirect('index.php');
     }
-    if (!empty($costcenterid) || !empty($status) || !empty($departmentid) || !empty($subdepartmentid)) {
-        $formdata = new stdClass();
-        $formdata->organizations = $costcenterid;
-        $formdata->departments = $departmentid;
-        $formdata->subdepartment = $subdepartmentid;
+    if (!empty($costcenterid) || !empty($status) || !empty($departmentid) || !empty($subdepartmentid) || !empty($l4department) || !empty($l5department)) {
         $formdata->status = $status;
         $mform->set_data($formdata);
     }

@@ -12,7 +12,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    @author Narendra  <narendra.patela@moodle.in>
+    @author Narendra  <narendra.patel@moodle.in>
 }}
 {{# enabletable}}
     <table class='generaltable', id='popup_user{{roleid}}'>
@@ -22,6 +22,7 @@
                 <th>{{# str}} hierarchy, local_users{{/ str}}</th>
                 <th>{{# str}} level, local_users{{/ str}}</th>
                 <th>{{# str}} timeassign, local_users{{/ str}}</th>
+                <th>{{# str}} action, local_users{{/ str}}</th>
             </tr>
         </thead>
         <tbody>
@@ -31,11 +32,9 @@
                     <td>{{costcenter}}</td>
                     <td>{{depth}}</td>
                     <td>{{timeassign}}</td>
+                    <td><a style = 'color:#1177d1;cursor:pointer' onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'>{{# str}}unassign, local_assignroles{{/ str}}</a></td>
                 </tr>
             {{/ rowdata}}
         </tbody>
     </table>
-{{/ enabletable}}
-{{^ enabletable}}
-    {{# str}} noroleassign, local_users{{/ str}}
 {{/ enabletable}}

@@ -36,7 +36,7 @@ class learningplan {
     public function userlearningplans($status = 'inprogress', $search = '', $limit = '', $mobile = false, $page=0, $perpage=10) {
         global $DB, $USER, $CFG;
         $coursesinfo = self::learningplancoursestypeinfo(true);
-        $sqlquery = "SELECT llp.id, llp.name, llp.description, llp.learning_type, IF(llp.learning_type = 1, 'Core Courses', 'Elective Courses') AS learningplantype, llp.open_points $coursesinfo ";
+        $sqlquery = "SELECT llp.id, llp.name, llp.description, llp.learning_type,llp.certificateid ,IF(llp.learning_type = 1, 'Core Courses', 'Elective Courses') AS learningplantype, llp.open_points $coursesinfo ";
         $sqlcount = "SELECT COUNT(llp.id)";
         $userlearningplanssql = " FROM {local_learningplan} llp
                                    JOIN {local_learningplan_user} lla ON llp.id = lla.planid

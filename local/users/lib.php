@@ -900,6 +900,7 @@ function manage_users_count($stable, $filterdata) {
         $params = array_merge($params, $relatedemailparams);
         $formsql .= " AND u.id $relatedemailsql";
     }
+    // var_dump($filterdata);exit;
     if (!empty($filterdata->filteropen_costcenterid)) {
         $organizations = explode(',', $filterdata->filteropen_costcenterid);
         $orgsql = [];
@@ -1130,7 +1131,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
 * Author Sarath
 * return filterform
 */
-function users_filters_form($filterparams) {
+function users_filters_form($filterparams, $formdata = []) {
     global $CFG, $USER;
 
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
@@ -1138,10 +1139,10 @@ function users_filters_form($filterparams) {
     $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
     if (is_siteadmin()) {
         $mform = new filters_form(null, array('filterlist' => array(/*'organizations', 'departments',
-            'subdepartment', 'department4level','department5level'*/'hierarchy_fields','states','district','subdistrict','village', 'email', 'employeeid', 'status'), 'courseid' => 1,
-             'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams));
+            'subdepartment', 'department4level','department5level'*/'hierarchy_fields'/*,'states','district','subdistrict','village'*/, 'geographyfields', 'email', 'employeeid', 'status'), 'courseid' => 1,
+             'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams)+$formdata);
     } else {
-        $filters = array('hierarchy_fields', 'states','district','subdistrict','village','email', 'employeeid', 'status');
+        $filters = array('hierarchy_fields'/*, 'states','district','subdistrict','village'*/, 'geographyfields','email', 'employeeid', 'status');
         // $depth = $USER->useraccess['currentroleinfo']['depth'];
         // if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
         //     $depth--;
@@ -1162,7 +1163,7 @@ function users_filters_form($filterparams) {
         //     array_unshift($filters, 'organizations');
         // }
         $mform = new filters_form(null, array('filterlist' => $filters, 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
-          => $filterparams));
+          => $filterparams)+$formdata);
     }
     return $mform;
 }
@@ -1369,7 +1370,7 @@ function local_users_output_fragment_user_field_create($args){
     return $o;
 }
 //global user profile form fields
-function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$allenable = false, $pluginname, $context, $multiple = false){
+function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$allenable = false, $pluginname, $context, $multiple = false, $prefix = ''){
     global $DB, $USER;
 
 
@@ -1381,7 +1382,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
 
     $lastdepth=end($costcenterfields);
 
-    if($pluginname != 'local_users'){
+    if($pluginname != 'local_users' && $prefix != 'filter'){
 
         $functionname ='globaltargetaudience_elementlist';
 
@@ -1402,19 +1403,26 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
     $depth = 0;
 
     foreach($fields as $field){
-
+        $tablename = $DB->get_prefix().str_replace("open","local",$field);
+        $fieldname = str_replace("open_","",$field).'_name';
+        $actfield = $field;
+        $field = $prefix.$field;
         if($depth == 0 ){
+            if($prefix == 'filter'){
+                $prev_element = 'filteropen_costcenterid_select';
+            }else{
+                $prev_element = 'locationfieldparentid_select';
 
-            $prev_element = 'locationfieldparentid_select';
-
-            $mform->addElement('hidden','locationfieldparentid', null,array('data-class'=>$prev_element));
-            $mform->setConstant('locationfieldparentid', $customdata[$firstdepth]);
+                $mform->addElement('hidden','locationfieldparentid', null,array('data-class'=>$prev_element));
+                $mform->setConstant('locationfieldparentid', $customdata[$firstdepth]);
+            }
         }
         $fieldelementoptions = array(
-            'class' => $field.'_select',
+            'class' => $field.'_select custom_form_field',
             'id' => 'id_'.$field.'_select',
             'data-parentclass' => $prev_element,
-            'data-selectstring' => get_string('select'.$field, 'local_users'),
+            'data-selectstring' => get_string('select'.$actfield, 'local_users'),
+            'placeholder' => get_string('select'.$actfield, 'local_users'),
             'data-depth' => $depth,
             'data-class' => $field.'_select',
             'onchange' => '(function(e){ require("local_users/newuser").changeElement(event) })(event)',
@@ -1443,9 +1451,7 @@ function local_users_get_userprofile_fields($mform, $ajaxformdata, $customdata,$
 
             if($fieldelementids){
 
-                $tablename=$DB->get_prefix().str_replace("open","local",$field);
 
-                $fieldname=str_replace("open_","",$field).'_name';
 
 
                 list($idsql, $idparams) = $DB->get_in_or_equal($fieldelementids, SQL_PARAMS_QM, 'targetaudienceelements');
@@ -1502,7 +1508,7 @@ function local_users_output_fragment_userrole_display($args)
     $context = $args->context;
     $userid = $args->id;
 
-    $sql = "SELECT ra.id,r.name,ra.timemodified,cc.name as costcenter,cc.depth
+    $sql = "SELECT ra.id,r.name,ra.timemodified,cc.name as costcenter,cc.depth, ra.contextid,ra.roleid
         FROM mdl_role_assignments AS ra
         JOIN mdl_context AS c ON c.id = ra.contextid AND c.contextlevel = 40
         JOIN mdl_course_categories AS cc ON cc.id = c.instanceid
@@ -1510,13 +1516,15 @@ function local_users_output_fragment_userrole_display($args)
         WHERE ra.userid =:userid";
     $roles = $DB->get_records_sql($sql, array('userid'=> $userid));
 
-
     $templatedata = array();
     if ($roles) {
         $templatedata['enabletable'] = true;
         foreach ($roles as $role) {
             $rowdata = array();
+            $rowdata['userid'] = $userid;
+            $rowdata['ctxid'] = $role->contextid;
             $rowdata['id'] = $role->id;
+            $rowdata['roleid'] = $role->roleid;
             $rowdata['role'] = $role->name;
             $rowdata['timeassign'] = date("d M Y", $role->timemodified);
             $rowdata['costcenter'] = $role->costcenter;

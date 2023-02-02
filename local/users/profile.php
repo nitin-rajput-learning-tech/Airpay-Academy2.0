@@ -44,9 +44,9 @@ $PAGE->set_title(get_string('viewprofile', 'local_users'));
 if (($id != $USER->id) && (!is_siteadmin())) {
     $issupervisor = $DB->record_exists('user', array('id' => $id, 'open_supervisorid' => $USER->id));
     if (!(has_capability('local/users:create', $categorycontext) || $issupervisor)) {
-        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');  
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
         $selectsql = "SELECT  u.id  FROM {user} AS u
-            WHERE u.id > 2 AND u.deleted = 0 ".$costcenterpathconcatsql;
+            WHERE u.id > 2 AND u.deleted = 0 AND u.id = {$id} ".$costcenterpathconcatsql;
         if(!$DB->record_exists_sql($selectsql)){
             throw new moodle_exception(get_string('nopermission', 'local_users'));
         }

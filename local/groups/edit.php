@@ -45,14 +45,9 @@ require_login();
 $category = null;
 if ($id) {
     $groups = $DB->get_record('cohort', array('id'=>$id), '*', MUST_EXIST);
-    $context = context::instance_by_id($groups->contextid, MUST_EXIST);
-
+    $context =  (new \local_groups\lib\accesslib())::get_module_context();
     $groupsdetails = $DB->get_record('local_groups', array('cohortid'=>$id));
-
     //i.e other than admin eg:Org.Head
-
-
-
 } else {
     $context = context::instance_by_id($contextid, MUST_EXIST);
     if ($context->contextlevel != CONTEXT_COURSECAT and $context->contextlevel != CONTEXT_SYSTEM) {

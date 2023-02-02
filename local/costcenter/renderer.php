@@ -139,28 +139,14 @@ class local_costcenter_renderer extends plugin_renderer_base {
         $edit = false;
         $delete = false;
         $usercount = '';
-        if (has_capability('local/costcenter:manage', $categorycontext)) {
-            $del_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$record->fullname);
-            $pathcount = $record->depth;
-            if($pathcount == 1){
-                if(is_siteadmin()){
-                    if($departmentcount == 0 && $usercount == 0)
-                        $delete = true;
-                    $edit = true;
-                }
-            }else if($pathcount == 2){
-                if(is_siteadmin() || has_capability('local/costcenter:updatedepartment', $categorycontext))
-                    $edit = true;
-                if((is_siteadmin() || has_capability('local/costcenter:deletedepartment', $categorycontext)) && $departmentcount == 0 && $usercount == 0)
-                    $delete = true;
-            }else{
-                if(is_siteadmin() || has_capability('local/costcenter:updatesubdepartment', $categorycontext))
-                    $edit = true;
-                if((is_siteadmin() || has_capability('local/costcenter:deletesubdepartment', $categorycontext)) && $departmentcount == 0 && $usercount == 0)
-                    $delete = true;
-            }
 
-        }
+        $del_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$record->fullname);
+
+        if(has_capability('local/costcenter:update', $categorycontext))
+                $edit = true;
+        if((has_capability('local/costcenter:delete', $categorycontext)) && $usercount == 0 && $departmentcount == 0)
+                $delete = true;
+
          $viewdeptContext = [
             "coursefileurl" => $OUTPUT->image_url('/course_images/courseimg', 'local_costcenter'),
             "orgname" => format_string($record->fullname),
@@ -320,7 +306,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         if(has_capability('local/costcenter:update', $categorycontext))
             $edit = true;
-        if((has_capability('local/costcenter:delete', $categorycontext)) && count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
+        if((has_capability('local/costcenter:delete', $categorycontext)) && $pathcount == 0 && $pluginnavs['totalusers'] == 0)
             $delete = true;
 
 
@@ -367,7 +353,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
 
-            $subdept = count($subdepartments);
+            $subdeptcount =$subdept = count($subdepartments);
             if($subdept){
                 $subdept_count_link = $CFG->wwwroot.'/local/costcenter/costcenterview.php?id='.$dept->id;
             }else{
@@ -385,7 +371,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             if(has_capability('local/costcenter:update', $categorycontext))
                 $deptedit = true;
-            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0)
+            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0 && $subdeptcount == 0)
                 $deptdelete = true;
 
            $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);
@@ -462,7 +448,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         if(has_capability('local/costcenter:update', $categorycontext))
             $edit = true;
-        if((has_capability('local/costcenter:delete', $categorycontext)) && count((array)$depart) == 0 && $pluginnavs['totalusers'] == 0)
+        if((has_capability('local/costcenter:delete', $categorycontext)) && $pathcount == 0 && $pluginnavs['totalusers'] == 0)
             $delete = true;
 
 
@@ -501,7 +487,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
 
-            $subdept = count($subdepartments);
+            $subdeptcount=$subdept = count($subdepartments);
             if($subdept){
                 $subdept_count_link = $CFG->wwwroot.'/local/costcenter/costcenterview.php?id='.$dept->id;
             }else{
@@ -519,7 +505,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             if(has_capability('local/costcenter:update', $categorycontext))
                 $deptedit = true;
-            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0)
+            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0 && $subdeptcount == 0)
                 $deptdelete = true;
 
             $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);

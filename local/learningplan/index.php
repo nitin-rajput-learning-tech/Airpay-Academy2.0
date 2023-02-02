@@ -152,21 +152,14 @@ if (is_siteadmin() || (has_capability('local/learningplan:create', $categorycont
 
 $out .= "</ul>";
 echo $out;
-$depth = $USER->useraccess['currentroleinfo']['depth'];
-if(is_siteadmin()){
-    $thisfilters = array('learningplan', 'organizations', 'categories', 'departments', 'subdepartment', 'department4level','department5level', 'status', 'states', 'district', 'subdistrict', 'village');
-}else if(has_capability('local/learningplan:manage',$categorycontext) && $depth == 2){
-    $thisfilters = array('learningplan','departments', 'subdepartment', 'department4level','department5level', 'status', 'states', 'district', 'subdistrict', 'village');
-}else if(has_capability('local/learningplan:manage', $categorycontext) && $depth == 3){
-    $thisfilters = array('department4level','department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
-}else if(has_capability('local/learningplan:manage', $categorycontext) && $depth == 4){
-    $thisfilters = array('department5level', 'learningplan',  'status', 'states', 'district', 'subdistrict', 'village');
-}else {
-    $thisfilters = array('learningplan', 'status', 'states', 'district', 'subdistrict', 'village');
+//$depth = $USER->useraccess['currentroleinfo']['depth'];
+$thisfilters = array(/*'organizations', 'departments',
+    'subdepartment', 'department4level','department5level',*/'hierarchy_fields','states','district','subdistrict','village','idnumber', 'email','users');
+if(!is_siteadmin()) {
+$thisfilters = array('hierarchy_fields','states','district','subdistrict','village','idnumber', 'email','users');
 }
-
-$mform = new filters_form(null, array('filterlist'=> $thisfilters));
-//$filterdata = null;     
+$datasubmitted = data_submitted();
+$mform = new filters_form(null, array('filterlist'=> $thisfilters)+(array)$datasubmitted);
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/learningplan/index.php');
 } else{

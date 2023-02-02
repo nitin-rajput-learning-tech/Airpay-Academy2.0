@@ -151,9 +151,9 @@ $report_details=$ls->get_categories_from_reports();
                 $properties = new stdClass();
                 $properties->courseid = $courseid;
                 $reportclass = $ls->create_reportclass($results->id, $properties);
-                if ($reportclass->parent && $results->type != 'statistics') {
-                    $editcell .= '<a title="' . $strschedule . '" href="./components/scheduler/schedule.php?id=' . $results->id . '&courseid=' . $results->courseid . '&sesskey=' . $USER->sesskey . '"><i class="icon fa fa-calendar iconsmall"></i></a>';
-                }
+                // if ($reportclass->parent && $results->type != 'statistics') {
+                //     $editcell .= '<a title="' . $strschedule . '" href="./components/scheduler/schedule.php?id=' . $results->id . '&courseid=' . $results->courseid . '&sesskey=' . $USER->sesskey . '"><i class="icon fa fa-calendar iconsmall"></i></a>';
+                // }
 
                 //////////Download////////////
                 $download = '';
@@ -266,7 +266,7 @@ $report_details=$ls->get_categories_from_reports();
                     $list['report_name_class'] = true;
                 }
                 $list['reportfullname'] = $results->name;
-                $list['actions']=$editcell;
+                $list['actions']= is_siteadmin() ? $editcell : '';
                 $list['download']=$download;
                 $alllist[]=$list;
             }
