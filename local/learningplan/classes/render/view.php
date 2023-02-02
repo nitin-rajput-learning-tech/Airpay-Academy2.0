@@ -66,8 +66,8 @@ class view extends plugin_renderer_base
 			}
 			$assign_users_sql = "SELECT id FROM {local_learningplan} l WHERE 1 = 1 ";
 			if ($filterdata) {
-				if (!empty(array_filter($filterdata->organizations))) {
-					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
+				if (!empty(array_filter($filterdata->filteropen_costcenterid))) {
+					$selectedorganizations = implode(',', array_filter($filterdata->filteropen_costcenterid));
 					$organizations = explode(',', $selectedorganizations);
 					$orgsql = [];
 					foreach ($organizations as $organisation) {
@@ -94,8 +94,8 @@ class view extends plugin_renderer_base
 						$assign_users_sql .= " AND ( " . implode(' OR ', $deptsql) . " ) ";
 					}
 				}
-				if (!empty(array_filter($filterdata->subdepartment))) {
-					$selectedsubdepts = implode(',', array_filter($filterdata->subdepartment));
+				if (!empty(array_filter($filterdata->filteropen_subdepartment))) {
+					$selectedsubdepts = implode(',', array_filter($filterdata->filteropen_subdepartment));
 					$subdepts = explode(',', $selectedsubdepts);
 					$subdeptsql = [];
 					foreach ($subdepts as $subdept) {
@@ -109,8 +109,8 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->department4level))) {
-					$selecteddepts4 = implode(',', array_filter($filterdata->department4level));
+				if (!empty(array_filter($filterdata->filteropen_department4level))) {
+					$selecteddepts4 = implode(',', array_filter($filterdata->filteropen_department4level));
 					$depts4 = explode(',', $selecteddepts4);
 					$depts4sql = [];
 					foreach ($depts4 as $dept4) {
@@ -124,8 +124,8 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->department5level))) {
-					$selecteddepts5 = implode(',', array_filter($filterdata->department5level));
+				if (!empty(array_filter($filterdata->filteropen_department5level))) {
+					$selecteddepts5 = implode(',', array_filter($filterdata->filteropen_department5level));
 					$depts5 = explode(',', $selecteddepts5);
 					$depts5sql = [];
 					foreach ($depts5 as $dept5) {
@@ -1205,7 +1205,6 @@ class view extends plugin_renderer_base
 	/*Function to called in the bulk users upload*/
 	public function select_to_users_of_learninplan($planid, $userid, $params, $total = 0, $offset1 = -1, $perpage = -1, $lastitem = 0)
 	{
-		// print_r($params);exit;
 		$users = $this->db->get_record('local_learningplan', array('id' => $planid));
 		$us = $users->open_band;
 		$array = explode(',', $us);
@@ -1416,6 +1415,7 @@ class view extends plugin_renderer_base
 		global $DB;
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 		$learningplan  = $DB->get_records('local_learningplan');
+		$lpuserexist = $DB->record_exists('local_learningplan_user',array('planid'=>$planid));
 		foreach ($learningplan as $plan)
 			$departmentcount = count(array_filter(explode(',', $plan->department)));
 		$subdepartmentcount = count(array_filter(explode(',', $plan->subdepartment)));
@@ -1423,17 +1423,18 @@ class view extends plugin_renderer_base
 		$learningplan_lib = new lib;
 		$userscount = $learningplan_lib->get_enrollable_users_count_to_learningplan($planid);
 		$return = '';
-
-		$add_learningplancourses = '<ul class="course_extended_menu_list learningplan">
-							    		<li>
-									        <div class="course_extended_menu_itemcontainer">
-									            <a title="' . get_string('assign_courses', 'local_learningplan') . '" class="course_extended_menu_itemlink" href="javascript:void(0);"
-									            	onclick="(function(e){ require(\'local_learningplan/courseenrol\').init({selector:\'createcourseenrolmodal\', contextid:' . $categorycontext->id . ', planid:' . $planid . ', condition:\'manage\'}) })(event)">
-									            	<i class="icon fa fa-plus" aria-hidden="true"></i>
-									            </a>
-									        </div>
-									    </li>
-									</ul>';
+		if(!$lpuserexist){
+			$add_learningplancourses = '<ul class="course_extended_menu_list learningplan">
+				<li>
+				    <div class="course_extended_menu_itemcontainer">
+				        <a title="' . get_string('assign_courses', 'local_learningplan') . '" class="course_extended_menu_itemlink" href="javascript:void(0);"
+							onclick="(function(e){ require(\'local_learningplan/courseenrol\').init({selector:\'createcourseenrolmodal\', contextid:' . $categorycontext->id . ', planid:' . $planid . ', condition:\'manage\'}) })(event)">
+								<i class="icon fa fa-plus" aria-hidden="true"></i>
+						</a>
+					</div>
+				</li>
+			</ul>';
+		}
 
 
 		if ($departmentcount > 1 && !(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext))) {
@@ -1621,7 +1622,7 @@ class view extends plugin_renderer_base
 					if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
 						$unassign_url = '';
 						$unassign_link = '';
-					} else {
+					} elseif ($disbaled_button == "") {
 
 						$unassign_url = new \moodle_url('/local/learningplan/assign_courses_users.php', array('planid' => $planid, 'unassigncourse' => $course->lepid));
 						$unassign_link = html_writer::link(
@@ -1648,23 +1649,23 @@ class view extends plugin_renderer_base
 
 						if ($disbaled_button == "") {
 							$actions .= $unassign_link1; /*Arrows down for first course*/
-						}
 						/*condition for the select the dropdown if already selected*/
 						/*Select box*/
 
-						if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
-							$buttons .= '';
-						} else {
-							$buttons .= '<span class="switch_type">										
-										<label class="switch">
-											<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
-											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
-											<span class="switch-handle"></span> 
-										</label>
-							
-										<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
-										<input type="hidden" value="' . $planid . '" name="plan">
-									</span>';
+							if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
+								$buttons .= '';
+							} else {
+								$buttons .= '<span class="switch_type">
+									<label class="switch">
+										<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
+										<span class="switch-label" data-on="Man" data-off="Opt"></span>
+											<span class="switch-handle"></span>
+									</label>
+
+									<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
+									<input type="hidden" value="' . $planid . '" name="plan">
+								</span>';
+							}
 						}
 
 						/*End of the select box*/
@@ -1682,21 +1683,21 @@ class view extends plugin_renderer_base
 						}
 						if ($disbaled_button == "") {
 							$actions .= $unassign_link_up;
-						}
 
-						if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
-							$buttons .= '';
-						} else {
-							$buttons .= '<span class="switch_type">										
-										<label class="switch">
-											<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
-											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
-											<span class="switch-handle"></span> 
+							if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
+								$buttons .= '';
+							} else {
+								$buttons .= '<span class="switch_type">
+									<label class="switch">
+										<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
+										<span class="switch-label" data-on="Man" data-off="Opt"></span>
+											<span class="switch-handle"></span>
 										</label>
-						
-						<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
-						<input type="hidden" value="' . $planid . '" name="plan">
-						</span>';
+
+									<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
+									<input type="hidden" value="' . $planid . '" name="plan">
+								</span>';
+							}
 						}
 					} else {
 						/*Else condition Not for first and last record should have the both arrows*/
@@ -1715,17 +1716,17 @@ class view extends plugin_renderer_base
 							if ($disbaled_button == "") {
 								$actions .= $unassign_link_down;
 								$actions .= $unassign_link1;
-							}
 							/*select box*/
-							$buttons .= '<span class="switch_type">										
-										<label class="switch">
-											<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
-											<span class="switch-label" data-on="Man" data-off="Opt"></span> 
-											<span class="switch-handle"></span> 
-										</label>
-						
-										<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
-									</span>';
+								$buttons .= '<span class="switch_type">
+									<label class="switch">
+										<input class="switch-input" type="checkbox" id="next_val' . $course->id . '" value="' . $course->id . '" "' . $select . '">
+										<span class="switch-label" data-on="Man" data-off="Opt"></span>
+										<span class="switch-handle"></span>
+									</label>
+
+									<input type="hidden" value="' . $course->lepid . '" id="courseid' . $course->lepid . '" name="row[]">
+								</span>';
+							}
 						}
 						/*end of the select box*/
 						$courseid_condition[] = $course->lepid;

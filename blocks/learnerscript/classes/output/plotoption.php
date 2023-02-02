@@ -90,6 +90,7 @@ class plotoption implements renderable, templatable {
             $data->permissionsavailable = true;
         }
         $data->enableschedule = ($reportclass->parent === true && $reportclass->config->type != 'statistics')? true : false ;
+        $data->enableheader = is_siteadmin();
         return $data;
     }
 }

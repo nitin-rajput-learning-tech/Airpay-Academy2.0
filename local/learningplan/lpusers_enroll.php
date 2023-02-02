@@ -84,6 +84,9 @@ $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->js('/local/learningplan/js/jquery.bootstrap-duallistbox.js',true);
 $PAGE->requires->css('/local/learningplan/css/bootstrap-duallistbox.css');
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load');
+$PAGE->requires->js_call_amd('local_users/newuser', 'load');
+
 echo $OUTPUT->header();
 $learningplan_lib = new local_learningplan\lib\lib();
 $actionpage =$CFG->wwwroot.'/local/learningplan/lpusers_enroll.php?lpid='.$planid;
@@ -95,7 +98,8 @@ $core_component = new core_component();
 $courses_plugin_exists = $core_component::get_plugin_directory('local', 'courses');
 if(!empty($courses_plugin_exists)&&!$add&&!$remove){
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
-    $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment'));
+    $datasubmitted = data_submitted();
+    $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment')+(array)$datasubmitted);
     $organization = null;
     $department   = null;
     $email        = null;
@@ -111,7 +115,6 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
 	
 	
   	$filterdata =  $mform->get_data();
-    // print_r($filterdata);exit;
   	if($filterdata){
   		$collapse = false;
       $show = 'show';
@@ -119,11 +122,11 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
   		$collapse = true;
       $show = '';
   	}
-  	$organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
-  	$department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
-    $subdepartment = !empty($filterdata->subdepartment) ? implode(',', $filterdata->subdepartment) : null;
-    $department4level = !empty($filterdata->department4level) ? implode(',', $filterdata->department4level) : null;
-    $department5level = !empty($filterdata->department5level) ? implode(',', $filterdata->department5level) : null;
+  	$organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
+  	$department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
+    $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
+    $department4level = !empty($filterdata->filteropen_department4level) ? implode(',', $filterdata->filteropen_department4level) : null;
+    $department5level = !empty($filterdata->filteropen_department5level) ? implode(',', $filterdata->filteropen_department5level) : null;
     $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
     $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
     $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;

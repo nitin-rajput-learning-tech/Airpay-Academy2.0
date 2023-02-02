@@ -38,7 +38,6 @@ class lib{
                 $datarecord->path = $path;
                 $DB->update_record('local_custom_category',  $datarecord);
             }
-            blocks_add_default_org_blocks($statesid->id);
         }
         return $statesid->id;
     }

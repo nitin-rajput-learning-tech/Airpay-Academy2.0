@@ -348,124 +348,125 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             return new NewUser(args);
         },
         load: function(){
-            $(document).on('change', '#id_open_costcenterid', function() {
-              var costcentervalue = $(this).find("option:selected").val();
-               if (costcentervalue !== null) {
-                    var params = {};
-                    params.costcenterid = costcentervalue;
-                    params.contextid = 1;
-                    var promise = Ajax.call([{
-                        methodname: 'local_users_get_departments_list',
-                        args: params
-                    }]);
-                    promise[0].done(function(resp) {
-                        var resp = JSON.parse(resp);
-                        var template = '';
-                        $.each(resp, function(index,value) {
-                            template += '<option value = ' + index + ' >' +value + '</option>';
-                        });
-                        $("#id_open_departmentid").html(template);
-                    });
-                } 
-                $('#id_open_departmentid').trigger('change');
-                $('#id_open_subdepartment').trigger('change');
-            });
-            $(document).on('change', '#id_open_departmentid', function() {
-              var departmentvalue = $(this).find("option:selected").val();
-               if (departmentvalue !== null) {
-                    var params = {};
-                    params.departmentid = departmentvalue;
-                    params.contextid = 1;
-                    var promise = Ajax.call([{
-                        methodname: 'local_users_get_subdepartments_list',
-                        args: params
-                    }]);
-                    promise[0].done(function(resp) {
-                        var resp = JSON.parse(resp);
-                        var template = '';
-                        $.each(resp, function(index,value) {
-                            template += '<option value = ' + index + ' >' +value + '</option>';
-                        });
-                        $("#id_open_subdepartment").html(template);
-                    });
-                }
-            });
-            $(document).on('change', '#id_open_costcenterid', function() {
-                var costcentervalue = $(this).find("option:selected").val();
-                if (costcentervalue != 0) {
-                    var params = {};
-                    params.costcenterid = costcentervalue;
-                    params.contextid = 1;
-                    var promise = Ajax.call([{
-                        methodname: 'local_users_get_supervisors_list',
-                        args: params
-                    }]);
-                    promise[0].done(function(resp) {
-                        var resp = JSON.parse(resp);
-                        var template = '';
-                        $.each(resp, function(index,value) {
-                            template += '<option value = ' + index + ' >' +value + '</option>';
-                        });
-                        $("#open_supervisorid").html(template);
-                    });
-                }
-                $('#open_supervisorid').trigger('change');    
-            });
+            // $(document).on('change', '#id_open_costcenterid', function() {
+            //   var costcentervalue = $(this).find("option:selected").val();
+            //    if (costcentervalue !== null) {
+            //         var params = {};
+            //         params.costcenterid = costcentervalue;
+            //         params.contextid = 1;
+            //         var promise = Ajax.call([{
+            //             methodname: 'local_users_get_departments_list',
+            //             args: params
+            //         }]);
+            //         promise[0].done(function(resp) {
+            //             var resp = JSON.parse(resp);
+            //             var template = '';
+            //             $.each(resp, function(index,value) {
+            //                 template += '<option value = ' + index + ' >' +value + '</option>';
+            //             });
+            //             $("#id_open_departmentid").html(template);
+            //         });
+            //     }
+            //     $('#id_open_departmentid').trigger('change');
+            //     $('#id_open_subdepartment').trigger('change');
+            // });
+            // $(document).on('change', '#id_open_departmentid', function() {
+            //   var departmentvalue = $(this).find("option:selected").val();
+            //    if (departmentvalue !== null) {
+            //         var params = {};
+            //         params.departmentid = departmentvalue;
+            //         params.contextid = 1;
+            //         var promise = Ajax.call([{
+            //             methodname: 'local_users_get_subdepartments_list',
+            //             args: params
+            //         }]);
+            //         promise[0].done(function(resp) {
+            //             var resp = JSON.parse(resp);
+            //             var template = '';
+            //             $.each(resp, function(index,value) {
+            //                 template += '<option value = ' + index + ' >' +value + '</option>';
+            //             });
+            //             $("#id_open_subdepartment").html(template);
+            //         });
+            //     }
+            // });
+            // $(document).on('change', '#id_open_costcenterid', function() {
+            //     var costcentervalue = $(this).find("option:selected").val();
+            //     if (costcentervalue != 0) {
+            //         var params = {};
+            //         params.costcenterid = costcentervalue;
+            //         params.contextid = 1;
+            //         var promise = Ajax.call([{
+            //             methodname: 'local_users_get_supervisors_list',
+            //             args: params
+            //         }]);
+            //         promise[0].done(function(resp) {
+            //             var resp = JSON.parse(resp);
+            //             var template = '';
+            //             $.each(resp, function(index,value) {
+            //                 template += '<option value = ' + index + ' >' +value + '</option>';
+            //             });
+            //             $("#open_supervisorid").html(template);
+            //         });
+            //     }
+            //     $('#open_supervisorid').trigger('change');
+            // });
 
-            $(document).on('change', '#id_open_costcenterid', function() {
-                var costcentervalue = $(this).find("option:selected").val();
-                if (costcentervalue != 0) {
-                    var params = {};
-                    params.costcenterid = costcentervalue;
-                    params.contextid = 1;
-                    var promise = Ajax.call([{
-                        methodname: 'local_users_get_domains_list',
-                        args: params
-                    }]);
-                    promise[0].done(function(resp) {
-                        var resp = JSON.parse(resp);
-                        var template = '';
-                        $.each(resp, function(index,value) {
-                            template += '<option value = ' + index + ' >' +value + '</option>';
-                        });
-                        console.log(template);
-                        $("#id_open_domainid").html(template);
-                    });
-                }
-                $('#id_open_domainid').trigger('change');    
-            });
+            // $(document).on('change', '#id_open_costcenterid', function() {
+            //     var costcentervalue = $(this).find("option:selected").val();
+            //     if (costcentervalue != 0) {
+            //         var params = {};
+            //         params.costcenterid = costcentervalue;
+            //         params.contextid = 1;
+            //         var promise = Ajax.call([{
+            //             methodname: 'local_users_get_domains_list',
+            //             args: params
+            //         }]);
+            //         promise[0].done(function(resp) {
+            //             var resp = JSON.parse(resp);
+            //             var template = '';
+            //             $.each(resp, function(index,value) {
+            //                 template += '<option value = ' + index + ' >' +value + '</option>';
+            //             });
+            //             console.log(template);
+            //             $("#id_open_domainid").html(template);
+            //         });
+            //     }
+            //     $('#id_open_domainid').trigger('change');
+            // });
 
-            $(document).on('change', '#id_open_domainid', function() {
-                // var costcentervalue = $('#id_open_costcenterid').val();
-                // if(costcentervalue > 0) {
-                //     costcentervalue = costcentervalue;
-                // } else {
-                //     costcentervalue = $('input[name=open_costcenterid]').val();
-                // }
-                var costcentervalue = $(this).data('costcenterid')
-                var domainvalue = $(this).find("option:selected").val();
-                if (costcentervalue != 0 && domainvalue != 0) {
-                    var params = {};
-                    params.costcenterid = costcentervalue;
-                    params.domain = domainvalue;
-                    params.contextid = 1;
-                    var promise = Ajax.call([{
-                        methodname: 'local_users_get_positions_list',
-                        args: params
-                    }]);
-                    promise[0].done(function(resp) {
-                        var resp = JSON.parse(resp);
-                        var template = '';
-                        $.each(resp, function(index,value) {
-                            template += '<option value = ' + index + ' >' +value + '</option>';
-                        });
-                        $("#id_open_positionid").html(template);
-                    });
-                }
-                $('#id_open_positionid').trigger('change');    
-            });
+            // $(document).on('change', '#id_open_domainid', function() {
+            //     // var costcentervalue = $('#id_open_costcenterid').val();
+            //     // if(costcentervalue > 0) {
+            //     //     costcentervalue = costcentervalue;
+            //     // } else {
+            //     //     costcentervalue = $('input[name=open_costcenterid]').val();
+            //     // }
+            //     var costcentervalue = $(this).data('costcenterid')
+            //     var domainvalue = $(this).find("option:selected").val();
+            //     if (costcentervalue != 0 && domainvalue != 0) {
+            //         var params = {};
+            //         params.costcenterid = costcentervalue;
+            //         params.domain = domainvalue;
+            //         params.contextid = 1;
+            //         var promise = Ajax.call([{
+            //             methodname: 'local_users_get_positions_list',
+            //             args: params
+            //         }]);
+            //         promise[0].done(function(resp) {
+            //             var resp = JSON.parse(resp);
+            //             var template = '';
+            //             $.each(resp, function(index,value) {
+            //                 template += '<option value = ' + index + ' >' +value + '</option>';
+            //             });
+            //             $("#id_open_positionid").html(template);
+            //         });
+            //     }
+            //     $('#id_open_positionid').trigger('change');
+            // });
         },
         changeElement: function(event){
+            console.log('hello');
             var depth = $(event.target).data('depth');
             $.each($('[data-action="userprofile_element_selector"]'), function(index, value){
                 if($(value).data('depth') > depth){

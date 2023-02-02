@@ -144,6 +144,7 @@ class learningplan extends moodleform {
 			$mform->addGroup($manageapproval, 'approvalreqd',get_string('need_manage_approval', 'local_learningplan'),
 				array('&nbsp;&nbsp;'), false);
 			$mform->addHelpButton('approvalreqd','need_manager_approval','local_learningplan');
+            $mform->hideIf('approvalreqd', 'selfenrol', 'neq', '1');
 
 			// $mform->addElement('text', 'open_points', get_string('points','local_learningplan'));
 	        // $mform->addHelpButton('open_points', 'open_pointslearningpath', 'local_learningplan');

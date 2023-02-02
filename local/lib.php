@@ -93,10 +93,10 @@ function get_filterslist() {
 
 	global $CFG, $PAGE,$USER;
 
-	$filterlist = array('organizations', 'departments',
-            'subdepartment', 'department4level','department5level','states','district','subdistrict','village','idnumber', 'email','users');
+	$filterlist = array(/*'organizations', 'departments',
+            'subdepartment', 'department4level','department5level',*/'hierarchy_fields','states','district','subdistrict','village','idnumber', 'email','users');
 
-	if(!is_siteadmin()) {
+	/*if(!is_siteadmin()) {
 
         $filterlist = array('states','district','subdistrict','village','idnumber', 'email','users');
 
@@ -120,7 +120,7 @@ function get_filterslist() {
             array_unshift($filterlist, 'organizations');
         }
 
-    }
+    }*/
 
 	return $filterlist;
 }

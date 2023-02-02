@@ -1,0 +1,12 @@
+<div class="dropdown">
+    <a role="button" id="language_dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="fa fa-language" aria-hidden="true"></i>
+    </a>
+  
+    <div class="dropdown-menu" aria-labelledby="language_dropdown">
+      {{#options}}
+      <a class="dropdown-item" href="{{actionurl}}{{#hasparams}}&{{/hasparams}}{{^hasparams}}?{{/hasparams}}lang={{value}}">{{{name}}}</a>
+      {{/options}}
+    </div>
+
+</div>
