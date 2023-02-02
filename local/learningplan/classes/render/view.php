@@ -377,7 +377,7 @@ class view extends plugin_renderer_base
 					if ($learning_plan->visible == 0) {
 						$class = 'disabled';
 					}
-					$row = [html_writer::tag('a', $learning_plan_name, array('href' => $CFG->wwwroot . '/local/learningplan/plan_view.php?id=' . $learning_plan->id, 'class' => $class)), html_writer::span($learningplan_content['plan_shortname_string'], $class), html_writer::span($learningplan_content['plan_department_string'], $class), html_writer::span($learningplan_content['lpcoursescount'], $class), html_writer::span($actions,  $class)];
+					$row = [html_writer::tag('a', $learning_plan_name, array('href' => $CFG->wwwroot . '/local/learningplan/plan_view.php?id=' . $learning_plan->id, 'class' => $class)), html_writer::span($learningplan_content['plan_shortname_string'], $class), html_writer::span($learningplan_content['plandpt'], $class), html_writer::span($learningplan_content['lpcoursescount'], $class), html_writer::span($actions,  $class)];
 				}
 				$table_data[] = $row;
 			}
