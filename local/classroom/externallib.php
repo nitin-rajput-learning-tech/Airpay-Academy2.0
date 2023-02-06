@@ -1255,39 +1255,35 @@ class local_classroom_external extends external_api {
             'context' => $categorycontext,
             'includes' => $includes,
             'classroomid' => $classroomid,
-            // 'limitfrom' => $limitfrom,
-            // 'limitnum' => $limitnum,
         ));
         
         $query = $params['query'];
         $includes = $params['includes'];
         $classroomid = $params['classroomid'];
         $categorycontext = self::get_context_from_params($params['context']);
-        // $limitfrom = $params['limitfrom'];
-        // $limitnum = $params['limitnum'];
 
         self::validate_context($categorycontext);
         $courses = array();
-        // if ($query) {
-            $queryparams = array();
-            // $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($classroomid);        
-            if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-                $concatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-           }
-           if($query){
-                $concatsql .=" AND c.fullname LIKE '%$query%'";
-           }else{
-                $concatsql .=" ";
-           }
-
-            //unable to fetch data from the previous query.Updated into new one.
-              $cousresql = "SELECT c.id, c.fullname
-                           FROM {course} AS c
-                          WHERE c.visible = 1
-                           AND c.id <> " . SITEID . " $concatsql";
-            $courses = $DB->get_records_sql($cousresql, $queryparams);
+        $queryparams = array();
+        // if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
+        //     $concatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         // }
+        // if($query){
+        //     $concatsql .=" AND c.fullname LIKE '%$query%'";
+        // }else{
+        //     $concatsql .=" ";
+        // }
+        // $cousresql = "SELECT c.id, c.fullname FROM {course} AS c WHERE c.visible = 1 AND c.id <> " . SITEID . " $concatsql";
 
+        $open_path = $DB->get_field('local_classroom', 'open_path', array('id' => $classroomid));
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+        $cousresql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 "; 
+        if(is_siteadmin()){
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
+            }
+        $cousresql .= $costcenterpathconcatsql;
+
+        $courses = $DB->get_records_sql($cousresql, $queryparams);
         return array('courses' => $courses);
     }
     public static function classroom_course_selector_returns() {

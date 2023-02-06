@@ -114,8 +114,8 @@ $string['learningplan_self_enrol'] = '<div class="pl-15 pr-15 pb-15">Are you sur
 $string['learningplan_self_unenrol'] = '<div class="pl-15 pr-15 pb-15">Are you sure, Do you want to unenrol from {$a->planname} learning path?</div';
 $string['target_audience_tab'] = 'Target audience';
 $string['audience_department'] = '<p>This learningpath will eligible below-listed target audience.</p>
-<p> <b>Country :</b> {$a}</p>';
-$string['audience_subdepartment'] = '<p> <b>Commercial Unit :</b> {$a}</p>';
+<p> <b>Bussiness Unit :</b> {$a}</p>';
+$string['audience_subdepartment'] = '<p> <b>Department :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';
 $string['audience_hrmsrole'] = '<p> <b>Role :</b> {$a}</p>';
 $string['audience_designation'] = '<p> <b>Designations :</b> {$a}</p>';
@@ -241,11 +241,11 @@ $string['optional'] = 'Optional';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 $string['exportlearningplans'] = 'Export Learning Plans to Excel';
-$string['department'] = "Country";
+$string['department'] = "Bussiness Unit";
 $string['reportingto'] = "Reporting To";
 $string['autoenrol'] = "Auto Enrol";
 $string['need_self_enrol'] = "Need Self Enroll";
-$string['audience_commercial'] = '<p> <b>Commercial Area :</b> {$a}</p>';
+$string['audience_commercial'] = '<p> <b>Sub Department :</b> {$a}</p>';
 $string['audience_terriroty'] = '<p> <b>Territory :</b> {$a}</p>';
 $string['audience_state'] = '<p> <b>State :</b> {$a}</p>';
 $string['audience_district'] = '<p> <b>District :</b> {$a}</p>';

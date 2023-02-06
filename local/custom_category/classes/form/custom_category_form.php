@@ -74,7 +74,7 @@ class custom_category_form extends moodleform {
             'ajax' => 'local_costcenter/form-options-selector',
             'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
             'data-action' => 'custom_category_selector',
-            'data-options' => json_encode(array('id' => $fid)),
+            'data-options' => json_encode(array('id' => $fid,'type'=>'parent_selector')),
             'class' => 'idparentselect',
             'data-parentclass' => 'open_costcenterid_select',
             'data-class' => 'idparentselect',

@@ -118,6 +118,36 @@ function xmldb_local_users_install(){
           if (!$dbman->field_exists($table, $field3)) {
               $dbman->add_field($table, $field3);
           }
+          $field4 = new xmldb_field('open_subbranch');
+          $field4->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $field4)) {
+              $dbman->add_field($table, $field4);
+          }
+          $field5 = new xmldb_field('open_joindate');
+          $field5->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $field5)) {
+              $dbman->add_field($table, $field5);
+          }
+          $field6 = new xmldb_field('open_dateofbirth');
+          $field6->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $field6)) {
+              $dbman->add_field($table, $field6);
+          }
+          $field7 = new xmldb_field('gender');
+          $field7->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $field7)) {
+              $dbman->add_field($table, $field7);
+          }
+          $field8 = new xmldb_field('open_employmenttype');
+          $field8->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $field8)) {
+              $dbman->add_field($table, $field8);
+          }
+          $field9 = new xmldb_field('open_employmentstatus');
+          $field9->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $field9)) {
+              $dbman->add_field($table, $field9);
+          }
 
     }
 }

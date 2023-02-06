@@ -259,7 +259,7 @@ function local_learningplan_quicklink_node(){
 * return count of learningplans under selected costcenter
 * @return  [type] int count of learningplans
 */
-function costcenterwise_learningplan_count($costcenter,$department = false){
+function costcenterwise_learningplan_count($costcenter,$department = false, $subdepartment = false, $l4department=false, $l5department=false){
     global $USER, $DB,$CFG;
         $params = array();
         $params['costcenterpath'] = '%/'.$costcenter.'/%';
@@ -268,6 +268,18 @@ function costcenterwise_learningplan_count($costcenter,$department = false){
         if($department){
             $countlpql .= "  AND concat('/',lp.open_path,'/') LIKE :departmentpath  ";
             $params['departmentpath'] = '%/'.$department.'/%';
+        }
+        if ($subdepartment) {
+        $countlpql .= " AND concat('/',lp.open_path,'/') LIKE :subdepartmentpath ";
+        $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
+        }
+        if ($l4department) {
+            $countlpql .= " AND concat('/',lp.open_path,'/') LIKE :l4departmentpath ";
+            $params['l4departmentpath'] = '%/'.$l4department.'/%';
+        }
+        if ($l5department) {
+            $countlpql .= " AND concat('/',lp.open_path,'/') LIKE :l5departmentpath ";
+            $params['l5departmentpath'] = '%/'.$l5department.'/%';
         }
         $activesql = " AND visible = 1 ";
         $inactivesql = " AND visible = 0 ";
@@ -280,7 +292,16 @@ function costcenterwise_learningplan_count($costcenter,$department = false){
                 $viewlplink_url = $CFG->wwwroot.'/local/learningplan/index.php?costcenterid='.$costcenter; 
             }
             if($department){
-                $viewlplink_url = $CFG->wwwroot.'/local/learningplan/index.php?departmentid='.$department; 
+                $viewlplink_url = $CFG->wwwroot.'/local/learningplan/index.php?costcenterid='.$costcenter.'&departmentid='.$department;
+            }
+            if($subdepartment){
+                $viewlplink_url = $CFG->wwwroot.'/local/learningplan/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+            }
+            if($l4department){
+                $viewlplink_url = $CFG->wwwroot.'/local/learningplan/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+            }
+            if($l5department){
+                $viewlplink_url = $CFG->wwwroot.'/local/learningplan/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
             }
            
         }
@@ -289,15 +310,33 @@ function costcenterwise_learningplan_count($costcenter,$department = false){
                 $count_lpactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=active&costcenterid='.$costcenter; 
             }
             if($department){
-                $count_lpactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=active&departmentid='.$department; 
-            }        
+                $count_lpactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=active&costcenterid='.$costcenter.'&departmentid='.$department;
+            }
+            if($subdepartment){
+                $count_lpactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+            }
+            if($l4department){
+                $count_lpactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+            }
+            if($l5department){
+                $count_lpactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+            }
         }
         if($inactivelps >= 0){
             if($costcenter){
                 $count_lpinactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=inactive&costcenterid='.$costcenter; 
             }
             if($department){
-                $count_lpinactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=inactive&departmentid='.$department; 
+                $count_lpinactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=inactive&costcenterid='.$costcenter.'&departmentid='.$department;
+            }
+            if($subdepartment){
+                $count_lpinactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+            }
+            if($l4department){
+                $count_lpinactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+            }
+            if($l5department){
+                $count_lpinactivelink_url = $CFG->wwwroot.'/local/learningplan/index.php?status1=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
             }
         }
 

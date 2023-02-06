@@ -811,7 +811,7 @@ function local_costcenter_leftmenunode(){
 * Author sarath
 * @return  plugins count with all modules
 */
-function local_costcenter_plugins_count($costcenterid, $departmentid=false, $subdepartmentid=false){
+function local_costcenter_plugins_count($costcenterid, $departmentid=false, $subdepartmentid=false, $l4departmentid=false, $l5departmentid=false){
     global $CFG;
     $core_component = new core_component();
     $local_pluginlist = $core_component::get_plugin_list('local');
@@ -823,7 +823,7 @@ function local_costcenter_plugins_count($costcenterid, $departmentid=false, $sub
             if(function_exists($functionname)){
                 // if($subdepartmentid){
                     // if($key === 'users')
-                $data = $functionname($costcenterid,$departmentid, $subdepartmentid);
+                $data = $functionname($costcenterid,$departmentid, $subdepartmentid, $l4departmentid, $l5departmentid);
                 // }else{
                 //     $data = $functionname($costcenterid,$departmentid, $subdepartmentid);
                 // }
@@ -927,11 +927,11 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
     if(is_siteadmin()){
         $depth = 0;
     }
-    $total_fields = 5;
+    $total_fields = 4;
     $fields = local_costcenter_get_fields();
     $prev_element = '';
     if(empty($elements) || !is_array($elements)){
-        $elements = range(1, 5);
+        $elements = range(1, $total_fields);
     }
     $firstelement = true;
     foreach($elements as $level){
@@ -1056,6 +1056,6 @@ function local_costcenter_set_costcenter_path(&$data){
     }
 }
 function local_costcenter_get_fields(){
-    return $fields = [ 1 => 'open_costcenterid', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department', 5 => 'open_level5department'];
+    return $fields = [ 1 => 'open_costcenterid', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department'/*, 5 => 'open_level5department'*/];
 }
 

@@ -1110,7 +1110,7 @@ function local_classroom_quicklink_node()
 * return count of classrooms under selected costcenter
 * @return  [type] int count of classrooms
 */
-function costcenterwise_classroom_count($costcenter, $department = false, $subdepartment = false)
+function costcenterwise_classroom_count($costcenter, $department = false, $subdepartment = false, $l4department=false, $l5department=false)
 {
     global $USER, $DB;
     $newsql = $activesql = $cancelledsql = $completedsql = '';
@@ -1125,6 +1125,14 @@ function costcenterwise_classroom_count($costcenter, $department = false, $subde
     if ($subdepartment) {
         $sql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
         $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
+    }
+    if ($l4department) {
+        $sql .= " AND concat('/',open_path,'/') LIKE :l4departmentpath ";
+        $params['l4departmentpath'] = '%/'.$l4department.'/%';
+    }
+    if ($l5department) {
+        $sql .= " AND concat('/',open_path,'/') LIKE :l5departmentpath ";
+        $params['l5departmentpath'] = '%/'.$l5department.'/%';
     }
     $count = $DB->count_records_sql($sql, $params);
 

@@ -2501,7 +2501,7 @@ function user_evaluations($userid, $tabstatus) {
 * return count of feedbacks under selected costcenter
 * @return  [type] int count of feedbacks
 */
-function costcenterwise_evaluation_count($costcenter, $department = false){
+function costcenterwise_evaluation_count($costcenter, $department = false,$subdepartment = false, $l4department=false, $l5department=false){
     global $USER, $DB,$CFG;
         $params = array();
         $params['costcenter'] = '%/'.$costcenter.'/%';
@@ -2509,6 +2509,18 @@ function costcenterwise_evaluation_count($costcenter, $department = false){
         if($department){
             $countfeedbacksql .= " AND concat('/',open_path,'/') LIKE  :department ";
             $params['department'] = '%/'.$department.'/%';
+        }
+        if ($subdepartment) {
+            $countfeedbacksql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
+            $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
+        }
+        if ($l4department) {
+            $countfeedbacksql .= " AND concat('/',open_path,'/') LIKE :l4departmentpath ";
+            $params['l4departmentpath'] = '%/'.$l4department.'/%';
+        }
+        if ($l5department) {
+            $countfeedbacksql .= " AND concat('/',open_path,'/') LIKE :l5departmentpath ";
+            $params['l5departmentpath'] = '%/'.$l5department.'/%';
         }
         $activesql = " AND visible = 1 ";
         $inactivesql = " AND visible= 0 ";

@@ -43,7 +43,7 @@ redirect_if_major_upgrade_required();
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
 $fredirect  = optional_param('fredirect', true, PARAM_BOOL);
-if(!(is_siteadmin() || !$fredirect)){
+if(!$fredirect){
     redirect($CFG->wwwroot.'/my/dashboard.php');
 }
 require_login();

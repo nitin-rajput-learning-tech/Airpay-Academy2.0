@@ -315,9 +315,14 @@ class lib
 	function learningplan_courses_list($id)
 	{
 		global $DB, $USER;
-		$costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1  "; 
-	        $sql .= $costcenterpathconcatsql;
+		$open_path = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
+		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+		
+		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 "; 
+	   if(is_siteadmin()){
+		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
+			}
+		$sql .= $costcenterpathconcatsql;
 	    $courses = $DB->get_records_sql_menu($sql);
 		return $courses;
 	}

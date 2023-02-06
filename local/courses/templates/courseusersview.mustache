@@ -20,7 +20,9 @@
                 <th>{{# str}} completionstatus, local_courses{{/ str}}</th>
                 <th>{{# str}} completiondate, local_courses{{/ str}}</th>
                 <th>{{# str}} enrolmethod, local_courses{{/ str}}</th>
-                <th>{{# str}} actions,local_courses{{/ str}}</th>
+                {{#actions}}
+                    <th>{{# str}} actions,local_courses{{/ str}}</th>
+                {{/actions}}
                 {{# added_certificate}}
                     <th>{{# str}} certificate, local_courses{{/ str}}</th>
                 {{/ added_certificate}}

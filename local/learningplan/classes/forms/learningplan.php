@@ -89,8 +89,8 @@ class learningplan extends moodleform {
 			$mform->addRule('shortname', get_string('missing_plan_learningplan', 'local_learningplan'), 'required', null, 'client');
 			}
 	        $mform->setType('shortname', PARAM_TEXT);
-	        
-        $parentsql = "SELECT lcc.id, lcc.fullname FROM {local_custom_category} AS lcc WHERE 1 = 1 AND lcc.depth = 1";
+
+        $parentsql = "SELECT lcc.id, lcc.fullname, lcc.parentid FROM {local_custom_category} AS lcc WHERE 1 = 1";
         if(!is_siteadmin()){
             $orgcond = [];
             foreach($USER->useraccess['currentroleinfo']['contextinfo'] AS $contextinfo){
@@ -103,15 +103,26 @@ class learningplan extends moodleform {
                 $parentsql .= " AND 1 <> 1 ";
             }
         }
-        $parents = $DB->get_records_sql_menu($parentsql);
+        $customcat = $DB->get_records_sql($parentsql,array());
+        $parents = [];
+        foreach($customcat as $cat){
+            $parentname = '';
+            if($cat->parentid > 0){
+                $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $cat->parentid]);
+            }
+            if($parentname){
+                $cat->fullname = $parentname . ' / '. $cat->fullname;
+            }
+            $parents[$cat->id] = $cat->fullname;
+        }
 
         $parents[0] = 'Select Category';
-        asort($parents);
+        ksort($parents);
         $coursetype = array(
             'ajax' => 'local_costcenter/form-options-selector',
             'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
             'data-action' => 'custom_category_selector',
-            'data-options' => json_encode(array('id' => $identifiedtype)),
+            'data-options' => json_encode(array('id' => $identifiedtype,'type'=>'category_selector')),
             'class' => 'idparentselect',
             'data-parentclass' => 'open_costcenterid_select',
             'data-class' => 'idparentselect',
@@ -207,7 +218,7 @@ class learningplan extends moodleform {
 			$mform->addElement('hidden', 'open_costcenterid');
             // $mform->setType('open_costcenterid', PARAM_INT);
 			$mform->setConstant('open_costcenterid', $org);
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,4), true, 'local_learningplan', $categorycontext, $multiple = false);
 			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
     	}
         $mform->disable_form_change_checker();

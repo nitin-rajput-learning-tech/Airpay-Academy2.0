@@ -51,7 +51,7 @@ if ($format) {
     'subdistrict' => 'subdistrict',
     'village' => 'village',
     'contactno' => 'contactno',   
-    'employee_status' => 'employee_status',
+    'learner_status' => 'learner_status',
     'password' => 'password',
     'timezone' => 'timezone',
     'force_password_change' => 'force_password_change'

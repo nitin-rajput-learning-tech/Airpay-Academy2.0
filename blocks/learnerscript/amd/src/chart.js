@@ -36,8 +36,26 @@ define(['jquery',
                         args.filters['filter_departments'] = filter_departments;
                     }
                 }
+                if (typeof args.filters['filter_subdepartments'] == 'undefined') {
+                    var filter_subdepartments = $('#dashboardsubdepartment').val();
+                    if (filter_subdepartments != 0) {
+                        args.filters['filter_subdepartments'] = filter_subdepartments;
+                    }
+                }
+                if (typeof args.filters['filter_level4department'] == 'undefined') {
+                    var filter_level4department = $('#dashboardl4department').val();
+                    if (filter_level4department != 0) {
+                        args.filters['filter_level4department'] = filter_level4department;
+                    }
+                }
+                if (typeof args.filters['filter_level5department'] == 'undefined') {
+                    var filter_level5department = $('#dashboardl5department').val();
+                    if (filter_level5department != 0) {
+                        args.filters['filter_level5department'] = filter_level5department;
+                    }
+                }
                 args.filters = JSON.stringify(args.filters);
-
+                console.log(args.filters);
                 //Request
                 var promise = Ajax.call([{
                     methodname: 'block_learnerscript_generate_plotgraph',

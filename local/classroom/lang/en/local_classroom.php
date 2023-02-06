@@ -26,8 +26,8 @@ $string['pluginname'] = 'Classrooms';
 $string['browse_classrooms'] = 'Manage Classrooms';
 $string['my_classrooms'] = 'My Classrooms';
 $string['classrooms'] = 'View Classroom';
-$string['costcenter'] = 'Organization';
-$string['department'] = 'Country';
+$string['costcenter'] = 'Company';
+$string['department'] = 'Bussiness Unit';
 $string['shortname'] = 'Short Name';
 $string['shortname_help'] = 'Please enter the partner short name';
 $string['classroom_offline'] = 'Offline Courses';
@@ -84,9 +84,9 @@ $string['session_type'] = 'Session Type';
 $string['clrm_location_type'] = 'Classroom location Type';
 $string['classroom_locationtype_help'] = 'Select
 
-* Internal- if you want to search and select an Internal locations like Training Room, Conference Room etc that are internal to your organization and where the training is planned to happen.
+* Internal- if you want to search and select an Internal locations like Training Room, Conference Room etc that are internal to your Company and where the training is planned to happen.
 
-* External - if you want to search and select an External locations like Ball Rooms of a hotel, Training room of training institute etc that are external to your organization and where the training is planned to happen. ';
+* External - if you want to search and select an External locations like Ball Rooms of a hotel, Training room of training institute etc that are external to your Company and where the training is planned to happen. ';
 $string['classroom_location'] = 'Classroom location';
 $string['location_room'] = 'Classroom location Room';
 $string['nomination_startdate'] = 'Nomination start date';
@@ -98,9 +98,9 @@ $string['deleteallconfirm'] = 'Are you sure you want to delete this "<b>{$a}</b>
 $string['deletecourseconfirm'] = 'Are you sure you want to un-assign this "<b>{$a}</b>" course?';
 $string['deletefeedbackconfirm'] = 'Are you sure you want to delete this "<b>{$a}</b>" feedback?';
 $string['createclassroom'] = '<span class="fa fa-desktop icon">
-        </span> Create Classroom <div class="popupstring">Here you will create classrooms based upon the Country </div>';
+        </span> Create Classroom <div class="popupstring">Here you will create classrooms based upon the Bussiness Unit </div>';
 $string['updateclassroom']= '<span class="fa fa-desktop icon">
-        </span> Update Classroom <div class="popupstring">Here you will update classrooms based upon the Country </div>';
+        </span> Update Classroom <div class="popupstring">Here you will update classrooms based upon the Bussiness Unit </div>';
 $string['save_continue'] = 'Save & Continue';
 $string['enddateerror'] = 'End Date should greater than Start Date.';
 $string['sessionexisterror']='There are other sessions have in this time .';
@@ -111,8 +111,8 @@ $string['cs_timestart'] = 'Session Start Date';
 $string['showentries'] = 'View response';
 $string['cs_timefinish'] = 'Session End Date';
 $string['select_room'] = '--Select ROOM--';
-$string['select_costcenter'] = '--Select Organization--';
-$string['select_department'] = 'All Countries';
+$string['select_costcenter'] = '--Select Company--';
+$string['select_department'] = 'All Bussiness Units';
 $string['classroom_active_action'] = 'Are you sure you want to publish this "<b>{$a}</b>" classroom?';
 $string['classroom_release_hold_action'] = 'Are you sure you want to release this "<b>{$a}</b>" classroom?';
 $string['classroom_hold_action'] = 'Are you sure you want to hold this "<b>{$a}</b>" classroom?';
@@ -169,8 +169,8 @@ $string['classroom:managefeedback'] = 'Manage Classroom Feedback';
 $string['classroom:publish'] = 'Publish Classroom';
 $string['classroom:release_hold'] = 'Release Hold Classroom';
 $string['classroom:takemultisessionattendance'] = 'Classroom Multisession Attendance';
-$string['classroom:manage_owndepartments'] = 'Manage Own Country Classrooms.';
-$string['classroom:manage_multiorganizations'] = 'Manage Multi Organizations Classrooms.';
+$string['classroom:manage_owndepartments'] = 'Manage Own Bussiness Unit Classrooms.';
+$string['classroom:manage_multiorganizations'] = 'Manage Multi Companys Classrooms.';
 
 $string['classroom:takesessionattendance'] = 'Classroom Session Attendance';
 $string['classroom:trainer_viewclassroom'] = 'Trainer View Classroom';
@@ -368,7 +368,7 @@ $string['classroom_completion_tab_info_allcourses'] = 'This classroom will compl
 $string['classroom_completion_tab_info_anycourses'] = 'This classroom will completed when the below listed <b> any courses </b> should be completed.';
 
 $string['audience_department'] = '<p>This classroom will eligible below-listed target audience.</p>
-<p> <b>Countries :</b> {$a}</p>';
+<p> <b>Bussiness Units :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';
 $string['audience_hrmsrole'] = '<p> <b>Hrms Role :</b> {$a}</p>';
 $string['audience_designation'] = '<p> <b>Designations :</b> {$a}</p>';
@@ -477,7 +477,7 @@ $string['total_seats'] = 'Total Seats';
 $string['whats_next'] = 'What\'s next?';
 $string['do_you_want_create_session'] = 'Do you want to <b>Create Session</b>'; 
 $string['do_you_want_add_course'] = 'Do you want to <b>Add Course</b>'; 
-$string['departments'] = 'Countries'; 
+$string['departments'] = 'Bussiness Units';
 $string['sub_departments'] = 'LOB'; 
 $string['designations'] = 'Designations';
 $string['groups'] = 'Groups';
@@ -491,7 +491,7 @@ $string['search'] = 'Search';
 $string['create_session'] = 'Create a Session';
 $string['location'] = 'Location';
 $string['classroom_reports'] = 'Classroom Reports';
-$string['pleaseselectorganization'] = 'Please Select Organization';
+$string['pleaseselectorganization'] = 'Please Select Company';
 
 $string['viewmore'] = 'View More';
 $string['need_self_enrol'] = 'Need Self Enrol';
@@ -506,20 +506,20 @@ $string['selfenrolclassroom'] = 'need Self enrol ';
 $string['no_courses_assigned'] = 'No Courses assigned';
 $string['session_classropm'] = 'Select Classroom';
 $string['bussinessunit'] = "Bussiness Units";
-$string['commercialunit'] = "Commercial Units";
+$string['commercialunit'] = "Departments";
 $string['states'] = "States";
 $string['district'] = "Districts";
 $string['subdistrict'] = "Sub Districts";
 $string['village'] = "Villages";
 $string['territory'] = "Territory";
-$string['open_costcenteridlocal_classroom_help'] = 'Organization of the classroom';
-$string['open_costcenteridlocal_classroom'] = 'Organization';
-$string['open_departmentlocal_classroom_help'] = 'Country of the classroom';
-$string['open_departmentlocal_classroom'] = 'Country';
-$string['open_subdepartmentlocal_classroom_help'] = 'Commercial Unit of the classroom';
-$string['open_subdepartmentlocal_classroom'] = 'Commercial Unit ';
-$string['open_level4departmentlocal_classroom_help'] = 'Commercial Area of the classroom';
-$string['open_level4departmentlocal_classroom'] = 'Commercial Area ';
+$string['open_costcenteridlocal_classroom_help'] = 'Company of the classroom';
+$string['open_costcenteridlocal_classroom'] = 'Company';
+$string['open_departmentlocal_classroom_help'] = 'Bussiness Unit of the classroom';
+$string['open_departmentlocal_classroom'] = 'Bussiness Unit';
+$string['open_subdepartmentlocal_classroom_help'] = 'Department of the classroom';
+$string['open_subdepartmentlocal_classroom'] = 'Department ';
+$string['open_level4departmentlocal_classroom_help'] = 'Sub Department of the classroom';
+$string['open_level4departmentlocal_classroom'] = 'Sub Department ';
 $string['open_level5departmentlocal_classroom_help'] = 'Territory of the classroom';
 $string['open_level5departmentlocal_classroom'] = 'Territory';
 $string['open_states_help'] = 'Search and select an available or existing state as target audience';
@@ -528,3 +528,5 @@ $string['open_subdistrict_help'] = 'Search and select an available or existing s
 $string['open_village_help'] = 'Search and select an available or existing village as target audience';
 $string['processing'] = 'Processing';
 $string['selfenrolclassroom_help'] = 'Check yes if required self enrollment to the classroom';
+$string['sessionsexistingbeforestartdate'] = 'Sessions are existing before this date Please delete the sessions to alter it.';
+$string['sessionsexistingafterenddate'] = 'Sessions are existing after this date Please delete the sessions to alter it.';

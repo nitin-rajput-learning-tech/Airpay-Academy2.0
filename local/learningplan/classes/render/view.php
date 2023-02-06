@@ -240,6 +240,7 @@ class view extends plugin_renderer_base
 				$departmentcount = count(array_filter(explode(',', $learning_plan->department)));
 				$subdepartmentcount = count(array_filter(explode(',', $learning_plan->subdepartment)));
 				$plan_url = new \moodle_url('/local/learningplan/plan_view.php', array('id' => $learning_plan->id));
+				$planview_url = new \moodle_url('/local/learningplan/lpathinfo.php', array('id' => $learning_plan->id));
 
 				if (empty($learning_plan->credits)) {
 					$plan_credits = get_string('statusna');
@@ -314,8 +315,8 @@ class view extends plugin_renderer_base
 				$learning_plan_pathname = addslashes($learning_plan_name);
 				$learningplan_target_id = 'manage_learningplan';
 				$learningplan_content['plan_url'] = $plan_url;
-				$learningplan_content['learning_plan_name'] = $learning_plan_name;
-				$learningplan_content['learning_plan_pathname'] = $learning_plan_pathname;
+				$learningplan_content['learning_plan_name'] = \local_costcenter\lib::strip_tags_custom($learning_plan_name);
+				$learningplan_content['learning_plan_pathname'] = \local_costcenter\lib::strip_tags_custom($learning_plan_pathname);
 				$learningplan_content['capability1'] = $capability1;
 				$learningplan_content['capability2'] = $capability2;
 				$learningplan_content['capability3'] = $capability3;
@@ -344,6 +345,7 @@ class view extends plugin_renderer_base
 				$learningplan_content['plan_department_string'] = ($plan_department_string == '-1' || empty($plan_department_string)) ? 'All' : $plan_department_string;
 				$learningplan_content['plan_subdepartment'] = $plan_subdepartment;
 				$learningplan_content['plan_url'] = $plan_url;
+				$learningplan_content['planview_url'] = $planview_url;
 				$learningplan_content['lpcoursespath'] = $pathcourses;
 				$learningplan_content['lpcoursescount'] = count($lplanassignedcourses);
 				$learningplan_content['can_view'] = $can_view;
@@ -377,7 +379,13 @@ class view extends plugin_renderer_base
 					if ($learning_plan->visible == 0) {
 						$class = 'disabled';
 					}
-					$row = [html_writer::tag('a', $learning_plan_name, array('href' => $CFG->wwwroot . '/local/learningplan/plan_view.php?id=' . $learning_plan->id, 'class' => $class)), html_writer::span($learningplan_content['plan_shortname_string'], $class), html_writer::span($learningplan_content['plandpt'], $class), html_writer::span($learningplan_content['lpcoursescount'], $class), html_writer::span($actions,  $class)];
+					if($can_view){
+						$view_url = $CFG->wwwroot . '/local/learningplan/plan_view.php?id=' . $learning_plan->id;
+					}else{
+						$view_url = $CFG->wwwroot . '/local/learningplan/lpathinfo.php?id=' . $learning_plan->id;
+					}
+
+					$row = [html_writer::tag('a', $learning_plan_name, array('href' => $view_url, 'class' => $class)), html_writer::span($learningplan_content['plan_shortname_string'], $class), html_writer::span($learningplan_content['plandpt'], $class), html_writer::span($learningplan_content['lpcoursescount'], $class), html_writer::span($actions,  $class)];
 				}
 				$table_data[] = $row;
 			}
@@ -665,7 +673,7 @@ class view extends plugin_renderer_base
 			$pathcourses .= $this->render_from_template('local_learningplan/cousrespath', $coursespath_context);
 		}
 		$description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($plan_record->description), array('overflowdiv' => false, 'noclean' => false, 'para' => false));
-		$description_string = strlen($description) > 220 ? substr($description, 0, 220) . "..." : $description;
+		$description_string = strlen($description) > 400 ? substr($description, 0, 400) . "..." : $description;
 		$ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
 		if ($ratings_exist) {
 			require_once($CFG->dirroot . '/local/ratings/lib.php');
@@ -2947,7 +2955,8 @@ class view extends plugin_renderer_base
 		}
 		$lpinfo .= $this->render_from_template('local_learningplan/lpathview_user', $lp_userview);
 		$test = '';
-		$test .= '<div class="lp_course-wrapper w-100 pull-left">';
+		$test .='<div class="row my-4 lpathcourse_wrapper">';
+		$test .= '<div class="lp_course-wrapper w-100 col-md-9">';
 		if ($lplanassignedcourses) {
 			$i = 1;
 			foreach ($lplanassignedcourses as $assignedcourse) {
@@ -2978,6 +2987,10 @@ class view extends plugin_renderer_base
 				$test .= $this->render_from_template('local_learningplan/lpathcourse', $lp_userviewcoures);
 			}
 		}
+		$test .= '</div>';
+		$test .= '<div class="col-md-3 lp_bottom_container">';
+		$test .= $this->render_from_template('local_learningplan/lpathbottomcontent', $lp_userviewcoures);
+		$test .= '</div>';
 		$test .= '</div>';
 		$lpinfo .= $test;
 

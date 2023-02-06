@@ -73,18 +73,29 @@ class classroom_form extends moodleform {
             }
             $mform->addRule('name', null, 'required', null, 'client');
 
-            $depsql = "SELECT lcc.id,lcc.fullname
+            $depsql = "SELECT lcc.id,lcc.fullname, lcc.parentid
                         FROM {local_custom_category} as lcc";
 
-            $parents = $DB->get_records_sql_menu($depsql, ['parentid' => 0]);
-            // $parents[0] = 'Top';
-        $parents[0] = 'Select Category';       
-        ksort($parents);
+            $customcat = $DB->get_records_sql($depsql, ['parentid' => 0]);
+            $parents = [];
+            foreach($customcat as $cat){
+                $parentname = '';
+                if($cat->parentid > 0){
+                    $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $cat->parentid]);
+                }
+                if($parentname){
+                    $cat->fullname = $parentname . ' / '. $cat->fullname;
+                }
+                $parents[$cat->id] = $cat->fullname;
+            }
+
+            $parents[0] = 'Select Category';
+            ksort($parents);
             $categoryinfo = array(
                 'ajax' => 'local_costcenter/form-options-selector',
                 'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
                 'data-action' => 'custom_category_selector',
-                'data-options' => json_encode(array('id' => $id)),
+                'data-options' => json_encode(array('id' => $id,'type'=>'category_selector')),
                 'class' => 'idparentselect',
                 'data-parentclass' => 'open_costcenterid_select',
                 'data-class' => 'idparentselect',
@@ -279,7 +290,7 @@ class classroom_form extends moodleform {
             $mform->addElement('hidden', 'open_costcenterid');
             $mform->setType('open_costcenterid', PARAM_INT);
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_classroom', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,4), true, 'local_classroom', $categorycontext, $multiple = false);
            
 			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_classroom', $categorycontext, $multiple = false);
             $functionname = 'globaltargetaudience_elementlist';
@@ -305,6 +316,17 @@ class classroom_form extends moodleform {
                 isset($data['enddate']) && $data['enddate']) {
             if ($data['enddate'] <= $data['startdate']) {
                 $errors['enddate'] = get_string('enddateerror', 'local_classroom');
+            }else{
+                if($data['id']){
+                    if($DB->record_exists_sql("SELECT lcs.id FROM {local_classroom_sessions} AS lcs WHERE lcs.timestart < :startdate AND lcs.classroomid = :classroomid ", array('startdate' => $data['startdate'], 'classroomid' => $data['id']))){
+
+                        $errors['startdate'] = get_string('sessionsexistingbeforestartdate', 'local_classroom');
+                    }
+                    if( $DB->record_exists_sql("SELECT lcs.id FROM {local_classroom_sessions} AS lcs WHERE lcs.timefinish > :enddate AND lcs.classroomid = :classroomid ", array('enddate' => $data['enddate'], 'classroomid' => $data['id'])) ){
+                        $errors['enddate'] = get_string('sessionsexistingafterenddate', 'local_classroom');
+
+                    }
+                }
             }
         }
         // print_r($data['trainers']);

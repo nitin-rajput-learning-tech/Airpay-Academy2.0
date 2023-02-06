@@ -76,10 +76,11 @@ $PAGE->set_heading($learningplan->name ." : ". get_string("add_remove_users", 'l
 $PAGE->set_title($learningplan->name ." : ".get_string("add_remove_users", 'local_learningplan'));
 $PAGE->navbar->ignore_active();
 $PAGE->navbar->add(get_string("pluginname", 'local_learningplan'), new moodle_url($pagenavurl));
-if(isset($learningplan->name)){
-$PAGE->navbar->add($learningplan->name, new moodle_url('plan_view.php',array('id' => $planid)));
-$PAGE->navbar->add(get_string("enrolusers", 'local_classroom'));
+
+if(isset($learningplan->name) && has_capability('local/learningplan:manage', $systemcontext)){
+    $PAGE->navbar->add($learningplan->name, new moodle_url('plan_view.php',array('id' => $planid)));
 }
+$PAGE->navbar->add(get_string("enrolusers", 'local_classroom'));
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->js('/local/learningplan/js/jquery.bootstrap-duallistbox.js',true);

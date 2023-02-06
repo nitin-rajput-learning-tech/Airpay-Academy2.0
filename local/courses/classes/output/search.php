@@ -194,7 +194,7 @@ class search implements renderable{
             $course->statusstring = $statuslist[$course->open_status];
             $course_category = $DB->get_field('course_categories','name',array('id' => $course->category));
             $course->bannerimage = searchlib::convert_urlobject_intoplainurl($course);
-            if(is_enrolled(context_course::instance($course->id))){
+            if(is_enrolled(context_course::instance($course->id), null, '', true)){
                 if(file_exists($CFG->dirroot.'/local/includes.php')){
                     require_once($CFG->dirroot.'/local/includes.php');
                     $completion = new \completion_info($course);
@@ -233,7 +233,7 @@ class search implements renderable{
             $course->coursecompletiondays = $this->get_coursecompletiondays_format($course->duration);
 
             $coursecontext   = context_course::instance($course->id);
-            $enroll=is_enrolled($coursecontext, $USER->id);
+            $enroll=is_enrolled($coursecontext, $USER->id, '', true);
             $course->enroll = $enroll;
             $course->isenrolled = $enroll;
             if($enroll){
@@ -306,7 +306,7 @@ class search implements renderable{
 
              $course->open_skillcategory = ($DB->get_field('local_skill_categories','name',array('id' => $course->open_skillcategory))) ? ($DB->get_field('local_skill_categories','name',array('id' => $course->open_skillcategory))) : 'N/A';
 
-             $enrolldata = $DB->get_record_sql("SELECT ue.* FROM {user_enrolments} ue JOIN {enrol} e ON ue.enrolid = e.id JOIN {course} c ON c.id = e.courseid WHERE e.courseid = $course->id AND ue.userid = $USER->id");
+             $enrolldata = $DB->get_record_sql("SELECT ue.* FROM {user_enrolments} ue JOIN {enrol} e ON ue.enrolid = e.id JOIN {course} c ON c.id = e.courseid WHERE e.courseid = $course->id AND ue.userid = $USER->id AND e.status = 0 AND ue.status = 0");
             if($enrolldata){
                 $course->enrol_date = date("d M Y", $enrolldata->timecreated);
             }else{
@@ -316,7 +316,7 @@ class search implements renderable{
             $course->level = $course->open_level ? searchlib::$levels[$course->open_level] : '';
             if($enrolldata){
                 // $course->redirect = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'" class="viewmore_btn">'.get_string('resume','local_search').'</a>';
-                $course->redirect = false;
+                $course->redirect = '';
             }else{
                 $course->redirect='<a href="'.$CFG->wwwroot.'/local/search/coursedetails.php?id='.$course->id.'" class="viewmore_btn">'.get_string('view_details','local_search').'</a>';
             }

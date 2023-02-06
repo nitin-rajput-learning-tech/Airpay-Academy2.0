@@ -257,8 +257,8 @@ class local_courses_renderer extends plugin_renderer_base {
     global $DB;
   
     $certificate_plugin_exist = \core_component::get_plugin_directory('tool', 'certificate');
-        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
-        $maincheckcontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
+    $maincheckcontext = (new \local_courses\lib\accesslib())::get_module_context();
     if(is_siteadmin() || ((has_capability('local/courses:enrol',
                                 $maincheckcontext)  || is_siteadmin())&&has_capability('local/courses:manage', $maincheckcontext))) {
                 $enrolid = $DB->get_field('enrol', 'id', array('courseid' => $courseid ,'enrol' => 'manual'));
@@ -276,6 +276,16 @@ class local_courses_renderer extends plugin_renderer_base {
         $info['added_certificate'] = false;
       }
     }    
+
+    if(is_siteadmin() || (has_capability('local/courses:managecourses',$categorycontext))) {
+
+         $info['actions'] = true;
+
+    }else{
+
+        $info['actions'] = false;
+
+      }
     
     return $this->render_from_template('local_courses/courseusersview', $info);
   }
@@ -304,12 +314,10 @@ class local_courses_renderer extends plugin_renderer_base {
     $params = array();
     $params['courseid'] = $dataobj->courseid;
 
-        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($dataobj->courseid);
+    $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($dataobj->courseid);
 
-    if(!is_siteadmin()){
 
-      $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-    }
+    $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
     if (!empty($dataobj->search)) {
       $concatsql = " AND ( CONCAT(u.firstname,' ',u.lastname) LIKE '%".$dataobj->search."%' OR
@@ -317,8 +325,7 @@ class local_courses_renderer extends plugin_renderer_base {
     }else{
       $concatsql = '';
     }
-    // echo $selectsql.$sql;
-    // exit;
+
     $courseusers = $DB->get_records_sql($selectsql.$sql.$concatsql , $params, $dataobj->start, $dataobj->length);
     $enrolleduserscount = $DB->count_records_sql($countsql.$sql.$concatsql , $params);
     $userslist = array();
@@ -366,9 +373,9 @@ class local_courses_renderer extends plugin_renderer_base {
         $enrolmethod = array();
         $enroll = array();
         foreach($userenrolment as $userenrol){
-          $enroll[] = $userenrol->enrol;
+          $enroll[] = ucfirst($userenrol->enrol);
 
-         if(is_siteadmin() || (has_capability('local/courses:managecourses', context_system:: instance()))) {
+         if(is_siteadmin() || (has_capability('local/courses:managecourses', $categorycontext))) {
          $icon = '<i class="icon fa fa-pencil" aria-hidden="true"></i>';
          $array = array('id'=>$dataobj->courseid,'ue'=>$userenrol->id);
          $url = new moodle_url('editenrol.php', $array);

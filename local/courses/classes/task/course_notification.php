@@ -35,7 +35,6 @@ class course_notification extends \core\task\scheduled_task{
     	$type = "course_notification";
     	$starttime = strtotime(date('d/m/Y', time()));
         $endtime = $starttime+86399;
-
     	$newcoursesql = "SELECT c.* FROM {course} AS c WHERE c.timecreated BETWEEN :startdate AND :enddate
             AND concat(',',c.open_identifiedas, ',') LIKE concat('%,',2,',%') ";
     	$newcourse = $DB->get_records_sql($newcoursesql, array('startdate' => $starttime, 'enddate'=> $endtime));
@@ -51,15 +50,15 @@ class course_notification extends \core\task\scheduled_task{
             $notificationparams = array('type' => $type);
             $userssql = "SELECT u.* FROM {user} AS u WHERE u.suspended=0 AND u.deleted=0 ";
             if($costcenterexist){
-                $notification_sql .= " AND costcenterid=:costcenterid ";
-                $userssql .= " AND u.open_path=:costcenterid";
-                $params['costcenterid'] = $course->open_path;
+                $notification_sql .= " AND open_path LIKE :costcenterid ";
+                $userssql .= " AND u.open_path LIKE :costcenterid";
+                $params['costcenterid'] =$course->open_path;
                 $notificationparams['costcenterid'] = $course->open_path;
-                $modulenotificationparams['costcenterid'] = $course->open_path;
-    			if(!empty($course->open_departmentid)){
-					$userssql .= " AND u.open_departmentid=:departmentid";
-    				$params['departmentid'] = $course->open_departmentid;
-    			}
+                $modulenotificationparams['costcenterid'] =$course->open_path;
+    			// if(!empty($course->open_departmentid)){
+				// 	$userssql .= " AND u.open_departmentid=:departmentid";
+    			// 	$params['departmentid'] = $course->open_departmentid;
+    			// }
     		}
             $notification = $DB->get_record_sql($notification_sql.$modulenotification_sql, $modulenotificationparams);
             if(empty($notification)){

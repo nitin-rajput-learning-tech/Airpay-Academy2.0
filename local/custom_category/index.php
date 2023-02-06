@@ -50,7 +50,9 @@ $filterparams = $renderer->custom_category_content(true);
 
 $PAGE->set_heading(get_string('manage_custom_category', 'local_custom_category'));
 echo $OUTPUT->header();
-echo $renderer->get_top_action_buttons_custom_category();
+if(is_siteadmin()|| has_capability('local/custom_category:create_custom_category',$categorycontext)){
+    echo $renderer->get_top_action_buttons_custom_category();
+}
 $filterparams['submitid'] = 'form#filteringform';
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 echo $renderer->custom_category_content();

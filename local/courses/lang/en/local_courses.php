@@ -23,7 +23,7 @@
  */
 $string['pluginname'] = 'Courses';
 $string['course'] = 'Course';
-$string['organization']='Organization';
+$string['organization']='Company';
 $string['mooc'] = 'MOOC';
 $string['classroom'] = 'Classroom';
 $string['elearning'] = 'E-Learning';
@@ -40,9 +40,9 @@ $string['agentsearch']='Agent Search';
 $string['empnumber']='Learner ID';
 $string['email']='Email';
 $string['band'] = 'Band';
-$string['departments']='Countries';
-$string['sub_departments']='Commercial Unit';
-$string['sub-sub-departments']='Sub Commercial Units';
+$string['departments']='Bussiness Unities';
+$string['sub_departments']='Department';
+$string['sub-sub-departments']='Sub Departments';
 $string['designation'] = 'Designation';
 $string['im:already_in'] = 'The user "{$a}" was already enroled to this course';
 $string['im:enrolled_ok'] = 'The user "{$a}" has successfully enroled to this course ';
@@ -126,7 +126,7 @@ $string['leftmenu_browsecategories'] = 'Manage Categories';
 $string['courseother_details'] = 'Other Details';
 $string['view_courses'] = 'view courses';
 $string['deleteconfirm'] = 'Are you sure, you want to delete "<b>{$a->name}</b>" course?</br> Once deleted, it can not be reverted.';
-$string['department'] = 'Country';
+$string['department'] = 'Bussiness Unity';
 $string['coursecategory'] = 'Category';
 $string['fullnamecourse'] = 'Fullname';
 $string['coursesummary'] = 'Summary';
@@ -161,10 +161,10 @@ $string['help_2'] = '</td></tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>Summary</td><td>Summary of the course.</td></tr>
 <tr><td>Cost</td><td>Cost of the course.</td></tr>
-<tr><td>country_code</td><td>Provide Country code. Country must already exist in system as part of organization hierarchy.</td></tr>
-<tr><td>commercial_unit_code</td><td>Enter Commercial Unit Code. Bussiness Unit must already exist under specified Country in system as part of organization hierarchy.</td></tr>
-<tr><td>commercial_area_code</td><td>Enter Commercial Unit Code. Commercial Unit must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
-<tr><td>territory_code</td><td>Enter Territory Code. Territory must already exist under specified Commercial Unit in system as part of organization hierarchy.</td></tr>
+<tr><td>Bussiness Unit_code</td><td>Provide Bussiness Unit code. Bussiness Unit must already exist in system as part of Company hierarchy.</td></tr>
+<tr><td>commercial_unit_code</td><td>Enter Department Code. Bussiness Unit must already exist under specified Bussiness Unit in system as part of Company hierarchy.</td></tr>
+<tr><td>commercial_area_code</td><td>Enter Department Code. Department must already exist under specified Department in system as part of Company hierarchy.</td></tr>
+<tr><td>territory_code</td><td>Enter Territory Code. Territory must already exist under specified Department in system as part of Company hierarchy.</td></tr>
 <tr><td>Points</td><td>Points for the course.</td></tr>
 <tr><td>completiondays</td><td>completiondays should be greater than \'0\'. i.e, 1,2,3..etc</td></tr>
 </table>';
@@ -179,9 +179,9 @@ $string['completed_users'] = 'Completed Users';
 $string['course_filters'] = 'Course Filters';
 $string['back'] = 'Back';
 $string['sample'] = 'Sample';
-$string['selectdept'] = '--Select Country--';
-$string['selectsubdept'] = '--Select Commercial Unit--';
-$string['selectorg'] = '--Select Organization--';
+$string['selectdept'] = '--Select Bussiness Unit--';
+$string['selectsubdept'] = '--Select Department--';
+$string['selectorg'] = '--Select Company--';
 $string['selectcat'] = '--Select Category--';
 $string['select_cat'] = '--Select Categories--';
 $string['selectcoursetype'] = '--Select Course Type--';
@@ -215,13 +215,13 @@ $string['manage_br_courses'] = 'Manage <br/> courses';
 $string['nocourseavailiable'] = 'No Courses Available';
 $string['taskcoursenotification'] = 'Course Notification Task';
 $string['taskcoursereminder'] = 'Course Reminder Task';
-$string['pleaseselectorganization'] = 'Please Select Organization';
+$string['pleaseselectorganization'] = 'Please Select Company';
 $string['pleaseselectcategory'] = 'Please Select Category';
 $string['enablecourse'] = 'Are you sure, want Active course <b>\'{$a}\'</b>?';
 $string['disablecourse'] = 'Are you sure, want In-active course <b>\'{$a}\'</b>?';
 $string['courseconfirm'] = 'Confirm';
 $string['open_pathcourse_help'] = 'Organisation for the course';
-$string['open_departmentidcourse_help'] = 'Country for the course';
+$string['open_departmentidcourse_help'] = 'Bussiness Unit for the course';
 $string['open_identifiedascourse_help'] = 'Type of the course (multi select)';
 $string['open_pointscourse_help'] = 'Points for the course default (0)';
 $string['selfenrolcourse_help'] = 'Check yes if required self enrollment to the course';
@@ -230,7 +230,7 @@ $string['open_costcourse_help'] = 'Cost of the course';
 $string['open_skillcourse_help'] = 'Skill achieved on completion of course';
 $string['open_levelcourse_help'] = 'Level achieved on completion of course';
 $string['open_pathcourse'] = 'Organisation';
-$string['open_departmentidcourse'] = 'Country';
+$string['open_departmentidcourse'] = 'Bussiness Unit';
 $string['open_identifiedascourse'] = 'Type';
 $string['open_pointscourse'] = 'Points';
 $string['selfenrolcourse'] = 'self enrollment';
@@ -238,11 +238,11 @@ $string['approvalrequiredcourse'] = 'request manager for enrolling';
 $string['open_costcourse'] = 'Cost';
 $string['open_skillcourse'] = 'Skill ';
 $string['open_levelcourse'] = 'Level';
-$string['notyourorg_msg'] = 'You have tried to view this activity is not belongs to your Organization';
-$string['notyourdept_msg'] = 'You have tried to view this activity is not belongs to your Country';
-$string['notyourorgcourse_msg'] = 'You have tried to view this course is not belongs to your Organization';
-$string['notyourdeptcourse_msg'] = 'You have tried to view this course is not belongs to your Country';
-$string['notyourorgcoursereport_msg'] = 'You have tried to view this Grader report is not your Organization course, so you cann\'t access this page';
+$string['notyourorg_msg'] = 'You have tried to view this activity is not belongs to your Company';
+$string['notyourdept_msg'] = 'You have tried to view this activity is not belongs to your Bussiness Unit';
+$string['notyourorgcourse_msg'] = 'You have tried to view this course is not belongs to your Company';
+$string['notyourdeptcourse_msg'] = 'You have tried to view this course is not belongs to your Bussiness Unit';
+$string['notyourorgcoursereport_msg'] = 'You have tried to view this Grader report is not your Company course, so you cann\'t access this page';
 $string['need_manager_approval '] = 'need_manager_approval';
 $string['categorycode'] = 'Category Code';
 $string['categorycode_help'] = 'The Category Code of a course category is only used when matching the category against external systems and is not displayed anywhere on the site. If the category has an official code name it may be entered, otherwise the field can be left blank.';
@@ -262,7 +262,7 @@ $string['courses:view'] = 'View course';
 $string['courses:visibility'] = 'Course visibility';
 $string['courses:enrol'] = 'Course enrol';
 
-$string['reason_linkedtocostcenter'] = 'As this Course category is linked with the Organization/Country, you can not delete this category';
+$string['reason_linkedtocostcenter'] = 'As this Course category is linked with the Company/Bussiness Unit, you can not delete this category';
 $string['reason_subcategoriesexists'] = 'As we have sub-categories in this Course category, you can not delete this category';
 $string['reason_coursesexists'] = 'As we have courses in this Course category, you can not delete this category';
 $string['reason'] = 'Reason';
@@ -272,8 +272,8 @@ $string['tagarea_courses'] = 'Courses';
 $string['subcategories'] = 'Subcategories';
 $string['tag'] = 'Tag';
 $string['tag_help'] = 'tag';
-$string['open_subdepartmentcourse_help'] = 'Commercial Unit of the course';
-$string['open_subdepartmentcourse'] = 'Commercial Unit';
+$string['open_subdepartmentcourse_help'] = 'Department of the course';
+$string['open_subdepartmentcourse'] = 'Department';
 $string['suspendconfirm'] = 'Confirmation';
 $string['activeconfirm'] = 'Are you sure to make category active ?';
 $string['inactiveconfirm'] = 'Are you sure to make category inactive ?';
@@ -341,10 +341,10 @@ $string['missingfullname'] = 'Please Enter Valid Course Name';
 $string['missingshortname'] = 'Please Enter Valid Course Code';
 $string['missingtype'] = 'Please Select Type';
 $string['course_reports'] = 'Course Reports';
-$string['cannotuploadcoursewithlob'] = 'With out Country cannot upload a course with Commercial Unit';
-$string['categorycodeshouldbedepcode'] = 'Category Code should be under the Country i.e \'{$a}\'';
-$string['categorycodeshouldbesubdepcode'] = 'Category Code should be short name of Commercial Unit i.e \'{$a}\'';
-$string['subdeptshouldunderdepcode'] = 'Commercial Unit should be under the Country i.e \'{$a}\'';
+$string['cannotuploadcoursewithlob'] = 'With out Bussiness Unit cannot upload a course with Department';
+$string['categorycodeshouldbedepcode'] = 'Category Code should be under the Bussiness Unit i.e \'{$a}\'';
+$string['categorycodeshouldbesubdepcode'] = 'Category Code should be short name of Department i.e \'{$a}\'';
+$string['subdeptshouldunderdepcode'] = 'Department should be under the Bussiness Unit i.e \'{$a}\'';
 $string['course_name_help'] = 'Name for the Course';
 $string['coursecode_help'] = 'Code for the Course';
 $string['enrolled_courses'] = 'My Courses';
@@ -363,19 +363,19 @@ $string['enrollments'] = 'Enrolled';
 $string['skill'] = 'Skill';
 $string['ratings'] = 'Ratings';
 $string['tags'] = 'Tags';
-$string['subdepartment'] = 'Commercial Unit';
+$string['subdepartment'] = 'Department';
 $string['summary'] = 'Summary';
 $string['format'] = 'Course Format';
 $string['selfenrol'] = 'Self Enrol';
 $string['approvalreqdcourse_help'] = 'Select.
 
-* Yes - If you would like to enforce manager or organization head approval while self enrolling to course
-* No - If you would like user to self enroll to course without an approval from manager or organization head';
+* Yes - If you would like to enforce manager or Company head approval while self enrolling to course
+* No - If you would like user to self enroll to course without an approval from manager or Company head';
 $string['coursedescription'] = 'Description';
 $string['exportcourses'] = 'Export Courses to Excel';
 $string['make_inactive'] = 'Make Inactive';
 $string['make_active'] = 'Make Active';
-$string['departmentnotfound'] ='Country not found i.e \'{$a}\'';
+$string['departmentnotfound'] ='Bussiness Unit not found i.e \'{$a}\'';
 $string['categorycode'] = 'Category Code';
 // course types strings
 $string['open_coursetypecourse'] = 'Course type';
@@ -401,31 +401,32 @@ $string['coursecodeexists'] = 'Course code already exists ({$a})';
 $string['deletecoursetypenotconfirm'] = 'You cannot delete <b>{$a->name}</b> as it is currently mapped to a course. Please unmap to delete.';
 $string['reason'] = 'Reason';
 $string['open_costcenteridlocal_courses'] = 'Organisation';
-$string['open_departmentlocal_courses'] = 'Country';
-$string['open_subdepartmentlocal_courses'] = 'Commercial Unit';
-$string['open_level4departmentlocal_courses'] = 'Commercial Area';
+$string['open_departmentlocal_courses'] = 'Bussiness Unit';
+$string['open_subdepartmentlocal_courses'] = 'Department';
+$string['open_level4departmentlocal_courses'] = 'Sub Department';
 $string['open_level5departmentlocal_courses'] = 'Territory';
 $string['pleaseselectidentifiedtype'] = 'Please Select Type';
 
-$string['open_costcenteridlocal_courses_help'] = 'Organization of the course';
-$string['open_departmentlocal_courses_help'] = 'Country of the course';
-$string['open_subdepartmentlocal_courses_help'] = 'Commercial Unit of the course';
-$string['open_level4departmentlocal_courses_help'] = 'Commercial Area of the course';
+$string['open_costcenteridlocal_courses_help'] = 'Company of the course';
+$string['open_departmentlocal_courses_help'] = 'Bussiness Unit of the course';
+$string['open_subdepartmentlocal_courses_help'] = 'Department of the course';
+$string['open_level4departmentlocal_courses_help'] = 'Sub Department of the course';
 $string['open_level5departmentlocal_courses_help'] = 'Territory of the course';
 
-$string['cannotuploadcoursewithsubdepartment'] = 'With out Commercial Unit cannot upload a course with Commercial Area';
-$string['categorycodeshouldbesubdepcode'] = 'Category Code should be under the Commercial Unit i.e \'{$a}\'';
-$string['categorycodeshouldbesubsubdepcode'] = 'Category Code should be short name of Commercial Area i.e \'{$a}\'';
-$string['subdeptshouldundersubdepcode'] = 'Commercial Area should be under the Commercial Unit i.e \'{$a}\'';
-$string['subdepartmentnotfound'] ='Commercial Unit not found i.e \'{$a}\'';
+$string['cannotuploadcoursewithsubdepartment'] = 'With out Department cannot upload a course with Sub Department';
+$string['categorycodeshouldbesubdepcode'] = 'Category Code should be under the Department i.e \'{$a}\'';
+$string['categorycodeshouldbesubsubdepcode'] = 'Category Code should be short name of Sub Department i.e \'{$a}\'';
+$string['subdeptshouldundersubdepcode'] = 'Sub Department should be under the Department i.e \'{$a}\'';
+$string['subdepartmentnotfound'] ='Department not found i.e \'{$a}\'';
 
-$string['cannotuploadcoursewithsubsubdepartment'] = 'With out Commercial Area cannot upload a course with Territory';
-$string['categorycodeshouldbesubsubdepcode'] = 'Category Code should be under the Commercial Area i.e \'{$a}\'';
+$string['cannotuploadcoursewithsubsubdepartment'] = 'With out Sub Department cannot upload a course with Territory';
+$string['categorycodeshouldbesubsubdepcode'] = 'Category Code should be under the Sub Department i.e \'{$a}\'';
 $string['categorycodeshouldbesubsubsubdepcode'] = 'Category Code should be short name of Territory i.e \'{$a}\'';
-$string['subdeptshouldundersubsubdepcode'] = 'Territory should be under the Commercial Area i.e \'{$a}\'';
-$string['subsubdepartmentnotfound'] ='Commercial Area not found i.e \'{$a}\'';
+$string['subdeptshouldundersubsubdepcode'] = 'Territory should be under the Sub Department i.e \'{$a}\'';
+$string['subsubdepartmentnotfound'] ='Sub Department not found i.e \'{$a}\'';
 $string['open_states_help'] = 'Search and select an available or existing state as target audience';
 $string['open_district_help'] = 'Search and select an available or existing district as target audience';
 $string['open_subdistrict_help'] = 'Search and select an available or existing subdistrict as target audience';
 $string['open_village_help'] = 'Search and select an available or existing village as target audience';
 $string['username'] = 'Username';
+$string['enablereports'] = 'Course reports are currently not configured. <a href="{$a}" target="_blank"> <u>Click here </u></a> to configure reports';

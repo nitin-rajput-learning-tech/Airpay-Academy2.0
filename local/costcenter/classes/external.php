@@ -655,16 +655,30 @@ class local_costcenter_external extends external_api {
                             $sqlfields = implode(" OR ", $likesql);
                             $concatsql .= " AND ($sqlfields) ";
                         }
-                        $fields      = 'SELECT id, fullname';
-                        $accountssql = " FROM {local_custom_category}
-                                         WHERE 1=1 AND depth = 1 $concatsql AND costcenterid = :parentid ";
+                        if($formoptions->type == 'parent_selector'){
+                            $fields      = 'SELECT id, fullname , parentid ';
+                            $accountssql = " FROM {local_custom_category}
+                                WHERE 1=1 AND depth =1 $concatsql AND costcenterid = :parentid ";
+                        }else{
+                            $fields      = 'SELECT id, fullname, parentid ';
+                            $accountssql = " FROM {local_custom_category}
+                                WHERE 1=1 $concatsql AND costcenterid = :parentid ";
+                        }
                         if($formoptions->id > 0){
                             $accountssql .= " AND id !=".$formoptions->id;
                         }
 
 
                         $customcat = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
-
+                        foreach($customcat as $cat){
+                            $parentname = '';
+                            if($cat->parentid > 0){
+                                $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $cat->parentid]);
+                            }
+                            if($parentname){
+                                $cat->fullname = $parentname . ' / '. $cat->fullname;
+                            }
+                        }
                         if($formoptions->enableallfield){
                             $customcat = $allobjectarr + $customcat;
                         }

@@ -101,19 +101,30 @@ if(is_siteadmin() ||(
 
 $extended_menu_links .= '<div class="dropdown-menu dropdown-menu-right menu  align-tr-br" id="reportswitch" data-rel="menu-content" aria-labelledby="action-menu-toggle-1" role="menu" data-align="tr-br">';
  $reports_info = array();
- foreach($coursereports as $course){
-    $reports = array();
-    $reports['id'] = $course->id;
-    $reports['name'] = $course->name;
-    $reports_info[] = $reports;
-    $extended_menu_links .= '<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>
-                                        <a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$course->id.' class="dropdown-item menu-action" role="menuitem" data-title="'.$course->name.'" aria-labelledby="'.$course->name.'"target="_blank">
-                                            <span class="menu-action-text">
-                                                '.$course->name.'
-                                            </span>
-                                        </a>';
+ if($coursereports){
 
-   }
+     foreach($coursereports as $course){
+        $reports = array();
+        $reports['id'] = $course->id;
+        $reports['name'] = $course->name;
+        $reports_info[] = $reports;
+        $extended_menu_links .= '<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>
+                                            <a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$course->id.' class="dropdown-item menu-action" role="menuitem" data-title="'.$course->name.'" aria-labelledby="'.$course->name.'"target="_blank">
+                                                <span class="menu-action-text">
+                                                    '.$course->name.'
+                                                </span>
+                                            </a>';
+
+       }
+}else{
+
+    $url = $CFG->wwwroot . '/blocks/learnerscript/reportsview.php';
+    $enable = get_string('enablereports', 'local_courses', $url);
+
+    $extended_menu_links .= '<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>
+                                            '.$OUTPUT->notification($enable, 'notifyerror');
+
+}
 $extended_menu_links .= '</div></div></li>';
     if ((has_capability('local/courses:exportcourses', $categorycontext) || is_siteadmin())) {
         $extended_menu_links .= "<li>

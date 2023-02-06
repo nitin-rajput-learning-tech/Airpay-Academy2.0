@@ -1422,7 +1422,7 @@ body#page-local-users-index .field_required .icon {
 .openLMStransition.local_users  .form_status{
     margin-bottom:0 !important ;
 }
-.openLMStransition.local_users .modal-content .mform {
+.openLMStransition.local_users  .modal-body form{
     width: 100% !important;
     display: flex;
     flex-wrap: wrap;
@@ -1438,42 +1438,42 @@ body#page-local-users-index .field_required .icon {
     align-items: baseline;
     
 }
-.openLMStransition.local_users  .form-autocomplete-selection [data-active-selection=true]{
+.openLMStransition.local_users .form-autocomplete-selection [data-active-selection=true]{
     padding: 0.25em 0.4em !important;
     font-size: 100% !important;
 }
 .openLMStransition.local_users .modal-content .badge-info{
     margin-bottom: 0 !important;
 }
-.openLMStransition.local_users .mform .form-inline input[type=text].form-control{
+.openLMStransition.local_users form .felement input[type=text].form-control{
     position: relative;
     max-width: 100%;
     min-width:269px !important;
 }
-.openLMStransition.local_users .mform>.form-group .col-md-3 .col-form-label{
+.openLMStransition.local_users form .fitem .col-md-3 .col-form-label{
     vertical-align: -webkit-baseline-middle;
 }
 @media (max-width: 1293px){
-    .openLMStransition.local_users .modal-body .form-autocomplete-downarrow{
+    .openLMStransition.local_users .modal-body form .form-autocomplete-downarrow{
         bottom: 3px;
         right: 3px;
     }
 }
 @media (max-width: 1024px){
-    .openLMStransition.local_users .modal-body .form-group {
+    .openLMStransition.local_users .modal-body form .form-group {
         width: 100% !important;
     }
     
 }
 @media (max-width: 992px){
-    .openLMStransition.local_users .modal-body .form-group{
+    .openLMStransition.local_users .modal-body form .form-group{
         max-width: 100%  !important;
         flex: 0 0 100%  !important;
         margin-right: 0 !important;
     }
 }
 @media (max-width: 767px){
-    .openLMStransition.local_users .mform .form-inline select.custom-select {
+    .openLMStransition.local_users form .form-inline select.custom-select {
         max-width: 100% ;
         min-width: 269px !important;
     }
@@ -1481,10 +1481,4 @@ body#page-local-users-index .field_required .icon {
         margin-bottom: 1rem;
     }
 
-}
-@media (max-width:320px){
-    .openLMStransition.local_users .modal-body .form-autocomplete-downarrow{
-        bottom: 3px;
-        right:-40px;
-    }
 }

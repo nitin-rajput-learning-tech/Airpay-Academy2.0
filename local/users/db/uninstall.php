@@ -140,6 +140,31 @@ function xmldb_local_users_uninstall() {
         if ($dbman->field_exists($table, $field3)) {
             $dbman->drop_field($table, $field3);
         }
+        $field4 = new xmldb_field('open_subbranch');
+        if ($dbman->field_exists($table, $field4)) {
+            $dbman->drop_field($table, $field4);
+        }
+        $field5 = new xmldb_field('open_joindate');
+        if ($dbman->field_exists($table, $field5)) {
+            $dbman->drop_field($table, $field5);
+        }
+        $field6 = new xmldb_field('gender');
+        if ($dbman->field_exists($table, $field6)) {
+            $dbman->drop_field($table, $field6);
+        }
+
+        $field7 = new xmldb_field('open_dateofbirth');
+        if ($dbman->field_exists($table, $field7)) {
+            $dbman->drop_field($table, $field7);
+        }
+        $field8 = new xmldb_field('open_employmenttype');
+        if ($dbman->field_exists($table, $field8)) {
+            $dbman->drop_field($table, $field8);
+        }
+        $field9 = new xmldb_field('open_employmentstatus');
+        if ($dbman->field_exists($table, $field9)) {
+            $dbman->drop_field($table, $field9);
+        }
     }
     return true;
 }

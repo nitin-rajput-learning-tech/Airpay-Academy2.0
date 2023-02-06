@@ -97,6 +97,18 @@ define(['jquery',
                     filters['filter_subdepartments'] = filter_subdepartments;
                 }
             }
+            if (typeof args.filters['filter_level4department'] == 'undefined') {
+                var filter_level4department = $('#dashboardl4department').val();
+                if (filter_level4department != 0) {
+                    args.filters['filter_level4department'] = filter_level4department;
+                }
+            }
+            if (typeof args.filters['filter_level5department'] == 'undefined') {
+                var filter_level5department = $('#dashboardl5department').val();
+                if (filter_level5department != 0) {
+                    args.filters['filter_level5department'] = filter_level5department;
+                }
+            }
             if (typeof filters['filter_course'] == 'undefined') {
                 var filter_course = $('#coursedashboardfilter').val();
                 if (filter_course != 0) {
@@ -261,6 +273,18 @@ define(['jquery',
                     args.filters['filter_subdepartments'] = filter_subdepartments;
                 }
             }
+            if (typeof args.filters['filter_level4department'] == 'undefined') {
+                var filter_level4department = $('#dashboardl4department').val();
+                if (filter_level4department != 0) {
+                    args.filters['filter_level4department'] = filter_level4department;
+                }
+            }
+            if (typeof args.filters['filter_level5department'] == 'undefined') {
+                var filter_level5department = $('#dashboardl5department').val();
+                if (filter_level5department != 0) {
+                    args.filters['filter_level5department'] = filter_level5department;
+                }
+            }
             if (typeof args.filters['filter_course'] == 'undefined') {
                 var filter_course = $('#coursedashboardfilter').val();
                 if (filter_course != 0) {
@@ -273,24 +297,24 @@ define(['jquery',
                     args.filters['filter_onlinecourses'] = filter_onlinecourses;
                 }
             }
-            if (typeof args.filters['filter_labs'] == 'undefined') {
-                var filter_labs = $('#ls_labid').val();
-                if (filter_labs != 0) {
-                    args.filters['filter_labs'] = filter_labs;
-                }
-            }
-            if (typeof args.filters['filter_assessments'] == 'undefined') {
-                var filter_assessments = $('#ls_assessmentid').val();
-                if (filter_assessments != 0) {
-                    args.filters['filter_assessments'] = filter_assessments;
-                }
-            }
-            if (typeof args.filters['filter_webinars'] == 'undefined') {
-                var filter_webinars = $('#ls_webinarid').val();
-                if (filter_webinars != 0) {
-                    args.filters['filter_webinars'] = filter_webinars;
-                }
-            }
+            // if (typeof args.filters['filter_labs'] == 'undefined') {
+            //     var filter_labs = $('#ls_labid').val();
+            //     if (filter_labs != 0) {
+            //         args.filters['filter_labs'] = filter_labs;
+            //     }
+            // }
+            // if (typeof args.filters['filter_assessments'] == 'undefined') {
+            //     var filter_assessments = $('#ls_assessmentid').val();
+            //     if (filter_assessments != 0) {
+            //         args.filters['filter_assessments'] = filter_assessments;
+            //     }
+            // }
+            // if (typeof args.filters['filter_webinars'] == 'undefined') {
+            //     var filter_webinars = $('#ls_webinarid').val();
+            //     if (filter_webinars != 0) {
+            //         args.filters['filter_webinars'] = filter_webinars;
+            //     }
+            // }
             if (typeof args.filters['filter_classrooms'] == 'undefined') {
                 var filter_classrooms = $('#ls_classroomid').val();
                 if (filter_classrooms != 0) {

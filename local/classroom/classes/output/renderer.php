@@ -1160,7 +1160,8 @@ class renderer extends plugin_renderer_base
         if (!is_siteadmin()) {
             $patharr =(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
             $context =(new \local_costcenter\lib\accesslib())::costcenterpath_contextdata($patharr[0]);
-            $switchedrole = $USER->access['rsw'][$context->path];
+            $switchedrole = $USER->useraccess['currentroleinfo']['roleid'];
+            // $switchedrole = $USER->access['rsw'][$context->path];
             if ($switchedrole) {
                 $userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
             } else {
@@ -1183,7 +1184,10 @@ class renderer extends plugin_renderer_base
                         //            Mallikarjun added to get tool certificate
                         $gcertificateid = $DB->get_field('local_classroom', 'certificateid', array('id' => $classroom->id));
                         $certid = $DB->get_field('tool_certificate_issues', 'code', array('moduleid' => $classroom->id, 'userid' => $USER->id, 'moduletype' => 'classroom'));
-                        if ($completed && $certid) {
+                        if ($completed) {
+                            if($certid == 0){
+                                $certificate_exists = false;
+                            }
                             $certificate_download = true;
                         } else {
                             $certificate_download = false;

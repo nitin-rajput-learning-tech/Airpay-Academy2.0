@@ -41,8 +41,8 @@ $table->head[] = get_string('employeeid', 'local_users');
 $table->head[] = get_string('email', 'local_users');
 $table->head[] = get_string('organization', 'local_users');
 $table->head[] = get_string('department', 'local_users');
-$table->head[] = get_string('group', 'local_users');
-$table->head[] = get_string('discipline', 'local_users');
+//$table->head[] = get_string('group', 'local_users');
+//$table->head[] = get_string('discipline', 'local_users');
 $table->head[] = get_string('phonenumber', 'local_users');
 $table->head[] = get_string('designation', 'local_users');
 $table->head[] = get_string('supervisor', 'local_users');
@@ -55,7 +55,7 @@ $userdata = manage_users_content($stable, $totalusers);
 $data = [];
 foreach ($userdata as $user) {
     $data[] = [$user['fullname'], $user['username'], $user['empid'], $user['email'], $user['orgstring'],
-        $user['deptstring'], $user['group'], $user['level'], $user['phno'], $user['designationstring'],
+        $user['deptstring'],/* $user['group'], $user['level'],*/ $user['phno'], $user['designationstring'],
             $user['supervisiorstring'], $user['lastaccess']];
 }
 $table->id = "users";

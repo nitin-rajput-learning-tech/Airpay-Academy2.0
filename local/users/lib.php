@@ -794,7 +794,7 @@ function local_users_quicklink_node() {
 * return count of users under selected costcenter
 * @return  [type] int count of users
 */
-function costcenterwise_users_count($costcenter, $department = false, $subdepartment=false) {
+function costcenterwise_users_count($costcenter, $department = false, $subdepartment=false, $l4department=false, $l5department=false) {
     global $USER, $DB, $CFG;
         $params = array();
 
@@ -808,6 +808,14 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
             $countusersql .= " AND concat('/',u.open_path,'/') LIKE :subdepartmentpath ";
             $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
     }
+    if ($l4department) {
+            $countusersql .= " AND concat('/',u.open_path,'/') LIKE :l4departmentpath ";
+            $params['l4departmentpath'] = '%/'.$l4department.'/%';
+    }
+    if ($l5department) {
+            $countusersql .= " AND concat('/',u.open_path,'/') LIKE :l5departmentpath ";
+            $params['l5departmentpath'] = '%/'.$l5department.'/%';
+    }
         $activesql = " AND suspended = 0 ";
         $inactivesql = " AND suspended = 1 ";
         $countusers = $DB->count_records_sql($countusersql, $params);
@@ -818,22 +826,33 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
                 $viewlink_url = $CFG->wwwroot.'/local/users/index.php?costcenterid='. $costcenter;
         }
         if ($department) {
-                $viewlink_url = $CFG->wwwroot.'/local/users/index.php?departmentid='. $department;
+                $viewlink_url = $CFG->wwwroot.'/local/users/index.php?costcenterid='. $costcenter.'&departmentid='. $department;
         }
         if ($subdepartment) {
-                $viewlink_url = $CFG->wwwroot.'/local/users/index.php?subdepartmentid='. $subdepartment;
+                $viewlink_url = $CFG->wwwroot.'/local/users/index.php?costcenterid='. $costcenter.'&departmentid='. $department.'&subdepartmentid='. $subdepartment;
+        }
+        if ($l4department) {
+                $viewlink_url = $CFG->wwwroot.'/local/users/index.php?costcenterid='. $costcenter.'&departmentid='. $department.'&subdepartmentid='. $subdepartment.'&l4department='.$l4department;
+        }
+        if ($l5department) {
+                $viewlink_url = $CFG->wwwroot.'/local/users/index.php?costcenterid='. $costcenter.'&departmentid='. $department.'&subdepartmentid='. $subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
         }
     }
-
     if ($activeusers >= 0) {
         if ($costcenter) {
                 $count_activelink_url = $CFG->wwwroot.'/local/users/index.php?status=active&costcenterid='.$costcenter;
         }
         if ($department) {
-                $count_activelink_url = $CFG->wwwroot.'/local/users/index.php?status=active&departmentid='.$department;
+                $count_activelink_url = $CFG->wwwroot.'/local/users/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department;
         }
         if ($subdepartment) {
-                $count_activelink_url = $CFG->wwwroot.'/local/users/index.php?status=active&subdepartmentid='.$subdepartment;
+                $count_activelink_url = $CFG->wwwroot.'/local/users/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+            }
+        if ($l4department) {
+                $count_activelink_url = $CFG->wwwroot.'/local/users/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if ($l5department) {
+                $count_activelink_url = $CFG->wwwroot.'/local/users/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
         }
     }
     if ($inactiveusers >= 0) {
@@ -841,10 +860,16 @@ function costcenterwise_users_count($costcenter, $department = false, $subdepart
                 $count_inactivelink_url = $CFG->wwwroot.'/local/users/index.php?status=inactive&costcenterid='.$costcenter;
         }
         if ($department) {
-                $count_inactivelink_url = $CFG->wwwroot.'/local/users/index.php?status=inactive&departmentid='.$department;
+                $count_inactivelink_url = $CFG->wwwroot.'/local/users/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department;
         }
         if ($subdepartment) {
-                $count_inactivelink_url = $CFG->wwwroot.'/local/users/index.php?status=inactive&subdepartmentid='.$subdepartment;
+                $count_inactivelink_url = $CFG->wwwroot.'/local/users/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+        }
+        if ($l4department) {
+                $count_inactivelink_url = $CFG->wwwroot.'/local/users/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if ($l5department) {
+                $count_inactivelink_url = $CFG->wwwroot.'/local/users/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
         }
     }
     return array('totalusers' => $countusers, 'activeusercount' => $activeusers, 'inactiveusercount' =>
@@ -1138,30 +1163,11 @@ function users_filters_form($filterparams, $formdata = []) {
 
     $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
     if (is_siteadmin()) {
-        $mform = new filters_form(null, array('filterlist' => array(/*'organizations', 'departments',
-            'subdepartment', 'department4level','department5level'*/'hierarchy_fields'/*,'states','district','subdistrict','village'*/, 'geographyfields', 'email', 'employeeid', 'status'), 'courseid' => 1,
+        $mform = new filters_form(null, array('filterlist' => array( 'hierarchy_fields',/*'geographyfields',*/ 'email', 'employeeid', 'status'), 'courseid' => 1,
              'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams' => $filterparams)+$formdata);
     } else {
-        $filters = array('hierarchy_fields'/*, 'states','district','subdistrict','village'*/, 'geographyfields','email', 'employeeid', 'status');
-        // $depth = $USER->useraccess['currentroleinfo']['depth'];
-        // if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
-        //     $depth--;
-        // }
-        // if($depth < 6){
-        //     array_unshift($filters, 'department5level');
-        // }
-        // if($depth < 5){
-        //     array_unshift($filters, 'department4level');
-        // }
-        // if($depth < 4){
-        //     array_unshift($filters, 'subdepartment');
-        // }
-        // if($depth < 3){
-        //     array_unshift($filters, 'departments');
-        // }
-        // if($depth < 2){
-        //     array_unshift($filters, 'organizations');
-        // }
+        $filters = array('hierarchy_fields',/* 'geographyfields',*/'email', 'employeeid', 'status');
+
         $mform = new filters_form(null, array('filterlist' => $filters, 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('users', 'costcenter'), 'filterparams'
           => $filterparams)+$formdata);
     }

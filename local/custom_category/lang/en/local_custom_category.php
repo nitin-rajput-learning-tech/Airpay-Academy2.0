@@ -43,3 +43,4 @@ $string['organization'] = 'Organization';
 $string['open_costcenteridlocal_custom_category'] = 'Organization';
 $string['open_costcenteridlocal_custom_category_help'] = 'Organization of category';
 $string['custom_category:view_custom_category'] = 'custom_category:view_custom_category';
+$string['custom_category:create_custom_category'] = 'custom_category:create_custom_category';

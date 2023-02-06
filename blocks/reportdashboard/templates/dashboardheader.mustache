@@ -51,7 +51,7 @@
     {{# enable_level4department }}
         <span class="departmentl4filter">
             <label class="d-inline-block mb-0"><b>{{#str}}level4department, block_learnerscript{{/str}}</b></label>
-            <select name="filter_subdepartments" class = "dashboardsubdepartment" id = "dashboardsubdepartment" data-select2="1"  data-role="{{dashboardrole}}">
+            <select name="filter_l4departments" class = "dashboardl4department" id = "dashboardl4department" data-select2="1"  data-role="{{dashboardrole}}">
                 {{# level4departmentlist }}
                     <option value = "{{id}}" {{selected}}>{{fullname}}</option>
                 {{/ level4departmentlist }}
@@ -61,7 +61,7 @@
     {{# enable_level5department }}
         <span class="departmentl5filter">
             <label class="d-inline-block mb-0"><b>{{#str}}level5department, block_learnerscript{{/str}}</b></label>
-            <select name="filter_subdepartments" class = "dashboardsubdepartment" id = "dashboardsubdepartment" data-select2="1"  data-role="{{dashboardrole}}">
+            <select name="filter_l5departments" class = "dashboardl5department" id = "dashboardl5department" data-select2="1"  data-role="{{dashboardrole}}">
                 {{# level5departmentlist }}
                     <option value = "{{id}}" {{selected}}>{{fullname}}</option>
                 {{/ level5departmentlist }}
@@ -118,14 +118,14 @@
                     </span>
                 {{/ reportwidgetstatus }}
             {{/ issiteadmin}}
-            <span class="dropdown nav-item pull-right">
+            <!-- <span class="dropdown nav-item pull-right">
                 <a class="dropdown-toggle htitle" id="switchdashboard{{reportinstance}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{#str}}switchdashboard, block_reportdashboard{{/str}}">
-                    <!--<span class="tooltiptext tooltip-top">{{#str}}switchdashboard, block_reportdashboard{{/str}}</span>-->
+
                     <img src={{config.wwwroot}}/blocks/learnerscript/pix/switchdashboard.png id='addwidgets' class='addblocks-to-dashboard'>
                 </a>
                 <ul  class="menu dropdown-menu  dropdown-menu-right dropdown-content" area-labelledby="switchdashboard{{reportinstance}}">
                                 {{#get_dashboardname}}
-                    <!-- <a href='{{config.wwwroot}}/blocks/reportdashboard/dashboard.php?dashboardurl={{name}}'>{{name}}</a> -->
+
         <li class="dashboardinstances">
             {{#editingon}}
             <span class="edit_delete_icons">
@@ -153,15 +153,15 @@
         </li>
             {{/get_dashboardname}}
                 </ul>
-            </span>
+            </span> -->
     </span>
     <span class="right_buttons">
-    {{#issiteadmin}}
+    <!-- {{#issiteadmin}}
         <span class ='span_adddashboard htitle'onclick = '(function(e){ require("block_reportdashboard/reportdashboard").addnewdashboard() })(event)' title="{{#str}}addnewdashboard, block_reportdashboard{{/str}}">
-        <!--<span class="tooltiptext tooltip-top">{{#str}}addnewdashboard, block_reportdashboard{{/str}}</span>-->
+
             <img src={{config.wwwroot}}/blocks/learnerscript/pix/adddashboard.png id='adddashboard' class='addblocks-to-dashboard'>
         </span>
-    {{/issiteadmin}}
+    {{/issiteadmin}} -->
         <a class= 'htitle' href="{{config.wwwroot}}/blocks/learnerscript/reportsview.php" title="{{#str}}managereports, block_learnerscript{{/str}}">
             <!--<span class="tooltiptext tooltip-top">{{#str}}managereports, block_learnerscript{{/str}}</span>-->
             <img src={{config.wwwroot}}/blocks/learnerscript/pix/managereport.png id='addreport' class="addblocks-to-dashboard">

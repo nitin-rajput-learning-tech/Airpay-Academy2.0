@@ -263,7 +263,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $deptexistfo .= $costcenterpathconcatsql;
         }
         $deptexisttwo = $DB->record_exists_sql($deptexistfo);
-        if($deptexisttwo && $depth<=4 && has_capability('local/costcenter:create', $categorycontext)){
+        /*if($deptexisttwo && $depth<=4 && has_capability('local/costcenter:create', $categorycontext)){
             $headstring = 'addnewsubsubsubdept';
                 $title = get_string('createsubsubsubdepartment','local_costcenter');
                 $create_sub_sub_sub_department = "<a class='course_extended_menu_itemlink' data-action='createcostcentermodal' data-value='0' title = '$title' onclick ='(function(e){ require(\"local_costcenter/newcostcenter\").init({selector:\"createcostcentermodal\", contextid:$categorycontext->id, id:0, formtype:\"subsubsubdepartment\", headstring:\"$headstring\"}) })(event)'>
@@ -271,7 +271,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
                 </a>";
         }else{
             $create_sub_sub_sub_department = false;
-        }
+        }*/
 
         $buttons = array(
             'create_organisation' => $create_organisation,
@@ -350,6 +350,12 @@ class local_costcenter_renderer extends plugin_renderer_base {
                 $odd = true;
             }
 
+            $path = explode('/',$dept->path);
+            $organisationid = $path[1];
+            $departmentid = $path[2];
+            $subdepartmentid = $path[3];
+            $l4departmentid = $path[4];
+            $l5departmentid = $path[5];
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
 
@@ -361,7 +367,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             }
             $subdept = ($subdept > 0 ? $subdept : get_string('not_available', 'local_costcenter'));
 
-            $deparray = local_costcenter_plugins_count($dept->parentid,$dept->id);
+            $deparray = local_costcenter_plugins_count($organisationid,$departmentid,$subdepartmentid,$l4departmentid,$l5departmentid);
 
             $deptedit = false;
             $deptdelete = false;
@@ -452,7 +458,12 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $delete = true;
 
 
-        $organisationid = $DB->get_field('local_costcenter', 'parentid', array('id' => $id));
+        $parentpath = explode('/',$DB->get_field('local_costcenter', 'path', array('id' => $id)));
+        $parentorgnization = $parentpath[1];
+        $parentdepartment = $parentpath[2];
+        $parentsubdepartment = $parentpath[3];
+        $parentl4department = $parentpath[4];
+        $parentl5department = $parentpath[5];
         $subdepartment_link = '';
         $subdepartment = '';
         $departments_sql="SELECT id,id AS id_val FROM {local_costcenter} WHERE parentid=:parent";
@@ -473,7 +484,6 @@ class local_costcenter_renderer extends plugin_renderer_base {
         }
 
         $deptkeys = array_values($subdepartments);
-
         foreach($deptkeys as $key => $dept){
             $even = false;
             $odd = false;
@@ -483,6 +493,12 @@ class local_costcenter_renderer extends plugin_renderer_base {
             else{
                 $odd = true;
             }
+            $path = explode('/',$dept->path);
+            $organisationid = $path[1];
+            $departmentid = $path[2];
+            $subdepartmentid = $path[3];
+            $l4departmentid = $path[4];
+            $l5departmentid = $path[5];
 
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
@@ -495,7 +511,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             }
             $subdept = ($subdept > 0 ? $subdept : get_string('not_available', 'local_costcenter'));
 
-            $deparray = local_costcenter_plugins_count($organisationid, $dept->parentid,$dept->id);
+            $deparray = local_costcenter_plugins_count($organisationid,$departmentid,$subdepartmentid,$l4departmentid,$l5departmentid);
 
             $deptedit = false;
             $deptdelete = false;
@@ -542,11 +558,11 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['deptid'] = $dept->id;
             //$departments_array['deptaction_message'] = $deptaction_message;
             $departments_array['hide_users'] = FALSE;
-            $departments_array['hide_courses'] = TRUE;
+            $departments_array['hide_courses'] = FALSE;
             $departments_array['hide_exams'] = TRUE;
-            $departments_array['hide_learninplans'] = TRUE;
+            $departments_array['hide_learninplans'] = FALSE;
             $departments_array['hide_feedbacks'] = TRUE;
-            $departments_array['hide_classroom'] = TRUE;
+            $departments_array['hide_classroom'] = FALSE;
             $departments_array['hide_program'] = TRUE;
             $departments_array['hide_certification'] = TRUE;
             $departments_array['role_count'] = $rolescount;
@@ -571,22 +587,28 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "delete_message" => $del_confirmationmsg,
             "departments_content" => $departments_content,
             "headstring" => 'update_dipartment',
-            "formtype" => 'department',
             "assignroles" => (is_siteadmin() || has_capability('local/assignroles:manageassignroles', $categorycontext)),
             "managepermissions" => (is_siteadmin() || has_capability('local/costcenter:managepermissions', $categorycontext)),
         ];
-        if($depart->depth == 4){
+        if($depart->depth == 5){
+            $costcenter_view_content['headstring'] = 'update_subsubsubsubdipartment';
+            // $costcenter_view_content['showsubsubsubdept_content'] = true;
+            $costcenter_view_content['formtype'] = 'subsubsubdepartment';
+        }else if($depart->depth == 4){
             $costcenter_view_content['headstring'] = 'update_subsubsubdipartment';
             $costcenter_view_content['showsubsubsubdept_content'] = true;
+            $costcenter_view_content['formtype'] = 'subsubdepartment';
         }else if($depart->depth == 3){
             $costcenter_view_content['headstring'] = 'update_subsubdipartment';
             $costcenter_view_content['showsubsubdept_content'] = true;
+            $costcenter_view_content['formtype'] = 'subdepartment';
         }else if($depart->depth == 2){
             $costcenter_view_content['headstring'] = 'update_subdipartment';
             $costcenter_view_content['showsubdept_content'] = true;
+            $costcenter_view_content['formtype'] = 'department';
         }
 
-        $pluginnavs = local_costcenter_plugins_count($organisationid, $id);
+        $pluginnavs = local_costcenter_plugins_count($parentorgnization,$parentdepartment,$parentsubdepartment,$parentl4department,$parentl5department);
         $costcenter_view_content = $costcenter_view_content+$pluginnavs;
         return $OUTPUT->render_from_template('local_costcenter/departments_view', $costcenter_view_content);
     }

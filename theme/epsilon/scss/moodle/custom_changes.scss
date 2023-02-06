@@ -2761,6 +2761,26 @@ body .que .info>div {
     .drawercontent{
         padding: 0;
         height: 100%;
+        scrollbar-color: red yellow;
+        // Chrome, Edge and Safari.
+        &::-webkit-scrollbar {
+            width: 10px;
+            padding: 3px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: #222D3E;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background-color: #6c757d;
+            border-radius: 20px;
+            border: 3px solid #222D3E;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background-color: #495057;
+        }
         .courseindex-section {
             border: none;
             margin-bottom: 3px;
@@ -3101,4 +3121,22 @@ body .que .info>div {
 }
 .opacity-0{
     opacity: 0;
+}
+#page-course-view-topics ,#page-mod-forum-view{
+    #page.drawers .main-inner{
+        padding: 0 ;
+        margin-top: 0.5rem !important;
+    }
+    
+}
+#page-course-view-topics .courseheader .course_extended_menu_list .icon{
+    border-radius: 0!important;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: #fff!important;
+    font-size: 23px;  
+}
+#page-course-view-topics .courseheader .course_extended_menu_list li{
+    margin:0;
 }

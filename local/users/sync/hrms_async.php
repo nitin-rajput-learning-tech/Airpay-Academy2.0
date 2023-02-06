@@ -62,7 +62,7 @@ $STD_FIELDS = array(
     'commercial_unit_code' => 'commercial_unit_code','commercial_area_code' => 'commercial_area_code','territory_code' => 'territory_code',    
     'reportingmanager_empid' => 'reportingmanager_empid','language' => 'language','designation' => 'designation',
     'state' => 'state','district' => 'district','subdistrict' => 'subdistrict','village' => 'village',
-    'contactno' => 'contactno','employee_status' => 'employee_status',
+    'contactno' => 'contactno','learner_status' => 'learner_status',
     'password' => 'password','timezone' => 'timezone','force_password_change' => 'force_password_change'
     );
 

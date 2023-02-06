@@ -33,7 +33,7 @@
             {{/ certificate_download }}
         {{/ certificate_exists }}
 	</ul>
-	<div class="  planview_topcontent px-5">
+	<div class="  planview_topcontainer px-5">
 		<div class="border-top"></div>
 		<div class="d-flex planview_topcontent   mx-0 my-4  w-full">
 
@@ -54,13 +54,14 @@
 				<div class="w-full  pb-10">
 					<div class="desc_header row  align-items-center justify-content-between">
 						<div class="col-md-6">
-							<div class="desc_title mb-1"><h5>{{#str}}description{{/str}}</h5></div>
+							<div class="desc_title mb-1"><h5 class='lp_name'>{{ lpname }}</h5></div>
 						</div>
 						<div class="rating_stars col-md-6 d-flex justify-content-end">
 							{{{display_ratings}}}
 							{{{display_like}}}
 						</div>
 					</div>
+					<!-- <span class="w-full pull-left mb-1"><b>{{#str}}description{{/str}}:</b></span> -->
 					<div class="w-full mt-2 description">
 						{{# description_string }}
 							<p class="m-0">{{{ description_string }}}</p>

@@ -15,53 +15,35 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 
-<div class="w-full pull-left planview_container">
+<div class="w-full   planview_container">
     <ul class="course_extended_menu_list">
         {{{challenge_element}}}
     </ul>
-    <div class="col-lg-12 col-md-12 pull-left p-0 planview_topcontent">
-        <div class="col-lg-3 col-md-3 pull-left d-none-1023 p-0">
-            <div style="background-image: url('{{ lpimgurl }}');height:207px;" alt="{{ lpname }}" title="{{ lpname }}" class="lpimg_bg" ></div>
-
-        {{{display_ratings}}}
-        {{{display_like}}}
-        </div>
+    <div class="planview_topcontainer p-4">
+        <div class="border-top mx-4"></div>
+        <div class="d-flex planview_topcontent  px-4 mt-3  w-full">
+            <div class="lpathimg_block">
+                <div style="background-image: url('{{ lpimgurl }}');height:207px;" alt="{{ lpname }}" title="{{ lpname }}" class="lpimg_bg lpathimg_bg" ></div>
+            <!-- {{{display_ratings}}}
+            {{{display_like}}} -->
+            </div>
         
-        {{# needenroluser}}
-            <!--<a class='btn btn-primary pull-right mr-15' href='javascript:void(0)' onclick='(function(e){
-            require("local_learningplan/courseenrol").enrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:"{{{lpname}}}" }) })(event)'><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{# str}} enrol , local_learningplan{{/ str}}</a>-->
-            {{^ requestbtn}}
-                {{^ pending}}
-                    <div class="w-full pull-right">
-                        <span class="enrol">
-                            <a class='btn btn-primary pull-right mr-15' href='javascript:void(0)' onclick='(function(e){
-                            require("local_learningplan/courseenrol").enrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:"{{{lpname}}}" }) })(event)'>
-                                {{# str}} enroll , local_search{{/ str}}
-                            </a>
-                        </span>
-                    </div>
-                {{/ pending}}
-            {{/ requestbtn}}
-            {{# requestbtn}}
-                <div class="w-full pull-right">
-                    <span class="enrol">
-                        <a class=" btn-primary pull-right mr-15" href='javascript:void(0)' onclick="(function(e){ require('local_request/requestconfirm').init({componentid:{{planid}}, component:'{{component}}', action:'{{action}}', componentname: '{{lpname}}' }) })(event)" >
-                        {{# str}} requestforenroll , local_classroom{{/ str}}
-                        </a>
-                    </span>
-                </div>
-            {{/ requestbtn}}
-            {{# pending}}
-                <div class="enrol_strip">
-                    <button class="cat_btn btn btn-primary pull-right mr-15">Processing</button>
-                </div>
-            {{/ pending}}
-        {{/ needenroluser}}
-        <div class="col-lg-9 col-md-9 pull-left d-block-1023">
+        <div class="lpathdesc_block d-block-1023 p-4">
             <!--<h4 class='pull-left mb-5 lp_name'>{{ lpname }}</h4>--> 
-            <div class="w-full pull-left pb-10">
-                <span class="w-full pull-left mb-1"><b>Description :</b></span>
-                <div class="w-full pull-left description">
+            <div class="w-full  pb-10">
+                <div class="desc_header row  align-items-center justify-content-between">
+                    <div class="col-md-6">
+                        <div class="desc_title mb-1">
+                            <h5 class='lp_name'>{{ lpname }}</h5>
+                        </div>
+                    </div>
+                    <div class="rating_stars col-md-6 d-flex justify-content-end">
+                        {{{display_ratings}}}
+                        {{{display_like}}}
+                    </div>
+                </div>
+                <!-- <span class="w-full pull-left mb-1"><b>Description :</b></span> -->
+                <div class="w-full  mt-2 description">
                     {{# description_string }}
                         <p class="m-0">{{{ description_string }}}</p>
                     {{/ description_string }}
@@ -69,10 +51,47 @@
                         <p class="alert alert-info text-xs-center m-0">{{#str}}nocoursedesc, local_courses{{/str}}</p>
                     {{/ description_string }}
                 </div>
+                <div class="topprogress_bar mt-4 ">
+                    <h6 class="mb-0 mr-2">Progress</h6>
+                    <div class="max_progress d-flex align-items-baseline flexgrow-1">
+                        <div class="progress flexgrow-1">
+                            <div class="progress-bar text-center" role="progressbar" style="width: {{planpercent}}%;" aria-valuenow="{{planpercent}}%" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        <span class="progress_percentage ml-2">{{planpercent}}%</span>
+                    </div>
+                    <div class="enroll_button mt-3">
+                    {{# needenroluser}}
+                        <!-- <a class='btn btn-primary pull-right mr-15' href='javascript:void(0)' onclick='(function(e){
+                        require("local_learningplan/courseenrol").enrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:"{{{lpname}}}" }) })(event)'><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{# str}} enrol , local_learningplan{{/ str}}</a> -->
+                        {{^ requestbtn}}
+                            {{^ pending}}
+                            <span class="enrol">
+                                <a class='btn btn-primary  mr-15' href='javascript:void(0)' onclick='(function(e){
+                                require("local_learningplan/courseenrol").enrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:"{{{lpname}}}" }) })(event)'>
+                                    {{# str}} enroll , local_search{{/ str}}
+                                </a>
+                            </span>
+                            {{/ pending}}
+                        {{/ requestbtn}}
+                        {{# requestbtn}}
+                            <span class="enrol">
+                                <a class=" btn-primary  mr-15" href='javascript:void(0)' onclick="(function(e){ require('local_request/requestconfirm').init({componentid:{{planid}}, component:'{{component}}', action:'{{action}}', componentname: '{{lpname}}' }) })(event)" >
+                                {{# str}} requestforenroll , local_classroom{{/ str}}
+                                </a>
+                            </span>
+                        {{/ requestbtn}}
+                        {{# pending}}
+                            <div class="enrol_strip">
+                                <button class="cat_btn btn btn-primary pull-right mr-15">Processing</button>
+                            </div>
+                        {{/ pending}}
+                    {{/ needenroluser}}
+                    </div>
+                </div>
             </div>
             <!--<div class="w-full pull-left mt-5 mb-5"><img src="{{ lpcoursespath }}" class="w-full" height="40"/></div>-->
-            <div class="w-full pull-left coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-xs-center alert alert-info mt-1 m-0">Assign 2 or more courses to see the journey</span> {{/ lpcoursespath }}</div>
-            <div class="col-lg-12 col-md-12 pull-left p-0">
+            <!-- <div class="w-full pull-left coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-xs-center alert alert-info mt-1 m-0">Assign 2 or more courses to see the journey</span> {{/ lpcoursespath }}</div> -->
+            <!-- <div class="col-lg-12 col-md-12 pull-left p-0">
                 <div class="col-lg-6 col-md-6 pull-left pl-0">
                     <div class="w-full pull-left mb-1">
                         <span class="w-full pull-left"><b>Details :</b></span>
@@ -103,11 +122,12 @@
                         </span><span style="color:#333;"><b>{{ optionalcourses_count }}</b></span>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
     </div>
 </div>
 <!-- <div class="w-full pull-left m-15"><h4 class="lp_name">{{lpname}}</h4></div> -->
+</div>
 
 
 

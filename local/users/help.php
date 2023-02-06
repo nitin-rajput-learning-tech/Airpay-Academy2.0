@@ -46,7 +46,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('manual', 'local_users'));
 if (isset($CFG->allowframembedding) && ! $CFG->allowframembedding) {
     echo $OUTPUT->box(get_string('helpmanual', 'local_users'));
-    echo '<div style="float:right;"><a href="sync/hrms_async.php"><button>' .
+    echo '<div style="float:right;" class="mb-2"><a href="sync/hrms_async.php"><button>' .
     get_string('back_upload', 'local_users') . '</button></a></div>';
 }
 $country = get_string_manager()->get_list_of_countries();

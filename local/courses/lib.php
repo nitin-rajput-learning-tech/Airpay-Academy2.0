@@ -1237,7 +1237,7 @@ function local_courses_quicklink_node(){
     * @param int $department department
     * @return  array courses count of each type
 */
-function costcenterwise_courses_count($costcenter,$department = false,$subdepartment = false){
+function costcenterwise_courses_count($costcenter,$department = false,$subdepartment = false, $l4department=false, $l5department=false){
     global $USER, $DB,$CFG;
     $params = array();
     $params['costcenterpath'] = '%/'.$costcenter.'/%';
@@ -1250,6 +1250,14 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
         $countcoursesql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
         $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
     }
+    if ($l4department) {
+        $countcoursesql .= " AND concat('/',open_path,'/') LIKE :l4departmentpath ";
+        $params['l4departmentpath'] = '%/'.$l4department.'/%';
+    }
+    if ($l5department) {
+        $countcoursesql .= " AND concat('/',open_path,'/') LIKE :l5departmentpath ";
+        $params['l5departmentpath'] = '%/'.$l5department.'/%';
+    }
     $activesql = " AND visible = 1 ";
     $inactivesql = " AND visible = 0 ";
 
@@ -1261,8 +1269,17 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
             $viewcourselink_url = $CFG->wwwroot.'/local/courses/courses.php?costcenterid='.$costcenter; 
         }
         if($department){
-            $viewcourselink_url = $CFG->wwwroot.'/local/courses/courses.php?departmentid='.$department; 
-        }        
+            $viewcourselink_url = $CFG->wwwroot.'/local/courses/courses.php?costcenterid='.$costcenter.'&departmentid='.$department;
+        }
+        if($subdepartment){
+            $viewcourselink_url = $CFG->wwwroot.'/local/courses/courses.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+        }
+        if($l4department){
+            $viewcourselink_url = $CFG->wwwroot.'/local/courses/courses.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if($l5department){
+            $viewcourselink_url = $CFG->wwwroot.'/local/courses/courses.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+        }
     }
 
     if($activecourses >= 0){
@@ -1270,15 +1287,33 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
             $count_courseactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=active&costcenterid='.$costcenter; 
         }
         if($department){
-            $count_courseactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=active&departmentid='.$department; 
-        }        
+            $count_courseactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department;
+        }
+        if($subdepartment){
+            $count_courseactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+        }
+        if($l4department){
+            $count_courseactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if($l5department){
+            $count_courseactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+        }
     }
     if($inactivecourses >= 0){
         if($costcenter){
             $count_courseinactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=inactive&costcenterid='.$costcenter; 
         }
         if($department){
-            $count_courseinactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=inactive&departmentid='.$department; 
+            $count_courseinactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department;
+        }
+        if($subdepartment){
+            $count_courseinactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+        }
+        if($l4department){
+            $count_courseinactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if($l5department){
+            $count_courseinactivelink_url = $CFG->wwwroot.'/local/courses/courses.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
         }
     }
 
@@ -1482,7 +1517,7 @@ function get_listof_courses($stable, $filterdata) {
 
             if (strlen($coursename)>35){
                 $coursenameCut = substr($coursename, 0, 35)."...";
-                $courseslist[$count]["coursenameCut"] = $coursenameCut;
+                $courseslist[$count]["coursenameCut"] = \local_costcenter\lib::strip_tags_custom($coursenameCut);
             }
             $catname = $categoryname;
             $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12)."..." : $catname;
@@ -1526,21 +1561,21 @@ function get_listof_courses($stable, $filterdata) {
             } else {
                 $skillname = 'N/A';                
             }
-            $courseslist[$count]["coursename"] = $coursename;
-            $courseslist[$count]["shortname"] =  $shortname;
-            $courseslist[$count]["skillname"] = $skillname;
+            $courseslist[$count]["coursename"] = \local_costcenter\lib::strip_tags_custom($coursename);
+            $courseslist[$count]["shortname"] =  \local_costcenter\lib::strip_tags_custom($shortname);
+            $courseslist[$count]["skillname"] = \local_costcenter\lib::strip_tags_custom($skillname);
             $courseslist[$count]["ratings_value"] = $rating_value;
             $courseslist[$count]["ratingenable"] = $ratingenable;
-            $courseslist[$count]["tagstring"] = $tagstring;
+            $courseslist[$count]["tagstring"] = \local_costcenter\lib::strip_tags_custom($tagstring);
             $courseslist[$count]["tagstringtotal"] = $tagstringtotal;
             $courseslist[$count]["tagenable"] = $tagenable;
-            $courseslist[$count]["catname"] = $catname;
-            $courseslist[$count]["catnamestring"] = $catnamestring;
+            $courseslist[$count]["catname"] = \local_costcenter\lib::strip_tags_custom($catname);
+            $courseslist[$count]["catnamestring"] = \local_costcenter\lib::strip_tags_custom($catnamestring);
             $courseslist[$count]["enrolled_count"] = $enrolled_count;
             $courseslist[$count]["courseid"] = $course->id;
             $courseslist[$count]["completed_count"] = $completed_count;
             $courseslist[$count]["points"] = $course->open_points != NULL ? $course->open_points: 0;
-            $courseslist[$count]["coursetype"] = $displayed_names;
+            $courseslist[$count]["coursetype"] = \local_costcenter\lib::strip_tags_custom($displayed_names);
             $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
             $courseslist[$count]["grade_view"] = ((has_capability('local/courses:grade_view',
             $context) || is_siteadmin())&&has_capability('local/courses:manage', $context)) ? true : false;

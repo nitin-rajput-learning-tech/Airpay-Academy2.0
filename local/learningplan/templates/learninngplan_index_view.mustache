@@ -16,94 +16,87 @@
 }}
 <div class="w-full pull-left lp_container {{^hide}}disabled{{/hide}}">
 	<div class='col-md-12 pull-left learning_plan_view p-15'> 
-		<div class="col-md-12 pull-left pl-0 pr-0">
-			<i class="fa fa-map lpicon" aria-hidden="true" aria-label=""></i>
+		<div class="d-flex justify-content-between pl-0 pr-0">
+			<div><i class="fa fa-map lpicon" aria-hidden="true" aria-label=""></i>
 			{{#can_view}}
 			<a class="lp_name" href="{{plan_url}}" >{{{learning_plan_name}}}</a>
 			{{/can_view}}
-			{{^can_view}}
-			<a class="lp_name" href="javascript:void(0)" >{{{learning_plan_name}}}</a>
-			{{/can_view}}
-				<div class="pull-right showoptions{{learning_planid}} actionicons">
-	                <span  class="showoptions" data-action="showoptions{{learning_planid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{learning_planid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{learning_planid}}' }) })(event)">
-	                    <i class="fa fa-ellipsis-h options"></i>
-	                </span>
-	            <ul class="options_container" id="showoptions{{learning_planid}}">
+			{{^can_view}} 
+			<a class="lp_name" href="{{planview_url}}" >{{{learning_plan_name}}}</a>
+			{{/can_view}}</div>
+				<div class="dropdown action_menu_dropdown ">
+	                <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
+                        <i class="fa fa-ellipsis-h "></i>
+                    </span>
+	            <div class="dropdown-menu dropdown-menu-right shadow-sm">
 	            	{{# capability3}}
-	            	  <li>
-						<a href='javascript:void(0)' title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').deleteConfirm({action:'deleteplan' , id:{{{learning_planid}}}, name:'{{{learning_plan_name}}}'  }) })(event)">
+	            	  <a class="dropdown-item" href='javascript:void(0)' title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').deleteConfirm({action:'deleteplan' , id:{{{learning_planid}}}, name:'{{{learning_plan_name}}}'  }) })(event)">
 							<!--<img src="{{delete_icon_url}}"  class="icon" >-->
-							<i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str}} delete {{/ str}}" aria-label="Delete"></i>
-						</a>
-					</li>   
+							<i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str}} delete {{/ str}}" aria-label="Delete"></i>Delete
+						</a>   
 					{{/ capability3}}
 					{{# capability2}}
-					<li>
-						<a href='javascript:void(0)' title = "{{# str}} edit {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').init({selector:'updatelpmodal', contextid:1, planid:{{{learning_planid}}}, form_status:0 }) })(event)">
+					<a class="dropdown-item" href='javascript:void(0)' title = "{{# str}} edit {{/ str}}" onclick="(function(e){ require('local_learningplan/lpcreate').init({selector:'updatelpmodal', contextid:1, planid:{{{learning_planid}}}, form_status:0 }) })(event)">
 							<!--<img src="{{edit_icon_url}}" title="edit" class="icon" >-->
-							<i class="fa fa-pencil fa-fw" aria-hidden="true" title="{{# str}} edit {{/ str}}" aria-label="Edit"></i>
-						</a>
-					</li>
+							<i class="fa fa-pencil fa-fw" aria-hidden="true" title="{{# str}} edit {{/ str}}" aria-label="Edit"></i>Edit
+					</a>
 					{{/ capability2}}
 					{{# capability1}}
 						{{# hide}}
-						<li>
-							<a href='javascript:void(0)' title="{{title_hide_show}}" onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'visible', name:'{{{learning_plan_name}}}', id:{{{learning_planid}}} }) })(event)">
-								<i class="fa fa-eye" title="{{title_hide_show}}"></i>
-							</a>
-						</li>
+						<a class="dropdown-item" href='javascript:void(0)' title="{{title_hide_show}}" onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'visible', name:'{{{learning_plan_name}}}', id:{{{learning_planid}}} }) })(event)">
+								<i class="fa fa-eye" title="{{title_hide_show}}"></i>{{title_hide_show}}
+						</a>
 						{{/ hide}}
 						{{^ hide}}
-						<li>
-							<a href='javascript:void(0)' title="{{title_hide_show}}"  onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'hidden', name:'{{{learning_plan_name}}}', id:{{{learning_planid}}} }) })(event)">
+						<a class="dropdown-item" href='javascript:void(0)' title="{{title_hide_show}}"  onclick="(function(e){ require('local_learningplan/lpcreate').toggleVisible({action:'toggleplan' ,visible:'hidden', name:'{{{learning_plan_name}}}', id:{{{learning_planid}}} }) })(event)">
 								<!--<img src="{{hide_show_icon_url}}" class="icon">-->
-								<i class="fa fa-eye-slash icon" title="{{title_hide_show}}"></i>
+								<i class="fa fa-eye-slash" title="{{title_hide_show}}"></i>{{title_hide_show}}
 							</a>
 						</li>
 						{{/hide}}
 					{{/ capability1}}
-					
-					<li>
-						<a href='{{enroll_link}}' title = "{{# str}} le_enrol_users,local_learningplan {{/ str}}" >
-							<i class="icon fa fa-user-plus fa-fw" aria-hidden="true" title="{{# str}} le_enrol_users,local_learningplan {{/ str}}" aria-label="Enroll Users"></i>
-						</a>
-					</li>
-				</ul>
+					<a class="dropdown-item" href='{{enroll_link}}' title = "{{# str}} le_enrol_users,local_learningplan {{/ str}}" >
+						<i class=" fa fa-user-plus fa-fw" aria-hidden="true" title="{{# str}} le_enrol_users,local_learningplan {{/ str}}" aria-label="Enroll Users"></i>Enroll Users
+					</a>
+				</div>
 			</div>
-			<div class="w-full pull-left coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-center alert alert-info mt-1 m-0">{{#str}} assign_users_to_see_path, local_learningplan{{/str}}</span> {{/ lpcoursespath }}</div>
+			
 		</div>
-		<div class="col-md-12 pull-left learning_plan_info pull-left p-0">
-			<div class="w-full pull-left pt-10 pb-10">
-				<span class="w-full pull-left"><b>{{#str}} details {{/str}} :</b></span>
+		<div class="w-full  coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-center alert alert-info mt-1 m-0">{{#str}} assign_users_to_see_path, local_learningplan{{/str}}</span> {{/ lpcoursespath }}</div>
+		<div class="col-md-12  learning_plan_info  p-0">
+			<div class="w-full  pt-10 pb-10">
+				<span class="w-full"><b>{{#str}} details {{/str}} :</b></span>
 			</div>
 					
 		<!-- 	<div class="col-md-7 col-sm-7 pull-left pl-15">
 				<div class="w-full pull-left">
 					<span class="text-muted pull-left lp_info">{{#str}} plan_type, local_learningplan {{/str}}<span  class="pull-right mr-10">:</span> </span><span class="font-weight-bold lp_value">{{{plan_type}}}</span>
 				</div> -->
-				<div class="col-md-7 col-sm-7 pull-left pl-15">
-				<div class="w-full pull-left">
-					<span class="text-muted pull-left lp_info">{{#str}}learningplan, local_learningplan {{/str}}<span  class="pull-right mr-10">:</span> </span><span class="font-weight-bold lp_value">{{{plan_shortname_string}}}</span>
-				</div>
+			<div class="row">
+				<div class="col-md-7 col-sm-7  pl-15">
+					<div class="w-full ">
+						<span class="text-muted  lp_info">{{#str}}learningplan, local_learningplan {{/str}}<span  class=" mr-10">:</span> </span><span class="font-weight-bold lp_value">{{{plan_shortname_string}}}</span>
+					</div>
 
-				<div class="w-full pull-left">
-					<span class="text-muted pull-left lp_info">{{#str}}department, local_users{{/str}} 
-						<span class="pull-right mr-10">:</span>
-					</span>
-					<span title = "{{{plandpt}}}" class="font-weight-bold lp_value">{{{plandpt}}}</span>
+					<div class="w-full ">
+						<span class="text-muted  lp_info">{{#str}}department, local_users{{/str}} 
+							<span class=" mr-10">:</span>
+						</span>
+						<span title = "{{{plandpt}}}" class="font-weight-bold lp_value">{{{plandpt}}}</span>
+					</div>
 				</div>
-			</div>
-			<div class="col-md-5 col-sm-5 pull-left lp_content_right">
-				<!--<div class="w-full pull-left">
-					<span class="text-muted pull-left lp_info">{{#str}}learningplan_index_credits,local_learningplan{{/str}} 
-					<span class="pull-right mr-10">:</span> 
-					</span><span class="font-weight-bold lp_value">{{{plan_credits}}}</span>
-				</div>-->
+				<div class="col-md-5 col-sm-5  lp_content_right">
+					<!--<div class="w-full pull-left">
+						<span class="text-muted pull-left lp_info">{{#str}}learningplan_index_credits,local_learningplan{{/str}} 
+						<span class="pull-right mr-10">:</span> 
+						</span><span class="font-weight-bold lp_value">{{{plan_credits}}}</span>
+					</div>-->
 
-				<div class="w-full pull-left">
-					<span class="text-muted pull-left lp_info">{{#str}} assigned_courses, local_learningplan {{/str}} 
-					<span class="pull-right mr-10">:</span> 
-					</span><span class="font-weight-bold lp_value">{{{lpcoursescount}}}</span>
+					<div class="w-full">
+						<span class="text-muted  lp_info">{{#str}} assigned_courses, local_learningplan {{/str}} 
+						<span class=" mr-10">:</span> 
+						</span><span class="font-weight-bold lp_value">{{{lpcoursescount}}}</span>
+					</div>
 				</div>
 			</div>		
 			<!--<div>

@@ -40,6 +40,7 @@ $role = optional_param('role', $requests['role'], PARAM_RAW);
 $costcenterid = optional_param('costcenter', $requests['costcenter'], PARAM_INT);
 $departmentid = optional_param('department', $requests['department'], PARAM_INT);
 $subdepartmentid = optional_param('subdepartment', $requests['subdepartment'], PARAM_INT);
+$l4departmentid = optional_param('l4department', $requests['l4department'], PARAM_INT);
 require_login();
 $context = context_system::instance();
 $PAGE->set_context($context);
@@ -159,6 +160,32 @@ switch ($action) {
             $return = array('-1' => 'All');
         }
         break;
+    case 'l4departmentlist':
+        if ($subdepartmentid > 0) {
+            $sql = "SELECT lc.id, lc.fullname FROM {local_costcenter} lc WHERE lc.parentid = {$subdepartmentid} AND lc.depth = 4 ";
+            $l4departments = $DB->get_records_sql_menu($sql);
+            if (!empty($l4departments)) {
+                $return = array(0 => 'All') + $l4departments;
+            } else {
+                $return = array(0 => 'All');
+            }
+        } else {
+            $return = array(0 => 'All');
+        }
+    break;
+    case 'l5departmentlist':
+        if ($l4departmentid > 0) {
+            $sql = "SELECT lc.id, lc.fullname FROM {local_costcenter} lc WHERE lc.parentid = {$l4departmentid} AND lc.depth = 5 ";
+            $l5departments = $DB->get_records_sql_menu($sql);
+            if (!empty($l5departments)) {
+                $return = array(0 => 'All') + $l5departments;
+            } else {
+                $return = array(0 => 'All');
+            }
+        } else {
+            $return = array(0 => 'All');
+        }
+    break;
     /*case 'onlinecourselist': 
         if ($costcenterid >= 0) {
             $sql = "SELECT c.id, c.fullname AS onlinecourse

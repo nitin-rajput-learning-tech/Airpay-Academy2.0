@@ -676,20 +676,20 @@ class cronfunctionality {
 
         // check employeestatus
         $this->deletestatus = 0;
-        if (array_key_exists('employee_status', $excel)) {
-            if (empty($excel->employee_status)) {
+        if (array_key_exists('learner_status', $excel)) {
+            if (empty($excel->learner_status)) {
                 echo '<div class=local_users_sync_error>Provide employee status for  employee id "' .
                  $excel->employee_id . '" of uploaded excelsheet at line '.$this->excel_line_number.'.</div>';
                 $this->errors[] = 'Provide employee status for  employee id "' . $excel->employee_id . '"
                  of uploaded excelsheet at line '.$this->excel_line_number.'.';
-                $this->mfields[] = 'employee_status';
+                $this->mfields[] = 'learner_status';
                 $this->errorcount++;
             } else {
-                if (strtolower($excel->employee_status) == 'active') {
+                if (strtolower($excel->learner_status) == 'active') {
                     $this->activestatus = 0;
-                } else if ( strtolower($excel->employee_status) == 'inactive' ) {
+                } else if ( strtolower($excel->learner_status) == 'inactive' ) {
                     $this->activestatus = 1;
-                } else if ( strtolower($excel->employee_status) == 'delete' ) {
+                } else if ( strtolower($excel->learner_status) == 'delete' ) {
                     $this->deletestatus = 1;
                 } else {
                     $this->activestatus = 0;
@@ -700,7 +700,7 @@ class cronfunctionality {
             $this->errormessage = 'Error in arrangement of columns in uploaded excelsheet at line '.$this->excel_line_number.'.';
             $this->errorcount++;
         }
-    } // end of  employee_status_validation method
+    } // end of  learner_status_validation method
 
     /**
      * @param   $excel [<data in excel or csv uploaded>] for validation
@@ -1017,7 +1017,7 @@ class cronfunctionality {
         $user->email = strtolower($excel->email);
         $user->country = 'IN';
         $user->open_group = $excel->level ? $excel->level : ' ';
-        $user->employee_status = $excel->employee_status;
+        $user->learner_status = $excel->learner_status;
         $user->open_location = $excel->location ? $excel->location : ' ';
         $user->open_state = $excel->state_name ? $excel->state_name : ' ';
         $user->city = $excel->location ? $excel->location : ' ';

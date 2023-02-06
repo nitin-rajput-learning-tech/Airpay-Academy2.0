@@ -278,7 +278,8 @@ class accesslib
         if($datatype == self::ALL_MODULE_CONTENT){
 
             $match_sql='';
-            $paths[] = $costcenterpath.'%';
+            $paths[] = $costcenterpath.'/%';
+            $paths[] = $costcenterpath;
 
             while ($costcenterpath = rtrim($costcenterpath,'0123456789')) {
                 $costcenterpath = rtrim($costcenterpath, '/');

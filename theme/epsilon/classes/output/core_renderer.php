@@ -948,7 +948,7 @@ class core_renderer extends \core_renderer {
         if($courseid < 2){
             return '';
         }
-        $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'init');
+
         $return = '';
 
         $systemcontext = \context_course::instance($courseid);
@@ -956,7 +956,7 @@ class core_renderer extends \core_renderer {
         $categorycontext = context_coursecat::instance($COURSE->category);
 
 
-         if(has_capability('moodle/course:view', $systemcontext) || has_capability('moodle/course:create', $systemcontext) || is_siteadmin()) {
+         if(has_capability('moodle/course:create', $systemcontext) || is_siteadmin()) {
             $admin_default_menu = true;
             $manage = true;
         }
@@ -967,7 +967,6 @@ class core_renderer extends \core_renderer {
             $useredit = 'on';
         }
         if($this->page->pagetype!='local-catalog-courseinfo') {
-            $manage = true;
             if(!(is_siteadmin() || has_any_capability(['moodle/course:view'], $systemcontext))){
                 $manage = false;
                 $USER->editing = 0;
@@ -1718,21 +1717,35 @@ class core_renderer extends \core_renderer {
                 if($othercontext->__get('contextlevel') == CONTEXT_COURSECAT){
                     $othercategorypath = \local_costcenter\lib\accesslib::get_category_info($othercontext->instanceid, 'path');
                     $othercategoryids = array_values(array_filter((explode('/', $othercategorypath))));
+
                     if($contextdepth == $othercontext->__get('depth') && $othercategoryids[0] == $USER->useraccess['currentroleinfo']['orgcatid'] && $roleid == $assignedrole->roleid){//in_array($roleid, $USER->access['ra'][$othercontext->path])
+
+
+                        // strpos(haystack, needle)
                         if($this->role_capability_assignments($roleid, $othercontext, $accessdata)){
                             $USER->access['rsw'][$othercontext->path] = $roleid;
                             $othercostcenterpath = \local_costcenter\lib\accesslib::get_costcenterpath_context($othercontext);
                             $USER->useraccess['currentroleinfo']['contextinfo'][] = ['context' => $othercontext,'costcenterpath' => $othercostcenterpath];
                         }
                     }else {//if($context->path != '/1')if user is assigned at system context we unset the rsw variable.
-                        if($this->role_capability_assignments($userroleid, $othercontext, $accessdata))
-                            $USER->access['rsw'][$othercontext->path] = $userroleid;
+                // var_dump(strpos($othercontext->path.'/', $context->path.'/'));
+                //         var_dump(strpos($othercontext->path.'/', $context->path.'/'));
+                //     var_dump($othercontext->path);
+                // var_dump($context->path);
+                        if(strpos($othercontext->path.'/', $context->path.'/') === 0 && $context->path != '/1'){
+                            unset($USER->access['rsw'][$othercontext->path]);
+                        }else{
+                            if($this->role_capability_assignments($userroleid, $othercontext, $accessdata))
+                                $USER->access['rsw'][$othercontext->path] = $userroleid;
+                        }
                     }
                 }
             }
         }
         //Fetching the category contexts where the role is assigned ans switching as user to those for achieving system level role switch ends.
         $this->role_capability_assignments($roleid, $context, $accessdata);
+        // var_dump($USER->access['rsw']);
+        // exit;
         return true;
     }
     private function role_capability_assignments($roleid, $context, &$accessdata){
@@ -2012,7 +2025,6 @@ class core_renderer extends \core_renderer {
     public function activityurl_get_course() {
 
         global $COURSE;
-
         $courseformat = course_get_format($COURSE);
 
         if($COURSE->format == 'singleactivity'){

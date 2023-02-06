@@ -57,7 +57,7 @@ $user_departmentid = explode('/',$USER->open_path)[2];
 $user_subdepartmentid = explode('/',$USER->open_path)[3];
 if (!is_siteadmin()) {
     // $rolelist = (new ls)->get_currentuser_roles();
-    $userroles = get_user_roles($context, $USER->id);
+    $userroles = get_user_roles($context, $USER->id, false);
     $roleids = array_column($userroles, 'roleid');
     $rolenames = array_column($userroles, 'shortname');
 
@@ -76,6 +76,7 @@ if (!is_siteadmin()) {
 } else {
     $_SESSION['role'] = $role;
 }
+
 if (!is_siteadmin()) {
     // $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
     // if (!empty($scheduledreport)) {
@@ -154,8 +155,8 @@ $PAGE->navbar->ignore_active();
 require_once($CFG->dirroot . '/blocks/learnerscript/lib.php');
 
 $params = get_reportdashboard();
-$navurl = new moodle_url('/blocks/reportdashboard/dashboard.php', $params);
-$PAGE->navbar->add(get_string('analytics', 'block_learnerscript'), $navurl);
+// $navurl = new moodle_url('/blocks/reportdashboard/dashboard.php', $params);
+// $PAGE->navbar->add(get_string('analytics', 'block_learnerscript'), $navurl);
 if (!$dashboardurl) {
     $PAGE->navbar->add(get_string('dashboard', 'block_reportdashboard'));
 } else {
@@ -489,7 +490,8 @@ if($configuredinstances > 0){
         echo "<input type='hidden' name='filter_organization' id='ls_costcenterid' class = 'report_costcenter'  value='" . $dashboardcostcenterid . "' />";
         echo "<input type='hidden' name='filter_department' id='ls_departmentid' class = 'report_department'  value='" . $dashboarddepartmentid . "' />";
         echo "<input type='hidden' name='filter_subdepartment' id='ls_subdepartmentid' class = 'report_subdepartment'  value='" . $dashboardsubdepartmentid . "' />";
-        echo "<input type='hidden' name='filter_compliance' id='ls_complianceid' class = 'report_compliance'  value='" . $complianceid . "' />";
+        echo "<input type='hidden' name='filter_l4department' id='ls_l4departmentid' class = 'report_l4department'  value='" . $dashboardl4departmentid . "' />";
+        echo "<input type='hidden' name='filter_l5department' id='ls_l5departmentid' class = 'report_l5department'  value='" . $dashboardl5departmentid . "' />";
         echo '<div class="loader"></div>';
     }
 } else {

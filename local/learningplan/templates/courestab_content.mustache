@@ -63,9 +63,9 @@
 									<h5 class="d-flex justify-content-between">{{{ course_view_link }}}<span class="course_rating d-flex"><i class="fa fa-star mr-1"></i>{{avgrating}}</span></h5>
 									<div class="text-muted lp_course_desc">{{ course_summary_string }}</div>
 								</div>
-								<div class="bottom_content row align-items-center my-2">
-									<div class="progressbar_container d-flex align-items-baseline justify-content-between col-md-8">
-										<h6>{{#str}}progress, local_learningplan{{/str}}</h6>
+								<!-- <div class="bottom_content my-2">
+									<div class="progressbar_container d-flex align-items-baseline ">
+										<h6 class="mr-2">{{#str}}progress, local_learningplan{{/str}}</h6>
 										<div class="progress flexgrow-1">
 		            						<div class="progress-bar text-center" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
 										</div>
@@ -75,7 +75,7 @@
 		        						<i class="fa fa-tags"></i>
 		        						<span class="text-muted"><strong>English, Basics</strong></span>
 		        					</div> }}
-								</div>
+								</div> -->
 								{{# completeflag}}
 							<div class="couse_status text-muted">{{#str}}completed, local_learningplan{{/str}}</div>
 							{{/ completeflag}}

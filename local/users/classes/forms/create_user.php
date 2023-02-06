@@ -54,8 +54,8 @@ class create_user extends moodleform {
         $admin = $this->_customdata['admin'];
         $open_positionid = $this->_customdata['open_positionid'];
         $open_domainid = $this->_customdata['open_domainid'];
-        $this->_form->_attributes['id'] = 'create_user_form';
-        $this->_form->_attributes['class'] = 'create_user_form';
+        // $this->_form->_attributes['id'] = 'create_user_form';
+        // $this->_form->_attributes['class'] = 'create_user_form';
         if ($form_status == 0) {
 
 
@@ -120,6 +120,12 @@ class create_user extends moodleform {
             $mform->addRule('lastname', get_string('errorlastname', 'local_users'), 'required', null, 'client');
             $mform->setType('lastname', PARAM_RAW);
 
+            $genderarray=array();
+            $genderarray[] = $mform->createElement('radio', 'gender', '', get_string('male','local_users'), 0, $attributes);
+            $genderarray[] = $mform->createElement('radio', 'gender', '', get_string('female','local_users'), 1, $attributes);
+            $genderarray[] = $mform->createElement('radio', 'gender', '', get_string('other', 'local_users'), 2, $attributes);
+            $mform->addGroup($genderarray, 'gendergr', get_string('gender', 'local_users'), array(' '), false);
+
             $mform->addElement('text', 'email', get_string('email', 'local_users'));
             // $mform->addRule('email', get_string('emailerror', 'local_users'), 'required', null, 'client');
             $mform->setType('email', PARAM_RAW);
@@ -169,9 +175,41 @@ class create_user extends moodleform {
             $mform->setType('open_designation', PARAM_RAW);
             $mform->addHelpButton('open_designation', 'designation', 'local_users');
 
-             local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_users', $categorycontext, $multiple = false);
+             // local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_users', $categorycontext, $multiple = false);
+
+            $mform->addElement('text', 'open_employmenttype', get_string('employmenttype', 'local_users'));
+            $mform->setType('open_employmenttype', PARAM_RAW);
+            $mform->addHelpButton('open_employmenttype', 'employmenttype', 'local_users');
+
+            $mform->addElement('text', 'open_employmentstatus', get_string('employmentstatus', 'local_users'));
+            $mform->setType('open_employmentstatus', PARAM_RAW);
+            $mform->addHelpButton('open_employmentstatus', 'employmentstatus', 'local_users');
+
+            $mform->addElement('text', 'open_region', get_string('region', 'local_users'));
+            $mform->setType('open_region', PARAM_RAW);
+            $mform->addHelpButton('open_region', 'region', 'local_users');
+
+            $mform->addElement('text', 'open_branch', get_string('branch', 'local_users'));
+            $mform->setType('open_branch', PARAM_RAW);
+            $mform->addHelpButton('open_branch', 'branch', 'local_users');
+
+            $mform->addElement('text', 'open_subbranch', get_string('subbranch', 'local_users'));
+            $mform->setType('open_subbranch', PARAM_RAW);
+            $mform->addHelpButton('open_subbranch', 'subbranch', 'local_users');
+
+            $mform->addElement('text', 'open_grade', get_string('grade', 'local_users'));
+            $mform->setType('open_grade', PARAM_RAW);
+            $mform->addHelpButton('open_grade', 'grade', 'local_users');
+
+            $mform->addElement('text', 'open_level', get_string('level', 'local_users'));
+            $mform->setType('open_level', PARAM_RAW);
+            $mform->addHelpButton('open_level', 'level', 'local_users');
 
         } else if ($form_status == 2) {
+
+            $mform->addElement('date_selector','open_dateofbirth',get_string('dateofbirth','local_users'));
+            $mform->addElement('date_selector','open_joindate',get_string('joiningdate','local_users'));
+
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));
             $mform->addRule('phone1', get_string('numeric', 'local_users'), 'numeric', null, 'client');
             $mform->addRule('phone1', get_string('phoneminimum', 'local_users'), 'minlength', 10, 'client');

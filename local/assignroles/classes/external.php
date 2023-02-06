@@ -173,7 +173,7 @@ class local_assignroles_external extends external_api {
                      $sql = "SELECT r.id, r.name as fullname
                             FROM {role} r
                             JOIN {role_context_levels} rcl ON (rcl.contextlevel =:contextlevel AND r.id = rcl.roleid)
-                         WHERE r.name !='' ";
+                         WHERE r.name !='' AND (r.archetype !='manager' ";
 
 
                     $params = array('contextlevel' => CONTEXT_COURSECAT);
@@ -187,9 +187,38 @@ class local_assignroles_external extends external_api {
                         }
                     }
 
+                    if($formoptions->costcenterid){
+
+                        $hierarchysql = "SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:costcenterid ";
+
+                        $hierarchypath = $DB->get_field_sql($hierarchysql,array('costcenterid'=>$formoptions->costcenterid));
+
+                        $hierarchydepth = count(array_filter(explode('/',$hierarchypath)));
+
+                        if($hierarchydepth == 5){
+
+                            $sql .=" OR r.shortname LIKE 'tbm'";
+                        }
+                        if($hierarchydepth == 4){
+                            $sql .=" OR r.shortname LIKE 'cah'";
+                        }
+                        if($hierarchydepth == 3){
+                           $sql .=" OR r.shortname LIKE 'cuh'";
+                        }
+                        if($hierarchydepth == 2){
+                            $sql .=" OR r.shortname LIKE 'ch'";
+                        }
+                        if($hierarchydepth == 1){
+                            $sql .=" OR r.shortname LIKE 'administrator'";
+                        }
+                    }
+
+                    $sql .=" )";
+
                     $sql .=" ORDER BY r.sortorder ASC";
 
                     $return = $DB->get_records_sql($sql, $params);
+
 
                     break;
 

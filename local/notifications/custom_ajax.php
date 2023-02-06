@@ -45,7 +45,7 @@ switch($page){
 		if($notif_type == 'course_reminder'){
 			$completiondays_sql = "SELECT open_coursecompletiondays AS value, open_coursecompletiondays AS completiondays 
             	FROM {course} WHERE id > 1 AND open_coursecompletiondays IS NOT NULL 
-            	AND concat('/',c.open_path,'/') LIKE :costcenterpath GROUP BY open_coursecompletiondays ";
+            	AND concat('/',open_path,'/') LIKE :costcenterpath GROUP BY open_coursecompletiondays ";
 			$completiondays = $DB->get_records_sql_menu($completiondays_sql,$params);
 			$completiondays = array(0 => get_string('selectcompletiondays', 'local_notifications')) + $completiondays;
 		}else{

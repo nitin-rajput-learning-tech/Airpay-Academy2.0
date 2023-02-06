@@ -289,78 +289,21 @@ define(['core/ajax',
                             $("#dashboardsubdepartment").val($(' #dashboardsubdepartment option:eq(0)').val());
                             $("#dashboardsubdepartment").trigger('change');
                         });
-                        $('.breadcrumb-button.pull-xs-right').html($(this).find('option:selected').text());
+                        // $('.breadcrumb-button.pull-xs-right').html($(this).find('option:selected').text());
                     });
                     $(".dashboardsubdepartment").change(function(){
                         var costcenterid = $(".report_costcenter").val();
                         var departmentid = $(".report_department").val();
-                        var subdepartmentid = $('.dashboardsubdepartment').find(":selected").val();
+                        var subdepartmentid = $(this).val();
                         $(".report_subdepartment").val(subdepartmentid);
-                        var params = {};
-                        params.costcenter = costcenterid;
-                        params.department = departmentid;
-                        params.subdepartment = subdepartmentid;
-                        var promise = Ajax.call([{
-                            methodname: 'block_reportdashboard_complianceslist',
-                            args: params
-                        }]);
-                        promise[0].done(function(data) {
-                            $(".compliancetabs").html(JSON.parse(data.compliancetabs));
-                            var cid =  $('.compliance').data('complianceid');
-                            var params = {};
-                            params.costcenter = costcenterid;
-                            params.department = departmentid;  
-                            params.subdepartment = subdepartmentid;
-                            params.complianceid = cid;
-                            var promise = Ajax.call([{
-                                methodname: 'block_reportdashboard_compliancedetails',
-                                args: params
-                            }]);
-                            promise[0].done(function(data) {
-                                $(".allpercentage").html(data.overallpercentage+ '%');
-                                $(".section_content").html(JSON.parse(data.sections));
-                            });
-                            $(".compliance").click(function(){
-                                var complianceid = $(this).data("complianceid");
-                                var params = {};
-                                params.costcenter = costcenterid;
-                                params.department = departmentid;
-                                params.subdepartment = subdepartmentid;                                
-                                params.complianceid = complianceid;
-                                var promise = Ajax.call([{
-                                    methodname: 'block_reportdashboard_compliancedetails',
-                                    args: params
-                                }]);
-                                promise[0].done(function(data) {
-                                    $(".allpercentage").html(data.overallpercentage+ '%');
-                                    $(".section_content").html(JSON.parse(data.sections));
-                                    $("td a").click(function(){
-                                        var url = $(this).attr('href');
-                                        var tableid = 'popupoverlay';
-                                        event.preventDefault();
-                                        var reportid = $(this).data('reportid');
-                                        var reporttype = 'table';
-                                        var instanceid = $(this).data('reportid');
-                                        require(['block_learnerscript/helper'], function(helper) {
-                                            helper.ReportModelFromLink({container: $(this), url: url,
-                                                dashboard:'compliance',
-                                                tableid: tableid, 
-                                                reportid: reportid,
-                                                reporttype: reporttype,
-                                                instanceid: instanceid
-                                            });
-                                        });
-                                    });
-                                });
-                            });
+                        $(".report_department").val(departmentid);
+                        $(".viewmore").each(function(){
+                            var ahref = $(this).attr('href');
                         });
-                        reportwidget.DashboardTiles();
-                        reportwidget.DashboardWidgets();
-                        
                         var args = {};
-                        args.action = 'departmentcourses';
-                        args.department = departmentid;
+                        args.action = 'l4departmentlist';
                         args.costcenter = costcenterid;
+                        args.department = departmentid;
                         args.subdepartment = subdepartmentid;
                         senddata = JSON.stringify(args);
                         var promise = ajax.call({
@@ -372,275 +315,390 @@ define(['core/ajax',
                             $.each(response, function(key, value) {
                                 template += '<option value = ' + key + '>' + value + '</option>';
                             });
-                            $("#coursedashboardfilter").html(template);
-                            $("#coursedashboardfilter").val($(' #coursedashboardfilter option:eq(0)').val());
-                            $("#coursedashboardfilter").trigger('change');
-                        });
-                        var args = {};
-                        args.action = 'departmentcompliances';
-                        args.department = departmentid;
-                        args.costcenter = costcenterid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-                            $.each(response, function(key, value) {
-                                if(value == 'ALL') {
-                                    template += '<option value = ' + key + ' class="complianceall">' + value + '</option>';                                 
-                                } else {
-                                    template += '<option value = ' + key + ' class="optioncompliance">' + value + '</option>';
-                                }
-                            });
-                            $("#compliancedashboardfilter").html(template);
-                            $("#compliancedashboardfilter").val($(' #compliancedashboardfilter option:eq(0)').val());
-                            $("#compliancedashboardfilter").trigger('change');
-                        });
-                        var args = {};
-                        args.action = 'onlinecourselist';
-                        args.costcenter = costcenterid;
-                        args.department = departmentid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-                            let i = 0;
-                            $.each(response, function(key, value) {
-                                i++;
-                                template += '<option value = ' + key + '>' + value + '</option>';
-                            });
-                            if (i < 2) {
-                                $('.region-onlinecourses, .region-onlinecourses-filter').hide();
-                            } else {
-                                $('.region-onlinecourses, .region-onlinecourses-filter').show();
-                            }
-                            $("#ls_onlinecourseid").html(template);
-                            $("#ls_onlinecourseid").val($(' #ls_onlinecourseid option:eq(0)').val());
-                            $("#ls_onlinecourseid").trigger('change');
-                            $(".report_schedule.dropdown-item").click(function(){
-                            setTimeout(myFunction, 100);
-                                function myFunction() {
-                                    $("#id_filter_onlinecourses").html(template);
-                                    $("#id_filter_onlinecourses").val($(' #id_filter_onlinecourses option:eq(0)').val());
-                                    $("#id_filter_onlinecourses").trigger('change');
-                                }
-                            });
-                        });
-                        var args = {};
-                        args.action = 'lablist';
-                        args.costcenter = costcenterid;
-                        args.department = departmentid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-                            let i = 0;
-                            $.each(response, function(key, value) {
-                                i++;
-                                template += '<option value = ' + key + '>' + value + '</option>';
-                            });
-                            if (i < 2) {
-                                $('.region-labs, .region-labs-filter').hide();
-                            } else {
-                                $('.region-labs, .region-labs-filter').show();
-                            }
-                            $("#ls_labid").html(template);
-                            $("#ls_labid").val($(' #ls_labid option:eq(0)').val());
-                            $("#ls_labid").trigger('change');
-                            $(".report_schedule.dropdown-item").click(function(){
-                            setTimeout(myFunction, 100);
-                                function myFunction() {
-                                    $("#id_filter_labs").html(template);
-                                    $("#id_filter_labs").val($(' #id_filter_labs option:eq(0)').val());
-                                    $("#id_filter_labs").trigger('change');
-                                }
-                            });
-                        });
-                        var args = {};
-                        args.action = 'assessmentlist';
-                        args.costcenter = costcenterid;
-                        args.department = departmentid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-                            let i = 0;
-                            $.each(response, function(key, value) {
-                                i++;
-                                template += '<option value = ' + key + '>' + value + '</option>';
-                            });
-                            if (i < 2) {
-                                $('.region-assessments, .region-assessments-filter').hide();
-                            } else {
-                                $('.region-assessments, .region-assessments-filter').show();
-                            }
-                            $("#ls_assessmentid").html(template);
-                            $("#ls_assessmentid").val($(' #ls_assessmentid option:eq(0)').val());
-                            $("#ls_assessmentid").trigger('change');
-                            $(".report_schedule.dropdown-item").click(function(){
-                            setTimeout(myFunction, 100);
-                                function myFunction() {
-                                    $("#id_filter_assessments").html(template);
-                                    $("#id_filter_assessments").val($('#id_filter_assessments option:eq(0)').val());
-                                    $("#id_filter_assessments").trigger('change');
-                                }
-                            });
-                        });
-                        var args = {};
-                        args.action = 'webinarlist';
-                        args.costcenter = costcenterid;
-                        args.department = departmentid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-
-                            let i = 0;
-                            $.each(response, function(key, value) {
-                                i++;
-                                template += '<option value = ' + key + '>' + value + '</option>';
-                            });
-                            if (i < 2) {
-                                $('.region-webinars, .region-webinars-filter').hide();
-                            } else {
-                                $('.region-webinars, .region-webinars-filter').show();
-                            }
-
-                            $("#ls_webinarid").html(template);
-                            $("#ls_webinarid").val($(' #ls_webinarid option:eq(0)').val());
-                            $("#ls_webinarid").trigger('change');
-                            $(".report_schedule.dropdown-item").click(function(){
-                            setTimeout(myFunction, 100);
-                                function myFunction() {
-                                    $("#id_filter_webinars").html(template);
-                                    $("#id_filter_webinars").val($(' #id_filter_webinars option:eq(0)').val());
-                                    $("#id_filter_webinars").trigger('change');
-                                }
-                            });
-                        });
-                        var args = {};
-                        args.action = 'classroomlist';
-                        args.costcenter = costcenterid;
-                        args.department = departmentid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-                            let i = 0;
-                            $.each(response, function(key, value) {
-                                i++;
-                                template += '<option value = ' + key + '>' + value + '</option>';
-                            });
-                            if (i < 2) {
-                                $('.region-classroom, .region-classroom-filter').hide();
-                            } else {
-                                $('.region-classroom, .region-classroom-filter').show();
-                            }
-                            $("#ls_classroomid").html(template);
-                            $("#ls_classroomid").val($(' #ls_classroomid option:eq(0)').val());
-                            $("#ls_classroomid").trigger('change');
-                            $(".report_schedule.dropdown-item").click(function(){
-                            setTimeout(myFunction, 100);
-                                function myFunction() {
-                                    $("#id_filter_classrooms").html(template);
-                                    $("#id_filter_classrooms").val($(' #id_filter_classrooms option:eq(0)').val());
-                                    $("#id_filter_classrooms").trigger('change');
-                                }
-                            });
-                        });
-                        var args = {};
-                        args.action = 'programlist';
-                        args.costcenter = costcenterid;
-                        args.department = departmentid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-                            let i = 0;
-                            $.each(response, function(key, value) {
-                                i++;
-                                template += '<option value = ' + key + '>' + value + '</option>';
-                            });
-                            if (i < 2) {
-                                $('.region-program, .region-program-filter').hide();
-                            } else {
-                                $('.region-program, .region-program-filter').show();
-                            }
-                            $("#ls_programid").html(template);
-                            $("#ls_programid").val($(' #ls_programid option:eq(0)').val());
-                            $("#ls_programid").trigger('change');
-                            $(".report_schedule.dropdown-item").click(function(){
-                            setTimeout(myFunction, 100);
-                                function myFunction() {
-                                    $("#id_filter_programs").html(template);
-                                    $("#id_filter_programs").val($(' #id_filter_programs option:eq(0)').val());
-                                    $("#id_filter_programs").trigger('change');
-                                }
-                            });
-                        });               
-                        var args = {};
-                        args.action = 'learningpathlist';
-                        args.costcenter = costcenterid;
-                        args.department = departmentid;
-                        args.subdepartment = subdepartmentid;
-                        senddata = JSON.stringify(args);
-                        var promise = ajax.call({
-                            args:args,
-                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
-                        });
-                        promise.done(function(response) {
-                            var template = '';
-                            let i = 0;
-                            $.each(response, function(key, value) {
-                                i++;
-                                template += '<option value = ' + key + '>' + value + '</option>';
-                            });
-                            if (i < 2) {
-                                $('.region-learningpath, .region-learningpath-filter').hide();
-                            } else {
-                                $('.region-learningpath, .region-learningpath-filter').show();
-                            }
-                            $("#ls_learningpathid").html(template);
-                            $("#ls_learningpathid").val($(' #ls_learningpathid option:eq(0)').val());
-                            $("#ls_learningpathid").trigger('change');
-                            $(".report_schedule.dropdown-item").click(function(){
-                            setTimeout(myFunction, 100);
-                                function myFunction() {
-                                    $("#id_filter_learningpath").html(template);
-                                    $("#id_filter_learningpath").val($(' #id_filter_learningpath option:eq(0)').val());
-                                    $("#id_filter_learningpath").trigger('change');
-                                }
-                            });
+                            $("#dashboardl4department").html(template);
+                            $("#dashboardl4department").val($('#dashboardl4department option:eq(0)').val());
+                            $("#dashboardl4department").trigger('change');
                         });
                         $('.breadcrumb-button.pull-xs-right').html($(this).find('option:selected').text());
+
+                        // var promise = Ajax.call([{
+                        //     methodname: 'block_reportdashboard_complianceslist',
+                        //     args: params
+                        // }]);
+                        // promise[0].done(function(data) {
+                        //     $(".compliancetabs").html(JSON.parse(data.compliancetabs));
+                        //     var cid =  $('.compliance').data('complianceid');
+                        //     var params = {};
+                        //     params.costcenter = costcenterid;
+                        //     params.department = departmentid;
+                        //     params.subdepartment = subdepartmentid;
+                        //     params.complianceid = cid;
+                        //     var promise = Ajax.call([{
+                        //         methodname: 'block_reportdashboard_compliancedetails',
+                        //         args: params
+                        //     }]);
+                        //     promise[0].done(function(data) {
+                        //         $(".allpercentage").html(data.overallpercentage+ '%');
+                        //         $(".section_content").html(JSON.parse(data.sections));
+                        //     });
+                        //     $(".compliance").click(function(){
+                        //         var complianceid = $(this).data("complianceid");
+                        //         var params = {};
+                        //         params.costcenter = costcenterid;
+                        //         params.department = departmentid;
+                        //         params.subdepartment = subdepartmentid;
+                        //         params.complianceid = complianceid;
+                        //         var promise = Ajax.call([{
+                        //             methodname: 'block_reportdashboard_compliancedetails',
+                        //             args: params
+                        //         }]);
+                        //         promise[0].done(function(data) {
+                        //             $(".allpercentage").html(data.overallpercentage+ '%');
+                        //             $(".section_content").html(JSON.parse(data.sections));
+                        //             $("td a").click(function(){
+                        //                 var url = $(this).attr('href');
+                        //                 var tableid = 'popupoverlay';
+                        //                 event.preventDefault();
+                        //                 var reportid = $(this).data('reportid');
+                        //                 var reporttype = 'table';
+                        //                 var instanceid = $(this).data('reportid');
+                        //                 require(['block_learnerscript/helper'], function(helper) {
+                        //                     helper.ReportModelFromLink({container: $(this), url: url,
+                        //                         dashboard:'compliance',
+                        //                         tableid: tableid,
+                        //                         reportid: reportid,
+                        //                         reporttype: reporttype,
+                        //                         instanceid: instanceid
+                        //                     });
+                        //                 });
+                        //             });
+                        //         });
+                        //     });
+                        // });
+                        // reportwidget.DashboardTiles();
+                        // reportwidget.DashboardWidgets();
+
+                        // var args = {};
+                        // args.action = 'departmentcourses';
+                        // args.department = departmentid;
+                        // args.costcenter = costcenterid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     $.each(response, function(key, value) {
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     $("#coursedashboardfilter").html(template);
+                        //     $("#coursedashboardfilter").val($(' #coursedashboardfilter option:eq(0)').val());
+                        //     $("#coursedashboardfilter").trigger('change');
+                        // });
+                        // var args = {};
+                        // args.action = 'departmentcompliances';
+                        // args.department = departmentid;
+                        // args.costcenter = costcenterid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     $.each(response, function(key, value) {
+                        //         if(value == 'ALL') {
+                        //             template += '<option value = ' + key + ' class="complianceall">' + value + '</option>';
+                        //         } else {
+                        //             template += '<option value = ' + key + ' class="optioncompliance">' + value + '</option>';
+                        //         }
+                        //     });
+                        //     $("#compliancedashboardfilter").html(template);
+                        //     $("#compliancedashboardfilter").val($(' #compliancedashboardfilter option:eq(0)').val());
+                        //     $("#compliancedashboardfilter").trigger('change');
+                        // });
+                        // var args = {};
+                        // args.action = 'onlinecourselist';
+                        // args.costcenter = costcenterid;
+                        // args.department = departmentid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     let i = 0;
+                        //     $.each(response, function(key, value) {
+                        //         i++;
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     if (i < 2) {
+                        //         $('.region-onlinecourses, .region-onlinecourses-filter').hide();
+                        //     } else {
+                        //         $('.region-onlinecourses, .region-onlinecourses-filter').show();
+                        //     }
+                        //     $("#ls_onlinecourseid").html(template);
+                        //     $("#ls_onlinecourseid").val($(' #ls_onlinecourseid option:eq(0)').val());
+                        //     $("#ls_onlinecourseid").trigger('change');
+                        //     $(".report_schedule.dropdown-item").click(function(){
+                        //     setTimeout(myFunction, 100);
+                        //         function myFunction() {
+                        //             $("#id_filter_onlinecourses").html(template);
+                        //             $("#id_filter_onlinecourses").val($(' #id_filter_onlinecourses option:eq(0)').val());
+                        //             $("#id_filter_onlinecourses").trigger('change');
+                        //         }
+                        //     });
+                        // });
+                        // var args = {};
+                        // args.action = 'lablist';
+                        // args.costcenter = costcenterid;
+                        // args.department = departmentid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     let i = 0;
+                        //     $.each(response, function(key, value) {
+                        //         i++;
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     if (i < 2) {
+                        //         $('.region-labs, .region-labs-filter').hide();
+                        //     } else {
+                        //         $('.region-labs, .region-labs-filter').show();
+                        //     }
+                        //     $("#ls_labid").html(template);
+                        //     $("#ls_labid").val($(' #ls_labid option:eq(0)').val());
+                        //     $("#ls_labid").trigger('change');
+                        //     $(".report_schedule.dropdown-item").click(function(){
+                        //     setTimeout(myFunction, 100);
+                        //         function myFunction() {
+                        //             $("#id_filter_labs").html(template);
+                        //             $("#id_filter_labs").val($(' #id_filter_labs option:eq(0)').val());
+                        //             $("#id_filter_labs").trigger('change');
+                        //         }
+                        //     });
+                        // });
+                        // var args = {};
+                        // args.action = 'assessmentlist';
+                        // args.costcenter = costcenterid;
+                        // args.department = departmentid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     let i = 0;
+                        //     $.each(response, function(key, value) {
+                        //         i++;
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     if (i < 2) {
+                        //         $('.region-assessments, .region-assessments-filter').hide();
+                        //     } else {
+                        //         $('.region-assessments, .region-assessments-filter').show();
+                        //     }
+                        //     $("#ls_assessmentid").html(template);
+                        //     $("#ls_assessmentid").val($(' #ls_assessmentid option:eq(0)').val());
+                        //     $("#ls_assessmentid").trigger('change');
+                        //     $(".report_schedule.dropdown-item").click(function(){
+                        //     setTimeout(myFunction, 100);
+                        //         function myFunction() {
+                        //             $("#id_filter_assessments").html(template);
+                        //             $("#id_filter_assessments").val($('#id_filter_assessments option:eq(0)').val());
+                        //             $("#id_filter_assessments").trigger('change');
+                        //         }
+                        //     });
+                        // });
+                        // var args = {};
+                        // args.action = 'webinarlist';
+                        // args.costcenter = costcenterid;
+                        // args.department = departmentid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+
+                        //     let i = 0;
+                        //     $.each(response, function(key, value) {
+                        //         i++;
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     if (i < 2) {
+                        //         $('.region-webinars, .region-webinars-filter').hide();
+                        //     } else {
+                        //         $('.region-webinars, .region-webinars-filter').show();
+                        //     }
+
+                        //     $("#ls_webinarid").html(template);
+                        //     $("#ls_webinarid").val($(' #ls_webinarid option:eq(0)').val());
+                        //     $("#ls_webinarid").trigger('change');
+                        //     $(".report_schedule.dropdown-item").click(function(){
+                        //     setTimeout(myFunction, 100);
+                        //         function myFunction() {
+                        //             $("#id_filter_webinars").html(template);
+                        //             $("#id_filter_webinars").val($(' #id_filter_webinars option:eq(0)').val());
+                        //             $("#id_filter_webinars").trigger('change');
+                        //         }
+                        //     });
+                        // });
+                        // var args = {};
+                        // args.action = 'classroomlist';
+                        // args.costcenter = costcenterid;
+                        // args.department = departmentid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     let i = 0;
+                        //     $.each(response, function(key, value) {
+                        //         i++;
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     if (i < 2) {
+                        //         $('.region-classroom, .region-classroom-filter').hide();
+                        //     } else {
+                        //         $('.region-classroom, .region-classroom-filter').show();
+                        //     }
+                        //     $("#ls_classroomid").html(template);
+                        //     $("#ls_classroomid").val($(' #ls_classroomid option:eq(0)').val());
+                        //     $("#ls_classroomid").trigger('change');
+                        //     $(".report_schedule.dropdown-item").click(function(){
+                        //     setTimeout(myFunction, 100);
+                        //         function myFunction() {
+                        //             $("#id_filter_classrooms").html(template);
+                        //             $("#id_filter_classrooms").val($(' #id_filter_classrooms option:eq(0)').val());
+                        //             $("#id_filter_classrooms").trigger('change');
+                        //         }
+                        //     });
+                        // });
+                        // var args = {};
+                        // args.action = 'programlist';
+                        // args.costcenter = costcenterid;
+                        // args.department = departmentid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     let i = 0;
+                        //     $.each(response, function(key, value) {
+                        //         i++;
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     if (i < 2) {
+                        //         $('.region-program, .region-program-filter').hide();
+                        //     } else {
+                        //         $('.region-program, .region-program-filter').show();
+                        //     }
+                        //     $("#ls_programid").html(template);
+                        //     $("#ls_programid").val($(' #ls_programid option:eq(0)').val());
+                        //     $("#ls_programid").trigger('change');
+                        //     $(".report_schedule.dropdown-item").click(function(){
+                        //     setTimeout(myFunction, 100);
+                        //         function myFunction() {
+                        //             $("#id_filter_programs").html(template);
+                        //             $("#id_filter_programs").val($(' #id_filter_programs option:eq(0)').val());
+                        //             $("#id_filter_programs").trigger('change');
+                        //         }
+                        //     });
+                        // });
+                        // var args = {};
+                        // args.action = 'learningpathlist';
+                        // args.costcenter = costcenterid;
+                        // args.department = departmentid;
+                        // args.subdepartment = subdepartmentid;
+                        // senddata = JSON.stringify(args);
+                        // var promise = ajax.call({
+                        //     args:args,
+                        //     url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        // });
+                        // promise.done(function(response) {
+                        //     var template = '';
+                        //     let i = 0;
+                        //     $.each(response, function(key, value) {
+                        //         i++;
+                        //         template += '<option value = ' + key + '>' + value + '</option>';
+                        //     });
+                        //     if (i < 2) {
+                        //         $('.region-learningpath, .region-learningpath-filter').hide();
+                        //     } else {
+                        //         $('.region-learningpath, .region-learningpath-filter').show();
+                        //     }
+                        //     $("#ls_learningpathid").html(template);
+                        //     $("#ls_learningpathid").val($(' #ls_learningpathid option:eq(0)').val());
+                        //     $("#ls_learningpathid").trigger('change');
+                        //     $(".report_schedule.dropdown-item").click(function(){
+                        //     setTimeout(myFunction, 100);
+                        //         function myFunction() {
+                        //             $("#id_filter_learningpath").html(template);
+                        //             $("#id_filter_learningpath").val($(' #id_filter_learningpath option:eq(0)').val());
+                        //             $("#id_filter_learningpath").trigger('change');
+                        //         }
+                        //     });
+                        // });
+                        // $('.breadcrumb-button.pull-xs-right').html($(this).find('option:selected').text());
                     });
+                    $(".dashboardl4department").change(function(){
+                        var costcenterid = $(".report_costcenter").val();
+                        var departmentid = $(".report_department").val();
+                        var subdepartmentid = $('.report_subdepartment').val();
+                        var l4departmentid = $(this).val();
+                        $(".report_subdepartment").val(subdepartmentid);
+                        $(".report_department").val(departmentid);
+                        $(".viewmore").each(function(){
+                            var ahref = $(this).attr('href');
+                        });
+                        var args = {};
+                        args.action = 'l5departmentlist';
+                        args.costcenter = costcenterid;
+                        args.department = departmentid;
+                        args.subdepartment = subdepartmentid;
+                        args.l4department = l4departmentid;
+                        senddata = JSON.stringify(args);
+                        var promise = ajax.call({
+                            args:args,
+                            url: M.cfg.wwwroot + "/blocks/reportdashboard/ajax.php"
+                        });
+                        promise.done(function(response) {
+                            var template = '';
+                            $.each(response, function(key, value) {
+                                template += '<option value = ' + key + '>' + value + '</option>';
+                            });
+                            $("#dashboardl5department").html(template);
+                            $("#dashboardl5department").val($('#dashboardl4department option:eq(0)').val());
+                            $("#dashboardl5department").trigger('change');
+                        });
+                        // $('.breadcrumb-button.pull-xs-right').html($(this).find('option:selected').text());
+
+                    });
+                    $("#dashboardl5department").change(function(){
+                        reportwidget.DashboardTiles();
+                        reportwidget.DashboardWidgets();
+                    })
 
 
                     $( "#createdashbaord_form" ).submit(function( event ) {

@@ -135,11 +135,22 @@ class custom_course_form extends moodleform {
 
             if($opencategoryid){
 
-                $costcentersql = "SELECT lcc.id,lcc.fullname
+                $costcentersql = "SELECT lcc.id,lcc.fullname,lcc.parentid
                                 FROM {local_custom_category} AS lcc
                                 WHERE lcc.id=:id ";
 
-                $parents = $DB->get_records_sql_menu($costcentersql,array('id'=>$opencategoryid));
+                $customcat = $DB->get_records_sql($costcentersql,array('id'=>$opencategoryid));
+                $parents = [];
+                foreach($customcat as $cat){
+                    $parentname = '';
+                    if($cat->parentid > 0){
+                        $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $cat->parentid]);
+                    }
+                    if($parentname){
+                        $cat->fullname = $parentname . ' / '. $cat->fullname;
+                    }
+                    $parents[$cat->id] = $cat->fullname;
+                }
 
             }else{
 
@@ -158,7 +169,7 @@ class custom_course_form extends moodleform {
                 'ajax' => 'local_costcenter/form-options-selector',
                 'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
                 'data-action' => 'custom_category_selector',
-                'data-options' => json_encode(array('id' => $courseid)),
+                'data-options' => json_encode(array('id' => $courseid,'type'=>'category_selector')),
                 'class' => 'idparentselect',
                 'data-parentclass' => 'open_costcenterid_select',
                 'data-class' => 'idparentselect',
@@ -378,7 +389,7 @@ class custom_course_form extends moodleform {
             $mform->addElement('hidden', 'open_costcenterid');
             $mform->setConstant('open_costcenterid', $org);
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_courses', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,4), true, 'local_courses', $categorycontext, $multiple = false);
         }
         $mform->closeHeaderBefore('buttonar');
 		$mform->disable_form_change_checker();
