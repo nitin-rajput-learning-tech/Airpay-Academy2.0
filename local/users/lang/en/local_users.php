@@ -109,30 +109,35 @@ $string['serviceid'] = 'Employee Code';
 $string['help_1'] = '<div class="helpmanual_table"><table class="generaltable" border="1">
 <tr class="field_type_head"><td class="empty_column"></td><td class="field_type font-weight-bold" style="text-align:left;border-left:1px solid white;padding-left:50px;">Mandatory Fields</td><tr>
 <th>Field</th><th>Restriction</th>
-<tr><td>organization_code</td><td>Provide the Company</td></tr>
+<tr><td>company_code</td><td>Provide the company code</td></tr>
 <tr><td>username</td><td>Enter the username, avoid additional spaces.</td></tr>
-<tr><td>learner_id</td><td>Enter the employee code, avoid additional spaces.</td></tr>
+<tr><td>employee_code</td><td>Enter the employee code, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name.</td></tr>
 <tr><td>lastname</td><td>Enter the last name.</td></tr>
-<tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>';
+<tr><td>employee_status</td><td>Enter employee status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
+<tr><td>gender</td><td>Enter gender as either \'male\',\'female\' or \'other\', avoid additional spaces.</td></tr>';
 $string['help_2'] = '</td></tr>
 <tr class="field_type_head"><td class="empty_column"></td><td class="field_type font-weight-bold" style="text-align:left;border-left:1px solid white;"><b  class="pad-md-l-50 hlep2-oh">Non-Mandatory Fields</b></td><tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>password</td><td>Provide the password,Password must be at least 8 characters long,Password must have at least 1 digit(s),Password must have at least 1 upper case letter(s),
 Password must have at least 1 non-alphanumeric character(s) such as as *, -, or #..</td></tr>
-<tr><td>Bussiness Unit_code</td><td>Provide Bussiness Unit code. Bussiness Unit must already exist in system as part of Company hierarchy.</td></tr>
-<tr><td>commercial_unit_code</td><td>Enter Commercial Unit Code. Commercial Unit must already exist under specified Bussiness Unit in system as part of Company hierarchy.</td></tr>
-<tr><td>commercial_area_code</td><td>Enter Sub Department Code. Sub Department must already exist under specified Bussiness Unit in system as part of Company hierarchy.</td></tr>
-<tr><td>territory_code</td><td>Enter Territory Code. Territory must already exist under specified Sub Department in system as part of Company hierarchy.</td></tr>
-<tr><td>state</td><td>Enter State Code. State must already exist under specified Territory in system as part of Company hierarchy.</td></tr>
-<tr><td>district</td><td>Enter District Code. State must already exist under specified State in system as part of Company hierarchy.</td></tr>
-<tr><td>subdistrict</td><td>Enter Sub District Code. State must already exist under specified District in system as part of Company hierarchy.</td></tr>
-<tr><td>vilage</td><td>Enter Village Code. State must already exist under specified Sub District in system as part of Company hierarchy.</td></tr>
+<tr><td>bussiness_unit_code</td><td>Provide bussiness unit code. Bussiness unit must already exist in system as part of company hierarchy.</td></tr>
+<tr><td>department_code</td><td>Enter department code. Department must already exist under specified bussiness unit in system as part of company hierarchy.</td></tr>
+<tr><td>subdepartment_code</td><td>Enter sub department code. Sub Department must already exist under specified department in system as part of company hierarchy.</td></tr>
 <tr><td>email</td><td>Enter valid email.</td></tr>
-<tr><td>contactno</td><td>Enter Numerics only.</td></tr>
-<tr><td>reportingmanager_empid</td><td>Enter Reporting Manger learnerid, avoid additional spaces..</td></tr>
+<tr><td>mobileno</td><td>Enter Numerics only.</td></tr>
+<tr><td>reportingmanager_empid</td><td>Enter reporting manger employee code, avoid additional spaces..</td></tr>
 <tr><td>language</td><td>Enter Language code for the user.</td></tr>
 <tr><td>designation</td><td>Enter Designation for the user.</td></tr>
+<tr><td>employment_type</td><td>Enter employment type for the user.</td></tr>
+<tr><td>employment_status</td><td>Enter employment status for the user.</td></tr>
+<tr><td>region</td><td>Enter region for the user.</td></tr>
+<tr><td>branch</td><td>Enter branch for the user.</td></tr>
+<tr><td>subbranch</td><td>Enter sub branch for the user.</td></tr>
+<tr><td>grade</td><td>Enter grade for the user.</td></tr>
+<tr><td>level</td><td>Enter level for the user.</td></tr>
+<tr><td>date_of_birth</td><td>Enter date of birth of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
+<tr><td>date_of_joining</td><td>Enter date of joining of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
 <tr><td>force_password_change</td><td>Provide the value as 1 if need to enable force password or 0 to disable it..</td></tr>
 <tr><td>timezone</td><td>Enter timezone code. Refer dropdown for codes, avoid additional spaces. {$a->timezones}</td></tr>
 </table>';
@@ -495,8 +500,8 @@ $string['classrooms'] = 'Classrooms';
 $string['onlineexams'] = 'Online exams';
 $string['programs'] = 'Programs';
 $string['contactno'] = 'Mobile Number';
-$string['nosupervisormailfound'] = 'No Reporting managers found with email {$a->email} at line {$a->line}.';
-$string['nosupervisorempidfound'] = 'No Reporting managers found with employee code {$a->empid} at line {$a->line}.';
+$string['nosupervisormailfound'] = 'No reporting managers found with email {$a->email} at line {$a->line}.';
+$string['nosupervisorempidfound'] = 'No reporting managers found with employee code {$a->empid} at line {$a->line}.';
 $string['valusernamerequired'] = 'Please enter a valid Username';
 $string['valfirstnamerequired'] = 'Please enter a valid Firstname';
 $string['vallastnamerequired'] = 'Please enter a valid Lastname';
@@ -644,9 +649,9 @@ $string['usernameempty_error'] = 'Provide username for employee code \'{$a->empl
 
 $string['empstatusempty_error'] = 'Provide learner status for  employee code \'{$a->employee_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['mobileno_error'] = 'Enter a valid mobilenumber for employee code \'{$a->learner_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['mobileno_error'] = 'Enter a valid mobile number for employee code \'{$a->learner_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
-$string['validmobileno_error'] = 'Enter a valid mobilenumber of 10 digits for employee code \'{$a->learner_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
+$string['validmobileno_error'] = 'Enter a valid mobile number of 10 digits for employee code \'{$a->learner_id}\' of uploaded excelsheet at line {$a->excel_line_number}';
 
 $string['select_org'] = '--Select Company--';
 $string['select_dept'] = '--Select Bussiness Unit--';
@@ -772,9 +777,9 @@ $string['managestates'] = 'Manage State';
 $string['states'] = 'State';
 $string['organisation'] = 'Company';
 $string['invalidnoorganizationidfound'] = 'Department "{$a->commercial_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
-$string['noorcommercial_unitfound'] = 'No Department found with "{$a->commercial_unitid}" at line {$a->line}.';
+$string['noorcommercial_unitfound'] = 'No department found with "{$a->commercial_unitid}" at line {$a->line}.';
 $string['invalidbussinessunitgiven'] = 'Department "{$a->commercial_unitid}" is not under "{$a->parentid}" at line {$a->line}.';
-$string['noorcommercial_areafound'] = 'No Sub Department found with "{$a->commercial_areaid}" at line {$a->line}.';
+$string['noorcommercial_areafound'] = 'No sub department found with "{$a->commercial_areaid}" at line {$a->line}.';
 $string['invalidcommercialunitgiven'] = 'Sub Department "{$a->commercial_areaid}" is not under "{$a->parentid}" at line {$a->line}.';
 $string['noorterritoryfound'] = 'No Territory found with "{$a->territoryid}" at line {$a->line}.';
 $string['invalidterritorygiven'] = 'Territory "{$a->territoryid}" is not under "{$a->parentid}" at line {$a->line}.';

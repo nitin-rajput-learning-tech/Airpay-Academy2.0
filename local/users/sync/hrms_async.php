@@ -57,13 +57,33 @@ $PAGE->navbar->add(get_string('uploadusers', 'local_users'));
 $returnurl = new moodle_url('/local/users/index.php');
 
 $STD_FIELDS = array(
-    'organization_code' => 'organization_code','username' => 'username','password' => 'password','learner_id' => 'learner_id',
-    'first_name' => 'first_name','last_name' => 'last_name','email' => 'email','country_code' => 'country_code',
-    'commercial_unit_code' => 'commercial_unit_code','commercial_area_code' => 'commercial_area_code','territory_code' => 'territory_code',    
-    'reportingmanager_empid' => 'reportingmanager_empid','language' => 'language','designation' => 'designation',
-    'state' => 'state','district' => 'district','subdistrict' => 'subdistrict','village' => 'village',
-    'contactno' => 'contactno','learner_status' => 'learner_status',
-    'password' => 'password','timezone' => 'timezone','force_password_change' => 'force_password_change'
+    'company_code' => 'company_code',
+    'username' => 'username',
+    'password' => 'password',
+    'employee_code' => 'employee_code',
+    'first_name' => 'first_name',
+    'last_name' => 'last_name',
+    'gender' => 'gender',
+    'email' => 'email',
+    'bussiness_unit_code' => 'bussiness_unit_code',
+    'department_code' => 'department_code',
+    'subdepartment_code' => 'subdepartment_code',
+    'reportingmanager_empid' => 'reportingmanager_empid',
+    'language' => 'language',
+    'designation' => 'designation',
+    'employment_type' => 'employment_type',
+    'employment_status' => 'employment_status',
+    'region' => 'region',
+    'branch' => 'branch',
+    'subbranch' => 'subbranch',
+    'grade' => 'grade',
+    'level' => 'level',
+    'date_of_birth' => 'date_of_birth',
+    'date_of_joining' => 'date_of_joining',
+    'mobileno' => 'mobileno',
+    'employee_status' => 'employee_status',
+    'timezone' => 'timezone',
+    'force_password_change' => 'force_password_change'
     );
 
 
