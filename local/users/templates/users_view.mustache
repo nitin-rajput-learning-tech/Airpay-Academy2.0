@@ -46,9 +46,11 @@
                             <div>
                                     <div class="pull-right text-right">
                                     <div class="dropdown action_menu_dropdown">
+                                        {{#actionsicons}}
                                         <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
                                             <i class="fa fa-ellipsis-h"></i>
                                         </span>
+                                        {{/actionsicons}}
                                         <div class="dropdown-menu dropdown-menu-right shadow-sm">
                                             {{# delcap }}
                                             <a href="javascript:void(0)" class="dropdown-item" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">

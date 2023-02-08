@@ -810,6 +810,6 @@ $string['employmenttype_help'] = 'Enter the employment type of the user';
 $string['employmentstatus'] = 'Employment Status';
 $string['employmentstatus_help'] = 'Enter the employment status of the user';
 $string['prefix'] = 'Prefix';
-$string['skilltype'] = 'skill Type';
+$string['skilltype'] = 'Skill Type';
 $string['invalidgender'] = 'Invailid gender at line {$a->line}. Enter only male\female\other';
 $string['invalidprefix'] = 'Invailid prefix at line {$a->line}. Enter only mr\mrs\ms';

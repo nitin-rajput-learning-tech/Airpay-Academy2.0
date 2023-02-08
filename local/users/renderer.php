@@ -139,8 +139,22 @@ class local_users_renderer extends plugin_renderer_base {
         $dist = $DB->get_field('local_district','district_name',array('id'=>$userrecord->open_district));
         $subdist = $DB->get_field('local_subdistrict','subdistrict_name',array('id'=>$userrecord->open_subdistrict));
         $vill = $DB->get_field('local_village','village_name',array('id'=>$userrecord->open_village));
-        $certificatecount = 0;
         $options = array('targetID' => 'display_modulesdata');
+        if($userrecord->gender == 0){
+            $gender = 'Male';
+        } else if($userrecord->gender == 1){
+            $gender = 'Female';
+        } else if($userrecord->gender == 2){
+            $gender = 'Other';
+        }
+
+        if($userrecord->open_prefix == 1){
+            $prefix = 'Mr';
+        } else if($userrecord->open_prefix == 2){
+            $prefix = 'Mrs';
+        } else if($userrecord->open_prefix == 3){
+            $prefix = 'Ms';
+        }
         $usersviewContext = [
             "userid" => $userrecord->id,
             "username" => fullname($userrecord),
@@ -164,6 +178,7 @@ class local_users_renderer extends plugin_renderer_base {
             "level" => ! empty(trim($userrecord->open_level)) ? $userrecord->open_level : 'N/A',
             "branch" => ! empty(trim($userrecord->open_branch)) ? $userrecord->open_branch : 'N/A',
             "subbranch" => ! empty(trim($userrecord->open_subbranch)) ? $userrecord->open_subbranch : 'N/A',
+            "skilltype" => ! empty(trim($userrecord->open_skilltype)) ? $userrecord->open_skilltype : 'N/A',
             "employment_type" => ! empty(trim($userrecord->open_employmenttype)) ? $userrecord->open_employmenttype : 'N/A',
             "employment_status" => ! empty(trim($userrecord->open_employmentstatus)) ? $userrecord->open_employmentstatus : 'N/A',
             "userstate" => $stat ? $stat : 'N/A',
@@ -176,7 +191,6 @@ class local_users_renderer extends plugin_renderer_base {
             "editprofile" => new moodle_url("/user/editadvanced.php", array('id' => $userrecord->id, 'returnto' => 'profile')),
             "prflbgimageurl" => $OUTPUT->image_url('prflbg', 'local_users'),
             "badgescount" => $badgecount,
-            "certificatescount" => $certificatecount,
             "supervisorname" => $reporting_username,
             "capabilityedit" => $capabilityedit,
             "loginasurl" => $loginasurl,
@@ -189,6 +203,8 @@ class local_users_renderer extends plugin_renderer_base {
             "userdistrict" => $dist ? $dist : 'N/A',
             "usersubdistrict" => $subdist ? $subdist : 'N/A',
             "uservillage" => $vill ? $vill : 'N/A',
+            "gender" => $gender,
+            "prefix" => $prefix,
         ];
         $value = $this->render_from_template('local_users/profile', $usersviewContext);
 

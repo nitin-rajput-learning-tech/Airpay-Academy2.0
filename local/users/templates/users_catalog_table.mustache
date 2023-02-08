@@ -50,7 +50,10 @@
             <th>{{#str}}commercialunit, local_users{{/str}}</th>
             <th>{{#str}}commercialarea, local_users{{/str}}</th>
             <th>{{#str}}designation, local_users{{/str}}</th>
+            {{#actionsicons}}
             <th>{{#str}}actions, local_users{{/str}}</th>
+            {{/actionsicons}}
+
         </tr>
     </thead>
     <tbody>
@@ -71,7 +74,7 @@
             <td> {{commercialarea}}</td>
             <td>{{designationstring}}</td>
 
-
+            {{#actionsicons}}
             <td>
                 {{# delcap }}
 
@@ -96,6 +99,7 @@
                  {{/ editcap }}
                  {{{ copyaction }}}
             </td>
+            {{/actionsicons}}
         </tr>
        {{/records}}
     </tbody>
