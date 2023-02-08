@@ -15,7 +15,50 @@
     @author Narendra  <narendra.patel@moodle.in>
 }}
 {{# enabletable}}
-    <table class='generaltable', id='popup_user{{roleid}}'>
+{{# rowdata}}
+
+    <div class="row shadow" style=" margin: auto; width: 99%;">
+        <div class="column" >Assign as <b>{{ role }}</b> at <b>{{costcenter}}</b> on <b>{{timeassign}}</b></div>
+        <div class="column2" >
+            <a onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'><i class="fa fa-times fa-fw" title="{{# str }} unassign, local_assignroles {{/ str }}"></i></a>
+        </div>
+    </div>
+    <div style=" height: 10px;"></div>
+
+{{/ rowdata}}
+
+    <style>
+    * {
+        box-sizing: border-box;
+    }
+
+    .column {
+        float: left;
+        width: 95%;
+        padding: 10px;
+        height: 40px;
+    }
+    .column2 {
+        float: left;
+        width: 5%;
+        padding: 10px;
+        height: 40px;
+    }
+    .row:after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+    .row i{
+        visibility:hidden;
+    }
+    .row:hover i{
+        visibility:visible;
+    }
+</style>
+
+
+    <!-- <table class='generaltable', id='popup_user{{roleid}}'>
         <thead>
             <tr>
                 <th>{{# str}} rolename, local_users{{/ str}}</th>
@@ -36,5 +79,5 @@
                 </tr>
             {{/ rowdata}}
         </tbody>
-    </table>
+    </table> -->
 {{/ enabletable}}
