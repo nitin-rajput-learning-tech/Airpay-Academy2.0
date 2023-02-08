@@ -922,16 +922,25 @@ function courses_filter($mform){
     }
     $courseslist = $DB->get_records_sql_menu($sql);
 
-    $select = $mform->addElement('autocomplete', 'courses', '', $courseslist, array('placeholder' => get_string('course')));
+    $select = $mform->addElement('autocomplete', 'courses', get_string('course'), $courseslist, array('placeholder' => get_string('course')));
     $mform->setType('courses', PARAM_RAW);
     $select->setMultiple(true);
 }
 function status_filter($mform){
     $statusarray = array('active' => get_string('active'), 'inactive' => get_string('inactive'));
-    $select = $mform->addElement('autocomplete', 'status', '', $statusarray, array('placeholder' => get_string('status')));
+    $select = $mform->addElement('autocomplete', 'status', get_string('user_status','local_users'), $statusarray, array('placeholder' => get_string('user_status','local_users')));
     $mform->setType('status', PARAM_RAW);
     $select->setMultiple(true);
 } 
+function coursetype_filter($mform){
+    global $DB,$USER;
+    $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $coursetypeql = "SELECT id, name FROM {local_course_types} ";
+    $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams);
+    $select = $mform->addElement('autocomplete', 'coursetype', get_string('type','local_courses'), $coursetypes);
+    $mform->setType('coursetype',PARAM_RAW);
+    $select->setMultiple(true);
+}
 /*
 * todo provides form element - courses
 * @param $mform formobject
@@ -967,7 +976,7 @@ function categories_filter($mform){
     }
 
 
-    $select = $mform->addElement('autocomplete', 'categories', '', $categorylist, array('placeholder' => get_string('category')));
+    $select = $mform->addElement('autocomplete', 'categories', get_string('category'), $categorylist, array('placeholder' => get_string('category')));
     $mform->setType('categories', PARAM_RAW);
     $select->setMultiple(true);
 }
@@ -1360,30 +1369,34 @@ function get_listof_courses($stable, $filterdata) {
                      JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
         
     $formsql .= " AND c.id > 1  $open_path";
+    
+    $params=array();
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";
-        $searchparams = array('search' => '%'.trim($filterdata->search_query).'%');
+        // $searchparams = array('search' => '%'.trim($filterdata->search_query).'%');
+        $params['search'] = '%'.trim($filterdata->search_query).'%';
     }else{
         $searchparams = array();
     }
     if(!empty($filterdata->categories)){
         $filtercategories = explode(',', $filterdata->categories);
-        list($filtercategoriessql, $filtercategoriesparams) = $DB->get_in_or_equal($filtercategories, SQL_PARAMS_NAMED, 'param', true, false);
+        list($filtercategoriessql, $filtercategoriesparams) = $DB->get_in_or_equal($filtercategories, SQL_PARAMS_NAMED, 'categories', true, false);
+        $params = array_merge($params, $filtercategoriesparams);
         $formsql .= " AND c.open_categoryid $filtercategoriessql";
     }
     if(!empty($filterdata->courses)){
         $filtercourses = explode(',', $filterdata->courses);
-        list($filtercoursessql, $filtercoursesparams) = $DB->get_in_or_equal($filtercourses, SQL_PARAMS_NAMED, 'param', true, false);
+        list($filtercoursessql, $filtercoursesparams) = $DB->get_in_or_equal($filtercourses, SQL_PARAMS_NAMED, 'courses', true, false);
+        $params = array_merge($params, $filtercoursesparams);
         $formsql .= " AND c.id $filtercoursessql";
     }
-    $filterparams=array();
     if (!empty($filterdata->filteropen_costcenterid)) {
 
         $filteropen_costcenterid = explode(',', $filterdata->filteropen_costcenterid);
         $orgsql = [];
         foreach($filteropen_costcenterid AS $organisation){
             $orgsql[] = " concat('/',c.open_path,'/') LIKE :organisationparam_{$organisation}";
-            $filterparams["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+            $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
         }
         if(!empty($orgsql)){
             $formsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
@@ -1395,7 +1408,7 @@ function get_listof_courses($stable, $filterdata) {
         $deptsql = [];
         foreach($filteropen_department AS $department){
             $deptsql[] = " concat('/',c.open_path,'/') LIKE :departmentparam_{$department}";
-            $filterparams["departmentparam_{$department}"] = '%/'.$department.'/%';
+            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
         }
         if(!empty($deptsql)){
             $formsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
@@ -1407,7 +1420,7 @@ function get_listof_courses($stable, $filterdata) {
         $subdeptsql = [];
         foreach($subdepartments AS $subdepartment){
             $subdeptsql[] = " concat('/',c.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
-            $filterparams["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
+            $params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
         }
         if(!empty($subdeptsql)){
             $formsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -1419,7 +1432,7 @@ function get_listof_courses($stable, $filterdata) {
         $subsubdeptsql = [];
         foreach($subsubdepartments AS $department4level){
             $subsubdeptsql[] = " concat('/',c.open_path,'/') LIKE :department4levelparam_{$department4level}";
-            $filterparams["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
+            $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'/%';
         }
         if(!empty($subsubdeptsql)){
             $formsql .= " AND ( ".implode(' OR ', $subsubdeptsql)." ) ";
@@ -1430,7 +1443,7 @@ function get_listof_courses($stable, $filterdata) {
         $subsubsubdeptsql = [];
         foreach($subsubsubdepartments AS $department5level){
             $subsubsubdeptsql[] = " concat('/',c.open_path,'/') LIKE :department5levelparam_{$department5level}";
-            $filterparams["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
+            $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
         }
         if(!empty($subsubsubdeptsql)){
             $formsql .= " AND ( ".implode(' OR ', $subsubsubdeptsql)." ) ";
@@ -1438,12 +1451,14 @@ function get_listof_courses($stable, $filterdata) {
     }
     if(!empty($filterdata->hrmsrole)){
         $hrmsroles = explode(',', $filterdata->hrmsrole);
-        list($hrmsrolessql, $hrmsrolessparams) = $DB->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'param', true, false);
+        list($hrmsrolessql, $hrmsrolessparams) = $DB->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'hrmsrole', true, false);
+        $params = array_merge($params, $hrmsrolessparams);
         $formsql .= " AND c.open_hrmsrole {$hrmsrolessql} ";
     }
     if(!empty($filterdata->location)){
         $locations = explode(',', $filterdata->location);
-        list($locationsql, $locationsparams) = $DB->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'param', true, false);
+        list($locationsql, $locationsparams) = $DB->get_in_or_equal($locations, SQL_PARAMS_NAMED, 'location', true, false);
+        $params = array_merge($params, $locationsparams);
         $formsql .= " AND c.open_location {$locationsql} ";
     }
     
@@ -1459,7 +1474,13 @@ function get_listof_courses($stable, $filterdata) {
         }
     }
 
-    $params = array_merge($searchparams, $userorg, $userdep, $filtercategoriesparams,$filtercoursesparams, $departmentsparams, $subdepartmentsparams, $organizationsparams, $hrmsrolessparams, $locationsparams,$filterparams);
+    if(!empty($filterdata->coursetype)){
+        $filtercoursetype = explode(',', $filterdata->coursetype);
+        list($filtercoursetypesql, $filtercoursetypeparams) = $DB->get_in_or_equal($filtercoursetype, SQL_PARAMS_NAMED, 'coursetype', true, false);
+        $params = array_merge($params, $filtercoursetypeparams);
+        $formsql .= " AND c.open_identifiedas $filtercoursetypesql";
+    }
+    // $params = array_merge($searchparams, $userorg, $userdep, $filtercategoriesparams,$filtercoursesparams, $departmentsparams, $subdepartmentsparams, $organizationsparams, $hrmsrolessparams, $locationsparams,$filterparams,$filtercoursetypeparams);
 
     $totalcourses = $DB->count_records_sql($countsql.$formsql, $params);
 
@@ -1579,7 +1600,7 @@ function get_listof_courses($stable, $filterdata) {
             $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
             $courseslist[$count]["grade_view"] = ((has_capability('local/courses:grade_view',
             $context) || is_siteadmin())&&has_capability('local/courses:manage', $context)) ? true : false;
-            $courseslist[$count]["request_view"] = ((has_capability('local/request:approverecord', $context)) || is_siteadmin()) ? true : false;
+            $courseslist[$count]["request_view"] = ((has_capability('local/request:approverecord', $maincheckcontext)) || is_siteadmin()) ? true : false;
             
             $coursesummary = \local_costcenter\lib::strip_tags_custom($chelper->get_course_formatted_summary($course_in_list,
                     array('overflowdiv' => false, 'noclean' => false, 'para' => false)));
@@ -1657,7 +1678,7 @@ function get_listof_courses($stable, $filterdata) {
 
 
             if(has_capability('local/courses:update',$context)&&has_capability('local/courses:manage', $context)&&has_capability('moodle/course:update', $context)){
-                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil icon')) , array('title' => get_string('edit'), 'alt' => get_string('edit'),'data-action' => 'createcoursemodal', 'class'=>'createcoursemodal', 'data-value'=>$course->id, 'onclick' =>'(function(e){ require("local_courses/courseAjaxform").init({contextid:'.$context->id.', component:"local_courses", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "courses", courseid: ' . $course->id . ' }) })(event)'));
+                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')).get_string('edit') , array('title' => get_string('edit'), 'alt' => get_string('edit'),'data-action' => 'createcoursemodal', 'class'=>'createcoursemodal dropdown-item', 'data-value'=>$course->id, 'onclick' =>'(function(e){ require("local_courses/courseAjaxform").init({contextid:'.$context->id.', component:"local_courses", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "courses", courseid: ' . $course->id . ' }) })(event)'));
                 $courseslist[$count]["editcourse"] = $courseedit;
                 if($course->visible){
                     $icon = 't/hide';
@@ -1668,9 +1689,9 @@ function get_listof_courses($stable, $filterdata) {
                     $string = get_string('make_inactive','local_courses');
                     $title = get_string('make_active','local_courses');
                 }
-                $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => ''));
+                $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')).$title;
                 $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
-                $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('data-fg'=>"d", 'data-method' => 'course_update_status','data-plugin' => 'local_courses', 'data-params' => $params, 'data-id'=>$course->id));
+                $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image  , array('class'=>' make_inactive dropdown-item','data-fg'=>"d", 'data-method' => 'course_update_status','data-plugin' => 'local_courses', 'data-params' => $params, 'data-id'=>$course->id));
                 if(!empty($autoenroll_plugin_exist)){
                     $autoplugin = enrol_get_plugin('auto');
                     $instance = $autoplugin->get_instance_for_course($course->id);
@@ -1690,7 +1711,7 @@ function get_listof_courses($stable, $filterdata) {
              }   
 
            if(has_capability('local/courses:delete',$context)&&has_capability('local/courses:manage', $context)&&has_capability('moodle/course:delete', $context)){
-                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')), array('title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_courses/courseAjaxform\').deleteConfirm({action:\'deletecourse\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
+                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')).get_string('delete'), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_courses/courseAjaxform\').deleteConfirm({action:\'deletecourse\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
                 $courseslist[$count]["deleteaction"] = $deleteactionshtml;
            
             }
@@ -1716,7 +1737,7 @@ function get_listof_courses($stable, $filterdata) {
              }   
 
            
-            if ((has_capability('local/request:approverecord', $context) || is_siteadmin())) {
+            if ((has_capability('local/request:approverecord', $maincheckcontext) || is_siteadmin())) {
                 $courseslist[$count]["requestlink"] = $CFG->wwwroot."/local/request/index.php?courseid=".$course->id;
             }
 
@@ -1961,7 +1982,7 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
 
 
      $fields =array(/*'organizations', 'departments',
-            'subdepartment', 'department4level','department5level',*/'hierarchy_fields','courses','categories','status');
+            'subdepartment', 'department4level','department5level',*/'hierarchy_fields','courses','categories','status','coursetype');
 
     /*if(!is_siteadmin()) {
 

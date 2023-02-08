@@ -5,13 +5,14 @@
   <div class="{{cardClass}} pull-left {{^ visible}} inactive {{ /visible}}">
              <div class="card-page">
               {{ # groupname }}
-               <div class="card-title"><b>{{ groupname }}</b>                  
-                    <div class="pull-right text-right actionicons showoptions{{userid}}">
-                        <span  class="pull-right showoptions" data-action="showoptions{{userid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
+               <div class="card-title d-flex justify-content-between"><b>{{ groupname }}</b>                  
+                    <div class=" dropdown action_menu_dropdown">
+                        <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
+                            <i class="fa fa-ellipsis-h "></i>
                         </span>
                           {{ / groupname }}
 
-                       <ul class="options_container" id="showoptions{{userid}}">{{{actions}}} </ul>
+                       <div class="pull-right dropdown-menu dropdown-menu-right shadow-sm">{{{actions}}} </div>
                       
                     </div>
               </div>

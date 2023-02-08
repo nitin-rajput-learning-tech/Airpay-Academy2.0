@@ -42,6 +42,7 @@ class learningplan extends moodleform {
 
 	 	$this->formstatus = array(
 	 		'generaldetails' => get_string('generaldetails', 'local_learningplan'),
+	 		'lp_otherdetails' => get_string('lp_otherdetails', 'local_learningplan'),
 			'otherdetails' => get_string('otherdetails', 'local_learningplan')
 			);
 	 	parent::__construct($action, $customdata, $method, $target, $attributes, $editable, $formdata);
@@ -166,17 +167,6 @@ class learningplan extends moodleform {
 	        // // tags
 	        // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'learningplan', 'component' => 'local_learningplan'));
 
-	        $editoroption = [
-	        'maxfiles' => EDITOR_UNLIMITED_FILES,
-	        'trust' => false,
-	        'context' => (new \local_learningplan\lib\accesslib())::get_module_context(),
-	        'noclean' => true,
-	        'subdirs' => false,
-	        'autosave'=>false
-	    	];
-			$mform->addElement('editor','description', get_string('description'), null, $editoroption);
-	        $mform->setType('description', PARAM_RAW);
-	        $mform->addHelpButton('description','descript','local_learningplan');
 			
 			$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 			// if (is_siteadmin($USER->id) || has_capability('local/learningplan:manage', $categorycontext)) {
@@ -218,8 +208,23 @@ class learningplan extends moodleform {
 			$mform->addElement('hidden', 'open_costcenterid');
             // $mform->setType('open_costcenterid', PARAM_INT);
 			$mform->setConstant('open_costcenterid', $org);
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,4), true, 'local_learningplan', $categorycontext, $multiple = false);
+
+	        $editoroption = [
+	        'maxfiles' => EDITOR_UNLIMITED_FILES,
+	        'trust' => false,
+	        'context' => (new \local_learningplan\lib\accesslib())::get_module_context(),
+	        'noclean' => true,
+	        'subdirs' => false,
+	        'autosave'=>false
+	    	];
+			$mform->addElement('editor','description', get_string('description'), null, $editoroption);
+	        $mform->setType('description', PARAM_RAW);
+	        $mform->addHelpButton('description','descript','local_learningplan');
+
+    	}else if($form_status == 2){
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
 			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
+
     	}
         $mform->disable_form_change_checker();
     }
@@ -244,6 +249,8 @@ class learningplan extends moodleform {
 				 	$errors['shortname'] = get_string('unameexists','local_learningplan');
             	}
 			}
+		}
+		if($data['form_status']==1){
 			if($data['map_certificate'] == 1 && empty($data['certificateid'])){
                 $errors['certificateid'] = get_string('err_certificate','local_learningplan');
 			}

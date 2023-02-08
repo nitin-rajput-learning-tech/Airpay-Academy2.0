@@ -1012,6 +1012,17 @@ class local_courses_external extends external_api {
         }
 
         foreach ($user_course_info as $userinfo) {
+            //course image
+            if(file_exists($CFG->dirroot.'/local/includes.php')){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new user_course_details();
+                $courseimage = $includes->course_summary_files($userinfo);                
+                if(is_object($courseimage)){
+                    $courseimage = $courseimage->out();                    
+                }else{
+                    $courseimage = $courseimage;
+                }                
+            } 
             $context = context_course::instance($userinfo->id, IGNORE_MISSING);
             list($userinfo->summary,$userinfo->summaryformat) =
                 external_format_text($userinfo->summary ,$userinfo->summaryformat , $context->id, 'course', 'summary', null);
@@ -1056,7 +1067,8 @@ class local_courses_external extends external_api {
                 'ratingusers' => $ratingusers,
                 'likes' => $likes,
                 'dislikes' => $dislikes,
-                'certificateid' => $certificateid
+                'certificateid' => $certificateid,
+                'courseimage' => $courseimage
             );
         }
         if ($total > $perpage) {
@@ -1095,6 +1107,7 @@ class local_courses_external extends external_api {
                             'likes' => new external_value(PARAM_INT, 'Course Likes'),
                             'dislikes' => new external_value(PARAM_INT, 'Course Dislikes'),
                             'certificateid' => new external_value(PARAM_RAW, 'Certifictate Code', VALUE_OPTIONAL),
+                            'courseimage' => new external_value(PARAM_RAW, 'Courseimage', VALUE_OPTIONAL),
                         )
                     )
                 ),
@@ -1145,7 +1158,7 @@ class local_courses_external extends external_api {
         );
     }
     public function get_recently_enrolled_courses($source = 'mobile'){
-        global $DB,$USER;
+        global $DB,$USER,$CFG;
         $result = array();
         $enrolledcourses = general_lib::enrolled_coursenames_formobile('', 0, 10, 'recentlyaccessed', $source);
         if(empty($enrolledcourses)){
@@ -1156,7 +1169,17 @@ class local_courses_external extends external_api {
             $header = get_string('recentlyaccessedcourses', 'local_courses');
         }
         foreach ($enrolledcourses as $userinfo) {
-
+             //course image
+             if(file_exists($CFG->dirroot.'/local/includes.php')){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new user_course_details();
+                $courseimage = $includes->course_summary_files($userinfo);                
+                if(is_object($courseimage)){
+                    $courseimage = $courseimage->out();                    
+                }else{
+                    $courseimage = $courseimage;
+                }                
+            }
             $context = context_course::instance($userinfo->id, IGNORE_MISSING);
             list($userinfo->summary,$userinfo->summaryformat) =
                 external_format_text($userinfo->summary ,$userinfo->summaryformat , $context->id, 'course', 'summary', null);
@@ -1193,6 +1216,7 @@ class local_courses_external extends external_api {
                 'avgrating' => $ratinginfo->module_rating ? $ratinginfo->module_rating : 0,
                 'ratingusers' => $ratinginfo->module_rating_users ? $ratinginfo->module_rating_users : 0,
                 'certificateid' => $certificateid,
+                'courseimage' =>$courseimage,
             );
         }
         if(empty($result)){
@@ -1227,6 +1251,7 @@ class local_courses_external extends external_api {
                             'avgrating' => new external_value(PARAM_FLOAT, 'Course avgrating', VALUE_OPTIONAL),
                             'ratingusers' => new external_value(PARAM_INT, 'Course rating users',VALUE_OPTIONAL),
                             'certificateid' => new external_value(PARAM_RAW, 'Certifictate Code', VALUE_OPTIONAL),
+                            'courseimage' => new external_value(PARAM_RAW, 'Course image', VALUE_OPTIONAL),
                         )
                     )
                  ),

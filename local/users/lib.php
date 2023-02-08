@@ -220,7 +220,7 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
         'multiple' => true,
         'data-action' => 'email',
         'data-options' => json_encode(array('id' => 0)),
-        'placeholder' => get_string('email')
+        'placeholder' => get_string('select_email','local_users')
     );
     $select = $mform->addElement ('autocomplete', 'email', '', $userslist, $options);
     $mform->setType('email', PARAM_RAW);
@@ -276,7 +276,7 @@ function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $
         'multiple' => true,
         'data-action' => 'employeeid',
         'data-options' => json_encode(array('id' => 0)),
-        'placeholder' => get_string('idnumber', 'local_users')
+        'placeholder' => get_string('idnumber_select', 'local_users')
     );
     $select = $mform->addElement('autocomplete', 'idnumber', '', $userslist, $options);
     $mform->setType('idnumber', PARAM_RAW);

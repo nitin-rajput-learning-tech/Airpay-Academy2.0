@@ -60,7 +60,6 @@ class learningplan {
         $params = array();
         $params['userid'] = $USER->id;
         $params['visible'] = 1;
-        // $params['userid'] = $USER->id;
         if ($mobile) {
              $userlearningplans = $DB->get_records_sql($sqlquery . $userlearningplanssql, $params, $page * $perpage, $perpage);
              $count = $DB->count_records_sql($sqlcount . $userlearningplanssql, $params);

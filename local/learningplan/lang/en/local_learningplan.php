@@ -262,3 +262,4 @@ $string['eventlearningplanusers_deleted'] = 'Learning Path users deleted';
 $string['progress'] = 'Progress';
 $string['mandatory'] = 'Mandatory';
 $string['completed'] = 'Completed';
+$string['lp_otherdetails'] = 'Other Details';

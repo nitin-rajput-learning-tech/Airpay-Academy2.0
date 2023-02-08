@@ -972,3 +972,39 @@ body#page-local-courses-userdashboard .card_list_view {
     display: block;
 }
 }
+
+
+/*show option changes*/
+#page-local-courses-courses a.createcoursemodal .icon,
+#page-local-courses-courses a.delete_icon .icon,
+#page-local-courses-courses a.make_inactive .icon{
+    margin-right: 0;
+}
+
+/*coursepage view changes*/
+.courseheader .course_contextmenu_extended .course_extended_menu_list .icon{
+    border-radius: 0!important;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: #fff;
+    font-size: 23px;  
+}
+.course_contextmenu_extended .course_extended_menu_list .icon:hover {
+    background-color: transparent !important;
+}
+ .courseheader .course_extended_menu_list li{
+    margin:0;
+}
+.admin_default_menu .action-menu-trigger .dropdown .dropdown-item .icon{
+    color :#000 ;
+    font-size: 15px;
+}
+.admin_default_menu .action-menu-trigger .dropdown .dropdown-item:hover .icon,
+.admin_default_menu .action-menu-trigger .dropdown .dropdown-item:focus .icon,
+.admin_default_menu .action-menu-trigger .dropdown .dropdown-item:active .icon{
+    color:#fff ;
+}
+.admin_default_menu .action-menu-trigger .dropdown .dropdown-item:hover a{
+    text-decoration: none;
+}

@@ -119,6 +119,7 @@ class syncfunctionality
             foreach ($mandatory_fields as $field) {
                 // Mandatory field validation.
                 $this->mandatory_field_validation($user, $field);
+                $this->mandatory_field_count++;
             }
 
             // To check for existing user record.

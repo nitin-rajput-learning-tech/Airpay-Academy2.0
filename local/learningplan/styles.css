@@ -254,8 +254,7 @@ body#page-local-learningplan-plan_view .course_extended_menu_list {
 }
 #page-local-learningplan-plan_view .planview_topcontent .overall_users{
 	margin-top: 0;
-    width: 100%;
-    min-width: 100px;
+    width: auto
 }
 #page-local-learningplan-plan_view .course_img{
     width: 100%;
@@ -333,6 +332,30 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link{
 #page-local-learningplan-plan_view .bottom_right_container .conent_code{
 	min-width: 50%;
 }
+/*coursepath line css*/
+#page-local-learningplan-plan_view .coursespath_container{
+	width: 50%;
+}
+#page-local-learningplan-plan_view .coursespath_container ul{
+	padding-left: 0;
+}
+#page-local-learningplan-plan_view .pathcourse_container .path_coursline{
+	border-bottom: 2px solid #fff;
+	top: 30px;
+}
+#page-local-learningplan-plan_view .coursespath_container li:last-child .pathcourse_container .path_coursline {
+    border: none;
+}
+#page-local-learningplan-plan_view .pathcourse_container .path_coursline:before{
+	color: #fff;
+	content: "\f054";
+	font-family:'FontAwesome';
+	font-size: 16px;
+	top:-11px;
+	display: inline-block;
+}
+
+
 @media (max-width: 767px){
 
 #page-local-learningplan-plan_view .course_img {
@@ -454,8 +477,8 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link{
 #page-local-learningplan-view .planview_topcontent .like_unlike,
 #page-local-learningplan-lpathinfo .planview_topcontent .like_unlike{
     margin-top: 0;
-    width: 100%;
-    max-width: 120px;
+    width: auto;
+    margin-right: 10px;
 }
 #page-local-learningplan-view .planview_topcontent .overall_users i,
 #page-local-learningplan-lpathinfo .planview_topcontent .overall_users i{
@@ -810,4 +833,108 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link.active{
 #page-local-learningplan-lpathinfo .lp_bottom_container hr{
     margin-top: 0.5rem;
     margin-bottom: 0.5rem;
+}
+
+
+
+/* learning form filterform hema*/
+#page-local-learningplan-index  form#filteringform{
+    display: flex;
+    flex-wrap: wrap;
+}  
+#page-local-learningplan-index  .form-autocomplete-selection [data-active-selection=true]{
+  padding: 0.25em 0.4em !important;
+  font-size:100% !important;
+}
+#page-local-learningplan-index  #filters_form form .autocomplete .form-autocomplete-downarrow{
+  right: 9px !important;
+  left: auto !important;
+  bottom: 3px !important;
+  top: auto ;
+}
+#page-local-learningplan-index #filters_form form input[type="submit"]{
+   border-radius: 4px;
+}
+@media(min-width:571px) and (max-width:767px){
+	#page-local-learningplan-index #filters_form form .autocomplete .form-autocomplete-downarrow{
+		top: -5px !important ;
+	}
+	#page-local-learningplan-index #filters_form  .mr-md-2.position-relative{
+		display: inline ;
+	}
+}
+@media (max-width: 1024px){
+	#page-local-learningplan-index .form-autocomplete-selection [role=option]{
+		white-space: nowrap;
+	}
+	#page-local-learningplan-index #filters_form  [data-fieldtype="submit"]{
+		margin-left:10px;
+	}
+	#page-local-learningplan-index #filters_form .form-inline .form-group{
+		flex:1 0 auto;
+	}
+}
+
+
+/*learning path user mobile view */
+.openLMStransition form .form-inline input[type=text].form-control{
+	min-width:269px !important;
+}
+.openLMStransition form .autocomplete .form-autocomplete-downarrow{
+  right: 9px ;
+  left: auto !important;
+  bottom: 3px !important;
+  top: auto ;
+}
+.openLMStransition .modal-content form .col-md-3{
+    	display: flex;
+    	align-items: center;
+
+}
+@media(min-width:571px) and (max-width:767px){
+	.openLMStransition  .form-inline .mr-md-2{
+		display: inline ;
+	}
+	.openLMStransition .form-autocomplete-downarrow{
+		top:-5px !important;
+	}
+
+}
+@media(max-width:767px){
+	.openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link:before,
+	.openLMStransition .form_status .form_status_listitem:last-child .form_status_listitem_link:before{
+		border:0 !important;
+	}
+	.openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link:after,
+	.openLMStransition .form_status .form_status_listitem:last-child .form_status_listitem_link:after{
+		border:0 !important;
+	}
+	.openLMStransition .form_status .form_status_listitem:last-child .form_status_listitem_link,
+	.openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link{
+	    margin:0 !important;
+	}
+	#page-local-learningplan-index  form .form-inline input[type=text].form-control{
+		max-width:100%;
+
+	}
+
+}
+@media(max-width:374px){
+	.openLMStransition .form-autocomplete-downarrow{
+		right:-32px !important;
+	}
+}
+/*  add new instance new changes*/
+#page-local-learningplan-index #filters_form form #Organization,
+#page-local-learningplan-index #filters_form form #Country,
+#page-local-learningplan-index #filters_form form #Commercial\ Unit,
+#page-local-learningplan-index #filters_form form #Commercial\ Area,
+#page-local-learningplan-index #filters_form form #Territory{
+	flex:0 0 100%;
+	max-width:100%;
+	display: flex;
+	align-items: center;
+}
+#page-local-learningplan-index #filters_form form>.form-group .col-md-3 .text-nowrap{
+	margin-left:10px;
 }

@@ -813,3 +813,6 @@ $string['prefix'] = 'Prefix';
 $string['skilltype'] = 'Skill Type';
 $string['invalidgender'] = 'Invailid gender at line {$a->line}. Enter only male\female\other';
 $string['invalidprefix'] = 'Invailid prefix at line {$a->line}. Enter only mr\mrs\ms';
+$string['user_status'] = 'Select User Status';
+$string['select_email'] = 'Select Work Email';
+$string['idnumber_select'] = 'Select Employee Code';

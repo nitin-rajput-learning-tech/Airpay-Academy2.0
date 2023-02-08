@@ -214,45 +214,45 @@ class classroom {
             $calendarevent = \calendar_event::load($eventid);
             $calendarevent->delete();
         }
-        $eventid = $DB->get_field('event', 'id', array(
-            'modulename' => '0',
-            'instance' => 0,
-            'plugin' => 'local_classroom',
-            'plugin_instance' => $classroom->id,
-            'eventtype' => 'close',
-            'local_eventtype' => 'close'
-        ));
-        if (isset($classroom->enddate) && $classroom->enddate > 0) {
-            $event                  = new stdClass();
-            $event->categoryid      = $categorycontext->instanceid;
-            $event->type            = CALENDAR_EVENT_TYPE_ACTION;
-            $event->eventtype       = 'close';
-            $event->name            = $classroom->name;
-            $event->description     = $classroom->name;
-            $event->timestart       = $classroom->enddate;
-            $event->timesort        = $classroom->enddate;
-            $event->visible         = 1;
-            $event->timeduration    = 0;
-            $event->plugin_instance = $classroom->id;
-            $event->plugin          = 'local_classroom';
-            $event->local_eventtype = 'close';
-            $event->relateduserid   = $USER->id;
-            if ($eventid) {
-                $event->id     = $eventid;
-                $calendarevent = \calendar_event::load($event->id);
-                $calendarevent->update($event);
-            } else {
-                $event->courseid   = 0;
-                $event->groupid    = 0;
-                $event->userid     = 0;
-                $event->modulename = 0;
-                $event->instance   = 0;
-                \calendar_event::create($event);
-            }
-        } else if ($eventid) {
-            $calendarevent = \calendar_event::load($eventid);
-            $calendarevent->delete();
-        }
+        // $eventid = $DB->get_field('event', 'id', array(
+        //     'modulename' => '0',
+        //     'instance' => 0,
+        //     'plugin' => 'local_classroom',
+        //     'plugin_instance' => $classroom->id,
+        //     'eventtype' => 'close',
+        //     'local_eventtype' => 'close'
+        // ));
+        // if (isset($classroom->enddate) && $classroom->enddate > 0) {
+        //     $event                  = new stdClass();
+        //     $event->categoryid      = $categorycontext->instanceid;
+        //     $event->type            = CALENDAR_EVENT_TYPE_ACTION;
+        //     $event->eventtype       = 'close';
+        //     $event->name            = $classroom->name;
+        //     $event->description     = $classroom->name;
+        //     $event->timestart       = $classroom->enddate;
+        //     $event->timesort        = $classroom->enddate;
+        //     $event->visible         = 1;
+        //     $event->timeduration    = 0;
+        //     $event->plugin_instance = $classroom->id;
+        //     $event->plugin          = 'local_classroom';
+        //     $event->local_eventtype = 'close';
+        //     $event->relateduserid   = $USER->id;
+        //     if ($eventid) {
+        //         $event->id     = $eventid;
+        //         $calendarevent = \calendar_event::load($event->id);
+        //         $calendarevent->update($event);
+        //     } else {
+        //         $event->courseid   = 0;
+        //         $event->groupid    = 0;
+        //         $event->userid     = 0;
+        //         $event->modulename = 0;
+        //         $event->instance   = 0;
+        //         \calendar_event::create($event);
+        //     }
+        // } else if ($eventid) {
+        //     $calendarevent = \calendar_event::load($eventid);
+        //     $calendarevent->delete();
+        // }
     }
     public function manage_classroom_sessions($session) {
         global $DB, $USER;
@@ -371,47 +371,47 @@ class classroom {
             $calendarevent = \calendar_event::load($eventid);
             $calendarevent->delete();
         }
-        $eventid = $DB->get_field('event', 'id', array(
-            'modulename' => '0',
-            'instance' => 0,
-            'plugin' => 'local_classroom',
-            'plugin_instance' => $session->classroomid,
-            'plugin_itemid' => $session->id,
-            'eventtype' => 'close',
-            'local_eventtype' => 'session_close'
-        ));
-        if (isset($session->timefinish) && $session->timefinish > 0) {
-            $event                  = new stdClass();
-            $event->categoryid      = $categorycontext->instanceid;
-            $event->type            = CALENDAR_EVENT_TYPE_ACTION;
-            $event->eventtype       = 'close';
-            $event->name            = $session->name;
-            $event->description     = $session->name;
-            $event->timestart       = $session->timefinish;
-            $event->timesort        = $session->timefinish;
-            $event->visible         = 1;
-            $event->timeduration    = 0;
-            $event->plugin_instance = $session->classroomid;
-            $event->plugin_itemid   = $session->id;
-            $event->plugin          = 'local_classroom';
-            $event->local_eventtype = 'session_close';
-            $event->relateduserid   = $USER->id;
-            if ($eventid) {
-                $event->id     = $eventid;
-                $calendarevent = \calendar_event::load($event->id);
-                $calendarevent->update($event);
-            } else {
-                $event->courseid   = 0;
-                $event->groupid    = 0;
-                $event->userid     = 0;
-                $event->modulename = 0;
-                $event->instance   = 0;
-                \calendar_event::create($event);
-            }
-        } else if ($eventid) {
-            $calendarevent = \calendar_event::load($eventid);
-            $calendarevent->delete();
-        }
+        // $eventid = $DB->get_field('event', 'id', array(
+        //     'modulename' => '0',
+        //     'instance' => 0,
+        //     'plugin' => 'local_classroom',
+        //     'plugin_instance' => $session->classroomid,
+        //     'plugin_itemid' => $session->id,
+        //     'eventtype' => 'close',
+        //     'local_eventtype' => 'session_close'
+        // ));
+        // if (isset($session->timefinish) && $session->timefinish > 0) {
+        //     $event                  = new stdClass();
+        //     $event->categoryid      = $categorycontext->instanceid;
+        //     $event->type            = CALENDAR_EVENT_TYPE_ACTION;
+        //     $event->eventtype       = 'close';
+        //     $event->name            = $session->name;
+        //     $event->description     = $session->name;
+        //     $event->timestart       = $session->timefinish;
+        //     $event->timesort        = $session->timefinish;
+        //     $event->visible         = 1;
+        //     $event->timeduration    = 0;
+        //     $event->plugin_instance = $session->classroomid;
+        //     $event->plugin_itemid   = $session->id;
+        //     $event->plugin          = 'local_classroom';
+        //     $event->local_eventtype = 'session_close';
+        //     $event->relateduserid   = $USER->id;
+        //     if ($eventid) {
+        //         $event->id     = $eventid;
+        //         $calendarevent = \calendar_event::load($event->id);
+        //         $calendarevent->update($event);
+        //     } else {
+        //         $event->courseid   = 0;
+        //         $event->groupid    = 0;
+        //         $event->userid     = 0;
+        //         $event->modulename = 0;
+        //         $event->instance   = 0;
+        //         \calendar_event::create($event);
+        //     }
+        // } else if ($eventid) {
+        //     $calendarevent = \calendar_event::load($eventid);
+        //     $calendarevent->delete();
+        // }
     }
     public function manage_classroom_completions($completions) {
         global $DB, $USER;

@@ -18,15 +18,15 @@
     <div class="col-12 pull-left costcenter_content p-0">
         <div class="col-12 col-xl-3 pull-left orgimg_container">
             <div class="content_left"><!-- <i class="fas dept_img fa-university"></i> -->
+            <div class="d-flex align-items-center justify-content-between">
                 <h3 class="org_name">{{ orgname }}</h3>
-                <div class="pull-right showoptions{{{ recordid }}} actionicons ">
-                    <span  class="pull-right showoptions" data-action="showoptions{{{ recordid }}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{recordid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{recordid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
+                <div class="dropdown action_menu_dropdown">
+                    <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
+                        <i class="fa fa-ellipsis-h text-white"></i>
                     </span>
-                    <ul class="options_container" id="showoptions{{{recordid}}}">
+                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
                         {{# delete}}
-                        <li>
-                            <a href="javascript:void(0)" title ="{{# str}} delete {{/str}}" onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ recordid }}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ delete_message }}}' }) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i></a>
-                        </li>
+                        <a class="dropdown-item text-dark" href="javascript:void(0)" title ="{{# str}} delete {{/str}}" onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ recordid }}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ delete_message }}}' }) })(event)"><i class="fa fa-trash fa-fw " aria-hidden="true" aria-label="Delete"></i> Delete</a>
                         {{/ delete}}
                       <!--   {{# hide}}
                         <li>
@@ -39,9 +39,7 @@
                         </li>
                         {{/ show}}   -->
                         {{# edit}}
-                        <li>
-                            <a href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({ contextid:1, id:{{ recordid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i></a>
-                        </li>
+                        <a class="dropdown-item text-dark" href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({ contextid:1, id:{{ recordid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i> Edit</a>
                         {{/ edit}}
                        <!--  {{# assignroles}}
                         <li>
@@ -51,14 +49,12 @@
                         {{/ assignroles}} -->
                         {{# contextid}}
                             {{# managepermissions}}
-                            <li>
-                                <a href='{{config.wwwroot}}/admin/roles/permissions.php?contextid={{contextid}}' title="{{# str}}permissions,local_costcenter{{/ str}}"><i class="fa fa-cogs"></i></a>
-
-                            </li>
+                            <a class="dropdown-item text-dark" href='{{config.wwwroot}}/admin/roles/permissions.php?contextid={{contextid}}' title="{{# str}}permissions,local_costcenter{{/ str}}"><i class="fa fa-cogs"></i>Permissions</a>
                             {{/ managepermissions}}
                         {{/ contextid}}
-                    </ul>
+                    </div>
                 </div>
+            </div>
                 {{# showsubdept_content}}
                     <div class="left_info text-xl-center">
                         <span class="lable_align dept_string">{{# str}} sub_departments, local_costcenter {{/str}}</span>

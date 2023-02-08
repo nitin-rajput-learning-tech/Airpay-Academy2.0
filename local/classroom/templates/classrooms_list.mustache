@@ -29,35 +29,32 @@
                                 <a href="{{ classroomurl }}" class="class_name" title = "{{ classname }}">{{ classname_string }}</a>
                                 <span class="bg_banner" title="{{ crstatustitle }}"></span>
                             </div>
-                            <div class="showoptions{{classroomid}} actionicons">
+                            <div class="dropdown action_menu_dropdown">
                                 {{# action}}
                                     {{# mouse_overicon}}
-                                        <span  class="showoptions" data-action="showoptions{{classroomid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{classroomid}}' }) })(event)">
-                                            <i class="fa fa-ellipsis-h options" aria-hidden="true" title="" aria-label=""></i>
+                                        <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
+                                            <i class="fa fa-ellipsis-h text-white"></i>
                                         </span>
-                                        <ul class="options_container" id="showoptions{{classroomid}}">
-                                            {{# delete}}
-                                                <li>
-                                                    <a title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
-                                                        title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroom', id: {{ classroomid }}, classroomid: {{ classroomid }}, classroomname: '{{ classname }}'}) })(event)">
-                                                        <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i>
-                                                    </a>
-                                                </li>
-                                            {{/ delete}}
+                                        <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                            
                                             
                                             {{# edit}}
-                                                <li>
-                                                    <a title="{{# str}} user_enrollments, local_classroom {{/ str}}" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_classroom/ajaxforms').init({contextid:1, component:'local_classroom', callback:'classroom_form', form_status:0, plugintype: 'local', pluginname: 'classroom', id: {{ classroomid }} }) })(event)">
-                                                        <i class="fa fa-pencil fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} edit {{/str}}"></i>
+                                                <a class="dropdown-item" title="{{# str}} user_enrollments, local_classroom {{/ str}}" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_classroom/ajaxforms').init({contextid:1, component:'local_classroom', callback:'classroom_form', form_status:0, plugintype: 'local', pluginname: 'classroom', id: {{ classroomid }} }) })(event)">
+                                                        <i class="fa fa-pencil fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} edit {{/str}}"></i>Edit
                                                     </a>
                                                 </li>
                                             {{/ edit}}
                                             {{# assignusers}}
-                                                <li>
-                                                    <a href="{{ assignusersurl }}"><i class="icon fa fa-user-plus fa-fw" aria-hidden="true" aria-label="" title ="{{# str}} assignusers, local_classroom {{/str}}"></i></a>
-                                                </li>
+                                                <a class="dropdown-item" href="{{ assignusersurl }}"><i class="fa fa-user-plus fa-fw" aria-hidden="true" aria-label="" title ="{{# str}} assignusers, local_classroom {{/str}}"></i> Assign Users</a>
                                             {{/ assignusers}}
-                                        </ul>
+                                            {{# delete}}
+                                                <a class="dropdown-item" title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+                                                        title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroom', id: {{ classroomid }}, classroomid: {{ classroomid }}, classroomname: '{{ classname }}'}) })(event)">
+                                                        <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i>Delete
+                                                    </a>
+                                                </li>
+                                            {{/ delete}}
+                                        </div>
                                     {{/ mouse_overicon}}
                                 {{/ action}}
                             </div>
@@ -167,8 +164,8 @@
                                     <h6 class="trainer_header">{{#str}}courses{{/str}}</h6>
                                     <ul class="crcourseslist  m-0">
                                         {{# courses }}
-                                            <li class="w-full d-flex">
-                                                <p class="contentlist ">
+                                            <li class="w-full d-flex align-items-center">
+                                                <p class="contentlist mb-0">
                                                     <a href="{{ courseurl }}" title="{{ coursetitle }}"> {{ coursename }} </a>
                                                 </p>
                                             </li>

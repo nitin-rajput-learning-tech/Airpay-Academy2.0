@@ -51,55 +51,52 @@
                                             <a href="{{ courseurl }}" title="{{ coursename }}">{{ coursenameCut }}</a>
                                             {{/ coursenameCut}}
                                         </h5>
-                                        {{#actions}}
-                                        <div>
-                                            <div class="showoptions{{courseid}} actionicons">
-                                                <span  class="showoptions" data-action="showoptions{{courseid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{courseid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{courseid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i></span>
-                                                <ul class="options_container" id="showoptions{{courseid}}">
+{{#actions}}
+    <div>
+        <div class="dropdown action_menu_dropdown">
+            <span  data-toggle="dropdown" class="px-2" aria-expanded="false">
+                <i class="fa fa-ellipsis-h"></i>
+            </span>
+        <div class="dropdown-menu dropdown-menu-right shadow-sm">
 
-                                                    {{#deleteaction}}<li>{{{ deleteaction }}}</li>{{/deleteaction}}
-
-
-                                                        {{#enrol}}
-                                                        <li>
-                                                            <a href="{{ enrollusers }}" title= "{{#str}}userenrolments, local_courses{{/str}}" ><i class="fa fa-user" aria-hidden="true"></i></a>
-                                                        </li>
-                                                        {{/enrol}}
-                                                        {{#update}}
-                                                        {{#auto_enrol}}
-                                                        <li>
-                                                        <a href="{{ auto_enrol }}" title= "{{#str}}auto_enrol, local_courses{{/str}}"><i class="fa fa-user-circle-o" aria-hidden="true"></i></a>
-                                                        </li>
-                                                        {{/auto_enrol}}
-                                                        {{/update}}
-                                                        {{#update}}
-                                                        {{# editcourse}}
-                                                        <li>
-                                                        {{{ editcourse }}}
-                                                        </li>
-                                                        {{/ editcourse}}
-                                                        {{# update_status}}
-                                                        <li>
-                                                            {{{update_status}}}
-                                                        </li>
-                                                        {{/ update_status}}
-                                                        {{/update}}
-                                                        {{#grade_view}}
-                                                        <li>
-                                                        <a href="{{ grader }}" title= "{{#str}}grader, local_courses{{/str}}"><i class="fa fa-pie-chart" aria-hidden="true"></i></a>
-                                                        </li>
-                                                        {{/grade_view}}
-                                                        {{#request_view}}
-                                                    <li>
-                                                        <a href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}"><i class="fa fa-share-square" aria-hidden="true"></i></a>
-                                                    </li>
-                                                    {{/request_view}}
-
-                                                    </ul>
-                                                </div>
-
-                                        </div>
-                                        {{/actions}}
+            
+            {{#enrol}}
+                <a href="{{ enrollusers }}" class="dropdown-item" title= "{{#str}}userenrolments, local_courses{{/str}}" >
+                    <i class="fa fa-user" aria-hidden="true"></i>User Enrollments
+                </a>
+           {{/enrol}}
+           {{#update}}
+                {{#auto_enrol}}
+                    <a href="{{ auto_enrol }}" class="dropdown-item" title= "{{#str}}auto_enrol, local_courses{{/str}}">
+                        <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+                    </a>
+                {{/auto_enrol}}
+            {{/update}}
+            {{#update}}
+                {{# editcourse}}
+                    {{{ editcourse }}}
+                {{/ editcourse}}
+                {{# update_status}}
+                    {{{update_status}}}
+                {{/ update_status}}
+            {{/update}}
+            {{#grade_view}}
+                <a class="dropdown-item" href="{{ grader }}" title= "{{#str}}grader, local_courses{{/str}}">
+                        <i class="fa fa-pie-chart" aria-hidden="true"></i>Grader
+                </a>
+            {{/grade_view}}
+            {{#request_view}}
+                <a class="dropdown-item" href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
+                        <i class="fa fa-share-square" aria-hidden="true"></i>Request
+                </a>
+            {{/request_view}}
+            {{#deleteaction}}
+                {{{ deleteaction }}}
+            {{/deleteaction}}
+        </div>
+        </div>
+    </div>
+{{/actions}}
                                     </div>
                                     <div class="coursedesc mb-2">
                                         {{# coursesummary }}

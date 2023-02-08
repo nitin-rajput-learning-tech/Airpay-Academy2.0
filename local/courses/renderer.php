@@ -59,6 +59,9 @@ class local_courses_renderer extends plugin_renderer_base {
         $status = optional_param('status', '', PARAM_RAW);
         $costcenterid = optional_param('costcenterid', '', PARAM_INT);
         $departmentid = optional_param('departmentid', '', PARAM_INT);
+        $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
+        $l4department = optional_param('l4department', '', PARAM_INT);
+        $l5department = optional_param('l5department', '', PARAM_INT);
         // change the display according to moodle 3.6
         // $stable = new stdClass();
         // $stable->thead = true;
@@ -75,12 +78,14 @@ class local_courses_renderer extends plugin_renderer_base {
             $cardClass = 'tableformat';
             $perpage = 20;
         } 
-       $options = array('targetID' => 'manage_courses','perPage' => $perpage, 'cardClass' => 'col-md-6 col-12', 'viewType' => $view_type);
+        $options = array('targetID' => 'manage_courses','perPage' => $perpage, 'cardClass' => 'col-md-6 col-12', 'viewType' => $view_type);
         $options['methodName']='local_courses_courses_view';
         $options['templateName']= $templateName;
         $options = json_encode($options);
-        $filterdata = json_encode(array('status'=>$status,'organizations'=>$costcenterid,'departments'=>$departmentid));
-        $dataoptions = json_encode(array('contextid' => $categorycontext->id,'status'=>$status,'costcenterid'=>$costcenterid,'departmentid'=>$departmentid));
+        $filterdata = json_encode(array('status' => $status, 'filteropen_costcenterid' => $costcenterid, 'filteropen_department' => $departmentid, 'filteropen_subdepartment' => $subdepartmentid, 'filteropen_level4department' => $l4department, 'filteropen_level5department' => $l5department));
+        $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $categorycontext->id,'status' => $status, 'filteropen_costcenterid' => $costcenterid, 'filteropen_department' => $departmentid,'filteropen_subdepartment' => $subdepartmentid, 'filteropen_level4department' => $l4department, 'filteropen_level5department' => $l5department));
+        // $filterdata = json_encode(array('status'=>$status,'organizations'=>$costcenterid,'departments'=>$departmentid));
+        // $dataoptions = json_encode(array('contextid' => $categorycontext->id,'status'=>$status,'costcenterid'=>$costcenterid,'departmentid'=>$departmentid));
         $context = [
                 'targetID' => 'manage_courses',
                 'options' => $options,

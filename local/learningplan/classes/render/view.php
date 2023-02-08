@@ -40,6 +40,9 @@ class view extends plugin_renderer_base
 		$status1 = optional_param('status1', '', PARAM_RAW);
 		$costcenterid = optional_param('costcenterid', '', PARAM_INT);
 		$departmentid = optional_param('departmentid', '', PARAM_INT);
+		$subdepartment = optional_param('subdepartmentid', '', PARAM_INT);
+		$l4department = optional_param('l4department', '', PARAM_INT);
+		$l5department = optional_param('l5department', '', PARAM_INT);
 		// print_r($filterdata);
 		// exit;
 
@@ -66,8 +69,8 @@ class view extends plugin_renderer_base
 			}
 			$assign_users_sql = "SELECT id FROM {local_learningplan} l WHERE 1 = 1 ";
 			if ($filterdata) {
-				if (!empty(array_filter($filterdata->filteropen_costcenterid))) {
-					$selectedorganizations = implode(',', array_filter($filterdata->filteropen_costcenterid));
+				if (!empty(array_filter($filterdata->organizations))) {
+					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
 					$organizations = explode(',', $selectedorganizations);
 					$orgsql = [];
 					foreach ($organizations as $organisation) {
@@ -94,8 +97,8 @@ class view extends plugin_renderer_base
 						$assign_users_sql .= " AND ( " . implode(' OR ', $deptsql) . " ) ";
 					}
 				}
-				if (!empty(array_filter($filterdata->filteropen_subdepartment))) {
-					$selectedsubdepts = implode(',', array_filter($filterdata->filteropen_subdepartment));
+				if (!empty(array_filter($filterdata->subdepartment))) {
+					$selectedsubdepts = implode(',', array_filter($filterdata->subdepartment));
 					$subdepts = explode(',', $selectedsubdepts);
 					$subdeptsql = [];
 					foreach ($subdepts as $subdept) {
@@ -109,8 +112,8 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->filteropen_department4level))) {
-					$selecteddepts4 = implode(',', array_filter($filterdata->filteropen_department4level));
+				if (!empty(array_filter($filterdata->department4level))) {
+					$selecteddepts4 = implode(',', array_filter($filterdata->department4level));
 					$depts4 = explode(',', $selecteddepts4);
 					$depts4sql = [];
 					foreach ($depts4 as $dept4) {
@@ -124,8 +127,8 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->filteropen_department5level))) {
-					$selecteddepts5 = implode(',', array_filter($filterdata->filteropen_department5level));
+				if (!empty(array_filter($filterdata->department5level))) {
+					$selecteddepts5 = implode(',', array_filter($filterdata->department5level));
 					$depts5 = explode(',', $selecteddepts5);
 					$depts5sql = [];
 					foreach ($depts5 as $dept5) {
@@ -137,6 +140,12 @@ class view extends plugin_renderer_base
 						$sql .= " AND ( " . implode(' OR ', $depts5sql) . " ) ";
 						$assign_users_sql .= " AND ( " . implode(' OR ', $depts5sql) . " ) ";
 					}
+				}
+
+				if (!empty($filterdata->categories)) {
+					$selectedcategories = implode(',', $filterdata->categories);
+					$sql .= " AND l.open_categoryid IN ($selectedcategories) ";
+					$assign_users_sql .= " AND l.open_categoryid IN ($selectedcategories) ";
 				}
 
 				if (!empty($filterdata->states)) {
@@ -440,30 +449,30 @@ class view extends plugin_renderer_base
 			}
 			$table->data = $table_data;
 			$return = html_writer::table($table);
-			$filtersubdepts = $filterorganizations = $filterdepartments = $filterstatus = $filterlearningplan = $filter4level = $filter5level = $filterstates = $filterdistrict = $filtersubdistrict = $filtervillage = '';
+			$filtersubdepts = $filterorganizations = $filterdepartments = $filterstatus = $filterlearningplan = $filter4level = $filter5level = $filterstates = $filterdistrict = $filtersubdistrict = $filtervillage = $filtercategories = '';
 			if ($filterdata) {
-				if ($filterdata->subdepartment) {
-					$filtersubdepts = implode(',', $filterdata->subdepartment);
+				if ($filterdata->filteropen_subdepartment) {
+					$filtersubdepts = implode(',', $filterdata->filteropen_subdepartment);
 				}
 
-				if ($filterdata->organizations) {
-					$filterorganizations = implode(',', $filterdata->organizations);
+				if ($filterdata->filteropen_costcenterid) {
+					$filterorganizations = implode(',', $filterdata->filteropen_costcenterid);
 				}
 
-				if ($filterdata->departments) {
-					$filterdepartments = implode(',', $filterdata->departments);
+				if ($filterdata->filteropen_department) {
+					$filterdepartments = implode(',', $filterdata->filteropen_department);
 				}
 
 				if ($filterdata->learningplan) {
 					$filterlearningplan = implode(',', $filterdata->learningplan);
 				}
 
-				if ($filterdata->department4level) {
-					$filter4level = implode(',', $filterdata->department4level);
+				if ($filterdata->filteropen_level4department) {
+					$filter4level = implode(',', $filterdata->filteropen_level4department);
 				}
 
-				if ($filterdata->department5level) {
-					$filter5level = implode(',', $filterdata->department5level);
+				if ($filterdata->filteropen_level5department) {
+					$filter5level = implode(',', $filterdata->filteropen_level5department);
 				}
 
 				if ($filterdata->states) {
@@ -486,9 +495,24 @@ class view extends plugin_renderer_base
 					//print_r($filterdata->status);
 					$filterstatus = implode(',', $filterdata->status);
 				}
+
+				if ($filterdata->categories) {
+					$filtercategories = implode(',', $filterdata->categories);
+				}
 			} else {
-				$filtersubdepts = $filterorganizations = $filterdepartments = $filterlearningplan = $filterstatus = $filter4level = $filter5level = $filterstates = $filterdistrict = $filtersubdistrict = $filtervillage = null;
+				$filtersubdepts = $filterorganizations = $filterdepartments = $filterlearningplan = $filterstatus = $filter4level = $filter5level = $filterstates = $filterdistrict = $filtersubdistrict = $filtervillage = $filtercategories = null;
 			}
+			if (!empty($subdepartment)) {
+				$filtersubdepts = $subdepartment;
+			}
+
+			if (!empty($l4department)) {
+				$filter4level = $l4department;
+			}
+			if (!empty($l5department)) {
+				$filter5level = $l5department;
+			}
+
 			if (!empty($costcenterid)) {
 				$filterorganizations = $costcenterid;
 			}
@@ -513,6 +537,10 @@ class view extends plugin_renderer_base
 				$filterstatus = $status1;
 			}
 
+			if (!empty($filtercategories)) {
+				$filtercategories = $filtercategories;
+			}
+
 			$return .= html_writer::script('$(document).ready(function(){
 										  	
 												$("#' . $table->id . '").DataTable({
@@ -527,7 +555,7 @@ class view extends plugin_renderer_base
                     									  "searchPlaceholder": "' . get_string('search', 'local_learningplan') . '",
                     									  "emptyTable":     "<div class=\'w-100 alert alert-info\'>No Learning Paths Available </div>",
 													},
-													"ajax": "ajax.php?manage=1&subdepts=' . $filtersubdepts . '&costcenterid=' . $filterorganizations . '&departmentid=' . $filterdepartments . '&learningplan=' . $filterlearningplan . '&status=' . $filterstatus . '&view_type=' . $view_type . '&department4level=' . $filter4level . '&department5level=' . $filter5level . '&states=' . $filterstates . '&district=' . $filterdistrict . '&subdistrict=' . $filtersubdistrict . '&village=' . $filtervillage . '",
+													"ajax": "ajax.php?manage=1&subdepts=' . $filtersubdepts . '&costcenterid=' . $filterorganizations . '&departmentid=' . $filterdepartments . '&learningplan=' . $filterlearningplan . '&status=' . $filterstatus . '&view_type=' . $view_type . '&department4level=' . $filter4level . '&department5level=' . $filter5level . '&states=' . $filterstates . '&district=' . $filterdistrict . '&subdistrict=' . $filtersubdistrict . '&village=' . $filtervillage. '&categories=' . $filtercategories . '",
 													"datatype": "json",
 													"pageLength": 8,
 													

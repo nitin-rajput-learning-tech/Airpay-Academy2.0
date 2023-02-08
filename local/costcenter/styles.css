@@ -15,6 +15,15 @@
     padding: 8px;
     border-radius: 8px;
 }
-#filters_form .custom_form_field .col-md-3 {
-    display: none;
+/*action icon changes*/
+#page-local-costcenter-costcenterview .dept_container .dept_topcontent .dept_topright{
+	line-height: 25px;
+}
+#page-local-costcenter-index .dropdown-menu-right a,
+#page-local-costcenter-costcenterview .dropdown-menu-right a{
+	text-decoration: none !important;
+}
+#page-local-costcenter-costcenterview .dropdown-menu-right a:hover,
+#page-local-costcenter-index .dropdown-menu-right a:hover{
+	color: #fff !important;
 }

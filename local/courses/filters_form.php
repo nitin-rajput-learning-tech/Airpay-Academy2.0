@@ -45,7 +45,7 @@ class filters_form extends moodleform {
         
         $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         foreach ($filterlist as $key => $value) {
-            if($value === 'categories' || $value === 'elearning' || $value === 'status'){
+            if($value === 'categories' || $value === 'elearning' || $value === 'status' || $value === 'coursetype'){
                 $filter = 'courses';
             } else if($value === 'email' || $value ==='states' || $value ==='district' || $value ==='subdistrict' || $value ==='village' || $value === 'employeeid' || $value === 'username' || $value === 'users' || $value === 'hrmsrole'){
                 $filter = 'users';

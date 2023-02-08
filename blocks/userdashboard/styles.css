@@ -215,24 +215,25 @@
 #page-blocks-userdashboard-userdashboard_courses .course_container,
 .block.block_userdashboard .course_container {
     background-color: #f5f4f0;
-    padding: 1rem 0 !important;
+    padding: 10px 0 !important;
     color: #000;
     border: 1px solid #e6e8e7;
     box-shadow: none
 }
-
+/*
 #page-blocks-userdashboard-userdashboard_courses .coursecontent,
 .block.block_userdashboard .coursecontent {
     padding-left: 0 !important
 }
-
+*/
 #page-blocks-userdashboard-userdashboard_courses .course_name a,
 .block.block_userdashboard .course_name a {
     font-size: 18px;
-    word-break: break-all;
+    word-break: break-word;
     color: #2B354B;
     font-weight: 700;
     text-decoration: none;
+    white-space: normal;
 }
 #page-blocks-userdashboard-userdashboard_courses .course_name a:hover,
 .block.block_userdashboard .course_name a:hover {
@@ -1767,7 +1768,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 	border-radius: 10px;
     top: 0;
     box-shadow: 0 0 6px 0 #0000003b;
-    padding: 8px;
+    padding: 8px 5px;
     border: 1px solid #eee;
 }
 .block.block_userdashboard  .ctype_elearning .course_container .coursedesc span{
@@ -1815,7 +1816,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     z-index: -1;
 }
 .block.block_userdashboard .userdashboardcontent_container>div{
-    max-width: 1500px;
+/*    max-width: 1500px;*/
     margin: 0 auto;
 }
 .block.block_userdashboard .nav-tabs .nav-link.active, .block.block_userdashboard .nav-tabs .nav-link:hover
@@ -1829,7 +1830,8 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 .block.block_userdashboard .nav-tabs .nav-link{
 	color: #fff;
 }
-.block.block_userdashboard .nav-tabs .nav-link:hover,.block.block_userdashboard .nav-tabs .nav-link:focus {
+.block.block_userdashboard .nav-tabs .nav-link:hover,
+.block.block_userdashboard .nav-tabs .nav-link:focus {
 	color: #fff;
     border-top: none;
     border-left: none;
@@ -1891,7 +1893,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     border: 1px solid #fff;
 }
 .userdashboard_block .menulinks_container>div{
-    max-width: 1500px;
+/*    max-width: 1500px;*/
     margin: 0 auto;
 }
 .block.block_userdashboard .userdashboard_ctype_elearning .rating_container,
@@ -1957,6 +1959,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 }
 .block.block_userdashboard .ctype_elearning:hover .course_progress_container .progress_status{
     display: flex;
+    white-space: nowrap;
 }
 
 .block.block_userdashboard .node_container{
@@ -2062,11 +2065,138 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 #page-local-courses-userdashboard  #region-main {
     background-color: transparent;
 }
-#page-local-courses-userdashboard  .userdashboard_content.userdashboard_ctype_elearning {
+#page-local-courses-userdashboard  .userdashboard_content {
         margin-left: 3px;
 }
 @media(max-width:767px) {
     #page-local-courses-userdashboard  .userdashboard_content.userdashboard_ctype_elearning {
         margin-left: 20px;
     }
+}
+
+/*userdashboard block changes*/
+
+.block.block_userdashboard .course_container .courseimg_container {
+    width: 100%;
+    max-width: 175px;
+    padding: 0 10px;
+}
+.block.block_userdashboard .coursecontent {
+    width: 100%;
+    flex-grow: 1;
+}
+.block.block_userdashboard .course_progress_container{
+    width: 34px;
+}
+.block.block_userdashboard .course_progress_container .progress_circular {
+    width: 24px;
+    height: 24px;
+}
+.block.block_userdashboard .courseimg{
+    height: 100%;
+    min-height: 200px;
+}
+.block.block_userdashboard .ctype_elearning:hover .course_progress_container{
+    max-width: 144px;
+}
+.block.block_userdashboard .ctype_elearning:hover .course_progress_container .progress_status{
+    font-size: 13px;
+}
+
+/* userdashboard responsive css*/
+
+@media (max-width: 1023px){
+.block.block_userdashboard .course_container {
+    display: block !important;
+    height: 100%;
+}
+
+.block.block_userdashboard .courseimg_container {
+    max-width: 100% !important;
+    max-height: 100%;
+}
+.block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after {
+    border-left:0 !important;
+}
+.block.block_userdashboard .coursecontent{
+    max-width:100% !important;
+}
+.block.block_userdashboard .divslide {
+    height: 100% !important;
+}
+}
+
+@media(min-width:768px) and (max-width:1023px) {
+body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after {
+    border-right: 0 !important;
+}
+.block.block_userdashboard .col-md-2{
+    flex: 0 0 33.33333% !important;
+    max-width: 33.33% !important;
+}
+.block.block_userdashboard .course-next.icon, .block_userdashboard .course-prev{
+    top: 47%;
+}
+}
+@media(max-width: 767px){
+    .block.block_userdashboard .count_info_container{
+        position: static !important;
+    }
+    .block.block_userdashboard .courseimg_bg{
+        display:block !important;
+    }
+    .block.block_userdashboard .course_progress_container{
+        display:flex !important;
+    }
+    .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat .more{
+        padding-left:24px !important;
+    }
+    .block.block_userdashboard .count_info_list .enrolled_counts,
+    .block_userdashboard .count_info_list .inprogress_counts{
+        margin:15px;
+    }
+    .block.block_userdashboard .count_info_list .completed_counts{
+        margin-left: 1rem;
+        margin-top: 10px;
+    }
+    .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat .more{
+        justify-content: flex-start !important;
+    }
+     body .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab:after{    
+        border-top:0 !important;
+     }
+      .block.block_userdashboard  .nav-tabs:not(.more-nav){
+        background-color: transparent !important;
+     } 
+      .block.block_userdashboard  .nav-tabs:not(.more-nav) .nav-link.active:not(:disabled):not(.disabled).active{
+        background-color: transparent !important;
+        border-color:#fff !important;
+     }
+       .block.block_userdashboard  .nav-tabs:not(.more-nav) .nav-link{
+        background-color: transparent !important;
+     }
+     .block.block_userdashboard .course-next.icon{
+        padding:0 !important;
+     }
+    .block.block_userdashboard .course_container .courseimg_container {
+        max-width: 100% ;
+        max-height: 100%;
+    }
+    .block.block_userdashboard .courseimg{
+        display: block;
+    }
+}
+
+/*userdashboard card design*/
+.userdashboard_content .lp_container{
+
+    border-bottom: 5px solid #0071bd;
+    box-shadow: 0 0 5px 3px #ddd;
+    border-radius: 0 !important;
+    float: left;
+    box-sizing: border-box;
+    background-color: #fff;
+}
+.userdashboard_content .learning_plan_view .coursedesc{
+    min-height: 30px;
 }

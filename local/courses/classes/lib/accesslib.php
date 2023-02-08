@@ -80,8 +80,8 @@ class accesslib extends \local_costcenter\lib\accesslib{
 
             $totaluserscount =  $DB->count_records_sql($totalusersssql);
 
-
-            list($enrolledsqlselect, $enrolledparams) = self::get_course_enrolled_sql($context, $withcapability = '', $groupid = 0, $onlyactive = false, $onlysuspended = false,$enrolid);
+            $withcapability = 'local/courses:participate';
+            list($enrolledsqlselect, $enrolledparams) = self::get_course_enrolled_sql($context, $withcapability, $groupid = 0, $onlyactive = false, $onlysuspended = false,$enrolid);
             $enrolledsql = "SELECT COUNT('x') FROM ($enrolledsqlselect) enrolleduserids";
             $enrolledusercount = $DB->count_records_sql($enrolledsql, $enrolledparams);
 

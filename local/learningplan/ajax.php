@@ -29,6 +29,7 @@ $district = optional_param('district', null, PARAM_RAW);
 $subdistrict = optional_param('subdistrict', null, PARAM_RAW);
 $village = optional_param('village', null, PARAM_RAW);
 $selectedstatus = optional_param('status', null, PARAM_RAW);
+$categories = optional_param('categories', null, PARAM_RAW);
 // print_r($selectedstatus);
 // exit;
 $requestData = $_REQUEST;
@@ -126,6 +127,7 @@ if($manage>0){
     $filterdata->subdistrict = !empty($subdistrict) ? explode(',', $subdistrict) : null;
     $filterdata->village = !empty($village) ? explode(',', $village) : null;
     $filterdata->status = !empty($selectedstatus) ? explode(',', $selectedstatus) : null;
+    $filterdata->categories = !empty($categories) ? explode(',', $categories) : null;
     // if(!empty($costcenterid)){
     //     $filterdata->organizations = $costcenterid;
     // }

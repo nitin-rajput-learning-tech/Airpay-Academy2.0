@@ -336,7 +336,7 @@ class classroom_form extends moodleform {
                 FROM {local_classroom} AS lc 
                 JOIN {local_classroom_trainers} AS lct ON lct.classroomid = lc.id
                 JOIN {user} as u ON u.id = lct.trainerid
-                WHERE u.id IN (:trainerids) AND lc.id != :classroomid AND (lc.startdate BETWEEN :startdate AND :enddate OR lc.enddate BETWEEN :startdate1 AND :enddate1) ", array('trainerids' => implode(',', $data['trainers']), 'classroomid' => $data['id'], 'startdate' => $data['startdate'], 'enddate' => $data['enddate'], 'startdate1' => $data['startdate'], 'enddate1' => $data['enddate']));
+                WHERE u.id IN (:trainerids) AND lc.id != :classroomid AND ((lc.startdate BETWEEN :startdate AND :enddate OR lc.enddate BETWEEN :startdate1 AND :enddate1) OR ((lc.startdate < :startdate3 AND lc.enddate > :startdate4) OR (lc.startdate < :enddate3 AND lc.enddate > :enddate4))) ", array('trainerids' => implode(',', $data['trainers']), 'classroomid' => $data['id'], 'startdate' => $data['startdate'], 'enddate' => $data['enddate'], 'startdate1' => $data['startdate'], 'enddate1' => $data['enddate'], 'startdate3' => $data['startdate'], 'startdate4' => $data['startdate'], 'enddate3' => $data['enddate'], 'enddate4' => $data['enddate']));
             // print_r($trainernames);
             if(count($trainernames) > 0)
                 $errors['trainers'] = get_string('trainersoccupiedrequired','local_classroom', implode(',', $trainernames));

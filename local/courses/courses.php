@@ -33,6 +33,8 @@ $status = optional_param('status', '', PARAM_RAW);
 $costcenterid = optional_param('costcenterid', '', PARAM_INT);
 $departmentid = optional_param('departmentid', '', PARAM_INT);
 $subdepartmentid = optional_param('subdepartmentid','',PARAM_INT);
+$l4department = optional_param('l4department', '', PARAM_INT);
+$l5department = optional_param('l5department', '', PARAM_INT);
 $department4levelid = optional_param('department4levelid', '', PARAM_INT);
 $department5levelid = optional_param('department5levelid','',PARAM_INT);
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
@@ -181,8 +183,15 @@ echo $OUTPUT->header();
 echo $extended_menu_links;
 
 $filterparams = $renderer->get_catalog_courses(true,$formattype);
+    // for filtering users we are providing form
+    $formdata = new stdClass();
+    $formdata->filteropen_costcenterid = $costcenterid;
+    $formdata->filteropen_department = $departmentid;
+    $formdata->filteropen_subdepartment = $subdepartmentid;
+    $formdata->filteropen_level4department = $l4department;
+    $formdata->filteropen_level5department = $l5department;
 
-$mform = courses_filters_form($filterparams);
+$mform = courses_filters_form($filterparams, (array)$formdata);
      
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/courses/courses.php');
@@ -204,12 +213,12 @@ if(empty($filterdata) && !empty($jsonparam)){
     $mform->set_data($filterdata);
 }
 if(!empty($costcenterid) || !empty($status) || !empty($departmentid) || !empty($subdepartmentid) || !empty($department4levelid) || !empty($department5levelid)){
-        $formdata = new stdClass();
-        $formdata->organizations = $costcenterid;
-        $formdata->departments = $departmentid;
-        $formdata->subdepartment = $subdepartmentid;
-         $formdata->department4level = $department4levelid;
-        $formdata->department5level = $department5levelid;
+        // $formdata = new stdClass();
+        // $formdata->organizations = $costcenterid;
+        // $formdata->departments = $departmentid;
+        // $formdata->subdepartment = $subdepartmentid;
+        // $formdata->department4level = $department4levelid;
+        // $formdata->department5level = $department5levelid;
         $formdata->status = $status;
         $mform->set_data($formdata);
 }

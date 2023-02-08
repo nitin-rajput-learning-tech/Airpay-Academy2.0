@@ -466,7 +466,7 @@ class search implements renderable{
                     }else{
                        $string = get_string('selfenrol','local_search');
                     }
-                    $selfenrolbutton = '<a data-action="courseselfenrol'.$courseid.'" class="courseselfenrol cat_btn viewmore_btn  enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1, coursename: \''.$courseinfo->fullname.'\' }) })(event)">'.$string.'</a>';
+                    $selfenrolbutton = '<a data-action="courseselfenrol'.$courseid.'" class="courseselfenrol btn btn-block cat_btn viewmore_btn  enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1, coursename: \''.$courseinfo->fullname.'\' }) })(event)">'.$string.'</a>';
                 } else {
                     $selfenrolbutton = '';
                 }

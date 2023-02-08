@@ -28,7 +28,9 @@ require_once("$CFG->libdir/externallib.php");
 require_once($CFG->dirroot . '/local/classroom/lib.php');
 use \local_classroom\classroom as classroom;
 use \local_classroom\form\classroom_form as classroom_form;
-
+if (file_exists($CFG->dirroot . '/local/includes.php')) {
+	require_once($CFG->dirroot . '/local/includes.php');
+}
 class local_classroom_external extends external_api {
 
     public static function get_classrooms_parameters() {
@@ -2080,12 +2082,21 @@ public static function submit_instituteform_form_parameters() {
         $trainerlist = array();
         foreach ($allclassrooms as $classroom) {
             $classcourse = array();
+            if(file_exists($CFG->dirroot.'/local/includes.php')){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new \user_course_details();
+            }
+            $coursefileurl = (new \local_classroom\classroom)->classroom_logo($coursefileurl = $classroom->classroomlogo);
+            if($coursefileurl == false){
+                $coursefileurl = $includes->get_classes_summary_files($classroom);
+            }
             $classroominfo['id'] = $classroom->id;
             $classroominfo['status'] = $classroom->status;
             $classroominfo['name'] = $classroom->name;
             $classroominfo['startdate'] = \local_costcenter\lib::get_userdate("d/m/Y",$classroom->startdate);
             $classroominfo['enddate'] = \local_costcenter\lib::get_userdate("d/m/Y",$classroom->enddate);
             $classroominfo['summary'] = $classroom->description;
+            $classroominfo['bannerimage'] = is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
             $location = $DB->get_record_sql("SELECT * FROM {local_location_institutes} WHERE id =". $classroom->instituteid);
             if ($location->fullname) {
                 $classroominfo['location'] = $location->fullname;
@@ -2163,8 +2174,9 @@ public static function submit_instituteform_form_parameters() {
                             'likes' => new external_value(PARAM_INT, 'Classroom Likes'),
                             'dislikes' => new external_value(PARAM_INT, 'Classroom Dislikes'),
                             'avgrating' => new external_value(PARAM_FLOAT, 'Classroom avgrating'),
-                            'ratingusers' => new external_value(PARAM_FLOAT, 'Classroom users rating')
-                        )
+                            'ratingusers' => new external_value(PARAM_FLOAT, 'Classroom users rating'),
+                            'bannerimage' => new external_value(PARAM_URL, 'Classroom bannerimage')
+                            )
                     )
                 ),
                 'total' => new external_value(PARAM_INT, 'Total Records'),
@@ -2508,6 +2520,13 @@ public static function submit_instituteform_form_parameters() {
                 if ($course->enablecompletion) {
                     $progress = \core_completion\progress::get_course_progress_percentage($course, $userid);
                 }
+			    $includes = new user_course_details();
+                $courseimage = $includes->course_summary_files($course);                
+                if(is_object($courseimage)){
+                    $classcourse[$key]["courseimage"] = $courseimage->out();                    
+                }else{
+                    $classcourse[$key]["courseimage"] = $courseimage;
+                }  
                 $classcourse[$key]['id'] = $course->id;
                 $classcourse[$key]['fullname'] = $course->fullname;
                 $classcourse[$key]['shortname'] = $course->shortname;
@@ -2570,7 +2589,8 @@ public static function submit_instituteform_form_parameters() {
                             'dislikes' => new external_value(PARAM_INT, 'Course Dislikes'),
                             'avgrating' => new external_value(PARAM_FLOAT, 'Course Avg rating'),
                             'ratingusers' => new external_value(PARAM_INT, 'Course rating users'),
-                        )
+                            'courseimage' => new external_value(PARAM_URL, 'URL bannerimage'),
+                            )
                     )
                 ),
                 'classroomname' => new external_value(PARAM_RAW, 'classroomname'),

@@ -46,7 +46,7 @@ class local_learningplan_external extends external_api {
                 if( !($validateddata->open_costcenterid == $org) && ($validateddata->form_status == 0)){
                     local_costcenter_get_costcenter_path($validateddata);
                 }
-                if($validateddata->form_status == 1){
+                if($validateddata->form_status == 2){
                     // if((!empty($validateddata->open_costcenterid) != $org) || ($validateddata->open_department !=$ctr) || ($validateddata->open_subdepartment !=$bu) || ($validateddata->open_level4department !=$cu) || ($validateddata->open_level5department !=$territory)){
                         
                     // }
@@ -292,6 +292,8 @@ class local_learningplan_external extends external_api {
             $learningplans['credits'] = $lp->open_points;
             $learningplans['mandatory'] = $lp->mandatory;
             $learningplans['optional'] = $lp->optional;
+            $coursefileurl = (new \local_learningplan\lib\lib)->get_learningplansummaryfile($coursefileurl = $lp->id);
+            $learningplans['bannerimage'] =  is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
             $modulerating = $DB->get_field('local_ratings_likes', 'module_rating', array('module_id' => $lp->id, 'module_area' => 'local_learningplan'));
             if(!$modulerating){
                  $modulerating = 0;
@@ -336,6 +338,7 @@ class local_learningplan_external extends external_api {
                             'ratingusers' => new external_value(PARAM_INT, 'Course rating users'),
                             'likes' => new external_value(PARAM_INT, 'LearningPath Likes'),
                             'dislikes' => new external_value(PARAM_INT, 'LearningPath Dislikes'),
+                            'bannerimage'=> new external_value(PARAM_URL, 'LearningPath bannerimage',VALUE_OPTIONAL),
                             'certificateid'=> new external_value(PARAM_INT, 'LearningPath Certificate id'),
                             ), 'Learning Paths'
                         )

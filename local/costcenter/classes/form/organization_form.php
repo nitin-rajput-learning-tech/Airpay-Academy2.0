@@ -169,15 +169,14 @@ class organization_form extends moodleform { /*costcenter creation form*/
         //         $mform->addGroup($iconstyle,'shell',get_string('iconstyle', 'local_costcenter'), array('hidden'), false);
             
 
-         //button color
-           $mform->addElement('text', 'button_color','Button_color', 'local_costcenter');
-           $mform->setType('button_color', PARAM_RAW);
-            
          //brand_color
-           $mform->addElement('text', 'brand_color', 'Brand_color', 'local_costcenter');
+           $mform->addElement('text', 'brand_color', 'Primary Color', 'local_costcenter');
            $mform->setType('brand_color', PARAM_RAW);
 
-         //hover_color
+         //button color
+           $mform->addElement('text', 'button_color','Secondary Color', 'local_costcenter');
+           $mform->setType('button_color', PARAM_RAW);
+        //hover_color
            $mform->addElement('text', 'hover_color','Hover_color', 'local_costcenter');
            $mform->setType('hover_color', PARAM_RAW);
 

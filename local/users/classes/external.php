@@ -336,6 +336,11 @@ class local_users_external extends external_api {
         $totalusers = manage_users_count($stable, $filtervalues);
         $totalcount = $totalusers['totalusers'];
         $activeusercount = $totalusers['activeusercount'];
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        if(is_siteadmin() || has_capability('local/users:manage',$categorycontext) ) {
+        $actionsicons = true;
+        }
+       
         $inactiveusercount = $totalusers['inactiveusercount'];
         $stable->thead = false;
         $data = manage_users_content($stable, $totalusers/*$filtervalues*/);
@@ -343,6 +348,7 @@ class local_users_external extends external_api {
             'totalcount' => $totalcount,
             'activeusercount' => $activeusercount,
             'inactiveusercount' => $inactiveusercount,
+            'actionsicons' => $actionsicons,
             'records' => $data,
             'options' => $options,
             'dataoptions' => $dataoptions,
@@ -364,6 +370,7 @@ class local_users_external extends external_api {
             'inactiveusercount' => new external_value(PARAM_INT, 'total number of users in result set'),
             'wwwroot' => new external_value(PARAM_RAW, 'URL for wwwroot'),
             'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+            'actionsicons' => new external_value(PARAM_RAW, 'Action status', VALUE_OPTIONAL),
             'records' => new external_multiple_structure(
                             new external_single_structure(
                                 array(

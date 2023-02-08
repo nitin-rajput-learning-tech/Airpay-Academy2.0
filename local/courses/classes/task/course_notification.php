@@ -33,7 +33,7 @@ class course_notification extends \core\task\scheduled_task{
     	global $DB, $CFG;
         require_once($CFG->dirroot.'/local/courses/includes.php');
     	$type = "course_notification";
-    	$starttime = strtotime(date('d/m/Y', time()));
+    	$starttime = strtotime(date('d-m-Y', time()));
         $endtime = $starttime+86399;
     	$newcoursesql = "SELECT c.* FROM {course} AS c WHERE c.timecreated BETWEEN :startdate AND :enddate
             AND concat(',',c.open_identifiedas, ',') LIKE concat('%,',2,',%') ";
@@ -52,9 +52,10 @@ class course_notification extends \core\task\scheduled_task{
             if($costcenterexist){
                 $notification_sql .= " AND open_path LIKE :costcenterid ";
                 $userssql .= " AND u.open_path LIKE :costcenterid";
-                $params['costcenterid'] =$course->open_path;
-                $notificationparams['costcenterid'] = $course->open_path;
-                $modulenotificationparams['costcenterid'] =$course->open_path;
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$course->open_path);
+                $params['costcenterid'] ='%'.$org.'%';
+                $notificationparams['costcenterid'] = '%'.$org.'%';
+                $modulenotificationparams['costcenterid'] ='%'.$org.'%';
     			// if(!empty($course->open_departmentid)){
 				// 	$userssql .= " AND u.open_departmentid=:departmentid";
     			// 	$params['departmentid'] = $course->open_departmentid;

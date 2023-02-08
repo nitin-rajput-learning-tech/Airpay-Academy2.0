@@ -77,6 +77,11 @@ $PAGE->navbar->add(get_string("pluginname", 'local_learningplan'));
 $learningplan_renderer = new local_learningplan\render\view();
 $learningplan_lib = new local_learningplan\lib\lib();
 
+$costcenterid = optional_param('costcenterid', '', PARAM_INT);
+$departmentid = optional_param('departmentid', '', PARAM_INT);
+$subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
+$l4department = optional_param('l4department', '', PARAM_INT);
+$l5department = optional_param('l5department', '', PARAM_INT);
 echo $OUTPUT->header(); 
 $enabled = check_learningplanenrol_pluginstatus($value);
 
@@ -154,11 +159,19 @@ $out .= "</ul>";
 echo $out;
 //$depth = $USER->useraccess['currentroleinfo']['depth'];
 $thisfilters = array(/*'organizations', 'departments',
-    'subdepartment', 'department4level','department5level',*/'hierarchy_fields','states','district','subdistrict','village','idnumber', 'email','users');
+    'subdepartment', 'department4level','department5level',*/'hierarchy_fields','categories','idnumber', 'email','users');
 if(!is_siteadmin()) {
-$thisfilters = array('hierarchy_fields','states','district','subdistrict','village','idnumber', 'email','users');
+$thisfilters = array('hierarchy_fields','idnumber', 'email','users','categories');
 }
-$datasubmitted = data_submitted();
+
+    $formdata = new stdClass();
+    $formdata->filteropen_costcenterid = $costcenterid;
+    $formdata->filteropen_department = $departmentid;
+    $formdata->filteropen_subdepartment = $subdepartmentid;
+    $formdata->filteropen_level4department = $l4department;
+    $formdata->filteropen_level5department = $l5department;
+    
+$datasubmitted = data_submitted() ? data_submitted() : $formdata;
 $mform = new filters_form(null, array('filterlist'=> $thisfilters)+(array)$datasubmitted);
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/learningplan/index.php');
@@ -182,10 +195,16 @@ if(empty($filterdata) && !empty($jsonparam)){
 }
 if(!empty($costcenterid)|| !empty($status1) || !empty($departmentid) || !empty($subdepartmentid)){   
     $formdata = new stdClass();
-    $formdata->organizations = $costcenterid;
-    $formdata->departments = $departmentid;
-    $formdata->subdepartment = $subdepartmentid;
-    $formdata->status = $status1;
+    $formdata->filteropen_costcenterid = $costcenterid;
+    $formdata->filteropen_department = $departmentid;
+    $formdata->filteropen_subdepartment = $subdepartmentid;
+    $formdata->filteropen_level4department = $l4department;
+    $formdata->filteropen_level5department = $l5department;
+
+    // $formdata->organizations = $costcenterid;
+    // $formdata->departments = $departmentid;
+    // $formdata->subdepartment = $subdepartmentid;
+    // $formdata->status = $status1;
     $mform->set_data($formdata);
 }
 

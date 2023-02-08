@@ -39,14 +39,16 @@ class user{
             $classroomsarray['description'] = $classroomsummary;
             $classroomsarray['percentage'] = '';
             $classroomsarray['url'] = '';
-            $classroomsarray['module_img_url'] = ((new \local_classroom\classroom)->classroom_logo($classroom->module_logo));
-            if($return['module_img_url'] == 0){
+            // $classroomsarray['module_img_url'] = ((new \local_classroom\classroom)->classroom_logo($classroom->module_logo));
+            if($classroom->module_logo == 0){
                 require_once($CFG->dirroot.'/local/includes.php');
                 $includes = new \user_course_details();
                 $classroomsarray['module_img_url'] = ($includes->get_classes_summary_files($classroom))->out();
             }else{
-                $classroomsarray['module_img_url'] = $return['background_logourl']->out();
+                // $classroomsarray['module_img_url'] = $return['background_logourl']->out();
+                $classroomsarray['module_img_url'] = (new \local_classroom\classroom)->classroom_logo($classroom->module_logo);
             }
+            $classroomsarray['module_img_url'] = is_object($classroomsarray['module_img_url']) ? $classroomsarray['module_img_url']->out() : $classroomsarray['module_img_url'] ;
           
           $data[] = $classroomsarray;
       }

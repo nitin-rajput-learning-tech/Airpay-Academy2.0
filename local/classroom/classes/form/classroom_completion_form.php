@@ -35,10 +35,12 @@ class classroom_completion_form extends moodleform {
     public function definition() {
         global $CFG, $DB, $USER;
         $querieslib = new querylib();
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($cid);
+
         $mform = &$this->_form;
         $cid = $this->_customdata['cid'];
         $sid = $this->_customdata['id'];
+
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($cid);
 
         $mform->addElement('hidden', 'id', $sid);
         $mform->setType('id', PARAM_INT);
