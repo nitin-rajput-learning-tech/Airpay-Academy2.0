@@ -96,6 +96,7 @@ class syncfunctionality
             'employee_code',
             'employee_status',
             'gender',
+            'email',
         ];
         
         while ($line = $cir->next()) {

@@ -134,7 +134,7 @@ class create_user extends moodleform {
             $mform->addGroup($genderarray, 'gendergr', get_string('gender', 'local_users'), array(' '), false);
 
             $mform->addElement('text', 'email', get_string('email', 'local_users'));
-            // $mform->addRule('email', get_string('emailerror', 'local_users'), 'required', null, 'client');
+            $mform->addRule('email', get_string('emailerror', 'local_users'), 'required', null, 'client');
             $mform->setType('email', PARAM_RAW);
 
 
