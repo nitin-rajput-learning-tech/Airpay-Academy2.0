@@ -1,0 +1,107 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<div class="program_courses">
+	{{# cancreatelevel }}
+		<div class="pull-right">
+			<a title="{{#str}}addlevel, local_program{{/str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: 0, programid:{{programid}}  }) })(event)">
+				<i class="icon fa fa-tags fa-fw" aria-hidden="true" aria-label="" title="{{#str}}addlevel, local_program{{/str}}"></i>
+	        </a>
+		</div>
+	{{/ cancreatelevel }}
+	<div class="lp_course_sortorder w-full pull-left" >
+		{{# programlevels}}
+		<div class = "w-full pull-left lpcourses">
+			<div class="">
+				{{level}}
+				{{# caneditlevel }}
+					<div class="pull-right">
+						<a title="{{#str}}addlevel, local_program{{/str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: {{levelid}}, programid:{{programid}}  }) })(event)">
+							{{#str}}edit{{/str}}
+				        </a>
+					</div>
+				{{/ caneditlevel }}
+				{{# candeletelevel }}
+					<div class="pull-right">
+						<a title="{{#str}}addlevel, local_program{{/str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: {{levelid}}, programid:{{programid}}  }) })(event)">
+							{{#str}}delete{{/str}}
+				        </a>
+					</div>
+				{{/ candeletelevel }}
+                {{# canaddcourse }}
+				<div class="pull-right">
+					<a href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:{{ contextid }}, component:'local_program', callback:'course_form', form_status:0, plugintype: 'local_program', pluginname: 'course', id:0, bcid: {{ programid }}, levelid: {{levelid}} }) })(event)"><button class="btn btn-primary">{{#str}}addcourse, local_program{{/str}}</button></a>
+				</div>
+                {{/ canaddcourse }}
+			</div>
+			<div class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left p-0 lpcourses_container" id = "course_info_{{ levelid }}">
+				<div class="vertical_brdr"></div>
+				{{# courses}}
+					<div class="w-full pull-left lpcourse_content mt-15 mb-15">
+						<div class="col-lg-3 col-md-3 col-sm-12 col-12 pull-left p-0 course_progress_container">
+							<div class="w-full pull-left middlline_div"></div>
+							<div class="w-full pull-left middlline"></div>
+							<div class="course_progress">
+								<div class="lpcourse_progress progress-chart-container m-b-1">
+								   <div class="progress-doughnut">
+								        <div class="progress-text has-percent">{{ progress }}%</div>
+								        <div class="progress-indicator">
+								            <svg xmlns="http://www.w3.org/2000/svg">
+								                <g>
+								                    <title aria-hidden="true">{{ progress }}</title>
+								                    <circle class="circle percent-{{ progress }}"
+								                        r="27.5"
+							                            cx="35"
+							                            cy="35"/>
+								                </g>
+								            </svg>
+								        </div>
+								    </div>
+								</div>
+							</div>
+						</div>
+						<div class="col-lg-5 col-md-5 col-sm-12 col-12 pull-left p-0 lpcourseslist">
+							<div class="w-full pull-right actions">
+                                {{# canremovecourse }}
+                                    <a class="pull-right" id="unassign_course_{{bclevelcourseid}}" onclick="(function(e){ require('local_program/program').unassignCourses({action:'unassign_course', bclcid:{{bclevelcourseid}}, levelid:{{levelid}}, bcid:{{programid}} }) })(event)" href="javascript:void(0)"><i class="icon fa fa-trash fa-fw" aria-hidden="true" title="Un-assign" aria-label="Delete"></i></a>
+                                {{/ canremovecourse }}
+                                {{# canmanagecourse }}
+                                    <span class="switch_type">
+                                        <label class="switch">
+                                            <input class="switch-input" type="checkbox" id="next_val{{bclevelcourseid}}" value="{{bclevelcourseid}}" >
+                                            <span class="switch-label" data-on="Man" data-off="Opt"></span>
+                                            <span class="switch-handle"></span>
+                                        </label>
+                                        <input type="hidden" value="{{bclevelcourseid}}" id="courseid{{bclevelcourseid}}" name="row[]">
+                                    </span>
+                                {{/ canmanagecourse }}
+                            </div>
+							{{> local_program/courseblock }}
+						</div>
+						    {{> local_program/coursesessionblock }}
+						{{# cmpltd_class }}
+						<div class="col-lg-4 col-md-4 col-sm-12 col-12 pull-left">
+							<div class='completed'><span class='cmplt_icon {{cmpltd_class}}'><i class='fa fa-check' aria-hidden='true'></i></span><span cmplt_date>{{{ date }}}</span></div>
+						</div>
+						{{/ cmpltd_class }}
+					</div>
+				{{/ courses }}
+					<span class="lp_dot"></span>
+				</div>
+		</div>
+		{{/ programlevels}}
+	</div>
+</div>

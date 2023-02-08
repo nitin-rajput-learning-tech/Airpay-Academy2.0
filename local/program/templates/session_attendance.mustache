@@ -1,0 +1,37 @@
+<div class="rooms">
+    <span class="roomsiconimage">{{ iconimage }}</span>
+    <h4>{{# str }}session_details, local_program {{/ str }} :</h4>
+</div>
+<table id = "sessionDetails">
+    <tbody>
+        <tr>
+            <td>
+                <div class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left p-0">
+                    <div class="col-lg-6 col-md-6 col-12 pull-left">
+                        <p>
+                            <span class="label_name">{{#str}} name {{/str}} <span class="pull-right mr-10">:</span></span>
+                            <span>{{ sessiondata.name }}</span>
+                        </p>    
+                        <p>
+                            <span class="label_name">Trainer <span class="pull-right mr-10">:</span></span>
+                            <span>{{ sessiondata.trainername }}</span>
+                        </p>
+                    </div>
+
+                    <div class="col-lg-6 col-md-6 col-12 pull-left">
+
+                        <p>
+                            <span class="label_name">Duration <span class="pull-right mr-10">:</span></span>
+                            <span>{{ sessiondata.duration }} Hrs</span>
+                        </p>
+
+                        <p>
+                            <span class="label_name">{{#str}} timings, local_program {{/str}} <span class="pull-right mr-10">:</span></span>
+                            <span>{{#userdate}} {{sessiondata.timestart}}, {{#str}} strftimedatetime {{/str}} {{/userdate}} to {{#userdate}} {{sessiondata.timefinish}}, {{#str}} strftimedatetime {{/str}} {{/userdate}}</span>
+                        </p>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>

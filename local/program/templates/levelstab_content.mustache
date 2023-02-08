@@ -1,0 +1,77 @@
+<div class="col-lg-12 col-md-12 col-12 pull-left p-0 programview_tabscontainer">
+    <div class="leveltabs_list">
+        <ul class="nav nav-tabs tabs-left sideways" role="tablist">
+            {{# programlevels}}
+                <li class="nav-item {{^ disabled }} programlevels {{/ disabled }}" role="presentation">
+                    {{# caneditlevel }}
+                        <div class="actionicons showoptions{{ id }}">
+                            <span  class="pull-right showoptions" data-action="showoptions{{ id }}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{ id }}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{ id }}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
+                            </span>
+                            <ul class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left p-0 options_container" id = "showoptions{{ id }}">
+                                {{# caneditlevel }}
+                                <li>
+                                    <a href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: {{id}}, programid:{{programid}}  }) })(event)">
+                                        <i class="fa fa-pencil fa-fw" aria-hidden="true" title="{{# str}} editlevel, local_program {{/ str}}"></i>
+                                    </a>
+                                </li>
+                                {{/ caneditlevel }}
+                                {{# candeletelevel}}
+                                <li>
+                                    <a  href="javascript:void(0)" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deletelevel', id: {{ id }}, programid: {{ programid }}}) })(event)">
+                                        <i class="fa fa-trash" aria-hidden="true" title="{{# str}} deletelevel, local_program {{/ str}}"></i>
+    				                </a>
+                                </li>
+                            {{/ candeletelevel}}
+			    {{^ candeletelevel}}
+			    <!--<li>
+				<a href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+				    title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'cannotdeletelevel', id: {{ id }}, programid: {{ programid }}}) })(event)">
+					<i class="fa fa-times" aria-hidden="true" title="{{# str}} deletelevel, local_program {{/ str}}"></i>
+				</a>
+                </li>-->
+			    {{/ candeletelevel}}
+                            </ul>
+                        </div>
+                        {{/ caneditlevel }}
+                    {{# disabled }}
+                        <span class="nav-link">{{{ level }}}</span>
+                    {{/ disabled}}
+                    {{^ disabled }}
+                        <a class="nav-link {{active}} {{#userview}}{{#mycompletionstatus}}{{mycompletionstatus}}{{/mycompletionstatus}}{{#myinprogressstatus}}{{myinprogressstatus}}{{/myinprogressstatus}}{{/userview}}" data-toggle="tab" href="javascript:void(0);" aria-controls="bclevel{{ id }}" data-level = "{{id}}" role="tab">{{{ level }}}</a>
+                    {{/ disabled }}
+                </li>
+            {{/ programlevels}}
+        </ul>
+    </div>
+    <div class="levetabscontent_container">
+        {{{ levelcourses }}}
+    </div>
+</div>
+{{#js}}
+    $( document ).ready(function() {
+        var levelheight = $('.leveltabs_list').height();
+        $('.levetabscontent_container').css('min-height', levelheight+'px');
+    });
+    $('.programlevels').click(function(){
+        if ($(this).find('.nav-link').hasClass('active')){
+            return true;
+        }
+        if ($('.tab-content #{{levelid}}').hasClass('active')){
+            return true;
+        }
+
+        var levelid = $(this).find('.nav-link').data('level');
+        $.ajax({
+            method: 'POST',
+            url: M.cfg.wwwroot + '/local/program/ajax.php',
+            data: {
+                action: 'programlevelcourses',
+                programid:{{programid}},
+                levelid: levelid
+            },
+            success:function(resp){
+                $('.levetabscontent_container').html(resp);
+            }
+        });
+    });
+{{/js}}
