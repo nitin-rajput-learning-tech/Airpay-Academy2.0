@@ -165,6 +165,14 @@ function xmldb_local_users_uninstall() {
         if ($dbman->field_exists($table, $field9)) {
             $dbman->drop_field($table, $field9);
         }
+        $prefix = new xmldb_field('open_prefix');
+        if ($dbman->field_exists($table, $prefix)) {
+            $dbman->drop_field($table, $prefix);
+        }
+        $skilltype = new xmldb_field('open_skilltype');
+        if ($dbman->field_exists($table, $skilltype)) {
+            $dbman->drop_field($table, $skilltype);
+        }
     }
     return true;
 }

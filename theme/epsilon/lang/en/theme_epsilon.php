@@ -32,11 +32,11 @@ $string['backgroundimage_desc'] = 'The image to display as a background of the s
 $string['brandcolor'] = 'Brand colour';
 $string['brandcolor_desc'] = 'The accent colour.';
 
-$string['primarycolor'] = 'Site Buttons Colour';
-$string['primarycolor_desc'] = 'Pick your site buttons colour for Button , Icons and Tabs';
+$string['primarycolor'] = 'Site Primary Color';
+$string['primarycolor_desc'] = 'Pick your site primary color for Button , Icons and Tabs';
 
-$string['secondarycolor'] = 'Site Brand Colour';
-$string['secondarycolor_desc'] = 'Pick your site brand colour';
+$string['secondarycolor'] = 'Site Seconday Color';
+$string['secondarycolor_desc'] = 'Pick your site seconday color';
 
 $string['hovercolor'] = 'Site hover colour';
 $string['hovercolor_desc'] = 'Pick your site hover colour';

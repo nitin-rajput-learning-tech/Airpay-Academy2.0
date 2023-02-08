@@ -148,6 +148,16 @@ function xmldb_local_users_install(){
           if (!$dbman->field_exists($table, $field9)) {
               $dbman->add_field($table, $field9);
           }
+          $prefix = new xmldb_field('open_prefix');
+          $prefix->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $prefix)) {
+              $dbman->add_field($table, $prefix);
+          }
+          $skilltype = new xmldb_field('open_skilltype');
+          $skilltype->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+          if (!$dbman->field_exists($table, $skilltype)) {
+              $dbman->add_field($table, $skilltype);
+          }
 
     }
 }

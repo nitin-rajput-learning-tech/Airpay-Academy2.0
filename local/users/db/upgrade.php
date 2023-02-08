@@ -223,5 +223,21 @@ function xmldb_local_users_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2022101800.13, 'local', 'users');
     }
+
+    if ($oldversion < 2022101800.14) {
+        $table = new xmldb_table('user');
+        $field = new xmldb_field('open_prefix');
+        $field->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field1 = new xmldb_field('open_skilltype');
+        $field1->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.14, 'local', 'users');
+    }
 	return true;
 }

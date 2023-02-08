@@ -190,6 +190,9 @@ class syncfunctionality
 
             $this->gendervalidations($user);
 
+            if (!empty($user->prefix)) {
+                $this->prefixvalidations($user);
+            }
             if (!empty($user->timezone)) {
                 $this->timezonevalidations($user);
             }
@@ -504,7 +507,7 @@ class syncfunctionality
             } else if (strtolower($excel->gender) == 'female') {
                 $this->usergender = 1;
             } else if (strtolower($excel->gender) == 'other') {
-                $this->usergender = 1;
+                $this->usergender = 2;
             } else {
                 $strings = new stdClass;
                 $strings->line = $this->excel_line_number;
@@ -518,6 +521,30 @@ class syncfunctionality
              ' . $this->excel_line_number . '</div>';
             $this->errormessage = get_string('columnsarragement_error', 'local_users', $excel);
             $this->errorcount++;
+        }
+    }
+
+    public function prefixvalidations($excel)
+    {
+        //validation for gender
+        $strings = new stdClass;
+        $strings->learner_id = $excel->employee_code;
+        $strings->excel_line_number = $this->excel_line_number;
+        if (array_key_exists('prefix', $excel)) {
+            if (strtolower($excel->prefix) == 'mr') {
+                $this->prefix = 1;
+            } else if (strtolower($excel->prefix) == 'mrs') {
+                $this->prefix = 2;
+            } else if (strtolower($excel->prefix) == 'ms') {
+                $this->prefix = 3;
+            } else {
+                $strings = new stdClass;
+                $strings->line = $this->excel_line_number;
+                echo '<div class=local_users_sync_error>' . get_string('invalidprefix', 'local_users', $strings) . '</div>';
+                $this->errors[] = get_string('invalidprefix', 'local_users', $strings);
+                $this->mfields[] = $excel->gender;
+                $this->errorcount++;
+            }
         }
     }
 
@@ -792,6 +819,8 @@ class syncfunctionality
         $user->open_dateofbirth = strtotime($excel->date_of_birth);
         $user->open_joindate = strtotime($excel->date_of_joining);
         $user->idnumber = $excel->employee_code;
+        $user->open_prefix = $this->prefix;
+        $user->open_skilltype = $excel->skill_type;
         $user->open_employeeid = $excel->employee_code;
         $user->username = strtolower($excel->username);
         $user->firstname = $excel->first_name;
@@ -829,11 +858,11 @@ class syncfunctionality
         $user->open_village = $this->open_village;
         $user->country = $excel->bussiness_unit_code;
         $user->timezone = in_array($excel->timezone, $this->timezones) ? $excel->timezone : $CFG->forcetimezone;
-        // local_costcenter_get_costcenter_path($user);
-        // if ($excel->reportingmanager_empid) {
-        //     $super_user = $this->get_super_userid($excel->reportingmanager_empid, $user->open_path);
-        //     $user->open_supervisorid = $super_user;
-        // }
+        local_costcenter_get_costcenter_path($user);
+        if ($excel->reportingmanager_empid) {
+            $super_user = $this->get_super_userid($excel->reportingmanager_empid, $user->open_path);
+            $user->open_supervisorid = $super_user;
+        }
         $user->open_hrmsrole = $excel->role;
         $user->institution = $excel->bussiness_unit_code;
         $user->usermodified = $USER->id;
@@ -910,6 +939,8 @@ class syncfunctionality
                     \core\session\manager::kill_user_sessions($user->id);
                 }
             }
+            $user->open_prefix = $this->prefix;
+            $user->open_skilltype = $excel->skill_type;
             $user->open_costcenterid = $this->costcenterid;
             $user->open_department = $this->countryid;
             $user->open_subdepartment = $this->level3_bussinessid;

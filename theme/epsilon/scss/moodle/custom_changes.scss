@@ -832,7 +832,7 @@ body .moodle-dialogue-confirm .confirmation-buttons{
     left: 0px;
     bottom: 0px;
 }
-#page-course-view-topics #page.drawers .main-inner {
+.pagelayout-course #page.drawers .main-inner {
     max-width: inherit; }
 .page-context-header .page-header-headings h1{font-weight: 400!important;}
 .page-context-header .page-header-headings h1:after {
@@ -3093,19 +3093,34 @@ body .que .info>div {
 }
 .action_menu_dropdown{
     font-size: 18px;
-    .dropdown-item {
-        padding: 0.25rem 0.5rem;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        i{
-            width: 20px;
-            flex: 0 0 20px;
+    .dropdown-menu{
+        min-width: auto;
+        background-color: #fff;
+        overflow: hidden;
+        &::before{
+            position: absolute;
+            background-color: #0075a621;
+            content: "";
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            margin-top: -8px;
+        }
+        .dropdown-item {
+            padding: 0.25rem 1rem 0.25rem 0.5rem;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 5px;
+            i{
+                width: 20px;
+                flex: 0 0 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
         }
     }
+    
 }
 .opacity-25{
     opacity: 0.25;
@@ -3129,7 +3144,7 @@ body .que .info>div {
     }
     
 }
-#page-course-view-topics .courseheader .course_extended_menu_list .icon{
+/*#page-course-view-topics .courseheader .course_extended_menu_list .icon{
     border-radius: 0!important;
     background-color: transparent;
     border: none;
@@ -3140,3 +3155,4 @@ body .que .info>div {
 #page-course-view-topics .courseheader .course_extended_menu_list li{
     margin:0;
 }
+*/

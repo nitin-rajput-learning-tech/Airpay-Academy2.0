@@ -866,3 +866,7 @@ body#page-local-courses-index .catlisticons i {
 body.path-blocks-reportdashboard table.dataTable tr th.header {
     background-color: var(--sitehighlight) !important;
 }
+.action_menu_dropdown .dropdown-menu::before {
+    background-color: var(--secondarycolor);
+    opacity: 25%;
+}

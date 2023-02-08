@@ -1057,7 +1057,6 @@ function manage_users_count($stable, $filterdata) {
 */
 function manage_users_content($stable, $users/*,$filterdata*/) {
     global $DB, $PAGE, $USER, $CFG, $OUTPUT;
-
     $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
     $userslist = $users['users'];
     $data = array();
@@ -1105,10 +1104,37 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $list['dept'] = $dept;
         $list['commercialunit'] = $commercialunit;
         $list['commercialarea'] = $commercialarea;
-        $list['group'] = $user->open_group ? $user->open_group : 'N/A';
-        $list['level'] = $user->open_level ? $user->open_level : 'N/A';
+        if($user->gender == 0){
+            $list['gender'] = 'Male';
+        } else if($user->gender == 1){
+            $list['gender'] = 'Female';
+        } else if($user->gender == 2){
+            $list['gender'] = 'Other';
+        } else {
+            $list['gender'] = '--';
+        }
+
+        if($user->open_prefix == 1){
+            $list['prefix'] = 'Mr';
+        } else if($user->open_prefix == 2){
+            $list['prefix'] = 'Mrs';
+        } else if($user->open_prefix == 3){
+            $list['prefix'] = 'Ms';
+        } else {
+            $list['prefix'] = '--';
+        }
+        $list['employmenttype'] = $user->open_employmenttype ? $user->open_employmenttype : '--';
+        $list['employmentstatus'] = $user->open_employmentstatus ? $user->open_employmentstatus : '--';
+        $list['region'] = $user->open_region ? $user->open_region : '--';
+        $list['branch'] = $user->open_branch ? $user->open_branch : '--';
+        $list['subbranch'] = $user->open_subbranch ? $user->open_subbranch : '--';
+        $list['level'] = $user->open_level ? $user->open_level : '--';
+        $list['grade'] = $user->open_grade ? $user->open_grade : '--';
+        $list['skilltype'] = $user->open_skilltype ? $user->open_skilltype : '--';
         $list['phno'] = ($user->phone1) ? $user->phone1 : '--';
         $list['designation'] = $designation;
+        $list['dateofbirth'] = date('d-M-Y',$user->open_dateofbirth);
+        $list['dateofjoining'] = date('d-M-Y',$user->open_joindate);
         $rolecount = $DB->get_record_sql("SELECT COUNT(ra.id) AS role
             FROM {role_assignments} AS ra
             JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40

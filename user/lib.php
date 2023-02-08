@@ -253,7 +253,8 @@ function user_get_default_fields() {
         'institution', 'interests', 'firstaccess', 'lastaccess', 'auth', 'confirmed',
         'idnumber', 'lang', 'theme', 'timezone', 'mailformat', 'description', 'descriptionformat',
         'city', 'country', 'profileimageurlsmall', 'profileimageurl', 'customfields',
-        'groups', 'roles', 'preferences', 'enrolledcourses', 'suspended', 'lastcourseaccess'
+        'groups', 'roles', 'preferences', 'enrolledcourses', 'suspended', 'lastcourseaccess','open_path',
+        'open_states','open_district','open_subdistrict','open_village','open_supervisorid'
     );
 }
 
@@ -280,7 +281,6 @@ function user_get_user_details($user, $course = null, array $userfields = array(
     if (empty($userfields)) {
         $userfields = $defaultfields;
     }
-
     foreach ($userfields as $thefield) {
         if (!in_array($thefield, $defaultfields)) {
             throw new moodle_exception('invaliduserfield', 'error', '', $thefield);
@@ -342,6 +342,36 @@ function user_get_user_details($user, $course = null, array $userfields = array(
     if (in_array('username', $userfields)) {
         if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
             $userdetails['username'] = $user->username;
+        }
+    }
+    if (in_array('open_path', $userfields)) {
+        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
+            $userdetails['open_path'] = $user->open_path;
+        }
+    }
+    if (in_array('open_states', $userfields)) {
+        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
+            $userdetails['open_states'] = $user->open_states;
+        }
+    }
+    if (in_array('open_district', $userfields)) {
+        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
+            $userdetails['open_district'] = $user->open_district;
+        }
+    }
+    if (in_array('open_subdistrict', $userfields)) {
+        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
+            $userdetails['open_subdistrict'] = $user->open_subdistrict;
+        }
+    }
+    if (in_array('open_village', $userfields)) {
+        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
+            $userdetails['open_village'] = $user->open_village;
+        }
+    }
+    if (in_array('open_supervisorid', $userfields)) {
+        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
+            $userdetails['open_supervisorid'] = $user->open_supervisorid;
         }
     }
     if ($isadmin or $canviewfullnames) {

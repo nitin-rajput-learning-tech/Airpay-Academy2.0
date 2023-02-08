@@ -112,6 +112,13 @@ class create_user extends moodleform {
             $mform->addElement('advcheckbox', 'createpassword', get_string('createpassword', 'auth'));
             $mform->hideIf('createpassword', 'auth', 'in', $cannotchangepass);
             $mform->disabledIf('createpassword', 'auth', 'in', $cannotchangepass);
+            $options = array(
+                '0' => 'Select Prefix',
+                '1' => 'Mr',
+                '2' => 'Mrs',
+                '3' => 'Ms'
+            );
+            $select = $mform->addElement('select', 'open_prefix', get_string('prefix','local_users'), $options);
             $mform->addElement('text', 'firstname', get_string('firstname', 'local_users'));
             $mform->addRule('firstname', get_string('errorfirstname', 'local_users'), 'required', null, 'client');
             $mform->setType('firstname', PARAM_RAW);
@@ -204,6 +211,10 @@ class create_user extends moodleform {
             $mform->addElement('text', 'open_level', get_string('level', 'local_users'));
             $mform->setType('open_level', PARAM_RAW);
             $mform->addHelpButton('open_level', 'level', 'local_users');
+
+            $mform->addElement('text', 'open_skilltype', get_string('skilltype', 'local_users'));
+            $mform->setType('open_skilltype', PARAM_RAW);
+            $mform->addHelpButton('open_skilltype', 'skilltype', 'local_users');
 
         } else if ($form_status == 2) {
 
