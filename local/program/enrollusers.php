@@ -47,13 +47,13 @@ $renderer = $PAGE->get_renderer('local_program');
 $program=$renderer->programview_check($programid);
 
 
-$context = context_system::instance();
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 $sesskey = sesskey();
 $programclass = new program();
 // Security.
 require_login();
-require_capability('local/program:manageprogram', $context);
-require_capability('local/program:manageusers', $context);
+require_capability('local/program:manageprogram', $categorycontext);
+require_capability('local/program:manageusers', $categorycontext);
 if ($view == 'ajax') {
     $options = (array)json_decode($_GET["options"], false);
      $select_from_users = (new program)->select_to_and_from_users($type, $programid, $options,false, $offset1=-1, $perpage=50, $lastitem);
@@ -71,7 +71,7 @@ if ($returnurl) {
     $url->param('returnurl', $returnurl);
 }
 $PAGE->set_url($url);
-$PAGE->set_context($context);
+$PAGE->set_context($categorycontext);
 $PAGE->set_title($program->name);
 $PAGE->set_pagelayout('standard');
 $data_submitted = data_submitted();
@@ -113,7 +113,7 @@ if ($programid) {
     }
 
     // Create the user selector objects.
-    $options = array('context' => $context->id, 'programid' => $programid,
+    $options = array('context' => $categorycontext->id, 'programid' => $programid,
         'organization' => $organization, 'department' => $department, 'email' => $email,
         'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
     //$potentialuserselector = new local_program_potential_users('addselect', $options);

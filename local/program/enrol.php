@@ -32,8 +32,8 @@ $levelid = optional_param('levelid', 0, PARAM_INT);
 $bclcid = optional_param('bclcid', 0, PARAM_INT);
 $enrol = optional_param('enrol', 0, PARAM_INT);
 require_login();
-$context = context_system::instance();
-$PAGE->set_context($context);
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $url = new moodle_url($CFG->wwwroot . '/local/program/enrol.php', array('bcid' => $programid,
     'id' => $sessionid));
 

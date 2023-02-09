@@ -27,8 +27,9 @@ namespace local_program\form;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
+require_once($CFG->dirroot . '/local/users/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
-use context_system;
 use local_program\local\querylib;
 use moodleform;
 use core_component;
@@ -50,11 +51,13 @@ class program_form extends moodleform {
         $querieslib = new querylib();
         $mform = &$this->_form;
         $renderer = $PAGE->get_renderer('local_program');
-        $context = context_system::instance();
         $form_status = $this->_customdata['form_status'];
+        $open_path = $this->_customdata['open_path'];
         $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
         $formheaders = array_keys($this->formstatus);
         $formheader = $formheaders[$formstatus];
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($id);
 
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
@@ -67,6 +70,9 @@ class program_form extends moodleform {
         if($form_status == 0){
 
             $querieslib = new querylib();
+
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_program', $categorycontext, $multiple = false);
+
             $mform->addElement('text', 'name', get_string('program_name', 'local_program'), array());
             if (!empty($CFG->formatstringstriptags)) {
                 $mform->setType('name', PARAM_TEXT);
@@ -75,48 +81,37 @@ class program_form extends moodleform {
             }
             $mform->addRule('name', null, 'required', null, 'client');
 
-            if (is_siteadmin() || ((has_capability('local/program:manage_multiorganizations', context_system::instance()) ||has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))) ) {
-                $costcenters = array();
-                $costcenterslist = $this->_ajaxformdata['costcenter'];
-                if (!empty($costcenterslist)) {
-                    $costcenterslist = $costcenterslist;
-                } else if ($id > 0) {
-                    $costcenterslistsql = "SELECT cc.id
-                                             FROM {local_costcenter} cc
-                                             JOIN {local_program} c ON c.costcenter = cc.id
-                                                AND cc.parentid = 0 AND cc.visible = 1 AND
-                                                 c.id = :programid";
-                    $costcenterslist = $DB->get_field_sql($costcenterslistsql, array('programid' => $id));
-                }
-                if (!empty($costcenterslist)) {
-                    $costcenterslist = $DB->get_records_menu('local_costcenter',
-                            array('visible' => 1, 'parentid' => 0, 'id' => $costcenterslist),
-                            'id', 'id, fullname');
-                    $costcenters = array(null => get_string('select_costcenter',
-                            'local_program')) + $costcenterslist;
-                }
+            $depsql = "SELECT lcc.id,lcc.fullname, lcc.parentid
+                        FROM {local_custom_category} as lcc";
 
-                $options = array(
-                    'ajax' => 'local_program/form-options-selector',
-                    'data-contextid' => $context->id,
-                    'data-action' => 'program_costcenter_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 1, 'parnetid' => 0)),
-                    'class' => 'organizationselect',
-                    'data-class' => 'organizationselect'
-                );
-
-                $mform->addElement('autocomplete', 'costcenter',
-                        get_string('costcenter', 'local_program'), $costcenters, $options);
-                $mform->addRule('costcenter', get_string('errororganization', 'local_users'), 'required', null, 'client');
-                //$mform->addRule('costcenter', null, 'required', null, 'client');
-                $mform->setType('costcenter', PARAM_INT);
-            } else {
-                $mform->addElement('hidden', 'costcenter',
-                        get_string('costcenter', 'local_program'),
-                        array( 'data-class' => 'organizationselect'));
-                $mform->setType('costcenter', PARAM_INT);
-                $mform->setDefault('costcenter', $USER->open_costcenterid);
+            $customcat = $DB->get_records_sql($depsql, ['parentid' => 0]);
+            $parents = [];
+            foreach($customcat as $cat){
+                $parentname = '';
+                if($cat->parentid > 0){
+                    $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $cat->parentid]);
+                }
+                if($parentname){
+                    $cat->fullname = $parentname . ' / '. $cat->fullname;
+                }
+                $parents[$cat->id] = $cat->fullname;
             }
+
+            $parents[0] = 'Select Category';
+            ksort($parents);
+            $categoryinfo = array(
+                'ajax' => 'local_costcenter/form-options-selector',
+                'data-contextid' => $categorycontext->id,
+                'data-action' => 'custom_category_selector',
+                'data-options' => json_encode(array('id' => $id,'type'=>'category_selector')),
+                'class' => 'idparentselect',
+                'data-parentclass' => 'open_costcenterid_select',
+                'data-class' => 'idparentselect',
+                'multiple' => false,
+            );
+
+            $mform->addElement('autocomplete', 'open_categoryid', get_string('category'), $parents, $categoryinfo);
+            $mform->setType('open_categoryid', PARAM_INT);
 
             $selfenrol = array();
             $selfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
@@ -139,13 +134,13 @@ class program_form extends moodleform {
             $mform->setType('stream', PARAM_INT);
             $mform->addHelpButton('stream','streams','local_program');
 
-            $mform->addElement('text', 'points', get_string('points','local_program'));
-            $mform->addHelpButton('points', 'open_pointsprogram', 'local_program');
-            $mform->setType('points', PARAM_INT);
+            // $mform->addElement('text', 'points', get_string('points','local_program'));
+            // $mform->addHelpButton('points', 'open_pointsprogram', 'local_program');
+            // $mform->setType('points', PARAM_INT);
 
             // tags
-            $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 
-                'program', 'component' => 'local_program')); 
+            // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' =>
+            //     'program', 'component' => 'local_program'));
 
             $mform->addElement('filepicker', 'programlogo',
                     get_string('programlogo', 'local_program'), null,
@@ -160,7 +155,11 @@ class program_form extends moodleform {
             $mform->setType('cr_description', PARAM_RAW);
             $mform->addHelpButton('cr_description', 'description', 'local_program');
 
-            //certificate
+
+        }else if($form_status == 1){
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$open_path);
+
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
             if($certificate_plugin_exist){
                 $checkboxes = array();
@@ -168,14 +167,13 @@ class program_form extends moodleform {
                 $mform->addGroup($checkboxes, 'map_certificate', get_string('add_certificate', 'local_program'), array(' '), false);
                 $mform->addHelpButton('map_certificate', 'add_certificate', 'local_program');
 
-
                 $select = array(null => get_string('select_certificate','local_program'));
 
-                if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $context)){
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array(),'name', 'id,name');
-                }else{
-                    $cert_templates = $DB->get_records_menu('tool_certificate_templates',array('costcenter'=>$USER->open_costcenterid),'name', 'id,name');
-                }
+                $certificatesql = "SELECT id,name FROM {tool_certificate_templates}
+                                    WHERE 1=1 $costcenterpathconcatsql ";
+
+                $cert_templates = $DB->get_records_sql_menu($certificatesql);
+
                 $certificateslist = $select + $cert_templates;
 
                 $mform->addElement('select',  'certificateid', get_string('certificate_template','local_program'), $certificateslist);
@@ -183,123 +181,20 @@ class program_form extends moodleform {
                 $mform->setType('certificateid', PARAM_INT);
                 $mform->hideIf('certificateid', 'map_certificate', 'neq', 1);
             }
+            $mform->addElement('hidden', 'open_costcenterid');
+            $mform->setType('open_costcenterid', PARAM_INT);
 
-        }else if($form_status == 1){
-            $capability_array = array('local/costcenter:manage_multiorganizations', 
-                'local/program:manageprogram',
-                'local/costcenter:manage_ownorganization', 
-            );
-            
-            if (is_siteadmin() || (has_any_capability($capability_array, $context) && !has_capability('local/costcenter:manage_owndepartments',$context))) {
-                $departments = array();
-                $departmentslist = $this->_ajaxformdata['department'];
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_program', $categorycontext, $multiple = false);
 
-                $params = array();
-                if (!empty($departmentslist)) {
-                    $departmentslist = $departmentslist;
-                } else if ($id > 0) {
-                    $departmentlist = $DB->get_field('local_program', 'department', array('id' => $id));
-                    $departmentslist = explode(', ', $departmentlist);
-                }
-                if (!empty($departmentslist)) {
+            // local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_program', $categorycontext, $multiple = false);
+            $functionname = 'globaltargetaudience_elementlist';
 
-                    
-                    if (is_array($departmentslist)){
-                        $departmentslist=implode(',',$departmentslist);
-                    }
-                    $params['visible'] = 1;
-                    $params['depth'] = 2;
-                    $departmentlistsql = "SELECT id, fullname
-                                            FROM {local_costcenter}
-                                           WHERE visible = :visible AND depth = :depth";
-                    if(!empty($departmentslist)) {
-                        $departmentlistsql .= " AND id in ($departmentslist)";
-                    }
-                    $departmentlist = $DB->get_records_sql_menu($departmentlistsql, $params);
-                    $departments = array(-1 => get_string('all')) + $departmentlist;
-                }
+            if(function_exists($functionname)) {
+                $costcenterfields = local_costcenter_get_fields();
+                $firstdepth = current($costcenterfields);
+                $mform->modulecostcenterpath = $this->_customdata[$firstdepth];
 
-                $options = array(
-                    'ajax' => 'local_program/form-options-selector',
-                    'data-contextid' => $context->id,
-                    'data-action' => 'program_costcenter_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 2,
-                        'organizationselect' => '.organizationselect', 'department' => true,
-                    'organizationselect' => 'organizationselect')),
-                    'class' => 'departmentselect',
-                    'id' => 'departmentselect',
-                    'data-class' => 'departmentselect',
-                    'multiple' => true
-                );
-
-                $mform->addElement('autocomplete', 'department', get_string('department',
-                    'local_classroom'), $departments, $options);
-                $mform->setType('department', PARAM_INT);
-                
-            }else{
-                $mform->addElement('hidden',  'department',  $USER->open_departmentid, array('data-class' => 'departmentselect'));
-                $mform->setType('department', PARAM_INT);
-            }
-            if (is_siteadmin() || (has_any_capability($capability_array, $context) || has_capability('local/costcenter:manage_owndepartments',$context))) {
-                $subdepartments = array();
-                $subdepartmentlist = $this->_ajaxformdata['subdepartment'];
-
-                $params = array();
-                if (!empty($subdepartmentlist)) {
-                    $subdepartmentlist = $subdepartmentlist;
-                } else if ($id > 0) {
-                    $subdepartmentlist = $DB->get_field('local_program', 'subdepartment', array('id' => $id));
-                    $subdepartmentlist = explode(', ', $subdepartmentlist);
-                }
-                if (!empty($subdepartmentlist)) {
-
-                    
-                    if (is_array($subdepartmentlist)){
-                        $subdepartmentlist=implode(',',array_filter($subdepartmentlist));
-                    }
-                    $params['visible'] = 1;
-                    $params['depth'] = 3;
-                    $subdepartmentlistsql = "SELECT id, fullname
-                                            FROM {local_costcenter}
-                                           WHERE visible = :visible AND depth = :depth";
-                    if(!empty($subdepartmentlist)) {
-                        $subdepartmentlistsql .= " AND id in ($subdepartmentlist)";
-                    }
-                    $subdepartmentlist = $DB->get_records_sql_menu($subdepartmentlistsql, $params);
-                    $subdepartments = array(-1 => get_string('all')) + $subdepartmentlist;
-                }else{
-                    $subdepartments = array(-1 => get_string('all')); 
-                }
-
-                $options = array(
-                    'ajax' => 'local_program/form-options-selector',
-                    'data-contextid' => $context->id,
-                    'data-action' => 'program_costcenter_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 3,
-                        'departmentselect' => 'departmentselect', 'subdepartment' => true)),
-                    'class' => 'subdepartmentselect',
-                    'multiple' => true
-                );
-
-                $mform->addElement('autocomplete', 'subdepartment', get_string('subdepartment',
-                    'local_costcenter'), $subdepartments, $options);
-                $mform->setType('subdepartment', PARAM_INT);
-                
-            }else{
-                $mform->addElement('hidden',  'subdepartment',  $USER->open_subdepartmentid);
-                $mform->setType('subdepartment', PARAM_INT);
-            }
-            $users_plugin_exist = $core_component::get_plugin_directory('local','users');
-            if ($users_plugin_exist) {
-                require_once($CFG->dirroot . '/local/users/lib.php');
-                $functionname ='globaltargetaudience_elementlist';
-                 if(function_exists($functionname)) {
-                   $modulecostcenter = $DB->get_field('local_program', 'costcenter',array('id' => $id));
-
-                    $mform->modulecostcenter = $modulecostcenter;
-
-                    $functionname($mform,array('group','hrmsrole','designation','location'));
-                }
+                $functionname($mform,array('group','designation'));
             }
         }
 
@@ -319,39 +214,45 @@ class program_form extends moodleform {
                 $errors['stream'] = 'Please select the Stream.';
             }
 
-            if ($data['map_certificate'] == 1 && empty($data['certificateid'])){
-                $errors['certificateid'] = get_string('err_certificate', 'local_courses');
-            }
-
             if (isset($data['costcenter']) && $data['form_status'] == 0){
              if($data['costcenter'] == 0){
                 $errors['costcenter'] = get_string('pleaseselectorganization', 'local_program');
              }
          }
 
-        }
+        }elseif($form_status == 1){
+
+            if ($data['map_certificate'] == 1 && empty($data['certificateid'])){
+                $errors['certificateid'] = get_string('err_certificate', 'local_courses');
+            }
+
+         }
         return $errors;
     }
 
     public function set_data($components) {
         global $DB;
-        $context = context_system::instance();
+        $categorycontext =(new \local_program\lib\accesslib())::get_module_context($components->id);
         $data = $DB->get_record('local_program', array('id' => $components->id));
         //populate tags
-        $data->tags = \local_tags_tag::get_item_tags_array('local_program', 'program', $components->id);
+        // $data->tags = \local_tags_tag::get_item_tags_array('local_program', 'program', $components->id);
         $data->cr_description = array();
         $data->cr_description['text'] = $data->description;
         $draftitemid = file_get_submitted_draft_itemid('programlogo');
-        file_prepare_draft_area($draftitemid, $context->id, 'local_program', 'programlogo',
+
+        file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_program', 'programlogo',
             $data->programlogo, null);
+
         $data->programlogo = $draftitemid;
         $data->open_group =(!empty($data->open_group)) ? array_diff(explode(',',$data->open_group), array('')) :array(NULL=>NULL);
-        $data->open_hrmsrole =(!empty($data->open_hrmsrole)) ? array_diff(explode(',',$data->open_hrmsrole), array('')) :array(NULL=>NULL);
         $data->open_designation =(!empty($data->open_designation)) ? array_diff(explode(',',$data->open_designation), array('')) :array(NULL=>NULL);
-        $data->open_location =(!empty($data->open_location)) ? array_diff(explode(',',$data->open_location), array('')) :array(NULL=>NULL);
+
         if(!empty($data->certificateid)){
             $data->map_certificate = 1;
         }
+        $data =  (array)$data;
+        local_costcenter_set_costcenter_path($data);
+        $data = (object)$data;
         parent::set_data($data);
     }
 }

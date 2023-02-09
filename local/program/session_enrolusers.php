@@ -43,8 +43,8 @@ $view = optional_param('view', 'page', PARAM_RAW);
 $type = optional_param('type', '', PARAM_RAW);
 $lastitem = optional_param('lastitem', 0, PARAM_INT);
 
-$context = context_system::instance();
-$PAGE->set_context($context);
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 
 $url = new moodle_url($CFG->wwwroot . '/local/program/session_enrolusers.php',
     array('bcid' => $programid));
@@ -75,8 +75,8 @@ $renderer = $PAGE->get_renderer('local_program');
 $programclass = new program();
 require_login();
 
-require_capability('local/program:manageprogram', $context);
-require_capability('local/program:manageusers', $context);
+require_capability('local/program:manageprogram', $categorycontext);
+require_capability('local/program:manageusers', $categorycontext);
 // print_object($view);
 // if ($view == 'ajax') {
 //     $options = (array)json_decode($_GET["options"], false);
@@ -128,7 +128,7 @@ if ($programid && $sessionid) {
     }
 
     // Create the user selector objects.
-    $options = array('context' => $context->id, 'programid' => $programid, 'email' => $email,
+    $options = array('context' => $categorycontext->id, 'programid' => $programid, 'email' => $email,
         'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups);
     //$potentialuserselector = new local_program_potential_users('addselect', $options);
     //$currentuserselector = new local_program_existing_users('removeselect', $options);

@@ -72,17 +72,29 @@ class enrol_program_plugin extends enrol_plugin {
     public function get_instance_name($instance) {
         global $DB;
 
-        if (empty($instance->name)) {
-            if (!empty($instance->roleid) and $role = $DB->get_record('role', array('id'=>$instance->roleid))) {
-                $role = ' (' . role_get_name($role, context_course::instance($instance->courseid, IGNORE_MISSING)) . ')';
-            } else {
-                $role = '';
-            }
+
+        if (empty($instance)) {
             $enrol = $this->get_name();
-            return get_string('pluginname', 'enrol_'.$enrol) . $role;
+            return get_string('pluginname', 'enrol_'.$enrol);
+
+        } else if (empty($instance->name)) {
+            $enrol = $this->get_name();
+            $program = $DB->get_record('local_program', array('id'=>$instance->customint1));
+            if (!$program) {
+                return get_string('pluginname', 'enrol_'.$enrol);
+            }
+
+            if ($role = $DB->get_record('role', array('id'=>$instance->roleid))) {
+                $role = role_get_name($role, context_course::instance($instance->courseid, IGNORE_MISSING), ROLENAME_BOTH);
+                return get_string('pluginname', 'enrol_'.$enrol) . ' (' . $program->name . ' - ' . $role .')';
+            } else {
+                return get_string('pluginname', 'enrol_'.$enrol) . ' (' . $program->name . ')';
+            }
+
         } else {
-            return format_string($instance->name);
+            return format_string($instance->name, true, array('context'=>context_course::instance($instance->courseid)));
         }
+
     }
 
     public function roles_protected() {
@@ -116,17 +128,17 @@ class enrol_program_plugin extends enrol_plugin {
      * @return boolean
      */
     public function can_add_instance($courseid) {
-		global $DB;
+        global $DB;
         $context = context_course::instance($courseid, MUST_EXIST);
 
         if (!has_capability('moodle/course:enrolconfig', $context) or !has_capability('enrol/program:config', $context)) {
             return false;
         }
-		
-		 if ($DB->record_exists('enrol', array('courseid'=>$courseid, 'enrol'=>'program'))) {
-            // Multiple instances not supported.
-            return false;
-        }
+
+        //  if($DB->record_exists('enrol', array('courseid'=>$courseid, 'enrol'=>'program','customint1'=>$programid))) {
+        //     // Multiple instances not supported.
+        //     return false;
+        // }
 
         return true;
     }
@@ -477,10 +489,39 @@ class enrol_program_plugin extends enrol_plugin {
      */
     public function edit_instance_form($instance, MoodleQuickForm $mform, $context) {
         global $CFG;
-
+        $options = $this->get_status_options();
+        $mform->addElement('select', 'status', get_string('status', 'enrol_program'), $options);
         $roles = $this->extend_assignable_roles($context, $instance->roleid);
         $mform->addElement('select', 'roleid', get_string('role', 'enrol_program'), $roles);
+        $programoptions = $this->get_program_options($context,$instance);
+        $programs = array(null => get_string('select_program',
+                        'enrol_program')) + $programoptions;
+        $mform->addElement('select', 'customint1', get_string('program', 'enrol_program'), $programs);
+        if ($instance->id) {
+            $mform->setConstant('customint1', $instance->customint1);
+            $mform->hardFreeze('customint1', $instance->customint1);
+        } else {
+            $mform->addRule('customint1', get_string('required'), 'required', null, 'client');
+        }
 
+    }
+    public function edit_instance_validation($data, $files, $instance, $context) {
+        global $DB;
+        $errors = array();
+        // Allows multiple cohorts to be selected.
+        // list($sql1, $params1) = $DB->get_in_or_equal($data['customint1'], SQL_PARAMS_NAMED);
+        $params = array(
+            'roleid' => $data['roleid'],
+            'courseid' => $data['courseid'],
+            'customint1' => $data['customint1'],
+            'id' => $data['id'],
+        );
+        // $params = array_merge($params, $params1);
+        $sql = "roleid = :roleid AND customint1 =:customint1 AND courseid = :courseid AND enrol = 'program' AND id <> :id";
+        if ($DB->record_exists_select('enrol', $sql, $params)) {
+            $errors['customint1'] = get_string('instanceexists', 'enrol_cohort');
+        }
+        return $errors;
     }
 
     /**
@@ -492,9 +533,11 @@ class enrol_program_plugin extends enrol_plugin {
         return true;
     }
 
-  
-
- 
+    protected function get_status_options() {
+        $options = array(ENROL_INSTANCE_ENABLED  => get_string('yes'),
+                         ENROL_INSTANCE_DISABLED => get_string('no'));
+        return $options;
+    }
     /**
      * Update instance of enrol plugin.
      * @param stdClass $instance
@@ -520,6 +563,17 @@ class enrol_program_plugin extends enrol_plugin {
 
         return parent::update_instance($instance, $data);
     }
+     /**
+     * Add new instance of enrol plugin.
+     * @param object $course
+     * @param array $fields instance fields
+     * @return int id of new instance, null if can not be created
+     */
+    // public function add_instance($course, array $fields = null) {
+    //     global $CFG;
+    //         $result = parent::add_instance($course, $fields);
+    //     return $result;
+    // }
 
     /**
      * Gets a list of roles that this user can assign for the course as the default for self-enrolment.
@@ -538,5 +592,19 @@ class enrol_program_plugin extends enrol_plugin {
             }
         }
         return $roles;
+    }
+    public function get_program_options($context,$instance){
+        global $DB;
+        $sqlclass = "SELECT programid FROM {local_program_courses} as lcc  WHERE lcc.courseid =:courseid ";
+        $programidsarr = $DB->get_fieldset_sql($sqlclass,array("courseid"=>$instance->courseid));
+        if(!empty($programidsarr)){
+            list($insql, $inparams) = $DB->get_in_or_equal($programidsarr);
+            $sql = "SELECT id,name FROM {local_program}  WHERE id $insql";
+            $programoptions=$DB->get_records_sql_menu($sql,  $inparams, $sort='', $fields='*', $limitfrom=0, $limitnum=0);
+        }else{
+            $programoptions = array();
+        }
+
+        return $programoptions;
     }
 }

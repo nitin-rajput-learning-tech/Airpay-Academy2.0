@@ -37,8 +37,8 @@ if(empty($action)){
     $action = $action;
 }
 require_login();
-$systemcontext = context_system::instance();
-$PAGE->set_context($systemcontext);
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $url = new moodle_url($CFG->wwwroot . '/local/program/sessions.php', array('bcid' => $programid,
     'levelid' => $levelid, 'bclcid' => $bclcid));
 $courseid = $DB->get_field('local_program_level_courses', 'courseid', array('id' => $bclcid));
@@ -49,7 +49,7 @@ $program=$renderer->programview_check($programid);
 
 $PAGE->requires->js_call_amd('local_program/ajaxforms', 'load', array());
 $PAGE->requires->js_call_amd('local_program/program', 'load', array());
-if (!is_siteadmin() && !has_capability('local/program:createprogram', $systemcontext)) {
+if (!is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
     $PAGE->requires->js_call_amd('local_program/program', 'SessionDatatable',
                     array(array('programstatus' => -1, 'programid' => $programid,
                         'levelid' => $levelid, 'bclcid' => $bclcid)));
@@ -90,7 +90,7 @@ $bclcdata->bclcid = $bclcid;
 $programuser = $DB->record_exists('local_program_users', array('programid' => $bclcdata->programid, 'userid' => $USER->id));
 $userview = false;
 $enrolmentpending = false;
-if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $systemcontext)) {
+if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
     $bclevel = new stdClass();
     $bclevel->programid = $bclcdata->programid;
     $bclevel->levelid = $bclcdata->levelid;
@@ -109,7 +109,7 @@ if ($programuser && !is_siteadmin() && !has_capability('local/program:createprog
     }
     $userview = true;
 }
-if (is_siteadmin() || has_capability('local/program:createprogram', $systemcontext)) {
+if (is_siteadmin() || has_capability('local/program:createprogram', $categorycontext)) {
         // $PAGE->requires->js_call_amd('local_program/program', 'SessionDatatable',
         //             array(array('programstatus' => -1, 'programid' => $programid,
         //                 'levelid' => $levelid, 'bclcid' => $bclcid)));

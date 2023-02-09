@@ -125,3 +125,7 @@ $string['program:manage'] = 'Manage user enrolments';
 $string['program:unenrol'] = 'Unenrol users from the course';
 $string['program:unenrolself'] = 'Unenrol self from the course';
 $string['program:holdkey'] = 'Program Holdkey';
+
+$string['select_program'] = 'Select Program';
+$string['program'] = 'Program';
+$string['instanceexists'] = 'Program is already synchronised with selected role';

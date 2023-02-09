@@ -42,10 +42,10 @@ class local_program_external extends external_api {
         );
     }
 
-    public static function program_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function program_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -121,6 +121,7 @@ class local_program_external extends external_api {
     public static function delete_program_instance($action, $id, $confirm,$programname) {
         global $DB;
         try {
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
             $DB->delete_records('local_program_level_courses', array('programid' => $id));
 
             $DB->delete_records('local_bc_course_sessions', array('programid' => $id));
@@ -132,7 +133,7 @@ class local_program_external extends external_api {
             // delete events in calendar
             $DB->delete_records('event', array('plugin_instance'=>$id, 'plugin'=>'local_program')); // added by sreenivas
             $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' =>$id
             );
 
@@ -179,30 +180,33 @@ class local_program_external extends external_api {
         ));
     }
 
-    public static function program_course_selector($query, $context, $includes = 'parents') {
+    public static function program_course_selector($query, $categorycontext, $includes = 'parents') {
         global $CFG, $DB, $USER;
         $params = self::validate_parameters(self::program_course_selector_parameters(), array(
             'query' => $query,
-            'context' => $context,
+            'context' => $categorycontext,
             'includes' => $includes
         ));
         $query = $params['query'];
         $includes = $params['includes'];
-        $context = self::get_context_from_params($params['context']);
+        $categorycontext = self::get_context_from_params($params['context']);
 
-        self::validate_context($context);
+        self::validate_context($categorycontext);
         $courses = array();
         if ($query) {
             $queryparams = array();
             $concatsql = '';
-            if ((has_capability('local/program:manageprogram', context_system::instance())) && ( !is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-                $concatsql .= " AND open_costcenterid = :costcenterid";
-                $queryparams['costcenterid'] = $USER->open_costcenterid;
-                if ((has_capability('local/program:manage_owndepartments', context_system::instance())|| has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-                     $concatsql .= " AND open_departmentid = :department";
-                     $queryparams['department'] = $USER->open_departmentid;
-                 }
-           }
+
+           if(is_siteadmin()){
+
+                $concatsql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path=null,'lowerandsamepath');
+
+            }else{
+
+                $concatsql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+
+            }
+
             $cousresql = "SELECT c.id, c.fullname
                            FROM {course} AS c
                            JOIN {enrol} AS en on en.courseid = c.id AND en.enrol = 'program' and en.status = 0
@@ -241,7 +245,7 @@ class local_program_external extends external_api {
         try {
             if ($confirm) {
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' =>$id
                 );
 
@@ -287,22 +291,22 @@ class local_program_external extends external_api {
         ));
     }
 
-    public static function program_form_option_selector($query, $context, $action, $options) {
+    public static function program_form_option_selector($query, $categorycontext, $action, $options) {
         global $CFG, $DB, $USER;
         $params = self::validate_parameters(self::program_form_option_selector_parameters(), array(
             'query' => $query,
-            'context' => $context,
+            'context' => $categorycontext,
             'action' => $action,
             'options' => $options
         ));
         $query = trim($params['query']);
         $action = $params['action'];
-        $context = self::get_context_from_params($params['context']);
+        $categorycontext = self::get_context_from_params($params['context']);
         $options = $params['options'];
         if (!empty($options)) {
             $formoptions = json_decode($options);
         }
-        self::validate_context($context);
+        self::validate_context($categorycontext);
         if ($query && $action) {
             $querieslib = new \local_program\local\querylib();
             $return = array();
@@ -321,69 +325,6 @@ class local_program_external extends external_api {
                     $service['programid'] = $formoptions->programid;
                     $service['query'] = $query;
                     $return = $querieslib->get_program_institutes($formoptions->institute_type, $service);
-                break;
-                case 'program_costcenter_selector':
-                // OL-1042 Add Target Audience to programs//
-                    if ($formoptions->id > 0 && !isset($formoptions->parnetid)) {
-                        $parentid = $DB->get_field('local_program', 'costcenter', array('id' => $formoptions->id));
-                    } else{
-                         $parentid = $formoptions->parnetid;
-                    }
-                    if (is_array($parentid) && count($parentid) > 1){
-                        $return = array(-1 => array('id' => -1,'fullname' => 'All'));
-                    }else{
-                        // OL-1042 Add Target Audience to programs//
-                        $depth = $formoptions->depth;
-                        $params = array();
-                        $costcntersql = "SELECT id, fullname
-                                            FROM {local_costcenter}
-                                            WHERE visible = 1 ";
-                        if ($parentid > 0) {
-                            $costcntersql .= is_array($parentid) ? " AND parentid IN (:parentid) " : " AND parentid = :parentid ";
-                            $params['parentid'] = is_array($parentid) ? implode(',',  $parentid) : $parentid;
-                            
-                            // $costcntersql .= " AND parentid = :parentid ";
-                            // $params['parentid'] = $parentid;
-                        }else{
-                            $costcntersql .= " AND parentid = 0 ";
-                        }
-                        if ($depth > 0) {
-                            $costcntersql .= " AND depth = :depth ";
-                            $params['depth'] = $depth;
-                            // if($depth == 2){
-                            //     // if(!(is_siteadmin() || has_any_capability(['local/program:manage_multiorganizations', 'local/costcenter:manage_multiorganizations'], $context))){
-                            //     //     $costcntersql .= " AND parentid = :usercostcenterid ";
-                            //     //     $params['usercostcenterid'] = $USER->open_costcenterid;
-                            //     // }
-                            // }else
-                            if($depth == 3){
-                                if(!(is_siteadmin() || has_any_capability(['local/program:manage_multiorganizations', 'local/costcenter:manage_multiorganizations', 'local/costcenter:manage_ownorganization'], $context))){
-                                    $costcntersql .= " AND parentid = :userdepartmentid ";
-                                    $params['userdepartmentid'] = $USER->open_departmentid;   
-                                }else{
-                                    $programcostcenter = $DB->get_field('local_program', "costcenter", array('id' => $formoptions->id));
-                                    if($programcostcenter){
-                                        $costcntersql .= " AND parentid IN (SELECT id FROM {local_costcenter} AS llc WHERE llc.parentid = :programcostcenter) ";
-                                        $params['programcostcenter'] = $programcostcenter;
-                                    }
-
-                                }
-                            }
-                        }
-                        if (!empty($query)) {
-                            $costcntersql .= " AND fullname LIKE :query ";
-                            $params['query'] = '%' . $query . '%';
-                        }
-                        // var_dump($costcntersql);
-                        // var_dump($params);
-                        if($depth > 1){
-                            $return = array(-1 => array('id' => -1,'fullname' => 'All')) + $DB->get_records_sql($costcntersql, $params);
-                        }else{
-                            $return = $DB->get_records_sql($costcntersql, $params);
-                        }
-                        // $return = (object)((array)$return + array('0' => (object)array('id' => -1,
-                        //     'fullname' => get_string('all')) ));
-                    }
                 break;
                 case 'programsession_trainer_selector':
                     $parent = array();
@@ -431,10 +372,10 @@ class local_program_external extends external_api {
             )
         );
     }
-    public static function program_session_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function program_session_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -484,10 +425,10 @@ class local_program_external extends external_api {
         );
     }
 
-    public static function program_completion_settings_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function program_completion_settings_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -535,10 +476,10 @@ class local_program_external extends external_api {
         );
     }
 
-    public static function program_course_instance($id, $contextid, $form_status, $jsonformdata) {
+    public static function program_course_instance($id, $categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -607,7 +548,7 @@ class local_program_external extends external_api {
                     }
                     $DB->update_record('local_program_completion', $program_completiondata);
                     $params = array(
-                        'context' => context_system::instance(),
+                        'context' => $categorycontext,
                         'objectid' => $program_completiondata->id
                     );
 
@@ -633,7 +574,7 @@ class local_program_external extends external_api {
                     }
                 }
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' =>$id
                 );
 
@@ -669,21 +610,21 @@ class local_program_external extends external_api {
     /**
      * form submission of institute name and returns instance of this object
      *
-     * @param int $contextid
+     * @param int $categorycontextid
      * @param [string] $jsonformdata
      * @return institute form submits
      */
-    public function submit_catform_form($contextid, $jsonformdata){
+    public function submit_catform_form($categorycontextid, $jsonformdata){
         global $PAGE, $CFG;
 
         require_once($CFG->dirroot . '/local/program/lib.php');
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_instituteform_form_parameters(),
-                                    ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
-        // $context = $params['contextid'];
-        $context = context_system::instance();
+                                    ['contextid' => $categorycontextid, 'jsonformdata' => $jsonformdata]);
+        // $categorycontext = $params['contextid'];
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
-        self::validate_context($context);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($params['jsonformdata']);
         // throw new moodle_exception('Error in creation');
         // die;
@@ -728,10 +669,10 @@ class local_program_external extends external_api {
         );
     }
 
-    public static function manageprogramlevels($contextid, $form_status, $jsonformdata) {
+    public static function manageprogramlevels($categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -845,7 +786,7 @@ class local_program_external extends external_api {
             // delete events in calendar
             // $DB->delete_records('event', array('plugin_instance'=>$id, 'plugin'=>'local_program')); // added by sreenivas
             $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' =>$id
             );
 
@@ -881,10 +822,10 @@ class local_program_external extends external_api {
         );
     }
 
-    public static function manageprogramstreams($contextid, $form_status, $jsonformdata) {
+    public static function manageprogramstreams($categorycontextid, $form_status, $jsonformdata) {
         global $PAGE, $DB, $CFG, $USER;
-        $context = context::instance_by_id($contextid, MUST_EXIST);
-        self::validate_context($context);
+        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
+        self::validate_context($categorycontext);
         $serialiseddata = json_decode($jsonformdata);
         $data = array();
         parse_str($serialiseddata, $data);
@@ -940,7 +881,7 @@ class local_program_external extends external_api {
         try {
             if ($confirm) {
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' =>$id
                 );
 
@@ -1023,7 +964,7 @@ class local_program_external extends external_api {
                 $class = (new \block_trending_modules\lib())->trending_modules_crud($dataobject, 'local_program');
             }
             $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' =>$id
             );
             $event = \local_program\event\program_inactivated::create($params);
@@ -1066,7 +1007,7 @@ class local_program_external extends external_api {
                 $class = (new \block_trending_modules\lib())->trending_modules_crud($dataobject, 'local_program');
             }
             $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' =>$id
             );
             $event = \local_program\event\program_activated::create($params);
@@ -1120,7 +1061,7 @@ class local_program_external extends external_api {
             'filter_limit' => $filter_limit
         ));
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context($categorycontext);
         $renderable = new local_program\output\program_courses($params['filter'],$params['filter_text'], $params['filter_offset'], $params['filter_limit']);
         $output = $PAGE->get_renderer('block_userdashboard');
 
@@ -1179,10 +1120,10 @@ class local_program_external extends external_api {
             'filterdata' => new external_value(PARAM_RAW, 'filters applied'),
         ]);
     }
-    public static function data_for_programs_paginated($options, $dataoptions, $offset = 0, $limit = 0, $contextid, $filterdata){
+    public static function data_for_programs_paginated($options, $dataoptions, $offset = 0, $limit = 0, $categorycontextid, $filterdata){
         global $DB, $PAGE;
         require_login();
-        $PAGE->set_context($contextid);
+        $PAGE->set_context($categorycontextid);
 
         $decodedoptions = (array)json_decode($options);
         $decodedfilter = (array)json_decode($filterdata);
@@ -1192,7 +1133,7 @@ class local_program_external extends external_api {
         $filter_offset = $offset;
         $filter_limit = $limit;
 
-        $PAGE->set_context(context_system::instance());
+        $PAGE->set_context($categorycontext);
         $renderable = new local_program\output\program_courses($filter, $filter_text, $filter_offset, $filter_limit);
         $output = $PAGE->get_renderer('local_program');
 
@@ -1257,9 +1198,9 @@ class local_program_external extends external_api {
             'userid' => new external_value(PARAM_INT, 'Userid For the service')
         ]);
     }
-    public static function unenrol_user($contextid, $programid, $userid){
+    public static function unenrol_user($categorycontextid, $programid, $userid){
         $params = self::validate_parameters(self::unenrol_user_parameters(), array(
-            'contextid' => $contextid,
+            'contextid' => $categorycontextid,
             'programid' => $programid,
             'userid' => $userid
         ));

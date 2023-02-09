@@ -27,725 +27,211 @@
 defined('MOODLE_INTERNAL') || die;
 $capabilities = array(
     'local/program:createprogram' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:inactiveprogram' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:activeprogram' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:editprogram' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher' => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager' => CAP_ALLOW,
-            'user' => CAP_INHERIT,
-            'student' => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:deleteprogram' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:manageprogram' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_ALLOW,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:createsession' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:viewsession' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:editsession' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:deletesession' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:managesession' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_ALLOW,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:assigntrainer' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:managetrainer' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:addusers' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:removeusers' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:manageusers' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:viewusers' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_ALLOW,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:takesessionattendance' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_ALLOW,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:takemultisessionattendance' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:trainer_viewprogram' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_ALLOW,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_INHERIT,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:view_allprogramtab' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:view_newprogramtab' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:view_activeprogramtab' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:view_holdprogramtab' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:view_cancelledprogramtab' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:view_completedprogramtab' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:createfeedback' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:viewfeedback' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:editfeedback' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-          'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:deletefeedback' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:managefeedback' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:addcourse' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:createcourse' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:viewcourse' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:editcourse' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:deletecourse' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:removecourse' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:managecourse' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:publish' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:cancel' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:release_hold' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:hold' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:complete' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:manage_owndepartments' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_INHERIT,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:manage_multiorganizations' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'coursecreator' => CAP_INHERIT,
-            'teacher'        => CAP_INHERIT,
-            'editingteacher' => CAP_INHERIT,
-            'manager'          => CAP_INHERIT,
-            'user'        => CAP_INHERIT,
-            'student'      => CAP_INHERIT,
-            'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:programcompletion' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:createlevel' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:viewlevel' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:editlevel' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:deletelevel' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:managelevel' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'coursecreator' => CAP_INHERIT,
-           'teacher'        => CAP_INHERIT,
-           'editingteacher' => CAP_INHERIT,
-           'manager'          => CAP_ALLOW,
-           'user'        => CAP_INHERIT,
-           'student'      => CAP_INHERIT,
-           'guest' => CAP_INHERIT
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:enrolsession' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-           'student'      => CAP_ALLOW,
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     )
 );

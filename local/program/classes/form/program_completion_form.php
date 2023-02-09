@@ -29,17 +29,18 @@ require_once($CFG->libdir . '/formslib.php');
 use \local_program\program as program;
 use moodleform;
 use local_program\local\querylib;
-use context_system;
 
 class program_completion_form extends moodleform {
 
     public function definition() {
         global $CFG, $DB, $USER;
         $querieslib = new querylib();
-        $context = context_system::instance();
+
         $mform = &$this->_form;
         $bcid = $this->_customdata['bcid'];
         $sid = $this->_customdata['id'];
+
+        $categorycontext =  (new \local_program\lib\accesslib())::get_module_context($bcid);
 
         $mform->addElement('hidden', 'id', $sid);
         $mform->setType('id', PARAM_INT);
@@ -82,7 +83,7 @@ class program_completion_form extends moodleform {
         $options = array(
             'ajax' => 'local_program/form-options-selector',
             'multiple' => true,
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-action' => 'program_completions_sessions_selector',
             'data-options' => json_encode(array('id' => $id, 'programid' => $bcid)),
         );
@@ -120,7 +121,7 @@ class program_completion_form extends moodleform {
         $options = array(
             'ajax' => 'local_program/form-options-selector',
             'multiple' => true,
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-action' => 'program_completions_courses_selector',
             'data-options' => json_encode(array('id' => $id,'programid'=>$bcid)),
         );

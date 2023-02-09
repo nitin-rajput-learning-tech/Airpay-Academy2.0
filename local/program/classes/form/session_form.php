@@ -29,19 +29,19 @@ require_once($CFG->libdir . '/formslib.php');
 use \local_program\program as program;
 use moodleform;
 use local_program\local\querylib;
-use context_system;
 
 class session_form extends moodleform {
 
     public function definition() {
         global $CFG, $DB, $USER;
         $querieslib = new querylib();
-        $context = context_system::instance();
         $mform = &$this->_form;
         $bcid = $this->_customdata['bcid'];
         $sid = $this->_customdata['id'];
         $levelid = $this->_customdata['levelid'];
         $bclcid = $this->_customdata['bclcid'];
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bcid);
 
         $mform->addElement('hidden', 'id', $sid);
         $mform->setType('id', PARAM_INT);
@@ -101,7 +101,7 @@ class session_form extends moodleform {
         }
         $options = array(
             'ajax' => 'local_program/form-options-selector',
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-action' => 'program_institute_selector',
             'data-options' => json_encode(array('id' => $sid, 'programid' => $bcid)),
             'data-institute_type' => 'institute_type'
@@ -126,7 +126,7 @@ class session_form extends moodleform {
 
         $options = array(
             'ajax' => 'local_program/form-options-selector',
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-action' => 'program_room_selector',
             'data-options' => json_encode(array('id' => $sid, 'programid' => $bcid)),
             'data-institute_type' => 'institute_type',
@@ -153,7 +153,7 @@ class session_form extends moodleform {
         }
         $options = array(
             'ajax' => 'local_program/form-options-selector',
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
             'data-action' => 'programsession_trainer_selector',
             'data-options' => json_encode(array('programid' => $bcid)),
         );
@@ -208,7 +208,7 @@ class session_form extends moodleform {
             $errors['timestart'] = get_string('startdatelessthanenddate', 'local_program');
         }
         if (isset($data['name']) && empty(trim($data['name']))) {
-            $errors['name'] = get_string('valnamerequired', 'local_program');
+            $errors['name'] = get_string('sessionvalnamerequired', 'local_program');
         }
         $trainerid = $data['trainerid'];
         if(!empty($trainerid)){

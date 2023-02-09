@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Classroom Upgrade
+ * program Upgrade
  *
  * @package     local_program
  * @author:     M Arun Kumar <arun@eabyas.in>
@@ -260,7 +260,7 @@ function xmldb_local_program_upgrade($oldversion) {
     }
        if ($oldversion < 2019112504) {
         $table = new xmldb_table('local_program_stream');
-        $field = new xmldb_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $field = new xmldb_field('open_path', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -290,7 +290,7 @@ function xmldb_local_program_upgrade($oldversion) {
         }
         
        
-        $index1 = new xmldb_index('costcenterid', XMLDB_INDEX_NOTUNIQUE, array('costcenterid'));
+        $index1 = new xmldb_index('open_path', XMLDB_INDEX_NOTUNIQUE, array('open_path'));
 
         if (!$dbman->index_exists($table1,$index1)) {
             $dbman->add_index($table1,$index1);

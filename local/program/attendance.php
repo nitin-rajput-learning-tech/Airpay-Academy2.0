@@ -37,8 +37,8 @@ $bclcid = required_param('bclcid', PARAM_INT);
 $action = optional_param('action', '', PARAM_RAW);
 
 require_login();
-$context = context_system::instance();
-$PAGE->set_context($context);
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+$PAGE->set_context($categorycontext);
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
 $url = new moodle_url($CFG->wwwroot . '/local/program/attendance.php',
@@ -56,12 +56,12 @@ $program=$renderer->programview_check($programid);
 $PAGE->navbar->add(get_string("pluginname", 'local_program'), new moodle_url('view.php',
     array('bcid' => $programid, 'sid' => $sessionid)));
 $PAGE->navbar->add($program_name, new moodle_url('sessions.php',array('bcid' => $programid,'bclcid' => $bclcid, 'levelid' => $levelid)));
-$PAGE->navbar->add(get_string("sessions", 'local_classroom'), new moodle_url('sessions.php',array('bcid' => $programid,'bclcid' => $bclcid, 'levelid' => $levelid)));
+$PAGE->navbar->add(get_string("sessions", 'local_program'), new moodle_url('sessions.php',array('bcid' => $programid,'bclcid' => $bclcid, 'levelid' => $levelid)));
 $PAGE->navbar->add(get_string("attendance", 'local_program'));
 $PAGE->set_title($program_name);
 $PAGE->set_heading(get_string('session_attendance_heading', 'local_program', $program_name));
 
-require_capability('local/program:takesessionattendance', $context);
+require_capability('local/program:takesessionattendance', $categorycontext);
 
 $program = new program();
 $attendancedata = data_submitted();
@@ -107,7 +107,7 @@ if (!empty($attendancedata)) {
                 $emaillogs->program_notification('program_session_attendance', $touserid, $USER, $programinstance);
                 // $email_logs = $emaillogs->program_emaillogs('program_session_attendance', $decodeddata->sessionid, $decodeddata->userid, $USER->id);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $checkattendeestatus->id
                 );
 
@@ -131,7 +131,7 @@ if (!empty($attendancedata)) {
                                                     WHERE programid={$decodeddata->programid}
                                                     AND userid={$decodeddata->userid} AND sessionid={$decodeddata->sessionid}");
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $id
                 );
 

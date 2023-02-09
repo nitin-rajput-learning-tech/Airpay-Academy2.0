@@ -27,7 +27,6 @@ use renderable;
 use renderer_base;
 use stdClass;
 use templatable;
-use context_system;
 
 class form_status implements renderable, templatable {
     /**
@@ -35,7 +34,7 @@ class form_status implements renderable, templatable {
      * @method __construct
      */
     public function __construct($formstatus) {
-        $this->context = context_system::instance();
+        $this->context = (new \local_classroom\lib\accesslib())::get_module_context();
         $this->plugintype = 'local';
         $this->plugin_name = 'program';
         $this->formstatus = $formstatus;

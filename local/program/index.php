@@ -24,7 +24,7 @@
 
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->dirroot . '/local/learningplan/filters_form.php');
-$systemcontext = context_system::instance();
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 require_login();
 $value = '';
 $id = optional_param('id', 0, PARAM_INT); // program id
@@ -32,10 +32,16 @@ $hide = optional_param('hide', 0, PARAM_INT);
 $show = optional_param('show', 0, PARAM_INT);
 
 $status = optional_param('status', '', PARAM_RAW);
+
 $costcenterid = optional_param('costcenterid', '', PARAM_INT);
 $departmentid = optional_param('departmentid', '', PARAM_INT);
-$subdepartmentid = optional_param('subdepartmentid','',PARAM_INT);
+$subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
+$l4department = optional_param('l4department', '', PARAM_INT);
+$l5department = optional_param('l5department', '', PARAM_INT);
+
+
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
+
 if ($formattype == 'card') {
      $formattype_url = 'table';
     $display_text = get_string('listtype','local_program');
@@ -46,10 +52,8 @@ if ($formattype == 'card') {
     $display_icon = get_string('cardicon','local_program');
 }
 $PAGE->set_url($CFG->wwwroot . '/local/program/index.php');
-$PAGE->set_context($systemcontext);
-if (!is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance())
-                && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))
-	&& !(has_capability('local/program:manageprogram', context_system::instance()))) {
+$PAGE->set_context($categorycontext);
+if (!is_siteadmin() && !(has_capability('local/program:manageprogram', $categorycontext))) {
 	$PAGE->set_title(get_string('my_programs', 'local_program'));
 	$PAGE->set_heading(get_string('my_programs', 'local_program'));
 }else{
@@ -60,8 +64,7 @@ $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->css('/local/program/css/jquery.dataTables.min.css', true);
 $PAGE->requires->js_call_amd('local_program/ajaxforms', 'load');
 $PAGE->requires->js_call_amd('local_program/program', 'getstream');
-// $PAGE->requires->js_call_amd('local_program/program', 'programDatatable',
-//                     array(array('programstatus' => -1)));
+
 $corecomponent = new core_component();
 $epsilonpluginexist = $corecomponent::get_plugin_directory('theme', 'epsilon');
 if (!empty($epsilonpluginexist)) {
@@ -85,17 +88,17 @@ if ($show AND $id) {
 }
 $enabled = check_programenrol_pluginstatus($value);
 
-if(is_siteadmin()){
-    $thisfilters = array('program', 'organizations', 'departments', 'subdepartment', 'status');
-}else if(has_capability('local/costcenter:manage_ownorganization',$systemcontext)){
-    $thisfilters = array('program','departments', 'subdepartment', 'status');
-}else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-    $thisfilters = array('subdepartment', 'program',  'status');
-}else {
-    $thisfilters = array('program', 'status');
-}
+$thisfilters = array('hierarchy_fields','categories','idnumber', 'email','users');
 
-$mform = new filters_form(null, array('filterlist'=> $thisfilters));
+$formdata = new stdClass();
+$formdata->filteropen_costcenterid = $costcenterid;
+$formdata->filteropen_department = $departmentid;
+$formdata->filteropen_subdepartment = $subdepartmentid;
+$formdata->filteropen_level4department = $l4department;
+$formdata->filteropen_level5department = $l5department;
+
+$datasubmitted = data_submitted() ? data_submitted() : $formdata;
+$mform = new filters_form(null, array('filterlist'=> $thisfilters)+(array)$datasubmitted);
 $filterdata = null;     
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/program/index.php');
@@ -107,14 +110,7 @@ if ($mform->is_cancelled()) {
         $collapse = true;
     }
 }
-if(!empty($costcenterid)|| !empty($status) || !empty($departmentid) || !empty($subdepartmentid)){   
-    $formdata = new stdClass();
-    $formdata->organizations = $costcenterid;
-    $formdata->departments = $departmentid;
-    $formdata->subdepartment = $subdepartmentid;
-    $formdata->status = $status;
-    $mform->set_data($formdata);
-}
+$mform->set_data($datasubmitted);
 
 if($filterdata){
     $collapse = false;
@@ -133,55 +129,39 @@ echo  '<div class="collapse '.$show.'" id="local_courses-filter_collapse">
 echo        '</div>
         </div>';
 
-if($filterdata){
-		$selected_subdepts = !empty($filterdata->subdepartment) ? implode(',', array_filter($filterdata->subdepartment)) : null;
-        $selectedcostcenterid = !empty($filterdata->organizations) ? implode(',', array_filter($filterdata->organizations)) : null;
-		$selecteddepartmentid = !empty($filterdata->departments) ? implode(',', array_filter($filterdata->departments)) : null;
-		$selectedprogram = !empty($filterdata->program) ? implode(',', $filterdata->program) : null;
-		$selectedstatus = !empty($filterdata->status) ? implode(',', $filterdata->status) : null;
-	}else{
-		$selected_subdepts = $selectedcostcenterid = $selecteddepartmentid = $selectedprogram = $selectedstatus = null;
-	}
- if(!empty($costcenterid)){
-    $selectedcostcenterid = $costcenterid;
+$display_url = new moodle_url('/local/program/index.php');
+if($costcenterid){
+  $display_url->param('costcenterid', $costcenterid);
 }
-if(!empty($departmentid)){
-    $selecteddepartmentid = $departmentid;
+if($departmentid){
+ $display_url->param('departmentid',$departmentid);
 }
-if(!empty($status)){
-    $selectedstatus = $status;
+if($subdepartmentid){
+ $display_url->param('subdepartmentid',$subdepartmentid);
 }
-if(!empty($subdepartmentid)){
-    $selected_subdepts = $subdepartmentid;
+if($l4department){
+ $display_url->param('l4department',$l4department);
 }
-    
-    $display_url = new moodle_url('/local/program/index.php');
-    if($costcenterid){
-      $display_url->param('costcenterid', $costcenterid);  
-    }
-    if($departmentid){
-     $display_url->param('departmentid',$departmentid);
-    }
-    if($subdepartmentid){
-     $display_url->param('subdepartmentid',$subdepartmentid);
-    }
-    if($status){
-     $display_url->param('status',$status);
-    }
-    if($formattype_url){
-     $display_url->param('formattype', $formattype_url);      
-    } 
-    $displaytype_div = '<div class="col-12 d-inline-block">';
-    $displaytype_div .= '<a class="btn btn-outline-secondary pull-right" href="' . $display_url . '">';
-    $displaytype_div .= '<span class="'.$display_icon.'"></span>' . $display_text;
-    $displaytype_div .= '</a>';
-    $displaytype_div .= '</div>';
+if($l5department){
+ $display_url->param('l5department',$l5department);
+}
+if($status){
+ $display_url->param('status',$status);
+}
+if($formattype_url){
+ $display_url->param('formattype', $formattype_url);
+}
+$displaytype_div = '<div class="col-12 d-inline-block">';
+$displaytype_div .= '<a class="btn btn-outline-secondary pull-right" href="' . $display_url . '">';
+$displaytype_div .= '<span class="'.$display_icon.'"></span>' . $display_text;
+$displaytype_div .= '</a>';
+$displaytype_div .= '</div>';
 
 echo $displaytype_div;
 
-echo $renderer->get_program_tabs($selected_subdepts,$selectedcostcenterid,$selecteddepartmentid,$selectedprogram,$selectedstatus,$formattype);
+echo $renderer->get_program_tabs($subdepartmentid,$costcenterid,$departmentid,$selectedprogram,$selectedstatus,$formattype,$l4department,$l5department);
 
 $PAGE->requires->js_call_amd('local_program/program', 'programDatatable',
-                    array(array('programstatus' => -1,'selected_subdepts' => $selected_subdepts,'selectedcostcenterid' => $selectedcostcenterid,'selecteddepartmentid' => $selecteddepartmentid,'selectedprogram' => $selectedprogram,'selectedstatus' => $selectedstatus)));
+                    array(array('programstatus' => -1,'selected_subdepts' => $subdepartmentid,'costcenterid' => $costcenterid,'departmentid' => $departmentid,'selectedprogram' => $selectedprogram,'selectedstatus' => $selectedstatus,'selected_l4department' => $l4department,'selected_l5department' => $l5department)));
 
 echo $OUTPUT->footer();

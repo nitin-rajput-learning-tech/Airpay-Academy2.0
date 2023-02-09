@@ -39,15 +39,16 @@ class user{
             $programsarray['description'] = $programssummary;
             $programsarray['percentage'] = '';
             $programsarray['url'] = '';
-            $background_logourl = ((new \local_program\program)->program_logo($program->module_logo));
-            if($background_logourl == 0){
-              require_once($CFG->dirroot.'/local/includes.php');
-              $includes = new \user_course_details();
-              $programsarray['module_img_url'] = ($includes->get_classes_summary_files($program))->out();
+
+            if($program->module_logo == 0){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new \user_course_details();
+                $programsarray['module_img_url'] = ($includes->get_classes_summary_files($program))->out();
             }else{
-              if(is_a($background_logourl, 'moodle_url'))
-                $programsarray['module_img_url'] = $background_logourl->out();
+                $programsarray['module_img_url'] = (new \local_program\program)->program_logo($program->module_logo);
             }
+            $programsarray['module_img_url'] = is_object($programsarray['module_img_url']) ? $programsarray['module_img_url']->out() : $programsarray['module_img_url'] ;
+
             $data[] = $programsarray;
         }
 

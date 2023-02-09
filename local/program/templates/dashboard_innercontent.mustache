@@ -18,7 +18,7 @@
 
 {{# program_view_count}}
 {{# card_view}}
-<div class="userdashboard_content userdashboard_ctype_classroom d-flex flex-row flex-{{# enableflow}}no{{/enableflow}}wrap">
+<div class="userdashboard_content userdashboard_ctype_program d-flex flex-row flex-{{# enableflow}}no{{/enableflow}}wrap">
     {{#moduledetails}}
     <div class="col-sm-6 col-12 pull-left tabs_cmn_class courses_inprogress_slide ctype_program" data-index="{{index}}">
         <div class="bootcamp_container w-full pull-left" >
@@ -47,9 +47,9 @@
         
     {{/moduledetails}}  
     {{# viewMoreCard}}
-        <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_program d-flex justify-content-center align-items-center">
+        <!-- <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_program d-flex justify-content-center align-items-center">
             <a class="center_elemet" href="{{{view_more_url}}}">{{#str}} viewmore {{/str}}</a>
-        </div>
+        </div> -->
     {{/ viewMoreCard}}
 </div>
 {{/ card_view}}

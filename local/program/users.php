@@ -31,28 +31,19 @@ $download = optional_param('download', 0, PARAM_INT);
 $type = optional_param('type', '', PARAM_RAW);
 $search = optional_param_array('search', '', PARAM_RAW);
 require_login();
-$context = context_system::instance();
-$program = $DB->get_record('local_program', array('id' => $programid));
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
+$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+$programsql = "SELECT lp.*
+                    FROM {local_program} AS lp WHERE lp.id = $programid $costcenterpathconcatsql ";
+
+$program = $DB->get_record_sql($programsql);
+
 if (empty($program)) {
     print_error('program not found!');
 }
-if ((has_capability('local/program:manageprogram', context_system::instance())) && (!is_siteadmin()
-    && (!has_capability('local/program:manage_multiorganizations', context_system::instance())
-        && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
 
-        if($program->costcenter!= $USER->open_costcenterid){
-         print_error("You donot have permissions");
-        }
-
-        if ((has_capability('local/program:manage_owndepartments', context_system::instance())
-         || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-            $programs = $DB->get_record('local_program',array('id'=>$programid),$fields = 'id,costcenter,department');
-             if(!in_array(explode(',',$programs->department)) != $USER->open_departmentid){
-                print_error("You donot have permissions");
-             }
-        }
-}
-$PAGE->set_context($context);
+$PAGE->set_context($categorycontext);
 $url = new moodle_url($CFG->wwwroot . '/local/program/users.php', array('bcid' => $programid));
 $PAGE->requires->js_call_amd('local_program/program', 'UsersDatatable',
                     array(array('programid' => $programid)));

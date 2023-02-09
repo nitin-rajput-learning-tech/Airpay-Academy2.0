@@ -28,10 +28,10 @@ $programid = required_param('bcid', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHA);
 $status = optional_param('status', 0, PARAM_INT);
 
-$systemcontext = context_system::instance();
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 require_login();
 $PAGE->set_url('/local/program/view.php', array('bcid' => $programid));
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $PAGE->set_title(get_string('programs', 'local_program'));
 
 $renderer = $PAGE->get_renderer('local_program');

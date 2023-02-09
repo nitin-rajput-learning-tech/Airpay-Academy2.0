@@ -244,7 +244,8 @@ define([
             },
             {
                 key: 'deletecourseconfirm',
-                component: 'local_program'
+                component: 'local_program',
+                param: args.name,
             },
             {
                 key: 'cannotdeleteall',

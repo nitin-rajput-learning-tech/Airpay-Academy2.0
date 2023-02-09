@@ -35,11 +35,11 @@ if ($formattype == 'card') {
     $display_text = get_string('cardtype','local_program');
     $display_icon = get_string('cardicon','local_program');
 }
-$systemcontext = context_system::instance();
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 $pageurl = new moodle_url('/local/program/userdashboard.php',array('tab' => $tab));
 $PAGE->set_url($pageurl);
 $PAGE->set_pagelayout('standard');
-$PAGE->set_context($systemcontext);
+$PAGE->set_context($categorycontext);
 $heading = get_string($tab.'_program', 'local_program');
 $PAGE->set_title($heading);
 $PAGE->set_heading($heading);

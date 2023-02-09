@@ -34,6 +34,7 @@ require_once($CFG->dirroot . '/local/program/lib.php');
 if (file_exists($CFG->dirroot . '/local/lib.php')) {
   require_once($CFG->dirroot . '/local/lib.php');
 }
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 //use \local_program\notifications_emails as programnotifications_emails;
 // program
 define('program_NEW', 0);
@@ -54,7 +55,7 @@ class program {
     public function manage_program($program) {
         global $DB, $USER;
         $program->shortname = $program->name;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         if(!$program->selfenrol){
           $program->approvalreqd = 0;
         }
@@ -64,11 +65,7 @@ class program {
         if (empty($program->capacity) || $program->capacity == 0) {
             $program->capacity = 0;
         }
-        // if (is_array($program->department)) {
-        //     $program->department = !empty($program->department) ? implode(',', $program->department) : -1;
-        // } else {
-        //      $program->department = !empty($program->department) ? $program->department : -1;
-        // }
+
         // added for OL-2104 for not saving and displaying the file
         file_save_draft_area_files($program->programlogo, 1, 'local_program', 'programlogo', $program->programlogo);
         $program->startdate = 0;
@@ -85,10 +82,19 @@ class program {
                   $program->certificateid = null;
                 }
 
+                 $open_path=$DB->get_field('local_program', 'open_path', array('id' => $program->id));
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+                if($program->open_costcenterid !=$org){
+
+                     local_costcenter_get_costcenter_path($program);
+
+                }
+
                 $DB->update_record('local_program', $program);
                 // $this->program_set_events($program); // Added by sreenivas.
                 $params = array(
-                    'context' => $systemcontext,
+                    'context' => $categorycontext,
                     'objectid' => $program->id
                 );
                 // Trigger program updated event.
@@ -99,25 +105,17 @@ class program {
 
                 // Update program tags.
                 if (isset($program->tags)) {
-                    \local_tags_tag::set_item_tags('local_program', 'program', $program->id, context_system::instance(), $program->tags, 0, $program->costcenter, $program->department);
+                    \local_tags_tag::set_item_tags('local_program', 'program', $program->id, $categorycontext, $program->tags, 0, $program->costcenter, $program->department);
                 }
             } else {
                 $program->status = 0;
                 $program->timecreated = time();
                 $program->usercreated = $USER->id;
-                $program->department = -1;
-                $program->subdepartment = -1;
-                if (has_capability('local/program:manageprogram', $systemcontext)) {
-                    $program->department = -1;
-                    if (!is_siteadmin() && (has_capability('local/program:manage_owndepartments', $systemcontext)
-                      || has_capability('local/costcenter:manage_owndepartments', $systemcontext))) {
-                        $program->department = $USER->open_departmentid;
-                    }
-                }
+                local_costcenter_get_costcenter_path($program);
                 $program->id = $DB->insert_record('local_program', $program);
 
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $program->id
                 );
 
@@ -127,7 +125,7 @@ class program {
 
                 // Update program tags.
                 if (isset($program->tags)) {
-                    \local_tags_tag::set_item_tags('local_program', 'program', $program->id, context_system::instance(), $program->tags, 0, $program->costcenter, $program->department);
+                    \local_tags_tag::set_item_tags('local_program', 'program', $program->id, $categorycontext, $program->tags, 0, $program->costcenter, $program->department);
                 }
 
                 $program->shortname = 'program' . $program->id;
@@ -270,7 +268,7 @@ class program {
                 $DB->update_record('local_bc_course_sessions', $session);
                 $this->session_set_events($session); //added by sreenivas
                 $params = array(
-                            'context' => context_system::instance(),
+                            'context' => $categorycontext,
                             'objectid' => $session->id,
                             'other' => array('programid' => $session->programid,
                                              'levelid' => $session->levelid,
@@ -294,7 +292,7 @@ class program {
                 $this->manage_program_session_trainers($session, 'insert');
                 $this->session_set_events($session); // added by sreenivas
                 $params = array(
-                            'context' => context_system::instance(),
+                            'context' => $categorycontext,
                             'objectid' => $session->id,
                             'other' => array('programid' => $session->programid,
                                              'levelid' => $session->levelid,
@@ -462,7 +460,7 @@ class program {
                 $completions->usermodified = $USER->id;
                 $DB->update_record('local_bcl_cmplt_criteria', $completions);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $completions->id,
                     'other' => array('programid' => $completions->programid,
                                              'levelid' => $completions->levelid)
@@ -476,7 +474,7 @@ class program {
 
                 $completions->id = $DB->insert_record('local_bcl_cmplt_criteria', $completions);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $completions->id,
                     'other' => array('programid' => $completions->programid,
                                              'levelid' => $completions->levelid)
@@ -504,7 +502,7 @@ class program {
             $id = $program_session->id;
             $DB->delete_records('local_program_attendance', array('sessionid' => $id));
             $params = array(
-                'context' => context_system::instance(),
+                'context' => $categorycontext,
                 'objectid' => $id,
                 'other' => array('programid' => $program_session->programid,
                                  'levelid' => $program_session->levelid,
@@ -592,6 +590,8 @@ class program {
         $programscount = 0;
         $concatsql = '';
 
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+
         if (!empty($stable->search)) {
             $fields = array("bc.name");
             // $fields = implode(" LIKE :search1 OR ", $fields);
@@ -602,17 +602,9 @@ class program {
 
         }
 
-        if ((has_capability('local/program:manageprogram', context_system::instance())) &&
-            (!is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-                $condition = " AND (cc.id = :costcenter)";
-                $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/program:manage_owndepartments', context_system::instance())
-                    || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-               $condition .=  "AND concat(',', bc.department,',') LIKE '%,$USER->open_departmentid,%' ";
-               // $params['department'] = $USER->open_departmentid;
-            }
-            $concatsql .= $condition;
-            if (has_capability('local/program:trainer_viewprogram', context_system::instance())) {
+        if ((has_capability('local/program:manageprogram', $categorycontext))) {
+
+            if (has_capability('local/program:trainer_viewprogram', $categorycontext)) {
                 $myprograms = $DB->get_records_menu('local_bc_course_sessions',
                     array('trainerid' => $USER->id), 'id', 'id, programid');
                 if (!empty($myprograms)) {
@@ -621,8 +613,12 @@ class program {
                 } else {
                     return compact('programs', 'programscount');
                 }
+            }else{
+
+                $concatsql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
+
             }
-        } else if (!is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))) {
+        } else if (!is_siteadmin() && (!has_capability('local/program:manageprogram', $categorycontext) )) {
             $myprograms = $DB->get_records_menu('local_program_users',
                 array('userid' => $USER->id), 'id', 'id, programid');
             if (isset($stable->programid) && !empty($stable->programid)) {
@@ -668,11 +664,9 @@ class program {
         if($program != NULL && $program != 'null' ) {
           $concatsql .= " AND bc.id IN ($program) ";
         }
-        // print_r($status);
-        // exit;
+
         if(!empty($status)){
           $filterstatus = explode(',',$status);
-          //print_r($filterstatus);
           if(!(in_array('active',$filterstatus) && in_array('inactive',$filterstatus))){
               if(in_array('active' ,$filterstatus)){
                   $concatsql .= " AND bc.visible = 1 ";           
@@ -683,28 +677,17 @@ class program {
         }
         //end
         $countsql = "SELECT COUNT(bc.id) ";
-        // if ($request == true) {
-        //     $fromsql = "SELECT group_concat(bc.id) AS programids";
-        // } else {
-            $fromsql = "SELECT bc.*, (SELECT COUNT(DISTINCT cu.userid)
+
+        $fromsql = "SELECT bc.*, (SELECT COUNT(DISTINCT cu.userid)
                                   FROM {local_program_users} AS cu JOIN {user} As u ON cu.userid = u.id
                                   WHERE cu.programid = bc.id AND u.id > 2 AND u.suspended = 0 AND u.deleted = 0
                               ) AS enrolled_users, (SELECT COUNT(DISTINCT bu.userid)
                                   FROM {local_program_users} AS bu
                                   WHERE bu.programid = bc.id AND bu.completion_status = 1 AND bu.completiondate > 0
                               ) AS completed_users";
-        // }
-        if ((has_capability('local/program:manageprogram', context_system::instance())) &&
-            (!is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-                $joinon = "cc.id = bc.costcenter";
-            if ((has_capability('local/program:manage_owndepartments', context_system::instance()) || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-                $joinon = "cc.id = bc.department OR cc.id = bc.costcenter";
-            }
-        } else {
-            $joinon = "cc.id = bc.costcenter";
-        }
+
+
         $sql = " FROM {local_program} AS bc
-                 JOIN {local_costcenter} AS cc ON $joinon
                 WHERE 1 = 1 ";
         $sql .= $concatsql;
 
@@ -740,7 +723,7 @@ class program {
      */
     public function programsessions($bclcdata, $stable, $userview = false, $tab=null) {
         global $DB, $USER;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $programid = $bclcdata->programid;
         $levelid = $bclcdata->levelid;
         $bclcid = $bclcdata->bclcid;
@@ -792,7 +775,7 @@ class program {
             $time = time();
             $sql .= " AND (bcs.timefinish > $time OR bcs.id IN (SELECT sessionid
                     FROM {local_bc_course_sessions} WHERE programid = $programid AND levelid = $levelid AND bclcid = $bclcid AND userid = $USER->id ) )";
-        } else if (has_capability('local/program:takesessionattendance', $systemcontext) && !is_siteadmin() && !has_capability('local/program:manageprogram', $systemcontext)){
+        } else if (has_capability('local/program:takesessionattendance', $categorycontext) && !is_siteadmin() && !has_capability('local/program:manageprogram', $categorycontext)){
             $sql .= " AND bcs.trainerid = $USER->id ";
         }
         if($tab == 'upcomingsessions'){
@@ -926,7 +909,7 @@ class program {
                 $attendeesignup->timecreated = time();
                 $id = $DB->insert_record('local_program_attendance',  $attendeesignup);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $id
                 );
                 $event = \local_program\event\program_attendance_created_updated::create($params);
@@ -1046,7 +1029,7 @@ class program {
                             $programuser);
 
                         $params = array(
-                            'context' => context_system::instance(),
+                            'context' => $categorycontext,
                             'objectid' => $programuser->id,
                             'relateduserid' => $programuser->id,
                             'other' => array('programid' => $programid)
@@ -1119,7 +1102,7 @@ class program {
                         }
                     }
                 $params = array(
-                   'context' => context_system::instance(),
+                   'context' => $categorycontext,
                    'objectid' => $programid,
                    'relateduserid' => $removeuser,
                 );
@@ -1238,7 +1221,7 @@ class program {
             $programcourse->id = $DB->insert_record('local_program_level_courses',
                 $programcourse);
             $params = array(
-                'context' => context_system::instance(),
+                'context' => $categorycontext,
                 'objectid' => $programcourse->id,
                 'other' => array('programid' => $courses->programid,
                                  'levelid' => $courses->levelid)
@@ -1314,13 +1297,13 @@ class program {
      */
     public function program_level_courses($programid, $levelid, $userview = false) {
         global $DB, $USER;
-        $context = context_system::instance();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         if ($levelid > 0) {
             $params = array();
             $programcourses = array();
             $levelcousrsesselect = '';
             $levelcousrsessql = '';
-            if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $context)) {
+            if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
                 $levelcousrsesselect = ", bss.id AS signupid";
                 $levelcousrsessql = " LEFT JOIN {local_bc_session_signups} bss ON bss.sessionid = bcs.id AND userid = {$USER->id} ";
             }
@@ -1337,7 +1320,7 @@ class program {
                                       $levelcousrsessql
                                      WHERE bclc.programid = :programid
                                      AND bclc.levelid = {$levelid} ";
-            if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $context)) {
+            if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
                 $programcoursesssql .= " ORDER BY bclevelcourseid, signupid ASC";
             }
             $programlevelcourses = $DB->get_records_sql($programcoursesssql,
@@ -1375,14 +1358,14 @@ class program {
         try {
             $DB->update_record('local_program', $program);
             $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $programid
                 );
             $event  = \local_program\event\program_completed::create($params);
             $event->add_record_snapshot('local_program', $programid);
             $event->trigger();
            //  $params = array(
-           //     'context' => context_system::instance(),
+           //     'context' => $categorycontext,
            //     'objectid' => $program->id
            //  );
 
@@ -1570,7 +1553,7 @@ class program {
                 $programuser->completiondate = time();
                 $DB->update_record('local_program_users', $programuser);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $programuser->id
                 );
 
@@ -1619,13 +1602,10 @@ class program {
         if ($lastitem != 0) {
             $sql.=" AND u.id > $lastitem";
         }
-        if ((has_capability('local/program:manageprogram', context_system::instance())) && (!is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-            $sql .= " AND u.open_costcenterid = :costcenter";
-            $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/program:manage_owndepartments', context_system::instance()) || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-                $sql .= " AND u.open_departmentid = :department";
-                $params['department'] = $USER->open_departmentid;
-            }
+        if ((has_capability('local/program:manageprogram', $categorycontext))) {
+
+            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
         }
         $sql .= " AND u.id <> $USER->id ";
         if (!empty($params['email'])) {
@@ -1718,7 +1698,7 @@ class program {
         $enrolledusers     = $DB->count_records('local_program_users', array(
             'programid' => $programid
         ));
-        if ($programcapacity <= $enrolledusers && !empty($programcapacity) && $classroomcapacity != 0) {
+        if ($programcapacity <= $enrolledusers && !empty($programcapacity) && $programcapacity != 0) {
             $return = true;
         }
         return $return;
@@ -1764,7 +1744,7 @@ class program {
                 $level->timemodified = time();
                 $DB->update_record('local_program_levels', $level);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $level->id,
                     'other' =>array('programid' => $level->programid)
                 );
@@ -1793,7 +1773,7 @@ class program {
                     $level->id = $DB->insert_record('local_program_levels', $level);
 
                     $params = array(
-                        'context' => context_system::instance(),
+                        'context' => $categorycontext,
                         'objectid' => $level->id,
                         'other' =>array('programid' => $level->programid)
                     );
@@ -1824,7 +1804,7 @@ class program {
                 'userid' => $enroldata->userid));
         if (!empty($sessionenroldata) && $enroldata->enrol == 3) {
            $params = array(
-                   'context' => context_system::instance(),
+                   'context' => $categorycontext,
                    'objectid' => $sessionenroldata->sessionid,
                    'userid' => $USER->id,
                    'relateduserid' => $enroldata->userid
@@ -1878,7 +1858,7 @@ class program {
             $enroldata->timecreated = time();
             $signupid = $DB->insert_record('local_bc_session_signups', $enroldata);
             $params = array(
-                            'context' => context_system::instance(),
+                            'context' => $categorycontext,
                             'objectid' => $enroldata->sessionid,
                             'userid' => $USER->id,
                             'relateduserid' => $enroldata->userid,
@@ -1918,7 +1898,7 @@ class program {
                 $signupid = $DB->insert_record('local_bc_session_signups', $enroldata);
 
                 $params = array(
-                            'context' => context_system::instance(),
+                            'context' => $categorycontext,
                             'objectid' => $enroldata->sessionid,
                             'userid' => $USER->id,
                             'relateduserid' => $enroldata->userid,
@@ -2203,7 +2183,7 @@ class program {
                       // $emaillogs = new programnotifications_emails();
                       // $email_logs = $emaillogs->program_emaillogs($type, $bcuser->programid, $bcuser->userid,
                       //           $USER->id);
-                      $params = array('context' => \context_system::instance(),
+                      $params = array('context' => $categorycontext,
                         'objectid' => $userdata->programid,
                         'courseid' => 1,
                         'userid' => $userdata->userid,
@@ -2450,7 +2430,7 @@ class program {
 
      /**
      * [programsession_capacity_check description]
-     * @param  [type] $classroomid [description]
+     * @param  [type] $programid [description]
      * @return [type]              [description]
      */
     public function session_capacity_check($programid, $levelid, $bclcid, $sessionid){
@@ -2458,7 +2438,7 @@ class program {
         $return =false;
         $session_capacity=$DB->get_field('local_bc_course_sessions','maxcapacity',array('programid'=>$programid, 'levelid' => $levelid, 'bclcid' => $bclcid));
         $sessionenrolledusers=$DB->count_records('local_bc_session_signups',array('programid'=>$programid, 'levelid' => $levelid, 'bclcid' => $bclcid, 'sessionid' => $sessionid));
-        //if($classroom_capacity <= $enrolled_users){
+        //if($program_capacity <= $enrolled_users){
         //    $return =true;
         //}
         if($session_capacity <= $sessionenrolledusers && !empty($session_capacity) && $session_capacity!=0){
@@ -2583,13 +2563,9 @@ class program {
         if ($lastitem != 0) {
             $sql.=" AND u.id > $lastitem";
         }
-        if ((has_capability('local/program:manageprogram', context_system::instance())) && (!is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-            $sql .= " AND u.open_costcenterid = :costcenter";
-            $params['costcenter'] = $USER->open_costcenterid;
-            if ((has_capability('local/program:manage_owndepartments', context_system::instance()) || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-                $sql .= " AND u.open_departmentid = :department";
-                $params['department'] = $USER->open_departmentid;
-            }
+        if ((has_capability('local/program:manageprogram', $categorycontext))) {
+
+            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         }
         $sql .= " AND u.id <> $USER->id ";
         if (!empty($params['email'])) {

@@ -47,19 +47,10 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
                     institute_type_selector = $(selector).data('institute_type');
                     institute_type = $("[name='" + institute_type_selector + "']:checked").val();
                     formoptions.institute_type = institute_type;
-                } else if (action === 'program_costcenter_selector') {
-                    if (formoptions.department) {
-                        organizationclass = formoptions.organizationselect;
-                        formoptions.parnetid = $("[data-class='" + organizationclass + "']").val();
-                    }else if(formoptions.subdepartment){
-                        departmentclass = formoptions.departmentselect;
-                        formoptions.parnetid = $("[data-class='" + departmentclass + "']").val();
-                        // console.log(formoptions);
-                    }
-                } else if (action === 'program_trainer_selector') {
+                }else if (action === 'program_trainer_selector') {
                     organizationclass = formoptions.organizationselect;
                     formoptions.parnetid = $("[data-class='" + organizationclass + "']").val();
-                } else if (action === 'program_room_selector') {
+                }else if (action === 'program_room_selector') {
                     institute_type_selector = $(selector).data('institute_type');
                     institute_type = $("[name='" + institute_type_selector + "']:checked").val();
                     formoptions.institute_type = institute_type;

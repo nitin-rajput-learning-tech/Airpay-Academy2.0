@@ -33,33 +33,24 @@ require_once($CFG->dirroot.'/local/lib.php');
 
 $id = required_param('id', PARAM_INT);
 
-$program = $DB->get_record('local_program', array('id' => $id));
-if (empty($program)) {
+$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path',$costcenterpath=null,$datatype='lowerandsamepath');
+
+$programsql = "SELECT lp.*
+                    FROM {local_program} AS lp WHERE lp.id = $id $costcenterpathconcatsql ";
+
+$program = $DB->get_record_sql($programsql);
+
+if (!((is_siteadmin()) || $program)) {
+
     print_error(get_string('program_not_found', 'local_program'));
 }
-if ((has_capability('local/program:manageprogram', context_system::instance())) && (!is_siteadmin()
-    && (!has_capability('local/program:manage_multiorganizations', context_system::instance())
-        && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-        if($program->costcenter!=$USER->open_costcenterid){
-         print_error(get_string('dont_have_permissions', 'local_program'));
-        }
-
-        if ((has_capability('local/program:manage_owndepartments', context_system::instance())
-         || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-            $programs = $DB->get_record('local_program',array('id'=>$programid),$fields = 'id,costcenter,department');
-             if(!in_array(explode(',',$programs->department)) != $USER->open_departmentid){
-                print_error(get_string('dont_have_permissions', 'local_program'));  
-             }
-        }
-}
-
 
 /// Security and access check
 
 require_login();
-$context =  context_system::instance();
-require_capability('local/program:manageprogram', $context);
-require_capability('local/program:manageusers', $context);
+$categorycontext =  (new \local_program\lib\accesslib())::get_module_context($id);
+require_capability('local/program:manageprogram', $categorycontext);
+require_capability('local/program:manageusers', $categorycontext);
  
 /// Start making page
 $PAGE->set_pagelayout('standard');
@@ -76,7 +67,7 @@ $PAGE->navbar->add(get_string("bulkenrolments", 'local_program'));
 echo $OUTPUT->header();
 $mform = new local_courses\form\mass_enroll_form($CFG->wwwroot . '/local/program/mass_enroll.php', array (
 	'course' => $program,
-    'context' => $context,
+    'context' => $categorycontext,
 	'type' => 'program'
 ));
 
@@ -100,7 +91,7 @@ if ($data = $mform->get_data(false)) { // no magic quotes
         print_error('csvemptyfile', 'error', $returnurl);
     }
    
-    $result = program_mass_enroll($cir, $program, $context, $data);
+    $result = program_mass_enroll($cir, $program, $categorycontext, $data);
     
     $cir->close();
     $cir->cleanup(false); // only currently uploaded CSV file 

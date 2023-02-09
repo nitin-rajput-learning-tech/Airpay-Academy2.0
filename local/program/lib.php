@@ -29,7 +29,7 @@ use local_program\local\querylib;
 use local_program\program;
 // use \local_program\notifications_emails as programnotifications_emails;
 
-function local_program_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
+function local_program_pluginfile($course, $cm, $categorycontext, $filearea, $args, $forcedownload, array $options=array()) {
     // Check the contextlevel is as expected - if your plugin is a block, this becomes CONTEXT_BLOCK, etc.
 
     // Make sure the filearea is one of those used by the plugin.
@@ -48,7 +48,7 @@ function local_program_pluginfile($course, $cm, $context, $filearea, $args, $for
 
     // Retrieve the file from the Files API.
     $fs = get_file_storage();
-    $file = $fs->get_file($context->id, 'local_program', $filearea, $itemid, $filepath, $filename);
+    $file = $fs->get_file($categorycontext->id, 'local_program', $filearea, $itemid, $filepath, $filename);
     if (!$file) {
         return false;
     }
@@ -64,7 +64,7 @@ function local_program_pluginfile($course, $cm, $context, $filearea, $args, $for
 function local_program_output_fragment_program_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $renderer = $PAGE->get_renderer('local_program');
     $formdata = [];
@@ -107,7 +107,7 @@ function local_program_output_fragment_program_form($args) {
 function local_program_output_fragment_session_form($args) {
     global $CFG, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
@@ -150,7 +150,7 @@ function local_program_output_fragment_session_form($args) {
 function local_program_output_fragment_program_completion_form($args) {
     global $CFG, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
@@ -194,7 +194,7 @@ function local_program_output_fragment_program_completion_form($args) {
 function local_program_output_fragment_course_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $renderer = $PAGE->get_renderer('local_program');
     $formdata = [];
@@ -238,7 +238,7 @@ class programcourse_form extends moodleform {
         $mform = &$this->_form;
         $bcid = $this->_customdata['bcid'];
         $levelid = $this->_customdata['levelid'];
-        $context = context_system::instance();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         //$mform->addElement('header', 'general', get_string('addcourses', 'local_program'));
 
@@ -273,7 +273,7 @@ class programcourse_form extends moodleform {
         $options = array(
             'ajax' => 'local_program/form-course-selector',
             'multiple' => true,
-            'data-contextid' => $context->id,
+            'data-contextid' => $categorycontext->id,
         );
         $mform->addElement('autocomplete', 'course', get_string('course', 'local_program'), $courses,
             $options);
@@ -292,7 +292,7 @@ class programcourse_form extends moodleform {
  */
 class local_program_potential_users extends user_selector_base {
     protected $programid;
-    protected $context;
+    protected $categorycontext;
     protected $courseid;
     /**
      * @param string $name control name
@@ -353,14 +353,15 @@ class local_program_potential_users extends user_selector_base {
                     AND u.id > 2 AND u.confirmed = :confirmed AND u.suspended = :suspended
                     AND u.deleted = :deleted
                         ";
-        if ($program->costcenter && (has_capability('local/program:manageprogram', context_system::instance())) && ( !is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-            $sql .= " AND u.open_costcenterid = :costcenter";
-            $params['costcenter'] = $program->costcenter;
 
-            if ($program->department && (has_capability('local/program:manage_owndepartments', context_system::instance()) || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-               $sql .= " AND u.open_departmentid = :department";
-               $params['department'] = $program->department;
-            }
+        if(is_siteadmin()){
+
+            $sql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$program->open_path,'lowerandsamepath');
+
+        }else{
+
+            $sql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
         }
 
         if (!empty($this->email)) {
@@ -417,7 +418,7 @@ class local_program_potential_users extends user_selector_base {
  */
 class local_program_existing_users extends user_selector_base {
     protected $programid;
-    protected $context;
+    protected $categorycontext;
     // protected $courseid;
     /**
      * @param string $name control name
@@ -486,15 +487,15 @@ class local_program_existing_users extends user_selector_base {
             }
         }
         if ($idsreturn) {
-            $contextusers = $DB->get_records_sql_menu('SELECT DISTINCT u.id, u.id as userid ' . $sql, $params);
-            return $contextusers;
+            $categorycontextusers = $DB->get_records_sql_menu('SELECT DISTINCT u.id, u.id as userid ' . $sql, $params);
+            return $categorycontextusers;
         } else {
             $order = " ORDER BY u.id DESC";
-            $contextusers = $DB->get_records_sql($fields . $sql . $order, $params);
+            $categorycontextusers = $DB->get_records_sql($fields . $sql . $order, $params);
         }
 
         // No users at all.
-        if (empty($contextusers)) {
+        if (empty($categorycontextusers)) {
             return array();
         }
 
@@ -503,7 +504,7 @@ class local_program_existing_users extends user_selector_base {
         } else {
             $groupname = get_string('enrolledusers', 'enrol');
         }
-        return array($groupname => $contextusers);
+        return array($groupname => $categorycontextusers);
     }
 
     protected function this_con_group_name($search, $numusers) {
@@ -515,11 +516,11 @@ class local_program_existing_users extends user_selector_base {
                 return get_string('extusers', 'local_program');
             }
         }
-        $contexttype = context_helper::get_level_name($this->context->contextlevel);
+        $categorycontexttype = context_helper::get_level_name($this->context->contextlevel);
         if ($search) {
             $a = new stdClass;
             $a->search = $search;
-            $a->contexttype = $contexttype;
+            $a->contexttype = $categorycontexttype;
             if ($numusers) {
                 return get_string('usersinthisxmatching', 'core_role', $a);
             } else {
@@ -527,23 +528,23 @@ class local_program_existing_users extends user_selector_base {
             }
         } else {
             if ($numusers) {
-                return get_string('usersinthisx', 'core_role', $contexttype);
+                return get_string('usersinthisx', 'core_role', $categorycontexttype);
             } else {
-                return get_string('noneinthisx', 'core_role', $contexttype);
+                return get_string('noneinthisx', 'core_role', $categorycontexttype);
             }
         }
     }
 
-    protected function parent_con_group_name($search, $contextid) {
-        $context = context::instance_by_id($contextid);
-        $contextname = $context->get_context_name(true, true);
+    protected function parent_con_group_name($search, $categorycontextid) {
+        $categorycontext = context::instance_by_id($categorycontextid);
+        $categorycontextname = $categorycontext->get_context_name(true, true);
         if ($search) {
             $a = new stdClass;
-            $a->contextname = $contextname;
+            $a->contextname = $categorycontextname;
             $a->search = $search;
             return get_string('usersfrommatching', 'core_role', $a);
         } else {
-            return get_string('usersfrom', 'core_role', $contextname);
+            return get_string('usersfrom', 'core_role', $categorycontextname);
         }
     }
 }
@@ -552,7 +553,7 @@ function local_program_output_fragment_new_catform($args) {
     global $CFG, $DB;
 
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $categoryid = $args->categoryid;
     $o = '';
     $formdata = [];
@@ -570,11 +571,11 @@ function local_program_output_fragment_new_catform($args) {
         'maxfiles' => EDITOR_UNLIMITED_FILES,
         'maxbytes' => $course->maxbytes,
         'trust' => false,
-        'context' => $context,
+        'context' => $categorycontext,
         'noclean' => true,
         'subdirs' => false,
     ];
-    $group = file_prepare_standard_editor($group, 'description', $editoroptions, $context, 'group', 'description', null);
+    $group = file_prepare_standard_editor($group, 'description', $editoroptions, $categorycontext, 'group', 'description', null);
 
     $mform = new local_program\form\catform(null, array('editoroptions' => $editoroptions), 'post', '', null, true, $formdata);
 
@@ -598,25 +599,25 @@ function program_filter($mform){
     $stable->start = 0;
     $stable->length = -1;
     $stable->search = '';
-    $systemcontext = context_system::instance();
+    $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+
+    $program_sql = "SELECT bc.id  FROM {local_program} AS bc ";
+
     $concatsql = '';
-    // $sql = "SELECT id, name FROM {local_program} WHERE id > 1 ";
-    if ((has_capability('local/request:approverecord', context_system::instance()) || is_siteadmin())) {
-        // $programs = (new program)->programs($stable,true);
-        $program_sql = "SELECT bc.id  FROM {local_program} AS bc ";
-        if ((has_capability('local/program:manageprogram', context_system::instance())) &&
-            (!is_siteadmin() && (!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance())))) {
-                $joinon = "cc.id = bc.costcenter";
-                $concatsql = " AND bc.costcenter = {$USER->open_costcenterid} ";
-            if ((has_capability('local/program:manage_owndepartments', context_system::instance()) || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-                $joinon = "cc.id = bc.department OR cc.id = bc.costcenter";
-                $concatsql = " AND CONCAT(',',bc.department,',') LIKE '%,{$USER->open_departmentid},%' ";
+    if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
+
+
+            if(is_siteadmin()){
+
+                $concatsql.= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
+
+            }else{
+
+                $concatsql.= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
+
             }
-        } else {
-            $joinon = "cc.id = bc.costcenter";
         }
-        $program_sql .= " JOIN {local_costcenter} AS cc ON $joinon
-                WHERE 1 = 1 ";
+        $program_sql .= " WHERE 1 = 1 ";
         $program_sql .= $concatsql;
         $programids = $DB->get_fieldset_sql($program_sql);
         $componentid = implode(',', $programids);
@@ -626,7 +627,7 @@ function program_filter($mform){
         } else {
             $courseslist = $DB->get_records_sql_menu("SELECT id, name FROM {local_program} ");
         }
-    }
+
     $select = $mform->addElement('autocomplete', 'program', '', $courseslist,
         array('placeholder' => get_string('program_name', 'local_program')));
     $mform->setType('program', PARAM_RAW);
@@ -650,7 +651,7 @@ class program_managelevel_form extends moodleform {
         $mform = &$this->_form;
         $id = $this->_customdata['id'];
         $programid = $this->_customdata['programid'];
-        $context = context_system::instance();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         //$mform->addElement('header', 'general', get_string('addcourses', 'local_program'));
 
@@ -674,7 +675,7 @@ class program_managelevel_form extends moodleform {
 function local_program_output_fragment_program_managelevel_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $renderer = $PAGE->get_renderer('local_program');
     $formdata = [];
@@ -730,11 +731,11 @@ class program_managestream_form extends moodleform {
         $querieslib = new querylib();
         $mform = &$this->_form;
         $id = $this->_customdata['id'];
-        $context = context_system::instance();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
-        if (is_siteadmin() || ((has_capability('local/program:manage_multiorganizations', context_system::instance()) ||has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))) ) {
+        if (is_siteadmin()) {
                 $costcenters = array();
                 $costcenterslist = $this->_ajaxformdata['costcenter'];
                 if (!empty($costcenterslist)) {
@@ -755,7 +756,7 @@ class program_managestream_form extends moodleform {
 
                 $options = array(
                     'ajax' => 'local_program/form-options-selector',
-                    'data-contextid' => $context->id,
+                    'data-contextid' => $categorycontext->id,
                     'data-action' => 'program_costcenter_selector',
                     'data-options' => json_encode(array('id' => $id, 'depth' => 1, 'parnetid' => 0)),
                     'class' => 'organizationselect',
@@ -787,7 +788,7 @@ class program_managestream_form extends moodleform {
 function local_program_output_fragment_program_managestream_form($args) {
     global $CFG, $PAGE, $DB;
     $args = (object) $args;
-    $context = $args->context;
+    $categorycontext = $args->context;
     $return = '';
     $renderer = $PAGE->get_renderer('local_program');
     $formdata = [];
@@ -838,10 +839,10 @@ function local_program_output_fragment_program_managestream_form($args) {
 * @return  [type] string  link for the leftmenu
 */
 function local_program_leftmenunode(){
-    $systemcontext = context_system::instance();
+    $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
     $programnode = '';
-    if(((has_capability('local/program:manageprogram', context_system::instance())) && 
-        (!has_capability('local/program:trainer_viewprogram', context_system::instance()))) || 
+    if(((has_capability('local/program:manageprogram', $categorycontext)) &&
+        (!has_capability('local/program:trainer_viewprogram', $categorycontext))) ||
         (is_siteadmin())) {
         $programnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browseprograms', 'class'=>'pull-left user_nav_div browseprograms'));
             $programs_url = new moodle_url('/local/program/index.php');
@@ -851,13 +852,13 @@ function local_program_leftmenunode(){
         $programnode .= html_writer::end_tag('li');
     }
 
-    return array('10' => $programnode);
+    //return array('10' => $programnode);
 }
 function local_program_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;
-    $systemcontext = context_system::instance();
+    $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
     $stable = new stdClass();
-    if(has_capability('local/program:manageprogram', $systemcontext) || is_siteadmin()){
+    if(has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin()){
             
         // $stable->thead = false;
         // $stable->start = 0;
@@ -884,8 +885,8 @@ function local_program_quicklink_node(){
         // $local_programs_content .= "<div class='quick_navigation_detail'>
         //                                 <div class='span_str'>".get_string('manage_br_programs', 'local_program')."</div>";
         //     $local_programs_content .= "<span class='span_createlink'>";
-        //     if(has_capability('local/program:createprogram', $systemcontext) || is_siteadmin()){
-        //         $local_programs_content .= "<a href='javascript:void(0);' class='quick_nav_link goto_local_program' title='".get_string('create_program', 'local_program')."' onclick='(function(e){ require(\"local_program/ajaxforms\").init({contextid: ".$systemcontext->id.", component:\"local_program\", callback:\"program_form\", form_status:0, plugintype: \"local\", pluginname: \"program\", id:0, title: \"createprogram\" }) })(event)' >".get_string('create')."</a> | ";
+        //     if(has_capability('local/program:createprogram', $categorycontext) || is_siteadmin()){
+        //         $local_programs_content .= "<a href='javascript:void(0);' class='quick_nav_link goto_local_program' title='".get_string('create_program', 'local_program')."' onclick='(function(e){ require(\"local_program/ajaxforms\").init({contextid: ".$categorycontext->id.", component:\"local_program\", callback:\"program_form\", form_status:0, plugintype: \"local\", pluginname: \"program\", id:0, title: \"createprogram\" }) })(event)' >".get_string('create')."</a> | ";
         //     }
             
         //     $local_programs_content .="<a href='".$CFG->wwwroot."/local/program/index.php' class='viewlink' title= '".get_string('view_programs', 'local_program')." '>".get_string('view')."</a>
@@ -897,11 +898,11 @@ function local_program_quicklink_node(){
         $programs['node_header_string'] = get_string('manage_br_programs', 'local_program');
         $programs['pluginname'] = 'bootcamp';
         $programs['plugin_icon_class'] = 'fa fa-graduation-cap';
-        if(has_capability('local/program:createprogram', $systemcontext) || is_siteadmin()){
+        if(has_capability('local/program:createprogram', $categorycontext) || is_siteadmin()){
             $programs['create'] = TRUE;
-            $programs['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('class' => 'quick_nav_link goto_local_program', 'title' => get_string('create_program', 'local_program'), 'onclick' => '(function(e){ require("local_program/ajaxforms").init({contextid: '.$systemcontext->id.', component:"local_program", callback:"program_form", form_status:0, plugintype: "local", pluginname: "program", id:0, title: "createprogram" }) })(event)'));
+            $programs['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('class' => 'quick_nav_link goto_local_program', 'title' => get_string('create_program', 'local_program'), 'onclick' => '(function(e){ require("local_program/ajaxforms").init({contextid: '.$categorycontext->id.', component:"local_program", callback:"program_form", form_status:0, plugintype: "local", pluginname: "program", id:0, title: "createprogram" }) })(event)'));
         }
-        // if(has_capability('local/courses:view', $systemcontext) || has_capability('local/courses:manage', $systemcontext)){
+        // if(has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext)){
         $programs['viewlink_url'] = $CFG->wwwroot.'/local/program/index.php';
         $programs['view'] = TRUE;
         $programs['viewlink_title'] = get_string('view_programs', 'local_program');
@@ -917,11 +918,11 @@ function local_program_quicklink_node(){
  * process the bootcamp_mass_enroll
  * @param csv_import_reader $cir  an import reader created by caller
  * @param Object $bootcamp  a bootcamp record from table mdl_local_bootcamp
- * @param Object $context  course context instance
+ * @param Object $categorycontext  course context instance
  * @param Object $data    data from a moodleform
  * @return string  log of operations
  */
-function program_mass_enroll($cir, $program, $context, $data) {
+function program_mass_enroll($cir, $program, $categorycontext, $data) {
     global $CFG,$DB, $USER;
     require_once ($CFG->dirroot . '/group/lib.php');
     // require_once($CFG->dirroot . '/local/program/notifications_emails.php');
@@ -937,13 +938,18 @@ function program_mass_enroll($cir, $program, $context, $data) {
             continue;
         $fields[0]= str_replace('"', '', trim($fields[0]));
         /*First Condition To validate users*/
-        $systemcontext = \context_system::instance();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield LIKE '{$fields[0]}'";
-        }else if(has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield LIKE '{$fields[0]}' AND u.open_costcenterid={$USER->open_costcenterid} ";
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+
+        $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield LIKE '{$fields[0]}' ";
+
+        if(is_siteadmin()){
+
+            $sql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$open_path=null,'lowerandsamepath');
+
         }else{
-            $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield LIKE '{$fields[0]}' AND u.open_costcenterid={$USER->open_costcenterid} AND u.open_departmentid = {$USER->open_departmentid} ";
+
+            $sql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
         }
 
         if (!$user = $DB->get_record_sql($sql)) {
@@ -984,7 +990,7 @@ function program_mass_enroll($cir, $program, $context, $data) {
                             $local_program = $DB->get_record('local_program', array('id' => $program->id));
 
                             $params = array(
-                                'context' => context_system::instance(),
+                                'context' => $categorycontext,
                                 'objectid' => $programuser->id,
                                 'other' => array('programid' => $program->id)
                             );
@@ -1026,16 +1032,30 @@ function program_mass_enroll($cir, $program, $context, $data) {
 * return count of programs under selected costcenter
 * @return  [type] int count of programs
 */
-function costcenterwise_program_count($costcenter,$department = false){
+function costcenterwise_program_count($costcenter, $department = false, $subdepartment = false, $l4department=false, $l5department=false){
     global $USER, $DB,$CFG;
         $params = array();
-        $params['costcenter'] = $costcenter;
-        $countprogramql = "SELECT count(id) FROM {local_program} WHERE costcenter = :costcenter";
-        if($department){
-            //$countprogramql .= " AND department = :department ";
-            $countprogramql .= "AND CONCAT(',',department,',') LIKE CONCAT('%,',{$department},',%')";
-           // $params['department'] = $department;
+        $params['costcenterpath'] = '%/'.$costcenter.'/%';
+
+        $countprogramql = "SELECT count(id) FROM {local_program} WHERE concat('/',open_path,'/') LIKE :costcenterpath";
+
+        if ($department) {
+            $countprogramql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
+            $params['departmentpath'] = '%/'.$department.'/%';
         }
+        if ($subdepartment) {
+            $countprogramql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
+            $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
+        }
+        if ($l4department) {
+            $countprogramql .= " AND concat('/',open_path,'/') LIKE :l4departmentpath ";
+            $params['l4departmentpath'] = '%/'.$l4department.'/%';
+        }
+        if ($l5department) {
+            $countprogramql .= " AND concat('/',open_path,'/') LIKE :l5departmentpath ";
+            $params['l5departmentpath'] = '%/'.$l5department.'/%';
+        }
+
         $activesql = " AND visible = 1 ";
         $inactivesql = " AND visible = 0 ";
 
@@ -1043,28 +1063,57 @@ function costcenterwise_program_count($costcenter,$department = false){
         $activeprograms = $DB->count_records_sql($countprogramql.$activesql, $params);
         $inactiveprograms = $DB->count_records_sql($countprogramql.$inactivesql, $params);
         if($countprograms >= 0){
+
             if($costcenter){
-                $viewprogramlink_url = $CFG->wwwroot.'/local/program/index.php?costcenterid='.$costcenter; 
+                $viewprogramlink_url = $CFG->wwwroot.'/local/program/index.php?costcenterid='.$costcenter;
             }
             if($department){
-                $viewprogramlink_url = $CFG->wwwroot.'/local/program/index.php?departmentid='.$department; 
+                $viewprogramlink_url = $CFG->wwwroot.'/local/program/index.php?costcenterid='.$costcenter.'&departmentid='.$department;
             }
-           
+            if($subdepartment){
+                $viewprogramlink_url = $CFG->wwwroot.'/local/program/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+            }
+            if($l4department){
+                $viewprogramlink_url = $CFG->wwwroot.'/local/program/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+            }
+            if($l5department){
+                $viewprogramlink_url = $CFG->wwwroot.'/local/program/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+            }
         }
         if($activeprograms >= 0){
+
             if($costcenter){
-                $count_programactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=active&costcenterid='.$costcenter; 
+                $count_programactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=active&costcenterid='.$costcenter;
             }
             if($department){
-                $count_programactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=active&departmentid='.$department; 
-            }        
+                $count_programactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department;
+            }
+            if($subdepartment){
+                $count_programactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+            }
+            if($l4department){
+                $count_programactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+            }
+            if($l5department){
+                $count_programactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+            }
         }
         if($inactiveprograms >= 0){
+
             if($costcenter){
-                $count_programinactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=inactive&costcenterid='.$costcenter; 
+                $count_programinactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=inactive&costcenterid='.$costcenter;
             }
             if($department){
-                $count_programinactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=inactive&departmentid='.$department; 
+                $count_programinactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department;
+            }
+            if($subdepartment){
+                $count_programinactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+            }
+            if($l4department){
+                $count_programinactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+            }
+            if($l5department){
+                $count_programinactivelink_url = $CFG->wwwroot.'/local/program/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
             }
         }
     return array('program_plugin_exist' => true,'allprogramcount' => $countprograms,'activeprogramcount' => $activeprograms,'inactiveprogramcount' => $inactiveprograms,'viewprogramlink_url'=>$viewprogramlink_url,'count_programactivelink_url' => $count_programactivelink_url,'count_programinactivelink_url' => $count_programinactivelink_url);
@@ -1079,7 +1128,7 @@ function learnerscript_program_list(){
 }
 
 /**
- * Returns classrooms tagged with a specified tag.
+ * Returns programs tagged with a specified tag.
  *
  * @param local_tags_tag $tag
  * @param bool $exclusivemode if set to true it means that no other entities tagged with this tag
@@ -1112,21 +1161,21 @@ function local_program_get_tagged_programs($tag, $exclusivemode = false, $fromct
 }
 /**
 * todo sql query departmentwise
-* @param  $systemcontext object 
+* @param  $categorycontext object
 * @return array
 **/
-function orgdep_sql($systemcontext){
+function orgdep_sql($categorycontext){
     global $DB, $USER;
     $sql = '';
     $params =array();
-    if (has_capability('local/program:manageprogram', $systemcontext) && 
-        has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        $sql = " AND  c.costcenter = :costcenter";
-        $params['costcenter'] = $USER->open_costcenterid;
-    } else if (has_capability('local/program:manage_owndepartments', $systemcontext)) {
-        $sql = " AND  c.department = :department";
-        $params['department'] = $USER->open_departmentid;
-    } elseif (has_capability('local/program:trainer_viewprogram', $systemcontext)){
+
+    $sql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+
+    if(is_siteadmin()){
+
+        $sql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path=null,'lowerandsamepath');
+
+    }elseif (has_capability('local/program:trainer_viewprogram', $categorycontext)){
         $myprograms = $DB->get_records_menu('local_program_trainers', array(
                     'trainerid' => $USER->id), 'id', 'id, programid');
         if (!empty($myprograms)) {
@@ -1135,119 +1184,24 @@ function orgdep_sql($systemcontext){
         } else {
             return compact('sql', 'params');
         }
-    } else {
-        $sql .= " AND  c.costcenter = :costcenter";
-        $params['costcenter'] = $USER->open_costcenterid;
-        $sql .= " AND  ( c.department = :department OR c.department = '-1' )";
-        $params['department'] = $USER->open_departmentid;
-        // target audience
-        $gparams = array();
-        $group_list = $DB->get_records_sql_menu("select cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
-        if (!empty($group_list)){
-             $groups_members = implode(',', $group_list);
-             if(!empty($group_list)){
-                $grouquery = array();
-                foreach ($group_list as $key => $group) {
-                    $grouquery[] = " CONCAT(',',c.open_group,',') LIKE CONCAT('%,',$group,',%') "; 
-                }
-                $groupqueeryparams =implode('OR',$grouquery);
-                $gparams[]= '('.$groupqueeryparams.')';
-             }
-        }
-
-        if(!empty($gparams))
-          $opengroup=implode('AND',$gparams);
-        else
-          $opengroup = '1 != 1';
-        $fparams = array();
-        $fparams[]= " 1 = CASE WHEN (c.open_group!='-1' AND c.open_group <> '')
-                THEN
-                  CASE WHEN $opengroup
-                    THEN 1
-                    ELSE 0 END 
-                ELSE 1 END ";
-        if(!empty($USER->open_departmentid) && $USER->open_departmentid != ""){
-          $departmentlike = "'%,$USER->open_departmentid,%'";
-        }else{
-          $departmentlike = "''";
-        }
-        $fparams[]= " 1 = CASE WHEN c.department!='-1'
-          THEN 
-            CASE WHEN CONCAT(',',c.department,',') LIKE {$departmentlike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
-        if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-          $subdepartmentlike = "'%,$USER->open_subdepartment,%'";
-        }else{
-          $subdepartmentlike = "''";
-        }
-        $fparams[]= " 1 = CASE WHEN c.subdepartment!='-1'
-          THEN 
-            CASE WHEN CONCAT(',',c.subdepartment,',') LIKE {$subdepartmentlike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
-        if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
-          $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
-        }else{
-          $hrmsrolelike = "''";
-        }
-          $fparams[]= " 1 = CASE WHEN c.open_hrmsrole IS NOT NULL
-          THEN 
-            CASE WHEN CONCAT(',',c.open_hrmsrole,',') LIKE {$hrmsrolelike}
-            THEN 1
-            ELSE 0 END
-          ELSE 1 END ";
-        if(!empty($USER->open_designation) && $USER->open_designation != ""){
-          $designationlike = "'%,$USER->open_designation,%'";
-        }else{
-          $designationlike = "''";
-        }
-          $fparams[]= " 1 = CASE WHEN c.open_designation IS NOT NULL
-            THEN 
-              CASE WHEN CONCAT(',',c.open_designation,',') LIKE {$designationlike}
-                THEN 1
-                ELSE 0 END
-            ELSE 1 END  ";
-        if(!empty($USER->open_location) && $USER->open_location != ""){
-          $citylike = "'%,$USER->open_location,%'";
-        }else{
-          $citylike = "''";
-        }
-        $fparams[]= " 1 = CASE WHEN c.open_location IS NOT NULL
-          THEN 
-            CASE WHEN CONCAT(',',c.open_location,',') LIKE {$citylike}
-              THEN 1
-              ELSE 0 END
-          ELSE 1 END  ";
-
-        if(!empty($params)){
-          $finalparams=implode('AND',$fparams);
-        }else{
-          $finalparams= '1=1' ;
-        }
-
-        $sql .= " AND ($finalparams OR (c.open_hrmsrole IS NULL AND c.open_designation IS NULL AND c.open_location IS NULL AND c.open_group IS NULL AND c.department='-1' ) ) AND c.status in (1,3,4) ";
     }
     return compact('sql', 'params'); 
 }
 
 /**
 * todo sql query departmentwise
-* @param  $systemcontext object 
+* @param  $categorycontext object
 * @return array
 **/
 
 function get_program_details($classid) { 
     global $USER, $DB, $PAGE;
-    $context = context_system::instance();
+    $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
     $PAGE->requires->js_call_amd('local_program/program','load', array());
     $PAGE->requires->js_call_amd('local_request/requestconfirm','load', array());
     $details = array();
     $joinsql = " ";
-    if(is_siteadmin() OR has_capability('local/costcenter:manage_ownorganization',$context) OR 
-        has_capability('local/costcenter:manage_owndepartments',$context)) {
+    if(has_capability('local/program:manageprogram',$categorycontext)){
         $selectsql = "select c.*  ";
         $fromsql = " from  {local_program} c ";
         if ($DB->get_manager()->table_exists('local_rating')) {
@@ -1283,7 +1237,7 @@ function get_program_details($classid) {
         if ($programinfo->selfenrol == 1 && $programinfo->approvalreqd == 0) {
               $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$programinfo->id.', programid:'.$programinfo->id.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$programinfo->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_program').'</button></a>';
         } elseif ($programinfo->selfenrol == 1 && $programinfo->approvalreqd == 1) {
-              $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('requestforenroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$programinfo->id.', component:\'program\',componentname:\''.$programinfo->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
+              $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_program'). ' title = ' .get_string('requestforenroll','local_program'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$programinfo->id.', component:\'program\',componentname:\''.$programinfo->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_program').'</button></a>';
         }
         else {
             $enrollmentbtn ='-';

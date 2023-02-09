@@ -100,14 +100,6 @@ class program_courses implements renderable, templatable {
         if ($courseslist == '') {
             $courseslist = null;
         }
-
-        // if ($inprogress_bootcamps == '') {
-        //     $inprogress_bootcamps = null;
-        // }
-
-        // if ($completed_bootcamps == '') {
-        //     $completed_bootcamps = null;
-        // }
         $data->course_count_view =0;
         $data->total =$total;
         $data->index = $this->coursesViewCount > 10 ? 9 : $this->coursesViewCount-1;
@@ -161,6 +153,14 @@ class program_courses implements renderable, templatable {
                     $onerow['rating_element'] = $rating_render->render_ratings_data('local_program', $inprogress_bootcamps->id);
                 }else{
                     $onerow['rating_element'] = '';
+                }
+                require_once($CFG->dirroot.'/local/ratings/lib.php');
+                $crratings = get_rating($inprogress_coursename->id, 'local_program');
+                $onerow['ratingavg'] = $crratings->avg;
+                if($DB->record_exists('local_program_completion', array("programid"=>$inprogress_coursename->id))){
+                    $onerow['statusname'] = get_string('completed','local_program');
+                }else{
+                    $onerow['statusname'] =  get_string('launch','block_userdashboard');
                 }
                 array_push($data->inprogress_elearning, $onerow);
                 

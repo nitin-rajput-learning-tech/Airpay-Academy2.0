@@ -30,7 +30,6 @@ if (file_exists($CFG->dirroot . '/local/includes.php')) {
     require_once($CFG->dirroot . '/local/includes.php');
 }
 
-use context_system;
 use html_table;
 use html_writer;
 use local_program\program;
@@ -77,36 +76,36 @@ class renderer extends plugin_renderer_base {
      * Display the program tabs
      * @return string The text to render
      */
-    public function get_program_tabs($selected_subdepts = null, $selectedcostcenterid= null, $selecteddepartmentid = null,$selectedprogram = null,$selectedstatus = null, $view_type = 'card') {
+    public function get_program_tabs($selected_subdepts = null, $selectedcostcenterid= null, $selecteddepartmentid = null,$selectedprogram = null,$selectedstatus = null, $view_type = 'card',$selected_l4department = null, $selected_l5department= null) {
         global $CFG, $OUTPUT,$DB;
         $stable = new stdClass();
         $stable->thead = true;
         $stable->start = 0;
         $stable->length = -1;
         $stable->search = '';
-        $programscontent = $this->viewprograms($stable,$selected_subdepts, $selectedcostcenterid, $selecteddepartmentid,$selectedprogram,$selectedstatus,$view_type);
-        $context = context_system::instance();
+        $programscontent = $this->viewprograms($stable,$selected_subdepts, $selectedcostcenterid, $selecteddepartmentid,$selectedprogram,$selectedstatus,$view_type,$selected_l4department = null, $selected_l5department= null);
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         $programtabslist = [
             'programslist' => $programscontent,
-            'contextid' => $context->id,
+            'contextid' => $categorycontext->id,
             'plugintype' => 'local',
             'plugin_name' =>'program',
             'is_siteadmin' => ((has_capability('local/program:manageprogram',
-            context_system::instance())) || is_siteadmin()) ? true : false,
+            $categorycontext)) || is_siteadmin()) ? true : false,
             'creataprogram' => ((has_capability('local/program:manageprogram',
-            context_system::instance()) && has_capability('local/program:createprogram',
-            context_system::instance())) || is_siteadmin()) ? true : false,
+            $categorycontext) && has_capability('local/program:createprogram',
+            $categorycontext)) || is_siteadmin()) ? true : false,
         ];
-        if ((has_capability('local/location:manageinstitute', context_system::instance()) || has_capability('local/location:viewinstitute', context_system::instance())) && (has_capability('local/program:manageprogram', context_system::instance()))) {
+        if ((has_capability('local/location:manageinstitute', $categorycontext) || has_capability('local/location:viewinstitute', $categorycontext)) && (has_capability('local/program:manageprogram', $categorycontext))) {
             $programtabslist['location_url'] = $CFG->wwwroot . '/local/location/index.php?components=program';
 
         }
-        if(is_siteadmin() || has_capability('local/request:approverecord',context_system::instance()) ){
+        if(is_siteadmin() || has_capability('local/request:approverecord',$categorycontext) ){
             $programtabslist['request_url'] = $CFG->wwwroot . '/local/request/index.php?component=program';
         }
         if(is_siteadmin() ||(
-        has_capability('local/program:createprogram', $context)|| has_capability('local/program:updateprogram', $context)||has_capability('local/program:manageprogram', $context))){
+        has_capability('local/program:createprogram', $categorycontext)|| has_capability('local/program:updateprogram', $categorycontext)||has_capability('local/program:manageprogram', $categorycontext))){
             $sql = "SELECT id,name FROM {block_learnerscript} WHERE category = 'local_program'";
             $programreports = $DB->get_records_sql($sql);
            foreach ($programreports as $program) { 
@@ -121,10 +120,10 @@ class renderer extends plugin_renderer_base {
      * @param  [type]         $stable [description]
      * @return [type]                 [description]
      */
-    public function viewprograms($stable,$subdepts = null, $costcenterid= null, $departmentid = null,$program = null,$status = null,$view_type='card') {
+    public function viewprograms($stable,$subdepts = null, $costcenterid= null, $departmentid = null,$program = null,$status = null,$view_type='card',$l4departmentid = null, $l5departmentid= null) {
         
         global $OUTPUT, $CFG, $DB;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         if (file_exists($CFG->dirroot . '/local/includes.php')) {
             require_once($CFG->dirroot . '/local/includes.php');
             $includes = new user_course_details();
@@ -201,20 +200,15 @@ class renderer extends plugin_renderer_base {
                     $line['programcompletion'] = false;
                 
                     $mouseovericon = false;
-                    if ((has_capability('local/program:manageprogram', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
                         $line['action'] = true;
                     }
-                    if ((has_capability('local/program:editprogram', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/program:editprogram', $categorycontext) || is_siteadmin())) {
                         $line['edit'] = true;
                         $mouseovericon = true;
                     }
 
-                    if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))) {
-                         $line['edit'] = false;
-                   
-                    }   
-
-                    if ((has_capability('local/program:deleteprogram', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/program:deleteprogram', $categorycontext) || is_siteadmin())) {
                         $count_records = $DB->get_records('local_bc_session_signups', array('programid'=>$sdata->id));
                         if(count($count_records) > 0) {
                             $line['cannotdelete'] = true;
@@ -224,22 +218,12 @@ class renderer extends plugin_renderer_base {
                             $mouseovericon = true;
                         }
                     }
-                  
-                   if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))) {
-                        $line['cannotdelete'] = false;
-                        $line['delete'] = false;
-                   
-                   }   
 
-                    if (is_siteadmin() || (has_capability('local/program:inactiveprogram', context_system::instance()) || (has_capability('local/program:activeprogram', context_system::instance())))) {
+                    if (is_siteadmin() || (has_capability('local/program:inactiveprogram', $categorycontext) || (has_capability('local/program:activeprogram', $categorycontext)))) {
                          $line['hide_show'] = true;
                          $mouseovericon = true;
                     }
-                    if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))) {
-                        $line['hide_show'] = false;
-                    }   
-
-                    if ((has_capability('local/program:manageusers', context_system::instance()) || is_siteadmin())) {
+                    if ((has_capability('local/program:manageusers', $categorycontext) || is_siteadmin())) {
                         $line['assignusers'] = true;
                         $line['assignusersurl'] = new moodle_url("/local/program/enrollusers.php?bcid=" . $sdata->id . "");
                         $mouseovericon = true;
@@ -253,9 +237,9 @@ class renderer extends plugin_renderer_base {
                     }
                     $line['programcompletion_id'] = $programcompletion_id;
                    
-                    if($sdata->visible==1&&has_capability('local/program:inactiveprogram', context_system::instance())){
+                    if($sdata->visible==1&&has_capability('local/program:inactiveprogram', $categorycontext)){
                         $line['hide'] = true;
-                    }elseif(has_capability('local/program:activeprogram', context_system::instance())){
+                    }elseif(has_capability('local/program:activeprogram', $categorycontext)){
                         $line['show'] = true;
                     }
                     
@@ -334,25 +318,25 @@ class renderer extends plugin_renderer_base {
         $programid = $bclcdata->programid;
         $levelid = $bclcdata->levelid;
         $bclcid = $bclcdata->bclcid;
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
 
         $program = $DB->get_record('local_program', ['id' => $bclcdata->programid]);
         $departmentcount = count(explode(',',$program->department));
         $manage = true;
 
-        if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$context)) && $departmentcount > 1){
+        if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'],$categorycontext))){
             $manage = false;
         }
         $programcompletionstatus = $DB->get_field('local_program_users', 'completion_status', array('programid' => $bclcdata->programid, 'userid' => $USER->id));
         if ($stable->thead) {
             $return = '';
             $lc_course = $DB->get_record('local_program_level_courses', array('id' => $bclcid));
-            if (has_capability('local/program:createsession', $context) && (has_capability('local/program:manageprogram', $context)) && $manage) {
+            if (has_capability('local/program:createsession', $categorycontext) && (has_capability('local/program:manageprogram', $categorycontext)) && $manage) {
                 $return .= '<ul class="course_extended_menu_list">
                                 <li>
                                     <div class="createicon course_extended_menu_itemlink">
-                                        <a class="create_session createpopicon" title="'.get_string('addsession', 'local_program').'" onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:' . $context->id . ', component:\'local_program\', callback:\'session_form\', form_status:0, plugintype: \'local_program\', pluginname: \'session\', id:0, bcid: ' . $programid . ', levelid: '. $levelid .',  bclcid: ' . $bclcid . ', title: \'addsession\' }) })(event)">
+                                        <a class="create_session createpopicon" title="'.get_string('addsession', 'local_program').'" onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:' . $categorycontext->id . ', component:\'local_program\', callback:\'session_form\', form_status:0, plugintype: \'local_program\', pluginname: \'session\', id:0, bcid: ' . $programid . ', levelid: '. $levelid .',  bclcid: ' . $bclcid . ', title: \'addsession\' }) })(event)">
                                             <i class="fa fa-plus icon" aria-hidden="true"></i>
                                         </a>
                                     </div>
@@ -365,7 +349,7 @@ class renderer extends plugin_renderer_base {
                 $table->head = array(get_string('name'), get_string('startdatetime', 'local_program'));
                 $table->head[] = get_string('enddatetime', 'local_program');
                 $table->head[] = get_string('room', 'local_program');
-                if ((has_capability('local/program:manageprogram', context_system::instance()) || is_siteadmin() || has_capability('local/program:takesessionattendance', context_system::instance()))) {
+                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin() || has_capability('local/program:takesessionattendance', $categorycontext))) {
                     $table->head[] = get_string('status', 'local_program');
                     $table->head[] = get_string('attended_sessions_users', 'local_program');
                 }
@@ -374,7 +358,7 @@ class renderer extends plugin_renderer_base {
                     $table->head[] = get_string('seats', 'local_program');
                 }
 
-                if ((($userview && !$enrolmentpending) || ($userview && !$programcompletionstatus)) || (has_capability('local/program:manageprogram', context_system::instance()) || is_siteadmin() || has_capability('local/program:takesessionattendance', context_system::instance()))) {
+                if ((($userview && !$enrolmentpending) || ($userview && !$programcompletionstatus)) || (has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin() || has_capability('local/program:takesessionattendance', $categorycontext))) {
                     $table->head[] = get_string('actions');
                 }
                 $table->id = 'viewprogramsessions';
@@ -386,7 +370,7 @@ class renderer extends plugin_renderer_base {
         } else {
             $programuser = $DB->record_exists('local_program_users', array('programid' => $bclcdata->programid, 'userid' => $USER->id));
             $userview = false;
-            if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $context)) {
+            if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
                 $bclevel = new stdClass();
                 $bclevel->programid = $bclcdata->programid;
                 $bclevel->levelid = $bclcdata->levelid;
@@ -411,7 +395,7 @@ class renderer extends plugin_renderer_base {
             $sessions = (new program)->programsessions($bclcdata, $stable, $userview, $tab);
             $data = array();
             $absentsessions = false;
-            if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $context)) {
+            if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
                 $absentsessions = $DB->count_records('local_bc_session_signups',
                     array('programid' => $bclcdata->programid,
                         'levelid' => $bclcdata->levelid, 'bclcid' => $bclcdata->bclcid,
@@ -444,7 +428,7 @@ class renderer extends plugin_renderer_base {
                             $link = html_writer::link($CFG->wwwroot . '/mod/' .$sdata->moduletype. '/view.php?id=' . $moduleid,
                                     get_string('join', 'local_program'),
                                     array('title' => get_string('join', 'local_program')));
-                            if (!is_siteadmin() && !has_capability('local/program:manageprogram', context_system::instance())) {
+                            if (!is_siteadmin() && !has_capability('local/program:manageprogram', $categorycontext)) {
                                 $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $sdata->programid, 'userid' => $USER->id));
                                 if (!$userenrolstatus) {
                                     $link = get_string('join', 'local_program');
@@ -457,12 +441,12 @@ class renderer extends plugin_renderer_base {
 
                 $program_totalusers = $DB->count_records('local_bc_session_signups',
                     array('bclcid' => $bclcid, 'sessionid' => $sdata->id));
-                if ((has_capability('local/program:manageprogram', context_system::instance()) || is_siteadmin())) {
+                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
                     $attendedsessions_users = $DB->count_records('local_bc_session_signups',
                         array('bclcid' => $bclcid, 'sessionid' => $sdata->id,
                             'completion_status' => SESSION_PRESENT));
                 }
-                if (has_capability('local/program:manageprogram', context_system::instance()) || has_capability('local/program:takesessionattendance', context_system::instance())) {
+                if (has_capability('local/program:manageprogram', $categorycontext) || has_capability('local/program:takesessionattendance', $categorycontext)) {
                     if ($sdata->timefinish <= time() && $sdata->attendance_status == 1) {
                         $line[] = get_string('completed', 'local_program');
                     } else {
@@ -475,7 +459,7 @@ class renderer extends plugin_renderer_base {
                     //     $line[] = get_string('pending', 'local_program');
                     // }
                 }
-                if ((has_capability('local/program:manageprogram', context_system::instance()) || is_siteadmin())) {
+                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
                     $line[] = $sdata->activeusers . '/' . $sdata->totalusers;
                 }
                 if ($sdata->trainerid) {
@@ -488,11 +472,11 @@ class renderer extends plugin_renderer_base {
                     $line[] = $sdata->signups . ' / ' . $sdata->maxcapacity;
                 }
                 $action = '';
-                if ((has_capability('local/program:editsession', context_system::instance()) || is_siteadmin())&&(has_capability('local/program:manageprogram', context_system::instance()))) {
+                if ((has_capability('local/program:editsession', $categorycontext) || is_siteadmin())&&(has_capability('local/program:manageprogram', $categorycontext))) {
                     $action .= '<a href="javascript:void(0);" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:1, component:\'local_program\', callback:\'session_form\', form_status:0, plugintype: \'local_program\', pluginname: \'session\', id: ' . $sdata->id . ', bcid: ' . $programid .', levelid: '. $levelid .', bclcid: '.$bclcid.', title: \'updatesession\'}) })(event)" ><img src="' . $OUTPUT->image_url('i/edit') . '" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' class="icon"/></a>';
                 }
-                if ((has_capability('local/program:deletesession', context_system::instance())
-                    || is_siteadmin())&&(has_capability('local/program:manageprogram', context_system::instance()))) {
+                if ((has_capability('local/program:deletesession', $categorycontext)
+                    || is_siteadmin())&&(has_capability('local/program:manageprogram', $categorycontext))) {
                     $count_records = $DB->get_records('local_bc_session_signups',
                         array('sessionid' => $sdata->id));
                     if (count($count_records) > 0) {
@@ -501,13 +485,13 @@ class renderer extends plugin_renderer_base {
                          $action .= '<a href="javascript:void(0);" alt = ' . get_string('delete') . ' title = ' . get_string('delete') . ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deletesession\', programid: ' . $sdata->programid . ', levelid: '.$levelid.', bclcid: ' . $bclcid . ', id: ' . $sdata->id . ' }) })(event)" ><img src="' . $OUTPUT->image_url('i/trash') . '" alt = ' . get_string('delete') . ' title = ' . get_string('delete') . ' class="icon"/></a>';
                     }
                 }
-                if(has_capability('local/program:manageusers', context_system::instance()) || is_siteadmin()) {
+                if(has_capability('local/program:manageusers', $categorycontext) || is_siteadmin()) {
                     $action .= '<a href="' . $CFG->wwwroot . '/local/program/session_enrolusers.php?bcid=' . $sdata->programid . '&levelid=' . $levelid . '&bclcid=' . $bclcid . '&sid=' . $sdata->id . '"><img src="' . $OUTPUT->image_url('t/groups') . '"  alt = "'.get_string('sessionenrolments', 'local_program').'"  title = "'.get_string('sessionenrolments', 'local_program').'" class="icon"/></a>';
                 }
-                if ((has_capability('local/program:takesessionattendance', context_system::instance()) || is_siteadmin())&&(has_capability('local/program:manageprogram', context_system::instance()))) {
+                if ((has_capability('local/program:takesessionattendance', $categorycontext) || is_siteadmin())&&(has_capability('local/program:manageprogram', $categorycontext))) {
                     $action .= '<a href="' . $CFG->wwwroot . '/local/program/attendance.php?bcid=' . $sdata->programid . '&sid=' . $sdata->id . '&action='.$tab.'&levelid='.$levelid.'&bclcid='.$bclcid.'" ><img src="' . $OUTPUT->image_url('t/assignroles') . '" alt = ' . get_string('attendace', 'local_program') . ' title = ' . get_string('attendace', 'local_program') . ' class="icon"/></a>';
                 }
-                if ((has_capability('local/program:editsession', context_system::instance()) || has_capability('local/program:deletesession', context_system::instance()) || has_capability('local/program:takesessionattendance', context_system::instance())) && (has_capability('local/program:manageprogram', context_system::instance()))) {
+                if ((has_capability('local/program:editsession', $categorycontext) || has_capability('local/program:deletesession', $categorycontext) || has_capability('local/program:takesessionattendance', $categorycontext)) && (has_capability('local/program:manageprogram', $categorycontext))) {
                     $line[] = $action;
                 } else {
                     if ((($userview && !$enrolmentpending) || ($userview && !$programcompletionstatus))) {
@@ -569,7 +553,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogramsessionstabs($bclcdata, $stable, $userview = false, $enrolmentpending = false, $tab) {
         global $CFG, $OUTPUT;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $toprow = array();
         if ($tab) {
             $toprow[] = new tabobject('upcomingsessions', new moodle_url("/local/program/sessions.php?action=upcomingsessions&bcid=$bclcdata->programid&levelid=$bclcdata->levelid&bclcid=$bclcdata->bclcid"), get_string('upcomingsessions', 'local_program'));
@@ -581,23 +565,23 @@ class renderer extends plugin_renderer_base {
     
     public function viewprogramlevels($programid, $levelid) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program)
          $departmentcount = count(array_filter(explode(',',$program->department)));
          $subdepartmentcount = count(array_filter(explode(',',$program->subdepartment)));
          $manage = true;
-         if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_multiorganizations','local/costcenter:manage_ownorganization'],$systemcontext)) && $departmentcount > 1){
+         if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'],$categorycontext)) ){
             $manage = false;
          }
         $assign_courses = '';
         $bcuser = $DB->record_exists('local_program_users',
             array('programid' => $programid, 'userid' => $USER->id));
-        $userview = $bcuser && !is_siteadmin() && !has_capability('local/program:createprogram', $systemcontext) ? true : false;
+        $userview = $bcuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext) ? true : false;
 
         $programlevels = (new program)->program_levels($programid);
         
-        if(has_capability('local/program:addcourse', $systemcontext)){
+        if(has_capability('local/program:addcourse', $categorycontext)){
             $addcourse = true;
         }
 
@@ -622,7 +606,7 @@ class renderer extends plugin_renderer_base {
                 if ($programlevel->id == $levelid) {
                     $activeclass = 'active';
                 }
-                if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $systemcontext) && array_search($programlevel->id, $mycompletedlevels) === false
+                if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext) && array_search($programlevel->id, $mycompletedlevels) === false
                     && $nextlevel != $programlevel->id) {
                     $disabled = 'disabled';
                 }
@@ -649,26 +633,26 @@ class renderer extends plugin_renderer_base {
                 // }
                 if($can_delete_levels){
                     if ((count($levelcount_records) > 0 && has_capability('local/program:deletelevel',
-                        $systemcontext)) || ($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext)))) {
+                        $categorycontext))) {
                         $candeletelevel = false;
-                    } else if (has_capability('local/program:deletelevel', $systemcontext)) {
+                    } else if (has_capability('local/program:deletelevel', $categorycontext)) {
                         $candeletelevel = true;
                     }
                 }
                 
-                if(has_capability('local/program:createlevel',$systemcontext)){
+                if(has_capability('local/program:createlevel',$categorycontext)){
                     isset($createlevel);
                 }
-                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))) {
+                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/program:createlevel',$categorycontext))) {
                     ;
                     unset($createlevel);
                 }
 
 
-                if(has_capability('local/program:editlevel',$systemcontext)){
+                if(has_capability('local/program:editlevel',$categorycontext)){
                     $editlevel = true;
                 }
-                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))) {
+                if(!(is_siteadmin() || has_capability('local/program:editlevel',$categorycontext))) {
                     ;
                     $editlevel = false;
                 }
@@ -680,23 +664,23 @@ class renderer extends plugin_renderer_base {
         }
 
         $programlevelscontext = [
-            'contextid' => $systemcontext->id,
+            'contextid' => $categorycontext->id,
             'programid' => $programid,
-            //'cancreatelevel' => has_capability('local/program:createlevel', $systemcontext),
+            //'cancreatelevel' => has_capability('local/program:createlevel', $categorycontext),
             'cancreatelevel' => isset($createlevel),
-            'canviewlevel' => has_capability('local/program:viewlevel', $systemcontext),
-            //'caneditlevel' => has_capability('local/program:editlevel', $systemcontext),
+            'canviewlevel' => has_capability('local/program:viewlevel', $categorycontext),
+            //'caneditlevel' => has_capability('local/program:editlevel', $categorycontext),
             'caneditlevel' => $editlevel,
-            'canaddcourse' => has_capability('local/program:addcourse', $systemcontext),
-            'caneditcourse' => has_capability('local/program:editcourse', $systemcontext),
-            'canmanagecourse' => has_capability('local/program:managecourse', $systemcontext),
+            'canaddcourse' => has_capability('local/program:addcourse', $categorycontext),
+            'caneditcourse' => has_capability('local/program:editcourse', $categorycontext),
+            'canmanagecourse' => has_capability('local/program:managecourse', $categorycontext),
             'candeletelevel' => $candeletelevel,
-            'cancreatesession' => (has_capability('local/program:createsession', $systemcontext) && $manage),
-            'canenrolsession' => has_capability('local/program:enrolsession', $systemcontext) && !is_siteadmin(),
+            'cancreatesession' => (has_capability('local/program:createsession', $categorycontext) && $manage),
+            'canenrolsession' => has_capability('local/program:enrolsession', $categorycontext) && !is_siteadmin(),
             'cfg' => $CFG,
             'levelid' => $levelid,
             'cantakeattendance' => has_capability('local/program:takesessionattendance',
-                $systemcontext) && !is_siteadmin(),
+                $categorycontext) && !is_siteadmin(),
             'programlevel' => $programlevel,
             'userview' => $userview,
             'programlevels' => array_values($programlevels),
@@ -714,21 +698,21 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogramcourses($programid, $levelid) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program){
 
         $departments = array_filter(explode(',', $program->department));
         $manage = true;
         
-        if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_ownorganization', 'local/costcenter:manage_multiorganizations'], $systemcontext)) && count($departments) > 1){
+        if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'], $categorycontext))){
                 $manage = false;
                 
         }
         $assign_courses = '';
         $bcuser = $DB->record_exists('local_program_users',
             array('programid' => $programid, 'userid' => $USER->id));
-        $userview = $bcuser && !is_siteadmin() && !has_capability('local/program:createprogram', $systemcontext) ? true : false;
+        $userview = $bcuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext) ? true : false;
         $bclevel = new stdClass();
         $bclevel->programid = $programid;
         $bclevel->levelid = $levelid;
@@ -789,10 +773,10 @@ class renderer extends plugin_renderer_base {
             $canremovecourse = false;
             $cannotremovecourse = false;
             if (count($count_records) > 0 && has_capability('local/program:removecourse',
-                $systemcontext)) {
+                $categorycontext)) {
                 $canremovecourse = false;
                 $cannotremovecourse = true;
-            } else if (has_capability('local/program:removecourse', $systemcontext)) {
+            } else if (has_capability('local/program:removecourse', $categorycontext)) {
                 $canremovecourse = true;
                 $cannotremovecourse = false;
             }
@@ -801,21 +785,21 @@ class renderer extends plugin_renderer_base {
             $programlevelcourses[$i] = $bclevelcourse;
         }
     }
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         
      
         $programcoursescontext = [
-            'contextid' => $systemcontext->id,
+            'contextid' => $categorycontext->id,
             'programid' => $programid,
-            'canaddcourse' => (has_capability('local/program:addcourse',$systemcontext) && $manage),
-            'caneditcourse' => has_capability('local/program:editcourse', $systemcontext),
-            'canmanagecourse' => has_capability('local/program:managecourse', $systemcontext),
-            'cancreatesession' => (has_capability('local/program:createsession', $systemcontext) && $manage),
-            'canenrolsession' => has_capability('local/program:enrolsession', $systemcontext) && !is_siteadmin(),
+            'canaddcourse' => (has_capability('local/program:addcourse',$categorycontext) && $manage),
+            'caneditcourse' => has_capability('local/program:editcourse', $categorycontext),
+            'canmanagecourse' => has_capability('local/program:managecourse', $categorycontext),
+            'cancreatesession' => (has_capability('local/program:createsession', $categorycontext) && $manage),
+            'canenrolsession' => has_capability('local/program:enrolsession', $categorycontext) && !is_siteadmin(),
             'cfg' => $CFG,
             'levelid' => $levelid,
             'cantakeattendance' => has_capability('local/program:takesessionattendance',
-                $systemcontext) && !is_siteadmin(),
+                $categorycontext) && !is_siteadmin(),
             'programlevel' => $programlevel,
             'userview' => $userview,
             'programlevelcourses' => array_values($programlevelcourses)
@@ -830,7 +814,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogram($programid) {
         global $OUTPUT, $CFG, $DB, $USER, $PAGE;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $stable = new stdClass();
         $stable->programid = $programid;
         $stable->thead = false;
@@ -841,7 +825,7 @@ class renderer extends plugin_renderer_base {
         $subdepartmentcount = count(array_filter(explode(',',$program->subdepartment)));
         $departments = explode(',', $program->department);
         $manage = true;
-        if(!(is_siteadmin() || has_any_capability(['local/costcenter:manage_ownorganization', 'local/costcenter:manage_multiorganizations'], $systemcontext)) && count($departments) > 1){
+        if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'], $categorycontext))){
                 $manage = false;
         }
 
@@ -900,24 +884,20 @@ class renderer extends plugin_renderer_base {
         $programcompletion = $user_tab = $course_tab = $session_tab = $action = $edit = $delete = $assignusers = $assignusersurl = false;
             $session_tab = false;
             $course_tab = true;
-        if (has_capability('local/program:viewusers', context_system::instance())) {
+        if (has_capability('local/program:viewusers', $categorycontext)) {
             $user_tab = true;
         }
-        if ((has_capability('local/program:manageprogram', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
             $action = true;
         }
 
         
-        if ((has_capability('local/program:programcompletion', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/program:programcompletion', $categorycontext) || is_siteadmin())) {
             $programcompletion = false;
         }
-        if ((has_capability('local/program:editprogram', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/program:editprogram', $categorycontext) || is_siteadmin())) {
             $edit = true;
         }
-
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))) {
-             $edit = false;
-        }   
 
         $unenrolbutton = $this->get_self_unenrollment_button($programid, $program->name);
         if(!is_null($unenrolbutton)){
@@ -925,7 +905,7 @@ class renderer extends plugin_renderer_base {
         }
         $cannotdelete = true;
         $delete = false;
-        if ((has_capability('local/program:deleteprogram', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/program:deleteprogram', $categorycontext) || is_siteadmin())) {
             $count_records = $DB->get_records('local_bc_session_signups', array('programid' => $programid));
             if (count($count_records) > 0) {
                 $cannotdelete = true;
@@ -935,13 +915,8 @@ class renderer extends plugin_renderer_base {
                 $delete = true;
             }
         }
-
-        if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations',$systemcontext) || has_capability('local/costcenter:manage_ownorganization',$systemcontext))) {
-               $cannotdelete = false;
-               $delete = false;
-        }   
        
-        if ((has_capability('local/program:manageusers', context_system::instance()) || is_siteadmin())) {
+        if ((has_capability('local/program:manageusers', $categorycontext) || is_siteadmin())) {
             $assignusers = true;
             $assignusersurl = new moodle_url("/local/program/enrollusers.php?bcid=" .
                 $programid . "");
@@ -950,7 +925,7 @@ class renderer extends plugin_renderer_base {
                 $programid . "");
         }
         $selfenrolmenttabcap = true;
-        if (!has_capability('local/program:manageprogram', context_system::instance())) {
+        if (!has_capability('local/program:manageprogram', $categorycontext)) {
             $selfenrolmenttabcap = false;
         }
         if (!empty($program->description)) {
@@ -973,7 +948,7 @@ class renderer extends plugin_renderer_base {
         }
         $bcuser = $DB->record_exists('local_program_users',
             array('programid' => $programid, 'userid' => $USER->id));
-        $userview = $bcuser && !is_siteadmin() && !has_capability('local/program:createprogram', $systemcontext) ? true : false;
+        $userview = $bcuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext) ? true : false;
 
         if ($userview) {
             $mycompletedlevels = (new program)->mycompletedlevels($programid, $USER->id);
@@ -1078,7 +1053,7 @@ class renderer extends plugin_renderer_base {
             'programname' => $program->name,
             'cfg' => $CFG,
             'programcompletionstatus' => $programcompletionstatus,
-            'cancreatelevel' => (has_capability('local/program:createlevel', $systemcontext) && $manage),
+            'cancreatelevel' => (has_capability('local/program:createlevel', $categorycontext) && $manage),
             'seats_image' => $OUTPUT->image_url('GraySeatNew', 'local_program'),
             'levelid' => $levelid,
             'programlevels' => $this->viewprogramlevels($programid, $levelid),
@@ -1100,8 +1075,8 @@ class renderer extends plugin_renderer_base {
         if(!$selfenrolled){
             return null;
         }
-        $systemcontext = \context_system::instance();
-        $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_program/program\').unEnrolUser({programid: '.$programid.', userid:'.$USER->id.', programname:\''.$programname.'\', contextid:'.$systemcontext->id.'}) })(event)'));
+        $categorycontext =(new \local_classroom\lib\accesslib())::get_module_context();
+        $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_program/program\').unEnrolUser({programid: '.$programid.', userid:'.$USER->id.', programname:\''.$programname.'\', contextid:'.$categorycontext->id.'}) })(event)'));
         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
         $liTag = html_writer::tag('li', $container);
         return html_writer::tag('ul', $liTag, array('class' => 'course_extended_menu_list'));
@@ -1116,7 +1091,7 @@ class renderer extends plugin_renderer_base {
     public function viewprogramusers($stable) {
         global $OUTPUT, $CFG, $DB;
         $programid = $stable->programid;
-        if (has_capability('local/program:manageusers', context_system::instance()) && has_capability('local/program:manageprogram', context_system::instance())) {
+        if (has_capability('local/program:manageusers', $categorycontext) && has_capability('local/program:manageprogram', $categorycontext)) {
             $url = new moodle_url('/local/program/enrollusers.php', array('bcid' => $programid));
             $assign_users ='<ul class="course_extended_menu_list">
                                 <li>
@@ -1207,7 +1182,7 @@ class renderer extends plugin_renderer_base {
                     }else{
                         $url = 'javascript: void(0)';
                        // $icon = '<i class="icon fa fa-download" aria-hidden="true"></i>';
-                        $downloadlink = html_writer::tag($url,get_string('notassigned','local_classroom'));
+                        $downloadlink = html_writer::tag($url,get_string('notassigned','local_program'));
                     }
                     $line[] =  $downloadlink;
                 }
@@ -1335,11 +1310,11 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $program = (new program)->programs($stable);
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
-        if (!has_capability('local/program:view_newprogramtab', context_system::instance()) && $program_status== 0) {
+        if (!has_capability('local/program:view_newprogramtab', $categorycontext) && $program_status== 0) {
             print_error("You don't have permissions to view this page.");
-        } else if (!has_capability('local/program:view_holdprogramtab', context_system::instance()) &&
+        } else if (!has_capability('local/program:view_holdprogramtab', $categorycontext) &&
             $program_status == 2) {
             print_error("You don't have permissions to view this page.");
         }
@@ -1367,8 +1342,8 @@ class renderer extends plugin_renderer_base {
         }
 
         $return = "";
-        $program->userenrolmentcap = (has_capability('local/program:manageusers', context_system::instance())
-            && has_capability('local/program:manageprogram', context_system::instance())
+        $program->userenrolmentcap = (has_capability('local/program:manageusers', $categorycontext)
+            && has_capability('local/program:manageprogram', $categorycontext)
             && $program->status == 0) ? true : false;
 
         $stable = new stdClass();
@@ -1403,7 +1378,7 @@ class renderer extends plugin_renderer_base {
             'description' => $description,
             'descriptionstring' => $decsriptionstring,
             'isdescription' => $isdescription,
-            'contextid' => $context->id,
+            'contextid' => $categorycontext->id,
             'cfg' => $CFG,
             'linkpath' => "$CFG->wwwroot/local/program/view.php?bcid=$programid"
         ];
@@ -1418,13 +1393,13 @@ class renderer extends plugin_renderer_base {
      */
     public function view_program_sessions($bclcid, $stable) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         if ($stable->thead) {
             $return = '';
             $sessions = (new program)->programsessions($bclcid, $stable);
             if ($sessions['sessionscount'] > 0) {
                 $table = new html_table();
-                if ((has_capability('local/program:manageprogram', context_system::instance()) || is_siteadmin())) {
+                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
                     $table->head = array(get_string('name'), get_string('date'));
                     $table->head[] = get_string('type', 'local_program');
                     $table->head[] = get_string('room', 'local_program');
@@ -1465,7 +1440,7 @@ class renderer extends plugin_renderer_base {
                             $link = html_writer::link($CFG->wwwroot . '/mod/' . $sdata->moduletype. '/view.php?id=' . $moduleid,
                                 get_string('join', 'local_program'),
                                 array('title' => get_string('join', 'local_program')));
-                            if (!has_capability('local/program:manageprogram', context_system::instance())) {
+                            if (!has_capability('local/program:manageprogram', $categorycontext)) {
                                 $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $programid, 'userid' => $USER->id));
                                 if (!$userenrolstatus) {
                                     $link = get_string('join', 'local_program');
@@ -1491,13 +1466,13 @@ class renderer extends plugin_renderer_base {
     }
     public function viewprogramstreams($stable) {
         global $OUTPUT, $CFG, $DB;
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $return = '';
-        if (is_siteadmin() || has_capability('local/program:manageprogram', context_system::instance())) {
+        if (is_siteadmin() || has_capability('local/program:manageprogram', $categorycontext)) {
             $return .= '<ul class="course_extended_menu_list">
                             <li>
                                 <div class="course_extended_menu_itemcontainer">
-                                    <a class="course_extended_menu_itemlink create_ilt" title=" '. get_String("create_streams", "local_program") .'" onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:'. $systemcontext->id .', component:\'local_program\', callback:\'program_managestream_form\', form_status:0, plugintype: \'local_program\', pluginname: \'stream\', id:0, title: \'createstream\' }) })(event)">
+                                    <a class="course_extended_menu_itemlink create_ilt" title=" '. get_String("create_streams", "local_program") .'" onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:'. $categorycontext->id .', component:\'local_program\', callback:\'program_managestream_form\', form_status:0, plugintype: \'local_program\', pluginname: \'stream\', id:0, title: \'createstream\' }) })(event)">
                                         <i class="icon fa fa-columns" aria-hidden="true"></i>
                                     </a>
                                 </div>
@@ -1526,10 +1501,10 @@ class renderer extends plugin_renderer_base {
                     }
                 $row[] = $programstream->description? $programstream->description: 'N/A';
                 $action = '';
-                if (is_siteadmin() || (has_capability('local/program:manageprogram', context_system::instance()))) {
+                if (is_siteadmin() || (has_capability('local/program:manageprogram', $categorycontext))) {
                     $action .= '<a href="javascript:void(0);" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:1, component:\'local_program\', callback:\'program_managestream_form\', form_status:0, plugintype:\'local\', pluginname:\'program_stream\', id: ' . $programstream->id . ', title: \'updatesession\'}) })(event)" ><img src="' . $OUTPUT->image_url('t/editinline') . '" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' class="icon"/></a>';
                 }
-                if (is_siteadmin() || (has_capability('local/program:manageprogram', context_system::instance()))) {
+                if (is_siteadmin() || (has_capability('local/program:manageprogram', $categorycontext))) {
                     $pr_exists = $DB->record_exists('local_program',array('stream'=>$programstream->id));
                     if($pr_exists){
                         $action .= $OUTPUT->help_icon('cannotdeleteprogram', 'local_program');
@@ -1556,7 +1531,7 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $program = (new program)->programs($stable);
-        $context = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
         if (empty($program)) {
             print_error("program Not Found!");
@@ -1580,7 +1555,7 @@ class renderer extends plugin_renderer_base {
      */
   public function tagged_programs($tagid, $exclusivemode, $ctx, $rec, $displayoptions, $count = 0, $sort='') {
     global $CFG, $DB, $USER;
-    $systemcontext = context_system::instance();
+    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
     if ($count > 0)
     $sql =" select count(c.id) from {local_program} c ";
     else
@@ -1618,7 +1593,7 @@ class renderer extends plugin_renderer_base {
     $whereparams = array();
     $conditionalwhere = '';
     if (!is_siteadmin()) {
-        $wherearray = orgdep_sql($systemcontext); // get records department wise
+        $wherearray = orgdep_sql($categorycontext); // get records department wise
         $whereparams = $wherearray['params'];
         $conditionalwhere = $wherearray['sql'];
     }    
@@ -1645,7 +1620,7 @@ class renderer extends plugin_renderer_base {
     return $this->output->render_from_template('local_tags/tagfeed', $tagfeed->export_for_template($this->output));
     }
     public function get_userdashboard_program($tab, $filter = false,$view_type='card'){
-        $systemcontext = context_system::instance();
+        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
         $templateName = 'local_program/userdashboard_paginated';
         $cardClass = 'col-md-6 col-12';
@@ -1661,17 +1636,17 @@ class renderer extends plugin_renderer_base {
         $options['filter'] = $tab;
         $options = json_encode($options);
         $filterdata = json_encode(array());
-        $dataoptions = json_encode(array('contextid' => $systemcontext->id));
-        $context = [
+        $dataoptions = json_encode(array('contextid' => $categorycontext->id));
+        $categorycontext = [
             'targetID' => 'dashboard_program',
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata
         ];
         if($filter){
-            return  $context;
+            return  (new \local_classroom\lib\accesslib())::get_module_context();
         }else{
-            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
+            return  $this->render_from_template('local_costcenter/cardPaginate', $categorycontext);
         }
     }
 }

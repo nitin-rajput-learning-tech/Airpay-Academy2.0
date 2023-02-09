@@ -38,16 +38,18 @@ $tab = optional_param('tab', '', PARAM_RAW);
 $programstatus = optional_param('programstatus', -1, PARAM_INT);
 $programmodulehead = optional_param('programmodulehead', false, PARAM_BOOL);
 $cat = optional_param('categoryname', '', PARAM_RAW);
-$context = context_system::instance();
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 $subdepts = optional_param('subdepts', null, PARAM_RAW);
 $costcenterid = optional_param('costcenterid', null, PARAM_RAW);
 $departmentid = optional_param('departmentid', null, PARAM_RAW);
+$l4department = optional_param('l4department', '', PARAM_INT);
+$l5department = optional_param('l5department', '', PARAM_INT);
 $program = optional_param('program', null, PARAM_RAW);
 $status = optional_param('status', null, PARAM_RAW);
 $view_type = optional_param('view_type', 'card', PARAM_TEXT);
 
 require_login();
-$PAGE->set_context($context);
+$PAGE->set_context($categorycontext);
 $renderer = $PAGE->get_renderer('local_program');
 try{
     switch ($action) {
@@ -58,7 +60,7 @@ try{
             $stable->start = $start;
             $stable->length = $length;
             $stable->programstatus = $programstatus;
-            $return = $renderer->viewprograms($stable,$subdepts,$costcenterid,$departmentid,$program,$status,$view_type);  
+            $return = $renderer->viewprograms($stable,$subdepts,$costcenterid,$departmentid,$program,$status,$view_type,$l4department,$l5department);
             
         break;
         case 'viewprogramsessions':

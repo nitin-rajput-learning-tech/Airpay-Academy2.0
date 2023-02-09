@@ -344,9 +344,9 @@ $string['addlevel'] = 'Add Level';
 $string['enrolluserssuccess'] = '<b>{$a->changecount}</b> Employee(s) successfully enrolled to this <b>"{$a->program}"</b> program .';
 $string['unenrolluserssuccess'] = '<b>{$a->changecount}</b> Employee(s) successfully un enrolled from this <b>"{$a->program}"</b> program .';
 
-$string['enrollusers'] = 'Classroom <b>"{$a}"</b> enrollment is in process...';
+$string['enrollusers'] = 'program <b>"{$a}"</b> enrollment is in process...';
 
-$string['un_enrollusers'] = 'Classroom <b>"{$a}"</b> un enrollment is in process...';
+$string['un_enrollusers'] = 'program <b>"{$a}"</b> un enrollment is in process...';
 $string['click_continue'] = 'Click on continue';
 $string['unassign_courses_confirm'] = 'Are you sure you want to un-assign this course from the level.';
 $string['unassign'] = 'Yes';
@@ -423,9 +423,9 @@ $string['tasksessionreminder'] = 'Task Session Reminder';
 $string['enrolluserssuccess'] = '<b>{$a->changecount}</b> Employee(s) successfully enrolled to this <b>"{$a->program}"</b> program .';
 $string['unenrolluserssuccess'] = '<b>{$a->changecount}</b> Employee(s) successfully un enrolled from this <b>"{$a->program}"</b> program .';
 
-$string['enrollusers'] = 'Classroom <b>"{$a}"</b> enrollment is in process...';
+$string['enrollusers'] = 'program <b>"{$a}"</b> enrollment is in process...';
 
-$string['un_enrollusers'] = 'Classroom <b>"{$a}"</b> un enrollment is in process...';
+$string['un_enrollusers'] = 'program <b>"{$a}"</b> un enrollment is in process...';
 $string['click_continue'] = 'Click on continue';
 $string['startdatetime'] = 'Start Date Time';
 $string['enddatetime'] = 'End Date Time';

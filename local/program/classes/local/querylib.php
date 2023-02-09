@@ -37,8 +37,7 @@ class querylib {
 
         $sql = "SELECT lc.id, CONCAT(lc.fullname, '-', lc.shortname) AS fullshrtname
                   FROM {local_costcenter} lc
-                  JOIN {user} u on (u.open_costcenterid = lc.id OR
-                        u.open_costcenterid = lc.parentid)
+                  JOIN {user} u on (concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') or concat('/',u.open_path,'/') LIKE concat('%/',lc.parentid,'/%') ) AND lc.depth = 1
                 WHERE u.id = :userid";
         $departments = $DB->get_records_sql_menu($sql, array('userid' => $USER->id));
         if (empty($departments)) {
@@ -57,8 +56,8 @@ class querylib {
         $courses = array();
         if (!empty($costcenters)) {
             $costcenter = implode(',', $costcenters);
-            $costcentersql .= " AND c.open_costcenterid in (:costcenter) ";
-            $params['costcenter'] = $costcenter;
+            $costcentersql .= " AND concat('/',c.open_path,'/') LIKE  (:costcenter) ";
+            $params['costcenter'] = '%'.$costcenter.'%';
         }
         $sql = "SELECT c.id, c.fullname
                   FROM {course} as c
@@ -83,9 +82,9 @@ class querylib {
         global $DB, $USER;
         $costcentersql = '';
         $concatsql = '';
-        $context = context_system::instance();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $params = array();
-        list($ctxcondition, $ctxparams) = $DB->get_in_or_equal($context->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'ctx');
+        list($ctxcondition, $ctxparams) = $DB->get_in_or_equal($categorycontext->get_parent_context_ids(true), SQL_PARAMS_NAMED, 'ctx');
         $params = array_merge($params, $ctxparams);
         if (!empty($trainers)) {
             list($trainerslistsql, $trainerslistparams) = $DB->get_in_or_equal($trainers, SQL_PARAMS_NAMED, 'crtr');
@@ -94,22 +93,15 @@ class querylib {
 
         if (!empty($costcenters)) {
             $costcenters = implode(',', $costcenters);
-            $concatsql .= " AND u.open_costcenterid in ( {$costcenters} ) ";
-            //$params['costcenterid'] = $costcenters;
+
+            $concatsql .= " AND concat('/',u.open_path,'/') LIKE :costcenter ";
+            $params['costcenter'] = '%'.$costcenters.'%';
         }
-         if ((has_capability('local/program:manageprogram', context_system::instance())) &&
-            (!is_siteadmin() )&&(!has_capability('local/program:manage_multiorganizations', context_system::instance()) && !has_capability('local/costcenter:manage_multiorganizations', context_system::instance()))) {
-            $concatsql .= " AND u.open_costcenterid in ( :costcenterid ) ";
-            $params['costcenterid'] = $USER->open_costcenterid;
-             if ((has_capability('local/program:manage_owndepartments', context_system::instance()) || has_capability('local/costcenter:manage_owndepartments', context_system::instance()))) {
-                $concatsql .= " AND u.open_departmentid in ( :open_departmentid ) ";
-                $params['open_departmentid'] = $USER->open_departmentid;
-             }
+        if ((has_capability('local/program:manageprogram', $categorycontext)) && ( !is_siteadmin() )) {
+            $concatsql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         }
         if (!empty($query)) {
-            // $fields = array('u.email', 'CONCAT(u.firstname, " ", u.lastname)');
-            // $fields = implode(" LIKE :search1 OR ", $fields);
-            // $fields .= " LIKE :search2 ";
+
             $fields = "u.email LIKE :search1 OR CONCAT(u.firstname, ' ', u.lastname) LIKE :search2 ";
             $params['search1'] = '%' . $query . '%';
             $params['search2'] = '%' . $query . '%';
@@ -120,16 +112,16 @@ class querylib {
         $params['confirmed'] = 1;
         $params['suspended'] = 0;
         $params['deleted'] = 0;
-        $params['roleid'] = $DB->get_field('role', 'id', array('shortname' => 'trainer'));
 
         $fields = "SELECT u.id , CONCAT(u.firstname, ' ', u.lastname) AS fullname ";
-        $sql = "FROM {role_assignments} ra
+        $sql = "FROM {role_capabilities} as rc
+                  JOIN {role_assignments} ra
+                  JOIN {role} mr ON mr.id = rc.roleid
                   JOIN {user} u ON u.id = ra.userid
                   JOIN {context} ctx ON ra.contextid = ctx.id
                  WHERE u.confirmed = :confirmed
                   AND u.suspended = :suspended AND u.deleted = :deleted AND u.id > 2
-                       AND ctx.id $ctxcondition
-                       AND ra.roleid = :roleid";
+                       AND rc.capability LIKE '%trainer_viewprogram%' and rc.permission=1 AND shortname = 'trainer' ";
         if (!empty($trainers)) {
             $sql .= " AND u.id $trainerslistsql";
         }
@@ -190,11 +182,9 @@ class querylib {
                 }
                 if ($service['programid'] > 0) {
                     $institutessql .= " AND costcenter = :costcenter ";
-                    $params['costcenter'] = $DB->get_field('local_program', 'costcenter', array('id' => $service['programid']));
-                    // $prgm_cst_sql = "SELECT lp.costcenter FROM {local_program} AS lp 
-                    //   JOIN {local_bc_course_sessions} AS lbcs ON lbcs.programid=lp.id
-                    //   WHERE lbcs.id = :id";
-                    // $params['costcenter'] = $DB->get_field_sql($prgm_cst_sql, array('id' => $service['programid']));
+                    $open_path= $DB->get_field('local_program', 'open_path', array('id' => $service['programid']));
+                    list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+                    $params['costcenter'] =$org;
                 }
                 if (!empty($service['query'])) {
                     $institutessql .= " AND fullname LIKE :query ";
