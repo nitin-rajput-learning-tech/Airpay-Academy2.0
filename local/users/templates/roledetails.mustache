@@ -15,69 +15,27 @@
     @author Narendra  <narendra.patel@moodle.in>
 }}
 {{# enabletable}}
+<div class="row" style=" margin: auto; width: 99%;">
+
 {{# rowdata}}
 
-    <div class="row shadow" style=" margin: auto; width: 99%;">
-        <div class="column" >Assign as <b>{{ role }}</b> at <b>{{costcenter}}</b> on <b>{{timeassign}}</b></div>
-        <div class="column2" >
-            <a onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'><i class="fa fa-times fa-fw" title="{{# str }} unassign, local_assignroles {{/ str }}"></i></a>
-        </div>
+    <div class="col-md-3" style=" margin: 10px 30px 15px 30px; box-shadow: 0px 0px 0px 2px #f2f2f2;">
+        <div style="height: 10px;"><a onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'><i style= "" class="fa fa-trash fa-fw" title="{{# str }} unassign, local_assignroles {{/ str }}"></i></a></div>
+        <p>Assigned as <b>{{ role }}</b> at <b>{{costcenter}}</b> on <b>{{timeassign}}</b></p>
     </div>
-    <div style=" height: 10px;"></div>
 
 {{/ rowdata}}
 
+</div>
     <style>
-    * {
-        box-sizing: border-box;
-    }
 
-    .column {
-        float: left;
-        width: 95%;
-        padding: 10px;
-        height: 40px;
-    }
-    .column2 {
-        float: left;
-        width: 5%;
-        padding: 10px;
-        height: 40px;
-    }
-    .row:after {
-        content: "";
-        display: table;
-        clear: both;
-    }
-    .row i{
+    .col-md-3 i{
         visibility:hidden;
     }
-    .row:hover i{
+    .col-md-3:hover i{
+        position: absolute;
+        right: 0px;
         visibility:visible;
     }
 </style>
-
-
-    <!-- <table class='generaltable', id='popup_user{{roleid}}'>
-        <thead>
-            <tr>
-                <th>{{# str}} rolename, local_users{{/ str}}</th>
-                <th>{{# str}} hierarchy, local_users{{/ str}}</th>
-                <th>{{# str}} level, local_users{{/ str}}</th>
-                <th>{{# str}} timeassign, local_users{{/ str}}</th>
-                <th>{{# str}} action, local_users{{/ str}}</th>
-            </tr>
-        </thead>
-        <tbody>
-            {{# rowdata}}
-                <tr>
-                    <td>{{role}}</td>
-                    <td>{{costcenter}}</td>
-                    <td>{{depth}}</td>
-                    <td>{{timeassign}}</td>
-                    <td><a style = 'color:#1177d1;cursor:pointer' onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'>{{# str}}unassign, local_assignroles{{/ str}}</a></td>
-                </tr>
-            {{/ rowdata}}
-        </tbody>
-    </table> -->
 {{/ enabletable}}

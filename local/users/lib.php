@@ -162,7 +162,7 @@ function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpa
                     'data-options' => json_encode(array('id' => 0)),
                     'placeholder' => get_string('users')
     );
-    $select = $mform->addElement('autocomplete', 'users', '', $userslist, $options);
+    $select = $mform->addElement('autocomplete', 'users', get_string('users'), $userslist, $options);
     $mform->setType('users', PARAM_RAW);
 }
 /**
@@ -222,7 +222,7 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
         'data-options' => json_encode(array('id' => 0)),
         'placeholder' => get_string('select_email','local_users')
     );
-    $select = $mform->addElement ('autocomplete', 'email', '', $userslist, $options);
+    $select = $mform->addElement ('autocomplete', 'email', get_string('email','local_users'), $userslist, $options);
     $mform->setType('email', PARAM_RAW);
 }
 /**
@@ -278,7 +278,7 @@ function employeeid_filter ($mform, $query='', $searchanywhere=false, $page=0, $
         'data-options' => json_encode(array('id' => 0)),
         'placeholder' => get_string('idnumber_select', 'local_users')
     );
-    $select = $mform->addElement('autocomplete', 'idnumber', '', $userslist, $options);
+    $select = $mform->addElement('autocomplete', 'idnumber', get_string('idnumber', 'local_users'), $userslist, $options);
     $mform->setType('idnumber', PARAM_RAW);
 }
 /**
