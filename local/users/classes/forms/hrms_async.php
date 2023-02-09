@@ -65,10 +65,7 @@ class hrms_async extends moodleform {
                 $authoptions[$auth] = get_string('pluginname', "auth_{$auth}");
             }
         }
-        $otp = array();
-        if($authoptions['otp'] == 'OTP'){
-            $otp = array(OTP_ENROLL => 'OTP');
-        }
+
         $mform->addElement('filepicker', 'userfile', get_string('file'));
         $mform->addRule('userfile', null, 'required');
         $mform->addElement('hidden',  'delimiter_name');
@@ -80,11 +77,11 @@ class hrms_async extends moodleform {
         // $mform->addElement('hidden', 'enrollmentmethod');
         // $mform->setType('enrollmentmethod', PARAM_INT);
 
-        $enrollmentmethod = array(null=>'---Select---',LDAP_ENROLL=>'Ldap',MANUAL_ENROLL=>'Manual')+$otp;
-		$mform->addElement('select', 'enrollmentmethod', get_string('authenticationmethods', 'local_users'), $enrollmentmethod);
+        // $enrollmentmethod = array(null=>'---Select---',LDAP_ENROLL=>'Ldap',MANUAL_ENROLL=>'Manual')+$otp;
+		$mform->addElement('select', 'enrollmentmethod', get_string('authenticationmethods', 'local_users'), $authoptions);
         $mform->addRule('enrollmentmethod', null, 'required', null, 'client');
-		$mform->setType('enrollmentmethod', PARAM_INT);
-        $mform->setDefault('enrollmentmethod', MANUAL_ENROLL);
+		$mform->setType('enrollmentmethod', PARAM_TEXT);
+        $mform->setDefault('enrollmentmethod', 'manual');
         $mform->addElement('advcheckbox', 'createpassword', get_string('createpassword', 'auth'));
         $mform->addElement('hidden', 'option', ADD_UPDATE);
         $mform->setType('option', PARAM_INT);
