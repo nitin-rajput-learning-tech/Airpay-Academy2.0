@@ -30,32 +30,17 @@ require_once($CFG->dirroot . '/local/learningplan/lib.php');
 $filtervalues = json_decode($_REQUEST['formdata']);
 $systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 require_login(); 
-       
 $table = new html_table();
 $table->id = "learningplan";
 $table->head[] = get_string('planname','local_learningplan');
 $table->head[] = get_string('plancode','local_learningplan');
 $table->head[] = get_string('coursescount','local_learningplan');
-// $table->head[] = get_string('department','local_learningplan');
-// $table->head[] = get_string('points','local_learningplan');
-// $table->head[] = get_string('description','local_learningplan');
 $learningplan = new \local_learningplan\learningplan();
 $plandata = $learningplan->get_learningplans($filtervalues, 0, 0);
-// var_dump($plandata);exit;
 $data = [];
 $planlib = new \local_learningplan\lib\lib();
 foreach($plandata AS $plan){
     $courses = $planlib->get_learningplan_assigned_courses($plan->id);
-    // $plan_departments= local_learningplan\render\open::departments($plan->department);
-    // $plan_department = array();
-    // foreach($plan_departments as $plan_dep){
-    //     $plan_department[] = $plan_dep->fullname;
-    // }
-    // $plan_department = implode(',', $plan_department);
-    // $learningplan_department = ($plan_department ? $plan_department : 'All');
-    // $points = $DB->get_field('local_learningplan','open_points',array('id' => $plan->id));
-    // $description = ($DB->get_field('local_learningplan','description',array('id' => $plan->id))) ? ($DB->get_field('local_learningplan','description',array('id'=>$plan->id))) : 'N/A' ;
-    //$data[] = [$plan->name, $plan->shortname, count($courses), $plan_department,$points,$description];
     $data[] = [$plan->name, $plan->shortname, count($courses)];
 }
 

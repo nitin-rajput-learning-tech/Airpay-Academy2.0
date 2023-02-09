@@ -103,7 +103,7 @@ class classroom {
                 }
 
                 $DB->update_record('local_classroom', $classroom);
-                $this->classroom_set_events($classroom);
+                // $this->classroom_set_events($classroom);
                 $params = array(
                     'context' =>  (new \local_classroom\lib\accesslib())::get_module_context($classroom->id),
                     'objectid' => $classroom->id,
@@ -185,7 +185,8 @@ class classroom {
         if (isset($classroom->startdate) && $classroom->startdate > 0) {
             $event                  = new stdClass();
             $event->eventtype       = 'open';
-            $event->categoryid      = $categorycontext->instanceid;
+            $event->categoryid      = 0;
+            // $event->categoryid      = $categorycontext->instanceid;
             $event->type            = empty($classroom->enddate) ? CALENDAR_EVENT_TYPE_ACTION : CALENDAR_EVENT_TYPE_STANDARD;
             $event->name            = $classroom->name;
             $event->description     = $classroom->name;
@@ -202,7 +203,7 @@ class classroom {
                 $calendarevent = \calendar_event::load($event->id);
                 $calendarevent->update($event);
             } else {
-                $event->courseid   = 0;
+                $event->courseid   = 1;
                 $event->groupid    = 0;
                 $event->userid     = 0;
                 $event->modulename = 0;
@@ -340,7 +341,8 @@ class classroom {
         ));
         if (isset($session->timestart) && $session->timestart > 0) {
             $event                  = new stdClass();
-            $event->categoryid      = $categorycontext->instanceid;
+            // $event->categoryid      = $categorycontext->instanceid;
+            $event->categoryid      = 0;
             $event->eventtype       = 'open';
             $event->type            = empty($session->timefinish) ? CALENDAR_EVENT_TYPE_ACTION : CALENDAR_EVENT_TYPE_STANDARD;
             $event->name            = $session->name;
@@ -359,7 +361,7 @@ class classroom {
                 $calendarevent = \calendar_event::load($event->id);
                 $calendarevent->update($event);
             } else {
-                $event->courseid   = 0;
+                $event->courseid   = 1;
                 $event->groupid    = 0;
                 $event->userid     = 0;
                 $event->modulename = 0;
@@ -1910,7 +1912,7 @@ class classroom {
                     'id' => $classroomid
                 ));
                 $classroom->costcenter = explode('/',$classroom->open_path)[1]; 
-                $this->classroom_set_events($classroom);
+                // $this->classroom_set_events($classroom);
                 $classroomusers   = $DB->get_records_menu('local_classroom_users', array(
                     'classroomid' => $classroomid
                 ), 'id', 'id, userid');

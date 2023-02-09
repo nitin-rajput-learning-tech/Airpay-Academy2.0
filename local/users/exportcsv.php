@@ -63,7 +63,6 @@ $stable = new \stdClass();
 $stable->thead = false;
 $stable->start = 0;
 $stable->length = 0;
-// print_r($totalusers);die;
 $userdata = manage_users_content($stable, $totalusers);
 $data = [];
 foreach ($userdata as $user) {

@@ -88,22 +88,13 @@ class raw_event_retrieval_strategy implements raw_event_retrieval_strategy_inter
         $limitnum,
         $ignorehidden
     ) {
-        global $DB,$USER;
+        global $DB;
 
         $params = array();
         // Quick test.
         if (empty($users) && empty($groups) && empty($courses) && empty($categories)) {
             return array();
         }
-        //getting category,Classrooms & courses from USER
-        if(!is_siteadmin()){
-            $categories = $DB->get_field('local_costcenter','category', array("path" => $USER->open_path));
-            $subqueryclassrooms = $DB->get_fieldset_sql(" SELECT lcu.classroomid FROM {local_classroom_users} lcu INNER JOIN {local_classroom} lc on lc.id=lcu.classroomid WHERE lcu.userid = $USER->id AND lc.status = 1 ");
-            $courses = $DB->get_fieldset_sql("SELECT e.courseid FROM {user_enrolments} ue INNER JOIN {enrol} e on e.id = ue.enrolid where ue.userid=$USER->id");
-        }else{
-            $subqueryclassrooms=[];
-        }
-            
 
         if (is_numeric($users)) {
             $users = array($users);
@@ -275,14 +266,7 @@ class raw_event_retrieval_strategy implements raw_event_retrieval_strategy_inter
             $subqueryconditions[] = "(ev.groupid = 0 AND ev.courseid $incourses AND ev.categoryid = 0)";
             $subqueryparams = array_merge($subqueryparams, $incoursesparams);
         }
-        
-        // Added union sub query for classrooms
-        if (!empty($subqueryclassrooms)) {
-            list($inclassrooms, $inclassroomparams) = $DB->get_in_or_equal($subqueryclassrooms, SQL_PARAMS_NAMED);
-            $subqueryconditions[] = "( ev.plugin_instance $inclassrooms )";
-            $subqueryparams = array_merge($subqueryparams, $inclassroomparams);
-        }
-        
+
         // Set subquery filter condition for the categories.
         if ($categories === true) {
             $subqueryconditions[] = "(ev.categoryid != 0 AND ev.eventtype = 'category')";
@@ -333,9 +317,7 @@ class raw_event_retrieval_strategy implements raw_event_retrieval_strategy_inter
         if (!empty($whereparams)) {
             $params = array_merge($params, $whereparams);
         }
-//         echo "<pre>";
-// echo $sql;
-// print_r($params);
+
         $events = $DB->get_records_sql($sql, $params, $offset, $limitnum);
 
         return  $events === false ? [] : $events;
