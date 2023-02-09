@@ -42,8 +42,13 @@ class session_reminder extends \core\task\scheduled_task {
         		JOIN {local_bc_session_signups} AS bss ON bss.sessionid=bcs.id
         		JOIN {user} AS u ON bss.userid=u.id AND u.deleted = 0 AND u.suspended = 0
         		JOIN {local_program} AS lp ON lp.id=bcs.programid
-        		WHERE bcs.programid IN (:moduleid) AND bcs.timestart BETWEEN :timestart AND :timeend AND u.open_costcenterid = :costcenterid ";
-			$params = array('timestart' => $starttime, 'timeend' => $endtime, 'moduleid' => $moduleids, 'costcenterid' => $notification->costcenterid);
+        		WHERE bcs.programid IN (:moduleid) AND bcs.timestart BETWEEN :timestart AND :timeend AND concat('/',lp.open_path,'/') LIKE :costcenterid ";
+
+
+			$params = array('timestart' => $starttime, 'timeend' => $endtime, 'moduleid' => $moduleids);
+
+			$params['costcenterid'] = '%'.$notification->costcenterid. '%';
+
 			$programsessionusers = $DB->get_records_sql($programsession_sql, $params);
 			foreach($programsessionusers AS $programsessiondetails){
 			

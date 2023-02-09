@@ -76,14 +76,17 @@ class renderer extends plugin_renderer_base {
      * Display the program tabs
      * @return string The text to render
      */
-    public function get_program_tabs($selected_subdepts = null, $selectedcostcenterid= null, $selecteddepartmentid = null,$selectedprogram = null,$selectedstatus = null, $view_type = 'card',$selected_l4department = null, $selected_l5department= null) {
+    public function get_program_tabs($stable,$selectedprogram= null,$selectedstatus= null,$view_type= 'card') {
+
         global $CFG, $OUTPUT,$DB;
-        $stable = new stdClass();
+
+        $stable = clone $stable;
         $stable->thead = true;
         $stable->start = 0;
         $stable->length = -1;
         $stable->search = '';
-        $programscontent = $this->viewprograms($stable,$selected_subdepts, $selectedcostcenterid, $selecteddepartmentid,$selectedprogram,$selectedstatus,$view_type,$selected_l4department = null, $selected_l5department= null);
+
+        $programscontent = $this->viewprograms($stable,$selectedprogram,$selectedstatus,$view_type);
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         $programtabslist = [
@@ -120,17 +123,18 @@ class renderer extends plugin_renderer_base {
      * @param  [type]         $stable [description]
      * @return [type]                 [description]
      */
-    public function viewprograms($stable,$subdepts = null, $costcenterid= null, $departmentid = null,$program = null,$status = null,$view_type='card',$l4departmentid = null, $l5departmentid= null) {
-        
+    public function viewprograms($stable,$program = null,$status = null,$view_type='card') {
+
         global $OUTPUT, $CFG, $DB;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         if (file_exists($CFG->dirroot . '/local/includes.php')) {
             require_once($CFG->dirroot . '/local/includes.php');
             $includes = new user_course_details();
         }
         if ($stable->thead) {
             $table_data = array();
-            $programs = (new program)->programs($stable,false,$subdepts, $costcenterid, $departmentid,$program,$status);
+            $programs = (new program)->programs($stable,$request = false,$program,$status);
             if ($programs['programscount'] > 0) {
                 $table = new html_table();
                 if($view_type == 'card'){
@@ -148,18 +152,17 @@ class renderer extends plugin_renderer_base {
             }
         } else {
            
-            $programs = (new program)->programs($stable,false,$subdepts, $costcenterid, $departmentid,$program,$status);
+            $programs = (new program)->programs($stable,$request =false,$program,$status);
             $data = array();
             $table_data = array();
             $programchunks = array_chunk($programs['programs'], 3);
             foreach ($programchunks as $bc_data) {
                 $row = [];
               foreach ($bc_data as $sdata) {
+                    $programcontext = (new \local_program\lib\accesslib())::get_module_context($sdata->id);
                     $line = array();
                     $program = $sdata->name;
                     $programname = strlen($program) > 19 ? substr($program, 0, 19) . "..." : $program;
-                    $departmentcount = count(array_filter(explode(',',$sdata->department)));
-                    $subdepartmentcount = count(array_filter(explode(',',$sdata->subdepartment)));
                     $description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->description));
 
                     $isdescription = '';
@@ -200,15 +203,15 @@ class renderer extends plugin_renderer_base {
                     $line['programcompletion'] = false;
                 
                     $mouseovericon = false;
-                    if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
+                    if ((has_capability('local/program:manageprogram', $programcontext) || is_siteadmin())) {
                         $line['action'] = true;
                     }
-                    if ((has_capability('local/program:editprogram', $categorycontext) || is_siteadmin())) {
+                    if ((has_capability('local/program:editprogram', $programcontext) || is_siteadmin())) {
                         $line['edit'] = true;
                         $mouseovericon = true;
                     }
 
-                    if ((has_capability('local/program:deleteprogram', $categorycontext) || is_siteadmin())) {
+                    if ((has_capability('local/program:deleteprogram', $programcontext) || is_siteadmin())) {
                         $count_records = $DB->get_records('local_bc_session_signups', array('programid'=>$sdata->id));
                         if(count($count_records) > 0) {
                             $line['cannotdelete'] = true;
@@ -219,7 +222,7 @@ class renderer extends plugin_renderer_base {
                         }
                     }
 
-                    if (is_siteadmin() || (has_capability('local/program:inactiveprogram', $categorycontext) || (has_capability('local/program:activeprogram', $categorycontext)))) {
+                    if (is_siteadmin() || (has_capability('local/program:inactiveprogram', $programcontext) || (has_capability('local/program:activeprogram', $programcontext)))) {
                          $line['hide_show'] = true;
                          $mouseovericon = true;
                     }
@@ -237,9 +240,9 @@ class renderer extends plugin_renderer_base {
                     }
                     $line['programcompletion_id'] = $programcompletion_id;
                    
-                    if($sdata->visible==1&&has_capability('local/program:inactiveprogram', $categorycontext)){
+                    if($sdata->visible==1&&has_capability('local/program:inactiveprogram', $programcontext)){
                         $line['hide'] = true;
-                    }elseif(has_capability('local/program:activeprogram', $categorycontext)){
+                    }elseif(has_capability('local/program:activeprogram', $programcontext)){
                         $line['show'] = true;
                     }
                     
@@ -318,7 +321,7 @@ class renderer extends plugin_renderer_base {
         $programid = $bclcdata->programid;
         $levelid = $bclcdata->levelid;
         $bclcid = $bclcdata->bclcid;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
 
         $program = $DB->get_record('local_program', ['id' => $bclcdata->programid]);
@@ -553,7 +556,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogramsessionstabs($bclcdata, $stable, $userview = false, $enrolmentpending = false, $tab) {
         global $CFG, $OUTPUT;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $toprow = array();
         if ($tab) {
             $toprow[] = new tabobject('upcomingsessions', new moodle_url("/local/program/sessions.php?action=upcomingsessions&bcid=$bclcdata->programid&levelid=$bclcdata->levelid&bclcid=$bclcdata->bclcid"), get_string('upcomingsessions', 'local_program'));
@@ -565,7 +568,7 @@ class renderer extends plugin_renderer_base {
     
     public function viewprogramlevels($programid, $levelid) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program)
          $departmentcount = count(array_filter(explode(',',$program->department)));
@@ -698,7 +701,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogramcourses($programid, $levelid) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program){
 
@@ -785,7 +788,7 @@ class renderer extends plugin_renderer_base {
             $programlevelcourses[$i] = $bclevelcourse;
         }
     }
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         
      
         $programcoursescontext = [
@@ -814,7 +817,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogram($programid) {
         global $OUTPUT, $CFG, $DB, $USER, $PAGE;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $stable = new stdClass();
         $stable->programid = $programid;
         $stable->thead = false;
@@ -1075,7 +1078,7 @@ class renderer extends plugin_renderer_base {
         if(!$selfenrolled){
             return null;
         }
-        $categorycontext =(new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext =(new \local_program\lib\accesslib())::get_module_context();
         $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_program/program\').unEnrolUser({programid: '.$programid.', userid:'.$USER->id.', programname:\''.$programname.'\', contextid:'.$categorycontext->id.'}) })(event)'));
         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
         $liTag = html_writer::tag('li', $container);
@@ -1310,7 +1313,7 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $program = (new program)->programs($stable);
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
         if (!has_capability('local/program:view_newprogramtab', $categorycontext) && $program_status== 0) {
             print_error("You don't have permissions to view this page.");
@@ -1393,7 +1396,7 @@ class renderer extends plugin_renderer_base {
      */
     public function view_program_sessions($bclcid, $stable) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         if ($stable->thead) {
             $return = '';
             $sessions = (new program)->programsessions($bclcid, $stable);
@@ -1466,7 +1469,7 @@ class renderer extends plugin_renderer_base {
     }
     public function viewprogramstreams($stable) {
         global $OUTPUT, $CFG, $DB;
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $return = '';
         if (is_siteadmin() || has_capability('local/program:manageprogram', $categorycontext)) {
             $return .= '<ul class="course_extended_menu_list">
@@ -1531,7 +1534,7 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $program = (new program)->programs($stable);
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
         if (empty($program)) {
             print_error("program Not Found!");
@@ -1555,7 +1558,7 @@ class renderer extends plugin_renderer_base {
      */
   public function tagged_programs($tagid, $exclusivemode, $ctx, $rec, $displayoptions, $count = 0, $sort='') {
     global $CFG, $DB, $USER;
-    $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
     if ($count > 0)
     $sql =" select count(c.id) from {local_program} c ";
     else
@@ -1620,7 +1623,7 @@ class renderer extends plugin_renderer_base {
     return $this->output->render_from_template('local_tags/tagfeed', $tagfeed->export_for_template($this->output));
     }
     public function get_userdashboard_program($tab, $filter = false,$view_type='card'){
-        $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         $templateName = 'local_program/userdashboard_paginated';
         $cardClass = 'col-md-6 col-12';
@@ -1644,7 +1647,7 @@ class renderer extends plugin_renderer_base {
             'filterdata' => $filterdata
         ];
         if($filter){
-            return  (new \local_classroom\lib\accesslib())::get_module_context();
+            return  (new \local_program\lib\accesslib())::get_module_context();
         }else{
             return  $this->render_from_template('local_costcenter/cardPaginate', $categorycontext);
         }

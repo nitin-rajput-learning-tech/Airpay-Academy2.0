@@ -24,6 +24,7 @@
 defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/user/selector/lib.php');
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/local/costcenter/lib.php');
 use \local_program\form\program_form as program_form;
 use local_program\local\querylib;
 use local_program\program;
@@ -735,45 +736,8 @@ class program_managestream_form extends moodleform {
 
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
-        if (is_siteadmin()) {
-                $costcenters = array();
-                $costcenterslist = $this->_ajaxformdata['costcenter'];
-                if (!empty($costcenterslist)) {
-                    $costcenterslist = $costcenterslist;
-                } else if ($id > 0) {
-                    $costcenterslistsql = "SELECT cc.id
-                                           FROM {local_costcenter} as cc
-                                           WHERE cc.parentid = 0 AND cc.visible = 1";
-                    $costcenterslist = $DB->get_field_sql($costcenterslistsql, array('programid' => $id));
-                }
-                if (!empty($costcenterslist)) {
-                    $costcenterslist = $DB->get_records_menu('local_costcenter',
-                            array('visible' => 1, 'parentid' => 0, 'id' => $costcenterslist),
-                            'id', 'id, fullname');
-                    $costcenters = array(null => get_string('select_costcenter',
-                            'local_program')) + $costcenterslist;
-                }
 
-                $options = array(
-                    'ajax' => 'local_program/form-options-selector',
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'program_costcenter_selector',
-                    'data-options' => json_encode(array('id' => $id, 'depth' => 1, 'parnetid' => 0)),
-                    'class' => 'organizationselect',
-                    'data-class' => 'organizationselect'
-                );
-
-                $mform->addElement('autocomplete', 'costcenter',
-                        get_string('costcenter', 'local_program'), $costcenters, $options);
-                $mform->addRule('costcenter', null, 'required', null, 'client');
-                $mform->setType('costcenter', PARAM_INT);
-            } else {
-                $mform->addElement('hidden', 'costcenter',
-                        get_string('costcenter', 'local_program'),
-                        array( 'data-class' => 'organizationselect'));
-                $mform->setType('costcenter', PARAM_INT);
-                $mform->setDefault('costcenter', $USER->open_costcenterid);
-            }
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_program', $categorycontext, $multiple = false);
 
         $mform->addElement('text', 'stream', get_string('stream', 'local_program'));
         $mform->addRule('stream', null, 'required', null, 'client');

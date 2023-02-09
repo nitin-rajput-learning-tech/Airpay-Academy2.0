@@ -38,6 +38,7 @@ $departmentid = optional_param('departmentid', '', PARAM_INT);
 $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
 $l4department = optional_param('l4department', '', PARAM_INT);
 $l5department = optional_param('l5department', '', PARAM_INT);
+$programid = optional_param('program', '', PARAM_INT);
 
 
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
@@ -88,7 +89,7 @@ if ($show AND $id) {
 }
 $enabled = check_programenrol_pluginstatus($value);
 
-$thisfilters = array('hierarchy_fields','categories','idnumber', 'email','users');
+$thisfilters = array('hierarchy_fields','categories','program', 'status');
 
 $formdata = new stdClass();
 $formdata->filteropen_costcenterid = $costcenterid;
@@ -106,19 +107,13 @@ if ($mform->is_cancelled()) {
     $filterdata =  $mform->get_data();
     if($filterdata){
         $collapse = false;
+        $show = 'show';
     } else{
         $collapse = true;
+        $show = '';
     }
 }
 $mform->set_data($datasubmitted);
-
-if($filterdata){
-    $collapse = false;
-    $show = 'show';
-} else{
-    $collapse = true;
-    $show = '';
-}
 
 echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
@@ -159,9 +154,15 @@ $displaytype_div .= '</div>';
 
 echo $displaytype_div;
 
-echo $renderer->get_program_tabs($subdepartmentid,$costcenterid,$departmentid,$selectedprogram,$selectedstatus,$formattype,$l4department,$l5department);
+$stable = new stdClass();
+$stable->costcenterid = $costcenterid;
+$stable->departmentid = $departmentid;
+$stable->subdepartmentid = $subdepartmentid;
+$stable->l4department = $l4department;
+$stable->l5department = $l5department;
+echo $renderer->get_program_tabs($stable,$programid,$status,$formattype);
 
 $PAGE->requires->js_call_amd('local_program/program', 'programDatatable',
-                    array(array('programstatus' => -1,'selected_subdepts' => $subdepartmentid,'costcenterid' => $costcenterid,'departmentid' => $departmentid,'selectedprogram' => $selectedprogram,'selectedstatus' => $selectedstatus,'selected_l4department' => $l4department,'selected_l5department' => $l5department)));
+                    array(array('programstatus' => -1,'selectedcostcenterid' => $costcenterid,'selecteddepartmentid' => $departmentid,'selectedsubdepartmentid' => $subdepartmentid,'selectedl4department' => $l4department,'selectedl5department' => $l5department,'selectedprogram' => $programid ,'selectedstatus' => $status)));
 
 echo $OUTPUT->footer();
