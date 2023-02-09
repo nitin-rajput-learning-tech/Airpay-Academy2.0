@@ -45,7 +45,7 @@ if ($format) {
     'department_code' => 'department_code',
     'subdepartment_code' => 'subdepartment_code',
     'reportingmanager_empid' => 'reportingmanager_empid',
-    'language' => 'language',
+    // 'language' => 'language',
     'designation' => 'designation',
     'employment_type' => 'employment_type',
     'employment_status' => 'employment_status',
@@ -59,7 +59,7 @@ if ($format) {
     'date_of_joining' => 'date_of_joining',
     'mobileno' => 'mobileno',
     'employee_status' => 'employee_status',
-    'timezone' => 'timezone',
+    // 'timezone' => 'timezone',
     'force_password_change' => 'force_password_change'
     );
 

@@ -149,11 +149,11 @@ class local_users_renderer extends plugin_renderer_base {
         }
 
         if($userrecord->open_prefix == 1){
-            $prefix = 'Mr';
+            $prefix = 'Mr. ';
         } else if($userrecord->open_prefix == 2){
-            $prefix = 'Mrs';
+            $prefix = 'Mrs. ';
         } else if($userrecord->open_prefix == 3){
-            $prefix = 'Ms';
+            $prefix = 'Ms. ';
         }
         $usersviewContext = [
             "userid" => $userrecord->id,
@@ -195,8 +195,8 @@ class local_users_renderer extends plugin_renderer_base {
             "capabilityedit" => $capabilityedit,
             "loginasurl" => $loginasurl,
             "options" => $options,
-            "joindate"=> date('d-M-Y',$userrecord->open_joindate),
-            "dateofbirth"=> date('d-M-Y',$userrecord->open_dateofbirth),
+            "joindate"=> $userrecord->open_joindate > 0 ? date('d-M-Y', $userrecord->open_joindate) : 'N/A',
+            "dateofbirth"=> $userrecord->open_dateofbirth > 0 ? date('d-M-Y', $userrecord->open_dateofbirth) : 'N/A',
             "pluginslist" => $pluginarray,
             "userterritory" => $userterritory ? $userterritory : 'All',
             "usercu" => $usercu ? $usercu : 'All',

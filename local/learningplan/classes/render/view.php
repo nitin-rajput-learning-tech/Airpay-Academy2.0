@@ -2782,6 +2782,7 @@ class view extends plugin_renderer_base
 				}
 				if ($progressbarval == 100) {
 					$cmpltd_class = 'course_completed';
+					$cmpltd_btn = 'completed';
 					$completeflag = true;
 					if ($completed->timecompleted) {
 						$completiondate = \local_costcenter\lib::get_userdate("d/m/Y", $completed->timecompleted);
@@ -2793,6 +2794,7 @@ class view extends plugin_renderer_base
 					}
 				} else {
 					$cmpltd_class = '';
+					$cmpltd_btn = '';
 					$completiondate = '';
 					$completeflag = false;
 					$ctime = '';
@@ -2830,6 +2832,7 @@ class view extends plugin_renderer_base
 				$lp_userviewcoures['needenrol'] = $needenrol;
 				$lp_userviewcoures['enroldisable_class1'] = $enroldisable_class1;
 				$lp_userviewcoures['cmpltd_class'] = $cmpltd_class;
+				$lp_userviewcoures['cmpltd_btn'] = $cmpltd_btn;
 				$lp_userviewcoures['progressbar'] = $progressbarval;
 				$lp_userviewcoures['courseimgurl'] = $courseimgurl;
 				$lp_userviewcoures['courselink'] = $courselink;

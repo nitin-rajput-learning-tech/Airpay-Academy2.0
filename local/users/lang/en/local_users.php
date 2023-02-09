@@ -127,7 +127,7 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 <tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>mobileno</td><td>Enter Numerics only.</td></tr>
 <tr><td>reportingmanager_empid</td><td>Enter reporting manger employee code, avoid additional spaces..</td></tr>
-<tr><td>language</td><td>Enter Language code for the user.</td></tr>
+
 <tr><td>designation</td><td>Enter Designation for the user.</td></tr>
 <tr><td>employment_type</td><td>Enter employment type for the user.</td></tr>
 <tr><td>employment_status</td><td>Enter employment status for the user.</td></tr>
@@ -139,8 +139,9 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 <tr><td>date_of_birth</td><td>Enter date of birth of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
 <tr><td>date_of_joining</td><td>Enter date of joining of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
 <tr><td>force_password_change</td><td>Provide the value as 1 if need to enable force password or 0 to disable it..</td></tr>
-<tr><td>timezone</td><td>Enter timezone code. Refer dropdown for codes, avoid additional spaces. {$a->timezones}</td></tr>
 </table>';
+// <tr><td>language</td><td>Enter Language code for the user.</td></tr>
+// <tr><td>timezone</td><td>Enter timezone code. Refer dropdown for codes, avoid additional spaces. {$a->timezones}</td></tr>
 
 $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-oh">Mandatory Fields</b></td><tr>

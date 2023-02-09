@@ -239,6 +239,7 @@ echo  '<div class="collapse '.$show.'" id="local_courses-filter_collapse">
 echo        '</div>
         </div>';
 $filterparams['submitid'] = 'form#filteringform';
+$filterparams['filterdata'] = json_encode($formdata);
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 // if (is_siteadmin() || (
 //         has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/courses:manage', $categorycontext))) {

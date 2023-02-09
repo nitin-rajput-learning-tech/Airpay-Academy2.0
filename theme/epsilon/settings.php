@@ -403,7 +403,14 @@ if ($ADMIN->fulltree) {
     // color settings.
     $page = new admin_settingpage('theme_epsilon_color', get_string('colorsettings', 'theme_epsilon'));
 
-
+    // Site buttons color
+    $name = 'theme_epsilon/primarycolor';
+    $title = get_string('primarycolor', 'theme_epsilon');
+    $description = get_string('primarycolor_desc', 'theme_epsilon');
+    $setting = new admin_setting_configcolourpicker($name, $title, $description, '#25467a');
+    $setting->set_updatedcallback('theme_reset_all_caches');
+    $page->add($setting);
+    
     // Site brand color
     $name = 'theme_epsilon/secondarycolor';
     $title = get_string('secondarycolor', 'theme_epsilon');
@@ -412,13 +419,7 @@ if ($ADMIN->fulltree) {
     $setting->set_updatedcallback('theme_reset_all_caches');
     $page->add($setting);
 
-    // Site buttons color
-    $name = 'theme_epsilon/primarycolor';
-    $title = get_string('primarycolor', 'theme_epsilon');
-    $description = get_string('primarycolor_desc', 'theme_epsilon');
-    $setting = new admin_setting_configcolourpicker($name, $title, $description, '#25467a');
-    $setting->set_updatedcallback('theme_reset_all_caches');
-    $page->add($setting);
+    
 
     // Hover color
     $name = 'theme_epsilon/hovercolor';

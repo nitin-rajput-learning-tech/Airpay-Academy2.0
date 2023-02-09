@@ -26,7 +26,7 @@ class lib
 	{
 		global $DB, $USER;
 		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
-		$data->description = $data->description['text'];
+		// $data->description = $data->description['text'];
 		$data->usercreated =  $this->user->id;
 		$data->timecreated = time();
 		$data->visible = 1;

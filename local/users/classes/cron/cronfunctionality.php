@@ -1057,23 +1057,38 @@ class cronfunctionality {
         }
 
         $user->force_password_change = (empty($excel->force_password_change)) ? 0 :
-         $excel->force_password_change;
-        if ($formdata) {
-            switch($formdata->enrollmentmethod) {
-                case MANUAL_ENROLL:
-                      $user->auth = "manual";
-                      break;
-                case LDAP_ENROLL:
-                      $user->auth = "ldap";
-                      break;
-                case SAML2:
-                      $user->auth = "saml2";
-                      break;
-                case ADWEBSERVICE:
-                      $user->auth = "adwebservice";
-                      break;
+        $excel->force_password_change;
+        $auths = \core_component::get_plugin_list('auth');
+        foreach ($auths as $auth => $unused) {
+            if ($auth == 'nologin')
+                continue;
+
+            if (is_enabled_auth($auth)) {
+                $authoptions[$auth] = get_string('pluginname', "auth_{$auth}");
             }
         }
+        if(in_array($formdata->enrollmentmethod, $authoptions)){
+            $user->auth = $formdata->enrollmentmethod;
+        }else{
+            // Hack to make the user authentication method as manual if non enabled values are sent.
+            $user->auth = 'manual';
+        }
+        // if ($formdata) {
+        //     switch($formdata->enrollmentmethod) {
+        //         case MANUAL_ENROLL:
+        //               $user->auth = "manual";
+        //               break;
+        //         case LDAP_ENROLL:
+        //               $user->auth = "ldap";
+        //               break;
+        //         case SAML2:
+        //               $user->auth = "saml2";
+        //               break;
+        //         case ADWEBSERVICE:
+        //               $user->auth = "adwebservice";
+        //               break;
+        //     }
+        // }
 
         return $user;
     } // end of function
