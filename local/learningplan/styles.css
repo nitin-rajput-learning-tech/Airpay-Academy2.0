@@ -467,7 +467,6 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link{
     border: none!important;
     text-align: left!important;
 }
-#page-local-learningplan-view .planview_topcontent .radiostars,
 #page-local-learningplan-lpathinfo .planview_topcontent .radiostars{
 	display: none;
 }

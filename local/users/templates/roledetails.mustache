@@ -15,27 +15,24 @@
     @author Narendra  <narendra.patel@moodle.in>
 }}
 {{# enabletable}}
-<div class="row" style=" margin: auto; width: 99%;">
+    <div class="row" style=" margin: auto; width: 99%;">
+        {{# rowdata}}
 
-{{# rowdata}}
+            <div class="col-md-3" style=" margin: 10px 30px 15px 30px; box-shadow: 0px 0px 0px 2px #f2f2f2;">
+                <div style="height: 10px;"><a onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'><i style= "" class="fa fa-trash fa-fw" title="{{# str }} unassign, local_assignroles {{/ str }}"></i></a></div>
+                <p>Assigned as <b>{{ role }}</b> at <b>{{costcenter}}</b> on <b>{{timeassign}}</b></p>
+            </div>
 
-    <div class="col-md-3" style=" margin: 10px 30px 15px 30px; box-shadow: 0px 0px 0px 2px #f2f2f2;">
-        <div style="height: 10px;"><a onclick='(function(e){ require("local_assignroles/popup").unassignConfirm({selector:"unassignpopup", contextid:{{ctxid}}, rolename:"{{role}}", roleid:{{roleid}}, userid:{{userid}}, username:"{{fullname}}"}) })(event)'><i style= "" class="fa fa-trash fa-fw" title="{{# str }} unassign, local_assignroles {{/ str }}"></i></a></div>
-        <p>Assigned as <b>{{ role }}</b> at <b>{{costcenter}}</b> on <b>{{timeassign}}</b></p>
+        {{/ rowdata}}
     </div>
-
-{{/ rowdata}}
-
-</div>
     <style>
-
-    .col-md-3 i{
-        visibility:hidden;
-    }
-    .col-md-3:hover i{
-        position: absolute;
-        right: 0px;
-        visibility:visible;
-    }
-</style>
+        .col-md-3 i{
+            visibility:hidden;
+        }
+        .col-md-3:hover i{
+            position: absolute;
+            right: 0px;
+            visibility:visible;
+        }
+    </style>
 {{/ enabletable}}

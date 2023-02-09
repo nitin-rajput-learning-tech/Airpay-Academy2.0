@@ -29,7 +29,7 @@ $string['theme'] = 'Theme Name';
 $string['msg_del_reg_schl'] = 'Hi {$a->username}<br> You are un assigned from costcenter {$a->costcentername}.';
 $string['msg_add_reg_schl'] = 'Hi {$a->username}<br> You are assigned to Bussiness Unit {$a->costcentername}.';
 $string['assignrole_help'] = 'Assign a role to the user in the selected Bussiness Unit.';
-$string['assignedcostcenter'] = 'Assigned Companies';
+$string['assignedcostcenter'] = 'Assigned Bussiness Unit';
 $string['assigncostcenter_help'] = 'Assign this user to a Bussiness Unit.';
 $string['anycostcenter'] = 'Any Bussiness Unit';
 $string['campus'] = 'Campus';
@@ -37,10 +37,10 @@ $string['university'] = 'University';
 $string['location'] = 'Location';
 $string['costcenterlevel'] = 'Bussiness Unit Level';
 $string['assignedtocostcenters'] = 'Assigned to Bussiness Unit';
-$string['assigncostcenter'] = 'Assign Companies';
+$string['assigncostcenter'] = 'Assign Bussiness Unit';
 $string['notassignedcostcenter'] = 'Sorry you are not assigned to any costcenter.';
-$string['costcenterscolleges'] = 'Companies';
-$string['costcenterid'] = 'Companies';
+$string['costcenterscolleges'] = 'Bussiness Unit';
+$string['costcenterid'] = 'Bussiness Unit';
 $string['costcenterrequired'] = 'Bussiness Unit field is mandatory';
 $string['missingcostcenter'] = 'Please select the Bussiness Unit';
 $string['select'] = 'Select Bussiness Unit';
@@ -57,7 +57,7 @@ $string['orgStructure'] = 'Company Structure';
 $string['department_structure'] = 'Bussiness Unit Structure';
 $string['subdepartment_structure'] = 'Department Structure';
 $string['orgmanage'] = 'Manage Company';
-$string['managecostcenters'] = 'Manage Companies';
+$string['managecostcenters'] = 'Manage Bussiness Unit';
 $string['allowframembedding'] = 'This page allows you to manage (delete/edit) the costcenters that are defined under this institution.';
 $string['description'] = 'Description';
 $string['deletecostcenter'] = 'Delete Bussiness Unit';
@@ -70,7 +70,7 @@ $string['viewsubdepartments'] = 'View Department';
 $string['top'] = 'Top';
 $string['parent'] = 'Parent';
 $string['parent_help'] = "To create a New Bussiness Unit at Parent Level, please select 'Parent' ";
-$string['costcenter'] = 'Company';
+$string['costcenter'] = 'Bussiness Unit';
 $string['assignusers'] = 'Assign Managers';
 $string['viewusers'] = 'View Users';
 $string['unassign'] = 'Un assign';
@@ -85,14 +85,14 @@ $string['deletesuccesscostcenter'] = 'Bussiness Unit "<b>{$a}</b>" deleted Succe
 $string['type'] = 'Type';
 $string['type_help'] = 'Please select your Bussiness Unit Type. If it is "University" please select University as Type. If it is "Campus"  select Campus as Type.';
 $string['chilepermissions'] = 'Do we need to allow the manager to see child courses of this costcenter.';
-$string['create'] = 'Create Companies';
+$string['create'] = 'Create Bussiness Unit';
 $string['update_dipartment'] = 'Update Bussiness Unit';
 $string['update_subdipartment'] = 'Update Bussiness Unit';
 $string['update_subsubdipartment'] = 'Update Department';
 $string['update_subsubsubdipartment'] = 'Update Sub Department';
 $string['update_subsubsubsubdipartment'] = 'Update Territory';
 $string['update_subdept'] = 'Update Department';
-$string['view'] = 'View Companies';
+$string['view'] = 'View Bussiness Unit';
 $string['assignmanager'] = 'Assign Managers';
 $string['info'] = 'Help';
 $string['reports'] = 'Reports';
@@ -113,7 +113,7 @@ $string['saction'] = 'Action';
 $string['assignmanagertxt'] = "Assign the manager to a Bussiness Unit by selecting the respective manager, next selecting the respective Companies and then clicking on 'Assign Manager' ";
 $string['costcenter:manage'] = 'costcenter:manage';
 $string['costcenter:view'] = 'costcenter:view';
-$string['costcenter:manage_owndepartments'] = 'costcenter:manage_owncompanies';
+$string['costcenter:manage_owndepartments'] = 'costcenter:manage_ownbussinessunit';
 $string['costcenter:manage_ownorganizations'] = 'costcenter:manage_owncompanies';
 $string['costcenter:assignusers'] = 'costcenter:assignusers';
 $string['costcenter:manage_multidepartments'] = 'costcenter:manage_multicompanies';
@@ -133,49 +133,49 @@ $string['encoding'] = 'Encoding';
 $string['errors'] = 'Errors';
 $string['nochanges'] = 'No changes';
 $string['rowpreviewnum'] = 'Preview rows';
-$string['uploadcostcenters'] = 'Upload Companies';
+$string['uploadcostcenters'] = 'Upload Bussiness Unit';
 $string['uploadcostcenter_help'] = ' The format of the file should be as follows:
 * Please download sample excelsheet through button provided .
 * Enter the values based upon the information provided in Information/help tab';
-$string['uploadcostcenterspreview'] = 'Upload Companies preview';
-$string['uploadcostcentersresult'] = 'Upload Companies results';
-$string['costcenteraccountupdated'] = 'Companies updated';
-$string['costcenteraccountuptodate'] = 'Companies up-to-date';
+$string['uploadcostcenterspreview'] = 'Upload Bussiness Unit preview';
+$string['uploadcostcentersresult'] = 'Upload Bussiness Unit results';
+$string['costcenteraccountupdated'] = 'Bussiness Unit updated';
+$string['costcenteraccountuptodate'] = 'Bussiness Unit up-to-date';
 $string['costcenterdeleted'] = 'Bussiness Unit deleted';
 $string['costcenterscreated'] = 'Bussiness Unit created';
 $string['costcentersdeleted'] = 'Bussiness Unit deleted';
 $string['costcentersskipped'] = 'Bussiness Unit skipped';
 $string['costcentersupdated'] = 'Bussiness Unit updated';
 $string['uubulk'] = 'Select for bulk costcenter actions';
-$string['uubulkall'] = 'All Companies';
-$string['uubulknew'] = 'New Companies';
-$string['uubulkupdated'] = 'Updated Companies';
+$string['uubulkall'] = 'All Bussiness Unit';
+$string['uubulknew'] = 'New Bussiness Unit';
+$string['uubulkupdated'] = 'Updated Bussiness Unit';
 $string['uucsvline'] = 'CSV line';
 $string['uuoptype'] = 'Upload type';
-$string['uuoptype_addnew'] = 'Add new only, skip existing Companies';
-$string['uuoptype_addupdate'] = 'Add new and update existing Companies';
-$string['uuoptype_update'] = 'Update existing Companies only';
+$string['uuoptype_addnew'] = 'Add new only, skip existing Bussiness Unit';
+$string['uuoptype_addupdate'] = 'Add new and update existing Bussiness Unit';
+$string['uuoptype_update'] = 'Update existing Bussiness Unit only';
 $string['uuupdateall'] = 'Override with file and defaults';
 $string['uuupdatefromfile'] = 'Override with file';
 $string['uuupdatemissing'] = 'Fill in missing from file and defaults';
 $string['uuupdatetype'] = 'Existing costcenter details';
-$string['uploadcostcenters'] = 'Upload Companies';
-$string['uploadcostcenter'] = 'Upload Companies';
-$string['costcenternotaddedregistered'] = 'Companies not added, Already manager';
+$string['uploadcostcenters'] = 'Upload Bussiness Unit';
+$string['uploadcostcenter'] = 'Upload Bussiness Unit';
+$string['costcenternotaddedregistered'] = 'Bussiness Unit not added, Already manager';
 $string['newcostcenter'] = 'New program created';
 $string['parentid'] = 'Parentid';
-$string['uploadcostcenterspreview'] = 'Uploaded Companies preview';
+$string['uploadcostcenterspreview'] = 'Uploaded Bussiness Unit preview';
 $string['visible'] = 'Visible';
 $string['duration'] = 'Duration';
 $string['timecreated'] = 'Time Created';
 $string['timemodified'] = 'Time modofied';
 $string['costcentermodified'] = 'costcenter modified';
 $string['description'] = 'Description';
-$string['uploadcostcenterspreview'] = 'Uploaded Companies Preview';
-$string['uploadcostcenters'] = 'Upload Companies';
-$string['costcenters'] = 'Companies';
+$string['uploadcostcenterspreview'] = 'Uploaded Bussiness Unit Preview';
+$string['uploadcostcenters'] = 'Upload Bussiness Unit';
+$string['costcenters'] = 'Bussiness Unit';
 $string['no_user'] = "No user is assigned till now";
-$string['information'] = 'A costcenter in Cobalt Learning Management System is defined as college/institution that offers program(s). The costcenter(s) is instructed/disciplined by Instructor(s). A costcenter has its own programs and Companies. ';
+$string['information'] = 'A costcenter in Cobalt Learning Management System is defined as college/institution that offers program(s). The costcenter(s) is instructed/disciplined by Instructor(s). A costcenter has its own programs and Bussiness Unit. ';
 $string['addcostcentertabdes'] = 'This page allows you to create/define a new costcenter.<br>
 Fill in the following details and click on  create college to create a new college.';
 $string['editcostcentertabdes'] = 'This page allows you to edit costcenter.<br>
@@ -222,15 +222,15 @@ $string['reportdes'] = 'The list of accepted applicants is given below along wit
 $string['viewapplicantsdes'] = 'The list of registered applicants is given below so as to view their applications and confirm their admission. Applicants whose details furnished do not meet the requirement can be rejected based on the rules and regulations.
 <br>Using the filters, customize the view of applicants based on the admission type, program type, costcenter, program and curriculum.
 ';
-$string['help_des'] = '<h1>View Companies</h1>
-<p>This page allows you to manage (delete/edit) the Companies that are defined under this institution.</b></p>
+$string['help_des'] = '<h1>View Bussiness Unit</h1>
+<p>This page allows you to manage (delete/edit) the Bussiness Unit that are defined under this institution.</b></p>
 
 <h1>Add New</h1>
 <p>This page allows you to create/define a new costcenter. </b></p>
 <p>Fill in the following details and click on save changes to create a new costcenter.</p>
 <ul>
 <li style="display:block"><h4>Parent</h4>
-<p>Parent denotes the main institution that can be categorized into different Companies, campus, universities etc. It can have one or multiple (child) sub-institutions.</b></p>
+<p>Parent denotes the main institution that can be categorized into different Bussiness Unit, campus, universities etc. It can have one or multiple (child) sub-institutions.</b></p>
 <p>Select the top level or the parent costcenter under which the new costcenter has to be created. </p>
 <p><b>Note*:</b> Select \'Top Level\', if the new costcenter will be the parent costcenter or the highest level under this institution.</p></li>
 <li style="display:block"><h4>Type</h4>
@@ -315,7 +315,7 @@ $string['scheme_3'] = 'Blue';
 $string['scheme_4'] = 'Maroon';
 $string['scheme_5'] = 'Midnight Blue';
 $string['scheme_6'] = 'Lite Blue';
-$string['costcenter:assign_multiple_departments_manage'] = 'Assign multiple companies';
+$string['costcenter:assign_multiple_departments_manage'] = 'Assign multiple Bussiness Unit';
 $string['costcenter:manage_multiorganizations'] = 'Manage multiple Companies';
 $string['costcenter:manage_ownorganization'] = 'Manage ownCompany';
 $string['costcenter:manage_subdepartments_manage'] = 'Manage_subCompanies';

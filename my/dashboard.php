@@ -35,8 +35,12 @@ $org_id=explode('/',$path[0])[1];
 $heading = $site->fullname;
 if(is_siteadmin()){
     if($orgid){
-        $categoryid = $DB->get_field('local_costcenter', 'category', array('id' => $orgid));
-    }else{       
+        $categoryid = $DB->get_field('local_costcenter', 'category', array('id' => $orgid, 'parentid' => 0));
+    }
+    if(!$categoryid){
+        $categoryid = $DB->get_field_sql("SELECT category FROM {local_costcenter} WHERE parentid = :parentid ORDER BY id ASC ", array('parentid' => 0));
+    }
+    if($categoryid){
         $categoryid = 1;
     }
 }else if($org_id){

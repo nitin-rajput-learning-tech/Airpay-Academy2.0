@@ -177,7 +177,6 @@ if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/learningplan/index.php');
 } else{
     $filterdata =  $mform->get_data();
-    
     if($filterdata){
         $collapse = false;
     } else{
@@ -195,17 +194,15 @@ if(empty($filterdata) && !empty($jsonparam)){
 }
 if(!empty($costcenterid)|| !empty($status1) || !empty($departmentid) || !empty($subdepartmentid)){   
     $formdata = new stdClass();
-    $formdata->filteropen_costcenterid = $costcenterid;
-    $formdata->filteropen_department = $departmentid;
-    $formdata->filteropen_subdepartment = $subdepartmentid;
-    $formdata->filteropen_level4department = $l4department;
-    $formdata->filteropen_level5department = $l5department;
-
-    // $formdata->organizations = $costcenterid;
-    // $formdata->departments = $departmentid;
-    // $formdata->subdepartment = $subdepartmentid;
-    // $formdata->status = $status1;
+    $formdata->filteropen_costcenterid[] = $costcenterid;
+    $formdata->filteropen_department[] = $departmentid;
+    $formdata->filteropen_subdepartment[] = $subdepartmentid;
+    $formdata->filteropen_level4department[] = $l4department;
+    $formdata->filteropen_level5department[] = $l5department;
+    $formdata->status[] = $status1;
     $mform->set_data($formdata);
+echo '<span id="global_filter" class="hidden" data-filterdata='.json_encode($formdata).'></span>';
+
 }
 
 if($filterdata){

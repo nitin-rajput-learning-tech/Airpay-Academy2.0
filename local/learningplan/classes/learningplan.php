@@ -246,34 +246,81 @@ class learningplan {
         $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
         $filtersql = '';
         if($filterdata){
-            if(!empty($filterdata->subdepartment)){
-                $selectedsubdepts = implode(',', $filterdata->subdepartment);
-                $filtersql .= " AND l.subdepartment IN ($selectedsubdepts) ";
+            if (!empty(array_filter($filterdata->filteropen_costcenterid))) {
+                $selectedorganizations = implode(',', array_filter($filterdata->filteropen_costcenterid));
+                $organizations = explode(',', $selectedorganizations);
+                $orgsql = [];
+                foreach ($organizations as $organisation) {
+                    $orgsql[] = " concat('/',l.open_path,'/') LIKE :organisationparam_{$organisation}";
+                    $lpparams["organisationparam_{$organisation}"] = '%/' . $organisation . '/%';
+                }
+                if (!empty($orgsql)) {
+                    $filtersql .= " AND ( " . implode(' OR ', $orgsql) . " ) ";
+                }
             }
-            if(!empty(array_filter($filterdata->organizations))){
-                $selectedorganizations = implode(',', array_filter($filterdata->organizations));
-                $filtersql .= " AND l.costcenter IN ($selectedorganizations) ";
+            if (!empty(array_filter($filterdata->filteropen_department))) {
+                $selecteddepts = implode(',', array_filter($filterdata->filteropen_department));
+                $depts = explode(',', $selecteddepts);
+                $deptsql = [];
+                foreach ($depts as $dept) {
+                    $deptsql[] = " concat('/',l.open_path,'/') LIKE :deptparam_{$dept}";
+                    $lpparams["deptparam_{$dept}"] = '%/' . $dept . '/%';
+                }
+                if (!empty($deptsql)) {
+                    $filtersql .= " AND ( " . implode(' OR ', $deptsql) . " ) ";
+                }
             }
-            if(!empty(array_filter($filterdata->departments))){
-                $selecteddepartments = implode(',', array_filter($filterdata->departments));
-                $filtersql .= " AND l.department IN ($selecteddepartments) ";
+            if (!empty(array_filter($filterdata->filteropen_subdepartment))) {
+                $selectedsubdepts = implode(',', array_filter($filterdata->filteropen_subdepartment));
+                $subdepts = explode(',', $selectedsubdepts);
+                $subdeptsql = [];
+                foreach ($subdepts as $subdept) {
+                    $subdeptsql[] = " concat('/',l.open_path,'/') LIKE :subdeptparam_{$subdept}";
+                    $lpparams["subdeptparam_{$subdept}"] = '%/' . $subdept . '/%';
+                }
+                if (!empty($subdeptsql)) {
+                    $filtersql .= " AND ( " . implode(' OR ', $subdeptsql) . " ) ";
+                }
             }
 
-            if(!empty($filterdata->learningplan)){
-                $selectedlearningplan = implode(',', $filterdata->learningplan);
-                $filtersql .= " AND l.id IN ($selectedlearningplan) ";
+            if (!empty(array_filter($filterdata->filteropen_department4level))) {
+                $selecteddepts4 = implode(',', array_filter($filterdata->filteropen_department4level));
+                $depts4 = explode(',', $selecteddepts4);
+                $depts4sql = [];
+                foreach ($depts4 as $dept4) {
+                    $depts4sql[] = " concat('/',l.open_path,'/') LIKE :dept4param_{$dept4}";
+                    $lpparams["dept4param_{$dept4}"] = '%/' . $dept4 . '/%';
+                }
+                if (!empty($depts4sql)) {
+                    $filtersql .= " AND ( " . implode(' OR ', $depts4sql) . " ) ";
+                }
             }
 
-            if(!empty($filterdata->status)){
-                 if(!(in_array('active',$filterdata->status) && in_array('inactive',$filterdata->status))){
-                    if(in_array('active' ,$filterdata->status)){
-                        $filtersql .= " AND l.visible = 1 ";           
-                    }else if(in_array('inactive' ,$filterdata->status)){
+            if (!empty(array_filter($filterdata->filteropen_department5level))) {
+                $selecteddepts5 = implode(',', array_filter($filterdata->filteropen_department5level));
+                $depts5 = explode(',', $selecteddepts5);
+                $depts5sql = [];
+                foreach ($depts5 as $dept5) {
+                    $depts5sql[] = " concat('/',l.open_path,'/') LIKE :dept5param_{$dept5}";
+                    $lpparams["dept5param_{$dept5}"] = '%/' . $dept5 . '/%';
+                }
+                if (!empty($depts5sql)) {
+                    $filtersql .= " AND ( " . implode(' OR ', $depts5sql) . " ) ";
+                }
+            }
+            if (!empty($filterdata->categories)) {
+                $selectedcategories = implode(',', $filterdata->categories);
+                $filtersql .= " AND l.open_categoryid IN ($selectedcategories) ";
+            }
+            if (!empty($filterdata->status)) {
+                if (!(in_array('active', $filterdata->status) && in_array('inactive', $filterdata->status))) {
+                    if (in_array('active', $filterdata->status)) {
+                        $filtersql .= " AND l.visible = 1 ";
+                    } else if (in_array('inactive', $filterdata->status)) {
                         $filtersql .= " AND l.visible = 0 ";
                     }
                 }
             }
-
         }
 
         $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1 "; 
@@ -288,7 +335,7 @@ class learningplan {
         }
         $sql .= $filtersql;
         $sql .= " ORDER BY l.id DESC"; 
-        $learning_plans = $DB->get_records_sql($sql, [], $start,$length);
+        $learning_plans = $DB->get_records_sql($sql,$lpparams, $start,$length);
         // if(is_siteadmin()){
         //     $sql="SELECT l.* FROM {local_learningplan} AS l WHERE 1 = 1 "; 
         //     if(!empty($search)){

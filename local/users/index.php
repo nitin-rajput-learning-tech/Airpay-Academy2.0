@@ -134,6 +134,7 @@ if (!empty($coursespluginexist)) {
             </div>';
 }
 $filterparams['submitid'] = 'form#filteringform';
+$filterparams['filterdata'] = json_encode($formdata);
 echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
    $display_url = new moodle_url('/local/users/index.php');
 if ($costcenterid) {
