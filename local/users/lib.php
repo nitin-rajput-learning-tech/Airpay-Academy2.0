@@ -1153,7 +1153,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         }
         $list['lastaccess'] = ($user->lastaccess) ? format_time(time() - $user->lastaccess) : get_string('never');
         $list['userid'] = $user->id;
-        $list['fullname'] = $list['prefix'].fullname($user);
+        $list['fullname'] = $list['prefix'] ? $list['prefix'].'. '.fullname($user) : fullname($user);
         if (has_capability('local/users:manage', (new \local_users\lib\accesslib())::get_module_context()) || is_siteadmin()) {
             $list['visible'] = $user->suspended;
             $list['activeicon'] = 1;
