@@ -166,7 +166,7 @@ class local_users_renderer extends plugin_renderer_base {
             "department" => $userdepartment ? $userdepartment : 'All',
             "subdepartment" => $usersubdepartment ? $usersubdepartment : 'All',
             "location" => $userrecord->city != null ? $userrecord->city : 'N/A',
-            "timezone" => core_date::get_user_timezone($userrecord->timezone),
+            // "timezone" => core_date::get_user_timezone($userrecord->timezone),
             "address" => $userrecord->address != null ? $userrecord->address : 'N/A',
             "designation" => $userrecord->open_designation != null ? $userrecord->open_designation : 'N/A',
             "client" => ! empty(trim($userrecord->open_client)) ? $userrecord->open_client : 'N/A',
