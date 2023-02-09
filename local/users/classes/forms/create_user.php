@@ -173,10 +173,10 @@ class create_user extends moodleform {
                 // End of if($form_status = 0) condition.
         } else if ($form_status == 1) {
 
-            $mform->addElement('select', 'lang', get_string(
-                'preferredlanguage', 'local_users'),
-                get_string_manager()->get_list_of_translations());
-            $mform->setDefault('lang', $CFG->lang);
+            // $mform->addElement('select', 'lang', get_string(
+            //     'preferredlanguage', 'local_users'),
+            //     get_string_manager()->get_list_of_translations());
+            // $mform->setDefault('lang', $CFG->lang);
 
             $mform->addElement('text', 'open_designation', get_string('designation', 'local_users'));
             $mform->setType('open_designation', PARAM_RAW);
@@ -227,16 +227,20 @@ class create_user extends moodleform {
             $mform->addRule('phone1', get_string('phonemaximum', 'local_users'), 'maxlength', 10, 'client');
             $mform->setType('phone1', PARAM_RAW);
 
-            if (isset($CFG->forcetimezone) && $CFG->forcetimezone != 99) {
-                $choices = \core_date::get_list_of_timezones($CFG->forcetimezone);
-                $mform->addElement('static', 'forcedtimezone', get_string('timezone'), $choices[$CFG->forcetimezone]);
-                $mform->addElement('hidden', 'timezone');
-                $mform->setType('timezone', \core_user::get_property_type('timezone'));
-            } else {
-                $userrecord = \core_user::get_user($id);
-                $choices = \core_date::get_list_of_timezones($userrecord->timezone, true);
-                $mform->addElement('select', 'timezone', get_string('timezone'), $choices);
-            }
+
+            $mform->addElement('hidden', 'timezone');
+            $mform->setType('timezone', \core_user::get_property_type('timezone'));
+
+            // if (isset($CFG->forcetimezone) && $CFG->forcetimezone != 99) {
+            //     $choices = \core_date::get_list_of_timezones($CFG->forcetimezone);
+            //     $mform->addElement('static', 'forcedtimezone', get_string('timezone'), $choices[$CFG->forcetimezone]);
+            //     $mform->addElement('hidden', 'timezone');
+            //     $mform->setType('timezone', \core_user::get_property_type('timezone'));
+            // } else {
+            //     $userrecord = \core_user::get_user($id);
+            //     $choices = \core_date::get_list_of_timezones($userrecord->timezone, true);
+            //     $mform->addElement('select', 'timezone', get_string('timezone'), $choices);
+            // }
             $mform->addElement('static', 'currentpicture', get_string('currentpicture'));
             $mform->addElement('checkbox', 'deletepicture', get_string('delete'));
             $mform->setDefault('deletepicture', 0);
