@@ -1110,8 +1110,6 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
             $list['gender'] = 'Female';
         } else if($user->gender == 2){
             $list['gender'] = 'Other';
-        } else {
-            $list['gender'] = '--';
         }
 
         if($user->open_prefix == 1){
@@ -1120,9 +1118,8 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
             $list['prefix'] = 'Mrs';
         } else if($user->open_prefix == 3){
             $list['prefix'] = 'Ms';
-        } else {
-            $list['prefix'] = '--';
         }
+
         $list['employmenttype'] = $user->open_employmenttype ? $user->open_employmenttype : '--';
         $list['employmentstatus'] = $user->open_employmentstatus ? $user->open_employmentstatus : '--';
         $list['region'] = $user->open_region ? $user->open_region : '--';
@@ -1156,7 +1153,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         }
         $list['lastaccess'] = ($user->lastaccess) ? format_time(time() - $user->lastaccess) : get_string('never');
         $list['userid'] = $user->id;
-        $list['fullname'] = fullname($user);
+        $list['fullname'] = $list['prefix'].fullname($user);
         if (has_capability('local/users:manage', (new \local_users\lib\accesslib())::get_module_context()) || is_siteadmin()) {
             $list['visible'] = $user->suspended;
             $list['activeicon'] = 1;
