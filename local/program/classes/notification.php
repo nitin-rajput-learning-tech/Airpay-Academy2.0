@@ -81,8 +81,8 @@
         $params['moduleid'] = $programinstance->id;
         $params['emailtype'] = $emailtype;
         if($costcenterexist){
-            $notification_typesql .= " AND lni.costcenterid=:costcenter";
-            $params['costcenter'] = $programinstance->costcenter;
+            $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE :costcenter";
+            $params['costcenter'] = '%'.$programinstance->costcenter.'%';
         }
         $notification = $this->db->get_record_sql($notification_typesql, $params);
         if(empty($notification)){ // sends the default notification for the type.
@@ -93,8 +93,9 @@
                 AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
             $params['emailtype'] = $emailtype;
             if($costcenterexist){
-                $notification_typesql .= " AND lni.costcenterid=:costcenter";
-                $params['costcenter'] = $programinstance->costcenter;
+
+                $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE :costcenter ";
+                $params['costcenter'] = '%'.$programinstance->costcenter.'%';
             }
             $notification = $this->db->get_record_sql($notification_typesql, $params);
         }

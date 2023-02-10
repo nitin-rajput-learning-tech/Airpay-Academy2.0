@@ -33,7 +33,7 @@ require_once($CFG->dirroot.'/local/lib.php');
 
 $id = required_param('id', PARAM_INT);
 
-$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path',$costcenterpath=null,$datatype='lowerandsamepath');
+$costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path');
 
 $programsql = "SELECT lp.*
                     FROM {local_program} AS lp WHERE lp.id = $id $costcenterpathconcatsql ";

@@ -41,17 +41,16 @@
         <FIELD NAME="open_hrmsrole" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="open_designation" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="open_location" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="open_path" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_categoryid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_states" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_district" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_subdistrict" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_village" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
-
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" />
@@ -68,18 +67,20 @@
         <FIELD NAME="stream" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="description" TYPE="text" LENGTH="big" SEQUENCE="false"/>
         <FIELD NAME="status" TYPE="int" LENGTH="20" NOTNULL="false" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="open_path" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="costcenterid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" />
+        <KEY NAME="fk_usercreated" TYPE="foreign" FIELDS="usercreated" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="fk_usermodified" TYPE="foreign" FIELDS="usermodified" REFTABLE="user" REFFIELDS="id"/>
       </KEYS>
-       <INDEXES>
-        <INDEX NAME="costcenterid" UNIQUE="false" FIELDS="costcenterid"/>
-       </INDEXES>
+      <INDEXES>
+        <INDEX NAME="status" UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
     </TABLE>
     <TABLE NAME="local_program_users" COMMENT="table for program users">
       <FIELDS>

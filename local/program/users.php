@@ -32,7 +32,7 @@ $type = optional_param('type', '', PARAM_RAW);
 $search = optional_param_array('search', '', PARAM_RAW);
 require_login();
 $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
-$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path',$costcenterpath=null,$datatype='lowerandsamepath');
+$costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path');
 
 $programsql = "SELECT lp.*
                     FROM {local_program} AS lp WHERE lp.id = $programid $costcenterpathconcatsql ";

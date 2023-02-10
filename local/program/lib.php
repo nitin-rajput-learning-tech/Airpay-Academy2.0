@@ -361,9 +361,11 @@ class local_program_potential_users extends user_selector_base {
 
         }else{
 
-            $sql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
         }
+
+        $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($program);
 
         if (!empty($this->email)) {
             $sql .= " AND u.id IN ({$this->email})";
@@ -607,16 +609,8 @@ function program_filter($mform){
     $concatsql = '';
     if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
 
+            $concatsql.= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
 
-            if(is_siteadmin()){
-
-                $concatsql.= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
-
-            }else{
-
-                $concatsql.= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
-
-            }
         }
         $program_sql .= " WHERE 1 = 1 ";
         $program_sql .= $concatsql;
@@ -908,13 +902,15 @@ function program_mass_enroll($cir, $program, $categorycontext, $data) {
 
         if(is_siteadmin()){
 
-            $sql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$open_path=null,'lowerandsamepath');
+            $sql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$open_path=$program->open_path,'lowerandsamepath');
 
         }else{
 
-            $sql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
         }
+
+        $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($program);
 
         if (!$user = $DB->get_record_sql($sql)) {
             $result .= '<div class="alert alert-error">'.get_string('im:user_unknown', 'local_courses', $fields[0] ). '</div>';
@@ -1135,11 +1131,7 @@ function orgdep_sql($categorycontext){
 
     $sql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
 
-    if(is_siteadmin()){
-
-        $sql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path=null,'lowerandsamepath');
-
-    }elseif (has_capability('local/program:trainer_viewprogram', $categorycontext)){
+    if (has_capability('local/program:trainer_viewprogram', $categorycontext)){
         $myprograms = $DB->get_records_menu('local_program_trainers', array(
                     'trainerid' => $USER->id), 'id', 'id, programid');
         if (!empty($myprograms)) {

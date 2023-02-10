@@ -97,9 +97,9 @@ class querylib {
             $concatsql .= " AND concat('/',u.open_path,'/') LIKE :costcenter ";
             $params['costcenter'] = '%'.$costcenters.'%';
         }
-        if ((has_capability('local/program:manageprogram', $categorycontext)) && ( !is_siteadmin() )) {
-            $concatsql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-        }
+
+        $concatsql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
         if (!empty($query)) {
 
             $fields = "u.email LIKE :search1 OR CONCAT(u.firstname, ' ', u.lastname) LIKE :search2 ";
@@ -212,9 +212,7 @@ class querylib {
     }
      public function get_program_streamlist() {
         global $DB;
-        // $streamssql = "SELECT id, stream
-        //                    FROM {local_program_stream} ";
-        // $streams = $DB->get_records_sql_menu($streamssql, array());
+
         $streams = $DB->get_records_menu('local_program_stream', array(), '', 'id, stream');
         return $streams;
      }

@@ -35,7 +35,7 @@ define([
                 'serverSide': true,
                 'ajax': {
                     "type": "POST",
-                    "url": M.cfg.wwwroot + '/local/program/ajax.php?subdepts='+args.selected_subdepts+'&costcenterid='+args.selectedcostcenterid+'&departmentid='+args.selecteddepartmentid+'&program='+args.selectedprogram+'&status='+args.selectedstatus+'&view_type='+'table',
+                    "url":M.cfg.wwwroot + '/local/program/ajax.php?costcenterid='+args.selectedcostcenterid+'&departmentid='+args.selecteddepartmentid+'&subdepartmentid='+args.selectedsubdepartmentid+'&l4department='+args.selectedl4department+'&l5department='+args.selectedl5department+'&program='+args.selectedprogram+'&status='+args.selectedstatus+'&view_type='+'table',
                     "data": params
                 },
                 "bInfo" : false,
@@ -61,7 +61,7 @@ define([
                 'serverSide': true,
                 'ajax': {
                     "type": "POST",
-                    "url": M.cfg.wwwroot + '/local/program/ajax.php?subdepts='+args.selected_subdepts+'&costcenterid='+args.selectedcostcenterid+'&departmentid='+args.selecteddepartmentid+'&program='+args.selectedprogram+'&status='+args.selectedstatus+'&view_type='+'card',
+                    "url":M.cfg.wwwroot + '/local/program/ajax.php?costcenterid='+args.selectedcostcenterid+'&departmentid='+args.selecteddepartmentid+'&subdepartmentid='+args.selectedsubdepartmentid+'&l4department='+args.selectedl4department+'&l5department='+args.selectedl5department+'&program='+args.selectedprogram+'&status='+args.selectedstatus+'&view_type='+'card',
                     "data": params
                 },
                 "bInfo" : false,
@@ -530,7 +530,7 @@ define([
             });
         }, 
         getstream: function() {
-            $(document).on('change', '#id_costcenter', function(){
+            $(document).on('change', '#id_open_costcenterid_select', function(){
                 var orgID = $(this).val();
                 if(orgID){
                     var promise = Ajax.call([{

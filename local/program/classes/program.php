@@ -583,7 +583,7 @@ class program {
      * @param  Object     $stable Datatable fields
      * @return Array  programs and totalprogramcount
      */
-    public function programs($stable, $request = false,$subdepts = null, $costcenterid= null, $departmentid = null,$program = null,$status = null) {
+    public function programs($stable, $request = false,$program = null,$status = null) {
         global $DB, $USER;
         $params = array();
         $programs = array();
@@ -629,7 +629,7 @@ class program {
                  $program_costcenter = $DB->get_field('local_program', 'costcenter',
                     array('id' => $stable->programid));
 
-                   $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path',);
+                   $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path');
 
                     $programsql = "SELECT lp.*
                                         FROM {local_program} AS lp WHERE lp.id = $stable->programid $costcenterpathconcatsql ";
@@ -658,18 +658,41 @@ class program {
             $concatsql .= " AND bc.id = :programid";
             $params['programid'] = $stable->programid;
         }
-        //added revathi
-        if($subdepts != NULL && $subdepts != 'null' ) {
-          $concatsql .= " AND bc.subdepartment IN ($subdepts) ";
-        }
-        if($costcenterid != NULL && $costcenterid != 'null' ) {
-          $concatsql .= " AND bc.costcenter IN ($costcenterid) ";
-        }
-        if($departmentid != NULL && $departmentid != 'null' ) {
-          $concatsql .= " AND bc.department IN ($departmentid) ";
-        }
+
         if($program != NULL && $program != 'null' ) {
           $concatsql .= " AND bc.id IN ($program) ";
+        }
+
+        if(!empty($stable->costcenterid)){
+
+            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :costcenterid";
+            $params["costcenterid"] = '%/'.$stable->costcenterid.'/%';
+
+        }
+        if(!empty($stable->departmentid)){
+
+            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :departmentid";
+            $params["departmentid"] = '%/'.$stable->departmentid.'/%';
+
+        }
+        if(!empty($stable->subdepartmentid)){
+
+            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :subdepartmentid";
+            $params["subdepartmentid"] = '%/'.$stable->subdepartmentid.'/%';
+
+        }
+        if(!empty($stable->l4department)){
+
+            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :l4department";
+            $params["l4department"] = '%/'.$stable->l4department.'/%';
+
+        }
+
+        if(!empty($stable->l5department)){
+
+            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :l5department";
+            $params["l5department"] = '%/'.$stable->l5department.'/%';
+
         }
 
         if(!empty($status)){
@@ -1609,12 +1632,20 @@ class program {
         if ($lastitem != 0) {
             $sql.=" AND u.id > $lastitem";
         }
-        if ((has_capability('local/program:manageprogram', $categorycontext))) {
+
+        if(is_siteadmin()){
+
+            $sql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$program->open_path,'lowerandsamepath');
+
+        }else{
 
             $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-            $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($program);
 
         }
+
+        $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($program);
+
+
         $sql .= " AND u.id <> $USER->id ";
         if (!empty($params['email'])) {
             $sql .= " AND u.id IN ({$params['email']})";
@@ -2479,13 +2510,23 @@ class program {
         $stream->description = $stream->stream_description['text'];
         try {
             if ($stream->id > 0) {
+
+                $open_path=$DB->get_field('local_program_stream', 'open_path', array('id' => $stream->id));
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+                if($stream->open_costcenterid !=$org){
+
+                     local_costcenter_get_costcenter_path($stream);
+
+                }
+
                 $stream->usermodified = $USER->id;
                 $stream->timemodified = time();
                 $DB->update_record('local_program_stream', $stream);
             } else {
                 $stream->usercreated = $USER->id;
                 $stream->timecreated = time();
-                $stream->costcenterid=  $stream->costcenter;
+                local_costcenter_get_costcenter_path($stream);
                 $stream->id = $DB->insert_record('local_program_stream', $stream);
             }
         } catch (dml_exception $ex) {
@@ -2655,11 +2696,20 @@ class program {
         if ($lastitem != 0) {
             $sql.=" AND u.id > $lastitem";
         }
-        if ((has_capability('local/program:manageprogram', $categorycontext))) {
+
+        if(is_siteadmin()){
+
+            $sql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$program->open_path,'lowerandsamepath');
+
+        }else{
 
             $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-            $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($program);
+
         }
+
+        $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($program);
+
+
         $sql .= " AND u.id <> $USER->id ";
         if (!empty($params['email'])) {
             $sql .= " AND u.id IN ({$params['email']})";

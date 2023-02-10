@@ -195,17 +195,8 @@ class local_program_external extends external_api {
         $courses = array();
         if ($query) {
             $queryparams = array();
-            $concatsql = '';
 
-           if(is_siteadmin()){
-
-                $concatsql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path=null,'lowerandsamepath');
-
-            }else{
-
-                $concatsql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-
-            }
+            $concatsql= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
 
             $cousresql = "SELECT c.id, c.fullname
                            FROM {course} AS c
@@ -1032,7 +1023,14 @@ class local_program_external extends external_api {
     }
     public static function organization_streams($orgid) {
         global $DB;
-     $data = $DB->get_records_menu('local_program_stream',array('costcenterid' => $orgid),'stream','id,stream');
+
+        $params = array();
+        $program_streamsql = "SELECT lps.id,lps.stream FROM {local_program_stream} AS lps WHERE concat('/',lps.open_path,'/') LIKE :costcenter ";
+
+        $params['costcenter'] = '%'.$orgid.'%';
+
+        $data = $DB->get_records_sql_menu($program_streamsql, $params);
+
           return json_encode($data);
     }
     public static function organization_streams_returns() {
