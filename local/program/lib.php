@@ -73,10 +73,20 @@ function local_program_output_fragment_program_form($args) {
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
+    $data = $DB->get_record('local_program', ['id' => $args->id]);
     $formdata['id'] = $args->id;
+    $customdata = array(
+        'id' => $args->id,
+        'form_status' => $args->form_status
+    );
+    if($args->id){
+        $customdata['open_path'] = $data->open_path;
+    }
 
-    $mform = new program_form(null, array('id' => $args->id,
-        'form_status' => $args->form_status), 'post', '', null, true, $formdata);
+    local_costcenter_set_costcenter_path($customdata);
+    local_users_set_userprofile_datafields($customdata,$data);
+
+    $mform = new program_form(null, $customdata, 'post', '', null, true, $formdata);
     $programdata = new stdClass();
     $programdata->id = $args->id;
     $programdata->form_status = $args->form_status;
@@ -239,7 +249,7 @@ class programcourse_form extends moodleform {
         $mform = &$this->_form;
         $bcid = $this->_customdata['bcid'];
         $levelid = $this->_customdata['levelid'];
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bcid);
 
         //$mform->addElement('header', 'general', get_string('addcourses', 'local_program'));
 
@@ -283,275 +293,6 @@ class programcourse_form extends moodleform {
         $mform->disable_form_change_checker();
     }
 }
-
-/**
- * User selector subclass for the list of potential users on the assign roles page,
- * when we are assigning in a context below the course level. (CONTEXT_MODULE and
- * some CONTEXT_BLOCK).
- *
- * This returns only enrolled users in this context.
- */
-class local_program_potential_users extends user_selector_base {
-    protected $programid;
-    protected $categorycontext;
-    protected $courseid;
-    /**
-     * @param string $name control name
-     * @param array $options should have two elements with keys groupid and courseid.
-     */
-    public function __construct($name, $options) {
-        global $CFG;
-        if (isset($options['context'])) {
-            $this->context = $options['context'];
-        } else {
-            $this->context = context::instance_by_id($options['contextid']);
-        }
-        $options['accesscontext'] = $this->context;
-        parent::__construct($name, $options);
-        $this->programid = $options['programid'];
-        $this->organization = $options['organization'];
-        $this->department = $options['department'];
-        $this->email = $options['email'];
-        $this->idnumber = $options['idnumber'];
-        $this->uname = $options['uname'];
-        $this->searchanywhere = true;
-        require_once($CFG->dirroot . '/group/lib.php');
-    }
-
-    protected function get_options() {
-        global $CFG;
-        $options = parent::get_options();
-        $options['file'] = 'local/program/lib.php';
-        $options['programid'] = $this->programid;
-        $options['contextid'] = $this->context->id;
-        return $options;
-    }
-
-    public function find_users($search) {
-        global $DB;
-        $params = array();
-        $program = $DB->get_record('local_program', array('id' => $this->programid));
-        if (empty($program)) {
-            print_error('program not found!');
-        }
-
-        // Now we have to go to the database.
-        list($wherecondition, $params) = $this->search_sql($search, 'u');
-
-        if ($wherecondition) {
-            $wherecondition = ' AND ' . $wherecondition;
-        }
-
-        $fields      = 'SELECT ' . $this->required_fields_sql('u');
-        $countfields = 'SELECT COUNT(u.id)';
-        $params['confirmed'] = 1;
-        $params['suspended'] = 0;
-        $params['deleted'] = 0;
-
-        $sql   = " FROM {user} AS u
-                  WHERE 1 = 1
-                        {$wherecondition}
-                    AND u.id > 2 AND u.confirmed = :confirmed AND u.suspended = :suspended
-                    AND u.deleted = :deleted
-                        ";
-
-        if(is_siteadmin()){
-
-            $sql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$program->open_path,'lowerandsamepath');
-
-        }else{
-
-            $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-
-        }
-
-        $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($program);
-
-        if (!empty($this->email)) {
-            $sql .= " AND u.id IN ({$this->email})";
-        }
-        if (!empty($this->uname)) {
-            $sql .= " AND u.id IN ({$this->uname})";
-        }
-        if (!empty($this->department)) {
-            $sql .= " AND u.open_departmentid IN ($this->department)";
-        }
-        if (!empty($this->idnumber)) {
-            $sql .= " AND u.id IN ($this->idnumber)";
-        }
-
-        $options = array('contextid' => $this->context->id, 'programid' => $this->programid, 'email' => $this->email, 'uname' => $this->uname, 'department' => $this->department, 'idnumber' => $this->idnumber, 'organization' => $this->organization);
-        $local_program_existing_users = new local_program_existing_users('removeselect', $options);
-        $enrolleduerslist = $local_program_existing_users->find_users('', true);
-        if (!empty($enrolleduerslist)) {
-            $enrolleduers = implode(',', $enrolleduerslist);
-            $sql .= " AND u.id NOT IN ($enrolleduers)";
-        }
-
-        list($sort, $sortparams) = users_order_by_sql('u', $search, $this->accesscontext);
-        $order = ' ORDER BY ' . $sort;
-
-        // Check to see if there are too many to show sensibly.
-        if (!$this->is_validating()) {
-            $potentialmemberscount = $DB->count_records_sql($countfields . $sql, $params);
-            if ($potentialmemberscount > $this->maxusersperpage) {
-                return $this->too_many_results($search, $potentialmemberscount);
-            }
-        }
-        // If not, show them.
-        $availableusers = $DB->get_records_sql($fields . $sql . $order, array_merge($params, $sortparams));
-
-        if (empty($availableusers)) {
-            return array();
-        }
-
-        if ($search) {
-            $groupname = get_string('potusersmatching', 'local_program', $search);
-        } else {
-            $groupname = get_string('potusers', 'local_program');
-        }
-
-        return array($groupname => $availableusers);
-    }
-}
-
-/**
- * User selector subclass for the list of users who already have the role in
- * question on the assign roles page.
- */
-class local_program_existing_users extends user_selector_base {
-    protected $programid;
-    protected $categorycontext;
-    // protected $courseid;
-    /**
-     * @param string $name control name
-     * @param array $options should have two elements with keys groupid and courseid.
-     */
-    public function __construct($name, $options) {
-        global $CFG;
-        $this->searchanywhere = true;
-        if (isset($options['context'])) {
-            $this->context = $options['context'];
-        } else {
-            $this->context = context::instance_by_id($options['contextid']);
-        }
-        $options['accesscontext'] = $this->context;
-        parent::__construct($name, $options);
-        $this->programid = $options['programid'];
-        $this->organization = $options['organization'];
-        $this->department = $options['department'];
-        $this->email = $options['email'];
-        $this->idnumber = $options['idnumber'];
-        $this->uname = $options['uname'];
-        require_once($CFG->dirroot . '/group/lib.php');
-    }
-
-    protected function get_options() {
-        global $CFG;
-        $options = parent::get_options();
-        $options['file'] = 'local/program/lib.php';
-        $options['programid'] = $this->programid;
-        // $options['courseid'] = $this->courseid;
-        $options['contextid'] = $this->context->id;
-        return $options;
-    }
-    public function find_users($search, $idsreturn = false) {
-        global $DB;
-
-        list($wherecondition, $params) = $this->search_sql($search, 'u');
-
-        $params['programid'] = $this->programid;
-        $fields = "SELECT DISTINCT u.id, " . $this->required_fields_sql('u') ;
-        $countfields = "SELECT COUNT(DISTINCT u.id) ";
-        $params['confirmed'] = 1;
-        $params['suspended'] = 0;
-        $params['deleted'] = 0;
-        $sql = " FROM {user} AS u
-                JOIN {local_program_users} AS cu ON cu.userid = u.id
-                 WHERE {$wherecondition}
-                AND u.id > 2 AND u.confirmed = :confirmed AND u.suspended = :suspended
-                    AND u.deleted = :deleted AND cu.programid = :programid";
-        if (!empty($this->email)) {
-            $sql.=" AND u.id IN ({$this->email})";
-        }
-       if (!empty($this->uname)) {
-            $sql .=" AND u.id IN ({$this->uname})";
-        }
-        if (!empty($this->department)) {
-            $sql .=" AND u.open_departmentid IN ($this->department)";
-        }
-        if (!empty($this->idnumber)) {
-            $sql .=" AND u.id IN ($this->idnumber)";
-        }
-        if (!$this->is_validating()) {
-            $existinguserscount = $DB->count_records_sql($countfields . $sql, $params);
-            if ($existinguserscount > $this->maxusersperpage) {
-                return $this->too_many_results($search, $existinguserscount);
-            }
-        }
-        if ($idsreturn) {
-            $categorycontextusers = $DB->get_records_sql_menu('SELECT DISTINCT u.id, u.id as userid ' . $sql, $params);
-            return $categorycontextusers;
-        } else {
-            $order = " ORDER BY u.id DESC";
-            $categorycontextusers = $DB->get_records_sql($fields . $sql . $order, $params);
-        }
-
-        // No users at all.
-        if (empty($categorycontextusers)) {
-            return array();
-        }
-
-        if ($search) {
-            $groupname = get_string('enrolledusersmatching', 'enrol', $search);
-        } else {
-            $groupname = get_string('enrolledusers', 'enrol');
-        }
-        return array($groupname => $categorycontextusers);
-    }
-
-    protected function this_con_group_name($search, $numusers) {
-        if ($this->context->contextlevel == CONTEXT_SYSTEM) {
-            // Special case in the System context.
-            if ($search) {
-                return get_string('extusersmatching', 'local_program', $search);
-            } else {
-                return get_string('extusers', 'local_program');
-            }
-        }
-        $categorycontexttype = context_helper::get_level_name($this->context->contextlevel);
-        if ($search) {
-            $a = new stdClass;
-            $a->search = $search;
-            $a->contexttype = $categorycontexttype;
-            if ($numusers) {
-                return get_string('usersinthisxmatching', 'core_role', $a);
-            } else {
-                return get_string('noneinthisxmatching', 'core_role', $a);
-            }
-        } else {
-            if ($numusers) {
-                return get_string('usersinthisx', 'core_role', $categorycontexttype);
-            } else {
-                return get_string('noneinthisx', 'core_role', $categorycontexttype);
-            }
-        }
-    }
-
-    protected function parent_con_group_name($search, $categorycontextid) {
-        $categorycontext = context::instance_by_id($categorycontextid);
-        $categorycontextname = $categorycontext->get_context_name(true, true);
-        if ($search) {
-            $a = new stdClass;
-            $a->contextname = $categorycontextname;
-            $a->search = $search;
-            return get_string('usersfrommatching', 'core_role', $a);
-        } else {
-            return get_string('usersfrom', 'core_role', $categorycontextname);
-        }
-    }
-}
-
 function local_program_output_fragment_new_catform($args) {
     global $CFG, $DB;
 
@@ -646,7 +387,7 @@ class program_managelevel_form extends moodleform {
         $mform = &$this->_form;
         $id = $this->_customdata['id'];
         $programid = $this->_customdata['programid'];
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
 
         //$mform->addElement('header', 'general', get_string('addcourses', 'local_program'));
 
@@ -726,6 +467,7 @@ class program_managestream_form extends moodleform {
         $querieslib = new querylib();
         $mform = &$this->_form;
         $id = $this->_customdata['id'];
+        $open_path = $this->_customdata['open_path'];
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         $mform->addElement('hidden', 'id', $id);
@@ -754,14 +496,25 @@ function local_program_output_fragment_program_managestream_form($args) {
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
+    $data = $DB->get_record('local_program_stream', ['id' => $args->id]);
     $formdata['id'] = $args->id;
+    $customdata = array(
+        'id' => $args->id,
+        'form_status' => $args->form_status
+    );
+    if($args->id){
+        $customdata['open_path'] = $data->open_path;
+    }
 
-    $mform = new program_managestream_form(null, array('id' => $args->id,
-        'form_status' => $args->form_status), 'post', '', null,
-        true, $formdata);
+    local_costcenter_set_costcenter_path($customdata);
+    local_users_set_userprofile_datafields($customdata,$data);
+
+    $mform = new program_managestream_form(null, $customdata, 'post', '', null, true, $formdata);
+
+
     $bcstream = new stdClass();
     if ($args->id > 0) {
-        $bcstream = $DB->get_record('local_program_stream', array('id' => $args->id));
+        $bcstream = $data;
     }
 
     $bcstream->form_status = $args->form_status;
@@ -810,7 +563,7 @@ function local_program_leftmenunode(){
         $programnode .= html_writer::end_tag('li');
     }
 
-    //return array('10' => $programnode);
+    return array('10' => $programnode);
 }
 function local_program_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;

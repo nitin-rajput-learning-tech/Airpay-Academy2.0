@@ -38,18 +38,16 @@ class catform extends moodleform {
 	function definition() {
 		global $DB;
 
-		$mform = &$this->_form;
-		$categoryid = $this->_customdata['id'];
+        $mform = &$this->_form;
+        $categoryid = $this->_customdata['id'];
 
-		$selected_ins_name = $DB->get_records('local_costcenter');
+        $mform->addElement('hidden', 'categoryid', $categoryid);
+        $mform->setType('categoryid', PARAM_INT);
 
-		$mform->addElement('hidden', 'id', $instituteid);
-		$mform->setType('id', PARAM_INT);
+        $mform->addElement('text', 'fullname', get_string('category_name', 'local_program'));
+        $mform->setType('fullname', PARAM_TEXT);
+        $mform->addRule('fullname', null, 'required', null, 'client');
 
-		$mform->addElement('text', 'fullname', get_string('category_name', 'local_program'));
-		$mform->setType('fullname', PARAM_TEXT);
-		$mform->addRule('fullname', null, 'required', null, 'client');
-
-		$this->add_action_buttons();
+        $this->add_action_buttons();
 	}
 }

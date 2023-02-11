@@ -37,7 +37,7 @@ $bclcid = required_param('bclcid', PARAM_INT);
 $action = optional_param('action', '', PARAM_RAW);
 
 require_login();
-$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
 $PAGE->set_context($categorycontext);
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');

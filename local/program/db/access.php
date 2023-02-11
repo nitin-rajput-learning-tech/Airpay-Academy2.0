@@ -198,14 +198,6 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
     ),
-    'local/program:manage_owndepartments' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:manage_multiorganizations' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
     'local/program:programcompletion' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,

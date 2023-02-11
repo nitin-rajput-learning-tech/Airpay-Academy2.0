@@ -96,19 +96,14 @@ if ($returnurl) {
 }
 $data_submitted = data_submitted();
 if ($programid && $sessionid) {
-    // $organization = null;
-    // $department   = null;
-    $email        = null;
-    $idnumber     = null;
-    $uname        = null;
-    $groups       = null;
+
 
     if (file_exists($CFG->dirroot . '/local/lib.php')) {
         require_once($CFG->dirroot . '/local/lib.php');
         $filterlist = get_filterslist();
     }
     if (!empty($courses_plugin_exists)) {
-        $mform = new filters_form($url, array('filterlist' => $filterlist));
+        $mform = new filters_form($url, array('filterlist'=>$filterlist, 'action' => 'user_enrolment'));
         if ($mform->is_cancelled()) {
             redirect($PAGE->url);
         } else {
@@ -118,8 +113,17 @@ if ($programid && $sessionid) {
             } else {
                 $collapse = true;
             }
-            // $organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
-            // $department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
+            $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
+            $department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
+            $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
+            $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', $filterdata->filteropen_level4department) : null;
+            $department5level = !empty($filterdata->filteropen_level5department) ? implode(',', $filterdata->filteropen_level5department) : null;
+            $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
+            $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
+            $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
+            $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
+
+
             $email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
             $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
             $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
@@ -128,10 +132,9 @@ if ($programid && $sessionid) {
     }
 
     // Create the user selector objects.
-    $options = array('context' => $categorycontext->id, 'programid' => $programid, 'email' => $email,
-        'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups);
-    //$potentialuserselector = new local_program_potential_users('addselect', $options);
-    //$currentuserselector = new local_program_existing_users('removeselect', $options);
+
+    $options = array('context' => $categorycontext->id, 'programid' => $programid, 'organization' => $organization, 'department' => $department,'subdepartment' => $subdepartment,'department4level' => $department4level,'department5level' => $department5level,'states' => $states,'district' => $district,'subdistrict' => $subdistrict,'village' => $village, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
+
 
     if ($add && confirm_sesskey()) {
         if ($submit_value == "Add_All_Users") {

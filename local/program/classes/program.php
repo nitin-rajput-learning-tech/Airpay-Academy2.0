@@ -590,7 +590,14 @@ class program {
         $programscount = 0;
         $concatsql = '';
 
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        if (isset($stable->programid) && $stable->programid > 0) {
+
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($stable->programid);
+        }else{
+
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+
+        }
 
         if (!empty($stable->search)) {
             $fields = array("bc.name");
@@ -753,7 +760,7 @@ class program {
      */
     public function programsessions($bclcdata, $stable, $userview = false, $tab=null) {
         global $DB, $USER;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bclcdata->programid);
         $programid = $bclcdata->programid;
         $levelid = $bclcdata->levelid;
         $bclcid = $bclcdata->bclcid;
@@ -1327,7 +1334,7 @@ class program {
      */
     public function program_level_courses($programid, $levelid, $userview = false) {
         global $DB, $USER;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         if ($levelid > 0) {
             $params = array();
             $programcourses = array();

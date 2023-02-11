@@ -37,7 +37,7 @@ if(empty($action)){
     $action = $action;
 }
 require_login();
-$categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+$categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
 $PAGE->set_context($categorycontext);
 $url = new moodle_url($CFG->wwwroot . '/local/program/sessions.php', array('bcid' => $programid,
     'levelid' => $levelid, 'bclcid' => $bclcid));

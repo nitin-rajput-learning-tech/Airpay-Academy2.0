@@ -321,7 +321,7 @@ class renderer extends plugin_renderer_base {
         $programid = $bclcdata->programid;
         $levelid = $bclcdata->levelid;
         $bclcid = $bclcdata->bclcid;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bclcdata->programid);
 
 
         $program = $DB->get_record('local_program', ['id' => $bclcdata->programid]);
@@ -556,7 +556,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogramsessionstabs($bclcdata, $stable, $userview = false, $enrolmentpending = false, $tab) {
         global $CFG, $OUTPUT;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bclcdata->programid);
         $toprow = array();
         if ($tab) {
             $toprow[] = new tabobject('upcomingsessions', new moodle_url("/local/program/sessions.php?action=upcomingsessions&bcid=$bclcdata->programid&levelid=$bclcdata->levelid&bclcid=$bclcdata->bclcid"), get_string('upcomingsessions', 'local_program'));
@@ -568,7 +568,7 @@ class renderer extends plugin_renderer_base {
     
     public function viewprogramlevels($programid, $levelid) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program)
          $departmentcount = count(array_filter(explode(',',$program->department)));
@@ -701,7 +701,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogramcourses($programid, $levelid) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program){
 
@@ -788,7 +788,7 @@ class renderer extends plugin_renderer_base {
             $programlevelcourses[$i] = $bclevelcourse;
         }
     }
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         
      
         $programcoursescontext = [
@@ -817,7 +817,7 @@ class renderer extends plugin_renderer_base {
      */
     public function viewprogram($programid) {
         global $OUTPUT, $CFG, $DB, $USER, $PAGE;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $stable = new stdClass();
         $stable->programid = $programid;
         $stable->thead = false;
@@ -1078,7 +1078,7 @@ class renderer extends plugin_renderer_base {
         if(!$selfenrolled){
             return null;
         }
-        $categorycontext =(new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext =(new \local_program\lib\accesslib())::get_module_context($programid);
         $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_program/program\').unEnrolUser({programid: '.$programid.', userid:'.$USER->id.', programname:\''.$programname.'\', contextid:'.$categorycontext->id.'}) })(event)'));
         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
         $liTag = html_writer::tag('li', $container);
@@ -1313,7 +1313,7 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $program = (new program)->programs($stable);
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
         if (!has_capability('local/program:view_newprogramtab', $categorycontext) && $program_status== 0) {
             print_error("You don't have permissions to view this page.");
@@ -1396,7 +1396,7 @@ class renderer extends plugin_renderer_base {
      */
     public function view_program_sessions($bclcid, $stable) {
         global $OUTPUT, $CFG, $DB, $USER;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bclcid->programid);
         if ($stable->thead) {
             $return = '';
             $sessions = (new program)->programsessions($bclcid, $stable);
@@ -1534,7 +1534,7 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $program = (new program)->programs($stable);
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
         if (empty($program)) {
             print_error("program Not Found!");

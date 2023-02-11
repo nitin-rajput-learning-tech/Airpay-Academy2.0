@@ -121,7 +121,7 @@ class local_program_external extends external_api {
     public static function delete_program_instance($action, $id, $confirm,$programname) {
         global $DB;
         try {
-            $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($id);
             $DB->delete_records('local_program_level_courses', array('programid' => $id));
 
             $DB->delete_records('local_bc_course_sessions', array('programid' => $id));
@@ -612,7 +612,6 @@ class local_program_external extends external_api {
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_instituteform_form_parameters(),
                                     ['contextid' => $categorycontextid, 'jsonformdata' => $jsonformdata]);
-        // $categorycontext = $params['contextid'];
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($categorycontext);
