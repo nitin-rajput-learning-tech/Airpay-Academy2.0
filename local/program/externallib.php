@@ -628,9 +628,9 @@ class local_program_external extends external_api {
 
         if ($valdata) {
             if ($valdata->id > 0) {
-                $institutes->category_update_instance($valdata);
+                $category->category_update_instance($valdata);
             } else {
-                $institutes->category_insert_instance($valdata);
+                $category->category_insert_instance($valdata);
             }
         } else {
             // Generate a warning.

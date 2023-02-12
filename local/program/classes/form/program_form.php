@@ -232,7 +232,7 @@ class program_form extends moodleform {
 
     public function set_data($components) {
         global $DB;
-        $categorycontext =(new \local_program\lib\accesslib())::get_module_context($components->id);
+        $categorycontext =(new \local_program\lib\accesslib())::get_module_context();
         $data = $DB->get_record('local_program', array('id' => $components->id));
         //populate tags
         // $data->tags = \local_tags_tag::get_item_tags_array('local_program', 'program', $components->id);

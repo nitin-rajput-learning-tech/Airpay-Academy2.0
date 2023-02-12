@@ -23,7 +23,7 @@
  */
 
 require_once(dirname(__FILE__) . '/../../config.php');
-require_once($CFG->dirroot . '/local/learningplan/filters_form.php');
+require_once($CFG->dirroot . '/local/courses/filters_form.php');
 $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 require_login();
 $value = '';

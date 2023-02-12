@@ -67,7 +67,7 @@ class program {
         }
 
         // added for OL-2104 for not saving and displaying the file
-        file_save_draft_area_files($program->programlogo, 1, 'local_program', 'programlogo', $program->programlogo);
+        file_save_draft_area_files($program->programlogo, $categorycontext->id, 'local_program', 'programlogo', $program->programlogo);
         $program->startdate = 0;
         $program->enddate = 0;
         $program->description = $program->cr_description['text'];
@@ -609,7 +609,7 @@ class program {
 
         }
 
-        if ((has_capability('local/program:manageprogram', $categorycontext))) {
+        if (!is_siteadmin() &&(has_capability('local/program:manageprogram', $categorycontext))) {
 
             if (has_capability('local/program:trainer_viewprogram', $categorycontext)) {
                 $myprograms = $DB->get_records_menu('local_bc_course_sessions',
@@ -735,6 +735,7 @@ class program {
                 $programscount = $DB->count_records_sql($countsql . $sql, $params);
                 if ($stable->thead == false) {
                     $sql .= " ORDER BY bc.id DESC";
+
                     if ($request == true) {
                         $programs = $DB->get_record_sql($fromsql . $sql, $params, $stable->start, $stable->length);
                     } else {
@@ -1197,16 +1198,12 @@ class program {
             } else {
                 $program->open_location = NULL;
             }
-            if (is_array($program->department)) {
-                $program->department = !empty($program->department) ? implode(',', $program->department) : -1;
-            } else {
-                $program->department = !empty($program->department) ? $program->department : -1;
-            }
-            if (is_array($program->subdepartment)) {
-                $program->subdepartment = !empty($program->subdepartment) ? implode(',', array_filter($program->subdepartment)) : -1;
-            } else {
-                $program->subdepartment = !empty($program->subdepartment) ? $program->subdepartment : -1;
-            }
+             $open_path=$DB->get_field('local_program', 'open_path', array('id' => $program->id));
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+
+            local_costcenter_get_costcenter_path($program);
+
+            local_users_get_userprofile_datafields($program);
             $DB->update_record('local_program', $program);
         }
         return $program->id;

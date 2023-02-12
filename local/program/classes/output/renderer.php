@@ -1030,7 +1030,7 @@ class renderer extends plugin_renderer_base {
             $gcertificateid = $DB->get_field('local_program', 'certificateid', array('id'=>$programid));
             $certificateid = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$programid,'userid'=>$USER->id,'moduletype'=>'program'));
 //                        $certificateid = $program->certificateid;
-                        // $certificate_download['moduletype'] = 'learningplan';
+                        // $certificate_download['moduletype'] = 'program';
                     }
                 }
             }
@@ -1094,6 +1094,7 @@ class renderer extends plugin_renderer_base {
     public function viewprogramusers($stable) {
         global $OUTPUT, $CFG, $DB;
         $programid = $stable->programid;
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         if (has_capability('local/program:manageusers', $categorycontext) && has_capability('local/program:manageprogram', $categorycontext)) {
             $url = new moodle_url('/local/program/enrollusers.php', array('bcid' => $programid));
             $assign_users ='<ul class="course_extended_menu_list">
