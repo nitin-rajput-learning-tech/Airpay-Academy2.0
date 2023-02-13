@@ -57,7 +57,7 @@ class program_form extends moodleform {
         $formheaders = array_keys($this->formstatus);
         $formheader = $formheaders[$formstatus];
 
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($id);
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
         $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
@@ -213,12 +213,6 @@ class program_form extends moodleform {
             if (!isset($data['stream']) || $data['stream'] < 1) {
                 $errors['stream'] = 'Please select the Stream.';
             }
-
-            if (isset($data['costcenter']) && $data['form_status'] == 0){
-             if($data['costcenter'] == 0){
-                $errors['costcenter'] = get_string('pleaseselectorganization', 'local_program');
-             }
-         }
 
         }elseif($form_status == 1){
 

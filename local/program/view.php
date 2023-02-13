@@ -35,7 +35,7 @@ $PAGE->set_context($categorycontext);
 $PAGE->set_title(get_string('programs', 'local_program'));
 
 $renderer = $PAGE->get_renderer('local_program');
-
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $program=$renderer->programview_check($programid);
 
 $PAGE->navbar->add(get_string("pluginname", 'local_program'), new moodle_url('index.php'));
@@ -45,6 +45,7 @@ $PAGE->set_heading($program->name);
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->css('/local/program/css/jquery.dataTables.min.css', true);
 $PAGE->requires->js_call_amd('local_program/ajaxforms', 'load');
+$PAGE->requires->js_call_amd('local_request/requestconfirm', 'load');
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 
 $renderer = $PAGE->get_renderer('local_program');

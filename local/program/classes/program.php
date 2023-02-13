@@ -245,7 +245,7 @@ class program {
      */
     public function manage_bc_courses_sessions($session) {
         global $DB, $USER;
-
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($session->programid);
         $session->description = $session->cs_description['text'];
         try {
             // $sessions_validation_start = $this->sessions_validation($session->programid,
@@ -431,6 +431,7 @@ class program {
     public function manage_program_level_completions($programid, $levelid) {
         global $DB, $USER;
 
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $courses = $DB->get_records_menu('local_program_level_courses',
             array('programid' => $programid, 'levelid' => $levelid), '', 'id, courseid');
         $bclcomptlcheck = $DB->record_exists('local_bcl_cmplt_criteria',
@@ -495,6 +496,9 @@ class program {
      */
     public function program_sessions_delete($programid){
         global $DB, $USER;
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
+
         $program_sessions = $DB->get_records_sql_menu("SELECT *
                                                 FROM {local_bc_course_sessions}
                                                 where programid = $programid");
@@ -632,8 +636,6 @@ class program {
                 $userenrolstatus = $DB->record_exists('local_program_users',
                     array('programid' => $stable->programid, 'userid' => $USER->id));
                 $status = $DB->get_field('local_program', 'status',
-                    array('id' => $stable->programid));
-                 $program_costcenter = $DB->get_field('local_program', 'costcenter',
                     array('id' => $stable->programid));
 
                    $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path');
@@ -918,6 +920,7 @@ class program {
     public function add_program_signups($programid, $userid, $sessionid = 0) {
         global $DB, $USER;
         $program = $DB->record_exists('local_program',  array('id' => $programid));
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         if (!$program) {
             print_error("program Not Found!");
         }
@@ -1030,6 +1033,7 @@ class program {
         if (file_exists($CFG->dirroot . '/local/lib.php')) {
             require_once($CFG->dirroot . '/local/lib.php');
         }
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         // require_once($CFG->dirroot . '/local/program/notifications_emails.php');
         // $emaillogs = new programnotifications_emails();
         $emaillogs = new \local_program\notification();
@@ -1111,6 +1115,7 @@ class program {
         if (file_exists($CFG->dirroot . '/local/lib.php')) {
             require_once($CFG->dirroot . '/local/lib.php');
         }
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         // require_once($CFG->dirroot . '/local/program/notifications_emails.php');
         // $emaillogs = new programnotifications_emails();
         $emaillogs = new \local_program\notification();
@@ -1246,6 +1251,7 @@ class program {
             if (!empty($programcourseexists)) {
                 continue;
             }
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($courses->programid);
             $programcourse = new stdClass();
             $programcourse->programid = $courses->programid;
             $programcourse->levelid = $courses->levelid;
@@ -1371,6 +1377,7 @@ class program {
      */
     public function update_program_status($programid, $programstatus) {
         global $DB, $USER;
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $program = new stdClass();
         $program->id = $programid;
         $program->status = $programstatus;
@@ -1471,6 +1478,9 @@ class program {
         global $DB, $USER, $CFG;
         require_once($CFG->libdir . '/completionlib.php');
         require_once($CFG->dirroot . '/completion/criteria/completion_criteria_role.php');
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
+
         $programuserssql = "SELECT cu.*
                                 FROM {user} AS u
                                 JOIN {local_program_users} AS cu ON cu.userid = u.id
@@ -1868,6 +1878,9 @@ class program {
 
         $level->description = $level->level_description['text'];
         $position = $DB->count_records('local_program_levels', array('programid' => $level->programid));
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($level->programid);
+
         $level->position = $position;
         try {
             if ($level->id > 0) {
@@ -1922,6 +1935,9 @@ class program {
     public function bc_session_enrolments($enroldata) {
         global $DB, $CFG, $USER;
         // require_once($CFG->dirroot . '/local/program/notifications_emails.php');
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($enroldata->programid);
+
         $sessionenroldatasql = "SELECT bss.*, bcs.timestart, bcs.timefinish, bcs.attendance_status, bcs.totalusers, bcs.mincapacity, bcs.maxcapacity
                                   FROM {local_bc_course_sessions} bcs
                                   JOIN {local_bc_session_signups} bss ON bss.sessionid = bcs.id
@@ -2205,6 +2221,9 @@ class program {
     public function bc_level_courses_completions($userdata) {
         global $DB, $USER, $CFG;
         // require_once($CFG->dirroot . '/local/program/notifications_emails.php');
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($userdata->programid);
+
         if ($userdata->sessionid > 0) {
             $session = $DB->get_record_select('local_bc_course_sessions', 'id = :id', array('id' => $userdata->sessionid));
             $levelid = $DB->get_field('local_bc_course_sessions', 'levelid',

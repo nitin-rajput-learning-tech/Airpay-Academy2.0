@@ -42,14 +42,17 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
             var promise;
                 contextid = parseInt($(selector).data('contextid'), 10),
                 includes = $(selector).data('includes');
-
+                programid = $(selector).data('programid');
+                levelid = $(selector).data('levelid');
 
             promise = Ajax.call([{
                 methodname: 'local_program_form_course_selector',
                 args: {
                     query: query,
                     context: {contextid: contextid},
-                    includes: includes
+                    includes: includes,
+                    programid: programid,
+                    levelid: levelid
                 }
             }]);
 

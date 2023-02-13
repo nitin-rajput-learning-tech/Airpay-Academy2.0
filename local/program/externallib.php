@@ -173,39 +173,54 @@ class local_program_external extends external_api {
             VALUE_DEFAULT,
             'parents'
         );
+        $programid = new external_value(
+            PARAM_INT,
+            'Program Id'
+        );
+        $levelid = new external_value(
+            PARAM_INT,
+            'Level Id'
+        );
         return new external_function_parameters(array(
             'query' => $query,
             'context' => self::get_context_parameters(),
-            'includes' => $includes
+            'includes' => $includes,
+            'programid' => $programid,
+            'levelid' => $levelid
         ));
     }
 
-    public static function program_course_selector($query, $categorycontext, $includes = 'parents') {
+    public static function program_course_selector($query, $categorycontext, $includes = 'parents', $programid, $levelid) {
         global $CFG, $DB, $USER;
         $params = self::validate_parameters(self::program_course_selector_parameters(), array(
             'query' => $query,
             'context' => $categorycontext,
-            'includes' => $includes
+            'includes' => $includes,
+            'programid' => $programid,
+            'levelid' => $levelid
         ));
         $query = $params['query'];
         $includes = $params['includes'];
+        $programid = $params['programid'];
+        $levelid = $params['levelid'];
+
         $categorycontext = self::get_context_from_params($params['context']);
 
         self::validate_context($categorycontext);
-        $courses = array();
-        if ($query) {
-            $queryparams = array();
 
-            $concatsql= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+        $open_path = $DB->get_field('local_program', 'open_path', array('id' => $programid));
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+        $cousresql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 ";
+        if(is_siteadmin()){
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
+        }
+        $cousresql .= $costcenterpathconcatsql;
 
-            $cousresql = "SELECT c.id, c.fullname
-                           FROM {course} AS c
-                           JOIN {enrol} AS en on en.courseid = c.id AND en.enrol = 'program' and en.status = 0
-                          WHERE c.visible = 1 AND concat(',',c.open_identifiedas,',') LIKE '%,5,%' AND c.fullname LIKE :query AND c.id <> " . SITEID . " {$concatsql}";
-            $queryparams['query'] = "%$query%";
-            $courses = $DB->get_records_sql($cousresql, $queryparams);
+        if($query){
+            $cousresql .=" AND c.fullname LIKE '%$query%'";
         }
 
+        $courses = $DB->get_records_sql($cousresql);
         return array('courses' => $courses);
     }
     public static function program_course_selector_returns() {
@@ -234,6 +249,7 @@ class local_program_external extends external_api {
     public static function delete_session_instance($action, $id, $programid, $levelid, $bclcid, $confirm) {
         global $DB, $USER;
         try {
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
             if ($confirm) {
                 $params = array(
                     'context' => $categorycontext,
@@ -522,6 +538,7 @@ class local_program_external extends external_api {
     public static function delete_programcourse_instance($action, $id, $programid, $confirm) {
         global $DB;
         try {
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
             if ($confirm) {
                 $course = $DB->get_field('local_program_level_courses', 'courseid', array('programid' => $programid, 'id' => $id));
 
@@ -771,6 +788,8 @@ class local_program_external extends external_api {
         global $DB,$USER;
         try {
 
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
+
             $DB->delete_records('local_bc_course_sessions', array('levelid' => $id));
             $DB->delete_records('local_program_level_courses', array('levelid' => $id));
             // delete events in calendar
@@ -869,6 +888,7 @@ class local_program_external extends external_api {
     public static function delete_stream_instance($action, $id, $confirm) {
         global $DB, $USER;
         try {
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
             if ($confirm) {
                 $params = array(
                     'context' => $categorycontext,
@@ -943,6 +963,7 @@ class local_program_external extends external_api {
         global $DB;
         try {
             $program=$DB->get_record('local_program',array('id'=>$id));
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($id);
             $program->visible=0;
             $DB->update_record('local_program', $program);
             if(class_exists('\block_trending_modules\lib')){
@@ -986,6 +1007,7 @@ class local_program_external extends external_api {
         global $DB;
         try {
             $program=$DB->get_record('local_program',array('id'=>$id));
+            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($id);
             $program->visible=1;
             $DB->update_record('local_program', $program);
             if(class_exists('\block_trending_modules\lib')){

@@ -260,37 +260,50 @@ class programcourse_form extends moodleform {
         $mform->setType('levelid', PARAM_INT);
 
         $courses = array();
+        $params = array();
         $course = $this->_ajaxformdata['course'];
         if (!empty($course)) {
-            $course = implode(',', $course);
+
             $coursessql = "SELECT c.id, c.fullname
-                        FROM {course} AS c
-                        JOIN {enrol} AS en on en.courseid=c.id AND en.enrol='program' AND en.status=0
-                        WHERE c.id IN ($course) AND c.visible = 1 
-                        AND concat(',', c.open_identifiedas, ',') LIKE '%,5,%' 
-                        AND c.id <> " . SITEID; //FIND_IN_SET(5, c.open_identifiedas)
-            $courses = $DB->get_records_sql_menu($coursessql);
+                              FROM {course} AS c
+                             WHERE c.visible = 1  AND c.id <> " . SITEID;
+
+            list($csql, $courseparam) = $DB->get_in_or_equal($course, SQL_PARAMS_NAMED);
+            $coursessql .= " AND c.id $csql ";
+            $params = $params + $courseparam;
+            $courses = $DB->get_records_sql_menu($coursessql, $params);
+
         } else if ($id > 0) {
+
             $coursessql = "SELECT c.id, c.fullname
-                             FROM {course} AS c
-                             JOIN {enrol} AS en on en.courseid=c.id and en.enrol='program' and en.status=0
-                             JOIN {local_program_level_courses} AS cc ON cc.courseid = c.id
-                            WHERE cc.programid = $bcid AND c.visible = 1 
-                            AND concat(',', c.open_identifiedas, ',') LIKE '%,5,%' "; 
-                            //FIND_IN_SET(5, c.open_identifiedas)
-            $courses = $DB->get_records_sql_menu($coursessql);
+                              FROM {course} AS c
+
+                              JOIN {local_program_level_courses} AS cc ON cc.courseid = c.id
+                             WHERE cc.programid = :programid AND c.visible = 1 ";
+            $courses = $DB->get_records_sql_menu($coursessql, array('programid' => $cid));
         }
 
         $options = array(
             'ajax' => 'local_program/form-course-selector',
             'multiple' => true,
             'data-contextid' => $categorycontext->id,
+            'data-programid' => $bcid,
+            'data-levelid' => $levelid,
         );
         $mform->addElement('autocomplete', 'course', get_string('course', 'local_program'), $courses,
             $options);
         $mform->addRule('course', null, 'required', null, 'client');
 
         $mform->disable_form_change_checker();
+    }
+    public function validation($data, $files) {
+        global $CFG, $DB, $USER;
+        $errors = parent::validation($data, $files);
+        if (empty($data['course'])){
+                $errors['course'] = get_string('no_courses_assigned', 'local_program');
+
+        }
+        return $errors;
     }
 }
 function local_program_output_fragment_new_catform($args) {
