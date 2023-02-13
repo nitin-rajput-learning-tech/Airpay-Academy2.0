@@ -35,7 +35,7 @@ class report_classroomsoverview extends reportbase implements report {
         parent::__construct($report);
         $this->components = array('columns','filters', 'permissions', 'plot', 'orderable');
         $this->columns = ['classroomfield'=>['classroomfield'],'classroomsoverviewcolumns' => ['classroomname','enrollmentscount','completionscount']];
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'classrooms','classroomstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department'*/, 'classrooms','classroomstatus');
         $this->orderable = array('classroomname','enrollmentscount','completionscount');
         $this->defaultcolumn = 'lc.id';
     }

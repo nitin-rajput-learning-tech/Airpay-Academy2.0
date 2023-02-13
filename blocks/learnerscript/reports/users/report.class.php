@@ -44,7 +44,7 @@ class report_users extends reportbase {
         // if ($this->loggedinuserrole != 'dh') {
         //     $this->basicparams = array(['name' => 'organization'], ['name' => 'departments'], ['name'=>'subdepartments']);
         // }
-        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'users'/*, 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country'*/);
+        $this->filters = array('organization', 'departments','subdepartments', 'level4department' /*,'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage'*/, 'users'/*, 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country'*/);
         $this->defaultcolumn = 'u.id';
         $this->excludedroles = array("'employee'");
 

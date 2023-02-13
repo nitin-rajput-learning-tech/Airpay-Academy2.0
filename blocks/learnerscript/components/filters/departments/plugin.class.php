@@ -127,7 +127,7 @@ class plugin_departments extends pluginbase {
         //$deptoptions[] = 'All';
         $selectdept = array(); 
         if(empty($this->reportclass->basicparams)){
-            $selectdept[0] = 'Select Country';
+            $selectdept[0] = get_string('selectdepartment', 'local_users');
         }else{
             $deptoptions[0] = 'All';
         }

@@ -32,7 +32,7 @@ class report_coursescompletions extends reportbase implements report {
         parent::__construct($report, $reportproperties);
         $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
-        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage','course','user','completionstatus');
+        $this->filters = array('organization', 'departments','subdepartments', 'level4department'/*, 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage'*/,'course','user','completionstatus');
         $this->parent = true;
         $this->orderable = array('coursename');
         $this->defaultcolumn = 'ra.id';

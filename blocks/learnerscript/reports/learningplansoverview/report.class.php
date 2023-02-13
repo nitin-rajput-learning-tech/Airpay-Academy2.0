@@ -38,7 +38,7 @@ class report_learningplansoverview extends reportbase implements report {
         $this->columns = ['learningpathfield'=>['learningpathfield'], 'learningplansoverviewcolumns'=> ['optionalcourses','mandatorycourses','enrolledcount',
          'completedcount']];    
         $this->parent = true;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'learningpath');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department'*/, 'learningpath');
         $this->orderable = array('learningpath_name','enrolledcount','completedcount');
         $this->defaultcolumn = 'lp.id';
 
