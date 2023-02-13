@@ -37,7 +37,7 @@ class report_learningplancomletions extends reportbase implements report {
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot','orderable');
         $this->columns = ['learningpathfield'=>['learningpathfield'], 'userfield'=>['userfield'],'learningplancompletionscolumns'=>['learningpathname','completionstatus','completiondate']];
         $this->parent = true;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'learningpath','user','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage'*/, 'learningpath','user','completionstatus');
         $this->orderable = array('learningpathname');
         $this->defaultcolumn = 'llu.id';
 

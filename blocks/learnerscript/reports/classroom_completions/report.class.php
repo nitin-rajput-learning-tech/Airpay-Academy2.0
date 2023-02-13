@@ -38,7 +38,7 @@ class report_classroom_completions extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],
                                 'userfield'=>['userfield'],
                                 'classroomcompletionscolumns'=>['attendedsessions','totalsessions','usercompletionstatus','usercompletiondate']);
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'user','classrooms','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage'*/, 'user','classrooms','completionstatus');
         $this->defaultcolumn = 'lcu.id';
     }
 

@@ -31,7 +31,7 @@ class report_coursesoverview extends reportbase implements report {
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
         $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions']);   
         $this->columns = $columns;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'course');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department'*/, 'course');
         $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions');
         $this->defaultcolumn = 'c.id';
     }
