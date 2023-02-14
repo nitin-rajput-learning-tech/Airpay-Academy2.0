@@ -256,6 +256,6 @@ if ($sessionid > 0) {
     echo $renderer->render($sessionattendance);
 }
 echo $renderer->viewprogramattendance($programid, $sessionid);
-$continue .= '<a href='.$CFG->wwwroot.'/local/program/sessions.php?action='.$action.'&bcid='.$programid.'&levelid='.$levelid.'&bclcid='.$bclcid.' class="singlebutton pull-right attendance_continue"><button>'.get_string('continue', 'local_program').'</button></a>';
+$continue= '<a href='.$CFG->wwwroot.'/local/program/sessions.php?action='.$action.'&bcid='.$programid.'&levelid='.$levelid.'&bclcid='.$bclcid.' class="singlebutton pull-right attendance_continue"><button>'.get_string('continue', 'local_program').'</button></a>';
 echo $continue;
 echo $OUTPUT->footer();

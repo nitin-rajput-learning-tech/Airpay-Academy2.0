@@ -40,8 +40,8 @@ require_once($CFG->dirroot . '/local/costcenter/lib.php');
 define('program_NEW', 0);
 define('program_COMPLETED', 2);
 // Session Attendance
-// define('SESSION_PRESENT', 1);
-// define('SESSION_ABSENT', 2);
+define('SESSION_PRESENT', 1);
+define('SESSION_ABSENT', 2);
 // Types
 define('program', 1);
 

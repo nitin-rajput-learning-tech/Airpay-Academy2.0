@@ -325,7 +325,7 @@ class renderer extends plugin_renderer_base {
 
 
         $program = $DB->get_record('local_program', ['id' => $bclcdata->programid]);
-        $departmentcount = count(explode(',',$program->department));
+
         $manage = true;
 
         if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'],$categorycontext))){
@@ -571,8 +571,7 @@ class renderer extends plugin_renderer_base {
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program)
-         $departmentcount = count(array_filter(explode(',',$program->department)));
-         $subdepartmentcount = count(array_filter(explode(',',$program->subdepartment)));
+
          $manage = true;
          if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'],$categorycontext)) ){
             $manage = false;
@@ -646,7 +645,7 @@ class renderer extends plugin_renderer_base {
                 if(has_capability('local/program:createlevel',$categorycontext)){
                     isset($createlevel);
                 }
-                if($departmentcount > 1 && !(is_siteadmin() || has_capability('local/program:createlevel',$categorycontext))) {
+                if(!(is_siteadmin() || has_capability('local/program:createlevel',$categorycontext))) {
                     ;
                     unset($createlevel);
                 }
