@@ -121,6 +121,7 @@ $string['help_2'] = '</td></tr>
 <th>Field</th><th>Restriction</th>
 <tr><td>password</td><td>Provide the password,Password must be at least 8 characters long,Password must have at least 1 digit(s),Password must have at least 1 upper case letter(s),
 Password must have at least 1 non-alphanumeric character(s) such as as *, -, or #..</td></tr>
+<tr><td>prefix</td><td>Enter prfix as either \'mr\', \'mrs\' or \'ms\', avoid additional spaces.</td></tr>
 <tr><td>bussiness_unit_code</td><td>Provide bussiness unit code. Bussiness unit must already exist in system as part of company hierarchy.</td></tr>
 <tr><td>department_code</td><td>Enter department code. Department must already exist under specified bussiness unit in system as part of company hierarchy.</td></tr>
 <tr><td>subdepartment_code</td><td>Enter sub department code. Sub Department must already exist under specified department in system as part of company hierarchy.</td></tr>
@@ -136,6 +137,7 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 <tr><td>subbranch</td><td>Enter sub branch for the user.</td></tr>
 <tr><td>grade</td><td>Enter grade for the user.</td></tr>
 <tr><td>level</td><td>Enter level for the user.</td></tr>
+<tr><td>skill_type</td><td>Enter skill type for the user.</td></tr>
 <tr><td>date_of_birth</td><td>Enter date of birth of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
 <tr><td>date_of_joining</td><td>Enter date of joining of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
 <tr><td>force_password_change</td><td>Provide the value as 1 if need to enable force password or 0 to disable it..</td></tr>

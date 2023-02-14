@@ -290,7 +290,7 @@ class classroom_form extends moodleform {
             $mform->addElement('hidden', 'open_costcenterid');
             $mform->setType('open_costcenterid', PARAM_INT);
 
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,4), true, 'local_classroom', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,HIERARCHY_LEVELS), true, 'local_classroom', $categorycontext, $multiple = false);
            
 			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_classroom', $categorycontext, $multiple = false);
             $functionname = 'globaltargetaudience_elementlist';

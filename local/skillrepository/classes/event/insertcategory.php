@@ -39,7 +39,7 @@ class insertcategory{
             $open_path = $DB->get_field('user','open_path',array('id'=>$USER->id));
             $costcenter=explode('/',$open_path)[1];
         } else {
-            $costcenter = explode('/',$data->costcenterid)[1];
+            $costcenter = $data->open_costcenterid;
         }
 
         if($data->id > 0){

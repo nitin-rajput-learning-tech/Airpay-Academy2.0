@@ -27,6 +27,7 @@ defined('MOODLE_INTERNAL') or die;
 define('ACTIVE',0);
 define('IN_ACTIVE',1);
 define('TOTAL',2);
+define('HIERARCHY_LEVELS', 4);
 //use core_component;
 require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->dirroot . '/enrol/locallib.php');
@@ -1056,6 +1057,16 @@ function local_costcenter_set_costcenter_path(&$data){
     }
 }
 function local_costcenter_get_fields(){
-    return $fields = [ 1 => 'open_costcenterid', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department'/*, 5 => 'open_level5department'*/];
+    $level = HIERARCHY_LEVELS;
+    $fields = [ 1 => 'open_costcenterid', 2 => 'open_department', 3 => 'open_subdepartment', 4 => 'open_level4department', 5 => 'open_level5department'];
+    for($i=1; $i<= $level; $i++){
+        if(isset($fields[$i])){
+            $return[$i] = $fields[$i];
+        }else{
+            // Never occuring but for test case verification.
+            $return[$i] = 'open_level'.$i.'department';
+        }
+    }
+    return $return;
 }
 

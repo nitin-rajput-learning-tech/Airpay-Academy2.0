@@ -364,6 +364,14 @@ function xmldb_local_learningplan_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2022101800.08, 'local', 'learningplan');   
     }
+    if($oldversion < 2022101800.12){
+        $table = new xmldb_table('local_learningplan');
+        $field1 = new xmldb_field('description', XMLDB_TYPE_TEXT, '', null, NULL, null, null);
+        if ($dbman->field_exists($table, $field1)) {
+            $dbman->rename_field($table, $field1, 'description');
+        }
+        upgrade_plugin_savepoint(true, 2022101800.12, 'local', 'learningplan');
+    }
 
     return true;
 }
