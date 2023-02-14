@@ -564,4 +564,75 @@ class local_skillrepository_external extends external_api {
             )
         ]);
     }
+
+
+
+    /**
+     * Describes the parameters for submit_skil interested_form webservice.
+    * @return external_function_parameters
+    */
+    public static function submit_skills_interested_form_parameters() {
+        return new external_function_parameters(
+            array(
+                'contextid' => new external_value(PARAM_INT, 'The context id for the skills interested'),
+                'jsonformdata' => new external_value(PARAM_RAW, 'The data from the skills interested form, encoded as a json array')
+            )
+        );
+    }
+
+    /**
+     * Submit the Skills Interested form.
+    *
+    * @param int $contextid The context id .
+    * @param string $jsonformdata The data from the form, encoded as a json array.
+    * @return int new skill interested id.
+    */
+    public static function submit_skills_interested_form($contextid, $jsonformdata) {
+        global $DB, $USER;
+      
+        // We always must pass webservice params through validate_parameters.
+        $params = self::validate_parameters(self::submit_skills_interested_form_parameters(), ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
+
+        $context = context::instance_by_id($params['contextid'], MUST_EXIST);
+        self::validate_context($context);
+        $serialiseddata = json_decode($params['jsonformdata']);
+        $data = array();
+        parse_str($serialiseddata, $data);
+       
+        // The last param is the ajax submitted data.
+        $mform = new local_skillrepository\form\skills_interested_form(null, array('contextid'=>$contextid), 'post', '', null, true, $data);
+        $validateddata = $mform->get_data();
+        // print_r($validateddata); die;
+
+        if ($validateddata) {
+            $data = new stdClass();
+            $data->interested_skill_ids = implode(',',$validateddata->skills);
+            $data->id = $validateddata->id;
+            $data->open_costcenterid =  $USER->open_costcenterid;
+
+            // print_r($data);die;
+            if($validateddata->id>0){
+                $data->usermodified = $USER->id;
+                $data->timemodified = time();
+                $intskillsupdate = $DB->update_record('local_interested_skills',$data);
+            } else{
+                $data->usercreated = $USER->id;
+                $data->timecreated = time();
+                $intskillsinsert = $DB->insert_record('local_interested_skills',$data);
+                
+            }
+        } else {
+            // Generate a warning.
+            throw new moodle_exception('Error in submission');
+        }
+    }
+    /**filter_starttime_assignment
+     * Returns description of method result value.
+     *
+     * @return external_description
+     * @since Moodle 3.0
+     */
+    public static function submit_skills_interested_form_returns() {
+        return new external_value(PARAM_INT, 'skills interested id');
+    }
 }

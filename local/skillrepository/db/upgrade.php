@@ -128,5 +128,23 @@ function xmldb_local_skillrepository_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2022101800.12, 'local', 'skillrepository');
     }
+
+    if ($oldversion < 2022101801) {
+        $table = new xmldb_table('local_interested_skills'); 
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('interested_skill_ids', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+            $table->add_field('open_costcenterid', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+            $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            $dbman->create_table($table);
+        }
+       upgrade_plugin_savepoint(true, 2022101801, 'local', 'skillrepository');
+    }
     return true;
 }

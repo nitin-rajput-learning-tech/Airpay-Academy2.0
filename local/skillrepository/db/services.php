@@ -93,4 +93,13 @@ $functions = array(
         'ajax' => true,
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
      ),
+
+    'local_skillrepository_submit_skills_interested_form' => array(
+        'classname'     => 'local_skillrepository_external',
+        'methodname'    => 'submit_skills_interested_form',
+        'classpath'     => 'local/skillrepository/classes/external.php',
+        'description'   => 'Submit Skills Interested form',
+        'type'          => 'write',
+        'ajax'          => true,  
+    )
 );

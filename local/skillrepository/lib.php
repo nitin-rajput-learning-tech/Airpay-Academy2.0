@@ -154,18 +154,18 @@ $mform->set_data($data);
 */
 function local_skillrepository_leftmenunode(){
 
-    // $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
-    // $skillreponode = '';
-    // if(has_capability('local/skillrepository:manage', $systemcontext) || is_siteadmin()) {
-    //     $skillreponode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_skills', 'class'=>'pull-left user_nav_div skills'));
-    //     $skills_url = new moodle_url('/local/skillrepository/index.php');
-    //     $skill_icon = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
-    //     $courses = html_writer::link($skills_url, $skill_icon.'<span class="user_navigation_link_text">'.get_string('manage_skills','local_skillrepository').'</span>',array('class'=>'user_navigation_link'));
-    //     $skillreponode .= $courses;
-    //     $skillreponode .= html_writer::end_tag('li');
-    // }
+    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+    $skillreponode = '';
+    if(has_capability('local/skillrepository:manage', $systemcontext) || is_siteadmin()) {
+        $skillreponode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_skills', 'class'=>'pull-left user_nav_div skills'));
+        $skills_url = new moodle_url('/local/skillrepository/index.php');
+        $skill_icon = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
+        $courses = html_writer::link($skills_url, $skill_icon.'<span class="user_navigation_link_text">'.get_string('manage_skills','local_skillrepository').'</span>',array('class'=>'user_navigation_link'));
+        $skillreponode .= $courses;
+        $skillreponode .= html_writer::end_tag('li');
+    }
 
-    // return array('18' => $skillreponode);
+    return array('18' => $skillreponode);
 }
 
 //Level related functions
@@ -337,4 +337,57 @@ function skills_category_details($tablelimits, $filtervalues){
 }
 
 
+function local_skillrepository_output_fragment_skills_interested($args){
+ 
+    global $CFG, $DB;
+    $args = (object) $args;
+    $context = $args->context;
+    $intskill_id = $args->id;
+    $o = '';
+    $formdata = [];
 
+    $o = '';
+     if (!empty($args->jsonformdata)) {
+        $serialiseddata = json_decode($args->jsonformdata);
+        parse_str($serialiseddata, $formdata);
+    }
+
+    if (empty($formdata) && $intskill_id > 0) {
+        $data = $DB->get_record('local_interested_skills', array('id'=>$intskill_id));
+        $formdata = new stdClass();
+        $formdata->id = $data->id;
+        $formdata->interested_skill_ids = $data->interestes_skill_ids;
+        
+        $fromsql="SELECT * FROM {local_skill} AS sk WHERE sk.id >0 ";
+        $ordersql= " ORDER BY sk.id DESC";     
+        if($data->interested_skill_ids){
+                $fromsql .=" AND sk.id IN ($data->interested_skill_ids) ";
+        }
+
+        $interested_skills_list = $DB->get_records_sql($fromsql .$ordersql);
+        foreach($interested_skills_list as $intskills){
+            $interested_skills[] =  $intskills->id;
+        }
+        $formdata->skills = $interested_skills;
+    }
+
+    $params = array(
+    'intskill_id' => $intskill_id,
+    'interested_skill_ids' => $formdata->featured_course_ids,
+    'context' => $context
+    ); 
+   
+    $mform = new local_skillrepository\form\skills_interested_form(null, array('contextid'=> $context, 'interested_skills' => $formdata->skills,'intskill_id' => $intskill_id ), 'post', '', null, true, (array)$formdata);
+    $mform->set_data($formdata);
+    
+    if (!empty($formdata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
+ 
+}
