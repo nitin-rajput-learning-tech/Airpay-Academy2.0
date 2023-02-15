@@ -148,3 +148,8 @@ $string['open_costcenteridlocal_skillrepository'] = 'Organization';
 $string['reason'] = 'Reason';
 $string['deletenotconfirm'] = 'You cannot delete this skill catagory as it is currently mapped to a skill. Please unmap to delete.';
 $string['namelengthexceeds'] = 'Name length exceeds 150 Charecter\'s';
+
+$string['skills_interested'] = 'Interested Skill';
+$string['skills'] = 'Skills';
+// $string[''] = '';
+

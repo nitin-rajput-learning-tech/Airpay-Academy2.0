@@ -222,7 +222,7 @@ class learningplan extends moodleform {
 	        $mform->addHelpButton('description','descript','local_learningplan');
 
     	}else if($form_status == 2){
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,5), true, 'local_learningplan', $categorycontext, $multiple = false);
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,HIERARCHY_LEVELS), true, 'local_learningplan', $categorycontext, $multiple = false);
 			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
 
     	}

@@ -2341,3 +2341,22 @@ function local_courses_enabled_search(){
 function  local_courses_applicable_filters_for_search_page(&$filterapplicable){
     $filterapplicable[elearning] = ['learningtype', 'status', 'categories', 'level', 'skill'];
 }
+
+function course_thumbimage($course) {
+    // print_r($course); die;
+    global $DB,$CFG;
+    if (file_exists($CFG->dirroot.'/local/includes.php')) {
+        require_once($CFG->dirroot.'/local/includes.php');
+        $includes = new \user_course_details();
+    }
+
+    if (file_exists($CFG->dirroot.'/local/includes.php')) {
+        $courseimage = $includes->course_summary_files($course);
+        if (is_object($courseimage)) {
+            $imageurl = $courseimage->out();
+        } else {
+            $imageurl = $courseimage;
+        }
+    }
+    return $imageurl;
+}
