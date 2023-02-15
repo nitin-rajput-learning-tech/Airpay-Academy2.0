@@ -542,28 +542,28 @@ class local_program_external extends external_api {
             if ($confirm) {
                 $course = $DB->get_field('local_program_level_courses', 'courseid', array('programid' => $programid, 'id' => $id));
 
-                $program_completiondata =$DB->get_record_sql("SELECT id,courseids
-                                        FROM {local_program_completion}
-                                        WHERE programid = $programid");
+                // $program_completiondata =$DB->get_record_sql("SELECT id,courseids
+                //                         FROM {local_program_completion}
+                //                         WHERE programid = $programid");
 
-                if ($program_completiondata->courseids != null) {
-                    $program_courseids = explode(',', $program_completiondata->courseids);
-                    $array_diff = array_diff($program_courseids, array($course));
-                    if (!empty($array_diff)) {
-                        $program_completiondata->courseids = implode(',', $array_diff);
-                    } else {
-                        $program_completiondata->courseids = "NULL";
-                    }
-                    $DB->update_record('local_program_completion', $program_completiondata);
-                    $params = array(
-                        'context' => $categorycontext,
-                        'objectid' => $program_completiondata->id
-                    );
+                // if ($program_completiondata->courseids != null) {
+                //     $program_courseids = explode(',', $program_completiondata->courseids);
+                //     $array_diff = array_diff($program_courseids, array($course));
+                //     if (!empty($array_diff)) {
+                //         $program_completiondata->courseids = implode(',', $array_diff);
+                //     } else {
+                //         $program_completiondata->courseids = "NULL";
+                //     }
+                //     $DB->update_record('local_program_completion', $program_completiondata);
+                //     $params = array(
+                //         'context' => $categorycontext,
+                //         'objectid' => $program_completiondata->id
+                //     );
 
-                    $event = \local_program\event\program_completions_settings_updated::create($params);
-                    $event->add_record_snapshot('local_program', $programid);
-                    $event->trigger();
-                }
+                //     $event = \local_program\event\program_completions_settings_updated::create($params);
+                //     $event->add_record_snapshot('local_program', $programid);
+                //     $event->trigger();
+                // }
 
                 $programtrainers = $DB->get_records_menu('local_program_trainers',
                     array('programid' => $programid), 'trainerid', 'id, trainerid');

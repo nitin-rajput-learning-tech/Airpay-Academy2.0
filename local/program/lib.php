@@ -172,19 +172,19 @@ function local_program_output_fragment_program_completion_form($args) {
     $formdata['bcid'] = $args->bcid;
     $mform = new \local_program\form\program_completion_form(null, array('id' => $args->id,
         'bcid' => $args->cid, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
-    if ($args->id > 0) {
-        $program_completiondata = $DB->get_record('local_program_completion', array('id' => $args->id));
-        $program_completiondata->form_status = $args->form_status;
+    // if ($args->id > 0) {
+    //     $program_completiondata = $DB->get_record('local_program_completion', array('id' => $args->id));
+    //     $program_completiondata->form_status = $args->form_status;
 
-        if ($program_completiondata->sessionids == "NULL") {
-            $program_completiondata->sessionids = null;
-        }
-        if ($program_completiondata->courseids == "NULL") {
-            $program_completiondata->courseids = null;
-        }
+    //     if ($program_completiondata->sessionids == "NULL") {
+    //         $program_completiondata->sessionids = null;
+    //     }
+    //     if ($program_completiondata->courseids == "NULL") {
+    //         $program_completiondata->courseids = null;
+    //     }
 
-        $mform->set_data($program_completiondata);
-    }
+    //     $mform->set_data($program_completiondata);
+    // }
 
     if (!empty((array) $serialiseddata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.

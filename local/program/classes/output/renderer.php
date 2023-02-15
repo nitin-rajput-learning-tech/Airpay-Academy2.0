@@ -1064,7 +1064,7 @@ class renderer extends plugin_renderer_base {
             'display_review' => $display_review,
             'challenge_element' => $challenge_element,
             'certificate_exists' => isset($certificate_exists),
-            'certificate_download' => isset($certificate_download),
+            'certificate_download' => $certificate_download,
             'certificateid' => isset($certificateid),
             'unenrolbutton' => $unenrolbutton
              
@@ -1640,16 +1640,16 @@ class renderer extends plugin_renderer_base {
         $options = json_encode($options);
         $filterdata = json_encode(array());
         $dataoptions = json_encode(array('contextid' => $categorycontext->id));
-        $categorycontext = [
+        $context = [
             'targetID' => 'dashboard_program',
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata
         ];
         if($filter){
-            return  (new \local_program\lib\accesslib())::get_module_context();
+           return  $context;
         }else{
-            return  $this->render_from_template('local_costcenter/cardPaginate', $categorycontext);
+            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
         }
     }
 }

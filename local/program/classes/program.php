@@ -1496,16 +1496,16 @@ class program {
                                 AND cu.programid = {$programid} ";
         $programusers = $DB->get_records_sql($programuserssql);
 
-        $program_completiondata = $DB->get_record('local_program_completion',
-            array('programid' => $programid));
+        // $program_completiondata = $DB->get_record('local_program_completion',
+        //     array('programid' => $programid));
 
         $totalsessionssql = "SELECT count(id) as total
                                         FROM {local_bc_course_sessions}
                                         WHERE programid = {$programid} ";
-        if (!empty($program_completiondata)&&$program_completiondata->sessiontracking=="OR" &&
-            $program_completiondata->sessionids!=null) {
-            $totalsessionssql.=" AND id IN ({$program_completiondata->sessionids})";
-        }
+        // if (!empty($program_completiondata)&&$program_completiondata->sessiontracking=="OR" &&
+        //     $program_completiondata->sessionids!=null) {
+        //     $totalsessionssql.=" AND id IN ({$program_completiondata->sessionids})";
+        // }
         $totalsessions = $DB->count_records_sql($totalsessionssql);
 
         $programcoursessql = "SELECT c.*
@@ -1515,9 +1515,9 @@ class program {
                                   JOIN {local_program_level_courses} AS cc ON cc.courseid = c.id
                                  WHERE cc.programid = {$programid}";
 
-        if (!empty($program_completiondata)&&$program_completiondata->coursetracking=="OR"&&$program_completiondata->courseids!=null) {
-            $programcoursessql.=" AND cc.courseid in ($program_completiondata->courseids)";
-        }
+        // if (!empty($program_completiondata)&&$program_completiondata->coursetracking=="OR"&&$program_completiondata->courseids!=null) {
+        //     $programcoursessql.=" AND cc.courseid in ($program_completiondata->courseids)";
+        // }
         $programcourses = $DB->get_records_sql($programcoursessql);
 
 
