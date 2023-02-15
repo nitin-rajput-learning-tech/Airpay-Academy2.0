@@ -1,0 +1,168 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+<ul class="course_extended_menu_list">
+{{# action}}
+        {{# assignusers}}
+            <li>
+                <div class="courseedit course_extended_menu_itemcontainer">
+                    <a title="{{# str}} assignusers, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ assignusersurl }}"><i class="icon fa fa-user-plus fa-fw" aria-hidden="true" title ="{{# str}} assignusers, local_program {{/ str}}"></i></a>
+                </div>
+                
+            </li>
+            <li>
+                <div class="courseedit course_extended_menu_itemcontainer">
+                    <a title="{{# str}} programusers, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ cfg.wwwroot }}/local/program/users.php?bcid={{programid}}"><i class="icon fa fa-user" aria-hidden="true"></i></a>
+                </div>
+            </li>
+        {{/ assignusers}}
+        {{# bulkenrollusers}}
+            <li>
+                <div class="courseedit course_extended_menu_itemcontainer">
+                    <a title="{{# str}} bulk_enroll, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ cfg.wwwroot }}/local/program/mass_enroll.php?id={{programid}}"><i class="icon fa fa-users" aria-hidden="true"></i></a>
+                </div>
+            </li>
+        {{/ bulkenrollusers}}
+    
+        {{# edit}}
+            <li>
+                <div class="coursebackup course_extended_menu_itemcontainer">
+                    <a title="{{# str}} user_enrollments, local_program {{/ str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_form', form_status:0, plugintype: 'local', pluginname: 'program', id: {{ programid }} }) })(event)"><i class="icon fa fa-pencil fa-fw" aria-hidden="true"  title = "{{# str}} edit {{/str}}"></i>
+                    </a>
+                </div>
+            </li>
+        {{/ edit}}
+        {{# cancreatelevel }}
+            <li>
+                <div class="pull-right">
+                    <a title="{{#str}}addlevel, local_program{{/str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: 0, programid:{{programid}}  }) })(event)">
+                        <i class="icon fa fa-tags fa-fw" aria-hidden="true" title="{{#str}}addlevel, local_program{{/str}}"></i>
+                    </a>
+                </div>
+            </li>
+        {{/ cancreatelevel }}
+        {{{unenrolbutton}}}
+{{/ action}}
+        {{{ challenge_element }}}
+        {{# certificate_exists }}
+            {{# certificate_download }}
+                <li>
+                    <a class="course_extended_menu_itemlink" title="{{#str}} download_certificate, local_courses {{/ str}}" class="course_extended_menu_itemlink" href="{{ config.wwwroot}}/admin/tool/certificate/view.php?code={{certificateid}}"><i class="icon fa fa-download" aria-hidden="true"></i>
+                    </a>
+                </li>
+            {{/ certificate_download }}
+            {{^ certificate_download }}
+                    <li>
+                        <a class="course_extended_menu_itemlink" title="{{# str}} unableto_download_msg, local_program, Learning path {{/str}}" class="course_extended_menu_itemlink" href="javascript: void(0)"><i class="icon fa fa-download" aria-hidden="true"></i>
+                        </a>
+                    </li>
+            {{/ certificate_download }}
+            {{/ certificate_exists }}
+    </ul>
+{{# program}}
+<div class="programview_container">
+    <div class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left classview_topcontent pl-0 pr-0">
+        <!-- <div class="w-full pull-left classname" title = "{{ programname }}"><h3>{{ programname }}</h3></div> -->
+        <div class="program_view_content w-full pull-left mb-10">
+            <div class="col-lg-3 pull-left pl-0">
+                <div style="background-image: url('{{ programlogoimg }}');" alt="{{ programname }}" title="{{ programname }}" class="classviewimg mb-10" >
+                </div>   
+             {{{display_ratings}}}
+             {{{display_like}}}
+             {{{display_review}}}         
+            </div>
+            <div class="description col-lg-9 mt-10 pull-left">
+                {{# isdescription}}
+                    {{^ descriptionstring}}
+                        <p class="text-muted" >{{{ description }}}</p>
+                    {{/ descriptionstring }}
+                    {{# descriptionstring}}
+                        <p class="text-muted" >{{ descriptionstring }}...</p>
+                    {{/ descriptionstring }}
+                {{/ isdescription}}
+                {{^ isdescription }}
+                    <p class="alert alert-info text-center">{{#str}}nocoursedesc, local_courses{{/str}}</p>
+                {{/ isdescription }}
+                <div class = "col-lg-6 pull-left">
+                    <div>
+                        <span class='column_definition'>{{#str}} stream, local_program{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data'>{{ stream }}</span>
+                    </div>
+                </div>
+                <div class="col-lg-6 pull-left">
+                    <div>
+                        <span class='column_definition'>{{#str}} points, local_program{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data'>{{ points }}</span>
+                    </div>
+                </div>
+                <div class = "w-full target_audience header" style="margin-top:45px;">
+                    <span><b class="pl-15 pr-15">{{# str}} target_audience_tab, local_program{{/ str}}</b></span>
+                </div>
+                <div class = "col-lg-4 pull-left">
+                    <div class="department_column">
+                        <span class='column_definition'>{{#str}} department, local_program{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data'>{{ department }}</span>
+                    </div>
+                </div>
+           <!--      <div class = "col-lg-4 pull-left">
+                    <div>
+                        <span class='column_definition'>{{#str}} subdepartment, local_costcenter{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data'>{{ subdepartment }}</span>
+                    </div>
+                </div> -->
+                <div class = "col-lg-4 pull-left">
+                    <div>
+                        <span class='column_definition'>{{#str}} open_group, local_users{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data' title='{{open_group}}'>{{ open_group_str }}</span>
+                    </div>
+                </div>
+          <!--       <div class = "col-lg-4 pull-left">
+                    <div>
+                        <span class='column_definition'>{{#str}} hrmrole, local_users{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data' title='{{open_hrmsrole}}'>{{ open_hrmsrole_str }}</span>
+                    </div>
+                </div> -->
+                <div class = "col-lg-4 pull-left">
+                    <div>
+                        <span class='column_definition'>{{#str}} open_designation, local_users{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data' title='{{open_designation}}'>{{ open_designation_str }}</span>
+                    </div>
+                </div>
+         <!--        <div class = "col-lg-4 pull-left ">
+                    <div>
+                        <span class='column_definition'>{{#str}} open_location, local_users{{/ str}}</span>
+                        <span class = 'colon'>:</span>
+                        <span class='column_data' title='{{open_location}}'>
+                        {{ open_location_str }}</span>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-12 col-sm-12 col-12 pull-right pl-0 pr-0">
+    </div>
+    <div class="program_view_content w-full pull-left">
+        {{{ programlevels }}}
+    </div>
+</div>
+{{/ program}}
