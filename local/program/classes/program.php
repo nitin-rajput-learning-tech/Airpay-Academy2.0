@@ -154,6 +154,9 @@ class program {
    function program_set_events($program) {
         global $DB, $CFG, $USER;
         // Include calendar/lib.php.
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($program->id);
+
         require_once($CFG->dirroot . '/calendar/lib.php');
 
         // evaluation start calendar events.
@@ -165,6 +168,7 @@ class program {
         if (isset($program->startdate) && $program->startdate > 0) {
            $event = new stdClass();
            $event->eventtype    = 'open';
+           $event->categoryid   = $categorycontext->instanceid;
            $event->type         = empty($program->enddate) ? CALENDAR_EVENT_TYPE_ACTION : CALENDAR_EVENT_TYPE_STANDARD;
            $event->name         = $program->name;
            $event->description  = $program->name;
@@ -183,7 +187,7 @@ class program {
                $calendarevent->update($event);
            } else {
                // Event doesn't exist so create one.
-               $event->courseid     = 0;
+               $event->courseid     = 1;
                $event->groupid      = 0;
                $event->userid       = 0;
                $event->modulename   = 0;
@@ -207,6 +211,7 @@ class program {
            $event = new stdClass();
            $event->type         = CALENDAR_EVENT_TYPE_ACTION;
            $event->eventtype    = 'close';
+           $event->categoryid   = $categorycontext->instanceid;
            $event->name         = $program->name;
            $event->description  = $program->name;
            $event->timestart    = $program->enddate;
@@ -224,7 +229,7 @@ class program {
                $calendarevent->update($event);
            } else {
                // Event doesn't exist so create one.
-               $event->courseid     = 0;
+               $event->courseid     = 1;
                $event->groupid      = 0;
                $event->userid       = 0;
                $event->modulename   = 0;
@@ -342,6 +347,7 @@ class program {
     public function session_set_events($session) {
         global $DB, $CFG, $USER;
         // Include calendar/lib.php.
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($session->programid);
         require_once($CFG->dirroot.'/calendar/lib.php');
 
         // session start calendar events.
@@ -353,6 +359,7 @@ class program {
         if (isset($session->timestart) && $session->timestart > 0) {
             $event = new stdClass();
             $event->eventtype    = 'open';
+            $event->categoryid   = $categorycontext->instanceid;
             $event->type         = empty($session->timefinish) ? CALENDAR_EVENT_TYPE_ACTION : CALENDAR_EVENT_TYPE_STANDARD;
             $event->name         = $session->name;
             $event->description  = $session->name;
@@ -396,6 +403,7 @@ class program {
             $event = new stdClass();
             $event->type         = CALENDAR_EVENT_TYPE_ACTION;
             $event->eventtype    = 'close';
+            $event->categoryid   = $categorycontext->instanceid;
             $event->name         = $session->name;
             $event->description  = $session->name;
             $event->timestart    = $session->timefinish;
@@ -638,7 +646,7 @@ class program {
                 $status = $DB->get_field('local_program', 'status',
                     array('id' => $stable->programid));
 
-                   $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.path');
+                   $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
 
                     $programsql = "SELECT lp.*
                                         FROM {local_program} AS lp WHERE lp.id = $stable->programid $costcenterpathconcatsql ";
