@@ -546,3 +546,4 @@ $string['delete'] = 'Delete';
 $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 
+$string['notassigned'] = 'N/A';

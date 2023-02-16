@@ -125,14 +125,14 @@ class program_form extends moodleform {
             $mform->addGroup($manageapproval, 'approvalreqd', get_string('need_manage_approval', 'local_program'), array('&nbsp;&nbsp;'), false);
             $mform->hideIf('approvalreqd', 'selfenrol', 'neq', '1');
             
-            $stream = $querieslib->get_program_streamlist();
-            $stream = array(null => '--SELECT--') + $stream;
-            $mform->addElement('autocomplete', 'stream', get_string('stream', 'local_program'),
-                    $stream);
-            $mform->addRule('stream', null, 'required', null, 'client');
-            $mform->addRule('stream', null, 'numeric', null, 'client');
-            $mform->setType('stream', PARAM_INT);
-            $mform->addHelpButton('stream','streams','local_program');
+            // $stream = $querieslib->get_program_streamlist();
+            // $stream = array(null => '--SELECT--') + $stream;
+            // $mform->addElement('autocomplete', 'stream', get_string('stream', 'local_program'),
+            //         $stream);
+            // $mform->addRule('stream', null, 'required', null, 'client');
+            // $mform->addRule('stream', null, 'numeric', null, 'client');
+            // $mform->setType('stream', PARAM_INT);
+            // $mform->addHelpButton('stream','streams','local_program');
 
             // $mform->addElement('text', 'points', get_string('points','local_program'));
             // $mform->addHelpButton('points', 'open_pointsprogram', 'local_program');
@@ -210,9 +210,9 @@ class program_form extends moodleform {
                 $errors['name'] = get_string('valnamerequired', 'local_program');
             }
 
-            if (!isset($data['stream']) || $data['stream'] < 1) {
-                $errors['stream'] = 'Please select the Stream.';
-            }
+            // if (!isset($data['stream']) || $data['stream'] < 1) {
+            //     $errors['stream'] = 'Please select the Stream.';
+            // }
 
         }elseif($form_status == 1){
 
