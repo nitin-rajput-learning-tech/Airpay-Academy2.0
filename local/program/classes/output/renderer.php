@@ -704,7 +704,6 @@ class renderer extends plugin_renderer_base {
         $programs = $DB->get_records('local_program');
         foreach($programs AS $program){
 
-        $departments = array_filter(explode(',', $program->department));
         $manage = true;
         
         if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'], $categorycontext))){
@@ -823,9 +822,7 @@ class renderer extends plugin_renderer_base {
         $stable->start = 0;
         $stable->length = 1;
         $program = (new program)->programs($stable);
-        $departmentcount = count(array_filter(explode(',',$program->department)));
-        $subdepartmentcount = count(array_filter(explode(',',$program->subdepartment)));
-        $departments = explode(',', $program->department);
+
         $manage = true;
         if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'], $categorycontext))){
                 $manage = false;
@@ -854,31 +851,39 @@ class renderer extends plugin_renderer_base {
                 }
         }
 
-        if(!empty($program->department)){
-            $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN('.$program->department.')');
-            $Department=array();
-            foreach($department as $dep){
-                $Department[]=$dep->fullname;
-            }
-            $programdepartment=implode(',',$Department);
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$program->open_path);
+
+        if($ctr){
+            $department = $DB->get_field_sql('SELECT fullname FROM {local_costcenter} WHERE id IN('.$ctr.')');
+            $programdepartment=$department ? $department : get_string('statusna');
         }else{
-            $programdepartment =  get_string('statusna');
+            $programdepartment =  get_string('all');
         }
+
+         if($bu){
+            $subdepartment = $DB->get_field_sql('SELECT fullname FROM {local_costcenter} WHERE id IN('.$bu.')');
+            $programsubdepartment=$subdepartment ? $subdepartment : get_string('statusna');
+        }else{
+            $programsubdepartment =  get_string('all');
+        }
+
         $program->stream = $DB->get_field('local_program_stream', 'stream', array('id' => $program->stream));
-        $program->department = ($programdepartment=='-1'||empty($programdepartment))?get_string('all') :$programdepartment;
-        $program->subdepartment = $program->subdepartment == -1 ? get_string('all') : $DB->get_field('local_costcenter', 'fullname', array ('id' => $program->subdepartment));
+
+        $program->department = $programdepartment;
+
+        $program->subdepartment = $programsubdepartment;
         
         $groups_sql = "SELECT mc.name FROM {cohort} AS mc 
             JOIN {local_groups} AS lg ON lg.cohortid = mc.id 
             WHERE ',{$program->open_group},' LIKE concat('%,',lg.id,',%') ";
         $program->open_group = $program->open_group ? implode(', ', $DB->get_fieldset_sql($groups_sql)): get_string('all');
         $program->open_group_str = strlen($program->open_group) > 15 ? substr($program->open_group, 0, 15).'...': $program->open_group;
-        $program->open_hrmsrole = $program->open_hrmsrole ? $program->open_hrmsrole : get_string('all'); 
-        $program->open_hrmsrole_str = strlen($program->open_hrmsrole) > 15 ? substr($program->open_hrmsrole, 0, 15).'...': $program->open_hrmsrole;
+        // $program->open_hrmsrole = $program->open_hrmsrole ? $program->open_hrmsrole : get_string('all');
+        // $program->open_hrmsrole_str = strlen($program->open_hrmsrole) > 15 ? substr($program->open_hrmsrole, 0, 15).'...': $program->open_hrmsrole;
         $program->open_designation = $program->open_designation ? $program->open_designation : get_string('all'); 
         $program->open_designation_str = strlen($program->open_designation) > 15 ? substr($program->open_designation, 0, 15).'...': $program->open_designation;
-        $program->open_location = $program->open_location ? $program->open_location : get_string('all'); 
-        $program->open_location_str = strlen($program->open_location) > 15 ? substr($program->open_location, 0, 15).'...': $program->open_location;
+        // $program->open_location = $program->open_location ? $program->open_location : get_string('all');
+        // $program->open_location_str = strlen($program->open_location) > 15 ? substr($program->open_location, 0, 15).'...': $program->open_location;
         $return = "";
         $bulkenrollusers = '';
         $bulkenrollusersurl = '';

@@ -162,7 +162,11 @@
         $datamailobject->program_startdate = $programinstance->startdate ? \local_costcenter\lib::get_userdate("d/m/Y H:i",$programinstance->startdate) : 'N/A';
         $datamailobject->program_enddate = $programinstance->enddate ? \local_costcenter\lib::get_userdate("d/m/Y H:i",$programinstance->enddate) : 'N/A';
     	$datamailobject->program_name = $programinstance->name;
-    	$datamailobject->program_organization = $this->db->get_field('local_costcenter', 'fullname',  array('id' => $programinstance->costcenter));
+
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$programinstance->open_path);
+
+    	$datamailobject->program_organization = $this->db->get_field('local_costcenter', 'fullname',  array('id' => $org));
+
     	// $datamailobject->program_stream = $this->db->get_field('local_program_stream', 'stream', array('id'=>$programinstance->stream));
         $creatornamesql = "SELECT concat(firstname,' ',lastname) FROM {user} WHERE id=:creatorid ";
     	$datamailobject->program_creater = $this->db->get_field_sql($creatornamesql, array('creatorid' => $programinstance->usercreated));
