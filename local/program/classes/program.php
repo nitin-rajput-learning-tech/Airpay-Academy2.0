@@ -104,9 +104,9 @@ class program {
                 $event->trigger();
 
                 // Update program tags.
-                if (isset($program->tags)) {
-                    \local_tags_tag::set_item_tags('local_program', 'program', $program->id, $categorycontext, $program->tags, 0, $program->costcenter, $program->department);
-                }
+                // if (isset($program->tags)) {
+                //     \local_tags_tag::set_item_tags('local_program', 'program', $program->id, $categorycontext, $program->tags, 0, $program->costcenter, $program->department);
+                // }
             } else {
                 $program->status = 0;
                 $program->timecreated = time();
@@ -124,9 +124,9 @@ class program {
                 $event->trigger();
 
                 // Update program tags.
-                if (isset($program->tags)) {
-                    \local_tags_tag::set_item_tags('local_program', 'program', $program->id, $categorycontext, $program->tags, 0, $program->costcenter, $program->department);
-                }
+                // if (isset($program->tags)) {
+                //     \local_tags_tag::set_item_tags('local_program', 'program', $program->id, $categorycontext, $program->tags, 0, $program->costcenter, $program->department);
+                // }
 
                 $program->shortname = 'program' . $program->id;
                 $DB->update_record('local_program', $program);
