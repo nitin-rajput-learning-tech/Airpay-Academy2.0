@@ -155,13 +155,13 @@ class program_courses implements renderable, templatable {
                     $onerow['rating_element'] = '';
                 }
                 require_once($CFG->dirroot.'/local/ratings/lib.php');
-                $crratings = get_rating($inprogress_coursename->id, 'local_program');
+                $crratings = get_rating($inprogress_bootcamps->id, 'local_program');
                 $onerow['ratingavg'] = $crratings->avg;
-                if($DB->record_exists('local_program_completion', array("programid"=>$inprogress_coursename->id))){
-                    $onerow['statusname'] = get_string('completed','local_program');
-                }else{
-                    $onerow['statusname'] =  get_string('launch','block_userdashboard');
-                }
+                // if($DB->record_exists('local_program_completion', array("programid"=>$inprogress_bootcamps->id))){
+                //     $onerow['statusname'] = get_string('completed','local_program');
+                // }else{
+                //     $onerow['statusname'] =  get_string('launch','block_userdashboard');
+                // }
                 array_push($data->inprogress_elearning, $onerow);
                 
             } // end of foreach 

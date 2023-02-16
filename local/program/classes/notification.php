@@ -31,13 +31,13 @@
 	public function get_notification_strings($emailtype){
 		switch($emailtype){
 			case 'program_enrol':
-                $strings = "[program_name], [program_organization], [program_stream], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";   
+                $strings = "[program_name], [program_organization], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";
                 break;
             case 'program_unenroll':
-                $strings = "[program_name], [program_organization], [program_stream], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";
+                $strings = "[program_name], [program_organization], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";
                 break;
             case 'program_completion':
-                $strings = "[program_name], [program_organization], [program_stream], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail], [program_completiondate]";
+                $strings = "[program_name], [program_organization], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail], [program_completiondate]";
                 break;
             case 'program_level_completion':
                 $strings = "[program_name], [program_level], [program_enroluserfulname], [program_link], [program_enroluseremail],[program_level_creater],[program_level_completiondate]";   
@@ -163,7 +163,7 @@
         $datamailobject->program_enddate = $programinstance->enddate ? \local_costcenter\lib::get_userdate("d/m/Y H:i",$programinstance->enddate) : 'N/A';
     	$datamailobject->program_name = $programinstance->name;
     	$datamailobject->program_organization = $this->db->get_field('local_costcenter', 'fullname',  array('id' => $programinstance->costcenter));
-    	$datamailobject->program_stream = $this->db->get_field('local_program_stream', 'stream', array('id'=>$programinstance->stream));
+    	// $datamailobject->program_stream = $this->db->get_field('local_program_stream', 'stream', array('id'=>$programinstance->stream));
         $creatornamesql = "SELECT concat(firstname,' ',lastname) FROM {user} WHERE id=:creatorid ";
     	$datamailobject->program_creater = $this->db->get_field_sql($creatornamesql, array('creatorid' => $programinstance->usercreated));
     	$datamailobject->program_enroluserfulname = fullname($touser);

@@ -141,7 +141,7 @@ class renderer extends plugin_renderer_base {
                   $table->head = array('', '','');
                   $table->id = 'viewprograms';
                 }else{
-                  $table->head = array(get_string('programname','local_program'),get_string('stream','local_program'), get_string('levels','local_program'), get_string('enrolled','local_program'),get_string('completed','local_program'), get_string('actions','local_program'));
+                  $table->head = array(get_string('programname','local_program')/*,get_string('stream','local_program')*/, get_string('levels','local_program'), get_string('enrolled','local_program'),get_string('completed','local_program'), get_string('actions','local_program'));
                   $table->id = 'viewprograms_table';
                 }
                     $table->data = $table_data;
@@ -187,8 +187,8 @@ class renderer extends plugin_renderer_base {
                             array('programid' =>$sdata->id));
                     $line['program'] = addslashes($program);
                     $line['programname'] = $programname;
-                    $line['stream'] = $stream;
-                    $line['streamname'] = $streamname;
+                    //$line['stream'] = $stream;
+                    //$line['streamname'] = $streamname;
                     $line['totallevels'] = $level;
                     $line['programicon'] = $OUTPUT->image_url('program_icon', 'local_program');
                     $line['description'] =  \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->description));
@@ -275,7 +275,7 @@ class renderer extends plugin_renderer_base {
                       $row[] = $this->render_from_template('local_program/browseprogram', $line);
 
                     }else{
-                      $row = [html_writer::tag('a', $programname, array('href' => $CFG->wwwroot. '/local/program/view.php?bcid='.$sdata->id)), $stream, $level , $sdata->enrolled_users,$sdata->completed_users, $actions]; 
+                      $row = [html_writer::tag('a', $programname, array('href' => $CFG->wwwroot. '/local/program/view.php?bcid='.$sdata->id)), $level , $sdata->enrolled_users,$sdata->completed_users, $actions];
                     }
                      $table_data[] = $row;
 
@@ -1064,7 +1064,7 @@ class renderer extends plugin_renderer_base {
             'display_review' => $display_review,
             'challenge_element' => $challenge_element,
             'certificate_exists' => isset($certificate_exists),
-            'certificate_download' => isset($certificate_download),
+            'certificate_download' => $certificate_download,
             'certificateid' => isset($certificateid),
             'unenrolbutton' => $unenrolbutton
              
@@ -1640,16 +1640,16 @@ class renderer extends plugin_renderer_base {
         $options = json_encode($options);
         $filterdata = json_encode(array());
         $dataoptions = json_encode(array('contextid' => $categorycontext->id));
-        $categorycontext = [
+        $context = [
             'targetID' => 'dashboard_program',
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata
         ];
         if($filter){
-            return  (new \local_program\lib\accesslib())::get_module_context();
+           return  $context;
         }else{
-            return  $this->render_from_template('local_costcenter/cardPaginate', $categorycontext);
+            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
         }
     }
 }

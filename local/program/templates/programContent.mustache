@@ -64,12 +64,12 @@
                     </a>
                 </li>
             {{/ certificate_download }}
-            {{^ certificate_download }}
+<!--             {{^ certificate_download }}
                     <li>
                         <a class="course_extended_menu_itemlink" title="{{# str}} unableto_download_msg, local_program, Learning path {{/str}}" class="course_extended_menu_itemlink" href="javascript: void(0)"><i class="icon fa fa-download" aria-hidden="true"></i>
                         </a>
                     </li>
-            {{/ certificate_download }}
+            {{/ certificate_download }} -->
             {{/ certificate_exists }}
     </ul>
 {{# program}}
@@ -97,18 +97,18 @@
                     <p class="alert alert-info text-center">{{#str}}nocoursedesc, local_courses{{/str}}</p>
                 {{/ isdescription }}
                 <div class = "col-lg-6 pull-left">
-                    <div>
+         <!--            <div>
                         <span class='column_definition'>{{#str}} stream, local_program{{/ str}}</span>
                         <span class = 'colon'>:</span>
                         <span class='column_data'>{{ stream }}</span>
-                    </div>
+                    </div> -->
                 </div>
                 <div class="col-lg-6 pull-left">
-                    <div>
+           <!--          <div>
                         <span class='column_definition'>{{#str}} points, local_program{{/ str}}</span>
                         <span class = 'colon'>:</span>
                         <span class='column_data'>{{ points }}</span>
-                    </div>
+                    </div> -->
                 </div>
                 <div class = "w-full target_audience header" style="margin-top:45px;">
                     <span><b class="pl-15 pr-15">{{# str}} target_audience_tab, local_program{{/ str}}</b></span>
