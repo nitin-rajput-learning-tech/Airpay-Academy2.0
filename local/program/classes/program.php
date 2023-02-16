@@ -602,14 +602,14 @@ class program {
         $programscount = 0;
         $concatsql = '';
 
-        if (isset($stable->programid) && $stable->programid > 0) {
+        // if (isset($stable->programid) && $stable->programid > 0) {
 
-            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($stable->programid);
-        }else{
+        //     $categorycontext = (new \local_program\lib\accesslib())::get_module_context($stable->programid);
+        // }else{
 
             $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
-        }
+        // }
 
         if (!empty($stable->search)) {
             $fields = array("bc.name");
@@ -637,7 +637,7 @@ class program {
                 $concatsql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
 
             }
-        } else if (!is_siteadmin() && (!has_capability('local/program:manageprogram', $categorycontext) )) {
+        } else if (!is_siteadmin()) {
             $myprograms = $DB->get_records_menu('local_program_users',
                 array('userid' => $USER->id), 'id', 'id, programid');
             if (isset($stable->programid) && !empty($stable->programid)) {
