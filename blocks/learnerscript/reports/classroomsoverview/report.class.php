@@ -35,7 +35,7 @@ class report_classroomsoverview extends reportbase implements report {
         parent::__construct($report);
         $this->components = array('columns','filters', 'permissions', 'plot', 'orderable');
         $this->columns = ['classroomfield'=>['classroomfield'],'classroomsoverviewcolumns' => ['classroomname','enrollmentscount','completionscount']];
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department'*/, 'classrooms','classroomstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'classrooms','classroomstatus');
         $this->orderable = array('classroomname','enrollmentscount','completionscount');
         $this->defaultcolumn = 'lc.id';
     }
@@ -127,11 +127,20 @@ class report_classroomsoverview extends reportbase implements report {
                     AND u.deleted =:deleted AND u.suspended =:suspended {$costcenterpathconcatsql} ";
 
             $completionscount = ' AND lcu.completion_status = :status ';
-            
-            foreach ($classroominfo as $classroom) {
-                $classroom->enrollmentscount = $DB->count_records_sql($sql, array('classroomid' => $classroom->classroomid,'deleted' => 0, 'suspended' => 0));
+            $enrolsql = '';
+            if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+                $enrolsql .= " AND lcu.timecreated > :ls_startdate ";
+                $completedsql .= " AND lcu.completiondate > :ls_startdate ";
+            // }
+            // if($this->ls_enddate > 0){
+                $enrolsql .= " AND lcu.timecreated < :ls_enddate ";
+                $completionscount .= " AND lcu.completiondate < :ls_enddate ";
+            }
 
-                $classroom->completionscount = $DB->count_records_sql($sql.$completionscount, array('classroomid' => $classroom->classroomid,'deleted' => 0,'suspended' => 0,'status' => 1));
+            foreach ($classroominfo as $classroom) {
+                $classroom->enrollmentscount = $DB->count_records_sql($sql.$enrolsql, array('classroomid' => $classroom->classroomid,'deleted' => 0, 'suspended' => 0, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
+
+                $classroom->completionscount = $DB->count_records_sql($sql.$completionscount, array('classroomid' => $classroom->classroomid,'deleted' => 0,'suspended' => 0,'status' => 1, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
 
                 $data[] = $classroom;
             }
