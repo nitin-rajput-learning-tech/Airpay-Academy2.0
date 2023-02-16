@@ -38,7 +38,7 @@ class report_classroom_completions extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],
                                 'userfield'=>['userfield'],
                                 'classroomcompletionscolumns'=>['attendedsessions','totalsessions','usercompletionstatus','usercompletiondate']);
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage'*/, 'user','classrooms','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'user','classrooms','completionstatus');
         $this->defaultcolumn = 'lcu.id';
     }
 
@@ -137,6 +137,14 @@ class report_classroom_completions extends reportbase implements report {
         }
         if ($this->params['filter_geovillage'] > 0) {
             $this->sql .= " AND u.open_village = :filter_geovillage ";
+        }
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND lcu.completiondate > :report_startdate ";
+            $this->params['report_startdate'] = $this->ls_startdate;
+        // }
+        // if($this->ls_enddate > 0){
+            $this->sql .= " AND lcu.completiondate < :report_enddate ";
+            $this->params['report_enddate'] = $this->ls_enddate;
         }
 
         if (!empty($this->params['filter_classrooms']) && $this->params['filter_classrooms'] > 0) {

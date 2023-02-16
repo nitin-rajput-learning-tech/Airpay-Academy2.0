@@ -31,7 +31,7 @@ class report_coursesoverview extends reportbase implements report {
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
         $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions']);   
         $this->columns = $columns;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department'*/, 'course');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'course');
         $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions');
         $this->defaultcolumn = 'c.id';
     }
@@ -122,6 +122,8 @@ class report_coursesoverview extends reportbase implements report {
             $this->sql .= " AND c.id = :courseid ";
             $this->params['courseid'] = $this->params['filter_course'];
         }
+
+        // print_r($this->params);
         // echo $this->sql;
 
     }
@@ -149,11 +151,18 @@ class report_coursesoverview extends reportbase implements report {
                         WHERE u.deleted = 0
                             AND u.suspended = 0 AND r.shortname = 'employee'
                             AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
-
+            if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+                $enrolsql .= " AND ra.timemodified > :ls_fstartdate ";
+                $completedsql .= " AND cc.timecompleted > :ls_fstartdate ";
+            // }
+            // if($this->ls_enddate > 0){
+                $enrolsql .= " AND ra.timemodified < :ls_fenddate ";
+                $completedsql .= " AND cc.timecompleted < :ls_fenddate ";
+            }
             foreach ($courses as $course) {
-                $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid));
+                $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
 
-                $course->noofcompletions = $DB->count_records_sql($completedsql, array('courseid' => $course->courseid));
+                $course->noofcompletions = $DB->count_records_sql($completedsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
 
                 $data[] = $course;
             }
