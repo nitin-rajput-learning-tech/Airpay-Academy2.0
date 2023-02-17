@@ -436,3 +436,5 @@ $string['manage_onlineexams'] = 'Manage Online Exams';
 $string['maxgrade'] = 'Max grade';
 $string['gradepass'] = 'Pass grade';
 $string['onlineexams'] = 'Online Exams';
+$string['view_onlineexams'] = 'View Online Exams';
+$string['manage_br_onlineexams'] = 'Manage Online Exams';
