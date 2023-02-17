@@ -91,6 +91,8 @@ class program {
 
                 }
 
+                $program->stream=0;
+
                 $DB->update_record('local_program', $program);
                 // $this->program_set_events($program); // Added by sreenivas.
                 $params = array(
@@ -112,6 +114,8 @@ class program {
                 $program->timecreated = time();
                 $program->usercreated = $USER->id;
                 local_costcenter_get_costcenter_path($program);
+                $program->stream=0;
+
                 $program->id = $DB->insert_record('local_program', $program);
 
                 $params = array(
