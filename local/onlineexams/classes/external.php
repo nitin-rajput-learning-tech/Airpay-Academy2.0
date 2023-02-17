@@ -491,7 +491,7 @@ class local_onlineexams_external extends external_api
      * @param string $name
      * @return int new course id.
      */
-    public static function delete_onlineexams($action, $id, $confirm, $name)
+    public static function onlineexams_course($action, $id, $confirm, $name)
     {
         global $DB;
         try {
