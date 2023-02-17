@@ -187,15 +187,15 @@ function get_listof_onlineexams($stable, $filterdata) {
     $filtercategoriesparams= array();
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
-    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
+    $selectsql = "SELECT c.id ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
                      JOIN {course_categories} AS cc ON cc.id = c.category
-                     JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
+                     ";
         
     $formsql .= " AND c.id > 1  $open_path";
-    $formsql .= " AND c.course_type ='online_exams'  $open_path";
+    $formsql .= " AND c.course_type ='online_exams'  $open_path AND custom_coursetype = 1";
     $params=array();
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";
@@ -537,7 +537,7 @@ function get_listof_onlineexams($stable, $filterdata) {
              }   
 
            if(has_capability('local/onlineexams:delete',$context)&&has_capability('local/onlineexams:manage', $context)&&has_capability('moodle/course:delete', $context)){
-                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')).get_string('delete'), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deletecourse\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
+                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')).get_string('delete'), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
                 $courseslist[$count]["deleteaction"] = $deleteactionshtml;
            
             }

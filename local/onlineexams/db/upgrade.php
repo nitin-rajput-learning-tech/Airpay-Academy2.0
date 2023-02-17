@@ -19,14 +19,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author eabyas  <info@eabyas.in>
- * @package BizLMS
- * @subpackage local_courses
  */
 
+defined('MOODLE_INTERNAL') || die();
 
-defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2023021500.07;          // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2017110800;        // Requires this Moodle version
-// $plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'local_onlineexams';
-$plugin->release = '3.4 (Build: 20171113)'; // Human-friendly version name
+function xmldb_local_onlineexams_upgrade($oldversion)
+{
+    global $DB, $CFG;
+    $dbman = $DB->get_manager();    
+    if ($oldversion < 2023021500.07) {
+        $table = new xmldb_table('course');
+        $field1 = new xmldb_field('custom_coursetype', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2023021500.07, 'local', 'onlineexams');
+    }
+    return true;
+}
