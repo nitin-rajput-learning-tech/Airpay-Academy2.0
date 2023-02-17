@@ -201,7 +201,7 @@ if (!$download) {
 	require_once($CFG->dirroot . '/blocks/learnerscript/lib.php');
 	
 	$params = get_reportdashboard();
-	$dashboardurl = new moodle_url($CFG->wwwroot .'/blocks/reportdashboard/dashboard.php', $params);
+	$dashboardurl = new moodle_url($CFG->wwwroot .'/blocks/reportdashboard/dashboard.php'/*, $params*/);
 	$PAGE->navbar->add(get_string("reportdashboard", 'block_learnerscript'), $dashboardurl);
 	
 	// if (has_capability('block/learnerscript:managereports', $context) ||
@@ -260,6 +260,7 @@ if (!$download) {
 	if (file_exists($exportplugin)) {
 		require_once($exportplugin);
 		$reportclass->finalreport->name = $reportclass->config->name;
+		ob_clean(); //hack to clear up the
 		export_report($reportclass, $id);
 	}
 	die;

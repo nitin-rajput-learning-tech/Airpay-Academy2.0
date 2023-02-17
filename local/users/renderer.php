@@ -135,10 +135,7 @@ class local_users_renderer extends plugin_renderer_base {
         }
         $badgecount = $DB->count_records_sql("SELECT count(id) FROM {badge_issued} WHERE
          userid = :userid", array('userid' => $userrecord->id));
-        $stat = $DB->get_field('local_states','states_name',array('id'=>$userrecord->open_states));
-        $dist = $DB->get_field('local_district','district_name',array('id'=>$userrecord->open_district));
-        $subdist = $DB->get_field('local_subdistrict','subdistrict_name',array('id'=>$userrecord->open_subdistrict));
-        $vill = $DB->get_field('local_village','village_name',array('id'=>$userrecord->open_village));
+
         $options = array('targetID' => 'display_modulesdata');
         if($userrecord->gender == 0){
             $gender = 'Male';
@@ -181,7 +178,6 @@ class local_users_renderer extends plugin_renderer_base {
             "skilltype" => ! empty(trim($userrecord->open_skilltype)) ? $userrecord->open_skilltype : 'N/A',
             "employment_type" => ! empty(trim($userrecord->open_employmenttype)) ? $userrecord->open_employmenttype : 'N/A',
             "employment_status" => ! empty(trim($userrecord->open_employmentstatus)) ? $userrecord->open_employmentstatus : 'N/A',
-            "userstate" => $stat ? $stat : 'N/A',
             "phnumber" => $contact,
             "badgesimg" => $OUTPUT->image_url('badgeicon', 'local_users'),
             "certimg" => $OUTPUT->image_url('certicon', 'local_users'),
@@ -200,9 +196,6 @@ class local_users_renderer extends plugin_renderer_base {
             "pluginslist" => $pluginarray,
             "userterritory" => $userterritory ? $userterritory : 'All',
             "usercu" => $usercu ? $usercu : 'All',
-            "userdistrict" => $dist ? $dist : 'N/A',
-            "usersubdistrict" => $subdist ? $subdist : 'N/A',
-            "uservillage" => $vill ? $vill : 'N/A',
             "gender" => $gender,
             "prefix" => $prefix,
         ];

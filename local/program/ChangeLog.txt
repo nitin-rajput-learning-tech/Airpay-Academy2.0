@@ -1,0 +1,3 @@
+
+/** Attendance Query **/
+SELECT CONCAT(u.id, '', cs.sessionid), u.id, cs.status, cs.sessionid FROM `mdl_user` as u JOIN `mdl_local_program_users` as cu ON (cu.userid = u.id AND cu.programid = 1) LEFT JOIN `mdl_local_program_signups` AS cs ON (cs.programid = cu.programid AND u.id = cs.userid AND cs.sessionid IN (1,2)) WHERE cu.programid = 1

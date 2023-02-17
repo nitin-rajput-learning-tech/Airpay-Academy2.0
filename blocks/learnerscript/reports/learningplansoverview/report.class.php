@@ -38,7 +38,7 @@ class report_learningplansoverview extends reportbase implements report {
         $this->columns = ['learningpathfield'=>['learningpathfield'], 'learningplansoverviewcolumns'=> ['optionalcourses','mandatorycourses','enrolledcount',
          'completedcount']];    
         $this->parent = true;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department'/*, 'level5department'*/, 'learningpath');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'learningpath');
         $this->orderable = array('learningpath_name','enrolledcount','completedcount');
         $this->defaultcolumn = 'lp.id';
 
@@ -129,11 +129,19 @@ class report_learningplansoverview extends reportbase implements report {
                     WHERE llu.planid = :planid {$costcenterpathconcatsql} ";
 
             $completionscount = ' AND llu.status = :status ';
-
+            $enrolsql = '';
+            if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+                $enrolsql .= " AND llu.timecreated > :ls_startdate ";
+                $completedsql .= " AND llu.completiondate > :ls_startdate ";
+            // }
+            // if($this->ls_enddate > 0){
+                $enrolsql .= " AND llu.timecreated < :ls_enddate ";
+                $completionscount .= " AND llu.completiondate < :ls_enddate ";
+            }
             foreach ($learningpaths as $learningpath) {
-                $learningpath->enrolledcount = $DB->count_records_sql($sql, array('planid' => $learningpath->learningpathid,'deleted' => 0, 'suspended' => 0));
+                $learningpath->enrolledcount = $DB->count_records_sql($sql, array('planid' => $learningpath->learningpathid,'deleted' => 0, 'suspended' => 0, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
 
-                $learningpath->completedcount = $DB->count_records_sql($sql.$completionscount, array('planid' => $learningpath->learningpathid,'deleted' => 0,'suspended' => 0,'status' => 1));
+                $learningpath->completedcount = $DB->count_records_sql($sql.$completionscount, array('planid' => $learningpath->learningpathid,'deleted' => 0,'suspended' => 0,'status' => 1, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
 
                 $data[] = $learningpath;
             }

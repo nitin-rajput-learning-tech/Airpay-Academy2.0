@@ -346,13 +346,13 @@ class notifications {
                             [req_userfulname], [req_useremail]";
                 break;
             case 'program_enrol':
-                $strings = "[program_name], [program_organization], [program_stream], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";   
+                $strings = "[program_name], [program_organization], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";
                 break;
             case 'program_unenroll':
-                $strings = "[program_name], [program_organization], [program_stream], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";
+                $strings = "[program_name], [program_organization], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail]";
                 break;
             case 'program_completion':
-                $strings = "[program_name], [program_organization], [program_stream], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail], [program_completiondate]";
+                $strings = "[program_name], [program_organization], [program_creater], [program_enroluserfulname], [program_link], [program_enroluseremail], [program_completiondate]";
                 break;
             case 'program_level_completion':
                 $strings = "[program_name], [program_level], [program_enroluserfulname], [program_link], [program_enroluseremail],[program_level_creater],[program_level_completiondate]";   

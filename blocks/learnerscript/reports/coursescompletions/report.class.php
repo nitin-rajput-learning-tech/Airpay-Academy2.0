@@ -32,7 +32,7 @@ class report_coursescompletions extends reportbase implements report {
         parent::__construct($report, $reportproperties);
         $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
-        $this->filters = array('organization', 'departments','subdepartments', 'level4department'/*, 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage'*/,'course','user','completionstatus');
+        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage','course','user','completionstatus');
         $this->parent = true;
         $this->orderable = array('coursename');
         $this->defaultcolumn = 'ra.id';
@@ -83,7 +83,7 @@ class report_coursescompletions extends reportbase implements report {
         $this->sql .= " WHERE c.id <> :siteid   ";
         $this->params['siteid'] = SITEID;
 
-        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
             $this->sql .= "";
@@ -154,6 +154,14 @@ class report_coursescompletions extends reportbase implements report {
             $userid = $this->params['filter_user'];
             $this->sql .= " AND u.id = :userid ";
             $this->params['userid'] = $userid;
+        }
+
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND cc.timecompleted > :report_startdate ";
+            $this->params['report_startdate'] = $this->ls_startdate;
+
+            $this->sql .= " AND cc.timecompleted < :report_enddate ";
+            $this->params['report_enddate'] = $this->ls_enddate;
         }
 
         if ($this->params['filter_completionstatus'] == 1) {
