@@ -150,7 +150,7 @@ class local_onlineexams_external extends external_api
             $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
             if ($validateddata->id <= 0) {
-                $validateddata->open_identifiedas = $validateddata->identifiedtype;
+                // $validateddata->open_identifiedas = $validateddata->identifiedtype;
                 $validateddata->category = $category_id;
                 $validateddata->open_departmentid = $open_departmentid;
                 $validateddata->course_type = 'online_exams';
@@ -164,7 +164,7 @@ class local_onlineexams_external extends external_api
 
                 $validateddata->startdate = time();
                 $validateddata->enddate = 0;
-
+                $validateddata->custom_coursetype = 1;
                 $examid = create_course($validateddata, $editoroptions);
                 // Update course tags.
                 if (isset($validateddata->tags)) {
@@ -197,7 +197,9 @@ class local_onlineexams_external extends external_api
             } elseif ($validateddata->id > 0) {
                 $open_path = $DB->get_field('course', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $open_path);
-                $validateddata->open_identifiedas = $validateddata->identifiedtype;
+                // $validateddata->open_identifiedas = $validateddata->identifiedtype;
+                $validateddata->custom_coursetype = 1;
+                
                 if ($form_status == 0) {
                     $examid = new stdClass();
                     $examid->id = $data['id'];
@@ -489,7 +491,7 @@ class local_onlineexams_external extends external_api
      * @param string $name
      * @return int new course id.
      */
-    public static function onlineexams_course($action, $id, $confirm, $name)
+    public static function delete_onlineexams($action, $id, $confirm, $name)
     {
         global $DB;
         try {

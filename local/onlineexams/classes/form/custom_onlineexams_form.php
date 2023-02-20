@@ -221,45 +221,50 @@ class custom_onlineexams_form extends moodleform {
             $certification_plugin_exist = $core_component::get_plugin_directory('local', 'certification');
           
 
-            if(!empty($this->_ajaxformdata['open_identifiedas'])){
-                $identifiedtype  = $this->_ajaxformdata['open_identifiedas'];
-            }elseif(!empty($this->_ajaxformdata['identifiedtype'])){
-                 $identifiedtype  = $this->_ajaxformdata['identifiedtype'];
-            }
-            if($identifiedtype){
+            // if(!empty($this->_ajaxformdata['open_identifiedas'])){
+            //     $identifiedtype  = $this->_ajaxformdata['open_identifiedas'];
+            // }elseif(!empty($this->_ajaxformdata['identifiedtype'])){
+            //      $identifiedtype  = $this->_ajaxformdata['identifiedtype'];
+            // }
+            // if($identifiedtype){
 
-                $identifiedtype = is_array($identifiedtype) ? $identifiedtype : explode(',', $identifiedtype);
-                list($coursetypesql, $coursetypeparams) = $DB->get_in_or_equal($identifiedtype, SQL_PARAMS_NAMED, 'name');
-                $coursetypeql = "SELECT id, name FROM {local_course_types} WHERE id {$coursetypesql} ";
-                $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams);
-            }
+            //     $identifiedtype = is_array($identifiedtype) ? $identifiedtype : explode(',', $identifiedtype);
+            //     list($coursetypesql, $coursetypeparams) = $DB->get_in_or_equal($identifiedtype, SQL_PARAMS_NAMED, 'name');
+            //     $coursetypeql = "SELECT id, name FROM {local_course_types} WHERE id {$coursetypesql} ";
+            //     $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams);
+            // }
 
-            $coursetype = array(
-                'ajax' => 'local_costcenter/form-options-selector',
-                'data-contextid' => $categorycontext->id,
-                'data-action' => 'costecenter_coursetype_selector',
-                'data-options' => json_encode(array('id' => $identifiedtype)),
-                'class' => 'identifiedasselect',
-                'data-parentclass' => 'open_costcenterid_select',
-                'data-class' => 'identifiedasselect',
-                'multiple' => false,
-            );
-            $mform->addElement('autocomplete', 'identifiedtype', get_string('type','local_onlineexams'), $coursetypes,$coursetype);
-            $mform->addRule('identifiedtype', get_string('missingtype','local_onlineexams'), 'required', null, 'client');
-            $mform->addHelpButton('identifiedtype', 'open_identifiedascourse', 'local_onlineexams');
-            $mform->setType('identifiedtype',PARAM_RAW);
+            // $coursetype = array(
+            //     'ajax' => 'local_costcenter/form-options-selector',
+            //     'data-contextid' => $categorycontext->id,
+            //     'data-action' => 'costecenter_coursetype_selector',
+            //     'data-options' => json_encode(array('id' => $identifiedtype)),
+            //     'class' => 'identifiedasselect',
+            //     'data-parentclass' => 'open_costcenterid_select',
+            //     'data-class' => 'identifiedasselect',
+            //     'multiple' => false,
+            // );
+            // $mform->addElement('autocomplete', 'identifiedtype', get_string('type','local_onlineexams'), $coursetypes,$coursetype);
+            // $mform->addRule('identifiedtype', get_string('missingtype','local_onlineexams'), 'required', null, 'client');
+            // $mform->addHelpButton('identifiedtype', 'open_identifiedascourse', 'local_onlineexams');
+            // $mform->setType('identifiedtype',PARAM_RAW);
             
-            //for course format
-            $courseformats = get_sorted_course_formats(true);
-            $formcourseformats = array();
-            foreach ($courseformats as $courseformat) {
-              $formcourseformats[$courseformat] = get_string('pluginname', "format_$courseformat");
-            }
+            // //for course format
+            // $courseformats = get_sorted_course_formats(true);
+            // $formcourseformats = array();
+            // foreach ($courseformats as $courseformat) {
+            //   $formcourseformats[$courseformat] = get_string('pluginname', "format_$courseformat");
+            // }
 
             // Completion tracking.
   			$mform->addElement('hidden', 'enablecompletion');
   			$mform->setType('enablecompletion', PARAM_INT);
   			$mform->setDefault('enablecompletion', 0);
+
+            // Custom Course type .
+  			$mform->addElement('hidden', 'custom_coursetype');
+  			$mform->setType('custom_coursetype', PARAM_INT);
+  			$mform->setDefault('custom_coursetype', 1);
 
             // tags
             // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'courses', 'component' => 'local_onlineexams'));
@@ -545,11 +550,11 @@ class custom_onlineexams_form extends moodleform {
                 $errors['open_path'] = get_string('pleaseselectorganization', 'local_onlineexams');
             }
         }
-        if (isset($data['identifiedtype']) && $data['form_status'] == 0){
-            if($data['identifiedtype'] == 0){
-                $errors['identifiedtype'] = get_string('pleaseselectidentifiedtype', 'local_onlineexams');
-            }
-        }
+        // if (isset($data['identifiedtype']) && $data['form_status'] == 0){
+        //     if($data['identifiedtype'] == 0){
+        //         $errors['identifiedtype'] = get_string('pleaseselectidentifiedtype', 'local_onlineexams');
+        //     }
+        // }
         if(isset($data['open_coursecompletiondays']) && $data['open_coursecompletiondays']){
             $value = $data['open_coursecompletiondays'];
             $intvalue = (int)$value;
