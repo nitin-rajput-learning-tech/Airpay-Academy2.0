@@ -22,8 +22,6 @@
  * @package BizLMS
  * @subpackage local_onlineexams
  */
-define('elearning', 1);
-define('courses', 1);
 
 if(file_exists($CFG->dirroot.'/local/costcenter/lib.php')){
     require_once($CFG->dirroot.'/local/costcenter/lib.php');                  
@@ -195,7 +193,7 @@ function get_listof_onlineexams($stable, $filterdata) {
                      ";
         
     $formsql .= " AND c.id > 1  $open_path";
-    $formsql .= " AND c.course_type ='online_exams'  $open_path AND custom_coursetype = 1";
+    $formsql .= " AND c.open_module ='online_exams'  $open_path AND open_coursetype = 1 ";
     $params=array();
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";

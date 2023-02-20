@@ -118,4 +118,36 @@ class local_onlineexams_renderer extends plugin_renderer_base {
     $data = $page->export_for_template($this);
     return parent::render_from_template('local_onlineexams/form_status', $data);
     }
+    public function get_userdashboard_onlineexams($tab, $filter = false,$view_type = 'card') {
+        $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
+        
+        
+        $templateName = 'local_onlineexams/userdashboard_paginated';
+        $cardClass = 'col-md-6 col-12';
+        $perpage = 6;
+        if($view_type=='table'){
+            $templateName = 'local_onlineexams/userdashboard_paginated_catalog_list';
+            $cardClass = 'tableformat';
+            $perpage = 20;
+        } 
+
+        $options = array('targetID' => 'dashboard_onlineexams', 'perPage' => $perpage, 'cardClass' =>$cardClass, 'viewType' => $view_type);
+        $options['methodName']='local_onlineexams_userdashboard_content_paginated';
+        $options['templateName']= $templateName;
+        $options['filter'] = $tab;
+        $options = json_encode($options);
+        $filterdata = json_encode(array());
+        $dataoptions = json_encode(array('contextid' => $categorycontext->id));
+        $context = [
+                'targetID' => 'dashboard_onlineexams',
+                'options' => $options,
+                'dataoptions' => $dataoptions,
+                'filterdata' => $filterdata
+        ];
+        if($filter){
+            return  $context;
+        }else{
+            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
+        }
+    }
 };

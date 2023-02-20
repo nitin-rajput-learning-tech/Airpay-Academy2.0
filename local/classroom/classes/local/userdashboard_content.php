@@ -9,7 +9,7 @@ class userdashboard_content extends \block_userdashboard\content{
 		$returndata['tabname'] = 'inprogress';
 		$returndata['status'] = 'inprogress';
 		$returndata['class'] = 'userdashboard_menu_link';
-		$returndata['iconclass'] = 'fa fa-desktop';
+		$returndata['iconclass'] = 'browse_classroom_icon mr-1';
 		$returndata['label'] = get_string('classroomtrainings', 'block_userdashboard');
 		$returndata['templatename'] = 'local_classroom/userdashboard_content';
 		return $returndata;
