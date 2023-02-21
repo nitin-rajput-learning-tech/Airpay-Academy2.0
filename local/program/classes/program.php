@@ -2014,7 +2014,7 @@ class program {
             if ($enroldata->signupid) {
                 $courseid = $DB->get_field('local_program_level_courses', 'courseid',
                         array('id' => $enroldata->bclcid));
-                $this->manage_bclevel_course_enrolments($courseid, $USER->id, 'employee', 'unenrol');
+                $this->manage_bclevel_course_enrolments($courseid, $enroldata->userid, 'employee', 'unenrol');
             }
             //cancel session
             // $emaillogs = new programnotifications_emails();
@@ -2120,7 +2120,7 @@ class program {
                 if ($signupid) {
                     $courseid = $DB->get_field('local_program_level_courses', 'courseid',
                         array('id' => $enroldata->bclcid));
-                    $this->manage_bclevel_course_enrolments($courseid, $USER->id);
+                    $this->manage_bclevel_course_enrolments($courseid, $enroldata->userid);
                 }
                 return $signupid;
             }
