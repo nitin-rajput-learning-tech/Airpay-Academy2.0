@@ -1016,7 +1016,7 @@ function local_costcenter_get_costcenter_path(&$data){
         $data->open_path = $path;
     }
 }
-function local_costcenter_set_costcenter_path(&$data){
+function local_costcenter_set_costcenter_path(&$data, $prefix = ''){
     global $USER;
     $fields = local_costcenter_get_fields();
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
@@ -1028,7 +1028,7 @@ function local_costcenter_set_costcenter_path(&$data){
                 $recordedpathids = explode('/', $data['open_path']);
                 foreach($fields as $levelid => $field){
                     if(isset($recordedpathids[$levelid]) && $recordedpathids[$levelid] > 0){
-                        $data[$field] = $recordedpathids[$levelid];
+                        $data[$prefix.$field] = $recordedpathids[$levelid];
                     }
                 }
                 break;
@@ -1039,7 +1039,7 @@ function local_costcenter_set_costcenter_path(&$data){
         $recordedpathids = explode('/', $data['open_path']);
         foreach($fields as $levelid => $field){
             if(isset($recordedpathids[$levelid]) && $recordedpathids[$levelid] > 0){
-                $data[$field] = $recordedpathids[$levelid];
+                $data[$prefix.$field] = $recordedpathids[$levelid];
             }
         }
     }
@@ -1052,7 +1052,7 @@ function local_costcenter_set_costcenter_path(&$data){
             $depth = $USER->useraccess['currentroleinfo']['depth'] - 1;
         }
         for($i = 1; $i <= $depth; $i++){
-            $data[$fields[$i]] = $rolecontextids[$i];
+            $data[$prefix.$fields[$i]] = $rolecontextids[$i];
         }
     }
 }

@@ -600,6 +600,8 @@ class program {
      * @return Array  programs and totalprogramcount
      */
     public function programs($stable, $request = false,$program = null,$status = null) {
+
+
         global $DB, $USER;
         $params = array();
         $programs = array();
@@ -680,42 +682,66 @@ class program {
             $params['programid'] = $stable->programid;
         }
 
-        if($program != NULL && $program != 'null' ) {
+        if($program != NULL && $program != 'null' && $program > 0) {
           $concatsql .= " AND bc.id IN ($program) ";
         }
-
         if(!empty($stable->costcenterid)){
 
-            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :costcenterid";
-            $params["costcenterid"] = '%/'.$stable->costcenterid.'/%';
+            $organizations = explode(',', $stable->costcenterid);
+            $orgsql = [];
+            foreach($organizations AS $organisation){
+                $orgsql[] = " concat('/',bc.open_path,'/') LIKE :organisationparam_{$organisation}";
+                $params["organisationparam_{$organisation}"] = '%'.$organisation.'%';
+            }
+            if(!empty($orgsql)){
+                $concatsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+            }
 
         }
-        if(!empty($stable->departmentid)){
-
-            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :departmentid";
-            $params["departmentid"] = '%/'.$stable->departmentid.'/%';
-
+        if (!empty($stable->departmentid)) {
+            $departments = explode(',', $stable->departmentid);
+            $deptsql = [];
+            foreach($departments AS $department){
+                $deptsql[] = " concat('/',bc.open_path,'/') LIKE :departmentparam_{$department}";
+                $params["departmentparam_{$department}"] = '%'.$department.'%';
+            }
+            if(!empty($deptsql)){
+                $concatsql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+            }
         }
-        if(!empty($stable->subdepartmentid)){
-
-            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :subdepartmentid";
-            $params["subdepartmentid"] = '%/'.$stable->subdepartmentid.'/%';
-
+        if (!empty($stable->subdepartmentid)) {
+            $subdepartments = explode(',', $stable->subdepartmentid);
+            $subdeptsql = [];
+            foreach($subdepartments AS $subdepartment){
+                $subdeptsql[] = " concat('/',bc.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+                $params["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartment.'%';
+            }
+            if(!empty($subdeptsql)){
+                $concatsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+            }
         }
-        if(!empty($stable->l4department)){
-
-            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :l4department";
-            $params["l4department"] = '%/'.$stable->l4department.'/%';
-
+        if (!empty($stable->l4department)) {
+            $subdepartments = explode(',', $stable->l4department);
+            $subdeptsql = [];
+            foreach($subdepartments AS $department4level){
+                $subdeptsql[] = " concat('/',bc.open_path,'/') LIKE :department4levelparam_{$department4level}";
+                $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
+            }
+            if(!empty($subdeptsql)){
+                $concatsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+            }
         }
-
-        if(!empty($stable->l5department)){
-
-            $concatsql .= " AND concat('/',bc.open_path,'/') LIKE :l5department";
-            $params["l5department"] = '%/'.$stable->l5department.'/%';
-
+        if (!empty($stable->l5department)) {
+            $subdepartments = explode(',', $stable->l5department);
+            $subdeptsql = [];
+            foreach($subdepartments AS $department5level){
+                $subdeptsql[] = " concat('/',bc.open_path,'/') LIKE :department5levelparam_{$department5level}";
+                $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
+            }
+            if(!empty($subdeptsql)){
+                $concatsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+            }
         }
-
         if(!empty($status)){
           $filterstatus = explode(',',$status);
           if(!(in_array('active',$filterstatus) && in_array('inactive',$filterstatus))){
@@ -741,6 +767,7 @@ class program {
         $sql = " FROM {local_program} AS bc
                 WHERE 1 = 1 ";
         $sql .= $concatsql;
+
 
         if (isset($stable->programid) && $stable->programid > 0) {
             $programs = $DB->get_record_sql($fromsql . $sql, $params);

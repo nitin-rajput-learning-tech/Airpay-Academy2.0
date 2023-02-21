@@ -29,7 +29,7 @@ require_once($CFG->dirroot . '/local/program/lib.php');
 $core_component = new core_component();
 $courses_plugin_exists = $core_component::get_plugin_directory('local', 'courses');
 if (!empty($courses_plugin_exists)) {
-    require_once($CFG->dirroot . '/local/courses/filters_form.php');
+    require_once($CFG->dirroot . '/local/program/filters_form.php');
 }
 
 $programid = required_param('bcid', PARAM_INT);
