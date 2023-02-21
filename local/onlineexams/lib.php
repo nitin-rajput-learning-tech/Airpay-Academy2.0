@@ -489,7 +489,7 @@ function get_listof_onlineexams($stable, $filterdata) {
             if(has_capability('local/onlineexams:enrol',$maincheckcontext)&&has_capability('local/onlineexams:manage', $maincheckcontext)){
                 $courseslist[$count]["enrollusers"] = $CFG->wwwroot."/local/onlineexams/onlineexamsenrol.php?id=".$course->id."&enrolid=".$enrolid;
             }
-            if(has_capability('moodle/course:view', $context) || is_enrolled($context)){
+            if(has_capability('local/onlineexams:view', $context) || is_enrolled($context)){
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
             }else{
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot."/local/search/coursedetails.php?id=".$course->id;
@@ -501,7 +501,7 @@ function get_listof_onlineexams($stable, $filterdata) {
              }   
 
 
-            if(has_capability('local/onlineexams:update',$context)&&has_capability('local/onlineexams:manage', $context)&&has_capability('moodle/course:update', $context)){
+            if(has_capability('local/onlineexams:update',$context)&&has_capability('local/onlineexams:manage', $context)){
                 $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')).get_string('edit') , array('title' => get_string('edit'), 'alt' => get_string('edit'),'data-action' => 'createcoursemodal', 'class'=>'createcoursemodal dropdown-item', 'data-value'=>$course->id, 'onclick' =>'(function(e){ require("local_onlineexams/onlineexamsAjaxform").init({contextid:'.$context->id.', component:"local_onlineexams", callback:"custom_onlineexams_form", form_status:0, plugintype: "local", pluginname: "onlineexams", courseid: ' . $course->id . ' }) })(event)'));
                 $courseslist[$count]["editcourse"] = $courseedit;
                 if($course->visible){
@@ -534,7 +534,7 @@ function get_listof_onlineexams($stable, $filterdata) {
                   $courseslist[$count]["auto_enrol"] = '';
              }   
 
-           if(has_capability('local/onlineexams:delete',$context)&&has_capability('local/onlineexams:manage', $context)&&has_capability('moodle/course:delete', $context)){
+           if(has_capability('local/onlineexams:delete',$context)&&has_capability('local/onlineexams:manage', $context)){
                 $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')).get_string('delete'), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
                 $courseslist[$count]["deleteaction"] = $deleteactionshtml;
            
