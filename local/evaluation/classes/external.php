@@ -107,7 +107,7 @@ class local_evaluation_external extends external_api {
                 if(!empty($validateddata->open_group)) {
                 $validateddata->open_group = $validateddata->open_group;
                 } else {
-                $validateddata->open_group = NULL;
+                $validateddata->open_group = 0;
                 }
                 $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
@@ -127,7 +127,7 @@ class local_evaluation_external extends external_api {
                 if(!empty($validateddata->open_group)) {
                 $validateddata->open_group = $validateddata->open_group;
                 } else {
-                $validateddata->open_group = NULL;
+                $validateddata->open_group = 0;
                 }
                 $validateddata->instance = $instance;
                 $validateddata->plugin = $plugin;

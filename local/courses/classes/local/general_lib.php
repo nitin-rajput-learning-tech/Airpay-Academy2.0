@@ -117,7 +117,7 @@ class general_lib{
                 JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
 
-        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 0";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -143,7 +143,7 @@ class general_lib{
             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             WHERE ue.userid = {$USER->id}
-            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) ";
+            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) AND course.open_coursetype = 0 ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -167,7 +167,7 @@ class general_lib{
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 WHERE ue.userid = {$USER->id}
-                AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 ";
+                AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 0";
         if($source == 'mobile'){
            $sql .= " AND c.open_securecourse != 1 ";
         }
@@ -191,7 +191,7 @@ class general_lib{
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 WHERE ue.userid = {$USER->id} AND c.visible = 1 AND c.id > 1
-                AND cc.timecompleted IS NOT NULL";
+                AND cc.timecompleted IS NOT NULL AND c.open_coursetype = 0 ";
 
         if($source == 'mobile'){
             $sql .= " AND c.open_securecourse != 1 ";
@@ -213,7 +213,7 @@ class general_lib{
             INNER JOIN {course_completion_criteria} ccc ON ccc.course = c.id
             WHERE c.enablecompletion = ".COMPLETION_ENABLED."  AND c.id <> :courseid
 
-            AND c.open_path = (SELECT open_path FROM {course} WHERE id = :thiscourseid) ";
+            AND c.open_path = (SELECT open_path FROM {course} WHERE id = :thiscourseid) AND c.open_coursetype = 0 ";
         $params = array('courseid' => $courseid, 'thiscourseid' => $courseid);
         if($query != ''){
             $coursesSql .= " AND ".$DB->sql_like('c.fullname', ":search", false);
@@ -232,7 +232,7 @@ class general_lib{
                 JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
 
-        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 0 ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -255,7 +255,7 @@ class general_lib{
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             JOIN {user} u ON u.id = ue.userid
             WHERE ue.userid = {$USER->id}
-            AND course.id <> 1 AND course.visible = 1 AND u.id > 2 AND u.suspended = 0 AND u.deleted = 0";
+            AND course.id <> 1 AND course.visible = 1 AND u.id > 2 AND u.suspended = 0 AND u.deleted = 0 AND course.open_coursetype = 0 ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -278,7 +278,7 @@ class general_lib{
         if($type == 'recentlyaccessed'){
             $sql .= " JOIN {user_lastaccess} as ul ON ul.courseid = course.id AND ul.userid = $USER->id";
         }
-        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 0 ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse = 0 ";
         }

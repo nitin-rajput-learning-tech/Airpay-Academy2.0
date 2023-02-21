@@ -73,7 +73,7 @@ class block_userdashboard_renderer extends plugin_renderer_base {
 		$local_pluginlist = \core_component::get_plugin_list('local');
 		foreach($local_pluginlist as $key => $local_pluginname){
 			$classname = '\\local_'.$key.'\\local\\userdashboard_content';
-			if(class_exists($classname)){
+			if(class_exists($classname)){				
 				$class = new $classname($DB);
 				if(method_exists($class, 'userdashboard_menu_content')){
 					$content = $class->userdashboard_menu_content();
@@ -81,7 +81,9 @@ class block_userdashboard_renderer extends plugin_renderer_base {
 				}
 			}
 		}
+		// die;
 		ksort($menulinks);
+		// print_object($menulinks);
 		$menulinks = array_values($menulinks);
 		$menulinks[0]['active_class'] = 'active_main_tab';
 		$content = array('links' => $menulinks,

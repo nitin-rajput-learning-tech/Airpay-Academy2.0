@@ -55,6 +55,7 @@ class local_courses_renderer extends plugin_renderer_base {
      * @return string The text to render
      */
     public function get_catalog_courses($filter = false,$view_type='card') {
+      global $USER;
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $status = optional_param('status', '', PARAM_RAW);
         $costcenterid = optional_param('costcenterid', '', PARAM_INT);

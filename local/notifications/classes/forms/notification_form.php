@@ -226,7 +226,7 @@ class notification_form extends moodleform {
 			break;	
 			case 'program':	
 				$sql = "SELECT c.id, c.name FROM {local_program} c                           
-				WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath } ";                 
+				WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath  ";
 				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Programs";

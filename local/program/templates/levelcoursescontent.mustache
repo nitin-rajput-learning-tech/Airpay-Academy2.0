@@ -1,0 +1,38 @@
+<div class="tab-content">
+    {{# programlevel }}
+        {{# canaddcourse }}
+        <div class="pull-right mb-15">
+            <a href="javascript:void(0)" class="addcourse" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:{{ contextid }}, component:'local_program', callback:'course_form', form_status:0, plugintype: 'local_program', pluginname: 'course', id:0, bcid: {{ programid }}, levelid: {{levelid}} }) })(event)">{{#str}}assigncourses, local_program{{/str}}</a>
+        </div>
+        {{/ canaddcourse }}
+        {{# userview}}
+        {{# mycompletionstatus }}
+            <span class="pull-right mt-15 mb-10 levelcomplition completed">{{# str}} levelcompleted, local_program {{/ str}}</span>
+        {{/ mycompletionstatus }}
+        {{# myinprogressstatus }}
+            <span class="pull-right mt-15 mb-10 levelcomplition inprogress">{{# str}} levelinprogress, local_program {{/ str}}</span>
+        {{/ myinprogressstatus }}
+        {{/ userview}}
+            <div class="w-full pull-left level_description">{{{description}}}</div>
+        {{# programlevelcourses }}
+        <div class="w-full pull-left lpcourse_content pt-10 pb-10 pl-15 pr-15">
+            <div class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left p-0 levelcourse_list {{ coursecompletionstatus }} ">
+                <div class="col-lg-5 col-md-5 col-sm-12 col-12 pull-left levelcourse_left">
+                    <div class="w-full pull-left pl-0 pt-15 pb-15 pr-15">
+                        <h5 class="coursename">
+                            <span class="course_icon mr-15">
+                                <i class="fa fa-book" aria-hidden="true"></i>
+                            </span>
+                            {{{ course }}}
+                        </h5>
+                    </div>
+                </div>
+                {{> local_program/coursesessionblock }}
+            </div>
+        </div>
+        {{/ programlevelcourses }}
+        {{^ programlevelcourses }}
+            <div class="w-full pull-left alert alert-info text-center">{{#str}} noassignedcourses, local_program{{/str}}</div>
+        {{/ programlevelcourses }}
+    {{/ programlevel }}
+</div>
