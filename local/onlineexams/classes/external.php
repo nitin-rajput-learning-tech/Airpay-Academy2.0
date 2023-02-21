@@ -448,8 +448,8 @@ class local_onlineexams_external extends external_api
                                 'ratingenable' => new external_value(PARAM_BOOL, 'ratingenable', VALUE_OPTIONAL),
                                 'tagstring' => new external_value(PARAM_RAW, 'tagstring', VALUE_OPTIONAL),
                                 'tagenable' => new external_value(PARAM_BOOL, 'tagenable', VALUE_OPTIONAL),
-                                'report_view' => new external_value(PARAM_INT, 'report_view', VALUE_OPTIONAL),
-                                'grade_view' => new external_value(PARAM_INT, 'grade_view', VALUE_OPTIONAL),
+                                'report_view' => new external_value(PARAM_BOOL, 'report_view', VALUE_OPTIONAL),
+                                'grade_view' => new external_value(PARAM_BOOL, 'grade_view', VALUE_OPTIONAL),
                                 'delete' => new external_value(PARAM_BOOL, 'delete', VALUE_OPTIONAL),
                                 'update' => new external_value(PARAM_BOOL, 'update', VALUE_OPTIONAL),
                                 'enrol' => new external_value(PARAM_BOOL, 'enrol', VALUE_OPTIONAL),
@@ -491,7 +491,7 @@ class local_onlineexams_external extends external_api
      * @param string $name
      * @return int new course id.
      */
-    public static function delete_onlineexams($action, $id, $confirm, $name)
+    public static function onlineexams_course($action, $id, $confirm, $name)
     {
         global $DB;
         try {
@@ -604,5 +604,183 @@ class local_onlineexams_external extends external_api
     }
     public static function course_update_status_returns(){
         return new external_value(PARAM_BOOL, 'Status');
+    }
+    public static function data_for_onlineexams_parameters(){
+        $filter = new external_value(PARAM_TEXT, 'Filter text');
+        $filter_text = new external_value(PARAM_TEXT, 'Filter name',VALUE_OPTIONAL);
+        $filter_offset = new external_value(PARAM_INT, 'Offset value',VALUE_OPTIONAL);
+        $filter_limit = new external_value(PARAM_INT, 'Limit value',VALUE_OPTIONAL);
+        $params = array(
+            'filter' => $filter,
+            'filter_text' => $filter_text,
+            'filter_offset' => $filter_offset,
+            'filter_limit' => $filter_limit
+        );
+        return new external_function_parameters($params);
+    }
+    public static function data_for_onlineexams($filter, $filter_text='', $filter_offset = 0, $filter_limit = 0){
+        global $PAGE;
+
+        $params = self::validate_parameters(self::data_for_onlineexams_parameters(), array(
+            'filter' => $filter,
+            'filter_text' => $filter_text,
+            'filter_offset' => $filter_offset,
+            'filter_limit' => $filter_limit
+        ));
+        $PAGE->set_context((new \local_onlineexams\lib\accesslib())::get_module_context());
+        $renderable = new local_onlineexams\output\userdashboard($params['filter'], $params['filter_text'], $params['filter_offset'], $params['filter_limit']);
+        $output = $PAGE->get_renderer('local_onlineexams');
+        $data= $renderable->export_for_template($output);
+        // print_object($data);
+        return $data;
+
+    }
+    public static function data_for_onlineexams_returns(){
+        $return  = new external_single_structure(array(
+            'total' => new external_value(PARAM_INT, 'Number of enrolled onlineexams.', VALUE_OPTIONAL),
+            'inprogresscount'=>  new external_value(PARAM_INT, 'Number of inprogress course count.'),
+            'completedcount'=>  new external_value(PARAM_INT, 'Number of complete course count.'),
+            'onlineexams_view_count'=>  new external_value(PARAM_INT, 'Number of onlineexams count.'),
+            'enableslider'=>  new external_value(PARAM_INT, 'Flag for enable the slider.'),
+            'inprogress_elearning_available'=>  new external_value(PARAM_INT, 'Flag to check enrolled course available or not.'),
+            'course_count_view'=>  new external_value(PARAM_TEXT, 'to add course count class'),
+            'functionname' => new external_value(PARAM_TEXT, 'Function name'),
+            'subtab' => new external_value(PARAM_TEXT, 'Sub tab name'),
+            'elearningtemplate' => new external_value(PARAM_INT, 'template name',VALUE_OPTIONAL),
+            'nodata_string' => new external_value(PARAM_TEXT, 'no data message'),
+            'enableflow' => new external_value(PARAM_BOOL, "flag for flow enabling", VALUE_DEFAULT, true),
+            'moduledetails' => new external_multiple_structure(
+                new external_single_structure(
+                    array(
+                        // 'inprogress_coursename' => new external_value(PARAM_RAW, 'Course name'),
+                        'lastaccessdate' => new external_value(PARAM_RAW, 'Last access Time'),
+                        'course_image_url' => new external_value(PARAM_RAW, 'Course Image'),
+                        'onlineexamsummary' => new external_value(PARAM_RAW, 'Course Summary'),
+                        'progress' => new external_value(PARAM_RAW, 'Course Progress'),
+                        'progress_bar_width' => new external_value(PARAM_RAW, 'Course Progress bar width'),
+                        'course_fullname' => new external_value(PARAM_RAW, 'Course Fullname'),
+                        'course_fullname' => new external_value(PARAM_RAW, 'Course Fullname'),
+                        'course_url' => new external_value(PARAM_RAW, 'Course Url'),
+                        'inprogress_coursename_fullname' => new external_value(PARAM_RAW, 'Course Url'),
+                        'rating_element' => new external_value(PARAM_RAW, 'Ratings'),
+                        'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
+                        // 'indexClass' => new external_value(PARAM_TEXT, 'Index Card Class'),
+                        'index' => new external_value(PARAM_INT, 'Index of Card'),
+                         'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),
+                         'label_name' => new external_value(PARAM_RAW, 'course_completedon'),
+                        )
+                    )
+            ),
+            'viewMoreCard' => new external_value(PARAM_BOOL, 'More info card to display', false),
+            'menu_heading' => new external_value(PARAM_TEXT, 'heading string of the dashboard'),
+            'filter' => new external_value(PARAM_TEXT, 'filter for display data'),
+            'index' => new external_value(PARAM_INT, 'number of onlineexams count'),
+            'filter_text' => new external_value(PARAM_TEXT, 'filtertext content',VALUE_OPTIONAL),
+            'view_more_url' => new external_value(PARAM_URL, 'view_more_url for tab'),
+            'templatename' => new external_value(PARAM_TEXT, 'Templatename for tab content'),
+            'pluginname' => new external_value(PARAM_TEXT, 'Pluginname for tab content', VALUE_DEFAULT, 'local_onlineexams'),
+            'tabname' => new external_value(PARAM_TEXT, 'Pluginname for tab content', VALUE_DEFAULT, 'local_onlineexams'),
+            'status' => new external_value(PARAM_TEXT, 'Pluginname for tab content', VALUE_DEFAULT, 'local_onlineexams'),
+            'enrolled_url' => new external_value(PARAM_URL, 'view_more_url for tab'),//added revathi
+            'inprogress_url' => new external_value(PARAM_URL, 'view_more_url for tab'),
+            'completed_url' => new external_value(PARAM_URL, 'view_more_url for tab'),
+        ));
+        return $return;
+    }
+    public static function data_for_onlineexams_paginated_parameters(){
+        return new external_function_parameters([
+            'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
+            'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
+            'offset' => new external_value(PARAM_INT, 'Number of items to skip from the begging of the result set',
+                VALUE_DEFAULT, 0),
+            'limit' => new external_value(PARAM_INT, 'Maximum number of results to return',
+                VALUE_DEFAULT, 0),
+            'contextid' => new external_value(PARAM_INT, 'contextid'),
+            'filterdata' => new external_value(PARAM_RAW, 'filters applied'),
+        ]);
+    }
+    public static function data_for_onlineexams_paginated($options, $dataoptions, $offset = 0, $limit = 0, $contextid, $filterdata){
+        global $DB, $PAGE;
+        require_login();
+        $PAGE->set_url('/local/onlineexams/userdashboard.php', array());
+        $PAGE->set_context($contextid);
+
+        $decodedoptions = (array)json_decode($options);
+        $decodedfilter = (array)json_decode($filterdata);
+        $filter = $decodedoptions['filter'];
+        $filter_text = isset($decodedfilter['search_query']) ? $decodedfilter['search_query'] : '';
+        $filter_offset = $offset;
+        $filter_limit = $limit;
+
+        $renderable = new local_onlineexams\output\userdashboard($filter, $filter_text, $filter_offset, $filter_limit);
+        $output = $PAGE->get_renderer('local_onlineexams');
+        $data = $renderable->export_for_template($output);
+        $totalcount = $renderable->onlineexamsViewCount;
+        return [
+            'totalcount' => $totalcount,
+            'length' => $totalcount,
+            'filterdata' => $filterdata,
+            'records' => array($data),
+            'options' => $options,
+            'dataoptions' => $dataoptions,
+        ];
+    }
+    public static function data_for_onlineexams_paginated_returns(){
+        return new external_single_structure([
+        'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
+        'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
+        'totalcount' => new external_value(PARAM_INT, 'total number of challenges in result set'),
+        'filterdata' => new external_value(PARAM_RAW, 'The data for the service'),
+        'records' => new external_multiple_structure(
+                new external_single_structure(
+                    array(
+                        'total' => new external_value(PARAM_INT, 'Number of enrolled onlineexams.', VALUE_OPTIONAL),
+                        'inprogresscount'=>  new external_value(PARAM_INT, 'Number of inprogress course count.'),
+                        'completedcount'=>  new external_value(PARAM_INT, 'Number of complete course count.'),
+                        'onlineexams_view_count'=>  new external_value(PARAM_INT, 'Number of onlineexams count.'),
+
+                        'inprogress_elearning_available'=>  new external_value(PARAM_INT, 'Flag to check enrolled course available or not.'),
+                        'course_count_view'=>  new external_value(PARAM_TEXT, 'to add course count class'),
+                        'functionname' => new external_value(PARAM_TEXT, 'Function name'),
+                        'subtab' => new external_value(PARAM_TEXT, 'Sub tab name'),
+                        'elearningtemplate' => new external_value(PARAM_INT, 'template name',VALUE_OPTIONAL),
+                        'nodata_string' => new external_value(PARAM_TEXT, 'no data message'),
+                        'enableflow' => new external_value(PARAM_BOOL, "flag for flow enabling", VALUE_DEFAULT, false),
+                        'moduledetails' => new external_multiple_structure(
+                        new external_single_structure(
+                            array(
+                                // 'inprogress_coursename' => new external_value(PARAM_RAW, 'Course name'),
+                                'lastaccessdate' => new external_value(PARAM_RAW, 'Last access Time'),
+                                'course_image_url' => new external_value(PARAM_RAW, 'Course Image'),
+                                'onlineexamsummary' => new external_value(PARAM_RAW, 'Course Summary'),
+                                'progress' => new external_value(PARAM_RAW, 'Course Progress'),
+                                'progress_bar_width' => new external_value(PARAM_RAW, 'Course Progress bar width'),
+                                'course_fullname' => new external_value(PARAM_RAW, 'Course Fullname'),
+                                'course_fullname' => new external_value(PARAM_RAW, 'Course Fullname'),
+                                'course_url' => new external_value(PARAM_RAW, 'Course Url'),
+                                'inprogress_coursename_fullname' => new external_value(PARAM_RAW, 'Course Url'),
+                                'rating_element' => new external_value(PARAM_RAW, 'Ratings'),
+                                'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
+                                // 'indexClass' => new external_value(PARAM_TEXT, 'Index Card Class'),
+                                'index' => new external_value(PARAM_INT, 'Index of Card'),
+                                 'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),
+                                 'label_name' => new external_value(PARAM_RAW, 'course_completedon'),
+                            )
+                        )
+                    ),
+                // 'viewMoreCard' => new external_value(PARAM_BOOL, 'More info card to display', false),
+                'menu_heading' => new external_value(PARAM_TEXT, 'heading string of the dashboard'),
+                'filter' => new external_value(PARAM_TEXT, 'filter for display data'),
+                'index' => new external_value(PARAM_INT, 'number of onlineexams count'),
+                'filter_text' => new external_value(PARAM_TEXT, 'filtertext content',VALUE_OPTIONAL),
+                'view_more_url' => new external_value(PARAM_URL, 'view_more_url for tab'),
+                'templatename' => new external_value(PARAM_TEXT, 'Templatename for tab content'),
+                'pluginname' => new external_value(PARAM_TEXT, 'Pluginname for tab content', VALUE_DEFAULT, 'local_onlineexams'),
+                'tabname' => new external_value(PARAM_TEXT, 'Pluginname for tab content', VALUE_DEFAULT, 'local_onlineexams'),
+                'status' => new external_value(PARAM_TEXT, 'Pluginname for tab content', VALUE_DEFAULT, 'local_onlineexams'),
+                )
+            )
+        )
+    ]);
     }
 }

@@ -17,10 +17,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * @package   local
- * @subpackage  courses
+ * @subpackage  onlineexams
  * @author eabyas  <info@eabyas.in>
 **/
-namespace local_courses\local;
+namespace local_onlineexams\local;
 class general_lib{
 	public function get_custom_data($fields = '*', $params){
 		global $DB;
@@ -48,34 +48,7 @@ class general_lib{
 		}
 	}
 
-	public function enable_enrollment_to_module($courseid, $user){
-		$coursecontext = \context_course::instance($courseid);
-		if(is_enrolled($coursecontext, $user, '', $onlyactive = true)){
-			return true;
-		}
-		$params = array('id' => $courseid);
-		$coursedata = $this->get_custom_data('*', $params);
-		if(($coursedata->open_path == $user->open_path) &&
-			($coursedata->open_departmentid == $user->open_departmentid
-				|| $coursedata->open_departmentid == 0) &&
-			($coursedata->open_subdepartment == $user->open_subdepartment
-				|| $coursedata->open_subdepartment == 0)
-		){
-			$classname = "\\local_request\\api\\requestapi";
-			if(class_exists($classname)){
-				$class = new $classname();
-				if($coursedata->selfenrol == 1 && $coursedata->approvalreqd == 1){
-					if(method_exists($class, 'create')){
-						$class->create('local_courses', $courseid);
-					}
-				}else if($coursedata->selfenrol == 1){
-					if(method_exists($class, 'enroll_to_component')){
-						$class->enroll_to_component('local_courses', $courseid, $user->id);
-					}
-				}
-			}
-		}
-	}
+	
 	public function get_completion_count_from($moduleid, $userstatus, $date = NULL){
 		global $DB;
 		$params = array('moduleid' => $moduleid);
@@ -108,7 +81,7 @@ class general_lib{
 	}
 
 	/******Function to the show the inprogress course names in the E-learning Tab********/
-    public static function inprogress_coursenames($filter_text='', $offset = 0, $limit = 10,$source = '') {
+    public static function inprogress_onlineexamnames($filter_text='', $offset = 0, $limit = 10,$source = '') {
         global $DB, $USER;
 
         $sqlquery = "SELECT course.* ";
@@ -117,9 +90,9 @@ class general_lib{
                 JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
 
-        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 0";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
         if($source == 'mobile'){
-            $sql .= " AND course.open_securecourse != 1 ";
+            $sql .= " AND course.open_securecourse != 1 AND course.open_coursetype = 1 AND course.open_module = 'online_exams'   ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -127,23 +100,27 @@ class general_lib{
            $params['coursename'] = '%'.$filter_text.'%';
         }
 
-        $sql .= " AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) ";
+        $sql .= " AND course.id NOT IN(SELECT DISTINCT(course) FROM {course_modules} cm
+        JOIN   {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id 
+        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id ) ";
 
         $sql .= ' order by ue.timecreated desc';
 
-        $inprogress_courses = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
+        $inprogress_onlineexams = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
 
-        return $inprogress_courses;
+        return $inprogress_onlineexams;
 
     }
 
-    public static function inprogress_coursenames_count($filter_text = '', $source = ''){
+    public static function inprogress_onlineexamnames_count($filter_text = '', $source = ''){
         global $USER, $DB;
         $sql = "SELECT COUNT(DISTINCT(course.id))  FROM {course} AS course
             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             WHERE ue.userid = {$USER->id}
-            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) AND course.open_coursetype = 0 ";
+            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT DISTINCT(course) FROM {course_modules} cm
+        JOIN   {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id 
+        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -158,16 +135,17 @@ class general_lib{
     /*********End of the Function*********/
 
     /******Function to the show the Completed course names in the E-learning Tab********/
-    public static function completed_coursenames($filter_text='', $offset = 0, $limit = 10, $source = '') {
+    public static function completed_onlineexamnames($filter_text='', $offset = 0, $limit = 10, $source = '') {
         global $DB, $USER;
-
-        $sqlquery = "SELECT cc.id as completionid,c.*";
-        $sql .= " FROM {course_completions} cc
-                JOIN {course} c ON c.id = cc.course AND cc.userid = $USER->id
+        $sql = '';
+        $sqlquery = "SELECT c.*";
+        $sql .= " FROM {course} c
+                JOIN {course_modules} as cm ON cm.course = c.id                
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
+                JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND ue.userid = cmc.userid
                 WHERE ue.userid = {$USER->id}
-                AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 0";
+                AND cmc.completionstate = 1 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams' ";
         if($source == 'mobile'){
            $sql .= " AND c.open_securecourse != 1 ";
         }
@@ -176,22 +154,23 @@ class general_lib{
            $sql .= "   AND ".$DB->sql_like('c.fullname', ':coursename', false);
            $params['coursename'] = '%'.$filter_text.'%';
         }
-        $sql .= " ORDER BY cc.timecompleted DESC ";
-        $coursenames = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
-        return $coursenames;
+        $sql .= " ORDER BY c.id DESC ";
+        $onlineexamnames = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
+        return $onlineexamnames;
     }
     /********end of the Function****/
 
-    public static function completed_coursenames_count($filter_text = '', $source = ''){
+    public static function completed_onlineexamnames_count($filter_text = '', $source = ''){
     	global $DB, $USER;
 
         $sql = "SELECT COUNT(DISTINCT(c.id))
-                FROM {course_completions} cc
-                JOIN {course} c ON c.id = cc.course AND cc.userid = {$USER->id}
+                FROM {course} c
+                JOIN {course_modules} as cm ON cm.course = c.id                
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
-                WHERE ue.userid = {$USER->id} AND c.visible = 1 AND c.id > 1
-                AND cc.timecompleted IS NOT NULL AND c.open_coursetype = 0 ";
+                JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND ue.userid = cmc.userid
+                WHERE ue.userid = {$USER->id}
+                AND cmc.completionstate = 1 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams'";
 
         if($source == 'mobile'){
             $sql .= " AND c.open_securecourse != 1 ";
@@ -204,26 +183,26 @@ class general_lib{
         $completed_count = $DB->count_records_sql($sql, $params);
         return $completed_count;
     }
-    public function get_courses_having_completion_criteria($courseid, $query = '', $offset = 0, $limit = 0){
+    public function get_onlineexams_having_completion_criteria($courseid, $query = '', $offset = 0, $limit = 0){
     	global $DB, $CFG;
     	require_once($CFG->libdir.'/completionlib.php');
-        $coursesSql = "SELECT DISTINCT c.id, c.fullname
+        $onlineexamsSql = "SELECT DISTINCT c.id, c.fullname
             FROM {course} c
             LEFT JOIN {course_completion_criteria} cc ON cc.courseinstance = c.id AND cc.course = {$courseid}
             INNER JOIN {course_completion_criteria} ccc ON ccc.course = c.id
             WHERE c.enablecompletion = ".COMPLETION_ENABLED."  AND c.id <> :courseid
 
-            AND c.open_path = (SELECT open_path FROM {course} WHERE id = :thiscourseid) AND c.open_coursetype = 0 ";
+            AND c.open_path = (SELECT open_path FROM {course} WHERE id = :thiscourseid) AND c.open_coursetype = 1 AND c.open_module = 'online_exams' ";
         $params = array('courseid' => $courseid, 'thiscourseid' => $courseid);
         if($query != ''){
-            $coursesSql .= " AND ".$DB->sql_like('c.fullname', ":search", false);
+            $onlineexamsSql .= " AND ".$DB->sql_like('c.fullname', ":search", false);
             $params['search'] = "%$query%";
         }
-        $courses = $DB->get_records_sql($coursesSql, $params, $offset, $limit);
-        return $courses;
+        $onlineexams = $DB->get_records_sql($onlineexamsSql, $params, $offset, $limit);
+        return $onlineexams;
     }
     /******Function to the show the enrolled course names in the E-learning Tab********/
-    public static function enrolled_coursenames($filter_text='', $offset = 0, $limit = 10, $source = '') {
+    public static function enrolled_onlineexamnames($filter_text='', $offset = 0, $limit = 10, $source = '') {
         global $DB, $USER;
 
         $sqlquery = "SELECT course.*";
@@ -232,7 +211,7 @@ class general_lib{
                 JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
 
-        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 0 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 1 AND course.open_module = 'online_exams' ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -243,19 +222,19 @@ class general_lib{
         }
 
         $sql .= ' order by ue.timecreated desc';
-        $enrolled_courses = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
+        $enrolled_onlineexams = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
 
-        return $enrolled_courses;
+        return $enrolled_onlineexams;
 
     }
-    public static function enrolled_coursenames_count($filter_text='', $source = ''){
+    public static function enrolled_onlineexamnames_count($filter_text='', $source = ''){
         global $USER, $DB;
         $sql = "SELECT COUNT(DISTINCT(course.id))  FROM {course} AS course
             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             JOIN {user} u ON u.id = ue.userid
             WHERE ue.userid = {$USER->id}
-            AND course.id <> 1 AND course.visible = 1 AND u.id > 2 AND u.suspended = 0 AND u.deleted = 0 AND course.open_coursetype = 0 ";
+            AND course.id <> 1 AND course.visible = 1 AND u.id > 2 AND u.suspended = 0 AND u.deleted = 0 AND course.open_coursetype = 1 AND course.open_module = 'online_exams' ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -267,7 +246,7 @@ class general_lib{
         $enrolled_count = $DB->count_records_sql($sql, $params);
         return $enrolled_count;
     }
-    public static function enrolled_coursenames_formobile($filter_text='', $offset = 0, $limit = 10, $type = '', $source = '') {
+    public static function enrolled_onlineexamnames_formobile($filter_text='', $offset = 0, $limit = 10, $type = '', $source = '') {
         global $DB, $USER;
 
         $sqlquery = "SELECT course.*";
@@ -278,7 +257,7 @@ class general_lib{
         if($type == 'recentlyaccessed'){
             $sql .= " JOIN {user_lastaccess} as ul ON ul.courseid = course.id AND ul.userid = $USER->id";
         }
-        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 0 ";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 1 AND course.open_module = 'online_exams' ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse = 0 ";
         }
@@ -293,9 +272,9 @@ class general_lib{
             $sql .= ' order by ue.timecreated desc';
         }
 
-        $enrolled_courses = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
+        $enrolled_onlineexams = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
 
-        return $enrolled_courses;
+        return $enrolled_onlineexams;
 
     }
     public function get_course_info($id){
@@ -320,7 +299,7 @@ class general_lib{
             }
             $course->bannerimage = \local_search\output\searchlib::convert_urlobject_intoplainurl($course);
 
-            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_courses'));
+            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $course->id, 'module_area' => 'local_onlineexams'));
             if($ratinginfo){
                 $course->avgrating = $ratinginfo->module_rating;
                 $course->ratedusers = $ratinginfo->module_rating_users;
@@ -335,7 +314,7 @@ class general_lib{
             if($course->open_level)
                 $course->level = ($DB->get_field('local_course_levels','name',array('id' => $course->open_level))) ;
 
-            $course->module = 'local_courses';
+            $course->module = 'local_onlineexams';
             return $course;
         }else{
             throw new \Exception('Course not found');

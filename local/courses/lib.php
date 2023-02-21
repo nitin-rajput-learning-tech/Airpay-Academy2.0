@@ -936,7 +936,7 @@ function coursetype_filter($mform){
     global $DB,$USER;
     $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $coursetypeql = "SELECT id, name FROM {local_course_types} ";
-    $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams);
+    $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams=null);
     $select = $mform->addElement('autocomplete', 'coursetype', get_string('type','local_courses'), $coursetypes);
     $mform->setType('coursetype',PARAM_RAW);
     $select->setMultiple(true);

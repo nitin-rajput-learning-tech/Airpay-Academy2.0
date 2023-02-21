@@ -259,7 +259,7 @@ class custom_onlineexams_form extends moodleform {
             // Completion tracking.
   			$mform->addElement('hidden', 'enablecompletion');
   			$mform->setType('enablecompletion', PARAM_INT);
-  			$mform->setDefault('enablecompletion', 0);
+  			$mform->setDefault('enablecompletion', 1);
 
             // Custom Course type .
   			$mform->addElement('hidden', 'custom_coursetype');
@@ -316,7 +316,7 @@ class custom_onlineexams_form extends moodleform {
             // $mform->setType('maxgrade', PARAM_FLOAT);
             
             $mform->addElement('text', 'gradepass', get_string('gradepass', 'local_onlineexams'));
-            $mform->addRule('gradepass', get_string('missinggrade', 'local_onlineexams'), 'required', null, 'client');
+            $mform->addRule('gradepass', get_string('entergradepass', 'local_onlineexams'), 'required', null, 'client');
             $mform->setType('gradepass', PARAM_FLOAT);
 
             $mform->addElement('select', 'grademethod', get_string('grademethod', 'quiz'),
@@ -564,6 +564,11 @@ class custom_onlineexams_form extends moodleform {
             }
             
           }
+          if (isset($data['gradepass']) && $data['form_status'] == 0){
+            if($data['gradepass'] == 0){
+                $errors['gradepass'] = get_string('entergradepass', 'local_onlineexams');
+            }
+        }
 
         // if(isset($data['open_cost']) && $data['open_cost']){
         //     $value = $data['open_cost'];

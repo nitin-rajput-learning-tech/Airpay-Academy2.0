@@ -22,8 +22,6 @@
  * @package BizLMS
  * @subpackage local_onlineexams
  */
-define('elearning', 1);
-define('courses', 1);
 
 if(file_exists($CFG->dirroot.'/local/costcenter/lib.php')){
     require_once($CFG->dirroot.'/local/costcenter/lib.php');                  
@@ -195,7 +193,7 @@ function get_listof_onlineexams($stable, $filterdata) {
                      ";
         
     $formsql .= " AND c.id > 1  $open_path";
-    $formsql .= " AND c.course_type ='online_exams'  $open_path AND custom_coursetype = 1";
+    $formsql .= " AND c.open_module ='online_exams'  $open_path AND open_coursetype = 1 ";
     $params=array();
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";
@@ -491,10 +489,10 @@ function get_listof_onlineexams($stable, $filterdata) {
             if(has_capability('local/onlineexams:enrol',$maincheckcontext)&&has_capability('local/onlineexams:manage', $maincheckcontext)){
                 $courseslist[$count]["enrollusers"] = $CFG->wwwroot."/local/onlineexams/onlineexamsenrol.php?id=".$course->id."&enrolid=".$enrolid;
             }
-            if(has_capability('moodle/course:view', $context) || is_enrolled($context)){
+            if(has_capability('local/onlineexams:view', $context) || is_enrolled($context)){
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
             }else{
-                $courseslist[$count]["courseurl"] = $CFG->wwwroot."/local/search/coursedetails.php?id=".$course->id;
+                $courseslist[$count]["courseurl"] = $CFG->wwwroot."/local/onlineexams/onlinexamdetails.php?id=".$course->id;
             }
 
             if($departmentcount > 1 && !(is_siteadmin())) {
@@ -503,7 +501,7 @@ function get_listof_onlineexams($stable, $filterdata) {
              }   
 
 
-            if(has_capability('local/onlineexams:update',$context)&&has_capability('local/onlineexams:manage', $context)&&has_capability('moodle/course:update', $context)){
+            if(has_capability('local/onlineexams:update',$context)&&has_capability('local/onlineexams:manage', $context)){
                 $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')).get_string('edit') , array('title' => get_string('edit'), 'alt' => get_string('edit'),'data-action' => 'createcoursemodal', 'class'=>'createcoursemodal dropdown-item', 'data-value'=>$course->id, 'onclick' =>'(function(e){ require("local_onlineexams/onlineexamsAjaxform").init({contextid:'.$context->id.', component:"local_onlineexams", callback:"custom_onlineexams_form", form_status:0, plugintype: "local", pluginname: "onlineexams", courseid: ' . $course->id . ' }) })(event)'));
                 $courseslist[$count]["editcourse"] = $courseedit;
                 if($course->visible){
@@ -536,7 +534,7 @@ function get_listof_onlineexams($stable, $filterdata) {
                   $courseslist[$count]["auto_enrol"] = '';
              }   
 
-           if(has_capability('local/onlineexams:delete',$context)&&has_capability('local/onlineexams:manage', $context)&&has_capability('moodle/course:delete', $context)){
+           if(has_capability('local/onlineexams:delete',$context)&&has_capability('local/onlineexams:manage', $context)){
                 $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')).get_string('delete'), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
                 $courseslist[$count]["deleteaction"] = $deleteactionshtml;
            
@@ -635,7 +633,7 @@ function local_onlineexams_leftmenunode(){
     global $DB, $USER;
 	$categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
-    if(has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) || is_siteadmin()) {
+    if(has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsecourses', 'class'=>'pull-left user_nav_div browsecourses'));
             $courses_url = new moodle_url('/local/onlineexams/index.php');
             $courses = html_writer::link($courses_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">'.get_string('manage_onlineexams','local_onlineexams').'</span>',array('class'=>'user_navigation_link'));
@@ -649,7 +647,7 @@ function local_onlineexams_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;
 	$categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
     $content = '';
-    if (has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) || is_siteadmin()){
+    if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()){
         $PAGE->requires->js_call_amd('local_onlineexams/onlineexamsAjaxform', 'load');
        
         $coursedata = array();
