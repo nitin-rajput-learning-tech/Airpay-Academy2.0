@@ -259,7 +259,7 @@ class custom_onlineexams_form extends moodleform {
             // Completion tracking.
   			$mform->addElement('hidden', 'enablecompletion');
   			$mform->setType('enablecompletion', PARAM_INT);
-  			$mform->setDefault('enablecompletion', 0);
+  			$mform->setDefault('enablecompletion', 1);
 
             // Custom Course type .
   			$mform->addElement('hidden', 'custom_coursetype');
