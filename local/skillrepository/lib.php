@@ -338,7 +338,7 @@ function skills_category_details($tablelimits, $filtervalues){
 
 
 function local_skillrepository_output_fragment_skills_interested($args){
- 
+
     global $CFG, $DB;
     $args = (object) $args;
     $context = $args->context;
@@ -357,9 +357,9 @@ function local_skillrepository_output_fragment_skills_interested($args){
         $formdata = new stdClass();
         $formdata->id = $data->id;
         $formdata->interested_skill_ids = $data->interestes_skill_ids;
-        
+
         $fromsql="SELECT * FROM {local_skill} AS sk WHERE sk.id >0 ";
-        $ordersql= " ORDER BY sk.id DESC";     
+        $ordersql= " ORDER BY sk.id DESC";
         if($data->interested_skill_ids){
                 $fromsql .=" AND sk.id IN ($data->interested_skill_ids) ";
         }
@@ -375,11 +375,10 @@ function local_skillrepository_output_fragment_skills_interested($args){
     'intskill_id' => $intskill_id,
     'interested_skill_ids' => $formdata->featured_course_ids,
     'context' => $context
-    ); 
-   
+    );
+
     $mform = new local_skillrepository\form\skills_interested_form(null, array('contextid'=> $context, 'interested_skills' => $formdata->skills,'intskill_id' => $intskill_id ), 'post', '', null, true, (array)$formdata);
     $mform->set_data($formdata);
-    
     if (!empty($formdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
@@ -389,5 +388,50 @@ function local_skillrepository_output_fragment_skills_interested($args){
     $o .= ob_get_contents();
     ob_end_clean();
     return $o;
- 
+
+}
+
+function local_skillrepository_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $systemcontext =(new \local_skillrepository\lib\accesslib())::get_module_context();
+    $content = '';
+    if(has_capability('local/skillrepository:manage', $systemcontext) || is_siteadmin()) {
+        // skill
+        $skills_Query = "SELECT count(id) FROM {local_skill}";
+        if(!is_siteadmin()){
+            $skills_Query .=" WHERE open_path = '/$costcenterid'";
+        }
+        $totalskill = $DB->count_records_sql($skills_Query);
+
+        if($totalskill > 0) {
+            $skill = '('.$totalskill.')';
+        }
+
+
+        // level
+        $levels = "SELECT count(id) FROM {local_course_levels}";
+        if(!is_siteadmin()){
+            $levels .=" WHERE open_path = '/$costcenterid'";
+        }
+        $totallevel = $DB->count_records_sql($levels);
+
+        if($totallevel > 0) {
+            $lev = '('.$totallevel.')';
+        } /*else {
+            $lev = '<i class="fa fa-times" aria-hidden="true"></i>';
+        }*/
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $skill;
+        $templatedata['link'] = $CFG->wwwroot.'/local/skillrepository/index.php';
+        $templatedata['stringname'] = get_string('skill','block_masterinfo');
+        $templatedata['show2'] = true;
+        $templatedata['count2'] = $lev;
+        $templatedata['link2'] = $CFG->wwwroot.'/local/skillrepository/level.php';
+        $templatedata['stringname2'] = get_string('level','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('4' => $content);
 }

@@ -307,3 +307,36 @@ function local_assignroles_leftmenunode()
     }
     //return array('4' => $assignrolesnode);
 }
+
+function local_assignroles_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $context = (new \local_assignroles\lib\accesslib())::get_module_context();
+    $content = '';
+    if (has_capability('local/assignroles:manageassignroles', $context) || is_siteadmin()) {
+
+        // trainer
+        $trainers = "SELECT count(ra.id) FROM {role_assignments} AS ra";
+        if(!is_siteadmin()){
+            $trainers .=" JOIN {context} AS ctx ON ctx.id = ra.contextid AND ra.roleid = 10
+            JOIN {course_categories} AS cc ON cc.id = ctx.instanceid AND ctx.contextlevel = 40
+            JOIN {local_costcenter} AS lc ON lc.category = cc.id
+            WHERE lc.id = $costcenterid";
+        } else{
+            $trainers .=" WHERE ra.roleid = 10";
+        }
+        $totaltrainers = $DB->count_records_sql($trainers);
+
+        if($totaltrainers > 0) {
+            $trainer = '('.$totaltrainers.')';
+        }
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $trainer;
+        $templatedata['link'] = '';
+        $templatedata['stringname'] = get_string('trainer','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('9' => $content);
+}

@@ -1401,3 +1401,4 @@ function local_classroom_enabled_search(){
 function  local_classroom_applicable_filters_for_search_page(&$filterapplicable){
     $filterapplicable[classroom] = [/*'learningtype',*/ 'status', 'categories'/*, 'level', 'skill'*/];
 }
+

@@ -582,3 +582,31 @@ function get_reportdashboard(){
 
     return $params;
 }
+
+function block_learnerscript_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+    $content = '';
+    if(has_capability('block/learnerscript:viewreports', $systemcontext) || is_siteadmin()) {
+
+        // reports
+        $reports = "SELECT count(id) FROM {block_learnerscript}";
+        // if(!is_siteadmin()){
+        //     $reports .=" WHERE open_path = '/$costcenterid'";
+        // }
+        $totalreports = $DB->count_records_sql($reports);
+
+        if($totalreports > 0) {
+            $report = '('.$totalreports.')';
+        }
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $report;
+        $templatedata['link'] = $CFG->wwwroot.'/blocks/learnerscript/reportsview.php';
+        $templatedata['stringname'] = get_string('report','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('5' => $content);
+}
