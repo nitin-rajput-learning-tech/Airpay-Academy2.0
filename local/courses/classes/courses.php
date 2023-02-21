@@ -71,12 +71,10 @@ class courses {
                                 WHERE 1=1 $costcenterpathconcatsql ";
 
                 $user_costcenter = $DB->record_exists_sql($usercostcentersql);
-
                 $coursecostcentersql = "SELECT id FROM {course}
                                 WHERE 1=1 $costcenterpathconcatsql ";
 
                 $course_costcenter = $DB->record_exists_sql($coursecostcentersql);
-
 
                 if (!$user_costcenter || !$course_costcenter) {
 
@@ -84,7 +82,7 @@ class courses {
                     return ['status' => false, 'message' => $message];
 
                 }else{
-                    return ['status' => false, 'message' => ''];
+                    return ['status' => true, 'message' => ''];
                 }
             }
         }

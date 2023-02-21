@@ -195,22 +195,22 @@ class local_assignroles_external extends external_api {
 
                         $hierarchydepth = count(array_filter(explode('/',$hierarchypath)));
 
-                        if($hierarchydepth == 5){
+                        // if($hierarchydepth == 5){
 
-                            $sql .=" OR r.shortname LIKE 'tbm'";
-                        }
-                        if($hierarchydepth == 4){
-                            $sql .=" OR r.shortname LIKE 'cah'";
-                        }
-                        if($hierarchydepth == 3){
-                           $sql .=" OR r.shortname LIKE 'cuh'";
-                        }
-                        if($hierarchydepth == 2){
-                            $sql .=" OR r.shortname LIKE 'ch'";
-                        }
-                        if($hierarchydepth == 1){
+                        //     $sql .=" OR r.shortname LIKE 'tbm'";
+                        // }
+                        // if($hierarchydepth == 4){
+                        //     $sql .=" OR r.shortname LIKE 'cah'";
+                        // }
+                        // if($hierarchydepth == 3){
+                        //    $sql .=" OR r.shortname LIKE 'cuh'";
+                        // }
+                        // if($hierarchydepth == 2){
+                        //     $sql .=" OR r.shortname LIKE 'ch'";
+                        // }
+                        // if($hierarchydepth == 1){
                             $sql .=" OR r.shortname LIKE 'administrator'";
-                        }
+                        // }
                     }
 
                     $sql .=" )";
