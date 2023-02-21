@@ -492,7 +492,7 @@ function get_listof_onlineexams($stable, $filterdata) {
             if(has_capability('local/onlineexams:view', $context) || is_enrolled($context)){
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
             }else{
-                $courseslist[$count]["courseurl"] = $CFG->wwwroot."/local/search/coursedetails.php?id=".$course->id;
+                $courseslist[$count]["courseurl"] = $CFG->wwwroot."/local/onlineexams/onlinexamdetails.php?id=".$course->id;
             }
 
             if($departmentcount > 1 && !(is_siteadmin())) {
@@ -633,7 +633,7 @@ function local_onlineexams_leftmenunode(){
     global $DB, $USER;
 	$categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
-    if(has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) || is_siteadmin()) {
+    if(has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsecourses', 'class'=>'pull-left user_nav_div browsecourses'));
             $courses_url = new moodle_url('/local/onlineexams/index.php');
             $courses = html_writer::link($courses_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">'.get_string('manage_onlineexams','local_onlineexams').'</span>',array('class'=>'user_navigation_link'));
@@ -647,7 +647,7 @@ function local_onlineexams_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;
 	$categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
     $content = '';
-    if (has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) || is_siteadmin()){
+    if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()){
         $PAGE->requires->js_call_amd('local_onlineexams/onlineexamsAjaxform', 'load');
        
         $coursedata = array();
