@@ -244,7 +244,8 @@ function xmldb_local_courses_install(){
         array('name' => 'E-Learning', 'active' => '1','shortname' => 'elearning','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
         array('name' => 'Learning Path', 'active' => '1','shortname' => 'learningpath','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
         array('name' => 'Exams', 'active' => '1','shortname' => 'exams','usercreated' => '2','orgid'=>'0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
-        array('name' => 'Forums', 'active' => '1','shortname' => 'forums','usercreated' => '2','orgid'=>'0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),       
+        array('name' => 'Forums', 'active' => '1','shortname' => 'forums','usercreated' => '2','orgid'=>'0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+        array('name' => 'Program', 'active' => '1','shortname' => 'program','orgid'=>'0','usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
     );
     foreach ($course_type_data as $course_type) {
         unset($course_type['timecreated']);

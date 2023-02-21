@@ -30,6 +30,8 @@ use completion_completion;
 use html_table;
 use html_writer;
 use core_component;
+use \local_courses\action\insert as insert;
+
 require_once($CFG->dirroot . '/local/program/lib.php');
 if (file_exists($CFG->dirroot . '/local/lib.php')) {
   require_once($CFG->dirroot . '/local/lib.php');
@@ -2183,20 +2185,34 @@ class program {
      * @return [type]                                       [description]
      */
     public function manage_bclevel_course_enrolments($course, $user, $role = 'employee',
-        $type = 'enrol', $pluginname = 'program') {
+        $type = 'enrol', $pluginname = 'program',$programid=null) {
         global $DB;
-        $courseexist=$DB->record_exists('enrol', array('courseid' => $course, 'enrol' => $pluginname));
-        if($courseexist){ 
-          $enrolmethod = enrol_get_plugin($pluginname);
-          $roleid = $DB->get_field('role', 'id', array('shortname' => $role));
-          $instance = $DB->get_record('enrol', array('courseid' => $course, 'enrol' => $pluginname), '*', MUST_EXIST);
-          if (!empty($instance)) {
-              if ($type == 'enrol') {
-                  $enrolmethod->enrol_user($instance, $user, $roleid, time());
-              } else if ($type == 'unenrol') {
-                  $enrolmethod->unenrol_user($instance, $user, $roleid, time());
-              }
-          }
+
+        $params =array(
+            'courseid' => $course,
+            'enrol' => $pluginname
+        );
+        if($programid !== null){
+            $params['customint1']=$programid;
+        }
+        $courseexist = $DB->record_exists('enrol', $params);
+        if (!$courseexist) {
+            $coursedata = $DB->get_record('course', array('id' => $course));
+            $coursedata->open_identifiedas = '5';
+            insert::add_enrol_method_tocourse($coursedata, 5);
+        }
+
+        $enrolmethod = enrol_get_plugin($pluginname);
+        $roleid      = $DB->get_field('role', 'id', array(
+            'shortname' => $roleshortname
+        ));
+        $instance    = $DB->get_record('enrol',$params , '*', MUST_EXIST);
+        if (!empty($instance)) {
+            if ($type == 'enrol') {
+                $enrolmethod->enrol_user($instance, $user, $roleid, time());
+            } else if ($type == 'unenrol') {
+                $enrolmethod->unenrol_user($instance, $user, $roleid, time());
+            }
         }
         return true;
     }

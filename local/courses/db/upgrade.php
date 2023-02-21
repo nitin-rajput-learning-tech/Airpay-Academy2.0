@@ -155,6 +155,7 @@ function xmldb_local_courses_upgrade($oldversion)
                 array('name' => 'Learning Path', 'active' => '1', 'shortname' => 'learningpath', 'orgid' => '0', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
                 array('name' => 'Exams', 'active' => '1', 'shortname' => 'exams', 'usercreated' => '2', 'orgid' => '0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
                 array('name' => 'Forums', 'active' => '1', 'shortname' => 'forums', 'usercreated' => '2', 'orgid' => '0', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
+                array('name' => 'Program', 'active' => '1', 'shortname' => 'program', 'orgid' => '0', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL)
 
             );
             foreach ($course_type_data as $course_type) {
@@ -182,6 +183,27 @@ function xmldb_local_courses_upgrade($oldversion)
             $dbman->add_field($table, $field1);
         }
         upgrade_plugin_savepoint(true, 2022101800.10, 'local', 'courses');
+    }
+    if ($oldversion < 2022101800.17) {
+        $time = time();
+
+        $table = new xmldb_table('local_course_types');
+
+        if ($dbman->table_exists($table)) {
+            $course_type_data = array(
+
+                array('name' => 'Program', 'active' => '1', 'shortname' => 'program', 'orgid' => '0', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL)
+
+            );
+            foreach ($course_type_data as $course_type) {
+                unset($course_type['timecreated']);
+                if (!$DB->record_exists('local_course_types',  $course_type)) {
+                    $course_type['timecreated'] = $time;
+                    $DB->insert_record('local_course_types', $course_type);
+                }
+            }
+        }
+        upgrade_plugin_savepoint(true, 2022101800.17, 'local', 'courses');
     }
     return true;
 }

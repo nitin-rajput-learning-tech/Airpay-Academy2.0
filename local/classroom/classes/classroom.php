@@ -1827,8 +1827,8 @@ class classroom {
         $courseexist = $DB->record_exists('enrol', $params);
         if (!$courseexist) {
             $coursedata = $DB->get_record('course', array('id' => $cousre));
-            $coursedata->open_identifiedas = '2';
-            insert::add_enrol_method_tocourse($coursedata, 2);
+            $coursedata->open_identifiedas = '5';
+            insert::add_enrol_method_tocourse($coursedata, 5);
         }
 
         $enrolmethod = enrol_get_plugin($pluginname);
