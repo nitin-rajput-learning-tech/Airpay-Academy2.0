@@ -23,7 +23,7 @@
  */
 
 require_once(dirname(__FILE__) . '/../../config.php');
-require_once($CFG->dirroot . '/local/courses/filters_form.php');
+require_once($CFG->dirroot . '/local/program/filters_form.php');
 $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 require_login();
 $value = '';
@@ -124,6 +124,7 @@ echo  '<div class="collapse '.$show.'" id="local_courses-filter_collapse">
 echo        '</div>
         </div>';
 
+
 $display_url = new moodle_url('/local/program/index.php');
 if($costcenterid){
   $display_url->param('costcenterid', $costcenterid);
@@ -154,15 +155,16 @@ $displaytype_div .= '</div>';
 
 echo $displaytype_div;
 
-$stable = new stdClass();
-$stable->costcenterid = $costcenterid;
-$stable->departmentid = $departmentid;
-$stable->subdepartmentid = $subdepartmentid;
-$stable->l4department = $l4department;
-$stable->l5department = $l5department;
-echo $renderer->get_program_tabs($stable,$programid,$status,$formattype);
+
+echo $renderer->get_program_tabs($datasubmitted,$programid,$status,$formattype);
+
+$organization = !empty(array_filter($datasubmitted->filteropen_costcenterid)) ? implode(',', array_filter($datasubmitted->filteropen_costcenterid)) : '';
+$department = !empty(array_filter($datasubmitted->filteropen_department)) ? implode(',', array_filter($datasubmitted->filteropen_department)) : '';
+$subdepartment = !empty(array_filter($datasubmitted->filteropen_subdepartment)) ? implode(',', array_filter($datasubmitted->filteropen_subdepartment)) : '';
+$department4level = !empty(array_filter($datasubmitted->filteropen_department4level)) ? implode(',', array_filter($datasubmitted->filteropen_department4level)) : '';
+$department5level = !empty(array_filter($datasubmitted->filteropen_department5level)) ? implode(',', array_filter($datasubmitted->filteropen_department5level)) : '';
 
 $PAGE->requires->js_call_amd('local_program/program', 'programDatatable',
-                    array(array('programstatus' => -1,'selectedcostcenterid' => $costcenterid,'selecteddepartmentid' => $departmentid,'selectedsubdepartmentid' => $subdepartmentid,'selectedl4department' => $l4department,'selectedl5department' => $l5department,'selectedprogram' => $programid ,'selectedstatus' => $status)));
+                    array(array('programstatus' => -1,'selectedcostcenterid' => $organization,'selecteddepartmentid' => $department,'selectedsubdepartmentid' => $subdepartment,'selectedl4department' => $department4level,'selectedl5department' => $department5level,'selectedprogram' => $programid ,'selectedstatus' => $status)));
 
 echo $OUTPUT->footer();
