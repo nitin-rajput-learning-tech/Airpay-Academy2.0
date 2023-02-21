@@ -51,6 +51,7 @@ $string['nocertificationavailable'] = 'No Certifications available';
 $string['nolearningplansavailable'] = 'No Learning Paths available';
 $string['noevaluationsavailable'] = 'No Feedbacks available';
 $string['noonlinetestsavailable'] = 'No Exams available';
+$string['noonlineexamsavailable']= 'No Online Exams Available';
 $string['pending'] = 'Pending';
 $string['elearningcourses'] = 'E-Learning';
 $string['cancelled'] = 'Cancelled';

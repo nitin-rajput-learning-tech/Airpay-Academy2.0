@@ -100,7 +100,9 @@ class general_lib{
            $params['coursename'] = '%'.$filter_text.'%';
         }
 
-        $sql .= " AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) ";
+        $sql .= " AND course.id NOT IN(SELECT DISTINCT(course) FROM {course_modules} cm
+        JOIN   {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id 
+        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id ) ";
 
         $sql .= ' order by ue.timecreated desc';
 
@@ -116,7 +118,9 @@ class general_lib{
             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             WHERE ue.userid = {$USER->id}
-            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
+            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT DISTINCT(course) FROM {course_modules} cm
+        JOIN   {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id 
+        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -133,14 +137,15 @@ class general_lib{
     /******Function to the show the Completed course names in the E-learning Tab********/
     public static function completed_onlineexamnames($filter_text='', $offset = 0, $limit = 10, $source = '') {
         global $DB, $USER;
-
-        $sqlquery = "SELECT cc.id as completionid,c.*";
-        $sql .= " FROM {course_completions} cc
-                JOIN {course} c ON c.id = cc.course AND cc.userid = $USER->id
+        $sql = '';
+        $sqlquery = "SELECT c.*";
+        $sql .= " FROM {course} c
+                JOIN {course_modules} as cm ON cm.course = c.id                
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
+                JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND ue.userid = cmc.userid
                 WHERE ue.userid = {$USER->id}
-                AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams' ";
+                AND cmc.completionstate = 1 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams' ";
         if($source == 'mobile'){
            $sql .= " AND c.open_securecourse != 1 ";
         }
@@ -149,7 +154,7 @@ class general_lib{
            $sql .= "   AND ".$DB->sql_like('c.fullname', ':coursename', false);
            $params['coursename'] = '%'.$filter_text.'%';
         }
-        $sql .= " ORDER BY cc.timecompleted DESC ";
+        $sql .= " ORDER BY c.id DESC ";
         $onlineexamnames = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
         return $onlineexamnames;
     }
@@ -159,12 +164,13 @@ class general_lib{
     	global $DB, $USER;
 
         $sql = "SELECT COUNT(DISTINCT(c.id))
-                FROM {course_completions} cc
-                JOIN {course} c ON c.id = cc.course AND cc.userid = {$USER->id}
+                FROM {course} c
+                JOIN {course_modules} as cm ON cm.course = c.id                
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
-                WHERE ue.userid = {$USER->id} AND c.visible = 1 AND c.id > 1
-                AND cc.timecompleted IS NOT NULL AND c.open_coursetype = 1 AND c.open_module = 'online_exams' ";
+                JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND ue.userid = cmc.userid
+                WHERE ue.userid = {$USER->id}
+                AND cmc.completionstate = 1 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams'";
 
         if($source == 'mobile'){
             $sql .= " AND c.open_securecourse != 1 ";

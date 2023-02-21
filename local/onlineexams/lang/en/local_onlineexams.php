@@ -439,3 +439,7 @@ $string['onlineexams'] = 'Online Exams';
 $string['view_onlineexams'] = 'View Online Exams';
 $string['manage_br_onlineexams'] = 'Manage Online Exams';
 $string['entergradepass'] = "Please enter Grade pass";
+$string['noonlineexamsavailable']= 'No Online Exams Available';
+$string['enrolled_onlineexams'] = "My Online Exams";
+$string['inprogress_onlineexams'] = "My Online Exams";
+$string['completed_onlineexams'] = "My Online Exams";
