@@ -16,9 +16,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * local courses
+ * local onlineexams
  *
- * @package    local_courses
+ * @package    local_onlineexams
  * @copyright  2019 eAbyas <eAbyas.in>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -56,7 +56,7 @@ $functions = array(
         'classname' => 'local_onlineexams_external',
         'methodname' => 'onlineexams_view',
         'classpath' => 'local/onlineexams/classes/external.php',
-        'description' => 'List all courses in card view',
+        'description' => 'List all onlineexams in card view',
         'ajax' => true,
         'type' => 'read',
     ),
@@ -64,9 +64,28 @@ $functions = array(
         'classname' => 'local_onlineexams_external',
         'methodname' => 'course_update_status',
         'classpath' => 'local/onlineexams/classes/external.php',
-        'description' => 'List all courses in card view',
+        'description' => 'List all onlineexams in card view',
         'ajax' => true,
         'type' => 'read',
     ),
+    'local_onlineexams_userdashboard_content' => array(
+        'classname'    => 'local_onlineexams_external',
+        'methodname'   => 'data_for_onlineexams',
+        'classpath'    => 'local/onlineexams/classes/external.php',
+        'description'  => 'Load the data for the elearning onlineexams in Userdashboard.',
+        'type'         => 'read',
+        'capabilities' => '',
+        'ajax'         => true,
+    ),
+    'local_onlineexams_userdashboard_content_paginated' => array(
+        'classname'    => 'local_onlineexams_external',
+        'methodname'   => 'data_for_onlineexams_paginated',
+        'classpath'    => 'local/onlineexams/classes/external.php',
+        'description'  => 'Load the data for the elearning onlineexams in Userdashboard.',
+        'type'         => 'read',
+        'capabilities' => '',
+        'ajax'         => true,
+    ),
+
    );
 

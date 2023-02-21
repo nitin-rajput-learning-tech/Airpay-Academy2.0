@@ -27,13 +27,27 @@ function xmldb_local_onlineexams_upgrade($oldversion)
 {
     global $DB, $CFG;
     $dbman = $DB->get_manager();    
-    if ($oldversion < 2023021500.07) {
-        $table = new xmldb_table('course');
-        $field1 = new xmldb_field('custom_coursetype', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);
-        if (!$dbman->field_exists($table, $field1)) {
-            $dbman->add_field($table, $field1);
+    if ($oldversion < 2023021500.08) {
+        $time = time();
+        $initcontent = array('name' => 'Online Exam','shortname' => 'onlineexam','parent_module' => '0','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'onlineexams');
+        $parentid = $DB->get_field('local_notification_type', 'id', array('shortname' => 'onlineexam'));
+        if(!$parentid){
+            $parentid = $DB->insert_record('local_notification_type', $initcontent);
         }
-        upgrade_plugin_savepoint(true, 2023021500.07, 'local', 'onlineexams');
+        $notification_type_data = array(
+            array('name' => 'Online Exam Enrollment','shortname' => 'onlineexam_enrol','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'onlineexams'),
+            array('name' => 'Online Exam Completion','shortname' => 'onlineexam_complete','parent_module' => $parentid, 'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'onlineexams'),
+            array('name' => 'Online Exam Unenrollment','shortname' => 'onlineexam_unenroll','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'onlineexams'),
+            
+        );
+        foreach($notification_type_data as $notification_type){
+            unset($notification_type['timecreated']);
+            if(!$DB->record_exists('local_notification_type',  $notification_type)){
+                $notification_type['timecreated'] = $time;
+                $DB->insert_record('local_notification_type', $notification_type);
+            }
+        }
+        upgrade_plugin_savepoint(true, 2023021500.08, 'local', 'onlineexams');
     }
     return true;
 }

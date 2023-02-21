@@ -60,7 +60,7 @@ class courses {
         return $return;
     }
     public static function can_access_course($courseid, $userid){
-        global $DB, $CFG;
+        global $DB, $CFG,$COURSE;
         $coursecontext = \context_course::instance($courseid, MUST_EXIST);
         if(!is_enrolled(\context_course::instance($COURSE->id))){
             if (!(is_siteadmin())) {

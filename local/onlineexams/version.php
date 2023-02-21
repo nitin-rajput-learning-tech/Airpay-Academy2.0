@@ -25,7 +25,7 @@
 
 
 defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2023021500.07;          // The current plugin version (Date: YYYYMMDDXX)
+$plugin->version = 2023021500.09;          // The current plugin version (Date: YYYYMMDDXX)
 $plugin->requires  = 2017110800;        // Requires this Moodle version
 // $plugin->maturity = MATURITY_STABLE;
 $plugin->component = 'local_onlineexams';

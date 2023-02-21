@@ -91,79 +91,11 @@ $renderer = $PAGE->get_renderer('local_onlineexams');
 $extended_menu_links = '';  
 $extended_menu_links = '<div class="course_contextmenu_extended">
             <ul class="course_extended_menu_list">';
+
+
+           
+
 if(is_siteadmin() ||(
-        has_capability('moodle/course:create', $categorycontext)|| has_capability('moodle/course:update', $categorycontext)||has_capability('local/courses:manage', $categorycontext))){
-     $sql = "SELECT id,name FROM {block_learnerscript} WHERE category = 'course'" ;
-     $coursereports = $DB->get_records_sql($sql);
-     
- $extended_menu_links .= '<li><div class="dropdown"><a href="#" tabindex="0" class=" dropdown-toggle icon-no-margin" id="dropdown-1" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" aria-controls="reportswitch" title="'.get_string('course_reports','local_onlineexams').'">            
-            <i class="icon fa fa-signal" aria-hidden="true"></i>
-        </a>';
-
-
-$extended_menu_links .= '<div class="dropdown-menu dropdown-menu-right menu  align-tr-br" id="reportswitch" data-rel="menu-content" aria-labelledby="action-menu-toggle-1" role="menu" data-align="tr-br">';
- $reports_info = array();
- if($coursereports){
-
-     foreach($coursereports as $course){
-        $reports = array();
-        $reports['id'] = $course->id;
-        $reports['name'] = $course->name;
-        $reports_info[] = $reports;
-        $extended_menu_links .= '<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>
-                                            <a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$course->id.' class="dropdown-item menu-action" role="menuitem" data-title="'.$course->name.'" aria-labelledby="'.$course->name.'"target="_blank">
-                                                <span class="menu-action-text">
-                                                    '.$course->name.'
-                                                </span>
-                                            </a>';
-
-       }
-}else{
-
-    $url = $CFG->wwwroot . '/blocks/learnerscript/reportsview.php';
-    $enable = get_string('enablereports', 'local_onlineexams', $url);
-
-    $extended_menu_links .= '<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>
-                                            '.$OUTPUT->notification($enable, 'notifyerror');
-
-}
-$extended_menu_links .= '</div></div></li>';
-    if ((has_capability('local/courses:exportcourses', $categorycontext) || is_siteadmin())) {
-        $extended_menu_links .= "<li>
-            <div class='coursebackup course_extended_menu_itemcontainer'>
-                <a id='extended_menu_downloadusers' title='".get_string('exportcourses','local_onlineexams')."' class='course_extended_menu_itemlink custom_content_download' data-href='$CFG->wwwroot/local/courses/exportcsv.php' href='javascript:void(0);'>
-                    <i class='icon fa fa-download fa-fw' aria-hidden='true' aria-label=''></i>
-                </a>
-            </div>
-        </li>";
-    }
-}
-if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
-    $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
-                            <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('request', 'local_request').'" href = '.$CFG->wwwroot.'/local/request/index.php?component=elearning>
-                                <i class="icon fa fa-share-square" aria-hidden="true"></i>
-                            </a>
-                        </div></li>';
-} 
-if(is_siteadmin() ||(
-    has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
-    $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
-                                <a href='.$CFG->wwwroot.'/local/courses/coursestypes.php class="pull-right course_extended_menu_itemlink" title = "'.get_string('add_course_type','local_onlineexams').'">
-                                    <span class="createicon">
-                                    <i class="icon fa fa-book"></i>
-                                    <i class="fa fa-sitemap createiconchild" aria-hidden="true"></i>
-                                    </span>
-                                </a>
-                            </div></li>';
-}              
-if(((has_capability('local/costcenter:create', $categorycontext)&&has_capability('local/courses:bulkupload', $categorycontext)&&has_capability('local/courses:manage', $categorycontext)&&has_capability('moodle/course:create', $categorycontext)&&has_capability('moodle/course:update', $categorycontext)))|| is_siteadmin()){
-
-    // $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
-    //                             <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('uploadcourses','local_onlineexams').'" href = '.$CFG->wwwroot.'/local/courses/upload/index.php>
-    //                                 <i class="icon fa fa-upload" aria-hidden="true"></i>
-    //                             </a>
-    //                         </div></li>';
-}if(is_siteadmin() ||(
         has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
         $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                                     <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('create_newonlineexams','local_onlineexams').'" data-action="createcoursemodal" onclick="(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').init({contextid:'.$categorycontext->id.', component:\'local_onlineexams\', callback:\'custom_onlineexams_form\', form_status:0, plugintype: \'local\', pluginname: \'onlineexams\'}) })(event)">
