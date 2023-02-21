@@ -153,7 +153,7 @@ class local_onlineexams_external extends external_api
                 // $validateddata->open_identifiedas = $validateddata->identifiedtype;
                 $validateddata->category = $category_id;
                 $validateddata->open_departmentid = $open_departmentid;
-                $validateddata->course_type = 'online_exams';
+                $validateddata->open_module = 'online_exams';
                 $validateddata->format = 'singleactivity';
                 $validateddata->open_subdepartment = $open_subdepartment;
                 local_costcenter_get_costcenter_path($validateddata);
@@ -164,7 +164,7 @@ class local_onlineexams_external extends external_api
 
                 $validateddata->startdate = time();
                 $validateddata->enddate = 0;
-                $validateddata->custom_coursetype = 1;
+                $validateddata->open_coursetype = 1;
                 $examid = create_course($validateddata, $editoroptions);
                 // Update course tags.
                 if (isset($validateddata->tags)) {
@@ -179,6 +179,7 @@ class local_onlineexams_external extends external_api
                 }
                 $quiz->course = $examid->id;
                 $quiz->grademethod = $validateddata->grademethod;
+                $quiz->grade = $validateddata->gradepass;
                 $quiz->gradepass = $validateddata->gradepass;
                 $quiz->name = $validateddata->fullname;
 
@@ -198,7 +199,7 @@ class local_onlineexams_external extends external_api
                 $open_path = $DB->get_field('course', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $open_path);
                 // $validateddata->open_identifiedas = $validateddata->identifiedtype;
-                $validateddata->custom_coursetype = 1;
+                $validateddata->open_coursetype = 1;
                 
                 if ($form_status == 0) {
                     $examid = new stdClass();
@@ -235,7 +236,9 @@ class local_onlineexams_external extends external_api
 
                     $quiz->introeditor['format'] = $validateddata->summary_editor['format'];
                     $quiz->grademethod = $validateddata->grademethod;
+                    $quiz->grade = $validateddata->gradepass;
                     $quiz->gradepass = $validateddata->gradepass;
+                    // print_r($quiz);
                     update_moduleinfo($cm, $quiz, $coursedata, null);
                     //  insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
                 } else {

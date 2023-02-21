@@ -92,8 +92,9 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args){
                 FROM {quiz} as q               
                 WHERE q.course=:courseid ";
             $moduleinfo = $DB->get_record_sql($moduleinfoSql, array('courseid' => $courseid));
+            // print_r($moduleinfo);exit;
             $maxgrade = round($moduleinfo->grademax, 2);
-            $gradepass = round($moduleinfo->gradepass, 2);
+            $gradepass = round($moduleinfo->grade, 2);
             $attempts = $moduleinfo->attempts;
             $formdata['gradepass'] = $gradepass; 
             $formdata['attempts'] = $attempts; 
@@ -492,7 +493,7 @@ function get_listof_onlineexams($stable, $filterdata) {
             if(has_capability('local/onlineexams:view', $context) || is_enrolled($context)){
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
             }else{
-                $courseslist[$count]["courseurl"] = $CFG->wwwroot."/local/onlineexams/onlinexamdetails.php?id=".$course->id;
+                $courseslist[$count]["courseurl"] = "#";
             }
 
             if($departmentcount > 1 && !(is_siteadmin())) {
