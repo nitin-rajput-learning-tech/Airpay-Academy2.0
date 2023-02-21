@@ -274,3 +274,31 @@ function tool_certificate_leftmenunode(){
     }
     return array('15' => $certificatenode);
 }
+
+function tool_certificate_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
+    $content = '';
+    if(has_capability('tool/certificate:manage', $systemcontext) || is_siteadmin() ) {
+
+        // certificates
+        $certificates = "SELECT count(id) FROM {tool_certificate_templates}";
+        if(!is_siteadmin()){
+            $certificates .=" WHERE open_path = '/$costcenterid'";
+        }
+        $totalcertificate = $DB->count_records_sql($certificates);
+
+        if($totalcertificate > 0) {
+            $certificate = '('.$totalcertificate.')';
+        }
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $certificate;
+        $templatedata['link'] = $CFG->wwwroot.'/admin/tool/certificate/manage_templates.php';
+        $templatedata['stringname'] = get_string('certificate','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('7' => $content);
+}

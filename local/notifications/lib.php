@@ -367,7 +367,7 @@ class notifications
                 $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";
                 break;
                 // case 'program_session_unenroll':
-                //     $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";   
+                //     $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";
                 //     break;
             case 'program_session_reschedule':
                 $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";
@@ -821,4 +821,32 @@ function notifications_filter($mform)
     $select = $mform->addElement('autocomplete', 'request', '', $requestlist, array('placeholder' => get_string('compname', 'local_request')));
     $mform->setType('request', PARAM_RAW);
     $select->setMultiple(true);
+}
+
+function local_notifications_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
+    $content = '';
+    if(has_capability('local/notifications:manage',$systemcontext) || is_siteadmin()){
+
+        // notification
+        $notifications = "SELECT count(id) FROM {local_notification_info}";
+        if(!is_siteadmin()){
+            $notifications .=" WHERE open_path = '/$costcenterid'";
+        }
+        $totalnotification = $DB->count_records_sql($notifications);
+
+        if($totalnotification > 0) {
+            $notification = '('.$totalnotification.')';
+        }
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $notification;
+        $templatedata['link'] = $CFG->wwwroot.'/local/notifications/index.php';
+        $templatedata['stringname'] = get_string('notificaton','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('6' => $content);
 }

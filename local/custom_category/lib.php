@@ -110,3 +110,30 @@ function custom_category_details($tablelimits, $filtervalues){
     }
     return array('count' => $count, 'data' => $data);
 }
+
+function local_custom_category_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $content = '';
+    if(has_capability('local/custom_category:view_custom_category', $categorycontext) || is_siteadmin()) {
+    // course category
+        $course_catogories = "SELECT count(id) FROM {local_custom_category}";
+        if(!is_siteadmin()){
+            $course_catogories .=" WHERE costcenterid = $costcenterid";
+        }
+        $totalcourse_category = $DB->count_records_sql($course_catogories);
+
+        if($totalcourse_category > 0) {
+            $cat = '('.$totalcourse_category.')';
+        }
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $cat;
+        $templatedata['link'] = $CFG->wwwroot.'/local/custom_category/index.php';
+        $templatedata['stringname'] = get_string('category','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('3' => $content);
+}
