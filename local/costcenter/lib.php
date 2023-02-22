@@ -1070,3 +1070,26 @@ function local_costcenter_get_fields(){
     return $return;
 }
 
+function local_costcenter_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $content = '';
+    if (is_siteadmin()){
+        $organisation = "SELECT count(id) FROM {local_costcenter} WHERE parentid = 0";
+        $totalorgnisation = $DB->count_records_sql($organisation);
+
+        if($totalorgnisation > 0) {
+            $org = '('.$totalorgnisation.')';
+        }
+
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $org;
+        $templatedata['link'] = $CFG->wwwroot.'/local/costcenter/index.php';
+        $templatedata['stringname'] = get_string('originator','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('1' => $content);
+}

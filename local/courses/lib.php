@@ -1369,7 +1369,7 @@ function get_listof_courses($stable, $filterdata) {
                      JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas ";
         
     $formsql .= " AND c.id > 1  $open_path";
-    
+
     $params=array();
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND c.fullname LIKE :search";
@@ -2359,4 +2359,30 @@ function course_thumbimage($course) {
         }
     }
     return $imageurl;
+}
+
+function local_courses_masterinfo(){
+    global $CFG, $PAGE, $OUTPUT, $DB, $USER;
+    $costcenterid = explode('/',$USER->open_path)[1];
+    $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $content = '';
+    if(has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) || is_siteadmin()) {
+        $course_type = "SELECT count(id) FROM {local_course_types}";
+        if(!is_siteadmin()){
+            $course_type .=" WHERE orgid = 0 OR orgid = $costcenterid";
+        }
+        $totalcourse_type = $DB->count_records_sql($course_type);
+
+        if($totalcourse_type > 0) {
+            $string = '('.$totalcourse_type.')';
+        }
+        $templatedata = array();
+        $templatedata['show'] = true;
+        $templatedata['count'] = $string;
+        $templatedata['link'] = $CFG->wwwroot.'/local/courses/coursestypes.php';
+        $templatedata['stringname'] = get_string('course','block_masterinfo');
+
+        $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
+    }
+    return array('2' => $content);
 }
