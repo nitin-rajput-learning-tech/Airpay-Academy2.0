@@ -318,7 +318,7 @@ class lib
 		$open_path = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
 		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
 		
-		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 "; 
+		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 AND c.open_coursetype = 0 "; 
 	   if(is_siteadmin()){
 		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
 			}
