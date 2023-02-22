@@ -189,6 +189,9 @@ class local_onlineexams_external extends external_api
                     $quiz->introeditor['text'] = $validateddata->fullname;
 
                 $quiz->introeditor['format'] = $validateddata->summary_editor['format'];
+                $quiz->completion= 2;
+                $quiz->completionusegrade = 1;
+                $quiz->completionpassgrade = 1;
                 // $quiz->grade = $validateddata->maxgrade;
                 add_moduleinfo($quiz, $examid);
                 //$coursedata = $examid;
@@ -238,6 +241,9 @@ class local_onlineexams_external extends external_api
                     $quiz->grademethod = $validateddata->grademethod;
                     $quiz->grade = $validateddata->gradepass;
                     $quiz->gradepass = $validateddata->gradepass;
+                    $quiz->completion= 2;
+                    $quiz->completionusegrade = 1;
+                    $quiz->completionpassgrade = 1;
                     // print_r($quiz);
                     update_moduleinfo($cm, $quiz, $coursedata, null);
                     //  insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
@@ -260,6 +266,9 @@ class local_onlineexams_external extends external_api
                         $quiz->coursemodule = $cm->id;
                         $quiz->introeditor['text'] = $DB->get_field('quiz', 'intro', array('course' => $data->id));
                         $quiz->introeditor['format'] = $DB->get_field('quiz', 'introformat', array('course' => $data->id));
+                        $quiz->completion= 2;
+                        $quiz->completionusegrade = 1;
+                        $quiz->completionpassgrade = 1;
                         update_moduleinfo($cm, $quiz, $coursedata, null);
                     }   
                     if ($form_status == 2) {
