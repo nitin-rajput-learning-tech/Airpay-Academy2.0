@@ -1471,24 +1471,17 @@ class program {
         $params = array();
         $programusers = array();
         $concatsql = '';
+
         if (!empty($stable->search)) {
-            // $fields = array(0 => 'u.firstname',
-            //                 1 => 'u.lastname',
-            //                 2 => 'u.email',
-            //                 3 => 'u.idnumber'
-            //                 );
-            $fields = array(0 => $DB->sql_like('u.firstname', ':ufirstname',  false),
-                            1 => $DB->sql_like('u.lastname', ':ulastname',  false),
-                            2 => $DB->sql_like('u.email', ':uemail',  false),
-                            3 => $DB->sql_like('u.idnumber', ':uidnumber',  false)
-                            );
-            $fields = implode(" OR ", $fields);
-            $fields .= " LIKE '%" .$stable->search. "%' ";
+            $fields = array(
+                0 => 'u.firstname',
+                1 => 'u.lastname',
+                2 => 'u.email',
+                3 => 'u.idnumber'
+            );
+            $fields = implode(" LIKE '%" . $stable->search . "%' OR ", $fields);
+            $fields .= " LIKE '%" . $stable->search . "%' ";
             $concatsql .= " AND ($fields) ";
-            $params['ufirstname'] = '%' .$stable->search. '%';
-            $params['ulastname'] = '%' .$stable->search. '%';
-            $params['uemail'] = '%' .$stable->search. '%';
-            $params['uidnumber'] = '%' .$stable->search. '%';
         }
         $countsql = "SELECT COUNT(cu.id) ";
         $fromsql = "SELECT u.*, cu.attended_sessions, cu.hours, cu.completion_status, c.totalsessions,
@@ -1499,7 +1492,9 @@ class program {
                 WHERE c.id = {$programid} AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
         $sql .= $concatsql;
         try {
-            $programuserscount = $DB->count_records_sql($countsql . $sql, $params);
+
+
+            $programuserscount = $DB->count_records_sql($countsql. $sql, $params);
             if ($stable->thead == false) {
                 $sql .= " ORDER BY id ASC";
                 $programusers = $DB->get_records_sql($fromsql . $sql, $params, $stable->start, $stable->length);
