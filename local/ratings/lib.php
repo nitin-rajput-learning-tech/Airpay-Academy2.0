@@ -16,7 +16,7 @@ function display_like_unlike($itemid, $likearea){
     $output = html_writer::start_tag('div', $params);
     
     
-    $output .= html_writer::start_tag('div', array('id'=>'contents_'.$itemid, 'style'=>'float: left; clear:both;font-size:16px;'));
+    $output .= html_writer::start_tag('div', array('class'=>'d-flex align-items-center','id'=>'contents_'.$itemid, 'style'=>'float: left; clear:both;font-size:16px;'));
     $likestyle = "";
     $unlikestyle = "";
     $mylike_unlike = $DB->get_record('local_like',array('userid' => $USER->id, 'itemid' => $itemid, 'likearea' => $likearea));
@@ -111,7 +111,7 @@ function display_rating($itemid, $ratearea) {
             <div class='mytooltiptext'><span class='rating_tooltip' data-itemid=$itemid data-ratearea='$ratearea'></span>
             </div>
         </div>";
-    $res .="<i class='fa fa-star overall_ratings_$itemid' style='color: #0f77d5; font-size:18px; '>$displayrating</i>&nbsp;";
+    $res .="<i class='fa fa-star rating_star overall_ratings_$itemid'>$displayrating</i>&nbsp;";
     $res .= "<span>(<font class='totalcount_$itemid'>$avgratings->count</font> users)</span>";
     $res .= '</div>'; //End of .overall_users
 
@@ -147,8 +147,8 @@ function display_averagerating($itemid, $ratearea, $tooltipdata) {
                   maxValue: 5,
                   // spacing   : '5px',
                   multiColor: {
-                    'startColor': '#FF0000', //RED
-                    'endColor': '#FF0000', //RED
+                    'startColor': '#ffc107', //RED
+                    'endColor': '#ffc107', //RED
                     // 'endColor'  : '#00FF00'  //GREEN
                   },
                   starWidth: '18px'

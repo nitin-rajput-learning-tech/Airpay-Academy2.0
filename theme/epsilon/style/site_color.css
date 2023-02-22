@@ -60,7 +60,7 @@ body::-webkit-scrollbar-thumb {
     color: #fff;
 }
 .progress-bar {
-    background-color: var(--sitehighlight);
+    background-color: var(--hovercolor);
 }
 a, .btn-link {
      color: var(--linkcolor);
@@ -122,9 +122,22 @@ body button, html [type="button"], body [type="reset"], body [type="submit"], bo
      border-color: var(--btnbordercolor);
      border-radius: 0.25rem;
 }
- body button:hover, html [type="button"]:hover, body [type="reset"]:hover, body [type="submit"]:hover, body [type="cancel"]:hover, body .btn-primary:hover, body .btn:hover, .cat_btn:hover, body button:focus, html [type="button"]:focus, body [type="reset"]:focus, body [type="submit"]:focus, body [type="cancel"]:focus, body .btn-primary:focus, body .btn:focus, .cat_btn:focus, body button:active, html [type="button"]:active, body [type="reset"]:active, body [type="submit"]:active, body [type="cancel"]:active, body .btn-primary:active, body .btn:active, .cat_btn:active {
+ body button:hover, html [type="button"]:hover,
+ body [type="reset"]:hover, body [type="submit"]:hover,
+ body [type="cancel"]:hover, body .btn-primary:hover, 
+ body .btn:hover, .cat_btn:hover, body button:focus,
+ html [type="button"]:focus, body [type="reset"]:focus,
+ body [type="submit"]:focus, body [type="cancel"]:focus, 
+ body .btn-primary:focus, body .btn:focus, .cat_btn:focus, 
+ body button:active, html [type="button"]:active, 
+ body [type="reset"]:active, body [type="submit"]:active, 
+ body [type="cancel"]:active, 
+ body .btn-primary:active, 
+ .btn-primary:not(:disabled):not(.disabled):active, .btn-primary:not(:disabled):not(.disabled).active, .show > .btn-primary.dropdown-toggle,
+ body .btn:active, .cat_btn:active {
      background-color: var(--btnhoverbgcolor);
      color: var(--btnhovertextcolor);
+     border-color: var(--btnhoverbgcolor);
 }
 body .btn-link {
      background-color: transparent !important;
@@ -332,11 +345,11 @@ body#page-course-view-tabtopics .course_stat_label{color: var(--btntextcolor);}*
     color: var(--gradientcolor);
 }
 .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab {
-    background-color: var(--sitehighlight);
-    border-right: 1px solid var(--sitehighlight);
+    background-color: var(--hovercolor);
+    border-right: 1px solid var(--hovercolor);
 }
 .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat.active_main_tab:after{
-    border-left: 25px solid var(--sitehighlight);
+    border-left: 25px solid var(--hovercolor);
 }
 .block.block_userdashboard .course_container, 
 #page-blocks-userdashboard-userdashboard_courses .course_container{

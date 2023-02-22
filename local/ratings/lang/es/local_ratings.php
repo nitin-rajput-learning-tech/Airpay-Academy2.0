@@ -28,7 +28,7 @@
  */
 
 $string['pluginname']='Calificaciones';
-$string['specificstar']='{$a} Estrella';
+$string['specificstar']='{$a}';
 $string['postcomment']='Publicar revisión';
 $string['reviews']='Reseñas';
 $string['reviews_for']='Reseñas de "{$a}"';

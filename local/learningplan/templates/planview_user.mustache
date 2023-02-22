@@ -57,7 +57,6 @@
 							<div class="desc_title mb-1"><h5 class='lp_name'>{{ lpname }}</h5></div>
 						</div>
 						<div class="rating_stars col-md-6 d-flex justify-content-end">
-							{{{display_ratings}}}
 							{{{display_like}}}
 						</div>
 					</div>
@@ -79,6 +78,9 @@
 			        	</div>
 			        	<span class="progress_percentage ml-2">{{planpercent}}%</span>
 					</div>
+				</div>
+				<div class="rating_stars  align-items-center d-flex justify-content-end">
+					{{{display_ratings}}}
 				</div>
 			<!--<div class="w-full pull-left mt-5 mb-5"><img src="{{ lpcoursespath }}" class="w-full" height="40"/></div>-->
 			<!-- <div class="w-full  coursepath">{{# lpcoursespath }} {{{lpcoursespath}}} {{/ lpcoursespath }} {{^ lpcoursespath }} <span class="w-full pull-left text-xs-center alert alert-info mt-1 m-0">{{#str}}assign_users_to_see_path, local_learningplan{{/str}}</span> {{/ lpcoursespath }}</div> -->
