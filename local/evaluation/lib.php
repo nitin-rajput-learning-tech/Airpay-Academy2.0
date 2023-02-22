@@ -2578,7 +2578,7 @@ function get_listof_evalautions($stable, $filtervalues){
        $fromsql = " from {local_evaluations} a where a.id > 0 AND instance = 0 $costcenterpathconcatsql";
     } else { // check for users
        $sql ="SELECT a.*, eu.creatorid, eu.timemodified as joinedate ";
-       $fromsql =" from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = :userid AND instance = 0 AND a.visible=1 AND a.evaluationmode LIKE 'SE' $costcenterpathconcatsql";
+       $fromsql =" from {local_evaluations} a, {local_evaluation_users} eu where a.id = eu.evaluationid AND eu.userid = :userid AND instance = 0 AND a.visible=1 AND a.evaluationmode LIKE 'SE' ";
        $userorder = 1;
        $userarray['userid'] = $USER->id;
     }
