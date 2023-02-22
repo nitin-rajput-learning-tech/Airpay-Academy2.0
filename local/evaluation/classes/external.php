@@ -109,6 +109,14 @@ class local_evaluation_external extends external_api {
                 } else {
                 $validateddata->open_group = 0;
                 }
+
+                $validateddata->open_designation = (!empty($validateddata->open_designation)) ? implode(',', array_filter($validateddata->open_designation)) : NULL;
+                if (!empty($validateddata->open_designation)) {
+                    $validateddata->open_designation = $validateddata->open_designation;
+                } else {
+                    $validateddata->open_designation = NULL;
+                }
+
                 $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
