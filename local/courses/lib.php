@@ -928,7 +928,7 @@ function courses_filter($mform){
 }
 function status_filter($mform){
     $statusarray = array('active' => get_string('active'), 'inactive' => get_string('inactive'));
-    $select = $mform->addElement('autocomplete', 'status', get_string('user_status','local_users'), $statusarray, array('placeholder' => get_string('user_status','local_users')));
+    $select = $mform->addElement('autocomplete', 'status', get_string('status'), $statusarray, array('placeholder' => get_string('user_status','local_users')));
     $mform->setType('status', PARAM_RAW);
     $select->setMultiple(true);
 } 
