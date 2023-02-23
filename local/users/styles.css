@@ -1095,11 +1095,11 @@ table.user_profile_tablist_content tbody tr td {
         top: 17px;
         visibility: visible
     }
-    .btn.btn_active_user,
+   /* .btn.btn_active_user,
     body#page-local-users-index .btn.btn_inactive_user {
         right: 50px;
         top: 20px
-    }
+    }*/
     #page-local-users-profile .user_gen_info .general_info .userprfltabs_container ul.nav.nav-tabs {
         margin-top: 0
     }
@@ -1481,4 +1481,21 @@ body#page-local-users-index .field_required .icon {
         margin-bottom: 1rem;
     }
 
+}
+
+/*manage user card styles*/
+#page-local-users-index .userdetails_right p,
+#page-local-users-index .userdetails_left p{
+    display: flex;
+    align-items: center;
+}
+#page-local-users-index #manage_users1 .userscontainer{
+    height: 100%;
+}
+body#page-local-users-index .userscontainer .userdetails_right .user_info_lable,
+body#page-local-users-index .userscontainer .userdetails_left .user_info_lable{
+    min-width: 40% !important;
+}
+body#page-local-users-index .userscontainer b{
+    word-break: break-all !important;
 }

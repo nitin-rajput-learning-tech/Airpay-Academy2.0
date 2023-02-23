@@ -299,9 +299,9 @@ class local_groups_renderer extends plugin_renderer_base  {
                     
                     $showhideurl = new moodle_url('/local/groups/edit.php', $urlparams + array('sesskey' => sesskey()));
                     if ($cohortmanager) {
-                        $buttons[] = html_writer::start_tag('li'); 
+                      
                         $buttons[] = html_writer::link('javascript:void(0)',
-                            $OUTPUT->pix_icon('t/editinline', get_string('edit')) .get_string('edit'),
+                            $OUTPUT->pix_icon('t/editinline', get_string('edit')) .html_writer::tag('span',get_string('edit'),array('class'=>'hidestrings')),
                             array('class'=>'dropdown-item','title' => get_string('edit'), 'onclick' => '(function(e){ require("local_groups/newgroup").init({contextid:'.$systemcontext->id.', groupsid:'.$cohort->id.'}) })(event)'));
 
                         $editcolumnisempty = false;
@@ -312,19 +312,19 @@ class local_groups_renderer extends plugin_renderer_base  {
                             
                                $buttons[]= html_writer::link(
                                 "javascript:void(0)",
-                                $OUTPUT->pix_icon('t/hide', get_string('hide'), 'moodle', array('title' => '')) .get_string('hide'),
+                                $OUTPUT->pix_icon('t/hide', get_string('hide'), 'moodle',array('title' => '')).html_writer::tag('span',get_string('hide'),array('class'=>'hidestrings')),
                                 array('class'=>'dropdown-item' ,'id' => 'confirmhide' . $cohort->id . '', 'onclick' => '(
                                       function(e){
                                 require("local_groups/renderselections").hideshow_cohort(' . $cohort->id . ', "' . $cohort->name . '")
                                 })(event)'));
-                               $buttons[] = html_writer::end_tag('li');
+                               
                         } else {
                             $showhideurl->param('show', 1);
                             $visibleimg = $OUTPUT->pix_icon('t/show', get_string('active'));
                              
                             $buttons[]= html_writer::link(
                                 "javascript:void(0)",
-                                $OUTPUT->pix_icon('t/show', get_string('show'), 'moodle', array('title' => '')).get_string('show'),
+                                $OUTPUT->pix_icon('t/show', get_string('show'), 'moodle', array('title' => '')).html_writer::tag('span',get_string('show'),array('class'=>'hidestrings')),
                                 array('class'=>'dropdown-item','id' => 'confirmshow' . $cohort->id . '', 'onclick' => '(
                                       function(e){
                                 require("local_groups/renderselections").showhide_cohort(' . $cohort->id . ', "' . $cohort->name . '")
@@ -333,20 +333,19 @@ class local_groups_renderer extends plugin_renderer_base  {
                         }
                     }
 
-                    if ($cohortcanassign) {
-                        $buttons[] = html_writer::start_tag('li'); 
+                    if ($cohortcanassign) { 
                            $buttons[] = html_writer::link(new moodle_url('/local/groups/assign.php', $urlparams),
-                            $OUTPUT->pix_icon('i/enrolusers', get_string('assign', 'core_cohort')) .get_string('assign', 'core_cohort'),
+                            $OUTPUT->pix_icon('i/enrolusers', get_string('assign', 'core_cohort')) .html_writer::tag('span',get_string('assign', 'core_cohort'),array('class'=>'hidestrings')),
                             array( 'class'=>'dropdown-item','title' => get_string('assign', 'core_cohort')));
                         $editcolumnisempty = false;
                            $buttons[] = html_writer::link(new moodle_url('/local/groups/mass_enroll.php', $urlparams),
-                            $OUTPUT->pix_icon('i/users', get_string('bulk_enroll', 'local_groups')) .get_string('bulk_enroll', 'local_groups'),
+                            $OUTPUT->pix_icon('i/users', get_string('bulk_enroll', 'local_groups')) .html_writer::tag('span',get_string('bulk_enroll', 'local_groups'),array('class'=>'hidestrings')),
                             array('class'=>'dropdown-item', 'title' => get_string('bulk_enroll', 'local_groups')));
                     }       
                     if ($cohortmanager) 
                     $buttons[] =  html_writer::link(
                                     "javascript:void(0)",
-                                    $OUTPUT->pix_icon('i/delete', get_string('delete'), 'moodle', array('title' => '')) .get_string('delete'),
+                                    $OUTPUT->pix_icon('i/delete', get_string('delete'), 'moodle', array('title' => '')) .html_writer::tag('span',get_string('delete'),array('class'=>'hidestrings')),
                                     array('class'=>'dropdown-item','id' => 'deleteconfirm' . $cohort->id . '', 'onclick' => '(
                                           function(e){
                             require("local_groups/renderselections").deletecohort(' . $cohort->id . ', "' . $cohort->name . '")

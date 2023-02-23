@@ -38,11 +38,10 @@
                         </div>
                     </div>
                     <div class="rating_stars col-md-6 d-flex justify-content-end">
-                        {{{display_ratings}}}
                         {{{display_like}}}
                     </div>
                 </div>
-                <!-- <span class="w-full pull-left mb-1"><b>Description :</b></span> -->
+                <span class="w-full pull-left mb-1"><b>Description :</b></span>
                 <div class="w-full  mt-2 description">
                     {{# description_string }}
                         <p class="m-0">{{{ description_string }}}</p>
@@ -51,19 +50,20 @@
                         <p class="alert alert-info text-xs-center m-0">{{#str}}nocoursedesc, local_courses{{/str}}</p>
                     {{/ description_string }}
                 </div>
+                
                 <div class="topprogress_bar mt-4 ">
-                    <h6 class="mb-0 mr-2">Progress</h6>
+                    <!-- <h6 class="mb-0 mr-2">Progress</h6>
                     <div class="max_progress d-flex align-items-baseline flexgrow-1">
                         <div class="progress flexgrow-1">
                             <div class="progress-bar text-center" role="progressbar" style="width: {{planpercent}}%;" aria-valuenow="{{planpercent}}%" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         <span class="progress_percentage ml-2">{{planpercent}}%</span>
-                    </div>
+                    </div> -->
                     <div class="enroll_button mt-3">
                     {{# needenroluser}}
                         <!-- <a class='btn btn-primary pull-right mr-15' href='javascript:void(0)' onclick='(function(e){
                         require("local_learningplan/courseenrol").enrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:"{{{lpname}}}" }) })(event)'><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{# str}} enrol , local_learningplan{{/ str}}</a> -->
-                        {{^ requestbtn}}
+                        <!-- {{^ requestbtn}}
                             {{^ pending}}
                             <span class="enrol">
                                 <a class='btn btn-primary  mr-15' href='javascript:void(0)' onclick='(function(e){
@@ -84,9 +84,13 @@
                             <div class="enrol_strip">
                                 <button class="cat_btn btn btn-primary pull-right mr-15">Processing</button>
                             </div>
-                        {{/ pending}}
+                        {{/ pending}} -->
+                        {{{enrollbtn}}}
                     {{/ needenroluser}}
                     </div>
+                </div>
+                <div class="rating_stars  d-flex align-items-center justify-content-end">
+                    {{{display_ratings}}}
                 </div>
             </div>
             <!--<div class="w-full pull-left mt-5 mb-5"><img src="{{ lpcoursespath }}" class="w-full" height="40"/></div>-->
