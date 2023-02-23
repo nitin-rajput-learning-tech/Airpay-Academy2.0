@@ -377,8 +377,8 @@ function program_filter($mform){
             $courseslist = $DB->get_records_sql_menu("SELECT id, name FROM {local_program} ");
         }
 
-    $select = $mform->addElement('autocomplete', 'program', '', $courseslist,
-        array('placeholder' => get_string('program_name', 'local_program')));
+    $select = $mform->addElement('autocomplete', 'program', get_string('program', 'local_program'), $courseslist,
+        array('placeholder' => get_string('program', 'local_program')));
     $mform->setType('program', PARAM_RAW);
     $select->setMultiple(true);
 }

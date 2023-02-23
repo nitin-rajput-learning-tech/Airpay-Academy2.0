@@ -47,6 +47,7 @@ $l5department = optional_param('l5department', '', PARAM_RAW);
 $program = optional_param('program', null, PARAM_RAW);
 $status = optional_param('status', null, PARAM_RAW);
 $view_type = optional_param('view_type', 'card', PARAM_TEXT);
+$categories = optional_param('categories', '', PARAM_RAW);
 
 require_login();
 $PAGE->set_context($categorycontext);
@@ -65,6 +66,7 @@ try{
             $stable->subdepartmentid = $subdepartmentid;
             $stable->l4department = $l4department;
             $stable->l5department = $l5department;
+            $stable->categories = $categories;
             $return = $renderer->viewprograms($stable,$program,$status,$view_type);
             
         break;

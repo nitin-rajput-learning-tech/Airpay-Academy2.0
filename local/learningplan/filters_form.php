@@ -31,7 +31,7 @@ class filters_form extends moodleform {
             } else if($value === 'hierarchy_fields'){
                 require_once($CFG->dirroot.'/local/costcenter/lib.php');
                 $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
-                local_costcenter_set_costcenter_path($this->_customdata);
+                local_costcenter_set_costcenter_path($this->_customdata, $prefix = 'filter');
                 local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_learningplan', $categorycontext, $multiple = true, $prefix = 'filter');
                 continue;
             }else{

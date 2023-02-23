@@ -685,6 +685,13 @@ class program {
         }
 
         if($program != NULL && $program != 'null' && $program > 0) {
+
+          if(is_array($program)){
+
+            $program = implode(',', $program);
+
+          }
+
           $concatsql .= " AND bc.id IN ($program) ";
         }
         if(!empty($stable->costcenterid)){
@@ -744,11 +751,25 @@ class program {
                 $concatsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
             }
         }
+        if(!empty($stable->categories)){
+
+            if(is_array($program)){
+
+                $filtercategories = explode(',', $stable->categories);
+
+            }else{
+
+                $filtercategories = $stable->categories;
+            }
+            list($filtercategoriessql, $filtercategoriesparams) = $DB->get_in_or_equal($filtercategories, SQL_PARAMS_NAMED, 'categories', true, false);
+            $params = array_merge($params, $filtercategoriesparams);
+            $concatsql .= " AND bc.open_categoryid $filtercategoriessql";
+        }
         if(!empty($status)){
           $filterstatus = explode(',',$status);
           if(!(in_array('active',$filterstatus) && in_array('inactive',$filterstatus))){
               if(in_array('active' ,$filterstatus)){
-                  $concatsql .= " AND bc.visible = 1 ";           
+                  $concatsql .= " AND bc.visible = 1 ";
               }else if(in_array('inactive' ,$filterstatus)){
                   $concatsql .= " AND bc.visible = 0 ";
               }
@@ -775,6 +796,7 @@ class program {
             $programs = $DB->get_record_sql($fromsql . $sql, $params);
         } else {
             try {
+
                 $programscount = $DB->count_records_sql($countsql . $sql, $params);
                 if ($stable->thead == false) {
                     $sql .= " ORDER BY bc.id DESC";
