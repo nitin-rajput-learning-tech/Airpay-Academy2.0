@@ -124,7 +124,7 @@ class custom_course_form extends moodleform {
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
 
-        $mform->addElement('hidden', 'id', $courseid);
+        $mform->addElement('hidden', 'id', $courseid, array('id' => 'courseid'));
         $mform->setType('id', PARAM_INT);
 		
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
