@@ -27,7 +27,7 @@
  * @license eAbyas info solutions.
  */
 $string['pluginname'] = 'Ratings';
-$string['specificstar'] = '{$a} Star';
+$string['specificstar'] = '{$a}';
 $string['postcomment'] = 'Post Review';
 $string['reviews'] = 'Reviews';
 $string['reviews_for'] = 'Reviews for "{$a}"';

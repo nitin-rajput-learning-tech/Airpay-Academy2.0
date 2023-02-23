@@ -129,6 +129,29 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
                     }
                     
                 });
+                if(self.args.callback == 'custom_onlineexams_form'){
+                    $(document).on('click', '.custom_onlineexam_form_redirect', function(){
+                        var instanceid = $("#onlineexamid").val();
+                        if(instanceid > 0){
+                            self.args.form_status = $(this).data('value');
+                            var data = self.getBody();
+                            data.then(function(html, js) {
+                                if (html === false) {
+                                  // window.location.reload();
+                                    self.handleFormSubmissionResponse(args);
+                                }
+                            });
+                            modal.setBody(data);
+                            // if(self.args.form_status==0){
+                            //     $('[data-action="skip"]').css('display', 'none');
+                            //     $('[data-action="previous"]').css('display', 'none');
+                            // }else{
+                            //     $('[data-action="skip"]').css('display', 'block');
+                            //     $('[data-action="previous"]').css('display', 'block');
+                            // }
+                        }
+                    });
+                }
             
 
             this.modal.getRoot().on('submit', 'form', function(form) {
@@ -203,8 +226,8 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
              this.modal.hide();
         }else{
             return Str.get_strings([{
-                key: 'courseoverview',
-                component: 'local_courses'
+                key: 'onlineexamoverview',
+                component: 'local_onlineexams'
             }]).then(function(s) {
                 
                 // This will be the context for our template. So {{name}} in the template will resolve to "Tweety bird".
@@ -212,7 +235,7 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
 
                 var modalPromise = ModalFactory.create({
                     type: ModalFactory.types.DEFAULT,
-                    body: Templates.render('local_courses/courses', context),
+                    body: Templates.render('local_onlineexams/onlineexams', context),
                     footer: this.getcontentFooter(),
                 });
                 $.when(modalPromise).then(function(modal) {

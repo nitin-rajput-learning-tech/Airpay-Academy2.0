@@ -67,23 +67,11 @@ class lib
 		}
 		if ($data->form_status == 1) {
 
-			$data->open_group = (!empty($data->open_group)) ? implode(',', array_filter($data->open_group)) : NULL;
-			if (!empty($data->open_group)) {
-				$data->open_group = $data->open_group;
-			} else {
-				$data->open_group = NULL;
-			}
 			$data->open_hrmsrole = (!empty($data->open_hrmsrole)) ? implode(',', array_filter($data->open_hrmsrole)) : NULL;
 			if (!empty($data->open_hrmsrole)) {
 				$data->open_hrmsrole = $data->open_hrmsrole;
 			} else {
 				$data->open_hrmsrole = NULL;
-			}
-			$data->open_designation = (!empty($data->open_designation)) ? implode(',', array_filter($data->open_designation)) : NULL;
-			if (!empty($data->open_designation)) {
-				$data->open_designation = $data->open_designation;
-			} else {
-				$data->open_designation = NULL;
 			}
 			$data->open_location = (!empty($data->open_location)) ? implode(',', array_filter($data->open_location)) : NULL;
 			if (!empty($data->open_location)) {
@@ -115,7 +103,20 @@ class lib
 			} else {
 				$data->certificateid = null;
 			}
-		// } else {
+		} else if($data->form_status == 2) {
+
+			$data->open_group = (!empty($data->open_group)) ? implode(',', array_filter($data->open_group)) : NULL;
+			if (!empty($data->open_group)) {
+				$data->open_group = $data->open_group;
+			} else {
+				$data->open_group = NULL;
+			}
+			$data->open_designation = (!empty($data->open_designation)) ? implode(',', array_filter($data->open_designation)) : NULL;
+			if (!empty($data->open_designation)) {
+				$data->open_designation = $data->open_designation;
+			} else {
+				$data->open_designation = NULL;
+			}
 		}
 		$data->usermodified =  $this->user->id;
 		$data->timemodified = time();
@@ -318,7 +319,7 @@ class lib
 		$open_path = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
 		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
 		
-		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 "; 
+		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 AND c.open_coursetype = 0 "; 
 	   if(is_siteadmin()){
 		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
 			}

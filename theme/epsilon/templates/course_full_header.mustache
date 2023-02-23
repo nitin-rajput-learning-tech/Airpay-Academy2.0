@@ -31,9 +31,17 @@
 }}
 <header id="page-header" class="d-print-none">
     <div class="w-100">
+        <div class="d-flex justify-content-end">
+            {{#hasnavbar}}
+                    <div id="page-navbar">
+                        {{{navbar}}}
+                    </div>
+                {{/hasnavbar}}
+        </div>
         <div class="courseheader" style="background-image: url('{{coursebannerimage}}');">
             
-            <div class="d-flex flex-column mt-5 h-100">
+            <div class="d-flex flex-column  mt-4 h-100">
+              
                 <div class="heading" >
                     {{{contextheader}}}
                     {{#activityurl}}

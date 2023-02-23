@@ -1008,3 +1008,19 @@ body#page-local-courses-userdashboard .card_list_view {
 .admin_default_menu .action-menu-trigger .dropdown .dropdown-item:hover a{
     text-decoration: none;
 }
+
+/*action icon list view changes*/
+#page-local-courses-courses #manage_courses.generaltable td a .hidestrings{
+    display: none;
+}
+#page-local-courses-courses #manage_courses.generaltable a{
+    width: 20px;
+    padding: 2px 3px;
+    margin-right: 5px;
+    color: #0070a8;
+    display: inline;
+}
+#page-local-courses-courses #manage_courses.generaltable a:hover{
+    color: var(--linkhovercolor);
+    background-color: transparent;
+}

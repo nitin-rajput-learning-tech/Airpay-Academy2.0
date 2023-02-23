@@ -105,7 +105,7 @@ function local_program_output_fragment_program_form($args) {
     $formstatus = array();
     foreach (array_values($mform->formstatus) as $k => $mformstatus) {
         $activeclass = $k == $args->form_status ? 'active' : '';
-        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass);
+        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass, 'form-status' => $k);
     }
     $formstatusview = new \local_program\output\form_status($formstatus);
     $return .= $renderer->render($formstatusview);

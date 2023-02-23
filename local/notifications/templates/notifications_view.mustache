@@ -46,7 +46,7 @@
                         {{organization}}
                     </td>
                     <td>
-                         <a href="javascript:void(0)" data-action="createnotificationmodal" class="createnotificationmodal" data-value="{{notification_id}}" onclick="(function(e){ require('local_notifications/notifications').init({selector:'createnotificationmodal', context:{{contextid}}, id:{{notification_id}},form_status:0}) })(event)" style="cursor:pointer" title="{{# str}}edit{{/ str}}">
+                         <a href="javascript:void(0)" data-action="createnotificationmodal" class="createnotificationmodal" data-value="{{notification_id}}" onclick="(function(e){ require('local_notifications/notifications').init({selector:'createnotificationmodal', context:{{contextid}}, id:{{notification_id}},form_status:0, callback:'notification_form'}) })(event)" style="cursor:pointer" title="{{# str}}edit{{/ str}}">
                         <i class="fa fa-pencil fa-fw"></i>
 
                        <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_notifications/custom').deletenotification({{notification_id}})})(event)">

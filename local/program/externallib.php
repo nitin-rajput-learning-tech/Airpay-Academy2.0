@@ -210,7 +210,7 @@ class local_program_external extends external_api {
 
         $open_path = $DB->get_field('local_program', 'open_path', array('id' => $programid));
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
-        $cousresql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 AND c.id not in (SELECT courseid FROM {local_program_level_courses} WHERE programid=$programid and levelid=$levelid) ";
+        $cousresql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 AND c.open_coursetype = 0 AND c.id not in (SELECT courseid FROM {local_program_level_courses} WHERE programid=$programid and levelid=$levelid) ";
         if(is_siteadmin()){
             $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
         }

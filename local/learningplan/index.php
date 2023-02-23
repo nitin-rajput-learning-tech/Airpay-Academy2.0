@@ -149,7 +149,7 @@ if (is_siteadmin() || (has_capability('local/learningplan:create', $categorycont
     $titlestring = get_string('addnew_learningplans','local_learningplan');
     $out .= "<li>    
                 <div class = 'coursebackup course_extended_menu_itemcontainer'>
-                    <a class='course_extended_menu_itemlink' data-action='createlpmodal' title='$titlestring' onclick ='(function(e){ require(\"local_learningplan/lpcreate\").init({selector:\"createlpmodal\", contextid:$categorycontext->id, planid:0, form_status:0}) })(event)'><span class='createicon'><i class='icon fa fa-map' aria-hidden='true' aria-label=''></i><i class='fa fa-plus createiconchild' aria-hidden='true'></i></span>
+                    <a class='course_extended_menu_itemlink' data-action='createlpmodal' title='$titlestring' onclick ='(function(e){ require(\"local_learningplan/lpcreate\").init({selector:\"createlpmodal\", contextid:$categorycontext->id, planid:0, form_status:0, callback:\"learningplan_form\"}) })(event)'><span class='createicon'><i class='icon fa fa-map' aria-hidden='true' aria-label=''></i><i class='fa fa-plus createiconchild' aria-hidden='true'></i></span>
                     </a>
                 </div>
             </li>";
@@ -170,7 +170,7 @@ $thisfilters = array('hierarchy_fields','idnumber', 'email','users','categories'
     $formdata->filteropen_subdepartment = $subdepartmentid;
     $formdata->filteropen_level4department = $l4department;
     $formdata->filteropen_level5department = $l5department;
-    
+
 $datasubmitted = data_submitted() ? data_submitted() : $formdata;
 $mform = new filters_form(null, array('filterlist'=> $thisfilters)+(array)$datasubmitted);
 if ($mform->is_cancelled()) {

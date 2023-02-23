@@ -3029,6 +3029,16 @@ body .que .info>div {
         font-size: 18px;
     } 
 }
+.course_drawer_header_container .overall_users .mytooltip .mytooltiptext{
+    min-width: 200px ;
+}
+.course_drawer_header_container .overall_users .mytooltip .mytooltiptext::after{
+    -webkit-transform: rotate(45deg);
+    left: -8px;
+}
+.courseheader .rating_container .overall_users .side i{
+    color: #000 !important;
+}
 .courseheader::before{
     background-color: #305D94;
     content:"";
@@ -3093,6 +3103,9 @@ body .que .info>div {
 }
 .action_menu_dropdown{
     font-size: 18px;
+    &:hover{
+        cursor: pointer;
+    }
     .dropdown-menu{
         min-width: auto;
         background-color: #fff;
@@ -3137,22 +3150,39 @@ body .que .info>div {
 .opacity-0{
     opacity: 0;
 }
-#page-course-view-topics ,#page-mod-forum-view{
-    #page.drawers .main-inner{
-        padding: 0 ;
-        margin-top: 0.5rem !important;
-    }
-    
+#page-course-view-topics #page.drawers .main-inner,
+.pagelayout-incourse #page.drawers .main-inner {
+    padding: 0;
+    margin-top:0 !important;
 }
-/*#page-course-view-topics .courseheader .course_extended_menu_list .icon{
-    border-radius: 0!important;
-    background-color: transparent;
-    border: none;
-    box-shadow: none;
-    color: #fff!important;
-    font-size: 23px;  
+
+#page-local-custom_category-index .course_extended_menu_list{
+    top: 11px;
 }
-#page-course-view-topics .courseheader .course_extended_menu_list li{
-    margin:0;
+
+#page-navbar .breadcrumb-item a,
+#page-navbar .breadcrumb-item span{
+    font-size: 14px;
 }
-*/
+.pagelayout-incourse #page-navbar{
+    display: flex;
+    width: 100%;
+    justify-content: end;
+}
+
+
+
+#page-my-dashboard .ctype_classroom .coursedesc span {
+    text-align: left;
+    background-color: inherit;
+    border: 0;
+    position: relative;
+    padding: 0;
+    margin-bottom: 0 !important;
+}
+
+#page-navbar {
+    justify-content: end;
+    width: 100%;
+    display: flex;
+}

@@ -216,6 +216,30 @@ define(['jquery',
                 modal.setBody(data);
             });
 
+                if(self.args.callback == 'program_form'){
+                    $(document).on('click', '.custom_program_form_redirect', function(){
+                        var instanceid = $("#programid").val();
+                        if(instanceid > 0){
+                            self.args.form_status = $(this).data('value');
+                            var data = self.getBody();
+                            data.then(function(html, js) {
+                                if (html === false) {
+                                  // window.location.reload();
+                                    self.handleFormSubmissionResponse(args);
+                                }
+                            });
+                            modal.setBody(data);
+                            // if(self.args.form_status==0){
+                            //     $('[data-action="skip"]').css('display', 'none');
+                            //     $('[data-action="previous"]').css('display', 'none');
+                            // }else{
+                            //     $('[data-action="skip"]').css('display', 'block');
+                            //     $('[data-action="previous"]').css('display', 'block');
+                            // }
+                        }
+                    });
+                }
+
             this.modal.getRoot().on('submit', 'form', function(form) {
                 self.submitFormAjax(form, self.args);
             });

@@ -41,7 +41,7 @@ require_once($CFG->dirroot . '/local/costcenter/lib.php');
 //require_once($CFG->libdir. '/coursecatlib.php');
 
 class custom_onlineexams_form extends moodleform {
-    protected $course;
+    protected $onlineexam;
     protected $context;
     public $formstatus;
     public function __construct($action = null, $customdata = null, $method = 'post', $target = '', $attributes = null, $editable = true, $formdata = null) {
@@ -50,7 +50,7 @@ class custom_onlineexams_form extends moodleform {
 
         $this->formstatus = array(
             'manage_onlineexam' => get_string('manage_onlineexam', 'local_onlineexams'),
-            'other_details' => get_string('courseother_details', 'local_onlineexams'),
+            'other_details' => get_string('onlineexamother_details', 'local_onlineexams'),
         );
         $costcenterdepth=local_costcenter_get_fields();
 
@@ -70,15 +70,15 @@ class custom_onlineexams_form extends moodleform {
         global $DB,$OUTPUT,$CFG, $PAGE, $USER;
 
         $mform    = $this->_form;
-        $course        = $this->_customdata['course']; // this contains the data of this form
-        $course_id        = $this->_customdata['courseid']; // this contains the data of this form
+        $onlineexam        = $this->_customdata['course']; // this contains the data of this form
+        $onlineexam_id        = $this->_customdata['courseid']; // this contains the data of this form
         $category      = $this->_customdata['category'];
         $formstatus = $this->_customdata['form_status'];
-        $get_coursedetails = $this->_customdata['get_coursedetails'];
+        $get_onlineexamdetails = $this->_customdata['get_coursedetails'];
         $editoroptions = $this->_customdata['editoroptions'];
         $returnto = $this->_customdata['returnto'];
         $returnurl = $this->_customdata['returnurl'];
-        $coursetype =  $course->open_identifiedas;
+        $onlineexamtype =  $onlineexam->open_identifiedas;
         $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
         $formheaders = array_keys($this->formstatus);
         $formheader = $formheaders[$formstatus];
@@ -87,22 +87,22 @@ class custom_onlineexams_form extends moodleform {
           $category = $CFG->defaultrequestcategory;
         }
 
-        if (!empty($course->id)) {
-          $coursecontext = context_course::instance($course->id);
-          $context = $coursecontext;
+        if (!empty($onlineexam->id)) {
+          $onlineexamcontext = context_course::instance($onlineexam->id);
+          $context = $onlineexamcontext;
           $categorycontext = context_coursecat::instance($category->id);
         } else {
-          $coursecontext = null;
+          $onlineexamcontext = null;
           $categorycontext = context_coursecat::instance($category);
           $context = $categorycontext;
         }
 
         $courseconfig = get_config('moodlecourse');
 
-        $this->course  = $course;
+        $this->onlineexam  = $onlineexam;
         $this->context = $context;
 
-        // Form definition with new course defaults.
+        // Form definition with new onlineexam defaults.
         $mform->addElement('hidden', 'returnto', null);
         $mform->setType('returnto', PARAM_ALPHANUM);
         $mform->setConstant('returnto', $returnto);
@@ -117,21 +117,25 @@ class custom_onlineexams_form extends moodleform {
         $mform->addElement('hidden', 'getselectedclients');
         $mform->setType('getselectedclients', PARAM_BOOL);
 
+        $mform->addElement('hidden', 'enablecompletion');
+        $mform->setType('enablecompletion', PARAM_INT);
+        $mform->setConstant('enablecompletion', 1);
+
         $defaultformat = $courseconfig->format;
 
-        if(empty($course->id)){
-          $courseid = 0;
+        if(empty($onlineexam->id)){
+          $onlineexamid = 0;
         }else{
-          $courseid = $id = $course->id;
+          $onlineexamid = $id = $onlineexam->id;
         }
 
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
 
-        $mform->addElement('hidden', 'id', $courseid);
+        $mform->addElement('hidden', 'id', $onlineexamid, array('id' => 'onlineexamid'));
         $mform->setType('id', PARAM_INT);
 		
-        $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context($courseid);
+        $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context($onlineexamid);
         $core_component = new core_component();
         if($formstatus == 0){
 
@@ -173,7 +177,7 @@ class custom_onlineexams_form extends moodleform {
                 'ajax' => 'local_costcenter/form-options-selector',
                 'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
                 'data-action' => 'custom_category_selector',
-                'data-options' => json_encode(array('id' => $courseid,'type'=>'category_selector')),
+                'data-options' => json_encode(array('id' => $onlineexamid,'type'=>'category_selector')),
                 'class' => 'idparentselect',
                 'data-parentclass' => 'open_costcenterid_select',
                 'data-class' => 'idparentselect',
@@ -188,9 +192,9 @@ class custom_onlineexams_form extends moodleform {
             $mform->addHelpButton('fullname', 'onlineexam_name','local_onlineexams');
 
 
-            if (!empty($course->id) and !has_capability('moodle/course:changefullname', $categorycontext)) {
+            if (!empty($onlineexam->id) and !has_capability('moodle/course:changefullname', $categorycontext)) {
                 $mform->hardFreeze('fullname');
-                $mform->setConstant('fullname', $course->fullname);
+                $mform->setConstant('fullname', $onlineexam->fullname);
 
             }elseif(has_capability('moodle/course:changefullname', $categorycontext)) {
 
@@ -203,9 +207,9 @@ class custom_onlineexams_form extends moodleform {
             $mform->addHelpButton('shortname', 'onlineexamcode','local_onlineexams');
 
 
-            if (!empty($course->id) and !has_capability('moodle/course:changeshortname', $categorycontext)) {
+            if (!empty($onlineexam->id) and !has_capability('moodle/course:changeshortname', $categorycontext)) {
                 $mform->hardFreeze('shortname');
-                $mform->setConstant('shortname', $course->shortname);
+                $mform->setConstant('shortname', $onlineexam->shortname);
             }elseif(has_capability('moodle/course:changefullname', $categorycontext)) {
 
                 $mform->addRule('shortname', get_string('missingshortname','local_onlineexams'), 'required', null, 'client');
@@ -221,50 +225,9 @@ class custom_onlineexams_form extends moodleform {
             $certification_plugin_exist = $core_component::get_plugin_directory('local', 'certification');
           
 
-            // if(!empty($this->_ajaxformdata['open_identifiedas'])){
-            //     $identifiedtype  = $this->_ajaxformdata['open_identifiedas'];
-            // }elseif(!empty($this->_ajaxformdata['identifiedtype'])){
-            //      $identifiedtype  = $this->_ajaxformdata['identifiedtype'];
-            // }
-            // if($identifiedtype){
-
-            //     $identifiedtype = is_array($identifiedtype) ? $identifiedtype : explode(',', $identifiedtype);
-            //     list($coursetypesql, $coursetypeparams) = $DB->get_in_or_equal($identifiedtype, SQL_PARAMS_NAMED, 'name');
-            //     $coursetypeql = "SELECT id, name FROM {local_course_types} WHERE id {$coursetypesql} ";
-            //     $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams);
-            // }
-
-            // $coursetype = array(
-            //     'ajax' => 'local_costcenter/form-options-selector',
-            //     'data-contextid' => $categorycontext->id,
-            //     'data-action' => 'costecenter_coursetype_selector',
-            //     'data-options' => json_encode(array('id' => $identifiedtype)),
-            //     'class' => 'identifiedasselect',
-            //     'data-parentclass' => 'open_costcenterid_select',
-            //     'data-class' => 'identifiedasselect',
-            //     'multiple' => false,
-            // );
-            // $mform->addElement('autocomplete', 'identifiedtype', get_string('type','local_onlineexams'), $coursetypes,$coursetype);
-            // $mform->addRule('identifiedtype', get_string('missingtype','local_onlineexams'), 'required', null, 'client');
-            // $mform->addHelpButton('identifiedtype', 'open_identifiedascourse', 'local_onlineexams');
-            // $mform->setType('identifiedtype',PARAM_RAW);
-            
-            // //for course format
-            // $courseformats = get_sorted_course_formats(true);
-            // $formcourseformats = array();
-            // foreach ($courseformats as $courseformat) {
-            //   $formcourseformats[$courseformat] = get_string('pluginname', "format_$courseformat");
-            // }
-
-            // Completion tracking.
-  			$mform->addElement('hidden', 'enablecompletion');
-  			$mform->setType('enablecompletion', PARAM_INT);
-  			$mform->setDefault('enablecompletion', 1);
-
-            // Custom Course type .
-  			$mform->addElement('hidden', 'custom_coursetype');
-  			$mform->setType('custom_coursetype', PARAM_INT);
-  			$mform->setDefault('custom_coursetype', 1);
+  			$mform->addElement('hidden', 'open_coursetype');
+  			$mform->setType('open_coursetype', PARAM_INT);
+  			$mform->setDefault('open_coursetype', 1);
 
             // tags
             // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'courses', 'component' => 'local_onlineexams'));
@@ -274,23 +237,23 @@ class custom_onlineexams_form extends moodleform {
             $mform->setType('summary_editor', PARAM_RAW);
             $summaryfields = 'summary_editor';
 
-            if ($overviewfilesoptions = course_overviewfiles_options($course)) {
+            if ($overviewfilesoptions = course_overviewfiles_options($onlineexam)) {
               $mform->addElement('filemanager', 'overviewfiles_filemanager', get_string('onlineexamoverviewfiles','local_onlineexams'), null, $overviewfilesoptions);
               $mform->addHelpButton('overviewfiles_filemanager', 'onlineexamoverviewfiles');
               $summaryfields .= ',overviewfiles_filemanager';
             }
-            $courseformats = get_sorted_course_formats(true);
-            $formcourseformats = array();
-            foreach ($courseformats as $courseformat) {
-              $formcourseformats[$courseformat] = get_string('pluginname', "format_$courseformat");
+            $onlineexamformats = get_sorted_course_formats(true);
+            $formonlineexamformats = array();
+            foreach ($onlineexamformats as $onlineexamformat) {
+              $formonlineexamformats[$onlineexamformat] = get_string('pluginname', "format_$onlineexamformat");
             }
 
-            if (isset($course->format)) {
-              $course->format = course_get_format($course)->get_format(); // replace with default if not found
-              if (!in_array($course->format, $courseformats)) {
+            if (isset($onlineexam->format)) {
+              $onlineexam->format = course_get_format($onlineexam)->get_format(); // replace with default if not found
+              if (!in_array($onlineexam->format, $onlineexamformats)) {
                   // this format is disabled. Still display it in the dropdown
-                  $formcourseformats[$course->format] = get_string('withdisablednote', 'moodle',
-                          get_string('pluginname', 'format_'.$course->format));
+                  $formonlineexamformats[$onlineexam->format] = get_string('withdisablednote', 'moodle',
+                          get_string('pluginname', 'format_'.$onlineexam->format));
               }
             }
 
@@ -309,7 +272,9 @@ class custom_onlineexams_form extends moodleform {
             // $mform->hideIf('sndtimelimit', 'examtype', 'eq', 0);
           
 
-
+            $mform->addElement('hidden', 'maxgrade');
+            $mform->setType('maxgrade', PARAM_INT);
+            $mform->setDefault('maxgrade', 10);
 
             // $mform->addElement('text', 'maxgrade',get_string('maxgrade','local_onlineexams'), array('size'=>'20'));
             // $mform->addRule('maxgrade', get_string('missinggrade', 'local_onlineexams'), 'required', null, 'client');
@@ -350,59 +315,10 @@ class custom_onlineexams_form extends moodleform {
         $mform->addElement('select', 'browsersecurity', get_string('browsersecurity', 'quiz'),
                 \quiz_access_manager::get_browser_security_choices());
         $mform->addHelpButton('browsersecurity', 'browsersecurity', 'quiz');
-        //\quiz_access_manager::add_settings_form_fields($this, $mform);
-        // $element = $mform->createElement('header', 'seb', get_string('seb', 'quizaccess_seb'));
-        // insert_element($mform, $mform, $element);
-         // Grade settings.
-        //  (new \mod_quiz_mod_form($current, $section, $cm, $course))->standard_grading_coursemodule_elements();
+        
+            $skillselect = array(0 => get_string('select_skill','local_onlineexams'));
 
-        //  $mform->removeElement('grade');
-        //  if (property_exists($this->current, 'grade')) {
-        //      $currentgrade = $this->current->grade;
-        //  } else {
-        //      $currentgrade = $quizconfig->maximumgrade;
-        //  }
-        //  $mform->addElement('hidden', 'grade', $currentgrade);
-        //  $mform->setType('grade', PARAM_FLOAT);
- 
-        //  // Number of attempts.
-        //  $attemptoptions = array('0' => get_string('unlimited'));
-        //  for ($i = 1; $i <= QUIZ_MAX_ATTEMPT_OPTION; $i++) {
-        //      $attemptoptions[$i] = $i;
-        //  }
-        //  $mform->addElement('select', 'attempts', get_string('attemptsallowed', 'quiz'),
-        //          $attemptoptions);
- 
-         // Grading method.
-      
-        //  if (\mod_quiz_mod_form::get_max_attempts_for_any_override() < 2) {
-        //      $mform->hideIf('grademethod', 'attempts', 'eq', 1);
-        //  }
- 
-        //add_seb_header_element(\mod_quiz_mod_form $quizform, \MoodleQuickForm $mform);
-        //-------------------------------------------------------------------------
-        // TODO Formslib does OR logic on disableif, and we need AND logic here.
-        // $mform->disabledIf('overduehandling', 'timelimit', 'eq', 0);
-        // $mform->disabledIf('overduehandling', 'timeclose', 'eq', 0);
-
-            // $pointsArr = array();
-            // $pointsArr[] = $mform->createElement('text',  'open_points',  '',  get_string('points','local_courses'));
-            // $pointsArr[] = $mform->createElement('advcheckbox', 'open_enablepoints',  '',  '', 0);
-            // $mform->hideIf('open_points', 'open_enablepoints', 'neq', 1);
-            // $mform->addGroup($pointsArr, 'pointsArr',
-            //     get_string('points','local_courses'),
-            //     array('&nbsp;&nbsp;'), false);
-            // $mform->addHelpButton('pointsArr', 'open_pointscourse', 'local_courses');
-            // $mform->setType('open_points', PARAM_INT);
-            // $mform->addRule('open_points', get_string('numeric','local_classroom'), 'numeric', null, 'client');
-
-            // $mform->addElement('text',  'open_cost', get_string('open_costcourse','local_courses'));
-            // $mform->addHelpButton('open_cost', 'open_costcourse', 'local_courses');
-            // $mform->setType('open_cost', PARAM_INT);
-            // $mform->addRule('open_cost', get_string('numeric','local_users'), 'numeric', null, 'client');
-            $skillselect = array(0 => get_string('select_skill','local_courses'));
-
-         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->course->open_path);
+         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->onlineexam->open_path);
 
             $skillcostcentersql = "SELECT id,name FROM {local_skill}
                                 WHERE 1=1 $costcenterpathconcatsql ";
@@ -415,8 +331,8 @@ class custom_onlineexams_form extends moodleform {
                 $skillselect = $skillselect+$skills;
             }
 
-            $mform->addElement('select',  'open_skill', get_string('open_skillcourse','local_onlineexams'), $skillselect);
-            $mform->addHelpButton('open_skill', 'open_skillcourse', 'local_onlineexams');
+            $mform->addElement('select',  'open_skill', get_string('open_skillonlineexam','local_onlineexams'), $skillselect);
+            $mform->addHelpButton('open_skill', 'open_skillonlineexam', 'local_onlineexams');
             $mform->setType('open_skill', PARAM_INT);
 
             $levelselect = array(0 => get_string('select_level','local_onlineexams'));
@@ -429,15 +345,15 @@ class custom_onlineexams_form extends moodleform {
             if(!empty($levels)){
                 $levelselect = $levelselect+$levels;
             }
-            $mform->addElement('select',  'open_level', get_string('open_levelcourse','local_onlineexams'), $levelselect);
-            $mform->addHelpButton('open_level', 'open_levelcourse', 'local_onlineexams');
+            $mform->addElement('select',  'open_level', get_string('open_levelonlineexam','local_onlineexams'), $levelselect);
+            $mform->addHelpButton('open_level', 'open_levelonlineexam', 'local_onlineexams');
             $mform->setType('open_level', PARAM_INT);
 
-            // $mform->addElement('date_time_selector', 'startdate', get_string('startdate','local_courses'),
+            // $mform->addElement('date_time_selector', 'startdate', get_string('startdate','local_onlineexams'),
             //  array());
             // $mform->addHelpButton('startdate', 'startdate');
 		
-			// $mform->addElement('date_time_selector', 'enddate', get_string('enddate','local_courses'), array('optional' => false));
+			// $mform->addElement('date_time_selector', 'enddate', get_string('enddate','local_onlineexams'), array('optional' => false));
             // $mform->addHelpButton('enddate', 'enddate');
 
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
@@ -463,7 +379,7 @@ class custom_onlineexams_form extends moodleform {
             }
 
         }else if ($formstatus == 2) {
-            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$this->course->open_path);
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$this->onlineexam->open_path);
             $mform->addElement('hidden', 'open_costcenterid');
             $mform->setConstant('open_costcenterid', $org);
 
@@ -472,28 +388,28 @@ class custom_onlineexams_form extends moodleform {
         $mform->closeHeaderBefore('buttonar');
 		$mform->disable_form_change_checker();
         // Finally set the current form data
-        if(empty($course)&&$course_id>0){
-             $course = get_course($course_id);
+        if(empty($onlineexam)&&$onlineexam_id>0){
+             $onlineexam = get_course($onlineexam_id);
         }
         if(!empty($this->_ajaxformdata['open_certificateid'])){
-            $course->open_certificateid = $this->_ajaxformdata['open_certificateid'];
+            $onlineexam->open_certificateid = $this->_ajaxformdata['open_certificateid'];
         }
-        if(!empty($course->open_certificateid)){
-            $course->map_certificate = 1;
+        if(!empty($onlineexam->open_certificateid)){
+            $onlineexam->map_certificate = 1;
         }
 
         if(!empty($this->_ajaxformdata['open_categoryid'])){
-            $course->open_categoryid = $this->_ajaxformdata['open_categoryid'];
+            $onlineexam->open_categoryid = $this->_ajaxformdata['open_categoryid'];
         }else{
-            $course->open_categoryid =0;
+            $onlineexam->open_categoryid =0;
         }
 
         if(empty($this->_ajaxformdata['open_identifiedas'])&&!empty($this->_ajaxformdata['identifiedtype'])){
-            $course->identifiedtype = $this->_ajaxformdata['identifiedtype'];
+            $onlineexam->identifiedtype = $this->_ajaxformdata['identifiedtype'];
         }elseif(empty($this->_ajaxformdata['open_identifiedas'])&&empty($this->_ajaxformdata['identifiedtype'])){
-            $course->identifiedtype ='';
+            $onlineexam->identifiedtype ='';
         }
-        $this->set_data($course);
+        $this->set_data($onlineexam);
 		$mform->disable_form_change_checker();
     }
      /**
@@ -509,76 +425,49 @@ class custom_onlineexams_form extends moodleform {
         $errors = parent::validation($data, $files);
 		$form_data = data_submitted();
         // Add field validation check for duplicate shortname.
-        if ($course = $DB->get_record('course', array('shortname' => $data['shortname']), '*', IGNORE_MULTIPLE)) {
-            if (empty($data['id']) || $course->id != $data['id']) {
-                $errors['shortname'] = get_string('shortnametaken', '', $course->fullname);
+        if ($onlineexam = $DB->get_record('course', array('shortname' => $data['shortname']), '*', IGNORE_MULTIPLE)) {
+            if (empty($data['id']) || $onlineexam->id != $data['id']) {
+                $errors['shortname'] = get_string('shortnametaken', '', $onlineexam->fullname);
             }
         }  
-		 if (isset($data['startdate']) && $data['startdate']
-                && isset($data['enddate']) && $data['enddate']) {
-            if ($data['enddate'] < $data['startdate']) {
-                $errors['enddate'] = get_string('nosameenddate', 'local_onlineexams');
+		 if (isset($data['timeopen']) && $data['timeopen']
+                && isset($data['timeclose']) && $data['timeclose']) {
+            if ($data['timeclose'] < $data['timeopen']) {
+                $errors['timeclose'] = get_string('nosameenddate', 'local_onlineexams');
             }
         }
-
-        // if (isset($data['category']) && $data['form_status'] == 0){
-        //     if(empty($data['category'])){
-        //         $errors['category'] = get_string('err_category', 'local_onlineexams');
-        //     }
-        // }
-
         if ($data['map_certificate'] == 1 && empty($this->_ajaxformdata['open_certificateid'])){
             $errors['open_certificateid'] = get_string('err_certificate', 'local_onlineexams');
         }
-        
-        // if ($data['open_enablepoints'] == 1){
-            
-        //     if(isset($data['open_points']) && $data['open_points']){
-        //         $value = $data['open_points'];
-        //         $intvalue = (int)$value;
-      
-        //         if(!("$intvalue" === "$value") || $intvalue < 0){
-        //           $errors['pointsArr'] = get_string('numeric', 'local_classroom');
-        //         }
-                
-        //       }else{
-        //         $errors['pointsArr'] = get_string('err_points', 'local_onlineexams');
-        //       }
-        // }
         if (isset($data['open_path']) && $data['form_status'] == 0){
             if($data['open_path'] == 0){
                 $errors['open_path'] = get_string('pleaseselectorganization', 'local_onlineexams');
             }
         }
-        // if (isset($data['identifiedtype']) && $data['form_status'] == 0){
-        //     if($data['identifiedtype'] == 0){
-        //         $errors['identifiedtype'] = get_string('pleaseselectidentifiedtype', 'local_onlineexams');
-        //     }
-        // }
-        if(isset($data['open_coursecompletiondays']) && $data['open_coursecompletiondays']){
-            $value = $data['open_coursecompletiondays'];
+        if(isset($data['open_onlineexamcompletiondays']) && $data['open_onlineexamcompletiondays']){
+            $value = $data['open_onlineexamcompletiondays'];
             $intvalue = (int)$value;
   
             if(!("$intvalue" === "$value") || $intvalue < 0){
-              $errors['open_coursecompletiondays'] = get_string('numeric', 'local_classroom'); 
+              $errors['open_onlineexamcompletiondays'] = get_string('numeric', 'local_classroom'); 
             }
             
           }
           if (isset($data['gradepass']) && $data['form_status'] == 0){
-            if($data['gradepass'] == 0){
-                $errors['gradepass'] = get_string('entergradepass', 'local_onlineexams');
-            }
-        }
-
-        // if(isset($data['open_cost']) && $data['open_cost']){
-        //     $value = $data['open_cost'];
-        //     $intvalue = (int)$value;
-  
-        //     if(!("$intvalue" === "$value") || $intvalue < 0){
-        //       $errors['open_cost'] = get_string('numeric', 'local_classroom');
-        //     }
             
-        //   }
+            if (array_key_exists('maxgrade', $data) AND array_key_exists('gradepass', $data)) {
+                if ($data['gradepass'] > $data['maxgrade']) {
+                    $errors['gradepass'] = get_string('shouldbeless','local_onlineexams',$data['maxgrade']);
+                }
+            }
+            $value = $data['gradepass'];
+            $intvalue = (int)$value;
+  
+            if(!("$intvalue" === "$value") || $intvalue < 0){
+              $errors['gradepass'] = get_string('numeric', 'local_onlineexams');
+            }
+            
+        }
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));
         return $errors;
     }
