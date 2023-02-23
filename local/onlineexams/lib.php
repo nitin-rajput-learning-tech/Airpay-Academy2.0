@@ -146,7 +146,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     $formstatus = array();
     foreach (array_values($mform->formstatus) as $k => $mformstatus) {
         $activeclass = $k == $args->form_status ? 'active' : '';
-        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass);
+        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass, 'form-status' => $k);
     }
     $formstatusview = new \local_onlineexams\output\form_status($formstatus);
     $o .= $renderer->render($formstatusview);

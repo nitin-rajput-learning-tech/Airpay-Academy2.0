@@ -132,7 +132,7 @@ class custom_onlineexams_form extends moodleform {
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
 
-        $mform->addElement('hidden', 'id', $onlineexamid);
+        $mform->addElement('hidden', 'id', $onlineexamid, array('id' => 'onlineexamid'));
         $mform->setType('id', PARAM_INT);
 		
         $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context($onlineexamid);
