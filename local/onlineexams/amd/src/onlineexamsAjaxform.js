@@ -203,8 +203,8 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
              this.modal.hide();
         }else{
             return Str.get_strings([{
-                key: 'courseoverview',
-                component: 'local_courses'
+                key: 'onlineexamoverview',
+                component: 'local_onlineexams'
             }]).then(function(s) {
                 
                 // This will be the context for our template. So {{name}} in the template will resolve to "Tweety bird".
@@ -212,7 +212,7 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
 
                 var modalPromise = ModalFactory.create({
                     type: ModalFactory.types.DEFAULT,
-                    body: Templates.render('local_courses/courses', context),
+                    body: Templates.render('local_onlineexams/onlineexams', context),
                     footer: this.getcontentFooter(),
                 });
                 $.when(modalPromise).then(function(modal) {
