@@ -56,7 +56,7 @@ class search implements renderable{
         $leftjoinsql = '';
 
         // added condition for not displaying retired ILT's.
-        $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 AND lc.selfenrol = 1 ";
+        $wheresql = " WHERE lc.visible=1  AND lc.selfenrol = 1 ";
 
         $searchsql = '';
         if(searchlib::$search && searchlib::$search != 'null'){
@@ -157,23 +157,19 @@ class search implements renderable{
             foreach($filters['status'] AS $statusfilter){
                 switch ($statusfilter) {
                     case 'notenrolled':
-                        $statussql[] = " lc.id not in (select distinct programid from {local_program_users} where userid=$USER->id) AND lc.status in (1) ";
+                        $statussql[] = " lc.id not in (select distinct programid from {local_program_users} where userid=$USER->id)  ";
                     break;
                     case 'inprogress':
-                        $wheresql .= " AND lc.id in (select distinct programid from {local_program_users} where userid=$USER->id AND completion_status <> 1) AND lc.status in (1,3,4)";
+                        $wheresql .= " AND lc.id in (select distinct programid from {local_program_users} where userid=$USER->id AND completion_status <> 1) ";
                     break;
                     case 'completed':
-                        $statussql[] = " lc.id in (select distinct programid from {local_program_users} where userid=$USER->id AND completion_status = 1) AND lc.status in (1,3,4) ";
+                        $statussql[] = " lc.id in (select distinct programid from {local_program_users} where userid=$USER->id AND completion_status = 1)  ";
                     break;
                 }
             }
             if(!empty($statussql)){
                 $wheresql .= " AND (".implode('OR', $statussql)." ) ";
-            }else{
-                $wheresql .= " AND lc.status in (1,3,4) ";
             }
-        }else{
-            $wheresql .= " AND lc.status in (1,3,4) ";
         }
 
         foreach($filters AS $filtertype => $filtervalues){
@@ -193,7 +189,8 @@ class search implements renderable{
         // print_r($finalcountquery);exit;
         $numberofrecords = 0;
         if($return_noofrecords)
-            $numberofrecords = sizeof($DB->get_records_sql($finalcountquery,$sqlparams));
+
+        $numberofrecords = sizeof($DB->get_records_sql($finalcountquery,$sqlparams));
 
         $finalsql = $csql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
         $finalsql .= " ORDER BY lc.id DESC ";
@@ -211,13 +208,13 @@ class search implements renderable{
             }
         }
 
-    } // end of get_facetofacelist_query
+    } // end of get_programslist_query
 
 
     public function export_for_template($perpage,$startlimit, $selectedfilter = array()){
         global $DB, $USER, $CFG, $PAGE,$OUTPUT;
 
-        $facetofacelist_ar =$this->get_facetofacelist_query($perpage, $startlimit, true, true, $selectedfilter);
+        $facetofacelist_ar =$this->get_programslist_query($perpage, $startlimit, true, true, $selectedfilter);
         $facetofacelist= $facetofacelist_ar['list'];
 
         foreach($facetofacelist as $list){
@@ -290,11 +287,8 @@ class search implements renderable{
                 $list->enrolmethods[] = 'self';
             }
 
-            $waitlist = $DB->get_field('local_program_waitlist','id',array('programid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
             $list->requeststatus = MODULE_NOT_ENROLLED;
-            if($waitlist > 0){
-                $list->requeststatus = MODULE_ENROLMENT_WAITING;
-            }else{
+
                 if($list->isenrolled){
                     $list->requeststatus = MODULE_ENROLLED;
                 }else{
@@ -306,7 +300,7 @@ class search implements renderable{
                         }
                     }
                 }
-            }
+
             $list->userenrolstatus = $userenrolstatus;
             $return=false;
             if($list->id > 0 && ($list->nomination_startdate!=0 || $list->nomination_enddate!=0)){
@@ -373,7 +367,7 @@ class search implements renderable{
             }
 
             // program view link
-            $list->programlink= $CFG->wwwroot.'/local/program/view.php?cid='.$list->id;
+            $list->programlink= $CFG->wwwroot.'/local/program/view.php?bcid='.$list->id;
             if (!$userenrolstatus){
               $list->redirect = '<a href="'.$list->programlink.'" class="programinfo cat_btn viewmore_btn" >'.get_string('viewmore','local_search').'</a>';
             } else {
@@ -445,7 +439,7 @@ class search implements renderable{
         $selectsql = "SELECT  lc.id FROM {local_program} lc  ";
 
         // added condition for not displaying retired ILT's.
-        $wheresql = " WHERE lc.visible=1 AND lc.status = 1 AND lc.selfenrol = 1 AND lc.id = ? ";
+        $wheresql = " WHERE lc.visible=1 AND lc.selfenrol = 1 AND lc.id = ? ";
 
         $sqlparams = array($program->id);
         $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
@@ -536,10 +530,7 @@ class search implements renderable{
 
         if(!is_siteadmin()){
             if($programinfo->approvalreqd==1){
-                   $waitlist = $DB->get_field('local_program_waitlist','id',array('programid' => $programid,'userid'=>$USER->id,'enrolstatus'=>0));
-                if($waitlist > 0){
-                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Waiting</button>';
-                }else{
+
                     $componentid =$programid;
                     $component = 'program';
                     $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
@@ -549,14 +540,11 @@ class search implements renderable{
                     }else{
                         $enrollmentbtn =requestapi::get_requestbutton($componentid, $component, $programname);
                     }
-                }
+
             }else{
-                $waitlist = $DB->get_field('local_program_waitlist','id',array('programid' => $programid,'userid'=>$USER->id,'enrolstatus'=>0));
-                if($waitlist > 0){
-                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Waiting</button>';
-                }else{
+
                      $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$programid.', programid:'.$programid.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$programname.'\'}) })(event)" >'.get_string('enroll','local_program').'</a>';
-                }
+
             }
         }
         return $enrollmentbtn;

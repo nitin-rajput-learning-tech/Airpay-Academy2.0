@@ -25,6 +25,9 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/user/selector/lib.php');
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
+
+define('program', 4);
+
 use \local_program\form\program_form as program_form;
 use local_program\local\querylib;
 use local_program\program;

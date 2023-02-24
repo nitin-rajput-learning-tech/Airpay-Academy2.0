@@ -100,13 +100,11 @@ class general_lib{
                 $coursefileurl = $includes->get_classes_summary_files($program);
             }
             $program->isenrolled = $DB->record_exists('local_program_users', array('programid' => $program->id, 'userid' => $USER->id));
-            $waitlist = $DB->get_field('local_program_waitlist','id',array('programid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
+
             $program->requeststatus = MODULE_NOT_ENROLLED;
             $certificate_code = ($DB->get_field('tool_certificate_issues','code',array('moduletype'=> 'program','moduleid' => $program->id, 'userid' => $USER->id))) ;
             $program->certificateid = $certificate_code ? $certificate_code : '';
-            if($waitlist > 0){
-                $program->requeststatus = MODULE_ENROLMENT_WAITING;
-            }else{
+
                 if($program->isenrolled){
                     $program->requeststatus = MODULE_ENROLLED;
                 }else{
@@ -118,7 +116,7 @@ class general_lib{
                         }
                     }
                 }
-            }
+
             $program->bannerimage = is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
             $program->category = ($DB->get_field('local_custom_category','fullname',array('id' => $program->open_category))) ;
             $program_capacity_check = (new \local_program\program)->program_capacity_check( $program->id);
