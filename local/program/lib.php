@@ -996,3 +996,20 @@ if(!$enabled_plugins){
      }
    }    
 }
+function local_program_search_page_js(){
+    global $PAGE;
+    $PAGE->requires->js_call_amd('local_program/program','load', array());
+}
+function local_program_search_page_filter_element(&$filterelements){
+    global $CFG;
+    if(file_exists($CFG->dirroot.'/local/search/lib.php')){
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        $filterelements['ilt'] = ['code' => 'program', 'name' => 'program Trainings', 'tagitemshortname' => 'program', 'count' => local_search_get_coursecount_for_modules([['type' => 'moduletype', 'values' => ['program']]])];
+    }
+}
+function local_program_enabled_search(){
+    return ['pluginname' => 'local_program', 'templatename' => 'local_program/searchpagecontent', 'type' => program];
+}
+function  local_program_applicable_filters_for_search_page(&$filterapplicable){
+    $filterapplicable[program] = [/*'learningtype',*/ 'status', 'categories'/*, 'level', 'skill'*/];
+}

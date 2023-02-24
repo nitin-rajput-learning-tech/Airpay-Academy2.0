@@ -1,0 +1,75 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template catalog/program list
+
+    Displays program
+   
+}}
+
+<div class="course-img">
+    <a ng-if="record.selfenroll == 0" title="<% record.iltformatname %>">
+        <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
+    </a>
+    <a ng-if="record.selfenroll == 1" title="<% record.iltformatname %>" ng-href="<% record.programlink %>">
+        <div style="background-image: url('<% record.fileurl %>')" class=courseimg_bg></div>
+    </a>
+    <a ng-if="record.selfenroll == 2" title="<% record.iltformatname %>">
+        <div style="background-image: url(<% record.fileurl %>)" class=courseimg_bg></div>
+    </a>
+</div>
+<div class="coursepage-name">
+    <a ng-if="record.selfenroll == 0" class="coursesubtitle" title="<% record.iltformatname %>" >
+        <h5 class="cat-level-course"><% record.iltformatname %><br/></h5>
+    </a>
+
+    <a ng-if="record.selfenroll == 2" class="coursesubtitle" title="<% record.iltformatname %>" >
+        <h5 class="cat-level-course"><% record.iltformatname %><br/></h5>
+    </a>
+
+    <a ng-if="record.selfenroll == 1" class="coursesubtitle" title="<% record.iltformatname %>" ng-href="<% record.programlink %>">
+        <h5 class="cat-level-course"><% record.iltformatname %><br/></h5>
+    </a>
+    
+    <div class="course-desc" ng-bind-html="record.intro | unsafe" ></div>
+    <span class="pull-left w-full cls-rating" ng-bind-html="record.rating_element | unsafe"></span>
+    <div class="pull-left w-full mt-2 cls-tags" ng-bind-html="record.tags | unsafe"></div></br>
+    <div class="course-author">
+        <div class="row">
+            <div class="col-md-12 pull-left author-name">
+                <div class="course_maindetails">
+                    <span class="pull-right w-full">
+                        <span class="course_details_new">
+                            <span ng-if="record.selfenroll == 0" class="catcr_enrol" ng-bind-html="record.enrollmentbtn | unsafe"></span>
+                                <span ng-if="record.selfenroll == 2">
+                                <button class="cat_btn btn-primary viewmore_btn">
+                                {{#str}}capacity_check, local_catalog{{/str}}
+                                </button>
+                                </span>
+                                <span ng-if="record.selfenroll == 1">
+                                <a ng-href="<% record.programlink %>" class="as_button_in_anchor">
+                                    <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_catalog{{/str}}</span>
+                                </a>
+                                </span>
+                                <span ng-bind-html="record.redirect | unsafe"></span>
+                        </span>  {{! end of class course_details_new div}}
+                    </span> {{! end of class pull-right div}}
+                </div> {{! end of class course_maindetails div}}
+            </div> {{! end of class author-name div}}
+        </div> {{! end of class row div}}
+    </div> {{! end of class course-author div}}
+</div> {{! end of class coursepage-name div}}

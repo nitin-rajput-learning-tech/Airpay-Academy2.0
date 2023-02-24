@@ -290,7 +290,7 @@ class allcourses {
     foreach($standard_catalogtypes as $key => $type){
       switch($type){
        
-       case learningplan :
+       case 'learningplan' :
             $classname = '\local_learningplan\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
@@ -300,13 +300,23 @@ class allcourses {
             } // end of if condition
           break;
 
-        case classroom:
+        case 'classroom':
             $classname = '\local_classroom\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
                 $classroom_ar= $class->get_facetofacelist_query(1,searchlib::$page*1,true,true,$thisfilters);
                 $totalrecords_ineachtype[]= array('numberofrecords'=>$classroom_ar['numberofrecords'],'type' =>'classroom');
                 $sumofallrecords += $classroom_ar['numberofrecords'];
+            } // end of if condition
+          break;
+
+        case 'program':
+            $classname = '\local_program\output\search';
+            if(class_exists($classname)){
+                $class = new $classname();
+                $program_ar= $class->get_programslist_query(1,searchlib::$page*1,true,true,$thisfilters);
+                $totalrecords_ineachtype[]= array('numberofrecords'=>$program_ar['numberofrecords'],'type' =>'program');
+                $sumofallrecords += $program_ar['numberofrecords'];
             } // end of if condition
           break;
 
@@ -511,6 +521,14 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
             break;
             case 'classroom' :
                 $classname = '\local_classroom\output\search';
+                if(class_exists($classname)){
+                    $class = new $classname();
+                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$thisfilters);
+                    $finallist = $this->get_array_format($lplist);
+                }
+            break;
+            case 'program' :
+                $classname = '\local_program\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();
                     $lplist = $class->export_for_template($level_perpage, $level_startlimit,$thisfilters);

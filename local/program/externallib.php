@@ -1230,4 +1230,36 @@ class local_program_external extends external_api {
     public static function unenrol_user_returns(){
         return new external_value(PARAM_BOOL, 'return');
     }
+    public function get_program_info_parameters(){
+        return new external_function_parameters(
+            array(
+                'id' => new external_value(PARAM_INT, 'The id of the module'),
+            )
+        );
+    }
+    public function get_program_info($id){
+        $params = self::validate_parameters(self::get_program_info_parameters(),
+            ['id' => $id]);
+        return (new \local_program\local\general_lib())->get_program_info($id);
+    }
+    public function get_program_info_returns(){
+       return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'The id of the module'),
+            'fullname' => new external_value(PARAM_TEXT, 'fullname'),
+            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
+            'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
+            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_INT, 'points', VALUE_OPTIONAL, NULL),
+            'requeststatus' => new external_value(PARAM_INT, 'User request status to module', VALUE_OPTIONAL, 0),
+            'enrolment_status_message' => new external_value(PARAM_INT, 'Status message for enrollment', VALUE_OPTIONAL, 0),
+            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
+            'startdate' => new external_value(PARAM_INT, 'startdate'),
+            'enddate' => new external_value(PARAM_INT, 'enddate'),
+            'coursecount' => new external_value(PARAM_INT, 'coursecount', VALUE_OPTIONAL, 0),
+            'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
+            'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
+        ));
+    }
 }
