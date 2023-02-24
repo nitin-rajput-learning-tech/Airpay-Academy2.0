@@ -86,7 +86,7 @@ function local_notifications_output_fragment_new_notification_form($args)
     $formstatus = array();
     foreach (array_values($mform->formstatus) as $k => $mformstatus) {
         $activeclass = $k == $args->form_status ? 'active' : '';
-        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass);
+        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass, 'form-status' => $k);
     }
     $formstatusview = new \local_notifications\output\form_status($formstatus);
     $o .= $renderer->render($formstatusview);

@@ -178,7 +178,7 @@ class notification_form extends moodleform {
             $mform->setType('adminbody', PARAM_RAW);
         }// end of form status = 1 condition
         
-        $mform->addElement('hidden', 'id');
+        $mform->addElement('hidden', 'id', $id, array('id' => 'notificationid'));
         $mform->setType('id', PARAM_INT);
 
         //$this->add_action_buttons(true);

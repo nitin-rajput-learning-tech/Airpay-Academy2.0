@@ -61,7 +61,7 @@ class learningplan extends moodleform {
 		$open_path = $this->_customdata['open_path'];
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
    		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
-		$mform->addElement('hidden', 'id', $id);
+		$mform->addElement('hidden', 'id', $id, array('id' => 'learningplanid'));
         $mform->setType('id', PARAM_INT);
 
         $mform->addElement('hidden', 'form_status', $form_status);

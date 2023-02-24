@@ -75,6 +75,30 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 self.modal.getRoot().on(ModalEvents.shown, function () {
                     self.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
                 }.bind(this));
+
+                if(self.args.callback == 'learningplan_form'){
+                    $(document).on('click', '.custom_user_form_redirect', function(){
+                        var instanceid = $("#learningplanid").val();
+                        if(instanceid > 0){
+                            self.args.form_status = $(this).data('value');
+                            var data = self.getBody();
+                            data.then(function(html, js) {
+                                if (html === false) {
+                                  // window.location.reload();
+                                    self.handleFormSubmissionResponse(args);
+                                }
+                            });
+                            modal.setBody(data);
+                            // if(self.args.form_status==0){
+                            //     $('[data-action="skip"]').css('display', 'none');
+                            //     $('[data-action="previous"]').css('display', 'none');
+                            // }else{
+                            //     $('[data-action="skip"]').css('display', 'block');
+                            //     $('[data-action="previous"]').css('display', 'block');
+                            // }
+                        }
+                    });
+                }
                 // We catch the modal save event, and use it to submit the form inside the modal.
                 // Triggering a form submission will give JS validation scripts a chance to check for errors.
                 self.modal.getRoot().on(ModalEvents.save, self.submitForm.bind(self));

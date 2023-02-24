@@ -166,6 +166,33 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                         $('[data-action="previous"]').css('display', 'block');
                     }
                 });
+                // added for custom navigating from the top lists.
+                if(self.args.callback == 'user_form'){
+                    $(document).on('click', '.custom_user_form_redirect', function(){
+                        var instanceid = $("#userid").val();
+                        if(instanceid > 0){
+                            self.args.form_status = $(this).data('value');
+                            var data = self.getBody();
+                            data.then(function(html, js) {
+                                if (html === false) {
+                                  // window.location.reload();
+                                    self.handleFormSubmissionResponse(args);
+                                }
+                            });
+                            modal.setBody(data);
+                            if(self.args.form_status==0){
+                                $('[data-action="skip"]').css('display', 'none');
+                                $('[data-action="previous"]').css('display', 'none');
+                            }else if(self.args.form_status==2){
+                                $('[data-action="skip"]').css('display', 'none');
+                                $('[data-action="previous"]').css('display', 'block');
+                            }else {
+                                $('[data-action="skip"]').css('display', 'block');
+                                $('[data-action="previous"]').css('display', 'block');
+                            }
+                        }
+                    });
+                }
 
                 this.modal.getRoot().on('submit', 'form', function(form) {
                     self.submitFormAjax(form, self.args);
