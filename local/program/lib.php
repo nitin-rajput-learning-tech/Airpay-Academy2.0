@@ -25,6 +25,9 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/user/selector/lib.php');
 require_once($CFG->libdir . '/formslib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
+
+define('program', 4);
+
 use \local_program\form\program_form as program_form;
 use local_program\local\querylib;
 use local_program\program;
@@ -377,8 +380,8 @@ function program_filter($mform){
             $courseslist = $DB->get_records_sql_menu("SELECT id, name FROM {local_program} ");
         }
 
-    $select = $mform->addElement('autocomplete', 'program', '', $courseslist,
-        array('placeholder' => get_string('program_name', 'local_program')));
+    $select = $mform->addElement('autocomplete', 'program', get_string('program', 'local_program'), $courseslist,
+        array('placeholder' => get_string('program', 'local_program')));
     $mform->setType('program', PARAM_RAW);
     $select->setMultiple(true);
 }
@@ -995,4 +998,21 @@ if(!$enabled_plugins){
         echo $OUTPUT->notification($enable,'notifyerror');
      }
    }    
+}
+function local_program_search_page_js(){
+    global $PAGE;
+    $PAGE->requires->js_call_amd('local_program/program','load', array());
+}
+function local_program_search_page_filter_element(&$filterelements){
+    global $CFG;
+    if(file_exists($CFG->dirroot.'/local/search/lib.php')){
+        require_once($CFG->dirroot.'/local/search/lib.php');
+        $filterelements['program'] = ['code' => 'program', 'name' => 'Program Trainings', 'tagitemshortname' => 'program', 'count' => local_search_get_coursecount_for_modules([['type' => 'moduletype', 'values' => ['program']]])];
+    }
+}
+function local_program_enabled_search(){
+    return ['pluginname' => 'local_program', 'templatename' => 'local_program/searchpagecontent', 'type' => program];
+}
+function  local_program_applicable_filters_for_search_page(&$filterapplicable){
+    $filterapplicable[program] = [/*'learningtype',*/ 'status', 'categories'/*, 'level', 'skill'*/];
 }

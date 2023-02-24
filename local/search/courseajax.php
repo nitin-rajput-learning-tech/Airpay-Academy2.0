@@ -2,6 +2,8 @@
 define('AJAX_SCRIPT',true);
 require_once(dirname(__FILE__) . '/../../config.php');
 use local_classroom\classroom as classroom;
+use local_classroom\program as program;
+
 use local_search\output\searchlib;
 
 //require_once('../../config.php');

@@ -310,6 +310,16 @@ class allcourses {
             } // end of if condition
           break;
 
+        case program:
+            $classname = '\local_program\output\search';
+            if(class_exists($classname)){
+                $class = new $classname();
+                $program_ar= $class->get_programslist_query(1,searchlib::$page*1,true,true,$thisfilters);
+                $totalrecords_ineachtype[]= array('numberofrecords'=>$program_ar['numberofrecords'],'type' =>'program');
+                $sumofallrecords += $program_ar['numberofrecords'];
+            } // end of if condition
+          break;
+
         default:
             $classname = '\local_courses\output\search';
             if(class_exists($classname)){
@@ -414,7 +424,10 @@ class allcourses {
 public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     global $DB;
     $othertagitems = array();
+
+
     $response = $this->get_available_catalogtypes($selectedfilter);
+
 
     $totalrecords_ineachtype = $response['totalrecords_ineachtype'];
     $sumofallrecords = $response['sumofallrecords'];
@@ -511,6 +524,14 @@ public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
             break;
             case 'classroom' :
                 $classname = '\local_classroom\output\search';
+                if(class_exists($classname)){
+                    $class = new $classname();
+                    $lplist = $class->export_for_template($level_perpage, $level_startlimit,$thisfilters);
+                    $finallist = $this->get_array_format($lplist);
+                }
+            break;
+            case 'program' :
+                $classname = '\local_program\output\search';
                 if(class_exists($classname)){
                     $class = new $classname();
                     $lplist = $class->export_for_template($level_perpage, $level_startlimit,$thisfilters);
