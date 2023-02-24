@@ -42,11 +42,11 @@
                 </li>
             {{/learningplan}}
 
-            {{#onlinetests}}
-                <li class="nav-item profiledatadisplay" role="presentation" data-class = "onlinetests" data-action = "display_onlinetests" data-status = "onlinetests" id={{userid}}>
-                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="onlinetests" role="tab"  title="{{#str}}onlineexams, local_users{{/str}}" >{{#str}}onlineexams, local_users{{/str}}</a>
+            {{#onlineexams}}
+                <li class="nav-item profiledatadisplay" role="presentation" data-class = "onlineexams" data-action = "display_onlineexams" data-status = "onlineexams" id={{userid}}>
+                    <a class="nav-link" data-toggle="tab" href="javascript:void(0);" aria-controls="onlineexams" role="tab"  title="{{#str}}onlineexams, local_users{{/str}}" >{{#str}}onlineexams, local_users{{/str}}</a>
                 </li>
-            {{/onlinetests}}
+            {{/onlineexams}}
 
             {{#program}}
                 <li class="nav-item profiledatadisplay" role="presentation" data-class = "program" data-action = "display_program" data-status = "program" id={{userid}}>
