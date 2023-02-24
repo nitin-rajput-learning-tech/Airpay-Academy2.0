@@ -57,12 +57,12 @@
                             <span ng-if="record.selfenroll == 0" class="catcr_enrol" ng-bind-html="record.enrollmentbtn | unsafe"></span>
                                 <span ng-if="record.selfenroll == 2">
                                 <button class="cat_btn btn-primary viewmore_btn">
-                                {{#str}}capacity_check, local_catalog{{/str}}
+                                {{#str}}capacity_check, local_search{{/str}}
                                 </button>
                                 </span>
                                 <span ng-if="record.selfenroll == 1">
                                 <a ng-href="<% record.programlink %>" class="as_button_in_anchor">
-                                    <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_catalog{{/str}}</span>
+                                    <span class="cat_btn btn-sm appear_as_button btn-primary viewmore_btn">{{#str}}start_now, local_search{{/str}}</span>
                                 </a>
                                 </span>
                                 <span ng-bind-html="record.redirect | unsafe"></span>

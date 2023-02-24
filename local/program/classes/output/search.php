@@ -34,7 +34,7 @@ use context_system;
 use context_course;
 use context_user;
 use local_search\output\searchlib;
-use local_program\program as pgrm;
+use local_program\program as program;
 use user_course_details;
 use local_request\api\requestapi;
 
@@ -45,420 +45,520 @@ use local_request\api\requestapi;
  */
 class search implements renderable{
 
-        public function get_programslist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false){
+
+    public function get_programslist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false, $filters = array()){
         global $DB, $USER, $CFG;
-        $search = cataloglib::$search;
-        $sortid = cataloglib::$sortid;
-        //------main queries written here to fetch Program or  session based on condition
-        $csql ="SELECT  lp.*,lp.startdate as trainingstartdate, lp.enddate as trainingenddate ";
-          $cfromsql = " from {local_program} lp  ";
-          $usql = " UNION ";
-          $tsql ="SELECT lp.*,lp.startdate as trainingstartdate, lp.enddate as trainingenddate ";
-          $tfromsql = " from {local_program} lp ";
-          $tjoinsql = " JOIN {tag_instance} tgi ON tgi.itemid = lp.id AND tgi.itemtype = 'program' AND tgi.component = 'local_program' JOIN {tag} t ON t.id = tgi.tagid ";
-          $leftjoinsql = $groupby = $orderby = $avgsql = '';
-        if (!empty($sortid)) {
-          switch($sortid) {
-            case 'highrate':
-            if ($DB->get_manager()->table_exists('local_rating')) {
-                $avgsql .= " , AVG(r.rating) as rates ";
-                $leftjoinsql .= " LEFT JOIN {local_rating} as r ON r.itemid = lp.id AND r.ratearea = 'local_program' ";
-                $groupby .= " group by lp.id ";
-                $orderby .= " order by rates desc ";
-            }
-            break;
-            case 'lowrate':
-            if ($DB->get_manager()->table_exists('local_rating')) {
-                $avgsql .= " , AVG(r.rating) as rates  ";
-                $leftjoinsql .= " LEFT JOIN {local_rating} as r ON r.itemid = lp.id AND r.ratearea = 'local_program' ";
-                $groupby .= " group by lp.id ";
-                $orderby .= " order by rates asc ";
-            }
-            break;
-            case 'latest':
-            $orderby .= " order by a.timecreated desc ";
-            break;
-            case 'oldest':
-            $orderby .= " order by a.timecreated asc ";
-            break;
-            default:
-            $orderby .= " order by a.timecreated desc ";
-            break;
-            }
-        }
-          $wheresql = " where 1=1 and lp.visible=1 ";
-            //------if not site admin sessions list will be filter by location or bands
-         if(is_siteadmin()){
-            if(cataloglib::$search && cataloglib::$search!='null'){
-                 $cwrsql = " AND lp.name LIKE '%$search%'";
-                 $twrsql = " AND t.name LIKE '%$search%'";
-            }
-         }
+        $search = searchlib::$search;
+        //------main queries written here to fetch programs or  session based on condition
+        $csql = "SELECT  lc.*, lc.startdate as trainingstartdate, lc.enddate as trainingenddate ";
+        $cfromsql = " FROM {local_program} lc  ";
 
+        $leftjoinsql = '';
+
+        // added condition for not displaying retired ILT's.
+        $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 AND lc.selfenrol = 1 ";
+
+        $searchsql = '';
+        if(searchlib::$search && searchlib::$search != 'null'){
+            $searchsql = " AND lc.name LIKE '%$search%'";
+        }
         $usercontext = context_user::instance($USER->id);
+        $sqlparams = array();
         if(!is_siteadmin()){
-
-            //-----filter by costcenter
-            if($USER->open_costcenterid){
-                $wheresql .= " AND $USER->open_costcenterid in (lp.costcenter)";
+            $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            $paths = [];
+            foreach($usercostcenterpaths AS $userpath){
+                $userpathinfo = $userpath;
+                $paths[] = $userpathinfo.'/%';
+                $paths[] = $userpathinfo;
+                while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                    $userpathinfo = rtrim($userpathinfo, '/');
+                    if ($userpathinfo === '') {
+                      break;
+                    }
+                    $paths[] = $userpathinfo;
+                }
             }
+            if(!empty($paths)){
+                foreach($paths AS $path){
+                    $pathsql[] = " lc.open_path LIKE '{$path}' ";
+                }
+                $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+            }
+            // if(!empty($usercostcenterpaths)){
+            //     foreach($usercostcenterpaths AS $path){
+            //         $pathsql[] = " lc.open_path LIKE '{$path}' ";
+            //     }
+            //     $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+            // }
 
-             //OL-1042 Add Target Audience to Program//
-                $params = array();
+            $params = array();
 
-                $group_list = $DB->get_records_sql_menu("SELECT  cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
+            $group_list = $DB->get_records_sql_menu("SELECT cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
 
-                $grouquery = array(" lp.open_group IS NULL ");
-                if($grouquery){
+            if (!empty($group_list)){
+                $groups_members = implode(',', $group_list);
+                if(!empty($group_list)){
+                    $grouquery = array();
                     foreach ($group_list as $key => $group) {
-                        $grouquery[] = " CONCAT(',',lp.open_group,',') LIKE CONCAT('%,',{$group},',%') ";
+                        $grouquery[] = " CONCAT(',',lc.open_group,',') LIKE CONCAT('%,',{$group},',%') ";
                     }
+                    $groupqueeryparams =implode('OR',$grouquery);
+
+                    $params[]= '('.$groupqueeryparams.')';
                 }
-                $groupqueeryparams =implode('OR',$grouquery);
-                $params[]= '('.$groupqueeryparams.')';
-
-                // if(!empty($USER->open_departmentid)){
-                if(!empty($USER->open_departmentid) && $USER->open_departmentid != ""){
-                    $sqlparams[] = "%,$USER->open_departmentid,%";
-                }else{
-                    $sqlparams[] = "";
-                }
-                $params[]= " 1 = CASE WHEN lp.department !='-1'
-                    THEN
-                        CASE WHEN CONCAT(',',lp.department,',') LIKE ?
-                        THEN 1
-                        ELSE 0 END
-                    ELSE 1 END ";
-                //FIND_IN_SET($USER->open_departmentid,lp.department)
-                // }
-                if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-                    $sqlparams[] = "%,$USER->open_subdepartment,%";
-                }else{
-                    $sqlparams[] = "";
-                }
-                $params[]= " 1 = CASE WHEN lp.subdepartment !='-1'
-                    THEN
-                        CASE WHEN CONCAT(',',lp.subdepartment,',') LIKE ?
-                        THEN 1
-                        ELSE 0 END
-                    ELSE 1 END ";//FIND_IN_SET($USER->open_departmentid,lp.department)
-                // }
-                // if(!empty($USER->open_hrmsrole)){
-                // if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
-             //     $sqlparams[] = "%,$USER->open_hrmsrole,%";
-                // }else{
-                //  $sqlparams[] = "";
-                // }
-          //       $params[]= " 1 = CASE WHEN lp.open_hrmsrole IS NOT NULL
-                //  THEN
-                //      CASE WHEN CONCAT(',',lp.open_hrmsrole,',') LIKE ?
-                //          THEN 1
-                //          ELSE 0 END
-                //  ELSE 1 END ";
-                //FIND_IN_SET('$USER->open_hrmsrole',lp.open_hrmsrole)
-                // }
-               // if(!empty($USER->open_designation)){
-                if(!empty($USER->open_designation) && $USER->open_designation != ""){
-                    $sqlparams[] = "%,$USER->open_designation,%";
-                }else{
-                    $sqlparams[] = "";
-                }
-                $params[]= " 1 = CASE WHEN lp.open_designation IS NOT NULL
-                    THEN
-                        CASE WHEN CONCAT(',',lp.open_designation,',') LIKE ?
-                            THEN 1
-                            ELSE 0 END
-                    ELSE 1 END ";//FIND_IN_SET('$USER->open_designation',lp.open_designation)
-               // }
-
-
-               // if(!empty($USER->city)){
-                // if(!empty($USER->open_location) && $USER->open_location != ""){
-                //  $sqlparams[] = "%,$USER->open_location,%";
-                // }else{
-                //  $sqlparams[] = "";
-                // }
-          //       $params[]= " 1 = CASE WHEN lp.open_location IS NOT NULL
-                //      THEN
-                //          CASE WHEN CONCAT(',',lp.open_location,',') LIKE ?
-                //              THEN 1
-                //              ELSE 0 END
-                //      ELSE 1 END ";
-                //FIND_IN_SET('$USER->city',lp.open_location)
-                //
-                // }
-
-
-               $userlocation = $DB->get_field('user','open_location',array('id' => $USER->id));
-
-               if($userlocation){
-                 $wheresql .=" AND (FIND_IN_SET('$userlocation', lp.open_location) OR lp.open_location IS NULL OR lp.open_location = '') ";
-               }else{
-                  $wheresql .=" AND (lp.open_location IS NULL OR lp.open_location = '') ";
-               }
-
-                if(!empty($USER->open_level) && $USER->open_level != ""){
-                    $sqlparams[] = "%,$USER->open_level,%";
-                }else{
-                    $sqlparams[] = "";
-                }
-                $params[]= " 1 = CASE WHEN lp.level IS NOT NULL
-                                    THEN
-                                        CASE
-                                            WHEN CONCAT(',',lp.level,',') LIKE ?
-                                                THEN 1
-                                                ELSE 0
-                                        END
-                                    ELSE 1 END ";
-
-                if(!empty($USER->open_resourcegroupid) && $USER->open_resourcegroupid != ""){
-                    $sqlparams[] = "%,$USER->open_resourcegroupid,%";
-                }else{
-                    $sqlparams[] = "";
-                }
-                $params[]= " 1 = CASE WHEN lp.resourcegroup IS NOT NULL
-                                    THEN
-                                        CASE
-                                            WHEN CONCAT(',',lp.resourcegroup,',') LIKE ?
-                                                THEN 1
-                                                ELSE 0
-                                        END
-                                    ELSE 1 END ";
-
-                if(!empty($USER->open_resourcetypeid) && $USER->open_resourcetypeid != ""){
-                    $sqlparams[] = "%,$USER->open_resourcetypeid,%";
-                }else{
-                    $sqlparams[] = "";
-                }
-                $params[]= " 1 = CASE WHEN lp.resourcetype IS NOT NULL
-                                    THEN
-                                        CASE
-                                            WHEN CONCAT(',',lp.resourcetype,',') LIKE ?
-                                                THEN 1
-                                                ELSE 0
-                                        END
-                                    ELSE 1 END ";
-                if(!empty($USER->open_doj) && $USER->open_doj != ""){
-                    $open_doj = $USER->open_doj;
-                }else{
-                    $open_doj = 0;
-                }
-                $params[]= " 1 = CASE WHEN lp.open_doj IS NOT NULL
-                                    THEN
-                                        CASE
-                                            WHEN lp.open_doj <= {$open_doj}
-                                                THEN 1
-                                                ELSE 0
-                                        END
-                                    ELSE 1 END ";
-
-                if(!empty($params)){
-                    $finalparams=implode('AND',$params);
-                }else{
-                    $finalparams= '1=1' ;
-                }
-             //OL-1042 Add Target Audience to Program//
-
-            if(cataloglib::$search && cataloglib::$search!='null'){
-                $cwrsql = " AND lp.name LIKE '%$search%'";
-                $twrsql = " AND t.name LIKE '%$search%'";
             }
-            $category=cataloglib::$category;
-            if(cataloglib::$category && cataloglib::$category>0){
 
-            }
-            $joinsql = " AND $finalparams ";// OR (lp.open_hrmsrole IS NULL AND lp.open_designation IS NULL AND lp.open_location IS NULL AND lp.open_group IS NULL AND lp.department='-1' )
-
-            if(cataloglib::$enrolltype && cataloglib::$enrolltype>0 ){
-                if(cataloglib::$enrolltype==1){
-                    if(cataloglib::$category && cataloglib::$category>0){
-
-                    }
-                    $wheresql .= " AND lp.id in (select distinct programid from {local_program_users} where userid=$USER->id) ";//AND lp.status in (1,3,4)
-                }else{
-                    $wheresql .= " AND lp.id not in (select distinct programid from {local_program_users} where userid=$USER->id) AND lp.selfenrol = 1 ";//AND lp.status in (1)
-                       $wheresql .= $joinsql;
-
-                }
+            if(count($params) > 0){
+                $opengroup=implode('AND',$params);
             }else{
-                    //$enrolled_programs=$DB->get_field_sql("select GROUP_CONCAT(programid) from {local_program_users} where userid=$USER->id");
-                    //
-                    //$yetto_enrolled_programs=$DB->get_field_sql("select GROUP_CONCAT(lp.id) from {local_program} AS lp  where  lp.id not in (select distinct programid from {local_program_users} where userid=$USER->id) and lp.status in (1) $joinsql");
-
-                   $wheresql .= " AND (lp.id in (select programid from {local_program_users} where userid=$USER->id) or lp.id in (select lp.id from {local_program} AS lp  where  lp.id not in (select distinct programid from {local_program_users} where userid=$USER->id) AND lp.selfenrol = 1 $joinsql )) ";//AND lp.status in (1,3,4)
+                $opengroup =  " 1 != 1 ";
             }
-            //$finalsql .= " AND lp.id not in (select distinct programid from {local_program_trainers} where trainerid=$USER->id)";
+
+            $params = array();
+            $params[]= " 1 = CASE WHEN lc.open_group is NOT NULL
+                    THEN
+                        CASE
+                            WHEN $opengroup
+                                THEN 1
+                                ELSE 0
+                        END
+                    ELSE 1 END ";
+
+
+
+
+            if(!empty($USER->open_designation) && $USER->open_designation != ""){
+                $sqlparams[] = "%,$USER->open_designation,%";
+            }else{
+                $sqlparams[] = "";
+            }
+            $params[]= " 1 = CASE WHEN lc.open_designation IS NOT NULL
+                        THEN
+                            CASE
+                                WHEN CONCAT(',',lc.open_designation,',') LIKE ?
+                                    THEN 1
+                                    ELSE 0
+                            END
+                        ELSE 1 END ";
+
+
+            if(!empty($params)){
+                $finalparams = implode('AND',$params);
+            }else{
+                $finalparams= '1=1' ;
+            }
+
+            $joinsql = " AND ($finalparams) ";
+            $wheresql .= $joinsql;
         }
-        // $orderby = ' ORDER BY lp.id DESC';//group by lp.id
-        // echo $finalsql;
-        $csqlparams = $tsqlparams = $sqlparams;
-        $mainparams = array_merge($csqlparams, $tsqlparams);
-
-        // $finalsql .=" limit $startlimit,$perpage";
-        $finalsql = "select a.* from ( ".$csql.$avgsql.$cfromsql.$leftjoinsql.$wheresql.$cwrsql.$groupby.$usql.$tsql.$avgsql.$tfromsql.$tjoinsql.$leftjoinsql.$wheresql.$twrsql.$groupby." ) as a ";
-        $numofilt = $DB->get_records_sql($finalsql, $mainparams);
-        $numberofrecords = sizeof($numofilt);
-
-        if (empty($sortid)) {
-            $finalsql .= " order by a.id desc ";
-        } else {
-            $finalsql .= $orderby;
+        if($filters['status']){
+            $statussql = [];
+            foreach($filters['status'] AS $statusfilter){
+                switch ($statusfilter) {
+                    case 'notenrolled':
+                        $statussql[] = " lc.id not in (select distinct programid from {local_program_users} where userid=$USER->id) AND lc.status in (1) ";
+                    break;
+                    case 'inprogress':
+                        $wheresql .= " AND lc.id in (select distinct programid from {local_program_users} where userid=$USER->id AND completion_status <> 1) AND lc.status in (1,3,4)";
+                    break;
+                    case 'completed':
+                        $statussql[] = " lc.id in (select distinct programid from {local_program_users} where userid=$USER->id AND completion_status = 1) AND lc.status in (1,3,4) ";
+                    break;
+                }
+            }
+            if(!empty($statussql)){
+                $wheresql .= " AND (".implode('OR', $statussql)." ) ";
+            }else{
+                $wheresql .= " AND lc.status in (1,3,4) ";
+            }
+        }else{
+            $wheresql .= " AND lc.status in (1,3,4) ";
         }
-        $facetofacelist=$DB->get_records_sql($finalsql, $mainparams,$startlimit,$perpage);
 
+        foreach($filters AS $filtertype => $filtervalues){
+            switch($filtertype){
+                case 'categories':
+                    $categories = is_array($filtervalues) ? $filtervalues : [$filtervalues];
+                    list($categoriessql, $categoriesparams) = $DB->get_in_or_equal($categories, SQL_PARAMS_QM, '');
+                    $wheresql .= " AND lc.open_categoryid $categoriessql ";
+                    $sqlparams = array_merge($sqlparams, $categoriesparams);
+                break;
+            }
+        }
+        $groupby = " GROUP BY lc.id ";
+
+        $countsql = "SELECT lc.id ";
+        $finalcountquery = $countsql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
+        // print_r($finalcountquery);exit;
+        $numberofrecords = 0;
+        if($return_noofrecords)
+            $numberofrecords = sizeof($DB->get_records_sql($finalcountquery,$sqlparams));
+
+        $finalsql = $csql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
+        $finalsql .= " ORDER BY lc.id DESC ";
+        $programslist = $DB->get_records_sql($finalsql, $sqlparams, $startlimit,$perpage);
 
         if($return_noofrecords && !$returnobjectlist){
             return  array('numberofrecords'=>$numberofrecords);
         }
         else if($returnobjectlist && !$return_noofrecords){
-            return  array('list'=>$facetofacelist);
+            return  array('list'=>$programslist);
         }
         else{
             if($return_noofrecords && $returnobjectlist){
-                return  array('numberofrecords'=>$numberofrecords,'list'=>$facetofacelist);
+                return  array('numberofrecords'=>$numberofrecords,'list'=>$programslist);
             }
         }
 
-    }//end of get_programslist_query.
-    public function export_for_template($perpage,$startlimit){
-        global $DB, $USER,$CFG,$PAGE;
-        $programslist_ar =$this->get_programslist_query($perpage, $startlimit, true, true);
-        $programslist= $programslist_ar['list'];
-        $localtags = new \local_tags\tags();
-        foreach($programslist as $list){
-          //    $programlocation=$DB->get_field('local_location_institutes','fullname',array('id'=>$list->instituteid));
-          //    if($programlocation){
-                // $list->programlocation=$programlocation;
-          //    }
-            // if($list->approvalreqd)
-                // print_object($list);
-            $course=$DB->get_record('course', array('id'=>$list->course));
+    } // end of get_facetofacelist_query
 
-            // $coursefileurl = (new pgrm)->program_logo($list->programlogo);
+
+    public function export_for_template($perpage,$startlimit, $selectedfilter = array()){
+        global $DB, $USER, $CFG, $PAGE,$OUTPUT;
+
+        $facetofacelist_ar =$this->get_facetofacelist_query($perpage, $startlimit, true, true, $selectedfilter);
+        $facetofacelist= $facetofacelist_ar['list'];
+
+        foreach($facetofacelist as $list){
+
+           $iltlocation=$DB->get_field('local_location_institutes','fullname',array('id'=>$list->instituteid));
+           if($iltlocation){
+            $list->iltlocation=$iltlocation;
+           }
+
+
+
+            $name="categoryname";
+
             if(file_exists($CFG->dirroot.'/local/includes.php')){
                 require_once($CFG->dirroot.'/local/includes.php');
                 $includes = new user_course_details();
             }
-            if ($list->programlogo > 0){
-                $coursefileurl = (new pgrm)->program_logo($list->programlogo);
+
+            if($list->programlogo > 0){
+                $coursefileurl = (new program)->program_logo($list->programlogo);
                 if($coursefileurl == false){
                     $coursefileurl = $includes->get_classes_summary_files($list);
                 }
             } else {
-                $coursefileurl = $includes->get_classes_summary_files($list);
+                 $coursefileurl = $includes->get_classes_summary_files($list);
             }
 
-            // $list->categoryname = $name;
-            // $list->formattedcategoryname = cataloglib::format_thestring($name);
-            $list->iltformatname = cataloglib::format_thestring($list->name);
+            $list->categoryname = $name;
+            $categoryname = $list->categoryname;
+            $list->formattedcategoryname = searchlib::format_thestring($name);
+            $list->iltfullformatname = searchlib::format_thestring($list->name);
+            $list->fullname = searchlib::format_thestring($list->name);
+            $list->shortnme = searchlib::format_thestring($list->shortname);
+            $iltname = searchlib::format_thestring($list->name);
+            $list->iltformatname = $iltname ;
+            $list->duration = (empty($list->duration)) ? 'N/A':$list->duration;
+            $list->price = (empty($list->price)) ? '-':$list->price;
 
-
+            //-----program image file url-------
             if(is_object($coursefileurl)){
-                    $coursefileurl=$coursefileurl->out();
+                $coursefileurl=$coursefileurl->out();
             }
-            $list->fileurl =   $coursefileurl;
+            $list->fileurl = $coursefileurl;
+            $list->bannerimage = $coursefileurl;
 
-            $list->intro = cataloglib::format_thesummary($list->description);
-            //------------------Date-----------------------
-            $startdate = cataloglib::get_thedateformat($list->startdate);
-            $enddate = cataloglib::get_thedateformat($list->enddate);
+
+            $list->intro = searchlib::format_thesummary($list->description);
+            $list->summary = searchlib::format_thesummary($list->description);
+
+             //------------------Date-----------------------
+            $startdate =searchlib::get_thedateformat($list->startdate);
+            $enddate= searchlib::get_thedateformat($list->enddate);
+
+
             $list->date = $startdate.' - '.$enddate;
             $list->start_date = date("j M 'y", $list->startdate);
-            //-------bands----------------------------
-            $list->bands = cataloglib::trim_theband($list->bands);
-            $list->type = PROGRAM;
-            $list->enroll = $this->get_enrollflag($list->id);
+
+            $list->bands=searchlib::trim_theband($list->bands);
+            $list->type = program;
+            $list->module = 'local_program';
+
+            $list->enroll=$this->get_the_enrollflag($list->id);
+            $list->isenrolled=$list->enroll;
+
             $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $list->id, 'userid' => $USER->id));
+
+            if($list->approvalreqd == 1){
+                $list->enrolmethods[] = 'request';
+            }else if($list->selfenrol == 1){
+                $list->enrolmethods[] = 'self';
+            }
+
+            $waitlist = $DB->get_field('local_program_waitlist','id',array('programid' => $list->id,'userid'=>$USER->id,'enrolstatus'=>0));
+            $list->requeststatus = MODULE_NOT_ENROLLED;
+            if($waitlist > 0){
+                $list->requeststatus = MODULE_ENROLMENT_WAITING;
+            }else{
+                if($list->isenrolled){
+                    $list->requeststatus = MODULE_ENROLLED;
+                }else{
+                    if($list->approvalreqd == 1){
+                        $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                        $requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'program', 'createdbyid'=>$USER->id));
+                        if($requeststatus == 'PENDING'){
+                            $list->requeststatus = MODULE_ENROLMENT_PENDING;
+                        }
+                    }
+                }
+            }
+            $list->userenrolstatus = $userenrolstatus;
             $return=false;
             if($list->id > 0 && ($list->nomination_startdate!=0 || $list->nomination_enddate!=0)){
                 $params1 = array();
                 $params1['programid'] = $list->id;
-                $params1['nomination_startdate'] = date('Y-m-d H:i',time());
-                $params1['nomination_enddate'] = date('Y-m-d H:i',time());
+                $params1['nomination_startdate'] = time();
+                $params1['nomination_enddate'] = time();
 
-                $sql1="SELECT * FROM {local_program} where id=:programid and CASE WHEN nomination_startdate > 0
-                        then (from_unixtime(nomination_startdate,'%Y-%m-%d %H:%i')<=:nomination_startdate)
-                        else 1 = 1 end and CASE WHEN nomination_enddate > 0
-                        then (from_unixtime(nomination_enddate,'%Y-%m-%d %H:%i')>=:nomination_enddate)
-                        else 1 = 1 end";
+                $sql1="SELECT *
+                        FROM {local_program} WHERE id=:programid
+                        AND CASE WHEN nomination_startdate > 0
+                        THEN
+                            CASE WHEN nomination_startdate <= :nomination_startdate
+                            THEN 1
+                            ELSE 0 END
+                        ELSE 1  END = 1 AND
+                        CASE WHEN nomination_enddate > 0
+                            THEN CASE WHEN nomination_enddate >= :nomination_enddate
+                                THEN 1
+                                ELSE 0 END
+                        ELSE 1 END = 1 ";
 
-                $return=$DB->record_exists_sql($sql1,$params1);
+                $return = $DB->record_exists_sql($sql1,$params1);
 
             }elseif($list->id > 0 && $list->nomination_startdate==0 && $list->nomination_enddate==0){
                 $return=true;
             }
+
             $list->selfenroll=1;
-            // print_object($list);
-            if (!$userenrolstatus && $return) {//$list->status == 1 &&
+            $list->canenrolrequest = false;
+            if ($list->status == 1 && !$userenrolstatus && $return) {
                 $list->selfenroll=0;
+                $list->canenrolrequest = true;
             }
-            $program_capacity_check=(new pgrm)->program_capacity_check($list->id);
-            if($program_capacity_check&&$list->status == 1 && !$userenrolstatus){
-                  $list->selfenroll=2;
+            $program_capacity_check=(new program)->program_capacity_check( $list->id);
+            if($program_capacity_check&&$list->status == 1 && !$userenrolstatus&&  $list->allow_waitinglistusers==0){
+                $list->selfenroll=2;
             }
-            $list->enrollmentbtn = $this->get_enrollbtn($list);
+            $list->enrolment_status_message = 0;
+            if($program_capacity_check && $list->status == 1 && !$list->isenrolled &&  $list->allow_waitinglistusers == 0){
+                $list->enrolment_status_message = 1;
+            }else if($list->nomination_startdate > 0 && $list->nomination_startdate >  time()){
+                $list->enrolment_status_message = 2;
+            }else if($list->nomination_enddate > 0 && $list->nomination_enddate < time()){
+                $list->enrolment_status_message = 3;
+            }
 
-            if(class_exists('local_ratings\output\renderer')){
-            $rating_render = $PAGE->get_renderer('local_ratings');
-            $list->rating_element = $rating_render->render_ratings_data('local_courses', $list->id ,null, 14);
-            }else{
+            $list->enrollmentbtn= $this->get_enrollbtn($list);
             $list->rating_element = '';
+            $list->avgrating = 0;
+            $list->ratedusers = 0;
+            $list->likes = 0;
+            $list->dislikes = 0;
+            if(class_exists('local_ratings\output\renderer')){
+                $rating_render = $PAGE->get_renderer('local_ratings');
+                $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $list->id, 'module_area' => 'local_program'));
+                if($ratinginfo){
+                    $list->avgrating = $ratinginfo->module_rating;
+                    $list->ratedusers = $ratinginfo->module_rating_users;
+                    $list->likes = $ratinginfo->module_like;
+                    $list->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+                    $list->rating_element = $rating_render->render_ratings_data('local_program', $list->id ,$ratinginfo->module_rating, 14);
+                }
             }
 
-            $list->redirect='<a data-action="program'.$list->id.'" class="programinfo" onclick ="(function(e){ require(\'local_catalog/courseinfo\').programinfo({selector:\'program'.$list->id.'\', programid:'.$list->id.'}) })(event)"><button class="cat_btn viewmore_btn">'.get_string('viewmore','local_catalog').'</button></a>';
-            $list->programlink= $CFG->wwwroot.'/local/program/view.php?bcid='.$list->id;
-            $context = context_system::instance();
-            $tags = $localtags->get_item_tags('local_program', 'program', $list->id, $context->id, $arrayflag = 0, $more = 0);
-            $course->tags_title = $tags;
-            $tags = strlen($tags) > 25 ? substr($tags, 0, 25)."..." : $tags;
-            $list->tags = (!empty($tags) ) ? '<span title="Tags"><i class="fa fa-tags" aria-hidden="true"></i></span> '.$tags: '';
+            // program view link
+            $list->programlink= $CFG->wwwroot.'/local/program/view.php?cid='.$list->id;
+            if (!$userenrolstatus){
+              $list->redirect = '<a href="'.$list->programlink.'" class="programinfo cat_btn viewmore_btn" >'.get_string('viewmore','local_search').'</a>';
+            } else {
+                $list->redirect = '';
+              // $list->redirect = '<a href="'.$list->programlink.'" class="programinfo" ><button class="cat_btn viewmore_btn">'.get_string('start_now','local_program').'</button></a>';
+            }
+
+            $context = \local_costcenter\lib\accesslib::get_module_context();
+
             $finallist[]= $list;
         } // end of foreach
 
-        $finallist['numberofrecords']=$programslist_ar['numberofrecords'];
+        $finallist['numberofrecords']=$facetofacelist_ar['numberofrecords'];
+        $finallist['cfgwwwroot']= $CFG->wwwroot;
 
         return $finallist;
-    }
 
-    private function get_enrollflag($programid){
+    } //end of  get_facetofacelist
+
+   private function get_the_enrollflag($programid){
         global $USER, $DB;
 
-        $enrolled = $DB->record_exists('local_program_users',array('programid'=>$programid,'userid'=>$USER->id));
+        $enrolled =$DB->record_exists('local_program_users',array('programid'=>$programid,'userid'=>$USER->id));
         if($enrolled){
             $flag=1;
         }else{
             $flag=0;
         }
-        return $flag;
-    } // end of get_enrollflag
 
-    public function get_enrollbtn($pgminfo){
-    global $DB,$USER;
-        $pgmid = $pgminfo->id;
-        $pgmname =  $pgminfo->name;
+        return $flag;
+    } // end of get_the_enrollflag
+
+    public function enrol_user_to_component($enrolmethod, $moduleid){
+        global $DB, $USER, $CFG;
+        $program = $DB->get_record('local_program', array('id' => $moduleid));
+        if(empty($program)){
+            throw new \Exception("program not found");
+        }
+        $can_self_enrol = $this->is_program_accessible($program);
+        if(!$can_self_enrol){
+            throw new \Exception("You cannot enrol to this program");
+        }
+        if($this->get_the_enrollflag($moduleid)){
+            throw new \Exception("Already enrolled");
+        }
+        switch($enrolmethod){
+            case 'request':
+                if($program->approvalreqd != 1){
+                    throw new \Exception("Enrollment method inactive");
+                }else{
+                    \local_request\api\requestapi::create('program', $moduleid);
+                }
+            break;
+            case 'self':
+                if($program->approvalreqd == 1 || $program->selfenrol != 1){
+                    throw new \Exception("Enrollment method inactive");
+                }else{
+                    require_once($CFG->dirroot.'/local/program/externallib.php');
+                    \local_program_external::manageprogramStatus_instance('selfenrol', $moduleid, true, $actionstatusmsg = '', $program->name);
+                }
+            break;
+            default:
+                throw new \Exception("Unknown enrollment method");
+            break;
+        }
+    }
+    public function is_program_accessible($program){
+        global $DB,$USER;
+        $selectsql = "SELECT  lc.id FROM {local_program} lc  ";
+
+        // added condition for not displaying retired ILT's.
+        $wheresql = " WHERE lc.visible=1 AND lc.status = 1 AND lc.selfenrol = 1 AND lc.id = ? ";
+
+        $sqlparams = array($program->id);
+        $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        // $paths = [];
+        // foreach($usercostcenterpaths AS $userpath){
+        //     $userpathinfo = $userpath->costcenterpath;
+        //     $paths[] = $userpathinfo.'%';
+        //     while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+        //         $userpathinfo = rtrim($userpathinfo, '/');
+        //         if ($userpathinfo === '') {
+        //           break;
+        //         }
+        //         $paths[] = $userpathinfo;
+        //     }
+        // }
+        if(!empty($usercostcenterpaths)){
+            foreach($usercostcenterpaths AS $path){
+                $pathsql[] = " lc.open_path LIKE '{$path}' ";
+            }
+            $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+        }
+
+        $params = array();
+
+        $group_list = $DB->get_records_sql_menu("SELECT cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
+
+        if (!empty($group_list)){
+            $groups_members = implode(',', $group_list);
+            if(!empty($group_list)){
+                $grouquery = array();
+                foreach ($group_list as $key => $group) {
+                    $grouquery[] = " CONCAT(',',lc.open_group,',') LIKE CONCAT('%,',{$group},',%') ";
+                }
+                $groupqueeryparams =implode('OR',$grouquery);
+
+                $params[]= '('.$groupqueeryparams.')';
+            }
+        }
+
+        if(count($params) > 0){
+            $opengroup=implode('AND',$params);
+        }else{
+            $opengroup =  " 1 != 1 ";
+        }
+
+        $params = array();
+        $params[]= " 1 = CASE WHEN lc.open_group is NOT NULL
+                THEN
+                    CASE
+                        WHEN $opengroup
+                            THEN 1
+                            ELSE 0
+                    END
+                ELSE 1 END ";
+
+
+
+
+        if(!empty($USER->open_designation) && $USER->open_designation != ""){
+            $sqlparams[] = "%,$USER->open_designation,%";
+        }else{
+            $sqlparams[] = "";
+        }
+        $params[]= " 1 = CASE WHEN lc.open_designation IS NOT NULL
+                    THEN
+                        CASE
+                            WHEN CONCAT(',',lc.open_designation,',') LIKE ?
+                                THEN 1
+                                ELSE 0
+                        END
+                    ELSE 1 END ";
+
+
+        if(!empty($params)){
+            $finalparams = implode('AND',$params);
+        }else{
+            $finalparams= ' 1=1 ' ;
+        }
+
+        $joinsql = " AND ($finalparams) ";
+        $wheresql .= $joinsql;
+        return $DB->record_exists_sql($selectsql.$wheresql, $sqlparams);
+    }
+    private function get_enrollbtn($programinfo){
+        global $DB,$USER;
+        $programid = $programinfo->id;
+        $programname =  $programinfo->name;
 
         if(!is_siteadmin()){
-            if($pgminfo->approvalreqd==1){
-                $componentid =$pgmid;
-                $component = 'program';
-                // $request = $DB->get_field('local_request_records','status',array('componentid' => $pgmid,'compname' => $component,'createdbyid'=>$USER->id));
-                $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                $request = $DB->get_field_sql($sql,array('componentid' => $pgmid,'compname' => $component,'createdbyid'=>$USER->id));
-                if($request=='PENDING'){
-                    $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Processing</button>';
+            if($programinfo->approvalreqd==1){
+                   $waitlist = $DB->get_field('local_program_waitlist','id',array('programid' => $programid,'userid'=>$USER->id,'enrolstatus'=>0));
+                if($waitlist > 0){
+                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Waiting</button>';
                 }else{
-                    $enrollmentbtn =requestapi::get_requestbutton($componentid, $component, $pgmname);
+                    $componentid =$programid;
+                    $component = 'program';
+                    $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
+                    $request = $DB->get_field_sql($sql, array('componentid' => $programid,'compname' => $component,'createdbyid'=>$USER->id));
+                    if($request=='PENDING'){
+                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Processing</button>';
+                    }else{
+                        $enrollmentbtn =requestapi::get_requestbutton($componentid, $component, $programname);
+                    }
                 }
-            } else if($pgminfo->selfenrol==1){
-               $enrollmentbtn = '<a href="javascript:void(0);" class="" alt = ' . get_string('enroll','local_catalog'). ' title = ' .get_string('enroll','local_catalog'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$pgmid.', programid:'.$pgmid.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$pgmname.'\'}) })(event)" ><button class="cat_btn viewmore_btn" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_catalog').'</button></a>';
+            }else{
+                $waitlist = $DB->get_field('local_program_waitlist','id',array('programid' => $programid,'userid'=>$USER->id,'enrolstatus'=>0));
+                if($waitlist > 0){
+                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Waiting</button>';
+                }else{
+                     $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$programid.', programid:'.$programid.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$programname.'\'}) })(event)" >'.get_string('enroll','local_program').'</a>';
+                }
             }
         }
         return $enrollmentbtn;
     } // end of get_enrollbtn
 } // end of class
-
-
-
-
-
-

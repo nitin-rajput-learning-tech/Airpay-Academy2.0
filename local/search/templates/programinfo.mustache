@@ -15,7 +15,7 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_catalog/programinfo
+    @template local_search/programinfo
 
     Displays programinfo 
 
@@ -58,7 +58,7 @@
     </div>
     {{# is_admin}}
         <div class="col-12 pull-left enrol invisible">
-            <button class="cat_btn courseenrolbtn pull-right btn btn-primary"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{#str}}enroll, local_catalog{{/str}}</button>
+            <button class="cat_btn courseenrolbtn pull-right btn btn-primary"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>{{#str}}enroll, local_search{{/str}}</button>
         </div>
     {{/ is_admin}}
     {{# selfenrolmentcap }}
@@ -87,7 +87,7 @@
     {{^ selfenrolmentcap }}
         <div class="col-12 pull-left enrol">
             <a href={{ linkpath }}>
-                <button  class="cat_btn courseenrolbtn pull-right btn btn-primary">{{#str}}start_now, local_catalog{{/str}}</button>
+                <button  class="cat_btn courseenrolbtn pull-right btn btn-primary">{{#str}}start_now, local_search{{/str}}</button>
             </a>
         </div>
     {{/ selfenrolmentcap }}

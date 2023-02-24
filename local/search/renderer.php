@@ -2,6 +2,7 @@
 
 global $CFG;
 use local_classroom\classroom;
+use local_program\program;
 use local_learningplan\lib\lib as lib;
 use local_search\output\elearning as elearning;
 // require_once($CFG->dirroot . '/local/catalog/lib.php');
@@ -614,14 +615,9 @@ class local_search_renderer extends plugin_renderer_base {
                               ) AS enrolled_users FROM {local_program} AS c
 							 WHERE c.id= $programid";
         $program = $DB->get_record_sql($fromsql);
-        $context = context_system::instance();
+        $context = $context = \local_costcenter\lib\accesslib::get_module_context();
         $program_status = $DB->get_field('local_program','status',array('id' => $programid));
-        // if(!has_capability('local/program:view_newprogramtab', context_system::instance()) && $program_status==0){
-        //     print_error("You don't have permissions to view this page. echo 1");
-        // }
-        // elseif(!has_capability('local/program:view_holdprogramtab', context_system::instance())&& $program_status==2){
-        //     print_error("You don't have permissions to view this page.echo 2");
-        // }
+
         if(empty($program)) {
             print_error("Program Not Found!");
         }
@@ -638,11 +634,7 @@ class local_search_renderer extends plugin_renderer_base {
         } else {
             $program->programlogoimg = $includes->get_classes_summary_files($program);
         }
-        //if ($program->category > 0) {
-        //    $program->category = $DB->get_field('local_location_institutes', 'category', array('id' => $program->instituteid));
-        //} else {
-        //    $program->category = 'N/A';
-        //}
+
         if ($program->instituteid > 0) {
             $program->programlocation = $DB->get_field('local_location_institutes', 'fullname', array('id' => $program->instituteid));
         } else {
@@ -657,78 +649,26 @@ class local_search_renderer extends plugin_renderer_base {
             $program->programdepartment = implode(', ', $programdepartment);
         }
 
-        // $programtrainerssql = "SELECT u.id, u.picture, u.firstname, u.lastname,
-        //                                 u.firstnamephonetic, u.lastnamephonetic, u.middlename,
-        //                                 u.alternatename, u.imagealt, u.email
-        //                            FROM {user} AS u
-        //                            JOIN {local_program_trainers} AS ct ON ct.trainerid = u.id
-        //                           WHERE u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND ct.programid = $program->id";
 
-        // $programtrainers = $DB->get_records_sql($programtrainerssql);
-        // $totalprogramtrainers = count($programtrainers);
-        // $program->trainerpagination = false;
-        // if ($totalprogramtrainers > 3) {
-        //     $program->trainerpagination = true;
-        // }
-        // $program->trainers  = array();
-        // if (!empty($programtrainers)) {
-        //     foreach($programtrainers as $programtrainer) {
-        //         $programtrainerpic = $OUTPUT->user_picture($programtrainer, array('size' => 60, 'class'=>'trainerimg'));
-        //         $program->trainers[] = array('programtrainerpic' => $programtrainerpic, 'trainername' => fullname($programtrainer), 'trainerdesignation' => 'Trainer', 'traineremail' => $programtrainer->email);
-        //     }
-        // }
-        // $return="";
-        // $program->userenrolmentcap = (has_capability('local/program:manageusers', context_system::instance()) &&has_capability('local/program:manageprogram', context_system::instance()) && $program->status == 0) ? true : false;
-
-        // $stable = new stdClass();
-        // $stable->thead = true;
-        // $stable->start = 0;
-        // $stable->length = -1;
-        // $stable->search = '';
         $program->selfenrolmentcap = false;
-        if (!has_capability('local/classroom:manageclassroom', context_system::instance())) {
+        if (!has_capability('local/program:manageprogram', $context)) {
             $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $programid, 'userid' => $USER->id));
 
-            // $return=false;
-            // if($programid > 0 && $program->nomination_startdate!=0 && $program->nomination_enddate!=0){
-            //     $params1 = array();
-            //     $params1['programid'] = $programid;
-            //     $params1['nomination_startdate'] = date('Y-m-d H:i',time());
-            //     $params1['nomination_enddate'] = date('Y-m-d H:i',time());
-
-            //     $sql1="SELECT * FROM {local_program} where id=:programid and (from_unixtime(nomination_startdate,'%Y-%m-%d %H:%i')<=:nomination_startdate and from_unixtime(nomination_enddate,'%Y-%m-%d %H:%i')>=:nomination_enddate)";
-
-            //     $return=$DB->record_exists_sql($sql1,$params1);
-
-            // }elseif($programid > 0 && $program->nomination_startdate==0 && $program->nomination_enddate==0){
-            //     $return=true;
-            // }
-
-
-            if (/*$program->status == 1 &&*/ !$userenrolstatus/* && $return*/) {
                 $program->selfenrolmentcap = true;
                 $url = new moodle_url('/local/program/view.php', array('bcid' =>$programid,'action' => 'selfenrol'));
-                    //$btn = new single_button($url,get_string('enroll','local_catalog'), 'POST');
-                    //$btn->add_confirm_action(get_string('classroom_self_enrolment', 'local_classroom'));
-                    //
-                    //$cbutton=str_replace("Enroll",''.get_string('enroll','local_catalog'),$OUTPUT->render($btn));
-                    // $cbutton=str_replace('title=""','title="'.get_string('enroll','local_catalog').'"',$cbutton);
+
 
                      $program->selfenrolmentcap='<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$program->id.', programid:'.$program->id.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$program->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_program').'</button></a>';
-                     //$classroom->selfenrolmentcap= array_values(array($cbutton));
-            }
-                $program_capacity_check=(new program)->program_capacity_check($programid);
-                if($program_capacity_check&&$program->status == 1 && !$userenrolstatus){
 
-                        $program->selfenrolmentcap=get_string('capacity_check', 'local_program');
-                }
+         }
+        $program_capacity_check=(new program)->program_capacity_check($programid);
+        if($program_capacity_check&&$program->status == 1 && !$userenrolstatus){
 
+                $program->selfenrolmentcap=get_string('capacity_check', 'local_program');
         }
-
         $totalseats=$DB->get_field('local_program','capacity',array('id'=>$programid)) ;
         $allocatedseats=$DB->count_records('local_program_users',array('programid'=>$programid)) ;
-        //$coursesummary = strip_tags($course->summary,
-        //            array('overflowdiv' => false, 'noclean' => false, 'para' => false));
+
         $description = strip_tags(html_entity_decode($program->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
         $isdescription = '';
         if (empty($description)) {
@@ -743,7 +683,7 @@ class local_search_renderer extends plugin_renderer_base {
         $component = 'program';
 		$action = 'add';
        	if($program->approvalreqd==1){
-			// $request = $DB->get_field('local_request_records','status',array('componentid' => $program->id,'compname' => $component,'createdbyid'=>$USER->id));
+
 			$requestsql = "SELECT status FROM {local_request_records}
 				WHERE componentid = :componentid AND compname LIKE :compname AND
 				createdbyid = :createdbyid ORDER BY id DESC ";
@@ -774,12 +714,10 @@ class local_search_renderer extends plugin_renderer_base {
         	'action' => $action,
         	'requestbtn' => $requestbtn,
         	'pending' => $pending,
-            //'seats_progress'=>$seats_progress,
             'contextid' => $context->id,
             'linkpath'=> $program_url,
         ];
-       // print_object($programcontext);exit;
-        return $this->render_from_template('local_catalog/programinfo', $programcontext);
+        return $this->render_from_template('local_search/programinfo', $programcontext);
     }
 
 }

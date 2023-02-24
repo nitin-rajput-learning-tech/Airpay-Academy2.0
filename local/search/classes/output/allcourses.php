@@ -290,7 +290,7 @@ class allcourses {
     foreach($standard_catalogtypes as $key => $type){
       switch($type){
        
-       case 'learningplan' :
+       case learningplan :
             $classname = '\local_learningplan\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
@@ -300,7 +300,7 @@ class allcourses {
             } // end of if condition
           break;
 
-        case 'classroom':
+        case classroom:
             $classname = '\local_classroom\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
@@ -310,7 +310,7 @@ class allcourses {
             } // end of if condition
           break;
 
-        case 'program':
+        case program:
             $classname = '\local_program\output\search';
             if(class_exists($classname)){
                 $class = new $classname();
@@ -424,7 +424,10 @@ class allcourses {
 public function main_toget_catalogtypes($perpage, $selectedfilter = array()){
     global $DB;
     $othertagitems = array();
+
+
     $response = $this->get_available_catalogtypes($selectedfilter);
+
 
     $totalrecords_ineachtype = $response['totalrecords_ineachtype'];
     $sumofallrecords = $response['sumofallrecords'];
