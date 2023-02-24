@@ -67,7 +67,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     }
     $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
         if ($get_coursedetails->format == 'singleactivity') {
-            $moduleinfoSql = "SELECT q.id, q.attempts, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
+            $moduleinfoSql = "SELECT q.id, q.attempts,q.timelimit,q.overduehandling,q.browsersecurity, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
                 FROM {quiz} as q 
                 JOIN {grade_items} as gi ON gi.iteminstance = q.id AND gi.itemtype ='mod' AND gi.itemmodule = 'quiz' 
                 WHERE q.course=:courseid ";
@@ -80,6 +80,9 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
             $course->attempts = $attempts;
             $course->timeopen = $moduleinfo->timeopen;
             $course->timeclose = $moduleinfo->timeclose;
+            $course->timelimit = $moduleinfo->timelimit;
+            $course->overduehandling =$moduleinfo->overduehandling;
+            $course->browsersecurity = $moduleinfo->browsersecurity;
             // }else{
         }
     if (!empty($course) && empty($formdata)) {
@@ -712,6 +715,7 @@ function add_onlineexam_quiz($validateddata, $examid)
     $quiz->grade = $validateddata->maxgrade;
     $quiz->gradepass = $validateddata->gradepass;
     $quiz->name = $validateddata->fullname;
+    $quiz->attempts = $validateddata->attempts;
 
     if (!empty($validateddata->summary_editor['text']))
         $quiz->introeditor['text'] = $validateddata->summary_editor['text'];
@@ -759,6 +763,7 @@ function update_onlineexam_quiz($validateddata, $data, $formstatus)
         $quiz->gradepass = $validateddata->gradepass;
         $quiz->grademethod = $validateddata->grademethod;
         $quiz->grade = $validateddata->maxgrade;
+        $quiz->attempts = $validateddata->attempts;
     }
     if ($formstatus == 1) {
         $quiz->timeopen = $validateddata->timeopen;

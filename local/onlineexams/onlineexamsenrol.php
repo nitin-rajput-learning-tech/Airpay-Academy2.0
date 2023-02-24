@@ -99,7 +99,7 @@ $instancename = $enrol_manual->get_instance_name($instance);
 $PAGE->set_context($context);
 $PAGE->set_url('/local/onlineexams/onlineexamsenrol.php', array('id' => $course_id, 'enrolid' => $instance->id));
 $PAGE->set_pagelayout('standard');
-$PAGE->navbar->add(get_string('manage_courses', 'local_onlineexams'), new moodle_url('/local/onlineexams/index.php'));
+$PAGE->navbar->add(get_string('manage_onlineexams', 'local_onlineexams'), new moodle_url('/local/onlineexams/index.php'));
 $PAGE->navbar->add(get_string('userenrolments', 'local_onlineexams'));
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
@@ -454,7 +454,7 @@ if ($course) {
   });
     </script>";
 }
-$backurl = new moodle_url('/local/onlineexams/courses.php');
+$backurl = new moodle_url('/local/onlineexams/index.php');
 $continue = '<div class="col-md-12 pull-left text-right mt-6">';
 $continue .= $OUTPUT->single_button($backurl, get_string('continue'));
 $continue .= '</div>';
