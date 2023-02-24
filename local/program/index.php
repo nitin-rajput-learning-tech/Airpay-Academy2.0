@@ -52,6 +52,7 @@ if ($formattype == 'card') {
     $display_text = get_string('cardtype','local_program');
     $display_icon = get_string('cardicon','local_program');
 }
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $PAGE->set_url($CFG->wwwroot . '/local/program/index.php');
 $PAGE->set_context($categorycontext);
 if (!is_siteadmin() && !(has_capability('local/program:manageprogram', $categorycontext))) {
