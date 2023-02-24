@@ -233,13 +233,13 @@ class custom_onlineexams_form extends moodleform {
             // $mform->addElement('tags', 'tags', get_string('tags'), array('itemtype' => 'courses', 'component' => 'local_onlineexams'));
 
             $mform->addElement('editor','summary_editor', get_string('onlineexamsummary','local_onlineexams'), null, $editoroptions);
-            $mform->addHelpButton('summary_editor', 'onlineexamsummary');
+            $mform->addHelpButton('summary_editor', 'onlineexamsummary','local_onlineexams');
             $mform->setType('summary_editor', PARAM_RAW);
             $summaryfields = 'summary_editor';
 
             if ($overviewfilesoptions = course_overviewfiles_options($onlineexam)) {
               $mform->addElement('filemanager', 'overviewfiles_filemanager', get_string('onlineexamoverviewfiles','local_onlineexams'), null, $overviewfilesoptions);
-              $mform->addHelpButton('overviewfiles_filemanager', 'onlineexamoverviewfiles');
+              $mform->addHelpButton('overviewfiles_filemanager', 'onlineexamoverviewfiles','local_onlineexams');
               $summaryfields .= ',overviewfiles_filemanager';
             }
             $onlineexamformats = get_sorted_course_formats(true);
@@ -427,7 +427,7 @@ class custom_onlineexams_form extends moodleform {
         // Add field validation check for duplicate shortname.
         if ($onlineexam = $DB->get_record('course', array('shortname' => $data['shortname']), '*', IGNORE_MULTIPLE)) {
             if (empty($data['id']) || $onlineexam->id != $data['id']) {
-                $errors['shortname'] = get_string('shortnametaken', '', $onlineexam->fullname);
+                $errors['shortname'] = get_string('shortnametaken', 'local_onlineexams', $onlineexam->fullname);
             }
         }  
 		 if (isset($data['timeopen']) && $data['timeopen']
@@ -468,6 +468,14 @@ class custom_onlineexams_form extends moodleform {
             }
             
         }
+        if(isset($data['timelimit'])){
+            $value = $data['timelimit'];
+            $intvalue = (int)$value;  
+            if(!("$intvalue" === "$value") || $intvalue < 0){
+              $errors['timelimit'] = get_string('numeric', 'local_onlineexams');
+            }
+        }
+        
         $errors = array_merge($errors, enrol_course_edit_validation($data, $this->context));
         return $errors;
     }
