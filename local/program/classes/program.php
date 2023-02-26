@@ -39,13 +39,13 @@ if (file_exists($CFG->dirroot . '/local/lib.php')) {
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
 //use \local_program\notifications_emails as programnotifications_emails;
 // program
-define('program_NEW', 0);
-define('program_COMPLETED', 2);
+define('PROGRAM_NEW', 0);
+define('PROGRAM_COMPLETED', 2);
 // Session Attendance
 define('SESSION_PRESENT', 1);
 define('SESSION_ABSENT', 2);
 // Types
-define('program', 1);
+define('PROGRAM', 1);
 
 class program {
     /**
@@ -669,6 +669,10 @@ class program {
                     } else {
                         return compact('programs', 'programscount');
                     }
+                }else {
+
+                    return compact('programs', 'programscount');
+
                 }
             } else {
                 if (!empty($myprograms)) {
@@ -793,7 +797,9 @@ class program {
 
 
         if (isset($stable->programid) && $stable->programid > 0) {
+
             $programs = $DB->get_record_sql($fromsql . $sql, $params);
+
         } else {
             try {
 

@@ -55,7 +55,6 @@ class search implements renderable{
 
         $leftjoinsql = '';
 
-        // added condition for not displaying retired ILT's.
         $wheresql = " WHERE lc.visible=1  AND lc.selfenrol = 1 ";
 
         $searchsql = '';
@@ -85,12 +84,7 @@ class search implements renderable{
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }
-            // if(!empty($usercostcenterpaths)){
-            //     foreach($usercostcenterpaths AS $path){
-            //         $pathsql[] = " lc.open_path LIKE '{$path}' ";
-            //     }
-            //     $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
-            // }
+
 
             $params = array();
 
@@ -281,71 +275,31 @@ class search implements renderable{
 
             $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $list->id, 'userid' => $USER->id));
 
-            if($list->approvalreqd == 1){
-                $list->enrolmethods[] = 'request';
-            }else if($list->selfenrol == 1){
-                $list->enrolmethods[] = 'self';
-            }
+
+            $list->enrolmethods[] = 'self';
+
 
             $list->requeststatus = MODULE_NOT_ENROLLED;
 
-                if($list->isenrolled){
-                    $list->requeststatus = MODULE_ENROLLED;
-                }else{
-                    if($list->approvalreqd == 1){
-                        $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                        $requeststatus = $DB->get_field_sql($sql, array('componentid' => $list->id,'compname' => 'program', 'createdbyid'=>$USER->id));
-                        if($requeststatus == 'PENDING'){
-                            $list->requeststatus = MODULE_ENROLMENT_PENDING;
-                        }
-                    }
-                }
+            if($list->isenrolled){
+                $list->requeststatus = MODULE_ENROLLED;
+            }
 
             $list->userenrolstatus = $userenrolstatus;
-            $return=false;
-            if($list->id > 0 && ($list->nomination_startdate!=0 || $list->nomination_enddate!=0)){
-                $params1 = array();
-                $params1['programid'] = $list->id;
-                $params1['nomination_startdate'] = time();
-                $params1['nomination_enddate'] = time();
-
-                $sql1="SELECT *
-                        FROM {local_program} WHERE id=:programid
-                        AND CASE WHEN nomination_startdate > 0
-                        THEN
-                            CASE WHEN nomination_startdate <= :nomination_startdate
-                            THEN 1
-                            ELSE 0 END
-                        ELSE 1  END = 1 AND
-                        CASE WHEN nomination_enddate > 0
-                            THEN CASE WHEN nomination_enddate >= :nomination_enddate
-                                THEN 1
-                                ELSE 0 END
-                        ELSE 1 END = 1 ";
-
-                $return = $DB->record_exists_sql($sql1,$params1);
-
-            }elseif($list->id > 0 && $list->nomination_startdate==0 && $list->nomination_enddate==0){
-                $return=true;
-            }
 
             $list->selfenroll=1;
             $list->canenrolrequest = false;
-            if ($list->status == 1 && !$userenrolstatus && $return) {
+            if (!$userenrolstatus) {
                 $list->selfenroll=0;
                 $list->canenrolrequest = true;
             }
             $program_capacity_check=(new program)->program_capacity_check( $list->id);
-            if($program_capacity_check&&$list->status == 1 && !$userenrolstatus&&  $list->allow_waitinglistusers==0){
+            if($program_capacity_check && !$userenrolstatus){
                 $list->selfenroll=2;
             }
             $list->enrolment_status_message = 0;
-            if($program_capacity_check && $list->status == 1 && !$list->isenrolled &&  $list->allow_waitinglistusers == 0){
+            if($program_capacity_check && !$list->isenrolled ){
                 $list->enrolment_status_message = 1;
-            }else if($list->nomination_startdate > 0 && $list->nomination_startdate >  time()){
-                $list->enrolment_status_message = 2;
-            }else if($list->nomination_enddate > 0 && $list->nomination_enddate < time()){
-                $list->enrolment_status_message = 3;
             }
 
             $list->enrollmentbtn= $this->get_enrollbtn($list);
@@ -414,15 +368,9 @@ class search implements renderable{
             throw new \Exception("Already enrolled");
         }
         switch($enrolmethod){
-            case 'request':
-                if($program->approvalreqd != 1){
-                    throw new \Exception("Enrollment method inactive");
-                }else{
-                    \local_request\api\requestapi::create('program', $moduleid);
-                }
-            break;
+
             case 'self':
-                if($program->approvalreqd == 1 || $program->selfenrol != 1){
+                if($program->selfenrol != 1){
                     throw new \Exception("Enrollment method inactive");
                 }else{
                     require_once($CFG->dirroot.'/local/program/externallib.php');
@@ -529,24 +477,12 @@ class search implements renderable{
         $programname =  $programinfo->name;
 
         if(!is_siteadmin()){
-            if($programinfo->approvalreqd==1){
 
-                    $componentid =$programid;
-                    $component = 'program';
-                    $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                    $request = $DB->get_field_sql($sql, array('componentid' => $programid,'compname' => $component,'createdbyid'=>$USER->id));
-                    if($request=='PENDING'){
-                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Processing</button>';
-                    }else{
-                        $enrollmentbtn =requestapi::get_requestbutton($componentid, $component, $programname);
-                    }
 
-            }else{
+         $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$programid.', programid:'.$programid.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$programname.'\'}) })(event)" >'.get_string('enroll','local_program').'</a>';
 
-                     $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$programid.', programid:'.$programid.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$programname.'\'}) })(event)" >'.get_string('enroll','local_program').'</a>';
+    }
 
-            }
-        }
         return $enrollmentbtn;
     } // end of get_enrollbtn
 } // end of class
