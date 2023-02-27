@@ -34,6 +34,9 @@ class instituteform extends moodleform {
 	function definition() {
 		global $DB,$USER;
 
+		$costcenterid = explode('/',$USER->open_path)[1];
+		// print_r($costcenterid); die;
+
 		$mform = &$this->_form;
 
 		$instituteid = $this->_customdata['id'];
@@ -51,7 +54,7 @@ class instituteform extends moodleform {
 		$params = array();
 		if ((has_capability('local/location:manageinstitute', $categorycontext)) && (!is_siteadmin() ) ) {
             $sql .= " AND (id = :costcenter)";
-            $params['costcenter'] = $USER->open_costcenterid;
+            $params['costcenter'] = $costcenterid;
             
         }
        
@@ -68,7 +71,7 @@ class instituteform extends moodleform {
 				$mform->addElement('select', 'costcenter', get_string('organization', 'local_location'), $institutenames, array());
 				$mform->addRule('costcenter', null, 'required', null, 'client');
 	    }else{
-	    	$mform->addElement('hidden', 'costcenter',$USER->open_costcenterid);
+	    	$mform->addElement('hidden', 'costcenter', $costcenterid);
 	    }
 
 		$allow_multi_session = array();
@@ -92,6 +95,7 @@ class instituteform extends moodleform {
 		$mform->disable_form_change_checker();
 	}
 	public function validation($data, $files){
+		// print_r($data[costcenter]);die;
 		$errors = parent::validation($data, $files);
 		if(strlen($data['address'])> 500){
 			$errors['address'] = get_string('addresstoolong', 'local_location');
