@@ -55,7 +55,7 @@ $title="Skill Category";
 $PAGE->set_title($title);
 $PAGE->navbar->add(get_string('manage_skills', 'local_skillrepository'),new moodle_url('/local/skillrepository/index.php'));
 $PAGE->navbar->add(get_string('manage_skill_category', 'local_skillrepository'));
-$PAGE->set_heading(get_string('skill_category', 'local_skillrepository'));
+$PAGE->set_heading(get_string('manage_skill_category', 'local_skillrepository'));
 $PAGE->requires->js_call_amd('local_skillrepository/newcategory', 'load', array());
 echo $OUTPUT->header();
 $lib =  new local_skillrepository\event\insertcategory();

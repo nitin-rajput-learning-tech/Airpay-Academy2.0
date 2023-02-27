@@ -203,5 +203,26 @@ define([
                 }.bind(this));
             }.bind(this));
         },
+
+        nodeletelevel: function (args) {
+        return Str.get_strings([{
+          key: 'reason',
+          component: 'local_skillrepository'
+        },
+        {
+          key: 'deletelevelnotconfirm',
+          component: 'local_skillrepository',
+          param: args
+        }]).then(function (s) {
+          ModalFactory.create({
+            title: s[0],
+            type: ModalFactory.types.DEFAULT,
+            body: s[1],
+          }).done(function (modal) {
+            this.modal = modal;
+            modal.show();
+          }.bind(this));
+        }.bind(this));
+      },
     };
 });

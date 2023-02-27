@@ -27,7 +27,7 @@
                         <th class="header text-left" tabindex="0">{{# str}} organisation, local_costcenter{{/ str}}
                         </th>
                     {{/ is_admin}}
-                    <th class="header text-left" tabindex="0">Full Name</th>
+                    <th class="header text-left" tabindex="0">Name</th>
                     <th class="header text-center" tabindex="0">Code</th>
                     <th class="header text-center" tabindex="0">Actions</th>
                 </tr>
@@ -45,12 +45,12 @@
                                 <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>
                             </a>
                             {{^ delete_cat}}
-                                <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/newcategory').deletecategory({ selector: 'deletecategory' ,categoryid:{{skillscategory_id}},contextid:1}) })(event)">
+                                <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/newcategory').deletecategory({ selector: 'deletecategory' ,categoryid:{{skillscategory_id}},contextid:1, skillcatname:'{{skillscategoryname}}'}) })(event)">
                                     <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
                                 </a>
                             {{/ delete_cat}}
                             {{# delete_cat}}
-                                <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/newcategory').notdeletecategory({ selector: 'deletecategory' ,categoryid:{{skillscategory_id}},contextid:1}) })(event)">
+                                <a href="javascript:void(0)" title="{{# str}}delete{{/ str}}" onclick="(function(e){ require('local_skillrepository/newcategory').notdeletecategory({ selector: 'deletecategory' ,categoryid:{{skillscategory_id}},contextid:1, skillcatname:'{{skillscategoryname}}'}) })(event)">
                                     <i class="fa fa-trash fa-fw" aria-hidden="true" title="{{# str }} delete_title, local_skillrepository {{/ str }}" aria-label="Delete"></i>
                                 </a>
                             {{/ delete_cat}}

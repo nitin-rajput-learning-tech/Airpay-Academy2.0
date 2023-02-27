@@ -238,6 +238,7 @@ function skill_details($tablelimits, $filtervalues){
                 on cc.userid = u.id
                 WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL ";
             $usercount = $DB->count_records_sql($usercountsql);
+            $skillmaped = $DB->record_exists('course',array('open_skill'=>$id));
             $skilname=$c->name;
             $list['skilname'] = $skilname;
             $list['organisationname'] = $c->organisationname;
@@ -245,6 +246,7 @@ function skill_details($tablelimits, $filtervalues){
             $list['achieved_users'] = $usercount;
             $list['shortname']=$c->shortname;
             $list['skill_catname']=$c->skill_catname;
+            $list['skillmaped']=$skillmaped;
             $data[] = $list;
         }
     }
@@ -281,11 +283,14 @@ function skills_level_details($tablelimits, $filtervalues){
 
     if ($records) {
         foreach ($records as $c) {
+
+            $dellevel = $DB->record_exists('course',array('open_level'=>$c->id));
             $list=array();
             $list['skillslevelname'] = $c->name;
             $list['username'] = $c->username;
             $list['code'] = $c->code;
             $list['organisationname'] = $c->organisationname;
+            $list['dellevel'] = $dellevel;
             $list['skillslevel_id'] = $c->id;
             $data[] = $list;
         }

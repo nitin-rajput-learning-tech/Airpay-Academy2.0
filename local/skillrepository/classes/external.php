@@ -357,6 +357,7 @@ class local_skillrepository_external extends external_api {
                         'shortname' => new external_value(PARAM_RAW, 'shortname of skill', VALUE_OPTIONAL),
                         'skill_catname' => new external_value(PARAM_RAW, 'category name in skill', VALUE_OPTIONAL),
                         'achieved_users' => new external_value(PARAM_RAW, 'achieved users in skill', VALUE_OPTIONAL),
+                        'skillmaped' => new external_value(PARAM_RAW, 'skill maped to course', VALUE_OPTIONAL),
                     )
                 )
             )
@@ -456,6 +457,7 @@ class local_skillrepository_external extends external_api {
                         'achieved_users' => new external_value(PARAM_RAW, 'achieved users in skill', VALUE_OPTIONAL),
                         'code' => new external_value(PARAM_RAW, 'code in skillslevel', VALUE_OPTIONAL),
                         'username' => new external_value(PARAM_RAW, 'username in skillslevel', VALUE_OPTIONAL),
+                        'dellevel' => new external_value(PARAM_RAW, 'level in course', VALUE_OPTIONAL),
                     )
                 )
             )
