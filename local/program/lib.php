@@ -262,6 +262,17 @@ class programcourse_form extends moodleform {
         $mform->addElement('hidden', 'levelid', $levelid);
         $mform->setType('levelid', PARAM_INT);
 
+        $classroom_plugin_exist = \core_component::get_plugin_directory('local', 'classroom');
+
+        if($classroom_plugin_exist){
+
+            $checkboxes = array();
+            $checkboxes[] = $mform->createElement('advcheckbox', 'map_classroom_'.$bcid.'_'.$levelid, null, '', array('class'=>'map_classroom_'.$bcid.'_'.$levelid),array(0,1));
+            $mform->addGroup($checkboxes, 'map_classroom_'.$bcid.'_'.$levelid, get_string('add_classroom', 'local_program'), array(' '), false);
+            $mform->addHelpButton('map_classroom_'.$bcid.'_'.$levelid, 'add_classroom', 'local_program');
+
+        }
+
         $courses = array();
         $params = array();
         $course = $this->_ajaxformdata['course'];
