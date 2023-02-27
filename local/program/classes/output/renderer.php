@@ -1539,12 +1539,12 @@ class renderer extends plugin_renderer_base {
         $stable->length = 1;
         $program = (new program)->programs($stable);
 
-        $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
-        if (empty($program)) {
+        $program_status = $DB->get_record('local_program', array('id' => $programid), 'id,name');
+        if (is_array($program) && empty($program['programs'])) {
             print_error("program Not Found!");
         }
 
-        return $program;
+        return $program_status;
     }
 
     /**

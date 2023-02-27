@@ -91,6 +91,7 @@ class local_users_renderer extends plugin_renderer_base {
         $navigationdata = '';
         foreach ($local_pluginlist as $pluginname => $pluginurl) {
             $userclass = '\local_'.$pluginname.'\local\user';
+            
             if (class_exists($userclass)) {
                 $plugininfo = array();
                 $pluginclass = new $userclass;
@@ -106,7 +107,6 @@ class local_users_renderer extends plugin_renderer_base {
                 }
             }
         }
-
         ksort($existingplugin);
         $existingplugin = array_values($existingplugin);
         if (is_siteadmin() || has_capability('local/users:edit', $categorycontext)) {
