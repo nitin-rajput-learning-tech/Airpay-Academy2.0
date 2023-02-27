@@ -44,6 +44,7 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
                 includes = $(selector).data('includes');
                 programid = $(selector).data('programid');
                 levelid = $(selector).data('levelid');
+                classroomcourses = $("[name='map_classroom_" + programid+'_'+levelid+"']:checked").val();
 
             promise = Ajax.call([{
                 methodname: 'local_program_form_course_selector',
@@ -52,7 +53,8 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
                     context: {contextid: contextid},
                     includes: includes,
                     programid: programid,
-                    levelid: levelid
+                    levelid: levelid,
+                    classroomcourses: classroomcourses,
                 }
             }]);
 

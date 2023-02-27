@@ -181,28 +181,35 @@ class local_program_external extends external_api {
             PARAM_INT,
             'Level Id'
         );
+        $classroomcourses = new external_value(
+            PARAM_INT,
+            'classroomcourses', VALUE_DEFAULT, 0
+        );
         return new external_function_parameters(array(
             'query' => $query,
             'context' => self::get_context_parameters(),
             'includes' => $includes,
             'programid' => $programid,
-            'levelid' => $levelid
+            'levelid' => $levelid,
+            'classroomcourses'=>$classroomcourses
         ));
     }
 
-    public static function program_course_selector($query, $categorycontext, $includes = 'parents', $programid, $levelid) {
+    public static function program_course_selector($query, $categorycontext, $includes = 'parents', $programid, $levelid, $classroomcourses) {
         global $CFG, $DB, $USER;
         $params = self::validate_parameters(self::program_course_selector_parameters(), array(
             'query' => $query,
             'context' => $categorycontext,
             'includes' => $includes,
             'programid' => $programid,
-            'levelid' => $levelid
+            'levelid' => $levelid,
+            'classroomcourses'=>$classroomcourses
         ));
         $query = $params['query'];
         $includes = $params['includes'];
         $programid = $params['programid'];
         $levelid = $params['levelid'];
+        $classroomcourses = $params['classroomcourses'];
 
         $categorycontext = self::get_context_from_params($params['context']);
 
@@ -215,6 +222,13 @@ class local_program_external extends external_api {
             $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
         }
         $cousresql .= $costcenterpathconcatsql;
+
+        if($classroomcourses === 1){
+
+            $cousresql .= " AND (EXISTS (SELECT clcrs.id FROM {local_classroom_courses} AS clcrs
+                                        WHERE FIND_IN_SET(clcrs.courseid,c.id) > 0 ) > 0)";
+
+        }
 
         if($query){
             $cousresql .=" AND c.fullname LIKE '%$query%'";

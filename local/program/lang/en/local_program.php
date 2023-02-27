@@ -547,3 +547,10 @@ $string['listicon'] ='icon fa fa-bars fa-fw';
 $string['cardicon'] ='icon fa fa-fw fa-th';
 
 $string['notassigned'] = 'N/A';
+$string['add_classroom'] = 'Classroom Courses';
+
+$string['add_classroom_help'] = 'Select
+
+* Checked - If you want to let classroom courses.
+
+* Unchecked - If you want to let all courses';
