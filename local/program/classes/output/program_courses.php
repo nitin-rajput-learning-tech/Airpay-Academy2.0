@@ -143,7 +143,7 @@ class program_courses implements renderable, templatable {
                 $onerow['index'] = $i++;
                 // $i++;
                 //---------get bootcamp fullname-----
-                $onerow['ProgramFullname'] = $inprogress_bootcamps->fullname;
+                $onerow['ProgramFullname'] = \local_costcenter\lib::strip_tags_custom(html_entity_decode($inprogress_bootcamps->fullname));
                 $onerow['DisplayProgramFullname'] = $this->get_fullname($inprogress_bootcamps);
                 $onerow['ProgramUrl'] = $CFG->wwwroot.'/local/program/view.php?bcid='.$inprogress_bootcamps->id;
                 $onerow['ProgramIcon'] = $CFG->wwwroot.'/theme/epsilon/pix/scheme_icons/bcschemefff.png';
@@ -177,27 +177,27 @@ class program_courses implements renderable, templatable {
 
     private function get_summary($course_record){   
 
-        $coursesummary = \local_costcenter\lib::strip_tags_custom($course_record->description);
+        $coursesummary = \local_costcenter\lib::strip_tags_custom(html_entity_decode($course_record->description));
         $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100)."..." : $coursesummary;
         $coursesummary = $summarystring;
         if(empty($coursesummary)){
             $coursesummary = '<span class="w-full pull-left">'.get_string('nodecscriptionprovided','block_userdashboard').'</span>';
         }
 
-        return $coursesummary;
+        return \local_costcenter\lib::strip_tags_custom(html_entity_decode($coursesummary));
     } // end of function
 
 
     private function get_fullname($inprogress_coursename){
 
-        $course_fullname = $inprogress_coursename->fullname;
+        $course_fullname = \local_costcenter\lib::strip_tags_custom(html_entity_decode($inprogress_coursename->fullname));
         if (strlen($course_fullname) >= 22) {
             $inprogress_coursename_fullname = substr($inprogress_coursename->fullname, 0, 22) . '...';
         } else {
             $inprogress_coursename_fullname = $inprogress_coursename->fullname;
         }
 
-        return $inprogress_coursename_fullname;
+        return \local_costcenter\lib::strip_tags_custom(html_entity_decode($inprogress_coursename_fullname));
     } // end of function
 
 

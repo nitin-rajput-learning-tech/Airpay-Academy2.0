@@ -30,6 +30,8 @@ use completion_completion;
 use html_table;
 use html_writer;
 use core_component;
+use \local_courses\action\insert as insert;
+
 require_once($CFG->dirroot . '/local/program/lib.php');
 if (file_exists($CFG->dirroot . '/local/lib.php')) {
   require_once($CFG->dirroot . '/local/lib.php');
@@ -37,13 +39,13 @@ if (file_exists($CFG->dirroot . '/local/lib.php')) {
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
 //use \local_program\notifications_emails as programnotifications_emails;
 // program
-define('program_NEW', 0);
-define('program_COMPLETED', 2);
+define('PROGRAM_NEW', 0);
+define('PROGRAM_COMPLETED', 2);
 // Session Attendance
 define('SESSION_PRESENT', 1);
 define('SESSION_ABSENT', 2);
 // Types
-define('program', 1);
+define('PROGRAM', 1);
 
 class program {
     /**
@@ -667,6 +669,10 @@ class program {
                     } else {
                         return compact('programs', 'programscount');
                     }
+                }else {
+
+                    return compact('programs', 'programscount');
+
                 }
             } else {
                 if (!empty($myprograms)) {
@@ -683,6 +689,13 @@ class program {
         }
 
         if($program != NULL && $program != 'null' && $program > 0) {
+
+          if(is_array($program)){
+
+            $program = implode(',', $program);
+
+          }
+
           $concatsql .= " AND bc.id IN ($program) ";
         }
         if(!empty($stable->costcenterid)){
@@ -742,11 +755,25 @@ class program {
                 $concatsql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
             }
         }
+        if(!empty($stable->categories)){
+
+            if(is_array($program)){
+
+                $filtercategories = explode(',', $stable->categories);
+
+            }else{
+
+                $filtercategories = $stable->categories;
+            }
+            list($filtercategoriessql, $filtercategoriesparams) = $DB->get_in_or_equal($filtercategories, SQL_PARAMS_NAMED, 'categories', true, false);
+            $params = array_merge($params, $filtercategoriesparams);
+            $concatsql .= " AND bc.open_categoryid $filtercategoriessql";
+        }
         if(!empty($status)){
           $filterstatus = explode(',',$status);
           if(!(in_array('active',$filterstatus) && in_array('inactive',$filterstatus))){
               if(in_array('active' ,$filterstatus)){
-                  $concatsql .= " AND bc.visible = 1 ";           
+                  $concatsql .= " AND bc.visible = 1 ";
               }else if(in_array('inactive' ,$filterstatus)){
                   $concatsql .= " AND bc.visible = 0 ";
               }
@@ -770,9 +797,12 @@ class program {
 
 
         if (isset($stable->programid) && $stable->programid > 0) {
+
             $programs = $DB->get_record_sql($fromsql . $sql, $params);
+
         } else {
             try {
+
                 $programscount = $DB->count_records_sql($countsql . $sql, $params);
                 if ($stable->thead == false) {
                     $sql .= " ORDER BY bc.id DESC";
@@ -1469,24 +1499,17 @@ class program {
         $params = array();
         $programusers = array();
         $concatsql = '';
+
         if (!empty($stable->search)) {
-            // $fields = array(0 => 'u.firstname',
-            //                 1 => 'u.lastname',
-            //                 2 => 'u.email',
-            //                 3 => 'u.idnumber'
-            //                 );
-            $fields = array(0 => $DB->sql_like('u.firstname', ':ufirstname',  false),
-                            1 => $DB->sql_like('u.lastname', ':ulastname',  false),
-                            2 => $DB->sql_like('u.email', ':uemail',  false),
-                            3 => $DB->sql_like('u.idnumber', ':uidnumber',  false)
-                            );
-            $fields = implode(" OR ", $fields);
-            $fields .= " LIKE '%" .$stable->search. "%' ";
+            $fields = array(
+                0 => 'u.firstname',
+                1 => 'u.lastname',
+                2 => 'u.email',
+                3 => 'u.idnumber'
+            );
+            $fields = implode(" LIKE '%" . $stable->search . "%' OR ", $fields);
+            $fields .= " LIKE '%" . $stable->search . "%' ";
             $concatsql .= " AND ($fields) ";
-            $params['ufirstname'] = '%' .$stable->search. '%';
-            $params['ulastname'] = '%' .$stable->search. '%';
-            $params['uemail'] = '%' .$stable->search. '%';
-            $params['uidnumber'] = '%' .$stable->search. '%';
         }
         $countsql = "SELECT COUNT(cu.id) ";
         $fromsql = "SELECT u.*, cu.attended_sessions, cu.hours, cu.completion_status, c.totalsessions,
@@ -1497,7 +1520,9 @@ class program {
                 WHERE c.id = {$programid} AND u.confirmed = 1 AND u.suspended = 0 AND u.deleted = 0 AND u.id > 2";
         $sql .= $concatsql;
         try {
-            $programuserscount = $DB->count_records_sql($countsql . $sql, $params);
+
+
+            $programuserscount = $DB->count_records_sql($countsql. $sql, $params);
             if ($stable->thead == false) {
                 $sql .= " ORDER BY id ASC";
                 $programusers = $DB->get_records_sql($fromsql . $sql, $params, $stable->start, $stable->length);
@@ -2012,7 +2037,7 @@ class program {
             if ($enroldata->signupid) {
                 $courseid = $DB->get_field('local_program_level_courses', 'courseid',
                         array('id' => $enroldata->bclcid));
-                $this->manage_bclevel_course_enrolments($courseid, $USER->id, 'employee', 'unenrol');
+                $this->manage_bclevel_course_enrolments($courseid, $enroldata->userid, 'employee', 'unenrol');
             }
             //cancel session
             // $emaillogs = new programnotifications_emails();
@@ -2118,7 +2143,7 @@ class program {
                 if ($signupid) {
                     $courseid = $DB->get_field('local_program_level_courses', 'courseid',
                         array('id' => $enroldata->bclcid));
-                    $this->manage_bclevel_course_enrolments($courseid, $USER->id);
+                    $this->manage_bclevel_course_enrolments($courseid, $enroldata->userid);
                 }
                 return $signupid;
             }
@@ -2183,20 +2208,34 @@ class program {
      * @return [type]                                       [description]
      */
     public function manage_bclevel_course_enrolments($course, $user, $role = 'employee',
-        $type = 'enrol', $pluginname = 'program') {
+        $type = 'enrol', $pluginname = 'program',$programid=null) {
         global $DB;
-        $courseexist=$DB->record_exists('enrol', array('courseid' => $course, 'enrol' => $pluginname));
-        if($courseexist){ 
-          $enrolmethod = enrol_get_plugin($pluginname);
-          $roleid = $DB->get_field('role', 'id', array('shortname' => $role));
-          $instance = $DB->get_record('enrol', array('courseid' => $course, 'enrol' => $pluginname), '*', MUST_EXIST);
-          if (!empty($instance)) {
-              if ($type == 'enrol') {
-                  $enrolmethod->enrol_user($instance, $user, $roleid, time());
-              } else if ($type == 'unenrol') {
-                  $enrolmethod->unenrol_user($instance, $user, $roleid, time());
-              }
-          }
+
+        $params =array(
+            'courseid' => $course,
+            'enrol' => $pluginname
+        );
+        if($programid !== null){
+            $params['customint1']=$programid;
+        }
+        $courseexist = $DB->record_exists('enrol', $params);
+        if (!$courseexist) {
+            $coursedata = $DB->get_record('course', array('id' => $course));
+            $coursedata->open_identifiedas = '5';
+            insert::add_enrol_method_tocourse($coursedata, 5);
+        }
+
+        $enrolmethod = enrol_get_plugin($pluginname);
+        $roleid      = $DB->get_field('role', 'id', array(
+            'shortname' => $roleshortname
+        ));
+        $instance    = $DB->get_record('enrol',$params , '*', MUST_EXIST);
+        if (!empty($instance)) {
+            if ($type == 'enrol') {
+                $enrolmethod->enrol_user($instance, $user, $roleid, time());
+            } else if ($type == 'unenrol') {
+                $enrolmethod->unenrol_user($instance, $user, $roleid, time());
+            }
         }
         return true;
     }

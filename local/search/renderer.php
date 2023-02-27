@@ -2,6 +2,7 @@
 
 global $CFG;
 use local_classroom\classroom;
+use local_program\program;
 use local_learningplan\lib\lib as lib;
 use local_search\output\elearning as elearning;
 // require_once($CFG->dirroot . '/local/catalog/lib.php');
@@ -600,6 +601,123 @@ class local_search_renderer extends plugin_renderer_base {
 		$lp_userview['optionalcourses_count'] = $optionalcourses_count;
 		$lp_userview['linkpath'] = $lp_url;
 		return $this->render_from_template('local_search/learningplaninfo', $lp_userview);
+    }
+    public function get_program_info($programid){
+    	global $OUTPUT, $CFG, $DB, $USER, $PAGE;
+        $stable = new stdClass();
+        $stable->programid = $programid;
+        $stable->thead = false;
+        $stable->start = 0;
+        $stable->length = 1;
+        $fromsql = "SELECT c.*, (SELECT COUNT(DISTINCT cu.userid)
+                                  FROM {local_program_users} AS cu
+                                  WHERE cu.programid = c.id
+                              ) AS enrolled_users FROM {local_program} AS c
+							 WHERE c.id= $programid";
+        $program = $DB->get_record_sql($fromsql);
+        $context = $context = \local_costcenter\lib\accesslib::get_module_context();
+        $program_status = $DB->get_field('local_program','status',array('id' => $programid));
+
+        if(empty($program)) {
+            print_error("Program Not Found!");
+        }
+        if(file_exists($CFG->dirroot.'/local/includes.php')){
+        	require_once($CFG->dirroot.'/local/includes.php');
+        	$includes = new user_course_details();
+    	}
+
+        if ($program->programlogo > 0){
+            $program->programlogoimg = (new program)->program_logo($program->programlogo);
+            if($program->programlogoimg == false){
+                $program->programlogoimg = $includes->get_classes_summary_files($sdata);
+            }
+        } else {
+            $program->programlogoimg = $includes->get_classes_summary_files($program);
+        }
+
+        if ($program->instituteid > 0) {
+            $program->programlocation = $DB->get_field('local_location_institutes', 'fullname', array('id' => $program->instituteid));
+        } else {
+            $program->programlocation = 'N/A';
+        }
+
+
+        if ($program->department == -1) {
+            $program->programdepartment = 'All';
+        } else {
+            $programdepartment = $DB->get_fieldset_select('local_costcenter', 'fullname', " CONCAT(',',{$program->department},',') LIKE CONCAT('%,',id,',%') ", array());//FIND_IN_SET(id, '$program->department')
+            $program->programdepartment = implode(', ', $programdepartment);
+        }
+
+
+        $program->selfenrolmentcap = false;
+        if (!has_capability('local/program:manageprogram', $context)) {
+            $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $programid, 'userid' => $USER->id));
+
+                $program->selfenrolmentcap = true;
+                $url = new moodle_url('/local/program/view.php', array('bcid' =>$programid,'action' => 'selfenrol'));
+
+
+                     $program->selfenrolmentcap='<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$program->id.', programid:'.$program->id.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$program->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_program').'</button></a>';
+
+         }
+        $program_capacity_check=(new program)->program_capacity_check($programid);
+        if($program_capacity_check&&$program->status == 1 && !$userenrolstatus){
+
+                $program->selfenrolmentcap=get_string('capacity_check', 'local_program');
+        }
+        $totalseats=$DB->get_field('local_program','capacity',array('id'=>$programid)) ;
+        $allocatedseats=$DB->count_records('local_program_users',array('programid'=>$programid)) ;
+
+        $description = strip_tags(html_entity_decode($program->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
+        $isdescription = '';
+        if (empty($description)) {
+           $isdescription = false;
+        } else {
+            $isdescription = true;
+            if (strlen($description) > 250) {
+                $decsriptionCut = substr($description, 0, 250);
+                $decsriptionstring =  strip_tags(html_entity_decode($decsriptionCut),array('overflowdiv' => false, 'noclean' => false, 'para' => false));;
+            }
+        }
+        $component = 'program';
+		$action = 'add';
+       	if($program->approvalreqd==1){
+
+			$requestsql = "SELECT status FROM {local_request_records}
+				WHERE componentid = :componentid AND compname LIKE :compname AND
+				createdbyid = :createdbyid ORDER BY id DESC ";
+			$request = $DB->get_field_sql($requestsql ,array('componentid' => $program->id,'compname' => $component,'createdbyid'=>$USER->id));
+            if($request=='PENDING'){
+            	$pending = true;
+             }else{
+				$requestbtn = true;
+			}
+		}else{
+			$requestbtn = false;
+		}
+        $program_url = new moodle_url('/local/program/view.php', array('bcid' =>$programid));
+        $programcontext = [
+            'programname' => $program->name,
+        	'programlogoimg' => $program->programlogoimg,
+            'programid' => $programid,
+            'totalseats'=>$totalseats,
+            'allocatedseats'=>$allocatedseats,
+            'description'=>strip_tags(html_entity_decode($description),array('overflowdiv' => false, 'noclean' => false, 'para' => false)),
+            'descriptionstring'=>strip_tags(html_entity_decode($descriptionstring),array('overflowdiv' => false, 'noclean' => false, 'para' => false)),
+            'isdescription' => $isdescription,
+            'programlocation'=> $program->programlocation,
+           	'startdate' => date("j M 'y", $program->startdate),
+        	'enddate' => date("j M 'y", $program->enddate),
+        	'selfenrolmentcap' => $program->selfenrolmentcap,
+        	'component' => $component,
+        	'action' => $action,
+        	'requestbtn' => $requestbtn,
+        	'pending' => $pending,
+            'contextid' => $context->id,
+            'linkpath'=> $program_url,
+        ];
+        return $this->render_from_template('local_search/programinfo', $programcontext);
     }
 
 }

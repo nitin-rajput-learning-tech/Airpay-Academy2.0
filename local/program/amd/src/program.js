@@ -25,43 +25,54 @@ define([
             params = [];
             params.action = 'viewprograms';
             params.programstatus = args.programstatus;
-            var view_type = 'table';
-            var viewtype = 'card';
-            Str.get_string('search','local_program').then(function(s) {
-            if(view_type){
-            var oTable = $('#viewprograms_table').dataTable({
-                'bInfo': false,
-                'processing': true,
-                'serverSide': true,
-                'ajax': {
-                    "type": "POST",
-                    "url":M.cfg.wwwroot + '/local/program/ajax.php?costcenterid='+args.selectedcostcenterid+'&departmentid='+args.selecteddepartmentid+'&subdepartmentid='+args.selectedsubdepartmentid+'&l4department='+args.selectedl4department+'&l5department='+args.selectedl5department+'&program='+args.selectedprogram+'&status='+args.selectedstatus+'&view_type='+'table',
-                    "data": params
-                },
-                "bInfo" : false,
-                "bLengthChange": false,
-                "language": {
-                    "paginate": {
-                        "next": ">",
-                        "previous": "<"
-                    },
-                    'processing': '<img src='+M.cfg.wwwroot + '/local/ajax-loader.svg>'
-                },
-                 "oLanguage": {
-                    "sSearch": s
-                 },
-                "pageLength": 10
-            });
-         } 
 
-         if(viewtype){
+            params.costcenterid = args.selectedcostcenterid;
+            params.departmentid = args.selecteddepartmentid;
+            params.subdepartmentid =args.selectedsubdepartmentid;
+            params.l4department = args.selectedl4department;
+            params.l5department = args.selectedl5department;
+            params.program = args.selectedprogram;
+            params.status = args.selectedstatus;
+            params.categories = args.selectedcategories;
+            params.view_type = args.formattype;
+
+            Str.get_string('search','local_program').then(function(s) {
+
+            if(params.view_type === 'table'){
+
+                var oTable = $('#viewprograms_table').dataTable({
+                    'bInfo': false,
+                    'processing': true,
+                    'serverSide': true,
+                    'ajax': {
+                        "type": "POST",
+                        "url":M.cfg.wwwroot + '/local/program/ajax.php',
+                        "data": params
+                    },
+                    "bInfo" : false,
+                    "bLengthChange": false,
+                    "language": {
+                        "paginate": {
+                            "next": ">",
+                            "previous": "<"
+                        },
+                        'processing': '<img src='+M.cfg.wwwroot + '/local/ajax-loader.svg>'
+                    },
+                     "oLanguage": {
+                        "sSearch": s
+                     },
+                    "pageLength": 10
+                });
+            }
+
+        if(params.view_type === 'card'){
             var oTable = $('#viewprograms').dataTable({
                 'bInfo': false,
                 'processing': true,
                 'serverSide': true,
                 'ajax': {
                     "type": "POST",
-                    "url":M.cfg.wwwroot + '/local/program/ajax.php?costcenterid='+args.selectedcostcenterid+'&departmentid='+args.selecteddepartmentid+'&subdepartmentid='+args.selectedsubdepartmentid+'&l4department='+args.selectedl4department+'&l5department='+args.selectedl5department+'&program='+args.selectedprogram+'&status='+args.selectedstatus+'&view_type='+'card',
+                    "url":M.cfg.wwwroot + '/local/program/ajax.php',
                     "data": params
                 },
                 "bInfo" : false,
@@ -79,6 +90,7 @@ define([
                 "pageLength": 6
             });
         }
+
     });
         },
         SessionDatatable: function(args) {

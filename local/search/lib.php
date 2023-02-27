@@ -74,10 +74,10 @@ function local_search_get_itemlist_grade($start = 0, $limit = 5){
 	$sql = " FROM {user} AS u WHERE 1=1 AND suspended = 0 AND deleted = 0 AND open_grade != '' ";
 	$params = [];
 	$systemcontext = \local_costcenter\lib\accesslib::get_module_context();
-	if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && $USER->open_costcenterid > 0){
-		$sql .= " AND u.open_costcenterid = :open_costcenterid ";
-		$params['open_costcenterid'] = $USER->open_costcenterid;
-	}
+   if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) && !empty($USER->open_path)){
+        $sql .= " AND :pathlike LIKE concat('%/',u.open_path,'/%') ";
+        $params['pathlike'] = $USER->open_path.'/';
+    }
 	$grades = $DB->get_records_sql_menu($selectsql.$sql, $params, $start, $limit);
 
 	$itemlist = [];

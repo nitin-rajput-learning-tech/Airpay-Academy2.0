@@ -1,0 +1,62 @@
+{{!
+     This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    @author eabyas  <info@eabyas.in>
+}}
+
+<div id="status_tabs" class="pull-left w-100">
+    <div class="crstatus_tabs_list pl_15 pr_15 pb_15" style="display:none;">
+         {{#tabs.0}}
+             <ul class="nav nav-tabs trainerdashboard_tabs" role="tablist">
+                 {{#tabs}}
+                     <li class="nav-item trainerdashboardstatus {{type}}" data-type="{{type}}" data-target="trainerdashboard_{{ type }}" data-selected-class="active" aria-controls="{{ type }}" aria-selected="false" tabindex="-1" role="tab" data-status = {{trainerdashboardstatus}}>
+                         <a class=" {{active}} nav-link " data-toggle="tab" href="javascript:void(0)" aria-controls="{{type}}" role="tab"  title="{{name}}" >
+                         {{name}}
+                     </a>
+                     </li>
+                 {{/tabs}}
+             </ul>
+         {{/tabs.0}}
+    </div>
+    <div class="tab-content">
+            {{#tabs.0}}
+                {{#tabs}}
+                    <div role="tabpanel"
+                            class="tab-pane {{active}}"
+                            id="trainerdashboard_{{ type }}">
+                        {{> block_trainerdashboard/trainerdashboardfilters}}
+                    </div>
+                    <div class="global_filter_structure">
+                    <label>{{# str}}search{{/ str}} : </label>
+                    <input id="global_filter_{{ type }}" class="global filter" type="text" name="search_query">
+                    </div> 
+                     <div id="{{ type }}" data-region="{{ type }}-preview-container" class="viewtrainerdashboards">
+                          <div data-region="{{ type }}-count-container"></div>
+                          <div data-region="{{ type }}-list-container" class ="methoddata">
+                          </div>
+                          <span class="overlay-icon-container cardpaginate-loader {{$hiddenclass}}{{^visible}}hidden{{/visible}}{{/hiddenclass}}" data-region="overlay-icon-container">
+                                <span class="loading-icon icon-no-margin">{{#pix}} ajax-loader, local_costcenter, {{#str}} loading {{/str}} {{/pix}}</span>
+                            </span>
+                     </div>
+               {{/tabs}}
+            {{/tabs.0}}
+     
+    </div>
+</div>
+{{#js}}
+
+require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+        cardPaginate.reload({{{options}}}, {{{dataoptions}}},{{{filterdata}}});
+});
+{{/js}}
