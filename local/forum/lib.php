@@ -20,7 +20,7 @@
  *
  * @author eabyas  <info@eabyas.in>
  * @package BizLMS
- * @subpackage local_onlineexams
+ * @subpackage local_forum
  */
 
 if (file_exists($CFG->dirroot . '/local/costcenter/lib.php')) {
@@ -30,7 +30,7 @@ require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
 require_once($CFG->dirroot . '/completion/completion_completion.php');
 
-use \local_onlineexams\form\custom_onlineexams_form as custom_onlineexams_form;
+use \local_forum\form\custom_forum_form as custom_forum_form;
 use \local_courses\form\custom_courseevidence_form as custom_courseevidence_form;
 
 
@@ -43,12 +43,12 @@ defined('MOODLE_INTERNAL') || die();
  * @param array $args List of named arguments for the fragment loader.
  * @return string
  */
-function local_onlineexams_output_fragment_custom_onlineexams_form($args)
+function local_forum_output_fragment_custom_forum_form($args)
 {
     global $DB, $CFG, $PAGE;
     $args = (object) $args;
     $context = $args->context;
-    $renderer = $PAGE->get_renderer('local_onlineexams');
+    $renderer = $PAGE->get_renderer('local_forum');
     $courseid = $args->courseid;
     $o = '';
     if ($courseid) {
@@ -66,30 +66,28 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
         parse_str($serialiseddata, $formdata);
     }
     $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
-        if ($get_coursedetails->format == 'singleactivity') {
-            $moduleinfoSql = "SELECT q.id, q.attempts,q.timelimit,q.overduehandling,q.browsersecurity, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
-                FROM {quiz} as q 
-                JOIN {grade_items} as gi ON gi.iteminstance = q.id AND gi.itemtype ='mod' AND gi.itemmodule = 'quiz' 
-                WHERE q.course=:courseid ";
-            $moduleinfo = $DB->get_record_sql($moduleinfoSql, array('courseid' => $courseid));
-            // print_r($moduleinfo);exit;
-            $maxgrade = round($moduleinfo->grademax, 2);
-            $gradepass = round($moduleinfo->gradepass, 2);
-            $attempts = $moduleinfo->attempts;
-            $course->gradepass = $gradepass;
-            $course->attempts = $attempts;
-            $course->timeopen = $moduleinfo->timeopen;
-            $course->timeclose = $moduleinfo->timeclose;
-            $course->timelimit = $moduleinfo->timelimit;
-            $course->overduehandling =$moduleinfo->overduehandling;
-            $course->browsersecurity = $moduleinfo->browsersecurity;
-            // }else{
-        }
+    if ($get_coursedetails->format == 'singleactivity') {
+        $moduleinfoSql = "SELECT f.id,f.type, f.duedate,f.cutoffdate,f.maxbytes,f.maxattachments,f.displaywordcount,f.forcesubscribe,f.trackingtype,f.lockdiscussionafter,f.blockperiod
+                FROM {forum} as f  
+                WHERE f.course=:courseid ";
+        $moduleinfo = $DB->get_record_sql($moduleinfoSql, array('courseid' => $courseid));
+        $course->duedate = $moduleinfo->duedate;
+        $course->cutoffdate = $moduleinfo->cutoffdate;
+        $course->maxbytes = $moduleinfo->maxbytes;
+        $course->maxattachments = $moduleinfo->maxattachments;
+        $course->displaywordcount = $moduleinfo->displaywordcount;
+        $course->forcesubscribe = $moduleinfo->forcesubscribe;
+        $course->trackingtype = $moduleinfo->trackingtype;
+        $course->name = $moduleinfo->fullname;
+        $course->lockdiscussionafter = $moduleinfo->lockdiscussionafter;
+        $course->blockperiod = $moduleinfo->blockperiod;
+        // }else{
+    }
     if (!empty($course) && empty($formdata)) {
         $formdata = clone $course;
         $formdata = (array)$formdata;
     }
-// print_r($formdata);die;
+    // print_r($formdata);die;
     if ($courseid > 0) {
         $heading = get_string('updatecourse', 'local_courses');
         $collapse = false;
@@ -107,7 +105,6 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
         if ($overviewfilesoptions) {
             file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, $coursecontext, 'course', 'overviewfiles', 0);
         }
-        
     } else {
         // Editor should respect category context if course context is not set.
         $editoroptions['context'] = $catcontext;
@@ -131,7 +128,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
         'costcenterid' => $data->open_path,
     );
     local_costcenter_set_costcenter_path($formdata);
-    $mform = new custom_onlineexams_form(null, $params, 'post', '', null, true, $formdata);
+    $mform = new custom_forum_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
 
     $mform->set_data($formdata);
@@ -151,7 +148,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
         $activeclass = $k == $args->form_status ? 'active' : '';
         $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass, 'form-status' => $k);
     }
-    $formstatusview = new \local_onlineexams\output\form_status($formstatus);
+    $formstatusview = new \local_forum\output\form_status($formstatus);
     $o .= $renderer->render($formstatusview);
     // $o = $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'getCatlist');
     $mform->display();
@@ -168,7 +165,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
  * @return  array courses
  */
 
-function get_listof_onlineexams($stable, $filterdata)
+function get_listof_forum($stable, $filterdata)
 {
     global $CFG, $DB, $OUTPUT, $USER;
     $core_component = new core_component();
@@ -194,14 +191,16 @@ function get_listof_onlineexams($stable, $filterdata)
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
     $selectsql = "SELECT c.id ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
-    $countsql  = "SELECT count(c.id) FROM {course} AS c ";
-    $open_path = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
+    $countsql  = "SELECT count(c.id) FROM {course} AS c ";    
+    if(has_capability('local/forum:manage', $maincheckcontext)) {
+        $open_path = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
+    }
     $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
                      JOIN {course_categories} AS cc ON cc.id = c.category
                      ";
 
-    $formsql .= " AND c.id > 1  $open_path";
-    $formsql .= " AND c.open_module ='online_exams'  $open_path AND open_coursetype = 1 ";
+    $formsql .= " AND c.id > 1  ";
+    $formsql .= " AND c.open_module ='forum'   AND c.open_coursetype = 1 $open_path ";
     $params = array();
     if (isset($filterdata->search_query) && trim($filterdata->search_query) != '') {
         $formsql .= " AND c.fullname LIKE :search";
@@ -347,9 +346,8 @@ function get_listof_onlineexams($stable, $filterdata)
                                 JOIN {role_assignments} as ra ON ra.contextid = cot.id
                                 JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
                                                 AND u.deleted = 0 AND u.suspended = 0
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql AND c.open_module= 'online_exams' AND c.open_coursetype = 1 ";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql AND c.open_module= 'forum' AND c.open_coursetype = 1 ";
             $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
-
 
             $completedusersssql = " SELECT COUNT(u.id) as ccount
                                 FROM {course} c
@@ -359,7 +357,7 @@ function get_listof_onlineexams($stable, $filterdata)
                                                 AND u.deleted = 0 AND u.suspended = 0
                                 JOIN {course_modules} as cm ON cm.course = c.id 
                                 JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND u.id = cmc.userid
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cmc.completionstate = 1 $costcenterpathconcatsql AND c.open_module= 'online_exams' AND c.open_coursetype = 1 ";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cmc.completionstate = 1 $costcenterpathconcatsql";
 
             $completed_count = $DB->count_records_sql($completedusersssql, $params);
 
@@ -431,9 +429,9 @@ function get_listof_onlineexams($stable, $filterdata)
             $courseslist[$count]["coursetype"] = \local_costcenter\lib::strip_tags_custom($displayed_names);
             $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
             $courseslist[$count]["grade_view"] = ((has_capability(
-                'local/onlineexams:grade_view',
+                'local/forum:grade_view',
                 $context
-            ) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context)) ? true : false;
+            ) || is_siteadmin()) && has_capability('local/forum:manage', $context)) ? true : false;
             $courseslist[$count]["request_view"] = ((has_capability('local/request:approverecord', $maincheckcontext)) || is_siteadmin()) ? true : false;
 
             $coursesummary = \local_costcenter\lib::strip_tags_custom($chelper->get_course_formatted_summary(
@@ -498,10 +496,10 @@ function get_listof_onlineexams($stable, $filterdata)
 
             $enrolid = $DB->get_field('enrol', 'id', array('enrol' => 'manual', 'courseid' => $course->id));
 
-            if (has_capability('local/onlineexams:enrol', $maincheckcontext) && has_capability('local/onlineexams:manage', $maincheckcontext)) {
-                $courseslist[$count]["enrollusers"] = $CFG->wwwroot . "/local/onlineexams/onlineexamsenrol.php?id=" . $course->id . "&enrolid=" . $enrolid;
+            if (has_capability('local/forum:enrol', $maincheckcontext) && has_capability('local/forum:manage', $maincheckcontext)) {
+                $courseslist[$count]["enrollusers"] = $CFG->wwwroot . "/local/forum/forumenrol.php?id=" . $course->id . "&enrolid=" . $enrolid;
             }
-            if (has_capability('local/onlineexams:view', $context) || is_enrolled($context)) {
+            if (has_capability('local/forum:view', $context) || is_enrolled($context)) {
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot . "/course/view.php?id=" . $course->id;
             } else {
                 $courseslist[$count]["courseurl"] = "#";
@@ -513,8 +511,8 @@ function get_listof_onlineexams($stable, $filterdata)
             }
 
 
-            if (has_capability('local/onlineexams:update', $context) && has_capability('local/onlineexams:manage', $context)) {
-                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')) . get_string('edit'), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_onlineexams/onlineexamsAjaxform").init({contextid:' . $context->id . ', component:"local_onlineexams", callback:"custom_onlineexams_form", form_status:0, plugintype: "local", pluginname: "onlineexams", courseid: ' . $course->id . ' }) })(event)'));
+            if (has_capability('local/forum:update', $context) && has_capability('local/forum:manage', $context)) {
+                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')) . get_string('edit'), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_forum/forumAjaxform").init({contextid:' . $context->id . ', component:"local_forum", callback:"custom_forum_form", form_status:0, plugintype: "local", pluginname: "forum", courseid: ' . $course->id . ' }) })(event)'));
                 $courseslist[$count]["editcourse"] = $courseedit;
                 if ($course->visible) {
                     $icon = 't/hide';
@@ -527,7 +525,7 @@ function get_listof_onlineexams($stable, $filterdata)
                 }
                 $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
                 $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
-                $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_onlineexams', 'data-params' => $params, 'data-id' => $course->id));
+                $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-params' => $params, 'data-id' => $course->id));
                 if (!empty($autoenroll_plugin_exist)) {
                     $autoplugin = enrol_get_plugin('auto');
                     $instance = $autoplugin->get_instance_for_course($course->id);
@@ -546,8 +544,8 @@ function get_listof_onlineexams($stable, $filterdata)
                 $courseslist[$count]["auto_enrol"] = '';
             }
 
-            if (has_capability('local/onlineexams:delete', $context) && has_capability('local/onlineexams:manage', $context)) {
-                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')) . get_string('delete'), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "courses_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
+            if (has_capability('local/forum:delete', $context) && has_capability('local/forum:manage', $context)) {
+                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')) . get_string('delete'), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "courses_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_forum/forumAjaxform\').deleteConfirm({action:\'deleteforum\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
                 $courseslist[$count]["deleteaction"] = $deleteactionshtml;
             }
 
@@ -555,7 +553,7 @@ function get_listof_onlineexams($stable, $filterdata)
                 $courseslist[$count]["deleteaction"] = '';
             }
 
-            if (has_capability('local/onlineexams:grade_view', $context) && has_capability('local/onlineexams:manage', $context)) {
+            if (has_capability('local/forum:grade_view', $context) && has_capability('local/forum:manage', $context)) {
                 $courseslist[$count]["grader"] =  $CFG->wwwroot . "/grade/report/grader/index.php?id=" . $course->id;
             }
 
@@ -563,7 +561,7 @@ function get_listof_onlineexams($stable, $filterdata)
                 unset($courseslist[$count]["grader"]);
             }
 
-            if (has_capability('local/courses:report_view', $context) && has_capability('local/onlineexams:manage', $context)) {
+            if (has_capability('local/courses:report_view', $context) && has_capability('local/forum:manage', $context)) {
                 $courseslist[$count]["activity"] = $CFG->wwwroot . "/report/outline/index.php?id=" . $course->id;
             }
             if ($departmentcount > 1 && !(is_siteadmin())) {
@@ -579,37 +577,36 @@ function get_listof_onlineexams($stable, $filterdata)
                 unset($courseslist[$count]["requestlink"]);
             }
 
-
             $courseslist[$count] = array_merge($courseslist[$count], array(
                 "actions" => (((has_capability(
-                    'local/onlineexams:enrol',
+                    'local/forum:enrol',
                     $maincheckcontext
                 ) || has_capability(
-                    'local/onlineexams:update',
+                    'local/forum:update',
                     $context
                 ) || has_capability(
-                    'local/onlineexams:delete',
+                    'local/forum:delete',
                     $context
                 ) || has_capability(
-                    'local/onlineexams:grade_view',
+                    'local/forum:grade_view',
                     $context
                 ) || has_capability(
                     'local/courses:report_view',
                     $context
-                )) || is_siteadmin()) && has_capability('local/onlineexams:manage', $maincheckcontext)) ? true : false,
+                )) || is_siteadmin()) && has_capability('local/forum:manage', $maincheckcontext)) ? true : false,
                 "enrol" => ((has_capability(
-                    'local/onlineexams:enrol',
+                    'local/forum:enrol',
                     $maincheckcontext
-                )  || is_siteadmin()) && has_capability('local/onlineexams:manage', $maincheckcontext)) ? true : false,
+                )  || is_siteadmin()) && has_capability('local/forum:manage', $maincheckcontext)) ? true : false,
                 "update" => ((has_capability(
-                    'local/onlineexams:update',
+                    'local/forum:update',
                     $context
-                ) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context) && has_capability('moodle/course:update', $context)) ? true : false,
+                ) || is_siteadmin()) && has_capability('local/forum:manage', $context) && has_capability('moodle/course:update', $context)) ? true : false,
                 "delete" => ((has_capability(
-                    'local/onlineexams:delete',
+                    'local/forum:delete',
                     $context
-                ) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context) && has_capability('moodle/course:delete', $context)) ? true : false,
-                "report_view" => ((has_capability('local/courses:report_view', $context) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context)) ? true : false,
+                ) || is_siteadmin()) && has_capability('local/forum:manage', $context) && has_capability('moodle/course:delete', $context)) ? true : false,
+                "report_view" => ((has_capability('local/courses:report_view', $context) || is_siteadmin()) && has_capability('local/forum:manage', $context)) ? true : false,
                 "actions" => 1
             ));
 
@@ -654,41 +651,41 @@ function get_listof_onlineexams($stable, $filterdata)
 
     return $coursesContext;
 }
-function local_onlineexams_leftmenunode()
+function local_forum_leftmenunode()
 {
     global $DB, $USER;
-    $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
-    if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()) {
+    if (has_capability('local/forum:view', $categorycontext) || has_capability('local/forum:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browsecourses', 'class' => 'pull-left user_nav_div browsecourses'));
-        $courses_url = new moodle_url('/local/onlineexams/index.php');
-        $courses = html_writer::link($courses_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">' . get_string('manage_onlineexams', 'local_onlineexams') . '</span>', array('class' => 'user_navigation_link'));
+        $courses_url = new moodle_url('/local/forum/index.php');
+        $courses = html_writer::link($courses_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">' . get_string('manage_forum', 'local_forum') . '</span>', array('class' => 'user_navigation_link'));
         $coursecatnodes .= $courses;
         $coursecatnodes .= html_writer::end_tag('li');
     }
     return array('6' => $coursecatnodes);
 }
 
-function local_onlineexams_quicklink_node()
+function local_forum_quicklink_node()
 {
     global $CFG, $PAGE, $OUTPUT;
-    $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
+    $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
     $content = '';
-    if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()) {
-        $PAGE->requires->js_call_amd('local_onlineexams/onlineexamsAjaxform', 'load');
+    if (has_capability('local/forum:view', $categorycontext) || has_capability('local/forum:manage', $categorycontext) || is_siteadmin()) {
+        $PAGE->requires->js_call_amd('local_forum/forumAjaxform', 'load');
 
         $coursedata = array();
-        $coursedata['node_header_string'] = get_string('manage_br_onlineexams', 'local_onlineexams');
-        $coursedata['pluginname'] = 'onlineexams';
+        $coursedata['node_header_string'] = get_string('manage_br_forum', 'local_forum');
+        $coursedata['pluginname'] = 'forum';
         $coursedata['plugin_icon_class'] = 'fa fa-book';
-        if (is_siteadmin() || (has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/onlineexams:manage', $categorycontext))) {
+        if (is_siteadmin() || (has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/forum:manage', $categorycontext))) {
             $coursedata['create'] = TRUE;
-            $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_onlineexams/courseAjaxform").init({contextid:' . $categorycontext->id . ', component:"local_onlineexams", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "onlineexams"}) })(event)'));
+            $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_forum/courseAjaxform").init({contextid:' . $categorycontext->id . ', component:"local_forum", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "forum"}) })(event)'));
         }
-        if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext)) {
-            $coursedata['viewlink_url'] = $CFG->wwwroot . '/local/onlineexams/index.php';
+        if (has_capability('local/forum:view', $categorycontext) || has_capability('local/forum:manage', $categorycontext)) {
+            $coursedata['viewlink_url'] = $CFG->wwwroot . '/local/forum/index.php';
             $coursedata['view'] = TRUE;
-            $coursedata['viewlink_title'] = get_string('view_onlineexams', 'local_onlineexams');
+            $coursedata['viewlink_title'] = get_string('view_forum', 'local_forum');
         }
         $coursedata['space_count'] = 'one';
         $content = $OUTPUT->render_from_template('block_quick_navigation/quicklink_node', $coursedata);
@@ -696,85 +693,143 @@ function local_onlineexams_quicklink_node()
     return array('5' => $content);
 }
 
-function add_onlineexam_quiz($validateddata, $examid)
+function add_forum_forum($validateddata, $forumid)
 {
     global $DB;
-    //quiz module
-    $quiz = new stdClass();
-    $quiz->modulename = 'quiz';
-    $quiz->add = 'quiz';
-    $quiz->module = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-    $quiz->graceperiod = 0;
-    $quiz->preferredbehaviour = 'deferredfeedback';
-    $quiz->quizpassword = '';
-    $quiz->subnet = '';
-    $quiz->visible = 1;
-    $quiz->section = 0;
-    $quiz->course = $examid->id;
-    $quiz->grademethod = $validateddata->grademethod;
-    $quiz->grade = $validateddata->maxgrade;
-    $quiz->gradepass = $validateddata->gradepass;
-    $quiz->name = $validateddata->fullname;
-    $quiz->attempts = $validateddata->attempts;
+
+    //forum module
+    $forum = new stdClass();
+    $forum->modulename = 'forum';
+    $forum->add = 'forum';
+    $forum->module = $DB->get_field('modules', 'id', array('name' => 'forum'));
+    $forum->showdescription = 0;
+    $forum->visible = 1;
+    $forum->section = 0;
+    $forum->type = 'general';
+    $forum->duedate = 0;
+    $forum->cutoffdate = 0;
+    $forum->maxbytes = 512000;
+    $forum->maxattachments = 9;
+    $forum->displaywordcount = 0;
+    $forum->forcesubscribe = 0;
+    $forum->trackingtype = 1;
+    $forum->name = $validateddata->fullname;
+    $forum->lockdiscussionafter = 0;
+    $forum->blockperiod = 0;
+    // $forum->blockafter = $validateddata->lockdiscussionafter;
+    // $forum->warnafter = $validateddata->warnafter;
+    // $forum->grade_forum = $validateddata->grade_forum;
+    // $forum->grade_forum_rescalegrades = $validateddata->grade_forum_rescalegrades;
+    // $forum->gradepass_forum = $validateddata->gradepass_forum;
+
+    // $forum->assessed = $validateddata->assessed;
+    // $forum->scale = $validateddata->scale;
+    // $forum->scale_rescalegrades = $validateddata->scale_rescalegrades;
+    // $forum->assesstimestart = $validateddata->assesstimestart;
+    // $forum->assesstimefinish = $validateddata->assesstimefinish;
+    // $forum->gradepass = $validateddata->gradepass;
+    // $forum->visible = $validateddata->visible;
+
+    // $forum->visibleoncoursepage = $validateddata->visibleoncoursepage;
+    // $forum->cmidnumber = $validateddata->cmidnumber;
+    // $forum->groupmode = $validateddata->groupmode;
+    // $forum->groupingid = $validateddata->groupingid;
+    // $forum->availabilityconditionsjson = $validateddata->availabilityconditionsjson;
+    // $forum->completionunlocked = $validateddata->completionunlocked;
+    // $forum->completion = $validateddata->completion;
+    // $forum->completionview = $validateddata->completionview;
+    // $forum->completiongradeitemnumber = $validateddata->completiongradeitemnumber;
+    // $forum->completionpostsenabled = $validateddata->completionpostsenabled;
+    // $forum->completionposts = $validateddata->completionposts;
+    // $forum->completiondiscussions = $validateddata->completiondiscussions;
+    // $forum->completionreplies = $validateddata->completionreplies;
+    // $forum->completionexpected = $validateddata->completionexpected;
+
+    $forum->course = $forumid;
+    // $forum->coursemodule = $validateddata->coursemodule;
+    // $forum->section = $validateddata->section;
+    // $forum->instance = $validateddata->instance;
 
     if (!empty($validateddata->summary_editor['text']))
-        $quiz->introeditor['text'] = $validateddata->summary_editor['text'];
+        $forum->introeditor['text'] = $validateddata->summary_editor['text'];
     else
-        $quiz->introeditor['text'] = $validateddata->fullname;
+        $forum->introeditor['text'] = $validateddata->fullname;
 
-    $quiz->introeditor['format'] = $validateddata->summary_editor['format'];
-    $quiz->completion = 2;
-    $quiz->completionusegrade = 1;
-    $quiz->completionpassgrade = 1;
-    return $quiz;
+    $forum->introeditor['format'] = $validateddata->summary_editor['format'];
+    $forum->completion = 2;
+    $forum->completionusegrade = 1;
+    $forum->completionpassgrade = 1;
+    return $forum;
 }
 
-function update_onlineexam_quiz($validateddata, $data, $formstatus)
+function update_forum_forum($validateddata, $data, $formstatus)
 {
     global $DB;
-    //quiz module
-    $quiz = new stdClass();
-    $quiz->modulename = 'quiz';
-    $quiz->add = 'quiz';
-    $quiz->module = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-    $quiz->graceperiod = 0;
-    $quiz->preferredbehaviour = 'deferredfeedback';
-    $quiz->quizpassword = '';
-    $quiz->subnet = '';
-    $quiz->visible = 1;
-    $quiz->section = 0;
-    $courseid = is_object($data) ? $data->id  : $data['id'];
-    $quiz->course = $courseid;
-    $quizobject = $DB->get_record('quiz', array('course' => $courseid));
-    $quiz->completion = 2;
-    $quiz->completionusegrade = 1;
-    $quiz->completionpassgrade = 1;
-    // print_r($validateddata);
-    // print_r($quizobject);
-    $quiz->id = $quizobject->id;
-    $quiz->name = $validateddata->fullname;
-    if ($formstatus == 0) {
-        if (!empty($validateddata->summary_editor['text']))
-            $quiz->introeditor['text'] = $validateddata->summary_editor['text'];
-        else
-            $quiz->introeditor['text'] = $validateddata->fullname;
 
-        $quiz->introeditor['format'] = $validateddata->summary_editor['format'];
-        $quiz->gradepass = $validateddata->gradepass;
-        $quiz->grademethod = $validateddata->grademethod;
-        $quiz->grade = $validateddata->maxgrade;
-        $quiz->attempts = $validateddata->attempts;
-    }
-    if ($formstatus == 1) {
-        $quiz->timeopen = $validateddata->timeopen;
-        $quiz->timeclose = $validateddata->timeclose;
-        $quiz->overduehandling = $validateddata->overduehandling;
-        $quiz->browsersecurity = $validateddata->browsersecurity;
-        $quiz->timelimit = $validateddata->timelimit;
-        $quiz->introeditor['text'] = $quizobject->intro;
-        $quiz->introeditor['format'] = $quizobject->introformat;
-        $quiz->grademethod = $quizobject->grademethod;
-    }
-    // print_r($quiz);
-    return $quiz;
+    //forum module
+    $forum = new stdClass();
+    $forum->modulename = 'forum';
+    $forum->add = 'forum';
+    $forum->module = $DB->get_field('modules', 'id', array('name' => 'forum'));
+    $forum->showdescription = 0;
+    $forum->type = 'general';
+    $forum->duedate = $validateddata->duedate;
+    $forum->cutoffdate = $validateddata->cutoffdate;
+    $forum->maxbytes = $validateddata->maxbytes;
+    $forum->maxattachments = $validateddata->maxattachments;
+    $forum->displaywordcount = $validateddata->displaywordcount;
+    $forum->forcesubscribe = $validateddata->forcesubscribe;
+    $forum->trackingtype = $validateddata->trackingtype;
+    $forum->name = $validateddata->fullname;
+    $forum->lockdiscussionafter = $validateddata->lockdiscussionafter;
+    $forum->blockperiod = $validateddata->blockperiod;
+    $courseid = is_object($data) ? $data->id  : $data['id'];
+    $forumobject = $DB->get_record('forum', array('course' => $courseid));
+
+    // $forum->duedate = 0;
+    // $forum->cutoffdate = 0;
+    $forum->visible = 1;
+    $forum->section = 0;
+    // $forum->blockafter = $validateddata->lockdiscussionafter;
+    // $forum->warnafter = $validateddata->warnafter;
+    // $forum->grade_forum = $validateddata->grade_forum;
+    // $forum->grade_forum_rescalegrades = $validateddata->grade_forum_rescalegrades;
+    // $forum->gradepass_forum = $validateddata->gradepass_forum;
+
+    // $forum->assessed = $validateddata->assessed;
+    // $forum->scale = $validateddata->scale;
+    // $forum->scale_rescalegrades = $validateddata->scale_rescalegrades;
+    // $forum->assesstimestart = $validateddata->assesstimestart;
+    // $forum->assesstimefinish = $validateddata->assesstimefinish;
+    // $forum->gradepass = $validateddata->gradepass;
+    // $forum->visible = $validateddata->visible;
+
+    // $forum->visibleoncoursepage = $validateddata->visibleoncoursepage;
+    // $forum->cmidnumber = $validateddata->cmidnumber;
+    // $forum->groupmode = $validateddata->groupmode;
+    // $forum->groupingid = $validateddata->groupingid;
+    // $forum->availabilityconditionsjson = $validateddata->availabilityconditionsjson;
+    // $forum->completionunlocked = $validateddata->completionunlocked;
+    // $forum->completion = $validateddata->completion;
+    // $forum->completionview = $validateddata->completionview;
+    // $forum->completiongradeitemnumber = $validateddata->completiongradeitemnumber;
+    // $forum->completionpostsenabled = $validateddata->completionpostsenabled;
+    // $forum->completionposts = $validateddata->completionposts;
+    // $forum->completiondiscussions = $validateddata->completiondiscussions;
+    // $forum->completionreplies = $validateddata->completionreplies;
+    // $forum->completionexpected = $validateddata->completionexpected;
+
+    // $forum->course = $forumid;
+    // $forum->coursemodule = $validateddata->coursemodule;
+    // $forum->section = $validateddata->section;
+    // // $forum->instance = $validateddata->instance;
+    // print_r($validateddata);
+    $forum->id = $forumobject->id;
+    $forum->introeditor['text'] = $forumobject->intro;
+    $forum->introeditor['format'] = $forumobject->introformat;
+    $forum->completion = 2;
+    $forum->completionusegrade = 1;
+    $forum->completionpassgrade = 1;
+    // print_r($forum);
+    return $forum;
 }

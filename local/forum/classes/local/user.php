@@ -16,76 +16,76 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * local onlineexams
+ * local forum
  *
- * @package    local_onlineexams
+ * @package    local_forum
  * @copyright  2019 eAbyas <eAbyas.in>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 */
 
-namespace local_onlineexams\local;
+namespace local_forum\local;
 
 class user{
 
     public function user_profile_content($userid,$return = false,$start =0,$limit =5){
         global $OUTPUT, $CFG;
         $returnobj = new \stdClass();
-        $returnobj->onlineexamsexist = 1;
-        $records = $this->enrol_get_users_onlineexams($userid,false,true,$start,$limit);
-        $onlineexams = $records['data'];
+        $returnobj->forumexist = 1;
+        $records = $this->enrol_get_users_forum($userid,false,true,$start,$limit);
+        $forum = $records['data'];
 
         $data = array();
-        foreach ($onlineexams as $onlineexam) {
-            $onlineexamsarray = array();
-            $onlineexamsarray["id"] = $onlineexam->id;
-            $onlineexamsarray["name"] = $onlineexam->fullname;
-            $url = new \moodle_url('/mod/quiz/view.php', array('id' => $onlineexam->id));
+        foreach ($forum as $forum) {
+            $forumarray = array();
+            $forumarray["id"] = $forum->id;
+            $forumarray["name"] = $forum->fullname;
+            $url = new \moodle_url('/mod/quiz/view.php', array('id' => $forum->id));
             $urllink = $url->out();
-            $onlineexamsarray["url"] = $urllink;
-            $onlineexamsummary = $onlineexam->summary;
-            $onlineexamsummary = \local_costcenter\lib::strip_tags_custom($onlineexamsummary);
-            $summarystring = strlen($onlineexamsummary) > 120 ? substr($onlineexamsummary, 0, 120)."..." : $onlineexamsummary;
-            $onlineexamsarray["description"] = $summarystring;
-            $onlineexamsarray["percentage"] = round($this->user_onlineexam_completion_progress($onlineexam->id,$userid));
+            $forumarray["url"] = $urllink;
+            $forumummary = $forum->summary;
+            $forumummary = \local_costcenter\lib::strip_tags_custom($forumummary);
+            $summarystring = strlen($forumummary) > 120 ? substr($forumummary, 0, 120)."..." : $forumummary;
+            $forumarray["description"] = $summarystring;
+            $forumarray["percentage"] = round($this->user_forum_completion_progress($forum->id,$userid));
 
             require_once($CFG->dirroot.'/local/includes.php');
             $includes = new \user_course_details();
-            $onlineexam_record = get_course($onlineexam->id);
-            $background_logourl= ($includes->course_summary_files($onlineexam_record));
+            $forum_record = get_course($forum->id);
+            $background_logourl= ($includes->course_summary_files($forum_record));
             if(is_a($background_logourl, 'moodle_url')){
-                $onlineexamsarray['module_img_url'] = $background_logourl->out();
+                $forumarray['module_img_url'] = $background_logourl->out();
             }else{
-                $onlineexamsarray['module_img_url'] = $background_logourl;
+                $forumarray['module_img_url'] = $background_logourl;
             }
-            $data[] = $onlineexamsarray;
+            $data[] = $forumarray;
         }
 
         $returnobj->sequence = 5;
         $returnobj->count = $records['count'];
-        $returnobj->divid = 'user_onlineexams';
-        $returnobj->moduletype = 'onlineexams';
+        $returnobj->divid = 'user_forum';
+        $returnobj->moduletype = 'forum';
         $returnobj->targetID = 'display_classroom';
         $returnobj->userid = $userid;
-        $returnobj->string = get_string('onlineexams', 'local_users');
+        $returnobj->string = get_string('forum', 'local_users');
         $returnobj->navdata = $data;
         return $returnobj;
     }
 
     /**
-     * Description: User onlineexam completion progress
-     * @param  INT $onlineexamid onlineexam id whose completed percentage to be fetched
-     * @param  INT $userid   userid whose completed onlineexam prcentage to be fetched
+     * Description: User forum completion progress
+     * @param  INT $forumid forum id whose completed percentage to be fetched
+     * @param  INT $userid   userid whose completed forum prcentage to be fetched
      * @return INT           percentage of completion.
      */
-    public function user_onlineexam_completion_progress($onlineexamid, $userid) {
+    public function user_forum_completion_progress($forumid, $userid) {
         global $DB, $USER, $CFG;
-        if(empty($onlineexamid) || empty($userid)){
+        if(empty($forumid) || empty($userid)){
             return false;
         }
 
         $sql="SELECT id from {course_completions} where course= ? and userid= ? and  timecompleted IS NOT NULL";
-        $completionenabled=$DB->get_record_sql($sql, [$onlineexamid, $userid]);
-        $onlineexam_completion_percent = '';
+        $completionenabled=$DB->get_record_sql($sql, [$forumid, $userid]);
+        $forum_completion_percent = '';
        
         return 0;
     }
@@ -94,7 +94,7 @@ class user{
    
 
    
-    public function inprogress_onlineexamnames($userid) {
+    public function inprogress_forumnames($userid) {
         global $DB;
         $params = array();
         $couresparams = array();
@@ -106,11 +106,11 @@ class user{
 
         $params['userid'] = $userid;
 
-        $completed_onlineexams = self::completed_onlineexamnames($userid);
-        if(!empty($completed_onlineexams)){
+        $completed_forum = self::completed_forumnames($userid);
+        if(!empty($completed_forum)){
             $complted_id = array();
-            foreach($completed_onlineexams as $complted_onlineexam){
-                $completed_id[] = $complted_onlineexam->id;
+            foreach($completed_forum as $complted_forum){
+                $completed_id[] = $complted_forum->id;
             }
             $completed_ids = implode(',', $completed_id);
             list($couressql, $couresparams) = $DB->get_in_or_equal($completed_id, SQL_PARAMS_NAMED, 'param', false, false);
@@ -118,11 +118,11 @@ class user{
         }
 
         $paramsarray = array_merge($params,$couresparams);
-        $inprogress_onlineexams = $DB->get_records_sql($sql, $paramsarray);
-        return $inprogress_onlineexams;
+        $inprogress_forum = $DB->get_records_sql($sql, $paramsarray);
+        return $inprogress_forum;
     }
 
-    public function completed_onlineexamnames($userid) {
+    public function completed_forumnames($userid) {
         global $DB;
         $sql = "SELECT distinct(cc.id) as completionid,c.id,c.fullname,c.shortname as code,c.summary,ue.timecreated as enrolldate,cc.timecompleted as completedate
             FROM {course_completions} AS cc
@@ -132,14 +132,14 @@ class user{
             WHERE cc.timecompleted is not NULL AND c.visible=1 AND c.id>1 AND cc.userid = ? AND c.open_coursetype = 1
             ";
 
-        $onlineexamnames = $DB->get_records_sql($sql, [$userid]);
-        return $onlineexamnames;
+        $forumnames = $DB->get_records_sql($sql, [$userid]);
+        return $forumnames;
     }
 
-    public function enrol_get_users_onlineexams($userid, $count =false, $limityesno = false, $start = 0, $limit = 5, $source = false) {
+    public function enrol_get_users_forum($userid, $count =false, $limityesno = false, $start = 0, $limit = 5, $source = false) {
         global $DB;
         $countsql = "SELECT count(DISTINCT(course.id)) ";
-        $onlineexamssql = "SELECT course.id, course.fullname,course.shortname, course.summary,ue.timecreated as enrolldate , cc.timecompleted AS completiondate ";
+        $forumsql = "SELECT course.id, course.fullname,course.shortname, course.summary,ue.timecreated as enrolldate , cc.timecompleted AS completiondate ";
 
         // $fromsql = "FROM {course} AS course
         //             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto')
@@ -164,9 +164,9 @@ class user{
         // }
         $ordersql = " ORDER BY ue.id DESC ";
         if ($limityesno)
-            $records = $DB->get_records_sql($onlineexamssql.$fromsql.$ordersql, [$userid], $start, $limit);
+            $records = $DB->get_records_sql($forumsql.$fromsql.$ordersql, [$userid], $start, $limit);
         else
-        $records = $DB->get_records_sql($onlineexamssql.$fromsql.$ordersql, [$userid]);
+        $records = $DB->get_records_sql($forumsql.$fromsql.$ordersql, [$userid]);
 
         $total = $DB->count_records_sql($countsql.$fromsql, [$userid]);
 
