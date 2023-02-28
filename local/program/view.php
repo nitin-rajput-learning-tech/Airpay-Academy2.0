@@ -47,7 +47,6 @@ $PAGE->requires->css('/local/program/css/jquery.dataTables.min.css', true);
 $PAGE->requires->js_call_amd('local_program/ajaxforms', 'load');
 $PAGE->requires->js_call_amd('local_request/requestconfirm', 'load');
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
-
 $renderer = $PAGE->get_renderer('local_program');
 
 $content = $renderer->viewprogram($programid);

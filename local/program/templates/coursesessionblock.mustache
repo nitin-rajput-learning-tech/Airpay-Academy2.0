@@ -1,28 +1,28 @@
 <div class="col-lg-5 col-md-5 pull-left levelcourse_middle">
     {{# cancreatesession }}
-        <a href="{{{ config.wwwroot }}}/local/program/sessions.php?bclcid={{bclevelcourseid}}&levelid={{levelid}}&bcid={{programid}}" class="addsession_link">{{#str}}view{{/str}} / {{#str}}createsession, local_program{{/str}}</a>
+     <!--    <a href="{{{ config.wwwroot }}}/local/program/sessions.php?bclcid={{bclevelcourseid}}&levelid={{levelid}}&bcid={{programid}}" class="addsession_link">{{#str}}view{{/str}} / {{#str}}createsession, local_program{{/str}}</a> -->
     {{/ cancreatesession }}
     {{^ cancreatesession }}
     <div class="w-full pull-left session_details">
         {{# signupid }}
-        <div class="w-full pull-left schedule_details">
+     <!--    <div class="w-full pull-left schedule_details">
             <span class="pull-left session_icon" title = "{{#str}} sessionschedule, local_program {{/str}}">
                 <i class="fa fa-calendar mr-10" aria-hidden="true"></i>
             </span>
-            <span class="pull-left sessiontime">
+            <span class="pull-left sessiontime"> -->
                 {{#userdate}} {{timestart}}, %d %b %Y{{/userdate}} at {{#userdate}} {{timestart}}, %I:%M %p {{/userdate}} to {{#userdate}} {{timefinish}}, %d %b %Y %I:%M %p {{/userdate}}
-            </span>
+<!--             </span>
         </div>
         <div class="w-full pull-left session_location">
             <span class="pull-left sessionlocation" title = "{{#str}} sessionlocation, local_program {{/str}}">
                 <i class="fa fa-map-marker pull-left mr-15" aria-hidden="true"></i>
                 <span class="pull-left sessionroom"> {{ roomname }}, {{ location }} </span>
             </span>
-        </div>
+        </div> -->
         {{/ signupid }}
         {{^ sessionenabled }}
         {{^ userview }}
-        <a href="{{cfg.wwwroot}}/local/program/sessions.php?bclcid={{bclevelcourseid}}&levelid={{levelid}}&bcid={{programid}}">Sessions</a>
+      <!--   <a href="{{cfg.wwwroot}}/local/program/sessions.php?bclcid={{bclevelcourseid}}&levelid={{levelid}}&bcid={{programid}}">Sessions</a> -->
         {{/ userview }}
         {{/ sessionenabled }}
     </div>
@@ -46,13 +46,18 @@
                 <span class="course_status completed">{{ coursecompletionstatus }}</span>
             {{/ coursecompletionstatus }}
         </span>
-        <span class="reschedule">
+<!--         <span class="reschedule">
             <a href="{{{ config.wwwroot }}}/local/program/sessions.php?bclcid={{bclevelcourseid}}&levelid={{levelid}}&bcid={{programid}}">
                 <button class="btn btn-primary reschedule_btn">
                     {{#str}}sessions, local_program{{/str}}
                 </button>
             </a>
-        </span>
+        </span> -->
+       <!--  {{^ coursecompletionstatus}} -->
+        {{# classroomcourse}}
+            <span data-courseid='{{id}}' class="pull-right program_classroom_icon" title="{{# str}} listofclassrooms, local_program{{/ str}}"></span>
+        {{/ classroomcourse}}
+       <!--  {{/ coursecompletionstatus}} -->
     </div>
     {{/ userview }}
     {{/ canremovecourse }}

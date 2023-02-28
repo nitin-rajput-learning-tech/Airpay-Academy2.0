@@ -782,6 +782,9 @@ class renderer extends plugin_renderer_base {
             }
             $bclevelcourse->canremovecourse = $canremovecourse;
             $bclevelcourse->cannotremovecourse = $cannotremovecourse;
+            // $bclevelcourse->classroomcourse = in_array(2, explode(',', $bclevelcourse->open_identifiedas)) ? true : false;
+            $bclevelcourse->classroomcourse = true ;
+
             $programlevelcourses[$i] = $bclevelcourse;
         }
     }

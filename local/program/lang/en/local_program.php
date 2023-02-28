@@ -554,3 +554,6 @@ $string['add_classroom_help'] = 'Select
 * Checked - If you want to let classroom courses.
 
 * Unchecked - If you want to let all courses';
+$string['listofclassrooms'] = 'List of Classrooms';
+$string['showless'] = 'Show Less';
+$string['showmore'] = 'Show More';

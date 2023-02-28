@@ -1027,3 +1027,14 @@ function local_program_enabled_search(){
 function  local_program_applicable_filters_for_search_page(&$filterapplicable){
     $filterapplicable[program] = [/*'learningtype',*/ 'status', 'categories'/*, 'level', 'skill'*/];
 }
+function local_program_output_fragment_course_classroom_info($args){
+    global $CFG,$DB, $OUTPUT;
+    $args = (object) $args;
+    $program = new local_program\program();
+    $classrooms = $program->get_classrooms_count($args->courseid);
+    if($classrooms > 0){
+        return $OUTPUT->render_from_template('local_program/classroom_table', array());
+    }else{
+        return html_writer::div(get_string('noclassroomsavailiable', 'local_classroom'), 'alert alert-info text-center');
+    }
+}
