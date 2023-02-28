@@ -45,10 +45,10 @@
                                     <div class="d-flex mt-1">
                                         <h5 class="flex-grow-1 course_name m-0">
                                             {{^ coursenameCut}}
-                                            <a  title="{{ coursename }}" onclick='(function(e){ require("local_forum/forum").subscribeuser({id:{{ courseid }}, action:"subscribe", confirm:true, name: "{{ coursename }}"}) })(event)'>{{ coursename }}</a>
+                                            <a  title="{{ coursename }}" {{# is_siteadmin}} href="{{ courseurl }}" {{/ is_siteadmin}} {{^ is_siteadmin}} onclick='(function(e){ require("local_forum/forum").subscribeuser({id:{{ courseid }}, action:"subscribe", confirm:true, name: "{{ coursename }}"}) })(event)' {{/ is_siteadmin}}>{{ coursename }}</a>
                                             {{/ coursenameCut}}
                                             {{# coursenameCut}}
-                                            <a  title="{{ coursename }} " onclick='(function(e){ require("local_forum/forum").subscribeuser({id:{{ courseid }}, action:"subscribe", confirm:true, name: "{{ coursename }}"}) })(event)'>{{ coursenameCut }}</a>
+                                            <a  title="{{ coursename }} " {{# is_siteadmin}} href="{{ courseurl }}" {{/ is_siteadmin}} {{^ is_siteadmin}} onclick='(function(e){ require("local_forum/forum").subscribeuser({id:{{ courseid }}, action:"subscribe", confirm:true, name: "{{ coursename }}"}) })(event)' {{/ is_siteadmin}} >{{ coursenameCut }}</a>
                                             {{/ coursenameCut}}
                                         </h5>
 {{#actions}}

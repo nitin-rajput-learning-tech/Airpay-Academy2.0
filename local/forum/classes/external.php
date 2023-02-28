@@ -413,6 +413,7 @@ class local_forum_external extends external_api
                                 'update' => new external_value(PARAM_BOOL, 'update', VALUE_OPTIONAL),
                                 'enrol' => new external_value(PARAM_BOOL, 'enrol', VALUE_OPTIONAL),
                                 'actions' => new external_value(PARAM_BOOL, 'actions', VALUE_OPTIONAL),
+                                'is_siteadmin' => new external_value(PARAM_BOOL, 'is Site admin?', VALUE_OPTIONAL)
                             )
                         )
                     ),
@@ -793,8 +794,8 @@ class local_forum_external extends external_api
                 // mdl_user_enrolments
                 // mdl_enrol
                 // mdl_forum_subscriptions
-                $sql = " SELECT * FROM mdl_user_enrolments ue
-                JOIN mdl_enrol e on e.id = ue.enrolid
+                $sql = " SELECT * FROM {user_enrolments} ue
+                JOIN {enrol} e on e.id = ue.enrolid
                 WHERE e.courseid =:courseid AND ue.userid =:userid ";
                 $params = array('courseid' => $id, 'userid' => $USER->id);
                 $forum = $DB->get_record('forum', array('course'=> $id));

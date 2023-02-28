@@ -77,7 +77,8 @@ define([
                   component: 'local_forum'
               }, {
                   key: 'subscribeusermsg',
-                  component: 'local_forum'
+                  component: 'local_forum',
+                  param: element
               }]).then(function(s) {
                   ModalFactory.create({
                       title: s[0],

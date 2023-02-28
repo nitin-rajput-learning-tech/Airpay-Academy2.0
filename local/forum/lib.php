@@ -191,8 +191,8 @@ function get_listof_forum($stable, $filterdata)
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
     $selectsql = "SELECT c.id ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
-    $countsql  = "SELECT count(c.id) FROM {course} AS c ";    
-    if(has_capability('local/forum:manage', $maincheckcontext)) {
+    $countsql  = "SELECT count(c.id) FROM {course} AS c ";
+    if (has_capability('local/forum:manage', $maincheckcontext)) {
         $open_path = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
     }
     $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
@@ -509,7 +509,16 @@ function get_listof_forum($stable, $filterdata)
                 $courseslist[$count]["grade_view"] = false;
                 $courseslist[$count]["request_view"] = false;
             }
-
+            $sql = " SELECT * FROM {user_enrolments} ue
+                JOIN {enrol} e on e.id = ue.enrolid
+                WHERE e.courseid =:courseid AND ue.userid =:userid ";
+            $params = array('courseid' => $course->id, 'userid' => $USER->id);
+            if (!$DB->record_exists_sql($sql, $params) && !is_siteadmin()) {
+                $subscribed =  false;
+            } else {
+                $subscribed =  true;
+            }
+            $courseslist[$count]["is_siteadmin"] = $subscribed;
 
             if (has_capability('local/forum:update', $context) && has_capability('local/forum:manage', $context)) {
                 $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')) . get_string('edit'), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_forum/forumAjaxform").init({contextid:' . $context->id . ', component:"local_forum", callback:"custom_forum_form", form_status:0, plugintype: "local", pluginname: "forum", courseid: ' . $course->id . ' }) })(event)'));
