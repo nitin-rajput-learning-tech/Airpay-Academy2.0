@@ -22,5 +22,5 @@
  * @subpackage block_trainerdashboard
  */
 $plugin->component = 'block_trainerdashboard';  // Recommended since 2.0.2 (MDL-26035). Required since 3.0 (MDL-48494)
-$plugin->version = 2019042102;  // YYYYMMDDHH (year, month, day, 24-hr time)
+$plugin->version = 2019042102.02;  // YYYYMMDDHH (year, month, day, 24-hr time)
 $plugin->requires = 2019042100; // YYYYMMDDHH (This is the release version for Moodle 2.0)

@@ -25,64 +25,33 @@
  
     'block/trainerdashboard:myaddinstance' => array(
         'captype' => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'user' => CAP_ALLOW
-        ),
- 
+        'contextlevel' => CONTEXT_COURSECAT,
         'clonepermissionsfrom' => 'moodle/my:manageblocks'
     ),
  
     'block/trainerdashboard:addinstance' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
- 
         'captype' => 'write',
         'contextlevel' => CONTEXT_BLOCK,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        ),
- 
         'clonepermissionsfrom' => 'moodle/site:manageblocks'
     ),
     'block/trainerdashboard:viewtrainerslist' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'block/trainerdashboard:viewconductedtrainings' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
     'block/trainerdashboard:viewtrainermanhours' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     ),
-    'block/trainerdashboard:viewdepttrainingavg' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
-    ),
+    // 'block/trainerdashboard:viewdepttrainingavg' => array(
+    //     'captype' => 'read',
+    //     'contextlevel' => CONTEXT_COURSECAT,
+    // ),
     'block/trainerdashboard:viewupcomingtrainings' => array(
-        'riskbitmask' => RISK_SPAM | RISK_XSS,
         'captype' => 'read',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
+        'contextlevel' => CONTEXT_COURSECAT,
     )
 );
