@@ -304,7 +304,7 @@ class local_evaluation_responses_table extends table_sql {
         // Add 'Delete entry' column.
         if (!$this->is_downloading() && has_capability('local/evaluation:deletesubmissions', $this->get_context())) {
             $tablecolumns[] = 'deleteentry';
-            $tableheaders[] = '';
+            $tableheaders[] = 'Delete';
         }
 
         $this->define_columns($tablecolumns);

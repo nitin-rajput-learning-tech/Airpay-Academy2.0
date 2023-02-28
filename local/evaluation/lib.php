@@ -2454,7 +2454,7 @@ function user_evaluations($userid, $tabstatus) {
 function local_evaluation_leftmenunode(){
     $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
     $evaluationnode = '';
-    if(has_capability('local/evaluation:view',$systemcontext) || is_siteadmin()){
+    if(has_capability('local/evaluation:edititems',$systemcontext) || is_siteadmin()){
         $evaluationnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browseevaluations', 'class'=>'pull-left user_nav_div browseevaluations'));
             $eval_url = new moodle_url('/local/evaluation/index.php');
             if(has_capability('local/evaluation:edititems', $systemcontext)) {
@@ -2473,7 +2473,7 @@ function local_evaluation_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT;
     $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
     $content = '';
-    if (is_siteadmin() || has_capability('local/evaluation:view',$systemcontext)) {
+    if (is_siteadmin() || has_capability('local/evaluation:addinstance',$systemcontext)) {
             $evalid = -1; //default for local/evaluation/index.php
             $classid = 0; //default for local/evaluation/index.php
             $eval_plugin = 'site'; //default for local/evaluation/index.php
@@ -3048,14 +3048,15 @@ function learnerscript_evaluation_list(){
 function evaluation_filter($mform,$query='',$searchanywhere=false, $page=0, $perpage=25){
     global $DB,$USER;
     $systemcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
+    $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $evaluationlist=array();
     $data=data_submitted();
 
-    if(is_siteadmin()){
-        $evaluation_sql="SELECT id, name AS fullname FROM {local_evaluations} WHERE 1=1 ";
+    if(is_siteadmin()|| has_capability('local/evaluation:addinstance', $systemcontext)){
+        $evaluation_sql="SELECT id, name AS fullname FROM {local_evaluations} WHERE deleted=0 $costcenterpathconcatsql";
     }else{
         $evaluation_sql="SELECT id, name AS fullname FROM {local_evaluations} WHERE id IN (SELECT evaluationid
-        FROM {local_evaluation_users} WHERE userid = {$USER->id}) AND visible=1 AND evaluationmode LIKE 'SE' ";
+        FROM {local_evaluation_users} WHERE userid = {$USER->id}) AND visible=1 AND evaluationmode LIKE 'SE' AND deleted=0";
     }
     $evaluation_sql.=" AND instance=0 ";
     if(!empty($query)){
