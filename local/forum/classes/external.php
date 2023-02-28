@@ -160,12 +160,12 @@ class local_forum_external extends external_api
                     $coursecontext = context_course::instance($examid->id, MUST_EXIST);
                     local_tags_tag::set_item_tags('local_courses', 'courses', $examid->id, $coursecontext, $validateddata->tags, 0, $data['open_path'], $validateddata->open_departmentid);
                 }
-                if (class_exists('\block_trending_modules\lib')) {
-                    $trendingclass = new \block_trending_modules\lib();
-                    if (method_exists($trendingclass, 'trending_modules_crud')) {
-                        $trendingclass->trending_modules_crud($examid->id, 'local_courses');
-                    }
-                }
+                // if (class_exists('\block_trending_modules\lib')) {
+                //     $trendingclass = new \block_trending_modules\lib();
+                //     if (method_exists($trendingclass, 'trending_modules_crud')) {
+                //         $trendingclass->trending_modules_crud($examid->id, 'local_courses');
+                //     }
+                // }
                 $forum = add_forum_forum($validateddata, $examid);
                 add_moduleinfo($forum, $examid);
                 //$coursedata = $examid;
@@ -459,16 +459,16 @@ class local_forum_external extends external_api
                 $corcat = $DB->get_field('course', 'category', array('id' => $id));
                 $category = $DB->get_record('course_categories', array('id' => $corcat));
                 delete_course($id, false);
-                if (class_exists('\block_trending_modules\lib')) {
-                    $trendingclass = new \block_trending_modules\lib();
-                    if (method_exists($trendingclass, 'trending_modules_crud')) {
-                        $course_object = new stdClass();
-                        $course_object->id = $id;
-                        $course_object->module_type = 'local_courses';
-                        $course_object->delete_record = True;
-                        $trendingclass->trending_modules_crud($course_object, 'local_courses');
-                    }
-                }
+                // if (class_exists('\block_trending_modules\lib')) {
+                //     $trendingclass = new \block_trending_modules\lib();
+                //     if (method_exists($trendingclass, 'trending_modules_crud')) {
+                //         $course_object = new stdClass();
+                //         $course_object->id = $id;
+                //         $course_object->module_type = 'local_courses';
+                //         $course_object->delete_record = True;
+                //         $trendingclass->trending_modules_crud($course_object, 'local_courses');
+                //     }
+                // }
                 $category->coursecount = $category->coursecount - 1;
                 $DB->update_record('course_categories', $category);
                 $return = true;

@@ -359,7 +359,7 @@ function get_listof_onlineexams($stable, $filterdata)
                                                 AND u.deleted = 0 AND u.suspended = 0
                                 JOIN {course_modules} as cm ON cm.course = c.id 
                                 JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND u.id = cmc.userid
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cmc.completionstate = 1 $costcenterpathconcatsql AND c.open_module= 'online_exams' AND c.open_coursetype = 1 ";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cmc.completionstate > 0 $costcenterpathconcatsql AND c.open_module= 'online_exams' AND c.open_coursetype = 1 ";
 
             $completed_count = $DB->count_records_sql($completedusersssql, $params);
 
