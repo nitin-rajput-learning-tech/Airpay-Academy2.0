@@ -60,7 +60,7 @@ class user{
             $data[] = $onlineexamsarray;
         }
 
-        $returnobj->sequence = 0;
+        $returnobj->sequence = 5;
         $returnobj->count = $records['count'];
         $returnobj->divid = 'user_onlineexams';
         $returnobj->moduletype = 'onlineexams';

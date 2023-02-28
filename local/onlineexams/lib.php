@@ -320,7 +320,7 @@ function get_listof_onlineexams($stable, $filterdata)
     $courses = $DB->get_records_sql($selectsql . $formsql, $params, $stable->start, $stable->length);
     $ratings_plugin_exist = $core_component::get_plugin_directory('local', 'ratings');
     $courseslist = array();
-    $employeerole = $DB->get_field('role', 'id', array('shortname' => 'student'));
+    $employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
     if (!empty($courses)) {
         $count = 0;
         foreach ($courses as $key => $course) {
@@ -347,7 +347,7 @@ function get_listof_onlineexams($stable, $filterdata)
                                 JOIN {role_assignments} as ra ON ra.contextid = cot.id
                                 JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
                                                 AND u.deleted = 0 AND u.suspended = 0
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql AND c.open_module= 'online_exams' AND c.open_coursetype = 1 ";
             $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
 
 
@@ -359,7 +359,7 @@ function get_listof_onlineexams($stable, $filterdata)
                                                 AND u.deleted = 0 AND u.suspended = 0
                                 JOIN {course_modules} as cm ON cm.course = c.id 
                                 JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND u.id = cmc.userid
-                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cmc.completionstate = 1 $costcenterpathconcatsql";
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cmc.completionstate = 1 $costcenterpathconcatsql AND c.open_module= 'online_exams' AND c.open_coursetype = 1 ";
 
             $completed_count = $DB->count_records_sql($completedusersssql, $params);
 

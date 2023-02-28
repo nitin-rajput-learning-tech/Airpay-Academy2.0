@@ -227,5 +227,26 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 }.bind(this));
             }.bind(this));
         },
+
+        nodeleteskill: function (args) {
+        return Str.get_strings([{
+          key: 'reason',
+          component: 'local_skillrepository'
+        },
+        {
+          key: 'deleteskillnotconfirm',
+          component: 'local_skillrepository',
+          param: args
+        }]).then(function (s) {
+          ModalFactory.create({
+            title: s[0],
+            type: ModalFactory.types.DEFAULT,
+            body: s[1],
+          }).done(function (modal) {
+            this.modal = modal;
+            modal.show();
+          }.bind(this));
+        }.bind(this));
+      },
     };
 });
