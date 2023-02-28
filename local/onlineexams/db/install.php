@@ -28,7 +28,9 @@ function xmldb_local_onlineexams_install(){
 
         $field1 = new xmldb_field('open_module');
         $field1->set_attributes(XMLDB_TYPE_CHAR, '255',null, null, null, null, null);
-        $dbman->add_field($table, $field1);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
 		$field1 = new xmldb_field('open_coursetype', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);
         if (!$dbman->field_exists($table, $field1)) {
             $dbman->add_field($table, $field1);

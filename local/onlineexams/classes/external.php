@@ -161,12 +161,30 @@ class local_onlineexams_external extends external_api
                     $coursecontext = context_course::instance($examid->id, MUST_EXIST);
                     local_tags_tag::set_item_tags('local_courses', 'courses', $examid->id, $coursecontext, $validateddata->tags, 0, $data['open_path'], $validateddata->open_departmentid);
                 }
-                if (class_exists('\block_trending_modules\lib')) {
-                    $trendingclass = new \block_trending_modules\lib();
-                    if (method_exists($trendingclass, 'trending_modules_crud')) {
-                        $trendingclass->trending_modules_crud($examid->id, 'local_courses');
-                    }
-                }
+
+                // if (class_exists('\block_trending_modules\lib')) {
+                //     $trendingclass = new \block_trending_modules\lib();
+                //     if (method_exists($trendingclass, 'trending_modules_crud')) {
+                //         $trendingclass->trending_modules_crud($examid->id, 'local_courses');
+                //     }
+                // }
+                $quiz->course = $examid->id;
+                $quiz->grademethod = $validateddata->grademethod;
+                $quiz->grade = $validateddata->gradepass;
+                $quiz->gradepass = $validateddata->gradepass;
+                $quiz->name = $validateddata->fullname;
+
+                if (!empty($validateddata->summary_editor['text']))
+                    $quiz->introeditor['text'] = $validateddata->summary_editor['text'];
+                else
+                    $quiz->introeditor['text'] = $validateddata->fullname;
+
+                $quiz->introeditor['format'] = $validateddata->summary_editor['format'];
+                $quiz->completion= 2;
+                $quiz->completionusegrade = 1;
+                $quiz->completionpassgrade = 1;
+                // $quiz->grade = $validateddata->maxgrade;
+
                 $quiz = add_onlineexam_quiz($validateddata, $examid);
                 add_moduleinfo($quiz, $examid);
                 //$coursedata = $examid;
@@ -199,7 +217,7 @@ class local_onlineexams_external extends external_api
                     cache_helper::purge_by_event('changesincourse');
                     cache_helper::purge_by_event('changesincoursecat');
 
-                    //update Quizz                    
+                    //update Quizz
                     $quiz = update_onlineexam_quiz($validateddata, $data, $form_status);
                     $cm = get_coursemodule_from_instance('quiz', $quiz->id, $data['id'], false, MUST_EXIST);
                     $quiz->coursemodule = $cm->id;
@@ -221,7 +239,7 @@ class local_onlineexams_external extends external_api
                     $examid->id = $data->id;
 
                     update_course($data);
-                    if ($form_status == 1) {                        
+                    if ($form_status == 1) {
                         $quiz = update_onlineexam_quiz($validateddata, $data, $form_status);
                         $cm = get_coursemodule_from_instance('quiz', $quiz->id, $data->id, false, MUST_EXIST);
                         $quiz->coursemodule = $cm->id;
@@ -469,16 +487,16 @@ class local_onlineexams_external extends external_api
                 $corcat = $DB->get_field('course', 'category', array('id' => $id));
                 $category = $DB->get_record('course_categories', array('id' => $corcat));
                 delete_course($id, false);
-                if (class_exists('\block_trending_modules\lib')) {
-                    $trendingclass = new \block_trending_modules\lib();
-                    if (method_exists($trendingclass, 'trending_modules_crud')) {
-                        $course_object = new stdClass();
-                        $course_object->id = $id;
-                        $course_object->module_type = 'local_courses';
-                        $course_object->delete_record = True;
-                        $trendingclass->trending_modules_crud($course_object, 'local_courses');
-                    }
-                }
+                // if (class_exists('\block_trending_modules\lib')) {
+                //     $trendingclass = new \block_trending_modules\lib();
+                //     if (method_exists($trendingclass, 'trending_modules_crud')) {
+                //         $course_object = new stdClass();
+                //         $course_object->id = $id;
+                //         $course_object->module_type = 'local_courses';
+                //         $course_object->delete_record = True;
+                //         $trendingclass->trending_modules_crud($course_object, 'local_courses');
+                //     }
+                // }
                 $category->coursecount = $category->coursecount - 1;
                 $DB->update_record('course_categories', $category);
                 $return = true;
@@ -564,16 +582,18 @@ class local_onlineexams_external extends external_api
         $course->visible = $course->visible ? 0 : 1;
         $course->timemodified = time();
         $return = $DB->update_record('course', $course);
-        $costcenterid = $DB->get_field('course', 'open_path', array('id' => $id));
-        if (class_exists('\block_trending_modules\lib')) {
-            $dataobject = new stdClass();
-            $dataobject->update_status = True;
-            $dataobject->id = $id;
-            $dataobject->module_type = 'local_courses';
-            $dataobject->module_visible = $course->visible;
-            $dataobject->costcenterid = $costcenterid;
-            $class = (new \block_trending_modules\lib())->trending_modules_crud($dataobject, 'local_courses');
-        }
+
+		$costcenterid = $DB->get_field('course','open_path',array('id' => $id));
+        // if(class_exists('\block_trending_modules\lib')){
+        //     $dataobject = new stdClass();
+        //     $dataobject->update_status = True;
+        //     $dataobject->id = $id;
+        //     $dataobject->module_type = 'local_courses';
+        //     $dataobject->module_visible = $course->visible;
+		// 	$dataobject->costcenterid = $costcenterid;
+        //     $class = (new \block_trending_modules\lib())->trending_modules_crud($dataobject, 'local_courses');
+        // }
+
         return $return;
     }
     public static function course_update_status_returns()
@@ -640,7 +660,7 @@ class local_onlineexams_external extends external_api
                         'course_url' => new external_value(PARAM_RAW, 'Course Url'),
                         'inprogress_coursename_fullname' => new external_value(PARAM_RAW, 'Course Url'),
                         'rating_element' => new external_value(PARAM_RAW, 'Ratings'),
-                        'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
+                        // 'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
                         // 'indexClass' => new external_value(PARAM_TEXT, 'Index Card Class'),
                         'index' => new external_value(PARAM_INT, 'Index of Card'),
                         'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),

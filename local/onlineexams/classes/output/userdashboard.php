@@ -170,13 +170,13 @@ class userdashboard implements renderable {
                 }else{
                     $onerow['rating_element'] = '';
                 }
-                $classname = '\block_trending_modules\querylib';
-                if(class_exists($classname)){
-                    $trendingQuerylib = new $classname();
-                    $onerow['element_tags'] = implode(',',$trendingQuerylib->get_my_tags_info('onlineexams')['local_onlineexams']);
-                }else{
-                    $onerow['element_tags'] = False;
-                }
+                // $classname = '\block_trending_modules\querylib';
+                // if(class_exists($classname)){
+                //     $trendingQuerylib = new $classname();
+                //     $onerow['element_tags'] = implode(',',$trendingQuerylib->get_my_tags_info('onlineexams')['local_onlineexams']);
+                // }else{
+                //     $onerow['element_tags'] = False;
+                // }
 
 
                 $completedon = $DB->get_field('course_completions', 'timecompleted', array('course'=> $inprogress_coursename->id, 'userid'=> $USER->id));
