@@ -660,7 +660,7 @@ class local_onlineexams_external extends external_api
                         'course_url' => new external_value(PARAM_RAW, 'Course Url'),
                         'inprogress_coursename_fullname' => new external_value(PARAM_RAW, 'Course Url'),
                         'rating_element' => new external_value(PARAM_RAW, 'Ratings'),
-                        'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
+                        // 'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
                         // 'indexClass' => new external_value(PARAM_TEXT, 'Index Card Class'),
                         'index' => new external_value(PARAM_INT, 'Index of Card'),
                         'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),

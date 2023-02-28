@@ -102,10 +102,9 @@ class general_lib{
 
         $sql .= " AND course.id NOT IN(SELECT DISTINCT(course) FROM {course_modules} cm
         JOIN   {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id 
-        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id ) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
+        WHERE cmc.userid = {$USER->id} AND cmc.completionstate > 0 ) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
 
         $sql .= ' order by ue.timecreated desc';
-
         $inprogress_onlineexams = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
         return $inprogress_onlineexams;
 
@@ -119,7 +118,7 @@ class general_lib{
             WHERE ue.userid = {$USER->id}
             AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT DISTINCT(course) FROM {course_modules} cm
         JOIN   {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id 
-        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
+        WHERE cmc.userid = {$USER->id} AND cmc.completionstate > 0 AND course = course.id) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -144,7 +143,7 @@ class general_lib{
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND ue.userid = cmc.userid
                 WHERE ue.userid = {$USER->id}
-                AND cmc.completionstate = 1 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams' ";
+                AND cmc.completionstate > 0 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams' ";
         if($source == 'mobile'){
            $sql .= " AND c.open_securecourse != 1 ";
         }
@@ -169,7 +168,7 @@ class general_lib{
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 JOIN {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id AND ue.userid = cmc.userid
                 WHERE ue.userid = {$USER->id}
-                AND cmc.completionstate = 1 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams'";
+                AND cmc.completionstate > 0 AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 1 AND c.open_module = 'online_exams'";
 
         if($source == 'mobile'){
             $sql .= " AND c.open_securecourse != 1 ";
