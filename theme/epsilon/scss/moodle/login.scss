@@ -21,6 +21,10 @@ body#page-login-index {
     background-repeat: no-repeat !important;
     background-size: 100% 100% !important;
     background-color: #f5f4f1 !important;
+   .card-header{
+    background-color: transparent;
+    border-bottom: 0;
+   } 
 }
 body#page-login-index #page-wrapper{
     background-color: #f5f4f1 !important;
