@@ -85,6 +85,7 @@ class classroom {
         }
         try {
             if ($classroom->id > 0) {
+
                 $classroom->timemodified = time();
                 $classroom->usermodified = $USER->id; 
                 $localclassroom          = $DB->get_record_sql("SELECT id,startdate,enddate,capacity,
@@ -101,7 +102,18 @@ class classroom {
                      local_costcenter_get_costcenter_path($classroom);
 
                 }
-
+                $classroom->open_group = (!empty($classroom->open_group)) ? implode(',', array_filter($classroom->open_group)) : NULL;
+                if (!empty($classroom->open_group)) {
+                    $classroom->open_group = $classroom->open_group;
+                } else {
+                    $classroom->open_group = NULL;
+                }
+                $classroom->open_designation = (!empty($classroom->open_designation)) ? implode(',', array_filter($classroom->open_designation)) : NULL;
+                if (!empty($classroom->open_designation)) {
+                    $classroom->open_designation = $classroom->open_designation;
+                } else {
+                    $classroom->open_designation = NULL;
+                }
                 $DB->update_record('local_classroom', $classroom);
                 // $this->classroom_set_events($classroom);
                 $params = array(

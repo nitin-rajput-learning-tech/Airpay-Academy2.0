@@ -203,6 +203,11 @@ class local_search_external extends external_api {
             case 'local_learningpath':
             return (new \local_learningplan\local\general_lib())->get_learningplan_info($id);
             break;
+
+            case 'local_program':
+            return (new \local_program\local\general_lib())->get_program_info($id);
+            break;
+
             default:
                 throw new \Exception('Unknown Module');
             break;

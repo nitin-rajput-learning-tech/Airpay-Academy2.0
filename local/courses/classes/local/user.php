@@ -163,7 +163,7 @@ class user{
                     FROM {course} AS course
                     JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto')
                     JOIN {user_enrolments} AS ue ON e.id = ue.enrolid
-                    WHERE ue.userid = :userid AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.id > 1";
+                    WHERE ue.userid = :userid AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.id > 1 AND course.open_coursetype = 0 ";
 
         $params['userid'] = $userid;
 
@@ -191,7 +191,7 @@ class user{
             JOIN {enrol} AS e ON c.id = e.courseid AND e.enrol IN('self','manual','auto')
             JOIN {user_enrolments} AS ue ON e.id = ue.enrolid AND ue.userid = cc.userid
             WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
-            AND cc.timecompleted is not NULL AND c.visible=1 AND c.id>1 AND cc.userid = ?
+            AND cc.timecompleted is not NULL AND c.visible=1 AND c.id>1 AND cc.userid = ? AND c.open_coursetype = 0 
             ";
 
         $coursenames = $DB->get_records_sql($sql, [$userid]);
@@ -220,7 +220,7 @@ class user{
                     JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=course.id
                     JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                     LEFT JOIN {course_completions} as cc ON cc.course = course.id AND u.id = cc.userid
-                    WHERE course.id > 1 AND ue.userid = ? ";
+                    WHERE course.id > 1 AND ue.userid = ? AND course.open_coursetype = 0 ";
         // if ($source) {
         //     $fromsql .= " AND course.open_securecourse != 1 ";
         // }

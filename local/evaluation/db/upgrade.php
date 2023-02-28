@@ -205,5 +205,17 @@ if($oldversion < 2022101800.05){
     }
     upgrade_plugin_savepoint(true, 2022101800.05, 'local', 'evaluation');
 }
+if($oldversion < 2022101800.06){
+    $table = new xmldb_table('local_evaluations');
+    if ($dbman->table_exists($table)) {
+
+          $field = new xmldb_field('open_designation');
+          $field->set_attributes(XMLDB_TYPE_CHAR, '255', null, null, null, null);
+          if (!$dbman->field_exists($table, $field)) {
+              $dbman->add_field($table, $field);
+          }
+    }
+    upgrade_plugin_savepoint(true, 2022101800.06, 'local', 'evaluation');
+}
     return true;
 }

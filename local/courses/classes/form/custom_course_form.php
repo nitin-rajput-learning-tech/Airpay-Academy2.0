@@ -124,7 +124,7 @@ class custom_course_form extends moodleform {
         //For Announcements activity
         $mform->addElement('hidden', 'newsitems',$courseconfig->newsitems);
 
-        $mform->addElement('hidden', 'id', $courseid);
+        $mform->addElement('hidden', 'id', $courseid, array('id' => 'courseid'));
         $mform->setType('id', PARAM_INT);
 		
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($courseid);
@@ -208,14 +208,7 @@ class custom_course_form extends moodleform {
                 $mform->setType('shortname', PARAM_TEXT);
 
             }
-            $identify = array();
-            $identifyone = array();
-            $identifytwo = array();
-            $classroom_plugin_exist = $core_component::get_plugin_directory('local', 'classroom');
-            $learningplan_plugin_exist = $core_component::get_plugin_directory('local', 'learningplan');
-            $program_plugin_exist = $core_component::get_plugin_directory('local', 'program');
-            $certification_plugin_exist = $core_component::get_plugin_directory('local', 'certification');
-          
+
 
             if(!empty($this->_ajaxformdata['open_identifiedas'])){
                 $identifiedtype  = $this->_ajaxformdata['open_identifiedas'];

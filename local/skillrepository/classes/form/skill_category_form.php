@@ -43,11 +43,11 @@ class skill_category_form extends moodleform {
        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1),false, 'local_skillrepository', $context, $multiple = false);
         $mform->addElement('text', 'name', get_string('name', 'local_skillrepository'));
         $mform->setType('name', PARAM_RAW);
-        $mform->addRule('name', null, 'required', null, 'client');
+        $mform->addRule('name', get_string('skillcatreq', 'local_skillrepository'), 'required', null, 'client');
 
         $mform->addElement('text', 'shortname', get_string('shortname', 'local_skillrepository'), array());
         $mform->setType('shortname', PARAM_RAW);
-        $mform->addRule('shortname', null, 'required', null, 'client');
+        $mform->addRule('shortname', get_string('skillcatcodereq', 'local_skillrepository'), 'required', null, 'client');
 
         $mform->disable_form_change_checker();
     }

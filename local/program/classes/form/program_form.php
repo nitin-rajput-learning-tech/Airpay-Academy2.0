@@ -59,7 +59,7 @@ class program_form extends moodleform {
 
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
-        $mform->addElement('hidden', 'id', $id);
+        $mform->addElement('hidden', 'id', $id, array('id' => 'programid'));
         $mform->setType('id', PARAM_INT);
 
         $mform->addElement('hidden', 'form_status', $form_status);

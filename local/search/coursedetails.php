@@ -20,8 +20,7 @@ $coursecontext = get_context_instance(CONTEXT_COURSE, $id);
 $PAGE->set_context($coursecontext);
 $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
 require_login();
-// $PAGE->set_pagelayout('course');
-$PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_catalog'), 'callbacks' => array()));
+$PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_search'), 'callbacks' => array()));
 local_search_include_search_js();
 $course = $DB->get_record('course', array('id'=>$id));
 if(!$course){
@@ -29,7 +28,6 @@ if(!$course){
 }
 
 $PAGE->set_title($course->fullname);
-//$PAGE->set_heading($course->fullname);
 $userrolecontext = local_costcenter\lib\accesslib::get_module_context();
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
 if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switch_path()) || in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true))){
@@ -45,12 +43,38 @@ if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switc
 	$PAGE->navbar->add(get_string('manage_courses','local_courses'), $managecourseurl);
 
 }
+$employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
+$params = array('courseid'=>$course->id, 'employeerole' => $employeerole);
+$enrolledusersssql = " SELECT COUNT(u.id) as ccount
+                                FROM {course} c
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
+                                                AND u.deleted = 0 AND u.suspended = 0
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole";
+$enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
+$completedusersssql = " SELECT COUNT(u.id) as ccount
+                                FROM {course} c
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
+                                                AND u.deleted = 0 AND u.suspended = 0
+                                JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL $costcenterpathconcatsql";
 
+$completed_count = $DB->count_records_sql($completedusersssql,$params);
 $PAGE->navbar->add($course->fullname);
 echo $OUTPUT->header();
 echo '<div class="content_era_left">';
 
-	$course_category = $DB->get_field('local_custom_category', 'fullname', array('id'=>$course->open_categoryid));
+	$sql = "SELECT id, fullname, parentid FROM {local_custom_category} WHERE id=:id";
+	$course_category = $DB->get_record_sql($sql, array('id'=>$course->open_categoryid));
+	$categoryname = $course_category->fullname;
+            if($course_category->parentid > 0){
+                $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $course_category->parentid]);
+                $categoryname = $parentname . ' / '. $categoryname;
+            }
+
 	$course_category = $course_category ? $course_category : 'NA';
 	// $open_level = $DB->get_field('local_course_levels', 'name', array('id' => $course->open_level));
 	// $level = $open_level ? $open_level : 'NA';
@@ -65,7 +89,7 @@ echo '<div class="content_era_left">';
 	$Courseullnfame = $course->fullname;
   	$includes = new user_course_details();
 	$courseurl = $includes->course_summary_files($course);
-
+	$managecoursecap = has_capability('local/courses:manage', $coursecontext);
 	echo '<div class=" coursedet_left">
 		<div class="cousedet_topcontent">
 		
@@ -74,19 +98,21 @@ echo '<div class="content_era_left">';
     	<div class="col-md-8 CourseDetails_content d-flex flex-column justify-content-end"> 
             <h3 class="course_title">'.$Courseullnfame.'</h3>
 
-         <div class="row mt-4 pb-2">
-              	<div class="col-md-4 user_completion d-flex">
+         <div class="row mt-4 pb-2">';
+		 if($managecoursecap)
+			{
+             echo 	'<div class="col-md-4 user_completion d-flex">
                         <div class="user_icon mr-2"></div>
                         <div class="completion_details d-flex">
                             <span class="details_content text-nowrap">Users Completion :</span>
-                            <span class="enroll_number"></span>
+                            <span class="enroll_number">'.$completed_count.'</span>
                         </div>
                     </div>
                     <div class="user_enrollment col-md-4 d-flex">
                         <div class="enroll_icon mr-2"></div>
                         <div class="enroll_details d-flex">
                             <span class="details_content text-nowrap">Enrollments :</span>
-                            <span class="enroll_number"></span>
+                            <span class="enroll_number">'.$enrolled_count.'</span>
                         </div>
                     </div>
                     <div class=" skill_level_details col-md-4 d-flex">
@@ -96,10 +122,10 @@ echo '<div class="content_era_left">';
                             <span class="skill_level"></span>
                         </div>
                     </div>
-                    </div>
-                            
-            <div class="pull-right">';
-
+                    </div>';
+				}
+            echo '<div class="pull-right">';
+			
    
 
     if(isloggedin()){
@@ -139,18 +165,18 @@ echo '<div class="content_era_left">';
 	        <div class="course_description">
                <p></p>
             </div>';
-            $renderer = $PAGE->get_renderer('local_search');
-         echo '
-				<div id="coursedetails" class="mt-1">
-		            <ul>
-		              <li><a href="#courseindex">Index</a></li>
+        //   $renderer = $PAGE->get_renderer('local_search');
+        //  echo '
+		// 		<div id="coursedetails" class="mt-1">
+		//             <ul>
+		//               <li><a href="#courseindex">Index</a></li>
 
-		            </ul>
-		            <div id="courseindex">'.$renderer->course_sections($course->id).'</div>
+		//             </ul>
+		//             <div id="courseindex">'.$renderer->course_sections($course->id).'</div>
 
-		        </div>
-				';
-//<li><a href="#courseilts">ILT Session</a></li><div id="courseilts">'.' $renderer->course_batchesinfo($course->id)'.'</div>
+		//         </div>
+		// 		';
+	echo $course->summary;
     echo html_writer::script('$("#coursedetails").tabs();');   
 
         echo '</div>
@@ -189,47 +215,43 @@ echo '<div class="content_era_left">';
 	           // 	</div>';
 
 		} 
-
-     echo '<div class="coursebrieflist col-12 p-0 mt-2">';
+		$certificate=$course->open_certificateid ? 'YES' :'NO';
+		$coursetype=$DB->get_field('local_course_types', 'name', array('id'=>$course->open_identifiedas));
+		$coursetype = $coursetype ? $coursetype : 'NA';
+     	echo '<div class="coursebrieflist col-12 p-0 mt-2">';
         $credits = !empty($course->open_points) ? $course->open_points : "NA";
         echo '<div class="crs_detail_head">
-        <p>Category</p>
+        <p>Course Information</p>
         </div>';
     	  echo'<ul class="crse_details">
 				<li class="my-1 incentives__text d-flex align-items-center">
 					<div class="category_type d-flex align-items-center">
 						<span class="career_icon"></span>
-						<span>Career Track</span>
+						<span>'.get_string('category', 'local_courses').'</span>
 					</div>
-					<b class="iteminfo ml-2">'.$course_category.'</b>
+					<b class="iteminfo ml-2">'.$categoryname.'</b>
 				</li>
 				<li class="my-1 incentives__text d-flex align-items-center">
 					<div class="category_type d-flex align-items-center">
 						<span class="category_icon"></span>
-						<span>'.get_string('category', 'local_courses').'</span>
+						<span>'.get_string('type', 'local_courses').'</span>
 					</div>  
-					<b class="iteminfo ml-2">'.$course_category.'</b>
+					<b class="iteminfo ml-2">'.$coursetype.'</b>
 				</li>
 				<li class="my-1 incentives__text d-flex align-items-center">
 					<div class="category_type d-flex align-items-center">
 						<span class="level_icon"></span>
-						<span>Level</span>
+						<span>'.get_string('coursecompday_atsearch', 'local_courses').'</span>
 					</div>
-					<b class="iteminfo ml-2">'.$course_category.'</b>
+					<b class="iteminfo ml-2">'.$course->open_coursecompletiondays.'</b>
 				</li>
 				<li class="my-1 incentives__text d-flex align-items-center">
 					<div class="category_type d-flex align-items-center">
 						<span class="grade_icon"></span>
-						<span>Grade</span>
+						<span>'.get_string('certificate', 'local_courses').'</span>
 					</div>
-						<b class="iteminfo ml-2">'.$course_category.'</b>
-				</li>
-				<li class="my-1 incentives__text d-flex align-items-center">
-					<div class="category_type d-flex align-items-center">
-						<span class="cp_icon"></span>
-						<span>Course Provider</span>
-					</div>
-					<b class="iteminfo ml-2">'.$course_category.'</b>
+					
+						<b class="iteminfo ml-2">'.$certificate.'</b>
 				</li>
 				</ul>
 	            </div>

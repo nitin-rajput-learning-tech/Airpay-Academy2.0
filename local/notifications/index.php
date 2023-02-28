@@ -61,7 +61,7 @@ echo "<ul class='course_extended_menu_list'>
        </li>
         <li>
         <div class='coursebackup course_extended_menu_itemcontainer'>
-                        <a id='extended_menu_createusers' title='".get_string('createnotification', 'local_notifications')."' class='course_extended_menu_itemlink' data-action='createnotificationmodal' onclick ='(function(e){ require(\"local_notifications/notifications\").init({selector:\"createnotificationmodal\", context:$sitecontext->id, id:$id, form_status:0}) })(event)' ><i class='icon fa fa-bell-o createicon' aria-hidden='true'></i><!-- <i class='fa fa-plus createiconchild' aria-hidden='true'></i> --></a>
+                        <a id='extended_menu_createusers' title='".get_string('createnotification', 'local_notifications')."' class='course_extended_menu_itemlink' data-action='createnotificationmodal' onclick ='(function(e){ require(\"local_notifications/notifications\").init({selector:\"createnotificationmodal\", context:$sitecontext->id, id:$id, form_status:0, callback:\"notification_form\"}) })(event)' ><i class='icon fa fa-bell-o createicon' aria-hidden='true'></i><!-- <i class='fa fa-plus createiconchild' aria-hidden='true'></i> --></a>
         </div>
         </li>
         

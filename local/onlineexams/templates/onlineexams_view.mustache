@@ -80,16 +80,7 @@
                     {{{update_status}}}
                 {{/ update_status}}
             {{/update}}
-            {{#grade_view}}
-                <a class="dropdown-item" href="{{ grader }}" title= "{{#str}}grader, local_onlineexams{{/str}}">
-                        <i class="fa fa-pie-chart" aria-hidden="true"></i>Grader
-                </a>
-            {{/grade_view}}
-            {{#request_view}}
-                <a class="dropdown-item" href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
-                        <i class="fa fa-share-square" aria-hidden="true"></i>Request
-                </a>
-            {{/request_view}}
+           
             {{#deleteaction}}
                 {{{ deleteaction }}}
             {{/deleteaction}}
@@ -100,10 +91,10 @@
                                     </div>
                                     <div class="coursedesc mb-2">
                                         {{# coursesummary }}
-                                            <p class="desc" title = "Course Descripton" >{{ coursesummary }}</p>
+                                            <p class="desc" title = "Onlineexam Descripton" >{{ coursesummary }}</p>
                                         {{/ coursesummary }}
                                         {{^ coursesummary }}
-                                            <p class="alert alert-info text-center mt-1">{{#str}}nocoursedesc, local_onlineexams{{/str}}</p>
+                                            <p class="alert alert-info text-center mt-1">{{#str}}noonlineexamdesc, local_onlineexams{{/str}}</p>
                                         {{/ coursesummary }}
                                     </div>
                                     <!--<div class="d-flex mb-2">
@@ -112,7 +103,7 @@
                                     <div class="row">
                                         <div class="col-12">
                                             <div class="d-flex">
-                                                <span class="text-muted">{{#str}}open_skillcourse, local_onlineexams{{/str}} : </span> <span class="ml-1">{{skillname}}</span>
+                                                <span class="text-muted">{{#str}}open_skillonlineexam, local_onlineexams{{/str}} : </span> <span class="ml-1">{{skillname}}</span>
                                                 <span class="text-muted">{{#str}}category, local_onlineexams{{/str}} : </span> <span class="ml-1">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
                                             </div>
                                         </div>

@@ -61,7 +61,7 @@ class learningplan extends moodleform {
 		$open_path = $this->_customdata['open_path'];
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
    		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
-		$mform->addElement('hidden', 'id', $id);
+		$mform->addElement('hidden', 'id', $id, array('id' => 'learningplanid'));
         $mform->setType('id', PARAM_INT);
 
         $mform->addElement('hidden', 'form_status', $form_status);
@@ -224,7 +224,12 @@ class learningplan extends moodleform {
     	}else if($form_status == 2){
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,HIERARCHY_LEVELS), true, 'local_learningplan', $categorycontext, $multiple = false);
 			// local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata,'local_learningplan',true, $categorycontext, $multiple = false);
+            $functionname ='globaltargetaudience_elementlist';
 
+            if(function_exists($functionname)) {
+                $mform->modulecostcenterpath = $customdata[$firstdepth];
+                $functionname($mform,array('group','designation'));
+            }
     	}
         $mform->disable_form_change_checker();
     }

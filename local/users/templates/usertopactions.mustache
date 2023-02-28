@@ -45,7 +45,7 @@
     </li>
     <li>
         <div class='coursebackup course_extended_menu_itemcontainer'>
-            <a id='extended_menu_createusers' title='{{# str}}createuser, local_users{{/str}}' class='course_extended_menu_itemlink' data-action='createusermodal' onclick ='(function(e){ require("local_users/newuser").init({selector:"createusermodal", context:{{contextid }}, userid:0, form_status:0}) })(event)' >
+            <a id='extended_menu_createusers' title='{{# str}}createuser, local_users{{/str}}' class='course_extended_menu_itemlink' data-action='createusermodal' onclick ='(function(e){ require("local_users/newuser").init({selector:"createusermodal", context:{{contextid }}, userid:0, form_status:0, callback:"user_form"}) })(event)' >
                 <i class='icon fa fa-user-plus' aria-hidden='true'></i>
             </a>
         </div>

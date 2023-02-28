@@ -161,7 +161,7 @@ class renderer extends plugin_renderer_base {
               foreach ($bc_data as $sdata) {
                     $programcontext = (new \local_program\lib\accesslib())::get_module_context($sdata->id);
                     $line = array();
-                    $program = $sdata->name;
+                    $program = \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->name));
                     $programname = strlen($program) > 19 ? substr($program, 0, 19) . "..." : $program;
                     $description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->description));
 
@@ -186,7 +186,7 @@ class renderer extends plugin_renderer_base {
                     $level = $DB->count_records('local_program_levels',
                             array('programid' =>$sdata->id));
                     $line['program'] = addslashes($program);
-                    $line['programname'] = $programname;
+                    $line['programname'] = addslashes($programname);
                     //$line['stream'] = $stream;
                     //$line['streamname'] = $streamname;
                     $line['totallevels'] = $level;
@@ -247,15 +247,14 @@ class renderer extends plugin_renderer_base {
                     }
                     
                     $line['mouse_overicon'] = $mouseovericon;
-                    $programnames = addslashes($programname);
 
                     if($line['action']){
                         if($line['cannotdelete']){
-                          $actions = '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'cannotdeleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$programnames.'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
+                          $actions = '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'cannotdeleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
                          }
                     
                          if($line['delete']){
-                           $actions = '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$programnames.'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
+                           $actions = '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
                         }
 
                        if($line['edit']){
@@ -264,10 +263,10 @@ class renderer extends plugin_renderer_base {
                        if($line['hide_show']){
 
                          if($line['hide']){
-                             $actions .= '<a href="javascript:void(0);" title = ' .get_string('inactive','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'inactiveprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$programnames.'\'}) })(event)" ><i class="fa fa-eye fa-fw" aria-hidden="true"></i></a>'; 
+                             $actions .= '<a href="javascript:void(0);" title = ' .get_string('inactive','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'inactiveprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-eye fa-fw" aria-hidden="true"></i></a>';
                          }
                          if($line['show']){
-                             $actions .= '<a href="javascript:void(0);" title = ' .get_string('active','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'activeprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$programnames.'\'}) })(event)" ><i class="fa fa-eye-slash" aria-hidden="true"></i></a>'; 
+                             $actions .= '<a href="javascript:void(0);" title = ' .get_string('active','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'activeprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-eye-slash" aria-hidden="true"></i></a>';
                          }
                        }
                     }
@@ -275,7 +274,7 @@ class renderer extends plugin_renderer_base {
                       $row[] = $this->render_from_template('local_program/browseprogram', $line);
 
                     }else{
-                      $row = [html_writer::tag('a', $programname, array('href' => $CFG->wwwroot. '/local/program/view.php?bcid='.$sdata->id)), $level , $sdata->enrolled_users,$sdata->completed_users, $actions];
+                      $row = [html_writer::tag('a', $line['program'], array('href' => $CFG->wwwroot. '/local/program/view.php?bcid='.$sdata->id)), $level , $sdata->enrolled_users,$sdata->completed_users, $actions];
                     }
                      $table_data[] = $row;
 
@@ -1540,12 +1539,12 @@ class renderer extends plugin_renderer_base {
         $stable->length = 1;
         $program = (new program)->programs($stable);
 
-        $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
-        if (empty($program)) {
+        $program_status = $DB->get_record('local_program', array('id' => $programid), 'id,name');
+        if (is_array($program) && empty($program['programs'])) {
             print_error("program Not Found!");
         }
 
-        return $program;
+        return $program_status;
     }
 
     /**

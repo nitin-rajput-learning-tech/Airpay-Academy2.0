@@ -1,0 +1,135 @@
+{{!
+    This file is part of eAbyas
+    Copyright eAbyas Info Solutons Pvt Ltd, India
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 3 of the License, or
+    (at your option) any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+    @author eabyas  <info@eabyas.in>
+}}
+{{#response}}
+    {{^records}}
+    {{#nodata}}
+        <div class = 'w-100 pull-left alert alert-info'>{{nodata}}</div>
+    {{/nodata}}
+    {{/records}}
+    {{#viewtypeCard}}     
+            <div id="status_tabs" class="w-60">
+
+                <table class="generaltable">
+                    <thead>
+                        <tr>
+                            {{^traininer}}
+                                <th>{{#str}}username,block_trainerdashboard{{/str}}</th>
+                                <th>{{#str}}useremail,block_trainerdashboard{{/str}}</th>
+                            {{/traininer}}
+                            <th>{{#str}}total_classroomtrainings,block_trainerdashboard{{/str}}</th>
+                            <th>{{#str}}completed_classroomtrainings,block_trainerdashboard{{/str}}</th>
+                            <th>{{#str}}upcoming_classroomtrainings,block_trainerdashboard{{/str}}</th>
+                            <th>{{#str}}totaluserscovered,block_trainerdashboard{{/str}}</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#records}}
+                    <tr>
+                        {{^traininer}}
+                            <td> 
+                                <img src="{{userpicture}}" class="userpic defaultuserpic" width="30" height="30" alt="Picture of {{username}}" title="Picture of {{username}}">
+                                {{username}}
+                            </td>
+                            <td>{{useremail}}</td>
+                        {{/traininer}}
+                        <td>
+                          <a href="javascript:void(0)" data-fg="vmtotaltrainings" data-plugin="block_trainerdashboard" data-method="trainerslist"  data-id="{{userid}}" data-triggertype="totaltrainings" data-params='{{viewmorestatus}}' >{{total_classroomtrainings}}</a>
+                        </td>
+                        <td>
+                          <a href="javascript:void(0)" data-fg="vmcmpltdtrainings" data-plugin="block_trainerdashboard" data-method="trainerslist"  data-id="{{userid}}" data-triggertype="completedtrainings"  data-params='{{viewmorestatus}}' >{{completed_classroomtrainings}}</a>
+                        </td>
+                        <td>
+                          <a href="javascript:void(0)" data-fg="vmupcmngtrainings" data-plugin="block_trainerdashboard" data-method="trainerslist"  data-id="{{userid}}" data-triggertype="upcomingtrainings" data-params='{{viewmorestatus}}' >{{upcoming_classroomtrainings}}</a>
+                        </td>
+                        <td>
+                          {{totaluserscovered}}
+                        </td>
+
+                        </tr>
+
+                        {{/records}}
+                    </tbody>
+                </table>
+            </div>  
+    {{/viewtypeCard}}
+{{/response}}
+{{#js}}
+    var chartdata = $('#chartfragment_trainerslistdashboards').html();
+
+    require(['core/fragment','core/templates'], function(fragment,Templates) {
+        var targetRoot = $('#chartapi_trainerslistdashboards');
+        $return = fragment.loadFragment('block_trainerdashboard', 'trainerdashboardchart', M.cfg.contextid, {'chartdata':chartdata});
+        $return.then(function(html, js) {
+
+            targetRoot.html(html);
+            Templates.runTemplateJS(js);
+        });
+    });
+    var search_interval = 100;
+    var timer;
+    var searchval 
+    $(document).on('keyup', '#global_filter_trainerslistdashboards', function(){
+
+        if (searchval===$(this).val()){
+            return true;
+        }
+        searchval = $(this).val();
+
+        var thiselement = $('.trainerdashboardstatus a.active').parent();
+
+        var trainerdashboardstatus = thiselement.data('status');
+
+        var options = {targetID: 'trainerslistdashboards',
+                    templateName: 'block_trainerdashboard/trainerslist',
+                    methodName: 'block_trainerdashboard_get_trainerslist',
+                    perPage: 6,
+                    cardClass: 'col-xl-4 col-md-6 col-12',
+                    viewType: 'card'};
+
+        var dataoptions = {trainerdashboardstatus: trainerdashboardstatus, search_query: searchval};
+        timer = setTimeout(function(){
+            require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+                cardPaginate.reload(options, dataoptions,'');
+            });
+        },search_interval);
+    });
+    $(document).on('keydown', '.global_filter_trainerslistdashboards', function(){
+        if (searchval===$(this).val()){
+            return true;
+        }
+        searchval = $(this).val();
+
+        var thiselement = $('.trainerdashboardstatus a.active').parent();
+
+        var trainerdashboardstatus = thiselement.data('status');
+
+        var options = {targetID: 'trainerslistdashboards',
+                    templateName: 'block_trainerdashboard/trainerslist',
+                    methodName: 'block_trainerdashboard_get_trainerslist',
+                    perPage: 6,
+                    cardClass: 'col-xl-4 col-md-6 col-12',
+                    viewType: 'card'};
+
+        var dataoptions = {trainerdashboardstatus: trainerdashboardstatus, search_query: searchval};
+        timer = setTimeout(function(){
+            require(['local_costcenter/cardPaginate'], function(cardPaginate) {
+                cardPaginate.reload(options, dataoptions,'');
+            });
+        },search_interval);
+    });
+{{/js}}

@@ -48,7 +48,8 @@ class create_user extends moodleform {
         $costcenter = new costcenter();
         $mform = $this->_form;
         $form_status = $this->_customdata['form_status'];
-        $id = $this->_customdata['id'];
+        // $id = $this->_customdata['id'];
+        $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
         $editoroptions = $this->_customdata['editoroptions'];
         $filemanageroptions = $this->_customdata['filemanageroptions'];
         $admin = $this->_customdata['admin'];
@@ -251,7 +252,8 @@ class create_user extends moodleform {
             $mform->addHelpButton('imagefile', 'newpicture');
         }
         // End of form status = 2 condition.
-        $mform->addElement('hidden', 'id');
+        // $mform->addElement('hidden', 'id');
+        $mform->addElement('hidden', 'id', $id, array('id' => 'userid'));
         $mform->setType('id', PARAM_INT);
         $mform->setDefault('id',  $id);
         $mform->addElement('hidden', 'form_status');
