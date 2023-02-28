@@ -251,17 +251,21 @@ class accesslib
 
             $contextarray =$USER->useraccess['currentroleinfo']['contextinfo'];
 
-
             foreach($contextarray as $context){
 
                 $costcenterpath=$context['costcenterpath'];
 
-                if(empty($sqlarray[$costcenterpath])){
+                if($costcenterpath > 0){
 
-                    $sqlarray[$costcenterpath]=self::costcenterpath_match_sql($costcenterpath,$matchcolumnname,$datatype);
+                    if(empty($sqlarray[$costcenterpath])){
+
+                        $sqlarray[$costcenterpath]=self::costcenterpath_match_sql($costcenterpath,$matchcolumnname,$datatype);
+                    }
+                }else{
+
+                    $sqlarray[$costcenterpath]=self::userpath_match_sql($matchcolumnname,$datatype);
+
                 }
-
-
             }
         }
         if(!empty($sqlarray)){
@@ -304,7 +308,54 @@ class accesslib
 
         return $match_sql;
     }
+    public static function userpath_match_sql($matchcolumnname,$datatype){
 
+        global $OUTPUT,$USER,$DB;
+
+        $match_sql='';
+
+        if(!is_siteadmin()){
+
+                $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+
+                $paths = [];
+
+                foreach($usercostcenterpaths AS $userpath){
+
+                    $userpathinfo = $userpath;
+
+                    $paths[] = $userpathinfo.'/%';
+
+                    if($datatype == self::ALL_MODULE_CONTENT){
+
+                        $paths[] = $userpathinfo;
+
+                        while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+
+                            $userpathinfo = rtrim($userpathinfo, '/');
+
+                            if ($userpathinfo === '') {
+                              break;
+                            }
+
+                            $paths[] = $userpathinfo;
+                        }
+                    }
+                }
+                if(!empty($paths)){
+
+                    foreach($paths AS $path){
+
+                        $pathsql[] = " $matchcolumnname LIKE '{$path}' ";
+
+                    }
+
+                    $match_sql.= " ( ".implode(' OR ', $pathsql).' ) ';
+                }
+        }
+
+        return $match_sql;
+    }
     public static function costcenterpath_contextdata($costcenterpath){
 
         global $DB;
