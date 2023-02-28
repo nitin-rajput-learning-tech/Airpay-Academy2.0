@@ -21,6 +21,10 @@ body#page-login-index {
     background-repeat: no-repeat !important;
     background-size: 100% 100% !important;
     background-color: #f5f4f1 !important;
+   .card-header{
+    background-color: transparent;
+    border-bottom: 0;
+   } 
 }
 body#page-login-index #page-wrapper{
     background-color: #f5f4f1 !important;
@@ -145,10 +149,10 @@ body#page-login-index .div_login_logo {
     transform: translateY(50%);*/
 }
 #page-login-index .login_logo {
-/*    width: 100%;*/
-    min-height: 70px;
-    max-height: 150px;
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
 }
 body#page-login-index .login_form {
     background-color: #fff;
