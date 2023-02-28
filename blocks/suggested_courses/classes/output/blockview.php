@@ -97,7 +97,7 @@ final class blockview implements renderable, templatable {
             $courseid =  $course->id;
             
             if ($summerylength == 0) {
-                $coursesummary = get_string('nodesc','local_courses');
+                $coursesummary = get_string('nodesc','block_suggested_courses');
             } else if ($summerylength >= 100) {
                 $coursesummary = substr(strip_tags(clean_text($course->summary)), 0, 100).'...';
             } else {
