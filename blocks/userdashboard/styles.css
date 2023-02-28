@@ -272,6 +272,13 @@ body#page-blocks-userdashboard-userdashboard_courses .evalinfo_container p.fdb {
     display: -ms-flexbox;
     display: flex
 }
+@media (min-width: 1200px) and (max-width: 1500px){
+    .block.block_userdashboard .userdashboard_content>div.col-sm-4 {
+        flex: 0 0 41.6666666667%;
+        max-width: 41.6666666667%;
+    }
+}
+
 .block.block_userdashboard .userdashboard_content .alert-info{
    border: none;
    background-color: #1d212570;
