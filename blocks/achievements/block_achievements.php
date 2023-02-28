@@ -57,6 +57,6 @@ class block_achievements extends block_base {
 		$PAGE->requires->jquery_plugin('ui');
 	 	$PAGE->requires->jquery_plugin('ui-css');
 		
-	   	$this->page->requires->js_call_amd('block_myskills/skillinfotable', 'achinfotable', array($USER->id));
+	   	$this->page->requires->js_call_amd('block_achievements/certifications', 'achinfotable', array($USER->id));
     }
 }

@@ -14,6 +14,7 @@
 
     @author eabyas  <info@eabyas.in>
 }}
+{{# is_siteadmin}}
 <button style="float:right; cursor: pointer;" onclick="(function(e){
         require('local_skillrepository/skillsInterested').init({
             contextid:1, id:{{skillsinterestedid}}, componplugintypeent:'local', pluginname:'skillrepository'
@@ -21,6 +22,7 @@
     })(event)" title="{{#str}}modify_recommended,block_suggested_courses{{/str}}" id="yui_3_17_2_1_1672045150980_304">
     {{#str}}modify_recommended,block_suggested_courses{{/str}}
 </button>
+{{/ is_siteadmin}}
 <div id="status_tabs" class="pull-left w-100" >
     <div class="crstatus_tabs_list pl_15 pr_15 pb_15">
         {{#tabs.0}}

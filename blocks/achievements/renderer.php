@@ -27,9 +27,9 @@ require_once($CFG->dirroot.'/blocks/achievements/lib.php');
 require_once($CFG->libdir . '/badgeslib.php');
 class block_achievements_renderer extends plugin_renderer_base {
 	public function my_achievements_tabs(){
-		global $CFG;
+		global $CFG, $USER;
 		$badges_tab=true;
-		$points_tab=true;
+		$points_tab=false;
 		$certifications_tab=true;
 
 		$achievementtabslist = [
@@ -39,6 +39,7 @@ class block_achievements_renderer extends plugin_renderer_base {
             'badges_tab'=>$badges_tab,
             'points_tab'=>$points_tab,
             'certifications_tab'=>$certifications_tab,
+            'userid'=>$USER->id,
         ];
 
 		//calling the mustache template

@@ -59,12 +59,13 @@ function badges_details($tablelimits, $filtervalues){
     $count = $DB->count_records_sql($countsql);
     $concatsql.=" ORDER BY bi.dateissued DESC";
     $badgesrecived = $DB->get_records_sql($selectsql.$concatsql, $queryparam, $tablelimits->start, $tablelimits->length);
-    $coursecontext = (new \local_courses\lib\accesslib())::get_module_context($badge->courseid);
+    // $coursecontext = (new \local_courses\lib\accesslib())::get_module_context($badge->courseid);
 
     $list=array();
     if ($badgesrecived) {
         $data = array();
         foreach ($badgesrecived as $badge) {
+            $coursecontext = \context_course::instance($badge->courseid);
             $context = ($badge->type == 1) ? $coursecontext : $coursecontext;
             $badgeurl = moodle_url::make_pluginfile_url($context->id, 'badges', 'badgeimage', $badge->id, '/', 'f1', false);
             $list['imageurl'] = $badgeurl->out();

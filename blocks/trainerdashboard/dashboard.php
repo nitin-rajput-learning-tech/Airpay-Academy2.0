@@ -24,7 +24,7 @@
 require_once(dirname(__FILE__) . '/../../config.php');
 require_once($CFG->libdir . '/accesslib.php');
 global $CFG, $PAGE, $OUTPUT,$DB, $USER;
-$adminediting = optional_param('adminedit', -1, PARAM_BOOL);
+// $adminediting = optional_param('adminedit', -1, PARAM_BOOL);
 
 require_login();
 if (isguestuser()) {
@@ -34,9 +34,9 @@ if (isguestuser()) {
 $context = (new \local_costcenter\lib\accesslib())::get_module_context();
 $PAGE->set_context($context);
 
-if ($PAGE->user_allowed_editing() && $adminediting != -1) {
-    $USER->editing = $adminediting;
-}
+// if ($PAGE->user_allowed_editing() && $adminediting != -1) {
+//     $USER->editing = $adminediting;
+// }
 
 $seturl ='/blocks/trainerdashboard/dashboard.php';
 $pagepattentype = 'blocks-trainerdashboard-dashboard';
@@ -75,67 +75,75 @@ $PAGE->set_heading($header);
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js_call_amd('block_trainerdashboard/trainerdashboard', 'init',array());
-
+$renderer = $PAGE->get_renderer('block_trainerdashboard');
 echo $OUTPUT->header();
 
-echo html_writer::start_tag('div', array());
+// echo html_writer::start_tag('div', array());
 
-$configuredinstances = $DB->count_records('block_instances', array(
-                            'pagetypepattern' => $pagepattentype));
+// $configuredinstances = $DB->count_records('block_instances', array(
+//                             'pagetypepattern' => $pagepattentype));
 
-    $editingon = false;
-    if (is_siteadmin() && isset($USER->editing) && $USER->editing) {
-        $editingon = true;
-    }
-    $turnediting = '';
-    if ($PAGE->user_allowed_editing()) {
-        $url = clone ($PAGE->url);
-        if ($PAGE->user_is_editing()) {
-            $caption = get_string('blockseditoff');
-            $url->param('adminedit', 'off');
-        } else {
-            $caption = get_string('blocksediton');
-            $url->param('adminedit', 'on');
-        }
-        $turnediting = $OUTPUT->single_button($url, $caption, 'get') . '</span>';
-    }
-    echo html_writer::start_tag('div', array('class' => 'width-container'));
-    echo $OUTPUT->blocks('side-db-first', 'width-default width-3');
-    echo $OUTPUT->blocks('side-db-second', 'width-default width-3');
-    echo $OUTPUT->blocks('side-db-third', 'width-default width-3');
-    echo $OUTPUT->blocks('side-db-four', 'width-default width-3');
-    echo html_writer::end_tag('div');
-    echo html_writer::start_tag('div', array('class' => 'width-container'));
-    echo $OUTPUT->blocks('first-maindb', 'width-default width-12');
-    echo html_writer::end_tag('div');
-    echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs'));
-    echo $OUTPUT->blocks('reportdb-one', 'width-default width-4 ml0');
-    echo $OUTPUT->blocks('reportdb-second', 'width-default width-4');
-    echo $OUTPUT->blocks('reportdb-third', 'width-default width-4');
-    echo html_writer::end_tag('div');
+//     $editingon = false;
+//     if (is_siteadmin() && isset($USER->editing) && $USER->editing) {
+//         $editingon = true;
+//     }
+//     $turnediting = '';
+//     if ($PAGE->user_allowed_editing()) {
+//         $url = clone ($PAGE->url);
+//         if ($PAGE->user_is_editing()) {
+//             $caption = get_string('blockseditoff');
+//             $url->param('adminedit', 'off');
+//         } else {
+//             $caption = get_string('blocksediton');
+//             $url->param('adminedit', 'on');
+//         }
+//         $turnediting = $OUTPUT->single_button($url, $caption, 'get') . '</span>';
+//     }
+//     echo html_writer::start_tag('div', array('class' => 'width-container'));
+//     echo $OUTPUT->blocks('side-db-first', 'width-default width-3');
+//     echo $OUTPUT->blocks('side-db-second', 'width-default width-3');
+//     echo $OUTPUT->blocks('side-db-third', 'width-default width-3');
+//     echo $OUTPUT->blocks('side-db-four', 'width-default width-3');
+//     echo html_writer::end_tag('div');
+//     echo html_writer::start_tag('div', array('class' => 'width-container'));
+//     echo $OUTPUT->blocks('first-maindb', 'width-default width-12');
+//     echo html_writer::end_tag('div');
+//     echo html_writer::start_tag('div', array('class' => 'width-container reports-act-graphs'));
+//     echo $OUTPUT->blocks('reportdb-one', 'width-default width-4 ml0');
+//     echo $OUTPUT->blocks('reportdb-second', 'width-default width-4');
+//     echo $OUTPUT->blocks('reportdb-third', 'width-default width-4');
+//     echo html_writer::end_tag('div');
 
-    echo html_writer::start_tag('div', array('class' => 'width-container'));
-    echo $OUTPUT->blocks('center-first', 'width-default width-9');
-    echo $OUTPUT->blocks('center-second', 'width-default width-3');
-    echo html_writer::end_tag('div');
+//     echo html_writer::start_tag('div', array('class' => 'width-container'));
+//     echo $OUTPUT->blocks('center-first', 'width-default width-9');
+//     echo $OUTPUT->blocks('center-second', 'width-default width-3');
+//     echo html_writer::end_tag('div');
 
-    echo html_writer::start_tag('div', array('class' => 'width-container'));
-    echo $OUTPUT->blocks('reports-db-one', 'width-default width-6');
-    echo $OUTPUT->blocks('reports-db-two', 'width-default width-6');
-    echo html_writer::end_tag('div');
+//     echo html_writer::start_tag('div', array('class' => 'width-container'));
+//     echo $OUTPUT->blocks('reports-db-one', 'width-default width-6');
+//     echo $OUTPUT->blocks('reports-db-two', 'width-default width-6');
+//     echo html_writer::end_tag('div');
 
-    echo html_writer::start_tag('div', array('class' => 'width-container'));
-    echo $OUTPUT->blocks('side-db-main', 'width-default width-12');
-    echo html_writer::end_tag('div');
+//     echo html_writer::start_tag('div', array('class' => 'width-container'));
+//     echo $OUTPUT->blocks('side-db-main', 'width-default width-12');
+//     echo html_writer::end_tag('div');
 
-    echo html_writer::start_tag('div', array('class' => 'width-container'));
-    echo $OUTPUT->blocks('side-db-one', 'width-default width-6');
-    echo $OUTPUT->blocks('side-db-two', 'width-default width-6');
-    echo html_writer::end_tag('div');
-    echo html_writer::start_tag('div', array('class' => 'width-container'));
-    echo $OUTPUT->blocks('side-db-three', 'width-default width-12');
-    echo html_writer::end_tag('div');
+//     echo html_writer::start_tag('div', array('class' => 'width-container'));
+//     echo $OUTPUT->blocks('side-db-one', 'width-default width-6');
+//     echo $OUTPUT->blocks('side-db-two', 'width-default width-6');
+//     echo html_writer::end_tag('div');
+//     echo html_writer::start_tag('div', array('class' => 'width-container'));
+//     echo $OUTPUT->blocks('side-db-three', 'width-default width-12');
+//     echo html_writer::end_tag('div');
 
 
-echo html_writer::end_tag('div');
+// echo html_writer::end_tag('div');
+echo "<div><h4>".get_string('trainerlist','block_trainerdashboard')."</h4></div>";
+echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::TRAINERLIST);
+echo "<div><h4>".get_string('conductedtrainings','block_trainerdashboard')."</h4></div>";
+echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::CONDUCTEDTRAININGS);
+echo "<div><h4>".get_string('trainermanhours','block_trainerdashboard')."</h4></div>";
+echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::TRAINERMANHOURS);
+echo "<div><h4>".get_string('depttrainingavg','block_trainerdashboard')."</h4></div>";
+echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::DEPTTRAININGAVG);
 echo $OUTPUT->footer();

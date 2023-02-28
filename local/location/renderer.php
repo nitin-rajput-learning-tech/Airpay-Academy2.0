@@ -59,7 +59,7 @@ class local_location_renderer extends plugin_renderer_base {
         if ($institutes) {
             foreach ($institutes as $institute) {
             $id = $institute->id;
-            if((is_siteadmin() || $institute->usercreated == $USER->id) && has_capability('local/location:manageinstitute', $categorycontext)){
+            if(has_capability('local/location:manageinstitute', $categorycontext)){
                 $actions = html_writer::empty_tag('img', array('src' => $OUTPUT->image_url('t/editinline'),'title' => get_string('edit'), 'data-action' => 'createinstitutemodal', 'class'=>'createinstitutemodal', 'data-value'=>$id, 'class' => 'iconsmall', 'onclick' =>'(function(e){ require("local_location/newinstitute").init({selector:"createinstitutemodal", contextid:1, instituteid:'.$institute->id.'}) })(event)'))/*)*/;
 				$actions .= '&nbsp&nbsp';
 
@@ -68,7 +68,7 @@ class local_location_renderer extends plugin_renderer_base {
                         $confirmationmsg = "Are you sure you want to delete?";
                 $PAGE->requires->event_handler("#delconfirm".$institute->id, 'click', 'M.util.moodle_location_confirm_dialog',array('message' => $confirmationmsg,'callbackargs' => array()));
             }else{
-                $actions="Created by Admin";
+                $actions=" ";
             }
                 if($institute->institute_type == 1){
                     $institute->institute_type = get_string('internal','local_location');
