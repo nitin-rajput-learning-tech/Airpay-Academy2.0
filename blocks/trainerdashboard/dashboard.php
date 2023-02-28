@@ -144,6 +144,6 @@ echo "<div><h4>".get_string('conductedtrainings','block_trainerdashboard')."</h4
 echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::CONDUCTEDTRAININGS);
 echo "<div><h4>".get_string('trainermanhours','block_trainerdashboard')."</h4></div>";
 echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::TRAINERMANHOURS);
-echo "<div><h4>".get_string('depttrainingavg','block_trainerdashboard')."</h4></div>";
-echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::DEPTTRAININGAVG);
+echo "<div><h4>".get_string('upcomingtrainings','block_trainerdashboard')."</h4></div>";
+echo $renderer->get_trainerdashboards(block_trainerdashboard_manager::UPCOMINGTRAININGS);
 echo $OUTPUT->footer();
