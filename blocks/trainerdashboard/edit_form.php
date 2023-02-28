@@ -63,10 +63,10 @@ class block_trainerdashboard_edit_form extends block_edit_form {
             $trainerdashboards[block_trainerdashboard_manager::TRAINERMANHOURS] = 'Trainer wise Manhours spend list ';
         }
 
-        if((has_capability('block/trainerdashboard:viewdepttrainingavg', $context))) {
+        // if((has_capability('block/trainerdashboard:viewdepttrainingavg', $context))) {
 
-            $trainerdashboards[block_trainerdashboard_manager::DEPTTRAININGAVG] = 'Department wise training averages';
-        }
+        //     $trainerdashboards[block_trainerdashboard_manager::DEPTTRAININGAVG] = 'Department wise training averages';
+        // }
 
         if((has_capability('block/trainerdashboard:viewupcomingtrainings', $context))) {
 
