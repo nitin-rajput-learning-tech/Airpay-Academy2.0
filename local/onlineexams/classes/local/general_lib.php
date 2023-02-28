@@ -92,7 +92,7 @@ class general_lib{
 
         $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
         if($source == 'mobile'){
-            $sql .= " AND course.open_securecourse != 1 AND course.open_coursetype = 1 AND course.open_module = 'online_exams'   ";
+            $sql .= " AND course.open_securecourse != 1   ";
         }
         $params = [];
         if(!empty($filter_text)){
@@ -102,12 +102,11 @@ class general_lib{
 
         $sql .= " AND course.id NOT IN(SELECT DISTINCT(course) FROM {course_modules} cm
         JOIN   {course_modules_completion} as cmc ON cmc.coursemoduleid = cm.id 
-        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id ) ";
+        WHERE cmc.userid = {$USER->id} AND cmc.completionstate = 1 AND course = course.id ) AND course.open_coursetype = 1 AND course.open_module = 'online_exams'  ";
 
         $sql .= ' order by ue.timecreated desc';
 
         $inprogress_onlineexams = $DB->get_records_sql($sqlquery . $sql, $params, $offset, $limit);
-
         return $inprogress_onlineexams;
 
     }
