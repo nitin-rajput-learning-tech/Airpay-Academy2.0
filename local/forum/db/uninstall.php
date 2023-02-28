@@ -28,14 +28,14 @@ function xmldb_local_forum_uninstall(){
 	global $DB;
 	$dbman = $DB->get_manager();
     $table = new xmldb_table('course');
-	if ($dbman->table_exists($table)) {
-		$fields = array('open_module','open_coursetype');
-		foreach($fields AS $field){
-			$field = new xmldb_field($field);
-			if($dbman->field_exists($table, $field)){
-				$dbman->drop_field($table, $field);
-			}
-		}
+	// if ($dbman->table_exists($table)) {
+	// 	$fields = array('open_module','open_coursetype');
+	// 	foreach($fields AS $field){
+	// 		$field = new xmldb_field($field);
+	// 		if($dbman->field_exists($table, $field)){
+	// 			$dbman->drop_field($table, $field);
+	// 		}
+	// 	}
 
-	}
+	// }
 }
