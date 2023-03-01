@@ -38,12 +38,18 @@ class skills_interested_form extends moodleform {
 		$contextid = optional_param('contextid', 1, PARAM_INT);
 		$interested_skills = $this->_customdata['interested_skills'];
         $intskill_id =  $this->_customdata['intskill_id'];
-        $mform = $this->_form;        
-        $sql = "SELECT id, name FROM {local_skill} AS sk WHERE sk.id > 0  ORDER BY sk.id DESC";
+        $mform = $this->_form;
+        $costcenterid = explode('/', $USER->open_path)[1];
+        $sql = "SELECT sk.id, sk.name FROM {local_skill} AS sk";
+        if(!is_siteadmin()){
+            $sql .= " WHERE sk.open_path LIKE '%$costcenterid'";
+        }
+        $sql .= " ORDER BY sk.id DESC";
+        // print_r($sql);die;
         $int_skills_list = $DB->get_records_sql_menu($sql);
 	
 		$select = $mform->addElement('autocomplete', 'skills',get_string('skills', 'local_skillrepository'), $int_skills_list);
-		$mform->addRule('skills', get_string('err_courses', 'local_courses'), 'required', null, 'client');
+		$mform->addRule('skills', get_string('err_courses', 'block_suggested_courses'), 'required', null, 'client');
 		$mform->addRule('skills', null, 'required', null, 'client');
         $select->setMultiple(true);
         //$mform->getElement('skills')->setMultiple(true);

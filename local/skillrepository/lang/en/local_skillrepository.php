@@ -152,6 +152,7 @@ $string['namelengthexceeds'] = 'Name length exceeds 150 Charecter\'s';
 
 $string['skills_interested'] = 'Interested Skill';
 $string['skills'] = 'Skills';
+$string['err_courses'] = 'Please select skill';
 $string['skillcatreq'] = 'Please enter a name';
 $string['skillcatcodereq'] = 'Please enter a code';
 $string['deleteskillnotconfirm'] = 'You cannot delete <b>{$a->skillname}</b> as it is currently mapped to a course. Please unmap to delete.';

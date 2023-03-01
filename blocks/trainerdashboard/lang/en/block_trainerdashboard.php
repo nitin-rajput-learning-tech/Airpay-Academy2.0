@@ -65,3 +65,7 @@ $string['classroomname'] = 'Classroom Name';
 $string['sessioncount'] = 'Session Count';
 
 $string['noclassroomsdashboards'] = 'Classrooms are currently not available';
+$string['trainerlist'] = 'Trainer List';
+$string['conductedtrainings'] = 'Training Conducted In Last 3 To 6 Months';
+$string['trainermanhours'] = 'Trainer Man Hours';
+$string['upcomingtrainings'] = 'Upcoming Training for next 3 to 6 Months';
