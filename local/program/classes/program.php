@@ -2969,134 +2969,98 @@ class program {
         $currenttime = time();
         $countSql = "SELECT count(lc.id)
             FROM {local_classroom_courses} AS lcc
-            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id
-            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4)
-            AND (lc.nomination_enddate <= 0 OR lc.nomination_enddate > :currenttime2) "; /*1 = CASE
-                WHEN lc.nomination_enddate > 0
-                    THEN
-                        CASE lc.nomination_enddate > :currenttime2
-                            THEN 1
-                            ELSE 0
-                        END
-                ELSE 1 END*/
-        $countSql .= $this->get_classroom_ta_query('lc');
-        return $DB->count_records_sql($countSql, array('courseid' => $courseid, 'currenttime1' => $currenttime, 'currenttime2' => $currenttime));
+            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4)
+            AND (lc.nomination_enddate <= 0 OR lc.nomination_enddate > :currenttime2) ";
+
+        $params=array('courseid' => $courseid, 'currenttime1' => $currenttime, 'currenttime2' => $currenttime);
+
+        $countSql.=$this->get_classroom_ta_query('lc');
+
+        return $DB->count_records_sql($countSql,$params);
     }
     public function get_classroom_ta_query($prefix = 'lc'){
         global $USER, $DB;
-        $group_list = $DB->get_records_sql_menu("SELECT cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
-        if (!empty($group_list)){
-             $groups_members = implode(',', $group_list);
-             if(!empty($group_list)){
-                $grouquery = array();
-                foreach ($group_list as $key => $group) {
-                    $grouquery[] = " CONCAT(',',{$prefix}.open_group,',') LIKE CONCAT('%,',{$group},',%') ";
+
+          $wheresql='';
+
+          $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            $paths = [];
+            foreach($usercostcenterpaths AS $userpath){
+                $userpathinfo = $userpath;
+                $paths[] = $userpathinfo.'/%';
+                $paths[] = $userpathinfo;
+                while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
+                    $userpathinfo = rtrim($userpathinfo, '/');
+                    if ($userpathinfo === '') {
+                      break;
+                    }
+                    $paths[] = $userpathinfo;
                 }
-                $groupqueeryparams =implode('OR',$grouquery);
+            }
+            if(!empty($paths)){
+                foreach($paths AS $path){
+                    $pathsql[] = " lc.open_path LIKE '{$path}' ";
+                }
+                $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
+            }
 
-                $params[]= '('.$groupqueeryparams.')';
-             }
-        }
 
-        if(count($params) > 0){
-            $opengroup=implode('AND',$params);
-        }else{
-            $opengroup =  " 1 != 1 ";
-        }
+            $params = array();
 
-        $params = array();
-        $params[]= " 1 = CASE WHEN {$prefix}.open_group is NOT NULL
-                THEN
-                    CASE
-                        WHEN $opengroup
-                            THEN 1
-                            ELSE 0
-                    END
-                ELSE 1 END ";
+            $group_list = $DB->get_records_sql_menu("SELECT cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
 
-        $params[]= " 1 = CASE WHEN {$prefix}.department!='-1'
-                THEN
-                    CASE
-                        WHEN CONCAT(',',{$prefix}.department,',') LIKE CONCAT('%,',{$USER->open_departmentid},',%')
-                            THEN 1
-                            ELSE 0
-                    END
-                ELSE 1 END ";
+            if (!empty($group_list)){
+                $groups_members = implode(',', $group_list);
+                if(!empty($group_list)){
+                    $grouquery = array();
+                    foreach ($group_list as $key => $group) {
+                        $grouquery[] = " CONCAT(',',lc.open_group,',') LIKE CONCAT('%,',{$group},',%') ";
+                    }
+                    $groupqueeryparams =implode('OR',$grouquery);
 
-        if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-            $subdeptparam = "%,$USER->open_subdepartment,%";
-        }else{
-            $subdeptparam = "";
-        }
-        $params[]= " 1 = CASE WHEN {$prefix}.subdepartment != '-1'
-            THEN
-                CASE
-                    WHEN CONCAT(',',{$prefix}.subdepartment,',') LIKE '{$subdeptparam}'
-                        THEN 1
-                        ELSE 0
-                END
-            ELSE 1 END ";
-        if(!empty($USER->open_designation) && $USER->open_designation != ""){
-            $designation = "%,$USER->open_designation,%";
-        }else{
-            $designation = "";
-        }
-        $params[]= " 1 = CASE WHEN ({$prefix}.open_designation IS NOT NULL OR {$prefix}.open_designation != '')
-                THEN
-                    CASE
-                        WHEN CONCAT(',',{$prefix}.open_designation,',') LIKE '{$designation}'
-                            THEN 1
-                            ELSE 0
-                    END
-                ELSE 1 END ";
-        if(!empty($USER->open_location) && $USER->open_location != ""){
-            $location = "%,$USER->open_location,%";
-        }else{
-            $location = "";
-        }
-        $params[]= " 1 = CASE WHEN ({$prefix}.open_location IS NOT NULL OR {$prefix}.open_location != '')
-            THEN
-                CASE
-                    WHEN CONCAT(',',{$prefix}.open_location,',') LIKE '{$location}'
-                        THEN 1
-                        ELSE 0
-                END
-            ELSE 1 END ";
-        if(!empty($USER->open_level) && $USER->open_level != ""){
-            $level = "%,$USER->open_level,%";
-        }else{
-            $level = "";
-        }
-        $params[]= " 1 = CASE WHEN ({$prefix}.level IS NOT NULL OR {$prefix}.level != '')
+                    $params[]= '('.$groupqueeryparams.')';
+                }
+            }
+
+            if(count($params) > 0){
+                $opengroup=implode('AND',$params);
+            }else{
+                $opengroup =  " 1 != 1 ";
+            }
+
+            $params = array();
+            $params[]= " 1 = CASE WHEN lc.open_group is NOT NULL
+                    THEN
+                        CASE
+                            WHEN $opengroup
+                                THEN 1
+                                ELSE 0
+                        END
+                    ELSE 1 END ";
+
+
+            if(!empty($USER->open_designation) && $USER->open_designation != ""){
+
+                $params[]= " 1 = CASE WHEN lc.open_designation IS NOT NULL
                             THEN
                                 CASE
-                                    WHEN CONCAT(',',{$prefix}.level,',') LIKE '{$level}'
+                                    WHEN CONCAT(',',lc.open_designation,',') LIKE CONCAT('%,',{$USER->open_designation},',%')
                                         THEN 1
                                         ELSE 0
                                 END
                             ELSE 1 END ";
-
-        if(!empty($USER->open_resourcegroupid) && $USER->open_resourcegroupid != ""){
-            $resourcegroup = "%,$USER->open_resourcegroupid,%";
-        }else{
-            $resourcegroup = "";
-        }
-        $params[]= " 1 = CASE WHEN ({$prefix}.resourcegroup IS NOT NULL OR {$prefix}.resourcegroup != '')
-                            THEN
-                                CASE
-                                    WHEN CONCAT(',',{$prefix}.resourcegroup,',') LIKE '{resourcegroup}'
-                                        THEN 1
-                                        ELSE 0
-                                END
-                            ELSE 1 END ";
+            }
 
 
-        if(!empty($params)){
-            $finalparams = implode('AND',$params);
-        }else{
-            $finalparams = '1=1' ;
-        }
-        return " AND ($finalparams) ";
+            if(!empty($params)){
+                $finalparams = implode('AND',$params);
+            }else{
+                $finalparams= '1=1' ;
+            }
+
+            $wheresql .= " AND ($finalparams) ";
+
+            return $wheresql;
 
     }
 }

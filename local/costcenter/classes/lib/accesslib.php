@@ -267,7 +267,12 @@ class accesslib
 
                 }
             }
+        }else{
+
+            $sqlarray[]=self::userpath_match_sql($matchcolumnname,$datatype);
+
         }
+
         if(!empty($sqlarray)){
 
             $concatsql="AND (".implode(" OR ", $sqlarray).")";
