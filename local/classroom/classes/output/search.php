@@ -393,7 +393,7 @@ class search implements renderable{
 
     } //end of  get_facetofacelist
 
-   private function get_the_enrollflag($classroomid){
+   public function get_the_enrollflag($classroomid){
         global $USER, $DB;
 
         $enrolled =$DB->record_exists('local_classroom_users',array('classroomid'=>$classroomid,'userid'=>$USER->id));
@@ -529,7 +529,7 @@ class search implements renderable{
         $wheresql .= $joinsql;
         return $DB->record_exists_sql($selectsql.$wheresql, $sqlparams);
     }
-    private function get_enrollbtn($classroominfo){
+    public function get_enrollbtn($classroominfo){
         global $DB,$USER;
         $classroomid = $classroominfo->id;
         $classroomname =  $classroominfo->name;

@@ -2978,6 +2978,21 @@ class program {
 
         return $DB->count_records_sql($countSql,$params);
     }
+    public function get_classrooms_content($courseid, $offset = 0, $limit = 10){
+        global $DB, $USER;
+        $currenttime = time();
+        $courseSql = "SELECT lc.*, group_concat(concat(u.firstname,' ', u.lastname)) as trainers
+            FROM {local_classroom_courses} AS lcc
+            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id
+            LEFT JOIN {local_classroom_trainers} AS lct ON lct.classroomid = lc.id
+            LEFT JOIN {user} AS u ON u.id = lct.trainerid
+            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4)
+            AND (lc.nomination_enddate <= 0 OR lc.nomination_enddate > :currenttime2) ";
+        $courseSql .= $this->get_classroom_ta_query('lc');
+        $courseSql .= " GROUP BY lc.id ";
+        // echo $courseSql;
+        return $DB->get_records_sql($courseSql, array('courseid' => $courseid, 'currenttime1' => $currenttime, 'currenttime2' => $currenttime), $offset, $limit);
+    }
     public function get_classroom_ta_query($prefix = 'lc'){
         global $USER, $DB;
 
@@ -3061,6 +3076,44 @@ class program {
             $wheresql .= " AND ($finalparams) ";
 
             return $wheresql;
+    }
+    public function get_course_classrooms($courseid, $requestData){
+        $classrooms = $this->get_classrooms_content($courseid, $requestData['start'], $requestData['length']);
+        $totalclassrooms = $this->get_classrooms_count($courseid);
+        $data = [];
+        $classroomsearch = new \local_classroom\output\search();
+        foreach($classrooms AS $classroom){
+            $info = [];
+            $info[] = $classroom->name;
+            if(!empty($classroom->trainers)){
+                $classroom->trainers = explode(',', str_replace(',', '</li>,<li>', $classroom->trainers));
+                $showless = $showmore = '';
+                if(isset($classroom->trainers[2])){
+                    $showless = '<span class="hidden show_less togglebutton">';
+                    $showmore = '<a href = "javascript:void(0)"> '.get_string('showless', 'local_learningplan').'</a></span><a href = "javascript:void(0)" class="show_more togglebutton">'.get_string('showmore', 'local_learningplan').'</a>';
+                    $classroom->trainers[2] = $showless.$classroom->trainers[2];
+                }
 
+                $info[] = '<ul class="trainerslist"><li>'.implode('', $classroom->trainers).'</li>'.$showmore.'</ul>';
+            }else{
+                $info[] = 'N/A';
+            }
+            $info[] = userdate($classroom->startdate);
+            $info[] = userdate($classroom->enddate);
+
+            $enrolled = $classroomsearch->get_the_enrollflag($classroom->id);
+            if($enrolled){
+                $info[] = \html_writer::link(new \moodle_url('/local/classroom/view.php', array('cid' => $classroom->id)), get_string('view'), array('class' => 'btn btn-primary'));
+            }else{
+                $info[] = $classroomsearch->get_enrollbtn($classroom);
+            }
+            $data[] = $info;
+        }
+        return [
+            "sEcho" => intval($requestData['sEcho']),
+            "iTotalRecords" => $totalclassrooms,
+            "iTotalDisplayRecords" => $totalclassrooms,
+            "aaData" => $data
+        ];
     }
 }

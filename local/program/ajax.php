@@ -23,8 +23,10 @@
  */
 
 define('AJAX_SCRIPT', true);
+
 require_once(dirname(__FILE__) . '/../../config.php');
 global $DB, $CFG, $USER, $PAGE;
+use local_program\program;
 
 $action = required_param('action', PARAM_ACTION);
 $programid = optional_param('programid', 0, PARAM_INT);
@@ -157,6 +159,14 @@ try{
 
             $return = $renderer->viewprogramstreams($stable);
         break;
+        case 'classroomlist':
+        // define('AJAX_SCRIPT', true);
+        $courseid = required_param('courseid',  PARAM_INT);
+        $program = new local_program\program();
+        $data = $program->get_course_classrooms($courseid, $_REQUEST);
+        echo json_encode($data);
+        die();
+    break;
     }
 
     echo json_encode($return);
