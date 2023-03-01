@@ -100,50 +100,36 @@
                                     <!--<div class="d-flex mb-2">
                                         <span class="text-muted">{{#str}}category, local_onlineexams{{/str}} : </span> <span class="ml-1">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
                                     </div>-->
-                                    <div class="row">
-                                        <div class="col-12">
+                                    <div class="row">                                       
+                                         <div class="col-6">
                                             <div class="d-flex">
-                                                <span class="text-muted">{{#str}}open_skillonlineexam, local_onlineexams{{/str}} : </span> <span class="ml-1">{{skillname}}</span>
-                                                <span class="text-muted">{{#str}}category, local_onlineexams{{/str}} : </span> <span class="ml-1">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
+                                                <span class="text-muted">{{#str}}department, local_onlineexams{{/str}} : </span> <span class="ml-1">{{{}}}</span>
                                             </div>
-                                        </div>
-                                        <!-- <div class="col-6">
-                                            <div class="d-flex">
-                                                <span class="text-muted">Tags : </span> <span class="ml-1">{{{tagstring}}}</span>
-                                            </div>
-                                        </div> -->
+                                        </div> 
                                     </div>
 
-                                    <div class="courseinfo_container">
+                                    <div class="courseinfo_container">                                        
+                                        <div class="info_container points_info">
+                                            <div class="icon"></div>
+                                            <span class="info_title">{{#str}}maxgrade, local_onlineexams{{/str}} : </span> 
+                                            <span class="info_value">{{skillname}}  </span>
+                                        </div> 
+                                       <div class="info_container rating_info">
+                                            <div class="icon"></div>
+                                            <span class="info_title">  {{#str}}gradepass, local_onlineexams{{/str}} : </span> 
+                                            <span class="info_value"> {{ passgrade}}</span>
+                                        </div>
                                         <div class="info_container enrolment_info">
-                                            <div class="icon"></div>
-                                            <span class="info_value">{{enrolled_count}}</span>
-                                            <span class="info_title">Enrollments</span>
-                                        </div>
-                                        <!-- <div class="info_container points_info">
-                                            <div class="icon"></div>
-                                            <span class="info_value">{{points}}</span>
-                                            <span class="info_title">{{#str}}points, local_onlineexams{{/str}}</span>
-                                        </div> -->
-                                        <div class="info_container rating_info">
-                                            <div class="icon"></div>
-                                            <span class="info_value">{{ratings_value}}</span>
-                                            <span class="info_title">{{#str}}pluginname, local_ratings{{/str}}</span>
-                                        </div>
-                                        <div class="info_container completed_info">
-                                            <div class="icon"></div>
-                                            <span class="info_value">{{completed_count}}</span>
-                                            <span class="info_title">Completed</span>
-                                        </div>
+                                            <div class="icon"></div>                                           
+                                            <span class="info_title">{{#str}}enrollments, local_onlineexams{{/str}}/{{#str}}completed, local_onlineexams{{/str}} :  </span>
+                                            <span class="info_value"> {{enrolled_count}}/{{completed_count}}</span>
+                                        </div>                                        
                                     </div>
 
-                                    <!-- <div class="d-flex coursetype coursetypes_container">
-                                        <span class="text-muted mr-1">
-                                            Type :
-                                        </span>
-                                        {{{coursetype}}} 
+                                    <div class="d-flex coursetype coursetypes_container">                               
+                                            <span class="info_title">{{#str}} from {{/str}} : {{examfromdate}} {{#str}} to{{/str}} : {{examtodate}}</span>
 
-                                    </div>-->
+                                    </div>
                                 </div>
 
 

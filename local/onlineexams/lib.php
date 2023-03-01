@@ -579,6 +579,11 @@ function get_listof_onlineexams($stable, $filterdata)
                 unset($courseslist[$count]["requestlink"]);
             }
 
+            $quiz = $DB->get_record('quiz', array("course" => $course->id));
+            // echo $quiz->timeopen;
+            // echo "<br/>";
+            $courseslist[$count]["examfromdate"] =($quiz->timeopen > 0) ?  date('d-m-Y h:i:s', ($quiz->timeopen)) : 'N/A';
+            $courseslist[$count]["examtodate"] = ($quiz->timeclose > 0) ? date('d-m-Y h:i:s', ($quiz->timeclose)) : 'N/A';
 
             $courseslist[$count] = array_merge($courseslist[$count], array(
                 "actions" => (((has_capability(
