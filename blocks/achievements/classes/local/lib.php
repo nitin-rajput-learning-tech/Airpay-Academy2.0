@@ -38,10 +38,11 @@ function point_details($tablelimits, $filtervalues){
 
 function badges_details($tablelimits, $filtervalues){
     global $DB, $CFG, $USER,$PAGE;
-    $countsql = "SELECT count(bi.uniquehash) FROM  {badge} b ,{badge_issued} bi,{user} u
+    $countsql = "SELECT count(bi.uniquehash) FROM  {badge} b, {badge_issued} bi, {user} u, {course} c
         WHERE bi.userid = {$USER->id}
         AND b.id = bi.badgeid
-        AND u.id = bi.userid";
+        AND u.id = bi.userid
+        AND c.id = b.courseid ";
 
     $selectsql = "SELECT bi.uniquehash,
         bi.dateissued,
@@ -50,10 +51,11 @@ function badges_details($tablelimits, $filtervalues){
         bi.visible,
         u.email,
         b.*
-        FROM  {badge} b ,{badge_issued} bi,{user} u
+        FROM  {badge} b, {badge_issued} bi, {user} u, {course} c
         WHERE bi.userid = {$USER->id}
         AND b.id = bi.badgeid
-        AND u.id = bi.userid ";
+        AND u.id = bi.userid
+        AND c.id = b.courseid ";
     $queryparam = array();
     
     $count = $DB->count_records_sql($countsql);
