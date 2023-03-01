@@ -55,8 +55,13 @@
                  {{/ view}}</span></span>
             </li>
             <li class="dashbaord_count_item"><span class="">
+                {{# enroll_string}}
+                <span class="d-block dashboard_count_string">{{enroll_string}}</span><span class="dashboard_count_value">
+                {{/ enroll_string}}
+                {{^ enroll_string}}
                 <span class="d-block dashboard_count_string">{{#str}}active,block_quick_navigation{{/str}}</span><span class="dashboard_count_value">
-                 {{# view}}
+                {{/ enroll_string}}
+                    {{# view}}
                     <a href="{{count_activelink_url}}" class='viewlink' title= "{{count_activelink_url}}">{{count_active}}</a>
                 {{/ view}}</span></span>
             </li>

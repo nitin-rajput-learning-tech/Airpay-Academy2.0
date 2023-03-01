@@ -428,5 +428,7 @@ $string['open_states_help'] = 'Search and select an available or existing state 
 $string['open_district_help'] = 'Search and select an available or existing district as target audience';
 $string['open_subdistrict_help'] = 'Search and select an available or existing subdistrict as target audience';
 $string['open_village_help'] = 'Search and select an available or existing village as target audience';
-$string['username'] = 'Username';
 $string['enablereports'] = 'Course reports are currently not configured. <a href="{$a}" target="_blank"> <u>Click here </u></a> to configure reports';
+$string['username'] = 'Username';
+$string['completioncount'] = 'Completions';
+$string['enrolcount'] = 'Enrolments';
