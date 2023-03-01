@@ -494,9 +494,10 @@ class core_renderer extends \core_renderer {
      */
     public function should_display_navbar_logo() {
         global $USER, $DB;
-        if(!empty($USER->open_costcenterid)){
-            $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$USER->open_costcenterid));
-        }
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+        if(!empty($org)){
+             $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$org));
+         }
         if(!empty($costcenterid)){
             $logopath = costcenter_logo($costcenterid);
         }
