@@ -97,8 +97,10 @@ class block_trainerdashboard_external extends external_api {
         if($totalcount>0){
             $renderer = $PAGE->get_renderer('block_trainerdashboard');
             $data = array_merge($data,$renderer->get_trainerslist($trainerslist,$filtervalues));
+        }else{
+            $data['data']=array();
         }
-
+        
         return [
             'totalcount' => $totalcount,
             'records' =>$data['data'],

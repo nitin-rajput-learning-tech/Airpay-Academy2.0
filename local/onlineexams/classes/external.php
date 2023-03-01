@@ -442,6 +442,8 @@ class local_onlineexams_external extends external_api
                                 'update' => new external_value(PARAM_BOOL, 'update', VALUE_OPTIONAL),
                                 'enrol' => new external_value(PARAM_BOOL, 'enrol', VALUE_OPTIONAL),
                                 'actions' => new external_value(PARAM_BOOL, 'actions', VALUE_OPTIONAL),
+                                'examfromdate' => new external_value(PARAM_RAW, 'examfromdate', VALUE_OPTIONAL),
+                                'examtodate' => new external_value(PARAM_RAW, 'examtodate', VALUE_OPTIONAL),
                             )
                         )
                     ),
@@ -660,7 +662,7 @@ class local_onlineexams_external extends external_api
                         'course_url' => new external_value(PARAM_RAW, 'Course Url'),
                         'inprogress_coursename_fullname' => new external_value(PARAM_RAW, 'Course Url'),
                         'rating_element' => new external_value(PARAM_RAW, 'Ratings'),
-                        // 'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
+                        'element_tags' => new external_value(PARAM_RAW, 'Course Tags', VALUE_OPTIONAL),
                         // 'indexClass' => new external_value(PARAM_TEXT, 'Index Card Class'),
                         'index' => new external_value(PARAM_INT, 'Index of Card'),
                         'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),
@@ -768,7 +770,7 @@ class local_onlineexams_external extends external_api
                                     'course_url' => new external_value(PARAM_RAW, 'Course Url'),
                                     'inprogress_coursename_fullname' => new external_value(PARAM_RAW, 'Course Url'),
                                     'rating_element' => new external_value(PARAM_RAW, 'Ratings'),
-                                    'element_tags' => new external_value(PARAM_RAW, 'Course Tags'),
+                                    'element_tags' => new external_value(PARAM_RAW, 'Course Tags', VALUE_OPTIONAL),
                                     // 'indexClass' => new external_value(PARAM_TEXT, 'Index Card Class'),
                                     'index' => new external_value(PARAM_INT, 'Index of Card'),
                                     'course_completedon' => new external_value(PARAM_RAW, 'course_completedon'),

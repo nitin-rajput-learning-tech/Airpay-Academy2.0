@@ -40,7 +40,7 @@ function block_trainerdashboard_leftmenunode(){
         $trainerdashboardnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browseclassrooms', 'class'=>'pull-left user_nav_div browseclassrooms'));
             $trainerdashboard_url = new moodle_url('/blocks/trainerdashboard/dashboard.php');
             $trainerdashboard_icon = '<span class="classroom_icon_wrap"></span>';
-            $trainerdashboard = html_writer::link($trainerdashboard_url, $trainerdashboard_icon.'<span class="user_navigation_link_text">'.$header.'</span>',array('class'=>'user_navigation_link'));
+            $trainerdashboard = html_writer::link($trainerdashboard_url, $trainerdashboard_icon.'<i class="fa fa-user-o" aria-hidden="true" aria-label=""></i><span class="user_navigation_link_text">'.$header.'</span>',array('class'=>'user_navigation_link'));
             $trainerdashboardnode .= $trainerdashboard;
         $trainerdashboardnode .= html_writer::end_tag('li');
     }
