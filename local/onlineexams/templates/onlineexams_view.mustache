@@ -121,8 +121,11 @@
                                         </div>
                                         <div class="info_container enrolment_info">
                                             <div class="icon"></div>                                           
-                                            <span class="info_title">{{#str}}enrollments, local_onlineexams{{/str}}/{{#str}}completed, local_onlineexams{{/str}} :  </span>
-                                            <span class="info_value"> {{enrolled_count}}/{{completed_count}}</span>
+                                            <span class="info_title">{{#str}}completed, local_onlineexams{{/str}}/{{#str}}enrollments, local_onlineexams{{/str}} :  </span>
+                                            <!-- <span class="info_value"> {{enrolled_count}}/{{completed_count}}</span> -->
+                                            <a href="javascript:void(0)" onclick="(function(e){ require('local_onlineexams/renderusers').displaycompletedusers('{{courseid}}') })(event)")><span>{{ completed_count }}</span></a>
+                                          <span class="">/</span>
+                                            <a href="javascript:void(0)" onclick="(function(e){ require('local_onlineexams/renderusers').displayusers('{{courseid}}') })(event)")><span>{{ enrolled_count }}</span></a>
                                         </div>                                        
                                     </div>
 

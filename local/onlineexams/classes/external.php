@@ -411,6 +411,7 @@ class local_onlineexams_external extends external_api
                                 'coursename' => new external_value(PARAM_RAW, 'coursename'),
                                 'coursenameCut' => new external_value(PARAM_RAW, 'coursenameCut', VALUE_OPTIONAL),
                                 'catname' => new external_value(PARAM_RAW, 'catname'),
+                                'shortname' => new external_value(PARAM_RAW, 'shortname'),
                                 'catnamestring' => new external_value(PARAM_RAW, 'catnamestring'),
                                 'courseimage' => new external_value(PARAM_RAW, 'catnamestring'),
                                 'enrolled_count' => new external_value(PARAM_INT, 'enrolled_count', VALUE_OPTIONAL),
