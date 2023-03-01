@@ -580,11 +580,15 @@ function get_listof_onlineexams($stable, $filterdata)
             }
 
             $quiz = $DB->get_record('quiz', array("course" => $course->id));
+            $gradeitem = $DB->get_record('grade_items', array('iteminstance' => $quiz->id, 'itemmodule' => 'quiz', 'courseid' => $course->id));
+				$gradepass = $gradeitem->gradepass;
+                $grademax = $gradeitem->grademax;
             // echo $quiz->timeopen;
             // echo "<br/>";
             $courseslist[$count]["examfromdate"] =($quiz->timeopen > 0) ?  date('d-m-Y h:i:s', ($quiz->timeopen)) : 'N/A';
             $courseslist[$count]["examtodate"] = ($quiz->timeclose > 0) ? date('d-m-Y h:i:s', ($quiz->timeclose)) : 'N/A';
-
+            $courseslist[$count]["passgrade"] = ($gradepass) ? round($gradepass, 2) : 'N/A';
+            $courseslist[$count]["maxgrade"] = ($grademax > 0) ? round($grademax,2) : 'N/A';
             $courseslist[$count] = array_merge($courseslist[$count], array(
                 "actions" => (((has_capability(
                     'local/onlineexams:enrol',

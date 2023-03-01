@@ -445,6 +445,9 @@ class local_onlineexams_external extends external_api
                                 'actions' => new external_value(PARAM_BOOL, 'actions', VALUE_OPTIONAL),
                                 'examfromdate' => new external_value(PARAM_RAW, 'examfromdate', VALUE_OPTIONAL),
                                 'examtodate' => new external_value(PARAM_RAW, 'examtodate', VALUE_OPTIONAL),
+                                'passgrade' => new external_value(PARAM_RAW, 'passgrade', VALUE_OPTIONAL),
+                                'maxgrade' => new external_value(PARAM_RAW, 'maxgrade', VALUE_OPTIONAL),
+
                             )
                         )
                     ),
