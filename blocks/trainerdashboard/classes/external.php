@@ -100,7 +100,7 @@ class block_trainerdashboard_external extends external_api {
         }else{
             $data['data']=array();
         }
-
+        
         return [
             'totalcount' => $totalcount,
             'records' =>$data['data'],
