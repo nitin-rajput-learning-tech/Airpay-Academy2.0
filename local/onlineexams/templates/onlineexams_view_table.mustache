@@ -23,9 +23,7 @@
             <th>{{#str}}onlineexamcode, local_onlineexams{{/str}}</th>
             <th>{{#str}}category, local_onlineexams{{/str}}</th>
             <th>{{#str}}enrolled, local_onlineexams{{/str}}</th>
-            <!-- <th>{{#str}}points, local_onlineexams{{/str}}</th> -->
             <th>{{#str}}completed, local_onlineexams{{/str}}</th>
-            <th>{{#str}}coursetype, local_onlineexams{{/str}}</th>
             <th>{{#str}}actions, local_onlineexams{{/str}}</th>
         </tr>
     </thead>
@@ -41,15 +39,13 @@
                     <a href="{{ courseurl }}" title="{{ coursename }}">{{ coursenameCut }}</a>
                 {{/ coursenameCut}}
             </td>            
-            <td>{{shortname}}</td>
+            <td>{{ shortname }}</td>
             <td>{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</td>
             <td>
                 {{# enrolled_count }} {{enrolled_count}} {{/ enrolled_count }} 
-                {{^ enrolled_count }} N/A {{/ enrolled_count }}
+                {{^ enrolled_count }} 0 {{/ enrolled_count }}
             </td>
-            <!-- <td>{{points}}</td> -->
-            <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</td>
-            <td>{{{coursetype}}}</td>
+            <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} 0 {{/ completed_count }}</td>
             <td>
                 {{#delete}}{{{ deleteaction }}}{{/delete}}
                 {{#enrol}}

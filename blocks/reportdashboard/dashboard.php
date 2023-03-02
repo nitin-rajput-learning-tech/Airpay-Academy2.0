@@ -57,20 +57,35 @@ $user_departmentid = explode('/',$USER->open_path)[2];
 $user_subdepartmentid = explode('/',$USER->open_path)[3];
 if (!is_siteadmin()) {
     // $rolelist = (new ls)->get_currentuser_roles();
-    $userroles = get_user_roles($context, $USER->id, false);
-    $roleids = array_column($userroles, 'roleid');
-    $rolenames = array_column($userroles, 'shortname');
+    // $userroles = get_user_roles($context, $USER->id, false);
+    if(1!=1&& isset($USER->useraccess['currentroleinfo']['roleid'])){
+        $role = $DB->get_field('role','shortname', array('id' => $USER->useraccess['currentroleinfo']['roleid']));
+        $user_costcenterid = explode('/',$USER->useraccess['currentroleinfo']['contextinfo'][0]['costcenterpath'])[1];
+    }else{
+        $assignedroles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+        $roleids = array_column($assignedroles, 'roleid');
+        $rolenames = array_column($assignedroles, 'rolecode');
 
-    $rolelist = array_combine($roleids,$rolenames);
-    $emprole = $DB->get_record('role',array('shortname' =>'user'),'id,name,shortname');
-    $rolelist[$emprole->id] = $emprole->shortname;
+        $rolelist = array_combine($roleids,$rolenames);
+        $emprole = $DB->get_record('role',array('shortname' =>'user'),'id,name,shortname');
+        $rolelist[$emprole->id] = $emprole->shortname;
 
-    if (!empty($role) && in_array($role, $rolelist)) {
-        $role = empty($role) ? array_shift($rolelist) : $role;
-    } else if (empty($role)) {
-        $role = empty($role) ? array_shift($rolelist) : $role;
-    } else {
-        $role = '';
+        if (!empty($role) && in_array($role, $rolelist)) {
+            $role = empty($role) ? array_shift($rolelist) : $role;
+        } else if (empty($role)) {
+            $role = empty($role) ? array_shift($rolelist) : $role;
+        } else {
+            $role = '';
+        }
+        $seletedrole = array_values(array_filter(array_map(function($roleinfo)use($role){
+                            if(array_search($role, (array)$roleinfo)){
+                                return $roleinfo;
+                            }
+                        } , $assignedroles)));
+        if($seletedrole[0]->categoryid){
+            $orgpath = $DB->get_field('local_costcenter', 'path', array('category' => $seletedrole[0]->categoryid));
+
+        }
     }
     $_SESSION['role'] = $role;
 } else {
@@ -95,12 +110,11 @@ $dashboardl4departmentid = 0;
 $dashboardl5departmentid = 0;
 $dashboardcourseid=0;
 $complianceid=0;
-    if (is_siteadmin()  || ($_SESSION['role'] == 'manager')) {
+    if (is_siteadmin()) {
         $dashboardcostcenter = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE visible = 1 AND depth = 1  AND parentid = 0 ORDER BY id ASC LIMIT 0, 1");
         $dashboardcostcenterid = $dashboardcostcenter;
     } else {
-        $dashboardcostcenter =  $user_costcenterid;
-        $dashboardcostcenterid = $dashboardcostcenter;
+        $dashboardcostcenterid = $user_costcenterid;
     }
     $systemcontext = (new \local_costcenter\lib\accesslib())::get_module_context(); //context_system::instance();
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)) {

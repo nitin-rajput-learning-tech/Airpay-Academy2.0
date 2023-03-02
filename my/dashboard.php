@@ -30,8 +30,10 @@ $orgid  = optional_param('orgid', 0, PARAM_INT);
 global $USER,$DB;
 $site = get_site();
 require_login();
+$categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 $path=(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
-$org_id=explode('/',$path[0])[1];
+//$org_id=explode('/',$path[0])[1];
+$org_id=($path) ? explode('/',$path[0])[1] : null;
 $heading = $site->fullname;
 if(is_siteadmin()){
     if($orgid){
@@ -58,9 +60,9 @@ $courserenderer = $PAGE->get_renderer('core', 'course');
 $PAGE->set_heading($heading);
 echo $OUTPUT->header();
 echo $OUTPUT->skip_link_target();
-echo $content;
+//echo $content;
 // Trigger event, course category viewed.
-$eventparams = array('context' => $PAGE->context, 'objectid' => $context->instanceid);
+$eventparams = array('context' => $PAGE->context, 'objectid' => $categorycontext->instanceid);
 $event = \core\event\course_category_viewed::create($eventparams);
 $event->trigger();
 echo $OUTPUT->footer();

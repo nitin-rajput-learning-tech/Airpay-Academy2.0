@@ -202,25 +202,25 @@ class costcenter {
     }
     function get_costcenter_theme(){
         global $USER, $DB;
-       $path=(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
-       $oh_orgid=explode('/',$path[0])[1];
-       $user_orgid=explode('/',$USER->open_path)[1];
-        if($oh_orgid){
-       $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
-       FROM {local_costcenter} AS lc WHERE lc.visible = 1 AND lc.id= $oh_orgid";
-        }else if($user_orgid){
-        $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
-        FROM {local_costcenter} AS lc WHERE lc.visible = 1 AND lc.id= $user_orgid";
-        }else{
-            return false;
-        }
-        if(!empty($costcentertheme = $DB->get_record_sql($costcentersql))){
-            return $costcentertheme;
+        if(!is_siteadmin()){
+            $path = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+            $orgid = ($path) ? explode('/',$path[0])[1] : null;
+            if($orgid==NULL) {
+                $orgid=(empty($path)) ? explode('/',$USER->open_path)[1] : null;
+            }
+            if($orgid){
+                $costcentersql = "SELECT lc.theme,lc.button_color,lc.brand_color,lc.hover_color
+                FROM {local_costcenter} AS lc WHERE lc.visible = 1 AND lc.id = {$orgid}";
+            }else{
+                return false;
+            }
+            if(!empty($costcentertheme = $DB->get_record_sql($costcentersql))){
+                return $costcentertheme;
+            }
         }else{
             return false;
         }
     }
-
 }
 /**
  * Description: local_costcenter_pluginfile for fetching images in costcenter plugin
@@ -834,6 +834,7 @@ function local_costcenter_plugins_count($costcenterid, $departmentid=false, $sub
             }
         }
     }
+    // print_object($deparray);die;
     return $deparray;
 }
 

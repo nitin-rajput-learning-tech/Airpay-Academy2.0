@@ -63,20 +63,28 @@ class dashboardheader implements renderable, templatable {
             $data['currentrole'] = '';
             $data['dashboardrole'] = '';
         }
-        $sql = "SELECT r.id, 
-                CASE
-                    WHEN r.name != '' THEN r.name
-                    ELSE r.shortname
-                END AS name
-                FROM {role} r
-                JOIN {role_context_levels} rcl ON rcl.roleid = r.id 
-                WHERE rcl.contextlevel IN (10,40)";
+        $roles = [];
+        if(is_siteadmin()){
+            $sql = "SELECT r.id,
+                    CASE
+                        WHEN r.name != '' THEN r.name
+                        ELSE r.shortname
+                    END AS name
+                    FROM {role} r
+                    JOIN {role_context_levels} rcl ON rcl.roleid = r.id
+                    WHERE rcl.contextlevel IN (10,40)";
 
-        $roles = $DB->get_records_sql_menu($sql);
+            $roles = $DB->get_records_sql_menu($sql);
+        }else{
+            // $assignedroles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
+            // foreach($assignedroles AS $role){
+            //     $roles[$role->roleid] = $role->rolename;
+            // }
+        }
         $emproleid = $DB->get_field('role','id',array('shortname'=>'user'));
         $roles[$emproleid] = 'Employee';
-        $oh = has_capability('block/learnerscript:managereports', $systemcontext);
-        if (is_siteadmin() || $oh) {
+        // $oh = has_capability('block/learnerscript:managereports', $systemcontext);
+        if (is_siteadmin() || has_capability('block/learnerscript:managereports', $systemcontext)) {
             $data['switchrole'] = true;
         }
         $unusedroles = array('guest', 'frontpage'); 

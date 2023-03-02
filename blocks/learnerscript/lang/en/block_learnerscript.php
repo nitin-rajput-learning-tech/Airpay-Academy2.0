@@ -1243,3 +1243,4 @@ $string['category_help'] = 'categorisation for the report';
 
 
 $string['report_userparticipation'] = 'User Participation Report';
+$string['organisation'] = 'Organization';

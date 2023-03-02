@@ -65,6 +65,7 @@ $PAGE->requires->js_call_amd('local_onlineexams/onlineexamsAjaxform', 'load');
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 $PAGE->requires->js_call_amd('local_costcenter/fragment', 'init', array());
 $PAGE->requires->js_call_amd('local_onlineexams/onlineexams', 'load', array());
+$PAGE->requires->js_call_amd('local_onlineexams/renderusers', 'load', array());
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'downloadtrigger',array());
 $PAGE->navbar->ignore_active();
 $PAGE->navbar->add(get_string('manage_onlineexams','local_onlineexams'));

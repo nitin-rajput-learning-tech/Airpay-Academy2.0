@@ -2996,7 +2996,7 @@ public static function submit_instituteform_form_parameters() {
         $daystart = strtotime(date("d-m-Y 00:00:01"));
         $dayend = strtotime(date("d-m-Y 23:59:59"));
 
-        $sessionsbydaytype = $DB->get_records_sql("SELECT lcs.id as sessionid, lb.id as classroomid,lb.name as classroomname, lcs.name, lcs.timestart, lcs.timefinish, CONCAT(lr.name, lr.building, lr.address) as sessionroom, lcs.trainerid
+        $sessionsbydaytype = $DB->get_records_sql("SELECT lcs.id as sessionid, lb.id as classroomid,lb.name as classroomname, lcs.name, lcs.timestart, lcs.timefinish, lr.name as roomname, lr.building as roombuilding, lr.address as roomaddress, lcs.trainerid
                 FROM {local_classroom_users} as lbu
                 JOIN {local_classroom} as lb ON lbu.classroomid = lb.id
                 JOIN {local_classroom_sessions} as lcs ON lcs.classroomid = lbu.classroomid
@@ -3013,8 +3013,8 @@ public static function submit_instituteform_form_parameters() {
             $todays['timestart'] = $sessionbydaytype->timestart;
             $todays['timefinish'] = $sessionbydaytype->timefinish;
             $todays['sessiontime'] = \local_costcenter\lib::get_userdate('H:i',$sessionbydaytype->timestart).' - '.date('H:i',$sessionbydaytype->timefinish);
-            if ($sessionbydaytype->sessionroom) {
-                $todays['sessionroom'] = $sessionbydaytype->sessionroom;
+            if ($sessionbydaytype->roomname) {
+                $todays['sessionroom'] = $sessionbydaytype->roomname.' '.$sessionbydaytype->roombuilding.' '.$sessionbydaytype->roomaddress;
             } else {
                 $todays['sessionroom'] = 'NA';
             }

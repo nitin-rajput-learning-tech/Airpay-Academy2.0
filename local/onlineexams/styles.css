@@ -144,12 +144,12 @@ body#page-local-courses-courseenrol img#image.content-img {
     word-break: break-word;
     color: #000;
 }
-#page-local-onlineexams-index .course_name a:hover,
+/* #page-local-onlineexams-index .course_name a:hover,
 #page-local-onlineexams-index .course_name a:active,
 #page-local-onlineexams-index .course_name a:focus,
 #page-local-onlineexams-index .course_name a:visited {
     text-decoration: none;
-}
+} */
 
 .coursedesc {
     min-height: 45px
