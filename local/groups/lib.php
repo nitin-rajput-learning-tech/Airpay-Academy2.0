@@ -1012,7 +1012,7 @@ function groups_mass_enroll($cir, $groups, $context, $data) {
                 $record->userid    = $user->id;
                 $record->timeadded = time();
                 $DB->insert_record('cohort_members', $record);
-                $result .= '<div class="alert alert-success">'.get_string('im:enrolled_ok', 'local_courses', fullname($user)).'</div>';
+                $result .= '<div class="alert alert-success">'.get_string('im:stats_i', 'local_groups', fullname($user)).'</div>';
 
                 $enrollablecount ++;
            }
