@@ -744,18 +744,25 @@ class renderer extends plugin_renderer_base {
         }
 
         foreach ($programlevelcourses as $i => $bclevelcourse) {
-            // print_object($bclevelcourse);exit;
+
+            $classrooms = (new program)->get_classrooms_count($bclevelcourse->id);
+
             $bclevelcourses = array();
             $coursecontext = \context_course::instance($bclevelcourse->id);
-           
-            if(is_enrolled($coursecontext, $USER)){
+
+            $enrolled = is_enrolled(\context_course::instance($bclevelcourse->id), $USER);
+            if($enrolled || has_capability('moodle/course:view', $categorycontext) || is_siteadmin()){
                 $courseurl = new \moodle_url('/course/view.php', array('id' => $bclevelcourse->id));
+            }elseif($classrooms > 0){
+                $courseurl = 'javascript:void(0)';
             }else{
-                $courseurl = new \moodle_url('/local/program/sessions.php', array('bclcid' => $bclevelcourse->bclevelcourseid, 'levelid' => $bclevelcourse->levelid, 'bcid' => $bclevelcourse->programid));
+                $courseurl = new \moodle_url('/local/program/checkenrol.php', array('courseid' => $bclevelcourse->id, 'programid' => $programid, 'action' => 'courseuserenrol'));
             }
             $courselink = strlen($bclevelcourse->course) > 25 ? substr($bclevelcourse->course, 0, 25) . "..." : $bclevelcourse->course;
             $bclevelcourse->course = html_writer::link($courseurl, $courselink,
                     array('title' => $bclevelcourse->course));
+
+
             if ($userview) {
                 $bclevelcourse->sessionenabled = true;
                 if (array_search($bclevelcourse->bclevelcourseid, $notcmptlcourses) !== false) {
@@ -782,8 +789,7 @@ class renderer extends plugin_renderer_base {
             }
             $bclevelcourse->canremovecourse = $canremovecourse;
             $bclevelcourse->cannotremovecourse = $cannotremovecourse;
-            // $bclevelcourse->classroomcourse = in_array(2, explode(',', $bclevelcourse->open_identifiedas)) ? true : false;
-            $bclevelcourse->classroomcourse = true ;
+            $bclevelcourse->classroomcourse = ($classrooms > 0) ? true : false;
 
             $programlevelcourses[$i] = $bclevelcourse;
         }

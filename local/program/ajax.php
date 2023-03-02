@@ -166,7 +166,7 @@ try{
         $data = $program->get_course_classrooms($courseid, $_REQUEST);
         echo json_encode($data);
         die();
-    break;
+        break;
     }
 
     echo json_encode($return);

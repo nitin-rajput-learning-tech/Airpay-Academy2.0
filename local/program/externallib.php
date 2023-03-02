@@ -584,7 +584,7 @@ class local_program_external extends external_api {
                 if (!empty($programtrainers)) {
                     foreach ($programtrainers as $programtrainer) {
                         $unenrolprogramtrainer = (new program)->manage_program_course_enrolments($course, $programtrainer,
-                            'editingteacher', 'unenrol');
+                            'editingteacher', 'unenrol', $pluginname = 'program',$programid);
                     }
                 }
                 $programusers = $DB->get_records_menu('local_program_users',
@@ -592,7 +592,7 @@ class local_program_external extends external_api {
                 if (!empty($programusers)) {
                     foreach ($programusers as $programuser) {
                         $unenrolprogramuser = (new program)->manage_program_course_enrolments($course, $programuser,
-                            'employee', 'unenrol');
+                            'employee', 'unenrol', $pluginname = 'program',$programid);
                     }
                 }
                 $params = array(

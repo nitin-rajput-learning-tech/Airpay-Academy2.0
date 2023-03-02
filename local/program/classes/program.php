@@ -1207,8 +1207,7 @@ class program {
                                 if ($course > 0) {
                                     //$instance = $DB->get_record('enrol', array('courseid' => $course, 'enrol'=>'program'), '*', MUST_EXIST);
                                     //$programenrol->unenrol_user($instance, $removeuser, $instance->roleid, time());
-                                    $unenrolprogramuser = $this->manage_program_course_enrolments(
-                                        $course, $removeuser, 'employee', 'unenrol');
+                                    $unenrolprogramuser = $this->manage_bclevel_course_enrolments($course, $removeuser, $role = 'employee',$type = 'unenrol', $pluginname = 'program',$programid);
                                 }
                             }
                         }
@@ -1372,22 +1371,9 @@ class program {
      * @return [type]                                            [description]
      */
     public function manage_program_course_enrolments($cousre, $user, $roleshortname = 'employee',
-        $type = 'enrol', $pluginname = 'program') {
+        $type = 'enrol', $pluginname = 'program',$programid=null) {
         global $DB;
-        $courseexist=$DB->record_exists('enrol', array('courseid' => $cousre, 'enrol' => $pluginname));
-        if($courseexist){ 
-            $enrolmethod = enrol_get_plugin($pluginname);
-            $roleid = $DB->get_field('role', 'id', array('shortname' => $roleshortname));
-            $instance = $DB->get_record('enrol', array('courseid' => $cousre, 'enrol' => $pluginname), '*', MUST_EXIST);
-            if (!empty($instance)) {
-                if ($type == 'enrol') {
-                    $enrolmethod->enrol_user($instance, $user, $roleid, time());
-                } else if ($type == 'unenrol'){
-                    $enrolmethod->unenrol_user($instance, $user,$roleid, time());
-                }
-            }
-        }
-        return true;
+        return $this->manage_bclevel_course_enrolments($course, $user, $roleshortname,$type, $pluginname = 'program',$programid);
     }
     public function program_levels($programid) {
         global $DB, $USER;
@@ -2218,14 +2204,20 @@ class program {
         if($programid !== null){
             $params['customint1']=$programid;
         }
-        $courseexist = $DB->record_exists('enrol', $params);
-        if (!$courseexist) {
-            $coursedata = $DB->get_record('course', array('id' => $course));
-            $coursedata->open_identifiedas = '5';
-            insert::add_enrol_method_tocourse($coursedata, 5);
-        }
 
         $enrolmethod = enrol_get_plugin($pluginname);
+
+        if (!$DB->record_exists('enrol',$params)) {
+
+            $courseobj = $DB->get_record('course', array('id' => $course));
+
+            $enrolid = $enrolmethod->add_instance($courseobj,$fields);
+
+        }else{
+
+            $this->update_enrol_status($course,$programid,$status=ENROL_INSTANCE_ENABLED);
+        }
+
         $roleid      = $DB->get_field('role', 'id', array(
             'shortname' => $roleshortname
         ));
@@ -2238,6 +2230,20 @@ class program {
             }
         }
         return true;
+    }
+    public function update_enrol_status($course,$programid,$status){
+        global $DB;
+        $params =array('courseid' => $course, 'enrol' => 'program','customint1'=>$programid,'roleid'=>$DB->get_field('role','id',array('shortname' => 'employee')));
+        $fields = array('customint1'=>$programid);
+        $enrolid= $DB->get_field('enrol', 'id', $params);
+        if(!empty($enrolid)){
+            $arrayfields = array("id"=>$enrolid,"status"=>$status);
+            $fields =array_merge($fields,$arrayfields);
+            $update = $DB->update_record('enrol', $fields);
+        }else{
+            $update = false;
+        }
+        return  $update;
     }
     /**
      * [bclevel_completions description]
