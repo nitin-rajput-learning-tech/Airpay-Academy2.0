@@ -330,15 +330,9 @@ class accesslib
                     $userpathinfo = $userpath;
 
                     $paths[] = $userpathinfo.'/%';
-<<<<<<< HEAD
 
                     if($datatype == self::ALL_MODULE_CONTENT){
 
-=======
-
-                    if($datatype == self::ALL_MODULE_CONTENT){
-
->>>>>>> 582f14ac36e0bda55449debc56d640498da0c52e
                         $paths[] = $userpathinfo;
 
                         while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
