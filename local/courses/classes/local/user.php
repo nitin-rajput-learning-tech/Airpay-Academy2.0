@@ -163,7 +163,7 @@ class user{
                     FROM {course} AS course
                     JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto')
                     JOIN {user_enrolments} AS ue ON e.id = ue.enrolid
-                    WHERE ue.userid = :userid AND CONCAT(',',course.open_identifiedas,',') LIKE CONCAT('%,',3,',%') AND course.id > 1 AND course.open_coursetype = 0 ";
+                    WHERE ue.userid = :userid AND course.id > 1 AND course.open_coursetype = 0 ";
 
         $params['userid'] = $userid;
 
@@ -177,7 +177,6 @@ class user{
             list($couressql, $couresparams) = $DB->get_in_or_equal($completed_id, SQL_PARAMS_NAMED, 'param', false, false);
             $sql .= " AND course.id $couressql";
         }
-
         $paramsarray = array_merge($params,$couresparams);
         $inprogress_courses = $DB->get_records_sql($sql, $paramsarray);
         return $inprogress_courses;
@@ -190,8 +189,7 @@ class user{
             JOIN {course} AS c ON c.id = cc.course
             JOIN {enrol} AS e ON c.id = e.courseid AND e.enrol IN('self','manual','auto')
             JOIN {user_enrolments} AS ue ON e.id = ue.enrolid AND ue.userid = cc.userid
-            WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%')
-            AND cc.timecompleted is not NULL AND c.visible=1 AND c.id>1 AND cc.userid = ? AND c.open_coursetype = 0 
+            WHERE cc.timecompleted is not NULL AND c.visible=1 AND c.id>1 AND cc.userid = ? AND c.open_coursetype = 0 
             ";
 
         $coursenames = $DB->get_records_sql($sql, [$userid]);
