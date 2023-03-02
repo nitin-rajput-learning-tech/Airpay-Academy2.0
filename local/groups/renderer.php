@@ -280,18 +280,12 @@ class local_groups_renderer extends plugin_renderer_base  {
              //   $cohortcontext = context::instance_by_id($cohort->contextid);
                 $urlparams = array('id' => $cohort->id, 'returnurl' => $baseurl->out_as_local_url());
                 $group_members_count = $DB->count_records('cohort_members', array('cohortid'=>$cohort->id));
-                $line['groupname'] = $groupname;
-                $line['groupid'] = $groupid;               
+                $line['groupname'] = \local_costcenter\lib::strip_tags_custom(html_entity_decode($groupname));
+                $line['groupid'] = \local_costcenter\lib::strip_tags_custom(html_entity_decode($groupid));               
                 $line['orgname'] = $orgname;
                 if($visible==1){
                 $line['visible'] = $visible;}
                 $buttons = array();
-
-
-
-
-
-
                 if (empty($cohort->component)) {
                     $cohortmanager = has_capability('moodle/cohort:manage', $cohortcontext);
                     $cohortcanassign = has_capability('moodle/cohort:assign', $cohortcontext);

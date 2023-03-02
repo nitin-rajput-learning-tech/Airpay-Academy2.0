@@ -130,7 +130,7 @@ function local_forum_output_fragment_custom_forum_form($args)
     local_costcenter_set_costcenter_path($formdata);
     $mform = new custom_forum_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
-
+    $formdata['shortname_static'] = $formdata['shortname'];
     $mform->set_data($formdata);
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata) > 2) {
@@ -192,12 +192,7 @@ function get_listof_forum($stable, $filterdata)
     $chelper = new coursecat_helper();
     $selectsql = "SELECT c.id ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
-    if (has_capability('local/forum:manage', $maincheckcontext)) {
-        $open_path = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path',null,$datatype ='lowerandsamepath');
-    }else{
-        $open_path = " AND c.open_path = '$USER->open_path' ";
-    }
-    // echo $open_path;die;
+    $open_path = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
     $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
                      JOIN {course_categories} AS cc ON cc.id = c.category
                      ";
@@ -702,7 +697,7 @@ function local_forum_quicklink_node()
         $coursedata['space_count'] = 'one';
         $content = $OUTPUT->render_from_template('block_quick_navigation/quicklink_node', $coursedata);
     }
-    return array('5' => $content);
+    return array('3' => $content);
 }
 
 function add_forum_forum($validateddata, $forumid)

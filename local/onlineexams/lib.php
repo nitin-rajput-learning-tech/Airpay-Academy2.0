@@ -133,7 +133,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     local_costcenter_set_costcenter_path($formdata);
     $mform = new custom_onlineexams_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
-
+    $formdata['shortname_static'] = $formdata['shortname'];
     $mform->set_data($formdata);
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata) > 2) {
@@ -579,7 +579,16 @@ function get_listof_onlineexams($stable, $filterdata)
                 unset($courseslist[$count]["requestlink"]);
             }
 
-
+            $quiz = $DB->get_record('quiz', array("course" => $course->id));
+            $gradeitem = $DB->get_record('grade_items', array('iteminstance' => $quiz->id, 'itemmodule' => 'quiz', 'courseid' => $course->id));
+				$gradepass = $gradeitem->gradepass;
+                $grademax = $gradeitem->grademax;
+            // echo $quiz->timeopen;
+            // echo "<br/>";
+            $courseslist[$count]["examfromdate"] =($quiz->timeopen > 0) ?  date('d-m-Y h:i:s', ($quiz->timeopen)) : 'N/A';
+            $courseslist[$count]["examtodate"] = ($quiz->timeclose > 0) ? date('d-m-Y h:i:s', ($quiz->timeclose)) : 'N/A';
+            $courseslist[$count]["passgrade"] = ($gradepass) ? round($gradepass, 2) : 'N/A';
+            $courseslist[$count]["maxgrade"] = ($grademax > 0) ? round($grademax,2) : 'N/A';
             $courseslist[$count] = array_merge($courseslist[$count], array(
                 "actions" => (((has_capability(
                     'local/onlineexams:enrol',
@@ -632,8 +641,8 @@ function get_listof_onlineexams($stable, $filterdata)
             $candelete = false;
     }
 
-    $program_plugin_exist = $core_component::get_plugin_directory('local', 'program');
-    if ($program_plugin_exist) {
+    $onlineexam_plugin_exist = $core_component::get_plugin_directory('local', 'onlineexam');
+    if ($onlineexam_plugin_exist) {
         $exist_sql = "Select id from {local_program_level_courses} where courseid = ?";
         if ($DB->record_exists_sql($exist_sql, array($course->id)))
             $candelete = false;
@@ -777,4 +786,94 @@ function update_onlineexam_quiz($validateddata, $data, $formstatus)
     }
     // print_r($quiz);
     return $quiz;
+}
+
+/**
+    * function costcenterwise_onlineexams_count
+    * @todo count of onlineexams under selected costcenter
+    * @param int $costcenter costcenter
+    * @param int $department department
+    * @return  array onlineexams count of each type
+*/
+function costcenterwise_onlineexams_count($costcenter,$department = false,$subdepartment = false, $l4department=false, $l5department=false){
+    global $USER, $DB,$CFG;
+    $params = array();
+    $params['costcenterpath'] = '%/'.$costcenter.'/%';
+    $countonlineexamsql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath AND open_module = 'online_exams' AND open_coursetype = 1 ";
+    if ($department) {
+        $countonlineexamsql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
+        $params['departmentpath'] = '%/'.$department.'/%';
+    }
+    if ($subdepartment) {
+        $countonlineexamsql .= " AND concat('/',open_path,'/') LIKE :subdepartmentpath ";
+        $params['subdepartmentpath'] = '%/'.$subdepartment.'/%';
+    }
+    if ($l4department) {
+        $countonlineexamsql .= " AND concat('/',open_path,'/') LIKE :l4departmentpath ";
+        $params['l4departmentpath'] = '%/'.$l4department.'/%';
+    }
+    if ($l5department) {
+        $countonlineexamsql .= " AND concat('/',open_path,'/') LIKE :l5departmentpath ";
+        $params['l5departmentpath'] = '%/'.$l5department.'/%';
+    }
+    $activesql = " AND visible = 1 ";
+    $inactivesql = " AND visible = 0 ";
+
+    $countonlineexams = $DB->count_records_sql($countonlineexamsql, $params);
+    $activeonlineexams = $DB->count_records_sql($countonlineexamsql.$activesql, $params);
+    $inactiveonlineexams = $DB->count_records_sql($countonlineexamsql.$inactivesql, $params);
+    if($countonlineexams >= 0){
+        if($costcenter){
+            $viewonlineexamlink_url = $CFG->wwwroot.'/local/onlineexams/index.php?costcenterid='.$costcenter; 
+        }
+        if($department){
+            $viewonlineexamlink_url = $CFG->wwwroot.'/local/onlineexams/index.php?costcenterid='.$costcenter.'&departmentid='.$department;
+        }
+        if($subdepartment){
+            $viewonlineexamlink_url = $CFG->wwwroot.'/local/onlineexams/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+        }
+        if($l4department){
+            $viewonlineexamlink_url = $CFG->wwwroot.'/local/onlineexams/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if($l5department){
+            $viewonlineexamlink_url = $CFG->wwwroot.'/local/onlineexams/index.php?costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+        }
+    }
+
+    if($activeonlineexams >= 0){
+        if($costcenter){
+            $count_onlineexamactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=active&costcenterid='.$costcenter; 
+        }
+        if($department){
+            $count_onlineexamactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department;
+        }
+        if($subdepartment){
+            $count_onlineexamactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+        }
+        if($l4department){
+            $count_onlineexamactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if($l5department){
+            $count_onlineexamactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=active&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+        }
+    }
+    if($inactiveonlineexams >= 0){
+        if($costcenter){
+            $count_onlineexaminactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=inactive&costcenterid='.$costcenter; 
+        }
+        if($department){
+            $count_onlineexaminactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department;
+        }
+        if($subdepartment){
+            $count_onlineexaminactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment;
+        }
+        if($l4department){
+            $count_onlineexaminactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department;
+        }
+        if($l5department){
+            $count_onlineexaminactivelink_url = $CFG->wwwroot.'/local/onlineexams/index.php?status=inactive&costcenterid='.$costcenter.'&departmentid='.$department.'&subdepartmentid='.$subdepartment.'&l4department='.$l4department.'&l5department='.$l5department;
+        }
+    }
+
+    return array('onlineexam_plugin_exist' => true,'onlineexamcount' => $countonlineexams,'activeonlineexamcount' => $activeonlineexams,'inactiveonlineexamcount' => $inactiveonlineexams,'viewonlineexamlink_url'=>$viewonlineexamlink_url,'count_onlineexamactivelink_url' =>$count_onlineexamactivelink_url,'count_onlineexaminactivelink_url' =>$count_onlineexaminactivelink_url);
 }

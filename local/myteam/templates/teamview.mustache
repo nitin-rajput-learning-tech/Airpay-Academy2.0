@@ -57,7 +57,7 @@
                                     <th class="program_col text-center">{{program}}</th>
                                 {{/program}}
 
-                                <!-- {{#supervisorevaluation}}
+                                {{#supervisorevaluation}}
                                     <th class="program_col text-center">{{supervisorevaluation}}</th>
                                 {{/supervisorevaluation}}
 
@@ -67,7 +67,7 @@
 
                                 {{#badges}}
                                     <th class="badges_col text-center">{{badges}}</th>
-                                {{/badges}} -->
+                                {{/badges}}
                             {{/headers}}
                            
                         </tr>
@@ -105,7 +105,7 @@
                             {{#program}}
                                 <td class="program_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
                             {{/program}}
-                            <!-- {{#supervisorevaluation}}
+                            {{#supervisorevaluation}}
                                 <td class="courses_col text-center"><span class='label_colored_info label_{{elementcolor}} team_employeestatus' data-action='popupmodalcourse' data-userid='{{userid}}' data-username='{{username}}' data-moduletype='{{modulename}}'>{{completed}} / {{enrolled}}</span></td>
                             {{/supervisorevaluation}}
                             {{# evaluation}}
@@ -114,7 +114,7 @@
 
                             {{#badgescount}}
                                 <td class="badges_col text-center"><span class="label_colored_info label_{{elementcolor}}" data-action="popupmodalbadge{{userid}}">{{issuedbadges}} / {{totalbadges}}</span></td>
-                            {{/badgescount}} -->
+                            {{/badgescount}} 
                         </tr>
                         {{/records}}
                     </tbody>

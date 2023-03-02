@@ -1199,31 +1199,53 @@ function local_courses_leftmenunode(){
 }
 
 function local_courses_quicklink_node(){
-    global $CFG, $PAGE, $OUTPUT;
+    global $CFG, $PAGE, $OUTPUT,$DB;
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $content = '';
     if (has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) || is_siteadmin()){
-        //local courses content
-        // $local_courses_content = $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'load');
         $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'load');
-        // $local_courses_content = "<span class='anch_span'><i class='fa fa-book' aria-hidden='true'></i></span>";
-        // $local_courses_content .= "<div class='quick_navigation_detail'>
-        //                                 <div class='span_str'>".get_string('manage_br_courses', 'local_courses')."</div>";
-        // $local_courses_content .= "<span class='span_createlink'>";
-        // if(is_siteadmin() ||( has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
-        //     $local_courses_content .="<a href='javascript:void(0);' class='quick_nav_link goto_local_courses' title = '".get_string('create_newcourse', 'local_courses')."' data-action='createcoursemodal' onclick='(function(e){ require(\"local_courses/courseAjaxform\").init({contextid:".$categorycontext->id.", component:\"local_courses\", callback:\"custom_course_form\", form_status:0, plugintype: \"local\", pluginname: \"courses\"}) })(event)'>".get_string('create')."</a> | ";
-            
-        // }
-        // if(has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) ){
-        //     $local_courses_content .=" <a href='".$CFG->wwwroot."/local/courses/courses.php' class='viewlink' title= ' ".get_string('view_courses','local_courses')." '>".get_string('view')."</a>";
-        // }
-        // $local_courses_content .=" </span>";
-        // $local_courses_content .= "</div>";
-        // $local_courses = '<div class="quick_nav_list manage_courses one_of_three_columns" >'.$local_courses_content.'</div>';
         $coursedata = array();
+        if (is_siteadmin() || has_capability('local/courses:view', $categorycontext)) {
+            $sql = "SELECT count(id) FROM {course} WHERE id > 1 AND open_coursetype=0 ";
+            $suspendsql = " AND visible = :visible ";
+            $activeparams = array();
+            $activeparams['visible'] = 1;
+
+            $inactiveparams = array();
+            $inactiveparams['visible'] = 0;
+    
+            if (is_siteadmin()) {
+                $sql .= "";
+            } else  {
+                //costcenterid concating
+                $sql .= $costcenterpathconcatsql;
+    
+            }
+            $open_path = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+            $enrolsql="SELECT count(u.id)
+                    FROM {user} u
+                    JOIN {user_enrolments} ue ON ue.userid = u.id
+                    JOIN {enrol} e ON e.id = ue.enrolid
+                    JOIN {course} c ON  e.courseid = c.id 
+                    WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0 
+                    AND ue.status = 0 AND c.open_coursetype=0 $open_path";
+            $completioncount="SELECT count(u.id) FROM {course_completions} AS cp 
+                                JOIN {course} AS c ON cp.course = c.id 
+                                JOIN {user} AS u ON cp.userid = u.id 
+                                WHERE c.enablecompletion = 1 
+                                AND c.open_coursetype=0 $open_path";   
+            $enrolcount = $DB->get_field_sql($enrolsql);
+            $completioncount = $DB->get_field_sql($completioncount);
+            $count_courses = $DB->count_records_sql($sql);
+    
+            $percent = round(($completioncount / $enrolcount) * 100);
+            $percent = (int)$percent;
+        }
         $coursedata['node_header_string'] = get_string('manage_br_courses', 'local_courses');
         $coursedata['pluginname'] = 'courses';
         $coursedata['plugin_icon_class'] = 'fa fa-book';
+        $coursedata['displaystats'] = TRUE;
         if(is_siteadmin() ||( has_capability('moodle/course:create', $categorycontext)&& has_capability('moodle/course:update', $categorycontext)&&has_capability('local/courses:manage', $categorycontext))){
             $coursedata['create'] = TRUE;
             $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_courses/courseAjaxform").init({contextid:'.$categorycontext->id.', component:"local_courses", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "courses"}) })(event)'));
@@ -1233,10 +1255,16 @@ function local_courses_quicklink_node(){
             $coursedata['view'] = TRUE;
             $coursedata['viewlink_title'] = get_string('view_courses','local_courses');
         }
-        $coursedata['space_count'] = 'one';
+        $coursedata['percentage'] = $percent;
+        $coursedata['count_total'] = $count_courses;
+        $coursedata['count_active'] = $enrolcount;
+        $coursedata['enroll_string'] = get_string('enrolcount', 'local_courses');
+        $coursedata['inactive_string'] = get_string('completioncount', 'local_courses');
+        $coursedata['count_inactive'] = $completioncount;
+        $coursedata['space_count'] = 'two';
         $content = $OUTPUT->render_from_template('block_quick_navigation/quicklink_node', $coursedata);
     }
-    return array('3' => $content);
+        return array('5' => $content);
 }
 
 /**

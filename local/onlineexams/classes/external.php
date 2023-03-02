@@ -155,6 +155,9 @@ class local_onlineexams_external extends external_api
                 $validateddata->startdate = time();
                 $validateddata->enddate = 0;
                 $validateddata->open_coursetype = 1;
+                if(isset($validateddata->concatshortname) && !empty($validateddata->concatshortname)){
+                    $validateddata->shortname = $validateddata->concatshortname.'_'.$validateddata->shortname;
+                }
                 $examid = create_course($validateddata, $editoroptions);
                 // Update course tags.
                 if (isset($validateddata->tags)) {
@@ -211,6 +214,7 @@ class local_onlineexams_external extends external_api
                             $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                         }
                     }
+                    
                     update_course($validateddata, $editoroptions);
 
                     // purge appropriate caches in case fix_course_sortorder() did not change anything
@@ -411,6 +415,7 @@ class local_onlineexams_external extends external_api
                                 'coursename' => new external_value(PARAM_RAW, 'coursename'),
                                 'coursenameCut' => new external_value(PARAM_RAW, 'coursenameCut', VALUE_OPTIONAL),
                                 'catname' => new external_value(PARAM_RAW, 'catname'),
+                                'shortname' => new external_value(PARAM_RAW, 'shortname'),
                                 'catnamestring' => new external_value(PARAM_RAW, 'catnamestring'),
                                 'courseimage' => new external_value(PARAM_RAW, 'catnamestring'),
                                 'enrolled_count' => new external_value(PARAM_INT, 'enrolled_count', VALUE_OPTIONAL),
@@ -444,6 +449,9 @@ class local_onlineexams_external extends external_api
                                 'actions' => new external_value(PARAM_BOOL, 'actions', VALUE_OPTIONAL),
                                 'examfromdate' => new external_value(PARAM_RAW, 'examfromdate', VALUE_OPTIONAL),
                                 'examtodate' => new external_value(PARAM_RAW, 'examtodate', VALUE_OPTIONAL),
+                                'passgrade' => new external_value(PARAM_RAW, 'passgrade', VALUE_OPTIONAL),
+                                'maxgrade' => new external_value(PARAM_RAW, 'maxgrade', VALUE_OPTIONAL),
+
                             )
                         )
                     ),

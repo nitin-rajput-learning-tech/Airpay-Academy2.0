@@ -67,6 +67,7 @@ class block_reportdashboard_renderer extends plugin_renderer_base {
         $systemcontext = context_system::instance();
         if (!is_siteadmin()) {
             $roles = (new ls)->get_currentuser_roles();
+            // $roles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($USER->id);
         } else {
             $roles = get_switchable_roles($systemcontext);
         }

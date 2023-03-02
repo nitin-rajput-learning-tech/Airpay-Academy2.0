@@ -33,7 +33,6 @@ define('LOCAL_COHORT_WITH_NOTENROLLED_MEMBERS_ONLY', 23);
 
 
 class local_groups implements renderable {
-    
      public function __construct($page, $perpage, $searchquery,$showall) {
         $context =  (new \local_groups\lib\accesslib())::get_module_context();
         if ($showall || is_siteadmin()) {
@@ -61,7 +60,6 @@ function manage_groups_count($stable,$filterdata){
     $params = array();
 
     $order = " ORDER BY  g.id DESC";
-
     if(isset($filterdata->search_query) && trim($filterdata->search_query) != ''){
         $formsql .= " AND (c.name LIKE :search1 OR c.idnumber LIKE :search2 OR c.description LIKE :search3 )";
         $params['search1'] = '%'.trim($filterdata->search_query).'%';
@@ -70,7 +68,6 @@ function manage_groups_count($stable,$filterdata){
     }
 
     $groups = $DB->get_records_sql($fields . $sql . $order, $params, $stable->start, $stable->length);
-
     return array('totalgroups' => $totalgroups, 'groups' => $groups, 'allgroups' => $allgroups);
 
 }
@@ -1015,7 +1012,7 @@ function groups_mass_enroll($cir, $groups, $context, $data) {
                 $record->userid    = $user->id;
                 $record->timeadded = time();
                 $DB->insert_record('cohort_members', $record);
-                $result .= '<div class="alert alert-success">'.get_string('im:enrolled_ok', 'local_courses', fullname($user)).'</div>';
+                $result .= '<div class="alert alert-success">'.get_string('im:stats_i', 'local_groups', fullname($user)).'</div>';
 
                 $enrollablecount ++;
            }

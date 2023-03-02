@@ -304,6 +304,39 @@
                         </div>
                     </div>
                 {{/ program_plugin_exist}}
+                <!-- onlineexams Data-->
+                {{# onlineexam_plugin_exist}}
+                    <div class="org_detail col-12 col-sm-6 col-md-4 pull-left pb-15 pl-0">
+                        <div class="details_content org_onlineexams">
+                            <span class="org_icon_container">
+                                <!-- <i class="fa fa-map" aria-hidden="true"></i> -->
+                                <span class="bootcamp_icon_wrap"></span>
+                            </span>
+                            <div class="details_topcontent">
+                                <div class="col-10 col-sm-10 col-md-9 pull-left pl-6 details_topleft">{{# str}} onlineexams, local_costcenter {{/str}}</div>
+                                <div class="col-2 col-sm-2 col-md-3 pull-right p-0 text-right details_topright"><a href="{{viewonlineexamlink_url}}" class='viewlink' title= "{{#str}} allonlineexamcount, local_costcenter {{/str}}">{{ allonlineexamcount }}</a></div>
+                            </div>
+                            <div class="details_btmcontent">
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-bullhorn pr-1 activeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} active {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span><a href="{{count_onlineexamactivelink_url}}" class='viewlink' title= "{{#str}} activeonlineexamcount, local_costcenter {{/str}}">{{ activeonlineexamcount }}</a></span>
+                                </div>
+                                <div class="col-6 col-sm-6 col-md-12 col-lg-6 p-0 pull-right text-right text-md-left">
+                                    <span class="org_label">
+                                        <i class="fa fa-flag-o pr-1 completeicon" aria-hidden="true"></i>
+                                        <span>{{# str}} inactive {{/str}}</span>
+                                        <span class="mx-1">:</span>
+                                    </span>
+                                    <span><a href="{{count_onlineexaminactivelink_url}}" class='viewlink' title= "{{#str}} inactiveonlineexamcount, local_costcenter {{/str}}">{{ inactiveonlineexamcount }}</a></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {{/ onlineexam_plugin_exist}}
 
                 <!-- Certification Data -->
                 {{# certification_plugin_exist}}

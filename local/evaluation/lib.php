@@ -2566,7 +2566,7 @@ function costcenterwise_evaluation_count($costcenter, $department = false,$subde
 function get_listof_evalautions($stable, $filtervalues){
     global $DB, $USER, $OUTPUT;
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $statustype=$stable->status;
     $data = array();
     $userarray = array();
@@ -2838,7 +2838,6 @@ function get_listof_evalautions($stable, $filtervalues){
         $line['status'] = $record->visible ? TRUE : FALSE;
         $data[] = $line;
     }
-
     return array('totalrecords' => $feedbackcount,'records' => $data);
 }
 

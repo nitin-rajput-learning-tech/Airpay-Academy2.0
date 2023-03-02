@@ -31,7 +31,7 @@ class local_ratings_external extends external_api{
         );
 	}
 	public static function get_specific_rating_info($contextid, $itemid, $ratearea){
-		global $PAGE;
+		global $PAGE,$DB;
 		$params = self::validate_parameters(
             self::get_specific_rating_info_parameters(),
             [
@@ -42,8 +42,26 @@ class local_ratings_external extends external_api{
         );
 		$PAGE->set_context(\context_system::instance());
         $lib = new \local_ratings\lib\ratinglib();
+        //$total_ratings = $DB->count_records('local_rating', array('itemid' => $params['itemid'], 'ratearea' => $params['ratearea'])); 
+        $ratings = $DB->get_records('local_rating', array('itemid' => $params['itemid'], 'ratearea' => $params['ratearea'])); 
+        $count=0;
+        $avg_rating=0;
+        $all_ratings=0;
+        foreach($ratings as $rating)
+        {
+            $all_ratings=$all_ratings + ($rating->rating);
+            $count++;
+        }
+        if($count>0){
+        $avg_rating=$all_ratings/$count;
+    } else{
+        $avg_rating=0;
+    }
         $return = $lib->get_specific_rating_info($params['itemid'], $params['ratearea']);
-        return array('rows' => $return);
+        return array('rows' => $return,
+                     'avg_rating' => $avg_rating,
+                     'total_users' => $count
+                     );  
 	}
 	public static function get_specific_rating_info_returns(){
 		// return new external_value(PARAM_RAW, 'content');
@@ -56,7 +74,9 @@ class local_ratings_external extends external_api{
                     'rating_perc' => new external_value(PARAM_RAW, 'percentage value of rating'),
                     'rating' => new external_value(PARAM_INT, 'Rating', VALUE_OPTIONAL),
                 ])
-            )
+                ),
+                'avg_rating' => new external_value(PARAM_RAW, 'percentage value of rating', VALUE_OPTIONAL,0),
+                'total_users' => new external_value(PARAM_RAW, 'percentage value of rating', VALUE_OPTIONAL,0)
         ]);
 	}
     public static function save_comment_parameters(){

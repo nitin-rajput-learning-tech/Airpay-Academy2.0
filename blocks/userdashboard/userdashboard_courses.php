@@ -38,7 +38,7 @@ $PAGE->set_title(get_string($tab,'block_userdashboard'));
 $PAGE->set_heading(get_string($tab,'block_userdashboard'));
 $PAGE->navbar->add(get_string($tab,'block_userdashboard'));
 $PAGE->requires->js_call_amd('block_userdashboard/userdashboardinit', 'init');
-$PAGE->requires->js_call_amd('block_userdashboard/userdashboardinit', 'makeActive',array('tab' => $subtab));4
+$PAGE->requires->js_call_amd('block_userdashboard/userdashboardinit', 'makeActive',array('tab' => $subtab));
 switch($tab){
 	case get_string('elear','block_userdashboard'):
 		$renderable = new block_userdashboard\output\elearning_courses($subtab,'');
