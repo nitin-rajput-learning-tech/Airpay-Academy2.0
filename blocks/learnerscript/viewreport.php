@@ -132,6 +132,7 @@ $reportclass->ls_enddate = $datefilterrequests['ls_fenddate'];
 
 $reportclass->cmid = $cmid;
 $reportclass->userid = $userid;
+$context = context_system::instance();
 if (!is_siteadmin() && !$reportclass->check_permissions($USER->id, $context)) {
 	print_error("badpermissions", 'block_learnerscript');
 }

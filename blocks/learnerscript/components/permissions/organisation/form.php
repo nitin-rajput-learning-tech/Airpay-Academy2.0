@@ -27,31 +27,20 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->libdir . '/formslib.php');
 
-class sitelevelroles_form extends moodleform {
+class organisation_form extends moodleform {
 
     function definition() {
         global $DB;
 
         $mform = & $this->_form;
 
-        $mform->addElement('header', 'crformheader', get_string('sitelevelroles', 'block_learnerscript'), '');
+        $mform->addElement('header', 'crformheader', get_string('organisation', 'local_costcenter'), '');
 
-        $sql = "SELECT r.id, 
-                CASE
-                    WHEN r.name != '' THEN r.name
-                    ELSE r.shortname
-                END AS name
-                FROM {role} r
-                JOIN {role_context_levels} rcl ON rcl.roleid = r.id 
-                WHERE rcl.contextlevel = 40";
-        $systemroles = $DB->get_records_sql_menu($sql);
+        $sql = "SELECT lc.id, lc.fullname FROM {local_costcenter} as lc
+                WHERE lc.parentid = 0 ";
+        $organisations = $DB->get_records_sql_menu($sql);
 
-        $authuserid = $DB->get_field('role','id',array('shortname'=>'user'));
-        $authuser = array($authuserid => 'Employee');
-        $roles = $systemroles + $authuser;
-
-
-        $mform->addElement('select', 'roleid', get_string('roles'), $roles);
+        $mform->addElement('select', 'organisationid', get_string('organisation', 'local_costcenter'), $organisations);
 
         // buttons
         $this->add_action_buttons(true, get_string('add'));

@@ -92,6 +92,10 @@ class block_reportdashboard extends block_base {
         $this->content = new stdClass;
         $this->content->footer = '';
         $this->content->text = "";
+        $reportrecord = new \block_learnerscript\local\reportbase($this->config->reportlist);
+        if(!$reportrecord->check_permissions($USER->id, context_system::instance())){
+            return '';
+        }
         if (isset($this->config->reportlist) && $this->config->reportlist &&
             $DB->record_exists('block_learnerscript', array('id' => $this->config->reportlist, 'visible' => 1))) {
             $reportid = $this->config->reportlist;
@@ -114,7 +118,7 @@ class block_reportdashboard extends block_base {
             if ($delete && confirm_sesskey()) {
                 (new reportdashboard)->delete_widget($name, $report, $deledbui, $reportid);
             }
-            $reportrecord = new \block_learnerscript\local\reportbase($report->id);
+
             $reportrecord->customheader = true; // For not to display Form Header.
             $filterrecords = (new ls)->cr_unserialize($reportrecord->config->components);
             if (!empty($filterrecords['filters']['elements'])) {

@@ -6,9 +6,9 @@
             <img src={{config.wwwroot}}/blocks/learnerscript/pix/switchrole.png>
         </a>
         <ul class="menu dropdown-menu dropdown-menu-right dropdown-content" area-labelledby="switchrole{{reportinstance}}">
-            <li role="presentation">
+            <!-- <li role="presentation">
                 <a href='{{config.wwwroot}}/blocks/reportdashboard/dashboard.php' class="dropdown-item menu-action">{{#str}}defaultrole, block_reportdashboard{{/str}}</a>
-            </li>
+            </li> -->
         {{#roles}}
             <li role="presentation" class='{{active}}'>
                 <a href='{{config.wwwroot}}/blocks/reportdashboard/dashboard.php?role={{roleshortname}}&dashboardurl={{dashboardurl}}'
