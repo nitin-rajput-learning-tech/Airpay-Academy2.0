@@ -66,10 +66,10 @@ class mass_enroll_form extends moodleform {
         $mform->setType('roleassign', PARAM_INT);
 
 		$ids = array (
-			'username' => get_string('username', 'local_courses')
+			'email' => get_string('username', 'local_courses')
 		);
-		$mform->addElement('hidden',  'firstcolumn',  'username');
-		$mform->setDefault('firstcolumn', 'username');
+		$mform->addElement('hidden',  'firstcolumn',  'email');
+		$mform->setDefault('firstcolumn', 'email');
 		$mform->setType('firstcolumn', PARAM_RAW);
 /*		$mform->addElement('select', 'firstcolumn', get_string('firstcolumn', 'local_courses'), $ids);
 		$mform->setDefault('firstcolumn', 'idnumber');

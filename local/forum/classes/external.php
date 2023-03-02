@@ -154,6 +154,9 @@ class local_forum_external extends external_api
                 $validateddata->startdate = time();
                 $validateddata->enddate = 0;
                 $validateddata->open_coursetype = 1;
+                if(isset($validateddata->concatshortname) && !empty($validateddata->concatshortname)){
+                    $validateddata->shortname = $validateddata->concatshortname.'_'.$validateddata->shortname;
+                }
                 $examid = create_course($validateddata, $editoroptions);
                 // Update course tags.
                 if (isset($validateddata->tags)) {

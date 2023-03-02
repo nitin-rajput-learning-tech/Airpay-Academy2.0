@@ -395,3 +395,4 @@ $string['selectedrole'] = 'Selected {$a}';
 $string['select_level5department'] = 'Select Territory';
 $string['hold'] = 'Hold';
 $string['territory_structure'] = 'Territory Structure';
+$string['onlineexams'] = 'Online Exams';

@@ -203,19 +203,24 @@ class custom_onlineexams_form extends moodleform {
 
             }
 
-            $mform->addElement('text', 'shortname', get_string('onlineexamcode','local_onlineexams'), 'maxlength="100" size="20"');
-            $mform->addHelpButton('shortname', 'onlineexamcode','local_onlineexams');
-
-
-            if (!empty($onlineexam->id) and !has_capability('moodle/course:changeshortname', $categorycontext)) {
+            if (!empty($onlineexam->id)) {
+                $mform->addElement('static', 'shortname_static', get_string('shortname', 'local_costcenter'), 'maxlength="100" size="20"');
+    
+                // $mform->addRule('shortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');
+                $mform->addElement('hidden', 'shortname');
+                $mform->setType('shortname', PARAM_TEXT);
                 $mform->hardFreeze('shortname');
                 $mform->setConstant('shortname', $onlineexam->shortname);
-            }elseif(has_capability('moodle/course:changefullname', $categorycontext)) {
-
-                $mform->addRule('shortname', get_string('missingshortname','local_onlineexams'), 'required', null, 'client');
-                $mform->setType('shortname', PARAM_TEXT);
-
+            } else {
+                $shortnamestatic = 'oex';
+                $shortname = array();
+                $shortname[] = $mform->createElement('hidden',  'concatshortname', $shortnamestatic);
+                $shortname[] = $mform->createElement('static',  'shortnamestatic', '', '<span class="shortnamestatic">' . $shortnamestatic . '</span>_');
+                $shortname[] = $mform->createElement('text', 'shortname', '', 'maxlength="100" size="20"');
+                $mform->addGroup($shortname,  'groupshortname',  get_string('shortname', 'local_costcenter'),  array(''),  false);
+                $mform->addRule('groupshortname', get_string('missingshortname', 'local_onlineexams'), 'required', null, 'client');
             }
+
             $identify = array();
             $identifyone = array();
             $identifytwo = array();
@@ -425,11 +430,17 @@ class custom_onlineexams_form extends moodleform {
         $errors = parent::validation($data, $files);
 		$form_data = data_submitted();
         // Add field validation check for duplicate shortname.
-        if ($onlineexam = $DB->get_record('course', array('shortname' => $data['shortname']), '*', IGNORE_MULTIPLE)) {
+        
+        $shortname = !empty(trim($data['concatshortname'])) ? trim($data['concatshortname']) . '_' . trim($data['shortname']) : trim($data['shortname']);
+        if ($onlineexam = $DB->get_record('course', array('shortname' => $shortname), '*', IGNORE_MULTIPLE)) {
             if (empty($data['id']) || $onlineexam->id != $data['id']) {
-                $errors['shortname'] = get_string('shortnametaken', 'local_onlineexams', $onlineexam->fullname);
+                $errors['groupshortname'] = get_string('shortnametaken', 'local_onlineexams', $onlineexam->fullname);
             }
-        }  
+        }
+        if (empty(trim($data['shortname'])) && $data['id'] == 0) {
+            $errors['groupshortname'] = get_string('shortnamecannotbeempty', 'local_costcenter');
+        }
+
 		 if (isset($data['timeopen']) && $data['timeopen']
                 && isset($data['timeclose']) && $data['timeclose']) {
             if ($data['timeclose'] < $data['timeopen']) {
