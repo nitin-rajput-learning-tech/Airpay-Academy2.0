@@ -21,7 +21,7 @@
  * @package BizLMS
  * @subpackage block_learnerscript
  */
-use block_learnerscript\local\querylib;
+
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 
@@ -33,64 +33,53 @@ class report_dailyuniquelogins extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
         $this->parent = true;
-        $this->columns = array('dailyuniquelogins' => array('usercount','day', 'month', 'monthname','year'));
+        $this->columns = array('dailyuniquelogins' => array(/*'employeename', 'email',  */'usercount',/*'day',*/ 'month', 'monthname','year'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
-        $this->filters = array('organization','departments', 'subdepartments');
-        $this->groupcolumn = 'day, monthname, year';
-        $this->sqlorder['column'] = 'year';
-        $this->sqlorder['dir'] = 'desc';
+        $this->filters = array('organization','departments');
+        $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated))';
+        $this->sqlorder['column'] = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated))';        
         $this->orderable = array(' ');
     }
     
     function init() {
         parent::init();
     }
+
     function count() {
-        $this->sql = "SELECT COUNT(l.id) ";
+        $this->sql = "SELECT count(DISTINCT(concat(YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated))))) ";
     }
-    function select() {
-        $this->sql  = "SELECT COUNT(l.id) as usercount, day, month, MONTHNAME(FROM_UNIXTIME(l.count_date))  as monthname, year
-                 ";
+
+    function select() {      
+        $this->sql  = "SELECT lsl.userid, COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
         parent::select();
     }
+
     function from() {
-        $this->sql .= " FROM {local_uniquelogins} l ";
+        $this->sql .= " FROM {logstore_standard_log} as lsl ";
     }
+
     function joins() {
-        $this->sql .= " JOIN {user} u ON u.id = l.userid ";
+        $this->sql .= " JOIN {user} u ON u.id = lsl.userid ";
         parent::joins();
     }
-    function where($count){
-        global $USER, $DB;
-        // $this->sql .= " WHERE 1=1 group by day, month, year";
-        $this->sql .= " WHERE 1=1 ";
-        $systemcontext = context_system::instance();
-        // getscheduled report
-        // if (!is_siteadmin()) {
-        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-        //     if (!empty($scheduledreport)) {
-        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-        //     $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-        //     } else {
-        //         $ohs = $dhs = 1;
-        //     }
-        // }
-        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //     $this->sql .= " ";
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-        //     $this->sql .= " AND u.open_costcenterid = :costcenterid ";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid; 
-        // }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-        //     $this->sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid; 
-        //     $this->params['departmentid'] = $USER->open_departmentid;  
-        // }else{
-        //     $this->sql .= " AND u.open_costcenterid = :costcenterid AND u.open_departmentid = :departmentid AND u.open_subdepartment = :subdepartmentid";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid; 
-        //     $this->params['departmentid'] = $USER->open_departmentid;
-        //     $this->params['subdepartmentid'] = $USER->open_subdepartment;  
-        // }
+
+    function where(){
+       
+        $this->sql .= " WHERE lsl.action LIKE '%loggedin%' and lsl.userid > 2 ";
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'u.open_path', null, 'lowerandsamepath');
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else {
+            $this->sql .= $costcenterpathconcatsql;
+        }
+
+        if ($this->conditionsenabled) {
+            $conditions = implode(',', $this->conditionfinalelements);
+            if (empty($conditions)) {
+                return array(array(), 0);
+            }
+            $this->sql .= " AND u.id IN ( $conditions )";
+        }    
         parent::where();
     }
    
@@ -102,29 +91,25 @@ class report_dailyuniquelogins extends reportbase implements report {
             $this->sql .= " AND ($fields) ";
         }
     } 
+
     function filters(){  
+
         if (!empty($this->params['filter_organization'])  && $this->params['filter_organization'] > 0) {
             $organization = $this->params['filter_organization'];
             $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
-            $this->params["organizationparam_{$organization}"] = '%/'.$organization.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_organization)." ) ";
+            $this->params["organizationparam_{$organization}"] = '%/' . $organization . '/%';
+            $this->sql .= " AND ( " . implode(' OR ', $filter_organization) . " ) ";
         }
 
         if ($this->params['filter_departments'] > 0) {
             $department = $this->params['filter_departments'];
             $filter_department[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
-            $this->params["departmentparam_{$department}"] = '%/'.$department.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_department)." ) ";
+            $this->params["departmentparam_{$department}"] = '%/' . $department . '/%';
+            $this->sql .= " AND ( " . implode(' OR ', $filter_department) . " ) ";
         }
 
-        if ($this->params['filter_subdepartments'] > 0) {
-            $subdepartments = $this->params['filter_subdepartments'];
-            $filter_subdepartments[] = " concat('/',u.open_path,'/') LIKE :subdepartmentsparam_{$subdepartments}";
-            $this->params["subdepartmentsparam_{$subdepartments}"] = '%/'.$subdepartments.'/%';
-            $this->sql .= " AND ( ".implode(' OR ', $filter_subdepartments)." ) ";
-        }
+
     }
-
     /**
      * [get_rows description]
      * @param  array  $trainermandays [description]
@@ -134,3 +119,5 @@ class report_dailyuniquelogins extends reportbase implements report {
         return $data;
     }
 }
+
+
