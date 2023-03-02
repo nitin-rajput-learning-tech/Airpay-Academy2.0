@@ -155,6 +155,9 @@ class local_onlineexams_external extends external_api
                 $validateddata->startdate = time();
                 $validateddata->enddate = 0;
                 $validateddata->open_coursetype = 1;
+                if(isset($validateddata->concatshortname) && !empty($validateddata->concatshortname)){
+                    $validateddata->shortname = $validateddata->concatshortname.'_'.$validateddata->shortname;
+                }
                 $examid = create_course($validateddata, $editoroptions);
                 // Update course tags.
                 if (isset($validateddata->tags)) {
@@ -211,6 +214,7 @@ class local_onlineexams_external extends external_api
                             $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                         }
                     }
+                    
                     update_course($validateddata, $editoroptions);
 
                     // purge appropriate caches in case fix_course_sortorder() did not change anything

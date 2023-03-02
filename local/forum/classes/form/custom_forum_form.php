@@ -202,20 +202,37 @@ class custom_forum_form extends moodleform {
                 $mform->setType('fullname', PARAM_TEXT);
 
             }
-
-            $mform->addElement('text', 'shortname', get_string('forumcode','local_forum'), 'maxlength="100" size="20"');
-            $mform->addHelpButton('shortname', 'forumcode','local_forum');
-
-
-            if (!empty($forum->id) and !has_capability('moodle/course:changeshortname', $categorycontext)) {
+            if (!empty($forum->id)) {
+                $mform->addElement('static', 'shortname_static', get_string('shortname', 'local_costcenter'), 'maxlength="100" size="20"');
+    
+                // $mform->addRule('shortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');
+                $mform->addElement('hidden', 'shortname');
+                $mform->setType('shortname', PARAM_TEXT);
                 $mform->hardFreeze('shortname');
                 $mform->setConstant('shortname', $forum->shortname);
-            }elseif(has_capability('moodle/course:changefullname', $categorycontext)) {
-
-                $mform->addRule('shortname', get_string('missingshortname','local_forum'), 'required', null, 'client');
-                $mform->setType('shortname', PARAM_TEXT);
-
+            } else {
+                $shortnamestatic = 'fo';
+                $shortname = array();
+                $shortname[] = $mform->createElement('hidden',  'concatshortname', $shortnamestatic);
+                $shortname[] = $mform->createElement('static',  'shortnamestatic', '', '<span class="shortnamestatic">' . $shortnamestatic . '</span>_');
+                $shortname[] = $mform->createElement('text', 'shortname', 'local_costcenter', 'maxlength="100" size="20"');
+                $mform->addGroup($shortname,  'groupshortname',  get_string('shortname', 'local_costcenter'),  array(''),  false);
+                $mform->addRule('groupshortname', get_string('missingshortname', 'local_forums'), 'required', null, 'client');
             }
+
+            // $mform->addElement('text', 'shortname', get_string('forumcode','local_forum'), 'maxlength="100" size="20"');
+            // $mform->addHelpButton('shortname', 'forumcode','local_forum');
+
+
+            // if (!empty($forum->id) and !has_capability('moodle/course:changeshortname', $categorycontext)) {
+            //     $mform->hardFreeze('shortname');
+            //     $mform->setConstant('shortname', $forum->shortname);
+            // }elseif(has_capability('moodle/course:changefullname', $categorycontext)) {
+
+            //     $mform->addRule('shortname', get_string('missingshortname','local_forum'), 'required', null, 'client');
+            //     $mform->setType('shortname', PARAM_TEXT);
+
+            // }
             $identify = array();
             $identifyone = array();
             $identifytwo = array();
@@ -463,11 +480,16 @@ class custom_forum_form extends moodleform {
         $errors = parent::validation($data, $files);
 		$form_data = data_submitted();
         // Add field validation check for duplicate shortname.
-        if ($forum = $DB->get_record('course', array('shortname' => $data['shortname']), '*', IGNORE_MULTIPLE)) {
+        $shortname = !empty(trim($data['concatshortname'])) ? trim($data['concatshortname']) . '_' . trim($data['shortname']) : trim($data['shortname']);
+        if ($forum = $DB->get_record('course', array('shortname' => $shortname), '*', IGNORE_MULTIPLE)) {
             if (empty($data['id']) || $forum->id != $data['id']) {
-                $errors['shortname'] = get_string('shortnametaken', 'local_forum', $forum->fullname);
+                $errors['groupshortname'] = get_string('shortnametaken', 'local_forum', $forum->fullname);
             }
         }  
+
+        if (empty(trim($data['shortname'])) && $data['id'] == 0) {
+            $errors['groupshortname'] = get_string('shortnamecannotbeempty', 'local_costcenter');
+        }
 		 if (isset($data['timeopen']) && $data['timeopen']
                 && isset($data['timeclose']) && $data['timeclose']) {
             if ($data['timeclose'] < $data['timeopen']) {

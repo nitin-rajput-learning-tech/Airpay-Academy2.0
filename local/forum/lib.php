@@ -130,7 +130,7 @@ function local_forum_output_fragment_custom_forum_form($args)
     local_costcenter_set_costcenter_path($formdata);
     $mform = new custom_forum_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
-
+    $formdata['shortname_static'] = $formdata['shortname'];
     $mform->set_data($formdata);
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata) > 2) {

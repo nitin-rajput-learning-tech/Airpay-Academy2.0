@@ -129,22 +129,7 @@
                     </div>
                 </div>
                 {{/ hide_courses}}
-                <!-- {{^ hide_exams}}
-                <div class="w-full pull-left mt-3 dept_details dept_onlinetests">
-                    <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">
-                        <span class="pull-left pr-2 onlinetestscolor"><i class="fa fa-desktop" aria-hidden="true"></i></span>
-                        <span class="details_string pull-left">{{# str}} online_exams, local_costcenter {{/str}}</span>
-                        <span class="pull-right details_count onlinetestscolor"><a href="{{viewonlinetestlink_url}}" class='viewlink' title= "{{#str}} totalonlineexams, local_costcenter {{/str}}">{{ dept_ont }}</a></span>
-                    </div> 
-                    <div class="pull-left col-lg-7 col-md-12 col-sm-12 col-12 px-2 deptdetails_right">
-                        <span class="w-half pull-left inforight"><i class="fa fa-user-o pr-1 pull-left activeicon" aria-hidden="true"></i>
-                            <span class="lable_name pull-left">{{# str}} active {{/str}}<span class="label_colon pull-right mr-1">:</span></span><span class="onlinetestscolor"><a href="{{count_onlinetestactivelink_url}}" class='viewlink' title= "{{#str}} activeonlineexams, local_costcenter {{/str}}">{{ dept_ontactive }}</a></span>
-                        </span>
-
-                         <span class="w-half pull-left"><i class="fa fa-user-times pr-1 pull-left inactiveicon" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} inactive {{/str}}<span class="label_colon pull-right mr-1">:</span></span><span class="onlinetestscolor"><a href="{{count_onlinetestinactivelink_url}}" class='viewlink' title= "{{#str}} inactiveonlineexams, local_costcenter {{/str}}">{{ dept_ontinactive }}</a></span></span>
-                    </div>
-                </div>
-                {{/ hide_exams}} -->
+                
                 {{^ hide_learninplans}}
                 <div class="w-full pull-left mt-3 dept_details dept_learningplans">
                     <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">
@@ -197,6 +182,22 @@
                     </div>
                 </div>
                 {{/ hide_classroom}}
+                {{^ hide_exams}}
+                <div class="w-full pull-left mt-3 dept_details dept_onlineexams">
+                    <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">
+                        <span class="pull-left pr-2 onlineexamscolor"><i class="fa fa-desktop" aria-hidden="true"></i></span>
+                        <span class="details_string pull-left">{{# str}} online_exams, local_costcenter {{/str}}</span>
+                        <span class="pull-right details_count onlineexamscolor"><a href="{{viewonlineexamlink_url}}" class='viewlink' title= "{{#str}} totalonlineexams, local_costcenter {{/str}}">{{ onlineexamcount }}</a></span>
+                    </div> 
+                    <div class="pull-left col-lg-7 col-md-12 col-sm-12 col-12 px-2 deptdetails_right">
+                        <span class="w-half pull-left inforight"><i class="fa fa-user-o pr-1 pull-left activeicon" aria-hidden="true"></i>
+                            <span class="lable_name pull-left">{{# str}} active {{/str}}<span class="label_colon pull-right mr-1">:</span></span><span class="onlineexamscolor"><a href="{{count_onlineexamactivelink_url}}" class='viewlink' title= "{{#str}} activeonlineexams, local_costcenter {{/str}}">{{ activeonlineexamcount }}</a></span>
+                        </span>
+
+                         <span class="w-half pull-left"><i class="fa fa-user-times pr-1 pull-left inactiveicon" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} inactive {{/str}}<span class="label_colon pull-right mr-1">:</span></span><span class="onlineexamscolor"><a href="{{count_onlineexaminactivelink_url}}" class='viewlink' title= "{{#str}} inactiveonlineexams, local_costcenter {{/str}}">{{ inactiveonlineexamcount }}</a></span></span>
+                    </div>
+                </div>
+                {{/ hide_exams}}
                 <!-- {{^ hide_program}}
                 <div class="w-full pull-left mt-3 dept_details dept_programs">
                     <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">

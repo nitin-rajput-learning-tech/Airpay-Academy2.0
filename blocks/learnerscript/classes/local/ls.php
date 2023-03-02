@@ -1671,13 +1671,13 @@ class ls {
         }
         if (!is_siteadmin()) {
            // $roles = $this->get_currentuser_roles();
-	      $rolesql = "SELECT DISTINCT CONCAT(r.id,'-',ctx.contextlevel)  as roleid, r.shortname
+	      	$rolesql = "SELECT DISTINCT CONCAT(r.id,'-',ctx.contextlevel)  as roleid, r.shortname
 	                   FROM {role} AS r
 	                   JOIN {role_assignments} AS ra ON ra.roleid = r.id
 	                   JOIN {context} as ctx ON ctx.id = ra.contextid
 	                   WHERE ra.userid = $USER->id";
-		      $roles = $DB->get_records_sql($rolesql);
-		      ksort($roles);
+			$roles = $DB->get_records_sql($rolesql);
+			ksort($roles);
         } else {
             // $roles = get_switchable_roles($systemcontext);
             $rolesql = "SELECT DISTINCT concat(r.id,'-',rcl.contextlevel)  as roleid, r.shortname
