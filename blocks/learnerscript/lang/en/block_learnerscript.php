@@ -1240,4 +1240,7 @@ $string['geovillage'] = 'Village';
 $string['employe'] = 'User';
 $string['category'] = 'category';
 $string['category_help'] = 'categorisation for the report';
+
+
+$string['report_userparticipation'] = 'User Participation Report';
 $string['organisation'] = 'Organization';

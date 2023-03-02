@@ -26,7 +26,7 @@ use block_learnerscript\local\pluginbase;
 class plugin_usersdata extends pluginbase {
 
     public function init() {
-        $this->fullname = get_string('userdata', 'block_learnerscript');
+        $this->fullname = get_string('usersdata', 'block_learnerscript');
         $this->type = 'undefined';
         $this->form = true;
         $this->reporttypes = array('usersdata');

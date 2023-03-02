@@ -37,67 +37,86 @@ class report_usersdata extends reportbase {
         parent::__construct($report, $reportproperties);
         $this->components = array('columns', 'conditions', 'ordering', 'permissions', 'filters', 'plot');
         $this->parent = true;
-        $this->columns = ['userfield' => ['fullname','username','firstname','lastname','email','employeeid','reportingmanager','userstatus']];
-        $this->orderable = array('fullname', 'email', 'enrolled', 'inprogress', 'completed','grade','progress',
-                            'badges');
-        $this->filters = array('users');
+        $this->columns = ['userfield'=>['userfield']];
+        $this->filters = ['organization', 'user'];
+        $this->orderable = array('employeename');
         $this->defaultcolumn = 'u.id';
-
     }
-    function count() {
-      $this->sql  = " SELECT count(u.id) ";
+    function init()
+    {
+        parent::init();
     }
 
-    function select() {
+    function count()
+    {
+        $this->sql = " SELECT COUNT(u.id) ";
+    }
+    function select()
+    {
       $this->sql = " SELECT u.id as userid, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*";
-      parent::select();
+        parent::select();
     }
-    
-    function from() {
-      $this->sql .= " FROM {user} as u";
+    function from()
+    {
+        $this->sql .= " FROM {user} u ";
     }
-
-    function joins() {
-      // $this->sql .= " JOIN {local_costcenter} as c ON c.id = u.open_costcenterid ";
-      $this->sql .= " JOIN {local_costcenter} as c ON concat('/',c.id,'/') LIKE concat(u.open_path,'/%') AND c.depth = 1 ";
-
-      parent::joins();
+    function joins()
+    {
+        $this->sql .= "JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1 ";
+        parent::joins();
     }
+    function where()
+    {
+        global $USER, $DB;
 
-    function where() {
-      global $USER, $DB;
-         $this->sql .=  " WHERE u.deleted = 0 ";
-        $categorycontext =  (new \local_users\lib\accesslib())::get_module_context();
+        $this->sql .= " WHERE u.id > :id AND u.deleted = :deleted AND u.suspended = :suspended ";
+        $this->params['id'] = 2;
+        $this->params['deleted'] = 0;
+        $this->params['suspended'] = 0;
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'u.open_path');
+        // getscheduled report       
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else {
+            $this->sql .= $costcenterpathconcatsql;
+        }
+        if ($this->conditionsenabled) {
+            $conditions = implode(',', $this->conditionfinalelements);
+            if (empty($conditions)) {
+                return array(array(), 0);
+            }
+            $this->sql .= " AND u.id IN ( $conditions )";
+        }
 
-      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
-
-      if (is_siteadmin()) {
-          $this->sql .= "";
-      } else  {
-          $this->sql .= $costcenterpathconcatsql;
-      }
-        // echo $this->sql; exit;
-         parent::where();
+        parent::where();
     }
-
-    function search() {
+    function search()
+    {
         if (isset($this->search) && $this->search) {
-            $fields = array("CONCAT(u.firstname, ' ', u.lastname)", "u.email");
+            $fields = array("CONCAT(u.firstname, ' ' , u.lastname)", "lc.fullname");
             $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
             $fields .= " LIKE '%" . $this->search . "%' ";
             $this->sql .= " AND ($fields) ";
         }
     }
+    function filters()
+    {
+        if (!empty($this->params['filter_organization'])  && $this->params['filter_organization'] > 0) {
+            $organization = $this->params['filter_organization'];
+            $filter_organization[] = " concat('/',u.open_path,'/') LIKE :organizationparam_{$organization}";
+            $this->params["organizationparam_{$organization}"] = '%/' . $organization . '/%';
+            $this->sql .= " AND ( " . implode(' OR ', $filter_organization) . " ) ";
+        }
 
-    function filters() {
+       
         if (!empty($this->params['filter_user'])) {
             $userid = $this->params['filter_user'];
             $this->sql .= " AND u.id = :userid ";
             $this->params['userid'] = $userid;
         }
-    } 
-
-    public function get_rows($usersdata) {
-        return $usersdata;
     }
-}   
+    public function get_rows($users)
+    {
+        return $users;
+    }
+}

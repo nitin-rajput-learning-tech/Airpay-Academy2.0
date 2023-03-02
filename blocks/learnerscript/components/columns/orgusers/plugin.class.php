@@ -45,32 +45,22 @@ class plugin_orgusers extends pluginbase {
 
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB;
+       
         switch ($data->column) {
             case 'assignedroles':
-                $sql = "SELECT r.id, 
-                        CASE
-                            WHEN (r.name != '') THEN r.name
-                            ELSE r.shortname
-                        END as rolename
-                        FROM {user} u
-                        JOIN {role_assignments} ra ON ra.userid = u.id
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {context} cxt ON cxt.id = ra.contextid 
-                        WHERE ra.userid = $row->id AND cxt.contextlevel = 10";
-                $userroles = $DB->get_records_sql_menu($sql);
-                // $assignedroles = array();
-                // if($userroles){
-                //     $userroleids = array_keys($userroles);
-                //     $systemcontext = context_system::instance();
-                //     $switchableroles = get_switchable_roles($systemcontext);
-                //     $sroleids = array_keys($switchableroles);
-                //     $user_switchableroles = array_intersect($userroleids,$sroleids);
-                //     $rolenames = array();
-                //     foreach($user_switchableroles as $user_switchablerole){
-                //         $rolenames[] = $userroles[$user_switchablerole];
-                //     }
-                // }
-                // $row->assignedroles = !empty($rolenames) ? implode(',', $rolenames) : '--';
+                $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+                $costcenterpath = $DB->get_field_sql("SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ",array('organisationid'=>$row->costcenterid));
+                $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterpath);
+                $sql = " SELECT r.id, 
+                            CASE
+                                WHEN (r.name != '') THEN r.name
+                                ELSE r.shortname
+                            END as rolename
+                            FROM {role_assignments} AS ra 
+                            JOIN {user} AS u on u.id=ra.userid 
+                            JOIN {role} r ON r.id = ra.roleid
+                            WHERE  ra.contextid=:contextid $condition ";
+                $userroles = $DB->get_records_sql_menu($sql, array('contextid' => $context->id)); 
                 
                 $row->{$data->column} = !empty($userroles) ? implode(', ', $userroles) : '--';
                 break;
