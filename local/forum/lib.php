@@ -697,7 +697,7 @@ function local_forum_quicklink_node()
         $coursedata['space_count'] = 'one';
         $content = $OUTPUT->render_from_template('block_quick_navigation/quicklink_node', $coursedata);
     }
-    return array('5' => $content);
+    return array('3' => $content);
 }
 
 function add_forum_forum($validateddata, $forumid)
