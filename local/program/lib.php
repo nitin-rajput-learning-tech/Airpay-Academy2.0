@@ -398,6 +398,19 @@ class programcourse_form extends moodleform {
         return $errors;
     }
 }
+function local_program_completion_form_flag($mform, $programid, $levelid){
+    global $DB;
+    if($levelid > 0){
+        $completionsexist = $DB->record_exists('local_bc_level_completions', array('programid' => $programid, 'completion_status' => 1, 'levelid' => $levelid));
+    }else{
+        $completionsexist = $DB->record_exists('local_program_users', array('programid' => $programid, 'completion_status' => 1));
+    }
+    if($completionsexist){
+        $mform->addElement('static', '', '', get_string('err_settingslocked', 'local_program'));
+        $mform->addElement('button', 'settingsunlock', get_string('unlockcompletiondelete', 'local_program'), array('id' => 'reset_program_completions', 'data-programid' => $programid, 'data-levelid' => $levelid));
+    }
+    return $completionsexist;
+}
 function local_program_output_fragment_new_catform($args) {
     global $CFG, $DB;
 

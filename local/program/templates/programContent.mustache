@@ -56,6 +56,11 @@
         {{/ cancreatelevel }}
         {{{unenrolbutton}}}
 {{/ action}}
+{{# cansetprogramcompletioncriteria}}
+    <li>
+        <a class="course_extended_menu_itemlink" title='{{# str}} programcompletion, local_program{{/ str}}' href="javascript:void(0)"  onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_completion_settings', form_status:0, plugintype: 'local_program', pluginname: 'program_completion_settings', id: {{programcompletionid}}, pid: {{programid}} }) })(event)"><i class="icon fa fa-clock-o" aria-hidden="true" aria-label='' title = '{{# str}} programcompletion, local_program {{/ str}}' ></i></a>
+    </li>
+{{/ cansetprogramcompletioncriteria}}
         {{{ challenge_element }}}
         {{# certificate_exists }}
             {{# certificate_download }}

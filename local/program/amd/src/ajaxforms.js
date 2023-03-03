@@ -134,6 +134,36 @@ define(['jquery',
                 case 'program_managelevel_form':
                     header_label = {key:'addlevel', component:'local_program'};
                 break;
+                case 'level_completion_settings':
+                    switch (args.id) {
+                        case 0:
+
+                            header_label = {key:'addcompletioncriteria', component:'local_program'};
+
+                        break;
+
+                        default:
+
+                            header_label = {key:'updatecompletioncriteria', component:'local_program'};
+
+                        break;
+                    }
+                break;
+                case 'program_completion_settings':
+                    switch (args.id) {
+                        case 0:
+
+                            header_label = {key:'addprogramcompletioncriteria', component:'local_program'};
+
+                        break;
+
+                        default:
+
+                            header_label = {key:'updateprogramcompletioncriteria', component:'local_program'};
+
+                        break;
+                    }
+                break;
             }
         customstrings = Str.get_strings([header_label,{
                         key: 'savecontinue',
@@ -404,6 +434,20 @@ define(['jquery',
             return new AjaxForms(args);
         },
         load: function () {
+            $(document).on('click', '#reset_program_completions', function(){
+                var programid = $(this).data('programid')
+                levelid = $(this).data('levelid');
+                $.ajax({
+                type: "POST",
+                url:   M.cfg.wwwroot + '/local/program/ajax.php',
+                data: { programid: programid, levelid:levelid, action:'deletecompletions',
+                    sesskey: M.cfg.sesskey
+                },
+                success: function(returndata) {
+                    window.location.reload();
+                }
+            });
+            });
                $(document).on('click', '.program_classroom_icon', function(){
                     var data = $(this).data();
                     var bodycontent = Fragment.loadFragment('local_program', 'course_classroom_info', 1, data);

@@ -503,6 +503,48 @@ class program {
         }
         return $completions->id;
     }
+    public function program_completion_settings($data){
+        global $DB, $USER;
+        try {
+            $completions = $DB->get_record('local_bc_completion_criteria', array('programid' => $data->programid));
+            if(empty($completions)){
+                $completions = new \stdClass();
+                $completions->programid = $data->programid;
+            }
+            $completions->sessionids = null;
+            $completions->sessiontracking = null;
+            $completions->levelids = implode(',', $data->levelids);
+            $completions->leveltracking = $data->leveltracking;
+            if ($completions->id > 0) {
+                $completions->timemodified = time();
+                $completions->usermodified = $USER->id;
+                $DB->update_record('local_bc_completion_criteria', $completions);
+                $params = array(
+                    'context' => context_system::instance(),
+                    'objectid' => $completions->id,
+                    'other' => array('programid' => $completions->programid)
+                );
+                $event = \local_program\event\program_completions_settings_updated::create($params);
+                $event->add_record_snapshot('local_bc_completion_criteria', $completions->programid);
+                $event->trigger();
+            } else {
+                $completions->timecreated = time();
+                $completions->usercreated = $USER->id;
+                $completions->id = $DB->insert_record('local_bc_completion_criteria', $completions);
+                $params = array(
+                    'context' => context_system::instance(),
+                    'objectid' => $completions->id,
+                    'other' => array('programid' => $completions->programid)
+                );
+                $event = \local_program\event\program_completions_settings_created::create($params);
+                $event->add_record_snapshot('local_bc_completion_criteria', $completions);
+                $event->trigger();
+            }
+        } catch (dml_exception $ex) {
+            print_error($ex);
+        }
+        return true;
+    }
     /**
      * [program_sessions_delete description]
      * @param  [type] $programid [description]
