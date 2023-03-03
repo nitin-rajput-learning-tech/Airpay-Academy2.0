@@ -2002,12 +2002,13 @@ class program {
                         $records[$i] = ${'record' . $i};
                     }
                     $DB->insert_records('local_program_levels', $records);
+                    $this->manage_program_level_completions($level->programid, $levelid, '', $formdata);
                     return true;
                 } else {
                     $level->usercreated = $USER->id;
                     $level->timecreated = time();
                     $level->id = $DB->insert_record('local_program_levels', $level);
-
+                    $this->manage_program_level_completions($level->programid, $levelid, '', $formdata);
                     $params = array(
                         'context' => $categorycontext,
                         'objectid' => $level->id,
@@ -2498,16 +2499,18 @@ class program {
      */
     public function mycompletedlevels($programid, $userid) {
         global $DB;
+
         $mycompletedlevels = array();
-        $mycompletedlevelssql = "SELECT levelids
-                                   FROM {local_program_users}
-                                  WHERE programid = :programid AND userid = :userid ";
-        $mycompletedlevelslist = $DB->get_field_sql($mycompletedlevelssql,
+        // $mycompletedlevelssql = "SELECT levelids
+        //                            FROM {local_program_users}
+        //                           WHERE programid = :programid AND userid = :userid ";
+        $mycompletedlevelssql = "SELECT levelid FROM {local_bc_level_completions} WHERE programid = :programid AND userid = :userid AND completion_status = 1 ";
+        $mycompletedlevelslist = $DB->get_fieldset_sql($mycompletedlevelssql,
             array('programid' => $programid, 'userid' => $userid));
-        if (!empty($mycompletedlevelslist)) {
-            $mycompletedlevels = explode(',', $mycompletedlevelslist);
-        }
-        return $mycompletedlevels;
+        // if (!empty($mycompletedlevelslist)) {
+        //     $mycompletedlevels = explode(',', $mycompletedlevelslist);
+        // }
+        return $mycompletedlevelslist;
     }
     /**
      * [mycompletedlevelcourses description]
@@ -2544,12 +2547,15 @@ class program {
      * @return [type]                       [description]
      */
     public function mylevelsandcompletedlevels($programid) {
+
         global $DB, $USER;
         $levels = $DB->get_fieldset_select('local_program_levels', 'id', 'programid = :programid ORDER BY id ASC',
             array('programid' => $programid));
-        $mylevelcomptllist = $DB->get_field('local_program_users', 'levelids',
+        // $mylevelcomptllist = $DB->get_field('local_program_users', 'levelids', array('programid' => $programid, 'userid' => $USER->id));
+        $mycompletedlevelssql = "SELECT levelid FROM {local_bc_level_completions} WHERE programid = :programid AND userid = :userid AND completion_status = 1 ";
+        $mylevelcomptl = $DB->get_fieldset_sql($mycompletedlevelssql,
             array('programid' => $programid, 'userid' => $USER->id));
-        $mylevelcomptl = explode(',', $mylevelcomptllist);
+        // $mylevelcomptl = explode(',', $mylevelcomptllist);
         return array($levels, $mylevelcomptl);
 
     }
