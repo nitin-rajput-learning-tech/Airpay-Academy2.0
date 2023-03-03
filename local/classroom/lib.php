@@ -600,7 +600,7 @@ class classroomcourse_form extends moodleform
         } 
         $options = array(
             'ajax' => 'local_classroom/form-course-selector',
-            'multiple' => true,
+            'multiple' => false,
             'data-contextid' => $categorycontext->id,
             'data-classroomid' => $cid,
         );
@@ -1079,7 +1079,7 @@ function local_classroom_quicklink_node()
 
         $data = array();
         $local_classrooms = '';
-        $data['percentage'] = $percentage;
+       // $data['percentage'] = $percentage;
         $data['pluginname'] = 'classroom';
         $data['node_header_string'] = get_string('manage_br_classrooms', 'local_classroom');
         $data['plugin_icon_class'] = 'fa fa-desktop';

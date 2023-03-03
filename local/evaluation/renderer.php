@@ -71,9 +71,9 @@ class local_evaluation_renderer extends plugin_renderer_base  {
       }
     }
     if ( (is_siteadmin() OR has_capability('local/evaluation:edititems', $context) ) AND $record->instance == 0  ) {
-         
+      $editimg = html_writer::tag('i', '', array('class' => 'icon fa fa-pencil'));
       $buttons[] =  html_writer::start_tag('li', array('')).
-          html_writer::link("javascript:void(0)",$this->pix_icon('t/edit', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')), array('class'=>'course_extended_menu_itemlink', 'data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).
+          html_writer::link("javascript:void(0)",$editimg, array('class'=>'course_extended_menu_itemlink', 'data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).
           html_writer::end_tag('li');
 
       // if (has_capability('local/evaluation:viewreports', $context))

@@ -121,12 +121,12 @@ function manage_groups_count($stable,$filterdata){
                         $editcolumnisempty = false;
                         if ($cohort->visible) {
                             $showhideurl->param('hide', 1);
-                            $visibleimg = $OUTPUT->pix_icon('t/hide', get_string('hide'));
+                            $visibleimg = $OUTPUT->pix_icon('t/hide', get_string('hidecohort','local_groups'));
 
                             $buttons[] = html_writer::start_tag('li'); 
                                 $buttons[]= html_writer::link(
                                     "javascript:void(0)",
-                                    $OUTPUT->pix_icon('t/hide', get_string('hide'), 'moodle', array('title' => '')),
+                                    $OUTPUT->pix_icon('t/hide', get_string('hidecohort','local_groups'), 'moodle', array('title' => '')),
                                     array('id' => 'confirmhide' . $cohort->id . '', 'onclick' => '(
                                           function(e){
                                     require("local_groups/renderselections").hideshow_cohort(' . $cohort->id . ', "' . $cohort->name . '")
@@ -134,11 +134,11 @@ function manage_groups_count($stable,$filterdata){
                                 $buttons[] = html_writer::end_tag('li');
                         } else {
                             $showhideurl->param('show', 1);
-                            $visibleimg = $OUTPUT->pix_icon('t/show', get_string('show'));
+                            $visibleimg = $OUTPUT->pix_icon('t/show', get_string('showcohort','local_groups'));
                             $buttons[] = html_writer::start_tag('li'); 
                                 $buttons[] = html_writer::link(
                                     "javascript:void(0)",
-                                    $OUTPUT->pix_icon('t/show', get_string('show'), 'moodle', array('title' => '')),
+                                    $OUTPUT->pix_icon('t/show', get_string('showcohort','local_groups'), 'moodle', array('title' => '')),
                                     array('id' => 'confirmshow' . $cohort->id . '', 'onclick' => '(
                                           function(e){
                                     require("local_groups/renderselections").showhide_cohort(' . $cohort->id . ', "' . $cohort->name . '")
@@ -620,10 +620,10 @@ function local_groups_get_groups($contextid, $page = 0, $perpage = 10, $search =
        $sql .= " AND c.name LIKE '%".trim($search->search_query)."%'";
     } 
 
-    $totalgroups = $allgroups = $DB->count_records('cohort', array('contextid' => $contextid));
-    if (!empty($search)) {
+    //$totalgroups = $allgroups = $DB->count_records('cohort', array('contextid' => $contextid));
+   // if (!empty($search)) {
         $totalgroups = $DB->count_records_sql($countfields . $sql, $params);
-    }
+    //}
         $groups = $DB->get_records_sql($fields . $sql . $order, $params, $page, $perpage);
     return array('totalgroups' => $totalgroups, 'groups' => $groups, 'allgroups' => $allgroups);
 }

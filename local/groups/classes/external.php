@@ -334,12 +334,13 @@ class local_groups_external extends external_api {
     $stable->thead = false;
     $stable->start = $offset;
     $stable->length = $limit;
-    $group_members_count = $DB->count_records('local_groups');
+  //  $group_members_count = $DB->count_records('local_groups');
     $local_groups = new local_groups($stable->start, $stable->length, $filtervalues, $showall);
-        $output = $PAGE->get_renderer('local_groups');
+    $group_count=$local_groups->groups['totalgroups'];
+    $output = $PAGE->get_renderer('local_groups');
        $result = $output->render($local_groups);
         return [
-            'totalcount' => $group_members_count,
+            'totalcount' => $group_count,
             'records' =>$result,
             'options' => $options,
             'dataoptions' => $dataoptions,
