@@ -36,8 +36,15 @@ $PAGE->set_context($systemcontext);
 $PAGE->set_url('/local/skillrepository/skillinfo.php');
 
 $skill = $DB->get_record('local_skill', array('id' => $id));
-
-if (!has_capability('local/skillrepository:create_skill',(new \local_skillrepository\lib\accesslib())::get_module_context()) && !is_siteadmin()) {
+if (!is_siteadmin() && has_capability('local/skillrepository:create_skill',$systemcontext)) {
+    $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='ls.open_path');
+     $selectsql = "SELECT  ls.id  FROM {local_skill} AS ls
+        WHERE ls.id > 0  AND ls.id = {$id} ".$costcenterpathconcatsql;
+    if(!$DB->record_exists_sql($selectsql)){
+        throw new moodle_exception(get_string('nopermission', 'local_users'));
+    }
+}
+if (!has_capability('local/skillrepository:create_skill',$systemcontext) && !is_siteadmin()) {
     print_error('Sorry, You are not accessable to this page');
 }
 

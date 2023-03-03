@@ -43,7 +43,7 @@ $string['currentusers'] = 'Current users';
 $string['currentusersmatching'] = 'Current users matching';
 $string['defaultcontext'] = 'Default context';
 $string['delcohort'] = 'Delete group';
-$string['delconfirm'] = 'Do you really want to delete group "{$a}"?';
+$string['delconfirm'] = 'Do you really want to delete group "<b>{$a}</b> "?';
 $string['description'] = 'Description';
 $string['displayedrows'] = '{$a->displayed} rows displayed out of {$a->total}.';
 $string['duplicateidnumber'] = 'group with the same ID number already exists';
@@ -121,7 +121,7 @@ $string['addnewgroups']='Add New Group';
 $string['editgroups']='Edit Group';
 $string['editgroup']='Update Group';
 $string['create_group'] = 'Create Group';
-$string['groupname']='Missing Group name';
+$string['groupname']='Please add group name';
 $string['assignments']='Assignments';
 
 $string['tabgroupid']='Group-Id';

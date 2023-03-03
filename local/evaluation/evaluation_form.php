@@ -116,7 +116,6 @@ class evaluation_form extends moodleform {
         {
         $mform->addElement('header', 'evaluationhdr', get_string('target_audiance','local_evaluation'));
         local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,4), true, 'local_evaluation', $categorycontext, $multiple = false);
-        // local_users_get_userprofile_fields($mform, $this->_ajaxformdata, $this->_customdata, false, 'local_evoluation', $categorycontext, $multiple = false);
             $functionname ='globaltargetaudience_elementlist';
 
             if(function_exists($functionname)) {
