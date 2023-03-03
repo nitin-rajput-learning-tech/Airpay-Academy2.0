@@ -362,8 +362,10 @@ class local_program_external extends external_api {
                     $return = $DB->get_records_sql($sessions_sql);
                 break;
                 case 'program_completions_courses_selector':
-                    $courses_sql = "SELECT c.id, c.fullname FROM {course} as c JOIN {local_program_level_courses} as lcc on lcc.courseid=c.id where lcc.programid = {$formoptions->programid}";
+
+                    $courses_sql = "SELECT c.id, c.fullname FROM {course} as c JOIN {local_program_level_courses} as lcc on lcc.courseid=c.id where lcc.programid = {$formoptions->programid} AND lcc.levelid = {$formoptions->levelid} ";
                     $return = $DB->get_records_sql($courses_sql);
+
                 break;
                 case 'program_room_selector':
                     if (!empty($formoptions->instituteid)) {
@@ -1274,6 +1276,87 @@ class local_program_external extends external_api {
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
             'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
             'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
+        ));
+    }
+    public static function level_completion_settings_parameters(){
+        return new external_function_parameters([
+            'contextid' => new external_value(PARAM_INT, 'contextid'),
+            'form_status' => new external_value(PARAM_INT, 'Form position', 0),
+            'jsonformdata' => new external_value(PARAM_RAW, 'jsonformdata'),
+        ]);
+    }
+    public static function level_completion_settings($contextid, $form_status, $jsonformdata){
+        global $DB;
+        $context = context::instance_by_id($contextid, MUST_EXIST);
+        self::validate_context($context);
+        $serialiseddata = json_decode($jsonformdata);
+        $data = array();
+        parse_str($serialiseddata, $data);
+
+        $warnings = array();
+
+        $program = new stdClass();
+
+        // The last param is the ajax submitted data.
+        $mform = new \local_program\form\level_completion_form(null, array('id' => $data['id'], 'pid' => $data['programid'],'levelid' => $data['levelid'], 'form_status' => $data['form_status']), 'post', '', null, true, $data);
+        $validateddata = $mform->get_data();
+        if ($validateddata) {
+            $programid = $validateddata->programid;
+            $levelid = $validateddata->levelid;
+            $courses = $validateddata->courseids;
+            $programid = (new program)->manage_program_level_completions($programid, $levelid, $courses, $validateddata);
+        } else {
+            // Generate a warning.
+            throw new moodle_exception('missingprogram', 'local_program');
+        }
+        $return = array(
+            'id' => $programid,
+            'form_status' => $form_status = -2);
+        return $return;
+    }
+    public static function level_completion_settings_returns(){
+        return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'Context id for the framework'),
+            'form_status' => new external_value(PARAM_INT, 'form_status'),
+        ));
+    }
+    public static function program_completion_settings_parameters(){
+        return new external_function_parameters([
+            'contextid' => new external_value(PARAM_INT, 'contextid'),
+            'form_status' => new external_value(PARAM_INT, 'Form position', 0),
+            'jsonformdata' => new external_value(PARAM_RAW, 'jsonformdata'),
+        ]);
+    }
+    public static function program_completion_settings($contextid, $form_status, $jsonformdata){
+        global $DB;
+        $context = context::instance_by_id($contextid, MUST_EXIST);
+        self::validate_context($context);
+        $serialiseddata = json_decode($jsonformdata);
+        $data = array();
+        parse_str($serialiseddata, $data);
+
+        $warnings = array();
+
+        $program = new stdClass();
+
+        // The last param is the ajax submitted data.
+        $mform = new \local_program\form\program_completion_form(null, array('id' => $data['id'], 'pid' => $data['programid'], 'form_status' => $data['form_status']), 'post', '', null, true, $data);
+        $validateddata = $mform->get_data();
+        if ($validateddata) {
+            $programid = (new program)->program_completion_settings($validateddata);
+        } else {
+            // Generate a warning.
+            throw new moodle_exception('missingprogram', 'local_program');
+        }
+        $return = array(
+            'id' => $programid,
+            'form_status' => $form_status = -2);
+        return $return;
+    }
+    public static function program_completion_settings_returns(){
+        return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'Context id for the framework'),
+            'form_status' => new external_value(PARAM_INT, 'form_status'),
         ));
     }
 }

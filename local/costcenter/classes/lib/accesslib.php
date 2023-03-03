@@ -283,12 +283,11 @@ class accesslib
 
     public static function costcenterpath_match_sql($costcenterpath,$matchcolumnname,$datatype){
 
+        $match_sql='';
+        $paths[] = $costcenterpath.'/%';
+        $paths[] = $costcenterpath;
 
         if($datatype == self::ALL_MODULE_CONTENT){
-
-            $match_sql='';
-            $paths[] = $costcenterpath.'/%';
-            $paths[] = $costcenterpath;
 
             while ($costcenterpath = rtrim($costcenterpath,'0123456789')) {
                 $costcenterpath = rtrim($costcenterpath, '/');
@@ -298,16 +297,13 @@ class accesslib
                 $paths[] = $costcenterpath;
             }
 
-            if(!empty($paths)){
-                foreach($paths AS $path){
-                    $pathsql[] = " $matchcolumnname LIKE '$path' ";
-                }
-                $match_sql.= " ( ".implode(' OR ', $pathsql).' ) ';
+        }
+        if(!empty($paths)){
+
+            foreach($paths AS $path){
+                $pathsql[] = " $matchcolumnname LIKE '$path' ";
             }
-
-        }else{
-
-            $match_sql= " CONCAT('',$matchcolumnname,'/') LIKE '%$costcenterpath/%' ";
+            $match_sql.= " ( ".implode(' OR ', $pathsql).' ) ';
 
         }
 
@@ -331,9 +327,10 @@ class accesslib
 
                     $paths[] = $userpathinfo.'/%';
 
+                    $paths[] = $userpathinfo;
+
                     if($datatype == self::ALL_MODULE_CONTENT){
 
-                        $paths[] = $userpathinfo;
 
                         while ($userpathinfo = rtrim($userpathinfo,'0123456789')) {
 

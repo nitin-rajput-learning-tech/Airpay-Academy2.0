@@ -118,6 +118,84 @@ function local_program_output_fragment_program_form($args) {
 
     return $return;
 }
+function local_program_output_fragment_level_completion_settings($args) {
+    global $CFG, $DB;
+    $args = (object) $args;
+    $context = $args->context;
+    $return = '';
+    $formdata = [];
+    if (!empty($args->jsonformdata)) {
+        $serialiseddata = json_decode($args->jsonformdata);
+        parse_str($serialiseddata, $formdata);
+    }
+    $formdata['id'] = $args->id;
+    $formdata['pid'] = $args->pid;
+    $formdata['levelid'] = $args->levelid;
+    $mform = new \local_program\form\level_completion_form(null, array('id' => $args->id, 'pid' => $args->pid,'levelid' => $args->levelid, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
+    if ($args->id > 0) {
+        $section_completiondata = $DB->get_record('local_bcl_cmplt_criteria', array('id' => $args->id));
+        $section_completiondata->form_status = $args->form_status;
+        if($section_completiondata->courseids=="NULL"){
+            $section_completiondata->courseids=null;
+        }
+        $mform->set_data($section_completiondata);
+    }
+
+    if (!empty((array) $serialiseddata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+    $formheaders = array_keys($mform->formstatus);
+    $nextform = array_key_exists($args->form_status, $formheaders);
+    if ($nextform === false) {
+        return false;
+    }
+    ob_start();
+    $mform->display();
+    $return .= ob_get_contents();
+    ob_end_clean();
+
+    return $return;
+}
+function local_program_output_fragment_program_completion_settings($args){
+    global $CFG, $DB;
+    $args = (object) $args;
+    $context = $args->context;
+    $return = '';
+    $formdata = [];
+    if (!empty($args->jsonformdata)) {
+        $serialiseddata = json_decode($args->jsonformdata);
+        parse_str($serialiseddata, $formdata);
+    }
+    $formdata['id'] = $args->id;
+    $formdata['pid'] = $args->pid;
+    $formdata['levelid'] = $args->levelid;
+    $mform = new \local_program\form\program_completion_form(null, array('id' => $args->id, 'pid' => $args->pid, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
+    if ($args->id > 0) {
+        $program_completiondata = $DB->get_record('local_bc_completion_criteria', array('id' => $args->id));
+        $program_completiondata->form_status = $args->form_status;
+        if($program_completiondata->levelids=="NULL"){
+            $program_completiondata->levelids=null;
+        }
+        $mform->set_data($program_completiondata);
+    }
+
+    if (!empty((array) $serialiseddata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+    $formheaders = array_keys($mform->formstatus);
+    $nextform = array_key_exists($args->form_status, $formheaders);
+    if ($nextform === false) {
+        return false;
+    }
+    ob_start();
+    $mform->display();
+    $return .= ob_get_contents();
+    ob_end_clean();
+
+    return $return;
+}
 function local_program_output_fragment_session_form($args) {
     global $CFG, $DB;
     $args = (object) $args;

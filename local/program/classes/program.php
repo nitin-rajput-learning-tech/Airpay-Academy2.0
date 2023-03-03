@@ -1373,7 +1373,7 @@ class program {
     public function manage_program_course_enrolments($cousre, $user, $roleshortname = 'employee',
         $type = 'enrol', $pluginname = 'program',$programid=null) {
         global $DB;
-        return $this->manage_bclevel_course_enrolments($course, $user, $roleshortname,$type, $pluginname = 'program',$programid);
+        return $this->manage_bclevel_course_enrolments($course, $user, $roleshortname,$type, $pluginname,$programid);
     }
     public function program_levels($programid) {
         global $DB, $USER;
@@ -2207,9 +2207,18 @@ class program {
 
         $enrolmethod = enrol_get_plugin($pluginname);
 
+        $roleid      = $DB->get_field('role', 'id', array(
+            'shortname' => $role
+        ));
+
+
         if (!$DB->record_exists('enrol',$params)) {
 
+
+
             $courseobj = $DB->get_record('course', array('id' => $course));
+
+            $fields = array('customint1'=>$programid,'roleid'=>$roleid);
 
             $enrolid = $enrolmethod->add_instance($courseobj,$fields);
 
@@ -2218,9 +2227,7 @@ class program {
             $this->update_enrol_status($course,$programid,$status=ENROL_INSTANCE_ENABLED);
         }
 
-        $roleid      = $DB->get_field('role', 'id', array(
-            'shortname' => $roleshortname
-        ));
+
         $instance    = $DB->get_record('enrol',$params , '*', MUST_EXIST);
         if (!empty($instance)) {
             if ($type == 'enrol') {
@@ -3035,7 +3042,7 @@ class program {
                 if(!empty($group_list)){
                     $grouquery = array();
                     foreach ($group_list as $key => $group) {
-                        $grouquery[] = " CONCAT(',',lc.open_group,',') LIKE CONCAT('%,',{$group},',%') ";
+                        $grouquery[] = " CONCAT(',',lc.open_group,',') LIKE CONCAT('%,','{$group}',',%') ";
                     }
                     $groupqueeryparams =implode('OR',$grouquery);
 
@@ -3065,7 +3072,7 @@ class program {
                 $params[]= " 1 = CASE WHEN lc.open_designation IS NOT NULL
                             THEN
                                 CASE
-                                    WHEN CONCAT(',',lc.open_designation,',') LIKE CONCAT('%,',{$USER->open_designation},',%')
+                                    WHEN CONCAT(',',lc.open_designation,',') LIKE CONCAT('%,','{$USER->open_designation}',',%')
                                         THEN 1
                                         ELSE 0
                                 END
