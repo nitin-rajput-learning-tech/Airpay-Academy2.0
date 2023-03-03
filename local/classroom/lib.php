@@ -600,7 +600,7 @@ class classroomcourse_form extends moodleform
         } 
         $options = array(
             'ajax' => 'local_classroom/form-course-selector',
-            'multiple' => true,
+            'multiple' => false,
             'data-contextid' => $categorycontext->id,
             'data-classroomid' => $cid,
         );

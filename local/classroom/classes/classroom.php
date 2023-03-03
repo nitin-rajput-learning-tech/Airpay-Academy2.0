@@ -1756,26 +1756,29 @@ class classroom {
     }
     public function manage_classroom_courses($courses) {
         global $DB, $USER;
+        print_r($courses);
         $classroomtrainers = $DB->get_records_menu('local_classroom_trainers', array(
             'classroomid' => $courses->classroomid
         ), 'trainerid', 'id, trainerid');
         $classroomusers    = $DB->get_records_menu('local_classroom_users', array(
             'classroomid' => $courses->classroomid
         ), 'userid', 'id, userid');
-        foreach ($courses->course as $course) {
+        $course = $courses->course;
+        // foreach ($courses->course as $course) {
             $classroomcourseexists = $DB->record_exists('local_classroom_courses', array(
                 'classroomid' => $courses->classroomid,
                 'courseid' => $course
             ));
-            if (!empty($classroomcourseexists)) {
-                continue;
-            }
+            // if (!empty($classroomcourseexists)) {
+            //     continue;
+            // }
             $classroomcourse              = new stdClass();
             $classroomcourse->classroomid = $courses->classroomid;
             $classroomcourse->courseid    = $course;
             $classroomcourse->timecreated = time();
             $classroomcourse->usercreated = $USER->id;
             $classroomcourse->id          = $DB->insert_record('local_classroom_courses', $classroomcourse);
+            print_r($classroomcourse->id);
             $courseobj = $DB->get_record('course', array('id' => $course));
             $fields = array('customint1'=>$courses->classroomid,'roleid'=>$DB->get_field('role','id',array('shortname' => 'employee')));
             $params =array('courseid' => $course, 'enrol' => 'classroom','customint1'=>$courses->classroomid);            
@@ -1809,7 +1812,7 @@ class classroom {
                     $unenrolclassroomuser = $this->manage_classroom_course_enrolments($course, $classroomuser, 'employee', 'enrol',$pluginname = 'classroom',$courses->clasroomid);
                 }
             }
-        }
+        // }
         return true;
     }
     public function update_enrol_status($course,$classroomid,$status){

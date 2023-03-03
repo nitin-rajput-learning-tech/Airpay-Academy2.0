@@ -58,7 +58,7 @@ class custom_onlineexams_form extends moodleform {
 
         if($USER->useraccess['currentroleinfo']['depth'] < $depth){
 
-            $this->formstatus['target_audience']=get_string('target_audience', 'local_users');
+            // $this->formstatus['target_audience']=get_string('target_audience', 'local_users');
 
         }
         parent::__construct($action, $customdata, $method, $target, $attributes, $editable, $formdata);
@@ -315,6 +315,11 @@ class custom_onlineexams_form extends moodleform {
         $mform->addElement('select', 'overduehandling', get_string('overduehandling', 'quiz'),
                 quiz_get_overdue_handling_options());
         $mform->addHelpButton('overduehandling', 'overduehandling', 'quiz');
+        // Grace period time.
+        $mform->addElement('duration', 'graceperiod', get_string('graceperiod', 'quiz'),
+                array('optional' => true));
+        $mform->addHelpButton('graceperiod', 'graceperiod', 'quiz');
+        $mform->hideIf('graceperiod', 'overduehandling', 'neq', 'graceperiod');
         //---------------------------------------------------------------------------
         // Browser security choices.
         $mform->addElement('select', 'browsersecurity', get_string('browsersecurity', 'quiz'),
@@ -361,34 +366,28 @@ class custom_onlineexams_form extends moodleform {
 			// $mform->addElement('date_time_selector', 'enddate', get_string('enddate','local_onlineexams'), array('optional' => false));
             // $mform->addHelpButton('enddate', 'enddate');
 
-            $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
-            if($certificate_plugin_exist){
-                $checkboxes = array();
-                $checkboxes[] = $mform->createElement('advcheckbox', 'map_certificate', null, '', array(),array(0,1));
-                $mform->addGroup($checkboxes, 'map_certificate', get_string('add_certificate', 'local_onlineexams'), array(' '), false);
-                $mform->addHelpButton('map_certificate', 'add_certificate', 'local_onlineexams');
+            // $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
+            // if($certificate_plugin_exist){
+            //     $checkboxes = array();
+            //     $checkboxes[] = $mform->createElement('advcheckbox', 'map_certificate', null, '', array(),array(0,1));
+            //     $mform->addGroup($checkboxes, 'map_certificate', get_string('add_certificate', 'local_onlineexams'), array(' '), false);
+            //     $mform->addHelpButton('map_certificate', 'add_certificate', 'local_onlineexams');
 
 
-                $select = array(null => get_string('select_certificate','local_onlineexams'));
+            //     $select = array(null => get_string('select_certificate','local_onlineexams'));
 
-                $certificatesql = "SELECT id,name FROM {tool_certificate_templates}
-                                    WHERE 1=1 $costcenterpathconcatsql ";
+            //     $certificatesql = "SELECT id,name FROM {tool_certificate_templates}
+            //                         WHERE 1=1 $costcenterpathconcatsql ";
 
-                $cert_templates = $DB->get_records_sql_menu($certificatesql);
-                $certificateslist = $select + $cert_templates;
+            //     $cert_templates = $DB->get_records_sql_menu($certificatesql);
+            //     $certificateslist = $select + $cert_templates;
 
-                $mform->addElement('select',  'open_certificateid', get_string('certificate_template','local_onlineexams'), $certificateslist);
-                $mform->addHelpButton('open_certificateid', 'certificate_template', 'local_onlineexams');
-                $mform->setType('open_certificateid', PARAM_INT);
-                $mform->hideIf('open_certificateid', 'map_certificate', 'neq', 1);
-            }
+            //     $mform->addElement('select',  'open_certificateid', get_string('certificate_template','local_onlineexams'), $certificateslist);
+            //     $mform->addHelpButton('open_certificateid', 'certificate_template', 'local_onlineexams');
+            //     $mform->setType('open_certificateid', PARAM_INT);
+            //     $mform->hideIf('open_certificateid', 'map_certificate', 'neq', 1);
+            // }
 
-        }else if ($formstatus == 2) {
-            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$this->onlineexam->open_path);
-            $mform->addElement('hidden', 'open_costcenterid');
-            $mform->setConstant('open_costcenterid', $org);
-
-            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,HIERARCHY_LEVELS), true, 'local_onlineexams', $categorycontext, $multiple = false);
         }
         $mform->closeHeaderBefore('buttonar');
 		$mform->disable_form_change_checker();

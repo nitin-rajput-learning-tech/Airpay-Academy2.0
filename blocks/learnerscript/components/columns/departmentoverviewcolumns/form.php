@@ -28,26 +28,20 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->libdir . '/formslib.php');
 
-class coursesoverviewcolumns_form extends moodleform {
+class departmentoverviewcolumns_form extends moodleform {
 
     public function definition() {
-        global $DB;
-
+        global $DB, $USER, $CFG;
         $mform = & $this->_form;
-
-        $mform->addElement('header', 'crformheader', get_string('coursesoverviewcolumns', 'block_learnerscript'), '');
-
-        $columns = array('coursename', 'shortname','organization','department','category','coursestatus','noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions','skillname');
-
-        $coursecolumns = array();
+        $mform->addElement('header', 'crformheader', get_string('departmentoverviewcolumns', 'block_learnerscript'), '');
+        $columns = $DB->get_columns('departmentoverviewcolumns');
+        $prinfocolumns = array();
         foreach ($columns as $c) {
-            $coursecolumns[$c->name] = $c->name;
+            $prinfocolumns[$c->name] = $c->name;
         }
 
-        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $coursecolumns);
-
+        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $prinfocolumns);
         $this->_customdata['compclass']->add_form_elements($mform, $this);
-
         // Buttons.
         $this->add_action_buttons(true, get_string('add'));
     }

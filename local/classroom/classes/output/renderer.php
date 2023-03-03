@@ -683,10 +683,9 @@ class renderer extends plugin_renderer_base
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context($classroomid);
         $data = array();
         $assign_courses = false;
-        if (has_capability('local/classroom:createcourse', $categorycontext) && (has_capability('local/classroom:manageclassroom', $categorycontext))) {
+        if (has_capability('local/classroom:createcourse', $categorycontext) && (has_capability('local/classroom:manageclassroom', $categorycontext)) && count($courses) == 0) {
             $assign_courses = true;
         }
-
 
         $selfenrolmenttabcap = false;
         if ((has_capability('local/classroom:deletecourse', $categorycontext) || is_siteadmin()) && (has_capability('local/classroom:manageclassroom', $categorycontext))) {
