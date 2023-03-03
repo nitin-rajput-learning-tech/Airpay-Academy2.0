@@ -18,8 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @author eabyas  <info@eabyas.in>
- * @package BizLMS
- * @subpackage block_learnerscript
+ * @package block_learnerscript
  */
 if (!defined('MOODLE_INTERNAL')) {
     //  It must be included from a Moodle page.
@@ -28,26 +27,17 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->libdir . '/formslib.php');
 
-class coursesoverviewcolumns_form extends moodleform {
+class userparticipation_form extends moodleform {
 
     public function definition() {
-        global $DB;
-
+        global $DB, $USER, $CFG;
         $mform = & $this->_form;
+        $mform->addElement('header', 'crformheader', get_string('userparticipationcolumns', 'block_learnerscript'), '');
+        $columns = $DB->get_columns('userparticipation');
+        $activitycolumns = array();
 
-        $mform->addElement('header', 'crformheader', get_string('coursesoverviewcolumns', 'block_learnerscript'), '');
-
-        $columns = array('coursename', 'shortname','organization','department','category','coursestatus','noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions','skillname');
-
-        $coursecolumns = array();
-        foreach ($columns as $c) {
-            $coursecolumns[$c->name] = $c->name;
-        }
-
-        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $coursecolumns);
-
+        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $activitycolumns);
         $this->_customdata['compclass']->add_form_elements($mform, $this);
-
         // Buttons.
         $this->add_action_buttons(true, get_string('add'));
     }

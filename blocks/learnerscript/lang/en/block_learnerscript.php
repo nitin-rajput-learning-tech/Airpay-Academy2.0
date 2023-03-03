@@ -1240,3 +1240,9 @@ $string['geovillage'] = 'Village';
 $string['employe'] = 'User';
 $string['category'] = 'category';
 $string['category_help'] = 'categorisation for the report';
+$string['organizationoverviewcolumns'] = 'Orgnization Overview Columns';
+$string['report_organizationoverview'] = 'Orgnization Overview';
+$string['report_organizationoverview_help'] = 'Orgnization Overview';
+$string['report_userparticipation'] = 'User Participation Report';
+$string['organisation'] = 'Organization';
+

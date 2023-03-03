@@ -25,46 +25,60 @@ use block_learnerscript\local\ls;
 use block_learnerscript\local\pluginbase;
 use block_learnerscript\local\querylib;
 
-class plugin_sitelevelroles extends pluginbase {
+class plugin_organisation extends pluginbase {
 
     public function init() {
         $this->form = true;
         $this->unique = false;
-        $this->fullname = get_string('sitelevelroles', 'block_learnerscript');
+        $this->fullname = get_string('organisation', 'local_costcenter');
         $this->reporttypes = array('sql', 'coursesoverview','myclassrooms','mycoursess','mylearningplan','myonlinetests','myprograms','mycertification','coursescompletions','certificatecompletions','certificatesoverview','classroom_completions','classroomsoverview','feedbackcompletions','feedbackoverview','learningplancomletions','learningplansoverview','onlinetestscompletions','onlinetestsoverview','programcompletions','programsoverview','skill','coursegradeactivities','orgusers','userdata', 'users', 'statistics', 'courses','bigbluebutton','coursecompetency','quizzes','assignment','scorm','resources','usercourses','courseprofile','gradedactivity', 'userprofile', 'learnercoursesoverview', 'courseactivities', 'userbadges', 'courseviews', 'noofviews','myscorm','myforums','learners', 'onlinecourses', 'labs', 'assessments', 'webinars', 'classroom', 'exam', 'examenrolments', 'graphexamenrolments', 'graphexamcompletions', 'graphlearning', 'graphlearnercompletions', 'graphlearnerenrolments', 'learning', 'learners', 'learningpaths', 'learnerexamoverview','learnerexamsummary','examlearneroverview','examlearnersummery', 'certificationlearneroverview', 'certificationlearnersummary', 'learnercertificationsoverview', 'learnercertificationssummary', 'certifications', 'certificationsummary', 'programanalysis', 'programs', 'learnerstatus', 'compliancecertificationuserslist', 'compliancecourseuserslist','acclaimusers');
     }
 
     public function summary($data) {
         global $DB;
-
-        $rolename = $DB->get_field('role', 'shortname', array('id' => $data->roleid));
-
-        return $rolename;
+        $orgname = $DB->get_field('local_costcenter', 'fullname', array('id' => $data->organisationid));
+        return $orgname;
     }
 
     public function execute($userid, $context, $data) {
         global $CFG, $DB, $USER;
         
-        if(empty($USER->useraccess['currentroleinfo']['roleid'])){
-            $userroleid = $DB->get_field('role','id', array('shortname'=>'user'));
-        }else{
-            $userroleid = $USER->useraccess['currentroleinfo']['roleid'];
+        $organisationids = [];
+        if(!empty($USER->useraccess['currentroleinfo']['contextinfo'])){
+            foreach($USER->useraccess['currentroleinfo']['contextinfo'] as $contextinfo){
+                $pathinfo = explode('/', $contextinfo['costcenterpath']);
+                if(isset($pathinfo[1])){//Costecenter id is stored with index 1.
+                    $organisationids[] = $pathinfo[1];
+                }
+            }
+        } else {
+            $user = $userid ? $userid : $USER->id;
+            $assignedroles = \local_costcenter\lib\accesslib::get_user_roles_in_catgeorycontexts($user);
+            if($assignedroles){
+                foreach($assignedroles as $role){
+                    $path = $DB->get_field('local_costcenter', 'path', array('category' => $role->categoryid));
+                    if($path){
+                        $pathinfo = explode('/', $path);
+                            if(isset($pathinfo[1])){//Costecenter id is stored with index 1.
+                                $organisationids[] = $pathinfo[1];
+                            }
+                    }
+                }
+            } else {
+                $path = $DB->get_field('user', 'open_path', array('id' => $user));
+                if($path){
+                    $pathinfo = explode('/', $path);
+                        if(isset($pathinfo[1])){//Costecenter id is stored with index 1.
+                            $organisationids[] = $pathinfo[1];
+                        }
+                }
+            }
         }
-        if($data->roleid == $userroleid || is_siteadmin()){
+        if(in_array($data->organisationid, $organisationids)){
             return true;
+        }else{
+            return false;
         }
 
-        // $context = context_system::instance();
-        // $userroles = get_user_roles($context, $userid);
-        // $authuser = $DB->get_record('role',array('shortname'=>'user'));
-        // $authuser->roleid = $authuser->id;
-        // $authuserrole = array($authuser->id => $authuser);
-        // $userroles = $userroles + $authuserrole;
-        // foreach ($userroles as $userrole) {
-        //     if ($userrole->roleid == $data->roleid){
-        //         return true;
-        //     }
-        // }
-        return false;
     }
 }

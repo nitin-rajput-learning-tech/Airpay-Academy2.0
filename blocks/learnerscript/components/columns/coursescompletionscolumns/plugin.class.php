@@ -42,6 +42,14 @@ class plugin_coursescompletionscolumns extends pluginbase{
 	public function execute($data,$row,$user,$courseid,$starttime=0,$endtime=0){
 		global $DB;
         $context = context_system::instance();
+        $sql = "SELECT count(cmc.id) FROM {course_modules_completion} AS cmc
+            JOIN {course_modules} AS cm ON cm.id = cmc.coursemoduleid
+            WHERE cmc.userid = $row->userid AND cm.course = $row->courseid";
+        $activitycompletion = $DB->count_records_sql($sql,array());
+
+        $sql2 = "SELECT count(cm.id) FROM {course_modules} AS cm
+            WHERE cm.deletioninprogress = 0 AND cm.completion != 0 AND cm.course = $row->courseid";
+        $activities = $DB->count_records_sql($sql2,array());
 
         switch ($data->column) {
           //   case 'designation':
@@ -82,6 +90,18 @@ class plugin_coursescompletionscolumns extends pluginbase{
                 }else{
                     $row->{$data->column} = 0;
                 }
+            break;
+
+            case 'courseactivitiescount':
+                $row->{$data->column} = $activities;
+            break;
+
+            case 'activitycmplcount':
+                $row->{$data->column} = $activitycompletion;
+            break;
+            case 'activity_completion_percentage':
+            // number_format("1000.2262",2)."<br>";
+                $row->{$data->column} = number_format((($activitycompletion / $activities) * 100),0);
             break;
             default:
             	break;

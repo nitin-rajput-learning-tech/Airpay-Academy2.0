@@ -23,16 +23,17 @@
  */
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
+use core_completion\progress;
 
 class report_coursesoverview extends reportbase implements report {
 
     public function __construct($report, $reportproperties) {
         parent::__construct($report, $reportproperties);
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
-        $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions']);   
+        $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions']);   
         $this->columns = $columns;
         $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'course');
-        $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions');
+        $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions');
         $this->defaultcolumn = 'c.id';
     }
 
@@ -141,29 +142,34 @@ class report_coursesoverview extends reportbase implements report {
                         WHERE u.deleted = 0
                             AND u.suspended = 0 AND r.shortname = 'employee'
                             AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
-            $completedsql = "SELECT COUNT(ra.id)
+            $coursesql = "SELECT COUNT(ra.id)
                         FROM {role_assignments} ra
                         JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
                         JOIN {role} r ON r.id = ra.roleid
-                        JOIN {user} u ON ra.userid = u.id
-                        JOIN {course_completions} cc ON cxt.instanceid = cc.course
-                            AND cc.userid = u.id AND cc.timecompleted IS NOT NULL
-                        WHERE u.deleted = 0
+                        JOIN {user} u ON ra.userid = u.id";
+
+            $wheresql = " WHERE u.deleted = 0
                             AND u.suspended = 0 AND r.shortname = 'employee'
                             AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
+            $completedsql = " AND cxt.instanceid IN(SELECT cc.course FROM {course_completions} cc WHERE cxt.instanceid = cc.course AND cc.userid = u.id AND cc.timecompleted IS NOT NULL)";
+            $inprogresssql = " AND cxt.instanceid NOT IN(SELECT course FROM {course_completions} cc WHERE cxt.instanceid = cc.course AND cc.userid = u.id AND cc.timecompleted IS NOT NULL)";
             if($this->ls_startdate > 0 && $this->ls_enddate > 0){
                 $enrolsql .= " AND ra.timemodified > :ls_fstartdate ";
                 $completedsql .= " AND cc.timecompleted > :ls_fstartdate ";
+                $inprogresssql .= " AND cc.timecompleted > :ls_fstartdate ";
             // }
             // if($this->ls_enddate > 0){
                 $enrolsql .= " AND ra.timemodified < :ls_fenddate ";
                 $completedsql .= " AND cc.timecompleted < :ls_fenddate ";
+                $inprogresssql .= " AND cc.timecompleted > :ls_fstartdate ";
             }
+            
             foreach ($courses as $course) {
                 $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
-
-                $course->noofcompletions = $DB->count_records_sql($completedsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
-
+                $course->noofinprogress = $DB->count_records_sql($coursesql.$wheresql.$inprogresssql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
+                $course->noofcompletions = $DB->count_records_sql($coursesql.$wheresql.$completedsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
+                $percentofcompletions = ($course->noofcompletions/$course->noofenrollments)*100;
+                $course->percentofcompletions = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
                 $data[] = $course;
             }
         }

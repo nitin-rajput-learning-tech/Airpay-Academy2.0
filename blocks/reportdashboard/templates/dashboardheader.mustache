@@ -162,11 +162,12 @@
             <img src={{config.wwwroot}}/blocks/learnerscript/pix/adddashboard.png id='adddashboard' class='addblocks-to-dashboard'>
         </span>
     {{/issiteadmin}} -->
+    {{#issiteadmin}}
         <a class= 'htitle' href="{{config.wwwroot}}/blocks/learnerscript/reportsview.php" title="{{#str}}managereports, block_learnerscript{{/str}}">
             <!--<span class="tooltiptext tooltip-top">{{#str}}managereports, block_learnerscript{{/str}}</span>-->
             <img src={{config.wwwroot}}/blocks/learnerscript/pix/managereport.png id='addreport' class="addblocks-to-dashboard">
         </a>
-
+    {{/issiteadmin}}
     {{> block_reportdashboard/switchrole }}
     </span>
     </span>

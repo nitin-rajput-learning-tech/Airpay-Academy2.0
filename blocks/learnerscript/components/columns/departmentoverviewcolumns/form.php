@@ -22,39 +22,34 @@
  * @subpackage block_learnerscript
  */
 if (!defined('MOODLE_INTERNAL')) {
-    die(get_string('nodirectaccess','block_learnerscript'));///  It must be included from a Moodle page
+    //  It must be included from a Moodle page.
+    die(get_string('nodirectaccess','block_learnerscript'));
 }
 
 require_once($CFG->libdir . '/formslib.php');
 
-class sitelevelroles_form extends moodleform {
+class departmentoverviewcolumns_form extends moodleform {
 
-    function definition() {
-        global $DB;
-
+    public function definition() {
+        global $DB, $USER, $CFG;
         $mform = & $this->_form;
+        $mform->addElement('header', 'crformheader', get_string('departmentoverviewcolumns', 'block_learnerscript'), '');
+        $columns = $DB->get_columns('departmentoverviewcolumns');
+        $prinfocolumns = array();
+        foreach ($columns as $c) {
+            $prinfocolumns[$c->name] = $c->name;
+        }
 
-        $mform->addElement('header', 'crformheader', get_string('sitelevelroles', 'block_learnerscript'), '');
-
-        $sql = "SELECT r.id, 
-                CASE
-                    WHEN r.name != '' THEN r.name
-                    ELSE r.shortname
-                END AS name
-                FROM {role} r
-                JOIN {role_context_levels} rcl ON rcl.roleid = r.id 
-                WHERE rcl.contextlevel = 40";
-        $systemroles = $DB->get_records_sql_menu($sql);
-
-        $authuserid = $DB->get_field('role','id',array('shortname'=>'user'));
-        $authuser = array($authuserid => 'Employee');
-        $roles = $systemroles + $authuser;
-
-
-        $mform->addElement('select', 'roleid', get_string('roles'), $roles);
-
-        // buttons
+        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $prinfocolumns);
+        $this->_customdata['compclass']->add_form_elements($mform, $this);
+        // Buttons.
         $this->add_action_buttons(true, get_string('add'));
+    }
+
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+        $errors = $this->_customdata['compclass']->validate_form_elements($data, $errors);
+        return $errors;
     }
 
 }
