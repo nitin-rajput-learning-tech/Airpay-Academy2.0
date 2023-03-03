@@ -36,7 +36,7 @@ class report_learningplansoverview extends reportbase implements report {
         parent::__construct($report);
         $this->components = array('columns', 'permissions','orderable','plot');
         $this->columns = ['learningpathfield'=>['learningpathfield'], 'learningplansoverviewcolumns'=> ['optionalcourses','mandatorycourses','enrolledcount',
-         'completedcount']];    
+         'completedcount','inprogresscount','percentofcompletions']];    
         $this->parent = true;
         $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'learningpath');
         $this->orderable = array('learningpath_name','enrolledcount','completedcount');
@@ -127,12 +127,12 @@ class report_learningplansoverview extends reportbase implements report {
                     FROM {local_learningplan_user} as llu
                     JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0
                     WHERE llu.planid = :planid {$costcenterpathconcatsql} ";
-
+            $inprogresscount  = ' AND llu.status IS NULL AND llu.completiondate IS NULL ';
             $completionscount = ' AND llu.status = :status ';
             $enrolsql = '';
             if($this->ls_startdate > 0 && $this->ls_enddate > 0){
                 $enrolsql .= " AND llu.timecreated > :ls_startdate ";
-                $completedsql .= " AND llu.completiondate > :ls_startdate ";
+                $completionscount .= " AND llu.completiondate > :ls_startdate ";
             // }
             // if($this->ls_enddate > 0){
                 $enrolsql .= " AND llu.timecreated < :ls_enddate ";
@@ -140,9 +140,10 @@ class report_learningplansoverview extends reportbase implements report {
             }
             foreach ($learningpaths as $learningpath) {
                 $learningpath->enrolledcount = $DB->count_records_sql($sql, array('planid' => $learningpath->learningpathid,'deleted' => 0, 'suspended' => 0, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
-
+                $learningpath->inprogresscount = $DB->count_records_sql($sql.$inprogresscount, array('planid' => $learningpath->learningpathid,'deleted' => 0,'suspended' => 0,'status' => 1, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
                 $learningpath->completedcount = $DB->count_records_sql($sql.$completionscount, array('planid' => $learningpath->learningpathid,'deleted' => 0,'suspended' => 0,'status' => 1, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
-
+                $percentofcompletions = ($learningpath->completedcount/$learningpath->enrolledcount)*100;
+                $learningpath->percentofcompletions = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
                 $data[] = $learningpath;
             }
         }
