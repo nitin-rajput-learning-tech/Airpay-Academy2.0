@@ -7,7 +7,7 @@
 // (at your option) any later version.
 //
 // Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without userfield the implied warranty of
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
 //
@@ -18,7 +18,8 @@
   * A Moodle block for creating customizable reports
   * @package blocks
   * @subpackage learnerscript
-  * @date: 2019
+  * @author: sowmya<sowmya@eabyas.in>
+  * @date: 2016
   */
 if (!defined('MOODLE_INTERNAL')) {
     die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
@@ -26,26 +27,25 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->libdir.'/formslib.php');
 
-class coursescompletionscolumns_form extends moodleform {
+class organizationoverviewcolumns_form extends moodleform {
     public function definition() {
         global $DB, $USER, $CFG;
         $mform =& $this->_form;
-        $mform->addElement('header', '', get_string('coursescompletionscolumns','block_learnerscript'), '');
-		    $columns = array('coursename', 'shortname','category','employeename','employeeid', 'email',
-          'supervisor','userdepartment','designation','completionstatus','completiondate','courseactivitiescount','activitycmplcount', 'activity_completion_percentage');
-		    $coursecolumns = array();
-  			foreach($columns as $c){
-  				$coursecolumns[$c] = ucwords($c);
-  			}
+        $mform->addElement('header', '', get_string('organizationoverviewcolumns','block_learnerscript'), '');
+            $columns = array('costcentername', 'totaldepartment', 'totalcourses', 'totallp' ,'totalilts', 'totalprogram', 'totalactuser');
+            $coursecolumns = array();
+            foreach($columns as $c){
+                $coursecolumns[$c] = ucwords($c);
+            }
         $mform->addElement('select', 'column', get_string('column','block_learnerscript'), $coursecolumns);
-		    $this->_customdata['compclass']->add_form_elements($mform,$this);
+            $this->_customdata['compclass']->add_form_elements($mform,$this);
         // buttons
         $this->add_action_buttons(true, get_string('add'));
 
     }
-	public function validation($data, $files){
-		$errors = parent::validation($data, $files);
-		$errors = $this->_customdata['compclass']->validate_form_elements($data,$errors);
-		return $errors;
-	}
+    public function validation($data, $files){
+        $errors = parent::validation($data, $files);
+        $errors = $this->_customdata['compclass']->validate_form_elements($data,$errors);
+        return $errors;
+    }
 }
