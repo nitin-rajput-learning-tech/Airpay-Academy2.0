@@ -22,6 +22,11 @@
     				                </a>
                                 </li>
                             {{/ candeletelevel}}
+                            {{# cansetlevelcompletioncriteria}}
+                                <li>
+                                    <a title='{{# str}} levelcompletion, local_program{{/ str}}' href="javascript:void(0)"  onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'level_completion_settings', form_status:0, plugintype: 'local_program', pluginname: 'level_completion_settings', id: {{levelcompletionid}}, pid: {{programid}},levelid: {{id}} }) })(event)"><i class="icon fa fa-tags fa-fw" aria-hidden="true" aria-label='' title = '{{# str}} levelcompletion, local_program {{/ str}}' ></i></a>
+                                </li>
+                                {{/ cansetlevelcompletioncriteria}}
 			    {{^ candeletelevel}}
 			    <!--<li>
 				<a href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"

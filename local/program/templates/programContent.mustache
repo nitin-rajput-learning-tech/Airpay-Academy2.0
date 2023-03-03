@@ -78,6 +78,11 @@
             {{/ certificate_exists }}
     </ul>
 {{# program}}
+{{#programcompletionstatus}}
+    <span class="pull-right mt-15 mb-10 programcompletedbutton completed">
+        {{# str}} completed, local_program{{/ str}}
+    </span>
+{{/programcompletionstatus}}
 <div class="programview_container">
     <div class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left classview_topcontent pl-0 pr-0">
         <!-- <div class="w-full pull-left classname" title = "{{ programname }}"><h3>{{ programname }}</h3></div> -->

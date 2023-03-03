@@ -34,7 +34,9 @@ class level_completion_form extends moodleform {
 
     public function definition() {
         global $CFG, $DB, $USER;
-        $context = context_system::instance();
+
+        $categorycontext =  (new \local_program\lib\accesslib())::get_module_context($pid);
+
         $mform = &$this->_form;
         $pid = $this->_customdata['pid'];
         $levelid = $this->_customdata['levelid'];
@@ -88,7 +90,7 @@ class level_completion_form extends moodleform {
             $options = array(
                 'ajax' => 'local_program/form-options-selector',
                 'multiple' => true,
-                'data-contextid' => $context->id,
+                'data-contextid' => $categorycontext->id,
                 'data-action' => 'program_completions_courses_selector',
                 'data-options' => json_encode(array('id' => $id,'programid'=>$pid,'levelid'=>$levelid)),
             );

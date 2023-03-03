@@ -29,6 +29,7 @@ defined('MOODLE_INTERNAL') || die();
 class completion{
     public function program_course_completion($programid, $levelid, $courseid, $userid){
         global $DB, $USER;
+        $categorycontext =  (new \local_program\lib\accesslib())::get_module_context($programid);
         $completion_record = $DB->get_record('local_bc_level_completions', array('programid' => $programid, 'levelid' => $levelid, 'userid' => $userid));
         if(empty($completion_record)){
             $stream = $DB->get_field('local_program', 'stream',
@@ -95,7 +96,7 @@ class completion{
                 //program completions $bcuser->completion_status=1
                 if($bcuser->completion_status == 1){
                   $type = 'program_completion';
-                  $params = array('context' => \context_system::instance(),
+                  $params = array('context' => $categorycontext,
                     'objectid' => $programid,
                     'courseid' => 1,
                     'userid' => $userid,
@@ -170,6 +171,8 @@ class completion{
         require_once($CFG->libdir.'/completionlib.php');
         require_once($CFG->dirroot.'/completion/criteria/completion_criteria_role.php');
 
+        $categorycontext =  (new \local_program\lib\accesslib())::get_module_context($programid);
+
         //getting enrolled user for the program or single
         $programuserparam = array();
         $programuserssql = "SELECT pu.*
@@ -232,7 +235,7 @@ class completion{
                 $DB->update_record('local_program_users', $programuser);
                 if($programuser->completion_status == 1){
                     $type = 'program_completion';
-                    $params = array('context' => \context_system::instance(),
+                    $params = array('context' => $categorycontext,
                         'objectid' => $programid,
                         'courseid' => 1,
                         'userid' => $USER->id,

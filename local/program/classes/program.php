@@ -505,6 +505,7 @@ class program {
     }
     public function program_completion_settings($data){
         global $DB, $USER;
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($data->programid);
         try {
             $completions = $DB->get_record('local_bc_completion_criteria', array('programid' => $data->programid));
             if(empty($completions)){
@@ -520,7 +521,7 @@ class program {
                 $completions->usermodified = $USER->id;
                 $DB->update_record('local_bc_completion_criteria', $completions);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $completions->id,
                     'other' => array('programid' => $completions->programid)
                 );
@@ -532,7 +533,7 @@ class program {
                 $completions->usercreated = $USER->id;
                 $completions->id = $DB->insert_record('local_bc_completion_criteria', $completions);
                 $params = array(
-                    'context' => context_system::instance(),
+                    'context' => $categorycontext,
                     'objectid' => $completions->id,
                     'other' => array('programid' => $completions->programid)
                 );
@@ -2356,139 +2357,139 @@ class program {
         global $DB, $USER, $CFG;
         // require_once($CFG->dirroot . '/local/program/notifications_emails.php');
 
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($userdata->programid);
+        // $categorycontext = (new \local_program\lib\accesslib())::get_module_context($userdata->programid);
 
-        if ($userdata->sessionid > 0) {
-            $session = $DB->get_record_select('local_bc_course_sessions', 'id = :id', array('id' => $userdata->sessionid));
-            $levelid = $DB->get_field('local_bc_course_sessions', 'levelid',
-                array('id' => $userdata->sessionid));
-            $checkcousrecmptlsql = "SELECT *
-                                      FROM {local_bc_level_completions}
-                                      WHERE userid = {$userdata->userid}
-                                      AND programid = {$userdata->programid}
-                                      AND levelid = {$levelid} ";
-            $checkcousrecmptl = $DB->get_record_sql($checkcousrecmptlsql);
-            if (empty($checkcousrecmptl)) {
-                $stream = $DB->get_field('local_program', 'stream',
-                    array('id' => $userdata->programid));
-                $bclevelcmptl = new stdClass();
-                $bclevelcmptl->programid = $session->programid;
-                $bclevelcmptl->stream = $stream;
-                $bclevelcmptl->type = 0;
-                $bclevelcmptl->levelid = $session->levelid;
-                $bclevelcmptl->userid = $userdata->userid;
-                $bclevelcmptl->bclcids = $session->bclcid;
-                $completionstatus = $this->bclevel_completions($session, $userdata->userid);
-                $levelcompletion = $completionstatus;
-                $bclevelcmptl->completion_status = $completionstatus;
-                $bclevelcmptl->completiondate = time();
-                $bclevelcmptl->usercreated = $USER->id;
-                $bclevelcmptl->timecreated = time();
-                $bclevelcmptl->id = $DB->insert_record('local_bc_level_completions',
-                    $bclevelcmptl);
-                //level completions $completionstatus=1
-                if($completionstatus == 1){
-                  $type = 'program_level_completion';
-                  // $emaillogs = new programnotifications_emails();
-                  // $email_logs = $emaillogs->program_emaillogs($type, $session->levelid, $userdata->userid,
-                  //           $USER->id);
-                  $emaillogs = new \local_program\notification();
-                  $touser = \core_user::get_user($userdata->userid);
-                  $programinstance = $DB->get_record('local_program', array('id' => $session->programid));
-                  $programinstance->courseid = $session->bclcid;
-                  $programinstance->levelid = $session->levelid;
-                  $programinstance->sessionid = $userdata->sessionid;
-                  $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
-                }
-            } else {
-                $bclcids = $checkcousrecmptl->bclcids;
-                if (!empty($checkcousrecmptl->bclcids)) {
-                    $bclcidslist = explode(',', $checkcousrecmptl->bclcids);
-                    if (!in_array($session->bclcid, $bclcidslist)) {
-                        $bclcidslist[] = $session->bclcid;
-                    }
-                    $bclcids = implode(',', $bclcidslist);
-                } else {
-                  $bclcids = $session->bclcid;
-                }
-                $checkcousrecmptl->bclcids = $bclcids;
-                $completionstatus = $this->bclevel_completions($session, $userdata->userid);
-                $levelcompletion = $completionstatus;
-                $checkcousrecmptl->completion_status = $completionstatus;
-                $checkcousrecmptl->completiondate = time();
-                $checkcousrecmptl->usermodified = $USER->id;
-                $checkcousrecmptl->timemodified = time();
-                $DB->update_record('local_bc_level_completions', $checkcousrecmptl);
-                //level completions $completionstatus=1
-                if($completionstatus == 1){
-                  $type = 'program_level_completion';
-                  // $emaillogs = new programnotifications_emails();
-                  // $email_logs = $emaillogs->program_emaillogs($type, $session->levelid, $userdata->userid,
-                  //           $USER->id);
-                  $emaillogs = new \local_program\notification();
-                  $touser = \core_user::get_user($userdata->userid);
-                  $programinstance = $DB->get_record('local_program', array('id' => $userdata->programid));
-                  $programinstance->courseid = $session->bclcid;
-                  $programinstance->levelid = $session->levelid;
-                  $programinstance->sessionid = $userdata->sessionid;
-                  $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
-                }
-                //level course completions $checkcousrecmptl->bclcids
-            }
-            if ($levelcompletion) {
-                $bcuser = $DB->get_record('local_program_users',
-                    array('programid' => $userdata->programid,
-                        'userid' => $userdata->userid, 'completion_status' => 0));
-                if (!empty($bcuser)) {
-                    $bclevels = $DB->get_records_menu('local_program_levels',
-                        array('programid' => $session->programid), 'id',
-                        'id, id AS level');
-                    $bcusercmptllevelids = $bcuser->levelids;
-                    if (empty($bcusercmptllevelids)) {
-                        $bcuser->levelids = $session->levelid;
-                        $levelids = array($session->levelid);
-                    } else {
-                        $levelids = explode(',', $bcusercmptllevelids);
-                        if (!in_array($session->levelid, $levelids)) {
-                           $levelids[] = $session->levelid;
-                        }
-                        array_unique($levelids);
-                        $bcuser->levelids = implode(',', $levelids);;
-                    }
-                    $bclevelcompletionstatus = array_diff($bclevels, $levelids);
-                    if (empty($bclevelcompletionstatus)) {
-                        $bcuser->completion_status = 1;
-                        $bcuser->completiondate = time();
-                    }
-                    $DB->update_record('local_program_users', $bcuser);
-                    //program completions $bcuser->completion_status=1
-                    if($bcuser->completion_status == 1){
-                      $type = 'program_completion';
-                      // $emaillogs = new programnotifications_emails();
-                      // $email_logs = $emaillogs->program_emaillogs($type, $bcuser->programid, $bcuser->userid,
-                      //           $USER->id);
-                      $params = array('context' => $categorycontext,
-                        'objectid' => $userdata->programid,
-                        'courseid' => 1,
-                        'userid' => $userdata->userid,
-                        'relateduserid' => $userdata->userid);
-                      $event = \local_program\event\program_user_completed::create($params);
-                      $event->add_record_snapshot('local_program', $userdata->programid);
-                      $event->trigger();
-                      $emaillogs = new \local_program\notification();
-                      $touser = \core_user::get_user($bcuser->userid);
-                      $programinstance = $DB->get_record('local_program', array('id' => $userdata->programid));
-                      $programinstance->courseid = $session->bclcid;
-                      $programinstance->levelid = $session->levelid;
-                      $programinstance->sessionid = $userdata->sessionid;
-                      $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
-                    }
+        // if ($userdata->sessionid > 0) {
+        //     $session = $DB->get_record_select('local_bc_course_sessions', 'id = :id', array('id' => $userdata->sessionid));
+        //     $levelid = $DB->get_field('local_bc_course_sessions', 'levelid',
+        //         array('id' => $userdata->sessionid));
+        //     $checkcousrecmptlsql = "SELECT *
+        //                               FROM {local_bc_level_completions}
+        //                               WHERE userid = {$userdata->userid}
+        //                               AND programid = {$userdata->programid}
+        //                               AND levelid = {$levelid} ";
+        //     $checkcousrecmptl = $DB->get_record_sql($checkcousrecmptlsql);
+        //     if (empty($checkcousrecmptl)) {
+        //         $stream = $DB->get_field('local_program', 'stream',
+        //             array('id' => $userdata->programid));
+        //         $bclevelcmptl = new stdClass();
+        //         $bclevelcmptl->programid = $session->programid;
+        //         $bclevelcmptl->stream = $stream;
+        //         $bclevelcmptl->type = 0;
+        //         $bclevelcmptl->levelid = $session->levelid;
+        //         $bclevelcmptl->userid = $userdata->userid;
+        //         $bclevelcmptl->bclcids = $session->bclcid;
+        //         $completionstatus = $this->bclevel_completions($session, $userdata->userid);
+        //         $levelcompletion = $completionstatus;
+        //         $bclevelcmptl->completion_status = $completionstatus;
+        //         $bclevelcmptl->completiondate = time();
+        //         $bclevelcmptl->usercreated = $USER->id;
+        //         $bclevelcmptl->timecreated = time();
+        //         $bclevelcmptl->id = $DB->insert_record('local_bc_level_completions',
+        //             $bclevelcmptl);
+        //         //level completions $completionstatus=1
+        //         if($completionstatus == 1){
+        //           $type = 'program_level_completion';
+        //           // $emaillogs = new programnotifications_emails();
+        //           // $email_logs = $emaillogs->program_emaillogs($type, $session->levelid, $userdata->userid,
+        //           //           $USER->id);
+        //           $emaillogs = new \local_program\notification();
+        //           $touser = \core_user::get_user($userdata->userid);
+        //           $programinstance = $DB->get_record('local_program', array('id' => $session->programid));
+        //           $programinstance->courseid = $session->bclcid;
+        //           $programinstance->levelid = $session->levelid;
+        //           $programinstance->sessionid = $userdata->sessionid;
+        //           $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
+        //         }
+        //     } else {
+        //         $bclcids = $checkcousrecmptl->bclcids;
+        //         if (!empty($checkcousrecmptl->bclcids)) {
+        //             $bclcidslist = explode(',', $checkcousrecmptl->bclcids);
+        //             if (!in_array($session->bclcid, $bclcidslist)) {
+        //                 $bclcidslist[] = $session->bclcid;
+        //             }
+        //             $bclcids = implode(',', $bclcidslist);
+        //         } else {
+        //           $bclcids = $session->bclcid;
+        //         }
+        //         $checkcousrecmptl->bclcids = $bclcids;
+        //         $completionstatus = $this->bclevel_completions($session, $userdata->userid);
+        //         $levelcompletion = $completionstatus;
+        //         $checkcousrecmptl->completion_status = $completionstatus;
+        //         $checkcousrecmptl->completiondate = time();
+        //         $checkcousrecmptl->usermodified = $USER->id;
+        //         $checkcousrecmptl->timemodified = time();
+        //         $DB->update_record('local_bc_level_completions', $checkcousrecmptl);
+        //         //level completions $completionstatus=1
+        //         if($completionstatus == 1){
+        //           $type = 'program_level_completion';
+        //           // $emaillogs = new programnotifications_emails();
+        //           // $email_logs = $emaillogs->program_emaillogs($type, $session->levelid, $userdata->userid,
+        //           //           $USER->id);
+        //           $emaillogs = new \local_program\notification();
+        //           $touser = \core_user::get_user($userdata->userid);
+        //           $programinstance = $DB->get_record('local_program', array('id' => $userdata->programid));
+        //           $programinstance->courseid = $session->bclcid;
+        //           $programinstance->levelid = $session->levelid;
+        //           $programinstance->sessionid = $userdata->sessionid;
+        //           $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
+        //         }
+        //         //level course completions $checkcousrecmptl->bclcids
+        //     }
+        //     if ($levelcompletion) {
+        //         $bcuser = $DB->get_record('local_program_users',
+        //             array('programid' => $userdata->programid,
+        //                 'userid' => $userdata->userid, 'completion_status' => 0));
+        //         if (!empty($bcuser)) {
+        //             $bclevels = $DB->get_records_menu('local_program_levels',
+        //                 array('programid' => $session->programid), 'id',
+        //                 'id, id AS level');
+        //             $bcusercmptllevelids = $bcuser->levelids;
+        //             if (empty($bcusercmptllevelids)) {
+        //                 $bcuser->levelids = $session->levelid;
+        //                 $levelids = array($session->levelid);
+        //             } else {
+        //                 $levelids = explode(',', $bcusercmptllevelids);
+        //                 if (!in_array($session->levelid, $levelids)) {
+        //                    $levelids[] = $session->levelid;
+        //                 }
+        //                 array_unique($levelids);
+        //                 $bcuser->levelids = implode(',', $levelids);;
+        //             }
+        //             $bclevelcompletionstatus = array_diff($bclevels, $levelids);
+        //             if (empty($bclevelcompletionstatus)) {
+        //                 $bcuser->completion_status = 1;
+        //                 $bcuser->completiondate = time();
+        //             }
+        //             $DB->update_record('local_program_users', $bcuser);
+        //             //program completions $bcuser->completion_status=1
+        //             if($bcuser->completion_status == 1){
+        //               $type = 'program_completion';
+        //               // $emaillogs = new programnotifications_emails();
+        //               // $email_logs = $emaillogs->program_emaillogs($type, $bcuser->programid, $bcuser->userid,
+        //               //           $USER->id);
+        //               $params = array('context' => $categorycontext,
+        //                 'objectid' => $userdata->programid,
+        //                 'courseid' => 1,
+        //                 'userid' => $userdata->userid,
+        //                 'relateduserid' => $userdata->userid);
+        //               $event = \local_program\event\program_user_completed::create($params);
+        //               $event->add_record_snapshot('local_program', $userdata->programid);
+        //               $event->trigger();
+        //               $emaillogs = new \local_program\notification();
+        //               $touser = \core_user::get_user($bcuser->userid);
+        //               $programinstance = $DB->get_record('local_program', array('id' => $userdata->programid));
+        //               $programinstance->courseid = $session->bclcid;
+        //               $programinstance->levelid = $session->levelid;
+        //               $programinstance->sessionid = $userdata->sessionid;
+        //               $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
+        //             }
 
-                }
-            }
-            return true;
-        }
-        return false;
+        //         }
+        //     }
+        //     return true;
+        // }
+        // return false;
     }
     /**
      * [mycompletedlevels description]
@@ -3024,6 +3025,42 @@ class program {
         }
         // print_object($availableusers);
         return $availableusers;
+    }
+    public function delete_completion_data($programid, $levelid = 0){
+        global $DB, $USER;
+        $params = array('programid' => $programid, 'completion_status' => 1);
+        if($levelid > 0){
+            $params['levelid'] = $levelid;
+        }
+        $levelcompletions = $DB->get_records('local_bc_level_completions', $params);
+        foreach($levelcompletions as $levelcomp){
+            $dataobject = clone $levelcomp;
+            unset($dataobject->id);
+            $dataobject->timecreated = time();
+            $dataobject->usercreated = $USER->id;
+            $DB->insert_record('local_bc_level_comp_bk',  $dataobject);
+
+            $levelcomp->completion_status = 0;
+            $levelcomp->completiondate = 0;
+            $levelcomp->usermodified = $USER->id;
+            $levelcomp->timemodified = time();
+            $DB->update_record('local_bc_level_completions',  $levelcomp);
+        }
+        $programcompletions = $DB->get_records('local_program_users', array('programid' => $programid, 'completion_status' => 1), '', 'id, programid,userid,completiondate,levelids');
+        foreach($programcompletions AS $progcomp){
+            $dataobject = clone $progcomp;
+            unset($dataobject->id);
+            $dataobject->timecreated = time();
+            $dataobject->usercreated = $USER->id;
+            $DB->insert_record('local_bc_level_comp_bk',  $dataobject);
+
+            $progcomp->completion_status = 0;
+            $progcomp->completiondate = 0;
+            $progcomp->usermodified = $USER->id;
+            $progcomp->timemodified = time();
+            $DB->update_record('local_program_users',  $progcomp);
+        }
+        return true;
     }
     public function get_classrooms_count($courseid){
         global $DB, $USER;
