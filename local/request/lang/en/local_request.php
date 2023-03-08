@@ -328,7 +328,7 @@ $string['PENDING'] = 'PENDING';
 
 $string['latestfirst'] = 'Latest First';
 $string['classroom'] = 'Classroom';
-$string['elearning'] = 'E-Learning';
+$string['elearning'] = 'Courses';
 $string['learningplan'] = 'Learning path';
 $string['program'] = 'Program';
 $string['certification'] = 'Certification';
