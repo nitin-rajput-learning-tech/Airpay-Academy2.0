@@ -37,6 +37,9 @@ $bclcid = required_param('bclcid', PARAM_INT);
 $action = optional_param('action', '', PARAM_RAW);
 
 require_login();
+
+print_error("program Not Found!");
+
 $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
 $PAGE->set_context($categorycontext);
 $PAGE->requires->jquery();

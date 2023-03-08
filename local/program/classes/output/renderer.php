@@ -659,6 +659,7 @@ class renderer extends plugin_renderer_base {
                 }
 
                 $programlevel->candeletelevel = $candeletelevel;
+                $programlevel->levelcompletionid = $DB->get_field('local_bcl_cmplt_criteria', 'id', array('programid' => $programid, 'levelid' => $programlevel->id));
                 $programlevels[$k] = $programlevel;
                 //$prev_levelid = $k;
             }
@@ -678,6 +679,7 @@ class renderer extends plugin_renderer_base {
             'candeletelevel' => $candeletelevel,
             'cancreatesession' => (has_capability('local/program:createsession', $categorycontext) && $manage),
             'canenrolsession' => has_capability('local/program:enrolsession', $categorycontext) && !is_siteadmin(),
+            'cansetlevelcompletioncriteria' => is_siteadmin() || has_capability('local/program:setlevelcompletioncriteria', $categorycontext),
             'cfg' => $CFG,
             'levelid' => $levelid,
             'cantakeattendance' => has_capability('local/program:takesessionattendance',
@@ -744,18 +746,25 @@ class renderer extends plugin_renderer_base {
         }
 
         foreach ($programlevelcourses as $i => $bclevelcourse) {
-            // print_object($bclevelcourse);exit;
+
+            $classrooms = (new program)->get_classrooms_count($bclevelcourse->id);
+
             $bclevelcourses = array();
             $coursecontext = \context_course::instance($bclevelcourse->id);
-           
-            if(is_enrolled($coursecontext, $USER)){
+
+            $enrolled = is_enrolled(\context_course::instance($bclevelcourse->id), $USER);
+            if($enrolled || has_capability('moodle/course:view', $categorycontext) || is_siteadmin()){
                 $courseurl = new \moodle_url('/course/view.php', array('id' => $bclevelcourse->id));
+            }elseif($classrooms > 0){
+                $courseurl = 'javascript:void(0)';
             }else{
-                $courseurl = new \moodle_url('/local/program/sessions.php', array('bclcid' => $bclevelcourse->bclevelcourseid, 'levelid' => $bclevelcourse->levelid, 'bcid' => $bclevelcourse->programid));
+                $courseurl = new \moodle_url('/local/program/checkenrol.php', array('courseid' => $bclevelcourse->id, 'programid' => $programid, 'action' => 'courseuserenrol'));
             }
             $courselink = strlen($bclevelcourse->course) > 25 ? substr($bclevelcourse->course, 0, 25) . "..." : $bclevelcourse->course;
             $bclevelcourse->course = html_writer::link($courseurl, $courselink,
                     array('title' => $bclevelcourse->course));
+
+
             if ($userview) {
                 $bclevelcourse->sessionenabled = true;
                 if (array_search($bclevelcourse->bclevelcourseid, $notcmptlcourses) !== false) {
@@ -782,6 +791,8 @@ class renderer extends plugin_renderer_base {
             }
             $bclevelcourse->canremovecourse = $canremovecourse;
             $bclevelcourse->cannotremovecourse = $cannotremovecourse;
+            $bclevelcourse->classroomcourse = ($classrooms > 0) ? true : false;
+
             $programlevelcourses[$i] = $bclevelcourse;
         }
     }
@@ -1038,6 +1049,7 @@ class renderer extends plugin_renderer_base {
                 }
             }
         }
+        $programcompletionid = $DB->get_field('local_bc_completion_criteria', 'id', array('programid' => $programid));
         $programcontext = [
             'program' => $program,
             'programid' => $programid,
@@ -1060,6 +1072,8 @@ class renderer extends plugin_renderer_base {
             'cfg' => $CFG,
             'programcompletionstatus' => $programcompletionstatus,
             'cancreatelevel' => (has_capability('local/program:createlevel', $categorycontext) && $manage),
+            'cansetprogramcompletioncriteria' => is_siteadmin() || has_capability('local/program:cansetprogramcompletioncriteria', $categorycontext),
+            'programcompletionid' => $programcompletionid,
             'seats_image' => $OUTPUT->image_url('GraySeatNew', 'local_program'),
             'levelid' => $levelid,
             'programlevels' => $this->viewprogramlevels($programid, $levelid),

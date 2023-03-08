@@ -461,29 +461,29 @@ class core_renderer extends \core_renderer {
         }
         return $return;
     }
-	 /**
-	     * returns the scheme names for theme and costcenter
-	     *
-	     * @return string
-	     */
-	    function get_my_scheme(){
-		global $PAGE, $CFG;
+     /**
+         * returns the scheme names for theme and costcenter
+         *
+         * @return string
+         */
+        function get_my_scheme(){
+        global $PAGE, $CFG;
 
-		$return = '';
-		$theme_schemename = $PAGE->theme->settings->theme_scheme;
-		if(!empty($theme_schemename)){
-		    $return .= ' theme_'.$theme_schemename;
-		}
-		if(file_exists($CFG->dirroot . '/local/costcenter/lib.php')){
-		    require_once($CFG->dirroot . '/local/costcenter/lib.php');
-		    $costcenter = new costcenter();
-		    $costcenter_schemename = $costcenter->get_costcenter_theme();
-		    if(!empty($costcenter_schemename)){
-		        $return .= ' organization_'.$costcenter_schemename;
-		    }
-		}
+        $return = '';
+        $theme_schemename = $PAGE->theme->settings->theme_scheme;
+        if(!empty($theme_schemename)){
+            $return .= ' theme_'.$theme_schemename;
+        }
+        if(file_exists($CFG->dirroot . '/local/costcenter/lib.php')){
+            require_once($CFG->dirroot . '/local/costcenter/lib.php');
+            $costcenter = new costcenter();
+            $costcenter_schemename = $costcenter->get_costcenter_theme();
+            if(!empty($costcenter_schemename)){
+                $return .= ' organization_'.$costcenter_schemename;
+            }
+        }
 
-		return $return;
+        return $return;
     }
     /**
      * Whether we should display the logo in the navbar.
