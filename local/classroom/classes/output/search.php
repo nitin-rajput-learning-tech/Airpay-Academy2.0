@@ -54,9 +54,9 @@ class search implements renderable{
         $cfromsql = " FROM {local_classroom} lc  ";
 
         $leftjoinsql = '';
-
+        $today = time();
         // added condition for not displaying retired ILT's.
-        $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 AND lc.selfenrol = 1 ";
+        $wheresql = " WHERE lc.visible=1 AND lc.status <> 4 AND lc.selfenrol = 1 AND lc.enddate >= $today ";
 
         $searchsql = '';
         if(searchlib::$search && searchlib::$search != 'null'){
@@ -198,7 +198,6 @@ class search implements renderable{
         $finalsql = $csql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
         $finalsql .= " ORDER BY lc.id DESC ";
         $classroomslist = $DB->get_records_sql($finalsql, $sqlparams, $startlimit,$perpage);
-
         if($return_noofrecords && !$returnobjectlist){
             return  array('numberofrecords'=>$numberofrecords);
         }

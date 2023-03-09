@@ -114,6 +114,7 @@ $string['help_1'] = '<div class="helpmanual_table"><table class="generaltable" b
 <tr><td>employee_code</td><td>Enter the employee code, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name.</td></tr>
 <tr><td>lastname</td><td>Enter the last name.</td></tr>
+<tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>employee_status</td><td>Enter employee status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
 <tr><td>gender</td><td>Enter gender as either \'male\',\'female\' or \'other\', avoid additional spaces.</td></tr>';
 $string['help_2'] = '</td></tr>
@@ -125,7 +126,6 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 <tr><td>bussiness_unit_code</td><td>Provide bussiness unit code. Bussiness unit must already exist in system as part of company hierarchy.</td></tr>
 <tr><td>department_code</td><td>Enter department code. Department must already exist under specified bussiness unit in system as part of company hierarchy.</td></tr>
 <tr><td>subdepartment_code</td><td>Enter sub department code. Sub Department must already exist under specified department in system as part of company hierarchy.</td></tr>
-<tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>mobileno</td><td>Enter Numerics only.</td></tr>
 <tr><td>reportingmanager_empid</td><td>Enter reporting manger employee code, avoid additional spaces..</td></tr>
 
@@ -153,6 +153,7 @@ $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td>learner_id</td><td>Enter the employee code, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name.</td></tr>
 <tr><td>lastname</td><td>Enter the last name.</td></tr>
+<tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
 ';
 
@@ -164,6 +165,7 @@ $string['help_1_dephead'] = '<table class="generaltable" border="1">
 <tr><td>learner_id</td><td>Enter the employee code, avoid additional spaces.</td></tr>
 <tr><td>firstname</td><td>Enter the first name.</td></tr>
 <tr><td>lastname</td><td>Enter the last name.</td></tr>
+<tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>learner_status</td><td>Enter Learner Status as either \'Active\' or \'Inactive\', avoid additional spaces.</td></tr>
 ';
 
