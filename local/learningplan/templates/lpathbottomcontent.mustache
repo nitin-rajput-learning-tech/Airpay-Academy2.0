@@ -14,22 +14,15 @@
     
     @author eabyas  <info@eabyas.in>
 }} 
-
-    <!-- <div class="learningpath_details  mb-2">
-        <div class="enroll_btn">
-            <button type="button" class="btn btn-primary">Enroll</button>
-        </div>
-            <div class="block_heading"><b>Details</b></div>
-        <div class="block_content d-flex">
-            <span class="content_name">{{#str}}learningplan, local_learningplan{{/str}}</span>
-            <span class="conent_code">: {{ plan_learningplan_code }}</span>  
-         </div>
-        <div class="block_content d-flex">
-            <span class="content_name">Credits </span>
-            <span class="conent_code">: {{ lplancredits }}</span> 
-        </div>
-    </div> -->
-    <div class="learningpath_courses">
+<div class="enroll_btn">  
+    <span class="enrol">
+        {{# needenroluser}}
+        {{{enrollbtn}}}
+        {{/ needenroluser}}   
+    </span>      
+</div>
+ <br>
+    <div class="learningpath_courses"> 
        <div class="block_heading">
             <b>Courses </b>
         </div>

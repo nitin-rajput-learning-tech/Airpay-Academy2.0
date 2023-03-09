@@ -44,13 +44,12 @@ $lastitem=optional_param('lastitem',0, PARAM_INT);
 $sesskey=sesskey();
 $learningplan = $DB->get_record('local_learningplan',array('id' => $planid));
 if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext))){
-    
     $sql="SELECT lp.id ";
     $sql.=" FROM {local_learningplan} lp WHERE id = :id "; 
     $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
     $learningplans=$DB->get_records_sql($sql .$costcenterpathconcatsql,array('id'=>$planid));
     if(empty($learningplans)){
-        redirect($CFG->wwwroot . '/local/learningplan/index.php');  
+            print_error("You don't have permissions to view this page.");
     }
 }
 
