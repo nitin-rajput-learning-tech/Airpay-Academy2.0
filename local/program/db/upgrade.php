@@ -504,6 +504,18 @@ function xmldb_local_program_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true,2022101800.01, 'local', 'program');
     }
+    if($oldversion < 2022101800.03){
+        $table = new xmldb_table('local_bc_completion_criteria');
+        $field = new xmldb_field('courseids', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, 0);
+        if($dbman->field_exists($table, $field)){
+            $dbman->rename_field($table, $field, 'levelids');
+        }
+        $field = new xmldb_field('coursetracking', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, 'OR');
+        if($dbman->field_exists($table, $field)){
+            $dbman->rename_field($table, $field, 'leveltracking');
+        }
+        upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'program');
+    }
 
 
     return true;
