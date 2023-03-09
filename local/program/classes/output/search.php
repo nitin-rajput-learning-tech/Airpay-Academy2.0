@@ -218,8 +218,6 @@ class search implements renderable{
             $list->iltlocation=$iltlocation;
            }
 
-
-
             $name="categoryname";
 
             if(file_exists($CFG->dirroot.'/local/includes.php')){

@@ -117,14 +117,14 @@ class local_evaluation_external extends external_api {
                     $validateddata->open_designation = NULL;
                 }
 
-                $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));
-                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+                // $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));
+                // list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
 
-                if($validateddata->open_costcenterid !=$org){
+                // if($validateddata->open_costcenterid !=$org){
 
                      local_costcenter_get_costcenter_path($validateddata);
 
-                }
+                //}
 
                 local_users_get_userprofile_datafields($validateddata,$data);                
                 $evaluationid = evaluation_update_instance($validateddata);
@@ -208,7 +208,6 @@ class local_evaluation_external extends external_api {
         $limit = $params['limit'];
         $decodedata = json_decode($params['dataoptions']);
         $filtervalues = json_decode($filterdata);
-
         $stable = new \stdClass();
         $stable->thead = false;
         $stable->start = $offset;

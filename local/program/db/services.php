@@ -212,4 +212,22 @@ $functions = array(
         'capabilities' => '',
         'ajax'         => true,
     ),
+    'local_program_program_completion_settings_submit_instance' => array(
+        'classname'    => 'local_program_external',
+        'methodname'   => 'program_completion_settings',
+        'classpath'    => 'local/program/externallib.php',
+        'description'  => 'Set Program completion criteria.',
+        'type'         => 'write',
+        'capabilities' => '',
+        'ajax'         => true,
+    ),
+    'local_program_level_completion_settings_submit_instance' => array(
+        'classname'    => 'local_program_external',
+        'methodname'   => 'level_completion_settings',
+        'classpath'    => 'local/program/externallib.php',
+        'description'  => 'Set Program level completion criteria.',
+        'type'         => 'write',
+        'capabilities' => '',
+        'ajax'         => true,
+    ),
 );

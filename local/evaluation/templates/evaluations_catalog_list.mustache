@@ -27,6 +27,7 @@
          
              
             <th>{{# str}} schedule, local_evaluation {{/ str}} </th>
+            <th>{{# str}} response, local_evaluation {{/ str}} </th>
             <th>{{#str}}actions, local_evaluation{{/str}}</th>
         </tr>
     </thead>
@@ -38,9 +39,14 @@
             </td>            
         
             <td>{{ evaltype }}</td>
-            <td> {{{enrolled }}} </td>
-            <td> {{{ completed }}}</td>
-          
+            {{# has_evalcap}}
+            <td> {{{enrolled}}} </td>
+            <td> {{{completed}}}</td>
+            {{/ has_evalcap}}
+            {{^ has_evalcap}}
+            <td> {{enrolledon}} </td>
+            <td> {{completedon}}</td>
+            {{/ has_evalcap}}
             <td> 
               <p class="mb-1" title="{{# str}}schedule, local_evaluation{{/ str}}">
                  <span class="pull-left eval_schedule_label font-weight-bold">
@@ -73,6 +79,13 @@
                 {{/ current_feedback}}
                 {{{ copyaction }}}
             </td>
+            <td> 
+                {{# actions}}
+                <span style="font-size: 15px;color: #000;font-weight: 500;">
+                {{{ actions }}}
+                </span> 
+                 {{/ actions}}
+              </td>
         </tr>
        {{/records}}
     </tbody>

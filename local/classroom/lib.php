@@ -1079,7 +1079,7 @@ function local_classroom_quicklink_node()
 
         $data = array();
         $local_classrooms = '';
-        $data['percentage'] = $percentage;
+       // $data['percentage'] = $percentage;
         $data['pluginname'] = 'classroom';
         $data['node_header_string'] = get_string('manage_br_classrooms', 'local_classroom');
         $data['plugin_icon_class'] = 'fa fa-desktop';

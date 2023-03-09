@@ -16,7 +16,7 @@ define(['jquery',
         'core/yui',
         'core/templates',
         'local_program/select2',
-        'local_program/program'],
+        'local_program/program','local_program/jquery.dataTables'],
         function($, Str, ModalFactory, ModalEvents, Fragment, Ajax, Y, Templates, select2, program) {
 
     /**
@@ -133,6 +133,36 @@ define(['jquery',
                 break;
                 case 'program_managelevel_form':
                     header_label = {key:'addlevel', component:'local_program'};
+                break;
+                case 'level_completion_settings':
+                    switch (args.id) {
+                        case 0:
+
+                            header_label = {key:'addcompletioncriteria', component:'local_program'};
+
+                        break;
+
+                        default:
+
+                            header_label = {key:'updatecompletioncriteria', component:'local_program'};
+
+                        break;
+                    }
+                break;
+                case 'program_completion_settings':
+                    switch (args.id) {
+                        case 0:
+
+                            header_label = {key:'addprogramcompletioncriteria', component:'local_program'};
+
+                        break;
+
+                        default:
+
+                            header_label = {key:'updateprogramcompletioncriteria', component:'local_program'};
+
+                        break;
+                    }
                 break;
             }
         customstrings = Str.get_strings([header_label,{
@@ -362,6 +392,34 @@ define(['jquery',
         this.modal.getRoot().find('form').submit();
     };
 
+    var classroomdataTableshow  = function(courseid) {
+        var params = {};
+        params.action = 'classroomlist';
+        params.courseid = courseid
+        $('#classroomlists').DataTable({
+            'processing': true,
+            'serverSide': true,
+            "language": {
+                "paginate": {
+                "next": ">",
+                "previous": "<"
+                },
+                "search": "",
+                "searchPlaceholder": "Search",
+                "processing": '<img src='+M.cfg.wwwroot + '/local/ajax-loader.svg>'
+            },
+            'ajax': {
+            "type": "POST",
+            "url": M.cfg.wwwroot + '/local/program/ajax.php',
+            "data":params
+            },
+            "responsive": true,
+            "pageLength": 5,
+            "bLengthChange": false,
+            "bInfo" : false,
+        });
+    };
+
     return /** @alias module:core_group/AjaxForms */ {
         // Public variables and functions.
         /**
@@ -376,6 +434,67 @@ define(['jquery',
             return new AjaxForms(args);
         },
         load: function () {
+            $(document).on('click', '#reset_program_completions', function(){
+                var programid = $(this).data('programid')
+                levelid = $(this).data('levelid');
+                $.ajax({
+                type: "POST",
+                url:   M.cfg.wwwroot + '/local/program/ajax.php',
+                data: { programid: programid, levelid:levelid, action:'deletecompletions',
+                    sesskey: M.cfg.sesskey
+                },
+                success: function(returndata) {
+                    window.location.reload();
+                }
+            });
+            });
+               $(document).on('click', '.program_classroom_icon', function(){
+                    var data = $(this).data();
+                    var bodycontent = Fragment.loadFragment('local_program', 'course_classroom_info', 1, data);
+                    Str.get_string('listofclassrooms', 'local_program', self).then(function(title) {
+                        ModalFactory.create({
+                            type: ModalFactory.types.CANCEL,
+                            title: title,
+                            body: bodycontent
+                        }).done(function(modal) {
+                            // Keep a reference to the modal.
+                            self.modal = modal;
+
+
+                            // Forms are big, we want a big modal.
+                            self.modal.setLarge();
+
+                            // We want to reset the form every time it is opened.
+                            self.modal.getRoot().on(ModalEvents.hidden, function() {
+                                // self.modal.setBody('');
+                                self.modal.hide();
+                                self.modal.destroy();
+                            }.bind(this));
+
+                            // We want to reset the form every time it is opened.
+                            self.modal.getRoot().on(ModalEvents.cancel, function() {
+                                // self.modal.setBody('');
+                                self.modal.hide();
+                                self.modal.destroy();
+                            }.bind(this));
+                            self.modal.show();
+
+                            self.modal.getRoot().on(ModalEvents.bodyRendered, function() {
+                                 classroomdataTableshow(data.courseid);
+                            }.bind(this));
+
+                        });
+                    });
+                });
+                $(document).on('click', '.togglebutton', function(){
+                    if($(this).hasClass('show_more')){
+                        $(this).parent().find('.show_less').removeClass('hidden');
+                        $(this).parent().find('.show_more').addClass('hidden');
+                    }else{
+                        $(this).parent().find('.show_less').addClass('hidden');
+                        $(this).parent().find('.show_more').removeClass('hidden');
+                    }
+                });
         }
     };
 });

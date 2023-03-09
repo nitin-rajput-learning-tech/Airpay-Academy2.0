@@ -225,5 +225,17 @@ $capabilities = array(
     'local/program:enrolsession' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
-    )
+    ),
+    'local/program:setlevelcompletioncriteria' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+    ),
+    'local/program:cansetprogramcompletioncriteria' => array(
+        'riskbitmask' => RISK_SPAM | RISK_XSS,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array(
+           'manager'      => CAP_ALLOW,
+        ),
+    ),
 );

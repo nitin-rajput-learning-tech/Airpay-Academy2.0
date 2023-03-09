@@ -24,3 +24,17 @@ body#page-local-program-userdashboard .card_list_view {
 .local_program .modal-header .fa{
 	font-size: 26px;
 }
+#page-local-program-view .program_classroom_icon {
+    background-image:  url([[pix:theme_epsilon|scheme_icons/scheme1]]) !important;
+    background-repeat:  no-repeat;
+    position:  absolute;
+    right:  10px;
+    bottom:  35px;
+    width:  30px;
+    height:  25px;
+}
+#page-local-program-view .program_classroom_icon {
+    position: initial;
+    margin-top: 20px;
+    cursor:  pointer;
+}

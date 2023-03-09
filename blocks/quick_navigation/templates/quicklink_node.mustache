@@ -41,11 +41,12 @@
      </div>
     {{# displaystats}}
         <div class="w-100 pull-left">
+            {{# percentage}}
             <div class="progress mx-auto mt-3 mb-3">
                 <div class="progress-bar" role="progressbar" style="width: {{percentage}}%;" aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100">{{percentage}}%</div>
             </div>
+            {{/ percentage}}
         </div>
-
         <ul class="dashboard_count_list w-100 pull-left p-15">
             <li class="dashbaord_count_item"><span class="">
                 <span class="d-block dashboard_count_string">{{#str}}total,block_quick_navigation{{/str}}</span><span class="dashboard_count_value">

@@ -194,7 +194,8 @@ $string['completed_learningplan'] = 'My Learning Path';
 
 /* Strings added by Pallavi Veerla */
 $string['user_completed_learning_path'] = 'User with userid {$a->userid} has completed the Learning path with id {$a->objectid}';
-$string['learning_path_summary_file'] = 'Learning path summary file'; 
+//$string['learning_path_summary_file'] = 'Learning path summary file'; 
+$string['learning_path_summary_file'] = 'Banner Image'; 
 $string['make_inactive'] = 'Make Inactive';
 $string['make_active'] = 'Make Active'; 
 $string['coure_summary_not_provided'] = 'Course Summary not provided'; 
