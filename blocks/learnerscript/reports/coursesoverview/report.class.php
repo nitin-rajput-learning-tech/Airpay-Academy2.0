@@ -30,7 +30,7 @@ class report_coursesoverview extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report, $reportproperties);
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
-        $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions']);   
+        $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions','notstarted','quizpassed','quizfail','traineduserpercent']);
         $this->columns = $columns;
         $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'course');
         $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions');
@@ -142,34 +142,54 @@ class report_coursesoverview extends reportbase implements report {
                         WHERE u.deleted = 0
                             AND u.suspended = 0 AND r.shortname = 'employee'
                             AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
-            $coursesql = "SELECT COUNT(ra.id)
-                        FROM {role_assignments} ra
-                        JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {user} u ON ra.userid = u.id";
 
-            $wheresql = " WHERE u.deleted = 0
-                            AND u.suspended = 0 AND r.shortname = 'employee'
-                            AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
-            $completedsql = " AND cxt.instanceid IN(SELECT cc.course FROM {course_completions} cc WHERE cxt.instanceid = cc.course AND cc.userid = u.id AND cc.timecompleted IS NOT NULL)";
-            $inprogresssql = " AND cxt.instanceid NOT IN(SELECT course FROM {course_completions} cc WHERE cxt.instanceid = cc.course AND cc.userid = u.id AND cc.timecompleted IS NOT NULL)";
-            if($this->ls_startdate > 0 && $this->ls_enddate > 0){
-                $enrolsql .= " AND ra.timemodified > :ls_fstartdate ";
-                $completedsql .= " AND cc.timecompleted > :ls_fstartdate ";
-                $inprogresssql .= " AND cc.timecompleted > :ls_fstartdate ";
-            // }
-            // if($this->ls_enddate > 0){
-                $enrolsql .= " AND ra.timemodified < :ls_fenddate ";
-                $completedsql .= " AND cc.timecompleted < :ls_fenddate ";
-                $inprogresssql .= " AND cc.timecompleted > :ls_fstartdate ";
-            }
-            
+            $noofcompletions = "SELECT count(id) FROM {course_completions} WHERE course =:courseid and timecompleted IS NOT NULL";
+
+            $inprogress = "SELECT count(ul.id) FROM {user_lastaccess} AS ul
+                WHERE ul.courseid =:courseid AND ul.userid !=2
+                AND ul.userid NOT IN(SELECT cc.userid FROM {course_completions} AS cc
+                    WHERE cc.course = ul.courseid AND cc.userid = ul.userid AND cc.timecompleted IS NOT NULL)";
+
+            $notstarted = "AND ra.userid NOT IN (SELECT ul.userid FROM {user_lastaccess} AS ul WHERE ul.courseid = cxt.instanceid)";
+
+            $quizpassgrade = "SELECT id, gradepass, iteminstance FROM {grade_items} WHERE itemmodule = 'quiz' AND courseid =:courseid";
+
+            $countquizparticipents = "SELECT count(id) FROM {quiz_grades} WHERE quiz =:quizeid";
+
+            $countpassed = " AND grade >=:passgrade";
+
+            $countfail = " AND grade <:passgrade";
+
             foreach ($courses as $course) {
-                $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
-                $course->noofinprogress = $DB->count_records_sql($coursesql.$wheresql.$inprogresssql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
-                $course->noofcompletions = $DB->count_records_sql($coursesql.$wheresql.$completedsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
-                $percentofcompletions = ($course->noofcompletions/$course->noofenrollments)*100;
-                $course->percentofcompletions = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
+
+                $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid));
+                $course->noofinprogress = $DB->count_records_sql($inprogress, array('courseid' => $course->courseid));
+                $course->noofcompletions = $DB->count_records_sql($noofcompletions, array('courseid' => $course->courseid));
+                $course->notstarted = $DB->count_records_sql($enrolsql.$notstarted, array('courseid' => $course->courseid));
+                $percentofcompletions = round(($course->noofcompletions/$course->noofenrollments)*100);
+                $percentofcompletion = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
+                $course->percentofcompletions = '<div class="progress">
+                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$percentofcompletion.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$percentofcompletion.'%">
+                        <span class="progress_percentage ml-2">'.$percentofcompletion.'%</span>
+                    </div>
+                </div>';
+                $passgrade = $DB->get_record_sql($quizpassgrade,array('courseid' => $course->courseid));
+
+                $totalattemptsuser = $DB->count_records_sql($countquizparticipents, array('quizeid' => $passgrade->iteminstance));
+
+                $userpassed = $DB->count_records_sql($countquizparticipents.$countpassed, array('passgrade' => $passgrade->gradepass, 'quizeid' => $passgrade->iteminstance));
+                $course->quizpassed = $userpassed;
+
+                $userfail = $DB->count_records_sql($countquizparticipents.$countfail, array('passgrade' => $passgrade->gradepass, 'quizeid' => $passgrade->iteminstance));
+                $course->quizfail = $userfail;
+
+                $traineduser = round(($userpassed/$course->noofenrollments)*100);
+                $traineduserpercent = is_NAN($traineduser) ? 0 : $traineduser;
+                $course->traineduserpercent = '<div class="progress">
+                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$traineduserpercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$traineduserpercent.'%">
+                        <span class="progress_percentage ml-2">'.$traineduserpercent.'%</span>
+                    </div>
+                </div>';
                 $data[] = $course;
             }
         }
