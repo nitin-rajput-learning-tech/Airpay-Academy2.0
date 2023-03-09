@@ -86,7 +86,11 @@ class plugin_coursescompletionscolumns extends pluginbase{
                 $coursehasprogress = $progress !== null;
                 $courseprogresspercent = $coursehasprogress ? $progress : 0;
                 if (!is_nan($courseprogresspercent)) {
-                    $row->{$data->column} = floor($courseprogresspercent);
+                    $row->{$data->column} = '<div class="progress">
+                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$courseprogresspercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$courseprogresspercent.'%">
+                        <span class="progress_percentage ml-2">'.$courseprogresspercent.'% Complete</span>
+                    </div>
+                </div>';
                 }else{
                     $row->{$data->column} = 0;
                 }
@@ -101,7 +105,12 @@ class plugin_coursescompletionscolumns extends pluginbase{
             break;
             case 'activity_completion_percentage':
             // number_format("1000.2262",2)."<br>";
-                $row->{$data->column} = number_format((($activitycompletion / $activities) * 100),0);
+                $avtivitycomplete = intval(($activitycompletion / $activities) * 100);
+                $row->{$data->column} = '<div class="progress">
+                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$avtivitycomplete.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$avtivitycomplete.'%">
+                        <span class="progress_percentage ml-2">'.$avtivitycomplete.'% Complete</span>
+                    </div>
+                </div>';
             break;
             default:
             	break;

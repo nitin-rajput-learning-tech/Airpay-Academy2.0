@@ -49,11 +49,38 @@ class plugin_learningplancompletionscolumns extends pluginbase {
         global $DB, $CFG;
             switch ($data->column) {
                 case 'completionstatus':
-                   $row->{$data->column} = ($row->completionstatus) ? 'Completed' : 'Not Completed';
+                    $row->{$data->column} = ($row->completionstatus) ? 'Completed' : 'Not Completed';
                 break;              
                 case 'completiondate':
-                   $row->{$data->column} = $row->{$data->column} ? date('d-m-Y',$row->{$data->column}) : '--';
+                    $row->{$data->column} = $row->{$data->column} ? date('d-m-Y',$row->{$data->column}) : '--';
                 break;
+                case 'totalcourse':
+                    $totalcourse = $DB->count_records('local_learningplan_courses',array('planid' => $row->learningpathid));
+                    $row->{$data->column} = $totalcourse ? $totalcourse : 0;
+                break;
+                case 'totalcoursecompleted':
+                    $completedcourse = "SELECT count(distinct cc.id) FROM {course_completions} as cc
+                        WHERE cc.userid =:userid AND cc.timecompleted IS NOT NULL AND cc.course IN (SELECT courseid FROM {local_learningplan_courses} WHERE planid =:lpid)" ;
+                    $totalcompletecourse = $DB->count_records_sql($completedcourse, array('userid' => $row->userid, 'lpid' => $row->learningpathid));
+                    $row->{$data->column} = $totalcompletecourse ? $totalcompletecourse : 0;
+                break;
+                case 'inprogresscourse':
+                    $completedcourse = "SELECT count(ul.id) FROM {user_lastaccess} AS ul
+                        WHERE ul.userid =:userid
+                        AND ul.courseid IN (SELECT llc.courseid FROM {local_learningplan_courses} AS llc WHERE llc.planid =:lpid)
+                        AND ul.courseid NOT IN (SELECT cc.course FROM mdl_course_completions AS cc WHERE cc.userid = ul.userid and cc.timecompleted IS NOT NULL)" ;
+                    $totalinprogresscourse = $DB->count_records_sql($completedcourse, array('userid' => $row->userid, 'lpid' => $row->learningpathid));
+                    $row->{$data->column} = $totalinprogresscourse ? $totalinprogresscourse : 0;
+                break;
+                case 'enrolldays':
+                    $pdiffdays = date('d-m-Y', $row->timecreated);
+                    $odiffdays = date('d-m-Y');
+                    $newpdate = date_create("$pdiffdays");
+                    $existingpdate = date_create("$odiffdays");
+                    $diffdays = date_diff($newpdate, $existingpdate);
+                    $row->{$data->column} = $diffdays->format("%a days");
+                break;
+
             }
             
         return (isset($row->{$data->column})) ? $row->{$data->column} : '--';
