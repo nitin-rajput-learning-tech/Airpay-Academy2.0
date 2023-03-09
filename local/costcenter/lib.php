@@ -834,7 +834,6 @@ function local_costcenter_plugins_count($costcenterid, $departmentid=false, $sub
             }
         }
     }
-    // print_object($deparray);die;
     return $deparray;
 }
 

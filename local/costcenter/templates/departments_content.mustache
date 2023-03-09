@@ -28,10 +28,10 @@
                                 <div class="row">
                                     <div class="col-12">
 
-                                        <a class="rolescostcenterpopup" href="javascript:void(0)" data-costcenterid="{{deptid}}" data-hierarchyid="{{hierarchyid}}"   data-costcentername="{{departmentfullname}}" data-action="popupmodal{{deptid}}"  data-value={{role_count}}><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}assignroleusers,local_assignroles{{/ str}}</button></a>
-                                        {{# assignroles}}
+                                        <!-- <a class="rolescostcenterpopup" href="javascript:void(0)" data-costcenterid="{{deptid}}" data-hierarchyid="{{hierarchyid}}"   data-costcentername="{{departmentfullname}}" data-action="popupmodal{{deptid}}"  data-value={{role_count}}><button class="btn btn-primary btn-sm mr-1 my-1">{{# str}}assignroleusers,local_assignroles{{/ str}}</button></a> -->
+                                        <!-- {{# assignroles}}
                                         <a href='javascript:void(0)' data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{deptid}},costcentername:'{{departmentfullname}}', formtype:'{{formtype}}',hierarchyid:{{hierarchyid}}}) })(event)"><button class="btn btn-danger btn-sm mr-1 my-1">{{# str}}assignrole,local_assignroles{{/ str}}</button></a>
-                                        {{/ assignroles}}
+                                        {{/ assignroles}} -->
                                     </div>
                                 </div>
                             </div>
@@ -129,7 +129,6 @@
                     </div>
                 </div>
                 {{/ hide_courses}}
-                
                 {{^ hide_learninplans}}
                 <div class="w-full pull-left mt-3 dept_details dept_learningplans">
                     <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">
@@ -182,23 +181,7 @@
                     </div>
                 </div>
                 {{/ hide_classroom}}
-                {{^ hide_exams}}
-                <div class="w-full pull-left mt-3 dept_details dept_onlineexams">
-                    <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">
-                        <span class="pull-left pr-2 onlineexamscolor"><i class="fa fa-desktop" aria-hidden="true"></i></span>
-                        <span class="details_string pull-left">{{# str}} online_exams, local_costcenter {{/str}}</span>
-                        <span class="pull-right details_count onlineexamscolor"><a href="{{viewonlineexamlink_url}}" class='viewlink' title= "{{#str}} totalonlineexams, local_costcenter {{/str}}">{{ onlineexamcount }}</a></span>
-                    </div> 
-                    <div class="pull-left col-lg-7 col-md-12 col-sm-12 col-12 px-2 deptdetails_right">
-                        <span class="w-half pull-left inforight"><i class="fa fa-user-o pr-1 pull-left activeicon" aria-hidden="true"></i>
-                            <span class="lable_name pull-left">{{# str}} active {{/str}}<span class="label_colon pull-right mr-1">:</span></span><span class="onlineexamscolor"><a href="{{count_onlineexamactivelink_url}}" class='viewlink' title= "{{#str}} activeonlineexams, local_costcenter {{/str}}">{{ activeonlineexamcount }}</a></span>
-                        </span>
-
-                         <span class="w-half pull-left"><i class="fa fa-user-times pr-1 pull-left inactiveicon" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} inactive {{/str}}<span class="label_colon pull-right mr-1">:</span></span><span class="onlineexamscolor"><a href="{{count_onlineexaminactivelink_url}}" class='viewlink' title= "{{#str}} inactiveonlineexams, local_costcenter {{/str}}">{{ inactiveonlineexamcount }}</a></span></span>
-                    </div>
-                </div>
-                {{/ hide_exams}}
-                <!-- {{^ hide_program}}
+                {{^ hide_program}}
                 <div class="w-full pull-left mt-3 dept_details dept_programs">
                     <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">
                         <span class="pull-left pr-2 programscolor"><span class="program_icon_wrap"></span></span>
@@ -211,7 +194,7 @@
                          <span class="w-half pull-left"><i class="fa fa-flag-o pr-1 pull-left completeicon" aria-hidden="true"></i><span class="lable_name pull-left">{{# str}} inactive {{/str}}<span class="label_colon pull-right mr-1">:</span></span><span class="programscolor"><a href="{{count_programinactivelink_url}}" class='viewlink' title= "{{#str}} inactiveprogramcount, local_costcenter {{/str}}">{{ inactiveprogramcount }}</a></span></span>
                     </div>
                 </div>
-                {{/hide_program}} -->
+                {{/hide_program}}
                <!--  {{^ hide_certification}}
                 <div class="w-full pull-left mt-3 dept_details dept_certifications">
                     <div class="pull-left col-lg-5 col-md-12 col-sm-12 col-12 px-2 deptdetails_left">
