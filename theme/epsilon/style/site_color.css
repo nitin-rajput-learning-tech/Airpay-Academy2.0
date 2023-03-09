@@ -883,3 +883,12 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
     background-color: var(--secondarycolor);
     opacity: 25%;
 }
+#page-local-courses-courses .courseimg_container .enrolment_info,
+#page-local-onlineexams-index .courseimg_container .info_container.enrolment_info,
+#page-local-evaluation-index .eval_container .enroll_strip{
+    background-color: var(--primarycolor);
+    border-color: var(--primarycolor);
+}
+#page-local-courses-courses .courseimg_container .course_type{
+    background-color: var(--primarycolor);
+}
