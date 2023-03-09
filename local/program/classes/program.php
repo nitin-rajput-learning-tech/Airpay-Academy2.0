@@ -442,12 +442,13 @@ class program {
         }
     }
 
-    public function manage_program_level_completions($programid, $levelid) {
+    public function manage_program_level_completions($programid, $levelid, $courses = null,$validateddata = null) {
         global $DB, $USER;
-
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
-        $courses = $DB->get_records_menu('local_program_level_courses',
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($data->programid);
+        if(is_null($courses)){
+            $courses = $DB->get_records_menu('local_program_level_courses',
             array('programid' => $programid, 'levelid' => $levelid), '', 'id, courseid');
+        }
         $bclcomptlcheck = $DB->record_exists('local_bcl_cmplt_criteria',
             array('programid' => $programid, 'levelid' => $levelid));
         if ($bclcomptlcheck) {
@@ -468,7 +469,11 @@ class program {
         }
 
         $completions->sessiontracking = null;
-        $completions->coursetracking = 'AND';
+        if(!isset($validateddata->coursetracking) || empty($validateddata->coursetracking)){
+          $completions->coursetracking = 'AND';
+        }else{
+          $completions->coursetracking = $validateddata->coursetracking;
+        }
         try {
             if ($completions->id > 0) {
                 $completions->timemodified = time();
