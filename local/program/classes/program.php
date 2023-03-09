@@ -442,12 +442,13 @@ class program {
         }
     }
 
-    public function manage_program_level_completions($programid, $levelid) {
+    public function manage_program_level_completions($programid, $levelid, $courses = null,$validateddata = null) {
         global $DB, $USER;
-
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
-        $courses = $DB->get_records_menu('local_program_level_courses',
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($data->programid);
+        if(is_null($courses)){
+            $courses = $DB->get_records_menu('local_program_level_courses',
             array('programid' => $programid, 'levelid' => $levelid), '', 'id, courseid');
+        }
         $bclcomptlcheck = $DB->record_exists('local_bcl_cmplt_criteria',
             array('programid' => $programid, 'levelid' => $levelid));
         if ($bclcomptlcheck) {
@@ -468,7 +469,11 @@ class program {
         }
 
         $completions->sessiontracking = null;
-        $completions->coursetracking = 'AND';
+        if(!isset($validateddata->coursetracking) || empty($validateddata->coursetracking)){
+          $completions->coursetracking = 'AND';
+        }else{
+          $completions->coursetracking = $validateddata->coursetracking;
+        }
         try {
             if ($completions->id > 0) {
                 $completions->timemodified = time();
@@ -3067,10 +3072,9 @@ class program {
         $currenttime = time();
         $countSql = "SELECT count(lc.id)
             FROM {local_classroom_courses} AS lcc
-            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4)
-            AND (lc.nomination_enddate <= 0 OR lc.nomination_enddate > :currenttime2) ";
+            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4) ";
 
-        $params=array('courseid' => $courseid, 'currenttime1' => $currenttime, 'currenttime2' => $currenttime);
+        $params=array('courseid' => $courseid, 'currenttime1' => $currenttime);
 
         $countSql.=$this->get_classroom_ta_query('lc');
 
@@ -3084,11 +3088,10 @@ class program {
             JOIN {local_classroom} AS lc On lcc.classroomid = lc.id
             LEFT JOIN {local_classroom_trainers} AS lct ON lct.classroomid = lc.id
             LEFT JOIN {user} AS u ON u.id = lct.trainerid
-            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4)
-            AND (lc.nomination_enddate <= 0 OR lc.nomination_enddate > :currenttime2) ";
+            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4) ";
         $courseSql .= $this->get_classroom_ta_query('lc');
         $courseSql .= " GROUP BY lc.id ";
-        // echo $courseSql;
+
         return $DB->get_records_sql($courseSql, array('courseid' => $courseid, 'currenttime1' => $currenttime, 'currenttime2' => $currenttime), $offset, $limit);
     }
     public function get_classroom_ta_query($prefix = 'lc'){

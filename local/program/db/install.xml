@@ -357,8 +357,8 @@
         <FIELD NAME="programid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="sessiontracking" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="OR"  SEQUENCE="false"/>
         <FIELD NAME="sessionids" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="" SEQUENCE="false"/>
-        <FIELD NAME="coursetracking" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="OR" SEQUENCE="false"/>
-        <FIELD NAME="courseids" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="" SEQUENCE="false"/>
+        <FIELD NAME="leveltracking" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="OR" SEQUENCE="false"/>
+        <FIELD NAME="levelids" TYPE="char" LENGTH="225" NOTNULL="false" DEFAULT="" SEQUENCE="false"/>
         <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
