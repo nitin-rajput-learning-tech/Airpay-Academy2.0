@@ -160,12 +160,21 @@ try{
             $return = $renderer->viewprogramstreams($stable);
         break;
         case 'classroomlist':
-        // define('AJAX_SCRIPT', true);
         $courseid = required_param('courseid',  PARAM_INT);
         $program = new local_program\program();
         $data = $program->get_course_classrooms($courseid, $_REQUEST);
         echo json_encode($data);
         die();
+        break;
+        case 'deletecompletions':
+
+            if($programid){
+
+                $program = new \local_program\program();
+
+                $program->delete_completion_data($programid, $levelid);
+            }
+
         break;
     }
 
