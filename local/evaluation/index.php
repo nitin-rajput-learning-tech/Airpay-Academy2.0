@@ -41,6 +41,9 @@ $sessiontype = optional_param('sessiontype','all',PARAM_RAW);
 $status = optional_param('status', '', PARAM_RAW);
 $costcenterid = optional_param('costcenterid', '', PARAM_INT);
 $departmentid = optional_param('departmentid', '', PARAM_INT);
+$subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
+$l4department = optional_param('l4department', '', PARAM_INT);
+$l5department = optional_param('l5department', '', PARAM_INT);
 $formattype = optional_param('formattype', 'card', PARAM_TEXT);
 $out = '';
 if ($formattype == 'card') {
@@ -86,18 +89,19 @@ $PAGE->requires->strings_for_js(array_keys($strings), 'local_evaluation');
 $PAGE->navbar->add(get_string("pluginname", 'local_evaluation'));
 $renderer = $PAGE->get_renderer('local_evaluation');
 $filterparams = $renderer->get_evaluations(true,$formattype);
-$depth=$context->depth;
-if(is_siteadmin()){
-    $thisfilters = array('organizations', 'departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
-}else if($depth==2) {
-    $thisfilters = array('departments','subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
-}else if($depth==3){
-    $thisfilters = array('subdepartment', 'evaluation', 'evaluation_type', 'status','department4level','department5level');
-}else if($depth==4){
-    $thisfilters = array('evaluation', 'evaluation_type', 'status','department4level','department5level');
-}else if($depth==5){
-    $thisfilters = array('evaluation', 'evaluation_type', 'status','department5level');
+$thisfilters = array('hierarchy_fields','evaluation','evaluation_type', 'status');
+if(!is_siteadmin()) {
+$thisfilters = array('hierarchy_fields','evaluation','evaluation_type', 'status');
 }
+$formdata = new stdClass();
+$formdata->filteropen_costcenterid = $costcenterid;
+$formdata->filteropen_department = $departmentid;
+$formdata->filteropen_subdepartment = $subdepartmentid;
+$formdata->filteropen_level4department = $l4department;
+$formdata->filteropen_level5department = $l5department;
+
+$datasubmitted = data_submitted() ? data_submitted() : $formdata;
+$mform = new filters_form(null, array('filterlist'=> $thisfilters)+(array)$datasubmitted);
 $mform = new filters_form(null, array('filterlist'=> $thisfilters, 'filterparams' => $filterparams));
      
 if ($mform->is_cancelled()) {
@@ -119,13 +123,17 @@ if(empty($filterdata) && !empty($jsonparam)){
     }
     $mform->set_data($filterdata);
 }
-if(!empty($costcenterid) || !empty($status)){   
-        $formdata = new stdClass();
-        $formdata->organizations = $costcenterid;
-        $formdata->departments = $departmentid;
-        $formdata->subdepartment = $subdepartmentid;
-        $formdata->status = $status;
-        $mform->set_data($formdata);
+if(!empty($costcenterid)|| !empty($status) || !empty($departmentid) || !empty($subdepartmentid)){   
+    $formdata = new stdClass();
+    $formdata->filteropen_costcenterid[] = $costcenterid;
+    $formdata->filteropen_department[] = $departmentid;
+    $formdata->filteropen_subdepartment[] = $subdepartmentid;
+    $formdata->filteropen_level4department[] = $l4department;
+    $formdata->filteropen_level5department[] = $l5department;
+    $formdata->status[] = $status;
+    $mform->set_data($formdata);
+echo '<span id="global_filter" class="hidden" data-filterdata='.json_encode($formdata).'></span>';
+
 }
 if($filterdata){
     $collapse = false;

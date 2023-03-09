@@ -396,7 +396,7 @@ class notifications
                 [onlineexams_description], [onlineexams_url],
                 [enroluser_fullname], [enroluser_email], [onlineexam_completiondate]";
                 break;
-            case 'onlineexam_unenrol':
+            case 'onlineexam_unenroll':
                 $strings = "[onlineexams_title], [onlineexams_enrolstartdate],
                 [onlineexams_enrolenddate], [onlineexams_department],
                 [onlineexams_description], [onlineexams_url],

@@ -129,8 +129,10 @@ class notification{
 		//     	$notifications_lib->send_email_notification($emailtype, $datamailobj, $superuser->id, $fromuser->id);
 		//     }
 		// }else{
+            if($user->suspended == 0 && $user->deleted == 0){
 			$this->log_email_notification($user, $fromuser, $datamailobj, $emailtype);
-			if($superuser){
+            }
+			if($superuser && $superuser->suspended == 0 && $superuser->deleted == 0){
 				$datamailobj->body = $notification->adminbody;
 				$datamailobj->touserid = $superuser->id;
 				$datamailobj->teammemberid = $user->id;

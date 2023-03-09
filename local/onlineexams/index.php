@@ -124,7 +124,7 @@ $filterparams = $renderer->get_catalog_onlineexams(true,$formattype);
     $formdata->filteropen_level4department = $l4department;
     $formdata->filteropen_level5department = $l5department;
 
-$mform = courses_filters_form($filterparams, (array)$formdata);
+$mform = onlineexams_filters_form($filterparams, (array)$formdata);
      
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/onlineexams/index.php');

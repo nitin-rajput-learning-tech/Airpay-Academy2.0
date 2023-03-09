@@ -554,3 +554,12 @@ $string['add_classroom_help'] = 'Select
 * Checked - If you want to let classroom courses.
 
 * Unchecked - If you want to let all courses';
+$string['listofclassrooms'] = 'List of Classrooms';
+$string['showless'] = 'Show Less';
+$string['showmore'] = 'Show More';
+$string['level_completion'] = 'Level Completion';
+$string['program_anylevelcompletion'] = 'Program is complete when ANY SELECTED level is complete';
+$string['levelcompletion'] = 'Level Completion';
+$string['taskprogramcompletion'] = 'Task Program Completion';
+$string['addprogramcompletioncriteria'] = 'Add Program Completion Criteria';
+$string['updateprogramcompletioncriteria'] = 'Update Program Completion Criteria';

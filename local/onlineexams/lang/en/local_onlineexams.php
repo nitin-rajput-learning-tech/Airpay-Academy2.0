@@ -455,3 +455,5 @@ $string['enrolledon'] = "Enrolled on";
 $string['completedon'] = "Completed on";
 $string['grade'] = "Grade";
 $string['pending'] = "Pending";
+$string['onlineexam'] = 'Online Exam';
+$string['incompleted'] = 'In-Complete';

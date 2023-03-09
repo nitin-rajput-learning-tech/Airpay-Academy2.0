@@ -194,7 +194,8 @@ $string['completed_learningplan'] = 'My Learning Path';
 
 /* Strings added by Pallavi Veerla */
 $string['user_completed_learning_path'] = 'User with userid {$a->userid} has completed the Learning path with id {$a->objectid}';
-$string['learning_path_summary_file'] = 'Learning path summary file'; 
+//$string['learning_path_summary_file'] = 'Learning path summary file'; 
+$string['learning_path_summary_file'] = 'Banner Image'; 
 $string['make_inactive'] = 'Make Inactive';
 $string['make_active'] = 'Make Active'; 
 $string['coure_summary_not_provided'] = 'Course Summary not provided'; 
@@ -263,3 +264,14 @@ $string['progress'] = 'Progress';
 $string['mandatory'] = 'Mandatory';
 $string['completed'] = 'Completed';
 $string['lp_otherdetails'] = 'Other Details';
+$string['open_costcenteridlocal_learningplan'] = 'Company';
+$string['open_costcenteridlocal_learningplan_help'] = 'Company of the learningpath';
+$string['selfenrolcourse'] = 'Self Enrol';
+$string['selfenrolcourse_help'] = 'Enable Self Enrol';
+$string['open_departmentlocal_learningplan'] = 'Bussiness Unit';
+$string['open_subdepartmentlocal_learningplan'] = 'Department';
+$string['open_level4departmentlocal_learningplan'] = 'Sub Department ';
+$string['open_departmentlocal_learningplan_help'] = 'Bussiness Unit of the learningpath';
+$string['open_subdepartmentlocal_learningplan_help'] = 'Department of the learningpath';
+$string['open_level4departmentlocal_learningplan_help'] = 'Sub Department of the learningpath';
+$string['leaningpathsearch'] = 'Learning path';

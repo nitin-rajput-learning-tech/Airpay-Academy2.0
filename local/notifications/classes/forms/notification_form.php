@@ -199,7 +199,7 @@ class notification_form extends moodleform {
 			break;	
 			case 'classroom':	
 				$sql = "SELECT c.id, c.name FROM {local_classroom} c                           
-				WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath  ";
+				WHERE  concat('/',c.open_path,'/') LIKE :costcenterpath AND c.status NOT IN (0,2) ";
 				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Classrooms";

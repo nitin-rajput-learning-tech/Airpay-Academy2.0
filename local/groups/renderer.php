@@ -158,7 +158,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                         $visibleimg = $OUTPUT->pix_icon('t/inactive', get_string('inactive'));
                        $buttons[]= html_writer::link(
                         "javascript:void(0)",
-                        $OUTPUT->pix_icon('t/hide', get_string('hide'), 'moodle', array('title' => '')),
+                        $OUTPUT->pix_icon('t/hide', get_string('hidecohort','local_groups'), 'moodle', array('title' => '')),
                         array('id' => 'confirmhide' . $cohort->id . '', 'onclick' => '(
                               function(e){
                         require("local_groups/renderselections").hideshow_cohort(' . $cohort->id . ', "' . $cohort->name . '")
@@ -168,7 +168,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                         $visibleimg = $OUTPUT->pix_icon('t/active', get_string('active'));
                        $buttons[] = html_writer::link(
                         "javascript:void(0)",
-                        $OUTPUT->pix_icon('t/show', get_string('show'), 'moodle', array('title' => '')),
+                        $OUTPUT->pix_icon('t/show', get_string('showcohort','local_groups'), 'moodle', array('title' => '')),
                         array('id' => 'confirmshow' . $cohort->id . '', 'onclick' => '(
                               function(e){
                         require("local_groups/renderselections").showhide_cohort(' . $cohort->id . ', "' . $cohort->name . '")
@@ -306,7 +306,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                             
                                $buttons[]= html_writer::link(
                                 "javascript:void(0)",
-                                $OUTPUT->pix_icon('t/hide', get_string('hide'), 'moodle',array('title' => '')).html_writer::tag('span',get_string('hide'),array('class'=>'hidestrings')),
+                                $OUTPUT->pix_icon('t/hide', get_string('hidecohort','local_groups'), 'moodle',array('title' => '')).html_writer::tag('span',get_string('hidecohort','local_groups'),array('class'=>'hidestrings')),
                                 array('class'=>'dropdown-item' ,'id' => 'confirmhide' . $cohort->id . '', 'onclick' => '(
                                       function(e){
                                 require("local_groups/renderselections").hideshow_cohort(' . $cohort->id . ', "' . $cohort->name . '")
@@ -318,7 +318,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                              
                             $buttons[]= html_writer::link(
                                 "javascript:void(0)",
-                                $OUTPUT->pix_icon('t/show', get_string('show'), 'moodle', array('title' => '')).html_writer::tag('span',get_string('show'),array('class'=>'hidestrings')),
+                                $OUTPUT->pix_icon('t/show', get_string('showcohort','local_groups'), 'moodle', array('title' => '')).html_writer::tag('span',get_string('showcohort','local_groups'),array('class'=>'hidestrings')),
                                 array('class'=>'dropdown-item','id' => 'confirmshow' . $cohort->id . '', 'onclick' => '(
                                       function(e){
                                 require("local_groups/renderselections").showhide_cohort(' . $cohort->id . ', "' . $cohort->name . '")

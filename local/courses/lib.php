@@ -1466,17 +1466,17 @@ function get_listof_courses($stable, $filterdata) {
             $formsql .= " AND ( ".implode(' OR ', $subsubdeptsql)." ) ";
         }
     }
-    if (!empty($filterdata->filteropen_level5department)) {
-        $subsubsubdepartments = explode(',', $filterdata->filteropen_level5department);
-        $subsubsubdeptsql = [];
-        foreach($subsubsubdepartments AS $department5level){
-            $subsubsubdeptsql[] = " concat('/',c.open_path,'/') LIKE :department5levelparam_{$department5level}";
-            $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
-        }
-        if(!empty($subsubsubdeptsql)){
-            $formsql .= " AND ( ".implode(' OR ', $subsubsubdeptsql)." ) ";
-        }
-    }
+    // if (!empty($filterdata->filteropen_level5department)) {
+    //     $subsubsubdepartments = explode(',', $filterdata->filteropen_level5department);
+    //     $subsubsubdeptsql = [];
+    //     foreach($subsubsubdepartments AS $department5level){
+    //         $subsubsubdeptsql[] = " concat('/',c.open_path,'/') LIKE :department5levelparam_{$department5level}";
+    //         $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
+    //     }
+    //     if(!empty($subsubsubdeptsql)){
+    //         $formsql .= " AND ( ".implode(' OR ', $subsubsubdeptsql)." ) ";
+    //     }
+    // }
     if(!empty($filterdata->hrmsrole)){
         $hrmsroles = explode(',', $filterdata->hrmsrole);
         list($hrmsrolessql, $hrmsrolessparams) = $DB->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'hrmsrole', true, false);
@@ -1662,13 +1662,13 @@ function get_listof_courses($stable, $filterdata) {
             } else {
                 $courseslist[$count]["open_level4department"] = get_string('all');
             }
-            if($course->open_level5department > 0) {
-                $courseslist[$count]["open_level5department"] = $DB->get_records_sql_menu('SELECT id,fullname 
-               FROM {local_costcenter}
-               WHERE id IN('.$course->open_level5department.')');
-            } else {
-                $courseslist[$count]["open_level5department"] = get_string('all');
-            }
+            // if($course->open_level5department > 0) {
+            //     $courseslist[$count]["open_level5department"] = $DB->get_records_sql_menu('SELECT id,fullname 
+            //    FROM {local_costcenter}
+            //    WHERE id IN('.$course->open_level5department.')');
+            // } else {
+            //     $courseslist[$count]["open_level5department"] = get_string('all');
+            // }
 
              if($course->selfenrol == 1){
                 $courseslist[$count]["selfenrol"] = get_string('yes');

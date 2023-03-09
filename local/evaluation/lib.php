@@ -2571,7 +2571,7 @@ function get_listof_evalautions($stable, $filtervalues){
     $data = array();
     $userarray = array();
     $params = array();
-    $filtervalues->organizations = (ltrim($filtervalues->organizations, ','));
+    $filtervalues->filteropen_costcenterid = (ltrim($filtervalues->filteropen_costcenterid, ','));
     $countsql = "SELECT count(a.id) ";
     if (is_siteadmin() || has_capability('local/evaluation:edititems',$context)) {
        $sql ="SELECT a.* ";
@@ -2606,9 +2606,9 @@ function get_listof_evalautions($stable, $filtervalues){
         }
     }
     $filterparams=array();
-    if (!empty($filtervalues->organizations)) {
+    if (!empty($filtervalues->filteropen_costcenterid)) {
 
-        $organizations = explode(',', $filtervalues->organizations);
+        $organizations = explode(',', $filtervalues->filteropen_costcenterid);
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',a.open_path,'/') LIKE :organisationparam_{$organisation}";
@@ -2619,9 +2619,9 @@ function get_listof_evalautions($stable, $filtervalues){
             $fromsql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
         }
     }
-    if (!empty($filtervalues->departments)) {
+    if (!empty($filtervalues->filteropen_department)) {
 
-        $departments = explode(',', $filtervalues->departments);
+        $departments = explode(',', $filtervalues->filteropen_department);
         $departmentsql = [];
         foreach($departments AS $department){
             $departmentsql[] = "concat('/',a.open_path,'/') LIKE :departmentparam_{$department}";
@@ -2632,9 +2632,9 @@ function get_listof_evalautions($stable, $filtervalues){
             $fromsql .= " AND ( ".implode(' OR ', $departmentsql)." ) ";
         }
     }
-    if (!empty($filtervalues->subdepartment)) {
+    if (!empty($filtervalues->filteropen_subdepartment)) {
 
-        $subdepartments = explode(',', $filtervalues->subdepartment);
+        $subdepartments = explode(',', $filtervalues->filteropen_subdepartment);
         $subdepartmentsql = [];
         foreach($subdepartments AS $subdepartment){
             $subdepartmentsql[] = "concat('/',a.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
@@ -2644,9 +2644,9 @@ function get_listof_evalautions($stable, $filtervalues){
             $fromsql .= " AND ( ".implode(' OR ', $subdepartmentsql)." ) ";
         }
     }
-    if (!empty($filtervalues->department4level)) {
+    if (!empty($filtervalues->filteropen_level4department)) {
 
-        $department4levels = explode(',', $filtervalues->department4level);
+        $department4levels = explode(',', $filtervalues->filteropen_level4department);
         $departmentlevel4sql = [];
         foreach($department4levels AS $department4level){
             $departmentlevel4sql[] = "concat('/',a.open_path,'/') LIKE :departmentlevel4param_{$department4level}";
@@ -2656,9 +2656,9 @@ function get_listof_evalautions($stable, $filtervalues){
             $fromsql .= " AND ( ".implode(' OR ', $departmentlevel4sql)." ) ";
         }
     }
-    if (!empty($filtervalues->department5level)) {
+    if (!empty($filtervalues->filteropen_department5level)) {
 
-        $department5level = explode(',', $filtervalues->department5level);
+        $department5level = explode(',', $filtervalues->filteropen_department5level);
         $departmentlevel5sql = [];
         foreach($department5level AS $department5levels){
 
@@ -3087,13 +3087,13 @@ function evaluation_filter($mform,$query='',$searchanywhere=false, $page=0, $per
             'placeholder' => get_string('evaluation','local_evaluation')
     );
 
-    $select = $mform->addElement('autocomplete', 'evaluation', '', $evaluationlist,$options);
+    $select = $mform->addElement('autocomplete', 'evaluation', get_string('pluginname','local_evaluation'), $evaluationlist,$options);
     $mform->setType('evaluation', PARAM_RAW);
 }
 function evaluation_type_filter($mform){
     $eval_type_arr = array('1'=>get_string('feedback', 'local_evaluation'),
                          '2'=>get_string('survey', 'local_evaluation'));
-    $select = $mform->addElement('autocomplete', 'eval_type', '', $eval_type_arr, array('placeholder' => get_string('type', 'local_evaluation')));
+    $select = $mform->addElement('autocomplete', 'eval_type',get_string('types','local_evaluation'), $eval_type_arr, array('placeholder' => get_string('type', 'local_evaluation')));
     $mform->setType('eval_type', PARAM_RAW);
     $select->setMultiple(true);
 }

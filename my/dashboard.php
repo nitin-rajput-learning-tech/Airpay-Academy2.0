@@ -42,7 +42,7 @@ if(is_siteadmin()){
     if(!$categoryid){
         $categoryid = $DB->get_field_sql("SELECT category FROM {local_costcenter} WHERE parentid = :parentid ORDER BY id ASC ", array('parentid' => 0));
     }
-    if($categoryid){
+    if(!$categoryid){
         $categoryid = 1;
     }
 }else if($org_id){

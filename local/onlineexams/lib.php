@@ -67,7 +67,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     }
     $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
         if ($get_coursedetails->format == 'singleactivity') {
-            $moduleinfoSql = "SELECT q.id, q.attempts,q.timelimit,q.overduehandling,q.browsersecurity, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
+            $moduleinfoSql = "SELECT q.id, q.attempts,q.timelimit,q.graceperiod,q.overduehandling,q.browsersecurity, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
                 FROM {quiz} as q 
                 JOIN {grade_items} as gi ON gi.iteminstance = q.id AND gi.itemtype ='mod' AND gi.itemmodule = 'quiz' 
                 WHERE q.course=:courseid ";
@@ -82,6 +82,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
             $course->timeclose = $moduleinfo->timeclose;
             $course->timelimit = $moduleinfo->timelimit;
             $course->overduehandling =$moduleinfo->overduehandling;
+            $course->graceperiod =$moduleinfo->graceperiod;
             $course->browsersecurity = $moduleinfo->browsersecurity;
             // }else{
         }
@@ -120,7 +121,6 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     if ($formdata['open_points'] > 0) {
         $formdata['open_enablepoints'] = true;
     }
-    // print_r($formdata);
     $params = array(
         'course' => $course,
         'category' => $category,
@@ -180,7 +180,7 @@ function get_listof_onlineexams($stable, $filterdata)
     if (!empty($autoenroll_plugin_exist)) {
         require_once($CFG->dirroot . '/enrol/auto/lib.php');
     }
-    $maincheckcontext = $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $maincheckcontext = $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
     $statustype = $stable->status;
     $totalcostcentercount = $stable->costcenterid;
     $totaldepartmentcount = $stable->departmentid;
@@ -216,11 +216,11 @@ function get_listof_onlineexams($stable, $filterdata)
         $params = array_merge($params, $filtercategoriesparams);
         $formsql .= " AND c.open_categoryid $filtercategoriessql";
     }
-    if (!empty($filterdata->courses)) {
-        $filtercourses = explode(',', $filterdata->courses);
-        list($filtercoursessql, $filtercoursesparams) = $DB->get_in_or_equal($filtercourses, SQL_PARAMS_NAMED, 'courses', true, false);
-        $params = array_merge($params, $filtercoursesparams);
-        $formsql .= " AND c.id $filtercoursessql";
+    if (!empty($filterdata->onlineexams)) {
+        $filteronlineexams = explode(',', $filterdata->onlineexams);
+        list($filteronlineexamssql, $filteronlineexamsparams) = $DB->get_in_or_equal($filteronlineexams, SQL_PARAMS_NAMED, 'onlineexams', true, false);
+        $params = array_merge($params, $filteronlineexamsparams);
+        $formsql .= " AND c.id $filteronlineexamssql";
     }
     if (!empty($filterdata->filteropen_costcenterid)) {
 
@@ -314,16 +314,16 @@ function get_listof_onlineexams($stable, $filterdata)
     }
     // $params = array_merge($searchparams, $userorg, $userdep, $filtercategoriesparams,$filtercoursesparams, $departmentsparams, $subdepartmentsparams, $organizationsparams, $hrmsrolessparams, $locationsparams,$filterparams,$filtercoursetypeparams);
 
-    $totalcourses = $DB->count_records_sql($countsql . $formsql, $params);
+    $totalonlineexams = $DB->count_records_sql($countsql . $formsql, $params);
 
     $formsql .= " ORDER BY c.id DESC";
-    $courses = $DB->get_records_sql($selectsql . $formsql, $params, $stable->start, $stable->length);
+    $onlineexams = $DB->get_records_sql($selectsql . $formsql, $params, $stable->start, $stable->length);
     $ratings_plugin_exist = $core_component::get_plugin_directory('local', 'ratings');
-    $courseslist = array();
+    $onlineexamslist = array();
     $employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
-    if (!empty($courses)) {
+    if (!empty($onlineexams)) {
         $count = 0;
-        foreach ($courses as $key => $course) {
+        foreach ($onlineexams as $key => $course) {
 
             $course = (array)$course;
 
@@ -370,17 +370,17 @@ function get_listof_onlineexams($stable, $filterdata)
 
             if (strlen($coursename) > 35) {
                 $coursenameCut = substr($coursename, 0, 35) . "...";
-                $courseslist[$count]["coursenameCut"] = \local_costcenter\lib::strip_tags_custom($coursenameCut);
+                $onlineexamslist[$count]["coursenameCut"] = \local_costcenter\lib::strip_tags_custom($coursenameCut);
             }
             $catname = $categoryname;
             $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12) . "..." : $catname;
             $displayed_names = '<span class="pl-10 ' . $course->coursetype . '">' . $course->coursetype . '</span>';
 
-            $courestypes_names = array('2' => get_string('classroom', 'local_courses'), '3' => get_string('elearning', 'local_courses'), '4' => get_string('learningplan', 'local_courses'), '5' => get_string('program', 'local_courses'), '6' => get_string('certification', 'local_courses'));
+            $courestypes_names = array('2' => get_string('classroom', 'local_onlineexams'), '3' => get_string('elearning', 'local_onlineexams'), '4' => get_string('learningplan', 'local_onlineexams'), '5' => get_string('program', 'local_onlineexams'), '6' => get_string('certification', 'local_onlineexams'));
             if ($ratings_plugin_exist) {
                 require_once($CFG->dirroot . '/local/ratings/lib.php');
                 $ratingenable = True;
-                $avgratings = get_rating($course->id, 'local_courses');
+                $avgratings = get_rating($course->id, 'local_onlineexams');
                 $rating_value = $avgratings->avg == 0 ? 'N/A' : $avgratings->avg/*/2*/;
             } else {
                 $ratingenable = False;
@@ -390,7 +390,7 @@ function get_listof_onlineexams($stable, $filterdata)
             if (class_exists($classname)) {
                 $tags = new $classname;
 
-                $tagstring = $tags->get_item_tags($component = 'local_courses', $itemtype = 'courses', $itemid = $course->id, $contextid = context_course::instance($course->id)->id, $arrayflag = 0, $more = 0);
+                $tagstring = $tags->get_item_tags($component = 'local_onlineexams', $itemtype = 'onlineexams', $itemid = $course->id, $contextid = context_course::instance($course->id)->id, $arrayflag = 0, $more = 0);
                 $tagstringtotal = $tagstring;
                 if ($tagstring == "") {
                     $tagstring = 'N/A';
@@ -414,74 +414,74 @@ function get_listof_onlineexams($stable, $filterdata)
             } else {
                 $skillname = 'N/A';
             }
-            $courseslist[$count]["coursename"] = \local_costcenter\lib::strip_tags_custom($coursename);
-            $courseslist[$count]["shortname"] =  \local_costcenter\lib::strip_tags_custom($shortname);
-            $courseslist[$count]["skillname"] = \local_costcenter\lib::strip_tags_custom($skillname);
-            $courseslist[$count]["ratings_value"] = $rating_value;
-            $courseslist[$count]["ratingenable"] = $ratingenable;
-            $courseslist[$count]["tagstring"] = \local_costcenter\lib::strip_tags_custom($tagstring);
-            $courseslist[$count]["tagstringtotal"] = $tagstringtotal;
-            $courseslist[$count]["tagenable"] = $tagenable;
-            $courseslist[$count]["catname"] = \local_costcenter\lib::strip_tags_custom($catname);
-            $courseslist[$count]["catnamestring"] = \local_costcenter\lib::strip_tags_custom($catnamestring);
-            $courseslist[$count]["enrolled_count"] = $enrolled_count;
-            $courseslist[$count]["courseid"] = $course->id;
-            $courseslist[$count]["completed_count"] = $completed_count;
-            $courseslist[$count]["points"] = $course->open_points != NULL ? $course->open_points : 0;
-            $courseslist[$count]["coursetype"] = \local_costcenter\lib::strip_tags_custom($displayed_names);
-            $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
-            $courseslist[$count]["grade_view"] = ((has_capability(
+            $onlineexamslist[$count]["coursename"] = \local_costcenter\lib::strip_tags_custom($coursename);
+            $onlineexamslist[$count]["shortname"] =  \local_costcenter\lib::strip_tags_custom($shortname);
+            $onlineexamslist[$count]["skillname"] = \local_costcenter\lib::strip_tags_custom($skillname);
+            $onlineexamslist[$count]["ratings_value"] = $rating_value;
+            $onlineexamslist[$count]["ratingenable"] = $ratingenable;
+            $onlineexamslist[$count]["tagstring"] = \local_costcenter\lib::strip_tags_custom($tagstring);
+            $onlineexamslist[$count]["tagstringtotal"] = $tagstringtotal;
+            $onlineexamslist[$count]["tagenable"] = $tagenable;
+            $onlineexamslist[$count]["catname"] = \local_costcenter\lib::strip_tags_custom($catname);
+            $onlineexamslist[$count]["catnamestring"] = \local_costcenter\lib::strip_tags_custom($catnamestring);
+            $onlineexamslist[$count]["enrolled_count"] = $enrolled_count;
+            $onlineexamslist[$count]["courseid"] = $course->id;
+            $onlineexamslist[$count]["completed_count"] = $completed_count;
+            $onlineexamslist[$count]["points"] = $course->open_points != NULL ? $course->open_points : 0;
+            $onlineexamslist[$count]["coursetype"] = \local_costcenter\lib::strip_tags_custom($displayed_names);
+            $onlineexamslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
+            $onlineexamslist[$count]["grade_view"] = ((has_capability(
                 'local/onlineexams:grade_view',
                 $context
             ) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context)) ? true : false;
-            $courseslist[$count]["request_view"] = ((has_capability('local/request:approverecord', $maincheckcontext)) || is_siteadmin()) ? true : false;
+            $onlineexamslist[$count]["request_view"] = ((has_capability('local/request:approverecord', $maincheckcontext)) || is_siteadmin()) ? true : false;
 
-            $coursesummary = \local_costcenter\lib::strip_tags_custom($chelper->get_course_formatted_summary(
+            $onlineexamsummary = \local_costcenter\lib::strip_tags_custom($chelper->get_course_formatted_summary(
                 $course_in_list,
                 array('overflowdiv' => false, 'noclean' => false, 'para' => false)
             ));
-            $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . "..." : $coursesummary;
-            $courseslist[$count]["coursesummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
-            $courseslist[$count]["fullcoursesummary"] = $coursesummary;
-            $courseslist[$count]["format"] = $format;
+            $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100) . "..." : $onlineexamsummary;
+            $onlineexamslist[$count]["onlineexamsummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
+            $onlineexamslist[$count]["fullonlineexamsummary"] = $onlineexamsummary;
+            $onlineexamslist[$count]["format"] = $format;
 
 
             $course =  (array)$course;
             local_costcenter_set_costcenter_path($course);
             $course = (object)$course;
             if ($course->open_department > 0) {
-                $courseslist[$count]["open_department"] = $DB->get_records_sql_menu('SELECT id,fullname 
+                $onlineexamslist[$count]["open_department"] = $DB->get_records_sql_menu('SELECT id,fullname 
                 FROM {local_costcenter}
                 WHERE id IN(' . $course->open_department . ')');
             } else {
-                $courseslist[$count]["open_department"] = get_string('all');
+                $onlineexamslist[$count]["open_department"] = get_string('all');
             }
             if ($course->open_subdepartment > 0) {
-                $courseslist[$count]["open_subdepartment"] = $DB->get_records_sql_menu('SELECT id,fullname 
+                $onlineexamslist[$count]["open_subdepartment"] = $DB->get_records_sql_menu('SELECT id,fullname 
                 FROM {local_costcenter}
                 WHERE id IN(' . $course->open_subdepartment . ')');
             } else {
-                $courseslist[$count]["open_subdepartment"] = get_string('all');
+                $onlineexamslist[$count]["open_subdepartment"] = get_string('all');
             }
             if ($course->open_level4department > 0) {
-                $courseslist[$count]["open_level4department"] = $DB->get_records_sql_menu('SELECT id,fullname 
+                $onlineexamslist[$count]["open_level4department"] = $DB->get_records_sql_menu('SELECT id,fullname 
                FROM {local_costcenter}
                WHERE id IN(' . $course->open_level4department . ')');
             } else {
-                $courseslist[$count]["open_level4department"] = get_string('all');
+                $onlineexamslist[$count]["open_level4department"] = get_string('all');
             }
             if ($course->open_level5department > 0) {
-                $courseslist[$count]["open_level5department"] = $DB->get_records_sql_menu('SELECT id,fullname 
+                $onlineexamslist[$count]["open_level5department"] = $DB->get_records_sql_menu('SELECT id,fullname 
                FROM {local_costcenter}
                WHERE id IN(' . $course->open_level5department . ')');
             } else {
-                $courseslist[$count]["open_level5department"] = get_string('all');
+                $onlineexamslist[$count]["open_level5department"] = get_string('all');
             }
 
             if ($course->selfenrol == 1) {
-                $courseslist[$count]["selfenrol"] = get_string('yes');
+                $onlineexamslist[$count]["selfenrol"] = get_string('yes');
             } else {
-                $courseslist[$count]["selfenrol"] = get_string('no');
+                $onlineexamslist[$count]["selfenrol"] = get_string('no');
             }
 
             //course image
@@ -490,93 +490,93 @@ function get_listof_onlineexams($stable, $filterdata)
                 $includes = new user_course_details();
                 $courseimage = $includes->course_summary_files($course);
                 if (is_object($courseimage)) {
-                    $courseslist[$count]["courseimage"] = $courseimage->out();
+                    $onlineexamslist[$count]["courseimage"] = $courseimage->out();
                 } else {
-                    $courseslist[$count]["courseimage"] = $courseimage;
+                    $onlineexamslist[$count]["courseimage"] = $courseimage;
                 }
             }
 
             $enrolid = $DB->get_field('enrol', 'id', array('enrol' => 'manual', 'courseid' => $course->id));
 
             if (has_capability('local/onlineexams:enrol', $maincheckcontext) && has_capability('local/onlineexams:manage', $maincheckcontext)) {
-                $courseslist[$count]["enrollusers"] = $CFG->wwwroot . "/local/onlineexams/onlineexamsenrol.php?id=" . $course->id . "&enrolid=" . $enrolid;
+                $onlineexamslist[$count]["enrollusers"] = $CFG->wwwroot . "/local/onlineexams/onlineexamsenrol.php?id=" . $course->id . "&enrolid=" . $enrolid;
             }
             if (has_capability('local/onlineexams:view', $context) || is_enrolled($context)) {
-                $courseslist[$count]["courseurl"] = $CFG->wwwroot . "/course/view.php?id=" . $course->id;
+                $onlineexamslist[$count]["courseurl"] = $CFG->wwwroot . "/course/view.php?id=" . $course->id;
             } else {
-                $courseslist[$count]["courseurl"] = "#";
+                $onlineexamslist[$count]["courseurl"] = "#";
             }
 
             if ($departmentcount > 1 && !(is_siteadmin())) {
-                $courseslist[$count]["grade_view"] = false;
-                $courseslist[$count]["request_view"] = false;
+                $onlineexamslist[$count]["grade_view"] = false;
+                $onlineexamslist[$count]["request_view"] = false;
             }
 
 
             if (has_capability('local/onlineexams:update', $context) && has_capability('local/onlineexams:manage', $context)) {
                 $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')) . get_string('edit'), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_onlineexams/onlineexamsAjaxform").init({contextid:' . $context->id . ', component:"local_onlineexams", callback:"custom_onlineexams_form", form_status:0, plugintype: "local", pluginname: "onlineexams", courseid: ' . $course->id . ' }) })(event)'));
-                $courseslist[$count]["editcourse"] = $courseedit;
+                $onlineexamslist[$count]["editcourse"] = $courseedit;
                 if ($course->visible) {
                     $icon = 't/hide';
-                    $string = get_string('make_active', 'local_courses');
-                    $title = get_string('make_inactive', 'local_courses');
+                    $string = get_string('make_active', 'local_onlineexams');
+                    $title = get_string('make_inactive', 'local_onlineexams');
                 } else {
                     $icon = 't/show';
-                    $string = get_string('make_inactive', 'local_courses');
-                    $title = get_string('make_active', 'local_courses');
+                    $string = get_string('make_inactive', 'local_onlineexams');
+                    $title = get_string('make_active', 'local_onlineexams');
                 }
                 $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
-                $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
-                $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_onlineexams', 'data-params' => $params, 'data-id' => $course->id));
+                $params = json_encode(array('coursename' => $coursename, 'onlineexamstatus' => $course->visible));
+                $onlineexamslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_onlineexams', 'data-params' => $params, 'data-id' => $course->id));
                 if (!empty($autoenroll_plugin_exist)) {
                     $autoplugin = enrol_get_plugin('auto');
                     $instance = $autoplugin->get_instance_for_course($course->id);
                     if ($instance) {
                         if ($instance->status == ENROL_INSTANCE_DISABLED) {
 
-                            $courseslist[$count]["auto_enrol"] = $CFG->wwwroot . "/enrol/auto/edit.php?courseid=" . $course->id . "&id=" . $instance->id;
+                            $onlineexamslist[$count]["auto_enrol"] = $CFG->wwwroot . "/enrol/auto/edit.php?courseid=" . $course->id . "&id=" . $instance->id;
                         }
                     }
                 }
             }
 
             if ($departmentcount > 1 && !(is_siteadmin())) {
-                $courseslist[$count]["editcourse"] = '';
-                $courseslist[$count]["update_status"] = '';
-                $courseslist[$count]["auto_enrol"] = '';
+                $onlineexamslist[$count]["editcourse"] = '';
+                $onlineexamslist[$count]["update_status"] = '';
+                $onlineexamslist[$count]["auto_enrol"] = '';
             }
 
             if (has_capability('local/onlineexams:delete', $context) && has_capability('local/onlineexams:manage', $context)) {
-                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')) . get_string('delete'), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "courses_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
-                $courseslist[$count]["deleteaction"] = $deleteactionshtml;
+                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')) . get_string('delete'), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "onlineexams_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
+                $onlineexamslist[$count]["deleteaction"] = $deleteactionshtml;
             }
 
             if ($departmentcount > 1 && !(is_siteadmin())) {
-                $courseslist[$count]["deleteaction"] = '';
+                $onlineexamslist[$count]["deleteaction"] = '';
             }
 
             if (has_capability('local/onlineexams:grade_view', $context) && has_capability('local/onlineexams:manage', $context)) {
-                $courseslist[$count]["grader"] =  $CFG->wwwroot . "/grade/report/grader/index.php?id=" . $course->id;
+                $onlineexamslist[$count]["grader"] =  $CFG->wwwroot . "/grade/report/grader/index.php?id=" . $course->id;
             }
 
             if ($departmentcount > 1 && !(is_siteadmin())) {
-                unset($courseslist[$count]["grader"]);
+                unset($onlineexamslist[$count]["grader"]);
             }
 
-            if (has_capability('local/courses:report_view', $context) && has_capability('local/onlineexams:manage', $context)) {
-                $courseslist[$count]["activity"] = $CFG->wwwroot . "/report/outline/index.php?id=" . $course->id;
+            if (has_capability('local/onlineexams:report_view', $context) && has_capability('local/onlineexams:manage', $context)) {
+                $onlineexamslist[$count]["activity"] = $CFG->wwwroot . "/report/outline/index.php?id=" . $course->id;
             }
             if ($departmentcount > 1 && !(is_siteadmin())) {
-                unset($courseslist[$count]["activity"]);
+                unset($onlineexamslist[$count]["activity"]);
             }
 
 
             if ((has_capability('local/request:approverecord', $maincheckcontext) || is_siteadmin())) {
-                $courseslist[$count]["requestlink"] = $CFG->wwwroot . "/local/request/index.php?courseid=" . $course->id;
+                $onlineexamslist[$count]["requestlink"] = $CFG->wwwroot . "/local/request/index.php?courseid=" . $course->id;
             }
 
             if ($departmentcount > 1 && !(is_siteadmin())) {
-                unset($courseslist[$count]["requestlink"]);
+                unset($onlineexamslist[$count]["requestlink"]);
             }
 
             $quiz = $DB->get_record('quiz', array("course" => $course->id));
@@ -585,11 +585,11 @@ function get_listof_onlineexams($stable, $filterdata)
                 $grademax = $gradeitem->grademax;
             // echo $quiz->timeopen;
             // echo "<br/>";
-            $courseslist[$count]["examfromdate"] =($quiz->timeopen > 0) ?  date('d-m-Y h:i:s', ($quiz->timeopen)) : 'N/A';
-            $courseslist[$count]["examtodate"] = ($quiz->timeclose > 0) ? date('d-m-Y h:i:s', ($quiz->timeclose)) : 'N/A';
-            $courseslist[$count]["passgrade"] = ($gradepass) ? round($gradepass, 2) : 'N/A';
-            $courseslist[$count]["maxgrade"] = ($grademax > 0) ? round($grademax,2) : 'N/A';
-            $courseslist[$count] = array_merge($courseslist[$count], array(
+            $onlineexamslist[$count]["examfromdate"] =($quiz->timeopen > 0) ?  date('d-m-Y h:i:s', ($quiz->timeopen)) : 'N/A';
+            $onlineexamslist[$count]["examtodate"] = ($quiz->timeclose > 0) ? date('d-m-Y h:i:s', ($quiz->timeclose)) : 'N/A';
+            $onlineexamslist[$count]["passgrade"] = ($gradepass) ? round($gradepass, 2) : 'N/A';
+            $onlineexamslist[$count]["maxgrade"] = ($grademax > 0) ? round($grademax,2) : 'N/A';
+            $onlineexamslist[$count] = array_merge($onlineexamslist[$count], array(
                 "actions" => (((has_capability(
                     'local/onlineexams:enrol',
                     $maincheckcontext
@@ -603,7 +603,7 @@ function get_listof_onlineexams($stable, $filterdata)
                     'local/onlineexams:grade_view',
                     $context
                 ) || has_capability(
-                    'local/courses:report_view',
+                    'local/onlineexams:report_view',
                     $context
                 )) || is_siteadmin()) && has_capability('local/onlineexams:manage', $maincheckcontext)) ? true : false,
                 "enrol" => ((has_capability(
@@ -618,7 +618,7 @@ function get_listof_onlineexams($stable, $filterdata)
                     'local/onlineexams:delete',
                     $context
                 ) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context) && has_capability('moodle/course:delete', $context)) ? true : false,
-                "report_view" => ((has_capability('local/courses:report_view', $context) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context)) ? true : false,
+                "report_view" => ((has_capability('local/onlineexams:report_view', $context) || is_siteadmin()) && has_capability('local/onlineexams:manage', $context)) ? true : false,
                 "actions" => 1
             ));
 
@@ -653,15 +653,15 @@ function get_listof_onlineexams($stable, $filterdata)
         if ($DB->record_exists_sql($exist_sql, array($course->id)))
             $candelete = false;
     }
-    $coursesContext = array(
-        "hascourses" => $courseslist,
+    $onlineexamsContext = array(
+        "hascourses" => $onlineexamslist,
         "nocourses" => $nocourse,
-        "totalcourses" => $totalcourses,
-        "length" => count($courseslist),
+        "totalcourses" => $totalonlineexams,
+        "length" => count($onlineexamslist),
 
     );
 
-    return $coursesContext;
+    return $onlineexamsContext;
 }
 function local_onlineexams_leftmenunode()
 {
@@ -669,10 +669,10 @@ function local_onlineexams_leftmenunode()
     $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
     if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()) {
-        $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browsecourses', 'class' => 'pull-left user_nav_div browsecourses'));
-        $courses_url = new moodle_url('/local/onlineexams/index.php');
-        $courses = html_writer::link($courses_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">' . get_string('manage_onlineexams', 'local_onlineexams') . '</span>', array('class' => 'user_navigation_link'));
-        $coursecatnodes .= $courses;
+        $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browseonlineexams', 'class' => 'pull-left user_nav_div browseonlineexams'));
+        $onlineexams_url = new moodle_url('/local/onlineexams/index.php');
+        $onlineexams = html_writer::link($onlineexams_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">' . get_string('manage_onlineexams', 'local_onlineexams') . '</span>', array('class' => 'user_navigation_link'));
+        $coursecatnodes .= $onlineexams;
         $coursecatnodes .= html_writer::end_tag('li');
     }
     return array('6' => $coursecatnodes);
@@ -712,8 +712,7 @@ function add_onlineexam_quiz($validateddata, $examid)
     $quiz = new stdClass();
     $quiz->modulename = 'quiz';
     $quiz->add = 'quiz';
-    $quiz->module = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-    $quiz->graceperiod = 0;
+    $quiz->module = $DB->get_field('modules', 'id', array('name' => 'quiz'));    
     $quiz->preferredbehaviour = 'deferredfeedback';
     $quiz->quizpassword = '';
     $quiz->subnet = '';
@@ -725,7 +724,21 @@ function add_onlineexam_quiz($validateddata, $examid)
     $quiz->gradepass = $validateddata->gradepass;
     $quiz->name = $validateddata->fullname;
     $quiz->attempts = $validateddata->attempts;
-
+    $quiz->graceperiod = ($validateddata->graceperiod) ? $validateddata->graceperiod : 0;
+    $quiz->attemptimmediately = 1;
+    $quiz->correctnessimmediately = 1;
+    $quiz->marksimmediately = 1;
+    $quiz->specificfeedbackimmediately = 1;
+    $quiz->generalfeedbackimmediately = 1;
+    $quiz->rightanswerimmediately = 1;
+    $quiz->overallfeedbackimmediately = 1;
+    $quiz->attemptopen = 1;
+    $quiz->correctnessopen = 1;
+    $quiz->marksopen = 1;
+    $quiz->specificfeedbackopen = 1;
+    $quiz->generalfeedbackopen = 1;
+    $quiz->rightansweropen = 1;
+    $quiz->overallfeedbackopen = 1;
     if (!empty($validateddata->summary_editor['text']))
         $quiz->introeditor['text'] = $validateddata->summary_editor['text'];
     else
@@ -746,7 +759,6 @@ function update_onlineexam_quiz($validateddata, $data, $formstatus)
     $quiz->modulename = 'quiz';
     $quiz->add = 'quiz';
     $quiz->module = $DB->get_field('modules', 'id', array('name' => 'quiz'));
-    $quiz->graceperiod = 0;
     $quiz->preferredbehaviour = 'deferredfeedback';
     $quiz->quizpassword = '';
     $quiz->subnet = '';
@@ -758,6 +770,20 @@ function update_onlineexam_quiz($validateddata, $data, $formstatus)
     $quiz->completion = 2;
     $quiz->completionusegrade = 1;
     $quiz->completionpassgrade = 1;
+    $quiz->attemptimmediately = 1;
+    $quiz->correctnessimmediately = 1;
+    $quiz->marksimmediately = 1;
+    $quiz->specificfeedbackimmediately = 1;
+    $quiz->generalfeedbackimmediately = 1;
+    $quiz->rightanswerimmediately = 1;
+    $quiz->overallfeedbackimmediately = 1;
+    $quiz->attemptopen = 1;
+    $quiz->correctnessopen = 1;
+    $quiz->marksopen = 1;
+    $quiz->specificfeedbackopen = 1;
+    $quiz->generalfeedbackopen = 1;
+    $quiz->rightansweropen = 1;
+    $quiz->overallfeedbackopen = 1;
     // print_r($validateddata);
     // print_r($quizobject);
     $quiz->id = $quizobject->id;
@@ -783,6 +809,7 @@ function update_onlineexam_quiz($validateddata, $data, $formstatus)
         $quiz->introeditor['text'] = $quizobject->intro;
         $quiz->introeditor['format'] = $quizobject->introformat;
         $quiz->grademethod = $quizobject->grademethod;
+        $quiz->graceperiod = ($validateddata->graceperiod) ? $validateddata->graceperiod : 0;
     }
     // print_r($quiz);
     return $quiz;
@@ -876,4 +903,54 @@ function costcenterwise_onlineexams_count($costcenter,$department = false,$subde
     }
 
     return array('onlineexam_plugin_exist' => true,'onlineexamcount' => $countonlineexams,'activeonlineexamcount' => $activeonlineexams,'inactiveonlineexamcount' => $inactiveonlineexams,'viewonlineexamlink_url'=>$viewonlineexamlink_url,'count_onlineexamactivelink_url' =>$count_onlineexamactivelink_url,'count_onlineexaminactivelink_url' =>$count_onlineexaminactivelink_url);
+}
+
+
+function onlineexams_filters_form($filterparams, $ajaxformdata = null){
+
+    global $CFG, $PAGE,$USER;
+
+    require_once($CFG->dirroot . '/local/onlineexams/onlineexam_filters_form.php');
+
+    $action = isset($filterparams['action']) ? $filterparams['action'] : '';
+
+
+     $fields =array(/*'organizations', 'departments',
+            'subdepartment', 'department4level','department5level',*/'hierarchy_fields','onlineexams','categories');
+    $mform = new onlineexam_filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
+    return $mform;
+}
+function onlineexams_filter($mform){
+    global $DB,$USER;
+	$categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
+    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 AND open_module = 'online_exams'  AND open_coursetype = 1 ";
+
+    if(is_siteadmin()){
+       $onlineexamslist = $DB->get_records_sql_menu($sql);
+    }else{
+      $sql .= (new \local_onlineexams\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    }
+    $onlineexamslist = $DB->get_records_sql_menu($sql);
+
+    $select = $mform->addElement('autocomplete', 'onlineexams', get_string('onlineexam','local_onlineexams'), $onlineexamslist, array('placeholder' => get_string('onlineexam','local_onlineexams')));
+    $mform->setType('onlineexams', PARAM_RAW);
+    $select->setMultiple(true);
+}
+function category_filter($mform){
+    global $DB,$USER;
+	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+    $catslib = new local_courses\catslib();
+    if(is_siteadmin()){
+        $categorylist = $DB->get_records_sql_menu("SELECT id, fullname FROM {local_custom_category} ");
+    } else {
+
+       $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname="CONCAT('/',cc.costcenterid,'')");
+
+        $categorylist = $DB->get_records_sql_menu("SELECT cc.id, cc.fullname FROM {local_custom_category} AS cc WHERE 1=1 $costcenterpathconcatsql");
+    }
+
+
+    $select = $mform->addElement('autocomplete', 'categories', get_string('category'), $categorylist, array('placeholder' => get_string('category')));
+    $mform->setType('categories', PARAM_RAW);
+    $select->setMultiple(true);
 }

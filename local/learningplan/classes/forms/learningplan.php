@@ -91,6 +91,11 @@ class learningplan extends moodleform {
 			}
 	        $mform->setType('shortname', PARAM_TEXT);
 
+			if (!empty($id)) {
+                $mform->addElement('hidden', 'shortname');
+                $mform->setType('shortname', PARAM_TEXT);
+                $mform->hardFreeze('shortname');
+            } 
         $parentsql = "SELECT lcc.id, lcc.fullname, lcc.parentid FROM {local_custom_category} AS lcc WHERE 1 = 1";
         if(!is_siteadmin()){
             $orgcond = [];

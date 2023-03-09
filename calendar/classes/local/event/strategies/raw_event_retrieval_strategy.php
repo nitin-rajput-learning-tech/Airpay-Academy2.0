@@ -88,7 +88,7 @@ class raw_event_retrieval_strategy implements raw_event_retrieval_strategy_inter
         $limitnum,
         $ignorehidden
     ) {
-        global $DB;
+        global $DB,$USER;
 
         $params = array();
         // Quick test.
@@ -319,7 +319,22 @@ class raw_event_retrieval_strategy implements raw_event_retrieval_strategy_inter
         }
 
         $events = $DB->get_records_sql($sql, $params, $offset, $limitnum);
-
+        if (!is_siteadmin()) {
+            $classroomidsarr = $DB->get_fieldset_sql(" SELECT lcu.classroomid FROM {local_classroom_users} lcu
+            INNER JOIN {local_classroom} lc on lc.id=lcu.classroomid WHERE lcu.userid = $USER->id AND lc.status = 1    
+            UNION SELECT lct.classroomid FROM {local_classroom_trainers} lct INNER JOIN {local_classroom} lc on lc.id=lct.classroomid WHERE lct.trainerid = $USER->id AND lc.status = 1 ");
+            $eventsnew=[];
+            $checkclassrooms = [];
+            foreach ($events as $key => $value) {
+                if(in_array($value->plugin_instance,$classroomidsarr)){
+                    $eventsnew[] = $value;
+                }
+                 if($value->plugin !== 'local_classroom'){
+                    $eventsnew[] = $value;
+                }
+            }
+            $events = $eventsnew;
+        }
         return  $events === false ? [] : $events;
     }
 }
