@@ -30,7 +30,7 @@ class report_coursescompletions extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         global $DB;
         parent::__construct($report, $reportproperties);
-        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage']];
+        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','enddate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage','finalassespassinggrade','finalassesachievedgrade','finalgrade']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
         $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage','course','user','completionstatus');
         $this->parent = true;
@@ -50,6 +50,8 @@ class report_coursescompletions extends reportbase implements report {
         $this->sql = " SELECT ra.id as assignmentid ,u.id as userid, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*
                         , ra.timemodified as enrolledon
                         , cc.timecompleted 
+                        , c.startdate as startdate
+                        , c.enddate as enddate
                         , ra.timemodified as enrolstarted
                         , c.id as courseid 
                         , c.fullname as coursename

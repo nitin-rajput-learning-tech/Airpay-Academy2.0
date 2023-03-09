@@ -69,7 +69,8 @@ class report_orgusers extends reportbase implements report {
       $this->params['id'] = 2;
       $this->params['deleted'] = 0; 
       $this->params['suspended'] = 0;
-      $systemcontext = context_system::instance();
+      $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+
       // getscheduled report
         if (is_siteadmin()) {
             $this->sql .= "";

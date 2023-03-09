@@ -43,7 +43,7 @@ class report_coursegradeactivities extends reportbase implements report
     $this->basicparams = array(['name' => 'course']);
     $this->columns = $columnsarray;
     $this->filters = array('organization', 'departments', 'subdepartments', 'course');
-    $this->defaultcolumn = 'c.id';
+    $this->defaultcolumn = 'u.id';
   }
 
   function init()
@@ -58,7 +58,7 @@ class report_coursegradeactivities extends reportbase implements report
 
   function select()
   {
-    $this->sql = "SELECT u.id as userid, c.id as courseid, CONCAT(u.firstname,' ',u.lastname) AS fullname,cmp.timecompleted ";
+    $this->sql = "SELECT u.id as userid, c.id as courseid, CONCAT(u.firstname,' ',u.lastname) AS fullname,cc.timecompleted ";
 
     parent::select();
   }
@@ -70,16 +70,16 @@ class report_coursegradeactivities extends reportbase implements report
 
   function joins()
   {
-
-    $this->sql .= " JOIN {course_categories} AS cc ON cc.id = c.category
-                  JOIN {enrol} e ON e.courseid = c.id  
-                  JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                  JOIN {context} AS cxt ON cxt.instanceid = c.id and cxt.contextlevel = 50
-                  JOIN {role_assignments} AS ra ON ra.contextid = cxt.id AND ra.userid = ue.userid
-                  JOIN {role} AS r ON r.id = ra.roleid
-                  JOIN {user} AS u ON u.id = ra.userid
-                  LEFT JOIN {course_completions} AS cmp ON cmp.course = c.id AND cmp.userid = u.id ";
-    /*     $this->sql .= "JOIN {enrol} as e ON c.id =e.courseid
+    global $DB;
+    $employeerole = $DB->get_field('role', 'id', ['shortname' => 'employee']);
+    $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category
+                  JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
+                  JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}
+                  JOIN {user} u ON ra.userid = u.id AND u.confirmed = 1
+                                  AND u.deleted = 0 AND u.suspended = 0
+                  JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
+                  LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid ";
+/*     $this->sql .= "JOIN {enrol} as e ON c.id =e.courseid
                   JOIN {user_enrolments} ue ON ue.enrolid = e.id
                   JOIN {user} as u ON u.id = ue.userid
                   LEFT JOIN {course_completions} cc ON cc.course=e.courseid and ue.userid=cc.userid "; */
@@ -90,9 +90,8 @@ class report_coursegradeactivities extends reportbase implements report
   function where()
   {
     global $USER, $DB;
-    $courseid = $this->params['filter_course'];
-    $this->sql .= " WHERE r.shortname = 'employee' AND u.deleted = 0 
-                        AND u.suspended = 0 ";
+    $this->sql .= " WHERE c.id <> :siteid   ";
+    $this->params['siteid'] = SITEID;
 
     $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
@@ -143,19 +142,17 @@ class report_coursegradeactivities extends reportbase implements report
               FROM {course_modules} cm
               JOIN {modules} m ON cm.module = m.id
               WHERE cm.deletioninprogress = 0 AND cm.visible=1 AND cm.course = $courseuser->courseid ";
-        $criteria = $DB->get_records_sql($sql);       
+        $criteria = $DB->get_records_sql($sql);
 
-        $finalassesresult = $this->get_finalassesment($courseuser->courseid,$courseuser->userid);
-       
+        $finalassesresult = $this->get_finalassesment($courseuser->courseid, $courseuser->userid);
+
         $courseuser->finalassesment = $finalassesresult['finalassesment'];
         $courseuser->noofattempts = $finalassesresult['noofattempts'];
-        $courseuser->finalassesmentgrade = $finalassesresult['finalassesmentgrade'];   
+        $courseuser->finalassesmentgrade = $finalassesresult['finalassesmentgrade'];
 
-       // $courseuser->finalassesment = $this->get_finalassesment($courseuser->courseid,$courseuser->userid);
-
-
+        // $courseuser->finalassesment = $this->get_finalassesment($courseuser->courseid,$courseuser->userid);
         $courseuser->totalnoofactivities = $this->get_totalactivitiescount($courseuser->courseid);
-        $courseuser->noofactivitiescompleted = $this->get_completedactivitiescount($courseuser->userid,$courseuser->courseid);
+        $courseuser->noofactivitiescompleted = $this->get_completedactivitiescount($courseuser->userid, $courseuser->courseid);
         if ($criteria) {
           $activitycount = 0;
           foreach ($criteria as $key => $class) {
@@ -213,67 +210,71 @@ class report_coursegradeactivities extends reportbase implements report
     }
   }
 
-  function get_totalactivitiescount($courseid){
+  function get_totalactivitiescount($courseid)
+  {
     global $DB;
-         /*    SELECT count(cm.id) FROM {course_modules} AS cm
+    /*    SELECT count(cm.id) FROM {course_modules} AS cm
         WHERE cm.deletioninprogress = 0 AND cm.completion != 0 AND cm.course = $row->courseid";
     $activities = $DB->count_records_sql($sql2,array()); */
     $sql = "SELECT count(gi.id)
                 FROM  {grade_items} gi
                 WHERE gi.courseid= :courseid AND gi.itemtype = 'mod'";
-    $count = $DB->count_records_sql($sql,array('courseid' => $courseid));
+    $count = $DB->count_records_sql($sql, array('courseid' => $courseid));
     return $count;
   }
 
-  function get_completedactivitiescount($userid,$courseid){
+  function get_completedactivitiescount($userid, $courseid)
+  {
     global $DB;
     $sql = "SELECT count(cmc.id) FROM {course_modules_completion} AS cmc
                 JOIN {course_modules} AS cm ON cm.id = cmc.coursemoduleid
                 WHERE cmc.userid = :userid AND cm.course = :courseid";
-    $count = $DB->count_records_sql($sql,array('userid' => $userid,'courseid' => $courseid));
+    $count = $DB->count_records_sql($sql, array('userid' => $userid, 'courseid' => $courseid));
     return $count;
   }
 
-  function get_finalassesment($courseid,$userid){
+  function get_finalassesment($courseid, $userid)
+  {
     global $DB;
-   
+
     $sql = " SELECT gi.id FROM  {grade_items} gi WHERE gi.courseid= :courseid AND gi.itemtype = 'mod' AND gi.itemmodule = 'quiz' ";
-    $coursequizids = $DB->get_fieldset_sql($sql,array('courseid' => $courseid));
-    
+    $coursequizids = $DB->get_fieldset_sql($sql, array('courseid' => $courseid));
+
     $coursesectionssql = "SELECT cs.sequence FROM {course_sections} cs WHERE cs.course = $courseid ORDER BY cs.section desc";
     $coursesections = $DB->get_records_sql($coursesectionssql);
-    $quizid = 0; $finalassesmentgrade = '-';
+    $quizid = 0;
+    $finalassesmentgrade = '-';
     $finalassesment = get_string('pending', 'local_onlineexams');
-    foreach($coursesections as $cs){
-        $sequence = explode(',',$cs->sequence);
-        $sections = (array_reverse($sequence));
-        foreach($sections as $qid){
-          $quizid = (in_array($qid,$coursequizids)) ? $qid : 0;
-          break;
-        }
+    foreach ($coursesections as $cs) {
+      $sequence = explode(',', $cs->sequence);
+      $sections = (array_reverse($sequence));
+      foreach ($sections as $qid) {
+        $quizid = (in_array($qid, $coursequizids)) ? $qid : 0;
+        break;
+      }
     }
-   
-    if($quizid){     
-        $gradeitem = $DB->get_record_select('grade_items','id = :id',array('id' => $quizid),'*');
-        $sql = "SELECT MAX(attempt) FROM {quiz_attempts} WHERE quiz = :instanceid AND userid = :userid ";
-        $noofattempts = $DB->get_field_sql($sql, array('userid' => $userid, 'instanceid' => $gradeitem->iteminstance));
-        $gradepass = ($gradeitem->gradepass) ? round($gradeitem->gradepass, 2) : '-';
-        if ($gradeitem->id)
-          $usergrade = $DB->get_record_sql("select * from {grade_grades} where itemid = $gradeitem->id AND userid = $userid");
-        if ($usergrade) {
-          //$finalassesmentgrade = (round($usergrade->finalgrade, 2))*10 . '%';
-          $finalassesmentgrade = (round(($usergrade->finalgrade * 100) / $gradeitem->grademax)) . '%';
-          if ($usergrade->finalgrade >= $gradepass) {
-            $finalassesment = get_string('pass', 'local_onlineexams');
-          } else {
-            $finalassesment = get_string('fail', 'local_onlineexams');
-          }
+
+    if ($quizid) {
+      $gradeitem = $DB->get_record_select('grade_items', 'id = :id', array('id' => $quizid), '*');
+      $sql = "SELECT MAX(attempt) FROM {quiz_attempts} WHERE quiz = :instanceid AND userid = :userid ";
+      $noofattempts = $DB->get_field_sql($sql, array('userid' => $userid, 'instanceid' => $gradeitem->iteminstance));
+      $gradepass = ($gradeitem->gradepass) ? round($gradeitem->gradepass, 2) : '-';
+      if ($gradeitem->id)
+        $usergrade = $DB->get_record_sql("select * from {grade_grades} where itemid = $gradeitem->id AND userid = $userid");
+      if ($usergrade) {
+        //$finalassesmentgrade = (round($usergrade->finalgrade, 2))*10 . '%';
+        //$finalassesmentgrade = (round(($usergrade->finalgrade * 100) / $gradeitem->grademax)) . '%';
+        $finalassesmentgrade = (round(($usergrade->finalgrade / $gradeitem->grademax) * 100)) . '%';
+        if ($usergrade->finalgrade >= $gradepass) {
+          $finalassesment = get_string('pass', 'local_onlineexams');
+        } else {
+          $finalassesment = get_string('fail', 'local_onlineexams');
         }
+      }
     }
     $noofattempts = ($noofattempts) ? $noofattempts : 0;
-  
 
-    return array('noofattempts' => $noofattempts ,'finalassesment' => $finalassesment ,'finalassesmentgrade' => $finalassesmentgrade);
-   
+
+    return array('noofattempts' => $noofattempts, 'finalassesment' => $finalassesment, 'finalassesmentgrade' => $finalassesmentgrade);
   }
 }
