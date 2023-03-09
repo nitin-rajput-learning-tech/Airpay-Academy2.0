@@ -26,120 +26,70 @@ namespace local_program\form;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot.'/local/program/lib.php');
 use \local_program\program as program;
 use moodleform;
 use local_program\local\querylib;
+use context_system;
 
 class program_completion_form extends moodleform {
 
     public function definition() {
         global $CFG, $DB, $USER;
-        $querieslib = new querylib();
-
-        $mform = &$this->_form;
-        $bcid = $this->_customdata['bcid'];
-        $sid = $this->_customdata['id'];
-
         $categorycontext =  (new \local_program\lib\accesslib())::get_module_context($bcid);
-
-        $mform->addElement('hidden', 'id', $sid);
+        $mform = &$this->_form;
+        $pid = $this->_customdata['pid'];
+        $id = $this->_customdata['id'];
+        $mform->addElement('hidden', 'id', $id);
         $mform->setType('id', PARAM_INT);
 
-        $mform->addElement('hidden', 'programid', $bcid);
+        $mform->addElement('hidden', 'programid', $pid);
         $mform->setType('programid', PARAM_INT);
 
-        $session_tracking = array(
-                            NULL => get_string('program_donotsessioncompletion', 'local_program'),
-                            'AND' => get_string('program_allsessionscompletion', 'local_program'),
-                            'OR' => get_string('program_anysessioncompletion', 'local_program')
-                            );
+        $completionflag = local_program_completion_form_flag($mform, $pid, 0);
+        if(!$completionflag){
+            $section_tracking=array('ALL'=>get_string('alllevels','local_program'),
+                                    'AND'=>get_string('program_selectedlevelscompletion', 'local_program'),
+                                    'OR'=>get_string('program_anylevelcompletion', 'local_program'));
 
-        $mform->addElement('select', 'sessiontracking',
-            get_string('sessiontracking', 'local_program'), $session_tracking, array());
+            $mform->addElement('select', 'leveltracking', get_string('leveltracking', 'local_program'), $section_tracking, array());
 
-        $sessions = array();
-        $sessions = $this->_ajaxformdata['sessionids'];
-        if (!empty($sessions)) {
-            $sessions = $sessions;
-        } else if ($id > 0) {
-            $sessions = $DB->get_records_menu('local_program_completion',
-                array('id' => $id), 'id', 'id, sessionids');
+            $levels = array();
+            $levels = $this->_ajaxformdata['levels'];
+            // if (!empty($levels)) {
+            //     $levels = $levels;
+            // } else if ($id > 0) {
+            //     $levels = $DB->get_records_menu('local_bc_completion_criteria',
+            //         array('id' => $id), 'id', 'id, levelids');
+            // }
+            // if (!empty(array_filter($levels))) {
+            //     if(is_array($levels)){
+            //         $levels=implode(',',$levels);
+            //     }
+            //     $levels_sql = "SELECT id, level as fullname
+            //                         FROM {local_program_levels}
+            //                         WHERE programid = {$pid} and id in ({$levels})";
+            //     $levels = $DB->get_records_sql_menu($levels_sql);
+            // }elseif (empty($levels)) {
+            // }
+                $levels_sql = "SELECT id, level as fullname
+                                            FROM {local_program_levels}
+                                            WHERE programid = {$pid} ";
+                $levels = $DB->get_records_sql_menu($levels_sql);
+            $options = array(
+                'multiple' => true,
+                'data-contextid' => $categorycontext->id,
+            );
+            $mform->addElement('autocomplete', 'levelids', get_string('level_completion', 'local_program'), $levels,$options);
         }
-        if (!empty($sessions)) {
-                if (is_array($sessions)){
-                    $sessions = implode(',', $sessions);
-                 }
-
-                $sessions_sql = "SELECT id, name AS fullname
-                                   FROM {local_bc_course_sessions}
-                                  WHERE programid = $bcid AND id IN ($sessions)";
-                $sessions = $DB->get_records_sql_menu($sessions_sql);
-        } else if (empty($sessions)) {
-            $sessions_sql = "SELECT id, name AS fullname
-                               FROM {local_bc_course_sessions}
-                              WHERE programid = $bcid ";
-            $sessions = $DB->get_records_sql_menu($sessions_sql);
-        }
-        $options = array(
-            'ajax' => 'local_program/form-options-selector',
-            'multiple' => true,
-            'data-contextid' => $categorycontext->id,
-            'data-action' => 'program_completions_sessions_selector',
-            'data-options' => json_encode(array('id' => $id, 'programid' => $bcid)),
-        );
-
-        $mform->addElement('autocomplete', 'sessionids',
-                    get_string('session_completion', 'local_program'), $sessions,$options);
-
-        $course_tracking = array(
-                                NULL=>get_string('program_donotcoursecompletion','local_program'),
-                                'AND'=>get_string('program_allcoursescompletion', 'local_program'),
-                                'OR'=>get_string('program_anycoursecompletion', 'local_program')
-                            );
-
-        $mform->addElement('select', 'coursetracking', get_string('coursetracking', 'local_program'), $course_tracking, array());
-
-        $courses = array();
-        $courses = $this->_ajaxformdata['courseids'];
-        if (!empty($courses)) {
-            $courses = $courses;
-        } else if ($id > 0) {
-            $courses = $DB->get_records_menu('local_program_completion',
-                array('id' => $id), 'id', 'id, courseids');
-        }
-        if (!empty($courses)) {
-                if (is_array($courses)) {
-                        $courses = implode(',', $courses);
-                }
-                $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_program_level_courses} as lcc on lcc.courseid=c.id where lcc.programid= $bcid and lcc.courseid in ($courses)";
-                $courses = $DB->get_records_sql_menu($courses_sql);
-        }else if (empty($courses)) {
-            $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_program_level_courses} as lcc on lcc.courseid=c.id where lcc.programid= $bcid ";
-            $courses = $DB->get_records_sql_menu($courses_sql);
-        }
-
-        $options = array(
-            'ajax' => 'local_program/form-options-selector',
-            'multiple' => true,
-            'data-contextid' => $categorycontext->id,
-            'data-action' => 'program_completions_courses_selector',
-            'data-options' => json_encode(array('id' => $id,'programid'=>$bcid)),
-        );
-
-        $mform->addElement('autocomplete', 'courseids',
-                    get_string('course_completion', 'local_program'), $courses,$options);
-
         $mform->disable_form_change_checker();
     }
 
     public function validation($data, $files) {
         global $CFG, $DB, $USER;
         $errors = parent::validation($data, $files);
-        if (isset($data['sessiontracking']) && $data['sessiontracking'] == "OR" && isset($data['sessionids']) && empty($data['sessionids'])) {
-            $errors['sessionids'] = get_string('select_sessions', 'local_program');
-        }
-        if (isset($data['coursetracking']) && $data['coursetracking'] == "OR" && isset($data['courseids']) && empty($data['courseids'])) {
-            $errors['courseids'] = get_string('select_courses', 'local_program');
+        if (isset($data['leveltracking']) && ($data['leveltracking'] == "OR" || $data['leveltracking'] == "AND") && isset($data['levelids']) && empty($data['levelids'])) {
+            $errors['levelids'] = get_string('select_levels', 'local_program');
         }
         return $errors;
     }

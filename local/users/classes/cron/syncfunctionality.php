@@ -98,9 +98,9 @@ class syncfunctionality
             'gender',
             'email',
         ];
-        
+        $this->mandatory_field_count = 0;
         while ($line = $cir->next()) {
-            $this->orgcount =0;
+            $this->orgcount = 0;
             $linenum++;
             $user = new \stdClass();
             foreach ($line as $keynum => $value) {
@@ -134,40 +134,40 @@ class syncfunctionality
                 $this->errors[] = get_string('multiple_user', 'local_users');
             } else {
                 $this->existing_user = null;
-                $exists=$DB->record_exists('user',array('username'=>$user->username));
-                if($exists){          
+                $exists = $DB->record_exists('user', array('username' => $user->username));
+                if ($exists) {
                     $strings = new stdClass;
                     $strings->excel_line_number = $this->excel_line_number;
-                    $strings->username = $user->username;         
-                    echo "<div class='local_users_sync_error'>".get_string('usernamealeadyexists', 'local_users', $strings)."</div>";
+                    $strings->username = $user->username;
+                    echo "<div class='local_users_sync_error'>" . get_string('usernamealeadyexists', 'local_users', $strings) . "</div>";
                     $this->errors[] = get_string('usernamealeadyexists', 'local_users', $strings);
                     $this->mfields[] = "username";
                     $this->errorcount++;
                     continue;
                 }
             }
-            
-            $patharr =(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+
+            $patharr = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
             // echo $path =(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
             // print_r($patharr); die;
-            foreach($patharr as $path){
-                list($zero[], $orgid[], $countryid[], $buid[], $cuid[], $territoryid[]) = explode('/', $path);                
+            foreach ($patharr as $path) {
+                list($zero[], $orgid[], $countryid[], $buid[], $cuid[], $territoryid[]) = explode('/', $path);
             }
             // To hold costcenterid.
-            if(($this->orgcount == 0)){
+            if (($this->orgcount == 0)) {
                 $this->costcenterid = $this->get_org_hierarchyid($user->company_code, $parent = 0, array_unique($orgid));
-            }            
+            }
             // To hold countryid.
             if ($user->bussiness_unit_code && ($this->orgcount == 0)) {
-                $bussiness_unit_code = $user->company_code."_".$user->bussiness_unit_code;
-                $this->countryid = $this->get_country_hierarchyid($bussiness_unit_code, $parent = $this->costcenterid, $countryid,$user);
+                $bussiness_unit_code = $user->company_code . "_" . $user->bussiness_unit_code;
+                $this->countryid = $this->get_country_hierarchyid($bussiness_unit_code, $parent = $this->costcenterid, $countryid, $user);
             }
             if ($user->department_code && ($this->orgcount == 0)) {
-                $department_code = $user->company_code."_".$user->bussiness_unit_code."_".$user->department_code;
+                $department_code = $user->company_code . "_" . $user->bussiness_unit_code . "_" . $user->department_code;
                 $this->level3_bussinessid = $this->get_commercial_unitid($department_code, $this->countryid, $user, $buid);
             }
             if ($user->subdepartment_code && ($this->orgcount == 0)) {
-                $subdepartment_code = $user->company_code."_".$user->bussiness_unit_code."_".$user->department_code."_".$user->subdepartment_code;
+                $subdepartment_code = $user->company_code . "_" . $user->bussiness_unit_code . "_" . $user->department_code . "_" . $user->subdepartment_code;
                 $this->level4_commercialid = $this->get_commercial_areaid($subdepartment_code, $this->level3_bussinessid, $user, $cuid);
             }
             // if ($user->territory_code && ($this->orgcount == 0)) {
@@ -237,57 +237,58 @@ class syncfunctionality
                 $this->updatesupervisor_warningscount = count($this->warnings);
             }
         }
-        if(empty($line = $cir->next())){
-            foreach ($mandatory_fields as $field) {
-                // Mandatory field validation.
-                $this->mandatory_field_validation($user, $field);
+        if (empty($line = $cir->next())) {
+            if ($this->mandatory_field_count == 0) {
+                foreach ($mandatory_fields as $field) {
+                    // Mandatory field validation.
+                    $this->mandatory_field_validation($user, $field);
+                }
             }
         }
-            $upload_info = '<div class="critera_error1"><h3 style="text-decoration: underline;">'
-                . get_string('empfile_syncstatus', 'local_users') . '</h3>';
-            $upload_info .= '<div class=local_users_sync_success>' . get_string(
-                'addedusers_msg',
-                'local_users',
-                $this->insertedcount
-            ) . '</div>';
-            $upload_info .= '<div class=local_users_sync_success>' . get_string(
-                'updatedusers_msg',
-                'local_users',
-                $this->updatedcount
-            ) . '</div>';
-            $upload_info .= '<div class=local_users_sync_error>' . get_string(
-                'errorscount_msg',
-                'local_users',
-                $this->errorcount
-            ) . '</div>
+        $upload_info = '<div class="critera_error1"><h3 style="text-decoration: underline;">'
+            . get_string('empfile_syncstatus', 'local_users') . '</h3>';
+        $upload_info .= '<div class=local_users_sync_success>' . get_string(
+            'addedusers_msg',
+            'local_users',
+            $this->insertedcount
+        ) . '</div>';
+        $upload_info .= '<div class=local_users_sync_success>' . get_string(
+            'updatedusers_msg',
+            'local_users',
+            $this->updatedcount
+        ) . '</div>';
+        $upload_info .= '<div class=local_users_sync_error>' . get_string(
+            'errorscount_msg',
+            'local_users',
+            $this->errorcount
+        ) . '</div>
             </div>';
-            $upload_info .= '<div class=local_users_sync_warning>' . get_string(
-                'warningscount_msg',
-                'local_users',
-                $this->warningscount
-            ) . '</div>';
-            $upload_info .= '<div class=local_users_sync_warning>' . get_string(
-                'superwarnings_msg',
-                'local_users',
-                $this->updatesupervisor_warningscount
-            ) . '</div>';
-            $button = html_writer::tag('button', get_string('button', 'local_users'), array('class' => 'btn btn-primary'));
-            $link = html_writer::tag('a', $button, array('href' => $CFG->wwwroot . '/local/users/index.php'));
-            $upload_info .= '<div class="w-full pull-left text-xs-center">' . $link . '</div>';
-            mtrace($upload_info);
-            $sync_data = new \stdClass();
-            $sync_data->newuserscount = $this->insertedcount;
-            $sync_data->updateduserscount = $this->updatedcount;
-            $sync_data->errorscount = $this->errorcount;
-            $sync_data->warningscount = $this->warningscount;
-            $sync_data->supervisorwarningscount = $this->updatesupervisor_warningscount;
-            $sync_data->usercreated = $USER->id;
-            $sync_data->usermodified = $USER->id;
-            $sync_data->timecreated = time();
-            $sync_data->timemodified = time();
-            $sync_data->costcenterid = $this->costcenterid;
-            $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
-        
+        $upload_info .= '<div class=local_users_sync_warning>' . get_string(
+            'warningscount_msg',
+            'local_users',
+            $this->warningscount
+        ) . '</div>';
+        $upload_info .= '<div class=local_users_sync_warning>' . get_string(
+            'superwarnings_msg',
+            'local_users',
+            $this->updatesupervisor_warningscount
+        ) . '</div>';
+        $button = html_writer::tag('button', get_string('button', 'local_users'), array('class' => 'btn btn-primary'));
+        $link = html_writer::tag('a', $button, array('href' => $CFG->wwwroot . '/local/users/index.php'));
+        $upload_info .= '<div class="w-full pull-left text-xs-center">' . $link . '</div>';
+        mtrace($upload_info);
+        $sync_data = new \stdClass();
+        $sync_data->newuserscount = $this->insertedcount;
+        $sync_data->updateduserscount = $this->updatedcount;
+        $sync_data->errorscount = $this->errorcount;
+        $sync_data->warningscount = $this->warningscount;
+        $sync_data->supervisorwarningscount = $this->updatesupervisor_warningscount;
+        $sync_data->usercreated = $USER->id;
+        $sync_data->usermodified = $USER->id;
+        $sync_data->timecreated = time();
+        $sync_data->timemodified = time();
+        $sync_data->costcenterid = $this->costcenterid;
+        $insert_sync_data = $DB->insert_record('local_userssyncdata', $sync_data);
     } //end of main_hrms_frontendform_method
 
     public function get_organizations()
@@ -384,7 +385,7 @@ class syncfunctionality
         }
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if (!in_array($datal->id,$orgid) && !empty(array_filter($orgid))) {
+            if (!in_array($datal->id, $orgid) && !empty(array_filter($orgid))) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = $fieldvalue;
@@ -410,7 +411,7 @@ class syncfunctionality
             $this->orgcount++;
         }
     } //end of get_org_hierarchyid method
-    public function get_country_hierarchyid($bussiness_unit_code, $parent, $orgid,$user)
+    public function get_country_hierarchyid($bussiness_unit_code, $parent, $orgid, $user)
     {
         global $DB;
         $datalist = $this->organizations;
@@ -425,7 +426,7 @@ class syncfunctionality
         $strings->parentid = $user->company_code;
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if (!in_array($datal->id,$orgid) && !empty(array_filter($orgid))) {
+            if (!in_array($datal->id, $orgid) && !empty(array_filter($orgid))) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = $bussiness_unit_code;
@@ -481,7 +482,7 @@ class syncfunctionality
                 $this->activestatus = 1;
             } else if (strtolower($excel->employee_status) == 'delete') {
                 $this->deletestatus = 1;
-            } else {
+            } else if($this->mandatory_field_count == 0){
                 $strings = new stdClass;
                 $strings->line = $this->excel_line_number;
                 echo '<div class=local_users_sync_error>' . get_string('statusvalidation', 'local_users', $strings) . '</div>';
@@ -510,7 +511,7 @@ class syncfunctionality
                 $this->usergender = 1;
             } else if (strtolower($excel->gender) == 'other') {
                 $this->usergender = 2;
-            } else {
+            } else if($this->mandatory_field_count == 0){
                 $strings = new stdClass;
                 $strings->line = $this->excel_line_number;
                 echo '<div class=local_users_sync_error>' . get_string('invalidgender', 'local_users', $strings) . '</div>';
@@ -622,9 +623,9 @@ class syncfunctionality
         $user = $userslist[$reportinguserid];
         list($zero, $orgid1, $countryid, $buid, $cuid, $territoryid) = explode('/', $orgid);
         if ($user) {
-           if ($user->open_path == '/'.$orgid1) {
+            if ($user->open_path == '/' . $orgid1) {
                 return $user->id;
-           }
+            }
         } else {
             $strings = new \stdClass();
             $strings->empid = $reportinguserid;
@@ -649,7 +650,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if (!in_array($datal->id,$buid)  && !empty(array_filter($buid))) {
+                if (!in_array($datal->id, $buid)  && !empty(array_filter($buid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -684,7 +685,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if (!in_array($datal->id,$cuid) && !empty(array_filter($cuid))) {
+                if (!in_array($datal->id, $cuid) && !empty(array_filter($cuid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -719,7 +720,7 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if (!in_array($datal->id,$terrid) && !empty(array_filter($terrid))) {
+                if (!in_array($datal->id, $terrid) && !empty(array_filter($terrid))) {
                     echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                     $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
                     $this->errorcount++;
@@ -751,7 +752,7 @@ class syncfunctionality
                 $select = '';
                 $where = '';
                 $params = array();
-                $join = ''; 
+                $join = '';
                 if ($key == 'state') {
                     $select .= " ls.id as state";
                     $where .= " AND ls.code = :state ";
@@ -761,7 +762,7 @@ class syncfunctionality
                 }
                 if ($key == 'district') {
                     $select .= " ls.id as state, ld.id as district";
-                    $join .=" JOIN {local_district} as ld ON ld.statesid=ls.id ";
+                    $join .= " JOIN {local_district} as ld ON ld.statesid=ls.id ";
                     $where .= " AND ld.code = :district ";
                     $params['district'] = $user->district;
                     $strings->district = $user->district;
@@ -770,7 +771,7 @@ class syncfunctionality
                 if ($key == 'subdistrict') {
                     $select .= " ls.id as state, ld.id as district,lsd.id as subdistrict";
                     $where .= " AND lsd.code = :subdistrict ";
-                    $join .=" JOIN {local_district} as ld ON ld.statesid=ls.id
+                    $join .= " JOIN {local_district} as ld ON ld.statesid=ls.id
                     JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id ";
                     $params['subdistrict'] = $user->subdistrict;
                     $strings->subdistrict = $user->subdistrict;
@@ -779,7 +780,7 @@ class syncfunctionality
                 if ($key == 'village') {
                     $select .= " ls.id as state, ld.id as district,lsd.id as subdistrict,lv.id as village ";
                     $where .= " AND lv.code = :village ";
-                    $join .=" JOIN {local_district} as ld ON ld.statesid=ls.id
+                    $join .= " JOIN {local_district} as ld ON ld.statesid=ls.id
                     JOIN {local_subdistrict} as lsd ON lsd.districtid=ld.id
                     JOIN {local_village} as lv ON lv.subdistrictid=lsd.id ";
                     $params['village'] = $user->village;
@@ -879,23 +880,23 @@ class syncfunctionality
             $user->email = time() . $user->email;
             $user->open_employeeid = time() . $user->open_employeeid;
         }
-        if($formdata){ 
-            switch($formdata->enrollmentmethod){
+        if ($formdata) {
+            switch ($formdata->enrollmentmethod) {
                 case MANUAL_ENROLL:
-                      $user->auth = "manual";
-                      break;
+                    $user->auth = "manual";
+                    break;
                 case LDAP_ENROLL:
-                      $user->auth = "ldap";
-                      break;
+                    $user->auth = "ldap";
+                    break;
                 case SAML2:
-                      $user->auth = "saml2";
-                      break; 
+                    $user->auth = "saml2";
+                    break;
                 case ADwebservice:
-                      $user->auth = "adwebservice";
-                      break;
+                    $user->auth = "adwebservice";
+                    break;
                 case OTP_ENROLL:
-                      $user->auth = "otp";
-                      break;        
+                    $user->auth = "otp";
+                    break;
             }
         }
         $user->force_password_change = (empty($excel->force_password_change)) ? 0 : $excel->force_password_change;
@@ -983,7 +984,6 @@ class syncfunctionality
             if ($excel->reportingmanager_empid) {
                 $super_user = $this->get_super_userid($excel->reportingmanager_empid, $user->open_path);
                 $user->open_supervisorid = $super_user;
-
             }
             user_update_user($user, false);
             if ($formdata->createpassword) {
@@ -994,7 +994,7 @@ class syncfunctionality
             }
             if ($user->force_password_change == 1) {
                 set_user_preference('auth_forcepasswordchange', $user->force_password_change, $user->id);
-            }else if($user->force_password_change == 0){
+            } else if ($user->force_password_change == 0) {
                 set_user_preference('auth_forcepasswordchange', 0, $user->id);
             }
             $this->updatedcount++;
