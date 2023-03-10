@@ -111,6 +111,9 @@ body#page-local-users-syncstatistics table.dataTable thead .sorting {
 #page-local-users-profile header#page-header>div {
     display: none
 }
+#filters_form form.filteringform .col-md-3 {
+    display: none;
+}
 
 #page-local-users-profile .user_gen_info .edu_info {
     padding: 1.25rem

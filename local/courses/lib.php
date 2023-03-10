@@ -913,7 +913,7 @@ function local_courses_output_fragment_coursestatus_display($args){
 function courses_filter($mform){
     global $DB,$USER;
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 ";
+    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 AND open_coursetype = 0 ";
 
     if(is_siteadmin()){
        $courseslist = $DB->get_records_sql_menu($sql);

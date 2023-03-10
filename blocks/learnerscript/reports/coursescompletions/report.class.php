@@ -166,15 +166,18 @@ class report_coursescompletions extends reportbase implements report {
             $this->params['report_enddate'] = $this->ls_enddate;
         }
 
-        if ($this->params['filter_completionstatus'] == 1) {
-           $this->sql .= " AND cc.timecompleted IS NOT NULL ";
-        }
+        if(isset($this->params['filter_completionstatus'])){
 
-        if ($this->params['filter_completionstatus'] == 0) {
-            $this->sql .= " AND cc.timecompleted IS NULL ";
+            if ($this->params['filter_completionstatus'] == 1) {
+            $this->sql .= " AND cc.timecompleted IS NOT NULL ";
+            }
+
+            if ($this->params['filter_completionstatus'] == 0) {
+                $this->sql .= " AND cc.timecompleted IS NULL ";
+            }
         }
-        // echo $this->sql;
-        // print_r($this->params);exit;
+/*          echo $this->sql;
+        print_r($this->params);exit; */
     }
 
     public function get_rows($courseusers) {

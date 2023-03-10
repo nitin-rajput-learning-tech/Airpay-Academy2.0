@@ -50,7 +50,7 @@ class session_attendance implements renderable, templatable {
         $data->output = $OUTPUT;
         $data->sessiondata = $DB->get_record('local_classroom_sessions', array('id' => $this->sessionid));
         $data_trainers=$DB->get_record('user', array('id' =>$data->sessiondata->trainerid));
-        $data->sessiondata->duration = round($data->sessiondata->duration/60, 2);
+        $data->sessiondata->duration = date('H:i', mktime(0, $data->sessiondata->duration));
         $data->sessiondata->trainername=fullname($data_trainers);
         
         return $data;
