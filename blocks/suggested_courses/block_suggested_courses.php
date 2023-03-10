@@ -114,9 +114,9 @@ final class block_suggested_courses extends block_base {
                     'plugin_name' =>'suggested_courses',
                     'cfg' => $CFG,
                     'skillsinterestedid' => $skills_interested_id );
-                if((!is_siteadmin() && has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context())) || is_siteadmin()){
+                // if((!is_siteadmin() && has_capability('local/skillrepository:create_skill', (new \local_skillrepository\lib\accesslib())::get_module_context())) || is_siteadmin()){
                     $cardparams['is_siteadmin'] = true;
-                }
+                // }
                 $returnoutput.=$OUTPUT->render_from_template('block_suggested_courses/block_suggested_courses', $cardparams);
             }
 
