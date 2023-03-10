@@ -177,7 +177,7 @@ function learningplan_filter($mform){
     if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
         $learningplanlist = $DB->get_records_sql_menu($sql, $learningplan_params);
     }
-    $select = $mform->addElement('autocomplete', 'learningplan', '', $learningplanlist, array('placeholder' => get_string('learning_path_name', 'local_learningplan')));
+    $select = $mform->addElement('autocomplete', 'learningplan', get_string('leaningpathsearch', 'local_learningplan'), $learningplanlist, array('placeholder' => get_string('learning_path_name', 'local_learningplan')));
     $mform->setType('learningplan', PARAM_RAW);
     $select->setMultiple(true);
 }

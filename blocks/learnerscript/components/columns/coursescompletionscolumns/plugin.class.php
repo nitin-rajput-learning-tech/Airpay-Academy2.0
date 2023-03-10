@@ -41,7 +41,7 @@ class plugin_coursescompletionscolumns extends pluginbase{
 	}
 	public function execute($data,$row,$user,$courseid,$starttime=0,$endtime=0){
 		global $DB;
-        $context = context_system::instance();
+       
         $sql = "SELECT count(cmc.id) FROM {course_modules_completion} AS cmc
             JOIN {course_modules} AS cm ON cm.id = cmc.coursemoduleid
             WHERE cmc.userid = $row->userid AND cm.course = $row->courseid";
@@ -50,7 +50,7 @@ class plugin_coursescompletionscolumns extends pluginbase{
         $sql2 = "SELECT count(cm.id) FROM {course_modules} AS cm
             WHERE cm.deletioninprogress = 0 AND cm.completion != 0 AND cm.course = $row->courseid";
         $activities = $DB->count_records_sql($sql2,array());
-
+        $finalassesresult = $this->get_finalassesment($row->courseid, $row->userid);
         switch ($data->column) {
           //   case 'designation':
           //       if($row->{$data->column}){
@@ -65,6 +65,12 @@ class plugin_coursescompletionscolumns extends pluginbase{
 		        }else{
 		            $row->{$data->column} = 'Not Completed';
 		        }
+                break;
+            case 'startdate':
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : 'NA';
+                break;
+            case 'enddate':
+                $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : 'NA';
                 break;
             case 'completiondate':
                 $row->{$data->column} = !empty($row->{$data->column}) ? date('d-m-Y',$row->{$data->column}) : 'NA';
@@ -86,7 +92,11 @@ class plugin_coursescompletionscolumns extends pluginbase{
                 $coursehasprogress = $progress !== null;
                 $courseprogresspercent = $coursehasprogress ? $progress : 0;
                 if (!is_nan($courseprogresspercent)) {
-                    $row->{$data->column} = floor($courseprogresspercent);
+                    $row->{$data->column} = '<div class="progress">
+                        <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$courseprogresspercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$courseprogresspercent.'%">
+                             <span class="progress_percentage ml-2">'.$courseprogresspercent.'% Complete</span>
+                        </div>
+                     </div>';
                 }else{
                     $row->{$data->column} = 0;
                 }
@@ -100,13 +110,66 @@ class plugin_coursescompletionscolumns extends pluginbase{
                 $row->{$data->column} = $activitycompletion;
             break;
             case 'activity_completion_percentage':
-            // number_format("1000.2262",2)."<br>";
-                $row->{$data->column} = number_format((($activitycompletion / $activities) * 100),0);
+                 // number_format("1000.2262",2)."<br>";
+                $avtivitycomplete = intval(($activitycompletion / $activities) * 100);
+                $row->{$data->column} = '<div class="progress">
+                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$avtivitycomplete.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$avtivitycomplete.'%">
+                        <span class="progress_percentage ml-2">'.$avtivitycomplete.'% Complete</span>
+                    </div>
+                </div>';
             break;
+
+            case 'finalassespassinggrade':
+                $row->{$data->column} = $finalassesresult['passinggrade'];
+                break;
+            case 'finalassesachievedgrade':
+                $row->{$data->column} = $finalassesresult['gradeachieved'];
+                break;          
+            case 'finalgrade':
+                $row->{$data->column} = $finalassesresult['finalgrade'];
+                break; 
             default:
             	break;
         }
 
 		return (isset($row->{$data->column})) ? $row->{$data->column} : '--';
 	}
+
+    function get_finalassesment($courseid, $userid)
+    {
+        global $DB;
+
+        $sql = " SELECT gi.id FROM  {grade_items} gi WHERE gi.courseid= :courseid AND gi.itemtype = 'mod' AND gi.itemmodule = 'quiz' ";
+        $coursequizids = $DB->get_fieldset_sql($sql, array('courseid' => $courseid));
+
+        $coursesectionssql = "SELECT cs.sequence FROM {course_sections} cs WHERE cs.course = $courseid ORDER BY cs.section desc";
+        $coursesections = $DB->get_records_sql($coursesectionssql);
+        $quizid = 0;
+        $finalassesmentgrade = '-';
+        $gradeachieved = '-';
+        $gradepass = '-';
+        foreach ($coursesections as $cs) {
+            $sequence = explode(',', $cs->sequence);
+            $sections = (array_reverse($sequence));
+            foreach ($sections as $qid) {
+                $quizid = (in_array($qid, $coursequizids)) ? $qid : 0;
+                break;
+            }
+        }
+
+        if ($quizid) {
+            $gradeitem = $DB->get_record_select('grade_items', 'id = :id', array('id' => $quizid), '*');
+            $gradepass = ($gradeitem->gradepass) ? round($gradeitem->gradepass, 2) : '-';
+            if ($gradeitem->id)
+                $usergrade = $DB->get_record_sql("select * from {grade_grades} where itemid = $gradeitem->id AND userid = $userid");
+            if ($usergrade) {
+                //$finalgrade = (round(($usergrade->finalgrade * 100) / $gradeitem->grademax)) . '%';
+                $finalgrade = (round(($usergrade->finalgrade / $gradeitem->grademax) * 100)) . '%';
+                $gradeachieved = (round($usergrade->finalgrade, 2));
+            }
+        }
+
+
+        return array('passinggrade' => $gradepass, 'gradeachieved' => $gradeachieved, 'finalgrade' => $finalgrade);
+    }
 }

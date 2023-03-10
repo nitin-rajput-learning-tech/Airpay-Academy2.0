@@ -842,9 +842,9 @@ class view extends plugin_renderer_base
 	{
 		global $OUTPUT, $CFG, $DB, $USER;
 		$data = $DB->get_record_sql('SELECT id, open_group, open_hrmsrole,
-             open_designation, open_location,department, subdepartment, open_path,open_states,open_district,open_subdistrict,open_village
+             open_designation, open_location,open_path,open_states,open_district,open_subdistrict,open_village
              FROM {local_learningplan} WHERE id = ' . $planid);
-		list($zero, $org, $ctr, $bu, $cu, $territ) = explode("/", $data->open_path);
+		list($zero, $org, $ctr, $bu, $cu) = explode("/", $data->open_path);
 		if ($ctr == -1 || $ctr == NULL) {
 			$department = get_string('audience_department', 'local_learningplan', 'All');
 		} else {
@@ -869,14 +869,14 @@ class view extends plugin_renderer_base
 			$commercial = get_string('audience_commercial', 'local_learningplan', $commercial_list);
 		}
 
-		if ($territ == NULL) {
-			$territory = get_string('audience_terriroty', 'local_learningplan', 'All');
-		} else {
-			$sql = "SELECT id,fullname FROM {local_costcenter} WHERE id IN ($territ)";
-			$territorys = $DB->get_records_sql_menu($sql);
-			$territory_list = implode(", ", $territorys);
-			$territory = get_string('audience_terriroty', 'local_learningplan', $territory_list);
-		}
+		// if ($territ == NULL) {
+		// 	$territory = get_string('audience_terriroty', 'local_learningplan', 'All');
+		// } else {
+		// 	$sql = "SELECT id,fullname FROM {local_costcenter} WHERE id IN ($territ)";
+		// 	$territorys = $DB->get_records_sql_menu($sql);
+		// 	$territory_list = implode(", ", $territorys);
+		// 	$territory = get_string('audience_terriroty', 'local_learningplan', $territory_list);
+		// }
 
 		// if($data->open_states > 0){
 		//     $sql = "SELECT id,states_name FROM {local_states} WHERE id IN ($data->open_states)";
@@ -930,8 +930,7 @@ class view extends plugin_renderer_base
             $data->open_designation =(!empty($data->open_designation)) ? $designation=get_string('audience_designation','local_learningplan',$data->open_designation) :$designation=get_string('audience_designation','local_learningplan','All');
             
             $data->open_location =(!empty($data->open_location)) ? $location=get_string('audience_location','local_learningplan',$data->open_location) :$location=get_string('audience_location','local_learningplan','All');*/
-
-		return '<div class="tab-pane active mt-15 ml-15" id="plan_courses" role="tabpanel">' . $department . $subdepartment . $commercial . $territory . $state . $district . $subdistrict . $village . '</div>';
+		return '<div class="tab-pane active mt-15 ml-15" id="plan_targetaudiences" role="tabpanel">' . $department . $subdepartment . $commercial. $state . $district . $subdistrict . $village . '</div>';
 	}
 	/**Function to tab view of bulk users uploads
 	$planid=LEP_id $curr_tab="tab name"
@@ -2932,22 +2931,24 @@ class view extends plugin_renderer_base
 			$display_ratings = $display_like = '';
 		}
 
-		if (!is_siteadmin()) {
-			$switchedrole = $USER->access['rsw']['/1'];
-			if ($switchedrole) {
-				$userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
-			} else {
-				$userrole = null;
-			}
-		}
-		$lp_userview = array();
-		$lp_userview['planid'] = $planid;
-		$lp_userview['userid'] = $this->user->id;
-		$enrolled = $DB->record_exists('local_learningplan_user', array('planid' => $planid, 'userid' => $USER->id));
-		$selfenrol_check =  $DB->get_field('local_learningplan', 'selfenrol', array('id' => $planid));
-		if (!is_siteadmin() && !$enrolled && $selfenrol_check) {
-			$lp_userview['needenroluser'] = true;
-		}
+		// if (!is_siteadmin()) {
+		// 	// $switchedrole = $USER->access['rsw']['/1'];
+ 	  	//     $switchedrole = $USER->useraccess['currentroleinfo']['roleid'];
+		// 	if ($switchedrole) {
+		// 		$userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
+		// 	} else {
+		// 		$userrole = 'employee';
+		// 	}
+		// }
+		// $lp_userview = array();
+		// $lp_userview['planid'] = $planid;
+		// $lp_userview['userid'] = $this->user->id;
+		// $enrolled = $DB->record_exists('local_learningplan_user', array('planid' => $planid, 'userid' => $USER->id));
+		// $selfenrol_check =  $DB->get_field('local_learningplan', 'selfenrol', array('id' => $planid));
+		// if (!is_siteadmin() && !$enrolled && $selfenrol_check && $userrole=='employee') {
+		// 	$lp_userview['needenroluser'] = true;
+		// 	$lp_userview['enrollbtn'] = \local_learningplan\output\search::get_enrollbtn($lplan);
+		// }
 
 		$lp_userview['component'] = $component = 'learningplan';
 		$lp_userview['action'] = 'add';
@@ -3010,11 +3011,27 @@ class view extends plugin_renderer_base
 				}
 				$course_name_string = strlen($fullname) > 125 ? substr($fullname, 0, 125) . "..." : $fullname;
 				$enroldisable_class1 = 'enrolled';
+				if (!is_siteadmin()) {
+					   $switchedrole = $USER->useraccess['currentroleinfo']['roleid'];
+					if ($switchedrole) {
+						$userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
+					} else {
+						$userrole = 'employee';
+					}
+				}
+				$enrolled = $DB->record_exists('local_learningplan_user', array('planid' => $planid, 'userid' => $USER->id));
+				$selfenrol_check =  $DB->get_field('local_learningplan', 'selfenrol', array('id' => $planid));
+				if (!is_siteadmin() && !$enrolled && $selfenrol_check && $userrole=='employee') {
+					$lp_userviewcoures['needenroluser'] = true;
+					$lp_userviewcoures['enrollbtn'] = \local_learningplan\output\search::get_enrollbtn($lplan);
+					}
 				$lp_userviewcoures['enroldisable_class1'] = $enroldisable_class1;
 				$lp_userviewcoures['courseimgurl'] = $courseimgurl;
 				$lp_userviewcoures['courselink'] = $course_name_string;
 				$lp_userviewcoures['optional_or_mandtry'] = $optional_or_mandtry;
 				$lp_userviewcoures['course_summary_string'] = $course_summary_string;
+				$lp_userviewcoures['mandatarycourses_count'] = $mandatarycourses_count;
+				$lp_userviewcoures['optionalcourses_count'] = $optionalcourses_count;
 				$test .= $this->render_from_template('local_learningplan/lpathcourse', $lp_userviewcoures);
 			}
 		}

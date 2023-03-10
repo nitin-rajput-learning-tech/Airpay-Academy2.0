@@ -159,9 +159,9 @@ $out .= "</ul>";
 echo $out;
 //$depth = $USER->useraccess['currentroleinfo']['depth'];
 $thisfilters = array(/*'organizations', 'departments',
-    'subdepartment', 'department4level','department5level',*/'hierarchy_fields','categories','idnumber', 'email','users');
+    'subdepartment', 'department4level','department5level',*/'hierarchy_fields','categories','learningplan','status');
 if(!is_siteadmin()) {
-$thisfilters = array('hierarchy_fields','idnumber', 'email','users','categories');
+$thisfilters = array('hierarchy_fields','categories','learningplan','status');
 }
 
     $formdata = new stdClass();

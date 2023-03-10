@@ -30,7 +30,7 @@ class report_coursescompletions extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         global $DB;
         parent::__construct($report, $reportproperties);
-        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage']];
+        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','enddate','couponcode','couponissuedate','couponexpirydate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage','finalassespassinggrade','finalassesachievedgrade','finalgrade']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
         $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage','course','user','completionstatus');
         $this->parent = true;
@@ -50,6 +50,8 @@ class report_coursescompletions extends reportbase implements report {
         $this->sql = " SELECT ra.id as assignmentid ,u.id as userid, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*
                         , ra.timemodified as enrolledon
                         , cc.timecompleted 
+                        , c.startdate as startdate
+                        , c.enddate as enddate
                         , ra.timemodified as enrolstarted
                         , c.id as courseid 
                         , c.fullname as coursename
@@ -164,15 +166,18 @@ class report_coursescompletions extends reportbase implements report {
             $this->params['report_enddate'] = $this->ls_enddate;
         }
 
-        if ($this->params['filter_completionstatus'] == 1) {
-           $this->sql .= " AND cc.timecompleted IS NOT NULL ";
-        }
+        if(isset($this->params['filter_completionstatus'])){
 
-        if ($this->params['filter_completionstatus'] == 0) {
-            $this->sql .= " AND cc.timecompleted IS NULL ";
+            if ($this->params['filter_completionstatus'] == 1) {
+            $this->sql .= " AND cc.timecompleted IS NOT NULL ";
+            }
+
+            if ($this->params['filter_completionstatus'] == 0) {
+                $this->sql .= " AND cc.timecompleted IS NULL ";
+            }
         }
-        // echo $this->sql;
-        // print_r($this->params);exit;
+/*          echo $this->sql;
+        print_r($this->params);exit; */
     }
 
     public function get_rows($courseusers) {
