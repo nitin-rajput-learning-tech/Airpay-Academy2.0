@@ -530,3 +530,4 @@ $string['processing'] = 'Processing';
 $string['selfenrolclassroom_help'] = 'Check yes if required self enrollment to the classroom';
 $string['sessionsexistingbeforestartdate'] = 'Sessions are existing before this date Please delete the sessions to alter it.';
 $string['sessionsexistingafterenddate'] = 'Sessions are existing after this date Please delete the sessions to alter it.';
+$string['subdepartment'] = "Sub Department";

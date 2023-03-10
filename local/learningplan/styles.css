@@ -924,7 +924,7 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link.active{
 #page-local-learningplan-index #filters_form form #Commercial\ Unit,
 #page-local-learningplan-index #filters_form form #Commercial\ Area,
 #page-local-learningplan-index #filters_form form #Territory,
-#page-local-learningplan-index #filters_form form #Category1{
+#page-local-learningplan-index #filters_form form #Category{
 	flex:0 0 100%;
 	max-width:100%;
 	display: flex;

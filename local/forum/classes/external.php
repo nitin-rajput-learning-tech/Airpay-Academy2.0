@@ -498,41 +498,41 @@ class local_forum_external extends external_api
     /* Describes the parameters for global_filters_form_option_selector webservice.
   * @return external_function_parameters
   */
-    public static function global_filters_form_option_selector_parameters()
-    {
-        $query = new external_value(
-            PARAM_RAW,
-            'Query string'
-        );
-        $action = new external_value(
-            PARAM_RAW,
-            'Action for the classroom form selector'
-        );
-        $options = new external_value(
-            PARAM_RAW,
-            'Action for the classroom form selector'
-        );
-        $searchanywhere = new external_value(
-            PARAM_BOOL,
-            'find a match anywhere, or only at the beginning'
-        );
-        $page = new external_value(
-            PARAM_INT,
-            'Page number'
-        );
-        $perpage = new external_value(
-            PARAM_INT,
-            'Number per page'
-        );
-        return new external_function_parameters(array(
-            'query' => $query,
-            'action' => $action,
-            'options' => $options,
-            'searchanywhere' => $searchanywhere,
-            'page' => $page,
-            'perpage' => $perpage,
-        ));
-    }
+    // public static function global_filters_form_option_selector_parameters()
+    // {
+    //     $query = new external_value(
+    //         PARAM_RAW,
+    //         'Query string'
+    //     );
+    //     $action = new external_value(
+    //         PARAM_RAW,
+    //         'Action for the classroom form selector'
+    //     );
+    //     $options = new external_value(
+    //         PARAM_RAW,
+    //         'Action for the classroom form selector'
+    //     );
+    //     $searchanywhere = new external_value(
+    //         PARAM_BOOL,
+    //         'find a match anywhere, or only at the beginning'
+    //     );
+    //     $page = new external_value(
+    //         PARAM_INT,
+    //         'Page number'
+    //     );
+    //     $perpage = new external_value(
+    //         PARAM_INT,
+    //         'Number per page'
+    //     );
+    //     return new external_function_parameters(array(
+    //         'query' => $query,
+    //         'action' => $action,
+    //         'options' => $options,
+    //         'searchanywhere' => $searchanywhere,
+    //         'page' => $page,
+    //         'perpage' => $perpage,
+    //     ));
+    // }
     public static function course_update_status_parameters()
     {
         return new external_function_parameters(
