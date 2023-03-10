@@ -94,7 +94,6 @@ class evaluation_form extends moodleform {
         $mform->addElement('editor', 'introeditor', get_string('moduleintro'), array('rows' => 10), array('maxfiles' => EDITOR_UNLIMITED_FILES,
             'noclean' => true,  'subdirs' => true,'autosave' => false));
         $mform->setType('introeditor', PARAM_RAW); // no XSS prevention here, users must be trusted
-
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('availability'));
 
@@ -164,9 +163,8 @@ class evaluation_form extends moodleform {
 
          $mform->addHelpButton('multiple_submit', 'multiplesubmit', 'local_evaluation');
      }
-    //---------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------   
     }
-
     public function data_preprocessing(&$default_values) {
         $editoroptions = evaluation_get_editor_options();
         $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();

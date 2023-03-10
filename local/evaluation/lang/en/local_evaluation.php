@@ -573,3 +573,4 @@ $string['open_subdistrict_help'] = 'Enter the sub district of the user';
 $string['open_village_help'] = 'Enter the village of the user';
 $string['types'] = 'Feedback types';
 $string['response'] = 'Response action';
+$string['cannotloadxml'] = 'Please upload a valid file';

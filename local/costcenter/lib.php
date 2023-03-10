@@ -789,14 +789,11 @@ function local_costcenter_leftmenunode(){
     else{
             $depth=($categorycontext->depth-1);
 
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
 
             $costcentersql = "SELECT lc.id
                                 FROM {local_costcenter} AS lc WHERE lc.depth=$depth $costcenterpathconcatsql ";
-
             $costcenterid = $DB->get_field_sql($costcentersql);
-
-
             $organization_url = new moodle_url('/local/costcenter/costcenterview.php',array('id' => $costcenterid));
             $organization_string = get_string('orgStructure','local_costcenter');
         }
