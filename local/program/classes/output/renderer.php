@@ -1084,7 +1084,8 @@ class renderer extends plugin_renderer_base {
             'certificate_exists' => $certificate_exists,
             'certificate_download' => $certificate_download,
             'certificateid' => $certificateid,
-            'unenrolbutton' => $unenrolbutton
+            'unenrolbutton' => $unenrolbutton,
+            'programcompletioncriteria' => $this->viewprogramcompletion_settings_info($programid),
              
         ];
         return $this->render_from_template('local_program/programContent', $programcontext);
@@ -1669,5 +1670,29 @@ class renderer extends plugin_renderer_base {
         }else{
             return  $this->render_from_template('local_costcenter/cardPaginate', $context);
         }
+    }
+    /**
+     * [viewprogramcompletion_settings_info description]
+     * @param  [type] $programid [description]
+     * @return [type]              [description]
+     */
+    public function viewprogramcompletion_settings_info($programid)
+    {
+        global $OUTPUT, $CFG, $DB, $USER;
+        $completion_settings = (new program)->program_completion_settings_info($programid);
+
+        return $completion_settings;
+    }
+    /**
+     * [viewlevelcompletion_settings_info description]
+     * @param  [type] $programid [description]
+     * @return [type]              [description]
+     */
+    public function viewlevelcompletion_settings_info($programid,$levelid)
+    {
+        global $OUTPUT, $CFG, $DB, $USER;
+        $completion_settings = (new program)->program_level_completion_settings_info($programid);
+
+        return $completion_settings;
     }
 }
