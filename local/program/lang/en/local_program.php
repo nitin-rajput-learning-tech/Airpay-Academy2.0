@@ -321,14 +321,14 @@ $string['completion_settings_tab'] = 'Completion Information';
 $string['target_audience_tab'] = 'Target Audience';
 $string['requested_users_tab'] = 'Requested Users';
 $string['program_completion_tab_info'] = 'No program criteria found.';
-$string['program_completion_tab_info_allsessions'] = 'This program will completed when the below listed <b> all sessions </b> should be completed.';
-$string['program_completion_tab_info_anysessions'] = 'This program will completed when the below listed <b> any sessions </b> should be completed.';
-$string['program_completion_tab_info_allsessions_allcourses'] =  'This program will completed when the below listed <b>all courses </b> and <b> all sessions </b> should be completed.';
-$string['program_completion_tab_info_allsessions_anycourses'] =  'This program will completed when the below listed <b>any courses </b> and <b> all sessions </b> should be completed.';
-$string['program_completion_tab_info_anysessions_allcourses'] =  'This program will completed when the below listed <b>all courses </b> and <b> any sessions </b> should be completed.';
-$string['program_completion_tab_info_anysessions_anycourses'] =  'This program will completed when the below listed <b>any courses </b> and <b> any sessions </b> should be completed.';
-$string['program_completion_tab_info_allcourses'] = 'This program will completed when the below listed <b> all courses </b> should be completed.';
-$string['program_completion_tab_info_anycourses'] = 'This program will completed when the below listed <b> any courses </b> should be completed.';
+
+$string['program_completion_tab_info_alllevels'] = 'This program will completed when the below listed <b> all levels </b> should be completed.';
+
+$string['program_completion_tab_info_anylevels'] = 'This program will completed when the below listed <b> any levels </b> should be completed.';
+
+$string['program_level_completion_tab_info_allcourses'] = 'This leve; will completed when the below listed <b> all courses </b> should be completed.';
+
+$string['program_level_completion_tab_info_anycourses'] = 'This level will completed when the below listed <b> any courses </b> should be completed.';
 $string['audience_department'] = '<p>This program will eligible below-listed target audience.</p>
 <p> <b>Bussiness Units :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';

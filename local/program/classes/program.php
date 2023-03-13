@@ -73,16 +73,21 @@ class program {
         $program->startdate = 0;
         $program->enddate = 0;
         $program->description = $program->cr_description['text'];
+
         try {
             if ($program->id > 0) {
                 $program->timemodified = time();
                 $program->usermodified = $USER->id;
 
-                if($program->map_certificate == 1){
-                  $program->certificateid = $program->certificateid;
-                }else{
-                  $program->certificateid = null;
+                if($program->form_status == 1) {
+
+                    if($program->map_certificate == 1){
+                      $program->certificateid = $program->certificateid;
+                    }else{
+                      $program->certificateid = null;
+                    }
                 }
+
 
                  $open_path=$DB->get_field('local_program', 'open_path', array('id' => $program->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
@@ -3216,5 +3221,92 @@ class program {
             "iTotalDisplayRecords" => $totalclassrooms,
             "aaData" => $data
         ];
+    }
+    public function program_completion_settings_info($programid) {
+        global $DB, $USER;
+        $programcompletiondata = $DB->get_record('local_bc_completion_criteria', array(
+            'programid' => $programid
+        ));
+        $levelssql = "SELECT id,level FROM {local_program_levels}
+                                            WHERE programid = $programid ";
+        if (!empty($programcompletiondata) && $programcompletiondata->leveltracking == "OR" && $programcompletiondata->levelids != null) {
+            $levelssql .= " AND id in ($programcompletiondata->levelids)";
+        }
+        $levels            = $DB->get_records_sql_menu($levelssql);
+        $return           = "";
+        $data = array();
+
+        $level = '';
+
+        if (!empty($levels)) {
+            $level = implode(', ', $levels);
+        }
+
+        $list['programid'] = $programid;
+
+        $list['levels'] = $levels;
+
+        $leveltracking  = "";
+        if ($programcompletiondata->leveltracking == "AND" && !empty($levels)) {
+            $leveltracking = "_alllevels";
+        }
+        if ($programcompletiondata->leveltracking == "OR" && !empty($levels)) {
+            $leveltracking = "_anylevels";
+        }
+
+        $list['tracking'] = get_string('program_completion_tab_info' . $leveltracking . '', 'local_program');
+        $data[] = $list;
+
+        return $data;
+    }
+    public function program_level_completion_settings_info($programid,$levelid) {
+        global $DB, $USER;
+        $levelcompletiondata = $DB->get_record('local_bcl_cmplt_criteria', array(
+            'programid' => $programid,
+            'levelid' => $levelid
+        ));
+        $levelcoursessql = "SELECT c.id,fullname
+                                  FROM {course} AS c
+                                  JOIN {local_program_level_courses} AS lc ON lc.courseid = c.id
+                                 WHERE lc.programid = :programid AND lc.levelid = :levelid";
+        $params = array();
+        $params['programid'] = $programid;
+        $params['levelid'] = $levelid;
+
+
+        if (!empty($classroomcompletiondata) && $classroomcompletiondata->coursetracking == "OR" && $classroomcompletiondata->courseids != null) {
+            $courseidsda = explode(',',$classroomcompletiondata->courseids);
+            list($relatedcourseidsql, $relatedcourseidparams) = $DB->get_in_or_equal($courseidsda, SQL_PARAMS_NAMED, 'courseids');
+            $params = array_merge($params,$relatedcourseidparams);
+            $levelcoursessql .= " AND lc.courseid $relatedcourseidsql";
+        }
+        $levelcourses = $DB->get_records_sql_menu($levelcoursessql,$params);
+        $return           = "";
+        $data = array();
+
+        $course = '';
+
+        if (!empty($levelcourses)) {
+            $course = implode(', ', $levelcourses);
+        }
+
+        $list['programid'] = $programid;
+
+        $list['levelid'] = $levelid;
+
+        $list['courses'] = $levelcourses;
+
+        $coursetracking  = "";
+        if ($levelcompletiondata->coursetracking == "AND" && !empty($levelcourses)) {
+            $coursetracking = "_allcourses";
+        }
+        if ($levelcompletiondata->coursetracking == "OR" && !empty($levelcourses)) {
+            $coursetracking = "_anycourses";
+        }
+
+        $list['tracking'] = get_string('program_level_completion_tab_info' . $coursetracking . '', 'local_program');
+        $data[] = $list;
+
+        return $data;
     }
 }

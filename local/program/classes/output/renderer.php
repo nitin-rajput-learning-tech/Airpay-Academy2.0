@@ -1081,9 +1081,9 @@ class renderer extends plugin_renderer_base {
             'display_like' => $display_like,
             'display_review' => $display_review,
             'challenge_element' => $challenge_element,
-            'certificate_exists' => isset($certificate_exists),
+            'certificate_exists' => $certificate_exists,
             'certificate_download' => $certificate_download,
-            'certificateid' => isset($certificateid),
+            'certificateid' => $certificateid,
             'unenrolbutton' => $unenrolbutton
              
         ];
