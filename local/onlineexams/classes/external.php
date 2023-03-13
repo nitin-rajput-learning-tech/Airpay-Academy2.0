@@ -423,7 +423,7 @@ class local_onlineexams_external extends external_api
                                 'completed_count' => new external_value(PARAM_INT, 'completed_count', VALUE_OPTIONAL),
                                 'points' => new external_value(PARAM_INT, 'points', VALUE_OPTIONAL),
                                 'coursetype' => new external_value(PARAM_RAW, 'coursetype', VALUE_OPTIONAL),
-                                'coursesummary' => new external_value(PARAM_RAW, 'coursesummary', VALUE_OPTIONAL),
+                                'onlineexamsummary' => new external_value(PARAM_RAW, 'onlineexamsummary', VALUE_OPTIONAL),
                                 'courseurl' => new external_value(PARAM_RAW, 'courseurl', VALUE_OPTIONAL),
                                 'enrollusers' => new external_value(PARAM_RAW, 'enrollusers', VALUE_OPTIONAL),
                                 'editcourse' => new external_value(PARAM_RAW, 'editcourse', VALUE_OPTIONAL),

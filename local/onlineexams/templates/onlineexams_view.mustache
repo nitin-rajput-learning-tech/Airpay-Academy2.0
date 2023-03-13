@@ -90,23 +90,25 @@
 {{/actions}}
                                     </div>
                                     <div class="coursedesc mb-2">
-                                        {{# coursesummary }}
-                                            <p class="desc" title = "Onlineexam Descripton" >{{ coursesummary }}</p>
-                                        {{/ coursesummary }}
-                                        {{^ coursesummary }}
+                                        {{# onlineexamsummary }}
+                                            <p class="desc" title = "Onlineexam Descripton" >{{ onlineexamsummary }}</p>
+                                            <a  data-toggle="popover" title="Popover title" data-content="{{ onlineexamsummary }}">view more</a>
+
+                                            {{/ onlineexamsummary }}
+                                        {{^ onlineexamsummary }}
                                             <p class="alert alert-info text-center mt-1">{{#str}}noonlineexamdesc, local_onlineexams{{/str}}</p>
-                                        {{/ coursesummary }}
+                                        {{/ onlineexamsummary }}
                                     </div>
                                     <!--<div class="d-flex mb-2">
                                         <span class="text-muted">{{#str}}category, local_onlineexams{{/str}} : </span> <span class="ml-1">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
                                     </div>-->
-                                    <div class="row">                                       
-                                         <div class="col-6">
+                                    <!--<div class="row">                                       
+                                          <div class="col-6">
                                             <div class="d-flex">
-                                                <span class="text-muted">{{#str}}department, local_onlineexams{{/str}} : </span> <span class="ml-1">{{{}}}</span>
-                                            </div>
+                                                <span class="text-muted">{{#str}}open_department, local_onlineexams{{/str}} : </span> <span class="ml-1">{{{}}}</span>
+                                            </div> 
                                         </div> 
-                                    </div>
+                                    </div>-->
 
                                     <div class="courseinfo_container">                                        
                                         <div class="info_container points_info">
@@ -149,4 +151,9 @@
     {{/viewtypeCard}}
 {{/response}}
 
+{{#js}}
+$(function () {
+    $('[data-toggle="popover"]').popover()
+  })
 
+{{/js}}

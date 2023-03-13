@@ -87,3 +87,4 @@ $string['form_programs'] = 'Programs';
 $string['form_learning_paths'] = 'Learning Paths'; 
 $string['form_certifications'] = 'Certifications'; 
 $string['form_actions'] = 'Actions'; 
+$string['onlineexam']= 'Onlineexam';
