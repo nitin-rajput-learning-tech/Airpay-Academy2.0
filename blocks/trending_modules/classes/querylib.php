@@ -577,22 +577,22 @@ class querylib {
 		}else {
 			$concat_sql	= " 1 != 1 ";
 			if(!empty($filtervalues)){
-				if(isset($filtervalues->type)){
-					switch($filtervalues->type){
-						case 'enrolments' : 
-							$type = 'enrollments';
-						break;
-						case 'completions' :
-							$type = 'completions';
-						break;
-						case 'ratings' :
-							$type = 'ratings';
-						break;
-					}
-					// $type = $filtervalues->type == 'enrolments' ? 'enrollments': 'completions';
-				}else{
+				// if(isset($filtervalues->type)){
+				// 	switch($filtervalues->type){
+				// 		case 'enrolments' : 
+				// 			$type = 'enrollments';
+				// 		break;
+				// 		case 'completions' :
+				// 			$type = 'completions';
+				// 		break;
+				// 		case 'ratings' :
+				// 			$type = 'ratings';
+				// 		break;
+				// 	}
+				// 	// $type = $filtervalues->type == 'enrolments' ? 'enrollments': 'completions';
+				// }else{
 					$type = False;
-				}
+				//}
 				if(isset($filtervalues->duration)){
 					switch($filtervalues->duration){
 						case 'weekly':

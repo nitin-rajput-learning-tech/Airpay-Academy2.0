@@ -152,16 +152,11 @@ class lib  extends \block_trending_modules\querylib {
 		global $PAGE;
 		$search = $args->search ? $args->search : NULL;
 		$moduletype = $args->filtervalues->module_type ? $args->filtervalues->module_type : NULL;
-		
 		$trending_data = $this->get_trending_modules_query($args->config, $search, false, $moduletype, $moduletype, $args->filtervalues);
 		$sql = $trending_data['sql'];
 		$ordersql = $trending_data['ordersql'];
 		$params = $trending_data['params'];
-		// print_object($trending_data);
 		$records = $this->db->get_records_sql($sql.$ordersql, $params, $args->limitfrom, $args->limitnum);
-		// print_object($sql.$ordersql);
-		// print_object($params);
-		// exit;
 		$data = array();
 		$renderer = $PAGE->get_renderer('local_ratings');
 		$thisrender = $PAGE->get_renderer('block_trending_modules');
@@ -191,8 +186,12 @@ class lib  extends \block_trending_modules\querylib {
 		return $count; 
 	}
     private function local_classroom_content($module){
-    	global $CFG;
+    	global $CFG,$USER,$DB;
     	$return = array();
+		$sql = "SELECT cu.id FROM {local_classroom_users} AS cu 
+							WHERE cu.classroomid = $module->module_id AND userid = $USER->id";
+		$classroom_enrolled=$DB->get_records_sql($sql);
+		if(!$classroom_enrolled){
     	$description = strip_tags($module->module_description);
     	$return['description'] = strlen($description) > 50 ? substr($description, 0, 50).'...' : $description; 
     	$return['description_title'] = $description;
@@ -213,12 +212,15 @@ class lib  extends \block_trending_modules\querylib {
         }else{
         	$return['background_logourl'] = $return['background_logourl']->out();
         }
+	}
     	return $return;
     }
     private function local_courses_content($module){
-    	global $CFG;
+    	global $CFG,$USER;
     	$return = array();
-    	$description = strip_tags($module->module_description);
+		$isenrolled = is_enrolled(\context_course::instance($module->module_id, $USER->id, '', true));
+    	if(!$isenrolled){
+		$description = strip_tags($module->module_description);
     	$return['description'] = strlen($description) > 50 ? substr($description, 0, 50).'...' : $description; 
     	$return['description_title'] = $description;
     	$return['modulename'] = strlen($module->module_name) > 13 ? substr($module->module_name, 0, 13).'...': $module->module_name;
@@ -238,6 +240,7 @@ class lib  extends \block_trending_modules\querylib {
 			$return['background_logourl'] = $background_logourl->out();
 		}else{
 			$return['background_logourl'] = $background_logourl;
+		}
 		}
     	return $return;
     }
