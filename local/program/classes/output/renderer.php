@@ -660,6 +660,7 @@ class renderer extends plugin_renderer_base {
 
                 $programlevel->candeletelevel = $candeletelevel;
                 $programlevel->levelcompletionid = $DB->get_field('local_bcl_cmplt_criteria', 'id', array('programid' => $programid, 'levelid' => $programlevel->id));
+
                 $programlevels[$k] = $programlevel;
                 //$prev_levelid = $k;
             }
@@ -813,7 +814,8 @@ class renderer extends plugin_renderer_base {
                 $categorycontext) && !is_siteadmin(),
             'programlevel' => $programlevel,
             'userview' => $userview,
-            'programlevelcourses' => array_values($programlevelcourses)
+            'programlevelcourses' => array_values($programlevelcourses),
+            'levelcompletioncriteria' => $this->viewlevelcompletion_settings_info($programid, $levelid),
         ];
         $return = $this->render_from_template('local_program/levelcoursescontent',
             $programcoursescontext);
@@ -1691,7 +1693,7 @@ class renderer extends plugin_renderer_base {
     public function viewlevelcompletion_settings_info($programid,$levelid)
     {
         global $OUTPUT, $CFG, $DB, $USER;
-        $completion_settings = (new program)->program_level_completion_settings_info($programid);
+        $completion_settings = (new program)->program_level_completion_settings_info($programid,$levelid);
 
         return $completion_settings;
     }
