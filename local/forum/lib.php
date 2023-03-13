@@ -687,7 +687,7 @@ function local_forum_quicklink_node()
         $coursedata['plugin_icon_class'] = 'fa fa-book';
         if (is_siteadmin() || (has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/forum:manage', $categorycontext))) {
             $coursedata['create'] = TRUE;
-            $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_forum/courseAjaxform").init({contextid:' . $categorycontext->id . ', component:"local_forum", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "forum"}) })(event)'));
+            $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_forum/forumAjaxform").init({contextid:' . $categorycontext->id . ', component:"local_forum", callback:"custom_forum_form", form_status:0, plugintype: "local", pluginname: "forum"}) })(event)'));
         }
         if (has_capability('local/forum:view', $categorycontext) || has_capability('local/forum:manage', $categorycontext)) {
             $coursedata['viewlink_url'] = $CFG->wwwroot . '/local/forum/index.php';

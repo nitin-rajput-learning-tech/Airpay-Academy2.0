@@ -457,3 +457,4 @@ $string['grade'] = "Grade";
 $string['pending'] = "Pending";
 $string['onlineexam'] = 'Online Exam';
 $string['incompleted'] = 'In-Complete';
+$string['open_department'] = 'Bussiness Unit';

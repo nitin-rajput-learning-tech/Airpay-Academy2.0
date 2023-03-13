@@ -1131,15 +1131,12 @@ class renderer extends plugin_renderer_base
         if ($departmentcount > 1 && !(is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext))) {
             $createfeedback  = false;
         }
-
+        $countclassroomcourses = $DB->count_records_sql("SELECT count(id) as total FROM {local_classroom_courses} where classroomid = :classroomid ", array('classroomid' => $classroomid));
         $assign_courses = false;
-        if (is_siteadmin() || (has_capability('local/classroom:createcourse', $categorycontext) && (has_capability('local/classroom:manageclassroom', $categorycontext)))) {
+        if (is_siteadmin() && $countclassroomcourses == 0 || (has_capability('local/classroom:createcourse', $categorycontext) && (has_capability('local/classroom:manageclassroom', $categorycontext))) && $countclassroomcourses == 0 ) {
             $assign_courses = true;
         }
 
-        if ($departmentcount > 1 && !(is_siteadmin())) {
-            $assign_courses  = false;
-        }
         // $unenrolbutton = $this->render_classroom_unenrol_object($classroomid, $USER->id);
         /*$is_selfenrolled = $DB->record_exists("local_classroom_users",  array('userid' => $USER->id, 'classroomid' => $classroomid, 'usercreated' => $USER->id));*/
         if (($action == false && $classroom->status == 1 && ($unenroll == true /*|| $is_selfenrolled*/) /*&& $daysdiff<0*/)) {
