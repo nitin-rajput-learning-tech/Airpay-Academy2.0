@@ -423,7 +423,7 @@ class local_onlineexams_external extends external_api
                                 'completed_count' => new external_value(PARAM_INT, 'completed_count', VALUE_OPTIONAL),
                                 'points' => new external_value(PARAM_INT, 'points', VALUE_OPTIONAL),
                                 'coursetype' => new external_value(PARAM_RAW, 'coursetype', VALUE_OPTIONAL),
-                                'coursesummary' => new external_value(PARAM_RAW, 'coursesummary', VALUE_OPTIONAL),
+                                'onlineexamsummary' => new external_value(PARAM_RAW, 'onlineexamsummary', VALUE_OPTIONAL),
                                 'courseurl' => new external_value(PARAM_RAW, 'courseurl', VALUE_OPTIONAL),
                                 'enrollusers' => new external_value(PARAM_RAW, 'enrollusers', VALUE_OPTIONAL),
                                 'editcourse' => new external_value(PARAM_RAW, 'editcourse', VALUE_OPTIONAL),
@@ -533,41 +533,41 @@ class local_onlineexams_external extends external_api
     /* Describes the parameters for global_filters_form_option_selector webservice.
   * @return external_function_parameters
   */
-    public static function global_filters_form_option_selector_parameters()
-    {
-        $query = new external_value(
-            PARAM_RAW,
-            'Query string'
-        );
-        $action = new external_value(
-            PARAM_RAW,
-            'Action for the classroom form selector'
-        );
-        $options = new external_value(
-            PARAM_RAW,
-            'Action for the classroom form selector'
-        );
-        $searchanywhere = new external_value(
-            PARAM_BOOL,
-            'find a match anywhere, or only at the beginning'
-        );
-        $page = new external_value(
-            PARAM_INT,
-            'Page number'
-        );
-        $perpage = new external_value(
-            PARAM_INT,
-            'Number per page'
-        );
-        return new external_function_parameters(array(
-            'query' => $query,
-            'action' => $action,
-            'options' => $options,
-            'searchanywhere' => $searchanywhere,
-            'page' => $page,
-            'perpage' => $perpage,
-        ));
-    }
+    // public static function global_filters_form_option_selector_parameters()
+    // {
+    //     $query = new external_value(
+    //         PARAM_RAW,
+    //         'Query string'
+    //     );
+    //     $action = new external_value(
+    //         PARAM_RAW,
+    //         'Action for the classroom form selector'
+    //     );
+    //     $options = new external_value(
+    //         PARAM_RAW,
+    //         'Action for the classroom form selector'
+    //     );
+    //     $searchanywhere = new external_value(
+    //         PARAM_BOOL,
+    //         'find a match anywhere, or only at the beginning'
+    //     );
+    //     $page = new external_value(
+    //         PARAM_INT,
+    //         'Page number'
+    //     );
+    //     $perpage = new external_value(
+    //         PARAM_INT,
+    //         'Number per page'
+    //     );
+    //     return new external_function_parameters(array(
+    //         'query' => $query,
+    //         'action' => $action,
+    //         'options' => $options,
+    //         'searchanywhere' => $searchanywhere,
+    //         'page' => $page,
+    //         'perpage' => $perpage,
+    //     ));
+    // }
     public static function course_update_status_parameters()
     {
         return new external_function_parameters(

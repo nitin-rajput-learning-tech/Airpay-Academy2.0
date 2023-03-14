@@ -441,6 +441,7 @@ function get_listof_onlineexams($stable, $filterdata)
                 array('overflowdiv' => false, 'noclean' => false, 'para' => false)
             ));
             $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100) . "..." : $onlineexamsummary;
+            // $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100)."<span id='dots'>...</span><span id='more' style='display: none;'>".substr($onlineexamsummary, 100,strlen($onlineexamsummary)).'</span> <a onclick="myFunction()" id="myBtn">Read more</a>' : $onlineexamsummary;
             $onlineexamslist[$count]["onlineexamsummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
             $onlineexamslist[$count]["fullonlineexamsummary"] = $onlineexamsummary;
             $onlineexamslist[$count]["format"] = $format;

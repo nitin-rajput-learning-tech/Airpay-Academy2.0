@@ -1,5 +1,4 @@
 <?php
-
 /**
  * This file is part of eAbyas
  *
@@ -17,16 +16,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * @package   local
+ * @subpackage  courses
  * @author eabyas  <info@eabyas.in>
- * @package BizLMS
- * @subpackage local_courses
- */
+**/
+defined('MOODLE_INTERNAL') || die();
+$messageproviders = array(
+'onlineexam_enrol' => array (
+	 'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
+            'airnotifier' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ]
+      ),
 
+'onlineexam_unenroll' => array(
+	'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
+        ]
+    )
+);   
 
-defined('MOODLE_INTERNAL') || die;
-$plugin->version = 2023021500.10;          // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2017110800;        // Requires this Moodle version
-// $plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'local_onlineexams';
-$plugin->release = '3.4 (Build: 20171113)'; // Human-friendly version name
+ 

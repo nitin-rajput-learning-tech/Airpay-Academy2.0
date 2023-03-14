@@ -172,6 +172,14 @@
     <div class="col-lg-3 col-md-12 col-sm-12 col-12 pull-right pl-0 pr-0">
     </div>
     <div class="program_view_content w-full pull-left">
+
+            {{#programcompletioncriteria}}
+
+                <div class='alert alert-info'>
+                            <b>{{#str}} completion_settings_tab, local_program{{/ str}} : </b> {{{tracking}}}
+                </div>
+            {{/programcompletioncriteria}}
+
         {{{ programlevels }}}
     </div>
 </div>

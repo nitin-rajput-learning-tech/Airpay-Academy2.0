@@ -660,6 +660,7 @@ class renderer extends plugin_renderer_base {
 
                 $programlevel->candeletelevel = $candeletelevel;
                 $programlevel->levelcompletionid = $DB->get_field('local_bcl_cmplt_criteria', 'id', array('programid' => $programid, 'levelid' => $programlevel->id));
+
                 $programlevels[$k] = $programlevel;
                 //$prev_levelid = $k;
             }
@@ -813,7 +814,8 @@ class renderer extends plugin_renderer_base {
                 $categorycontext) && !is_siteadmin(),
             'programlevel' => $programlevel,
             'userview' => $userview,
-            'programlevelcourses' => array_values($programlevelcourses)
+            'programlevelcourses' => array_values($programlevelcourses),
+            'levelcompletioncriteria' => $this->viewlevelcompletion_settings_info($programid, $levelid),
         ];
         $return = $this->render_from_template('local_program/levelcoursescontent',
             $programcoursescontext);
@@ -1081,10 +1083,11 @@ class renderer extends plugin_renderer_base {
             'display_like' => $display_like,
             'display_review' => $display_review,
             'challenge_element' => $challenge_element,
-            'certificate_exists' => isset($certificate_exists),
+            'certificate_exists' => $certificate_exists,
             'certificate_download' => $certificate_download,
-            'certificateid' => isset($certificateid),
-            'unenrolbutton' => $unenrolbutton
+            'certificateid' => $certificateid,
+            'unenrolbutton' => $unenrolbutton,
+            'programcompletioncriteria' => $this->viewprogramcompletion_settings_info($programid),
              
         ];
         return $this->render_from_template('local_program/programContent', $programcontext);
@@ -1669,5 +1672,29 @@ class renderer extends plugin_renderer_base {
         }else{
             return  $this->render_from_template('local_costcenter/cardPaginate', $context);
         }
+    }
+    /**
+     * [viewprogramcompletion_settings_info description]
+     * @param  [type] $programid [description]
+     * @return [type]              [description]
+     */
+    public function viewprogramcompletion_settings_info($programid)
+    {
+        global $OUTPUT, $CFG, $DB, $USER;
+        $completion_settings = (new program)->program_completion_settings_info($programid);
+
+        return $completion_settings;
+    }
+    /**
+     * [viewlevelcompletion_settings_info description]
+     * @param  [type] $programid [description]
+     * @return [type]              [description]
+     */
+    public function viewlevelcompletion_settings_info($programid,$levelid)
+    {
+        global $OUTPUT, $CFG, $DB, $USER;
+        $completion_settings = (new program)->program_level_completion_settings_info($programid,$levelid);
+
+        return $completion_settings;
     }
 }

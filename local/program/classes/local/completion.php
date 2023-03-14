@@ -238,7 +238,7 @@ class completion{
                     $params = array('context' => $categorycontext,
                         'objectid' => $programid,
                         'courseid' => 1,
-                        'userid' => $USER->id,
+                        'userid' => $programuser->userid,
                         'relateduserid' => $programuser->userid);
                     $event = \local_program\event\program_user_completed::create($params);
                     $event->add_record_snapshot('local_program', $programid);

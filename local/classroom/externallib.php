@@ -356,7 +356,7 @@ class local_classroom_external extends external_api {
         $functinname = 'viewclassroom'.$decodeddataoptions->tabname;
         if(method_exists($renderer, $functinname)){
             $coursesdata = $renderer->$functinname($courses['classroomcourses'],$decodeddataoptions->classroomid);
-            $assigncourses = $coursesdata['assign_courses'];
+            $assigncourses = $coursesdata['assigncourses'];
             $selfenrolmenttabcap = $coursesdata['selfenrolmenttabcap'];
         }
         $classrooms = $DB->get_records('local_classroom');
@@ -368,10 +368,9 @@ class local_classroom_external extends external_api {
          if(!(is_siteadmin()) && $departmentcount > 1){
               $manage = false;
          }
-
          $return = [
             'action' => $manage,
-            'assigncourses' => false,
+            'assigncourses' => $assigncourses,
             'selfenrolmenttabcap' => $selfenrolmenttabcap,
             'classroomid' => $classroomid,
             'totalcount' => $totalcount,

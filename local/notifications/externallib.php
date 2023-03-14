@@ -78,13 +78,12 @@ class local_notifications_external extends external_api {
  
         $data = array();
         parse_str($serialiseddata, $data);
- 
         $warnings = array();
+        // print_r($data);
         // The last param is the ajax submitted data.
         $mform = new local_notifications\forms\notification_form(null, array('form_status' => $form_status,'id' => $data['id'],'org'=>$data['costcenterid'],'moduleid'=>$data['moduleid']), 'post', '', null, true, $data);
         
         $validateddata = $mform->get_data();
-        
         $lib = new \notifications();
         if ($validateddata) {
             if ($validateddata->id > 0) {

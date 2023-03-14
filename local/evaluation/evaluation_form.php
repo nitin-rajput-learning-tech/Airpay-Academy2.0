@@ -44,7 +44,11 @@ class evaluation_form extends moodleform {
         $instance = $this->_customdata['instance'];
         $plugin = $this->_customdata['plugin'];
         $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();
+        if($instance!=0){
         local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_evaluation', $categorycontext, $multiple = false);
+        }elseif($instance==0){
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,HIERARCHY_LEVELS), false, 'local_evaluation', $categorycontext, $multiple = false);
+        }
         $mform->addElement('text', 'name', get_string('name', 'local_evaluation'), array('size'=>'64'));
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', get_string('feedbackname', 'local_evaluation'), 'required', null, 'client');
@@ -94,7 +98,6 @@ class evaluation_form extends moodleform {
         $mform->addElement('editor', 'introeditor', get_string('moduleintro'), array('rows' => 10), array('maxfiles' => EDITOR_UNLIMITED_FILES,
             'noclean' => true,  'subdirs' => true,'autosave' => false));
         $mform->setType('introeditor', PARAM_RAW); // no XSS prevention here, users must be trusted
-
         //-------------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('availability'));
 
@@ -115,7 +118,7 @@ class evaluation_form extends moodleform {
         if($instance==0)
         {
         $mform->addElement('header', 'evaluationhdr', get_string('target_audiance','local_evaluation'));
-        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,4), true, 'local_evaluation', $categorycontext, $multiple = false);
+      //  local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,HIERARCHY_LEVELS), true, 'local_evaluation', $categorycontext, $multiple = false);
             $functionname ='globaltargetaudience_elementlist';
 
             if(function_exists($functionname)) {
@@ -164,9 +167,8 @@ class evaluation_form extends moodleform {
 
          $mform->addHelpButton('multiple_submit', 'multiplesubmit', 'local_evaluation');
      }
-    //---------------------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------   
     }
-
     public function data_preprocessing(&$default_values) {
         $editoroptions = evaluation_get_editor_options();
         $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();

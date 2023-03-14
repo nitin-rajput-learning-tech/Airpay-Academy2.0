@@ -892,3 +892,7 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
 #page-local-courses-courses .courseimg_container .course_type{
     background-color: var(--primarycolor);
 }
+.action_menu_dropdown:hover {
+    background-color: var(--buttonbgcolor) !important;
+    color: #fff;
+}

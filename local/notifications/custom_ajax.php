@@ -55,7 +55,7 @@ switch($page){
 		switch(strtolower($notif_type_find[0])){
 			case 'course':	
 			$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
-                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath AND c.open_coursetype = 0";                   
+                            WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath AND c.open_coursetype = 0 ";                   
 			$datamoduleids = $DB->get_records_sql($sql,$params);
 
         	$datamodule_label="Courses";
@@ -100,7 +100,13 @@ switch($page){
         	$datamodule_label="Learning Paths";
 
 			break;	
-			
+			case 'onlineexam':	
+				$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
+								WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath AND c.open_coursetype = 1  AND c.open_module = 'online_exams' ";                   
+				$datamoduleids = $DB->get_records_sql($sql,$params);
+	
+				$datamodule_label="Onlineexam";
+				break;	
         	
 		}
 		echo json_encode(['datamodule_label'=>$datamodule_label,'datamoduleids' =>$datamoduleids,'datastrings'=>$strings, 'completiondays' => $completiondays]);	
