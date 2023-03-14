@@ -14,7 +14,7 @@ function xmldb_block_trending_modules_install(){
 		if($dbman->table_exists($table)){
 			$condition = '';
 			if($key == 'course')
-				$condition = ' id > 1 ';
+				$condition = ' id > 1 AND open_coursetype = 0 ';
 			$records = $DB->get_fieldset_select($key, 'id', $condition, array());
 			foreach($records AS $record){
 				$lib->trending_modules_crud($record, $value);
