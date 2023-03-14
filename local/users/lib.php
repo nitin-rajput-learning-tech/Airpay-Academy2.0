@@ -1130,8 +1130,8 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         $list['skilltype'] = $user->open_skilltype ? $user->open_skilltype : '--';
         $list['phno'] = ($user->phone1) ? $user->phone1 : '--';
         $list['designation'] = $designation;
-        $list['dateofbirth'] = date('d-M-Y',$user->open_dateofbirth);
-        $list['dateofjoining'] = date('d-M-Y',$user->open_joindate);
+        $list['dateofbirth'] = $user->open_dateofbirth ? date('d-M-Y',$user->open_dateofbirth) : '';
+        $list['dateofjoining'] = $user->open_joindate ? date('d-M-Y',$user->open_joindate) : '';
         $rolecount = $DB->get_record_sql("SELECT COUNT(ra.id) AS role
             FROM {role_assignments} AS ra
             JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40

@@ -217,10 +217,11 @@ class create_user extends moodleform {
             $mform->setType('open_skilltype', PARAM_RAW);
             $mform->addHelpButton('open_skilltype', 'skilltype', 'local_users');
 
+            $mform->addElement('date_selector', 'open_dateofbirth',get_string('dateofbirth','local_users'),
+            array('optional' => true));
+            $mform->addElement('date_selector', 'open_joindate',get_string('joiningdate','local_users'),
+         array('optional' => true));
         } else if ($form_status == 2) {
-
-            $mform->addElement('date_selector','open_dateofbirth',get_string('dateofbirth','local_users'));
-            $mform->addElement('date_selector','open_joindate',get_string('joiningdate','local_users'));
 
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));
             $mform->addRule('phone1', get_string('numeric', 'local_users'), 'numeric', null, 'client');
