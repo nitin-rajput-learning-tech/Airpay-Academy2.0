@@ -149,6 +149,14 @@ class report_coursesoverview extends reportbase implements report {
                 WHERE ul.courseid =:courseid AND ul.userid !=2
                 AND ul.userid NOT IN(SELECT cc.userid FROM {course_completions} AS cc
                     WHERE cc.course = ul.courseid AND cc.userid = ul.userid AND cc.timecompleted IS NOT NULL)";
+            $inprogress .= " AND ul.userid IN (SELECT ra.userid
+                        FROM mdl_role_assignments ra
+                        JOIN mdl_context cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
+                        JOIN mdl_role r ON r.id = ra.roleid
+                        JOIN mdl_user u ON ra.userid = u.id
+                        WHERE u.deleted = 0
+                            AND u.suspended = 0 AND r.shortname = 'employee'
+                            AND cxt.instanceid = ul.courseid)";
 
             $notstarted = "AND ra.userid NOT IN (SELECT ul.userid FROM {user_lastaccess} AS ul WHERE ul.courseid = cxt.instanceid)";
 
