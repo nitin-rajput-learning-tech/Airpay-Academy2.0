@@ -949,7 +949,7 @@ body#page-local-courses-userdashboard .card_list_view {
 
 #page-local-courses-courses .course_container .courseimg_container{
     width: 100%;
-    min-height: 235px;
+    min-height: 200px;
 }
 #page-local-courses-courses .course_container .coursecontent{
     padding: 10px;
