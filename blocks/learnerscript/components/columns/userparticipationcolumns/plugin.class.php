@@ -219,7 +219,10 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }else{
                     $row->{$data->column} = 0;
                 }
-                break;                       
+                break; 
+            default:
+                $row->{$data->column} = isset($row->{$data->column}) ? $row->{$data->column} : $row->{$data->column};
+            break;                      
         }
         return (isset($row->{$data->column})) ? $row->{$data->column} : '--';
         

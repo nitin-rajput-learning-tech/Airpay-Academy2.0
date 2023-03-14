@@ -1246,3 +1246,11 @@ $string['report_organizationoverview_help'] = 'Orgnization Overview';
 $string['report_userparticipation'] = 'User Participation Report';
 $string['organisation'] = 'Organization';
 
+$string['report_classroomusers'] = 'Classroom Users';
+$string['report_departmentoverview'] = 'Department Overview';
+$string['report_orgclassrooms'] = 'OrganizationWise Classrooms';
+$string['report_trainerslist'] = 'Trainers List';
+$string['report_trainingsoverviewpast'] = 'Trainings Overview(Past 3 to 6 Months)';
+$string['report_trainingsoverviewupcoming'] = 'Trainings Overview(Next 3 to 6 Months)';
+$string['report_usercourseoverview'] = 'User Course Overview';
+

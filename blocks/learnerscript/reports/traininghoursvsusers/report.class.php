@@ -38,7 +38,9 @@ class report_traininghoursvsusers extends reportbase implements report {
         $this->filters = array('organization','departments', 'subdepartments');
         $this->sqlorder['column'] = 'year';
         $this->sqlorder['dir'] = 'desc';
-        $this->orderable = array('monthyear','totaltrainings', 'month','year','traininghours', 'userscovered');;
+        $this->orderable = array('monthyear','totaltrainings', 'month','year','traininghours', 'userscovered');
+        $this->defaultcolumn = 'lc.startdate';
+        
     }
     
     function init() {
@@ -48,40 +50,30 @@ class report_traininghoursvsusers extends reportbase implements report {
         $this->sql = "SELECT COUNT( distinct MONTH(FROM_UNIXTIME(lc.startdate)))";
     }
     function select() {
-        $sdepartmentarray = $this->department_selection('s');
-        $sdepartmentsql = $sdepartmentarray[0];
-        $this->params['sorgid'] = $sdepartmentarray[1]['sorgid']; 
-        $this->params['sdeptid'] = $sdepartmentarray[1]['sdeptid'];
-
-        $cdepartmentarray = $this->department_selection('c');
-        $cdepartmentsql = $cdepartmentarray[0];
-        $this->params['corgid'] = $cdepartmentarray[1]['corgid']; 
-        $this->params['cdeptid'] = $cdepartmentarray[1]['cdeptid'];
-
-        $udepartmentarray = $this->department_selection('u');
-        $udepartmentsql = $udepartmentarray[0];
-        $this->params['uorgid'] = $udepartmentarray[1]['uorgid']; 
-        $this->params['udeptid'] = $udepartmentarray[1]['udeptid'];
+        /* (SELECT DATEDIFF(DATE(FROM_UNIXTIME(c.enddate)), DATE(FROM_UNIXTIME(c.startdate)))
+        FROM {local_classroom} c 
+        WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(lc.startdate))
+        AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) )  as  trainingdays,  */
         $this->sql  = "SELECT distinct concat(MONTH(FROM_UNIXTIME(lc.startdate)), '/', YEAR(FROM_UNIXTIME(lc.startdate))) as monthyear, FROM_UNIXTIME(lc.startdate, '%M') AS month,
                     YEAR(FROM_UNIXTIME(lc.startdate)) AS year,
         (SELECT count(id) 
             FROM {local_classroom} c 
             WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(lc.startdate))
-            AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) $sdepartmentsql)  as totaltrainings,
+            AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) )  as totaltrainings,
         (SELECT SUM(round(cs.duration/60, 2)) 
             FROM {local_classroom_sessions} cs
             JOIN {local_classroom} c ON cs.classroomid = c.id
             WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
-            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) $cdepartmentsql) as traininghours,
-
+            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4)) as traininghours,
+       
         (SELECT count(distinct cat.userid) 
             FROM {local_classroom_attendance} cat
             JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1
             JOIN {local_classroom} c ON cs.classroomid = c.id
             WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
-            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) $udepartmentsql)  as userscovered
+            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) )  as userscovered
 
-                 ";
+                 "; 
         parent::select();
     }
     function from() {
@@ -90,11 +82,11 @@ class report_traininghoursvsusers extends reportbase implements report {
     function joins() {
         parent::joins();
     }
-    function where($count){
+    function where(){
         global $USER, $DB;
         $this->sql .= " WHERE 1=1 ";
         $this->sql .= " AND (lc.status = 1 OR lc.status = 4) ";
-        $systemcontext = context_system::instance();
+       
         // getscheduled report
         if (!is_siteadmin()) {
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
@@ -106,70 +98,45 @@ class report_traininghoursvsusers extends reportbase implements report {
                 $ohs =  $dh = 1;
             }
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $this->sql .= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-            $this->sql .= " AND lc.costcenter = :costcenterid ";
-            $this->params['costcenterid'] = $USER->open_costcenterid; 
-        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-           $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid ";
-            $this->params['costcenterid'] = $USER->open_costcenterid; 
-            $this->params['departmentid'] = $USER->open_departmentid;  
-        }else{
-            $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid AND lc.subdepartment = :subdepartment";
-            $this->params['costcenterid'] = $USER->open_costcenterid; 
-            $this->params['departmentid'] = $USER->open_departmentid; 
-            $this->params['subdepartment'] = $USER->open_subdepartment; 
-        }
-        // if ($count)
-        // $this->sql .= " group by MONTH(FROM_UNIXTIME(lc.startdate)) ";
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
 
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else  {
+            $this->sql .= $costcenterpathconcatsql;
+        }
         parent::where();
+
     }
    
     function search(){
+        if (isset($this->search) && $this->search) {
+            $fields = array("lc.name");
+            $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
+            $fields .= " LIKE '%" . $this->search . "%' ";
+            $this->sql .= " AND ($fields) ";
+        }
     } 
-    function filters(){        
+
+    function filters(){    
+        if ($this->params['filter_organization'] > 0) {
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
+        }
+        if ($this->params['filter_departments'] > 0) {
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
+        }
+
+        if ($this->params['filter_subdepartments'] > 0) {
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND concat(lc.open_path,'/') like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
+        }    
     }
-
-    // function get_all_elements() {
-    //     global $DB;
-    //     $records = $DB->get_records_sql($this->sql, $this->params);
-    //     foreach ($records as $record) {
-    //         $report = new stdClass();
-    //         $dateObj   = DateTime::createFromFormat('!m', $record->month);
-    //         $monthName = $dateObj->format('F');
-    //         $report->trmonth = $monthName;
-    //         $report->tryear = $record->year;
-    //         $departmentarray = $this->department_selection();
-    //         $departmentsql = $departmentarray[0];
-    //         $params = $departmentarray[1];
-    //         $csql = "SELECT count(id)  as t
-    //                     FROM {local_classroom} c 
-    //                     WHERE YEAR(FROM_UNIXTIME(c.startdate)) = $record->year
-    //                     AND MONTH(FROM_UNIXTIME(c.startdate)) = $record->month AND (c.status = 1 OR c.status = 4) $departmentsql";
-    //         $report->totaltrainings = $DB->count_records_sql($csql,$params);
-    //         $trsql = "SELECT SUM(cs.duration) AS sessionsduration
-    //                     FROM {local_classroom_sessions} cs
-    //                     JOIN {local_classroom} c ON cs.classroomid = c.id
-    //                     WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = $record->year
-    //                     AND MONTH(FROM_UNIXTIME(cs.timestart)) = $record->month AND (c.status = 1 OR c.status = 4) $departmentsql";
-
-    //         $trainginghrs = $DB->get_record_sql($trsql,$params);
-    //         $report->traininghours = round($trainginghrs->sessionsduration/60, 2);
-    //         $report->trainingdays = round($trainginghrs->sessionsduration/60/8, 2);
-    //         $usrsql = "SELECT count(distinct cat.userid) as userscovered
-    //                     FROM {local_classroom_attendance} cat
-    //                     JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1
-    //                     JOIN {local_classroom} c ON cs.classroomid = c.id
-    //                     WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = $record->year
-    //                     AND MONTH(FROM_UNIXTIME(cs.timestart)) = $record->month AND (c.status = 1 OR c.status = 4) $departmentsql";
-    //         $trainedusers = $DB->get_record_sql($usrsql,$params);
-    //         $report->userscovered = $trainedusers->userscovered;
-    //         $data[] = $report;
-    //     }
-    //     return $data;
-    // }
+    
     /**
      * [get_rows description]
      * @param  array  $trainermandays [description]
@@ -179,35 +146,4 @@ class report_traininghoursvsusers extends reportbase implements report {
         return $data;
     }
 
-    public function department_selection($nos) {
-        global $USER;
-        $systemcontext = context_system::instance();
-        $params =array();
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $sql .= " ";
-            if (!empty($this->params['filter_organization'])) {
-                $orgids = $this->params['filter_organization'];
-                $sql .= " AND c.costcenter = :".$nos."orgid ";
-                $params[''.$nos.'orgid'] = $orgids;
-            }        
-            if (!empty($this->params['filter_departments'])) {
-                $deps = $this->params['filter_departments'];
-                $sql .= " AND c.department = :".$nos."deptid ";
-                $params[''.$nos.'deptid'] = $deps;
-            }            
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-            $sql .= " AND c.costcenter = :".$nos."orgid ";
-            $params[''.$nos.'orgid'] = $USER->open_costcenterid; 
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-            $sql .= " AND c.costcenter = :".$nos."orgid AND c.department = :".$nos."deptid";
-            $params[''.$nos.'orgid'] = $USER->open_costcenterid; 
-            $params[''.$nos.'deptid'] = $USER->open_departmentid; 
-        }else{
-            $sql .= " AND c.costcenter = :".$nos."orgid AND c.department = :".$nos."deptid AND c.subdepartment = :".$nos."subdeptid ";
-            $params[''.$nos.'orgid'] = $USER->open_costcenterid; 
-            $params[''.$nos.'deptid'] = $USER->open_departmentid;
-            $params[''.$nos.'subdeptid'] = $USER->open_subdepartment;
-        }
-        return array($sql, $params);
-    }
 }
