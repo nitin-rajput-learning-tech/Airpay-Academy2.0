@@ -127,10 +127,12 @@ body#page-local-courses-courseenrol img#image.content-img {
 #page-local-courses-courses .course_container {
     background-color: #fff;
     color: #000;
+    box-shadow: 7px 7px 30px #0000005C;
     min-height: 215px !important;
-    box-shadow: 0px 0px 11px 5px #00000033;
-    margin: 15px 0;
     border-radius: 0;
+    height: 100%;
+    max-width: 430px;
+    margin: 0 auto;
 }
 
 .courseimg {
@@ -260,9 +262,9 @@ body#page-local-courses-courseenrol img#image.content-img {
     background-color: #1177d1
 }
 
-#page-local-courses-courses .course_extended_menu_list {
+/* #page-local-courses-courses .course_extended_menu_list {
     top: -20px
-}
+} */
 
 body#page-local-courses-index #region-main .card.card-block {
     overflow-x: visible
@@ -871,10 +873,7 @@ body#page-local-courses-userdashboard .card_list_view {
     padding: 10px!important;
     border-radius: 0;
 }
-#page-local-courses-courses .course_container{
-/*    padding: 6px !important;*/
-    height: calc( 100% - 20px );
-}
+
 /*progress bar code*/
 #page-local-courses-courses .course_progress_container  .progress_circular {
     width: 28px;
@@ -933,9 +932,7 @@ body#page-local-courses-userdashboard .card_list_view {
 /*#page-local-courses-courses #region-main{
     background-color: transparent;
 }*/
-#page-local-courses-courses #filters_form{
-    background-color: #fff;
-}
+
 
 #page-local-courses-courses .course_container .coursecontent .category{
    white-space: nowrap;
@@ -952,7 +949,7 @@ body#page-local-courses-userdashboard .card_list_view {
 
 #page-local-courses-courses .course_container .courseimg_container{
     width: 100%;
-    min-height: 200px;
+    min-height: 235px;
 }
 #page-local-courses-courses .course_container .coursecontent{
     padding: 10px;
@@ -1025,9 +1022,9 @@ body#page-local-courses-userdashboard .card_list_view {
 
 
 /*manage courses page changes*/
-#page-local-courses-courses  .catcourses_list:hover{
+#page-local-courses-courses .catcourses_list:hover{
     transform: scale(1.1);
-    transition: 0.5s;
+    transition: 0.8s;
     z-index: 1000;
 }
 /* #page-local-courses-courses  .catcourses_list{
@@ -1037,7 +1034,8 @@ body#page-local-courses-userdashboard .card_list_view {
 } */
 #page-local-courses-courses .courseimg_container  .info_container {
     font-size: 12px;
-    padding: 2px 10px;
+    padding: 2px 10px 4px 10px;
+    border-radius: 50px;
     color: #fff;
 }
 #page-local-courses-courses .courseimg_container  .enrolment_info{
@@ -1057,7 +1055,7 @@ body#page-local-courses-userdashboard .card_list_view {
     color: #fff;
     z-index: 1;
     background-color: #ff721c;
-    border-radius: 10px;
+    border-radius: 50px;
     padding: 3px 10px;
     font-size: 12px;
 }
@@ -1068,7 +1066,7 @@ body#page-local-courses-userdashboard .card_list_view {
 #page-local-courses-courses .coursedesc .desc{
     color:#000;
 }
-#page-local-courses-courses .courseimg_container .cog_icon{
+/* #page-local-courses-courses .courseimg_container .cog_icon{
     background-color: #fff;
     padding: 2px 6px;
     width: 25px;
@@ -1078,11 +1076,11 @@ body#page-local-courses-userdashboard .card_list_view {
     display: flex;
     align-items: center;
     justify-content: center;
-}
+} */
 #page-local-courses-courses .catcourses_list .courseimg_bg:after{
-    background-image: linear-gradient(to top,rgba(255,255,255,0),#00000091);
+    background-image: linear-gradient(to top,rgba(255,255,255,0),#00000063);
     width: 100%;
-    height: 100%;
+    height: 60%;
     position: absolute;
     top: 0;
     left: 0;

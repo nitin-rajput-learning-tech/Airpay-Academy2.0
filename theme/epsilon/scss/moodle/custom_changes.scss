@@ -579,7 +579,7 @@ body#page-my-index aside#block-region-layertwo_one .block .content {
     text-align: right;
     position: absolute;
     right: 30px;
-    top: 50px;
+    top: 6px;
     z-index: 199;
 }
 .course_extended_menu_itemlink i {
@@ -596,12 +596,12 @@ body#page-my-index aside#block-region-layertwo_one .block .content {
     line-height: 20px;
     padding: 10px;
     margin: 0px;
-    background-color: #adb2bd;
-    box-shadow: 0 0 0 4px #ddd;
+    background-color: #F2F4FB;
+    box-shadow: 0 0 0 1px #ddd;
     // color: $iconbgcolor;
     width: 20px;
     height: 20px;
-    border-radius: 50%;
+    border-radius: 5px;
     cursor: pointer;
     text-align: center;
     position: relative;
@@ -3033,6 +3033,7 @@ body .que .info>div {
     min-width: 200px ;
 }
 .course_drawer_header_container .overall_users .mytooltip .mytooltiptext::after{
+    transform: rotate(45deg);
     -webkit-transform: rotate(45deg);
     left: -8px;
 }
@@ -3102,9 +3103,47 @@ body .que .info>div {
    position: relative;
 }
 .action_menu_dropdown{
+    background-color: #fff;
+    padding: 2px 6px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 18px;
+    i{
+        transition: 0.3s;
+    }
+    >span{
+        >i.fa-gear{
+            line-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &::before{
+                content: "";
+                background-image: url([[pix:theme_epsilon|settings_icon]]);
+                width: 19px;
+                height: 19px;
+                display: inline-block;
+                background-size: 100%;
+                background-position: center;
+            }
+        }
+    }
     &:hover{
         cursor: pointer;
+        i.fa-gear{
+            
+            transform: rotate(45deg);
+            &::before{
+                content: "";
+                background-image: url([[pix:theme_epsilon|settings_icon]]);
+            }
+        }
+        
     }
     .dropdown-menu{
         min-width: auto;
@@ -3130,6 +3169,7 @@ body .que .info>div {
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                
             }
         }
     }
@@ -3185,4 +3225,58 @@ body .que .info>div {
     justify-content: end;
     width: 100%;
     display: flex;
+}
+
+/*pagination changes*/
+
+.pagination .page-link,
+.dataTables_paginate.paging_simple_numbers .paginate_button,
+.pagination .ng-scope>a{
+    margin: 0px 5px;
+    padding: 8px 14px !important;
+    background-color: #F2F4FB;
+    border: none;
+    color: #000;
+    box-shadow: none;
+    border-radius: 3px;
+    border: 1px solid #f2f2f2;
+}
+.pagination .ng-scope.active>a,
+.pagination .ng-scope.active>a:focus,
+.pagination .ng-scope.active>a:hover,
+.dataTables_paginate.paging_simple_numbers .paginate_button.current,
+.dataTables_paginate.paging_simple_numbers .paginate_button.current:focus,
+.dataTables_paginate.paging_simple_numbers .paginate_button.current:hover,
+.pagination .page-item.active .page-link, 
+.pagination .page-item.active .page-link:focus, 
+.pagination .page-item.active .page-link:hover{
+    box-shadow: none;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:focus,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next:hover,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next:focus,
+.dataTables_wrapper .dataTables_paginate .paginate_button.next{
+    border: 0 !important;
+    opacity: 1;
+    background: none;
+    box-shadow: none;
+    background-color: transparent !important;
+}
+.pagination .page-item.disabled,
+.page-item.disabled .page-link,
+.page-item:first-child .page-link,
+.page-item:last-child .page-link,
+.pagination .ng-scope.disabled>a{
+    border:0;
+    background-color: transparent;
+    opacity: 1;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button{
+    margin-left: 0;
+}
+.pagination .ng-scope.active>a{
+    border:1px solid #ddd;
 }
