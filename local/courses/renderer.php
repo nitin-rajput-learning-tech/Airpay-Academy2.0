@@ -79,7 +79,7 @@ class local_courses_renderer extends plugin_renderer_base {
             $cardClass = 'tableformat';
             $perpage = 20;
         } 
-        $options = array('targetID' => 'manage_courses','perPage' => $perpage, 'cardClass' => 'col-lg-3 col-md-4 col-12', 'viewType' => $view_type);
+        $options = array('targetID' => 'manage_courses','perPage' => $perpage, 'cardClass' => 'col-lg-3 col-md-4 col-12 mb-5', 'viewType' => $view_type);
         $options['methodName']='local_courses_courses_view';
         $options['templateName']= $templateName;
         $options = json_encode($options);
