@@ -20,5 +20,6 @@ function block_trending_modules_render_navbar_output(){
 	global $PAGE;
 	$PAGE->requires->js_call_amd('block_trending_modules/trending_modules', 'load', array());
 	$PAGE->requires->js_call_amd('block_trending_modules/trending_modules', 'init');
-    $PAGE->requires->js_call_amd('local_catalog/courseinfo', 'load', array());
+	$PAGE->requires->js_call_amd('local_search/courseinfo', 'load', array());
+   // $PAGE->requires->js_call_amd('local_catalog/courseinfo', 'load', array());
 }

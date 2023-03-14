@@ -36,9 +36,8 @@ $PAGE->set_pagelayout('standard');
 $heading = get_string('trending_modules', 'block_trending_modules');
 $PAGE->set_title($heading);
 $PAGE->set_heading($heading);
-
-$PAGE->requires->js_call_amd('local_catalog/courseinfo', 'load', array());
-
+//$PAGE->requires->js_call_amd('local_catalog/courseinfo', 'load', array());
+$PAGE->requires->js_call_amd('local_search/courseinfo', 'load', array());
 $PAGE->navbar->add($heading);
 $renderer = $PAGE->get_renderer('block_trending_modules');
 $filterparams = $renderer->trending_modules_content($blockinstanceid, true);

@@ -19,7 +19,11 @@
         <div class="trending_module" data-index="{{indexposition}}">
             <div class="module_image mx-auto" style="background-image: url('{{background_logourl}}'); height:auto; width:100%"></div>
             <div class="module_content">
-                <span class="modulename" title="{{modulename_title}}" onclick="(function(e){ require('local_catalog/courseinfo').{{functionname}}({selector:'{{selector}}', {{moduleidentifier}}:{{moduleid}}}) })(event)">{{modulename}}</span>
+                <a href="{{modulelink}}" class="modulename" title="{{modulename_title}}">
+                    <!-- {{#str}}viewmore, block_trending_modules{{/str}} -->
+                    {{modulename_title}}
+                 </a>
+                <!-- <span class="modulename" title="{{modulename_title}}" onclick="{{modulelink}}">{{modulename}}</span> -->
                 {{# enableDesc}}
                     {{# description}}
                         <span class="module_description" title="{{description_title}}">{{description}}</span>

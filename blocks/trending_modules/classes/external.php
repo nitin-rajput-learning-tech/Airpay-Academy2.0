@@ -141,8 +141,9 @@ class block_trending_modules_external  extends external_api{
                         'moduleidentifier' => new external_value(PARAM_TEXT, 'identifier name of the module', VALUE_OPTIONAL),
                         'moduleid' => new external_value(PARAM_TEXT, 'id of the module', VALUE_OPTIONAL),
                         'ratings_content' => new external_value(PARAM_RAW, 'html for the rating display', VALUE_OPTIONAL),
-                        'suggestions_btn' => new external_value(PARAM_RAW, 'html for the suggestions', VALUE_OPTIONAL)
-                    )
+                        'suggestions_btn' => new external_value(PARAM_RAW, 'html for the suggestions', VALUE_OPTIONAL),
+                        'modulelink' => new external_value(PARAM_RAW, 'html for the suggestions', VALUE_OPTIONAL)                    
+                        )
                 )
             ),
             'enableDesc' => new external_value(PARAM_BOOL, 'Flag variable to display description')

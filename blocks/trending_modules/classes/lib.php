@@ -203,7 +203,7 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'classroom'.$module->module_id;
     	$return['moduleidentifier'] = 'crid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/classroom/view.php?cid='.$module->module_id;
     	$return['background_logourl'] = ((new \local_classroom\classroom)->classroom_logo($module->module_imagelogo));
     	if($return['background_logourl'] == 0){
             require_once($CFG->dirroot.'/local/includes.php');
@@ -231,7 +231,7 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'courseinfo'.$module->module_id;
     	$return['moduleidentifier'] = 'courseid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/search/coursedetails.php?id='.$module->module_id;
     	require_once($CFG->dirroot.'/local/includes.php');
     	$includes = new \user_course_details();
 		$course_record = get_course($module->module_id);
@@ -287,7 +287,7 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'programinfo'.$module->module_id;
     	$return['moduleidentifier'] = 'programid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/program/view.php?bcid='.$module->module_id;
     	$background_logourl = ((new \local_program\program)->program_logo($module->module_imagelogo));
     	if($background_logourl == 0){
             require_once($CFG->dirroot.'/local/includes.php');
@@ -318,7 +318,7 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'learningplan'.$module->module_id;
     	$return['moduleidentifier'] = 'learningplanid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/learningplan/lpathinfo.php?id='.$module->module_id;
     	$learningplan_lib = new \local_learningplan\lib\lib();
     	$return['background_logourl'] = $learningplan_lib->get_learningplansummaryfile($module->module_id);
 		}
