@@ -470,7 +470,7 @@ class querylib {
 	    	$trending_sql = "SELECT tm.* ";
 	    }
 
-		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='tm.open_path', $this->user->open_path);
+		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='tm.open_path', $this->user->open_path, 'lowerandsamepath');
 		$trending_sql .= "FROM {block_trending_modules} AS tm
 		    WHERE tm.module_visible = 1 {$costcenterpathconcatsql}
 		    AND 1 = CASE WHEN (tm.module_type LIKE 'local_classroom' OR tm.module_type LIKE 'local_certification')
