@@ -162,20 +162,35 @@ div#continue button > a, body button > a {
     background-color: var(--btnhoverbgcolor);
     color: var(--btnhovertextcolor);
 }
-.pagination .page-link {
+/* .pagination .page-link,
+.pagination .ng-scope .ng-binding
+{
      background-color: var(--buttonbgcolor);
      color: var(--btntextcolor);
+     border-color: var(--btnbordercolor);
+     border:1px solid  var(--btnbordercolor);
 }
+
  .pagination .page-link:hover, .pagination .page-link:focus, .pagination .page-link:active {
      background-color: var(--btntextcolor);
      color: var(--buttonbgcolor);
      border-color: var(--btnbordercolor);
+} */
+.pagination .page-item.active .page-link, .page-item.active .page-link:focus, .page-item.active .page-link:hover {
+    background-color: var(--buttonbgcolor);
+    color:var(--btntextcolor);
+    border-color: transparent;
 }
-.page-item.active .page-link, .page-item.active .page-link:focus, .page-item.active .page-link:hover {
-    background-color: var(--btntextcolor);
+/*
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled{
+    color: var(--buttonbgcolor) !important;
+}
+.pagination .page-item.disabled,
+.page-item.disabled .page-link,
+.page-item:last-child .page-link,
+.pagination .ng-scope:last-child>a {
     color: var(--buttonbgcolor);
-    border-color: var(--btnbordercolor);
-}
+} */
 .initialbar .letter {
      color: var(--sitehighlight);
      background-color: var(--btntextcolor);
@@ -188,11 +203,21 @@ div#continue button > a, body button > a {
      background-color: var(--buttonbgcolor) !important;
      color: var(--btntextcolor) !important;
 }
- body .dataTables_wrapper .dataTables_paginate .paginate_button:hover, body .dataTables_wrapper .dataTables_paginate .paginate_button:focus, body .dataTables_wrapper .dataTables_paginate .paginate_button:active {
-     background-color: var(--btntextcolor) !important;
+/* .dataTables_wrapper .dataTables_paginate .paginate_button.next,
+.pagination .page-item.disabled, .page-item.disabled .page-link,
+.page-item:first-child .page-link, .page-item:last-child .page-link, 
+.pagination .ng-scope.disabled>a{
      color: var(--buttonbgcolor) !important;
 }
-
+ body .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+ .pagination .ng-scope .ng-binding:hover, 
+ body .dataTables_wrapper .dataTables_paginate .paginate_button:focus, 
+ body .dataTables_wrapper .dataTables_paginate .paginate_button:active {
+     background-color: var(--btntextcolor) !important;
+     color: var(--buttonbgcolor) !important;
+     border-color: var(--btnbordercolor);
+}
+.pagination .ng-scope.active>a,
 .dataTables_wrapper .dataTables_paginate .paginate_button.active,
 .dataTables_wrapper .dataTables_paginate .paginate_button:active,
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
@@ -217,7 +242,7 @@ body .dataTables_wrapper .dataTables_paginate .paginate_button:hover a {
 body .dataTables_wrapper .dataTables_paginate .paginate_button.active a,
 body .dataTables_wrapper .dataTables_paginate .paginate_button:hover a {
     color: var(--buttonbgcolor) !important;
-}
+} */
 body .form-filemanager a.btn, .alert a.btn {
      background-color: inherit;
      color: inherit;
@@ -268,10 +293,13 @@ a[data-toggle="popover"].btn.btn-link.p-a-0{
     background-color: inherit;
     border: none;
 }
-.course_extended_menu_itemlink .icon,
-.course_extended_menu_list .dropdown-toggle .icon,
+
 #page-local-certification-view .course_extended_menu_list li button {
     color: var(--iconbgcolor);
+}
+.course_extended_menu_itemlink .icon,
+.course_extended_menu_list .dropdown-toggle .icon{
+    color: #000;
 }
 .openLMStransition .form_status .form_status_listitem.active .form_status_listitem_link {
     background-color: var(--iconbgcolor);
@@ -488,7 +516,7 @@ body#page-blocks-training_calendar-view #calendar table thead.fc-head{
     background-color: var(--buttonbgcolor);
 }
 .course_extended_menu_list .createiconchild{    
-    color: var(--sitehighlight);
+    color: #000;
 }
 body#page-local-costcenter-costcenterview .costcenter_container:before,
 body#page-local-costcenter-costcenterview .costcenter_container:after,
@@ -892,7 +920,9 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
 #page-local-courses-courses .courseimg_container .course_type{
     background-color: var(--primarycolor);
 }
-.action_menu_dropdown:hover {
-    background-color: var(--buttonbgcolor) !important;
-    color: #fff;
+#filters_form{
+    background-color: #e7ebfa;
+}
+#page-header{
+    background-color: #f2f4fb;
 }
