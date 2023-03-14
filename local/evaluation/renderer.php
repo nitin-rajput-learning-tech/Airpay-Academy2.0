@@ -121,7 +121,8 @@ class local_evaluation_renderer extends plugin_renderer_base  {
     $data = '';        
     $line = array();
     $record = $DB->get_record('local_evaluations', array('id'=>$id));
-    $attendcount = $DB->count_records_sql('SELECT count(ou.id) from {local_evaluation_users} ou, {user} u where u.id = ou.userid AND u.deleted = 0 AND u.suspended = 0 AND ou.evaluationid=?', array($record->id));
+    $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    $attendcount = $DB->count_records_sql('SELECT count(ou.id) from {local_evaluation_users} ou, {user} u where u.id = ou.userid AND u.deleted = 0 '.$costcenterpathconcatsql.' AND u.suspended = 0 AND ou.evaluationid=?', array($record->id));
     $completedevaluationcount = intval(evaluation_get_completeds_group_count($record));
     $buttons = $this->get_evaluation_top_buttons($id, $context, $record);
  

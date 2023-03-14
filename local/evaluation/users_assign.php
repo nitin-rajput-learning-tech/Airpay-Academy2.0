@@ -92,11 +92,11 @@ if ($evaluationid) {
       require_once($CFG->dirroot.'/local/lib.php');
       $filterlist = get_filterslist();
   }
-	
   $pluginexists = $corecomponent::get_plugin_directory('local', 'courses');
   if(!empty($pluginexists)) {
       require_once($CFG->dirroot . '/local/courses/filters_form.php');
-      $mform = new filters_form($url, array('filterlist'=>$filterlist,'enrolid'=>0, 'courseid'=>$evaluationid, 'action' => 'user_enrolment'));
+      $datasubmitted = data_submitted();
+      $mform = new filters_form($url, array('filterlist'=>$filterlist,'enrolid'=>0, 'courseid'=>$evaluationid, 'action' => 'user_enrolment')+(array)$datasubmitted);
       if ($mform->is_cancelled()) {
         redirect($url);
       } else {
@@ -108,8 +108,10 @@ if ($evaluationid) {
             $collapse = true;
             $show = '';
         }
-        $organization = !empty($filterdata->organizations) ? implode(',', $filterdata->organizations) : null;
-        $department = !empty($filterdata->departments) ? implode(',', $filterdata->departments) : null;
+        $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
+        $department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
+        $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
+        $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', $filterdata->filteropen_level4department) : null;
         $email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
         $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
         $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
@@ -117,10 +119,8 @@ if ($evaluationid) {
         $location = !empty($filterdata->location) ? implode(',', $filterdata->location) : null;
         $hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', $filterdata->hrmsrole) : null;
       }
-
     // Create the user selector objects.
-    $options = array('context' => $context->id, 'evaluationid' => $evaluationid, 'organization' => $organization, 'department' => $department, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
-    
+    $options = array('context' => $context->id, 'evaluationid' => $evaluationid, 'organization' => $organization, 'department' => $department,'subdepartment'=>$subdepartment,'department4level'=>$department4level, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
     if ( $add AND confirm_sesskey()) {
         
         if($submitvalue == "Add_All_Users"){

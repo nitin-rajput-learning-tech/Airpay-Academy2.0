@@ -189,12 +189,10 @@ class search implements renderable{
         $numberofrecords = 0;
         if($return_noofrecords)
             $numberofrecords = sizeof($DB->get_records_sql($countquery, $sqlparams));
-
         $finalsql = $selectsql.$fromsql.$leftjoinsql.$wheresql.$searchsql;
         $finalsql .= " GROUP BY llp.id ORDER by llp.id DESC ";
 
         $learningplanlist = $DB->get_records_sql($finalsql, $sqlparams, $startlimit, $perpage);
-
         if($return_noofrecords && !$returnobjectlist){
             return  array('numberofrecords'=>$numberofrecords);
         }
@@ -373,7 +371,8 @@ class search implements renderable{
         // }
         if(!empty($usercostcenterpaths)){
             foreach($usercostcenterpaths AS $path){
-                $pathsql[] = " llp.open_path LIKE '{$path}' ";
+                list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$path);
+                $pathsql[]="concat('/',llp.open_path,'/') LIKE '%{$org}%'";
             }
             $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
         }

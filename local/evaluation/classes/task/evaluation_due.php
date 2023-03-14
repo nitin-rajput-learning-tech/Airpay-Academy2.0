@@ -32,7 +32,7 @@ class evaluation_due extends \core\task\scheduled_task{
         $availiablenotifications = $this->module_evaluation_due_notifications();
         $modules = array();
         foreach($availiablenotifications AS $notification){
-        	$starttime = strtotime(date('d/m/Y', strtotime("+".$notification->reminderdays." day")));
+        	$starttime = strtotime(date('d-m-Y', strtotime("+".$notification->reminderdays." day")));
         	$endtime = $starttime+86399;
 	    	$evaluationsql = "SELECT eu.*,u.id as user_id,e.id as evaluationid
 				FROM {local_evaluation_users} eu
@@ -54,7 +54,7 @@ class evaluation_due extends \core\task\scheduled_task{
         $globalduenotifications = $this->global_due_notifications();
         $moduleids = implode(',', $modules);
         foreach($globalduenotifications AS $notification){
-        	$starttime = strtotime(date('d/m/Y', strtotime("+".$notification->reminderdays." day")));
+        	$starttime = strtotime(date('d-m-Y', strtotime("+".$notification->reminderdays." day")));
         	$endtime = $starttime+86399;
 	    	$evaluationsql = "SELECT eu.*,u.id as user_id,e.id as evaluationid
 				FROM {local_evaluation_users} eu
@@ -84,7 +84,7 @@ class evaluation_due extends \core\task\scheduled_task{
     	global $DB;
     	$modulenotification_sql = "SELECT lni.* FROM {local_notification_info} AS lni 
     		WHERE (lni.moduleid!=0 OR lni.moduleid IS NOT NULL) AND lni.notificationid=(SELECT id FROM {local_notification_type} WHERE shortname=:shortname)"; 
-    	$notifications = $DB->get_records_sql($modulenotification_sql, array('shortname' => 'feedback_due'));
+		$notifications = $DB->get_records_sql($modulenotification_sql, array('shortname' => 'feedback_due'));
     	return $notifications;
     }
 }

@@ -2044,13 +2044,14 @@ function evaluation_get_current_completed($evaluationid,
  */
 function evaluation_get_completeds_group($evaluation, $groupid = false, $courseid = false) {
     global $CFG, $DB;
-
+    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
     if (intval($groupid) > 0) {
         $query = "SELECT fbc.*
-                    FROM {local_evaluation_completed} fbc, {groups_members} gm
+                    FROM {local_evaluation_completed} fbc, {groups_members} gm, {users} u
                    WHERE fbc.evaluation = ?
                          AND gm.groupid = ?
-                         AND fbc.userid = gm.userid";
+                         AND fbc.userid = gm.userid
+                         AND u.id=fbc.userid $costcenterpathconcatsql";
         if ($values = $DB->get_records_sql($query, array($evaluation->id, $groupid))) {
             return $values;
         } else {
@@ -2312,7 +2313,6 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
     $context = (new \local_evaluation\lib\accesslib())::get_module_context();
     $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
     $evaluation = $DB->get_record('local_evaluations', array('id' => $evaluationid));
-    $userprofilesql = (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($evaluation);
     $params['suspended'] = 0;
     $params['deleted'] = 0;
 
@@ -2321,7 +2321,7 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
     }else{
         $sql = "SELECT count(u.id) as total";
     }
-     $sql.=" FROM {user} AS u WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql $userprofilesql";
+     $sql.=" FROM {user} AS u WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql";
     if($lastitem!=0){
         $sql.=" AND u.id > $lastitem";
     }
@@ -2349,6 +2349,51 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
         list($hrmsrolesql, $hrmsroleparams) = $DB->get_in_or_equal($hrmsroles, SQL_PARAMS_NAMED, 'hrmsrole');
         $params = array_merge($params,$hrmsroleparams);            
         $sql .= " AND u.open_hrmsrole {$hrmsrolesql} ";
+    }
+    if (!empty($params['organization'])) {
+        $organizations = explode(',', $params['organization']);
+        $orgsql = [];
+        foreach ($organizations as $organisation) {
+            $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
+            $params["organisationparam_{$organisation}"] = '%/' . $organisation . '/%';
+        }
+        if (!empty($orgsql)) {
+            $sql .= " AND ( " . implode(' OR ', $orgsql) . " ) ";
+        }
+    }
+    if (!empty($params['department'])) {
+        $departments = explode(',', $params['department']);
+        $deptsql = [];
+        foreach ($departments as $department) {
+            $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+            $params["departmentparam_{$department}"] = '%/' . $department . '/%';
+        }
+        if (!empty($deptsql)) {
+            $sql .= " AND ( " . implode(' OR ', $deptsql) . " ) ";
+        }
+    }
+
+    if (!empty($params['subdepartment'])) {
+        $subdepartments = explode(',', $params['subdepartment']);
+        $subdeptsql = [];
+        foreach ($subdepartments as $subdepartment) {
+            $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+            $params["subdepartmentparam_{$subdepartment}"] = '%/' . $subdepartment . '/%';
+        }
+        if (!empty($subdeptsql)) {
+            $sql .= " AND ( " . implode(' OR ', $subdeptsql) . " ) ";
+        }
+    }
+    if (!empty($params['department4level'])) {
+        $depart4level = explode(',', $params['department4level']);
+        $department4levelsql = [];
+        foreach ($depart4level as $department4level) {
+            $department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+            $params["department4levelparam_{$department4level}"] = '%/' . $department4level . '/%';
+        }
+        if (!empty($department4levelsql)) {
+            $sql .= " AND ( " . implode(' OR ', $department4levelsql) . " ) ";
+        }
     }
     if (!empty($params['groups'])) {
          $group_list = $DB->get_records_sql_menu("select cm.id, cm.userid from {cohort_members} cm, {user} u where u.id = cm.userid AND u.deleted = 0 AND u.suspended = 0 AND cm.cohortid IN ({$params['groups']})");
@@ -2680,7 +2725,7 @@ function get_listof_evalautions($stable, $filtervalues){
     foreach($records as $record) {
         $line = array();
         $localcontext = (new \local_evaluation\lib\accesslib())::get_module_context();
-        $attendcount = $DB->count_records_sql('select count(ou.id) from {local_evaluation_users} ou, {user} u where u.id = ou.userid AND u.deleted = 0 AND u.suspended = 0 AND ou.evaluationid=?', array($record->id));
+        $attendcount = $DB->count_records_sql('select count(ou.id) from {local_evaluation_users} ou, {user} u where u.id = ou.userid '. $costcenterpathconcatsql .' AND u.deleted = 0 AND u.suspended = 0 AND ou.evaluationid=?', array($record->id));
         $completedevaluationcount = intval(evaluation_get_completeds_group_count($record));
         $buttons='';
 

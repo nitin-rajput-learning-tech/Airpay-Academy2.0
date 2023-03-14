@@ -44,14 +44,14 @@ $functions = array(
         'ajax' => true,
         'type' => 'write'
     ),
-    'local_forum_form_option_selector' => array(
-        'classname' => 'local_forum_external',
-        'methodname' => 'global_filters_form_option_selector',
-        'classpath' => 'local/forum/classes/external.php',
-        'description' => 'All global filters forms event handling',
-        'ajax' => true,
-        'type' => 'read',
-    ), 
+    // 'local_forum_form_option_selector' => array(
+    //     'classname' => 'local_forum_external',
+    //     'methodname' => 'global_filters_form_option_selector',
+    //     'classpath' => 'local/forum/classes/external.php',
+    //     'description' => 'All global filters forms event handling',
+    //     'ajax' => true,
+    //     'type' => 'read',
+    // ), 
     'local_forum_forum_view' => array(
         'classname' => 'local_forum_external',
         'methodname' => 'forum_view',

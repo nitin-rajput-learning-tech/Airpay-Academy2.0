@@ -71,17 +71,18 @@ class notification_form extends moodleform {
             $mform->addRule('notificationid', null, 'required', null, 'client');  
             $mform->addHelpButton('notificationid','notification_help','local_notifications');
       		$coursereminder = $DB->get_field('local_notification_type', 'id', array('shortname' => 'course_reminder'));
-            if(($this->_ajaxformdata['costcenterid'] && $this->_ajaxformdata['notificationid'])||$formdata->notificationid == $coursereminder){
-            	if($this->_ajaxformdata['costcenterid']){
-            		$costcenterid = $this->_ajaxformdata['costcenterid'];
+            if(($this->_ajaxformdata['open_costcenterid'] && $this->_ajaxformdata['notificationid'])||$formdata->notificationid == $coursereminder){
+            	if($this->_ajaxformdata['open_costcenterid']){
+            		$costcenterid = $this->_ajaxformdata['open_costcenterid'];
             	}else{
-            		$costcenterid = $formdata->costcenterid;
+            		$costcenterid = $formdata->open_costcenterid;
             	}
             	$completiondays_sql = "SELECT open_coursecompletiondays AS value, open_coursecompletiondays AS completiondays 
             		FROM {course} WHERE id > 1 AND open_coursecompletiondays IS NOT NULL 
-            		AND open_costcenterid={$costcenterid}
+            		AND concat('/',open_path,'/') LIKE :costcenterpath
             		GROUP BY open_coursecompletiondays ";
-            	$completiondays = $DB->get_records_sql_menu($completiondays_sql);
+					$params['costcenterpath'] = '%'.$costcenterid.'%';
+            	$completiondays = $DB->get_records_sql_menu($completiondays_sql,$params);
             }else{
             	$completiondays = array();
             }
@@ -190,7 +191,7 @@ class notification_form extends moodleform {
     	switch(strtolower($moduletype)){
 			case 'course':	
 				$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
-				WHERE  c.visible = 1 AND  concat('/',c.open_path,'/') LIKE :costcenterpath  ";                    
+				WHERE  c.visible = 1 AND  concat('/',c.open_path,'/') LIKE :costcenterpath AND c.open_coursetype = 0 ";                    
 				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
 				
 //				$datamodule_label="Courses";
@@ -250,6 +251,13 @@ class notification_form extends moodleform {
                                 $datamodule_label=get_string('form_certifications', 'local_notifications');
 			
 			break;
+			case 'onlineexam':	
+				$sql = "SELECT c.id, c.fullname as name FROM {course} c                           
+								WHERE  c.visible = 1 AND concat('/',c.open_path,'/') LIKE :costcenterpath AND c.open_coursetype = 1  AND c.open_module = 'online_exams' ";                   
+				$datamoduleids = $DB->get_records_sql_menu($sql,$params);
+	
+				$datamodule_label=get_string('onlineexam', 'local_notifications');
+				break;
 		}
 		return array('datamoduleids' => $datamoduleids, 'datamodule_label' => $datamodule_label);
     }

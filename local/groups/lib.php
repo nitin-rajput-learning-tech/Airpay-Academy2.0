@@ -752,7 +752,6 @@ function local_groups_edit_controls(context $context, moodle_url $currenturl) {
 */
 function local_group_users($type = null, $groupid = 0, $params, $total=0, $offset1=-1, $perpage=-1, $lastitem=0){
     global $DB, $USER;
-    
     $context =  (new \local_groups\lib\accesslib())::get_module_context();
     $group = $DB->get_record('cohort', array('id' => $groupid));
     $cohort_group  = $DB->get_record('local_groups', array('cohortid' => $groupid));
@@ -872,25 +871,24 @@ function local_group_users($type = null, $groupid = 0, $params, $total=0, $offse
         $sql .= " AND u.open_states {$statessql} ";
     }
     if (!empty($params['groups'])) {
-        $query = "SELECT usr.id 
-                FROM {user} AS usr 
-                JOIN {cohort_members} AS cm ON cm.userid=usr.id 
-                WHERE cm.cohortid IN ({$params['groups']}) $costcenterpathconcatsql ";
-        
+        $query = "SELECT u.id 
+                FROM {user} AS u
+                JOIN {cohort_members} AS cm ON cm.userid=u.id 
+                WHERE cm.cohortid IN ({$params['groups']})";
         $groupusers = $DB->get_records_sql_menu($query);
-
-        if($userslist){
+       if($userslist){
             $userslist = implode(',', $groupusers);
-            $sql .=" AND u.id IN ($userslist)";
-        }
+            $sql .=" AND u.id IN ($userslist) ";
+       }else{
+        $sql .=" AND u.id IN (NULL) ";
+       }
     }
     if ($type=='add') {
-        $sql .= " AND u.id NOT IN (SELECT userid FROM {cohort_members} WHERE cohortid = $groupid)";
+        $sql .= " AND u.id NOT IN (SELECT userid FROM {cohort_members} WHERE cohortid = $groupid) ";
     } elseif ($type=='remove') {
-        $sql .= " AND u.id IN (SELECT userid FROM {cohort_members} WHERE cohortid = $groupid)";
+        $sql .= " AND u.id IN (SELECT userid FROM {cohort_members} WHERE cohortid = $groupid) ";
     } 
     $order = ' ORDER BY u.id ASC ';
-  
     if($total==0){
         $availableusers = $DB->get_records_sql_menu($sql .$order,$params);
     }else{

@@ -136,10 +136,10 @@ class block_trending_modules_external  extends external_api{
                         'description' => new external_value(PARAM_RAW, 'Description of the Module', VALUE_OPTIONAL),
                         'modulename' => new external_value(PARAM_RAW, 'Module Name', VALUE_OPTIONAL),
                         'modulename_title' => new external_value(PARAM_RAW, 'Title for Module Name', VALUE_OPTIONAL),
-                        'functionname' => new external_value(PARAM_TEXT, 'function to be triggered on click'),
-                        'selector' => new external_value(PARAM_TEXT, 'selector type of the module'),
-                        'moduleidentifier' => new external_value(PARAM_TEXT, 'identifier name of the module'),
-                        'moduleid' => new external_value(PARAM_TEXT, 'id of the module'),
+                        'functionname' => new external_value(PARAM_TEXT, 'function to be triggered on click', VALUE_OPTIONAL),
+                        'selector' => new external_value(PARAM_TEXT, 'selector type of the module', VALUE_OPTIONAL),
+                        'moduleidentifier' => new external_value(PARAM_TEXT, 'identifier name of the module', VALUE_OPTIONAL),
+                        'moduleid' => new external_value(PARAM_TEXT, 'id of the module', VALUE_OPTIONAL),
                         'ratings_content' => new external_value(PARAM_RAW, 'html for the rating display', VALUE_OPTIONAL),
                         'suggestions_btn' => new external_value(PARAM_RAW, 'html for the suggestions', VALUE_OPTIONAL)
                     )
@@ -213,7 +213,7 @@ class block_trending_modules_external  extends external_api{
                 $coursecontext = context_course::instance($record->module_id);
                 $enrol = new stdClass();
                 $enrol->enrolled = is_enrolled($coursecontext, $USER->id);
-                $course = $DB->get_record('course', array('id' => $record->module_id));
+                $course = $DB->get_record('course', array('id' => $record->module_id,'open_coursetype'=>0));
                 $record->enrolstatus = (new \local_courses\courses)->enrol_status($enrol, $course);
             } else if ($record->module_type == 'local_classroom') {
                 $fromsql = "SELECT c.*, (SELECT COUNT(DISTINCT cu.userid)

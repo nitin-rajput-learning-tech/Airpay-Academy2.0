@@ -563,7 +563,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             $departments_array['hide_learninplans'] = FALSE;
             $departments_array['hide_feedbacks'] = TRUE;
             $departments_array['hide_classroom'] = FALSE;
-            $departments_array['hide_program'] = TRUE;
+            $departments_array['hide_program'] = FALSE;
             $departments_array['hide_certification'] = TRUE;
             $departments_array['role_count'] = $rolescount;
             $departments_array['deptdel_confirmationmsg'] = $deptdel_confirmationmsg;

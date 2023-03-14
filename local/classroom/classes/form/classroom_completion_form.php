@@ -66,11 +66,17 @@ class classroom_completion_form extends moodleform {
         if (!empty($sessions)) {
                 if(is_array($sessions)){
                     $sessions=implode(',',$sessions);
+                 }else{
+                    $sessions= null;
                  }
                
                 $sessions_sql = "SELECT id, name as fullname
                                         FROM {local_classroom_sessions}
-                                        WHERE classroomid = $cid and id in ($sessions)";
+                                        WHERE classroomid = $cid ";
+                if($sessions !== null){
+                    $sessions_sql .= " and id in ($sessions) ";
+                }    
+                    
                 $sessions = $DB->get_records_sql_menu($sessions_sql);
         }elseif (empty($sessions)) {
             $sessions_sql = "SELECT id, name as fullname
@@ -108,8 +114,13 @@ class classroom_completion_form extends moodleform {
         if (!empty($courses)) {
                  if(is_array($courses)){
                          $courses=implode(',',$courses);
+                 }else{
+                    $courses= null;
                  }
-                 $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_classroom_courses} as lcc on lcc.courseid=c.id where lcc.classroomid= $cid and lcc.courseid in ($courses)";
+                 $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_classroom_courses} as lcc on lcc.courseid=c.id where lcc.classroomid= $cid  ";
+                 if($courses !== null){
+                    $courses_sql .= " and lcc.courseid in ($courses) ";
+                 }
                 $courses = $DB->get_records_sql_menu($courses_sql);
         }elseif (empty($courses)) {
             $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_classroom_courses} as lcc on lcc.courseid=c.id where lcc.classroomid= $cid ";
@@ -134,6 +145,7 @@ class classroom_completion_form extends moodleform {
     public function validation($data, $files) {
         global $CFG, $DB, $USER;
         $errors = parent::validation($data, $files);
+
         if (isset($data['sessiontracking']) && $data['sessiontracking'] == "OR" && isset($data['sessionids']) && empty($data['sessionids'])) {
             $errors['sessionids'] = get_string('select_sessions', 'local_classroom');
         }

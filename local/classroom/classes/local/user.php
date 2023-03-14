@@ -35,7 +35,7 @@ class user{
             $classroomsarray['id'] = $classroom->id;
             $classroomsarray['name'] = $classroom->name;
             $classroomsummary = \local_costcenter\lib::strip_tags_custom($classroom->description);
-            $classroomsummary = strlen($classroomsummary) > 140 ? substr($classroomsummary, 0, 140)."..." : $classroomsummary;
+            $classroomsummary = strlen($classroomsummary) > 140 ? substr($classroomsummary, 0, 140)."<span id='dots'>...</span><span id='more' style='display: none;'>".substr($classroomsummary, 140,strlen($classroomsummary)).'</span> <a onclick="myFunction()" id="myBtn">Read more</a>' : $classroomsummary;
             $classroomsarray['description'] = $classroomsummary;
             $classroomsarray['percentage'] = '';
             $classroomsarray['url'] = '';

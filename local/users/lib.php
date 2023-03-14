@@ -162,7 +162,7 @@ function users_filter ($mform, $query='', $searchanywhere=false, $page=0, $perpa
                     'data-options' => json_encode(array('id' => 0)),
                     'placeholder' => get_string('users')
     );
-    $select = $mform->addElement('autocomplete', 'users', get_string('users'), $userslist, $options);
+    $select = $mform->addElement('autocomplete', 'users', '', $userslist, $options);
     $mform->setType('users', PARAM_RAW);
 }
 /**

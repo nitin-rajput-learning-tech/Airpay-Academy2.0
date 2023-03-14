@@ -228,21 +228,28 @@ class program_form extends moodleform {
         global $DB;
         $categorycontext =(new \local_program\lib\accesslib())::get_module_context();
         $data = $DB->get_record('local_program', array('id' => $components->id));
-        //populate tags
-        // $data->tags = \local_tags_tag::get_item_tags_array('local_program', 'program', $components->id);
-        $data->cr_description = array();
-        $data->cr_description['text'] = $data->description;
-        $draftitemid = file_get_submitted_draft_itemid('programlogo');
+        if ($components->form_status == 0) {
+            //populate tags
+            // $data->tags = \local_tags_tag::get_item_tags_array('local_program', 'program', $components->id);
+            $data->cr_description = array();
+            $data->cr_description['text'] = $data->description;
+            $draftitemid = file_get_submitted_draft_itemid('programlogo');
 
-        file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_program', 'programlogo',
-            $data->programlogo, null);
+            file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_program', 'programlogo',
+                $data->programlogo, null);
 
-        $data->programlogo = $draftitemid;
-        $data->open_group =(!empty($data->open_group)) ? array_diff(explode(',',$data->open_group), array('')) :array(NULL=>NULL);
-        $data->open_designation =(!empty($data->open_designation)) ? array_diff(explode(',',$data->open_designation), array('')) :array(NULL=>NULL);
+            $data->programlogo = $draftitemid;
 
-        if(!empty($data->certificateid)){
-            $data->map_certificate = 1;
+
+        }if($components->form_status == 1) {
+
+            $data->open_group =(!empty($data->open_group)) ? array_diff(explode(',',$data->open_group), array('')) :array(NULL=>NULL);
+            $data->open_designation =(!empty($data->open_designation)) ? array_diff(explode(',',$data->open_designation), array('')) :array(NULL=>NULL);
+
+            if(!empty($data->certificateid)){
+                $data->map_certificate = 1;
+            }
+
         }
         $data =  (array)$data;
         local_costcenter_set_costcenter_path($data);

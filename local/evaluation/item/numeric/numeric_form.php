@@ -35,6 +35,7 @@ class evaluation_numeric_form extends evaluation_item_form {
                             'name',
                             get_string('item_name', 'local_evaluation'),
                             array('size'=>EVALUATION_ITEM_NAME_TEXTBOX_SIZE, 'maxlength'=>255));
+         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addElement('text',
                             'label',
                             get_string('item_label', 'local_evaluation'),
