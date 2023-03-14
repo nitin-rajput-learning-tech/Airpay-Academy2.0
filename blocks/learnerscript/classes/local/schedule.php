@@ -1183,7 +1183,6 @@ class schedule {
 		} else {
 			$selected = '';
 		}
-
 		return $roles_list;
 	}
 
