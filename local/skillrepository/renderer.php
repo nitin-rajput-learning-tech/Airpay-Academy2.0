@@ -256,7 +256,7 @@ class local_skillrepository_renderer extends plugin_renderer_base {
 
         $sql = "SELECT c.id, c.fullname, c.open_skill from
                 {course} c
-                where c.open_skill = $skillid";
+                where c.open_coursetype = 0 AND c.open_skill = $skillid";
 
         $skill_courses = $DB->get_records_sql($sql);
 
