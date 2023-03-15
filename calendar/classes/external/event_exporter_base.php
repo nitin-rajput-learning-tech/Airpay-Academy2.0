@@ -100,13 +100,12 @@ class event_exporter_base extends exporter {
 
         if ($cm = $event->get_course_module()) {
             $data->modulename = $cm->get('modname');
-            $data->instance = $cm->get('id');
-            $data->activityname = $cm->get('name');
-
+            $data->instance = $cm->get('id');            
+            $data->activityname = $cm->get('name');      
             $component = 'mod_' . $data->modulename;
             if (!component_callback_exists($component, 'core_calendar_get_event_action_string')) {
-                $modulename = get_string('modulename', $data->modulename);
-                $data->activitystr = get_string('requiresaction', 'calendar', $modulename);
+                $modulename = get_string('modulename', $data->modulename);                
+                $data->activitystr = get_string('requiresaction', 'calendar', $modulename);                
             } else {
                 $data->activitystr = component_callback(
                     $component,
@@ -114,8 +113,11 @@ class event_exporter_base extends exporter {
                     [$event->get_type()]
                 );
             }
+            $coursemod = $related['course'];
+            if($coursemod->open_module == 'online_exams'){
+                $data->name = get_string('onlineexam'.$data->eventtype, 'local_onlineexams');
+            }
         }
-
         parent::__construct($data, $related);
     }
 
@@ -315,7 +317,13 @@ class event_exporter_base extends exporter {
             // But they are considered editable because you can drag and drop the event on the month view.
             $values['isactionevent'] = true;
             // Activity events are normalised to "look" like course events.
-            $values['normalisedeventtype'] = 'course';
+            if($course->open_module == 'online_exams'){
+                $values['normalisedeventtype'] = 'onlineexams';
+            }else if($course->open_module == 'forum'){
+                $values['normalisedeventtype'] = 'forum';
+            }else{
+                $values['normalisedeventtype'] = 'course';
+            }            
         } else if ($event->get_type() == 'course') {
             $values['iscourseevent'] = true;
         } else if ($event->get_type() == 'category') {
@@ -327,9 +335,16 @@ class event_exporter_base extends exporter {
         $stringexists = get_string_manager()->string_exists($identifier, 'calendar');
         if (!$stringexists) {
             // Property normalisedeventtype is used to build the name of the CSS class for the events.
-            $values['normalisedeventtype'] = 'other';
+            // $values['normalisedeventtype'] = 'other';
+            ($values['normalisedeventtype'] == 'onlineexams') ?  : '';
+          if($values['normalisedeventtype'] == 'onlineexams'){
+            $stringoe =get_string($identifier, 'local_onlineexams');
+          }else if($values['normalisedeventtype'] == 'forum'){
+            $stringoe =get_string($identifier, 'local_forum');
+          }
+          $values['normalisedeventtype'] ='other';
         }
-        $values['normalisedeventtypetext'] = $stringexists ? get_string($identifier, 'calendar') : '';
+        $values['normalisedeventtypetext'] = $stringexists ? get_string($identifier, 'calendar') : $stringoe;
 
         $purpose = 'none';
         if ($moduleproxy) {
@@ -348,7 +363,6 @@ class event_exporter_base extends exporter {
             $categorysummaryexporter = new coursecat_summary_exporter($category, ['context' => $context]);
             $values['category'] = $categorysummaryexporter->export($output);
         }
-
         if ($course && $course->id != SITEID) {
             $coursesummaryexporter = new course_summary_exporter($course, ['context' => $context]);
             $values['course'] = $coursesummaryexporter->export($output);
