@@ -34,7 +34,10 @@ class plugin_bar extends pluginbase {
                             'gradedactivity', 'myassignments', 'myquizs', 'myresources',
                             'quizzes', 'scorm', 'student_overall_performance', 
                             'student_performance', 'useractivities', 'userassignments',
-                            'usercourses', 'userquizzes', 'users', 'usersresources', 'usersscorm', 'forum', 'myforums', 'assignstatus','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress');
+                            'usercourses', 'userquizzes', 'users', 'usersresources', 'usersscorm', 'forum', 'myforums', 
+                            'assignstatus','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview',
+                            'onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress',
+                            'dailyuniquelogins');
     }
 
     function summary($data) {
