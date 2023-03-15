@@ -275,6 +275,8 @@ fieldset.coursesearchbox label {
     word-break: break-word;
     line-height: 1.4;
     text-align: left;
+    font-size: 13px !important;
+    margin-bottom: 8px !important;
 }
 
 .form-autocomplete-suggestions {
@@ -326,10 +328,10 @@ fieldset.coursesearchbox label {
     vertical-align: middle;
 }
 
-.form-autocomplete-selection [data-active-selection=true] {
-    padding: 4px;
-    font-size: 12px !important;
-}
+// .form-autocomplete-selection [data-active-selection=true] {
+//     padding: 4px;
+//     font-size: 12px !important;
+// }
 
 select.form-control {
     &[size],
