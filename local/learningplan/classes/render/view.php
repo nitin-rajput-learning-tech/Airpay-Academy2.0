@@ -601,7 +601,6 @@ class view extends plugin_renderer_base
 		foreach ($total_mandatory_course as $total_mandatory) {
 			$mandatory[] = $total_mandatory->id;
 		}
-
 		$total_optional_course = $this->db->get_records_sql("SELECT id FROM {local_learningplan_courses} WHERE planid = $planid
 													 AND nextsetoperator = 'or'");
 		$optional = array();
@@ -1875,12 +1874,26 @@ class view extends plugin_renderer_base
 		} else {
 			$avgrating  = '';
 		}
-				$shortname = $this->db->get_field('local_learningplan', 'shortname', array('id' => $planid));
+		
+				$plan = $this->db->get_record('local_learningplan', array('id' => $planid));
+				if ($plan->open_level > 0) {
+					$plan->planlevel = $DB->get_field('local_course_levels', 'name', array('id' => $plan->open_level));
+				} else {
+					$plan->planlevel = 'N/A';
+				}
+				if ($plan->open_skill > 0) {
+					$plan->planskill = $DB->get_field('local_skill', 'name', array('id' => $plan->open_level));
+				} else {
+					$plan->planskill = 'N/A';
+				}	
+				
 				$lpcourses_context['total_assigned_course'] = $total_assigned_course;
 				$lpcourses_context['mandatory'] = count($mandatory);
 				$lpcourses_context['optional'] = count($optional);
 				$lpcourses_context['avgrating'] = $avgrating;
-				$lpcourses_context['plan_learningplancode'] = $shortname;
+				$lpcourses_context['plan_learningplancode'] = $plan->shortname;
+				$lpcourses_context['planskill'] = $plan->planskill;
+				$lpcourses_context['planlevel'] = $plan->planlevel;
 				$lpcourses_context['planorg'] = $planorg ? $planorg : 'All';
 				$lpcourses_context['plandpt'] = $plandpt ? $plandpt : 'All';
 				$lpcourses_context['plansubdpt'] = $plansubdpt ? $plansubdpt : 'All';
