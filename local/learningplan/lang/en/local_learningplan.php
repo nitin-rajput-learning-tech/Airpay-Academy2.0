@@ -275,3 +275,6 @@ $string['open_departmentlocal_learningplan_help'] = 'Bussiness Unit of the learn
 $string['open_subdepartmentlocal_learningplan_help'] = 'Department of the learningpath';
 $string['open_level4departmentlocal_learningplan_help'] = 'Sub Department of the learningpath';
 $string['leaningpathsearch'] = 'Learning path';
+$string['skillnlevel'] = 'Skills & Levels';
+$string['planlevel'] = 'Level';
+$string['planskill'] = 'Skill';

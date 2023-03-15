@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of eAbyas
  *
@@ -21,113 +22,116 @@
  * @package BizLMS
  * @subpackage block_learnerscript
  */
+
 use block_learnerscript\local\querylib;
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 
-class report_feedbackcompletions extends reportbase implements report {
+class report_feedbackcompletions extends reportbase implements report
+{
     /**
      * @param object $report Report object
      * @param object $reportproperties Report properties object
      */
-    public function __construct($report, $reportproperties) {
+    public function __construct($report, $reportproperties)
+    {
         parent::__construct($report);
         $this->parent = true;
-        $this->columns = ['feedbackfield'=>['feedbackfield'],'userfield'=>['userfield'],'feedbackcompletionscolumns' => ['completionstatus','completiondate']];
-        $this->components = array('columns', 'filters', 'permissions','orderable');
-        $this->filters = array('organization','departments', 'subdepartments', 'feedbacks');
+        $this->columns = ['feedbackfield' => ['feedbackfield'], 'userfield' => ['userfield'], 'feedbackcompletionscolumns' => ['completionstatus', 'completiondate']];
+        $this->components = array('columns', 'filters', 'permissions', 'orderable');
+        $this->filters = array('organization', 'departments', 'subdepartments', 'feedbacks');
         $this->orderable = array('feedbackname');
         $this->defaultcolumn = 'le.id';
-
     }
-    function init() {
+    function init()
+    {
         parent::init();
     }
-    function count() {
+    function count()
+    {
         $this->sql = "SELECT COUNT(eu.id)";
     }
-    function select() {
+    function select()
+    {
         $this->sql  = "SELECT eu.id,le.id as feedbackid,u.id as userid,le.name as feedbackname,
                        ec.timemodified AS completiondate,eu.status as completionstatus";
-         parent::select();                
+        parent::select();
     }
-    function from() {
+    function from()
+    {
         $this->sql .= " FROM {local_evaluations} le ";
     }
-    function joins() {
+    function joins()
+    {
         $this->sql .= "JOIN {local_evaluation_users} eu ON eu.evaluationid = le.id
                       LEFT JOIN {local_evaluation_completed} ec ON ec.evaluation = le.id AND ec.userid = eu.userid
                     JOIN {user} u ON eu.userid = u.id AND u.deleted = 0 AND u.suspended = 0";
-          parent::joins();
+        parent::joins();
     }
-    function where(){
-       global $USER, $DB;
+    function where()
+    {
+        global $USER, $DB;
         $this->sql .= "  WHERE le.instance = 0 AND le.deleted  = 0 ";
-        $systemcontext = \context_system::instance();
+
         // getscheduled report
         if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
+            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid' => $this->reportid, 'sendinguserid' => $USER->id], IGNORE_MULTIPLE);
             if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
+                $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
+                $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid' => $scheduledreport->roleid, 'capability' => 'local/costcenter:manage_ownorganization']);
+                $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid' => $scheduledreport->roleid, 'capability' => 'local/costcenter:manage_owndepartments']);
             } else {
                 $ohs = $dhs = 1;
             }
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $this->sql.= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-           $this->sql .= " AND le.costcenterid = :costcenterid ";
-           $this->params['costcenterid']= $USER->open_costcenterid;
-        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-           $this->sql .= " AND le.costcenterid = :costcenterid AND le.departmentid = :departmentid ";
-           $this->params['costcenterid']= $USER->open_costcenterid;
-           $this->params['departmentid']= $USER->open_departmentid;
-        }else{
-           $this->sql .= " AND le.costcenterid = :costcenterid AND le.departmentid = :departmentid AND le.subdepartment = :subdepartmentid";
-           $this->params['costcenterid']= $USER->open_costcenterid;
-           $this->params['departmentid']= $USER->open_departmentid;
-           $this->params['subdepartmentid']= $USER->open_subdepartement;
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'le.open_path', null, 'lowerandsamepath');
+
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else {
+            $this->sql .= $costcenterpathconcatsql;
         }
-         parent::where();
+
+        parent::where();
     }
-     function search() {
+    function search()
+    {
         if (isset($this->search) && $this->search) {
-            $fields = array('le.name',"CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
+            $fields = array('le.name', "CONCAT(u.firstname,' ',u.lastname)", 'u.email', 'u.open_employeeid');
             $fields = implode(" LIKE '%$this->search%' OR ", $fields);
             $fields .= " LIKE '%$this->search%' ";
             $this->sql .= " AND ($fields) ";
         }
-    }  
-    function filters() {  
+    }
+    function filters()
+    {
         if (isset($this->params['filter_organization']) && !empty($this->params['filter_organization'])) {
             $this->sql .= " AND le.costcenterid = :orgid ";;
-            $this->params['orgid']= $this->params['filter_organization'];
+            $this->params['orgid'] = $this->params['filter_organization'];
         }
 
         if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-           $this->sql .= " AND le.departmentid = :deptid ";
-           $this->params['deptid']= $this->params['filter_departments'];
+            $this->sql .= " AND le.departmentid = :deptid ";
+            $this->params['deptid'] = $this->params['filter_departments'];
         }
 
         if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-           $this->sql .= " AND le.subdepartment = :subdeptid ";
-           $this->params['subdeptid']= $this->params['filter_subdepartments'];
+            $this->sql .= " AND le.subdepartment = :subdeptid ";
+            $this->params['subdeptid'] = $this->params['filter_subdepartments'];
         }
 
         if (!empty($this->params['filter_feedbacks'])) {
-             $this->sql .= " AND le.id = :feedbackid ";
-             $this->params['feedbackid']= $this->params['filter_feedbacks'];
+            $this->sql .= " AND le.id = :feedbackid ";
+            $this->params['feedbackid'] = $this->params['filter_feedbacks'];
         }
 
         if (!empty($this->params['filter_user'])) {
             $this->sql .= " AND u.id = :userid ";
-            $this->params['userid']= $this->params['filter_user'];
-
+            $this->params['userid'] = $this->params['filter_user'];
         }
-    }    
-    public function get_rows($feedbacks = array()) {
+    }
+    public function get_rows($feedbacks = array())
+    {
         return $feedbacks;
     }
 }

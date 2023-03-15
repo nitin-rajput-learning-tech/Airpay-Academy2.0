@@ -594,3 +594,5 @@ $string['extensionperiod_help'] = 'Extension Period days count for users';
 $string['extensionperiod_required'] = 'Extension Period Days Required';
 $string['extensionperiod_negative'] = 'Extension Period Days cannot be Negative';
 $string['taskauto_extension'] = 'Program Auto Extension Task';
+$string['programskill'] = 'Skill';
+$string['programlevel'] = 'Level';

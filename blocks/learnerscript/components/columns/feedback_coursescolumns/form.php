@@ -16,11 +16,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LearnerScript Reports
+ * Configurable Reports
  * A Moodle block for creating customizable reports
  * @package blocks
- * @author: eAbyas Info Solutions
- * @date: 2017
+ * @author: Anilkumar Cheguri <http://www.twitter.com/jleyvadelgado>
+ * @date: 2019
  */
 if (!defined('MOODLE_INTERNAL')) {
     //  It must be included from a Moodle page.
@@ -29,26 +29,17 @@ if (!defined('MOODLE_INTERNAL')) {
 
 require_once($CFG->libdir . '/formslib.php');
 
-class courseviews_form extends moodleform {
+class feedback_coursescolumns_form extends moodleform {
 
     public function definition() {
         global $DB, $USER, $CFG;
-
         $mform = & $this->_form;
+        $mform->addElement('header', 'crformheader', get_string('feedback_coursescolumns', 'block_learnerscript'), '');
+        $columns = $DB->get_columns('course_modules');
+        $feedbackrespcolumns = array('employeename', 'employeeid','managername','employeestatus','coursename');
 
-        $mform->addElement('header', 'crformheader', get_string('courseviews', 'block_learnerscript'), '');
-
-        $columns = $DB->get_columns('course');
-
-        $coursecolumns = array();
-        foreach ($columns as $c) {
-            $coursecolumns[$c->name] = $c->name;
-        }
-
-        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $coursecolumns);
-
+        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $feedbackrespcolumns);
         $this->_customdata['compclass']->add_form_elements($mform, $this);
-
         // Buttons.
         $this->add_action_buttons(true, get_string('add'));
     }

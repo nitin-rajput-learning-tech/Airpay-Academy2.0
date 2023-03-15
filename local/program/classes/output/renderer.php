@@ -952,6 +952,16 @@ class renderer extends plugin_renderer_base {
         } else {
             $description = "";
         }
+        if ($program->open_skill > 0) {
+            $program->programskill = $DB->get_field('local_skill', 'name', array('id' => $program->open_skill));
+            } else {
+            $program->programskill = 'N/A';
+        }
+        if ($program->open_level > 0) {
+            $program->programlevel = $DB->get_field('local_skill', 'name', array('id' => $program->open_level));
+            } else {
+            $program->programlevel = 'N/A';
+        }
         $isdescription = '';
         if (empty($description)) {
             $isdescription = false;

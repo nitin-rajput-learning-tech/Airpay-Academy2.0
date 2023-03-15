@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,21 +16,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * LearnerScript Reports
+ * Configurable Reports
  * A Moodle block for creating customizable reports
  * @package blocks
- * @author: eAbyas Info Solutions
- * @date: 2017
+ * @author: Anilkumar Cheguri <http://www.twitter.com/jleyvadelgado>
+ * @date: 2019
  */
 use block_learnerscript\local\pluginbase;
 
-class plugin_courseviews extends pluginbase {
+class plugin_feedback_coursescolumns extends pluginbase {
 
     public function init() {
-        $this->fullname = get_string('courseviews', 'block_learnerscript');
+        $this->fullname = get_string('feedback_coursescolumns', 'block_learnerscript');
         $this->type = 'undefined';
         $this->form = true;
-        $this->reporttypes = array('courseviews');
+        $this->reporttypes = array('feedbackcourses');
     }
 
     public function summary($data) {
@@ -43,8 +44,10 @@ class plugin_courseviews extends pluginbase {
         return array($align, $size, $wrap);
     }
 
-    public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
-       
-        return (isset($row->{$data->column}))? $row->{$data->column} : ' -- ';
+    // Data -> Plugin configuration data.
+    // Row -> Complet user row c->id, c->fullname, etc...
+    public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {        
+        return (isset($row->{$data->column})) ? $row->{$data->column} : '--';
     }
+
 }

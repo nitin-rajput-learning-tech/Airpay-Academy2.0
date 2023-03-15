@@ -223,6 +223,40 @@ class learningplan extends moodleform {
 			$mform->addElement('editor','description', get_string('description'), null, $editoroption);
 	        $mform->setType('description', PARAM_RAW);
 	        $mform->addHelpButton('description','descript','local_learningplan');
+            //skill related fields---------------------------------------------------------
+            $skillselect = array(0 => get_string('select_skill','local_onlineexams'));
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->onlineexam->open_path);
+   
+               $skillcostcentersql = "SELECT id,name FROM {local_skill}
+                                   WHERE 1=1 $costcenterpathconcatsql ";
+   
+   
+               $skills = $DB->get_records_sql_menu($skillcostcentersql);
+   
+          
+               if(!empty($skills)){
+                   $skillselect = $skillselect+$skills;
+               }
+   
+               $mform->addElement('select',  'open_skill', get_string('open_skillonlineexam','local_onlineexams'), $skillselect);
+               $mform->addHelpButton('open_skill', 'open_skillonlineexam', 'local_onlineexams');
+               $mform->setType('open_skill', PARAM_INT);
+   
+               $levelselect = array(0 => get_string('select_level','local_onlineexams'));
+   
+               $levelsql = "SELECT id,name FROM {local_course_levels}
+                                   WHERE 1=1 $costcenterpathconcatsql ";
+   
+               $levels = $DB->get_records_sql_menu($levelsql);
+   
+               if(!empty($levels)){
+                   $levelselect = $levelselect+$levels;
+               }
+               $mform->addElement('select',  'open_level', get_string('open_levelonlineexam','local_onlineexams'), $levelselect);
+               $mform->addHelpButton('open_level', 'open_levelonlineexam', 'local_onlineexams');
+               $mform->setType('open_level', PARAM_INT);
+            //skill related fields ends here---------------------------------------------------------
 
     	}else if($form_status == 2){
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(2,HIERARCHY_LEVELS), true, 'local_learningplan', $categorycontext, $multiple = false);

@@ -463,6 +463,8 @@ class local_classroom_external extends external_api {
                                     'name' => new external_value(PARAM_RAW, 'name'),
                                     'startdate' => new external_value(PARAM_RAW, 'startdate'),
                                     'enddate' => new external_value(PARAM_RAW, 'enddate'),
+                                    'classroomskill' => new external_value(PARAM_RAW, 'classroomskill'),
+                                    'classroomlevel' => new external_value(PARAM_RAW, 'classroomlevel'),
                                     'classroomlocation' => new external_value(PARAM_RAW, 'classroomlocation'),
                                     'classroomdepartment' => new external_value(PARAM_RAW, 'classroomdepartment'),
                                     'trainers' => new external_single_structure(
@@ -870,6 +872,8 @@ class local_classroom_external extends external_api {
                                     'district' => new external_value(PARAM_RAW, 'district'),
                                     'subdistrict' => new external_value(PARAM_RAW, 'subdistrict'),
                                     'village' => new external_value(PARAM_RAW, 'village'),
+                                    'groups' => new external_value(PARAM_RAW, 'groups',VALUE_OPTIONAL),
+                                    'classroomskill' => new external_value(PARAM_RAW, 'classroomskill',VALUE_OPTIONAL),
                                 )
                             )
             )
