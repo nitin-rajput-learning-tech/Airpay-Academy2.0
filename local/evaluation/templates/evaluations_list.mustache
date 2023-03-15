@@ -37,85 +37,130 @@
     {{! card view }}
     {{#viewtypeCard}}
         {{#records}}
-            <div class="{{cardClass}} pull-left mt-4{{^ status}} inactive{{/ status}}">
-                <div class="w-full pull-left eval_container">
-                    <div class="w-full pull-left evalname_container">
-                         <span class="evalicon"><i class="fa fa-clipboard" aria-hidden="true"></i></span>
-                        <span class="m-0 evalname font-weight-bold" title="{{ eval_name }}">{{{ evalname }}}</span>
-
-                        {{# actions}}
-                            <span class="pull-right">
-                                {{{ actions }}}
-                            </span>
-                        {{/ actions}}
+            <div class="{{cardClass}}  mt-4{{^ status}} inactive{{/ status}}">
+                <div class="w-full  eval_container mb-3">
+                    <div class="evalimage_container">
+                        <div class="eval_image  d-flex flex-column justify-content-between ">
+                            <div class="d-flex justify-content-end">
+                                {{# actions}}
+                                <div class="cog_icon dropdown action_menu_dropdown " data-toggle="dropdown" aria-expanded="false" >
+                                    <span><i class="fa fa-gear" aria-hidden="true"></i></span>
+                                     {{{ actions }}}
+                                </div>
+                                 {{/ actions}}
+                             </div>
+                            <div class="evaluation_strips d-flex align-items-start">
+                               {{# has_evalcap}}
+                                    <div class="enroll_strip">
+                                        <span class="eval_label"> 
+                                            {{# str}}enrolled, local_evaluation{{/ str}}
+                                            <span class=" enroll_colon">:</span>
+                                            <span class="enroll_count">{{{ enrolled }}}</span>
+                                        </span>
+                                    </div>
+                                    <div class="completed_strip">
+                                        <span class="eval_label"> {{# str}}completed, local_evaluation{{/ str}}
+                                            <span class="completed_colon">:</span>
+                                            <span class="completed_count">{{{ completed }}}</span>
+                                        </span>
+                                    </div>
+                                {{/ has_evalcap}}
+                                {{^ has_evalcap}}
+                                <div class="enrolled_strip">
+                                    <span class="eval_label"> 
+                                        {{# str}}enrolledon, local_evaluation{{/ str}}
+                                        <span class="enroll_colon">:</span>
+                                        <span class="enroll_count">{{ enrolledon }}</span>
+                                     </span>
+                                </div>
+                                <div class="completed_strip">
+                                    <span class="eval_label"> {{# str}}completedon, local_evaluation{{/ str}}
+                                        <span class="completed_colon">:</span>
+                                    </span>
+                                    <span class="completed_count">{{ completedon }}</span>
+                                </div>
+                                {{/ has_evalcap}}
+                            </div>    
+                        </div> 
                     </div>
-                    <div class="w-full pull-left evalinfo_container">
-                        <p class="font-weight-bold">
-                            <span class="eval_label"> {{# str}}type, local_evaluation{{/ str}}
-                                <span class="pull-right mr-10">:</span>
+                    <div class="w-full  evalinfo_container">
+                        <div class="w-full evalname_container p-0 d-flex justify-content-between align-items-center">
+                            <!-- <span class="evalicon">
+                                <i class="fa fa-clipboard" aria-hidden="true"></i>
+                            </span>  -->
+                            <span class="evalname" title="{{ eval_name }}">{{{ evalname }}}</span>                        
+                            
+                        </div>                
+                        <div class="eval_labelname">
+                            <span class="eval_label"> 
+                                {{# str}}type, local_evaluation{{/ str}}
+                                <span class="type_colon">:</span>
+                                <span class="type_survey">{{ evaltype }}</span>
                             </span>
-                            <span style="font-size: 15px;color: #000;font-weight: 500;">{{ evaltype }}</span>
-                        </p>
-                        {{# has_evalcap}}
-                            <p class="font-weight-bold">
+                        </div>
+                        <!-- {{# has_evalcap}}
+                            <div class="enroll_strip">
                                 <span class="eval_label"> {{# str}}enrolled, local_evaluation{{/ str}}
-                                    <span class="pull-right mr-10">:</span>
+                                    <span class=" enroll_colon">:</span>
                                 </span>
-                                <span>{{{ enrolled }}}</span>
-                            </p>
-                            <p class="font-weight-bold">
+                                <span class="enroll_count">{{{ enrolled }}}</span>
+                            </div>
+                            <div class="completed_strip">
                                 <span class="eval_label"> {{# str}}completed, local_evaluation{{/ str}}
-                                    <span class="pull-right mr-10">:</span>
+                                    <span class=" mr-10">:</span>
                                 </span>
                                 <span>{{{ completed }}}</span>
-                            </p>
-                        {{/ has_evalcap}}
-                        {{^ has_evalcap}}
-                            <p class="font-weight-bold">
-                                <span class="eval_label"> {{# str}}enrolledon, local_evaluation{{/ str}}
-                                    <span class="pull-right mr-10">:</span>
-                                </span>
-                                <span>{{ enrolledon }}</span>
-                            </p>
-                            <p class="font-weight-bold">
-                                <span class="eval_label"> {{# str}}completedon, local_evaluation{{/ str}}
-                                    <span class="pull-right mr-10">:</span>
-                                </span>
-                                <span class="">{{ completedon }}</span>
-                            </p>
-                        {{/ has_evalcap}}
-                        <p class="mb-1" title="{{# str}}schedule, local_evaluation{{/ str}}">
-                            <span class="pull-left eval_schedule_label font-weight-bold">
-                                <i class="fa fa-calendar pr-2" aria-hidden="true"></i>
-                            </span>
-                            <span style="font-size: 15px;color: #000;font-weight: 500;">{{ schedule }}</span>
-                        </p>
-                    </div>
-                    <div class="w-full pull-left text-center">
-                        <div class="w-full pull-left">
-                            {{# current_feedback}}
-                                {{^ completed}}
-                                    {{# actions}}
-                                    <a class="d-block take_evaluation evalactions" href="{{{previewurl}}}">{{previewstring}}</a>
-                                    {{/ actions}}
-                                {{/ completed}}
-                                
-                                {{# completed}}
-                                    <a class="d-block take_evaluation evalactions" href="{{{completedurl}}}">{{# str}}viewresponse, local_evaluation{{/str}}</a>
-                                {{/ completed}}
-                            {{/ current_feedback}}
+                            </div>
+                        {{/ has_evalcap}} -->
 
-                            {{^ current_feedback}}
+                        <!-- {{^ has_evalcap}}
+                            <div class="enrolled_strip">
+                                <span class="eval_label"> 
+                                    {{# str}}enrolledon, local_evaluation{{/ str}}
+                                    <span class="enroll_colon">:</span>
+                                    <span class="enroll_count">{{ enrolledon }}</span>
+                                 </span>
+                            </div>
+                            <div class="completed_strip">
+                                <span class="eval_label"> {{# str}}completedon, local_evaluation{{/ str}}
+                                    <span class="completed_colon">:</span>
+                                </span>
+                                <span class="completed_count">{{ completedon }}</span>
+                            </div>
+                        {{/ has_evalcap}} -->
+                        <div class=" schedule" title="{{# str}}schedule, local_evaluation{{/ str}}">
+                            <span class=" eval_schedule_label ">
+                                <!-- <i class="fa fa-calendar pr-2" aria-hidden="true"></i> -->
+                                <i class="fa fa-folder-open-o" aria-hidden="true"></i>
+                            </span>
+                            <span class="schedule_content">{{ schedule }}</span>
+                        </div>
+                        <div class="w-full text-right">
+                            <div class="w-full ">
+                                {{# current_feedback}}
+                                    {{^ completed}}
+                                        {{# actions}}
+                                        <a class="d-block take_evaluation evalactions" href="{{{previewurl}}}">{{previewstring}}</a>
+                                        {{/ actions}}
+                                    {{/ completed}}
+                                    
+                                    {{# completed}}
+                                        <a class="d-block take_evaluation evalactions" href="{{{completedurl}}}">{{# str}}viewresponse, local_evaluation{{/str}}</a>
+                                    {{/ completed}}
+                                {{/ current_feedback}}
+    
+                                {{^ current_feedback}}
                                     {{# closed_feedback}}
                                         <a class="d-block take_evaluation evalactions" href="{{{completedurl}}}">{{# str}}closed, local_evaluation{{/ str}}</a>
                                     {{/ closed_feedback}}
                                     {{# not_yetstarted}}
                                         <span class="take_evaluation evalactions">{{# str}}not_yet_started, local_evaluation{{/ str}}</span>
                                     {{/ not_yetstarted}}
-                            {{/ current_feedback}}
-
+                                {{/ current_feedback}}
+                            </div>
                         </div>
                     </div>
+                    
                 </div>
             </div>
         {{/records}}

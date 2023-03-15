@@ -21064,7 +21064,11 @@ div.editor_atto_toolbar button .icon {
   align-items: stretch;
   height: 61px; }
   .navbar.fixed-top .navbar-brand .logo {
-    max-height: calc(60px - (0.25rem * 2)); }
+    height: calc(60px - (0.25rem * 2)); 
+    max-height: 100%;
+    max-width: 100%;
+    padding: 5px;
+  }
   .navbar.fixed-top .nav-link {
     height: 100%;
     display: flex;
