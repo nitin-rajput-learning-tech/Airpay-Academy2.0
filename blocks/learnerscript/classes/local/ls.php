@@ -1849,7 +1849,7 @@ class ls {
                         $sql =  "SELECT DISTINCT(fi.name),fi.id, fi.feedback
                                     FROM {feedback_item} fi
                                     JOIN {feedback_template} AS ft ON fi.template = ft.id
-                                    WHERE fi.typ != 'label' AND ft.name LIKE 'Course Feedback Form - 2021'
+                                    WHERE fi.typ != 'label' 
                                     ORDER BY fi.position ASC ";
 
                 $evaluationitems = $DB->get_records_sql($sql);
