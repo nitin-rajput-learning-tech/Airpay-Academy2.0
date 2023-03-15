@@ -50,34 +50,6 @@ $capabilities = array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
     ),
-    'local/program:createsession' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:viewsession' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:editsession' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:deletesession' => array(
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:managesession' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:assigntrainer' => array(
-        'captype' => 'read',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:managetrainer' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
     'local/program:addusers' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
@@ -91,14 +63,6 @@ $capabilities = array(
         'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:viewusers' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:takesessionattendance' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:takemultisessionattendance' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
     ),
@@ -219,10 +183,6 @@ $capabilities = array(
         'contextlevel' => CONTEXT_COURSECAT,
     ),
     'local/program:managelevel' => array(
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_COURSECAT,
-    ),
-    'local/program:enrolsession' => array(
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
     ),

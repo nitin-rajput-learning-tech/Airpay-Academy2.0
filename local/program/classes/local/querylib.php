@@ -210,10 +210,4 @@ class querylib {
         }
         return $locationroomlists;
     }
-     public function get_program_streamlist() {
-        global $DB;
-
-        $streams = $DB->get_records_menu('local_program_stream', array(), '', 'id, stream');
-        return $streams;
-     }
 }

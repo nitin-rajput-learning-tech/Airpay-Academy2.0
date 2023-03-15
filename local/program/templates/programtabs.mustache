@@ -34,33 +34,7 @@
         </div>
     </li>
     {{/ reports.0}}
-  <!--   {{# is_siteadmin }}
-        <li>
-            <div class = "coursebackup course_extended_menu_itemcontainer" >
-                <a class="course_extended_menu_itemlink" href="{{{config.wwwroot}}}/local/program/streams.php" title="{{# str }} view_streams, local_program {{/ str }}">
-                    <i class="icon fa fa-columns" aria-hidden="true"></i>
-                </a>
-            </div>
-        </li>
-    {{/ is_siteadmin }} -->
-    {{#location_url }}
-        <li>
-            <div class = "coursebackup course_extended_menu_itemcontainer" >
-                <a href="{{ location_url }}" class="course_extended_menu_itemlink create_ilt" title="{{# str }} location, local_program {{/ str}}">
-                    <i class="icon fa fa-map-marker" aria-hidden="true"></i>
-                </a>
-            </div>
-        </li>
-    {{/location_url }}
-    {{# request_url }}
-        <li>
-            <div class = "coursebackup course_extended_menu_itemcontainer" >
-                <a href="{{ request_url }}" class="course_extended_menu_itemlink reqyest" title="{{# str }} request, local_program {{/ str}}">
-                    <i class="icon fa fa-share-square" aria-hidden="true"></i>
-                </a>
-            </div>
-        </li>
-    {{/ request_url }}
+
     {{# creataprogram }}
         <li>
             <div class = "coursebackup course_extended_menu_itemcontainer" >

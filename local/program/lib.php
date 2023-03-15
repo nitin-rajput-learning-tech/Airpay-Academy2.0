@@ -196,49 +196,6 @@ function local_program_output_fragment_program_completion_settings($args){
 
     return $return;
 }
-function local_program_output_fragment_session_form($args) {
-    global $CFG, $DB;
-    $args = (object) $args;
-    $categorycontext = $args->context;
-    $return = '';
-    $formdata = [];
-    if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
-        parse_str($serialiseddata, $formdata);
-    }
-    $formdata['id'] = $args->id;
-    $formdata['bcid'] = $args->bcid;
-    $formdata['levelid'] = $args->levelid;
-    $formdata['bclcid'] = $args->bclcid;
-    $mform = new \local_program\form\session_form(null, array('id' => $args->id,
-        'bcid' => $args->bcid, 'levelid' => $args->levelid, 'bclcid' => $args->bclcid,
-        'form_status' => $args->form_status), 'post', '', null, true, $formdata);
-    if ($args->id > 0) {
-        $sessiondata = $DB->get_record('local_bc_course_sessions', array('id' => $args->id));
-        $sessiondata->form_status = $args->form_status;
-        $sessiondata->cs_description['text'] = $sessiondata->description;
-        if ($sessiondata->trainerid == 0) {
-            $sessiondata->trainerid = null;
-        }
-        $mform->set_data($sessiondata);
-    }
-
-    if (!empty((array) $serialiseddata)) {
-        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
-        $mform->is_validated();
-    }
-    $formheaders = array_keys($mform->formstatus);
-    $nextform = array_key_exists($args->form_status, $formheaders);
-    if ($nextform === false) {
-        return false;
-    }
-    ob_start();
-    $mform->display();
-    $return .= ob_get_contents();
-    ob_end_clean();
-
-    return $return;
-}
 function local_program_output_fragment_program_completion_form($args) {
     global $CFG, $DB;
     $args = (object) $args;
@@ -253,19 +210,6 @@ function local_program_output_fragment_program_completion_form($args) {
     $formdata['bcid'] = $args->bcid;
     $mform = new \local_program\form\program_completion_form(null, array('id' => $args->id,
         'bcid' => $args->cid, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
-    // if ($args->id > 0) {
-    //     $program_completiondata = $DB->get_record('local_program_completion', array('id' => $args->id));
-    //     $program_completiondata->form_status = $args->form_status;
-
-    //     if ($program_completiondata->sessionids == "NULL") {
-    //         $program_completiondata->sessionids = null;
-    //     }
-    //     if ($program_completiondata->courseids == "NULL") {
-    //         $program_completiondata->courseids = null;
-    //     }
-
-    //     $mform->set_data($program_completiondata);
-    // }
 
     if (!empty((array) $serialiseddata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
@@ -576,97 +520,6 @@ function local_program_output_fragment_program_managelevel_form($args) {
 
     return $return;
 }
-
-
-class program_managestream_form extends moodleform {
-
-    public function definition() {
-        global $CFG, $DB, $USER;
-        $querieslib = new querylib();
-        $mform = &$this->_form;
-        $id = $this->_customdata['id'];
-        $open_path = $this->_customdata['open_path'];
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
-
-        $mform->addElement('hidden', 'id', $id);
-        $mform->setType('id', PARAM_INT);
-
-        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_program', $categorycontext, $multiple = false);
-
-        $mform->addElement('text', 'stream', get_string('stream', 'local_program'));
-        $mform->addRule('stream', null, 'required', null, 'client');
-
-        $mform->addElement('editor', 'stream_description', get_string('description', 'local_program'));
-        $mform->setType('stream_description', PARAM_RAW);
-
-        $mform->disable_form_change_checker();
-    }
-}
-
-function local_program_output_fragment_program_managestream_form($args) {
-    global $CFG, $PAGE, $DB;
-    $args = (object) $args;
-    $categorycontext = $args->context;
-    $return = '';
-    $renderer = $PAGE->get_renderer('local_program');
-    $formdata = [];
-    if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
-        parse_str($serialiseddata, $formdata);
-    }
-    $data = $DB->get_record('local_program_stream', ['id' => $args->id]);
-    $formdata['id'] = $args->id;
-    $customdata = array(
-        'id' => $args->id,
-        'form_status' => $args->form_status
-    );
-    if($args->id){
-        $customdata['open_path'] = $data->open_path;
-    }
-
-    local_costcenter_set_costcenter_path($customdata);
-    local_users_set_userprofile_datafields($customdata,$data);
-
-    $mform = new program_managestream_form(null, $customdata, 'post', '', null, true, $formdata);
-
-
-    $bcstream = new stdClass();
-    if ($args->id > 0) {
-        $bcstream = $data;
-    }
-
-    $bcstream->form_status = $args->form_status;
-    $bcstream->stream_description['text'] = $bcstream->description;
-    $mform->set_data($bcstream);
-
-    if (!empty((array) $serialiseddata)) {
-        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
-        $mform->is_validated();
-    }
-    $formheaders = array_keys($mform->formstatus);
-    $nextform = array_key_exists($args->form_status, $formheaders);
-    if ($nextform === false) {
-        return false;
-    }
-    ob_start();
-    $formstatus = array();
-    foreach (array_values($mform->formstatus) as $k => $mformstatus) {
-        $activeclass = $k == $args->form_status ? 'active' : '';
-        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass);
-    }
-    $formstatusview = new \local_program\output\form_status($formstatus);
-    $return .= $renderer->render($formstatusview);
-    $mform->display();
-    $return .= ob_get_contents();
-    ob_end_clean();
-
-    return $return;
-}
-/*
-* Author Rizwana
-* Displays a node in left side menu
-* @return  [type] string  link for the leftmenu
-*/
 function local_program_leftmenunode(){
     $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
     $programnode = '';
@@ -806,8 +659,6 @@ function program_mass_enroll($cir, $program, $categorycontext, $data) {
                         $programuser->postfeedback = 0;
                         $programuser->trainingfeedback = 0;
                         $programuser->confirmation = 0;
-                        $programuser->attended_sessions = 0;
-                        $programuser->hours = 0;
                         $programuser->completion_status = 0;
                         $programuser->completiondate = 0;
                         $programuser->usercreated = $USER->id;
@@ -1041,10 +892,9 @@ function get_program_details($classid) {
         $details['manage'] = 1;
         $completedcount = $DB->count_records_sql("select count(cu.id) from {local_program_users} cu, {user} u where u.id = cu.userid AND u.deleted = 0 AND u.suspended = 0 AND cu.programid=? AND cu.completion_status=?", array($classid, 1));
         $enrolledcount = $DB->count_records_sql("select count(cu.id) from {local_program_users} cu, {user} u where u.id = cu.userid AND u.deleted = 0 AND u.suspended = 0 AND cu.programid=? ", array($classid));
-        $sessioncount = $DB->count_records_sql("select count(cu.id) from {local_bc_course_sessions} cu, {local_program} c where c.id = cu.programid AND cu.programid=? ", array($classid));
+
         $details['completed'] = $completedcount;
         $details['enrolled'] = $enrolledcount;
-        $details['noofsessions'] = $sessioncount;
     } else {
         $selectsql = "select cu.*, c.id as cid ";
 
@@ -1057,7 +907,7 @@ function get_program_details($classid) {
         $wheresql = " where 1 = 1 AND cu.userid = ? AND c.id = ? ";
 
         $record = $DB->get_record_sql($selectsql.$fromsql.$joinsql.$wheresql, [$USER->id, $classid]);
-        $sessioncount = $DB->count_records_sql("select count(cu.id) from {local_bc_course_sessions} cu, {local_program} c where c.id = cu.programid AND cu.programid=? ", array($classid));
+
         $classsql = "select c.* from {local_program} c where c.id = ?";
         $programinfo = $DB->get_record_sql($classsql, [$classid]);
         
@@ -1073,8 +923,6 @@ function get_program_details($classid) {
         $details['status'] = ($record->completion_status == 1) ? get_string('completed', 'local_onlinetests'):get_string('pending', 'local_onlinetests');
         $details['enrolled'] = ($record->timecreated) ? \local_costcenter\lib::get_userdate("d/m/Y H:i", $record->timecreated): $enrollmentbtn;
         $details['completed'] = ($record->completiondate) ? \local_costcenter\lib::get_userdate("d/m/Y H:i", $record->completiondate): '-';
-        $details['noofsessions'] = ($sessioncount) ? $sessioncount: '-' ;
-        $details['attendance'] = $record->attended_sessions;
     }
     return $details;
 }

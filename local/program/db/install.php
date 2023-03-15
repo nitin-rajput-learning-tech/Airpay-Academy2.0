@@ -149,13 +149,7 @@ function xmldb_local_program_install() {
         array('name' => 'Program Enrollment','shortname' => 'program_enrol','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
         array('name' => 'Program Unenrollment','shortname' => 'program_unenroll','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
         array('name' => 'Program Completion','shortname' => 'program_completion','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
-        array('name' => 'Program Level Completion','shortname' => 'program_level_completion','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
-        array('name' => 'Program Session Enrollment','shortname' => 'program_session_enrol','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
-        array('name' => 'Program Session Reschedule','shortname' => 'program_session_reschedule','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
-        array('name' => 'Program Session Attendance','shortname' => 'program_session_attendance','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
-        array('name' => 'Program Session Reminder (before startdate)','shortname' => 'program_session_reminder','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
-        array('name' => 'Program Session Cancel','shortname' => 'program_session_cancel','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
-        array('name' => 'Program Session Completion','shortname' => 'program_session_completion','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program')
+        array('name' => 'Program Level Completion','shortname' => 'program_level_completion','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program')
     );
     foreach($notification_type_data as $notification_type){
         unset($notification_type['timecreated']);
@@ -166,36 +160,22 @@ function xmldb_local_program_install() {
     }
     $strings = array(
         array('name' => '[program_name]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_stream]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_startdate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_enddate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_level]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_username]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_sessionsinfo]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_enroluserfulname]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_enroluseremail]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_useremail]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_trainername]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_attendance]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_startdate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_enddate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_organization]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_course]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_creater]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_level_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_lc_course_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_lc_course_sessions_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_lc_course_creater]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_level_creater]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_lc_course_sessions_creater]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[program_level_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_lc_course_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_lc_course__session_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_name]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[program_session_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL)
+        array('name' => '[program_lc_course_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL)
     );
     foreach($strings as $string){
         unset($string['timecreated']);

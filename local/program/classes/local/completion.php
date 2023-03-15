@@ -32,11 +32,9 @@ class completion{
         $categorycontext =  (new \local_program\lib\accesslib())::get_module_context($programid);
         $completion_record = $DB->get_record('local_bc_level_completions', array('programid' => $programid, 'levelid' => $levelid, 'userid' => $userid));
         if(empty($completion_record)){
-            $stream = $DB->get_field('local_program', 'stream',
-                        array('id' => $programid));
+
             $bclevelcmptl = new stdClass();
             $bclevelcmptl->programid = $programid;
-            $bclevelcmptl->stream = $stream;
             $bclevelcmptl->type = 0;
             $bclevelcmptl->levelid = $levelid;
             $bclevelcmptl->userid = $userid;
@@ -65,7 +63,6 @@ class completion{
             $emaillogs = new \local_program\notification();
             $touser = \core_user::get_user($userdata->userid);
             $programinstance = $DB->get_record('local_program', array('id' => $programid));
-            $programinstance->levelid = $session->levelid;
             $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
                 
             $bcuser = $DB->get_record('local_program_users',
@@ -81,9 +78,7 @@ class completion{
                     $levelids = array($levelid);
                 } else {
                     $levelids = explode(',', $bcusercmptllevelids);
-                    if (!in_array($session->levelid, $levelids)) {
-                       $levelids[] = $session->levelid;
-                    }
+
                     array_unique($levelids);
                     $bcuser->levelids = implode(',', array_filter($levelids));
                 }
@@ -107,9 +102,6 @@ class completion{
                   $emaillogs = new \local_program\notification();
                   $touser = \core_user::get_user($userid);
                   $programinstance = $DB->get_record('local_program', array('id' => $programid));
-                  // $programinstance->courseid = $session->bclcid;
-                  // $programinstance->levelid = $session->levelid;
-                  // $programinstance->sessionid = $userdata->sessionid;
                   $email_logs = $emaillogs->program_notification($type, $touser, $USER, $programinstance);
                 }
             }
