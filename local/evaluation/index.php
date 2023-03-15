@@ -98,7 +98,7 @@ $formdata->filteropen_costcenterid = $costcenterid;
 $formdata->filteropen_department = $departmentid;
 $formdata->filteropen_subdepartment = $subdepartmentid;
 $formdata->filteropen_level4department = $l4department;
-$formdata->filteropen_level5department = $l5department;
+//$formdata->filteropen_level5department = $l5department;
 
 $datasubmitted = data_submitted() ? data_submitted() : $formdata;
 $mform = new filters_form(null, array('filterlist'=> $thisfilters)+(array)$datasubmitted);
@@ -129,7 +129,7 @@ if(!empty($costcenterid)|| !empty($status) || !empty($departmentid) || !empty($s
     $formdata->filteropen_department[] = $departmentid;
     $formdata->filteropen_subdepartment[] = $subdepartmentid;
     $formdata->filteropen_level4department[] = $l4department;
-    $formdata->filteropen_level5department[] = $l5department;
+   // $formdata->filteropen_level5department[] = $l5department;
     $formdata->status[] = $status;
     $mform->set_data($formdata);
 echo '<span id="global_filter" class="hidden" data-filterdata='.json_encode($formdata).'></span>';

@@ -180,11 +180,9 @@ class learningplan extends moodleform {
 	        // } else {
 				
 	        // }
-			
-			$mform->addElement('filemanager', 'summaryfile', get_string('learning_path_summary_file', 'local_learningplan'), null,array('maxbytes' => $maxbytes, 'accepted_types' => ['.jpg','.jpeg','.png','.gif']));
-			$mform->addHelpButton('summaryfile','learningpaths','local_learningplan');
-
-
+            $mform->addElement('filepicker', 'summaryfile', get_string('learning_path_summary_file','local_learningplan'), null,
+            array('maxbytes' => 2048000, 'accepted_types' => ['.jpg','.jpeg','.png','.gif']));
+        $mform->addHelpButton('summaryfile', 'learningpaths', 'local_learningplan');
 		}else if($form_status == 1){
 			//certificate
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');

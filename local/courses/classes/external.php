@@ -803,7 +803,7 @@ class local_courses_external extends external_api {
     $stable->status = $decodedata->status;
     $stable->costcenterid = $decodedata->costcenterid;
     $stable->departmentid = $decodedata->departmentid;
-    $data = get_listof_courses($stable, $filtervalues);
+    $data = get_listof_courses($stable, $filtervalues,$options);
     $totalcount = $data['totalcourses'];
     return [
         'totalcount' => $totalcount,

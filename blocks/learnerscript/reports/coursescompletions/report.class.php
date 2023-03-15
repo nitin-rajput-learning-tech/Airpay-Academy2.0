@@ -85,7 +85,7 @@ class report_coursescompletions extends reportbase implements report {
         $this->sql .= " WHERE c.id <> :siteid   ";
         $this->params['siteid'] = SITEID;
 
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
             $this->sql .= "";
@@ -108,29 +108,29 @@ class report_coursescompletions extends reportbase implements report {
     function filters() {
         if ($this->params['filter_organization'] > 0) {
             $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :orgpath ";
+            $this->sql .= " AND concat(c.open_path,'/') like :orgpath ";
             $this->params['orgpath'] = $orgpath.'/%';
         }
         if ($this->params['filter_departments'] > 0) {
             $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l2dept ";
+            $this->sql .= " AND concat(c.open_path,'/') like :l2dept ";
             $this->params['l2dept'] = $l2dept.'/%';
         }
 
         if ($this->params['filter_subdepartments'] > 0) {
             $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l3dept ";
+            $this->sql .= " AND concat(c.open_path,'/') like :l3dept ";
             $this->params['l3dept'] = $l3dept.'/%';
         }
 
         if ($this->params['filter_level4department'] > 0) {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
+            $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
         }
         if ($this->params['filter_level5department'] > 0) {
             $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
+            $this->sql .= " AND concat(c.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
         }
         if ($this->params['filter_geostate'] > 0) {

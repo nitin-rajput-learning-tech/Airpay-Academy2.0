@@ -156,43 +156,11 @@ class report_users extends reportbase {
     public function get_rows($users) {
         return $users;
     }
+    
     public function column_queries($column, $userid){
-        $where = " AND %placeholder% = $userid";
-        // if (!is_siteadmin($this->userid) && !(new ls)->is_manager($this->userid, $this->contextlevel, $this->role)) {
-        //     if ($this->rolewisecourses != '') {
-        //         $coursefilter = " AND c.id IN ($this->rolewisecourses) ";
-        //     }
-        // }else{
-          $coursefilter = "";
-        // }
-        $contentprovider = '';
-        // if (!empty($this->params['filter_contentprovider']) && $this->params['filter_contentprovider'] > 0) {
-        //     $contentproviderids = $this->params['filter_contentprovider'];
-        //     $contentprovider .= " AND c.open_contentvendor IN ($contentproviderids) ";
-        // }
-
-        // $learningtype = isset($this->params['filter_learningtype']) ? implode(',', $this->params['filter_learningtype']) : 0;
-        // $certification = isset($this->params['filter_certification']) ? implode(',', $this->params['filter_certification']) : 0;
-        // $certificationlevel = isset($this->params['filter_certificationlevel']) ? implode(',', $this->params['filter_certificationlevel']) : 0;
-        // $exam = isset($this->params['filter_exam']) ? implode(',', $this->params['filter_exam']) : 0;
-        // $solutionarea = isset($this->params['filter_solutionarea']) ? implode(',', $this->params['filter_solutionarea']) : 0;
-        // $technology = isset($this->params['filter_technology']) ? implode(',', $this->params['filter_technology']) : 0;
-        // $topic = isset($this->params['filter_topic']) ? implode(',', $this->params['filter_topic']) : 0;
-        // $vendor = isset($this->params['filter_vendor']) ? implode(',', $this->params['filter_vendor']) : 0;
-        // $level = isset($this->params['filter_level']) ? implode(',', $this->params['filter_level']) : 0;
-        // $language = isset($this->params['filter_language']) ? implode(',', $this->params['filter_language']) : 0;
-        // $jobrole = isset($this->params['filter_jobrole']) ? implode(',', $this->params['filter_jobrole']) : 0;
-
-        // $tagslist = array($learningtype, $certification, $certificationlevel, $exam, $solutionarea, $technology, $topic, $vendor, $level, $language, $jobrole);
-        // if (array_sum($tagslist) > 0) {
-        //     $tagslist = implode(',', $tagslist);
-        //     $tagcoursesql  = (new querylib)->gettagcourses($tagslist);
-        //     if (!empty($tagcoursesql) && $tagcoursesql > 0) {
-        //         $contentprovider .= " AND c.id IN (".$tagcoursesql.")";
-        //     } else {
-        //         $contentprovider .= " AND c.id IN (0)";
-        //     }
-        // }
+        $where = " AND %placeholder% = $userid";    
+        $coursefilter = "";   
+        $contentprovider = '';        
         
         switch ($column) {
             case 'enrolled':

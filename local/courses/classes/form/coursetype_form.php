@@ -47,7 +47,7 @@ class coursetype_form extends moodleform {
 
         if($id && is_siteadmin()){
             $orgname= $DB->get_field('local_costcenter','fullname',array('id'=>$costcenterid));
-            $mform->addElement('static','costcentername', get_string('organization', 'local_custom_category'), $orgname);
+            $mform->addElement('static','costcentername', get_string('organization', 'local_courses'), $orgname);
             $mform->addElement('hidden','open_costcenterid');
         }else{
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1, 1), false, 'local_courses', $categorycontext, $multiple = false);

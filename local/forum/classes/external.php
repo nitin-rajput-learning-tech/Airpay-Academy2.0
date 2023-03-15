@@ -352,7 +352,7 @@ class local_forum_external extends external_api
         $stable->thead = false;
         $stable->start = $offset;
         $stable->length = $limit;
-        $data = get_listof_forum($stable, $filtervalues);
+        $data = get_listof_forum($stable, $filtervalues,$options);
         $totalcount = $data['totalcourses'];
         return [
             'totalcount' => $totalcount,

@@ -120,42 +120,11 @@ class report_trainingsprogress extends reportbase implements report {
     function joins() {
         parent::joins();
     }
-    function where($count){
+    function where(){
         global $USER, $DB;
-        // $this->sql .= " WHERE 1=1 ";
+        $this->sql .= " WHERE 1=1 ";
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
         $this->sql .= " WHERE (lc.status = 1 OR lc.status = 4) {$costcenterpathconcatsql} ";
-        $systemcontext = context_system::instance();
-
-        // getscheduled report
-        // if (!is_siteadmin()) {
-        //     $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-        //     if (!empty($scheduledreport)) {
-        //     $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-        //     $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-        //     $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-        //     } else {
-        //         $ohs =  $dhs =1;
-        //     }
-        // }
-        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //     $this->sql .= " ";
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-        //     $this->sql .= " AND lc.costcenter = :costcenterid ";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid; 
-        // }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-        //     $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid; 
-        //     $this->params['departmentid'] = $USER->open_departmentid; 
-        // }else{
-        //     $this->sql .= " AND lc.costcenter = :costcenterid AND lc.department = :departmentid AND lc.subdepartment = :subdepartment";
-        //     $this->params['costcenterid'] = $USER->open_costcenterid; 
-        //     $this->params['departmentid'] = $USER->open_departmentid; 
-        //     $this->params['subdepartment'] = $USER->open_subdepartment; 
-        // }
-        // if ($count)
-        // $this->sql .= " group by MONTH(FROM_UNIXTIME(lc.startdate)) ";
-
         parent::where();
     }
    

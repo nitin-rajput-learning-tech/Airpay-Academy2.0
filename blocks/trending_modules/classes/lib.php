@@ -152,16 +152,11 @@ class lib  extends \block_trending_modules\querylib {
 		global $PAGE;
 		$search = $args->search ? $args->search : NULL;
 		$moduletype = $args->filtervalues->module_type ? $args->filtervalues->module_type : NULL;
-		
 		$trending_data = $this->get_trending_modules_query($args->config, $search, false, $moduletype, $moduletype, $args->filtervalues);
 		$sql = $trending_data['sql'];
 		$ordersql = $trending_data['ordersql'];
 		$params = $trending_data['params'];
-		// print_object($trending_data);
 		$records = $this->db->get_records_sql($sql.$ordersql, $params, $args->limitfrom, $args->limitnum);
-		// print_object($sql.$ordersql);
-		// print_object($params);
-		// exit;
 		$data = array();
 		$renderer = $PAGE->get_renderer('local_ratings');
 		$thisrender = $PAGE->get_renderer('block_trending_modules');
@@ -191,8 +186,12 @@ class lib  extends \block_trending_modules\querylib {
 		return $count; 
 	}
     private function local_classroom_content($module){
-    	global $CFG;
+    	global $CFG,$USER,$DB;
     	$return = array();
+		$sql = "SELECT cu.id FROM {local_classroom_users} AS cu 
+							WHERE cu.classroomid = $module->module_id AND cu.userid = $USER->id";
+		$classroom_enrolled=$DB->get_records_sql($sql);
+		if(!$classroom_enrolled){
     	$description = strip_tags($module->module_description);
     	$return['description'] = strlen($description) > 50 ? substr($description, 0, 50).'...' : $description; 
     	$return['description_title'] = $description;
@@ -204,7 +203,7 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'classroom'.$module->module_id;
     	$return['moduleidentifier'] = 'crid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/classroom/view.php?cid='.$module->module_id;
     	$return['background_logourl'] = ((new \local_classroom\classroom)->classroom_logo($module->module_imagelogo));
     	if($return['background_logourl'] == 0){
             require_once($CFG->dirroot.'/local/includes.php');
@@ -213,12 +212,15 @@ class lib  extends \block_trending_modules\querylib {
         }else{
         	$return['background_logourl'] = $return['background_logourl']->out();
         }
+	}
     	return $return;
     }
     private function local_courses_content($module){
-    	global $CFG;
+    	global $CFG,$USER;
     	$return = array();
-    	$description = strip_tags($module->module_description);
+		$isenrolled = is_enrolled(\context_course::instance($module->module_id, $USER->id, '', true));
+    	if(!$isenrolled){
+		$description = strip_tags($module->module_description);
     	$return['description'] = strlen($description) > 50 ? substr($description, 0, 50).'...' : $description; 
     	$return['description_title'] = $description;
     	$return['modulename'] = strlen($module->module_name) > 13 ? substr($module->module_name, 0, 13).'...': $module->module_name;
@@ -229,7 +231,7 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'courseinfo'.$module->module_id;
     	$return['moduleidentifier'] = 'courseid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/search/coursedetails.php?id='.$module->module_id;
     	require_once($CFG->dirroot.'/local/includes.php');
     	$includes = new \user_course_details();
 		$course_record = get_course($module->module_id);
@@ -238,6 +240,7 @@ class lib  extends \block_trending_modules\querylib {
 			$return['background_logourl'] = $background_logourl->out();
 		}else{
 			$return['background_logourl'] = $background_logourl;
+		}
 		}
     	return $return;
     }
@@ -267,8 +270,12 @@ class lib  extends \block_trending_modules\querylib {
     	return $return;
     }
     private function local_program_content($module){
-    	global $CFG;
+    	global $CFG,$DB,$USER;
     	$return = array();
+		$sql = "SELECT pu.id FROM {local_program_users} AS pu 
+							WHERE pu.programid = $module->module_id AND pu.userid = $USER->id";
+		$program_enrolled=$DB->get_records_sql($sql);
+		if(!$program_enrolled){
     	$description = strip_tags($module->module_description);
     	$return['description'] = strlen($description) > 50 ? substr($description, 0, 50).'...' : $description; 
     	$return['description_title'] = $description;
@@ -280,7 +287,7 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'programinfo'.$module->module_id;
     	$return['moduleidentifier'] = 'programid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/program/view.php?bcid='.$module->module_id;
     	$background_logourl = ((new \local_program\program)->program_logo($module->module_imagelogo));
     	if($background_logourl == 0){
             require_once($CFG->dirroot.'/local/includes.php');
@@ -290,11 +297,16 @@ class lib  extends \block_trending_modules\querylib {
         	if(is_a($background_logourl, 'moodle_url'))
         	$return['background_logourl'] = $background_logourl->out();
         }
+	}
     	return $return;
     }
     private function local_learningplan_content($module){
-    	global $CFG;
+    	global $CFG,$DB,$USER;
     	$return = array();
+		$sql = "SELECT lu.id FROM {local_learningplan_user} AS lu 
+							WHERE lu.planid = $module->module_id AND lu.userid = $USER->id";
+		$plan_enrolled=$DB->get_records_sql($sql);
+		if(!$plan_enrolled){
     	$description = strip_tags($module->module_description);
     	$return['description'] = strlen($description) > 50 ? substr($description, 0, 50).'...' : $description; 
     	$return['description_title'] = $description;
@@ -306,10 +318,11 @@ class lib  extends \block_trending_modules\querylib {
     	$return['selector'] = 'learningplan'.$module->module_id;
     	$return['moduleidentifier'] = 'learningplanid';
     	$return['moduleid'] = $module->module_id;
-
+    	$return['modulelink'] = $CFG->wwwroot . '/local/learningplan/lpathinfo.php?id='.$module->module_id;
     	$learningplan_lib = new \local_learningplan\lib\lib();
     	$return['background_logourl'] = $learningplan_lib->get_learningplansummaryfile($module->module_id);
-    	return $return;
+		}
+		return $return;
     }
     public function get_existing_moduleinfo($module_type, $functionname){
     	$classname = "\\$module_type\\local\\general_lib";
