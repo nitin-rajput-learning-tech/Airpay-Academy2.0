@@ -607,7 +607,7 @@ class classroom {
             $fromsql = "SELECT c.*, (SELECT COUNT(DISTINCT cu.userid)
                                   FROM {local_classroom_users} AS cu
                                   JOIN {user} AS u on u.id=cu.userid
-                                  WHERE cu.classroomid = c.id $usercondition
+                                  WHERE cu.classroomid = c.id AND u.deleted=0 AND u.suspended=0 $usercondition
                               ) AS enrolled_users";
      
        $sql = " FROM {local_classroom} AS c
@@ -2983,7 +2983,7 @@ class classroom {
 
         $list = array();
 
-        $classroom = $DB->get_record_sql('SELECT id, open_group, open_path,open_states,open_district,open_subdistrict,open_village
+        $classroom = $DB->get_record_sql('SELECT id, open_group, open_path,open_states,open_district,open_subdistrict,open_village,open_skill,open_level
              FROM {local_classroom} WHERE id = :classroomid',array('classroomid' => $classroomid));
          list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroom->open_path);
          if(!empty($ctr)){
@@ -3070,7 +3070,6 @@ class classroom {
          }else{
             $classroomvillage =  get_string('all');
          }
-        
        
         
         
@@ -3082,7 +3081,6 @@ class classroom {
         $list['district'] = $classroomdistrict;
         $list['subdistrict'] = $classroomsubdistrict;
         $list['village'] = $classroomvillage;
-
         if (empty($classroom->open_group)) {
             $group = 'All';
         } else {

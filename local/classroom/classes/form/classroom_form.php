@@ -286,6 +286,41 @@ class classroom_form extends moodleform {
             $mform->setType('cr_description', PARAM_RAW);
             $mform->addHelpButton('cr_description', 'description', 'local_classroom');
 
+               //skill related fields---------------------------------------------------------
+               $skillselect = array(0 => get_string('select_skill','local_onlineexams'));
+
+               $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->onlineexam->open_path);
+      
+                  $skillcostcentersql = "SELECT id,name FROM {local_skill}
+                                      WHERE 1=1 $costcenterpathconcatsql ";
+      
+      
+                  $skills = $DB->get_records_sql_menu($skillcostcentersql);
+      
+             
+                  if(!empty($skills)){
+                      $skillselect = $skillselect+$skills;
+                  }
+      
+                  $mform->addElement('select',  'open_skill', get_string('open_skillonlineexam','local_onlineexams'), $skillselect);
+                  $mform->addHelpButton('open_skill', 'open_skillonlineexam', 'local_onlineexams');
+                  $mform->setType('open_skill', PARAM_INT);
+      
+                  $levelselect = array(0 => get_string('select_level','local_onlineexams'));
+      
+                  $levelsql = "SELECT id,name FROM {local_course_levels}
+                                      WHERE 1=1 $costcenterpathconcatsql ";
+      
+                  $levels = $DB->get_records_sql_menu($levelsql);
+      
+                  if(!empty($levels)){
+                      $levelselect = $levelselect+$levels;
+                  }
+                  $mform->addElement('select',  'open_level', get_string('open_levelonlineexam','local_onlineexams'), $levelselect);
+                  $mform->addHelpButton('open_level', 'open_levelonlineexam', 'local_onlineexams');
+                  $mform->setType('open_level', PARAM_INT);
+               //skill related fields ends here---------------------------------------------------------
+
         }else if ($formstatus == 3) {
             $mform->addElement('hidden', 'open_costcenterid');
             $mform->setType('open_costcenterid', PARAM_INT);
