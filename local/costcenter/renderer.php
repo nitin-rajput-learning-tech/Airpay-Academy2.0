@@ -138,7 +138,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $edit = false;
         $delete = false;
-        $usercount = '';
+        $usercount = $pluginnavs['totalusers'];
     
             if ($record->visible) {
                 $hide = true;
