@@ -66,7 +66,7 @@ class report_feedbackoverview extends reportbase implements report {
     function where(){
         global $USER, $DB;
          $this->sql .=  " WHERE le.instance = 0 AND le.deleted  = 0 ";
-        $systemcontext = \context_system::instance();
+      
         // getscheduled report
         if (!is_siteadmin()) {
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
@@ -78,25 +78,15 @@ class report_feedbackoverview extends reportbase implements report {
                 $ohs = $dh = 1;
             }
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $this->sql.= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-            $this->sql .= " AND le.costcenterid = :costcenterid ";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-            $this->sql .= " AND le.costcenterid = :costcenterid AND le.departmentid = :departmentid";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-
-        }else{
-            $this->sql .= " AND le.costcenterid = :costcenterid AND le.departmentid = :departmentid AND le.subdepartment = :subdepartment";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-            $this->params['subdepartment']= $USER->open_subdepartment;
-
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path', null, 'lowerandsamepath');
+       
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else {
+            $this->sql .= $costcenterpathconcatsql;
         }
 
-         parent::where();
+        parent::where();
     }
     function search() {  
        if (isset($this->search) && $this->search) {

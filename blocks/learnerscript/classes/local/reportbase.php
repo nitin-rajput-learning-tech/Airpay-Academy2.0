@@ -606,13 +606,13 @@ class reportbase {
             $this->params['methodname'] = $methodname;
         }
         // if((($this->config->type == 'coursegradeactivities' || $this->config->type == 'programlevels') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities' && $this->config->type != 'programlevels')){
-        if((($this->config->type == 'coursegradeactivities') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities')){
+        if(($this->config->type == 'coursegradeactivities' && $this->params['filter_course'] > 0) || $this->config->type != 'coursegradeactivities' && $this->config->type != 'feedbackcourses'){
             $this->build_query(true);
         }
 
         if($this->reporttype == 'table'){
             // if((($this->config->type == 'coursegradeactivities' || $this->config->type == 'programlevels') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities' && $this->config->type != 'programlevels')){
-            if((($this->config->type == 'coursegradeactivities') && $this->params['filter_course'] > 0) || ($this->config->type != 'coursegradeactivities')){
+            if(($this->config->type == 'coursegradeactivities' && $this->params['filter_course'] > 0) || $this->config->type != 'coursegradeactivities' && $this->config->type != 'feedbackcourses'){
                 try {
                     $this->totalrecords = $DB->count_records_sql($this->sql, $this->params);
                 } catch (dml_exception $e) {
@@ -728,6 +728,10 @@ class reportbase {
             $columns = (new ls)->learnerscript_activities_dynamic_columns($columns, $this->config,
                 $this->params);
         }
+        else if($this->config->type == "feedbackcourses"){
+            $columns = (new ls)->learnerscript_feedbackcoursequestions_dynamic_columns($columns, $this->config,
+                $this->params);
+        }
         if ($rows) {
             foreach ($rows as $r) {
                 $tempcols = array();
@@ -751,7 +755,7 @@ class reportbase {
                     $class->reportfilterparams = $this->params;
                     $rid = isset($r->id) ? $r->id : 0;
                     if (isset($c['formdata']->column) && 
-                        (($this->config->type == "coursegradeactivities" || $this->config->type == "programlevels") || in_array($c['formdata']->column, $this->selectedcolumns))) {
+                        (($this->config->type == "coursegradeactivities" || $this->config->type == "feedbackcourses" || $this->config->type == "programlevels") || in_array($c['formdata']->column, $this->selectedcolumns))) {
                             if (!empty($this->params['filter_users'])) {
                                 $this->currentuser = $this->params['filter_users'];
                             }

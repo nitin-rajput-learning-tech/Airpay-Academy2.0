@@ -1829,6 +1829,89 @@ class ls {
 	    }
 		return $columns;
 	} // end of public function
+	public function learnerscript_feedbackcoursequestions_dynamic_columns($columns, $config,$basicparams){
+        global $DB, $CFG, $USER;
+
+        foreach($columns as $colvalue){
+            $colvalue =(object)$colvalue;
+            if($colvalue->pluginname=="feedback_coursescolumns"){
+                require_once($CFG->dirroot . '/blocks/learnerscript/components/columns/feedback_coursescolumns/plugin.class.php');
+                $pluginname =$colvalue->pluginname;
+                $plgname = 'plugin_feedback_coursescolumns';
+                $dynclass = new $plgname($config, $colvalue);
+                $flag=1;
+            }
+        }
+
+        if($flag == 1){
+            $reportinfo = $dynclass->report;
+            if($reportinfo->type == 'feedbackcourses'){
+                        $sql =  "SELECT DISTINCT(fi.name),fi.id, fi.feedback
+                                    FROM {feedback_item} fi
+                                    JOIN {feedback_template} AS ft ON fi.template = ft.id
+                                    WHERE fi.typ != 'label' 
+                                    ORDER BY fi.position ASC ";
+
+                $evaluationitems = $DB->get_records_sql($sql);
+
+                // for add Date of submission column after the feedback score column
+                $columns[] =(new self)->learnerscript_create_dynamic_cfbsubmitdate_column($evaluationid,'feedback_coursescolumns');
+
+                foreach($evaluationitems as $item){
+                    $columns[] =(new self)->learnerscript_create_dynamic_cfb_questionscolumns($item,'feedback_coursescolumns');
+                }
+           }
+        }
+	
+        return $columns;
+    }
+
+	   /**
+	 * [learnerscript_create_dynamic_cfb_questionscolumns description]
+	 * @param  [type] $value     [description]
+	 * @param  [type] $columname [description]
+	 * @return [type]            [description]
+	 */
+	public function learnerscript_create_dynamic_cfbsubmitdate_column($feedbackid, $columname){
+		global $DB;
+
+		$newcolumn=array();
+
+	    $formdata= new stdclass();
+	    $formdata->column = "feedback_submitteddate";
+
+	    $formdata->columname = 'Date of Submission';
+
+	    $newcolumn['formdata'] = $formdata;
+	    $newcolumn['pluginname'] = $columname;
+	    $newcolumn['pluginfullname'] = $columname;
+	    // var_dump($newcolumn);
+	    return $newcolumn;
+	} // end of public function
+
+	/**
+	 * [learnerscript_create_dynamic_cfb_questionscolumns description]
+	 * @param  [type] $value     [description]
+	 * @param  [type] $columname [description]
+	 * @return [type]            [description]
+	 */
+	public function learnerscript_create_dynamic_cfb_questionscolumns($class, $columname){
+		global $DB;
+			$newcolumn=array();
+
+		if(!empty($class->name)){
+		    $formdata= new stdclass();
+		    $formdata->column = "itemid_$class->name";
+
+		    $formdata->columname = $class->name;
+
+		    $newcolumn['formdata'] = $formdata;
+		    $newcolumn['pluginname'] = $columname;
+		    $newcolumn['pluginfullname'] = $columname;
+	     }
+	    return $newcolumn;
+	} // end of public function
+
 
 	/**
 	 * [learnerscript_create_dynamic_sectioncolumns description]
