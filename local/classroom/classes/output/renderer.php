@@ -826,6 +826,17 @@ class renderer extends plugin_renderer_base
         } else {
             $classroom->classroomlocation = 'N/A';
         }
+        if ($classroom->open_skill > 0) {
+            $classroom->classroomskill = $DB->get_field('local_skill', 'name', array('id' => $classroom->open_skill));
+        } else {
+            $classroom->classroomskill = 'N/A';
+        }
+
+        if ($classroom->open_level > 0) {
+            $classroom->classroomlevel = $DB->get_field('local_course_levels', 'name', array('id' => $classroom->open_level));
+        } else {
+            $classroom->classroomlevel = 'N/A';
+        }
         if (!empty($ctr)) {
             $department = $DB->get_records_sql('SELECT id, fullname FROM {local_costcenter} WHERE id IN(' . $ctr . ')');
             $Department = array();
@@ -1525,7 +1536,17 @@ class renderer extends plugin_renderer_base
         } else {
             $classroom->classroomlocation = 'N/A';
         }
+        if ($classroom->open_skill > 0) {
+            $classroom->classroomskill = $DB->get_field('local_skill', 'name', array('id' => $classroom->open_skill));
+        } else {
+            $classroom->classroomskill = 'N/A';
+        }
 
+        if ($classroom->open_level > 0) {
+            $classroom->classroomlevel = $DB->get_field('local_course_levels', 'name', array('id' => $classroom->open_level));
+        } else {
+            $classroom->classroomlevel = 'N/A';
+        }
 
         if ($classroom->department == -1) {
             $classroom->classroomdepartment = 'All';
@@ -1611,6 +1632,8 @@ class renderer extends plugin_renderer_base
             'name' => $classroom->name,
             'startdate' => $classroom->startdate,
             'enddate' => $classroom->enddate,
+            'classroomskill' => $classroom->classroomskill,
+            'classroomlevel' => $classroom->classroomlevel,
             'classroomlocation' => $classroom->classroomlocation,
             'classroomdepartment' => $classroom->classroomdepartment,
             'trainers' => $trainers[0],
