@@ -23,29 +23,30 @@
         <table class="generaltable dataTable no-footer" id="skill_repository" role="grid" aria-describedby="skill_repository_info">
             <thead>
                 <tr role="row">
+                    
+                    <th class="header text-left" tabindex="0">{{# str}} skill_name, local_skillrepository{{/ str}}</th>
+                    <th class="header text-left" tabindex="0">{{# str}} skill_category, local_skillrepository{{/ str}}</th>
+                    <th class="header text-center" tabindex="0">{{# str}} achieved_users, local_skillrepository{{/ str}}</th>
+                    <th class="header text-center" tabindex="0">{{# str}} shortname, local_skillrepository{{/ str}}</th>
                     {{# is_admin}}
                         <th class="header text-left" tabindex="0">{{# str}} organisation, local_costcenter{{/ str}}
                         </th>
                     {{/ is_admin}}
-                    <th class="header text-left" tabindex="0">Skill name</th>
-                    <th class="header text-left" tabindex="0">Category</th>
-                    <th class="header text-center" tabindex="0">Achieved Users</th>
-                    <th class="header text-center" tabindex="0">Code</th>
                     <th class="header text-center" tabindex="0">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {{#records}}
-                    <tr>
-                        {{# is_admin}}
-                            <td class="text-left">{{organisationname}}</td>
-                        {{/ is_admin}}
+                    <tr>                       
                         <td class="text-left">
                             <a href="../skillrepository/skillinfo.php?id={{skill_id}}">{{{skilname}}}</a>
                         </td>
                         <td class="text-left">{{skill_catname}}</td>
                         <td class="text-center">{{achieved_users}}</td>
                         <td class="text-center">{{shortname}}</td>
+                        {{# is_admin}}
+                        <td class="text-left">{{organisationname}}</td>
+                        {{/ is_admin}}
                         <td class="text-center">
                             <a href="javascript:void(0)" data-action="createrepositorymodal" class="iconsmall" data-value="{{skill_id}}" onclick="(function(e){ require('local_skillrepository/newrepository').init({selector:'createrepositorymodal', contextid:1, repositoryid:{{skill_id}}}) })(event)" style="cursor:pointer" title="Edit">
                                 <i class="fa fa-pencil fa-fw" title="{{# str }} edit_title, local_skillrepository {{/ str }}"></i>

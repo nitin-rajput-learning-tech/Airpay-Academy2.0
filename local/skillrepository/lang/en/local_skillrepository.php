@@ -34,6 +34,7 @@ $string['shortname'] = 'Code';
 $string['industry_domain'] = 'Industry/Domain';
 $string['type'] = 'Type';
 $string['category'] = 'Category';
+$string['skill_category'] = 'Skill Category';
 $string['sub_category'] = 'Sub Category';
 $string['stream'] = 'Stream';
 $string['podp_reference'] = 'PODP-Reference';
@@ -157,3 +158,5 @@ $string['skillcatreq'] = 'Please enter a name';
 $string['skillcatcodereq'] = 'Please enter a code';
 $string['deleteskillnotconfirm'] = 'You cannot delete <b>{$a->skillname}</b> as it is currently mapped to a course. Please unmap to delete.';
 $string['deletelevelnotconfirm'] = 'You cannot delete <b>{$a->levelname}</b> as it is currently mapped to a course. Please unmap to delete.';
+$string['achieved_users'] = 'Achieved Users';
+	
