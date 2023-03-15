@@ -2730,11 +2730,11 @@ function get_listof_evalautions($stable, $filtervalues){
         $buttons='';
 
         if (is_siteadmin() OR has_capability('local/evaluation:edititems', $context) ) {
-            $buttons .= '<li>'.html_writer::link("javascript:void(0)",$OUTPUT->pix_icon('t/editinline', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')), array('data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).'</li>';
+            $buttons .= '<li>'.html_writer::link( "javascript:void(0)",$OUTPUT->pix_icon('t/editinline', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('edit'), array('class'=>'dropdown-item','data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).'</li>';
             if (has_capability('local/evaluation:createpublictemplate', $context)) {
-                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#edit', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/questions', get_string('questions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
+                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#edit', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/questions', get_string('questions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('questions', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
 
-                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#tempaltes', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/copy', get_string('templates', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
+                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#tempaltes', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/copy', get_string('templates', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('templates', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
             }
             if($record->visible){
                 $icon = 't/hide';
@@ -2743,25 +2743,25 @@ function get_listof_evalautions($stable, $filtervalues){
                 $icon = 't/show';
                 $string = get_string('le_active','local_evaluation');
             }
-            $image = $OUTPUT->pix_icon($icon, $string, 'moodle', array('class' => 'iconsmall', 'title' => ''));
+            $image = $OUTPUT->pix_icon($icon, $string, 'moodle', array('class' => 'iconsmall', 'title' => '')).$string;
             $params = json_encode(array('eval_status' => $record->visible, 'evalname' => $record->name, 'published' => 1));
-            $buttons .= '<li>'.html_writer::link("javascript:void(0)", $image, array('data-fg'=>"d", 'data-method' => 'evaluation_update_status','data-plugin' => 'local_evaluation', 'data-params' => $params, 'data-id'=>$record->id)).'</li>';
+            $buttons .= '<li>'.html_writer::link("javascript:void(0)", $image, array('class'=>'dropdown-item','data-fg'=>"d", 'data-method' => 'evaluation_update_status','data-plugin' => 'local_evaluation', 'data-params' => $params, 'data-id'=>$record->id)).'</li>';
             if (has_capability('local/evaluation:viewreports', $context))
             // $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/analysis.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/grades', get_string('overview', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
 
             if (has_capability('local/evaluation:viewanalysepage', $context))
-            $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/show_entries.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
+            $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/show_entries.php',  array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('responses', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
 
             if (has_capability('local/evaluation:enroll_users', $context))
-            $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank'))).'</li>';
+            $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank')).get_string('assignusers', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
 
             // check for deletion
             if (is_siteadmin() OR has_capability('local/evaluation:delete', $context)) {
               $candelete = check_evaluationdeletion($record->id);
               $buttons .= '<li>'.html_writer::link(
               "javascript:void(0)",
-              $OUTPUT->pix_icon('i/delete', get_string('delete'), 'moodle', array('class' => 'iconsmall', 'title' => '')),
-              array('id' => 'deleteconfirm' . $record->id . '', 'onclick' => '(
+              $OUTPUT->pix_icon('i/delete', get_string('delete'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('delete'),
+              array('class'=>'dropdown-item','id' => 'deleteconfirm' . $record->id . '', 'onclick' => '(
                   function(e){
                   require("local_evaluation/newevaluation").deleteevaluation("' . $record->id . '","'.$record->name.'")
                   })(event)')).'</li>';
@@ -2785,12 +2785,8 @@ function get_listof_evalautions($stable, $filtervalues){
         }
 
         if(!empty($buttons)){
-            $buttons_container = '<div class="pull-right text-right actionicons showoptions'.$record->id.'">
-                      <span  class="pull-right showoptions" data-action="showoptions'.$record->id.'" onmouseenter="(function(e){ require(\'theme_epsilon/quickactions\').quickactionsCall({ selector:\'showoptions'.$record->id.'\' }) })(event)" onmouseleave="(function(e){require(\'theme_epsilon/quickactions\').quickactionsCall({ selector:\'showoptions'.$record->id.'\' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
-                      </span>
-                      <ul class="w-full pull-left options_container" id = "showoptions'.$record->id.'">
+            $buttons_container = '<div class="dropdown-menu dropdown-menu-right shadow-sm" id = "showoptions'.$record->id.'">
                         '.$buttons.'
-                      </ul>
                     </div>';
         } else {
           $buttons_container = '';

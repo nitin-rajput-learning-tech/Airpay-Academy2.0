@@ -1,6 +1,6 @@
-#page-local-evaluation-index #manage_feedbacks .eval_container .evalinfo_container {
+/*#page-local-evaluation-index #manage_feedbacks .eval_container .evalinfo_container {
     min-height: 195px
-}
+}*/
 
 .path-local-evaluation span.evaluation_info {
     font-weight: 700
@@ -523,9 +523,6 @@ body#page-local-evaluation-eval_view #evaluation_dragarea #evaluation_edit_form 
     overflow-x: visible
 }
 
-#page-local-evaluation-index .course_extended_menu_list {
-    top: -20px
-}
 
 body#page-local-evaluation-analysis .generaltable tbody tr {
     width: 50%;
@@ -1165,7 +1162,7 @@ body#page-local-evaluation-index .course_extended_menu_list .createiconchild {
     float: left
 }
 
-#manage_feedbacksid .eval_container {
+/*#manage_feedbacksid .eval_container {
     background-color: #fff;
     border-radius: 8px;
     border: 1px solid #ddd;
@@ -1173,17 +1170,16 @@ body#page-local-evaluation-index .course_extended_menu_list .createiconchild {
     box-shadow: 0 0 5px 3px #ddd;
     -webkit-box-shadow: 0 0 5px 3px #ddd
 }
-
+*/
 #manage_feedbacksid .eval_container .evalname_container {
     padding: 10px 15px;
-    border-bottom: 1px solid #ddd;
     line-height: 20px
 }
 
-#manage_feedbacksid .eval_container .evalactions {
+/*#manage_feedbacksid .eval_container .evalactions {
     background: #eee;
     border-radius: 0 0 8px 8px
-}
+}*/
 
 #manage_feedbacksid tbody tr td .eval_container .evalactions a i.fa {
     color: #fff;
@@ -1191,10 +1187,10 @@ body#page-local-evaluation-index .course_extended_menu_list .createiconchild {
     font-size: 20px
 }
 
-#manage_feedbacksid .eval_container .evalinfo_container {
+/*#manage_feedbacksid .eval_container .evalinfo_container {
     padding: 15px;
     color: #666
-}
+}*/
 
 #manage_feedbacksid .eval_container .evalicon {
     font-size: 25px;
@@ -1216,9 +1212,6 @@ body#page-local-evaluation-eval_view .course_extended_menu_list li a {
     margin-right: inherit
 }
 
-body#page-local-evaluation-eval_view .course_extended_menu_list {
-    top: -20px
-}
 
 div.aligninline {
     text-align: left;
@@ -1410,10 +1403,10 @@ body#page-local-evaluation-eval_view #region-main .card.card-block {
     color: #f05a28
 }
 
-#manage_feedbacksid .eval_container .eval_label {
+/*#manage_feedbacksid .eval_container .eval_label {
     min-width: 100px;
     float: left
-}
+}*/
 
 #page-local-evaluation-eval_view .evalinfo_container {
     line-height: 17px
@@ -1528,3 +1521,240 @@ body#page-local-evaluation-userdashboard .card_list_view {
     margin-bottom: 0 !important;
     float: none;
 }
+
+
+
+/* hema added manage feedbacks css*/
+#page-local-evaluation-index .eval_container {
+    border-radius: 0;
+    box-shadow: 7px 7px 30px #0000005C;
+}
+
+#page-local-evaluation-index  .eval_container{
+    transform: scale(1);
+    transition: 0.5s;
+    z-index: 1000;
+}
+#page-local-evaluation-index  .eval_container:hover{
+    transform: scale(1.1);
+    transition: 0.5s;
+    z-index: 1000;
+}
+#page-local-evaluation-index .eval_container .evalinfo_container{
+    padding: 15px 15px 0 15px;
+}
+#page-local-evaluation-index .eval_container .eval_image{
+    background-image: url('https://energyresourcing.com/wp-content/uploads/2022/07/giving-constructive-feedback.jpg');
+    background-repeat: no-repeat;
+    background-position: 100%;
+    background-size: cover;
+    width: 100%;
+    height: 200px;
+    padding: 10px;
+    position: relative;
+}
+#page-local-evaluation-index .evalinfo_container .evalname a {
+    color: #000;
+    font-weight: 600;
+    font-size: 18px;
+    font-family: Georgia, serif;
+    text-decoration: none;
+}
+#page-local-evaluation-index .eval_container .enroll_strip{
+    border: 1px solid #ff6e22;
+    background: #ff6e22;  
+    color: #fff;
+    font-size: 12px;   
+    border-radius: 50px;
+    padding: 3px 10px;
+    margin-right: 8px; 
+
+}
+#page-local-evaluation-index .eval_container .completed_strip{
+    border: 1px solid #00651a;
+    background: #00651a;
+    color: #fff;
+    font-size: 12px;   
+    border-radius: 50px;
+    padding: 3px 10px;
+    margin-right: 8px; 
+}
+#page-local-evaluation-index .eval_container .enroll_count a,
+#page-local-evaluation-index .eval_container .completed_count a {
+    color: #fff;
+    font-size:11px;
+}
+#page-local-evaluation-index .eval_container .setting_icon{
+    background-color: #fff;
+    padding: 2px 6px;
+    width: 25px;
+    height: 24px;
+    border-radius: 50%;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#page-local-evaluation-index .eval_container .eval_labelname {
+    font-size: 12px;
+    margin: 6px 0px;
+}
+
+#page-local-evaluation-index .eval_container .type_survey {
+    color: #000;
+    font-weight: 600;
+}
+#page-local-evaluation-index .eval_container .eval_labelname .eval_label{
+    color:#373737;
+}
+#page-local-evaluation-index .eval_container .eval_schedule_label {
+    color: #ff7628;
+    margin-left: 2px;
+}
+#page-local-evaluation-index .eval_container .schedule_content {
+    color: #ff7628;
+    font-size: 12px;
+}
+#page-local-evaluation-index .take_evaluation {
+    font-size: 12px;
+    padding: 0 15px 15px 15px;
+    color: #ff7628!important;
+    text-decoration: underline;
+    margin-top: -10px;
+}
+#page-local-evaluation-index .showoptions{
+    background:transparent;
+    color:#000;
+}
+
+/*evaluation feedback view page css*/
+body#page-local-evaluation-eval_view .evalview_topcontainer{
+    content:"";
+    background-image: url('https://energyresourcing.com/wp-content/uploads/2022/07/giving-constructive-feedback.jpg');
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    z-index: 1;
+    min-height: 150px;
+    margin-top: 35px;
+}
+body#page-local-evaluation-eval_view .evalview_topcontainer:after{
+    content: " ";
+    backdrop-filter: blur(4px);
+    background-image: linear-gradient(45deg, #03295f, #05294fb5);
+    background-color: rgba(255,255,255,0);
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+body#page-local-evaluation-eval_view .evalview_topcontainer .alert-info{
+    background-color: none;
+    border:none;
+    text-align: left;
+    color: #fff;
+}
+body#page-local-evaluation-eval_view .evalview_topcontainer:before{
+    background-image: linear-gradient(to right,#f0f0f0,#ffff);
+}
+body#page-local-evaluation-eval_view .evalview_topcontent{
+    border: none;
+    width: 90%;
+    margin:auto;
+    padding: 15PX;
+    color: #fff;
+}
+body#page-local-evaluation-eval_view .evalview_topcontent .eval_schedule_label{
+    color:#fff;
+}
+#page-local-evaluation-eval_view .evalinfo_container{
+    font-size: 13px;
+    line-height: 13px;
+}
+body#page-local-evaluation-eval_view .evalview_topcontent .eval_data a{
+    color: #fff;
+}
+body#page-local-evaluation-eval_view .ui-tabs .ui-tabs-nav{
+    padding-left: 0;
+}
+body#page-local-evaluation-eval_view .ui-tabs .ui-tabs-nav li.ui-tabs-active{
+    border:none;
+    border-bottom: 3px solid #ff721c;
+    color: #ff721c;
+    font-weight: 600;
+}
+body#page-local-evaluation-eval_view .ui-tabs .ui-tabs-nav li a{
+    color: #000;
+}
+body#page-local-evaluation-eval_view #evaluation_dragarea{
+    border: none;
+    float: none;
+}
+body#page-local-evaluation-eval_view .ui-widget.ui-widget-content{
+    padding: 1rem 2rem;
+}
+#evaluation_dragarea .evaluation_form .evaluation_itemlist{
+    border: 1px solid #eaeaea;
+    box-shadow: 0 3px 8px #eaeaea;
+    padding: 10px;
+    position: relative;
+    margin-bottom: 20px;
+}
+body#page-local-evaluation-eval_view .evaluation_header_wrapper{
+    background-color: transparent;
+    color: #000;
+}
+body#page-local-evaluation-eval_view #evaluation_dragarea .form-check-label{
+    min-width: 60px;
+    font-size: 13px;
+}
+body#page-local-evaluation-eval_view #evaluation_dragarea .itemhandle{
+    left: 16px;
+    position: absolute;
+    color: #999;
+    top: 15px;
+}
+body#page-local-evaluation-eval_view #evaluation_dragarea .itemname{
+    color: #000;
+}
+body#page-local-evaluation-eval_view  #id_creating_templates{
+    padding: 14px;
+    background-color: #f0f4fe;
+    border-bottom: none;
+    box-shadow: 0 3px 9px #ddd;
+}
+body#page-local-evaluation-eval_view .evalview_topcontent h3{
+    border-bottom: 1px solid #263f5d;
+    padding: 9px 0;
+}
+body#page-local-evaluation-eval_view  #id_creating_templates h3{
+    font-size: 13px;
+}
+body#page-local-evaluation-eval_view  #id_creating_templates .btn.btn-icon{
+    height: 25px;
+    width: 25px;
+    background-color: #ff721c;
+    border-color:#ff721c;
+}
+body#page-local-evaluation-eval_view  #id_creating_templates .expanded-icon{
+    padding:3px !important;
+}
+body#page-local-evaluation-eval_view  #id_creating_templates .expanded-icon .icon{
+    color:#fff;
+}
+#page-local-evaluation-eval_view #id_creating_templatescontainer .col-form-label{
+    font-size: 12px;
+    font-weight: 400 !important;
+}
+#page-local-evaluation-eval_view #id_creating_templatescontainer .btn.btn-primary{
+    background-color: #ff721c;
+    border-color:#ff721c;
+}
+#page-local-evaluation-eval_view  #id_creating_templatescontainer #fitem_id_create_template .col-md-9{
+    justify-content: end;
+  } 
