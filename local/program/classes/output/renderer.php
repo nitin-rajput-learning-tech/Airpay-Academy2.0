@@ -63,16 +63,6 @@ class renderer extends plugin_renderer_base {
         return parent::render_from_template('local_program/form_status', $data);
     }
     /**
-     * [render_session_attendance description]
-     * @method render_session_attendance
-     * @param  \local_program\output\session_attendance $page [description]
-     * @return [type]                                           [description]
-     */
-    public function render_session_attendance(\local_program\output\session_attendance $page) {
-        $data = $page->export_for_template($this);
-        return parent::render_from_template('local_program/session_attendance', $data);
-    }
-    /**
      * Display the program tabs
      * @return string The text to render
      */
@@ -141,7 +131,7 @@ class renderer extends plugin_renderer_base {
                   $table->head = array('', '','');
                   $table->id = 'viewprograms';
                 }else{
-                  $table->head = array(get_string('programname','local_program')/*,get_string('stream','local_program')*/, get_string('levels','local_program'), get_string('enrolled','local_program'),get_string('completed','local_program'), get_string('actions','local_program'));
+                  $table->head = array(get_string('programname','local_program'), get_string('levels','local_program'), get_string('enrolled','local_program'),get_string('completed','local_program'), get_string('actions','local_program'));
                   $table->id = 'viewprograms_table';
                 }
                     $table->data = $table_data;
@@ -178,17 +168,12 @@ class renderer extends plugin_renderer_base {
                         }
                     }
 
-                    if ($sdata->stream) {
-                        $stream =  $DB->get_field('local_program_stream', 'stream',
-                            array('id' => $sdata->stream));
-                    }
-                    $streamname = strlen($stream) > 15 ? substr($stream, 0, 15) . ".." : $stream;
+
                     $level = $DB->count_records('local_program_levels',
                             array('programid' =>$sdata->id));
                     $line['program'] = addslashes($program);
                     $line['programname'] = addslashes($programname);
-                    //$line['stream'] = $stream;
-                    //$line['streamname'] = $streamname;
+
                     $line['totallevels'] = $level;
                     $line['programicon'] = $OUTPUT->image_url('program_icon', 'local_program');
                     $line['description'] =  \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->description));
@@ -212,14 +197,10 @@ class renderer extends plugin_renderer_base {
                     }
 
                     if ((has_capability('local/program:deleteprogram', $programcontext) || is_siteadmin())) {
-                        $count_records = $DB->get_records('local_bc_session_signups', array('programid'=>$sdata->id));
-                        if(count($count_records) > 0) {
-                            $line['cannotdelete'] = true;
-                            $mouseovericon = true;
-                        } else {
-                            $line['delete'] = true;
-                            $mouseovericon = true;
-                        }
+
+                        $line['delete'] = true;
+                        $mouseovericon = true;
+
                     }
 
                     if (is_siteadmin() || (has_capability('local/program:inactiveprogram', $programcontext) || (has_capability('local/program:activeprogram', $programcontext)))) {
@@ -308,263 +289,6 @@ class renderer extends plugin_renderer_base {
         }
         return $return;
     }
-    /**
-     * [viewprogramsessions description]
-     * @method viewprogramsessions
-     * @param  [type]                $bclcid [description]
-     * @param  [type]                $stable      [description]
-     * @return [type]                             [description]
-     */
-    public function viewprogramsessions($bclcdata, $stable, $userview = false, $enrolmentpending = false,$tab=null) {
-        global $OUTPUT, $CFG, $DB, $USER;
-        $programid = $bclcdata->programid;
-        $levelid = $bclcdata->levelid;
-        $bclcid = $bclcdata->bclcid;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bclcdata->programid);
-
-
-        $program = $DB->get_record('local_program', ['id' => $bclcdata->programid]);
-
-        $manage = true;
-
-        if(!(is_siteadmin() || has_any_capability(['local/program:manageprogram'],$categorycontext))){
-            $manage = false;
-        }
-        $programcompletionstatus = $DB->get_field('local_program_users', 'completion_status', array('programid' => $bclcdata->programid, 'userid' => $USER->id));
-        if ($stable->thead) {
-            $return = '';
-            $lc_course = $DB->get_record('local_program_level_courses', array('id' => $bclcid));
-            if (has_capability('local/program:createsession', $categorycontext) && (has_capability('local/program:manageprogram', $categorycontext)) && $manage) {
-                $return .= '<ul class="course_extended_menu_list">
-                                <li>
-                                    <div class="createicon course_extended_menu_itemlink">
-                                        <a class="create_session createpopicon" title="'.get_string('addsession', 'local_program').'" onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:' . $categorycontext->id . ', component:\'local_program\', callback:\'session_form\', form_status:0, plugintype: \'local_program\', pluginname: \'session\', id:0, bcid: ' . $programid . ', levelid: '. $levelid .',  bclcid: ' . $bclcid . ', title: \'addsession\' }) })(event)">
-                                            <i class="fa fa-plus icon" aria-hidden="true"></i>
-                                        </a>
-                                    </div>
-                                </li>
-                            </ul>';
-            }
-            $sessions = (new program)->programsessions($bclcdata, $stable, $userview,$tab);
-            if ($sessions['sessionscount'] > 0) {
-                $table = new html_table();
-                $table->head = array(get_string('name'), get_string('startdatetime', 'local_program'));
-                $table->head[] = get_string('enddatetime', 'local_program');
-                $table->head[] = get_string('room', 'local_program');
-                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin() || has_capability('local/program:takesessionattendance', $categorycontext))) {
-                    $table->head[] = get_string('status', 'local_program');
-                    $table->head[] = get_string('attended_sessions_users', 'local_program');
-                }
-                $table->head[] = get_string('faculty', 'local_program');
-                if ($userview) {
-                    $table->head[] = get_string('seats', 'local_program');
-                }
-
-                if ((($userview && !$enrolmentpending) || ($userview && !$programcompletionstatus)) || (has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin() || has_capability('local/program:takesessionattendance', $categorycontext))) {
-                    $table->head[] = get_string('actions');
-                }
-                $table->id = 'viewprogramsessions';
-                $table->attributes['data-bclcid'] = $bclcid;
-                $return .= html_writer::table($table);
-            } else {
-                $return .= "<div class='mt-15 text-center alert alert-info w-full pull-left'>" . get_string('nosessions', 'local_program') . "</div>";
-            }
-        } else {
-            $programuser = $DB->record_exists('local_program_users', array('programid' => $bclcdata->programid, 'userid' => $USER->id));
-            $userview = false;
-            if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
-                $bclevel = new stdClass();
-                $bclevel->programid = $bclcdata->programid;
-                $bclevel->levelid = $bclcdata->levelid;
-                $notcmptlcourses = (new program)->mynextlevelcourses($bclevel);
-                unset($notcmptlcourses[0]);
-                $enrolmentpending = false;
-                if (!empty($notcmptlcourses) && array_search($bclcid, $notcmptlcourses) !== false) {
-                    $enrolmentpending = true;
-                }
-
-                $lastcompletiondate = $DB->get_field('local_bc_level_completions',
-                    'completiondate', array('programid' => $bclcdata->programid,
-                        'levelid' => $bclcdata->levelid, 'userid' => $USER->id));
-
-                $mylastattendedsession = (new program)->myattendedsessions($bclcdata, true);
-                if (empty($mylastattendedsession)) {
-                    $mylastattendedsession = new stdClass();
-                    $mylastattendedsession->timefinish = 0;
-                }
-                $userview = true;
-            }
-            $sessions = (new program)->programsessions($bclcdata, $stable, $userview, $tab);
-            $data = array();
-            $absentsessions = false;
-            if ($programuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
-                $absentsessions = $DB->count_records('local_bc_session_signups',
-                    array('programid' => $bclcdata->programid,
-                        'levelid' => $bclcdata->levelid, 'bclcid' => $bclcdata->bclcid,
-                        'userid' => $USER->id, 'completion_status' => 2));
-                $presentsessions = $DB->count_records('local_bc_session_signups',
-                    array('programid' => $bclcdata->programid,
-                        'levelid' => $bclcdata->levelid, 'bclcid' => $bclcdata->bclcid,
-                        'userid' => $USER->id, 'completion_status' => 1));
-                $activesessions = $DB->count_records('local_bc_session_signups',
-                    array('programid' => $bclcdata->programid,
-                        'levelid' => $bclcdata->levelid, 'bclcid' => $bclcdata->bclcid,
-                        'userid' => $USER->id, 'completion_status' => 0));
-            }
-
-            foreach ($sessions['sessions'] as $sdata) {
-                $line = array();
-                $line[] = $sdata->name;
-                $line[] = '<i class="fa fa-calendar" aria-hidden="true"></i> ' .
-                            \local_costcenter\lib::get_userdate("d/m/Y H:i", $sdata->timestart);
-                $line[] =  '<i class="fa fa-calendar" aria-hidden="true"></i> ' .
-                            \local_costcenter\lib::get_userdate("d/m/Y H:i", $sdata->timefinish);
-                $link = get_string('pluginname', 'local_program');
-                if ($sdata->onlinesession == 1) {
-                    $moduleids = $DB->get_field('modules', 'id',
-                        array('name' => $sdata->moduletype));
-                    if ($moduleids) {
-                        $moduleid = $DB->get_field('course_modules', 'id',
-                                array('instance' => $sdata->moduleid, 'module' => $moduleids));
-                        if ($moduleid) {
-                            $link = html_writer::link($CFG->wwwroot . '/mod/' .$sdata->moduletype. '/view.php?id=' . $moduleid,
-                                    get_string('join', 'local_program'),
-                                    array('title' => get_string('join', 'local_program')));
-                            if (!is_siteadmin() && !has_capability('local/program:manageprogram', $categorycontext)) {
-                                $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $sdata->programid, 'userid' => $USER->id));
-                                if (!$userenrolstatus) {
-                                    $link = get_string('join', 'local_program');
-                                }
-                            }
-                        }
-                    }
-                }
-                $line[] = $sdata->room ? $sdata->room : 'N/A';
-
-                $program_totalusers = $DB->count_records('local_bc_session_signups',
-                    array('bclcid' => $bclcid, 'sessionid' => $sdata->id));
-                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
-                    $attendedsessions_users = $DB->count_records('local_bc_session_signups',
-                        array('bclcid' => $bclcid, 'sessionid' => $sdata->id,
-                            'completion_status' => SESSION_PRESENT));
-                }
-                if (has_capability('local/program:manageprogram', $categorycontext) || has_capability('local/program:takesessionattendance', $categorycontext)) {
-                    if ($sdata->timefinish <= time() && $sdata->attendance_status == 1) {
-                        $line[] = get_string('completed', 'local_program');
-                    } else {
-                        $line[] = get_string('pending', 'local_program');
-                    }
-                } else {
-                    // if ($sdata->timefinish <= time() && $attendance_status == 1) {
-                    //     $line[] = get_string('completed', 'local_program');
-                    // } else {
-                    //     $line[] = get_string('pending', 'local_program');
-                    // }
-                }
-                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
-                    $line[] = $sdata->activeusers . '/' . $sdata->totalusers;
-                }
-                if ($sdata->trainerid) {
-                    $trainer = $DB->get_record('user', array('id' => $sdata->trainerid));
-                    $line[] = $OUTPUT->user_picture($trainer, array('size' => 30)) . fullname($trainer);
-                } else {
-                    $line[] = "N/A";
-                }
-                if ($userview) {
-                    $line[] = $sdata->signups . ' / ' . $sdata->maxcapacity;
-                }
-                $action = '';
-                if ((has_capability('local/program:editsession', $categorycontext) || is_siteadmin())&&(has_capability('local/program:manageprogram', $categorycontext))) {
-                    $action .= '<a href="javascript:void(0);" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:1, component:\'local_program\', callback:\'session_form\', form_status:0, plugintype: \'local_program\', pluginname: \'session\', id: ' . $sdata->id . ', bcid: ' . $programid .', levelid: '. $levelid .', bclcid: '.$bclcid.', title: \'updatesession\'}) })(event)" ><img src="' . $OUTPUT->image_url('i/edit') . '" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' class="icon"/></a>';
-                }
-                if ((has_capability('local/program:deletesession', $categorycontext)
-                    || is_siteadmin())&&(has_capability('local/program:manageprogram', $categorycontext))) {
-                    $count_records = $DB->get_records('local_bc_session_signups',
-                        array('sessionid' => $sdata->id));
-                    if (count($count_records) > 0) {
-                         $action .= '<a href="javascript:void(0);" alt = ' . get_string('delete') . ' title = ' . get_string('delete') . ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'cannotdeletesession\', programid: ' . $sdata->programid . ', levelid: '.$levelid.', bclcid: '.$bclcid.', id: ' . $sdata->id . ' }) })(event)" ><img src="' . $OUTPUT->image_url('i/trash') . '" alt = ' . get_string('delete') . ' title = ' . get_string('delete') . ' class="icon"/></a>';
-                    } else {
-                         $action .= '<a href="javascript:void(0);" alt = ' . get_string('delete') . ' title = ' . get_string('delete') . ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deletesession\', programid: ' . $sdata->programid . ', levelid: '.$levelid.', bclcid: ' . $bclcid . ', id: ' . $sdata->id . ' }) })(event)" ><img src="' . $OUTPUT->image_url('i/trash') . '" alt = ' . get_string('delete') . ' title = ' . get_string('delete') . ' class="icon"/></a>';
-                    }
-                }
-                if(has_capability('local/program:manageusers', $categorycontext) || is_siteadmin()) {
-                    $action .= '<a href="' . $CFG->wwwroot . '/local/program/session_enrolusers.php?bcid=' . $sdata->programid . '&levelid=' . $levelid . '&bclcid=' . $bclcid . '&sid=' . $sdata->id . '"><img src="' . $OUTPUT->image_url('t/groups') . '"  alt = "'.get_string('sessionenrolments', 'local_program').'"  title = "'.get_string('sessionenrolments', 'local_program').'" class="icon"/></a>';
-                }
-                if ((has_capability('local/program:takesessionattendance', $categorycontext) || is_siteadmin())&&(has_capability('local/program:manageprogram', $categorycontext))) {
-                    $action .= '<a href="' . $CFG->wwwroot . '/local/program/attendance.php?bcid=' . $sdata->programid . '&sid=' . $sdata->id . '&action='.$tab.'&levelid='.$levelid.'&bclcid='.$bclcid.'" ><img src="' . $OUTPUT->image_url('t/assignroles') . '" alt = ' . get_string('attendace', 'local_program') . ' title = ' . get_string('attendace', 'local_program') . ' class="icon"/></a>';
-                }
-                if ((has_capability('local/program:editsession', $categorycontext) || has_capability('local/program:deletesession', $categorycontext) || has_capability('local/program:takesessionattendance', $categorycontext)) && (has_capability('local/program:manageprogram', $categorycontext))) {
-                    $line[] = $action;
-                } else {
-                    if ((($userview && !$enrolmentpending) || ($userview && !$programcompletionstatus))) {
-                        $sessiondate = date_create(date('d/m/Y', $sdata->timestart));
-                        $currentdate = date_create(date('d/m/Y'));
-                        $diff = date_diff( $sessiondate, $currentdate );
-                        $sessionactionstatus = true;
-                        if($sdata->sessiondays > 0){
-                            if ($diff->days < $sdata->sessiondays) {
-                                $sessionactionstatus = false;
-                            }
-                        }
-                        // if ($diff->days < 3) {
-                        //     $sessionactionstatus = false;
-                        // }
-                        if ($enrolmentpending) {
-                            $line[] = 'Enrolment Not Yet Started.';
-                        } else if (time() > $sdata->timefinish && $sdata->signupid == 0) {
-                            $line[] = 'Closed';
-                        } else if ($sdata->attendance_status && $sdata->completion_status == 2) {
-                            $line[] = 'Absent';
-                        } else if ($sdata->signupid > 0 && $sdata->completion_status == 1) {
-                            $line[] = 'Present';
-                        } else if (time() < $sdata->timestart && $sdata->signupid > 0 && $sdata->mysignupstatus > 0 && $presentsessions == 0 /*$sdata->attendance_status == 0 &&*/ && $sessionactionstatus && $programcompletionstatus == 0) {
-                            $line[] = '<a href="javascript:void(0);" class="sessionenrol" data-programid='.$sdata->programid.' data-levelid='.$sdata->levelid.' data-bclcid='.$bclcid.' data-sessionid='.$sdata->id.' data-signupid='.$sdata->signupid.' data-enrol=3 >Cancel</a>';
-                        } else if ($sdata->mysignupstatus > 0 && !$sdata->signupid /*&& $sdata->attendance_status == 0*/ && $presentsessions == 0 && $activesessions > 0 && $programcompletionstatus == 0 && ($sdata->timestart > $mylastattendedsession->timefinish) && $sessionactionstatus) {
-                            $line[] = '<a href="javascript:void(0);" class="sessionenrol" data-programid='.$sdata->programid.' data-levelid='.$sdata->levelid.' data-bclcid='.$bclcid.' data-sessionid='.$sdata->id.' data-signupid=0 data-enrol=2 >Re Schedule</a>';
-                        } else if ((($sdata->signups < $sdata->maxcapacity) && ($sdata->timestart > $mylastattendedsession->timefinish) && $sdata->signupid == 0 && $presentsessions == 0 && $programcompletionstatus == 0 && $sessionactionstatus) && ($sdata->mysignupstatus == 0 || $absentsessions)) {
-                            $line[] = '<a href="javascript:void(0);" class="sessionenrol" data-programid='.$sdata->programid.' data-levelid='.$sdata->levelid.' data-bclcid='.$bclcid.' data-sessionid='.$sdata->id.'
-                            data-signupid=0 data-enrol=1 >Enrol</a>';
-                        } else if ($presentsessions > 0) {
-                            $line[] = 'Already one session completed in this course.';
-                        } else if ($sdata->signups == $sdata->maxcapacity && !$sdata->signupid){
-                            $line[] = 'Max Seats filled.';
-                        } else if ($sdata->signupid) {
-                            $line[] = 'Enrolled';
-                        } else {
-                            $line[] = 'Enrollment Closed';
-                        }
-                    }
-                }
-                $data[] = $line;
-            }
-            $return = array(
-                "recordsTotal" => $sessions['sessionscount'],
-                "recordsFiltered" => $sessions['sessionscount'],
-                "data" => $data
-            );
-        }
-        return $return;
-    }
-
-    /**
-     * [viewprogramsessionstabs description]
-     * @method viewprogramsessions
-     * @param  [type]                $bclcid [description]
-     * @param  [type]                $stable      [description]
-     * @return [type]                             [description]
-     */
-    public function viewprogramsessionstabs($bclcdata, $stable, $userview = false, $enrolmentpending = false, $tab) {
-        global $CFG, $OUTPUT;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bclcdata->programid);
-        $toprow = array();
-        if ($tab) {
-            $toprow[] = new tabobject('upcomingsessions', new moodle_url("/local/program/sessions.php?action=upcomingsessions&bcid=$bclcdata->programid&levelid=$bclcdata->levelid&bclcid=$bclcdata->bclcid"), get_string('upcomingsessions', 'local_program'));
-            $toprow[] = new tabobject('completedsessions', new moodle_url("/local/program/sessions.php?action=completedsessions&bcid=$bclcdata->programid&levelid=$bclcdata->levelid&bclcid=$bclcdata->bclcid"), get_string('completedsessions', 'local_program'));
-            
-        }
-       echo $OUTPUT->tabtree($toprow, $tab);
-    }
-    
     public function viewprogramlevels($programid, $levelid) {
         global $OUTPUT, $CFG, $DB, $USER;
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
@@ -615,17 +339,14 @@ class renderer extends plugin_renderer_base {
                 if ($userview && array_search($programlevel->id, $mycompletedlevels) !== false) {
                     $programlevel->mycompletionstatus = 'Completed';
                 }
-
-                $session = $DB->get_record('local_bc_session_signups', array('programid'=>$programid, 'levelid'=>$programlevel->id, 'completion_status'=>0));
                 $programlevel->myinprogressstatus = '';
-                if ($userview && array_search($programlevel->id, $mycompletedlevels) === false && !empty($session)) {
+                if ($userview && array_search($programlevel->id, $mycompletedlevels) === false) {
                     $programlevel->myinprogressstatus = 'Inprogress';
                 }
 
                 $programlevel->active = $activeclass;
                 $programlevel->disabled = $disabled;
-                $levelcount_records = $DB->get_records('local_bc_session_signups',
-                array('programid' => $programid, 'levelid' => $programlevel->id));
+
                 $candeletelevel = false;
                 $editlevel = '';
                 // $program_level_completetions = (new program)->levels_completion_status($programid);
@@ -633,10 +354,7 @@ class renderer extends plugin_renderer_base {
                 //     $level_completions = (new program)->levels_completion_status($programid, $prev_levelid) 
                 // }
                 if($can_delete_levels){
-                    if ((count($levelcount_records) > 0 && has_capability('local/program:deletelevel',
-                        $categorycontext))) {
-                        $candeletelevel = false;
-                    } else if (has_capability('local/program:deletelevel', $categorycontext)) {
+                    if (has_capability('local/program:deletelevel', $categorycontext)) {
                         $candeletelevel = true;
                     }
                 }
@@ -678,13 +396,9 @@ class renderer extends plugin_renderer_base {
             'caneditcourse' => has_capability('local/program:editcourse', $categorycontext),
             'canmanagecourse' => has_capability('local/program:managecourse', $categorycontext),
             'candeletelevel' => $candeletelevel,
-            'cancreatesession' => (has_capability('local/program:createsession', $categorycontext) && $manage),
-            'canenrolsession' => has_capability('local/program:enrolsession', $categorycontext) && !is_siteadmin(),
             'cansetlevelcompletioncriteria' => is_siteadmin() || has_capability('local/program:setlevelcompletioncriteria', $categorycontext),
             'cfg' => $CFG,
             'levelid' => $levelid,
-            'cantakeattendance' => has_capability('local/program:takesessionattendance',
-                $categorycontext) && !is_siteadmin(),
             'programlevel' => $programlevel,
             'userview' => $userview,
             'programlevels' => array_values($programlevels),
@@ -740,9 +454,8 @@ class renderer extends plugin_renderer_base {
         if ($userview && array_search($programlevel->id, $mycompletedlevels) !== false) {
             $programlevel->mycompletionstatus = 'Completed';
         }
-        $session = $DB->get_record('local_bc_session_signups', array('programid'=>$programid, 'levelid'=>$programlevel->id, 'completion_status'=>0));
         $programlevel->myinprogressstatus = '';
-        if ($userview && array_search($programlevel->id, $mycompletedlevels) === false && !empty($session)) {
+        if ($userview && array_search($programlevel->id, $mycompletedlevels) === false ) {
             $programlevel->myinprogressstatus = 'Inprogress';
         }
 
@@ -767,9 +480,7 @@ class renderer extends plugin_renderer_base {
 
 
             if ($userview) {
-                $bclevelcourse->sessionenabled = true;
                 if (array_search($bclevelcourse->bclevelcourseid, $notcmptlcourses) !== false) {
-                    $bclevelcourse->sessionenabled = false;
                     $bclevelcourse->coursecompletionstatus = '';
                 } else {
                     $bclevelcourse->coursecompletionstatus = 'Completed';
@@ -777,16 +488,10 @@ class renderer extends plugin_renderer_base {
             }
 
             $programlevelcourses[$i] = $bclevelcourse;
-            $count_records = $DB->get_records('local_bc_session_signups',
-                array('programid' => $programid, 'levelid' => $levelid,
-                    'bclcid' => $bclevelcourse->bclevelcourseid));
+
             $canremovecourse = false;
             $cannotremovecourse = false;
-            if (count($count_records) > 0 && has_capability('local/program:removecourse',
-                $categorycontext)) {
-                $canremovecourse = false;
-                $cannotremovecourse = true;
-            } else if (has_capability('local/program:removecourse', $categorycontext)) {
+            if (has_capability('local/program:removecourse', $categorycontext)) {
                 $canremovecourse = true;
                 $cannotremovecourse = false;
             }
@@ -806,12 +511,8 @@ class renderer extends plugin_renderer_base {
             'canaddcourse' => (has_capability('local/program:addcourse',$categorycontext) && $manage),
             'caneditcourse' => has_capability('local/program:editcourse', $categorycontext),
             'canmanagecourse' => has_capability('local/program:managecourse', $categorycontext),
-            'cancreatesession' => (has_capability('local/program:createsession', $categorycontext) && $manage),
-            'canenrolsession' => has_capability('local/program:enrolsession', $categorycontext) && !is_siteadmin(),
             'cfg' => $CFG,
             'levelid' => $levelid,
-            'cantakeattendance' => has_capability('local/program:takesessionattendance',
-                $categorycontext) && !is_siteadmin(),
             'programlevel' => $programlevel,
             'userview' => $userview,
             'programlevelcourses' => array_values($programlevelcourses),
@@ -879,7 +580,6 @@ class renderer extends plugin_renderer_base {
             $programsubdepartment =  get_string('all');
         }
 
-        $program->stream = $DB->get_field('local_program_stream', 'stream', array('id' => $program->stream));
 
         $program->department = $programdepartment;
 
@@ -900,8 +600,7 @@ class renderer extends plugin_renderer_base {
         $bulkenrollusers = '';
         $bulkenrollusersurl = '';
 
-        $programcompletion = $user_tab = $course_tab = $session_tab = $action = $edit = $delete = $assignusers = $assignusersurl = false;
-            $session_tab = false;
+        $programcompletion = $user_tab = $course_tab = $action = $edit = $delete = $assignusers = $assignusersurl = false;
             $course_tab = true;
         if (has_capability('local/program:viewusers', $categorycontext)) {
             $user_tab = true;
@@ -925,14 +624,10 @@ class renderer extends plugin_renderer_base {
         $cannotdelete = true;
         $delete = false;
         if ((has_capability('local/program:deleteprogram', $categorycontext) || is_siteadmin())) {
-            $count_records = $DB->get_records('local_bc_session_signups', array('programid' => $programid));
-            if (count($count_records) > 0) {
-                $cannotdelete = true;
-                $delete  = false;
-            } else {
+
                 $cannotdelete = false;
                 $delete = true;
-            }
+
         }
        
         if ((has_capability('local/program:manageusers', $categorycontext) || is_siteadmin())) {
@@ -1079,7 +774,6 @@ class renderer extends plugin_renderer_base {
             'isdescription' => $isdescription,
             'user_tab' => $user_tab,
             'course_tab' => $course_tab,
-            'session_tab' => $session_tab,
             'programname' => $program->name,
             'cfg' => $CFG,
             'programcompletionstatus' => $programcompletionstatus,
@@ -1230,112 +924,6 @@ class renderer extends plugin_renderer_base {
         }
         return $return;
     }
-    /**
-     * [viewprogramattendance description]
-     * @method viewprogramattendance
-     * @param  [type]                 $programid [description]
-     * @param  integer                $sessionid  [description]
-     * @return [type]                             [description]
-     */
-    public function viewprogramattendance($programid, $sessionid = 0) {
-        global $PAGE, $OUTPUT, $DB;
-        $program = new program();
-        $attendees = $program->program_get_attendees($programid, $sessionid);
-        $return = '';
-        if (empty($attendees)) {
-            $return .= "<div class='w-full pull-left text-center alert alert-info'>" . get_string('noprogramsessionusers', 'local_program') . "</div>";
-        } else {
-            $return .= '<form method="post" id="formattendance" action="' . $PAGE->url . '">';
-            $return .= '<input type="hidden" name="action" value="attendance" />';
-            $params = array();
-            $params['programid'] = $programid;
-            $sqlsessionconcat = '';
-            if ($sessionid > 0) {
-                $sqlsessionconcat = " AND id = :sessionid";
-                $params['sessionid'] = $sessionid;
-            }
-            $sessions = $DB->get_fieldset_select('local_bc_course_sessions', 'id',
-                'programid = :programid ' . $sqlsessionconcat, $params);
-            foreach ($attendees as $attendee) {
-                if (!$sessionid) {
-                    $attendancestatuslist = $DB->get_records_sql('SELECT sessionid, id AS attendanceid, sessionid, status, userid FROM {local_bc_session_signups} WHERE programid = :programid AND userid = :userid', array('programid' => $programid, 'userid' => $attendee->id));
-                }
-                $list = array();
-                $list[] = $OUTPUT->user_picture($attendee, array('size' => 30)) . fullname($attendee);
-                foreach ($sessions as $session) {
-                    if ($sessionid > 0) {
-                        $attendanceid = $attendee->attendanceid;
-                        $attendancestatus = $attendee->completion_status;
-                    } else {
-                        $attendanceid = isset($attendancestatuslist[$session]->attendanceid) && $attendancestatuslist[$session]->attendanceid > 0 ? $attendancestatuslist[$session]->attendanceid : 0;
-                        $attendancestatus = isset($attendancestatuslist[$session]->status) && $attendancestatuslist[$session]->status > 0 ? $attendancestatuslist[$session]->status : 0;
-                    }
-
-                    $encodeddata = base64_encode(json_encode(array(
-                            'programid' => $programid, 'sessionid' => $session,
-                            'userid' => $attendee->id, 'attendanceid' => $attendanceid)));
-                    $radio = '<input type="hidden" value="' . $encodeddata . '"
-                    name="attendeedata[]">';
-
-                    $check_exist = $DB->get_field('local_bc_session_signups', 'id',
-                        array('sessionid' => $session, 'userid' => $attendee->id));
-                    if ($check_exist) {
-                        $checked = '';
-                    } else {
-                        $checked = 'checked';
-                    }
-
-                    if ($attendancestatus == 2) {
-                        $checked = '';
-                        $status = $sessionid > 0 ? "Absent" : "A";
-                        $status = '<span class="tag tag-danger">'.$status.'</span>';
-                    } else if ($attendancestatus == 1) {
-                        $status = $sessionid > 0 ? "Present" : "P";
-                        $checked = 'checked';
-                        $status = '<span class="tag tag-success">'.$status.'</span>';
-                    } else {
-                        $status = $sessionid > 0 ? "Not yet given" : "NY";
-                        $status = '<span class="tag tag-warning">'.$status.'</span>';
-                    }
-                    $radio .= '<input type="checkbox" name="status[' . $encodeddata .']"
-                         ' . $checked  .' class="checksingle'.$session.'">';
-                    if ($sessionid > 0) {
-                        $list[] = $status;
-                    }
-                    $list[] = $radio;
-                }
-                $data[] = $list;
-            }
-            $table = new html_table();
-            $script = "";
-            if ($sessionid > 0) {
-                $table->head = array('Employee', 'Status', 'Attendance<p><input type=checkbox name=checkAll id=checkAll'.$sessionid.'> Select All</p>');
-                $script .= html_writer::script("
-                        $('#checkAll$sessionid').change(function () {
-                                $('.checksingle$sessionid').prop('checked', $(this).prop('checked'));
-                         });
-                     ");
-            } else {
-                $table->head[] = 'Employee';
-                foreach ($sessions as $session) {
-                    $table->head[] = 'Session ' . $session.'<p><input type=checkbox name=checkAll id=checkAll'.$session.'> Select All</p>';
-                    $script .= html_writer::script("
-                        $('#checkAll$session').change(function () {
-                                $('.checksingle$session').prop('checked', $(this).prop('checked'));
-                         });
-                     ");
-                }
-            }
-            $table->data = $data;
-            $return .= html_writer::table($table);
-            $return .= '<input type="submit" name="submit" value="Submit">';
-            $return .= '<input type="submit" name="reset" value="Reset Selected">';
-            $return .= '</form>';
-            $return .= "<div id='result'></div>" . $script;
-        }
-        return $return;
-    }
-
     public function viewprogramlastchildpopup($programid){
         global $OUTPUT, $CFG, $DB, $USER, $PAGE;
         $stable = new stdClass();
@@ -1418,146 +1006,7 @@ class renderer extends plugin_renderer_base {
         ];
         return $this->render_from_template('local_program/programview', $programcontext);
     }
-    /**
-     * [view_program_sessions description]
-     * @method view_program_sessions
-     * @param  [type]                 $bclcid [description]
-     * @param  [type]                 $stable [description]
-     * @return [type]                         [description]
-     */
-    public function view_program_sessions($bclcid, $stable) {
-        global $OUTPUT, $CFG, $DB, $USER;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($bclcid->programid);
-        if ($stable->thead) {
-            $return = '';
-            $sessions = (new program)->programsessions($bclcid, $stable);
-            if ($sessions['sessionscount'] > 0) {
-                $table = new html_table();
-                if ((has_capability('local/program:manageprogram', $categorycontext) || is_siteadmin())) {
-                    $table->head = array(get_string('name'), get_string('date'));
-                    $table->head[] = get_string('type', 'local_program');
-                    $table->head[] = get_string('room', 'local_program');
-                    $table->head[] = get_string('status', 'local_program');
-                    $table->head[] = get_string('trainer', 'local_program');
-                } else {
-                    $table->head = array(get_string('name'), get_string('date'));
-                    $table->head[] = get_string('type', 'local_program');
-                    $table->head[] = get_string('room', 'local_program');
-                    $table->head[] = get_string('status', 'local_program');
-                    $table->head[] = get_string('trainer', 'local_program');
-                }
-
-                $table->id = 'viewbcsessions';
-                $table->attributes['data-bclcid'] = $bclcid;
-                $return .= html_writer::table($table);
-            } else {
-                $return .= "<div class='mt-15 alert alert-info w-full pull-left text-center'>" .
-                get_string('nosessions', 'local_program') . "</div>";
-            }
-        } else {
-            $sessions = (new program)->programsessions($bclcid, $stable);
-            $data = array();
-            foreach ($sessions['sessions'] as $sdata) {
-                $line = array();
-                $line[] = $sdata->name;
-                $line[] = \local_costcenter\lib::get_userdate("d/m/Y H:i", $sdata->timestart) . ' to ' .
-                                    \local_costcenter\lib::get_userdate("d/m/Y H:i", $sdata->timefinish);
-
-                $link = get_string('pluginname', 'local_program');
-                if ($sdata->onlinesession == 1) {
-                    $moduleids = $DB->get_field('modules', 'id',
-                        array('name' => $sdata->moduletype));
-                    if ($moduleids) {
-                        $moduleid = $DB->get_field('course_modules', 'id',
-                            array('instance' => $sdata->moduleid, 'module' => $moduleids));
-                        if ($moduleid) {
-                            $link = html_writer::link($CFG->wwwroot . '/mod/' . $sdata->moduletype. '/view.php?id=' . $moduleid,
-                                get_string('join', 'local_program'),
-                                array('title' => get_string('join', 'local_program')));
-                            if (!has_capability('local/program:manageprogram', $categorycontext)) {
-                                $userenrolstatus = $DB->record_exists('local_program_users', array('programid' => $programid, 'userid' => $USER->id));
-                                if (!$userenrolstatus) {
-                                    $link = get_string('join', 'local_program');
-                                }
-                            }
-                        }
-                    }
-                }
-                $line[] = $link;
-                $line[] = $sdata->room ? $sdata->room : 'N/A';
-                if ($sdata->timefinish <= time() && $sdata->attendance_status == 1) {
-                    $line[] = get_string('completed', 'local_program');
-                } else {
-                    $line[] = get_string('pending', 'local_program');
-                }
-                $trainer = $DB->get_record('user', array('id' => $sdata->trainerid));
-                $line[] =  fullname($trainer);
-                $data[] = $line;
-            }
-            $return = $data;
-        }
-        return $return;
-    }
-    public function viewprogramstreams($stable) {
-        global $OUTPUT, $CFG, $DB;
-        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
-        $return = '';
-        if (is_siteadmin() || has_capability('local/program:manageprogram', $categorycontext)) {
-            $return .= '<ul class="course_extended_menu_list">
-                            <li>
-                                <div class="course_extended_menu_itemcontainer">
-                                    <a class="course_extended_menu_itemlink create_ilt" title=" '. get_String("create_streams", "local_program") .'" onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:'. $categorycontext->id .', component:\'local_program\', callback:\'program_managestream_form\', form_status:0, plugintype: \'local_program\', pluginname: \'stream\', id:0, title: \'createstream\' }) })(event)">
-                                        <i class="icon fa fa-columns" aria-hidden="true"></i>
-                                    </a>
-                                </div>
-                            </li>
-                        </ul>';
-            }
-        if ($stable->thead) {
-            $programstreams = (new program)->programstreams($stable);
-            if ($programstreams['programstreamscount'] > 0) {
-                $table = new html_table();
-                $table->head = array(get_String('streams','local_program'), get_String('description','local_program'), get_String('actions','local_program'));
-                $table->id = 'viewprogramstreams';
-                $return .= html_writer::table($table);
-            } else {
-                $return .= "<div class='alert alert-info text-center'>" .
-                        get_string('noprogramstreams', 'local_program') . "</div>";
-            }
-        } else {
-            $programstreams = (new program)->programstreams($stable);
-            $data = array();
-            foreach ($programstreams['programstreams'] as $programstream) {
-                $row = [];
-                $row[] = $programstream->stream;
-                  if(strlen($programstream->description) >380){
-                    $programstream->description = substr($programstream->description, 0,380).'...';
-                    }
-                $row[] = $programstream->description? $programstream->description: 'N/A';
-                $action = '';
-                if (is_siteadmin() || (has_capability('local/program:manageprogram', $categorycontext))) {
-                    $action .= '<a href="javascript:void(0);" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' onclick="(function(e){ require(\'local_program/ajaxforms\').init({contextid:1, component:\'local_program\', callback:\'program_managestream_form\', form_status:0, plugintype:\'local\', pluginname:\'program_stream\', id: ' . $programstream->id . ', title: \'updatesession\'}) })(event)" ><img src="' . $OUTPUT->image_url('t/editinline') . '" alt = ' . get_string('edit') . ' title = ' . get_string('edit') . ' class="icon"/></a>';
-                }
-                if (is_siteadmin() || (has_capability('local/program:manageprogram', $categorycontext))) {
-                    $pr_exists = $DB->record_exists('local_program',array('stream'=>$programstream->id));
-                    if($pr_exists){
-                        $action .= $OUTPUT->help_icon('cannotdeleteprogram', 'local_program');
-                    }else{
-                        $action .= '<a href="javascript:void(0);" alt = ' . get_string('delete') . ' title = ' . get_string('delete') . ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deletestream\', id: ' . $programstream->id . ' }) })(event)" ><img src="' . $OUTPUT->image_url('i/trash') . '" alt = '. get_string('delete') . ' title = ' . get_string('delete') . ' class="icon"/></a>';
-                    }
-                }
-                $row[] = $action;//'Edit, Delete';
-                $data[] = $row;
-            }
-            $return = array(
-                "recordsTotal" => $programstreams['programstreamscount'],
-                "recordsFiltered" => $programstreams['programstreamscount'],
-                "data" => $data
-            );
-        }
-        return $return;
-    }
-      public function programview_check($programid){
+    public function programview_check($programid){
         global $OUTPUT, $CFG, $DB, $USER, $PAGE;
         $stable = new stdClass();
         $stable->programid = $programid;

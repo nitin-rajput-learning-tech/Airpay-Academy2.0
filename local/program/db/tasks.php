@@ -22,15 +22,6 @@
  defined('MOODLE_INTERNAL') || die();
 
 $tasks = array(
-    // array(
-    //     'classname' => 'local_program\task\session_reminder',
-    //     'blocking' => 0,
-    //     'minute' => '*',
-    //     'hour' => '0',
-    //     'day' => '*',
-    //     'month' => '*',
-    //     'dayofweek' => '*'
-    // ),
     array(
         'classname' => 'local_program\task\programcompletion',
         'blocking' => 0,

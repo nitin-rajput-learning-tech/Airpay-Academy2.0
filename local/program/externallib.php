@@ -124,8 +124,6 @@ class local_program_external extends external_api {
             $categorycontext = (new \local_program\lib\accesslib())::get_module_context($id);
             $DB->delete_records('local_program_level_courses', array('programid' => $id));
 
-            $DB->delete_records('local_bc_course_sessions', array('programid' => $id));
-
             $DB->delete_records('local_program_users', array('programid' => $id));
             $DB->delete_records('local_program_trainers', array('programid' => $id));
             $DB->delete_records('local_program_trainerfb', array('programid' => $id));
@@ -247,49 +245,6 @@ class local_program_external extends external_api {
             ),
         ));
     }
-    public static function delete_session_instance_parameters() {
-        return new external_function_parameters(
-            array(
-                'action' => new external_value(PARAM_ACTION, 'Action of the event', false),
-                'id' => new external_value(PARAM_INT, 'ID of the record', 0),
-                'programid' => new external_value(PARAM_INT, 'ID of the record', 0),
-                'levelid' => new external_value(PARAM_INT, 'ID of the record', 0),
-                'bclcid' => new external_value(PARAM_INT, 'ID of the record', 0),
-                'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
-            )
-        );
-    }
-
-    public static function delete_session_instance($action, $id, $programid, $levelid, $bclcid, $confirm) {
-        global $DB, $USER;
-        try {
-            $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
-            if ($confirm) {
-                $params = array(
-                    'context' => $categorycontext,
-                    'objectid' =>$id
-                );
-
-                $event = \local_program\event\session_deleted::create($params);
-                $event->add_record_snapshot('local_bc_course_sessions', $id);
-                $event->trigger();
-
-                $DB->delete_records('local_bc_course_sessions', array('id' => $id));
-                $return = true;
-            } else {
-                $return = false;
-            }
-        } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_program');
-            $return = false;
-        }
-        return $return;
-    }
-
-    public static function delete_session_instance_returns() {
-        return new external_value(PARAM_BOOL, 'return');
-    }
-
     public static function program_form_option_selector_parameters() {
         $query = new external_value(
             PARAM_RAW,
@@ -347,20 +302,7 @@ class local_program_external extends external_api {
                     $service['query'] = $query;
                     $return = $querieslib->get_program_institutes($formoptions->institute_type, $service);
                 break;
-                case 'programsession_trainer_selector':
-                    $parent = array();
-                    if ($formoptions->parnetid > 0) {
-                        $parent = array($formoptions->parnetid);
-                    }
-                    $return = $querieslib->get_user_department_trainerslist(true, $parent,
-                        array(), $query);
-                break;
-                case 'program_completions_sessions_selector':
-                    $sessions_sql = "SELECT id, name as fullname
-                                        FROM {local_bc_course_sessions}
-                                        WHERE programid = {$formoptions->programid}";
-                    $return = $DB->get_records_sql($sessions_sql);
-                break;
+
                 case 'program_completions_courses_selector':
 
                     $courses_sql = "SELECT c.id, c.fullname FROM {course} as c JOIN {local_program_level_courses} as lcc on lcc.courseid=c.id where lcc.programid = {$formoptions->programid} AND lcc.levelid = {$formoptions->levelid} ";
@@ -384,58 +326,6 @@ class local_program_external extends external_api {
     }
     public static function program_form_option_selector_returns() {
         return new external_value(PARAM_RAW, 'data');
-    }
-    public static function program_session_instance_parameters() {
-        return new external_function_parameters(
-            array(
-                'id' => new external_value(PARAM_INT, 'ID', 0),
-                'contextid' => new external_value(PARAM_INT, 'The context id', false),
-                'form_status' => new external_value(PARAM_INT, 'Form position', 0),
-                'jsonformdata' => new external_value(PARAM_RAW, 'Submitted Form Data', false)
-            )
-        );
-    }
-    public static function program_session_instance($id, $categorycontextid, $form_status, $jsonformdata) {
-        global $PAGE, $DB, $CFG, $USER;
-        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
-        self::validate_context($categorycontext);
-        $serialiseddata = json_decode($jsonformdata);
-        $data = array();
-        parse_str($serialiseddata, $data);
-
-        $warnings = array();
-        $program = new stdClass();
-
-        // The last param is the ajax submitted data.
-        $mform = new \local_program\form\session_form(null, array('id' => $data['id'],
-            'bcid' => $data['programid'], 'levelid' => $data['levelid'],
-            'bclcid' => $data['bclcid'], 'form_status' => $form_status), 'post', '', null,
-             true, $data);
-        $validateddata = $mform->get_data();
-        if ($validateddata) {
-            // Do the action.
-            $sessionid = (new program)->manage_bc_courses_sessions($validateddata);
-            if ($sessionid > 0) {
-                $form_status = -2;
-                $error = false;
-            } else {
-                $error = true;
-            }
-        } else {
-            // Generate a warning.
-            throw new moodle_exception('missingprogram', 'local_program');
-        }
-        $return = array(
-            'id' => $sessionid,
-            'form_status' => $form_status);
-        return $return;
-    }
-
-    public static function program_session_instance_returns() {
-        return new external_single_structure(array(
-            'id' => new external_value(PARAM_INT, 'Context id for the framework'),
-            'form_status' => new external_value(PARAM_INT, 'form_status'),
-        ));
     }
     public static function program_completion_settings_instance_parameters() {
         return new external_function_parameters(
@@ -517,8 +407,8 @@ class local_program_external extends external_api {
         $validateddata = $mform->get_data();
         if ($validateddata) {
             // Do the action.
-            $sessionid = (new program)->manage_program_courses($validateddata);
-            if ($sessionid > 0) {
+            $courseid = (new program)->manage_program_courses($validateddata);
+            if ($courseid > 0) {
                 $form_status = -2;
                 $error = false;
             } else {
@@ -529,7 +419,7 @@ class local_program_external extends external_api {
             throw new moodle_exception('missingprogram', 'local_program');
         }
         $return = array(
-            'id' => $sessionid,
+            'id' => $courseid,
             'form_status' => $form_status);
         return $return;
     }
@@ -716,8 +606,8 @@ class local_program_external extends external_api {
             if ($validateddata->id > 0) {
                 $action = 'update';
             }
-            $sessionid = (new program)->manage_program_stream_levels($validateddata);
-            if ($sessionid > 0) {
+            $levelid = (new program)->manage_program_stream_levels($validateddata);
+            if ($levelid > 0) {
                 $form_status = -2;
                 $error = false;
             } else {
@@ -728,7 +618,7 @@ class local_program_external extends external_api {
             throw new moodle_exception('missingprogram', 'local_program');
         }
         $return = array(
-            'id' => $sessionid,
+            'id' => $levelid,
             'form_status' => $form_status);
         return $return;
     }
@@ -761,34 +651,6 @@ class local_program_external extends external_api {
     public static function bclevel_unassign_course_returns(){
         return new external_value(PARAM_BOOL, 'return');
     }
-    public static function bc_session_enrolments_parameters(){
-        return new external_function_parameters(
-            array(
-                'programid' => new external_value(PARAM_INT, 'ID of the program', VALUE_REQUIRED),
-                'levelid' => new external_value(PARAM_INT, 'ID of the program level', VALUE_REQUIRED),
-                'bclcid' => new external_value(PARAM_INT, 'ID of the program level course to be unassigned', VALUE_REQUIRED),
-                'sessionid' => new external_value(PARAM_INT, 'ID of the session', VALUE_REQUIRED),
-                'signupid' => new external_value(PARAM_INT, 'ID of the session signup', false, 0),
-                'enrol' => new external_value(PARAM_INT, 'enroment action status', VALUE_REQUIRED)
-            )
-        );
-    }
-    public static function bc_session_enrolments($programid, $levelid, $bclcid, $sessionid, $signupid, $enrol) {
-        global $USER;
-        $enroldata = new stdClass();
-        $enroldata->programid = $programid;
-        $enroldata->levelid = $levelid;
-        $enroldata->bclcid = $bclcid;
-        $enroldata->sessionid = $sessionid;
-        $enroldata->signupid = $signupid;
-        $enroldata->enrol = $enrol;
-        $enroldata->userid = $USER->id;
-        $return = (new program)->bc_session_enrolments($enroldata);
-    }
-    public static function bc_session_enrolments_returns(){
-        return new external_value(PARAM_BOOL, 'return');
-    }
-
     public static function delete_level_instance_parameters() {
         return new external_function_parameters(
             array(
@@ -806,7 +668,7 @@ class local_program_external extends external_api {
 
             $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
 
-            $DB->delete_records('local_bc_course_sessions', array('levelid' => $id));
+
             $DB->delete_records('local_program_level_courses', array('levelid' => $id));
             // delete events in calendar
             // $DB->delete_records('event', array('plugin_instance'=>$id, 'plugin'=>'local_program')); // added by sreenivas
@@ -837,100 +699,6 @@ class local_program_external extends external_api {
     public static function delete_level_instance_returns() {
         return new external_value(PARAM_BOOL, 'return');
     }
-    public static function manageprogramstreams_parameters() {
-        return new external_function_parameters(
-            array(
-                'contextid' => new external_value(PARAM_INT, 'The context id', true, 1),
-                'form_status' => new external_value(PARAM_INT, 'Form position', false, 0),
-                'jsonformdata' => new external_value(PARAM_RAW, 'Submitted Form Data', false),
-            )
-        );
-    }
-
-    public static function manageprogramstreams($categorycontextid, $form_status, $jsonformdata) {
-        global $PAGE, $DB, $CFG, $USER;
-        $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
-        self::validate_context($categorycontext);
-        $serialiseddata = json_decode($jsonformdata);
-        $data = array();
-        parse_str($serialiseddata, $data);
-
-        $warnings = array();
-        $program = new stdClass();
-
-        // The last param is the ajax submitted data.
-        $mform = new program_managestream_form(null, array('id' => $data['id'],
-            'form_status' => $form_status), 'post', '', null, true, $data);
-        $validateddata = $mform->get_data();
-        if ($validateddata) {
-            $action = 'create';
-            if ($validateddata->id > 0) {
-                $action = 'update';
-            }
-            $streamid = (new program)->manage_program_streams($validateddata);
-            if ($streamid > 0) {
-                $form_status = -2;
-                $error = false;
-            } else {
-                $error = true;
-            }
-        } else {
-            // Generate a warning.
-            throw new moodle_exception('missingprogram', 'local_program');
-        }
-        $return = array(
-            'id' => $streamid,
-            'form_status' => $form_status);
-        return $return;
-    }
-
-    public static function manageprogramstreams_returns() {
-        return new external_single_structure(array(
-            'id' => new external_value(PARAM_INT, 'Context id for the framework'),
-            'form_status' => new external_value(PARAM_INT, 'form_status'),
-        ));
-    }
-
-    public static function delete_stream_instance_parameters() {
-        return new external_function_parameters(
-            array(
-                'action' => new external_value(PARAM_ACTION, 'Action of the event', false),
-                'id' => new external_value(PARAM_INT, 'ID of the record', 0),
-                'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
-            )
-        );
-    }
-
-    public static function delete_stream_instance($action, $id, $confirm) {
-        global $DB, $USER;
-        try {
-            $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
-            if ($confirm) {
-                $params = array(
-                    'context' => $categorycontext,
-                    'objectid' =>$id
-                );
-
-                $event = \local_program\event\program_stream_deleted::create($params);
-                $event->add_record_snapshot('local_program_stream', $id);
-                $event->trigger();
-                
-                $DB->delete_records('local_program_stream', array('id' => $id));
-                $return = true;
-            } else {
-                $return = false;
-            }
-        } catch (dml_exception $ex) {
-            print_error('deleteerror', 'local_program');
-            $return = false;
-        }
-        return $return;
-    }
-
-    public static function delete_stream_instance_returns() {
-        return new external_value(PARAM_BOOL, 'return');
-    }
-
     public static function manageprogramStatus_instance_parameters() {
         return new external_function_parameters(
             array(
@@ -1050,28 +818,6 @@ class local_program_external extends external_api {
     }
     public static function active_program_instance_returns() {
         return new external_value(PARAM_BOOL, 'return');
-    }
-    public static function organization_streams_parameters() {
-        return new external_function_parameters(
-            array(
-                'orgid' => new external_value(PARAM_INT, 'The id for the costcenter / organization'),
-            )
-        );
-    }
-    public static function organization_streams($orgid) {
-        global $DB;
-
-        $params = array();
-        $program_streamsql = "SELECT lps.id,lps.stream FROM {local_program_stream} AS lps WHERE concat('/',lps.open_path,'/') LIKE :costcenter ";
-
-        $params['costcenter'] = '%'.$orgid.'%';
-
-        $data = $DB->get_records_sql_menu($program_streamsql, $params);
-
-          return json_encode($data);
-    }
-    public static function organization_streams_returns() {
-        return new external_value(PARAM_RAW, 'data');
     }
     public static function data_for_programs_parameters(){
         $filter = new external_value(PARAM_TEXT, 'Filter text');

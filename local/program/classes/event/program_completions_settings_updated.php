@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * The local_program post sessions_created event.
+ * The local_program post completions_settings_updated event.
  *
  * @package    local_program
  * @copyright  2018 Arun Kumar M <arun@eabyas.in>
@@ -27,7 +27,7 @@ use stdclass;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * The local_program post sessions_created event class.
+ * The local_program post completions_settings_updated event class.
  *
  * @package    local_program
  * @since      Moodle 3.4

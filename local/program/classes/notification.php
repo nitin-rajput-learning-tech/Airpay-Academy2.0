@@ -45,24 +45,6 @@
             case 'program_course_completion':
                 $strings = "[program_name], [program_course], [program_enroluserfulname], [program_link], [program_enroluseremail],[program_level_link],[program_lc_course_link],[program_lc_course_creater],[program_lc_course_completiondate]";   
                 break;
-            case 'program_session_enrol':
-                $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";   
-                break;
-            case 'program_session_reschedule':
-                $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";   
-                break;
-            case 'program_session_attendance':
-                $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_attendance], [program_session_startdate], [program_session_enddate]";   
-                break;
-            case 'program_session_reminder':
-                $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";   
-                break;
-            case 'program_session_completion':
-                $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_attendance], [program_session_startdate], [program_session_enddate], [program_session_completiondate]";   
-                break;
-            case 'program_session_cancel':
-                $strings = "[program_name], [program_level], [program_course], [program_session_name], [program_session_username], [program_session_link], [program_session_useremail], [program_session_trainername], [program_session_startdate], [program_session_enddate]";   
-                break;
 		}
 	}
 	public function program_notification($emailtype, $touser, $fromuser, $programinstance){
@@ -105,56 +87,6 @@
             return $notification;
         }
     }
-
-    public function send_program_sessionreminder_notification($programinstance, $touser, $fromuser, $emailtype, $notification){
-        global $CFG;
-        $datamailobject = new \stdClass();
-        $datamailobject->notification_infoid = $notification->id;
-        $datamailobject->program_session_startdate = $programinstance->timestart ? \local_costcenter\lib::get_userdate("d/m/Y H:i",$programinstance->timestart) : 'N/A';
-        $datamailobject->program_session_enddate = $programinstance->timefinish ? \local_costcenter\lib::get_userdate("d/m/Y H:i",$programinstance->timefinish) : 'N/A';
-        $datamailobject->program_name = $programinstance->product_name;
-        $datamailobject->program_level = $this->db->get_field('local_program_levels', 'level',array('id' => $programinstance->levelid));
-
-        $courseid = $this->db->get_field('local_program_level_courses', 'courseid', array('id' => $programinstance->bclcid));
-        $datamailobject->program_course = $this->db->get_field('course', 'fullname', array('id' => $courseid));
-        
-        $datamailobject->program_session_name = $programinstance->name;
-        $datamailobject->program_session_username = $programinstance->user_name;
-        
-        $url = new \moodle_url($CFG->wwwroot.'/local/program/view.php?bcid='.$programinstance->programid);
-        $datamailobject->program_session_link = \html_writer::link($url, $url);
-        $datamailobject->program_session_useremail = $touser->email;
-        $trainerdetails_sql = "SELECT u.id, concat(u.firstname,' ',u.lastname) AS trainername 
-                FROM {user} AS u 
-                JOIN {local_bc_course_sessions} AS lbcs ON lbcs.trainerid=u.id
-                WHERE lbcs.id=:sessionid ";
-        $trainerdetails = $this->db->get_record_sql($trainerdetails_sql, array('sessionid' => $programinstance->sessionid));
-        $datamailobject->program_session_trainername = $trainerdetails->trainername;
-     
-      
-      
-        $datamailobject->adminbody = NULL;
-        $datamailobject->body = $notification->body;
-        $datamailobject->subject = $notification->subject;
-        $datamailobject->programid = $programinstance->id;
-        $datamailobject->touserid = $touser->id;
-        $datamailobject->fromuserid = $fromuser->id;
-        $datamailobject->teammemberid = 0;
-        if(!empty($notification->adminbody) && !empty($touser->open_supervisorid)){
-            $superuser = \core_user::get_user($touser->open_supervisorid);
-        }else{
-            $superuser = false;
-        }
-        $this->log_email_notification($touser, $fromuser, $datamailobject);
-        if($superuser){
-            $datamailobject->body = $notification->adminbody;
-            $datamailobject->touserid = $superuser->id;
-            $datamailobject->teammemberid = $touser->id;
-            $this->log_email_notification($superuser, $fromuser, $datamailobject);
-        }
-    }
-
-
     public function send_program_notification($programinstance, $touser, $fromuser, $emailtype, $notification){
         global $CFG;
     	$datamailobject = new \stdClass();
@@ -166,8 +98,6 @@
         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$programinstance->open_path);
 
     	$datamailobject->program_organization = $this->db->get_field('local_costcenter', 'fullname',  array('id' => $org));
-
-    	// $datamailobject->program_stream = $this->db->get_field('local_program_stream', 'stream', array('id'=>$programinstance->stream));
         $creatornamesql = "SELECT concat(firstname,' ',lastname) FROM {user} WHERE id=:creatorid ";
     	$datamailobject->program_creater = $this->db->get_field_sql($creatornamesql, array('creatorid' => $programinstance->usercreated));
     	$datamailobject->program_enroluserfulname = fullname($touser);
@@ -208,37 +138,6 @@
             $programscourses = $this->db->get_records_sql_menu($programcourses_sql, array('programid' => $programinstance->id, 'levelid' => $programinstance->levelid));
             $datamailobject->program_course = implode(',', $programscourses);
             $datamailobject->program_level = $this->db->get_field('local_program_levels', 'level',array('id' => $programinstance->levelid));
-            $sessiondetails = $this->db->get_record('local_bc_course_sessions', array('id'=>$programinstance->sessionid), 'id, name, timestart, timefinish');
-            $datamailobject->program_session_name = $sessiondetails->name;
-            $datamailobject->program_session_startdate = $sessiondetails->timestart ? \local_costcenter\lib::get_userdate('d/m/Y H:i',$sessiondetails->timestart) : 'N/A';
-            $datamailobject->program_session_enddate = $sessiondetails->timefinish ? \local_costcenter\lib::get_userdate('d/m/Y H:i',$sessiondetails->timefinish) : 'N/A';
-            $url = new \moodle_url('local/program/sessions.php?bclcid='.$programinstance->courseid.'&levelid='.$programinstance->levelid.'&bcid='.$programinstance->id);
-            $datamailobject->program_session_link = \html_writer::link($url, $url);
-            $datamailobject->program_session_username = fullname($touser);
-            $datamailobject->program_session_useremail = $touser->email;
-            $trainerdetails_sql = "SELECT u.id, concat(u.firstname,' ',u.lastname) AS trainername 
-                FROM {user} AS u 
-                JOIN {local_bc_course_sessions} AS lbcs ON lbcs.trainerid=u.id
-                WHERE lbcs.id=:sessionid ";
-            $trainerdetails = $this->db->get_record_sql($trainerdetails_sql, array('sessionid' => $programinstance->sessionid));
-            $datamailobject->program_session_trainername = $trainerdetails->trainername;
-        }
-        $attendancereq = array('program_session_completion', 'program_session_attendance');
-        if(in_array($emailtype, $attendancereq)){
-            $completion_status = $this->db->get_field('local_bc_session_signups', 'completion_status', array('programid'=>$programinstance->id, 'levelid'=>$programinstance->levelid, 'bclcid'=>$programinstance->courseid, 'sessionid'=>$programinstance->sessionid, 'userid'=>$touser->id));
-            if($completion_status == SESSION_PRESENT) {
-                $datamailobject->program_session_attendance = 'Present';
-            } else {
-                $datamailobject->program_session_attendance = 'Absent';
-            }
-        }
-        if($emailtype == 'program_session_completion'){
-            $program_completiondate=$this->db->get_field('local_bc_session_signups', 'timemodified', array('programid'=>$programinstance->id, 'levelid'=>$programinstance->levelid, 'bclcid'=>$programinstance->bclcid, 'sessionid'=>$programinstance->sessionid, 'userid'=>$touser->id));
-            if(!empty($completion_date)){
-                $datamailobject->program_session_completiondate  =  \local_costcenter\lib::get_userdate("d/m/Y H:i",$program_completiondate);
-            } else {
-                $datamailobject->program_session_completiondate  = 'NA';
-            }
         }
         $datamailobject->adminbody = NULL;
         $datamailobject->body = $notification->body;

@@ -48,14 +48,6 @@ $functions = array(
         'ajax' => true,
         'type' => 'read',
     ),
-    'local_program_deletesession' => array(
-        'classname' => 'local_program_external',
-        'methodname' => 'delete_session_instance',
-        'classpath' => 'local/program/externallib.php',
-        'description' => 'All class room forms event handling',
-        'ajax' => true,
-        'type' => 'write'
-    ),
     'local_program_form_option_selector' => array(
         'classname' => 'local_program_external',
         'methodname' => 'program_form_option_selector',
@@ -63,14 +55,6 @@ $functions = array(
         'description' => 'All class room forms event handling',
         'ajax' => true,
         'type' => 'read',
-    ),
-    'local_program_session_submit_instance' => array(
-        'classname' => 'local_program_external',
-        'methodname' => 'program_session_instance',
-        'classpath' => 'local/program/externallib.php',
-        'description' => 'All class room forms event handling',
-        'ajax' => true,
-        'type' => 'write'
     ),
     'local_program_course_submit_instance' => array(
         'classname' => 'local_program_external',
@@ -120,34 +104,10 @@ $functions = array(
         'ajax' => true,
         'type' => 'write'
     ),
-    'local_program_session_enrolments' => array(
-        'classname' => 'local_program_external',
-        'methodname' => 'bc_session_enrolments',
-        'classpath' => 'local/program/externallib.php',
-        'description' => 'Session enrolments',
-        'ajax' => true,
-        'type' => 'write'
-    ),
     'local_program_deletelevel' => array(
         'classname' => 'local_program_external',
         'methodname' => 'delete_level_instance',
         'classpath' => 'local/program/externallib.php',
-        'classpath' => 'local/program/externallib.php',
-        'description' => 'All class room forms event handling',
-        'ajax' => true,
-        'type' => 'write'
-    ),
-    'local_program_stream_submit_instance' => array(
-        'classname' => 'local_program_external',
-        'methodname' => 'manageprogramstreams',
-        'classpath' => 'local/program/externallib.php',
-        'description' => 'All class room forms event handling',
-        'ajax' => true,
-        'type' => 'write'
-    ),
-    'local_program_deletestream' => array(
-        'classname' => 'local_program_external',
-        'methodname' => 'delete_stream_instance',
         'classpath' => 'local/program/externallib.php',
         'description' => 'All class room forms event handling',
         'ajax' => true,
@@ -176,14 +136,6 @@ $functions = array(
         'description' => 'All class room forms event handling',
         'ajax' => true,
         'type' => 'write'
-    ),
-    'local_program_streams' => array(
-        'classname' => 'local_program_external',
-        'methodname' => 'organization_streams',
-        'classpath' => 'local/program/externallib.php',
-        'description' => 'All programs display event handling',
-        'ajax' => true,
-        'type' => 'read'
     ),
     'local_program_userdashboard_content' => array(
         'classname'    => 'local_program_external',

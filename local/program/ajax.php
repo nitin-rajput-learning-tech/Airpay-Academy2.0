@@ -72,22 +72,7 @@ try{
             $return = $renderer->viewprograms($stable,$program,$status,$view_type);
             
         break;
-        case 'viewprogramsessions':
-            $stable = new stdClass();
-            $stable->search = $search['value'];
-            $stable->start = $start;
-            $stable->length = $length;
-            if ($programmodulehead) {
-                $stable->thead = true;
-            } else {
-                $stable->thead = false;
-            }
-            $bclcdata = new stdClass();
-            $bclcdata->programid = $programid;
-            $bclcdata->levelid = $levelid;
-            $bclcdata->bclcid = $bclcid;
-            $return = $renderer->viewprogramsessions($bclcdata, $stable, false, false, $tab);
-        break;
+
         case 'programsbystatus':
             $stable = new stdClass();
             $stable->thead = true;
@@ -149,15 +134,6 @@ try{
         break;
         case 'programlevelcourses':
              $return = $renderer->viewprogramcourses($programid, $levelid);
-        break;
-        case 'viewprogramstreams':
-            $stable = new stdClass();
-            $stable->search = $search['value'];
-            $stable->start = $start;
-            $stable->length = $length;
-            $stable->thead = false;
-
-            $return = $renderer->viewprogramstreams($stable);
         break;
         case 'classroomlist':
         $courseid = required_param('courseid',  PARAM_INT);

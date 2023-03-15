@@ -23,12 +23,6 @@ Description
 program are used to keep track of in-person trainings which
 require advance booking.
 
-Each activity is offered in one or more identical sessions.  These sessions
-can be given over multiple days.
-
-Reminder messages are sent to users and their managers a few days before the
-session is scheduled to start.  Confirmation messages are sent when users
-sign-up for a session or cancel.
 
 
 Requirements

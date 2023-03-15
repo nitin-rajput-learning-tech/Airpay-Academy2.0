@@ -65,7 +65,6 @@ if (!is_siteadmin() && !(has_capability('local/program:manageprogram', $category
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->css('/local/program/css/jquery.dataTables.min.css', true);
 $PAGE->requires->js_call_amd('local_program/ajaxforms', 'load');
-$PAGE->requires->js_call_amd('local_program/program', 'getstream');
 
 $corecomponent = new core_component();
 $epsilonpluginexist = $corecomponent::get_plugin_directory('theme', 'epsilon');
