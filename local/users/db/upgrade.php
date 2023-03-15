@@ -14,7 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-function xmldb_local_users_upgrade($oldversion) {
+function xmldb_local_users_upgrade($oldversion)
+{
     global $DB, $CFG;
     $dbman = $DB->get_manager();
     if ($oldversion < 2016080911.05) {
@@ -33,114 +34,114 @@ function xmldb_local_users_upgrade($oldversion) {
     if ($oldversion < 2020032600) {
         $table = new xmldb_table('local_uniquelogins');
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-            $table->add_field('day', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-            $table->add_field('month', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-            $table->add_field('year', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-            $table->add_field('count_date', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-            $table->add_field('type', XMLDB_TYPE_CHAR, '20', null, null, null, null);
-            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('day', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('month', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('year', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('count_date', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('type', XMLDB_TYPE_CHAR, '20', null, null, null, null);
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         if (!$dbman->table_exists($table)) {
-                $dbman->create_table($table);
+            $dbman->create_table($table);
         }
-            upgrade_plugin_savepoint(true, 2020032600, 'local', 'users');
+        upgrade_plugin_savepoint(true, 2020032600, 'local', 'users');
     }
 
     if ($oldversion < 2020032601) {
         $table = new xmldb_table('user');
         $field1 = new xmldb_field('open_notify_logins', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
 
-		if (!$dbman->field_exists($table, $field1)) {
-			$dbman->add_field($table, $field1);
-		}
-		upgrade_plugin_savepoint(true, 2020032601, 'local', 'user');
-	}
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2020032601, 'local', 'user');
+    }
 
     //Adding indexes to local Pulgins
     if ($oldversion < 2022101800) {
-   
-    	$table = new xmldb_table('local_recompletion_qa');
-    	$table1 = new xmldb_table('local_transcript_history');
-    	$table2 = new xmldb_table('local_uniquelogins');
-    	$table3 = new xmldb_table('local_positions');
-    	$table4 = new xmldb_table('local_domains');
 
-		$index = new xmldb_index('uniqueid', XMLDB_INDEX_NOTUNIQUE, array('uniqueid'));
+        $table = new xmldb_table('local_recompletion_qa');
+        $table1 = new xmldb_table('local_transcript_history');
+        $table2 = new xmldb_table('local_uniquelogins');
+        $table3 = new xmldb_table('local_positions');
+        $table4 = new xmldb_table('local_domains');
 
-		if (!$dbman->index_exists($table,$index)) {
-			$dbman->add_index($table,$index);
-		}
+        $index = new xmldb_index('uniqueid', XMLDB_INDEX_NOTUNIQUE, array('uniqueid'));
 
-		$index1 = new xmldb_index('employee_id', XMLDB_INDEX_NOTUNIQUE, array('employee_id'));
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
 
-		if (!$dbman->index_exists($table1,$index1)) {
-			$dbman->add_index($table1,$index1);
-		}
+        $index1 = new xmldb_index('employee_id', XMLDB_INDEX_NOTUNIQUE, array('employee_id'));
 
-		$index2 = new xmldb_index('training_object_id', XMLDB_INDEX_NOTUNIQUE, array('training_object_id'));
+        if (!$dbman->index_exists($table1, $index1)) {
+            $dbman->add_index($table1, $index1);
+        }
 
-		if (!$dbman->index_exists($table1,$index2)) {
-			$dbman->add_index($table1,$index2);
-		}
+        $index2 = new xmldb_index('training_object_id', XMLDB_INDEX_NOTUNIQUE, array('training_object_id'));
 
-		$index3 = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, array('courseid'));
+        if (!$dbman->index_exists($table1, $index2)) {
+            $dbman->add_index($table1, $index2);
+        }
 
-		if (!$dbman->index_exists($table1,$index3)) {
-			$dbman->add_index($table1,$index3);
-		}
+        $index3 = new xmldb_index('courseid', XMLDB_INDEX_NOTUNIQUE, array('courseid'));
 
-		$index4 = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
+        if (!$dbman->index_exists($table1, $index3)) {
+            $dbman->add_index($table1, $index3);
+        }
 
-		if (!$dbman->index_exists($table1,$index4)) {
-			$dbman->add_index($table1,$index4);
-		}
-    	
-    	
-		$index5 = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
+        $index4 = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
 
-		if (!$dbman->index_exists($table2,$index5)) {
-			$dbman->add_index($table2,$index5);
-		}
-    	
-		$index6 = new xmldb_index('costcenter', XMLDB_INDEX_NOTUNIQUE, array('costcenter'));
+        if (!$dbman->index_exists($table1, $index4)) {
+            $dbman->add_index($table1, $index4);
+        }
 
-		if (!$dbman->index_exists($table3,$index6)) {
-			$dbman->add_index($table3,$index6);
-		}
 
-		$index7 = new xmldb_index('costcenter', XMLDB_INDEX_NOTUNIQUE, array('costcenter'));
+        $index5 = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
 
-		if (!$dbman->index_exists($table4,$index7)) {
-			$dbman->add_index($table4,$index7);
-		}
+        if (!$dbman->index_exists($table2, $index5)) {
+            $dbman->add_index($table2, $index5);
+        }
 
-		upgrade_plugin_savepoint(true, 2022101800, 'local', 'users');
-	}
-	if ($oldversion < 2022101800.03) {
+        $index6 = new xmldb_index('costcenter', XMLDB_INDEX_NOTUNIQUE, array('costcenter'));
+
+        if (!$dbman->index_exists($table3, $index6)) {
+            $dbman->add_index($table3, $index6);
+        }
+
+        $index7 = new xmldb_index('costcenter', XMLDB_INDEX_NOTUNIQUE, array('costcenter'));
+
+        if (!$dbman->index_exists($table4, $index7)) {
+            $dbman->add_index($table4, $index7);
+        }
+
+        upgrade_plugin_savepoint(true, 2022101800, 'local', 'users');
+    }
+    if ($oldversion < 2022101800.03) {
         $table = new xmldb_table('local_userssyncdata');
         $field1 = new xmldb_field('costcenterid', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
 
-		if (!$dbman->field_exists($table, $field1)) {
-			$dbman->add_field($table, $field1);
-		}
-		upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'user');
-	}
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.03, 'local', 'user');
+    }
     if ($oldversion < 2022101800.08) {
 
         $table = new xmldb_table('local_userdata');
 
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-            $table->add_field('costcenterpath', XMLDB_TYPE_CHAR, '512', null, XMLDB_NOTNULL, null, null);
-            $table->add_field('categorypath', XMLDB_TYPE_CHAR, '512', null, XMLDB_NOTNULL, null, null);
-            $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-            $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
-            $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('costcenterpath', XMLDB_TYPE_CHAR, '512', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('categorypath', XMLDB_TYPE_CHAR, '512', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         if (!$dbman->table_exists($table)) {
-                $dbman->create_table($table);
+            $dbman->create_table($table);
         }
 
         $table = new xmldb_table('user');
@@ -239,5 +240,15 @@ function xmldb_local_users_upgrade($oldversion) {
         }
         upgrade_plugin_savepoint(true, 2022101800.14, 'local', 'users');
     }
-	return true;
+    if ($oldversion < 2022101800.17) {
+        $table = new xmldb_table('user');
+        $orgactive = new xmldb_field('open_orgactive');
+        $orgactive->set_attributes(XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $orgactive)) {
+            $dbman->add_field($table, $orgactive);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.17, 'local', 'users');
+    }
+
+    return true;
 }

@@ -1063,7 +1063,7 @@ class core_renderer extends \core_renderer {
                         $completed = $DB->record_exists_sql($sql, array('courseid'=>$COURSE->id, 'userid'=>$USER->id));
                         if($completed){
 
-                $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$COURSE->id,'userid'=>$USER->id,'templateid'=>$COURSE->open_certificateid,'moduletype'=>'course'));
+                $certcode = $DB->get_field('tool_certificate_issues', 'code', array('moduleid'=>$COURSE->id,'userid'=>$USER->id,'moduletype'=>'course'));
                             if($certcode == 0){
                                 $course_context['certificate_exists'] = false;
                             }
