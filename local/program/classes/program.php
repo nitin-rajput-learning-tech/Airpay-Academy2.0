@@ -2011,15 +2011,15 @@ class program {
                         ${'record' . $i}->usercreated = $USER->id;
                         ${'record' . $i}->timecreated = time();
                         $records[$i] = ${'record' . $i};
+                        $levelid=$DB->insert_record('local_program_levels', $record);
+                        $this->manage_program_level_completions($level->programid, $levelid, '', $formdata);
                     }
-                    $DB->insert_records('local_program_levels', $records);
-                    $this->manage_program_level_completions($level->programid, $levelid, '', $formdata);
                     return true;
                 } else {
                     $level->usercreated = $USER->id;
                     $level->timecreated = time();
                     $level->id = $DB->insert_record('local_program_levels', $level);
-                    $this->manage_program_level_completions($level->programid, $levelid, '', $formdata);
+                    $this->manage_program_level_completions($level->programid, $level->id, '', $formdata);
                     $params = array(
                         'context' => $categorycontext,
                         'objectid' => $level->id,
