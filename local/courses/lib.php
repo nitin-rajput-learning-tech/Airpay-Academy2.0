@@ -1365,8 +1365,9 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
     * @return  array courses
 */
 
-function get_listof_courses($stable, $filterdata) {
+function get_listof_courses($stable, $filterdata,$options) {
     global $CFG,$DB,$OUTPUT,$USER;
+    $options=json_decode($options);
     $core_component = new core_component();
      //require_once($CFG->libdir. '/coursecatlib.php');
     require_once($CFG->dirroot.'/course/renderer.php');
@@ -1706,8 +1707,23 @@ function get_listof_courses($stable, $filterdata) {
 
 
             if(has_capability('local/courses:update',$context)&&has_capability('local/courses:manage', $context)&&has_capability('moodle/course:update', $context)){
+                if($options->viewType=='table'){
+                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')), array('title' => get_string('edit'), 'alt' => get_string('edit'),'data-action' => 'createcoursemodal', 'class'=>'createcoursemodal dropdown-item', 'data-value'=>$course->id, 'onclick' =>'(function(e){ require("local_courses/courseAjaxform").init({contextid:'.$context->id.', component:"local_courses", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "courses", courseid: ' . $course->id . ' }) })(event)'));
+            }else{
                 $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')).get_string('edit') , array('title' => get_string('edit'), 'alt' => get_string('edit'),'data-action' => 'createcoursemodal', 'class'=>'createcoursemodal dropdown-item', 'data-value'=>$course->id, 'onclick' =>'(function(e){ require("local_courses/courseAjaxform").init({contextid:'.$context->id.', component:"local_courses", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "courses", courseid: ' . $course->id . ' }) })(event)'));
-                $courseslist[$count]["editcourse"] = $courseedit;
+            }
+            $courseslist[$count]["editcourse"] = $courseedit;
+            if($options->viewType=='table'){
+                if($course->visible){
+                    $icon = 't/hide';
+                    $string = get_string('make_active','local_courses');
+                   // $title = get_string('make_inactive','local_courses');
+                }else{
+                    $icon = 't/show';
+                    $string = get_string('make_inactive','local_courses');
+                   // $title = get_string('make_active','local_courses');
+                }
+            }else{
                 if($course->visible){
                     $icon = 't/hide';
                     $string = get_string('make_active','local_courses');
@@ -1717,6 +1733,7 @@ function get_listof_courses($stable, $filterdata) {
                     $string = get_string('make_inactive','local_courses');
                     $title = get_string('make_active','local_courses');
                 }
+            }
                 $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')).$title;
                 $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
                 $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image  , array('class'=>' make_inactive dropdown-item','data-fg'=>"d", 'data-method' => 'course_update_status','data-plugin' => 'local_courses', 'data-params' => $params, 'data-id'=>$course->id));
@@ -1739,8 +1756,12 @@ function get_listof_courses($stable, $filterdata) {
              }   
 
            if(has_capability('local/courses:delete',$context)&&has_capability('local/courses:manage', $context)&&has_capability('moodle/course:delete', $context)){
-                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')).get_string('delete'), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_courses/courseAjaxform\').deleteConfirm({action:\'deletecourse\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
-                $courseslist[$count]["deleteaction"] = $deleteactionshtml;
+            if($options->viewType=='table'){   
+            $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_courses/courseAjaxform\').deleteConfirm({action:\'deletecourse\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
+            }else{
+            $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')).get_string('delete'), array('class'=>"dropdown-item delete_icon" ,'title' => get_string('delete'), 'id' => "courses_delete_confirm_".$course->id,'onclick'=>'(function(e){ require(\'local_courses/courseAjaxform\').deleteConfirm({action:\'deletecourse\' , id: ' . $course->id . ', name:"'.$coursename.'" }) })(event)'));
+            }   
+            $courseslist[$count]["deleteaction"] = $deleteactionshtml;
            
             }
             
