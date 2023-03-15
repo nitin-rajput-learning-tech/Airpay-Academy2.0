@@ -451,6 +451,7 @@ class local_onlineexams_external extends external_api
                                 'examtodate' => new external_value(PARAM_RAW, 'examtodate', VALUE_OPTIONAL),
                                 'passgrade' => new external_value(PARAM_RAW, 'passgrade', VALUE_OPTIONAL),
                                 'maxgrade' => new external_value(PARAM_RAW, 'maxgrade', VALUE_OPTIONAL),
+                                'fullonlineexamsummary' => new external_value(PARAM_RAW, 'fullonlineexamsummary', VALUE_OPTIONAL),                                
 
                             )
                         )
@@ -638,7 +639,7 @@ class local_onlineexams_external extends external_api
         $renderable = new local_onlineexams\output\userdashboard($params['filter'], $params['filter_text'], $params['filter_offset'], $params['filter_limit']);
         $output = $PAGE->get_renderer('local_onlineexams');
         $data = $renderable->export_for_template($output);
-        // print_object($data);
+        // print_r($data);
         return $data;
     }
     public static function data_for_onlineexams_returns()
@@ -663,6 +664,7 @@ class local_onlineexams_external extends external_api
                         'lastaccessdate' => new external_value(PARAM_RAW, 'Last access Time'),
                         'course_image_url' => new external_value(PARAM_RAW, 'Course Image'),
                         'onlineexamsummary' => new external_value(PARAM_RAW, 'Course Summary'),
+                        'fullonlineexamsummary' => new external_value(PARAM_RAW, 'full onlineexams Summary', VALUE_OPTIONAL),
                         'progress' => new external_value(PARAM_RAW, 'Course Progress'),
                         'progress_bar_width' => new external_value(PARAM_RAW, 'Course Progress bar width'),
                         'course_fullname' => new external_value(PARAM_RAW, 'Course Fullname'),
@@ -771,6 +773,7 @@ class local_onlineexams_external extends external_api
                                     'lastaccessdate' => new external_value(PARAM_RAW, 'Last access Time'),
                                     'course_image_url' => new external_value(PARAM_RAW, 'Course Image'),
                                     'onlineexamsummary' => new external_value(PARAM_RAW, 'Course Summary'),
+                                    'fullonlineexamsummary' => new external_value(PARAM_RAW, 'full onlineexams Summary', VALUE_OPTIONAL),
                                     'progress' => new external_value(PARAM_RAW, 'Course Progress'),
                                     'progress_bar_width' => new external_value(PARAM_RAW, 'Course Progress bar width'),
                                     'course_fullname' => new external_value(PARAM_RAW, 'Course Fullname'),

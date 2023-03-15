@@ -154,6 +154,8 @@ class userdashboard implements renderable {
 
                 //-------- get the course summary------------------------ 
                 $onerow['onlineexamsummary']= $this->get_onlineexamsummary($inprogress_coursename);
+                $onlineexamsfullsummary = \local_costcenter\lib::strip_tags_custom($course_record->summary);
+                $onerow['fullonlineexamsummary']=  strlen($onlineexamsfullsummary) > 100 ? $onlineexamsfullsummary : null;
 
                 //------get progress bar and width value in the form of array
                 $progressbarvalues = $this->get_progress_value($inprogress_coursename); 
@@ -191,7 +193,6 @@ class userdashboard implements renderable {
                 }else{
                     $onerow['label_name'] = get_string('start_course','block_userdashboard');
                 }
-             
                 array_push($data->inprogress_elearning, $onerow);
                 
             } // end of foreach 

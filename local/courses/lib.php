@@ -2007,8 +2007,6 @@ function courses_filters_form($filterparams, $ajaxformdata = null){
     require_once($CFG->dirroot . '/local/courses/filters_form.php');
 
     $action = isset($filterparams['action']) ? $filterparams['action'] : '';
-
-
      $fields =array(/*'organizations', 'departments',
             'subdepartment', 'department4level','department5level',*/'hierarchy_fields','courses','categories','status','coursetype');
 

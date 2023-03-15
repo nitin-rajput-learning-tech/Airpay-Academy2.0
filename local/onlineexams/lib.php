@@ -443,7 +443,7 @@ function get_listof_onlineexams($stable, $filterdata)
             $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100) . "..." : $onlineexamsummary;
             // $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100)."<span id='dots'>...</span><span id='more' style='display: none;'>".substr($onlineexamsummary, 100,strlen($onlineexamsummary)).'</span> <a onclick="myFunction()" id="myBtn">Read more</a>' : $onlineexamsummary;
             $onlineexamslist[$count]["onlineexamsummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
-            $onlineexamslist[$count]["fullonlineexamsummary"] = $onlineexamsummary;
+            $onlineexamslist[$count]["fullonlineexamsummary"] = strlen($onlineexamsummary) > 100 ? $onlineexamsummary : null;
             $onlineexamslist[$count]["format"] = $format;
 
 
@@ -911,14 +911,14 @@ function onlineexams_filters_form($filterparams, $ajaxformdata = null){
 
     global $CFG, $PAGE,$USER;
 
-    require_once($CFG->dirroot . '/local/onlineexams/onlineexam_filters_form.php');
+    require_once($CFG->dirroot . '/local/courses/filters_form.php');
 
     $action = isset($filterparams['action']) ? $filterparams['action'] : '';
 
 
      $fields =array(/*'organizations', 'departments',
             'subdepartment', 'department4level','department5level',*/'hierarchy_fields','onlineexams','categories');
-    $mform = new onlineexam_filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
+    $mform = new filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
     return $mform;
 }
 function onlineexams_filter($mform){

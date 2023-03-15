@@ -29,7 +29,7 @@ require_once($CFG->dirroot . '/local/courses/filters_form.php');
 $deleteid = optional_param('delete', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_INT);
 $jsonparam    = optional_param('jsonparam', '', PARAM_RAW);
-$status = optional_param('status', '', PARAM_RAW);
+$forum = optional_param('forum', '', PARAM_RAW);
 $costcenterid = optional_param('costcenterid', '', PARAM_INT);
 $departmentid = optional_param('departmentid', '', PARAM_INT);
 $subdepartmentid = optional_param('subdepartmentid','',PARAM_INT);
@@ -123,7 +123,7 @@ $filterparams = $renderer->get_catalog_forum(true,$formattype);
     $formdata->filteropen_level4department = $l4department;
     $formdata->filteropen_level5department = $l5department;
 
-$mform = courses_filters_form($filterparams, (array)$formdata);
+$mform = forum_filters_form($filterparams, (array)$formdata);
      
 if ($mform->is_cancelled()) {
     redirect($CFG->wwwroot . '/local/forum/index.php');
@@ -144,14 +144,14 @@ if(empty($filterdata) && !empty($jsonparam)){
     }
     $mform->set_data($filterdata);
 }
-if(!empty($costcenterid) || !empty($status) || !empty($departmentid) || !empty($subdepartmentid) || !empty($department4levelid) || !empty($department5levelid)){
+if(!empty($costcenterid) || !empty($forum) || !empty($departmentid) || !empty($subdepartmentid) || !empty($department4levelid) || !empty($department5levelid)){
         // $formdata = new stdClass();
         // $formdata->organizations = $costcenterid;
         // $formdata->departments = $departmentid;
         // $formdata->subdepartment = $subdepartmentid;
         // $formdata->department4level = $department4levelid;
         // $formdata->department5level = $department5levelid;
-        $formdata->status = $status;
+        $formdata->forum = $forum;
         $mform->set_data($formdata);
 }
 if($filterdata){
@@ -161,7 +161,6 @@ if($filterdata){
     $collapse = true;
     $show = '';
 }
-
 echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_forum-filter_collapse" aria-expanded="false" aria-controls="local_forum-filter_collapse">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
@@ -191,8 +190,8 @@ echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterpara
    if($department5levelid){
     $display_url->param('department5levelid',$department5levelid);
    }
-   if($status){
-    $display_url->param('status',$status);
+   if($forum){
+    $display_url->param('forum',$forum);
    }
    if($formattype_url){
     $display_url->param('formattype', $formattype_url);      

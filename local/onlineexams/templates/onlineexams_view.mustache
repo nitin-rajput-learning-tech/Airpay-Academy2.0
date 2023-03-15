@@ -91,9 +91,7 @@
                                     </div>
                                     <div class="coursedesc mb-2">
                                         {{# onlineexamsummary }}
-                                            <p class="desc" title = "Onlineexam Descripton" >{{ onlineexamsummary }}</p>
-                                            <a  data-toggle="popover" title="Popover title" data-content="{{ onlineexamsummary }}">view more</a>
-
+                                            <p class="desc" title = "Onlineexam Descripton" >{{ onlineexamsummary }} {{# fullonlineexamsummary }}<a href= "#" data-toggle="popover" title="{{ coursename }}" data-content="{{ fullonlineexamsummary }}">view more</a>{{/ fullonlineexamsummary }}</p>
                                             {{/ onlineexamsummary }}
                                         {{^ onlineexamsummary }}
                                             <p class="alert alert-info text-center mt-1">{{#str}}noonlineexamdesc, local_onlineexams{{/str}}</p>
@@ -151,9 +149,3 @@
     {{/viewtypeCard}}
 {{/response}}
 
-{{#js}}
-$(function () {
-    $('[data-toggle="popover"]').popover()
-  })
-
-{{/js}}

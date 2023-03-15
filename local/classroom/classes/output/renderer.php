@@ -1217,6 +1217,7 @@ class renderer extends plugin_renderer_base
             'completed_seats' => $completed_seats,
             'selfenrolmenttabcap' => $selfenrolmenttabcap,
             'description' => $description,
+            'fullonlineexamsummary' => (strlen($description) > 270) ? $description : null,
             'descriptionstring' => $decsriptionstring,
             'isdescription' => $isdescription,
             'seats_progress' => $seats_progress,

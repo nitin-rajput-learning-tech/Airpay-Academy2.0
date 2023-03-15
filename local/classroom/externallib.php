@@ -71,7 +71,6 @@ class local_classroom_external extends external_api {
         $status = $formatted_dataoptions->status;
 
         $classrooms = (new classroom)->get_classrooms($status, $search, $offset, $limit);
-        // print_r($classrooms);exit;
         $totalcount = $classrooms['classroomscount'];
         $formattedclassrooms = $classrooms['classrooms'];
 
@@ -104,6 +103,7 @@ class local_classroom_external extends external_api {
                                     'description' => new external_value(PARAM_RAW, 'Classroom description'),
                                     'descriptionstring' => new external_value(PARAM_RAW, 'Classroom formatted description'),
                                     'isdescription' => new external_value(PARAM_RAW, 'Classroom isdescription available'),
+                                    'fullonlineexamsummary' => new external_value(PARAM_RAW, 'full Classroom Summary', VALUE_OPTIONAL),
                                     'seatallocation' => new external_value(PARAM_RAW, 'Classroom seatallocation'),
                                     'usercreated' => new external_value(PARAM_TEXT, 'Classroom usercreated'),
                                     'startdate' => new external_value(PARAM_RAW, 'Classroom startdate'),

@@ -814,6 +814,7 @@ class classroom {
                             $line['delete'] = false;
                             $line['assignusers'] = false;
                             $line['assignusersurl'] = false;
+                            $line['fullonlineexamsummary'] = (strlen($description) > 40) ? $description : null;
 
                             $mouse_overicon=false;
                             if ((has_capability('local/classroom:manageclassroom', $categorycontext) || is_siteadmin())) {
@@ -1868,7 +1869,7 @@ class classroom {
             $fields = array(
                 0 => 'c.fullname'
             );
-            $fields = implode(" LIKE '%" . $stable->search . "%' OR ", $fields);
+            $fields = implode(" LIKE '%" . $stable->search . "%' OR ", $fields);    
             $fields .= " LIKE '%" . $stable->search . "%' ";
             $concatsql .= " AND ($fields) ";
         }
