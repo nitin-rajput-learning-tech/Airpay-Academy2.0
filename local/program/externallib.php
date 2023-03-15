@@ -599,9 +599,7 @@ class local_program_external extends external_api {
             'form_status' => $form_status), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
         if ($validateddata) {
-            // Do the action.
-            $stream = $DB->get_field('local_program', 'stream',
-                array('id' => $validateddata->programid));
+
             $action = 'create';
             if ($validateddata->id > 0) {
                 $action = 'update';

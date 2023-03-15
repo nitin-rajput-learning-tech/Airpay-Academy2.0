@@ -1370,7 +1370,7 @@ class program {
                         ${'record' . $i}->position = $i;
                         ${'record' . $i}->usercreated = $USER->id;
                         ${'record' . $i}->timecreated = time();
-                        $records[$i] = ${'record' . $i};
+                        $record = ${'record' . $i};
                         $levelid=$DB->insert_record('local_program_levels', $record);
                         $this->manage_program_level_completions($level->programid, $levelid, '', $formdata);
                     }
@@ -1615,11 +1615,11 @@ class program {
         }
         $levelcompletions = $DB->get_records('local_bc_level_completions', $params);
         foreach($levelcompletions as $levelcomp){
-            $dataobject = clone $levelcomp;
-            unset($dataobject->id);
-            $dataobject->timecreated = time();
-            $dataobject->usercreated = $USER->id;
-            $DB->insert_record('local_bc_level_comp_bk',  $dataobject);
+            // $dataobject = clone $levelcomp;
+            // unset($dataobject->id);
+            // $dataobject->timecreated = time();
+            // $dataobject->usercreated = $USER->id;
+            // $DB->insert_record('local_bc_level_comp_bk',  $dataobject);
 
             $levelcomp->completion_status = 0;
             $levelcomp->completiondate = 0;
@@ -1629,11 +1629,11 @@ class program {
         }
         $programcompletions = $DB->get_records('local_program_users', array('programid' => $programid, 'completion_status' => 1), '', 'id, programid,userid,completiondate,levelids');
         foreach($programcompletions AS $progcomp){
-            $dataobject = clone $progcomp;
-            unset($dataobject->id);
-            $dataobject->timecreated = time();
-            $dataobject->usercreated = $USER->id;
-            $DB->insert_record('local_bc_level_comp_bk',  $dataobject);
+            // $dataobject = clone $progcomp;
+            // unset($dataobject->id);
+            // $dataobject->timecreated = time();
+            // $dataobject->usercreated = $USER->id;
+            // $DB->insert_record('local_bc_level_comp_bk',  $dataobject);
 
             $progcomp->completion_status = 0;
             $progcomp->completiondate = 0;

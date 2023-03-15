@@ -26,6 +26,59 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_program_upgrade($oldversion) {
     global $DB, $CFG;
     $dbman = $DB->get_manager();
+    if ($oldversion < 2022101800.05) {
 
+        $DB->delete_records('local_notification_strings',array('module'=>'program'));
+        $DB->delete_records('local_notification_type',array('pluginname'=>'program'));
+
+        $time = time();
+        $initcontent = array('name' => 'Program','shortname' => 'program','parent_module' => '0','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program');
+        $parentid = $DB->get_field('local_notification_type', 'id', array('shortname' => 'program'));
+        if(!$parentid){
+            $parentid = $DB->insert_record('local_notification_type', $initcontent);
+        }
+        $notification_type_data = array(
+            array('name' => 'Program Enrollment','shortname' => 'program_enrol','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
+            array('name' => 'Program Unenrollment','shortname' => 'program_unenroll','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
+            array('name' => 'Program Completion','shortname' => 'program_completion','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program'),
+            array('name' => 'Program Level Completion','shortname' => 'program_level_completion','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'program')
+        );
+        foreach($notification_type_data as $notification_type){
+            unset($notification_type['timecreated']);
+            if(!$DB->record_exists('local_notification_type',  $notification_type)){
+                $notification_type['timecreated'] = $time;
+                $DB->insert_record('local_notification_type', $notification_type);
+            }
+        }
+        $strings = array(
+            array('name' => '[program_name]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_startdate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_enddate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_level]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_enroluserfulname]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_enroluseremail]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_organization]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_course]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_creater]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_level_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_lc_course_link]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_lc_course_creater]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_level_creater]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_level_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[program_lc_course_completiondate]','module' => 'program','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL)
+        );
+        foreach($strings as $string){
+            unset($string['timecreated']);
+            if(!$DB->record_exists('local_notification_strings', $string)){
+                $string_obj = (object)$string;
+                $string_obj->timecreated = $time;
+                $DB->insert_record('local_notification_strings', $string_obj);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2022101800.05, 'local', 'program');
+    }
     return true;
 }

@@ -244,7 +244,6 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="programid" UNIQUE="false" FIELDS="programid"/>
-        <INDEX NAME="courseids" UNIQUE="false" FIELDS="courseids"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="local_program_trainers" COMMENT="table for program trainers">
