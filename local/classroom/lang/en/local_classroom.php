@@ -532,4 +532,4 @@ $string['sessionsexistingbeforestartdate'] = 'Sessions are existing before this 
 $string['sessionsexistingafterenddate'] = 'Sessions are existing after this date Please delete the sessions to alter it.';
 $string['subdepartment'] = "Sub Department";
 $string['classroomskill'] = 'Skill';
-$string['classroomlevel'] = 'Level';
+$string['classroomlevel'] = 'Skill Level';
