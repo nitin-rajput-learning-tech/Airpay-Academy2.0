@@ -653,7 +653,7 @@ class renderer extends plugin_renderer_base {
             $program->programskill = 'N/A';
         }
         if ($program->open_level > 0) {
-            $program->programlevel = $DB->get_field('local_skill', 'name', array('id' => $program->open_level));
+            $program->programlevel = $DB->get_field('local_course_levels', 'name', array('id' => $program->open_level));
             } else {
             $program->programlevel = 'N/A';
         }

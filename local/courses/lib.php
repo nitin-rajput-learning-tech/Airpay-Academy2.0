@@ -1207,14 +1207,12 @@ function local_courses_quicklink_node(){
         $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'load');
         $coursedata = array();
         if (is_siteadmin() || has_capability('local/courses:view', $categorycontext)) {
-            $sql = "SELECT count(id) FROM {course} WHERE id > 1 AND open_coursetype=0 ";
-            $suspendsql = " AND visible = :visible ";
-            $activeparams = array();
-            $activeparams['visible'] = 1;
-
-            $inactiveparams = array();
-            $inactiveparams['visible'] = 0;
-    
+            $sql = "SELECT count(c.id) FROM {course} c
+            JOIN {local_costcenter} AS co ON co.path = c.open_path
+            JOIN {course_categories} AS cc ON cc.id = c.category
+            JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
+            WHERE c.id > 1 AND c.open_coursetype=0 ";
+            
             if (is_siteadmin()) {
                 $sql .= "";
             } else  {
@@ -1238,7 +1236,6 @@ function local_courses_quicklink_node(){
             $enrolcount = $DB->get_field_sql($enrolsql);
             $completioncount = $DB->get_field_sql($completioncount);
             $count_courses = $DB->count_records_sql($sql);
-    
             $percent = round(($completioncount / $enrolcount) * 100);
             $percent = (int)$percent;
         }
