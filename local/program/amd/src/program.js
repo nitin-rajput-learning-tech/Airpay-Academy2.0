@@ -93,96 +93,6 @@ define([
 
     });
         },
-        SessionDatatable: function(args) {
-            params = [];
-            params.action = 'viewprogramsessions';
-            params.programid = args.programid;
-            params.levelid = args.levelid;
-            params.bclcid = args.bclcid;
-            if(args.action != ''){
-                params.tab = args.action;
-            } else {
-                params.tab = false;
-            }
-            var oTable = $('#viewprogramsessions').dataTable({
-                'processing': true,
-                'serverSide': true,
-                "language": {
-                    "paginate": {
-                    "next": ">",
-                    "previous": "<"
-                    },
-                    "processing": '<img src='+M.cfg.wwwroot + '/local/ajax-loader.svg>',
-                    "search": "",
-                    "searchPlaceholder": "Search"
-                },
-                'ajax': {
-                    "type": "POST",
-                    "url": M.cfg.wwwroot + '/local/program/ajax.php',
-                    "data": params
-                },
-                "responsive": true,
-                "pageLength": 5,
-                "bLengthChange": false,
-                "bInfo" : false,
-            });
-            this.sessionenrol(args);
-        },
-        sessionenrol: function(args) {
-            $(document).on('click', '.sessionenrol', function() {
-                var sessionargs = $(this).data();
-                return Str.get_strings([{
-                    key: 'confirmation',
-                    component: 'local_program'
-                },
-                {
-                    key: 'confirmschedulesession',
-                    component: 'local_program'
-                },
-                {
-                    key: 'confirmreschedulesession',
-                    component: 'local_program'
-                },
-                {
-                    key: 'confirmcancelsession',
-                    component: 'local_program'
-                },
-                {
-                    key: 'yes'
-                }
-                ]).then(function(s) {
-                    var body = s[1];
-                    if (sessionargs.enrol == 2) {
-                        body = s[2];
-                    } else if (sessionargs.enrol == 3) {
-                        body = s[3];
-                    }
-                    ModalFactory.create({
-                        title: s[0],
-                        type: ModalFactory.types.SAVE_CANCEL,
-                        body: body
-                    }).done(function(modal) {
-                        this.modal = modal;
-                        modal.setSaveButtonText(s[4]);
-                        modal.getRoot().on(ModalEvents.save, function(e) {
-                            e.preventDefault();
-                            args.confirm = true;
-                            var promise = Ajax.call([{
-                                methodname: 'local_program_session_enrolments',
-                                args: sessionargs
-                            }]);
-                            promise[0].done(function(resp) {
-                                window.location.href = window.location.href;
-                            }).fail(function(ex) {
-                                // do something with the exception
-                                 console.log(ex);
-                            });
-                        }.bind(this));
-                        modal.show();
-                    }.bind(this));
-                }.bind(this));
-            });
-        },
         CoursesDatatable: function(args) {
             params = [];
             params.action = 'viewprogramcourses';
@@ -263,10 +173,6 @@ define([
                 component: 'local_program'
             },
             {
-                key: 'cannotdeletesession',
-                component: 'local_program'
-            },
-            {
                 key: 'cannotdeletelevel',
                 component: 'local_program'
             },
@@ -290,9 +196,6 @@ define([
                  } else if (args.action == "cannotdeleteprogram") {
                     s[1] = s[5];
                     var confirm = ModalFactory.types.DEFAULT;
-                 } else if (args.action == "cannotdeletesession") {
-                    s[1] = s[6];
-                    var confirm = ModalFactory.types.DEFAULT;
                  } else if (args.action == "cannotdeletelevel") {
                     s[1] = s[7];
                     var confirm = ModalFactory.types.DEFAULT;
@@ -312,7 +215,7 @@ define([
                     body: s[1]
                 }).done(function(modal) {
                     this.modal = modal;
-                    if(args.action != "cannotdeleteprogram" && args.action != "cannotdeletesession" && args.action != "cannotdeletelevel"){
+                    if(args.action != "cannotdeleteprogram" && args.action != "cannotdeletelevel"){
                         modal.setSaveButtonText(s[3]);
                     }
                     modal.getRoot().on(ModalEvents.save, function(e) {
@@ -323,9 +226,7 @@ define([
                             args: args
                         }]);
                         promise[0].done(function(resp) {
-                            if(args.action == "deletestream"){
-                                window.location.href = M.cfg.wwwroot + '/local/program/streams.php';
-                            }else if(args.action == "deletesession" || args.action == "deleteprogram" || args.action == "activeprogram" || args.action == "inactiveprogram"){
+                            if(args.action == "deleteprogram" || args.action == "activeprogram" || args.action == "inactiveprogram"){
                                  window.location.href = window.location.href;
                             } else {
                                 window.location.href = M.cfg.wwwroot + '/local/program/view.php?bcid=' + args.programid;
@@ -510,77 +411,6 @@ define([
                     }.bind(this));
                 modal.show();
             }.bind(this));
-        },
-        StreamsDatatable: function(args) {
-            params = [];
-            params.action = 'viewprogramstreams';
-            Str.get_string('search','local_program').then(function(s) {
-            var oTable = $('#viewprogramstreams').dataTable({
-                'bInfo': false,
-                'processing': true,
-                'serverSide': true,
-                'ajax': {
-                    "type": "POST",
-                    "url": M.cfg.wwwroot + '/local/program/ajax.php',
-                    "data": params
-                },
-                "bInfo" : false,
-                "bLengthChange": false,
-                "language": {
-                    "paginate": {
-                        "next": ">",
-                        "previous": "<"
-                    },
-                    'processing': '<img src='+M.cfg.wwwroot + '/local/ajax-loader.svg>'
-                },
-                "oLanguage": {
-                    "sSearch": s
-                 },
-                "pageLength": 6
-            });
-            });
-        }, 
-        getstream: function() {
-            $(document).on('change', '#id_open_costcenterid_select', function(){
-                var orgID = $(this).val();
-                if(orgID){
-                    var promise = Ajax.call([{
-                        methodname: 'local_program_streams',
-                        args: {
-                            orgid: orgID,
-                        },
-                    }]);
-                    promise[0].done(function(resp) {
-                        customstrings = Str.get_strings(
-                            [{
-                                key: 'selectstrem',
-                                component: 'local_program'
-                            }]);
-                            return customstrings.then(function(strings) {
-                                var template =  '<option value=null>'+strings[0]+'</option>'; 
-                            });                                   
-                            $.each(JSON.parse(resp), function( index, value) {
-                                template += '<option value = ' + index + ' >' +value + '</option>';
-                            });
-                            $('#id_stream').html(template);
-                    }).fail(function() {
-                        // do something with the exception
-                        alert('Error occured while processing request');
-                         window.location.reload();
-                    });
-                } else {
-                    customstrings = Str.get_strings(
-                            [{
-                                key: 'selectstrem',
-                                component: 'local_program'
-                            }]);
-                    return customstrings.then(function(strings) {
-                        var template =  '<option value=\'\'>'+strings[0]+'</option>';
-                    }); 
-                    
-                    $('#id_stream').html(template);
-                }
-           });
         },
         unEnrolUser : function(args){
             return Str.get_strings([{

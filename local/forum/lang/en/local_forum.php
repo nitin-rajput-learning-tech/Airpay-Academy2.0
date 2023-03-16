@@ -451,3 +451,4 @@ $string['forumummary_help'] = 'The forum summary is displayed in the list of for
 $string['shortnametaken'] = 'Short name is already used for another forum ({$a})';
 $string['subscribeusermsg'] = 'Are you sure, you want to Subscribe <b>{$a->name}</b> ?';
 $string['subscribeuser'] = 'Subscription confirmation';
+$string['typeforum'] ='Forum Event';

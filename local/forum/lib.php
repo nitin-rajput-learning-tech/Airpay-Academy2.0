@@ -214,11 +214,11 @@ function get_listof_forum($stable, $filterdata,$options)
         $params = array_merge($params, $filtercategoriesparams);
         $formsql .= " AND c.open_categoryid $filtercategoriessql";
     }
-    if (!empty($filterdata->courses)) {
-        $filtercourses = explode(',', $filterdata->courses);
-        list($filtercoursessql, $filtercoursesparams) = $DB->get_in_or_equal($filtercourses, SQL_PARAMS_NAMED, 'courses', true, false);
-        $params = array_merge($params, $filtercoursesparams);
-        $formsql .= " AND c.id $filtercoursessql";
+    if (!empty($filterdata->forum)) {
+        $filterforum = explode(',', $filterdata->forum);
+        list($filterforumsql, $filterforumparams) = $DB->get_in_or_equal($filterforum, SQL_PARAMS_NAMED, 'forum', true, false);
+        $params = array_merge($params, $filterforumparams);
+        $formsql .= " AND c.id $filterforumsql";
     }
     if (!empty($filterdata->filteropen_costcenterid)) {
 
@@ -521,22 +521,11 @@ function get_listof_forum($stable, $filterdata,$options)
 
             if (has_capability('local/forum:update', $context) && has_capability('local/forum:manage', $context)) {
                 if($options->viewType=='table'){
-                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_forum/forumAjaxform").init({contextid:' . $context->id . ', component:"local_forum", callback:"custom_forum_form", form_status:0, plugintype: "local", pluginname: "forum", courseid: ' . $course->id . ' }) })(event)'));
+                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_forum/forumAjaxform").init({contextid:' . $context->id . ', component:"local_forum", callback:"custom_forum_form", form_status:0, plugintype: "local", pluginname: "forum", courseid: ' . $course->id . ' }) })(event)'));
                 }else{
                 $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')) . get_string('edit'), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_forum/forumAjaxform").init({contextid:' . $context->id . ', component:"local_forum", callback:"custom_forum_form", form_status:0, plugintype: "local", pluginname: "forum", courseid: ' . $course->id . ' }) })(event)'));
                 }
                 $courseslist[$count]["editcourse"] = $courseedit;
-                if($options->viewType=='table'){
-                if ($course->visible) {
-                    $icon = 't/hide';
-                    $string = get_string('make_active', 'local_courses');
-                    //$title = get_string('make_inactive', 'local_courses');
-                } else {
-                    $icon = 't/show';
-                    $string = get_string('make_inactive', 'local_courses');
-                    //$title = get_string('make_active', 'local_courses');
-                }
-            }else{
                 if ($course->visible) {
                     $icon = 't/hide';
                     $string = get_string('make_active', 'local_courses');
@@ -546,10 +535,14 @@ function get_listof_forum($stable, $filterdata,$options)
                     $string = get_string('make_inactive', 'local_courses');
                     $title = get_string('make_active', 'local_courses');
                 }
-            }
-                $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
-                $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
-                $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-params' => $params, 'data-id' => $course->id));
+
+                if($options->viewType=='table'){
+                    $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => ''));
+                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-params' => $params, 'data-id' => $course->id));
+                }else{
+                    $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
+                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-params' => $params, 'data-id' => $course->id));
+                }
                 if (!empty($autoenroll_plugin_exist)) {
                     $autoplugin = enrol_get_plugin('auto');
                     $instance = $autoplugin->get_instance_for_course($course->id);
@@ -570,7 +563,7 @@ function get_listof_forum($stable, $filterdata,$options)
 
             if (has_capability('local/forum:delete', $context) && has_capability('local/forum:manage', $context)) {
                 if($options->viewType=='table'){
-                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "courses_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_forum/forumAjaxform\').deleteConfirm({action:\'deleteforum\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
+                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')), array( 'title' => get_string('delete'), 'id' => "courses_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_forum/forumAjaxform\').deleteConfirm({action:\'deleteforum\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
                 }else{
                 $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')) . get_string('delete'), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "courses_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_forum/forumAjaxform\').deleteConfirm({action:\'deleteforum\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
                 }
@@ -860,4 +853,37 @@ function update_forum_forum($validateddata, $data, $formstatus)
     $forum->completionpassgrade = 1;
     // print_r($forum);
     return $forum;
+}
+function forum_filters_form($filterparams, $formdata = []) {
+    global $CFG, $USER;
+
+    require_once($CFG->dirroot . '/local/courses/filters_form.php');
+
+    $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
+    if (is_siteadmin()) {
+        $mform = new filters_form(null, array('filterlist' => array( 'hierarchy_fields',/*'geographyfields',*/ 'forum'), 'courseid' => 1,
+             'enrolid' => 0, 'plugins' => array('forum', 'costcenter'), 'filterparams' => $filterparams)+$formdata);
+    } else {
+        $filters = array('hierarchy_fields',/* 'geographyfields',*/'forum', 'status');
+
+        $mform = new filters_form(null, array('filterlist' => $filters, 'courseid' => 1, 'enrolid' => 0, 'plugins' => array('forum', 'costcenter'), 'filterparams'
+          => $filterparams)+$formdata);
+    }
+    return $mform;
+}
+function forum_filter($mform){
+    global $DB,$USER;
+	$categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
+    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 AND open_module = 'forum'  AND open_coursetype = 1 ";
+
+    if(is_siteadmin()){
+       $forumlist = $DB->get_records_sql_menu($sql);
+    }else{
+      $sql .= (new \local_forum\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+    }
+    $forumlist = $DB->get_records_sql_menu($sql);
+
+    $select = $mform->addElement('autocomplete', 'forum', get_string('forum','local_forum'), $forumlist, array('placeholder' => get_string('forum','local_forum')));
+    $mform->setType('forum', PARAM_RAW);
+    $select->setMultiple(true);
 }

@@ -30,8 +30,9 @@
                             <a href="{{course_url}}" title="{{{course_fullname}}}"> {{course_fullname}}</a>
                         </div>
                         {{# onlineexamsummary}} 
-                            <div class="desc coursedesc">{{{onlineexamsummary}}}</div>
+                            <div class="desc coursedesc">{{{onlineexamsummary}}} 
                          {{/ onlineexamsummary}} 
+                         {{# fullonlineexamsummary}}<a href= "#" data-toggle="popover" title="{{ course_fullname }}" data-content="{{ fullonlineexamsummary }}">view more</a>{{/ fullonlineexamsummary }}
                         <!-- {{^ summary}}
                             <div class="alert lert-info">no description provided</div>
                         {{/ summary}} -->

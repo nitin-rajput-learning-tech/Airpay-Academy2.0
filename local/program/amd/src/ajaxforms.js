@@ -98,16 +98,6 @@ define(['jquery',
                         break;
                     }
                 break;
-                case 'session_form':
-                    switch (args.id) {
-                        case 0:
-                            header_label = {key:'addsession', component:'local_program'};
-                        break;
-                        default:
-                            header_label = {key:'updatesession', component:'local_program'};
-                        break;
-                    }
-                break;
                 case 'course_form':
                     switch (args.id) {
                         case 0:
@@ -115,16 +105,6 @@ define(['jquery',
                         break;
                         default:
                             header_label = {key:'updatecourses', component:'local_program'};
-                        break;
-                    }
-                break;
-                case 'program_managestream_form':
-                    switch (args.id) {
-                        case 0:
-                            header_label = {key:'addstream', component:'local_program'};
-                        break;
-                        default:
-                            header_label = {key:'updatestream', component:'local_program'};
                         break;
                     }
                 break;

@@ -49,7 +49,7 @@ class search implements renderable{
     public function get_programslist_query($perpage,$startlimit,$return_noofrecords=false, $returnobjectlist=false, $filters = array()){
         global $DB, $USER, $CFG;
         $search = searchlib::$search;
-        //------main queries written here to fetch programs or  session based on condition
+        //------main queries written here to fetch programs based on condition
         $csql = "SELECT  lc.*, lc.startdate as trainingstartdate, lc.enddate as trainingenddate ";
         $cfromsql = " FROM {local_program} lc  ";
 

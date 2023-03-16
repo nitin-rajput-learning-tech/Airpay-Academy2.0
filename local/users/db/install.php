@@ -158,6 +158,11 @@ function xmldb_local_users_install(){
           if (!$dbman->field_exists($table, $skilltype)) {
               $dbman->add_field($table, $skilltype);
           }
+          $orgactive = new xmldb_field('open_orgactive');
+          $orgactive->set_attributes(XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);
+          if (!$dbman->field_exists($table, $orgactive)) {
+              $dbman->add_field($table, $orgactive);
+          }
 
     }
 }

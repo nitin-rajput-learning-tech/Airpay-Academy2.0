@@ -138,7 +138,22 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         $edit = false;
         $delete = false;
-        $usercount = '';
+        $usercount = $pluginnavs['datacount'];
+    
+            if ($record->visible) {
+                $hide = true;
+                $show = false;
+
+                $hideurl = 'javascript:void(0)';
+                $showurl = 'javascript:void(0)';
+            }else{
+                $show = true;
+                $hide = false;
+                $showurl = 'javascript:void(0)';
+                $hideurl = 'javascript:void(0)';
+
+            }
+        $action_message = get_string('confirmation_to_disable_'.$record->visible, 'local_costcenter', $record->fullname);
 
         $del_confirmationmsg = get_string('confirmationmsgfordel', 'local_costcenter',$record->fullname);
 
@@ -158,7 +173,12 @@ class local_costcenter_renderer extends plugin_renderer_base {
             "hideicon" => $OUTPUT->image_url('t/hide'),
             "showicon" => $OUTPUT->image_url('t/show'),
             "deleteicon" => $OUTPUT->image_url('t/delete'),
+            "hideurl" => $hideurl,
+            "showurl" => $showurl,
             "edit" => $edit,
+            "hide" => $hide,
+            "show" => $show,
+            "action_message" => $action_message,
             "delete_message" => $del_confirmationmsg,
             "status" => $record->visible,
             "delete" => $delete,
@@ -306,7 +326,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         if(has_capability('local/costcenter:update', $categorycontext))
             $edit = true;
-        if((has_capability('local/costcenter:delete', $categorycontext)) && $pathcount == 0 && $pluginnavs['totalusers'] == 0)
+        if((has_capability('local/costcenter:delete', $categorycontext)) && $pathcount == 0 && $pluginnavs['datacount'] == 0)
             $delete = true;
 
 
@@ -377,7 +397,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             if(has_capability('local/costcenter:update', $categorycontext))
                 $deptedit = true;
-            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0 && $subdeptcount == 0)
+            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['datacount'] == 0 && $subdeptcount == 0)
                 $deptdelete = true;
 
            $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);
@@ -454,7 +474,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
         if(has_capability('local/costcenter:update', $categorycontext))
             $edit = true;
-        if((has_capability('local/costcenter:delete', $categorycontext)) && $pathcount == 0 && $pluginnavs['totalusers'] == 0)
+        if((has_capability('local/costcenter:delete', $categorycontext)) && $pathcount == 0 && $pluginnavs['datacount'] == 0)
             $delete = true;
 
 
@@ -521,7 +541,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
             if(has_capability('local/costcenter:update', $categorycontext))
                 $deptedit = true;
-            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['totalusers'] == 0 && $subdeptcount == 0)
+            if((has_capability('local/costcenter:delete', $categorycontext)) && $deparray['datacount'] == 0 && $subdeptcount == 0)
                 $deptdelete = true;
 
             $context = (new \local_costcenter\lib\accesslib())::get_module_context($dept->path);

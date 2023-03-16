@@ -28,18 +28,14 @@
                         {{# delete}}
                         <a class="dropdown-item text-dark" href="javascript:void(0)" title ="{{# str}} delete {{/str}}" onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ recordid }}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ delete_message }}}' }) })(event)"><i class="fa fa-trash fa-fw " aria-hidden="true" aria-label="Delete"></i> Delete</a>
                         {{/ delete}}
-                      <!--   {{# hide}}
-                        <li>
-                            <a href="javascript:void(0)" title ="{{# str}} inactive {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye"></i></a>
-                        </li>
+                      {{# hide}}
+                            <a class="dropdown-item text-dark" href="javascript:void(0)" title ="{{# str}} inactive {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye" aria-hidden="true" aria-label="Inactive"></i>{{# str}} inactive {{/str}}</a>
                         {{/ hide}} 
                        {{# show}}
-                        <li>
-                            <a href="javascript:void(0)" title ="{{# str}} active {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye-slash"></i></a>
-                        </li>
-                        {{/ show}}   -->
+                            <a class="dropdown-item text-dark" href="javascript:void(0)" title ="{{# str}} active {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye-slash" aria-hidden="true" aria-label="Active"></i>{{# str}} active {{/str}}</a>
+                        {{/ show}}
                         {{# edit}}
-                        <a class="dropdown-item text-dark" href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({ contextid:1, id:{{ recordid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i> Edit</a>
+                        <a class="dropdown-item text-dark" href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({ contextid:1, id:{{ recordid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i> {{# str}} edit {{/str}}</a>
                         {{/ edit}}
                        <!--  {{# assignroles}}
                         <li>

@@ -444,7 +444,7 @@ function get_listof_onlineexams($stable, $filterdata,$options)
             $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100) . "..." : $onlineexamsummary;
             // $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100)."<span id='dots'>...</span><span id='more' style='display: none;'>".substr($onlineexamsummary, 100,strlen($onlineexamsummary)).'</span> <a onclick="myFunction()" id="myBtn">Read more</a>' : $onlineexamsummary;
             $onlineexamslist[$count]["onlineexamsummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
-            $onlineexamslist[$count]["fullonlineexamsummary"] = $onlineexamsummary;
+            $onlineexamslist[$count]["fullonlineexamsummary"] = strlen($onlineexamsummary) > 100 ? $onlineexamsummary : null;
             $onlineexamslist[$count]["format"] = $format;
 
 
@@ -517,35 +517,29 @@ function get_listof_onlineexams($stable, $filterdata,$options)
 
             if (has_capability('local/onlineexams:update', $context) && has_capability('local/onlineexams:manage', $context)) {
                 if($options->viewType=='table'){
-                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_onlineexams/onlineexamsAjaxform").init({contextid:' . $context->id . ', component:"local_onlineexams", callback:"custom_onlineexams_form", form_status:0, plugintype: "local", pluginname: "onlineexams", courseid: ' . $course->id . ' }) })(event)'));
+                $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_onlineexams/onlineexamsAjaxform").init({contextid:' . $context->id . ', component:"local_onlineexams", callback:"custom_onlineexams_form", form_status:0, plugintype: "local", pluginname: "onlineexams", courseid: ' . $course->id . ' }) })(event)'));
                 }else{
                     $courseedit = html_writer::link('javascript:void(0)', html_writer::tag('i', '', array('class' => 'fa fa-pencil ')) . get_string('edit'), array('title' => get_string('edit'), 'alt' => get_string('edit'), 'data-action' => 'createcoursemodal', 'class' => 'createcoursemodal dropdown-item', 'data-value' => $course->id, 'onclick' => '(function(e){ require("local_onlineexams/onlineexamsAjaxform").init({contextid:' . $context->id . ', component:"local_onlineexams", callback:"custom_onlineexams_form", form_status:0, plugintype: "local", pluginname: "onlineexams", courseid: ' . $course->id . ' }) })(event)'));
                 }
                 $onlineexamslist[$count]["editcourse"] = $courseedit;
-                if($options->viewType=='table'){
+                
                 if ($course->visible) {
                     $icon = 't/hide';
                     $string = get_string('make_active', 'local_onlineexams');
-                   // $title = get_string('make_inactive', 'local_onlineexams');
-                } else {
-                    $icon = 't/show';
-                    $string = get_string('make_inactive', 'local_onlineexams');
-                    //$title = get_string('make_active', 'local_onlineexams');
-                }
-            }else{
-                if ($course->visible) {
-                    $icon = 't/hide';
-                    $string = get_string('make_active', 'local_onlineexams');
-                    $title = get_string('make_inactive', 'local_onlineexams');
+                   $title = get_string('make_inactive', 'local_onlineexams');
                 } else {
                     $icon = 't/show';
                     $string = get_string('make_inactive', 'local_onlineexams');
                     $title = get_string('make_active', 'local_onlineexams');
                 }
-            }
-                $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
                 $params = json_encode(array('coursename' => $coursename, 'onlineexamstatus' => $course->visible));
+                if($options->viewType=='table'){
+                $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => ''));
+                $onlineexamslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_onlineexams', 'data-params' => $params, 'data-id' => $course->id));
+            }else{
+                $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
                 $onlineexamslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_onlineexams', 'data-params' => $params, 'data-id' => $course->id));
+            }
                 if (!empty($autoenroll_plugin_exist)) {
                     $autoplugin = enrol_get_plugin('auto');
                     $instance = $autoplugin->get_instance_for_course($course->id);
@@ -566,7 +560,7 @@ function get_listof_onlineexams($stable, $filterdata,$options)
 
             if (has_capability('local/onlineexams:delete', $context) && has_capability('local/onlineexams:manage', $context)) {
                 if($options->viewType=='table'){
-                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "onlineexams_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
+                $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')), array('title' => get_string('delete'), 'id' => "onlineexams_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
                 }else{
                 $deleteactionshtml = html_writer::link('javascript:void(0)', $OUTPUT->pix_icon('t/delete', get_string('delete'), 'moodle', array('')) . get_string('delete'), array('class' => "dropdown-item delete_icon", 'title' => get_string('delete'), 'id' => "onlineexams_delete_confirm_" . $course->id, 'onclick' => '(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').deleteConfirm({action:\'deleteonlineexams\' , id: ' . $course->id . ', name:"' . $coursename . '" }) })(event)'));
                 }
@@ -932,14 +926,14 @@ function onlineexams_filters_form($filterparams, $ajaxformdata = null){
 
     global $CFG, $PAGE,$USER;
 
-    require_once($CFG->dirroot . '/local/onlineexams/onlineexam_filters_form.php');
+    require_once($CFG->dirroot . '/local/courses/filters_form.php');
 
     $action = isset($filterparams['action']) ? $filterparams['action'] : '';
 
 
      $fields =array(/*'organizations', 'departments',
             'subdepartment', 'department4level','department5level',*/'hierarchy_fields','onlineexams','categories');
-    $mform = new onlineexam_filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
+    $mform = new filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
     return $mform;
 }
 function onlineexams_filter($mform){

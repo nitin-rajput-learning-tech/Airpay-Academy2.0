@@ -23,7 +23,7 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_local_program_uninstall() {
 	global $DB;
 	$dbman = $DB->get_manager();
-	$tablesarr = array('local_program', 'local_program_stream', 'local_program_users', 'local_program_levels', 'local_program_level_courses', 'local_bc_course_sessions', 'local_bcl_cmplt_criteria', 'local_bc_session_signups', 'local_bc_level_completions', 'local_bc_completion_criteria', 'local_program_trainers', 'local_program_trainerfb', 'local_bc_session_trainers', 'local_bc_session_trainerfb', 'local_program_test_score', '');
+	$tablesarr = array('local_program', 'local_program_users', 'local_program_levels', 'local_program_level_courses', 'local_bcl_cmplt_criteria', 'local_bc_level_completions', 'local_bc_completion_criteria', 'local_program_trainers', 'local_program_trainerfb', 'local_program_test_score', '');
 	foreach($tablesarr AS $tablename){
 		$table = new xmldb_table($tablename);
 		if ($dbman->table_exists($table)) {

@@ -50,6 +50,7 @@ $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js_call_amd('local_classroom/ajaxforms', 'load');
 $PAGE->requires->js_call_amd('local_classroom/classroom', 'load');
 $PAGE->requires->js_call_amd('local_classroom/classroom', 'classroomsData', array('view_type' => $formattype));
+$PAGE->requires->js(new moodle_url($CFG->wwwroot . '/local/courses/fulldescriptionpopover.js'));
 
 $core_component = new core_component();
 $epsilon_plugin_exist = $core_component::get_plugin_directory('theme', 'epsilon');

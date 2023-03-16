@@ -22,21 +22,23 @@
  * @copyright  2019 eAbyas <eAbyas.in>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
- 
+
 defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
-class local_costcenter_external extends external_api {
+class local_costcenter_external extends external_api
+{
 
-		/**
+    /**
      * Describes the parameters for submit_create_group_form webservice.
      * @return external_function_parameters
      */
-    public static function submit_costcenterform_form_parameters() {
+    public static function submit_costcenterform_form_parameters()
+    {
         return new external_function_parameters(
             array(
                 'contextid' => new external_value(PARAM_INT, 'The context id for the evaluation'),
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
-            
+
             )
         );
     }
@@ -48,124 +50,148 @@ class local_costcenter_external extends external_api {
      * @param [string] $jsonformdata 
      * @return costcenter form submits
      */
-	public function submit_costcenterform_form($contextid, $jsonformdata){
-		global $PAGE, $CFG;
+    public function submit_costcenterform_form($contextid, $jsonformdata)
+    {
+        global $PAGE, $CFG;
 
-		require_once($CFG->dirroot . '/local/costcenter/lib.php');
+        require_once($CFG->dirroot . '/local/costcenter/lib.php');
         // We always must pass webservice params through validate_parameters.
-		$params = self::validate_parameters(self::submit_costcenterform_form_parameters(),
-                                    ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
-		$context = (new \local_costcenter\lib\accesslib())::get_module_context();
+        $params = self::validate_parameters(
+            self::submit_costcenterform_form_parameters(),
+            ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]
+        );
+        $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
-		self::validate_context($context);
-		$serialiseddata = json_decode($params['jsonformdata']);
+        self::validate_context($context);
+        $serialiseddata = json_decode($params['jsonformdata']);
 
-		$data = array();
-       
+        $data = array();
+
         parse_str($serialiseddata, $data);
         $warnings = array();
-         // $mform = new local_costcenter\form\costcenterform(null, array(), 'post', '', null, true, $data);
-		 $mform = new local_costcenter\form\organization_form(null, array('formtype' => $data['formtype']), 'post', '', null, true, $data);
-		
+        // $mform = new local_costcenter\form\costcenterform(null, array(), 'post', '', null, true, $data);
+        $mform = new local_costcenter\form\organization_form(null, array('formtype' => $data['formtype']), 'post', '', null, true, $data);
+
         $valdata = $mform->get_data();
 
 
-        if($valdata){
-            if($valdata->id>0){
+        if ($valdata) {
+            if ($valdata->id > 0) {
                 $costcenterupdate = costcenter_edit_instance($valdata->id, $valdata);
-            } else{
-				$costcenterinsert = costcenter_insert_instance($valdata);
-			}
-		} else {
-			// Generate a warning.
+            } else {
+                $costcenterinsert = costcenter_insert_instance($valdata);
+            }
+        } else {
+            // Generate a warning.
             throw new moodle_exception('Error in creation');
-		}
-	}
+        }
+    }
 
 
-	/**
+    /**
      * Returns description of method result value.
      *
      * @return external_description
      * @since Moodle 3.0
      */
-    public static function submit_costcenterform_form_returns() {
+    public static function submit_costcenterform_form_returns()
+    {
         return new external_value(PARAM_INT, 'costcenter id');
     }
     /**
      * [costcenter_status_confirm_parameters description]
      * @return [external function param] [parameters for the costcenter status update]
      */
-	public static function costcenter_status_confirm_parameters() {
-		return new external_function_parameters(
-			array(
-				'action' => new external_value(PARAM_ACTION, 'Action of the event', false),
-				'id' => new external_value(PARAM_INT, 'ID of the record', 0),
-				'confirm' => new external_value(PARAM_INT, 'confirm',true),
-				'actionstatus' => new external_value(PARAM_RAW, 'actionstatus', false),
-				'actionstatusmsg' => new external_value(PARAM_RAW, 'actionstatusmsg', false),
-			)
-		);
-	}
-	/**
-	 * [costcenter_status_confirm description]
-	 * @param  [type] $action  [description]
-	 * @param  [int] $id      [id of the costcenter]
-	 * @param  [int] $confirm [confirmation key]
-	 * @return [boolean]          [true if success]
-	 */
-	public static function costcenter_status_confirm($action, $id, $confirm) {
-		global $DB;	
-		if ($id) {
-			$visible=$DB->get_field('local_costcenter','visible',array('id'=>$id));
-			if($visible==1){
-				$visible=0;
-			}else{
-				$visible=1;
-			}
-			$sql = "UPDATE {local_costcenter}
-               SET visible =$visible
-             WHERE id=$id";
-			
-			$DB->execute($sql);
-			$return = true;
-		} else {
-			$return = false;
-		}
-		
-		return $return;
-	}
-	/**
-	 * [costcenter_status_confirm_returns description]
-	 * @return [external value] [boolean]
-	 */
-	public static function costcenter_status_confirm_returns() {
-		return new external_value(PARAM_BOOL, 'return');
-	}
-	/**
-	 * [costcenter_delete_costcenter_parameters description]
-	 * @return [external value] [params for deleting costcenter]
-	 */
-	public static function costcenter_delete_costcenter_parameters(){
-		return new external_function_parameters(
+    public static function costcenter_status_confirm_parameters()
+    {
+        return new external_function_parameters(
+            array(
+                'action' => new external_value(PARAM_ACTION, 'Action of the event', false),
+                'id' => new external_value(PARAM_INT, 'ID of the record', 0),
+                'confirm' => new external_value(PARAM_INT, 'confirm', true),
+                'actionstatus' => new external_value(PARAM_RAW, 'actionstatus', false),
+                'actionstatusmsg' => new external_value(PARAM_RAW, 'actionstatusmsg', false),
+            )
+        );
+    }
+    /**
+     * [costcenter_status_confirm description]
+     * @param  [type] $action  [description]
+     * @param  [int] $id      [id of the costcenter]
+     * @param  [int] $confirm [confirmation key]
+     * @return [boolean]          [true if success]
+     */
+    public static function costcenter_status_confirm($action, $id, $confirm)
+    {
+        global $DB;
+        if ($id) {
+
+            $costcenter = $DB->get_record('local_costcenter', array('id' => $id), 'id, visible');
+            $costcenter->visible = ($costcenter->visible == 1) ? 0 : 1;
+            $costcenter->timemodified = time();
+            $return = $DB->update_record('local_costcenter', $costcenter);
+            if ($return) {
+                if ($costcenter->visible == 0) {
+                    $sql = " SELECT * FROM {user} where concat('/',open_path,'/') LIKE :costcenterid AND suspended = 0 ";
+                    $uparams['costcenterid'] = '%' . $id . '%';
+                    $costcenterusers = $DB->get_records_sql($sql, $uparams);
+                } else {
+                    $sql = " SELECT * FROM {user} where concat('/',open_path,'/') LIKE :costcenterid AND open_orgactive = 1 ";
+                    $uparams['costcenterid'] = '%' . $id . '%';
+                    $costcenterusers = $DB->get_records_sql($sql, $uparams);
+                }
+                foreach ($costcenterusers as $user) {
+                    if ($costcenter->visible == 0) {
+                        $user->suspended = 1;
+                        $user->open_orgactive = 1;
+                    } else {
+                        $user->suspended = 0;
+                        $user->open_orgactive = 0;
+                    }
+                    $update = $DB->update_record('user', $user);
+                }
+            }
+            $return = true;
+        } else {
+            $return = false;
+        }
+
+        return $return;
+    }
+    /**
+     * [costcenter_status_confirm_returns description]
+     * @return [external value] [boolean]
+     */
+    public static function costcenter_status_confirm_returns()
+    {
+        return new external_value(PARAM_BOOL, 'return');
+    }
+    /**
+     * [costcenter_delete_costcenter_parameters description]
+     * @return [external value] [params for deleting costcenter]
+     */
+    public static function costcenter_delete_costcenter_parameters()
+    {
+        return new external_function_parameters(
             array(
                 'id' => new external_value(PARAM_INT, 'userid', 0)
-           		)
+            )
         );
-	}
-	/**
-	 * [costcenter_delete_costcenter description]
-	 * @param  [int] $id id of costcenter to be deleted 
-	 * @return [boolean]     [true for success]
-	 */
-	public static function costcenter_delete_costcenter($id){
-		global $DB;
-        if($id){
+    }
+    /**
+     * [costcenter_delete_costcenter description]
+     * @param  [int] $id id of costcenter to be deleted 
+     * @return [boolean]     [true for success]
+     */
+    public static function costcenter_delete_costcenter($id)
+    {
+        global $DB;
+        if ($id) {
             $costcentercategory = $DB->get_field_sql("SELECT lc.category 
                 FROM {local_costcenter} AS lc 
                 JOIN {course_categories} AS cc ON cc.id = lc.category 
                 WHERE lc.id = {$id} ");
-            if($costcentercategory){
+            if ($costcentercategory) {
                 // require_once($CFG->libdir.'/coursecatlib.php');
                 // $category = coursecat::get($costcentercategory);
                 // $category->delete_full(false);
@@ -178,32 +204,34 @@ class local_costcenter_external extends external_api {
             $costcenterdelete .= $DB->delete_records('local_costcenter_permissions', array('costcenterid' => $id));
             $costcenterdelete = $DB->delete_records('course_categories', array('id' => $costcentercategory));
             return true;
-        }else {
+        } else {
             throw new moodle_exception('Error in deleting');
             return false;
         }
-		// if($id){
-		// 	$costcenterdelete = $DB->delete_records('local_costcenter', array('id' => $id));
-  //       	$costcenterdelete .= $DB->delete_records('local_costcenter_permissions', array('costcenterid' => $id));
-		// 	return true;
-		// }else {
-		// 	throw new moodle_exception('Error in deleting');
-		// 	return false;
-		// }
-	}
-	/**
-	 * [costcenter_delete_costcenter_returns description]
-	 * @return [external value] [boolean]
-	 */
-	public static function costcenter_delete_costcenter_returns() {
-		return new external_value(PARAM_BOOL, 'return');
-	}
+        // if($id){
+        // 	$costcenterdelete = $DB->delete_records('local_costcenter', array('id' => $id));
+        //       	$costcenterdelete .= $DB->delete_records('local_costcenter_permissions', array('costcenterid' => $id));
+        // 	return true;
+        // }else {
+        // 	throw new moodle_exception('Error in deleting');
+        // 	return false;
+        // }
+    }
+    /**
+     * [costcenter_delete_costcenter_returns description]
+     * @return [external value] [boolean]
+     */
+    public static function costcenter_delete_costcenter_returns()
+    {
+        return new external_value(PARAM_BOOL, 'return');
+    }
 
-	/**
+    /**
      * Describes the parameters for departmentlist webservice.
      * @return external_function_parameters
      */
-    public static function departmentlist_parameters() {
+    public static function departmentlist_parameters()
+    {
         return new external_function_parameters(
             array(
                 'orgid' => new external_value(PARAM_INT, 'The id for the costcenter / organization')
@@ -217,13 +245,14 @@ class local_costcenter_external extends external_api {
      * @param int $orgid id for the organization
      * @return array 
      */
-    public static function departmentlist($orgid) {
+    public static function departmentlist($orgid)
+    {
         global $DB, $CFG, $USER;
         $orglib = new local_costcenter\functions\userlibfunctions();
         $departmentlist = $orglib->find_departments_list($orgid);
         $return = array(
             'departments' => json_encode($departmentlist)
-            );
+        );
         return $return;
     }
 
@@ -232,7 +261,8 @@ class local_costcenter_external extends external_api {
      *
      * @return external_description
      */
-    public static function departmentlist_returns() {
+    public static function departmentlist_returns()
+    {
         return new external_function_parameters(
             array(
                 'departments' => new external_value(PARAM_RAW, 'Departmentlist ')
@@ -245,7 +275,8 @@ class local_costcenter_external extends external_api {
      * 
      * @return external_function_parameters
      */
-    public static function departmentview_parameters() {
+    public static function departmentview_parameters()
+    {
         return new external_function_parameters(
             array(
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data of licence settings form, encoded as a json array')
@@ -259,35 +290,38 @@ class local_costcenter_external extends external_api {
      * @param int $orgid id for the organization
      * @return array 
      */
-    public static function departmentview($jsonformdata) {
+    public static function departmentview($jsonformdata)
+    {
         global $PAGE;
 
-        $params = self::validate_parameters(self::departmentview_parameters(),
-                                            ['jsonformdata' => $jsonformdata]);
+        $params = self::validate_parameters(
+            self::departmentview_parameters(),
+            ['jsonformdata' => $jsonformdata]
+        );
 
         $serialiseddata = json_decode($params['jsonformdata']);
         $data = array();
         parse_str($serialiseddata, $data);
-        
-        $categorycontext =(new \local_costcenter\lib\accesslib())::get_module_context();
+
+        $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
         $PAGE->set_context($categorycontext);
         $mform = new \local_costcenter\functions\costcenter(null, array(), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
         $formdata = data_submitted();
         if ($validateddata) {
-	        set_config('serialkey', $validateddata->fullname, 'local_costcenter');
-	        $licencekeyhash = md5($validateddata->fullname);
-	        set_config('lms_serialkey', $licencekeyhash, 'local_costcenter');
+            set_config('serialkey', $validateddata->fullname, 'local_costcenter');
+            $licencekeyhash = md5($validateddata->fullname);
+            set_config('lms_serialkey', $licencekeyhash, 'local_costcenter');
 
-	        $return = array(
-	            'status' => 'success',
-	            'fullname' => $validateddata->fullname
-	            );
-        	return $return;
-	    }else{
-	    	throw new moodle_exception('Error in creation');
-	    }
+            $return = array(
+                'status' => 'success',
+                'fullname' => $validateddata->fullname
+            );
+            return $return;
+        } else {
+            throw new moodle_exception('Error in creation');
+        }
     }
 
     /**
@@ -295,7 +329,8 @@ class local_costcenter_external extends external_api {
      *
      * @return external_description
      */
-    public static function departmentview_returns() {
+    public static function departmentview_returns()
+    {
         return new external_function_parameters(
             array(
                 'status' => new external_value(PARAM_RAW, 'success/fail'),
@@ -303,7 +338,8 @@ class local_costcenter_external extends external_api {
             )
         );
     }
-    public static function subdepartmentlist_parameters(){
+    public static function subdepartmentlist_parameters()
+    {
         return new external_function_parameters(
             array(
                 'parentid' => new external_value(PARAM_INT, 'The id for the parent'),
@@ -311,18 +347,21 @@ class local_costcenter_external extends external_api {
             )
         );
     }
-    public static function subdepartmentlist($parentid, $parenttype){
+    public static function subdepartmentlist($parentid, $parenttype)
+    {
         global $DB, $CFG, $USER;
-        $params = self::validate_parameters(self::subdepartmentlist_parameters(),
-                                            ['parentid' => $parentid, 'parenttype' => $parenttype]);
-        if(is_array($parentid)){
+        $params = self::validate_parameters(
+            self::subdepartmentlist_parameters(),
+            ['parentid' => $parentid, 'parenttype' => $parenttype]
+        );
+        if (is_array($parentid)) {
             $parentid = implode(',', $parentid);
         }
-        if($parenttype == 'organization'){
+        if ($parenttype == 'organization') {
             $subdeptsql = "SELECT lc.id, lc.fullname FROM {local_costcenter} AS lc
                 JOIN {local_costcenter} AS llc ON llc.id=lc.parentid
                 WHERE llc.id IN (:id) ";
-        }else if($parenttype == 'department'){
+        } else if ($parenttype == 'department') {
             $subdeptsql = "SELECT lc.id, lc.fullname FROM {local_costcenter} AS lc
                 WHERE lc.parentid IN (:id) ";
         }
@@ -330,17 +369,19 @@ class local_costcenter_external extends external_api {
         $subdepartmentlist = $DB->get_records_sql_menu($subdeptsql, $params);
         $return = array(
             'subdepartments' => json_encode($subdepartmentlist)
-            );
+        );
         return $return;
     }
-    public static function subdepartmentlist_returns(){
+    public static function subdepartmentlist_returns()
+    {
         return new external_function_parameters(
             array(
                 'subdepartments' => new external_value(PARAM_RAW, 'Departmentlist')
             )
         );
     }
-    public static function form_option_selector_parameters(){
+    public static function form_option_selector_parameters()
+    {
         $query = new external_value(PARAM_RAW, 'Query string');
         $action = new external_value(PARAM_RAW, 'Action for the costcenter form selector');
         $options = new external_value(PARAM_RAW, 'Action for the kpichallenge form selector');
@@ -357,7 +398,8 @@ class local_costcenter_external extends external_api {
             'perpage' => $perpage,
         ));
     }
-    public static function form_option_selector($query, $context, $action, $options, $searchanywhere, $page, $perpage){
+    public static function form_option_selector($query, $context, $action, $options, $searchanywhere, $page, $perpage)
+    {
         global $CFG, $DB, $USER;
         $params = self::validate_parameters(self::form_option_selector_parameters(), array(
             'query' => $query,
@@ -373,9 +415,9 @@ class local_costcenter_external extends external_api {
         $context = self::get_context_from_params($params['context']);
         $options = $params['options'];
 
-        $searchanywhere=$params['searchanywhere'];
-        $page=$params['page'];
-        $perpage=$params['perpage'];
+        $searchanywhere = $params['searchanywhere'];
+        $page = $params['page'];
+        $perpage = $params['perpage'];
 
         if (!empty($options)) {
             $formoptions = json_decode($options);
@@ -389,7 +431,7 @@ class local_costcenter_external extends external_api {
 
             $return = array();
 
-            switch($action) {
+            switch ($action) {
                 case 'costcenter_organisation_selector':
                     $fields = array("fullname"/*, "shortname"*/);
                     $sqlparams['parentid'] = 0;
@@ -408,22 +450,23 @@ class local_costcenter_external extends external_api {
                     if ($formoptions->id == 0) {
                         $accountssql .= ' AND visible = 1';
                     }
-                
-                    $accounts = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+
+                    $accounts = $DB->get_records_sql($fields . $accountssql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                     if ($accounts) {
                         $totalaccounts = count($accounts);
                         $moreaccounts = $totalaccounts > $perpage;
-            
+
                         if ($moreaccounts) {
                             // We need to discard the last record.
                             array_pop($accounts);
                         }
                     }
                     $return = array_values(json_decode(json_encode(($accounts)), true));
-                break;
+                    break;
                 case 'costcenter_department_selector':
-                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) || 
-                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0) ) {
+                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) ||
+                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0)
+                    ) {
                         $fields = array("fullname"/*, "shortname"*/);
 
                         $likesql = array();
@@ -447,24 +490,25 @@ class local_costcenter_external extends external_api {
                         }
                         $sqlparams = array_merge($sqlparams, $organisationparams);
 
-                        $departments = $allobjectarr+$DB->get_records_sql($fields.$lobssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                        $departments = $allobjectarr + $DB->get_records_sql($fields . $lobssql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                         // if ($departments) {
                         //     $totaldepartments = count($departments);
                         //     $moredepartments = $totaldepartments > $perpage;
-                
+
                         //     if ($morelobs) {
                         //         // We need to discard the last record.
                         //         array_pop($departments);
                         //     }
                         // }
                         $return = array_values($departments);
-                    }else{
+                    } else {
                         $return = $allobjectarr;
                     }
-                break;
+                    break;
                 case 'costcenter_subdepartment_selector':
-                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) || 
-                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0) ) {
+                    if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) ||
+                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0)
+                    ) {
                         $fields = array("fullname"/*, "shortname"*/);
 
                         $likesql = array();
@@ -479,7 +523,7 @@ class local_costcenter_external extends external_api {
 
                         //$sqlparams['parentid'] = $formoptions->parentid;
 
-                        if(count($formoptions->parentid) == 1 && array_values($formoptions->parentid)[0] != 0){
+                        if (count($formoptions->parentid) == 1 && array_values($formoptions->parentid)[0] != 0) {
 
                             list($parentidsql, $parentparams) = $DB->get_in_or_equal($formoptions->parentid, SQL_PARAMS_NAMED, 'organisationid');
 
@@ -491,60 +535,62 @@ class local_costcenter_external extends external_api {
                             }
                             $sqlparams = array_merge($sqlparams, $parentparams);
 
-                            $subdepartments = $allobjectarr+$DB->get_records_sql($fields.$subdepartmentsql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                            $subdepartments = $allobjectarr + $DB->get_records_sql($fields . $subdepartmentsql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                             if ($departments) {
                                 $totalsubdepartments = count($subdepartments);
                                 $moresubdepartments = $totalsubdepartments > $perpage;
-                    
+
                                 if ($moresubdepartments) {
                                     // We need to discard the last record.
                                     array_pop($subdepartments);
                                 }
                             }
                             $return = array_values(json_decode(json_encode(($subdepartments)), true));
-                        }else{
+                        } else {
                             $return = array_values(json_decode(json_encode(($allobjectarr)), true));
                         }
-                    }else{
+                    } else {
                         $return = array_values(json_decode(json_encode(($allobjectarr)), true));
                     }
-                break;
+                    break;
                 case 'costcenter_category_selector':
-                    if ((int)$formoptions->organisationid  || 
-                        (int)$formoptions->departmentid || 
-                        (int)$formoptions->subdepartment ) {
+                    if (
+                        (int)$formoptions->organisationid  ||
+                        (int)$formoptions->departmentid ||
+                        (int)$formoptions->subdepartment
+                    ) {
                         $parentid_array = array();
-                        if(!empty($formoptions->subdepartment)){
-                            if(is_array($formoptions->subdepartment)){
-                                if(count($formoptions->subdepartment) ==1){
+                        if (!empty($formoptions->subdepartment)) {
+                            if (is_array($formoptions->subdepartment)) {
+                                if (count($formoptions->subdepartment) == 1) {
                                     $subdepartment = $formoptions->subdepartment[0];
-                                }else{
-                                    $subdepartment = 0;//all condition application for multiple selections
+                                } else {
+                                    $subdepartment = 0; //all condition application for multiple selections
                                 }
-                            }else{
+                            } else {
                                 $subdepartment = $formoptions->departmentid;
                             }
-                            if((int)$subdepartment > 0){
+                            if ((int)$subdepartment > 0) {
                                 $parentid = $subdepartment;
                             }
                         }
                         // var_dump($parentid);
-                        if(!empty($formoptions->departmentid)  && empty($parentid)) {
-                            if(is_array($formoptions->departmentid)){
-                                if(count($formoptions->departmentid) ==1){
+                        if (!empty($formoptions->departmentid)  && empty($parentid)) {
+                            if (is_array($formoptions->departmentid)) {
+                                if (count($formoptions->departmentid) == 1) {
                                     $departmentid = $formoptions->departmentid[0];
-                                }else{
-                                    $departmentid = 0;//add condition application for multiple selection.
+                                } else {
+                                    $departmentid = 0; //add condition application for multiple selection.
                                 }
-                            }else{
+                            } else {
                                 $departmentid = $formoptions->departmentid;
                             }
-                            if((int)$departmentid > 0){
+                            if ((int)$departmentid > 0) {
                                 $parentid = $departmentid;
                             }
                         }
-                        if(!empty($formoptions->organisationid) && empty($parentid)){
-                            if((int)$formoptions->organisationid > 0){
+                        if (!empty($formoptions->organisationid) && empty($parentid)) {
+                            if ((int)$formoptions->organisationid > 0) {
                                 $parentid = $formoptions->organisationid;
                             }
                         }
@@ -554,7 +600,7 @@ class local_costcenter_external extends external_api {
 
                         $likesql = array();
                         $i = 0;
-                        if($query != ''){
+                        if ($query != '') {
                             foreach ($fields as $field) {
                                 $i++;
                                 $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
@@ -562,7 +608,7 @@ class local_costcenter_external extends external_api {
                             }
                             $sqlfields = implode(" OR ", $likesql);
                             $concatsql = " AND ($sqlfields) ";
-                        }else{
+                        } else {
                             $sqlparams = [];
                             $concatsql = " ";
                         }
@@ -577,47 +623,47 @@ class local_costcenter_external extends external_api {
                         // }
                         // var_dump($fields.$categoriessql);
                         // var_dump($sqlparams);
-                        $categories = $DB->get_records_sql_menu($fields.$categoriessql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                        $categories = $DB->get_records_sql_menu($fields . $categoriessql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                         if ($categories) {
                             $totalcategories = count($categories);
                             $morecategories = $totalcategories > $perpage;
-                
+
                             if ($morecategories) {
                                 // We need to discard the last record.
                                 array_pop($categories);
                             }
                         }
-                        foreach($categories AS $key => $categorywise){
-                            $explodepaths = explode('/',$categorywise);
+                        foreach ($categories as $key => $categorywise) {
+                            $explodepaths = explode('/', $categorywise);
 
                             $countcat = count($explodepaths);
-                            if($countcat > 0){
+                            if ($countcat > 0) {
                                 $catpathnames = array();
-                                for ($i=0; $i < $countcat; $i++) { 
-                                    if($i != 0){
-                                        $catpathnames[$i] = $DB->get_field('course_categories','name',array('id' => $explodepaths[$i]));
+                                for ($i = 0; $i < $countcat; $i++) {
+                                    if ($i != 0) {
+                                        $catpathnames[$i] = $DB->get_field('course_categories', 'name', array('id' => $explodepaths[$i]));
                                     }
                                 }
-                                if(count($catpathnames) > 1){
-                                    $return[] = array('id' => $key, 'fullname' => implode(' / ',$catpathnames));
-                                }else{
+                                if (count($catpathnames) > 1) {
+                                    $return[] = array('id' => $key, 'fullname' => implode(' / ', $catpathnames));
+                                } else {
                                     $return[] = array('id' => $key, 'fullname' => $catpathnames[1]);;
                                 }
                             }
                         }
                     }
-                break;
-                case 'costcenter_course_selector' :
+                    break;
+                case 'costcenter_course_selector':
                     $classname = '\\local_courses\\local\\general_lib';
                     $class = class_exists($classname) ? new $classname() : NULL;
-                    if(!is_null($class)){
+                    if (!is_null($class)) {
                         $methodname = 'get_courses_having_completion_criteria';
-                        if(isset($formoptions->courseid) && $formoptions->courseid > 1 && method_exists($class, $methodname)){
-                            $courses = $class->$methodname($formoptions->courseid, $query, ($page * $perpage) -0, $perpage + 1);
+                        if (isset($formoptions->courseid) && $formoptions->courseid > 1 && method_exists($class, $methodname)) {
+                            $courses = $class->$methodname($formoptions->courseid, $query, ($page * $perpage) - 0, $perpage + 1);
                             if ($courses) {
                                 $totalcourses = count($courses);
                                 $morecourses = $totalcourses > $perpage;
-                    
+
                                 if ($morecourses) {
                                     // We need to discard the last record.
                                     array_pop($courses);
@@ -626,27 +672,29 @@ class local_costcenter_external extends external_api {
                             $return = array_values(json_decode(json_encode(($courses)), true));
                         }
                     }
-                break;
+                    break;
                 case 'costecenter_coursetype_selector':
                     if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) ||
-                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0) ) {
+                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0)
+                    ) {
                         list($organisationidssql, $organisationparams) = $DB->get_in_or_equal($formoptions->parentid, SQL_PARAMS_NAMED, 'organisationid');
 
                         $fields      = 'SELECT id, name as fullname';
                         $lobssql = " FROM {local_course_types}
                                          WHERE  active = 1 AND orgid $organisationidssql OR orgid=0 ";
-                        $coursetypes = $DB->get_records_sql($fields.$lobssql, $organisationparams, ($page * $perpage) -0, $perpage + 1);
+                        $coursetypes = $DB->get_records_sql($fields . $lobssql, $organisationparams, ($page * $perpage) - 0, $perpage + 1);
                         $return = array_values(json_decode(json_encode($coursetypes), true));
                     }
-                break;
+                    break;
                 case 'custom_category_selector':
                     if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) ||
-                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0) ) {
+                        (!is_array($formoptions->parentid) && $formoptions->parentid > 0)
+                    ) {
                         $sqlparams['parentid'] = $formoptions->parentid ? $formoptions->parentid : 0;
                         $fields = array("fullname");
                         $likesql = array();
                         $i = 0;
-                        if(!empty($query)){
+                        if (!empty($query)) {
                             foreach ($fields as $field) {
                                 $i++;
                                 $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
@@ -655,31 +703,31 @@ class local_costcenter_external extends external_api {
                             $sqlfields = implode(" OR ", $likesql);
                             $concatsql .= " AND ($sqlfields) ";
                         }
-                        if($formoptions->type == 'parent_selector'){
+                        if ($formoptions->type == 'parent_selector') {
                             $fields      = 'SELECT id, fullname , parentid ';
                             $accountssql = " FROM {local_custom_category}
                                 WHERE 1=1 AND depth =1 $concatsql AND costcenterid = :parentid ";
-                        }else{
+                        } else {
                             $fields      = 'SELECT id, fullname, parentid ';
                             $accountssql = " FROM {local_custom_category}
                                 WHERE 1=1 $concatsql AND costcenterid = :parentid ";
                         }
-                        if($formoptions->id > 0){
-                            $accountssql .= " AND id !=".$formoptions->id;
+                        if ($formoptions->id > 0) {
+                            $accountssql .= " AND id !=" . $formoptions->id;
                         }
 
 
-                        $customcat = $DB->get_records_sql($fields.$accountssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
-                        foreach($customcat as $cat){
+                        $customcat = $DB->get_records_sql($fields . $accountssql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
+                        foreach ($customcat as $cat) {
                             $parentname = '';
-                            if($cat->parentid > 0){
+                            if ($cat->parentid > 0) {
                                 $parentname = $DB->get_field('local_custom_category', 'fullname', ['id' => $cat->parentid]);
                             }
-                            if($parentname){
-                                $cat->fullname = $parentname . ' / '. $cat->fullname;
+                            if ($parentname) {
+                                $cat->fullname = $parentname . ' / ' . $cat->fullname;
                             }
                         }
-                        if($formoptions->enableallfield){
+                        if ($formoptions->enableallfield) {
                             $customcat = $allobjectarr + $customcat;
                         }
                         if ($customcat) {
@@ -691,20 +739,20 @@ class local_costcenter_external extends external_api {
                                 array_pop($customcat);
                             }
                         }
-                        foreach($customcat AS $key => $categorywise){
-                            $explodepaths = explode('/',$categorywise);
+                        foreach ($customcat as $key => $categorywise) {
+                            $explodepaths = explode('/', $categorywise);
 
                             $countcat = count($explodepaths);
-                            if($countcat > 0){
+                            if ($countcat > 0) {
                                 $catpathnames = array();
-                                for ($i=0; $i < $countcat; $i++) {
-                                    if($i != 0){
-                                        $catpathnames[$i] = $DB->get_field('local_custom_category','fullname',array('id' => $explodepaths[$i]));
+                                for ($i = 0; $i < $countcat; $i++) {
+                                    if ($i != 0) {
+                                        $catpathnames[$i] = $DB->get_field('local_custom_category', 'fullname', array('id' => $explodepaths[$i]));
                                     }
                                 }
-                                if(count($catpathnames) > 1){
-                                    $return[] = array('id' => $key, 'fullname' => implode(' / ',$catpathnames));
-                                }else{
+                                if (count($catpathnames) > 1) {
+                                    $return[] = array('id' => $key, 'fullname' => implode(' / ', $catpathnames));
+                                } else {
                                     $return[] = array('id' => $key, 'fullname' => $catpathnames[1]);;
                                 }
                             }
@@ -712,36 +760,35 @@ class local_costcenter_external extends external_api {
 
                         $return = array_values(json_decode(json_encode($customcat), true));
                     }
-                break;
+                    break;
                 case 'costcenter_element_selector':
                     $fields = array("fullname");
-                    if($formoptions->depth < $USER->useraccess['currentroleinfo']['depth']){
+                    if ($formoptions->depth < $USER->useraccess['currentroleinfo']['depth']) {
                         $elements = $USER->useraccess['currentroleinfo']['contextinfo'];
-                        if($USER->useraccess['currentroleinfo']['depth']-1 > $formoptions->depth){
+                        if ($USER->useraccess['currentroleinfo']['depth'] - 1 > $formoptions->depth) {
                             $elements = [$elements[0]];
                         }
 
-                        $accounts = array_map(function($data)use($formoptions, $DB){
-                            $identifiers = explode('/',$data['costcenterpath']);
+                        $accounts = array_map(function ($data) use ($formoptions, $DB) {
+                            $identifiers = explode('/', $data['costcenterpath']);
                             $identifier = $identifiers[$formoptions->depth];
                             $fullname = $DB->get_field('local_costcenter', 'fullname', ['id' => $identifier]);
                             return array('id' => $identifier, 'fullname' => $fullname);
-                        },$elements);
-
-                    }else{
+                        }, $elements);
+                    } else {
                         $parentids = [];
-                        if(is_array($formoptions->parentid)){
+                        if (is_array($formoptions->parentid)) {
                             $parentids = $formoptions->parentid;
-                            if(empty($parentids) && $formoptions->prefix != 'filter'){
+                            if (empty($parentids) && $formoptions->prefix != 'filter') {
                                 array_push($parentids, 0);
                             }
-                        }else{
+                        } else {
                             $parentid = $formoptions->parentid ? $formoptions->parentid : 0;
                             array_push($parentids, $parentid);
                         }
-                        if(!empty($parentids)){
+                        if (!empty($parentids)) {
                             list($parentsql, $parentparams) = $DB->get_in_or_equal($parentids, SQL_PARAMS_NAMED, 'organisationid');
-                        }else{
+                        } else {
                             $parentsql = '';
                             $parentparams = [];
                         }
@@ -749,7 +796,7 @@ class local_costcenter_external extends external_api {
                         $sqlparams['depth'] = $formoptions->depth;
                         $likesql = array();
                         $i = 0;
-                        if(!empty($query)){
+                        if (!empty($query)) {
                             foreach ($fields as $field) {
                                 $i++;
                                 $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
@@ -764,9 +811,9 @@ class local_costcenter_external extends external_api {
                         if ($formoptions->id == 0) {
                             $accountssql .= ' AND visible = 1';
                         }
-                        $accounts = $DB->get_records_sql($fields.$accountssql, array_merge($parentparams, $sqlparams), ($page * $perpage) -0, $perpage + 1);
+                        $accounts = $DB->get_records_sql($fields . $accountssql, array_merge($parentparams, $sqlparams), ($page * $perpage) - 0, $perpage + 1);
 
-                        if($formoptions->enableallfield){
+                        if ($formoptions->enableallfield) {
                             $accounts = $allobjectarr + $accounts;
                         }
                         if ($accounts) {
@@ -780,10 +827,10 @@ class local_costcenter_external extends external_api {
                         }
                     }
                     $return = array_values(json_decode(json_encode(($accounts)), true));
-                break;
+                    break;
                 case 'user_supervisor_selector':
-                    $sqlparams['parentpath'] = $formoptions->parentid ? '%/'.$formoptions->parentid.'/%' : 0;
-                    if(!empty($query)){
+                    $sqlparams['parentpath'] = $formoptions->parentid ? '%/' . $formoptions->parentid . '/%' : 0;
+                    if (!empty($query)) {
                         $fields = array("u.firstname", "u.lastname");
                         foreach ($fields as $field) {
                             $i++;
@@ -796,11 +843,11 @@ class local_costcenter_external extends external_api {
                     $fields = "SELECT id, concat(u.firstname,' ',u.lastname) AS fullname ";
                     $userssql = " FROM {user} AS u
                                          WHERE u.suspended = 0 AND u.deleted = 0 $concatsql AND CONCAT('/', u.open_path,'/') LIKE :parentpath ";
-                    if($formoptions->id > 0){
+                    if ($formoptions->id > 0) {
                         $userssql .= " AND u.id <> :userid ";
                         $sqlparams['userid'] = $formoptions->id;
                     }
-                    $users = $DB->get_records_sql($fields.$userssql, $sqlparams, ($page * $perpage) -0, $perpage + 1);
+                    $users = $DB->get_records_sql($fields . $userssql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                     if ($users) {
                         $totalusers = count($users);
                         $moreusers = $totalusers > $perpage;
@@ -810,24 +857,26 @@ class local_costcenter_external extends external_api {
                         }
                     }
                     $return = array_values(json_decode(json_encode(($users)), true));
-                break;
+                    break;
             }
         }
         return json_encode($return);
     }
-    public static function form_option_selector_returns(){
+    public static function form_option_selector_returns()
+    {
         return new external_value(PARAM_RAW, 'data');
     }
-    
+
     /* Start of Department Creation*/
- public static function department_create_parameters() {
+    public static function department_create_parameters()
+    {
         return new external_function_parameters(
             array(
                 'orgcode' => new external_value(PARAM_RAW, 'The context id for the evaluation'),
                 'fullname' => new external_value(PARAM_RAW, 'DepartmentName'),
                 'departmentcode' => new external_value(PARAM_RAW, 'Department Code'),
 
-            
+
             )
         );
     }
@@ -839,42 +888,41 @@ class local_costcenter_external extends external_api {
      * @param [string] $jsonformdata 
      * @return costcenter form submits
      */
-    public function department_create($orgcode, $fullname, $departmentcode){
+    public function department_create($orgcode, $fullname, $departmentcode)
+    {
         global $PAGE, $CFG, $DB;
 
         require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
         // We always must pass webservice params through validate_parameters.
-        $params = self::validate_parameters(self::department_create_parameters(),
-                                ['orgcode' => $orgcode, 'fullname' => $fullname,'departmentcode' => $departmentcode]);
+        $params = self::validate_parameters(
+            self::department_create_parameters(),
+            ['orgcode' => $orgcode, 'fullname' => $fullname, 'departmentcode' => $departmentcode]
+        );
         $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
-        $departmentcode = preg_replace('/\s+/','',$departmentcode);
+        $departmentcode = preg_replace('/\s+/', '', $departmentcode);
         $data = array();
-        $orgid= $DB->get_field('local_costcenter','id',array('shortname'=>$orgcode));
-     
-        $valdata= $DB->get_field('local_costcenter','id',array('shortname'=>$departmentcode,'parentid'=>$orgid));
-        $deptdata->parentid= $orgid;
+        $orgid = $DB->get_field('local_costcenter', 'id', array('shortname' => $orgcode));
+
+        $valdata = $DB->get_field('local_costcenter', 'id', array('shortname' => $departmentcode, 'parentid' => $orgid));
+        $deptdata->parentid = $orgid;
         $deptdata->fullname = $fullname;
-        $deptdata->shortname= $departmentcode;
+        $deptdata->shortname = $departmentcode;
 
-        if($valdata){
-          $valdata->id= $valdata;
-          $deptdata->id = $valdata;
-               $costcenterupdate= costcenter_edit_instance($valdata, $deptdata);
-               $return[] = array('status' => 'success', 'departmentid' => $valdata);
-
+        if ($valdata) {
+            $valdata->id = $valdata;
+            $deptdata->id = $valdata;
+            $costcenterupdate = costcenter_edit_instance($valdata, $deptdata);
+            $return[] = array('status' => 'success', 'departmentid' => $valdata);
         } else {
-                $costcenterinsert = costcenter_insert_instance($deptdata);
-                
-                if($costcenterinsert) {
-                   $return[] = array('status' => 'success', 'departmentid' => $costcenterinsert);
+            $costcenterinsert = costcenter_insert_instance($deptdata);
 
-                }
-                
+            if ($costcenterinsert) {
+                $return[] = array('status' => 'success', 'departmentid' => $costcenterinsert);
+            }
         }
-      return $return;
-
+        return $return;
     }
 
 
@@ -885,8 +933,9 @@ class local_costcenter_external extends external_api {
      * @return external_description
      * @since Moodle 3.0
      */
- 
-    public static function department_create_returns(){
+
+    public static function department_create_returns()
+    {
         return new external_multiple_structure(
             new external_single_structure(
                 array(
@@ -900,7 +949,8 @@ class local_costcenter_external extends external_api {
 
     /*End of Department creation */
 
-    public function generate_shortcode_parameters(){
+    public function generate_shortcode_parameters()
+    {
         return new external_function_parameters(
             array(
                 'accountid' => new external_value(PARAM_INT, 'Account id', 0),
@@ -910,31 +960,34 @@ class local_costcenter_external extends external_api {
             )
         );
     }
-    public function generate_shortcode($accountid, $contextid,$actions){
-        $params = self::validate_parameters(self::generate_shortcode_parameters(),
-                                    ['accountid'=>$accountid, 'contextid' => $contextid,'actions'=>$actions]);
+    public function generate_shortcode($accountid, $contextid, $actions)
+    {
+        $params = self::validate_parameters(
+            self::generate_shortcode_parameters(),
+            ['accountid' => $accountid, 'contextid' => $contextid, 'actions' => $actions]
+        );
         $context = \context::instance_by_id($params['contextid']);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
         global $DB;
         switch ($actions) {
             case 'accountselect':
-                if($accountid > 0){
-                    try{
+                if ($accountid > 0) {
+                    try {
                         $return = $DB->get_field('local_costcenter', 'shortname', array('id' => $accountid));
-                    }catch(Exception $e){
-                         $return = '';
+                    } catch (Exception $e) {
+                        $return = '';
                     }
                 }
                 break;
-                default:
+            default:
 
                 break;
         }
         return $return;
-
     }
-    public function generate_shortcode_returns(){
+    public function generate_shortcode_returns()
+    {
         return new external_value(PARAM_RAW, 'Data of account');
     }
 }

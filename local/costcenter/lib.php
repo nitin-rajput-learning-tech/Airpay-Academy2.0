@@ -814,6 +814,7 @@ function local_costcenter_plugins_count($costcenterid, $departmentid=false, $sub
     $core_component = new core_component();
     $local_pluginlist = $core_component::get_plugin_list('local');
     $deparray = array();
+    $deparray['datacount']=0;
     foreach($local_pluginlist as $key => $local_pluginname){
         if(file_exists($CFG->dirroot.'/local/'.$key.'/lib.php')){
             require_once($CFG->dirroot.'/local/'.$key.'/lib.php');
@@ -827,6 +828,13 @@ function local_costcenter_plugins_count($costcenterid, $departmentid=false, $sub
                 // }
                 foreach($data as  $key => $val){
                     $deparray[$key] = $val;
+
+                    if (gettype($val) != 'string' && preg_match("/count/", $key)){
+
+                       $deparray['datacount']=$deparray['datacount']+$val;
+
+
+                    }
                 }
             }
         }

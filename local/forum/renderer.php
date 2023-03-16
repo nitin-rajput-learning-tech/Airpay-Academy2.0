@@ -72,7 +72,7 @@ class local_forum_renderer extends plugin_renderer_base {
     public function get_catalog_forum($filter = false,$view_type='card') {
       global $USER;
       $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
-      $status = optional_param('status', '', PARAM_RAW);
+      $forum = optional_param('forum', '', PARAM_RAW);
       $costcenterid = optional_param('costcenterid', '', PARAM_INT);
       $departmentid = optional_param('departmentid', '', PARAM_INT);
       $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
@@ -85,7 +85,6 @@ class local_forum_renderer extends plugin_renderer_base {
       // $stable->length = -1;
       // $stable->search = '';
       // $stable->pagetype ='page';
-
       $templateName = 'local_forum/forum_view';
       $cardClass = 'col-md-6 col-12';
       $perpage = 10;
@@ -98,7 +97,7 @@ class local_forum_renderer extends plugin_renderer_base {
       $options['methodName']='local_forum_forum_view';
       $options['templateName']= $templateName;
       $options = json_encode($options);
-      $filterdata = json_encode(array('status' => $status, 'filteropen_costcenterid' => $costcenterid, 'filteropen_department' => $departmentid, 'filteropen_subdepartment' => $subdepartmentid, 'filteropen_level4department' => $l4department, 'filteropen_level5department' => $l5department));
+      $filterdata = json_encode(array('forum' => $forum, 'filteropen_costcenterid' => $costcenterid, 'filteropen_department' => $departmentid, 'filteropen_subdepartment' => $subdepartmentid, 'filteropen_level4department' => $l4department, 'filteropen_level5department' => $l5department));
       $dataoptions = json_encode(array('userid' => $USER->id, 'contextid' => $categorycontext->id,'status' => $status, 'filteropen_costcenterid' => $costcenterid, 'filteropen_department' => $departmentid,'filteropen_subdepartment' => $subdepartmentid, 'filteropen_level4department' => $l4department, 'filteropen_level5department' => $l5department));
       // $filterdata = json_encode(array('status'=>$status,'organizations'=>$costcenterid,'departments'=>$departmentid));
       // $dataoptions = json_encode(array('contextid' => $categorycontext->id,'status'=>$status,'costcenterid'=>$costcenterid,'departmentid'=>$departmentid));

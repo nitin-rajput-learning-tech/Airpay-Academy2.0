@@ -90,7 +90,8 @@
                         <p class="text-muted">{{{ description }}}</p>
                     {{/ descriptionstring }}
                     {{# descriptionstring}}
-                        <p class="text-muted">{{ descriptionstring }} ...</p>
+                        <p class="text-muted">{{ descriptionstring }} ...{{# fullonlineexamsummary }}<a href= "#" data-toggle="popover" title="{{ classname }}" data-content="{{ fullonlineexamsummary }}">{{#str}}more{{/str}}</a>{{/ fullonlineexamsummary }}</p>
+                        
                     {{/ descriptionstring }}
                 {{/ isdescription}}
                 {{^ isdescription }}
