@@ -3283,3 +3283,28 @@ body .que .info>div {
 .pagination .ng-scope.active>a{
     border:1px solid #ddd;
 }
+
+/*online quiz view page css*/
+#page-mod-quiz-view .activity-information .description-inner{
+    display: flex;
+}
+#page-mod-quiz-view .activity-information .description-inner>div{
+    margin-right: 10px;
+}
+#page-mod-quiz-view .tertiary-navigation .row{
+    justify-content: end;
+}
+#page-mod-quiz-view .generaltable.quizattemptsummary{
+    box-shadow: 0 4px 5px #ddd;
+}
+#page-mod-quiz-view .quizinfo{
+    display: flex;
+    background-color: #f0f4fe;
+    padding-left: 1rem;
+    margin-top: 1rem;
+}
+#page-mod-quiz-view .quizinfo p{
+    margin-right: 10px;
+    margin-bottom: 0;
+    font-size: 15px;
+}
