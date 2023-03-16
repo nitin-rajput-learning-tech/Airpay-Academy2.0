@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * This file is part of eAbyas
  *
  * Copyright eAbyas Info Solutons Pvt Ltd, India
@@ -21,10 +21,11 @@
  * @package BizLMS
  * @subpackage block_learnerscript
  */
+use block_learnerscript\local\querylib;
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 
-class report_trainerslist extends reportbase implements report {
+class report_trainermanhours extends reportbase implements report {
     /**
      * @param object $report Report object
      * @param object $reportproperties Report properties object
@@ -32,24 +33,24 @@ class report_trainerslist extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
         $this->parent = true;
-        $this->columns = array('trainerslist' => array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered'));
-        $this->components = array('columns', 'filters', 'permissions');
-        $this->filters = array('organization','departments', 'subdepartments', 'trainers');
-        $this->orderable = array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered');
-        $this->defaultcolumn = 'u.id';
+        $this->columns = array('classroomfield'=>['classroomfield'],'userfield'=>['userfield'],'trainermanhours' => array('traininghours', 'userscovered'));
+        $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
+        $this->filters = array('organization','departments', 'subdepartments', 'classrooms','trainers');
+        $this->defaultcolumn = 'lc.id';        
     }
     
     function init() {
         parent::init();
     }
 
+
     function count() {
-        $this->sql = " SELECT COUNT(ra.id) ";
+        $this->sql = " SELECT COUNT(lc.id) ";
     }
 
     function select() {
        
-        $this->sql  = "SELECT u.id, CONCAT(u.firstname,' ',u.lastname) as trainername , u.email as email,u.open_employeeid ";
+        $this->sql  = "SELECT lc.id as classroomid,u.id as userid , lc.name,lc.startdate,CONCAT(u.firstname,' ',u.lastname) as fullname , u.email as email,u.open_employeeid ";
         parent::select();                
     }
     function from() {
@@ -57,7 +58,9 @@ class report_trainerslist extends reportbase implements report {
     }
 
     function joins() {
-        $this->sql .= " JOIN {user} AS u on u.id=ra.userid ";
+        $this->sql .= " JOIN {user} AS u on u.id=ra.userid 
+                        JOIN {local_classroom_trainers} AS lct ON lct.trainerid=u.id
+                        JOIN {local_classroom} AS lc ON lc.id = lct.classroomid ";
         parent::joins();
     }
 
@@ -74,18 +77,17 @@ class report_trainerslist extends reportbase implements report {
         }
         parent::where();
     }
-   
+       
     function search(){
         if (isset($this->search) && $this->search) {
-            $fields = array('c.fullname',"CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
+            $fields = array('lc.fullname',"CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
             $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
             $fields .= " LIKE '%" . $this->search . "%' ";
             $this->sql .= " AND ($fields) ";
         }
     } 
 
-    function filters(){
-
+    function filters(){    
         if ($this->params['filter_organization'] > 0) {
             $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
             $this->sql .= " AND concat(u.open_path,'/') like :orgpath ";
@@ -101,32 +103,53 @@ class report_trainerslist extends reportbase implements report {
             $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
             $this->sql .= " AND concat(u.open_path,'/') like :l3dept ";
             $this->params['l3dept'] = $l3dept.'/%';
-        }
-        if ($this->params['filter_level4department'] > 0) {
-            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
-            $this->params['l4dept'] = $l4dept.'/%';
-        }
-        if ($this->params['filter_level5department'] > 0) {
-            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
-            $this->params['l5dept'] = $l5dept.'/%';
-        }
+        }    
 
         if (isset($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
             $userid = $this->params['filter_trainers'];
             $this->sql .= " AND u.id IN ($userid) ";
-        }
-
+        } 
     }
-
+    
     /**
      * [get_rows description]
      * @param  array  $trainermandays [description]
      * @return [type]        [description]
      **/
     public function get_rows($data = array()) {
-       
-        return $data;
+       return $data;
     }
+
+    public function column_queries($column, $userid){
+        $where = " AND %placeholder% = $userid";          
+      
+        switch ($column) {
+            case 'traininghours':
+                $identy = "cs.trainerid";
+                $query = "SELECT SUM(round(cs.duration/60, 2)) 
+                            FROM {local_classroom_sessions} cs
+                            JOIN {local_classroom} c ON cs.classroomid = c.id
+                            WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
+                            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) 
+                            $where ";
+                break;
+            case 'userscovered':
+                $identy = "cs.trainerid";
+                $query = "SELECT count(distinct cat.userid) 
+                            FROM {local_classroom_attendance} cat
+                            JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1
+                            JOIN {local_classroom} c ON cs.classroomid = c.id
+                            WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
+                            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4)
+                            $where ";
+                break;
+           
+            default:
+                return false;
+                break;
+        }
+        $query = str_replace('%placeholder%', $identy, $query);
+        return $query;
+    }
+
 }

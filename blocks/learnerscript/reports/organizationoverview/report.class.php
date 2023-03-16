@@ -39,7 +39,7 @@ class report_organizationoverview extends reportbase implements report {
         //$this->courselevel = true;
         $this->parent = true;
         $this->filters = ['organization'];
-        $this->orderable = array('costcentername');
+        $this->orderable = array('costcentername', 'totaldepartment', 'totalcourses', 'totallp' ,'totalilts', 'totalprogram', 'totalactuser');
         $this->defaultcolumn = 'c.id';
 
     }

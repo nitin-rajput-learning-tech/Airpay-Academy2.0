@@ -92,6 +92,15 @@ class plugin_trainingsoverview extends pluginbase {
                     $row->{$data->column} = 0;
                 }    
             break; 
+            case 'sessiontime':
+                $sessiontime  = date("H:i:s", $row->timestart) . '-' . date("H:i:s", $row->timefinish);
+                if($sessiontime){
+                    $row->{$data->column} = $sessiontime;
+                }else{
+                    $row->{$data->column} = 0;
+                }    
+            break; 
+            
             case 'type':
                 $type=get_string('pluginname', 'local_classroom');
                 if($row->onlinesession==1){
@@ -130,7 +139,7 @@ class plugin_trainingsoverview extends pluginbase {
                             AND u.deleted = :deleted AND cu.classroomid = :classroomid";
                 $classroom_totalusers = $DB->count_records_sql($sql, $params); 
                 $attendedsessions_users = $DB->count_records('local_classroom_attendance',
-                array('classroomid' => $row->classroomid, 'sessionid' =>$row->id, 'status' => SESSION_PRESENT));
+                array('classroomid' => $row->classroomid, 'sessionid' =>$row->id, 'status' => 1));
                 $attendedusers = $attendedsessions_users. '/' .$classroom_totalusers;
                 if($attendedusers){
                     $row->{$data->column} = $attendedusers;
@@ -138,19 +147,7 @@ class plugin_trainingsoverview extends pluginbase {
                     $row->{$data->column} = 0;
                 }     
             break;
-         /*    case 'trainer':
-                $totalcountsql= "SELECT SUM((SELECT COUNT(id) FROM {local_classroom_users} where classroomid=cs.id)) as totaluserscovered
-                                    FROM {local_classroom} AS cs
-                                    JOIN {local_classroom_trainers} AS ct ON ct.classroomid=cs.id
-                                    WHERE ct.trainerid = :trainerid AND cs.status IN (1,4) ";
-                $params     = array('trainerid'=>$row->id);
-                $userscovered = $DB->get_field_sql($totalcountsql, $params);
-                if($userscovered){
-                    $row->{$data->column} = $userscovered;
-                }else{
-                    $row->{$data->column} = 0;
-                }     
-            break;  */
+        
         default:
             $row->{$data->column} = isset($row->{$data->column}) ? $row->{$data->column} : $row->{$data->column};
             break;  

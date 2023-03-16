@@ -24,7 +24,7 @@
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 
-class report_trainerslist extends reportbase implements report {
+class report_trainingsoverview extends reportbase implements report {
     /**
      * @param object $report Report object
      * @param object $reportproperties Report properties object
@@ -32,11 +32,11 @@ class report_trainerslist extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
         $this->parent = true;
-        $this->columns = array('trainerslist' => array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered'));
+        $this->columns = array('trainingsoverview' => array('classroomname','classroomstartdate','classroomenddate','session', 'sessionstartdate','sessionenddate','sessiontime','type','room','status','attendedusers','trainer'));
         $this->components = array('columns', 'filters', 'permissions');
-        $this->filters = array('organization','departments', 'subdepartments', 'trainers');
-        $this->orderable = array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered');
-        $this->defaultcolumn = 'u.id';
+        $this->filters = array('organization','departments', 'subdepartments', 'classrooms','trainers');
+        $this->orderable = array('classroomname','classroomstartdate','classroomenddate','session', 'sessionstartdate','sessionenddate','sessiontime','type','room','status','attendedusers','trainer');
+        $this->defaultcolumn = 'cs.id';
     }
     
     function init() {
@@ -44,28 +44,32 @@ class report_trainerslist extends reportbase implements report {
     }
 
     function count() {
-        $this->sql = " SELECT COUNT(ra.id) ";
+        $this->sql = " SELECT COUNT(cs.id) ";
     }
 
     function select() {
        
-        $this->sql  = "SELECT u.id, CONCAT(u.firstname,' ',u.lastname) as trainername , u.email as email,u.open_employeeid ";
+        $this->sql  = "SELECT cs.id,c.name as classroomname, cs.name as session, cr.name as room, CONCAT(u.firstname,' ',u.lastname) as trainer,
+                        DATE(FROM_UNIXTIME(c.startdate)) as classroomstartdate, DATE(FROM_UNIXTIME(c.enddate)) as classroomenddate,
+                        DATE(FROM_UNIXTIME(cs.timestart)) as sessionstartdate, DATE(FROM_UNIXTIME(cs.timefinish)) as sessionenddate, cs.*";
+      
         parent::select();                
     }
     function from() {
-        $this->sql .= " FROM {role_assignments} AS ra ";
+        $this->sql .= " FROM {local_classroom_sessions} AS cs ";
     }
 
     function joins() {
-        $this->sql .= " JOIN {user} AS u on u.id=ra.userid ";
+        $this->sql .= " JOIN {local_classroom} AS c ON cs.classroomid = c.id 
+                        LEFT JOIN {user} AS u ON u.id = cs.trainerid 
+                        LEFT JOIN {local_location_room} AS cr ON cr.id = cs.roomid ";
         parent::joins();
     }
 
     function where(){
-        global $DB;
-        $roleid = $DB->get_field('role', 'id', array('shortname' => 'trainer'));
-        $this->sql .= " WHERE 1=1 AND ra.roleid=:roleid ";
-        $this->params['roleid'] = $roleid;
+        global $DB;    
+        $time=time();    
+        $this->sql .= " WHERE 1=1 ";        
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
@@ -76,14 +80,8 @@ class report_trainerslist extends reportbase implements report {
     }
    
     function search(){
-        if (isset($this->search) && $this->search) {
-            $fields = array('c.fullname',"CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
-            $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
-            $fields .= " LIKE '%" . $this->search . "%' ";
-            $this->sql .= " AND ($fields) ";
-        }
     } 
-
+    
     function filters(){
 
         if ($this->params['filter_organization'] > 0) {
@@ -112,11 +110,23 @@ class report_trainerslist extends reportbase implements report {
             $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
         }
+        if ($this->params['filter_classrooms'] > 0) {
+            $this->sql .= " AND lc.id = :classroomid ";
+            $this->params['classroomid'] = $this->params['filter_classrooms'];
+        }
 
         if (isset($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
             $userid = $this->params['filter_trainers'];
             $this->sql .= " AND u.id IN ($userid) ";
         }
+        
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND c.startdate > :report_startdate ";
+            $this->params['report_startdate'] = $this->ls_startdate;
+
+            $this->sql .= " AND c.enddate < :report_enddate ";
+            $this->params['report_enddate'] = $this->ls_enddate;
+        } 
 
     }
 
@@ -126,7 +136,8 @@ class report_trainerslist extends reportbase implements report {
      * @return [type]        [description]
      **/
     public function get_rows($data = array()) {
-       
         return $data;
     }
+   // ('classroomname','session', 'pastdate','futuredate','time','type','room','status','attendedusers','trainer'));  
+
 }
