@@ -33,7 +33,7 @@ class report_dailyuniquelogins extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
         $this->parent = true;
-        $this->columns = array('dailyuniquelogins' => array('usercount','monthname','year'));
+        $this->columns = array('dailyuniquelogins' => array('costcentername','usercount','monthname','year'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
         $this->filters = array('organization','departments');
         $this->orderable = array('usercount','monthname','year');
@@ -51,7 +51,7 @@ class report_dailyuniquelogins extends reportbase implements report {
     }
 
     function select() {      
-        $this->sql  = "SELECT lsl.userid, COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
+        $this->sql  = "SELECT lsl.userid, COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname,u.open_path ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
         parent::select();
     }
 
@@ -117,7 +117,17 @@ class report_dailyuniquelogins extends reportbase implements report {
      * @return [type]        [description]
      **/
     public function get_rows($data = array()) {
-        return $data;
+        global $DB;
+        $loginsdata = array();
+        if($data){  
+             
+            foreach ($data as $rec) {
+                $orgid = ($rec->open_path) ? explode('/',$rec->open_path)[1] : null;
+                $rec->costcentername = $DB->get_field_sql('SELECT c.fullname as costcentername FROM {local_costcenter} c WHERE c.depth = 1 AND c.id = :orgid',array('orgid' => $orgid));
+                $loginsdata[] = $rec; 
+            }
+        }     
+        return $loginsdata;
     }
 }
 

@@ -24,7 +24,7 @@
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 
-class report_trainingsoverviewpast extends reportbase implements report {
+class report_trainingsoverview extends reportbase implements report {
     /**
      * @param object $report Report object
      * @param object $reportproperties Report properties object
@@ -32,10 +32,10 @@ class report_trainingsoverviewpast extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
         $this->parent = true;
-        $this->columns = array('trainingsoverview' => array('classroomname','session', 'pastdate','futuredate','pasttime','futuretime','type','room','status','attendedusers','trainer'));
+        $this->columns = array('trainingsoverview' => array('classroomname','classroomstartdate','classroomenddate','session', 'sessionstartdate','sessionenddate','sessiontime','type','room','status','attendedusers','trainer'));
         $this->components = array('columns', 'filters', 'permissions');
-        $this->filters = array('organization','departments', 'subdepartments', 'user');
-        $this->orderable = array('classroomname');
+        $this->filters = array('organization','departments', 'subdepartments', 'classrooms','trainers');
+        $this->orderable = array('classroomname','classroomstartdate','classroomenddate','session', 'sessionstartdate','sessionenddate','sessiontime','type','room','status','attendedusers','trainer');
         $this->defaultcolumn = 'cs.id';
     }
     
@@ -49,7 +49,9 @@ class report_trainingsoverviewpast extends reportbase implements report {
 
     function select() {
        
-        $this->sql  = "SELECT cs.*,c.name as classroomname, cs.name as session, cr.name as room, CONCAT(u.firstname,' ',u.lastname) as trainer ";
+        $this->sql  = "SELECT cs.id,c.name as classroomname, cs.name as session, cr.name as room, CONCAT(u.firstname,' ',u.lastname) as trainer,
+                        DATE(FROM_UNIXTIME(c.startdate)) as classroomstartdate, DATE(FROM_UNIXTIME(c.enddate)) as classroomenddate,
+                        DATE(FROM_UNIXTIME(cs.timestart)) as sessionstartdate, DATE(FROM_UNIXTIME(cs.timefinish)) as sessionenddate, cs.*";
       
         parent::select();                
     }
@@ -67,7 +69,7 @@ class report_trainingsoverviewpast extends reportbase implements report {
     function where(){
         global $DB;    
         $time=time();    
-        $this->sql .= " WHERE 1=1 AND timefinish < $time";        
+        $this->sql .= " WHERE 1=1 ";        
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
@@ -108,6 +110,23 @@ class report_trainingsoverviewpast extends reportbase implements report {
             $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
         }
+        if ($this->params['filter_classrooms'] > 0) {
+            $this->sql .= " AND lc.id = :classroomid ";
+            $this->params['classroomid'] = $this->params['filter_classrooms'];
+        }
+
+        if (isset($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
+            $userid = $this->params['filter_trainers'];
+            $this->sql .= " AND u.id IN ($userid) ";
+        }
+        
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND c.startdate > :report_startdate ";
+            $this->params['report_startdate'] = $this->ls_startdate;
+
+            $this->sql .= " AND c.enddate < :report_enddate ";
+            $this->params['report_enddate'] = $this->ls_enddate;
+        } 
 
     }
 

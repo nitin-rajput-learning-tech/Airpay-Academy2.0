@@ -25,7 +25,7 @@
 
 use block_learnerscript\local\reportbase;
 
-class report_usercourseoverview extends reportbase {
+class report_userwisecourseoverview extends reportbase {
     /**
      * @param object $report Report object
      * @param object $reportproperties Report properties object

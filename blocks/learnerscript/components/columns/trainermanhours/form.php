@@ -22,30 +22,31 @@
  * @subpackage block_learnerscript
  */
 if (!defined('MOODLE_INTERNAL')) {
-    die('Direct access to this script is forbidden.');    ///  It must be included from a Moodle page
+    //  It must be included from a Moodle page.
+    die(get_string('nodirectaccess','block_learnerscript'));
 }
 
 require_once($CFG->libdir . '/formslib.php');
 
-class learnerreportcolumns_form extends moodleform {
+class trainermanhours_form extends moodleform {
 
-    function definition() {
+    public function definition() {
         global $DB, $USER, $CFG;
         $mform = & $this->_form;
-        $mform->addElement('header', 'crformheader', get_string('learnerreportcolumns', 'block_learnerscript'), '');
-        
-        $columns = array();
-         $coursecolumns = array();
-        foreach($columns as $c){
-           $coursecolumns[$c] = ucwords($c);
+        $mform->addElement('header', 'crformheader', get_string('trainermanhours', 'block_learnerscript'), '');
+        $columns = $DB->get_columns('trainermanhours');
+        $prinfocolumns = array();
+        foreach ($columns as $c) {
+            $prinfocolumns[$c->name] = $c->name;
         }
-        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $coursecolumns);
+
+        $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $prinfocolumns);
         $this->_customdata['compclass']->add_form_elements($mform, $this);
-        // buttons
+        // Buttons.
         $this->add_action_buttons(true, get_string('add'));
     }
 
-    function validation($data, $files) {
+    public function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $errors = $this->_customdata['compclass']->validate_form_elements($data, $errors);
         return $errors;

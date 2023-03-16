@@ -94,7 +94,7 @@ class local_onlineexams_renderer extends plugin_renderer_base {
           $cardClass = 'tableformat';
           $perpage = 20;
       } 
-      $options = array('targetID' => 'manage_courses','perPage' => $perpage, 'cardClass' => 'col-md-6 col-12', 'viewType' => $view_type);
+      $options = array('targetID' => 'manage_courses','perPage' => $perpage, 'cardClass' => 'col-lg-3 col-md-4 col-12', 'viewType' => $view_type);
       $options['methodName']='local_onlineexams_onlineexams_view';
       $options['templateName']= $templateName;
       $options = json_encode($options);

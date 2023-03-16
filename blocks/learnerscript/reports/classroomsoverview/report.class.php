@@ -34,7 +34,7 @@ class report_classroomsoverview extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
         $this->components = array('columns','filters', 'permissions', 'plot', 'orderable');
-        $this->columns = ['classroomfield'=>['classroomfield'],'classroomsoverviewcolumns' => ['classroomname','enrollmentscount','completionscount']];
+        $this->columns = ['classroomfield'=>['classroomfield'],'classroomsoverviewcolumns' => ['classroomname','classroomstatus','enrollmentscount','completionscount','trainerhrs']];
         $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'classrooms','classroomstatus');
         $this->orderable = array('classroomname','enrollmentscount','completionscount');
         $this->defaultcolumn = 'lc.id';
@@ -47,7 +47,7 @@ class report_classroomsoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lc.id) ";
     }
      function select() {
-        $this->sql = "SELECT lc.id as classroomid,lc.name as classroomname, lc.open_path AS class_open_path";
+        $this->sql = "SELECT lc.id as classroomid,lc.name as classroomname, lc.open_path AS class_open_path,lc.status as classroomstatus,lc.startdate,lc.enddate";
       parent::select();
     }
     function from() {
@@ -130,7 +130,7 @@ class report_classroomsoverview extends reportbase implements report {
             $enrolsql = '';
             if($this->ls_startdate > 0 && $this->ls_enddate > 0){
                 $enrolsql .= " AND lcu.timecreated > :ls_startdate ";
-                $completedsql .= " AND lcu.completiondate > :ls_startdate ";
+                $completionscount .= " AND lcu.completiondate > :ls_startdate ";
             // }
             // if($this->ls_enddate > 0){
                 $enrolsql .= " AND lcu.timecreated < :ls_enddate ";
@@ -141,7 +141,24 @@ class report_classroomsoverview extends reportbase implements report {
                 $classroom->enrollmentscount = $DB->count_records_sql($sql.$enrolsql, array('classroomid' => $classroom->classroomid,'deleted' => 0, 'suspended' => 0, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
 
                 $classroom->completionscount = $DB->count_records_sql($sql.$completionscount, array('classroomid' => $classroom->classroomid,'deleted' => 0,'suspended' => 0,'status' => 1, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
+                if ($classroom->classroomstatus == 0) {
+                    $classroom->classroomstatus = 'New';
+                } else if ($classroom->classroomstatus == 1) {
+                    $classroom->classroomstatus = 'Active';
+                } else if ($classroom->classroomstatus == 2) {
+                    $classroom->classroomstatus = 'Hold';
+                } else if ($classroom->classroomstatus == 3) {
+                    $classroom->classroomstatus = 'Cancel';
+                } else if ($classroom->classroomstatus == 4) {
+                    $classroom->classroomstatus = 'Completed';
+                }
 
+                $classroom->trainerhrs = $DB->get_field_sql("SELECT SUM(round(cs.duration/60, 2)) 
+                            FROM {local_classroom_sessions} cs
+                            JOIN {local_classroom} c ON cs.classroomid = c.id
+                            WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME($classroom->startdate))
+                            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME($classroom->startdate)) AND (c.status = 1 OR c.status = 4) 
+                            AND classroomid = :classroomid", array('classroomid' => $classroom->classroomid));
                 $data[] = $classroom;
             }
         }
