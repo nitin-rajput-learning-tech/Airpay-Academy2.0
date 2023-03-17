@@ -58,7 +58,11 @@
                 <i class="fa fa-ellipsis-h"></i>
             </span>
         <div class="dropdown-menu dropdown-menu-right shadow-sm">
-
+            {{#update}}
+                {{# editcourse}}
+                    {{{ editcourse }}}
+                {{/ editcourse}}
+            {{/update}}
             
             {{#enrol}}
                 <a href="{{ enrollusers }}" class="dropdown-item" title= "{{#str}}userenrolments, local_forum{{/str}}" >
@@ -73,9 +77,6 @@
                 {{/auto_enrol}}
             {{/update}}
             {{#update}}
-                {{# editcourse}}
-                    {{{ editcourse }}}
-                {{/ editcourse}}
                 {{# update_status}}
                     {{{update_status}}}
                 {{/ update_status}}

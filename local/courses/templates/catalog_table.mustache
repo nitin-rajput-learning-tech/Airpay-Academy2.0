@@ -51,22 +51,22 @@
             <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</td>
             <td>{{{coursetype}}}</td>
             <td>
-                {{#delete}}{{{ deleteaction }}}{{/delete}}
+                {{#update}}{{{ editcourse }}} {{/update}}
                 {{#enrol}}
-                     <a href="{{ enrollusers }}" title= "{{#str}}userenrolments, local_courses{{/str}}" >
-                         <i class="fa fa-user" aria-hidden="true"></i>
-                     </a>
-                       
+                <a href="{{ enrollusers }}" title= "{{#str}}userenrolments, local_courses{{/str}}" >
+                    <i class="fa fa-user" aria-hidden="true"></i>
+                </a>
+                  
                 {{/enrol}}
                 {{#update}}
-                    {{#auto_enrol}}                        
-                           <a href="{{ auto_enrol }}" title= "{{#str}}auto_enrol, local_courses{{/str}}">
-                               <i class="fa fa-user-circle-o" aria-hidden="true"></i>
-                           </a>
-                       
-                    {{/auto_enrol}}
+               {{#auto_enrol}}                        
+                      <a href="{{ auto_enrol }}" title= "{{#str}}auto_enrol, local_courses{{/str}}">
+                          <i class="fa fa-user-circle-o" aria-hidden="true"></i>
+                      </a>
+                  
+               {{/auto_enrol}}
                 {{/update}}
-                {{#update}}{{{ editcourse }}} {{{update_status}}}{{/update}}
+                {{#update}}{{{update_status}}} {{/update}}
                 {{#grade_view}}                 
                        <a href="{{ grader }}" title= "{{#str}}grader, local_courses{{/str}}">
                            <i class="fa fa-pie-chart" aria-hidden="true"></i>
@@ -79,6 +79,7 @@
                      </a>             
                 {{/request_view}}      
                 {{{ copyaction }}}
+                {{#delete}}{{{ deleteaction }}}{{/delete}}
             </td>
         </tr>
         {{/ hascourses}}
