@@ -803,7 +803,7 @@ case 'enrolledusers':
 	break;
 case 'categorycourses':
 	if ($categoryid > 0) {
-		$courses = $DB->get_records_sql_menu("SELECT id, fullname FROM {course} WHERE category = $categoryid AND visible = 1");
+		$courses = $DB->get_records_sql_menu("SELECT id, fullname FROM {course} WHERE open_categoryid = $categoryid AND visible = 1");
 		$return = array(0 => 'Select Course') + $courses;
 	} else {
 		$return = array('' => 'Select Course');
