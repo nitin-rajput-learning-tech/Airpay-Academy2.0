@@ -243,7 +243,7 @@ body#page-local-courses-courseenrol img#image.content-img {
     background-position: center center;
     background-color: #fff;
     width:100%;
-    height:160px;
+    height:200px;
 }
 
 #page-local-onlineexams-index .dataTables_length {
@@ -264,18 +264,10 @@ body#page-local-courses-courseenrol img#image.content-img {
     background-color: #1177d1
 }
 
-#page-local-onlineexams-index .course_extended_menu_list {
-    top: -20px
-}
 
 body#page-local-onlineexams-index #region-main .card.card-block {
     overflow-x: visible
 }
-
-body#page-local-onlineexams-index .course_extended_menu_list {
-    top: -20px
-}
-
 body#page-local-onlineexams-index #category_tbl_filter {
     float: left
 }
@@ -938,9 +930,6 @@ body#page-local-courses-userdashboard .card_list_view {
 /*#page-local-onlineexams-index #region-main{
     background-color: transparent;
 }*/
-#page-local-onlineexams-index #filters_form{
-    background-color: #fff;
-}
 
 #page-local-onlineexams-index .course_container .coursecontent span.text-muted {
    white-space: nowrap;
@@ -1088,9 +1077,9 @@ body#page-local-courses-userdashboard .card_list_view {
 }
 #page-local-onlineexams-index .courseimg_bg:after{
     content: "";
-    background-image: linear-gradient(to top,rgba(255,255,255,0),#00000091);
+    background-image: linear-gradient(to top,rgba(255,255,255,0),#00000063);
     width: 100%;
-    height: 100%;
+    height: 60%;
     position: absolute;
     top: 0;
     left: 0;
