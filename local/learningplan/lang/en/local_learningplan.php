@@ -277,4 +277,4 @@ $string['open_level4departmentlocal_learningplan_help'] = 'Sub Department of the
 $string['leaningpathsearch'] = 'Learning path';
 $string['skillnlevel'] = 'Skills & Levels';
 $string['planlevel'] = 'Level';
-$string['planskill'] = 'Skill';
+$string['planskill'] = 'Level Skill';
