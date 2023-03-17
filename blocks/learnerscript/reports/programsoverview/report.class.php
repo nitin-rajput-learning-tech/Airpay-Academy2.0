@@ -48,7 +48,7 @@ class report_programsoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lp.id)";
     }
     function select() {
-        $this->sql = "SELECT lp.id as programid, lp.name as programname,
+        $this->sql = "SELECT lp.id as programid, lp.name as programname,cat.fullname as stream,
                             (SELECT COUNT(pl.id)
                             FROM {local_program_levels} pl 
                             WHERE pl.programid = lp.id) AS levelscount,
@@ -69,7 +69,8 @@ class report_programsoverview extends reportbase implements report {
         $this->sql .= " FROM {local_program} lp";
     }
     function joins() {
-         $this->sql .= " JOIN {local_program_stream} ps ON ps.id = lp.stream";
+        $this->sql .= "  JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid ";
+       //  $this->sql .= " JOIN {local_program_stream} ps ON ps.id = lp.stream";
           parent::joins();
     }
     function where(){
@@ -88,20 +89,11 @@ class report_programsoverview extends reportbase implements report {
                 $ohs = $dh = 1;
             }
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        if (is_siteadmin()) {
             $this->sql .= "";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-            $this->sql .= " AND lp.costcenter = :costcenterid ";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-            $this->sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-        }else{
-            $this->sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid AND lp.subdepartment = :subdepartment";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-            $this->params['subdepartment']= $USER->open_subdepartment;
+        } else  {
+            $this->sql .= $costcenterpathconcatsql;
         }
          parent::where();
     }

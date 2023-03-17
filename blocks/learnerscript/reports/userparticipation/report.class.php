@@ -43,7 +43,7 @@ class report_userparticipation extends reportbase {
             'programenrolled','programinprogress','programcompleted', 'programprogress'));
         $this->orderable = array('fullname', 'email');        
         $this->filters = array('organization', 'departments','subdepartments', 'users');
-        $this->defaultcolumn = 'u.id';
+        $this->defaultcolumn = 'u.id,u.open_path';
     }
     function count() {
       $this->sql  = " SELECT count(DISTINCT u.id) ";

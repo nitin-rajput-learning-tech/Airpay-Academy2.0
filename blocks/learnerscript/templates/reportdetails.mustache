@@ -5,6 +5,19 @@
             </a>
  </div>
  {{/ createreport}}
+    {{#costcenter_exist}}
+<div class="w-100 pull-left mb-3">
+    <h4 class="module_heading">{{# str }}costcenter{{/ str }}</h4>
+    <div class="w-100 pull-left">
+        {{#local_costcenter}}
+            {{> block_learnerscript/reportscontent}}
+        {{/local_costcenter}}
+        <!--<div class="w-100 pull-right text-right">
+            <button>View More</button>
+        </div>-->     
+    </div> 
+</div>
+        {{/costcenter_exist}}
     {{#users_exist}}
 <div class="w-100 pull-left mb-3">
     <h4 class="module_heading">{{# str }}user{{/ str }}</h4>

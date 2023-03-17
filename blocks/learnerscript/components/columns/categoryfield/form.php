@@ -38,11 +38,11 @@ class categoryfield_form extends moodleform {
 
         $mform->addElement('header', 'crformheader', get_string('categoryfield', 'block_learnerscript'), '');
 
-        $columns = $DB->get_columns('course_categories');
+        $columns = $DB->get_columns('local_custom_category');
 
         $coursecolumns = array();
         foreach ($columns as $c) {
-            $coursecolumns[$c->name] = ucfirst($c->name);
+            $coursecolumns[$c->fullname] = ucfirst($c->fullname);
         }
 
         $mform->addElement('select', 'column', get_string('column', 'block_learnerscript'), $coursecolumns);
@@ -61,10 +61,10 @@ class categoryfield_form extends moodleform {
 
     public function advanced_columns() {
         global $DB;
-        $columns = $DB->get_columns('course_categories');
+        $columns = $DB->get_columns('local_custom_category');
         $coursecolumns = array();
         foreach ($columns as $c) {
-            $coursecolumns[$c->name] = ucfirst($c->name);
+            $coursecolumns[$c->fullname] = ucfirst($c->fullname);
         }
         return $coursecolumns;
     }

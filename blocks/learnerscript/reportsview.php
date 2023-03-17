@@ -64,11 +64,18 @@ $report_details=$ls->get_categories_from_reports();
     }else{
         $data['createreport'] = false;
     }
+   
     if($report_details){
         foreach ($report_details as $r) {
             $report_results=$ls->get_reportdetails_categorywise($r->category);
 
                 switch ($r->category) {
+                    case "local_costcenter":
+                        $plugin_exists = core_component::get_plugin_directory('local', 'costcenter'); 
+                        if($plugin_exists){
+                            $data['costcenter_exist'] = true;
+                        }
+                       break;
                     case "course":
                         $plugin_exists = core_component::get_plugin_directory('local', 'courses'); 
                         if($plugin_exists){
@@ -181,6 +188,13 @@ $report_details=$ls->get_categories_from_reports();
                 $feedback_report = false;
                 //Category names
                 switch ($r->category) {
+                    case "local_costcenter":
+                        $category_name='Oraganization';
+                        $plugin_exists = core_component::get_plugin_directory('local', 'costcenter'); 
+                        if($plugin_exists){
+                            $costcenter_report = true;
+                        }
+                       break;
                     case "course":
                         $category_name='Course';
                         $plugin_exists = core_component::get_plugin_directory('local', 'courses'); 
@@ -270,6 +284,7 @@ $report_details=$ls->get_categories_from_reports();
                 $list['download']=$download;
                 $alllist[]=$list;
             }
+         
             $data[$r->category]=$alllist;
         }
     }       
