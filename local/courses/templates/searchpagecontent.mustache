@@ -21,13 +21,17 @@
    
 }}
 <span class="courseimg_strip">Strip</span>
-<div class="d-flex my-3 coursecard_container">
+<div class="d-flex my-3 flex-column shadow border rounded overflow-hidden coursecard_container">
     <div class=" card-img-top courseimg_container p-0">
         <a ng-if="record.enroll == 0" title="<% record.fullname %>">
-            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class=courseimg_bg></div>
+            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class="courseimg_bg p-2">
+                <span class="CstripCnt"> <span class="elearning">{{# str}}course, local_courses{{/ str}}</span> </span>
+            </div>
         </a>
         <a ng-if="record.enroll == 1" title="<% record.fullname %>">
-            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class=courseimg_bg></div>
+            <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class="courseimg_bg p-2">
+                <span class="CstripCnt"> <span class="elearning">{{# str}}course, local_courses{{/ str}}</span> </span>
+            </div>
         </a>
     </div>
     <div class=" card-body readyCCnt coursecontent">
@@ -47,7 +51,7 @@
                     </h4>
                 </a>
             </div>
-            <span class="CstripCnt"> <span class="elearning">{{# str}}course, local_courses{{/ str}}</span> </span>
+            
         </div>
         <div class="card-text course-desc">
             <div class="coursedesc w-full" ng-if="record.summary">
