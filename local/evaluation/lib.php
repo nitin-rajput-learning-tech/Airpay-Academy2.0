@@ -2732,14 +2732,10 @@ function get_listof_evalautions($stable, $filtervalues){
         if (is_siteadmin() OR has_capability('local/evaluation:edititems', $context) ) {
             $buttons .= '<li>'.html_writer::link( "javascript:void(0)",$OUTPUT->pix_icon('t/editinline', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('edit'), array('class'=>'dropdown-item','data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).'</li>';
             $edit_eval= html_writer::link( "javascript:void(0)",$OUTPUT->pix_icon('t/editinline', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')), array('data-action'=>"createevaluationmodal", 'data-value'=>$record->id));
-            
-            if (has_capability('local/evaluation:createpublictemplate', $context)) {
-                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#edit', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/questions', get_string('questions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('questions', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
-
-                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#tempaltes', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/copy', get_string('templates', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('templates', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
-                 $edit_question=html_writer::link(new moodle_url('/local/evaluation/eval_view.php#edit', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/questions', get_string('questions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')));
-                 $edit_template=html_writer::link(new moodle_url('/local/evaluation/eval_view.php#tempaltes', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/copy', get_string('templates', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')));
-                }     
+            if (has_capability('local/evaluation:enroll_users', $context)){
+                $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank')).get_string('assignusers', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
+                $eval_enrol=html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank')));
+            } 
             if($record->visible){
                 $icon = 't/hide';
                 $string = get_string('le_inactive','local_evaluation');
@@ -2752,15 +2748,23 @@ function get_listof_evalautions($stable, $filtervalues){
             $params = json_encode(array('eval_status' => $record->visible, 'evalname' => $record->name, 'published' => 1));
             $buttons .= '<li>'.html_writer::link("javascript:void(0)", $image, array('class'=>'dropdown-item','data-fg'=>"d", 'data-method' => 'evaluation_update_status','data-plugin' => 'local_evaluation', 'data-params' => $params, 'data-id'=>$record->id)).'</li>';
             $eval_hideshow=html_writer::link("javascript:void(0)", $image1, array('data-fg'=>"d", 'data-method' => 'evaluation_update_status','data-plugin' => 'local_evaluation', 'data-params' => $params, 'data-id'=>$record->id));
-            if (has_capability('local/evaluation:viewreports', $context))
+           
+            if (has_capability('local/evaluation:createpublictemplate', $context)) {
+                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#edit', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/questions', get_string('questions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('questions', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
+
+                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#tempaltes', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/copy', get_string('templates', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('templates', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
+                 $edit_question=html_writer::link(new moodle_url('/local/evaluation/eval_view.php#edit', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/questions', get_string('questions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')));
+                 $edit_template=html_writer::link(new moodle_url('/local/evaluation/eval_view.php#tempaltes', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/copy', get_string('templates', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')));
+                } 
+            
+                if (has_capability('local/evaluation:viewreports', $context)) 
             // $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/analysis.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/grades', get_string('overview', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
 
-            if (has_capability('local/evaluation:viewanalysepage', $context))
+            if (has_capability('local/evaluation:viewanalysepage', $context)){
             $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/show_entries.php',  array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('responses', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
             $eval_analys=html_writer::link(new moodle_url('/local/evaluation/show_entries.php',  array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')));
-            if (has_capability('local/evaluation:enroll_users', $context))
-            $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank')).get_string('assignusers', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
-            $eval_enrol=html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank')));
+            }
+            
             // check for deletion
             if (is_siteadmin() OR has_capability('local/evaluation:delete', $context)) {
               $candelete = check_evaluationdeletion($record->id);

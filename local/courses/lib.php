@@ -2196,7 +2196,6 @@ function get_enrolledusers($courseid){
             JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
             LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid 
             WHERE c.id = :courseid ";
-
     $params = array();
     $params['courseid'] = $courseid;
 
@@ -2209,7 +2208,6 @@ function get_enrolledusers($courseid){
     }
 
     $courseusers = $DB->get_records_sql($sql , $params);
-
     $userslist = array();
     if($courseusers){
         $userslist['usersexists'] = true;
@@ -2238,7 +2236,6 @@ function get_enrolledusers($courseid){
     }else{
         $userslist['usersexists'] = false;
     }
-
     echo $OUTPUT->render_from_template('local_courses/enrolledusersview', $userslist);
 
 }

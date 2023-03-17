@@ -76,13 +76,6 @@
 
             {{#actionsicons}}
             <td>
-                {{# delcap }}
-
-                    <a href="javascript:void(0)" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">
-                         <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i>
-                    </a>
-
-               {{/ delcap }}
               {{# editcap }}
                     <a href="javascript:void(0)" title="{{#str}}edit{{/str}}" data-action="createusermodal" class="createusermodal" data-value="{{userid}}" onclick="(function(e){ require('local_users/newuser').init({selector:'createusermodal', context:1, id:{{userid}}, form_status:0}) })(event)" style="cursor:pointer" title="Edit">
                     <i class="fa fa-pencil fa-fw"></i>
@@ -97,6 +90,13 @@
                      <i class="fa fa-eye"></i></a>
                  {{/ visible}}
                  {{/ editcap }}
+                 {{# delcap }}
+
+                 <a href="javascript:void(0)" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">
+                      <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i>
+                 </a>
+
+            {{/ delcap }}
                  {{{ copyaction }}}
             </td>
             {{/actionsicons}}

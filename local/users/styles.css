@@ -91,10 +91,6 @@ body#page-local-users-syncstatistics table.dataTable thead .sorting {
     margin-top: 6px
 }
 
-#page-local-users-index .course_extended_menu_list {
-    top: -20px
-}
-
 #page-local-users-profile .user_gen_info {
     border: none;
     border-radius: 8px

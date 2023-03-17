@@ -46,6 +46,12 @@
                                         <div class="cog_icon dropdown action_menu_dropdown " data-toggle="dropdown" aria-expanded="false">
                                             <span><i class="fa fa-gear"></i></span>
                                             <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                                {{#update}}
+                                                    {{# editcourse}}
+                                                        {{{ editcourse }}}
+                                                    {{/ editcourse}}
+                                                    
+                                                {{/update}}
                                                 {{#enrol}}
                                                     <a href="{{ enrollusers }}" class="dropdown-item" title= "{{#str}}userenrolments, local_courses{{/str}}" >
                                                         <i class="fa fa-user" aria-hidden="true"></i>User Enrollments
@@ -58,14 +64,9 @@
                                                         </a>
                                                     {{/auto_enrol}}
                                                 {{/update}}
-                                                {{#update}}
-                                                    {{# editcourse}}
-                                                        {{{ editcourse }}}
-                                                    {{/ editcourse}}
-                                                    {{# update_status}}
+                                                {{# update_status}}
                                                         {{{update_status}}}
                                                     {{/ update_status}}
-                                                {{/update}}
                                                 {{#grade_view}}
                                                     <a class="dropdown-item" href="{{ grader }}" title= "{{#str}}grader, local_courses{{/str}}">
                                                         <i class="fa fa-pie-chart" aria-hidden="true"></i>Grader

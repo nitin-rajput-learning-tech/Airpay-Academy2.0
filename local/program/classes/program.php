@@ -412,7 +412,6 @@ class program {
                     array('id' => $stable->programid));
 
                    $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
-
                     $programsql = "SELECT lp.*
                                         FROM {local_program} AS lp WHERE lp.id = $stable->programid $costcenterpathconcatsql ";
 

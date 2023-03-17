@@ -19,21 +19,21 @@
 	<div class="  planview_topcontent px-5">
 		
 		<div class="d-flex mx-0 my-4 planview_topcontainer">
-			<div class="courseimg_container  d-none-1023 ">
+			<div class="courseimg_container  d-none-1023  ">
 				<div style="background-image: url('{{ lpnameimg }}');" alt="{{ lpname }}" title="{{ lpname }}" class="lpimg_bg" ></div>
 				<!-- {{#ratings_exist}}
 					{{{display_ratings}}}
 				{{/ratings_exist}} -->
 			</div>
-			<div class="desc_container d-block-1023 p-4">
+			<div class="desc_container d-block-1023 px-4 pt-2 pb-4">
 				<!--<h4 class='pull-left mb-5 lp_name'>{{ lpname }}</h4>-->	
 				<div class="row  align-items-center justify-content-between">
 					<div class="col-md-6 ">
-						<h5 class="lp_name">{{ lpname }}</h5>
+						<h4 class="lp_name">{{ lpname }}</h4>
 					</div>
 					
 				</div>
-				<span class="w-full "><b>{{#str}}description, local_learningplan{{/str}} :</b></span>
+				<span class="w-full d-block mt-3 "><b>{{#str}}description, local_learningplan{{/str}} :</b></span>
 				<div class="w-full  mt-2 description">
 					{{# description }}
 						<p class="m-0">{{{ description }}}</p>

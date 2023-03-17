@@ -53,7 +53,6 @@ class local_costcenter_external extends external_api
     public function submit_costcenterform_form($contextid, $jsonformdata)
     {
         global $PAGE, $CFG;
-
         require_once($CFG->dirroot . '/local/costcenter/lib.php');
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(
@@ -73,7 +72,6 @@ class local_costcenter_external extends external_api
         $mform = new local_costcenter\form\organization_form(null, array('formtype' => $data['formtype']), 'post', '', null, true, $data);
 
         $valdata = $mform->get_data();
-
 
         if ($valdata) {
             if ($valdata->id > 0) {
