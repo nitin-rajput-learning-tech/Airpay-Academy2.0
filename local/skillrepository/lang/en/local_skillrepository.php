@@ -112,6 +112,7 @@ $string['employeename'] = 'Employee Name';
 $string['nodata'] = '-- No data --';
 $string['skill_courses'] = 'Skill Courses';
 $string['adnewrepository'] = 'Create Skill';
+$string['editrepository'] = 'Edit Skill';
 $string['delete'] = 'Delete';
 $string['edit'] = 'Edit';
 $string['deleteconfirm'] = 'Are you sure you want to delete <b>{$a->skillcatname}</b>?';
