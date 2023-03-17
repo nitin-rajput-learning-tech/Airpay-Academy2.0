@@ -151,7 +151,7 @@ if (is_array($evaluationitems)) {
 $lastposition++;
 
 $PAGE->set_url('/local/evaluation/eval_view.php', array('id'=>$evaluation->id, 'do_show'=>$do_show));
-$PAGE->set_heading($evaluation->name);
+// $PAGE->set_heading($evaluation->name);
 $PAGE->set_title($evaluation->name);
 if ($evaluation->instance == 0) {
     $PAGE->navbar->add(get_string("manageevaluation", 'local_evaluation'), new moodle_url('index.php'));

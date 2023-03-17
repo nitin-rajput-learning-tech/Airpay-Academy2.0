@@ -1262,7 +1262,7 @@ body#page-local-evaluation-analysis .itemtype_numeric th {
 
 body#page-local-evaluation-complete .evaluation_form.ianonymous .form-group.femptylabel .col-md-9 {
     width: 100%;
-    text-align: center
+    /* text-align: center; */
 }
 
 body#page-local-evaluation-complete .evaluation_form.ianonymous .form-group.femptylabel .col-md-9 .btn-cancel,
@@ -1275,7 +1275,7 @@ body#page-local-evaluation-complete .evaluation_form.ianonymous .form-group .fit
 }
 
 body#page-local-evaluation-complete .evaluation_form.ianonymous .form-group .col-md-9 textarea {
-    width: 50%;
+    /* width: 50%; */
     float: left;
     height: 80px !important
 }
@@ -1801,7 +1801,10 @@ body#page-local-evaluation-complete .evaluation_form  .evaluation_itemlist .form
     width: 100%;
 }
 body#page-local-evaluation-complete .evaluation_form.ianonymous #fgroup_id_buttonar .form-inline{
-    justify-content: end;
+    justify-content: center;
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
 }
 body#page-local-evaluation-complete .evaluation_form.ianonymous .col-md-3>label {
     font-size: 15px;
