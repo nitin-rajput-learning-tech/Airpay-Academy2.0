@@ -47,7 +47,7 @@ class report_mycoursess extends reportbase implements report {
         $this->sql = "SELECT count(ue.id)";
     }
     function select() {
-        $this->sql = "SELECT ue.id, c.id as courseid, c.category,cc.timecompleted as completiondate,c.fullname as coursename";
+        $this->sql = "SELECT ue.id, c.id as courseid, c.open_categoryid,cc.timecompleted as completiondate,c.fullname as coursename";
 
         parent::select();
     }

@@ -58,7 +58,7 @@ class plugin_coursesfield extends pluginbase {
                 $courserecord->{$data->column} = $courserecord->shortname;
             break;
             case 'coursecategory':
-                $courserecord->{$data->column} = $DB->get_field('course_categories', 'name', array('id' =>$courserecord->category));
+                $courserecord->{$data->column} = $DB->get_field('local_custom_category', 'fullname', array('id' =>$courserecord->open_categoryid));
             break;
             case 'coursetype':
                 $courserecord->{$data->column} = ($courserecord->course_type); 
