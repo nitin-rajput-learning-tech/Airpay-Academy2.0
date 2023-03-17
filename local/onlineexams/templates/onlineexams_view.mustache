@@ -45,11 +45,11 @@
                                                     <i class="fa fa-gear" aria-hidden="true"></i>
                                                 </span>
                                                 <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                                    {{#enrol}}
-                                                        <a href="{{ enrollusers }}" class="dropdown-item" title= "{{#str}}userenrolments, local_onlineexams{{/str}}" >
-                                                            <i class="fa fa-user" aria-hidden="true"></i>User Enrollments
-                                                        </a>
-                                                   {{/enrol}}
+                                                    {{#update}}
+                                                    {{# editcourse}}
+                                                        {{{ editcourse }}}
+                                                    {{/ editcourse}}
+                                                    {{/update}}
                                                    {{#update}}
                                                         {{#auto_enrol}}
                                                             <a href="{{ auto_enrol }}" class="dropdown-item" title= "{{#str}}auto_enrol, local_onlineexams{{/str}}">
@@ -57,10 +57,12 @@
                                                             </a>
                                                         {{/auto_enrol}}
                                                     {{/update}}
+                                                    {{#enrol}}
+                                                    <a href="{{ enrollusers }}" class="dropdown-item" title= "{{#str}}userenrolments, local_onlineexams{{/str}}" >
+                                                        <i class="fa fa-user" aria-hidden="true"></i>User Enrollments
+                                                    </a>
+                                                     {{/enrol}}
                                                     {{#update}}
-                                                        {{# editcourse}}
-                                                            {{{ editcourse }}}
-                                                        {{/ editcourse}}
                                                         {{# update_status}}
                                                             {{{update_status}}}
                                                         {{/ update_status}}

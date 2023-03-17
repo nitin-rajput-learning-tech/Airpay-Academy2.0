@@ -81,10 +81,33 @@ class accesslib extends \local_costcenter\lib\accesslib{
             $totaluserscount =  $DB->count_records_sql($totalusersssql);
 
             $withcapability = 'local/courses:participate';
-            list($enrolledsqlselect, $enrolledparams) = self::get_course_enrolled_sql($context, $withcapability, $groupid = 0, $onlyactive = false, $onlysuspended = false,$enrolid);
-            $enrolledsql = "SELECT COUNT('x') FROM ($enrolledsqlselect) enrolleduserids";
-            $enrolledusercount = $DB->count_records_sql($enrolledsql, $enrolledparams);
+            $employeerole = $DB->get_field('role', 'id', array('shortname' => 'employee'));
+            $params = array('courseid'=>$courseid, 'employeerole' => $employeerole);
 
+            $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+
+            $enrolledusersssql = " SELECT COUNT(u.id) as ccount
+                                FROM {course} c
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
+                                                AND u.deleted = 0 AND u.suspended = 0
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole $costcenterpathconcatsql";
+
+            $enrolledusercount =  $DB->count_records_sql($enrolledusersssql, $params);
+
+
+            $completedusersssql = " SELECT COUNT(u.id) as ccount
+                                FROM {course} c
+                                JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
+                                JOIN {role_assignments} as ra ON ra.contextid = cot.id
+                                JOIN {user} u ON u.id = ra.userid AND u.confirmed = 1
+                                                AND u.deleted = 0 AND u.suspended = 0
+                                JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
+                                WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL $costcenterpathconcatsql";
+
+            $completedusercount = $DB->count_records_sql($completedusersssql,$params);
+           
             $enrolledpercentage=($enrolledusercount / $totaluserscount) * 100;
 
             if (!is_nan($enrolledpercentage)) {
@@ -93,12 +116,6 @@ class accesslib extends \local_costcenter\lib\accesslib{
             }else{
                 $enrolledpercentage=0;
             }
-
-            list($completedsqlselect, $completedparams) = self::get_course_completed_sql($context,$enrolledsqlselect, $enrolledparams);
-
-            $completedsql = "SELECT COUNT('x') FROM ($completedsqlselect) completeduserids";
-            $completedusercount = $DB->count_records_sql($completedsql, $completedparams);
-
             $completedpercentage=($completedusercount / $enrolledusercount) * 100;
 
             if (!is_nan($completedpercentage)) {
@@ -107,7 +124,6 @@ class accesslib extends \local_costcenter\lib\accesslib{
             }else{
                 $completedpercentage=0;
             }
-
             return array('totaluserscount'=>$totaluserscount,'enrolledusercount'=>$enrolledusercount,'completedusercount'=>$completedusercount,'enrolledpercentage'=>$enrolledpercentage,'completedpercentage'=>$completedpercentage,'courseprogresspercent'=>false);
 
         }else{
@@ -145,7 +161,6 @@ class accesslib extends \local_costcenter\lib\accesslib{
                   FROM {user} {$prefix}u
                 $capjoin->joins
                  WHERE $capjoin->wheres $costcenterpathconcatsql";
-
         return array($sql, $capjoin->params);
     }
     public static function get_course_completed_sql($context,$enrolledsqlselect,$enrolledparams) {
