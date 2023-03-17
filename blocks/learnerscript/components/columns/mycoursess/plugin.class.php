@@ -49,7 +49,7 @@ class plugin_mycoursess extends pluginbase {
         global $DB,$USER;
          switch ($data->column) {
             case 'category':
-            $ccategory = $DB->get_field('course_categories','name',array('id'=>$row->category));
+            $ccategory = $DB->get_field('local_custom_category','fullname',array('id'=>$row->category));
                 $row->{$data->column} = $ccategory;
             break;
             case 'coursetotal':

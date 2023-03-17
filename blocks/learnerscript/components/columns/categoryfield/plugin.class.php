@@ -62,7 +62,7 @@ class plugin_categoryfield extends pluginbase {
                     if ($row->{$data->column} == 0) {
                         $row->{$data->column} = '--';
                     } else {
-                        $row->{$data->column} = $DB->get_field('course_categories', 'name', array('id' => $row->{$data->column}));
+                        $row->{$data->column} = $DB->get_field('local_custom_category', 'fullname', array('id' => $row->{$data->column}));
                     }
                 break;
                 case 'description':

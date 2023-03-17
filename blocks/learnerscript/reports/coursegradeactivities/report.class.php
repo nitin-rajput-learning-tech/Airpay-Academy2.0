@@ -72,7 +72,7 @@ class report_coursegradeactivities extends reportbase implements report
   {
     global $DB;
     $employeerole = $DB->get_field('role', 'id', ['shortname' => 'employee']);
-    $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category
+    $this->sql .=" JOIN {local_custom_category} cat ON cat.id = c.open_categoryid
                   JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
                   JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}
                   JOIN {user} u ON ra.userid = u.id AND u.confirmed = 1
