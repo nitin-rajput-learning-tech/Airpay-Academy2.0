@@ -27,6 +27,8 @@
                     <th>{{#str}}startdate, local_classroom{{/str}}</th>
                     <th>{{#str}}enddate, local_classroom{{/str}}</th>
                     <th>{{#str}}type,local_classroom{{/str}}</th>
+                    <th>{{#str}}recordinglink,local_classroom{{/str}}</th>
+                    <th>{{#str}}messagelink,local_classroom{{/str}}</th>
                     <th>{{#str}}room,local_classroom{{/str}}</th>
                     <th>{{#str}}status,local_classroom{{/str}}</th>
                     <th>{{#str}}attended_sessions_users,local_classroom{{/str}}</th>
@@ -45,6 +47,31 @@
             <td><i class="fa fa-calendar" aria-hidden="true"></i>{{starttime}}</td>
             <td><i class="fa fa-calendar" aria-hidden="true"></i>{{endtime}}</td>
             <td>{{{link}}}</td>
+            <td>
+                {{{recordinglink}}}
+                <div class="modal fade" id="myRecordModal" role="dialog">
+                    <div class="modal-dialog">
+
+                      <!-- Modal content-->
+                      <div class="modal-content">
+                        <div class="modal-header">
+                          <h4 class="modal-title">Recorded Video</h4>
+                          <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+                        <div class="modal-body">               
+                          <video src="{{recordurl}}" id="classroomvideo" class="video-js vjs-default-skin vjs-layout-large" controls preload="auto" width="468" height="315"></video>
+                        </div>
+                        <div class="modal-footer">
+                          <button type="button" class="btn btn-default classroomvideo-close" data-dismiss="modal">Close</button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+            </td>
+            <td>{{{messagelink}}}</td>
             <td>{{room}}</td>
             <td>{{status}}</td>
             <td>{{attendacecount}}</td>

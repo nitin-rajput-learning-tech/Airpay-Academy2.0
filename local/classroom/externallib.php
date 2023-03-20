@@ -278,6 +278,9 @@ class local_classroom_external extends external_api {
                                  //   'action' => new external_value(PARAM_RAW, 'action'),
                                     'cfgwwwroot' => new external_value(PARAM_RAW, 'cfgwwwroot'),
                                     'editicon' => new external_value(PARAM_RAW, 'name'),
+                                    'recordurl' => new external_value(PARAM_RAW, 'recordurl', VALUE_OPTIONAL),
+                                    'recordinglink' => new external_value(PARAM_RAW, 'recordinglink'),
+                                    'messagelink' => new external_value(PARAM_RAW, 'messagelink'),
                                     'deleteicon' => new external_value(PARAM_RAW, 'name'),
                                     'assignrolesicon' => new external_value(PARAM_RAW, 'name'),
                                 )

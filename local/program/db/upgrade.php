@@ -80,5 +80,19 @@ function xmldb_local_program_upgrade($oldversion) {
 
         upgrade_plugin_savepoint(true, 2022101800.05, 'local', 'program');
     }
+    //added by sachin for skill and level
+    if ($oldversion < 2022101800.06) {
+        $table = new xmldb_table('local_program');
+        $field = new xmldb_field('open_skill', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+		$field1 = new xmldb_field('open_level', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.06, 'local', 'program');
+    }
+
     return true;
 }

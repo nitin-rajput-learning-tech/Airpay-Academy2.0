@@ -457,26 +457,76 @@ class renderer extends plugin_renderer_base
             $line['starttime'] = userdate($sdata->timestart, "%d/%m/%Y %H:%M");
             $line['endtime'] = userdate($sdata->timefinish, "%d/%m/%Y %H:%M");
 
-            $link = get_string('pluginname', 'local_classroom');
-            if ($sdata->onlinesession == 1) {
+            // $link = get_string('pluginname', 'local_classroom');
+            // if ($sdata->onlinesession == 1) {
 
-                $moduleids = $DB->get_field('modules', 'id', array('name' => $sdata->moduletype));
-                if ($moduleids) {
-                    $moduleid = $DB->get_field('course_modules', 'id', array('instance' => $sdata->moduleid, 'module' => $moduleids));
-                    if ($moduleid) {
-                        $link = html_writer::link($CFG->wwwroot . '/mod/' . $sdata->moduletype . '/view.php?id=' . $moduleid, get_string('join', 'local_classroom'), array('title' => get_string('join', 'local_classroom')));
+            //     $moduleids = $DB->get_field('modules', 'id', array('name' => $sdata->moduletype));
+            //     if ($moduleids) {
+            //         $moduleid = $DB->get_field('course_modules', 'id', array('instance' => $sdata->moduleid, 'module' => $moduleids));
+            //         if ($moduleid) {
+            //             $link = html_writer::link($CFG->wwwroot . '/mod/' . $sdata->moduletype . '/view.php?id=' . $moduleid, get_string('join', 'local_classroom'), array('title' => get_string('join', 'local_classroom')));
 
-                        if (!is_siteadmin() && !has_capability('local/classroom:manageclassroom', $categorycontext)) {
-                            $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $classroomid, 'userid' => $USER->id));
+            //             if (!is_siteadmin() && !has_capability('local/classroom:manageclassroom', $categorycontext)) {
+            //                 $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $classroomid, 'userid' => $USER->id));
 
-                            if (!$userenrolstatus) {
-                                $link = get_string('join', 'local_classroom');
+            //                 if (!$userenrolstatus) {
+            //                     $link = get_string('join', 'local_classroom');
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+            // $line['link'] = $link;
+            $link=get_string('pluginname', 'local_classroom');
+                if($sdata->onlinesession==1){
+                    $link = get_string('virtual_type', 'local_classroom');
+                                    }
+                                
+                $line['link'] = $link;
+
+                $record_link_params=[
+                'target'=>"_blank",
+                    'id' => 'recordinglink',
+                    'data-toggle'=>'modal',
+                    'data-target'=>'#myRecordModal'
+                ];
+                
+                $link_params=[
+                'target'=>"_blank"
+                ];
+                
+                if($sdata->recordinglink){
+                    $line['recordurl'] = $sdata->recordinglink;
+                } else {
+                    $line['recordurl'] = 'N/A';
+                }        
+                $line['recordinglink'] = $sdata->recordinglink ? html_writer::link($sdata->recordinglink, html_writer::tag('span',get_string('clickhere', 'local_classroom')),$record_link_params) : 'N/A' ;
+
+                 if($sdata->onlinesession==1){
+                    $moduleids = $DB->get_field('modules', 'id', array('name' =>$sdata->moduletype));
+                        if($moduleids){
+                            $moduleid = $DB->get_field('course_modules', 'id', array('instance' => $sdata->moduleid, 'module' => $moduleids));
+                            if($moduleid){
+                                $meeting_link=html_writer::link($CFG->wwwroot . '/mod/' .$sdata->moduletype. '/view.php?id=' . $moduleid,get_string('join', 'local_classroom'), array('title' => get_string('join', 'local_classroom')));
+
+                                if (!is_siteadmin() && !has_capability('local/classroom:manageclassroom',$categorycontext)) {
+                                    $userenrolstatus = $DB->record_exists('local_classroom_users', array('classroomid' => $classroomid, 'userid' => $USER->id));
+                                   
+                                    if (!$userenrolstatus) {
+                                        $meeting_link=get_string('join', 'local_classroom');                            
+                                    }
+                                }
+                                
                             }
-                        }
-                    }
+                        $line['messagelink'] = $meeting_link;
+                        } else {
+                        $line['messagelink'] = 'N/A';
+                } 
+                } 
+                else {
+                   // $line['messagelink'] = 'N/A';
+                    $line['messagelink'] = html_writer::link($sdata->messagelink, html_writer::tag('span',get_string('clickhere', 'local_classroom')),$link_params);
                 }
-            }
-            $line['link'] = $link;
             $line['room'] = $sdata->room ? $sdata->room : 'N/A';
 
             $countfields = "SELECT COUNT(DISTINCT u.id) ";

@@ -599,7 +599,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     justify-content: center;
 }
 #page-local-search-allcourses #allcourses_section #avaliable_courses input#search {
-    border: 1px solid #000;
+    border: 1px solid #bababa;
     margin-left: 2px;
     font-size: 17px;
     height: 50px !important;
@@ -629,7 +629,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 #page-local-search-allcourses #allcourses_section .row.ng-scope{
 /*    background-color: #fff;*/
-    margin:0 !important;
+    /* margin:0 !important; */
     
 }
 #page-local-search-allcourses #allcourses_section .d-md-block {
