@@ -1147,7 +1147,7 @@ class ls {
 		}
     }
 
-    public function listofreportsbyrole($coursels = false, $statistics = false, $parentcheck = false, $reportslist = false) {
+    public function listofreportsbyrole($coursels = false, $statistics = false, $parentcheck = false, $reportslist = false, $enablestatistics = false) {
     	global $DB,$PAGE;
     	//Course context reports
     	if($PAGE->context->contextlevel == 50 || $PAGE->context->contextlevel == 70){

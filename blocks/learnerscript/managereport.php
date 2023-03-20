@@ -142,7 +142,7 @@ if ($reports) {
         $properties = new stdClass();
         $properties->courseid = $courseid;
         $reportclass = (new \block_learnerscript\local\ls)->create_reportclass($r->id, $properties);
-        if ($reportclass->parent && $r->type != 'statistics') {
+        if ($reportclass->parent && $r->type != 'statistics' && $r->enablestatistics == 0) {
             $editcell .= '<a title="' . $strschedule . '" href="./components/scheduler/schedule.php?id=' . $r->id . '&amp;courseid=' . $r->courseid . '&amp;sesskey=' . $USER->sesskey . '"><img src="' . $OUTPUT->image_url('/i/calendar') . '" class="iconsmall" alt="' . $strschedule . '" /></a>';
         }
         $download = '';

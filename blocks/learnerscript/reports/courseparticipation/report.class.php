@@ -35,6 +35,7 @@ class report_courseparticipation extends reportbase implements report {
         $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department','course');
         $this->parent = true;
         $this->defaultcolumn = 'u.id';
+        $this->enablestatistics = true;
     }
 
     function init() {

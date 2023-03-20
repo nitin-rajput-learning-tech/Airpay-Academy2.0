@@ -45,7 +45,7 @@ class plotoption implements renderable, templatable {
             $reports = (new \block_learnerscript\local\ls)->listofreportsbyrole();
         } else {
             $reportlist = $DB->get_records_sql("SELECT * FROM {block_learnerscript}
-                                                 WHERE global = 1 AND visible = 1 AND type != 'statistics'");
+                                                 WHERE global = 1 AND visible = 1 AND  (type != 'statistics' OR enablestatistics=0)");
             $reports = array();
             foreach ($reportlist as $report) {
                 $reports[] = ['id'=> $report->id, 'name' => $report->name];

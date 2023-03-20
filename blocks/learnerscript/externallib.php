@@ -423,7 +423,7 @@ class block_learnerscript_external extends external_api {
             $reportclass->length = -1;
             $reportclass->reporttype = $reporttype;
         }
-        if($reportdashboard && $report->type == 'statistics'){
+        if($reportdashboard && ($report->type == 'statistics' || $report->enablestatistics == 1)){
             $reportdatatable = false;
         }else{
             $reportdatatable = true;
@@ -498,7 +498,7 @@ class block_learnerscript_external extends external_api {
                 }
             }
         } else {
-            if ($report->type != 'statistics') {
+            if ($report->type != 'statistics' && $report->enablestatistics == 0) {
                 $seriesvalues = (isset($reportclass->componentdata['plot']['elements'])) ? $reportclass->componentdata['plot']['elements'] : array();
                 $i = 0;
                 foreach ($seriesvalues as $g) {
@@ -670,7 +670,7 @@ class block_learnerscript_external extends external_api {
             $reportclass->length = -1;
             $reportclass->reporttype = $reporttype;
         }
-        if($reportdashboard && $report->type == 'statistics'){
+        if($reportdashboard && ($report->type == 'statistics' || $report->enablestatistics == 1)){
             $reportdatatable = false;
         }else{
             $reportdatatable = true;
@@ -745,7 +745,7 @@ class block_learnerscript_external extends external_api {
                 }
             }
         } else {
-            if ($report->type != 'statistics') {
+            if ($report->type != 'statistics' && $report->enablestatistics == 0) {
                 $seriesvalues = (isset($reportclass->componentdata['plot']['elements'])) ? $reportclass->componentdata['plot']['elements'] : array();
                 $i = 0;
                 foreach ($seriesvalues as $g) {

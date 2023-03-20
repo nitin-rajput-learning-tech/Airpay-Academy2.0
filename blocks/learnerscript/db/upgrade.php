@@ -266,7 +266,7 @@ function xmldb_block_learnerscript_upgrade($oldversion) {
     if ($oldversion < 2019052008.2) {
        $table = new xmldb_table('block_ls_learningformats');
         $table1 = new xmldb_table('block_ls_exams');
-       $field1 = new xmldb_field('refid', XMLDB_TYPE_CHAR, '10', null, null, null, null);
+       $field1 = new xmldb_field('refid', XMLDB_TYPE_INTEGER, '4', null, null, null, null);
         if (!$dbman->field_exists($table, $field1)) {   
             $dbman->add_field($table, $field1);    
         }
@@ -274,6 +274,16 @@ function xmldb_block_learnerscript_upgrade($oldversion) {
             $dbman->add_field($table1, $field1);    
         }
         upgrade_plugin_savepoint(true, 2019052008.2, 'block', 'learnerscript');         
+    }
+
+    if ($oldversion < 2019052008.5) {
+        $table = new xmldb_table('block_learnerscript');
+        $field = new xmldb_field('enablestatistics', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2019052008.5, 'block', 'learnerscript');
     }
     
     return true;

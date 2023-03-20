@@ -188,12 +188,23 @@ if ($editform->is_cancelled()) {
 		if ($data->type == 'sql' && !has_capability('block/learnerscript:managesqlreports', $context)) {
 			print_error('nosqlpermissions');
 		}
+
 		$data->id = (new ls)->add_report($data,$context);
+		$reportclass = (new ls)->create_reportclass($data->id);
+
+		$data->enablestatistics = ($reportclass->enablestatistics == true) ? 1 : 0;
+		(new ls)->update_report($data,$context);
+
 	} else {
 		$data->type = $report->type;
+
+		$reportclass = (new ls)->create_reportclass($data->id);
+
+		$data->enablestatistics = ($reportclass->enablestatistics == true) ? 1 : 0;
+
 		(new ls)->update_report($data,$context);
 	}
-	if($data->type == 'statistics'){
+	if($data->type == 'statistics' || $data->enablestatistics == 1){
 		redirect($CFG->wwwroot . '/blocks/learnerscript/viewreport.php?id=' . $data->id . '');
     } else{
 		redirect($CFG->wwwroot . '/blocks/learnerscript/design.php?id=' . $data->id . '');

@@ -235,7 +235,7 @@ if (!$download) {
 	$event->trigger();
 	echo $OUTPUT->header();
 	echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
-	if ($report->type == 'sql' || $report->type == 'statistics') {
+	if ($report->type == 'sql' || $report->type == 'statistics' || $report->enablestatistics == 1) {
 		echo $OUTPUT->heading($report->name);
 	} else {
 		echo $OUTPUT->heading($report->name.$OUTPUT->help_icon('report_' . $report->type,
