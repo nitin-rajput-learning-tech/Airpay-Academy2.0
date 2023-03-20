@@ -3311,3 +3311,10 @@ body .que .info>div {
 table{
     box-shadow: 0px 4px 11px 3px #00000036;
 }
+#calendar table{
+    box-shadow: none !important;
+}
+.ui-widget {
+    font-family: inherit !important;
+    font-size: inherit !important;
+}

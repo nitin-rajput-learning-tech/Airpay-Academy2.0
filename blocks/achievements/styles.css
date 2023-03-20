@@ -107,7 +107,6 @@ span.total {
 .block_achievements #achievements > .nav-tabs{
     background: none;
     margin: 0;
-    float: left;
     display: inline-block;
     border: none;
     padding: 0px !important;
@@ -142,7 +141,6 @@ span.total {
     padding: 10px 1em;
     text-transform: capitalize;
     line-height: 23px;
-    font-weight: 300;
 }
 .block_achievements #achievements li.achievements_tabs.active > a{
     margin: 0;
@@ -207,10 +205,8 @@ div#achievements {
     text-align: center;
     font-size: 13px;
 }
-.block_achievements #achievements li.achievements_tabs >a.active {
+.block_achievements #achievements li.achievements_tabs>a.active {
     text-decoration:underline;
-    color: #ddd;
-    font-weight: 400;
     text-underline-position: under;
 }
 @media(min-width: 768px) and (max-width: 991px) {

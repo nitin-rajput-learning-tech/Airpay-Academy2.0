@@ -547,6 +547,8 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     background-color: #ffb536;
     padding: 4px 7px;
     border-radius: 6px;
+    position: relative;
+    z-index: 1;
 }
 #page-local-search-allcourses .readyCCnt .course_name{
     text-transform: capitalize!important;

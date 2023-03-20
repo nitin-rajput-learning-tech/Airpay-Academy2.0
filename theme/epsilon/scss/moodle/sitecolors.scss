@@ -425,10 +425,6 @@ body#page-course-view-tabtopics .course_stat_label{color: $btntextcolor;}*/
  * @plugin sub-type achievements ====> starts here
  * 
 */
-.block_achievements #achievements li.achievements_tabs > a{
-    color: $gradientcolor;
-    /*font-weight: 100;*/
-}
 .block_achievements #achievements > .nav-tabs{
     background: linear-gradient(to left, $blockheaderstartbg, $blockheaderendbg);
 }
