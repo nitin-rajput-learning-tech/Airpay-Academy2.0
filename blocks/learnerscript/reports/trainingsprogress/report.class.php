@@ -158,6 +158,9 @@ class report_trainingsprogress extends reportbase implements report {
             $this->sql .= " AND concat(lc.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
         }
+        if ($this->ls_startdate > 0 && $this->ls_enddate) {
+            $this->sql  .= " AND lc.startdate BETWEEN $this->ls_startdate AND $this->ls_enddate ";
+        }
 
     }
 

@@ -1261,5 +1261,7 @@ $string['report_timewisequizattempts'] = 'Quiz Attempts Timewise';
 $string['report_questionattempthours'] = 'Question Attempts Hours';
 $string['filtertrainers'] = 'Select Trainers';
 $string['general'] = 'General';
+$string['feedback_courses'] = 'Feedback Courses';
+$string['trainers'] = 'Trainers';
 
 
