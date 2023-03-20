@@ -46,7 +46,7 @@ class report_skill extends reportbase implements report {
     }
     function select() {
         $this->sql ="SELECT cc.id,u.id as userid,c.fullname as course,ls.name as skill,
-                    cl.name as level,cc.timecompleted as achievedon, CONCAT(u.firstname,' ',u.lastname) AS fullname,u.idnumber as employeeid"; 
+                    cl.name as level,cc.timecompleted as achievedon, CONCAT(u.firstname,' ',u.lastname) AS fullname,u.open_employeeid as employeeid"; 
         parent::select();
     }
     function from() {
