@@ -62,18 +62,20 @@ class report_userwisecourseoverview extends reportbase {
         $this->sql .= " FROM {course} c ";
     }
 
-    function joins() {   
-        /*       $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category
+    function joins() { 
+        global $DB;
+        $employeerole = $DB->get_field_sql("SELECT id FROM {role} WHERE shortname IN ('employee','student')");  
+        $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category
             JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
             JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}
             JOIN {user} u ON ra.userid = u.id AND u.confirmed = 1
                             AND u.deleted = 0 AND u.suspended = 0
             JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
-            LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid "; */   
-        $this->sql .= " JOIN {enrol} as e ON c.id =e.courseid
+            LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid ";   
+      /*   $this->sql .= " JOIN {enrol} as e ON c.id =e.courseid
                     JOIN {user_enrolments} ue ON ue.enrolid = e.id
                     JOIN {user} as u ON u.id = ue.userid
-                    LEFT JOIN {course_completions} AS cc ON cc.course = c.id AND cc.userid = u.id  ";
+                    LEFT JOIN {course_completions} AS cc ON cc.course = c.id AND cc.userid = u.id  "; */
         parent::joins();
     }
 

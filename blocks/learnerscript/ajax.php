@@ -759,7 +759,7 @@ case 'usercourses':
 						JOIN {course} c ON c.id = ctx.instanceid
 						JOIN {enrol} e ON e.courseid = c.id AND e.status = 0
 						JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.userid = ra.userid AND ue.status = 0
-						JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+						JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
 						 WHERE u.id = $userid  AND c.visible = 1 ";
         $courses = $DB->get_records_sql_menu($sql);
         if (!empty($courses)) {
@@ -774,7 +774,7 @@ case 'usercourses':
 case 'enrolledusers':
 	if ($courseid > 0) {
 		$coursecontext = context_course::instance($courseid);
-		$studentroleid = $DB->get_field('role', 'id', array('shortname' => 'employee'));
+		$studentroleid = $DB->get_field_sql("SELECT id FROM {role} WHERE shortname IN ('employee','student')");
 		$enrolledusers = array_keys(get_role_users($studentroleid, $coursecontext));
 		$return = array();
 		if (!empty($enrolledusers)) {
@@ -1101,7 +1101,7 @@ case 'departmentcourses':
                     JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
                   JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
                   JOIN {role_assignments}  ra ON ra.userid = ue.userid
-                  JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                  JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
                   JOIN {context} ctx ON ctx.instanceid = c.id 
                   JOIN {user} AS u ON u.id = ue.userid 
                   JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1

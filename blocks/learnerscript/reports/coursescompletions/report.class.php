@@ -68,7 +68,8 @@ class report_coursescompletions extends reportbase implements report {
 
     function joins() {
         global $DB;
-        $employeerole = $DB->get_field('role', 'id', ['shortname' => 'employee']);
+        $employeerole = $DB->get_field_sql("SELECT id FROM {role} WHERE shortname IN ('employee','student')");
+       
         $this->sql .=" JOIN {local_custom_category} cat ON cat.id = c.open_categoryid
                         JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
                         JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}

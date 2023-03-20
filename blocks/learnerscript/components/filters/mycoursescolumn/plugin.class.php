@@ -62,7 +62,7 @@ class plugin_mycoursescolumn extends pluginbase {
                 JOIN {enrol} as e ON e.id = ue.enrolid 
                 JOIN {role_assignments} as ra ON ra.userid = ue.userid
                 JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
-                JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
+                JOIN {role} as r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
                 JOIN {course} as c ON c.id = e.courseid
                 WHERE CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') 
                 AND ue.userid = $USER->id ";
