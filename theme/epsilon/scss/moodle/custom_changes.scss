@@ -2680,7 +2680,7 @@ body .que .info>div {
 #page-local-courses-index .secondary-navigation{
     display: none;
 }
-.pagelayout-mydashboard .page-header-headings,.pagelayout-mydashboard h2{
+.pagelayout-mydashboard .page-header-headings h1{
     display: none;
 }
 #page-header .singlebutton{
@@ -3310,4 +3310,11 @@ body .que .info>div {
 }
 table{
     box-shadow: 0px 4px 11px 3px #00000036;
+}
+#calendar table{
+    box-shadow: none !important;
+}
+.ui-widget {
+    font-family: inherit !important;
+    font-size: inherit !important;
 }
