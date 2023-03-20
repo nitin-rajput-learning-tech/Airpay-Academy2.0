@@ -1254,3 +1254,5 @@ $string['report_trainingsoverviewpast'] = 'Trainings Overview(Past 3 to 6 Months
 $string['report_trainingsoverviewupcoming'] = 'Trainings Overview(Next 3 to 6 Months)';
 $string['report_usercourseoverview'] = 'User Course Overview';
 
+$string['report_courseparticipation'] = 'Course Participation';
+$string['courseparticipationcolumns'] = 'Course Participation Columns';
