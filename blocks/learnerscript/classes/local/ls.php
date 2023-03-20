@@ -1165,12 +1165,12 @@ class ls {
 			}
     		if(empty($_SESSION['role']) && !empty($statisticsreports)){
 				$implodereports = implode(',', $statisticsreports);
-    			$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND id NOT IN ('.$implodereports.') AND type = "statistics"', null, '', 'id, name');
+    			$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND id NOT IN ('.$implodereports.') AND (type = "statistics" OR enablestatistics=1)', null, '', 'id, name');
     		} else{
-    			$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND type = "statistics"', null, '', 'id, name');
+    			$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND (type = "statistics" OR enablestatistics=1)', null, '', 'id, name');
     		}
     	} else{
-    		$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND type != "statistics"', null, '', 'id, name');
+    		$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND (type != "statistics" OR enablestatistics=0)', null, '', 'id, name');
     	}
 		$rolereports = array();
 		if(!empty($reportlist)) {
@@ -1231,7 +1231,7 @@ class ls {
     	if(empty($role) || $role == 'manager'){
     		return array();
     	}
-		$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND type = "statistics"', null, '', 'id, name');
+		$reportlist = $DB->get_records_select_menu('block_learnerscript', 'global = 1 AND visible = 1 AND (type = "statistics" OR enablestatistics=1)', null, '', 'id, name');
 		$statisticsreports = array();
 		if(!empty($reportlist)) {
 			foreach ($reportlist as $key => $value) {
