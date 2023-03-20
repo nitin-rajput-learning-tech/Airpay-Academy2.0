@@ -77,7 +77,7 @@ final class block_suggested_courses extends block_base {
             $tabs=array();
             $filterdata = json_encode(array());
 
-            $options = array('targetID' => 'mysuggestedcourses','perPage' => '3', 'cardClass' => 'pl-0 pr-4 col-md-4 col-sm-6', 'viewType' => 'card');
+            $options = array('targetID' => 'mysuggestedcourses','perPage' => '4', 'cardClass' => 'col-md-3 col-sm-6', 'viewType' => 'card');
 
             $dataoptions['search_query'] = '' ;
             $options['methodName']='block_suggested_courses_get_courses';

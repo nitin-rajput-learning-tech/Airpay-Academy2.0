@@ -14,6 +14,7 @@
     .navbar-brand {
         .logo {
             max-height: calc(#{$navbar-height} - (#{$primary-nav-padding-y} * 2));
+            padding: 8px;
         }
     }
     .nav-link {
