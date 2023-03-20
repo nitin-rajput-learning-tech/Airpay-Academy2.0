@@ -59,7 +59,17 @@ class session_form extends moodleform {
             $mform->setType('name', PARAM_CLEANHTML);
         }
         $mform->addRule('name', null, 'required', null, 'client');
+        // added by sachin----------------------------------------------------
+        $mform->addElement('text', 'recordinglink', get_string('recordinglink', 'local_classroom'), array());
+        $mform->setType('recordinglink', PARAM_URL);
+        $mform->addRule('recordinglink', get_string('recordinglink_err', 'local_classroom'), 'regex', '/\b(?:(?:https?|ftp):\/\/|www\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i', 'server');
 
+        $mform->addElement('text', 'messagelink', get_string('messagelink', 'local_classroom'), array());
+        $mform->addHelpButton('messagelink', 'messagelink', 'local_classroom');
+        $mform->setType('messagelink', PARAM_URL);
+        $mform->addRule('messagelink', get_string('messagelink_err', 'local_classroom'), 'regex', '/\b(?:(?:https?|ftp):\/\/|www\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i', 'server');
+        $mform->disabledIf('messagelink', 'onlinesession', 'checked');
+        //-------------------------------------------------------------------
         $get_config=get_config('local_classroom', 'classroom_onlinesession_type');
 		
         if(!empty($get_config)){

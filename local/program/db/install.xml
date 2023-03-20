@@ -42,6 +42,8 @@
         <FIELD NAME="open_district" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_subdistrict" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="open_village" TYPE="char" LENGTH="225" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="open_skill" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="open_level" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="usercreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>

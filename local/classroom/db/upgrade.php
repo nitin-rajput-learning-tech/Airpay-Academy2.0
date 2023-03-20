@@ -581,5 +581,17 @@ if ($oldversion <  2022101800.11) {
     }
     upgrade_plugin_savepoint(true, 2022101800.11, 'local', 'classroom');
 }
+if($oldversion < 2022101800.12){
+    $table = new xmldb_table('local_classroom_sessions');
+    $field = new xmldb_field('recordinglink', XMLDB_TYPE_CHAR, '225', null, null, null, null);
+    if (!$dbman->field_exists($table, $field)) {
+        $dbman->add_field($table, $field);
+    }
+    $field = new xmldb_field('messagelink', XMLDB_TYPE_CHAR, '225', null, null, null, null);
+    if (!$dbman->field_exists($table, $field)) {
+        $dbman->add_field($table, $field);
+    }
+    upgrade_plugin_savepoint(true,2022101800.12, 'local', 'classroom');   
+}
     return true;
 }

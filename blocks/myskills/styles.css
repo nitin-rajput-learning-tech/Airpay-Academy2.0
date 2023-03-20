@@ -1,0 +1,15 @@
+/*@media(max-width: 1200px){
+	#block-region-layerone_one .block.block_myskills{height:437px;}
+}*/
+#block-region-layerone_one .block.block_myskills #all_skills_acquired tbody td {line-height:30px; padding-bottom: 0px;}
+#block-region-layerone_one .block.block_myskills #all_skills_acquired p {margin:5px;}
+#block-region-layerone_one .block.block_myskills #all_skills_acquired th,#block-region-layerone_one .block.block_myskills #all_skills_acquired td{background-image: none;}
+.block.block_myskills .content {min-height: 240px;}
+.block_myskills #manageblockskillid .paged-content-page-container+.m-t-1 {display: inline-block;width: 100%;margin: 0rem auto .5rem auto !important;}
+.block_myskills #all_skills_acquired>thead {background: transparent;}
+.block.block_myskills #all_skills_acquired th {color: #000;}
+/*code written for Mozilla by Raghuvaran*/
+@-moz-document url-prefix() {
+	.block.block_myskills .content {margin-bottom: 1rem;}
+}
+#all_skills_acquired_wrapper{width: 100%;float: left;overflow: auto;}
