@@ -1079,18 +1079,18 @@ input.form-control-danger {
 .modal.openLMStransition .modal-content .mform .col-md-3.form_label {
     margin-top: 5px;
 }
-.mform .form-inline select.custom-select {
-    min-width: 269px;
-    max-width: 269px;
-    min-height: 20px;
-}
-.mform .form-inline .form-control {
-    min-width: 269px;
-    min-height: 20px;
-}
-.mform .form-inline input[type=text].form-control {
-    max-width: 269px;
-}
+// .mform .form-inline select.custom-select {
+//     min-width: 269px;
+//     max-width: 269px;
+//     min-height: 20px;
+// }
+// .mform .form-inline .form-control {
+//     min-width: 269px;
+//     min-height: 20px;
+// }
+// .mform .form-inline input[type=text].form-control {
+//     max-width: 269px;
+// }
 
 
 .mform .col-md-9[data-fieldtype="date_time_selector"] select,
@@ -2680,7 +2680,7 @@ body .que .info>div {
 #page-local-courses-index .secondary-navigation{
     display: none;
 }
-.pagelayout-mydashboard .page-header-headings,.pagelayout-mydashboard h2{
+.pagelayout-mydashboard .page-header-headings h1{
     display: none;
 }
 #page-header .singlebutton{
@@ -2924,7 +2924,7 @@ body .que .info>div {
     padding: 20px;
     .course_image{
         width: 100%;
-        height:250px;
+        height:200px;
         position: relative;
         background-size: cover;
         background-position: center;
@@ -3282,4 +3282,37 @@ body .que .info>div {
 }
 .pagination .ng-scope.active>a{
     border:1px solid #ddd;
+}
+
+/*online quiz view page css*/
+#page-mod-quiz-view .activity-information .description-inner{
+    display: flex;
+}
+#page-mod-quiz-view .activity-information .description-inner>div{
+    margin-right: 10px;
+}
+#page-mod-quiz-view .tertiary-navigation .row{
+    justify-content: center;
+}
+#page-mod-quiz-view .generaltable.quizattemptsummary{
+    box-shadow: 0 4px 5px #ddd;
+}
+#page-mod-quiz-view .quizinfo{
+    display: flex;
+    background-color: #f0f4fe;
+    padding-left: 1rem;
+    margin-top: 1rem;
+}
+#page-mod-quiz-view .quizinfo p{
+    margin-right: 10px;
+    margin-bottom: 0;
+    font-size: 15px;
+}
+table.generaltable{
+    box-shadow: 0px 4px 11px 3px #00000036;
+}
+
+.ui-widget {
+    font-family: inherit !important;
+    font-size: inherit !important;
 }

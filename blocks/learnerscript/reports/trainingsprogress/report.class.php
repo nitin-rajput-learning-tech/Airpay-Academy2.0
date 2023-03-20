@@ -124,7 +124,7 @@ class report_trainingsprogress extends reportbase implements report {
         global $USER, $DB;
         $this->sql .= " WHERE 1=1 ";
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
-        $this->sql .= " WHERE (lc.status = 1 OR lc.status = 4) {$costcenterpathconcatsql} ";
+        $this->sql .= " AND (lc.status = 1 OR lc.status = 4) {$costcenterpathconcatsql} ";
         parent::where();
     }
    
@@ -157,6 +157,9 @@ class report_trainingsprogress extends reportbase implements report {
             $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
             $this->sql .= " AND concat(lc.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
+        }
+        if ($this->ls_startdate > 0 && $this->ls_enddate) {
+            $this->sql  .= " AND lc.startdate BETWEEN $this->ls_startdate AND $this->ls_enddate ";
         }
 
     }

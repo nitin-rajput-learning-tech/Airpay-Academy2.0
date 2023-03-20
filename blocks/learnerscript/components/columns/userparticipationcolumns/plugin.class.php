@@ -49,35 +49,16 @@ class plugin_userparticipationcolumns extends pluginbase {
         global $DB;
        
         switch ($data->column) {
-            case 'coursesenrolled':
-                $sql = "SELECT COUNT(DISTINCT c.id) AS enrolled 
-                            FROM {user_enrolments} ue   
-                            JOIN {enrol} e ON ue.enrolid = e.id 
-                            JOIN {role_assignments} ra ON ra.userid = ue.userid
-                            JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-                            JOIN {context} AS ctx ON ctx.id = ra.contextid
-                            JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                            WHERE e.courseid = c.id AND ue.userid = :userid";
-                $params = array('userid'=>$row->userid);
-                $enrolledcourses = $DB->count_records_sql($sql, $params);
+            case 'coursesenrolled':               
+                $enrolledcourses = $this->course_enrolled($row->userid);
                 if($enrolledcourses){
                     $row->{$data->column} = $enrolledcourses;
                 }else{
                     $row->{$data->column} = 0;
                 }     
             break;
-            case 'coursesinprogress':               
-                $sql = "SELECT (COUNT(DISTINCT c.id) - COUNT(DISTINCT cc.id)) AS inprogress 
-                          FROM {user_enrolments} ue   
-                          JOIN {enrol} e ON ue.enrolid = e.id 
-                          JOIN {role_assignments} ra ON ra.userid = ue.userid
-                          JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-                          JOIN {context} AS ctx ON ctx.id = ra.contextid
-                          JOIN {course} c ON c.id = ctx.instanceid 
-                          LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-                         WHERE e.courseid = c.id AND ue.userid = :userid";
-                $params = array('userid'=>$row->userid);
-                $coursesinprogress = $DB->count_records_sql($sql, $params);
+            case 'coursesinprogress':  
+                $coursesinprogress =  $this->course_inprogress($row->userid);
                 if($coursesinprogress){
                     $row->{$data->column} = $coursesinprogress;
                 }else{
@@ -85,17 +66,7 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }   
                 break;
             case 'coursescompleted':
-                $sql = "SELECT COUNT(DISTINCT cc.course) AS completed 
-                          FROM {user_enrolments} ue   
-                          JOIN {enrol} e ON ue.enrolid = e.id 
-                          JOIN {role_assignments} ra ON ra.userid = ue.userid
-                          JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-                          JOIN {context} AS ctx ON ctx.id = ra.contextid
-                          JOIN {course} c ON c.id = ctx.instanceid 
-                          JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
-                          WHERE e.courseid = c.id AND ue.userid = :userid";
-                $params = array('userid'=>$row->userid);
-                $coursescompleted = $DB->count_records_sql($sql, $params);
+                $coursescompleted =  $this->course_completed($row->userid);
                 if($coursescompleted){
                     $row->{$data->column} = $coursescompleted;
                 }else{
@@ -103,30 +74,19 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }  
                 break;
             case 'coursesprogress':
-                $sql = "SELECT ROUND((COUNT(distinct cc.course) / COUNT(DISTINCT c.id)) *100, 2) as progress 
-                            FROM {user_enrolments} ue   
-                            JOIN {enrol} e ON ue.enrolid = e.id 
-                            JOIN {role_assignments} ra ON ra.userid = ue.userid
-                            JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
-                            JOIN {context} AS ctx ON ctx.id = ra.contextid
-                            JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
-                            LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid 
-                            AND cc.timecompleted > 0 WHERE  e.courseid = c.id AND ue.userid = :userid";
-                $params = array('userid'=>$row->userid);
-                $coursesprogress = $DB->get_field_sql($sql, $params);
-                if($coursesprogress){
-                    $row->{$data->column} = $coursesprogress;
-                }else{
-                    $row->{$data->column} = 0;
-                }  
+                $enrolledcount = $this->course_enrolled($row->userid);
+                $completedcount = $this->course_completed($row->userid);
+                $coursesprogress = intval(($completedcount / $enrolledcount) * 100);              
+               
+                $row->{$data->column} ='<div class="progress">
+                        <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$coursesprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$coursesprogress.'%">
+                            <span class="progress_percentage ml-2">'.$coursesprogress.'% Complete</span>
+                        </div>
+                    </div>';
+               
                 break;   
-            case 'iltenrolled':
-                $sql = "SELECT count(lc.id) 
-                            FROM {local_classroom} AS lc
-                            JOIN {local_classroom_users} AS lcu ON lc.id=lcu.classroomid
-                            WHERE lcu.userid = :userid ";
-                $params = array('userid'=>$row->userid);
-                $iltenrolled = $DB->count_records_sql($sql, $params);
+            case 'iltenrolled':             
+                $iltenrolled = $this->ilt_enrolled($row->userid);
                 if($iltenrolled){
                     $row->{$data->column} = $iltenrolled;
                 }else{
@@ -134,12 +94,7 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }     
                 break;
             case 'iltinprogress':               
-                $sql = "SELECT count(lc.id) 
-                            FROM {local_classroom} AS lc
-                            JOIN {local_classroom_users} AS lcu ON lc.id=lcu.classroomid
-                            WHERE lcu.userid = :userid AND lcu.completion_status= :status";
-                $params = array('userid'=>$row->userid,'status' => 0);
-                $iltinprogress = $DB->count_records_sql($sql, $params);
+                $iltinprogress = $this->ilt_inprogress($row->userid);
                 if($iltinprogress){
                     $row->{$data->column} = $iltinprogress;
                 }else{
@@ -147,37 +102,30 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }   
                 break;  
             case 'iltcompleted':               
-                $sql = "SELECT count(lc.id) 
-                            FROM {local_classroom} AS lc
-                            JOIN {local_classroom_users} AS lcu ON lc.id=lcu.classroomid
-                            WHERE lcu.userid = :userid AND lcu.completion_status= :status";
-                $params = array('userid'=>$row->userid,'status' => 1);
-                $iltcompleted = $DB->count_records_sql($sql, $params);
+                $iltcompleted = $this->ilt_completed($row->userid);
                 if($iltcompleted){
                     $row->{$data->column} = $iltcompleted;
                 }else{
                     $row->{$data->column} = 0;
                 }   
                 break;  
-            case 'iltprogress':               
-                $completedcount = $DB->count_records_sql("select count(cu.id) from {local_classroom_users} cu where cu.userid = ? AND cu.completion_status=?", array($row->userid, 1));
+            case 'iltprogress':                               
+                /* $completedcount = $DB->count_records_sql("select count(cu.id) from {local_classroom_users} cu where cu.userid = ? AND cu.completion_status=?", array($row->userid, 1));
                 $enrolledcount = $DB->count_records_sql("select count(cu.id) from {local_classroom_users} cu where cu.userid = ? ", array($row->userid));
-              
-                $iltprogress = ROUND(($completedcount / $enrolledcount) *100, 2);
-                $iltprogress = is_NAN($iltprogress) ? 0 : $iltprogress;
-                if($iltprogress){
-                    $row->{$data->column} = $iltprogress;
-                }else{
-                    $row->{$data->column} = 0;
-                }
+               */
+                $iltenrolledcount = $this->ilt_enrolled($row->userid);
+                $iltcompletedcount = $this->ilt_completed($row->userid);
+                $iltprogress = intval(($iltcompletedcount / $iltenrolledcount) * 100);
+                //$iltprogress = is_NAN($iltprogress) ? 0 : $iltprogress;
+                $row->{$data->column} ='<div class="progress">
+                            <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$iltprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$iltprogress.'%">
+                                <span class="progress_percentage ml-2">'.$iltprogress.'% Complete</span>
+                            </div>
+                        </div>';
+               
                 break;         
             case 'lpenrolled':
-                //$completedcount = $DB->count_records_sql("select count(cu.id) from {local_learningplan_user} cu, {user} u where u.id = cu.userid AND u.deleted = 0 AND u.suspended = 0 AND cu.planid=? AND cu.status=?", array($lpid, 1));
-                $sql = "SELECT count(lpu.id) 
-                            FROM {local_learningplan_user} lpu
-                            WHERE lpu.userid = :userid ";                
-                $params = array('userid'=>$row->userid);
-                $lpenrolled = $DB->count_records_sql($sql, $params);
+                $lpenrolled = $this->lp_enrolled($row->userid);
                 if($lpenrolled){
                     $row->{$data->column} = $lpenrolled;
                 }else{
@@ -185,11 +133,7 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }     
                 break;
             case 'lpinprogress':               
-                $sql = "SELECT count(lpu.id) 
-                            FROM {local_learningplan_user} lpu
-                            WHERE lpu.userid = :userid AND lpu.completiondate IS NULL AND lpu.status IS NULL";
-                $params = array('userid'=>$row->userid,'status' => 0);
-                $lpinprogress = $DB->count_records_sql($sql, $params);
+                $lpinprogress = $this->lp_inprogress($row->userid);
                 if($lpinprogress){
                     $row->{$data->column} = $lpinprogress;
                 }else{
@@ -197,11 +141,7 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }   
                 break;  
             case 'lpcompleted':               
-                $sql = "SELECT count(lpu.id) 
-                            FROM {local_learningplan_user} lpu
-                            WHERE lpu.userid = :userid AND lpu.completiondate IS NOT NULL AND lpu.status = :status";
-                $params = array('userid'=>$row->userid,'status' => 1);
-                $lpcompleted = $DB->count_records_sql($sql, $params);
+                $lpcompleted = $this->lp_completed($row->userid);
                 if($lpcompleted){
                     $row->{$data->column} = $lpcompleted;
                 }else{
@@ -209,23 +149,220 @@ class plugin_userparticipationcolumns extends pluginbase {
                 }   
                 break;  
             case 'lpprogress':               
-                $lpcompletedcount = $DB->count_records_sql("select count(lpu.id) from {local_learningplan_user} lpu WHERE lpu.status=?", array(1));
-                $lpenrolledcount = $DB->count_records_sql("select count(lpu.id) from {local_learningplan_user} lpu ");
-        
-                $lpprogress = ROUND(($lpcompletedcount / $lpenrolledcount) *100, 2);
-                $lpprogress = is_NAN($lpprogress) ? 0 : $lpprogress;
-                if($lpprogress){
-                    $row->{$data->column} = $lpprogress;
+                /* $lpcompletedcount = $DB->count_records_sql("select count(lpu.id) from {local_learningplan_user} lpu WHERE lpu.status=?", array(1));
+                $lpenrolledcount = $DB->count_records_sql("select count(lpu.id) from {local_learningplan_user} lpu "); */
+                $lpenrolledcount = $this->lp_enrolled($row->userid);
+                $lpcompletedcount = $this->lp_completed($row->userid);
+                $lpprogress = intval(($lpcompletedcount / $lpenrolledcount) * 100);               
+                $row->{$data->column} ='<div class="progress">
+                        <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$lpprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$lpprogress.'%">
+                            <span class="progress_percentage ml-2">'.$lpprogress.'% Complete</span>
+                        </div>
+                    </div>';
+             
+                break; 
+           
+            case 'programenrolled':               
+                $programenrolled = $this->program_enrolled($row->userid);
+                if($programenrolled){
+                    $row->{$data->column} = $programenrolled;
                 }else{
                     $row->{$data->column} = 0;
                 }
                 break; 
+            case 'programinprogress':               
+                $programinprogress = $this->program_inprogress($row->userid);
+                if($programinprogress){
+                    $row->{$data->column} = $programinprogress;
+                }else{
+                    $row->{$data->column} = 0;
+                }   
+                break;  
+            case 'programcompleted':               
+                $programcompleted = $this->program_completed($row->userid);
+                if($programcompleted){
+                    $row->{$data->column} = $programcompleted;
+                }else{
+                    $row->{$data->column} = 0;
+                }
+                break;
+            case 'programprogress': 
+                $programenrolled = $this->program_enrolled($row->userid);              
+                $programcompleted = $this->program_completed($row->userid);
+                $programprogress = intval(($programcompleted / $programenrolled) * 100);               
+                $row->{$data->column} ='<div class="progress">
+                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$programprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$programprogress.'%">
+                        <span class="progress_percentage ml-2">'.$programprogress.'% Complete</span>
+                    </div>
+                </div>';
+            
+                break;   
             default:
                 $row->{$data->column} = isset($row->{$data->column}) ? $row->{$data->column} : $row->{$data->column};
             break;                      
         }
         return (isset($row->{$data->column})) ? $row->{$data->column} : '--';
-        
+    }
+
+    public function course_enrolled($userid){
+        global $DB;
+        $sql = "SELECT COUNT(DISTINCT c.id) AS enrolled 
+                    FROM {user_enrolments} ue   
+                    JOIN {enrol} e ON ue.enrolid = e.id 
+                    JOIN {role_assignments} ra ON ra.userid = ue.userid
+                    JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
+                    JOIN {context} AS ctx ON ctx.id = ra.contextid
+                    JOIN {course} c ON c.id = ctx.instanceid 
+                    WHERE e.courseid = c.id AND ue.userid = :userid";
+        $params = array('userid'=>$userid);
+        $enrolledcourses = $DB->count_records_sql($sql, $params);
+        return $enrolledcourses;
+    }
+
+    public function course_inprogress($userid){
+        global $DB;
+        $sql = "SELECT (COUNT(DISTINCT c.id) - COUNT(DISTINCT cc.id)) AS inprogress 
+                    FROM {user_enrolments} ue   
+                    JOIN {enrol} e ON ue.enrolid = e.id 
+                    JOIN {role_assignments} ra ON ra.userid = ue.userid
+                    JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
+                    JOIN {context} AS ctx ON ctx.id = ra.contextid
+                    JOIN {course} c ON c.id = ctx.instanceid 
+                    LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
+                WHERE e.courseid = c.id AND ue.userid = :userid";
+        $params = array('userid'=>$userid);
+        $inprogresscount = $DB->count_records_sql($sql, $params);        
+        return $inprogresscount;
+    }
+
+    public function course_completed($userid){
+        global $DB;
+        $sql = "SELECT COUNT(DISTINCT cc.course) AS completed 
+                    FROM {user_enrolments} ue   
+                    JOIN {enrol} e ON ue.enrolid = e.id 
+                    JOIN {role_assignments} ra ON ra.userid = ue.userid
+                    JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
+                    JOIN {context} AS ctx ON ctx.id = ra.contextid
+                    JOIN {course} c ON c.id = ctx.instanceid 
+                    JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
+                    WHERE e.courseid = c.id AND ue.userid = :userid";
+        $params = array('userid'=>$userid);
+        $coursescompleted = $DB->count_records_sql($sql, $params);      
+        return $coursescompleted;
+    }
+
+    public function course_progress($userid){
+        global $DB;
+        $sql = "SELECT ROUND((COUNT(distinct cc.course) / COUNT(DISTINCT c.id)) *100, 2) as progress 
+                    FROM {user_enrolments} ue   
+                    JOIN {enrol} e ON ue.enrolid = e.id 
+                    JOIN {role_assignments} ra ON ra.userid = ue.userid
+                    JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
+                    JOIN {context} AS ctx ON ctx.id = ra.contextid
+                    JOIN {course} c ON c.id = ctx.instanceid
+                    LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid 
+                    AND cc.timecompleted > 0 WHERE  e.courseid = c.id AND ue.userid = :userid";
+        $params = array('userid'=>$userid);
+        $coursesprogress = $DB->get_field_sql($sql, $params);
+        return $coursesprogress;
+    }
+
+    public function ilt_enrolled($userid){
+        global $DB;
+        $sql = "SELECT count(lc.id) 
+                    FROM {local_classroom} AS lc
+                    JOIN {local_classroom_users} AS lcu ON lc.id=lcu.classroomid
+                    WHERE lcu.userid = :userid ";
+        $params = array('userid'=>$userid);
+        $iltenrolled = $DB->count_records_sql($sql, $params);
+        return $iltenrolled ;
+    }
+
+    public function ilt_inprogress($userid){
+        global $DB;
+        $sql = "SELECT count(lc.id) 
+                    FROM {local_classroom} AS lc
+                    JOIN {local_classroom_users} AS lcu ON lc.id=lcu.classroomid
+                    WHERE lcu.userid = :userid AND lcu.completion_status= :status";
+        $params = array('userid'=>$userid,'status' => 0);
+        $iltinprogress = $DB->count_records_sql($sql, $params);
+        return $iltinprogress ;
+    }
+
+    public function ilt_completed($userid){
+        global $DB;
+        $sql = "SELECT count(lpu.id) 
+                    FROM {local_learningplan_user} lpu
+                    WHERE lpu.userid = :userid AND lpu.completiondate IS NOT NULL AND lpu.status = :status";
+        $params = array('userid'=>$userid,'status' => 1);
+        $lpcompleted = $DB->count_records_sql($sql, $params);
+        return $lpcompleted ;
+    }
+
+    public function lp_enrolled($userid){
+        global $DB;
+        $sql = "SELECT count(lpu.id) 
+                    FROM {local_learningplan_user} lpu
+                    WHERE lpu.userid = :userid ";                
+        $params = array('userid'=>$userid);
+        $lpenrolled = $DB->count_records_sql($sql, $params);
+        return $lpenrolled;
+    }
+
+    public function lp_inprogress($userid){
+        global $DB;
+        $sql = "SELECT count(lpu.id) 
+                    FROM {local_learningplan_user} lpu
+                    WHERE lpu.userid = :userid AND lpu.completiondate IS NULL AND lpu.status IS NULL";
+        $params = array('userid'=>$userid,'status' => 0);
+        $lpinprogress = $DB->count_records_sql($sql, $params);
+        return $lpinprogress;
+    }
+
+    public function lp_completed($userid){
+        global $DB;
+        $sql = "SELECT count(lpu.id) 
+                    FROM {local_learningplan_user} lpu
+                    WHERE lpu.userid = :userid AND lpu.completiondate IS NOT NULL AND lpu.status = :status";
+        $params = array('userid'=>$userid,'status' => 1);
+        $lpcompleted = $DB->count_records_sql($sql, $params);
+        return $lpcompleted;
+    }
+
+    public function program_enrolled($userid){
+        global $DB;
+        $sql = "SELECT COUNT(pg.id)
+                    FROM {local_program} as pg
+                    JOIN {local_program_users} AS pgu ON pg.id = pgu.programid
+                    WHERE pgu.userid = :userid ";//AND bc.visible=1 
+        $params = array('userid'=>$userid,'status' => 1);
+        $programenrolled = $DB->count_records_sql($sql, $params);
+        return $programenrolled;
+    }
+
+    public function program_inprogress($userid){
+        global $DB;
+        $sql = "SELECT count(pg.id) 
+                    FROM {local_program} AS pg
+                    JOIN {local_program_users} AS pgu ON pg.id = pgu.programid
+                    WHERE pgu.userid = :userid AND pgu.programid NOT IN (SELECT programid
+                    FROM {local_program_users} WHERE completion_status = :status AND completiondate > 0
+                    AND userid = {$userid} ) ";//AND pg.visible=1 
+        $params = array('userid'=>$userid,'status' => 1);
+        $programinprogress = $DB->count_records_sql($sql, $params);
+        return $programinprogress;
+    }
+
+    public function program_completed($userid){
+        global $DB;
+        $sql = "SELECT COUNT(pg.id)
+                    FROM {local_program} as pg
+                    JOIN {local_program_users} AS pgu ON pg.id = pgu.programid
+                    WHERE pgu.completion_status = :status AND pgu.completiondate > 0 
+                    AND pgu.userid = :userid "; //AND pg.visible=1 
+        $params = array('userid'=>$userid,'status' => 1);
+        $programcompleted = $DB->count_records_sql($sql, $params);
+        return $programcompleted;
     }
 
 }

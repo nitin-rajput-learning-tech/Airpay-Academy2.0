@@ -46,7 +46,7 @@ class report_users extends reportbase {
         // }
         $this->filters = array('organization', 'departments','subdepartments', 'level4department' /*,'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage'*/, 'users'/*, 'contentprovider', 'learningtype', 'certification', 'certificationlevel', 'exam', 'solutionarea', 'technology', 'topic', 'vendor', 'level', 'language', 'jobrole', 'country'*/);
         $this->defaultcolumn = 'u.id';
-        $this->excludedroles = array("'employee'");
+        $this->excludedroles = array("'employee','student'");
 
     }
     function count() {
@@ -169,7 +169,7 @@ class report_users extends reportbase {
                           FROM {user_enrolments} ue   
                           JOIN {enrol} e ON ue.enrolid = e.id 
                           JOIN {role_assignments} ra ON ra.userid = ue.userid
-                          JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                          JOIN {role} r ON r.id = ra.roleid AND r.shortname  IN ('employee','student')
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                           WHERE e.courseid = c.id $where $coursefilter $contentprovider";
@@ -180,7 +180,7 @@ class report_users extends reportbase {
                           FROM {user_enrolments} ue   
                           JOIN {enrol} e ON ue.enrolid = e.id 
                           JOIN {role_assignments} ra ON ra.userid = ue.userid
-                          JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                          JOIN {role} r ON r.id = ra.roleid AND r.shortname  IN ('employee','student')
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                      LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 
@@ -192,7 +192,7 @@ class report_users extends reportbase {
                           FROM {user_enrolments} ue   
                           JOIN {enrol} e ON ue.enrolid = e.id 
                           JOIN {role_assignments} ra ON ra.userid = ue.userid
-                          JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                          JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
                           JOIN {context} AS ctx ON ctx.id = ra.contextid
                           JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                           JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 WHERE e.courseid = c.id $where $coursefilter $contentprovider";
@@ -203,7 +203,7 @@ class report_users extends reportbase {
                             FROM {user_enrolments} ue   
                             JOIN {enrol} e ON ue.enrolid = e.id 
                             JOIN {role_assignments} ra ON ra.userid = ue.userid
-                            JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'employee'
+                            JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
                             JOIN {context} AS ctx ON ctx.id = ra.contextid
                             JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1 
                        LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid 

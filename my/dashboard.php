@@ -26,7 +26,12 @@
 require_once("../config.php");
 require_once($CFG->dirroot. '/course/lib.php');
 $orgid  = optional_param('orgid', 0, PARAM_INT);
+redirect_if_major_upgrade_required();
 
+$hassiteconfig = has_capability('moodle/site:config', context_system::instance());
+if ($hassiteconfig && moodle_needs_upgrading()) {
+    redirect(new moodle_url('/admin/index.php'));
+}
 global $USER,$DB;
 $site = get_site();
 require_login();

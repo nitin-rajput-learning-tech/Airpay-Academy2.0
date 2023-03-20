@@ -75,11 +75,11 @@ echo '<div class="content_era_left">';
                 $categoryname = $parentname . ' / '. $categoryname;
             }
 
-	$course_category = $course_category ? $course_category : 'NA';
-	// $open_level = $DB->get_field('local_course_levels', 'name', array('id' => $course->open_level));
-	// $level = $open_level ? $open_level : 'NA';
-	// $open_skill = $DB->get_field('local_skill', 'name', array('id' => $course->open_skill));
-	// $skill = $open_skill ? $open_skill : 'NA';
+	$categoryname = $categoryname ? $categoryname : 'N/A';
+	$open_level = $DB->get_field('local_course_levels', 'name', array('id' => $course->open_level));
+	$level = $open_level ? $open_level : 'NA';
+	$open_skill = $DB->get_field('local_skill', 'name', array('id' => $course->open_skill));
+	$skill = $open_skill ? $open_skill : 'NA';
 
 	// if(is_null($course->open_grade) || $course->open_grade == '' || $course->open_grade == -1){
 	// 	$course_grade = get_string('all');
@@ -101,27 +101,36 @@ echo '<div class="content_era_left">';
          <div class="row mt-4 pb-2">';
 		 if($managecoursecap)
 			{
-             echo 	'<div class="col-md-4 user_completion d-flex">
+             echo 	'<div class="col-md-3 user_completion d-flex">
                         <div class="user_icon mr-2"></div>
                         <div class="completion_details d-flex">
                             <span class="details_content text-nowrap">Users Completion :</span>
                             <span class="enroll_number">'.$completed_count.'</span>
                         </div>
                     </div>
-                    <div class="user_enrollment col-md-4 d-flex">
+                    <div class="user_enrollment col-md-3 d-flex">
                         <div class="enroll_icon mr-2"></div>
                         <div class="enroll_details d-flex">
                             <span class="details_content text-nowrap">Enrollments :</span>
                             <span class="enroll_number">'.$enrolled_count.'</span>
                         </div>
                     </div>
-                    <div class=" skill_level_details col-md-4 d-flex">
+					<div class=" skill_level_details col-md-3 d-flex">
                         <div class="skill_icon mr-2"></div>
                         <div class="skill_details d-flex">
-                            <span class="details_content text-nowrap">Skill Level :</span>
-                            <span class="skill_level"></span>
+                            <span class="details_content text-nowrap">Skill :</span>
+                            <span class="skill_level">'.$skill.'</span>
                         </div>
                     </div>
+					<div class=" skill_level_details col-md-3 d-flex">
+						<div class="skill_icon mr-2"></div>
+						<div class="skill_details d-flex">
+							<span class="details_content text-nowrap">Skill Level :</span>
+							<span class="skill_level">'.$open_level.'</span>
+					</div>
+					</div>
+                    
+					
                     </div>';
 				}
             echo '<div class="pull-right">';
@@ -194,7 +203,7 @@ echo '<div class="content_era_left">';
 		                </button>
 		            </a>
         		</div>';
-        	echo '<div class="view_gradeslink px-2"><a class="view_links btn btn-block" href="'.$CFG->wwwroot.'/grade/report/user/index.php?id='.$course->id.'">View Grades</a></div>';
+        	//echo '<div class="view_gradeslink px-2"><a class="view_links btn btn-block" href="'.$CFG->wwwroot.'/grade/report/user/index.php?id='.$course->id.'">View Grades</a></div>';
         }else{
         	// $enrol = $DB->get_record('enrol', array('courseid'=>$id, 'enrol'=>'self'));
         	$coursesearchlib = new \local_courses\output\search();
@@ -241,7 +250,7 @@ echo '<div class="content_era_left">';
 				<li class="my-1 incentives__text d-flex align-items-center">
 					<div class="category_type d-flex align-items-center">
 						<span class="level_icon"></span>
-						<span>'.get_string('coursecompday_atsearch', 'local_courses').'</span>
+						<span>'.get_string('coursecompday_atsearch', 'local_search').'</span>
 					</div>
 					<b class="iteminfo ml-2">'.$course->open_coursecompletiondays.'</b>
 				</li>

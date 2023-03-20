@@ -57,19 +57,19 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function joins() {
-        $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category ";
+        $this->sql .=" JOIN {local_custom_category} cat ON cat.id = c.open_categoryid ";
 
         parent::joins();
     }
 
     function where() {
         global $USER, $DB;
-        $this->sql .= " WHERE c.id <> :siteid ";
+        $this->sql .= " WHERE c.id <> :siteid  AND c.open_coursetype = :type";
         // $this->sql .= " WHERE c.id <> :siteid AND 
         //         CONCAT(',',c.open_identifiedas,',') LIKE CONCAT('%,',3,',%') ";
 
         $this->params['siteid'] = SITEID;
-
+        $this->params['type'] = 0;
         $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
         $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
 
@@ -140,7 +140,7 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN {role} r ON r.id = ra.roleid
                         JOIN {user} u ON ra.userid = u.id
                         WHERE u.deleted = 0
-                            AND u.suspended = 0 AND r.shortname = 'employee'
+                            AND u.suspended = 0 AND r.shortname IN ('employee','student')
                             AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
 
             $noofcompletions = "SELECT count(id) FROM {course_completions} WHERE course =:courseid and timecompleted IS NOT NULL";
@@ -155,7 +155,7 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN mdl_role r ON r.id = ra.roleid
                         JOIN mdl_user u ON ra.userid = u.id
                         WHERE u.deleted = 0
-                            AND u.suspended = 0 AND r.shortname = 'employee'
+                            AND u.suspended = 0 AND r.shortname IN ('employee','student')
                             AND cxt.instanceid = ul.courseid)";
 
             $notstarted = "AND ra.userid NOT IN (SELECT ul.userid FROM {user_lastaccess} AS ul WHERE ul.courseid = cxt.instanceid)";

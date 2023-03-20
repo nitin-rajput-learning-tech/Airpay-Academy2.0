@@ -50,7 +50,7 @@ class report_programcompletions extends reportbase implements report {
     }
     function select() {
         $this->sql = "SELECT lpu.id,lp.id as programid,u.id as userid,lp.name as programname,
-                            lpu.completion_status AS completionstatus,
+                            lpu.completion_status AS completionstatus,CONCAT(u.firstname,' ',u.lastname) as fullname, 
                             lpu.completiondate as completiondate, u.lastaccess";
         parent::select();
     }

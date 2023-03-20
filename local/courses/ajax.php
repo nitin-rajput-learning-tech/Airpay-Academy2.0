@@ -47,5 +47,4 @@ switch ($action) {
         $return = $renderer->get_course_enrolledusers($dataobj);
     break;
 }
-
 echo json_encode($return);

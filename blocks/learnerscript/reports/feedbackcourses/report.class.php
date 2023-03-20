@@ -72,7 +72,7 @@ class report_feedbackcourses extends reportbase implements report
                         JOIN {context} AS cxt ON  cxt.contextlevel = 50 AND cxt.instanceid=c.id
                         JOIN {role_assignments} as ra ON cxt.id=ra.contextid 
                         JOIN {user} u ON u.id = ra.userid AND u.deleted = 0 AND u.suspended = 0
-                        JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee' AND u.id = ra.userid
+                        JOIN {role} as r ON r.id = ra.roleid AND r.shortname  IN ('employee','student') AND u.id = ra.userid
                         LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid
                         LEFT JOIN {feedback_completed} AS fc ON fc.userid = u.id AND fc.feedback = f.id";
         parent::joins();

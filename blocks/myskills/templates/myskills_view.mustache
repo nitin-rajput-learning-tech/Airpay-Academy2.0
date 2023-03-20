@@ -1,0 +1,52 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+   
+}}
+    {{#response}}
+        {{#viewtypeCard}}
+        <div style="overflow: auto;">
+            <table class="generaltable dataTable no-footer" id="all_skills_acquired" role="grid" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th class="header c0 sorting_asc" style="text-align: left; width: 103px;" >
+                            Skill
+                        </th>
+                        <th class="header c1 sorting" style="text-align: left; width: 125px;">
+                            Proficiency Level
+                        </th>
+                        <th class="header c2 sorting" style="text-align: left; width: 120px;" >
+                            Course Name
+                        </th>
+                        <th class="header c4 lastcol sorting" style="text-align: left; width: 78px;">
+                            Achieved On
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#records}}
+                        <tr>
+                            <td  style="text-align: left;">{{skill_name}}</td>
+                            <td  style="text-align: center;">{{levelname}}</td>
+                            <td  style="text-align: left;">{{course_name}}</td>
+                            <td  style="text-align: left;">{{achieved_on}}</td>
+                        </tr>
+                   {{/records}}
+              </tbody>
+        </table>
+    </div>
+    {{/viewtypeCard}}
+{{/response}}

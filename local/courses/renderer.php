@@ -292,7 +292,6 @@ class local_courses_renderer extends plugin_renderer_base {
         $info['actions'] = false;
 
       }
-    
     return $this->render_from_template('local_courses/courseusersview', $info);
   }
 
@@ -355,7 +354,7 @@ class local_courses_renderer extends plugin_renderer_base {
       }else{
         $cert_plugin_exists = false;
       }
-var_dump($certificate_added);die;
+//var_dump($certificate_added);die;
       foreach ($courseusers as $enroluser) {
         $userinfo = array();
         $userinfo[] = $enroluser->firstname.' '.$enroluser->lastname;

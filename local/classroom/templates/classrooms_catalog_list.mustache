@@ -84,11 +84,7 @@
         
              <td>
                  {{# action}}
-                    {{# delete}}
-                        <a title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}" title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroom', id: {{ classroomid }}, classroomid: {{ classroomid }}, classroomname: '{{ classname }}'}) })(event)">
-                        <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i>
-                        </a>
-                    {{/ delete}}
+                   
                                             
                     {{# edit}}
                         <a title="{{# str}} user_enrollments, local_classroom {{/ str}}" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_classroom/ajaxforms').init({contextid:1, component:'local_classroom', callback:'classroom_form', form_status:0, plugintype: 'local', pluginname: 'classroom', id: {{ classroomid }} }) })(event)">
@@ -99,6 +95,11 @@
                      {{# assignusers}}
                          <a href="{{ assignusersurl }}"><i class="icon fa fa-user-plus fa-fw" aria-hidden="true" aria-label="" title ="{{# str}} assignusers, local_classroom {{/str}}"></i></a>
                      {{/ assignusers}}
+                     {{# delete}}
+                     <a title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}" title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_classroom/classroom').deleteConfirm({action:'deleteclassroom', id: {{ classroomid }}, classroomid: {{ classroomid }}, classroomname: '{{ classname }}'}) })(event)">
+                     <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i>
+                     </a>
+                    {{/ delete}}
 
                  {{/ action}}
                  {{{ copyaction }}}

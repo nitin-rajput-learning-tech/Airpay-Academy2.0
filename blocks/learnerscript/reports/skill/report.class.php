@@ -45,8 +45,8 @@ class report_skill extends reportbase implements report {
         $this->sql = "SELECT COUNT(DISTINCT(cc.id)) ";
     }
     function select() {
-        $this->sql ="SELECT DISTINCT(cc.id),u.id as userid,c.fullname as course,ls.name as skill,
-                    cl.name as level,cc.timecompleted as achievedon, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*"; 
+        $this->sql ="SELECT cc.id,u.id as userid,c.fullname as course,ls.name as skill,
+                    cl.name as level,cc.timecompleted as achievedon, CONCAT(u.firstname,' ',u.lastname) AS fullname,u.open_employeeid as employeeid"; 
         parent::select();
     }
     function from() {
@@ -68,8 +68,6 @@ class report_skill extends reportbase implements report {
          $this->params['visible']= 1;
          $this->params['deleted']= 0;
          $this->params['supended']= 0;
-
-        $systemcontext = \context_system::instance();
         // getscheduled report
         if (!is_siteadmin()) {
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
@@ -81,21 +79,13 @@ class report_skill extends reportbase implements report {
                 $ohs = $dhs = 1;
             }
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        if (is_siteadmin()) {
             $this->sql .= "";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-            $this->sql .= " AND c.open_costcenterid = :costcenterid ";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-            $this->sql .= " AND c.open_costcenterid = :costcenterid  AND c.open_departmentid = :departmentid";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-        }else{
-            $this->sql .= " AND c.open_costcenterid = :costcenterid  AND c.open_departmentid = :departmentid AND c.open_subdepartment = :subdepartment";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-            $this->params['subdepartment']= $USER->open_subdepartment;
+        } else  {
+            $this->sql .= $costcenterpathconcatsql;
         }
+
 
          parent::where();
     }
@@ -115,6 +105,7 @@ class report_skill extends reportbase implements report {
         }
     }    
     public function get_rows($skill) {
+      
         return $skill;
     }
 }

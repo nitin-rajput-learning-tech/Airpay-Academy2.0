@@ -78,3 +78,4 @@ $string['course_expiry_user'] = 'Your Course "<b>{$a->coursename}</b>" has been 
 $string['filters'] = 'filters';
 $string['view_more'] = 'View more';
 $string['search_for_courses'] = 'Search for courses';
+$string['coursecompday_atsearch'] = 'Completion Days';

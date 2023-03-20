@@ -52,11 +52,6 @@
                                         </span>
                                         {{/actionsicons}}
                                         <div class="dropdown-menu dropdown-menu-right shadow-sm">
-                                            {{# delcap }}
-                                            <a href="javascript:void(0)" class="dropdown-item" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">
-                                                <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i> Delete
-                                            </a>
-                                            {{/ delcap }}
                                             {{# editcap }}
                                             <a href="javascript:void(0)" class="dropdown-item" title="{{#str}}edit{{/str}}" data-action="createusermodal" class="createusermodal" data-value="{{userid}}" onclick="(function(e){ require('local_users/newuser').init({selector:'createusermodal', context:1, id:{{userid}}, form_status:0, callback:'user_form'}) })(event)" style="cursor:pointer" title="Edit">
                                                 <i class="fa fa-pencil fa-fw"></i> Edit
@@ -70,6 +65,11 @@
                                                 <i class="fa fa-eye"></i> Inactive</a>
                                                 {{/ visible}}
                                             {{/ editcap }}
+                                            {{# delcap }}
+                                            <a href="javascript:void(0)" class="dropdown-item" title="{{#str}}delete, local_users{{/str}}" onclick="(function(e){ require('local_users/newuser').deleteConfirm({ action: 'delete_user' ,id:{{userid}},context:1, fullname:'{{fullname}}'}) })(event)">
+                                                <i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i> Delete
+                                            </a>
+                                            {{/ delcap }}
                                         </div>
                                     </div>
                                 <!--  <span  class="pull-right showoptions" data-action="showoptions{{userid}}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{userid}}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>

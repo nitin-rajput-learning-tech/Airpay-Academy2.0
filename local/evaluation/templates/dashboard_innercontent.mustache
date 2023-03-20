@@ -50,15 +50,15 @@
 <div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
     <div class="userdashboard_content d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap {{{course_count_view}}}">
         {{# moduledetails}}
-            <div class="col-sm-6 col-12 pull-left tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_evaluation" data-index="{{index}}">
-                <div class="w-full pull-left eval_container">
-                    <div class="w-full pull-left text-center evalname_container">
+            <div class="col-sm-4 col-12 tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_evaluation" data-index="{{index}}">
+                <div class="w-full eval_container">
+                    <div class="w-full text-center evalname_container">
                          <span class="evalicon"><i class="fa fa-clipboard" aria-hidden="true"></i></span>
                         <span class="m-0 evalname" title="{{ eval_name }}">
                             <a href = "{{{evaluation_url}}}"> {{name}} </a>
                         </span>
                      </div>
-                    <div class="w-full pull-left pl-15 pr-15 text-center evalinfo_container">
+                    <div class="w-full pl-15 pr-15 evalinfo_container">
                         <p class="mb-1 fdb">
                             <strong><span class="lable_align text-left"> {{# str}}type, local_evaluation{{/ str}}<span class="colon_align">:</span> 
                             </span><span>{{ type }}</span></strong>
@@ -76,8 +76,8 @@
                             </span><span>{{ dates }}</span></strong>
                         </p>
                     </div>
-                    <div class="w-full pull-left text-center">
-                        <div class="w-full pull-left evalactions">
+                    <div class="w-full text-center">
+                        <div class="w-full  evalactions">
                             {{# actions }}{{{actions}}} {{/ actions }}
                             {{^ actions }}
                                 {{# Yettostart }}

@@ -53,7 +53,7 @@ class report_feedbackcompletions extends reportbase implements report
     }
     function select()
     {
-        $this->sql  = "SELECT eu.id,le.id as feedbackid,u.id as userid,le.name as feedbackname,
+        $this->sql  = "SELECT eu.id,le.id as feedbackid,u.id as userid,le.name as feedbackname,CONCAT(u.firstname,' ',u.lastname) AS fullname,
                        ec.timemodified AS completiondate,eu.status as completionstatus";
         parent::select();
     }

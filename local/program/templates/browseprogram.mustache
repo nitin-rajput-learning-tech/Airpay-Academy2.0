@@ -31,18 +31,7 @@
                 <i class="fa fa-ellipsis-h options" aria-hidden="true" title="" aria-label=""></i></span>
              {{/ mouse_overicon}}
                 <ul class="options_container" id="showoptions{{programid}}">
-                    {{# cannotdelete}}
-                    <li>
-                        <a title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
-                            title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'cannotdeleteprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i></a>
-                    </li>
-                    {{/ cannotdelete}}
-                    {{# delete}}
-                    <li>
-                        <a title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
-                           title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deleteprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i></a>
-                    </li>
-                    {{/ delete}}
+                    
 
     				{{# edit}}
                     <li>
@@ -76,6 +65,18 @@
                             <a href="#"><i class="fa fa-check-circle-o" aria-hidden="true" aria-label="" title ="{{# str}} completed, local_program {{/ str}}"></i></a>
                         </li>
                     {{/ programcompletionstatus}}
+                    {{# cannotdelete}}
+                    <li>
+                        <a title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+                            title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'cannotdeleteprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i></a>
+                    </li>
+                    {{/ cannotdelete}}
+                    {{# delete}}
+                    <li>
+                        <a title="{{# str}} coursebackup {{/ str}}" href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+                           title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deleteprogram', id: {{ programid }}, programid: {{ programid }}, programname: '{{ program }}'}) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="" title = "{{# str}} delete {{/ str}}"></i></a>
+                    </li>
+                    {{/ delete}}
                 </ul>
             {{/ action}}
         </div>

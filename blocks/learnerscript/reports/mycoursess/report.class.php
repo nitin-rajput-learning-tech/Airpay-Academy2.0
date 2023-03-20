@@ -47,7 +47,7 @@ class report_mycoursess extends reportbase implements report {
         $this->sql = "SELECT count(ue.id)";
     }
     function select() {
-        $this->sql = "SELECT ue.id, c.id as courseid, c.category,cc.timecompleted as completiondate,c.fullname as coursename";
+        $this->sql = "SELECT ue.id, c.id as courseid, c.open_categoryid,cc.timecompleted as completiondate,c.fullname as coursename";
 
         parent::select();
     }
@@ -59,7 +59,7 @@ class report_mycoursess extends reportbase implements report {
                 JOIN {role_assignments} as ra ON ra.userid = ue.userid
                 JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
                                         AND cxt.instanceid = e.courseid
-                JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
+                JOIN {role} as r ON r.id = ra.roleid AND r.shortname  IN ('employee','student')
                 JOIN {course} as c ON c.id = e.courseid
                 LEFT JOIN {course_completions} as cc ON cc.course = e.courseid and cc.userid = ue.userid ";
           parent::joins();

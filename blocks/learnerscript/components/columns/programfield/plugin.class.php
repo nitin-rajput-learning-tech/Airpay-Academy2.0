@@ -47,37 +47,32 @@ class plugin_programfield extends pluginbase {
     // Row -> Complete program row obj.,
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB;
-
-        $sql = "SELECT lp.*, ps.stream
-                FROM {local_program} lp
-                JOIN {Local_program_stream} ps ON ps.id = lp.stream 
-                WHERE lp.id = :programid " ;
-
         $programrecord = $DB->get_record('local_program',array('id'=>$row->programid));
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$programrecord->open_path);
 
-        $columns = array('programname','stream','programorg','programdept','program_subdept','points');
+       // $columns = array('programname','stream','programorg','programdept','program_subdept','points');
 
         switch ($data->column) {
             case 'programname':
                     $programrecord->{$data->column} = $programrecord->name;
                 break;
             case 'stream':
-                $stream = $DB->get_field('local_program_stream', 'stream', array('id' =>$programrecord->stream));
+                $stream = $DB->get_field('local_custom_category', 'fullname', array('id' =>$programrecord->open_categoryid));
                 $programrecord->{$data->column} = $stream;
                 break;                
             case 'programorg':
-                $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$programrecord->costcenter));
+                $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
                 break;
             case 'programdept':
-                if($programrecord->department > 0){
-                     $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$programrecord->department));
+                if($ctr > 0){
+                     $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
                 }else{
                     $programrecord->{$data->column} = get_string('all');
                 }
                 break;
             case 'program_subdept':
-                if($programrecord->subdepartment > 0){
-                    $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$programrecord->subdepartment));
+                if(!empty($bu) && ($bu != -1)){
+                    $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$bu));
                 }else{
                    $programrecord->{$data->column} = get_string('all'); 
                 }

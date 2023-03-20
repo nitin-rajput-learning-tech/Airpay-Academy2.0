@@ -230,16 +230,8 @@ class renderer extends plugin_renderer_base {
                     $line['mouse_overicon'] = $mouseovericon;
 
                     if($line['action']){
-                        if($line['cannotdelete']){
-                          $actions = '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'cannotdeleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
-                         }
-                    
-                         if($line['delete']){
-                           $actions = '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
-                        }
-
                        if($line['edit']){
-                         $actions .=  '<a href="javascript:void(0);" title = ' .get_string('edit','local_program'). ' onclick="(function(e){ require(\'local_program/ajaxforms\').init({ contextid:1,component:\'local_program\',callback:\'program_form\',plugintype:\'local\',pluginname:\'program\', id: '.$sdata->id.', form_status:0 }) })(event)" ><i class="fa fa-pencil fa-fw" aria-hidden="true"></i></a>' ;
+                         $actions =  '<a href="javascript:void(0);" title = ' .get_string('edit','local_program'). ' onclick="(function(e){ require(\'local_program/ajaxforms\').init({ contextid:1,component:\'local_program\',callback:\'program_form\',plugintype:\'local\',pluginname:\'program\', id: '.$sdata->id.', form_status:0 }) })(event)" ><i class="fa fa-pencil fa-fw" aria-hidden="true"></i></a>' ;
                        }
                        if($line['hide_show']){
 
@@ -250,6 +242,12 @@ class renderer extends plugin_renderer_base {
                              $actions .= '<a href="javascript:void(0);" title = ' .get_string('active','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'activeprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-eye-slash" aria-hidden="true"></i></a>';
                          }
                        }
+                       if($line['cannotdelete']){
+                        $actions .= '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'cannotdeleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
+                       }
+                       if($line['delete']){
+                        $actions .= '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
+                     }
                     }
                      if($view_type == 'card'){
                       $row[] = $this->render_from_template('local_program/browseprogram', $line);
@@ -653,7 +651,7 @@ class renderer extends plugin_renderer_base {
             $program->programskill = 'N/A';
         }
         if ($program->open_level > 0) {
-            $program->programlevel = $DB->get_field('local_skill', 'name', array('id' => $program->open_level));
+            $program->programlevel = $DB->get_field('local_course_levels', 'name', array('id' => $program->open_level));
             } else {
             $program->programlevel = 'N/A';
         }

@@ -34,8 +34,8 @@ class report_trainerslist extends reportbase implements report {
         $this->parent = true;
         $this->columns = array('trainerslist' => array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered'));
         $this->components = array('columns', 'filters', 'permissions');
-        $this->filters = array('organization','departments', 'subdepartments', 'user');
-        $this->orderable = array('trainername');
+        $this->filters = array('organization','departments', 'subdepartments', 'trainers');
+        $this->orderable = array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered');
         $this->defaultcolumn = 'u.id';
     }
     
@@ -113,8 +113,8 @@ class report_trainerslist extends reportbase implements report {
             $this->params['l5dept'] = $l5dept.'/%';
         }
 
-        if (isset($this->params['filter_user']) && $this->params['filter_user'] > 0) {
-            $userid = $this->params['filter_user'];
+        if (isset($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
+            $userid = $this->params['filter_trainers'];
             $this->sql .= " AND u.id IN ($userid) ";
         }
 

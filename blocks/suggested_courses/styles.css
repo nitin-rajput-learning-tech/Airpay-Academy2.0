@@ -6,10 +6,6 @@
     display: inline-block;
     text-align: center;
 }
-.block_suggested_courses.card {
-    background-color: transparent;
-    border: none;
-}
 .block_suggested_courses .coursedesc {
     white-space: normal;
     min-height: 66px;
@@ -263,8 +259,8 @@ body .crse-s-desc {
     padding: 5px 10px;
 }
 .block_suggested_courses .courseimg_strip {
-    position: absolute;
-    z-index: 1;
+    /* position: absolute; */
+    /* z-index: 1;
     background-color: #fff;
     padding: 5px 15px;
     top: 0.5rem;
@@ -272,7 +268,17 @@ body .crse-s-desc {
     right: 9px;
     box-shadow: 0 0 9px 0px #00000042;
     color: #008DCF;
-    font-weight: bold;
+    font-weight: bold; */
+    font-size: 10px;
+    color: #fff;
+    font-weight: 600;
+    text-transform: uppercase;
+    float: right;
+    background-color: #ffb536;
+    padding: 4px 7px;
+    border-radius: 6px;
+    position: relative;
+    z-index: 1;
 }
 .block_suggested_courses .cat_btn.viewmore_btn .fa-pencil-square-o {
     font-size: 18px;
@@ -297,14 +303,14 @@ body .crse-s-desc {
     margin-top:0 !important;
 
 }
-.block.block_suggested_courses  .course_container:hover{
+/* .block.block_suggested_courses  .course_container:hover{
     box-shadow: 0 2px 7px 2px #42a6cdbd !important;
     border: 1px solid #9ecee4d9 !important;
-}
-.block.block_suggested_courses .courseimg_strip{
+} */
+/* .block.block_suggested_courses .courseimg_strip{
     font-size: 12px !important;
     padding: 3px 24px !important;
-}
+} */
 .block.block_suggested_courses .courseimg_container .courseimg{
     height:200px !important;
     background-size: cover;
@@ -346,10 +352,19 @@ body .crse-s-desc {
 .block.block_suggested_courses  .count_tags i{
     font-size:21px !important;
 }
-.block.block_suggested_courses   .courseimg_strip.text-truncate{
+/* .block.block_suggested_courses .courseimg_strip.text-truncate{
     font-size: 12px !important;
     padding: 3px 15px !important;
     max-width: 150px  !important;
     height: 24px;
     text-align: center;
+} */
+.block.block_suggested_courses .courseimg_container .courseimg::after {
+    background-image: linear-gradient(to top,rgba(255,255,255,0),#00000063);
+    width: 100%;
+    height: 60%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    content: "";
 }

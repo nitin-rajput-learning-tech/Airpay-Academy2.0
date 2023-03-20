@@ -51,7 +51,7 @@
             <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</td>
             <td>{{{coursetype}}}</td>
             <td>
-                {{#delete}}{{{ deleteaction }}}{{/delete}}
+                {{#update}}{{{ editcourse }}} {{/update}}
                 {{#enrol}}
                      <a href="{{ enrollusers }}" title= "{{#str}}userenrolments, local_forum{{/str}}" >
                          <i class="fa fa-user" aria-hidden="true"></i>
@@ -66,7 +66,7 @@
                        
                     {{/auto_enrol}}
                 {{/update}}
-                {{#update}}{{{ editcourse }}} {{{update_status}}}{{/update}}
+                {{#update}} {{{update_status}}}{{/update}}
                 {{#grade_view}}                 
                        <a href="{{ grader }}" title= "{{#str}}grader, local_forum{{/str}}">
                            <i class="fa fa-pie-chart" aria-hidden="true"></i>
@@ -77,7 +77,8 @@
                      <a href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
                          <i class="fa fa-share-square" aria-hidden="true"></i>
                      </a>             
-                {{/request_view}}      
+                {{/request_view}}    
+                {{#delete}}{{{ deleteaction }}}{{/delete}}
                 {{{ copyaction }}}
             </td>
         </tr>
