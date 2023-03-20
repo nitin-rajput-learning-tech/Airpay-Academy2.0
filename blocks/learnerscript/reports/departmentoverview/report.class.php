@@ -38,7 +38,7 @@ class report_departmentoverview extends reportbase {
         $this->components = array('columns', 'conditions', 'ordering', 'permissions', 'filters', 'plot');
         $this->parent = true;
         $this->columns = array('departmentoverviewcolumns' => array('department_name','coursecount','iltcount','programcount','plancount','activeusers'));
-        $this->orderable = array('fullname', 'email');        
+        $this->orderable = array('department_name','coursecount','iltcount','programcount','plancount','activeusers');        
         $this->filters = array('organization', 'departments');
         $this->defaultcolumn = 'lc.id';
     }

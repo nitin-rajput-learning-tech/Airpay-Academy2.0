@@ -42,7 +42,7 @@ class report_coursegradeactivities extends reportbase implements report
     $columnsarray = array('coursefield' => ['coursefield'], 'userfield' => ['userfield'], 'coursegradeactivities' => $columns);
     $this->basicparams = array(['name' => 'course']);
     $this->columns = $columnsarray;
-    $this->filters = array('organization', 'departments', 'subdepartments', 'course');
+    $this->filters = array('organization', 'departments', 'subdepartments', 'level4department','course');
     $this->defaultcolumn = 'u.id';
   }
 
@@ -115,6 +115,30 @@ class report_coursegradeactivities extends reportbase implements report
 
   function filters()
   {
+
+    if ($this->params['filter_organization'] > 0) {
+        $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+        $this->sql .= " AND concat(c.open_path,'/') like :orgpath ";
+        $this->params['orgpath'] = $orgpath.'/%';
+    }
+    if ($this->params['filter_departments'] > 0) {
+        $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+        $this->sql .= " AND concat(c.open_path,'/') like :l2dept ";
+        $this->params['l2dept'] = $l2dept.'/%';
+    }
+
+    if ($this->params['filter_subdepartments'] > 0) {
+        $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+        $this->sql .= " AND concat(c.open_path,'/') like :l3dept ";
+        $this->params['l3dept'] = $l3dept.'/%';
+    }
+
+    if ($this->params['filter_level4department'] > 0) {
+        $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+        $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
+        $this->params['l4dept'] = $l4dept.'/%';
+    }
+
     if (isset($this->params['filter_course']) && $this->params['filter_course'] > 0) {
       $this->sql .= " AND c.id = :courseid ";
       $this->params['courseid'] = $this->params['filter_course'];
