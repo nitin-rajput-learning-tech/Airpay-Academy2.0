@@ -37,7 +37,7 @@ class plugin_bar extends pluginbase {
                             'usercourses', 'userquizzes', 'users', 'usersresources', 'usersscorm', 'forum', 'myforums', 
                             'assignstatus','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview',
                             'onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress',
-                            'dailyuniquelogins');
+                            'dailyuniquelogins','departmentoverview','organizationoverview','trainermanhours');
     }
 
     function summary($data) {
