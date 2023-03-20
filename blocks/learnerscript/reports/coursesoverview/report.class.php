@@ -140,7 +140,7 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN {role} r ON r.id = ra.roleid
                         JOIN {user} u ON ra.userid = u.id
                         WHERE u.deleted = 0
-                            AND u.suspended = 0 AND r.shortname = 'employee'
+                            AND u.suspended = 0 AND r.shortname IN ('employee','student')
                             AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
 
             $noofcompletions = "SELECT count(id) FROM {course_completions} WHERE course =:courseid and timecompleted IS NOT NULL";
@@ -155,7 +155,7 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN mdl_role r ON r.id = ra.roleid
                         JOIN mdl_user u ON ra.userid = u.id
                         WHERE u.deleted = 0
-                            AND u.suspended = 0 AND r.shortname = 'employee'
+                            AND u.suspended = 0 AND r.shortname IN ('employee','student')
                             AND cxt.instanceid = ul.courseid)";
 
             $notstarted = "AND ra.userid NOT IN (SELECT ul.userid FROM {user_lastaccess} AS ul WHERE ul.courseid = cxt.instanceid)";

@@ -36,6 +36,7 @@ class report_trainermanhours extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],'userfield'=>['userfield'],'trainermanhours' => array('traininghours', 'userscovered'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
         $this->filters = array('organization','departments', 'subdepartments', 'classrooms','trainers');
+        $this->orderable = array('classroomname','traininghours', 'userscovered');
         $this->defaultcolumn = 'lc.id';        
     }
     

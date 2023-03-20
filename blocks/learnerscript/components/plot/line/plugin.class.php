@@ -34,7 +34,8 @@ class plugin_line extends pluginbase {
                             'gradedactivity', 'myassignments', 'myquizs', 'myresources','myscorm',
                             'quizzes', 'scorm', 'student_overall_performance', 
                             'student_performance', 'useractivities', 'userassignments',
-                            'usercourses', 'userquizzes', 'usersresources', 'usersscorm', 'forum', 'myforums', 'assignstatus', 'userattendance', 'attendanceoverview','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress', 'coursecompetency', 'bigbluebutton', 'graphexamenrolments','graphexamcompletions', 'graphlearnerenrolments','graphlearnercompletions', 'graphlearning');
+                            'usercourses', 'userquizzes', 'usersresources', 'usersscorm', 'forum', 'myforums', 'assignstatus', 'userattendance', 'attendanceoverview','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress', 'coursecompetency', 'bigbluebutton',
+                             'graphexamenrolments','graphexamcompletions', 'graphlearnerenrolments','graphlearnercompletions', 'graphlearning','dailyuniquelogins','departmentoverview','organizationoverview');
     }
 
     function summary($data) {

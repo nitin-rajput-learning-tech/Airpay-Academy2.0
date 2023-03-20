@@ -33,8 +33,10 @@ class plugin_pie extends pluginbase {
                             'courseactivities', 'courseparticipation', 'courses', 'coursesoverview',
                             'gradedactivity', 'myassignments', 'myquizs', 'myresources',
                             'quizzes', 'student_overall_performance', 
-                            'student_performance',  'useractivities', 'forum', 'myforums', 'assignstatus','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress'
-                            );
+                            'student_performance',  'useractivities', 'forum', 'myforums', 'assignstatus',
+                            'certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview',
+                            'programsoverview','traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress','dailyuniquelogins','departmentoverview',
+                            'organizationoverview');
     }
 
     function summary($data) {

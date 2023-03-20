@@ -35,8 +35,8 @@ class report_dailyuniquelogins extends reportbase implements report {
         $this->parent = true;
         $this->columns = array('dailyuniquelogins' => array('costcentername','usercount','monthname','year'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
-        $this->filters = array('organization','departments');
-        $this->orderable = array('usercount','monthname','year');
+        $this->filters = array('organization');
+        $this->orderable = array('costcentername','usercount','monthname','year');
         $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated)),SUBSTRING(u.open_path,2,1) ';
         $this->sqlorder['column'] = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated))';       
        

@@ -36,7 +36,7 @@ global $DB;
                     JOIN {enrol} e ON e.id = ue.enrolid 
                     JOIN {role_assignments} ra ON ra.userid = ue.userid
                     JOIN {context} ct ON ct.id = ra.contextid
-                    JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname = 'employee'
+                    JOIN {role} rl ON rl.id = ra.roleid AND rl.shortname IN ('employee','student')
                     JOIN {user} u ON u.id = ue.userid AND u.confirmed = 1 AND u.deleted = 0 
                     JOIN {course} c ON c.id = e.courseid AND c.id = ct.instanceid 
                     LEFT JOIN {local_courses_venderslist} lcc1 ON lcc1.id = c.open_vendor
