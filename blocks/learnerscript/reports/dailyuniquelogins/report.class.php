@@ -110,6 +110,14 @@ class report_dailyuniquelogins extends reportbase implements report {
             $this->sql .= " AND ( " . implode(' OR ', $filter_department) . " ) ";
         }
 
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND lsl.timecreated > :report_startdate ";
+            $this->params['report_startdate'] = $this->ls_startdate;
+
+            $this->sql .= " AND lsl.timecreated < :report_enddate ";
+            $this->params['report_enddate'] = $this->ls_enddate;
+        }
+
 
     }
     /**

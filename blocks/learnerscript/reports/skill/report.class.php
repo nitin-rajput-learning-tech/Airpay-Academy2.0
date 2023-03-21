@@ -103,6 +103,13 @@ class report_skill extends reportbase implements report {
             $this->sql .= " AND c.open_skill = :skillname";
             $this->params['skillname'] = $skillname;
         }
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND cc.timecompleted > :report_startdate ";
+            $this->params['report_startdate'] = $this->ls_startdate;
+
+            $this->sql .= " AND cc.timecompleted < :report_enddate ";
+            $this->params['report_enddate'] = $this->ls_enddate;
+        }
     }    
     public function get_rows($skill) {
       
