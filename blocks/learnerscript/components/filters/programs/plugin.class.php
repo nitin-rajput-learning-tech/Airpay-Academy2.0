@@ -61,65 +61,15 @@ class plugin_programs extends pluginbase {
     }
     public function filter_data($selectoption = true){
         global $DB, $CFG;
-        $context = context_system::instance();
-        if($this->reportclass->basicparams){
-            $basicparams = array_column($this->reportclass->basicparams, 'name');
-            if (has_capability('local/costcenter:manage_ownorganization', $context) && !is_siteadmin()) {
-                $deptorgid = $USER->open_costcenterid;
-            } else {
-                if ($basicparams[0] == 'organization') {
-                    $orgoptions = $DB->get_records_sql_menu("SELECT id FROM {local_costcenter} WHERE depth = 1 ORDER BY id ASC"); 
-                    $orgids = array_keys($orgoptions);
-                    if (empty($request['filter_organization'])) {
-                        $deptorgid = array_shift($orgids);
-                    } else {
-                        $deptorgid = NULL;
-                    }
-                }else {
-                    $deptorgid = null;
-                } 
-            }
-        } else {
-            $deptorgid = null;
-        }
+   
         $sql = "SELECT id, name
                 FROM {local_program} lp 
                 WHERE 1 = 1 ";
-        if (!empty($deptorgid)) {
-            $sql .= " AND lp.costcenter = " . $deptorgid;
-            $departmentid = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE parentid = $deptorgid AND depth = 2 ORDER BY id ASC LIMIT 0, 1");
-            if (!empty($departmentid)) {
-                $sql .= " AND lp.department = " . $departmentid;
-                $subdepartmentid = $DB->get_field_sql("SELECT id FROM {local_costcenter} WHERE parentid = $departmentid AND depth = 3 ORDER BY id ASC LIMIT 0, 1");
-                if (!empty($subdepartmentid)) {
-                    $sql .= " AND lp.subdepartment = " . $subdepartmentid;
-                }
-            }
-        } else {
-            $params = array();
-            $systemcontext = \context_system::instance();
-            if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-                $sql .= " ";
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-                $sql .= " AND lp.costcenter = :costcenterid ";
-                $params['costcenterid'] = $USER->open_costcenterid;
-            }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-                $sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid ";
-                $params['costcenterid'] = $USER->open_costcenterid;
-                $params['departmentid'] = $USER->open_departmentid;
-            }else{
-                $sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid 
-                AND lp.subdepartment = :subdepartmentid";
-                $params['costcenterid'] = $USER->open_costcenterid;
-                $params['departmentid'] = $USER->open_departmentid;
-                $params['subdepartmentid'] = $USER->open_subdepartment;
-
-            }            
-        }
+        $sql .= (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');  
 
         $sql .= " ORDER BY lp.name ASC ";
         
-        $programs = $DB->get_records_sql_menu($sql, $params);
+        $programs = $DB->get_records_sql_menu($sql, array());
         
         $selectproption = array();
         $selectproption[null] = get_string('selectprogram', 'block_learnerscript');

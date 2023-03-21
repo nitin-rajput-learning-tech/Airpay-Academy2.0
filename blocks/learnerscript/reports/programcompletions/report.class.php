@@ -58,9 +58,8 @@ class report_programcompletions extends reportbase implements report {
         $this->sql .= " FROM {local_program} lp ";
     }
     function joins() {
-         $this->sql .= " JOIN {local_program_stream} ps ON ps.id = lp.stream
-                         JOIN {local_program_users} lpu ON lp.id = lpu.programid
-                         JOIN {user} u ON u.id = lpu.userid";
+         $this->sql .= " JOIN {local_program_users} lpu ON lp.id = lpu.programid
+                         JOIN {user} u ON u.id = lpu.userid";//JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid
           parent::joins();
     }
     function where(){
@@ -79,20 +78,12 @@ class report_programcompletions extends reportbase implements report {
                 $ohs = $dhs = 1;
             }
         }
-        if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-            $this->sql .= " ";
-        }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext) && $ohs){
-            $this->sql .= " AND lp.costcenter = :costcenterid ";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-        }else if(has_capability('local/costcenter:manage_owndepartments', $systemcontext) && $dhs){
-           $this->sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-        }else{
-            $this->sql .= " AND lp.costcenter = :costcenterid AND lp.department = :departmentid AND lp.subdepartment = :subdepartment";
-            $this->params['costcenterid']= $USER->open_costcenterid;
-            $this->params['departmentid']= $USER->open_departmentid;
-            $this->params['subdepartment']= $USER->open_subdepartment;
+        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
+        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+          $this->sql .= "";
+        } else {
+          $this->sql .= $costcenterpathconcatsql;
         }
          parent::where();
     }
@@ -141,11 +132,10 @@ class report_programcompletions extends reportbase implements report {
            $this->params['status']= $this->params['filter_completionstatus'];
 
         }
-         //echo $this->sql;
+        // echo $this->sql;
         // print_object($this->params);
     }    
     public function get_rows($programs) {
-        //print_object($programs);
         return $programs;
     }
 }
