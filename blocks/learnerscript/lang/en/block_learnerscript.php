@@ -1264,5 +1264,6 @@ $string['general'] = 'General';
 $string['feedback_courses'] = 'Feedback Courses';
 $string['trainers'] = 'Trainers';
 $string['report_orgwiseskillachieved'] = 'OrganizationWise SkillsAchieved';
+$string['programlevelcompletions'] = 'UserWise ProgramLevel Overview';
 
 
