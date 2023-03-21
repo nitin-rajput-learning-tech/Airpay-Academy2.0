@@ -261,18 +261,18 @@ body#page-local-courses-courseenrol img#image.content-img {
     color: #fff;
     background-color: #1177d1
 }
-
+/* 
 #page-local-forum-index .course_extended_menu_list {
     top: -20px
-}
+} */
 
 body#page-local-forum-index #region-main .card.card-block {
     overflow-x: visible
 }
 
-body#page-local-forum-index .course_extended_menu_list {
+/* body#page-local-forum-index .course_extended_menu_list {
     top: -20px
-}
+} */
 
 body#page-local-forum-index #category_tbl_filter {
     float: left
@@ -933,9 +933,9 @@ body#page-local-courses-userdashboard .card_list_view {
     margin-bottom: 0 !important;
     min-height: 40px;
 }
-#page-local-forum-index #region-main{
+/* #page-local-forum-index #region-main{
     background-color: transparent;
-}
+} */
 #page-local-forum-index #filters_form{
     background-color: #fff;
 }
