@@ -97,18 +97,18 @@ define(['jquery',
                     filters['filter_subdepartments'] = filter_subdepartments;
                 }
             }
-            if (typeof args.filters['filter_level4department'] == 'undefined') {
-                var filter_level4department = $('#dashboardl4department').val();
-                if (filter_level4department != 0) {
-                    args.filters['filter_level4department'] = filter_level4department;
-                }
-            }
-            if (typeof args.filters['filter_level5department'] == 'undefined') {
-                var filter_level5department = $('#dashboardl5department').val();
-                if (filter_level5department != 0) {
-                    args.filters['filter_level5department'] = filter_level5department;
-                }
-            }
+            // if (typeof args.filters['filter_level4department'] == 'undefined') {
+            //     var filter_level4department = $('#dashboardl4department').val();
+            //     if (filter_level4department != 0) {
+            //         args.filters['filter_level4department'] = filter_level4department;
+            //     }
+            // }
+            // if (typeof args.filters['filter_level5department'] == 'undefined') {
+            //     var filter_level5department = $('#dashboardl5department').val();
+            //     if (filter_level5department != 0) {
+            //         args.filters['filter_level5department'] = filter_level5department;
+            //     }
+            // }
             if (typeof filters['filter_course'] == 'undefined') {
                 var filter_course = $('#coursedashboardfilter').val();
                 if (filter_course != 0) {
