@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of eAbyas
  *
@@ -21,22 +22,27 @@
  * @package BizLMS
  * @subpackage block_learnerscript
  */
+
 use block_learnerscript\local\pluginbase;
 
-class plugin_user extends pluginbase {
+class plugin_user extends pluginbase
+{
 
-    public function init() {
+    public function init()
+    {
         $this->form = false;
         $this->unique = true;
         $this->fullname = get_string('filteruser', 'block_learnerscript');
         $this->reporttypes = array('sql');
     }
 
-    public function summary($data) {
+    public function summary($data)
+    {
         return get_string('filteruser_summary', 'block_learnerscript');
     }
 
-    public function execute($finalelements, $data) {
+    public function execute($finalelements, $data)
+    {
         $filteruser = optional_param('filter_user', 0, PARAM_INT);
         if (!$filteruser) {
             return $finalelements;
@@ -52,10 +58,11 @@ class plugin_user extends pluginbase {
         }
         return $finalelements;
     }
-    public function filter_data($selectoption = true){
+    public function filter_data($selectoption = true)
+    {
         global $DB, $USER;
 
-        $params = array(); 
+        $params = array();
         $sql = "SELECT u.id, CONCAT(u.firstname,' ',u.lastname) as employeename 
                 FROM {user} u 
                 WHERE u.deleted = :deleted AND u.suspended = :suspended AND id > 2 ";
@@ -64,15 +71,15 @@ class plugin_user extends pluginbase {
         $params['suspended'] = 0;
 
 
-      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'u.open_path', null, 'lowerandsamepath');
 
-      if (is_siteadmin()) {
-          $sql .= "";
-      } else  {
-          $sql .= $costcenterpathconcatsql;
-      }
+        if (is_siteadmin()) {
+            $sql .= "";
+        } else {
+            $sql .= $costcenterpathconcatsql;
+        }
         $sql .= " ORDER BY u.firstname ASC ";
-        $users = $DB->get_records_sql_menu($sql,$params);
+        $users = $DB->get_records_sql_menu($sql, $params);
 
         $selectusersopt = array();
         $selectusersopt[0] = get_string('filter_user', 'block_learnerscript');
@@ -82,18 +89,19 @@ class plugin_user extends pluginbase {
         return $userslist;
     }
 
-    public function selected_filter($selected) {
+    public function selected_filter($selected)
+    {
         $filterdata = $this->filter_data();
         return $filterdata[$selected];
     }
-    
-    public function print_filter(&$mform) {
+
+    public function print_filter(&$mform)
+    {
 
         $useroptions = $this->filter_data();
-        $array = array('data-select2' => 1,'data-maximum-selection-length' => $this->maxlength);
-        $select = $mform->addElement('select', 'filter_user', get_string('user'), $useroptions,$array);
+        $array = array('data-select2' => 1, 'data-maximum-selection-length' => $this->maxlength);
+        $select = $mform->addElement('select', 'filter_user', get_string('user'), $useroptions, $array);
         $select->setHiddenLabel(true);
         $mform->setType('filter_user', PARAM_INT);
     }
-
 }
