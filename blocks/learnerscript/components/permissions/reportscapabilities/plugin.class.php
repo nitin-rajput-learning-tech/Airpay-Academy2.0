@@ -28,7 +28,7 @@ class plugin_reportscapabilities extends pluginbase {
         $this->form = false;
         $this->unique = true;
         $this->fullname = get_string('reportscapabilities', 'block_learnerscript');
-        $this->reporttypes = array('courses', 'sql', 'users', 'timeline', 'categories');
+        $this->reporttypes = array('courses', 'sql', 'users', 'timeline', 'categories','courseparticipation');
     }
 
     function summary($data) {

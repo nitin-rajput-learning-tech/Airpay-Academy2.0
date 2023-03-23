@@ -31,7 +31,7 @@ class courseparticipationcolumns_form extends moodleform {
         global $DB, $USER, $CFG;
         $mform =& $this->_form;
         $mform->addElement('header', '', get_string('courseparticipationcolumns','block_learnerscript'), '');
-		    $columns = array('enrollments', 'completions');
+		    $columns = array('enrolled','inprogress','completed','progress');
 		    $coursecolumns = array();
   			foreach($columns as $c){
   				$coursecolumns[$c] = ucwords($c);

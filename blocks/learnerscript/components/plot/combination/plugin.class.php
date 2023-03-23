@@ -35,7 +35,7 @@ class plugin_combination extends pluginbase {
                             'quizzes', 'scorm', 'student_overall_performance', 
                             'student_performance', 'useractivities', 'userassignments', 'resources',
                             'usercourses', 'userquizzes', 'users', 'usersresources', 'usersscorm', 'forum', 'assignstatus','certificatesoverview','classroomsoverview','feedbackoverview','learningplansoverview','onlinetestsoverview','programsoverview',
-                            'traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress','dailyuniquelogins','departmentoverview','organizationoverview');
+                            'traininghoursvsusersvstrainers','traininghoursvsusers', 'trainingsprogress','dailyuniquelogins','departmentoverview','organizationoverview','courseparticipation');
     }
 
     function summary($data) {
