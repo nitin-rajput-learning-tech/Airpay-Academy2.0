@@ -38,7 +38,7 @@ class report_classroom_completions extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],
                                 'userfield'=>['userfield'],
                                 'classroomcompletionscolumns'=>['attendedsessions','totalsessions','usercompletionstatus','usercompletiondate']);
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'user','classrooms','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'user','classrooms','completionstatus');
         $this->defaultcolumn = 'lcu.id';
     }
 
@@ -121,7 +121,7 @@ class report_classroom_completions extends reportbase implements report {
             $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
         }
-        if ($this->params['filter_level5department'] > 0) {
+         /*  if ($this->params['filter_level5department'] > 0) {
             $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
             $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
@@ -137,7 +137,7 @@ class report_classroom_completions extends reportbase implements report {
         }
         if ($this->params['filter_geovillage'] > 0) {
             $this->sql .= " AND u.open_village = :filter_geovillage ";
-        }
+        } */
         if($this->ls_startdate > 0 && $this->ls_enddate > 0){
             $this->sql .= " AND lcu.completiondate > :report_startdate ";
             $this->params['report_startdate'] = $this->ls_startdate;

@@ -32,7 +32,7 @@ class report_coursescompletions extends reportbase implements report {
         parent::__construct($report, $reportproperties);
         $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','enddate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
-        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage','course','user','completionstatus');
+        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'course','user','completionstatus');
         $this->parent = true;
         $this->orderable = array('coursename');
         $this->defaultcolumn = 'ra.id';
@@ -128,24 +128,8 @@ class report_coursescompletions extends reportbase implements report {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
-        }
-        if ($this->params['filter_level5department'] > 0) {
-            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $this->sql .= " AND concat(c.open_path,'/') like :l5dept ";
-            $this->params['l5dept'] = $l5dept.'/%';
-        }
-        if ($this->params['filter_geostate'] > 0) {
-            $this->sql .= " AND u.open_states = :filter_geostate ";
-        }
-        if ($this->params['filter_geodistrict'] > 0) {
-            $this->sql .= " AND u.open_district = :filter_geodistrict ";
-        }
-        if ($this->params['filter_geosubdistrict'] > 0) {
-            $this->sql .= " AND u.open_subdistrict = :filter_geosubdistrict ";
-        }
-        if ($this->params['filter_geovillage'] > 0) {
-            $this->sql .= " AND u.open_village = :filter_geovillage ";
-        }
+        }    
+   
 
         if (!empty($this->params['filter_course'])) {
             $courseid = $this->params['filter_course'];

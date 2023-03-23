@@ -36,6 +36,7 @@ class report_classroomusers extends reportbase implements report {
         $this->columns = array('classroomusers' => array('employeename', 'totalilts', 'totalsessions','attendedsessions','totalhours'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');      
         $this->orderable = array('employeename', 'totalilts', 'totalsessions','attendedsessions','totalhours');
+        $this->filters = array('user');        
         $this->defaultcolumn = 'u.id';
         
     }
@@ -107,7 +108,18 @@ class report_classroomusers extends reportbase implements report {
             $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
             $this->sql .= " AND concat(u.open_path,'/') like :l3dept ";
             $this->params['l3dept'] = $l3dept.'/%';
-        }    
+        } 
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        } 
+        
+        if (!empty($this->params['filter_user'])) {
+            $userid = $this->params['filter_user'];
+            $this->sql .= " AND u.id = :userid ";
+            $this->params['userid'] = $userid;
+        }      
     }
     
     /**

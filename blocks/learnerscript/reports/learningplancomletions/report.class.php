@@ -37,7 +37,7 @@ class report_learningplancomletions extends reportbase implements report {
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot','orderable');
         $this->columns = ['learningpathfield'=>['learningpathfield'], 'userfield'=>['userfield'],'learningplancompletionscolumns'=>['learningpathname','completionstatus','completiondate','totalcourse','totalcoursecompleted','inprogresscourse','enrolldays']];
         $this->parent = true;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'learningpath','user','completionstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'learningpath','user','completionstatus');
         $this->orderable = array('learningpathname');
         $this->defaultcolumn = 'llu.id';
 
@@ -106,24 +106,7 @@ class report_learningplancomletions extends reportbase implements report {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
-        }
-        if ($this->params['filter_level5department'] > 0) {
-            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
-            $this->params['l5dept'] = $l5dept.'/%';
-        }
-        if ($this->params['filter_geostate'] > 0) {
-            $this->sql .= " AND u.open_states = :filter_geostate ";
-        }
-        if ($this->params['filter_geodistrict'] > 0) {
-            $this->sql .= " AND u.open_district = :filter_geodistrict ";
-        }
-        if ($this->params['filter_geosubdistrict'] > 0) {
-            $this->sql .= " AND u.open_subdistrict = :filter_geosubdistrict ";
-        }
-        if ($this->params['filter_geovillage'] > 0) {
-            $this->sql .= " AND u.open_village = :filter_geovillage ";
-        }
+        }     
 
         if (!empty($this->params['filter_learningpath'])) {
             $lplan = $this->params['filter_learningpath'];

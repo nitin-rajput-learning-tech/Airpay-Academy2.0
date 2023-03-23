@@ -35,7 +35,7 @@ class report_classroomsoverview extends reportbase implements report {
         parent::__construct($report);
         $this->components = array('columns','filters', 'permissions', 'plot', 'orderable');
         $this->columns = ['classroomfield'=>['classroomfield'],'classroomsoverviewcolumns' => ['classroomname','classroomstatus','enrollmentscount','completionscount','trainerhrs']];
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'classrooms','classroomstatus');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'classrooms','classroomstatus');
         $this->orderable = array('classroomname','enrollmentscount','completionscount');
         $this->defaultcolumn = 'lc.id';
     }
@@ -98,12 +98,7 @@ class report_classroomsoverview extends reportbase implements report {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             $this->sql .= " AND concat(lc.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
-        }
-        if ($this->params['filter_level5department'] > 0) {
-            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $this->sql .= " AND concat(lc.open_path,'/') like :l5dept ";
-            $this->params['l5dept'] = $l5dept.'/%';
-        }
+        }      
 
         if ($this->params['filter_classrooms'] > 0) {
             $this->sql .= " AND lc.id = :classroomid ";

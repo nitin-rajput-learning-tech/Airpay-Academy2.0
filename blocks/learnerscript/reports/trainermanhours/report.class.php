@@ -35,7 +35,7 @@ class report_trainermanhours extends reportbase implements report {
         $this->parent = true;
         $this->columns = array('classroomfield'=>['classroomfield'],'userfield'=>['userfield'],'trainermanhours' => array('traininghours', 'userscovered'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
-        $this->filters = array('organization','departments', 'subdepartments', 'classrooms','trainers');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department','classrooms','trainers');
         $this->orderable = array('classroomname','traininghours', 'userscovered');
         $this->defaultcolumn = 'lc.id';        
     }
@@ -105,7 +105,11 @@ class report_trainermanhours extends reportbase implements report {
             $this->sql .= " AND concat(u.open_path,'/') like :l3dept ";
             $this->params['l3dept'] = $l3dept.'/%';
         }    
-
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        }
         if (isset($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
             $userid = $this->params['filter_trainers'];
             $this->sql .= " AND u.id IN ($userid) ";

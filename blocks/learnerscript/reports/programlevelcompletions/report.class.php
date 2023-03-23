@@ -42,7 +42,7 @@ class report_programlevelcompletions extends reportbase implements report
         $this->components = array('columns', 'permissions', 'calcs', 'plot', 'orderable');
         $this->columns =  ['progarmfield' => ['programfield'], 'userfield' => ['userfield'], 'programlevelscompletion' => ['programname', 'completionstatus', 'completiondate']];
         $this->parent = true;
-        $this->filters = array('user');
+        $this->filters = array('organization','departments', 'subdepartments','level4department', 'programs','user');
         $this->orderable = array('programname', 'lastaccess');
         $this->defaultcolumn = 'lpu.id';
         $this->basicparams = array(['name'=>'programs']);//['name' => 'user'],
@@ -112,19 +112,27 @@ class report_programlevelcompletions extends reportbase implements report
     {
 
         if ($this->params['filter_organization'] > 0) {
-            $this->sql .= " AND lp.costcenter = :orgid ";;
-            $this->params['orgid'] = $this->params['filter_organization'];
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND concat(lp.open_path,'/') like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
         }
-
         if ($this->params['filter_departments'] > 0) {
-            $this->sql .= " AND lp.department = :deptid ";
-            $this->params['deptid'] = $this->params['filter_departments'];
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND concat(lp.open_path,'/') like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
         }
 
         if ($this->params['filter_subdepartments'] > 0) {
-            $this->sql .= " AND lp.subdepartment = :subdeptid ";
-            $this->params['subdeptid'] = $this->params['filter_subdepartments'];
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND concat(lp.open_path,'/') like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
         }
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(lp.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        }    
+        
 
         if (isset($this->params['filter_programs'])) {
             if (!empty($this->params['filter_programs'])) {

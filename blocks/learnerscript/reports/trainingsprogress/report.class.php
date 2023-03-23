@@ -48,16 +48,7 @@ class report_trainingsprogress extends reportbase implements report {
     function count() {
         $this->sql = "SELECT COUNT( distinct MONTH(FROM_UNIXTIME(lc.startdate)))";
     }
-    function select() {
-        // $sdepartmentarray = $this->department_selection('s');
-        // $sdepartmentsql = $sdepartmentarray[0];
-        // $this->params['sorgid'] = $sdepartmentarray[1]['sorgid']; 
-        // $this->params['sdeptid'] = $sdepartmentarray[1]['sdeptid'];
-
-        // $cdepartmentarray = $this->department_selection('c');
-        // $cdepartmentsql = $cdepartmentarray[0];
-        // $this->params['corgid'] = $cdepartmentarray[1]['corgid']; 
-        // $this->params['cdeptid'] = $cdepartmentarray[1]['cdeptid'];
+    function select() {    
         $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path', null, 'lowerandsamepath');
         $filtersql = '';
         if ($this->params['filter_organization'] > 0) {

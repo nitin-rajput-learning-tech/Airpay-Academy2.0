@@ -114,23 +114,30 @@ class report_feedbackcourses extends reportbase implements report
     }
     function filters()
     {
-        if (isset($this->params['filter_organization']) && !empty($this->params['filter_organization'])) {
-            $this->sql .= " AND lc.costcenterid = :orgid ";;
-            $this->params['orgid'] = $this->params['filter_organization'];
+        if ($this->params['filter_organization'] > 0) {
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
+        }
+        if ($this->params['filter_departments']  > 0) {
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
+        }
+        if ($this->params['filter_subdepartments'] > 0) {
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
         }
 
-        if (!empty($this->params['filter_departments']) && $this->params['filter_departments'] > 0) {
-            $this->sql .= " AND lc.departmentid = :deptid ";
-            $this->params['deptid'] = $this->params['filter_departments'];
-        }
-
-        if (!empty($this->params['filter_subdepartments']) && $this->params['filter_subdepartments'] > 0) {
-            $this->sql .= " AND lc.subdepartment = :subdeptid ";
-            $this->params['subdeptid'] = $this->params['filter_subdepartments'];
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
         }
 
         if (!empty($this->params['filter_feedbacks'])) {
-            $this->sql .= " AND lc.id = :feedbackid ";
+            $this->sql .= " AND f.id = :feedbackid ";
             $this->params['feedbackid'] = $this->params['filter_feedbacks'];
         }
 

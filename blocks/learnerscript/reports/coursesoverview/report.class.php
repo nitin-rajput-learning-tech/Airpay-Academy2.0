@@ -32,7 +32,7 @@ class report_coursesoverview extends reportbase implements report {
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
         $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions','notstarted','quizpassed','quizfail','traineduserpercent']);
         $this->columns = $columns;
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'level5department', 'course');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department','course');
         $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions');
         $this->defaultcolumn = 'c.id';
     }
@@ -112,13 +112,7 @@ class report_coursesoverview extends reportbase implements report {
             $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
         }
-        if ($this->params['filter_level5department'] > 0) {
-            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $this->sql .= " AND concat(c.open_path,'/') like :l5dept ";
-            $this->params['l5dept'] = $l5dept.'/%';
-        }
-
-
+       
         if(isset($this->params['filter_course']) && $this->params['filter_course'] > 0) {
             $this->sql .= " AND c.id = :courseid ";
             $this->params['courseid'] = $this->params['filter_course'];

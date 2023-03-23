@@ -34,7 +34,7 @@ class report_trainerslist extends reportbase implements report {
         $this->parent = true;
         $this->columns = array('trainerslist' => array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered'));
         $this->components = array('columns', 'filters', 'permissions');
-        $this->filters = array('organization','departments', 'subdepartments', 'trainers');
+        $this->filters = array('organization','departments', 'subdepartments', 'level4department','trainers');
         $this->orderable = array('trainername','email', 'totaltrainings','completedtrainings','upcomingtrainings','userscovered');
         $this->defaultcolumn = 'u.id';
     }
