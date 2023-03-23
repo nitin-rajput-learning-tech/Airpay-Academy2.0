@@ -193,7 +193,7 @@ if ($editform->is_cancelled()) {
 		$data->type = $report->type;
 		(new ls)->update_report($data,$context);
 	}
-	if($data->type == 'statistics'){
+	if($data->type == 'statistics' || $data->enablestatistics == 1){
 		redirect($CFG->wwwroot . '/blocks/learnerscript/viewreport.php?id=' . $data->id . '');
     } else{
 		redirect($CFG->wwwroot . '/blocks/learnerscript/design.php?id=' . $data->id . '');

@@ -85,7 +85,7 @@ class renderer extends plugin_renderer_base {
                 $reportid = $report->id;
 		$ls = new ls();
 
-		if ($report->type !== 'statistics') {
+		if ($report->type !== 'statistics' && $report->enablestatistics == 0) {
 			$plots = $ls->get_components_data($report->id, 'plot');
 			$components = $ls->cr_unserialize($reportclass->config->components);
 			$calcbutton = false;
