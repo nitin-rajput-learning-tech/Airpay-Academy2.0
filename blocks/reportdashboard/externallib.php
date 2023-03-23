@@ -198,7 +198,7 @@ class block_reportdashboard_external extends external_api {
                 $seturl = !empty($role) ? '/blocks/reportdashboard/dashboard.php?role='.$role.'&dashboardurl='.$dashboardurl.'' :'/blocks/reportdashboard/dashboard.php?dashboardurl='.$dashboardurl.'';
             }
             $staticreports = $DB->get_records_sql("SELECT id FROM {block_learnerscript}
-                                                WHERE type ='statistics' AND visible=1 AND global = 1");
+                                                WHERE (type ='statistics' OR enablestatistics=1 ) AND visible=1 AND global = 1");
             $reporttiles = new reporttiles_form($CFG->wwwroot.$seturl);
             if(!empty($staticreports)){
                 $return = $reporttiles->render();

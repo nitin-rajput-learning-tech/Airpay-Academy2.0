@@ -29,7 +29,7 @@ class reportselect_form extends moodleform {
 
         $mform = $this->_form;
         $reportlist = $DB->get_records_select_menu('block_learnerscript',
-            'global=1 AND visible=1 AND type !="statistics"', null, '', 'id,name');
+            'global=1 AND visible=1 AND (type !="statistics" OR enablestatistics=0)', null, '', 'id,name');
         $reportsdata = $DB->get_field('config_plugins', 'value',
             array('name' => 'dashboardReports'));
         $reports = unserialize($reportsdata);

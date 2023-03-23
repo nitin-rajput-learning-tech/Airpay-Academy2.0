@@ -45,7 +45,7 @@ class plotoption implements renderable, templatable {
             $reports = (new \block_learnerscript\local\ls)->listofreportsbyrole();
         } else {
             $reportlist = $DB->get_records_sql("SELECT * FROM {block_learnerscript}
-                                                 WHERE global = 1 AND visible = 1 AND type != 'statistics'");
+                                                 WHERE global = 1 AND visible = 1 AND  (type != 'statistics' OR enablestatistics=0)");
             $reports = array();
             foreach ($reportlist as $report) {
                 $reports[] = ['id'=> $report->id, 'name' => $report->name];
@@ -89,7 +89,7 @@ class plotoption implements renderable, templatable {
         if (in_array('permissions',$reportclass->components)) {
             $data->permissionsavailable = true;
         }
-        $data->enableschedule = ($reportclass->parent === true && $reportclass->config->type != 'statistics')? true : false ;
+        $data->enableschedule = ($reportclass->parent === true && $reportclass->config->type != 'statistics' && $reportclass->config->enablestatistics == 0)? true : false ;
         $data->enableheader = is_siteadmin();
         return $data;
     }

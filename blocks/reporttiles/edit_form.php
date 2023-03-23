@@ -32,7 +32,7 @@ class block_reporttiles_edit_form extends block_edit_form {
 
         // Fields for editing HTML block title and contents.
         $mform->addElement('header', 'configheader', get_string('blocksettings', 'block'));
-        $reportlist = $DB->get_records_select_menu('block_learnerscript', 'global=1 AND type="statistics"', null, '', 'id,name');
+        $reportlist = $DB->get_records_select_menu('block_learnerscript', 'global=1 AND (type="statistics" OR enablestatistics=1)', null, '', 'id,name');
         $reportlist[0] = 'Select Report';
         ksort($reportlist);
         $mform->addElement('select', 'config_reportlist', get_string('listofreports', 'block_reporttiles'), $reportlist);

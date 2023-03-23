@@ -1267,3 +1267,5 @@ $string['report_orgwiseskillachieved'] = 'OrganizationWise SkillsAchieved';
 $string['programlevelcompletions'] = 'UserWise ProgramLevel Overview';
 
 
+$string['report_courseparticipation'] = 'Course Participation';
+$string['courseparticipationcolumns'] = 'Course Participation Columns';

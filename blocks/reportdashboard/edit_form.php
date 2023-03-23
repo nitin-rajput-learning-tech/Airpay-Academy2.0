@@ -31,7 +31,7 @@ class block_reportdashboard_edit_form extends block_edit_form {
         // Fields for editing HTML block title and contents.
         $mform->addElement('header', 'configheader', get_string('blocksettings', 'block'));
 
-        $reportlist = $DB->get_records_select_menu('block_learnerscript', "global=1 AND visible=1 AND type!='statistics'",
+        $reportlist = $DB->get_records_select_menu('block_learnerscript', "global=1 AND visible=1 AND (type!='statistics' OR enablestatistics=0) ",
                                                         null, '', 'id, name');
         ksort($reportlist);
         $reports = array();
