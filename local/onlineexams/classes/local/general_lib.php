@@ -77,7 +77,7 @@ class general_lib{
 		return $count;
 	}
 	public function get_custom_icon_details(){
-		return ['componenticonclass' => 'fa fa-book', 'customimage_required' => False];
+		return ['componenticonclass' => 'fa fa-desktop', 'customimage_required' => False];
 	}
 
 	/******Function to the show the inprogress course names in the E-learning Tab********/

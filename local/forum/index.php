@@ -100,7 +100,7 @@ if(is_siteadmin() ||(
         $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                                     <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('create_newforum','local_forum').'" data-action="createcoursemodal" onclick="(function(e){ require(\'local_forum/forumAjaxform\').init({contextid:'.$categorycontext->id.', component:\'local_forum\', callback:\'custom_forum_form\', form_status:0, plugintype: \'local\', pluginname: \'forum\'}) })(event)">
                                         <span class="createicon">
-                                        <i class="icon fa fa-book"></i>
+                                        <i class="icon fa fa-comments-o"></i>
                                         <i class="fa fa-plus createiconchild" aria-hidden="true"></i>
                                         </span>
                                     </a>

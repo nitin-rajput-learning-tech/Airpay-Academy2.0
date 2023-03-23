@@ -680,7 +680,7 @@ function local_forum_leftmenunode()
     if (has_capability('local/forum:view', $categorycontext) || has_capability('local/forum:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browsecourses', 'class' => 'pull-left user_nav_div browsecourses'));
         $courses_url = new moodle_url('/local/forum/index.php');
-        $courses = html_writer::link($courses_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">' . get_string('manage_forum', 'local_forum') . '</span>', array('class' => 'user_navigation_link'));
+        $courses = html_writer::link($courses_url, '<i class="fa fa-comments-o"></i><span class="user_navigation_link_text">' . get_string('manage_forum', 'local_forum') . '</span>', array('class' => 'user_navigation_link'));
         $coursecatnodes .= $courses;
         $coursecatnodes .= html_writer::end_tag('li');
     }
@@ -698,7 +698,7 @@ function local_forum_quicklink_node()
         $coursedata = array();
         $coursedata['node_header_string'] = get_string('manage_br_forum', 'local_forum');
         $coursedata['pluginname'] = 'forum';
-        $coursedata['plugin_icon_class'] = 'fa fa-book';
+        $coursedata['plugin_icon_class'] = 'fa fa-comments-o';
         if (is_siteadmin() || (has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/forum:manage', $categorycontext))) {
             $coursedata['create'] = TRUE;
             $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_forum/forumAjaxform").init({contextid:' . $categorycontext->id . ', component:"local_forum", callback:"custom_forum_form", form_status:0, plugintype: "local", pluginname: "forum"}) })(event)'));

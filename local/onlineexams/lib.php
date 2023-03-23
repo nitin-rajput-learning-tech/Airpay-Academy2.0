@@ -687,7 +687,7 @@ function local_onlineexams_leftmenunode()
     if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browseonlineexams', 'class' => 'pull-left user_nav_div browseonlineexams'));
         $onlineexams_url = new moodle_url('/local/onlineexams/index.php');
-        $onlineexams = html_writer::link($onlineexams_url, '<i class="fa fa-book"></i><span class="user_navigation_link_text">' . get_string('manage_onlineexams', 'local_onlineexams') . '</span>', array('class' => 'user_navigation_link'));
+        $onlineexams = html_writer::link($onlineexams_url, '<i class="fa fa-desktop"></i><span class="user_navigation_link_text">' . get_string('manage_onlineexams', 'local_onlineexams') . '</span>', array('class' => 'user_navigation_link'));
         $coursecatnodes .= $onlineexams;
         $coursecatnodes .= html_writer::end_tag('li');
     }
@@ -705,7 +705,7 @@ function local_onlineexams_quicklink_node()
         $coursedata = array();
         $coursedata['node_header_string'] = get_string('manage_br_onlineexams', 'local_onlineexams');
         $coursedata['pluginname'] = 'onlineexams';
-        $coursedata['plugin_icon_class'] = 'fa fa-book';
+        $coursedata['plugin_icon_class'] = 'fa fa-desktop';
         if (is_siteadmin() || (has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/onlineexams:manage', $categorycontext))) {
             $coursedata['create'] = TRUE;
             $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_onlineexams/courseAjaxform").init({contextid:' . $categorycontext->id . ', component:"local_onlineexams", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "onlineexams"}) })(event)'));
