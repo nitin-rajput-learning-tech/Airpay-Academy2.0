@@ -236,11 +236,11 @@ body#page-local-users-index #manage_users1 .actionicons .btn.btn_inactive_user {
     float: left
 }
 
-.openLMStransition.local_users .modal-body .form-group:nth-child(odd) {
+.openLMStransition.local_users .modal-body .mform>.form-group:nth-child(odd) {
     float: right
 }
 
-.openLMStransition.local_users .modal-body .form-group {
+.openLMStransition.local_users .modal-body .mform>.form-group {
     width: 50%;
     float: left;
     margin-right: -55px;
@@ -261,11 +261,11 @@ body#page-local-users-index #manage_users1 .actionicons .btn.btn_inactive_user {
     width: 100%
 }
 
-.openLMStransition.local_users .modal-body .form-group>div {
+.openLMStransition.local_users .modal-body .mform>.form-group>div {
     float: left
 }
 
-.openLMStransition.local_users .modal-body .form-group>div label {
+.openLMStransition.local_users .modal-body .mform>.form-group>div label {
     float: left;
     padding: 5px 0
 }
@@ -1331,8 +1331,8 @@ body#page-local-users-index .field_required .icon {
 
 /*update users & manage users page ui*/
 
-#page-local-users-index .local_users .modal-body .form-group,
-#page-local-users-profile .local_users .modal-body .form-group{
+#page-local-users-index .local_users .modal-body .mform>.form-group,
+#page-local-users-profile .local_users .modal-body .mform>.form-group{
     max-width: 50%;
     flex: 0 0 50%;
     margin-right: 0!important;
@@ -1351,8 +1351,8 @@ body#page-local-users-index .field_required .icon {
 #page-local-users-profile .modal-content .badge-info{
     margin-bottom: 0!important;
 }
-#page-local-users-index .local_users .modal-body .form-group>div.col-md-3,
-#page-local-users-profile .local_users .modal-body .form-group>div.col-md-3 {
+#page-local-users-index .local_users .modal-body .mform>.form-group>div.col-md-3,
+#page-local-users-profile .local_users .modal-body .mform>.form-group>div.col-md-3 {
     display: flex;
     align-items: baseline;
 
@@ -1362,8 +1362,8 @@ body#page-local-users-index .field_required .icon {
     position: relative;
     max-width: 100%;
 }
-#page-local-users-index .local_users  .form-group,
-#page-local-users-profile .local_users  .form-group{
+#page-local-users-index .local_users .mform>.form-group,
+#page-local-users-profile .local_users .mform>.form-group{
     margin-bottom: 2rem;
 }
 #page-local-users-index .openLMStransition .form_status,
@@ -1372,8 +1372,8 @@ body#page-local-users-index .field_required .icon {
 }
 @media (max-width: 992px){
 
-    #page-local-users-index .local_users .modal-body .form-group,
-    #page-local-users-profile .local_users .modal-body .form-group{
+    #page-local-users-index .local_users .modal-body .mform>.form-group,
+    #page-local-users-profile .local_users .modal-body .mform>.form-group{
         max-width: 100%;
         flex: 0 0 100%;
         margin-right: 0 !important; 
@@ -1411,7 +1411,7 @@ body#page-local-users-index .field_required .icon {
   bottom: 3px !important;
   top: auto !important;
 }
-.openLMStransition.local_users .modal-body .form-group {
+.openLMStransition.local_users .modal-body .mform>.form-group {
     max-width: 50% ;
     flex:0 0 50% ;
     margin-right:0  !important;
@@ -1428,11 +1428,11 @@ body#page-local-users-index .field_required .icon {
     float: none !important;
     padding: 15px 15px 15px 30px;
 }
-.openLMStransition.local_users .form-group{
+.openLMStransition.local_users .mform>.form-group{
     margin-bottom:1rem;
 }
 
-.openLMStransition.local_users .modal-body .form-group>div.col-md-3{
+.openLMStransition.local_users .modal-body .mform>.form-group>div.col-md-3{
     display: flex;
     align-items: baseline;
     
@@ -1459,13 +1459,13 @@ body#page-local-users-index .field_required .icon {
     }
 }
 @media (max-width: 1024px){
-    .openLMStransition.local_users .modal-body form .form-group {
+    .openLMStransition.local_users .modal-body .mform>.form-group {
         width: 100% !important;
     }
     
 }
 @media (max-width: 992px){
-    .openLMStransition.local_users .modal-body form .form-group{
+    .openLMStransition.local_users .modal-body .mform>.form-group{
         max-width: 100%  !important;
         flex: 0 0 100%  !important;
         margin-right: 0 !important;
@@ -1476,7 +1476,7 @@ body#page-local-users-index .field_required .icon {
         max-width: 100% ;
         min-width: 269px !important;
     }
-    .openLMStransition.local_users .form-group {
+    .openLMStransition.local_users .mform>.form-group {
         margin-bottom: 1rem;
     }
 

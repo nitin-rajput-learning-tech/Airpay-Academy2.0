@@ -102,7 +102,7 @@ if(is_siteadmin() ||(
         $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                                     <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('create_newonlineexams','local_onlineexams').'" data-action="createcoursemodal" onclick="(function(e){ require(\'local_onlineexams/onlineexamsAjaxform\').init({contextid:'.$categorycontext->id.', component:\'local_onlineexams\', callback:\'custom_onlineexams_form\', form_status:0, plugintype: \'local\', pluginname: \'onlineexams\'}) })(event)">
                                         <span class="createicon">
-                                        <i class="icon fa fa-book"></i>
+                                        <i class="icon fa fa-desktop"></i>
                                         <i class="fa fa-plus createiconchild" aria-hidden="true"></i>
                                         </span>
                                     </a>

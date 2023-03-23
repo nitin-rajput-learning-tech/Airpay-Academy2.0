@@ -3316,3 +3316,13 @@ table.generaltable{
     font-family: inherit !important;
     font-size: inherit !important;
 }
+@media (min-width:768px) {
+    .bootstrap-duallistbox-container .col-md-2.actions {
+        margin-top: 243px
+    }
+}
+.bootstrap-duallistbox-container button.custom_btn.btn.move.btn-default,
+.bootstrap-duallistbox-container button.custom_btn.btn.remove.btn-default {
+    margin: 2% 0;
+    width: 100%
+}
