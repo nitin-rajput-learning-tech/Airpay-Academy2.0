@@ -58,7 +58,11 @@ class plugin_programfield extends pluginbase {
                 break;
             case 'stream':
                 $stream = $DB->get_field('local_custom_category', 'fullname', array('id' =>$programrecord->open_categoryid));
-                $programrecord->{$data->column} = $stream;
+                if($stream){
+                    $programrecord->{$data->column} = $stream;                
+                }else{
+                    $programrecord->{$data->column} = '-';                
+                }
                 break;                
             case 'programorg':
                 $programrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));

@@ -39,7 +39,7 @@ class report_trainingsprogress extends reportbase implements report {
         $this->sqlorder['column'] = 'year';
         $this->sqlorder['dir'] = 'desc';
         $this->orderable = array('monthyear','completed', 'month','year','scheduled');
-        $this->defaultcolumn = 'YEAR(FROM_UNIXTIME(lc.startdate))';
+        $this->defaultcolumn = 'YEAR(FROM_UNIXTIME(lc.startdate)),MONTH(FROM_UNIXTIME(lc.startdate))';
     }
     
     function init() {

@@ -921,12 +921,15 @@ class schedule {
 			$context = context_course::instance($reportclass->config->courseid);
 		}
 		$data = array();
-
+		//$context = (new \local_courses\lib\accesslib())::get_module_context();
+		
 		foreach ($rolewiseusers as $rolewiseuser) {
-			if ($reportclass->check_permissions($rolewiseuser->id, $context) && !is_siteadmin($rolewiseuser->id)) {
+			$data[] = ['id' => $rolewiseuser->id, 'text' => $rolewiseuser->fullname];
+		/* 	if ($reportclass->check_permissions($rolewiseuser->id, $context) && !is_siteadmin($rolewiseuser->id)) {
 				$data[] = ['id' => $rolewiseuser->id, 'text' => $rolewiseuser->fullname];
-			}
+			} */
 		}
+	
 		return $data;
 	}
 	/**
