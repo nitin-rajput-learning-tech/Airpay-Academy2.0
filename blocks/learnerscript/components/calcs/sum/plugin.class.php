@@ -29,7 +29,7 @@ class plugin_sum extends pluginbase {
         $this->form = true;
         $this->unique = false;
         $this->fullname = get_string('sum', 'block_learnerscript');
-        $this->reporttypes = array('courses', 'users', 'timeline', 'categories','assignment','courses', 'coursesoverview', 'gradedactivity', 'myassignments', 'myquizs', 'quizzes','scorm', 'useractivities', 'userassignments', 'usercourses', 'userquizzes', 'usersresources', 'usersscorm', 'courseactivities', 'myscorm');
+        $this->reporttypes = array('courses', 'users', 'timeline', 'categories','assignment','courses', 'coursesoverview', 'gradedactivity', 'myassignments', 'myquizs', 'quizzes','scorm', 'useractivities', 'userassignments', 'usercourses', 'userquizzes', 'usersresources', 'usersscorm', 'courseactivities', 'myscorm','courseparticipation');
     }
 
     function summary($data) {

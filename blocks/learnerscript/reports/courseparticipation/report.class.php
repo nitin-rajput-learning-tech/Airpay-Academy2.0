@@ -25,188 +25,223 @@ use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 use block_learnerscript\local\querylib;
 defined('MOODLE_INTERNAL') || die();
-class report_courseparticipation extends reportbase implements report {
-
+class report_courseparticipation extends reportbase {
     public function __construct($report, $reportproperties) {
         global $DB;
         parent::__construct($report, $reportproperties);
-        $this->columns = ['courseparticipationcolumns' => ['enrollments','completions']];
-        $this->components = array('columns', 'filters','permissions');
-        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department','course');
+        $this->components = array('columns', 'ordering', 'permissions', 'filters', 'plot');
         $this->parent = true;
-        $this->defaultcolumn = 'u.id';
+        $this->columns = ['courseparticipationcolumns' => ['enrolled','inprogress','completed','progress']];
+        $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'level5department','course');
+        $this->orderable = array('enrolled');
         $this->enablestatistics = true;
-    }
-
-    function init() {
-        parent::init();
-    }
-
-    function concatsql(){
-
-        $searchsql="";
-
-        if (isset($this->search) && $this->search) {
-
-            $fields = array('c.id');
-            $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
-            $fields .= " LIKE '%" . $this->search . "%' ";
-            $searchsql .= " AND ($fields) ";
-
-        }
-
-        $filtersql=$searchsql;
-
-        $filteronesql="";
-
-        $filtertwosql="";
-
-        if ($this->params['filter_organization'] > 0) {
-            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
-            $filtersql .= " AND concat(u.open_path,'/') like '%$orgpath/%'";
-        }
-        if ($this->params['filter_departments'] > 0) {
-            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
-            $filtersql .= " AND concat(u.open_path,'/') like '%$l2dept/%' ";
-        }
-        if ($this->params['filter_subdepartments'] > 0) {
-            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
-            $filtersql .= " AND concat(u.open_path,'/') like '%$l3dept/%' ";
-        }
-        if ($this->params['filter_level4department'] > 0) {
-            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
-             $filtersql .= " AND concat(u.open_path,'/') like '%$l4dept/%' ";
-        }
-        if ($this->params['filter_level5department'] > 0) {
-            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $filtersql .= " AND concat(u.open_path,'/') like '%$l5dept/%' ";
-        }
-        if (!empty($this->params['filter_course'])) {
-
-            $courseid = $this->params['filter_course'];
-
-            $filtersql .= " AND e.courseid = $courseid ";
-        }
-
-        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
-
-            $ls_startdate=$this->ls_startdate;
-
-            $ls_enddate=$this->ls_enddate;
-
-            $filteronesql=$filtersql;
-
-            $filteronesql.= " AND ra.timemodified > $ls_enddate ";
-
-            $filteronesql .= " AND ra.timemodified < $ls_enddate ";
-
-            $filtertwosql=$filtersql;
-
-            $filtertwosql .= " AND cc.timecompleted > $ls_enddate ";
-
-            $filtertwosql .= " AND cc.timecompleted < $ls_enddate ";
-
-        }else{
-
-            $filteronesql=$filtersql;
-
-            $filtertwosql=$filtersql;
-
-        }
-
-        return compact('filteronesql','filtertwosql');
-
+        $this->defaultcolumn = 'u.id';
     }
 
     function count() {
-
-
-        $concatsql=$this->concatsql();
-
-        $filteronesql=$concatsql['filteronesql'];
-
-
-        $this->sql = "SELECT COUNT(DISTINCT(SELECT COUNT(DISTINCT(ue.id))
-                        FROM {user_enrolments} ue
-                        JOIN {user} u ON ue.userid = u.id
-                        JOIN {enrol} e ON e.id = ue.enrolid AND (e.enrol = 'manual' OR e.enrol = 'self')
-                        JOIN {role_assignments} ra ON ra.userid = ue.userid
-                        JOIN {context} cxt ON cxt.id = ra.contextid
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {course} c ON c.id = cxt.instanceid
-                        WHERE u.deleted = 0 AND c.id = e.courseid AND u.confirmed = 1
-                        AND u.suspended = 0 AND r.shortname = 'employee' $filteronesql)) ";
+      $this->sql  = " SELECT 1 ";
     }
 
     function select() {
-
-
-        $concatsql=$this->concatsql();
-
-        $filteronesql=$concatsql['filteronesql'];
-
-        $filtertwosql=$concatsql['filtertwosql'];
-
-        $this->sql = "SELECT DISTINCT(SELECT COUNT(DISTINCT(ue.id))
-                        FROM {user_enrolments} ue
-                        JOIN {user} u ON ue.userid = u.id
-                        JOIN {enrol} e ON e.id = ue.enrolid AND (e.enrol = 'manual' OR e.enrol = 'self')
-                        JOIN {role_assignments} ra ON ra.userid = ue.userid
-                        JOIN {context} cxt ON cxt.id = ra.contextid
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {course} c ON c.id = cxt.instanceid
-                        WHERE u.deleted = 0 AND c.id = e.courseid AND u.confirmed = 1
-                        AND u.suspended = 0 AND r.shortname = 'employee' $filteronesql) AS 'Enrollments',
-                        (SELECT COUNT(DISTINCT(ue.id))
-                        FROM {user_enrolments} ue
-                        JOIN {user} u ON ue.userid = u.id
-                        JOIN {enrol} e ON e.id = ue.enrolid AND (e.enrol = 'manual' OR e.enrol = 'self')
-                        JOIN {role_assignments} ra ON ra.userid = ue.userid
-                        JOIN {context} cxt ON cxt.id = ra.contextid
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {course_completions} cc ON e.courseid = cc.course
-                        JOIN {course} c ON c.id = cc.course
-                        AND cc.userid = u.id AND cc.timecompleted IS NOT NULL
-                        WHERE  u.deleted = 0
-                        AND u.suspended = 0 AND r.shortname = 'employee' AND ra.userid = u.id
-                        AND c.id = e.courseid $filtertwosql) AS 'Completions'";
-
-
-        parent::select();
+       $this->sql = " SELECT DISTINCT u.id ";
+      parent::select();
     }
 
     function from() {
-        $this->sql .= " FROM {user} u ";
+      $this->sql .= " FROM {user} as u";
     }
 
     function joins() {
-
-        $this->sql .= "";
-
-        parent::joins();
+      parent::joins();
     }
 
     function where() {
-        global $USER, $DB;
+        global $DB, $USER;
+        $this->sql .= " WHERE u.confirmed = 1 AND u.deleted = 0 AND u.id > 2 ";
 
-        $this->sql .= " ";
+      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+      if (is_siteadmin()) {
+          $this->sql .= "";
+      } else  {
+          $this->sql .= $costcenterpathconcatsql;
+      }
+
+        if ($this->conditionsenabled) {
+            $conditions = implode(',', $this->conditionfinalelements);
+            if (empty($conditions)) {
+                return array(array(), 0);
+            }
+            $this->sql .= " AND u.id IN ( $conditions )";
+        }
 
         parent::where();
     }
 
-
     function search() {
         if (isset($this->search) && $this->search) {
-            $this->sql .= "  ";
+            $fields = array("CONCAT(u.firstname, ' ', u.lastname)", "u.email");
+            $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
+            $fields .= " LIKE '%" . $this->search . "%' ";
+            $this->sql .= " AND ($fields) ";
         }
     }
 
     function filters() {
+        global $DB;
+        if ($this->params['filter_organization'] > 0) {
+            $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :orgpath ";
+            $this->params['orgpath'] = $orgpath.'/%';
+        }
+        if ($this->params['filter_departments'] > 0) {
+            $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l2dept ";
+            $this->params['l2dept'] = $l2dept.'/%';
+        }
 
-        $this->sql .= "";
+        if ($this->params['filter_subdepartments'] > 0) {
+            $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l3dept ";
+            $this->params['l3dept'] = $l3dept.'/%';
+        }
+
+        if ($this->params['filter_level4department'] > 0) {
+            $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
+            $this->params['l4dept'] = $l4dept.'/%';
+        }
+        if ($this->params['filter_level5department'] > 0) {
+            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
+            $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
+            $this->params['l5dept'] = $l5dept.'/%';
+        }
+
+    }
+    public function get_rows($users) {
+
+        global $DB;
+
+        if(empty($users)){
+
+            return array();
+
+        }
+
+        $data=array();
+
+
+         $input = json_decode(json_encode ($users ) , true);
+
+
+        $result = array_keys(array_flip(array_column($input, 'id')));
+
+        foreach($this->columns['courseparticipationcolumns'] as $key=>$column){
+
+            if($column == 'progress'){
+
+                continue;
+            }
+
+
+            $sqlparams=$this->courseparticipation_column_queries($column,$result);
+
+
+            if(!empty($sqlparams)){
+
+
+                $data[$column] = $data[$column]+$DB->get_field_sql($sqlparams['sqlquery'],$sqlparams['sqlparams']);
+            }
+
+
+        }
+
+        $data['progress'] = round(($data['completed']/$data['enrolled'])*100);
+
+        return array((object)$data);
+
     }
 
-    public function get_rows($courseusers) {
-        return $courseusers;
+    public function courseparticipation_column_queries($column, $userids){
+
+        global $DB;
+
+        if(empty($userids)){
+
+            return array();
+
+        }
+
+
+        $filteruserids = $userids;
+
+        list($filteruseridssql, $filteruseridsparams) = $DB->get_in_or_equal($filteruserids, SQL_PARAMS_QM, 'userids', true, false);
+        $where= " AND  %placeholder% $filteruseridssql";
+
+        $coursefilter = "";
+
+        if (isset($this->params['filter_course'])
+            && $this->params['filter_course'] >0
+            && $this->params['filter_course'] != '_qf__force_multiselect_submission') {
+            $courseid = $this->params['filter_course'];
+            $coursefilter.= " AND c.id IN ($courseid) ";
+        }
+
+
+        if ($this->ls_startdate >= 0 && $this->ls_enddate) {
+
+            if ($column == 'enrolled' || $column == 'enrolled') {
+
+              $coursefilter.= " AND ra.timemodified BETWEEN $this->ls_startdate AND $this->ls_enddate";
+
+            }elseif ($column == 'completed' || $column == 'progress') {
+
+                $coursefilter.= " AND cc.timecompleted BETWEEN $this->ls_startdate AND $this->ls_enddate";
+            }
+
+        }
+
+        switch ($column) {
+            case 'enrolled':
+                $identy = "ue.userid";
+                $query = "SELECT COUNT(DISTINCT c.id) AS enrolled
+                          FROM {user_enrolments} ue
+                          JOIN {enrol} e ON ue.enrolid = e.id
+                          JOIN {role_assignments} ra ON ra.userid = ue.userid
+                          JOIN {role} r ON r.id = ra.roleid AND r.shortname  IN ('employee','student')
+                          JOIN {context} AS ctx ON ctx.id = ra.contextid
+                          JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1
+                          WHERE e.courseid = c.id $where $coursefilter ";
+                break;
+            case 'inprogress':
+                $identy = "ue.userid";
+                $query = "SELECT (COUNT(DISTINCT c.id) - COUNT(DISTINCT cc.id)) AS inprogress
+                          FROM {user_enrolments} ue
+                          JOIN {enrol} e ON ue.enrolid = e.id
+                          JOIN {role_assignments} ra ON ra.userid = ue.userid
+                          JOIN {role} r ON r.id = ra.roleid AND r.shortname  IN ('employee','student')
+                          JOIN {context} AS ctx ON ctx.id = ra.contextid
+                          JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1
+                     LEFT JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0
+                         WHERE e.courseid = c.id $where $coursefilter ";
+                break;
+            case 'completed':
+                $identy = "cc.userid";
+                $query = "SELECT COUNT(DISTINCT cc.course) AS completed
+                          FROM {user_enrolments} ue
+                          JOIN {enrol} e ON ue.enrolid = e.id
+                          JOIN {role_assignments} ra ON ra.userid = ue.userid
+                          JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
+                          JOIN {context} AS ctx ON ctx.id = ra.contextid
+                          JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1
+                          JOIN {course_completions} cc ON cc.course = ctx.instanceid AND cc.userid = ue.userid AND cc.timecompleted > 0 WHERE e.courseid = c.id $where $coursefilter ";
+                break;
+
+
+            default:
+                return false;
+                break;
+        }
+        $query = str_replace('%placeholder%', $identy, $query);
+        return array('sqlquery'=>$query,'sqlparams'=>$filteruseridsparams);
     }
 }

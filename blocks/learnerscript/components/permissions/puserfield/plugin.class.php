@@ -28,7 +28,7 @@ class plugin_puserfield extends pluginbase {
         $this->form = true;
         $this->unique = true;
         $this->fullname = get_string('puserfield', 'block_learnerscript');
-        $this->reporttypes = array('courses', 'sql', 'users', 'timeline', 'categories');
+        $this->reporttypes = array('courses', 'sql', 'users', 'timeline', 'categories','courseparticipation');
     }
 
     function summary($data) {
