@@ -29,13 +29,15 @@ class block_learnerscript_external extends external_api {
     }
     public static function rolewiseusers($roleid, $orgid, $deptid, $subdeptid, $term, $contextlevel, $page, $_type, $reportid, $action, $maximumSelectionLength) {
         global $PAGE, $DB;
-        $context = contextsystem::instance();
+        //$context = contextsystem::instance();
+        $context = (new \local_courses\lib\accesslib())::get_module_context();
         $PAGE->set_context($context);
         $roles = $roleid; 
         $search = $term;
         if ((has_capability('block/learnerscript:managereports', $context) ||
             has_capability('block/learnerscript:manageownreports', $context) ||
             is_siteadmin()) && !empty($roles)) {
+           
             if ($roles == -1) {
                 $adminssql = "SELECT user.id, CONCAT(user.firstname, ' ' , user.lastname) AS fullname
                                 FROM {user} user, {config} cfg
@@ -56,7 +58,8 @@ class block_learnerscript_external extends external_api {
                     $user_list[] = ['id' => $admin->id, 'text' => $admin->fullname];
                 }
             } else {
-                $user_list = (new schedule)->rolewiseusers($roles, $orgid, $deptid, $subdeptid, $term, $page, $reportid,$contextlevel);
+               $user_list = (new schedule)->rolewiseusers($roles, $orgid, $deptid, $subdeptid, $term, $page, $reportid,$contextlevel);
+             
             }
             $terms_data = array();
             $terms_data['total_count'] = sizeof($user_list);
@@ -64,6 +67,7 @@ class block_learnerscript_external extends external_api {
             $terms_data['items'] = $user_list;
             $return = $terms_data;
         } else {
+           
             $terms_data = array();
             $terms_data['error'] = true;
             $terms_data['type'] = 'Warning';

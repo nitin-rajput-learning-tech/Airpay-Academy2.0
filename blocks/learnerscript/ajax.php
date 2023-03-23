@@ -292,7 +292,8 @@ $basicparams = json_decode($basicparams, true);
 $elementsorder = optional_param('elementsorder', $elementsorder, PARAM_RAW);
 $contextlevel = optional_param('contextlevel', $contextlevel, PARAM_INT);
 
-$context = context_system::instance();
+//$context = context_system::instance();
+$context = (new \local_courses\lib\accesslib())::get_module_context();
 $ls = new ls();
 require_login();
 $PAGE->set_context($context);
@@ -379,11 +380,7 @@ case 'manageschusers':
 
 		$roles_list = (new schedule)->reportroles($selectedroleid);
 		$selectedusers = (new schedule)->selectesuserslist($schuserslist);
-		$scheduledata = new \block_learnerscript\output\scheduledusers($reportid,
-			$reqimage,
-			$roles_list,
-			$selectedusers,
-			$scheduleid);
+		$scheduledata = new \block_learnerscript\output\scheduledusers($reportid,$reqimage,$roles_list,$selectedusers,$scheduleid);
 		$return = $learnerscript->render($scheduledata);
 		// $return = $learnerscript->scheduleusers($reportid, $scheduleid, $selectedroleid, $schuserslist);
 	} else {
