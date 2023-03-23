@@ -731,7 +731,11 @@ class reportbase {
         else if($this->config->type == "feedbackcourses"){
             $columns = (new ls)->learnerscript_feedbackcoursequestions_dynamic_columns($columns, $this->config,
                 $this->params);
+        }else if($this->config->type == 'programlevelcompletions'){
+            $columns = (new ls)->learnerscript_programlevels_dynamic_columns($columns, $this->config,
+                        $this->params);
         }
+        
         if ($rows) {
             foreach ($rows as $r) {
                 $tempcols = array();
@@ -755,7 +759,7 @@ class reportbase {
                     $class->reportfilterparams = $this->params;
                     $rid = isset($r->id) ? $r->id : 0;
                     if (isset($c['formdata']->column) && 
-                        (($this->config->type == "coursegradeactivities" || $this->config->type == "feedbackcourses" || $this->config->type == "programlevels") || in_array($c['formdata']->column, $this->selectedcolumns))) {
+                        (($this->config->type == "coursegradeactivities" || $this->config->type == "feedbackcourses" || $this->config->type == "programlevels" || $this->config->type == 'programlevelcompletions') || in_array($c['formdata']->column, $this->selectedcolumns))) {
                             if (!empty($this->params['filter_users'])) {
                                 $this->currentuser = $this->params['filter_users'];
                             }

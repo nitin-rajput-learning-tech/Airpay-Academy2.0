@@ -1866,6 +1866,47 @@ class ls {
         return $columns;
     }
 
+	public function learnerscript_programlevels_dynamic_columns($columns, $config,$basicparams){
+		global $DB, $CFG, $USER;
+		
+		foreach($columns as $colvalue){
+            $colvalue =(object)$colvalue;
+			if($colvalue->pluginname=="programlevelscompletion"){
+				require_once($CFG->dirroot . '/blocks/learnerscript/components/columns/programlevelscompletion/plugin.class.php');
+				$pluginname =$colvalue->pluginname;
+				$plgname= 'plugin_programlevelscompletion';
+				$dynclass = new $plgname($config, $colvalue);
+				$flag=1;
+			}
+		}
+		if($flag == 1){
+					
+			$reportinfo = $dynclass->report;
+			if($reportinfo->type == 'programlevelcompletions'){
+				$programid = isset( $basicparams['filter_programs']) ? $basicparams['filter_programs'] : null;
+				if($programid){	
+					$newarray = array();
+					$sqllist = "SELECT lpl.id, lpl.level 
+								FROM {local_program_levels} lpl
+								WHERE 1 = 1 AND lpl.programid = $programid";
+
+					$levelslist = $DB->get_records_sql($sqllist);
+					foreach ($levelslist as $levellist) {
+						$levels[] = $levellist->level;
+					}
+				}
+				if (!empty($levels)) {
+					foreach($levels as $k => $value){
+						$columns[] = (new self)->learnerscript_create_dynamic_levelcolumns($value,
+							'programlevels', $k);
+					}
+				}
+			}
+		}
+		
+        return $columns;
+	}
+
 	   /**
 	 * [learnerscript_create_dynamic_cfb_questionscolumns description]
 	 * @param  [type] $value     [description]
