@@ -248,14 +248,11 @@ class accesslib
 
         if(!empty($USER->useraccess['currentroleinfo']['contextinfo'])){
 
-
             $contextarray =$USER->useraccess['currentroleinfo']['contextinfo'];
-
             foreach($contextarray as $context){
 
                 $costcenterpath=$context['costcenterpath'];
-
-                if($costcenterpath > 0){
+                if(!empty($costcenterpath)){
 
                     if(empty($sqlarray[$costcenterpath])){
 
@@ -277,6 +274,7 @@ class accesslib
 
             $concatsql="AND (".implode(" OR ", $sqlarray).")";
         }
+
 
         return $concatsql;
     }
