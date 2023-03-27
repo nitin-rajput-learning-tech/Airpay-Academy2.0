@@ -1,73 +1,85 @@
 <div id="dashboard-header">
     {{# configuredinstances }}
     <div id="reportbox_shadow">
-        <div id="segmented-button">
-            <input type="radio" name="duration" value="week" id="seg-Week" class="analytics-radio-tab">
-            <label for="seg-Week" class="week">{{#str}}week{{/str}}</label>
-            <input type="radio" name="duration" value="month" id="seg-Month" class="analytics-radio-tab">
-            <label for="seg-Month">{{#str}}month{{/str}}</label>
-            <input type="radio" name="duration" value="year" id="seg-Year" class="analytics-radio-tab">
-            <label for="seg-Year">{{#str}}year, block_reportdashboard{{/str}}</label>
-            <input type="radio" name="duration" value="custom" id="seg-Custom" class="analytics-radio-tab">
-            <label for="seg-Custom">{{#str}}custom, block_reportdashboard{{/str}}</label>
-            <input type="radio" name="duration" value="clear" id="seg-Clear" checked="true" class="analytics-radio-tab">
-            <label for="seg-Clear">{{#str}}all, block_reportdashboard{{/str}}</label>
-        </div>
+        <ul id="segmented-button" class="nav justify-content-center">
+            <li class="nav-item">
+                <input type="radio" name="duration" value="week" id="seg-Week" class="analytics-radio-tab">
+                <label for="seg-Week" class="week nav-link">{{#str}}week{{/str}}</label>
+            </li>
+            <li class="nav-item">
+                <input type="radio" name="duration" value="month" id="seg-Month" class="analytics-radio-tab">
+                <label for="seg-Month" class="nav-link">{{#str}}month{{/str}}</label>
+            </li>
+            <li class="nav-item">
+                <input type="radio" name="duration" value="year" id="seg-Year" class="analytics-radio-tab">
+                <label for="seg-Year" class="nav-link">{{#str}}year, block_reportdashboard{{/str}}</label>
+            </li>
+            <li class="nav-item">
+                <input type="radio" name="duration" value="custom" id="seg-Custom" class="analytics-radio-tab">
+                <label for="seg-Custom"  class="nav-link">{{#str}}custom, block_reportdashboard{{/str}}</label>
+            </li>
+            <li class="nav-item">
+                <input type="radio" name="duration" value="clear" id="seg-Clear" checked="true" class="analytics-radio-tab">
+                <label for="seg-Clear" class="nav-link">{{#str}}all, block_reportdashboard{{/str}}</label>
+            </li>
+        </ul>
         <span class="flatpickr">
         <input type="text" name="customduration" value="" style="display: none;"
                 id="customrange" placeholder="Start Date - End Date">
         </span>
-    </div>  
+    </div> 
+    <div class="mt-2 input_unit d-flex flex-wrap"> 
     {{# enable_organization }}
-        <span class="costcenterfilter">
+        <div class="costcenterfilter mx-2 mb-2 ">
             <label class="d-inline-block mb-0"><b>{{#str}}organization, block_learnerscript{{/str}}</b></label>
             <select name="filter_organization" class = "dashboardcostcenters" id = "dashboardcostcenters" data-select2="1"  data-role="{{dashboardrole}}">
                 {{# costcenterslist }}
                     <option value = "{{id}}" {{selected}}>{{fullname}}</option>
                 {{/ costcenterslist }}
             </select>
-        </span>
+        </div>
     {{/ enable_organization }}
     {{# enable_departments }}
-        <span class="departmentfilter">
+        <div class="departmentfilter mx-2 mb-2">
             <label class="d-inline-block mb-0"><b>{{#str}}departments, block_learnerscript{{/str}}</b></label>
             <select name="filter_departments" class = "dashboarddepartment" id = "dashboarddepartment" data-select2="1"  data-role="{{dashboardrole}}">
                 {{# departmentslist }}
                     <option value = "{{id}}" {{selected}}>{{fullname}}</option>
                 {{/ departmentslist }}
             </select>
-        </span>
+        </div>
     {{/ enable_departments }}
     {{# enable_subdepartments }}
-        <span class="subdepartmentfilter">
+        <div class="subdepartmentfilter mx-2 mb-2">
             <label class="d-inline-block mb-0"><b>{{#str}}subdepartments, block_learnerscript{{/str}}</b></label>
             <select name="filter_subdepartments" class = "dashboardsubdepartment" id = "dashboardsubdepartment" data-select2="1"  data-role="{{dashboardrole}}">
                 {{# subdepartmentslist }}
                     <option value = "{{id}}" {{selected}}>{{fullname}}</option>
                 {{/ subdepartmentslist }}
             </select>
-        </span>
+        </div>
     {{/ enable_subdepartments }}
     {{# enable_level4department }}
-        <span class="departmentl4filter">
+        <div class="departmentl4filter mx-2 mb-2">
             <label class="d-inline-block mb-0"><b>{{#str}}level4department, block_learnerscript{{/str}}</b></label>
             <select name="filter_l4departments" class = "dashboardl4department" id = "dashboardl4department" data-select2="1"  data-role="{{dashboardrole}}">
                 {{# level4departmentlist }}
                     <option value = "{{id}}" {{selected}}>{{fullname}}</option>
                 {{/ level4departmentlist }}
             </select>
-        </span>
+        </div>
     {{/ enable_level4department }}
     {{# enable_level5department }}
-        <span class="departmentl5filter">
+        <div class="departmentl5filter mx-2 mb-2">
             <label class="d-inline-block mb-0"><b>{{#str}}level5department, block_learnerscript{{/str}}</b></label>
             <select name="filter_l5departments" class = "dashboardl5department" id = "dashboardl5department" data-select2="1"  data-role="{{dashboardrole}}">
                 {{# level5departmentlist }}
                     <option value = "{{id}}" {{selected}}>{{fullname}}</option>
                 {{/ level5departmentlist }}
             </select>
-        </span>
+        </div>
     {{/ enable_level5department }}
+</div>
     {{# coursedashboard }}
         {{# courselist.0 }}
             <span class="coursefilter1">

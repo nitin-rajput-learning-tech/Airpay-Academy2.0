@@ -923,3 +923,6 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
 #filters_form{
     background-color: #e7ebfa;
 }
+.CstripCnt{
+    background-color: var(--hovercolor);
+}

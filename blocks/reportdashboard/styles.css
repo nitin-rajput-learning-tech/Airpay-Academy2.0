@@ -226,13 +226,15 @@ body.path-blocks-reportdashboard #reportbox_shadow {
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .costcenterfilter, 
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .departmentfilter, 
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .subdepartmentfilter,
-body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .compliancefilter {
+body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .compliancefilter,
+body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .departmentl4filter {
     margin-top: 4px;
 }
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .costcenterfilter .selection [role="combobox"],
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .departmentfilter .selection [role="combobox"],
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .subdepartmentfilter .selection [role="combobox"],
-body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .compliancefilter .selection [role="combobox"] {
+body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .compliancefilter .selection [role="combobox"],
+body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .departmentl4filter .selection [role="combobox"] {
     border-radius: 0px;
 }
 /*radio to tabs ends here*/
@@ -3658,11 +3660,11 @@ table.report_tiles_table tbody tr td h6 {
     pointer-events: none;
     opacity: 0.4;  
 }
-.departmentfilter, .costcenterfilter, .compliancefilter, .subdepartmentfilter {
+.departmentfilter, .costcenterfilter, .compliancefilter, .subdepartmentfilter, .departmentl4filter, .departmentl5filter {
     display: flex;
     flex-flow: column;
     float: left;
-    margin: 0px 0px 0px 1%;
+    /* margin: 0px 0px 0px 1%; */
     margin-top: 4px;
 }
 .compliancefilter {
@@ -3704,4 +3706,19 @@ table.report_tiles_table tbody tr td h6 {
     width: 800.5px!important;
     right: 50px;
     left: inherit!important;
+}
+
+
+body.path-blocks-reportdashboard #reportbox_shadow{
+    float: none;
+    display: flex;
+}
+body.reportdashboard.path-blocks-reportdashboard span#widgetaction{
+    display: none;
+}
+body.reportdashboard.path-blocks-reportdashboard div#dashboard-header{
+    background-color:#fff;
+}
+body.reportdashboard.path-blocks-reportdashboard .input_unit{
+    padding:17px 15px;
 }
