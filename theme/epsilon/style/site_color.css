@@ -918,11 +918,11 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
     border-color: var(--primarycolor);
 }
 #page-local-courses-courses .courseimg_container .course_type{
-    background-color: var(--primarycolor);
+    background-color: var(--hovercolor);
 }
 #filters_form{
     background-color: #e7ebfa;
 }
-.CstripCnt{
+#page-local-search-allcourses #allcourses_section .CstripCnt{
     background-color: var(--hovercolor);
 }
