@@ -50,10 +50,7 @@ class report_traininghoursvsusers extends reportbase implements report {
         $this->sql = "SELECT COUNT( distinct MONTH(FROM_UNIXTIME(lc.startdate)))";
     }
     function select() {
-        /* (SELECT DATEDIFF(DATE(FROM_UNIXTIME(c.enddate)), DATE(FROM_UNIXTIME(c.startdate)))
-        FROM {local_classroom} c 
-        WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(lc.startdate))
-        AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) )  as  trainingdays,  */
+        
         $this->sql  = "SELECT distinct concat(MONTH(FROM_UNIXTIME(lc.startdate)), '/', YEAR(FROM_UNIXTIME(lc.startdate))) as monthyear, FROM_UNIXTIME(lc.startdate, '%M') AS month,
                     YEAR(FROM_UNIXTIME(lc.startdate)) AS year,
         (SELECT count(id) 
@@ -65,7 +62,10 @@ class report_traininghoursvsusers extends reportbase implements report {
             JOIN {local_classroom} c ON cs.classroomid = c.id
             WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
             AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4)) as traininghours,
-       
+        (SELECT SUM(DATEDIFF(DATE(FROM_UNIXTIME(c.enddate)), DATE(FROM_UNIXTIME(c.startdate))))
+            FROM {local_classroom} c 
+            WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(c.startdate))
+            AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(c.startdate)) AND (c.status = 1 OR c.status = 4) )  as  trainingdays,  
         (SELECT count(distinct cat.userid) 
             FROM {local_classroom_attendance} cat
             JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1

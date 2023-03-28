@@ -48,7 +48,7 @@ class report_programsoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lp.id)";
     }
     function select() {
-        $this->sql = "SELECT lp.id as programid, lp.name as programname,cat.fullname as stream,
+        $this->sql = "SELECT lp.id as programid, lp.name as programname,lp.open_categoryid as catgid,
                             (SELECT COUNT(pl.id)
                             FROM {local_program_levels} pl 
                             WHERE pl.programid = lp.id) AS levelscount,
@@ -69,15 +69,15 @@ class report_programsoverview extends reportbase implements report {
         $this->sql .= " FROM {local_program} lp";
     }
     function joins() {
-        $this->sql .= "  LEFT JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid ";
+       // $this->sql .= "  LEFT JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid ";
        //  $this->sql .= " JOIN {local_program_stream} ps ON ps.id = lp.stream";
           parent::joins();
     }
     function where(){
-         global $USER, $DB;
+        global $USER, $DB;
         $this->sql .= " WHERE 1=1 ";
         $this->params['siteid'] = SITEID;
-        $systemcontext = \context_system::instance();
+        
         // getscheduled report
         if (!is_siteadmin()) {
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);

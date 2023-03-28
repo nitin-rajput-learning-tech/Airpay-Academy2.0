@@ -57,7 +57,7 @@ class report_programlevelcompletions extends reportbase implements report
     }
     function select()
     {
-        $this->sql = "SELECT lpu.id,lp.id as programid,u.id as userid,lp.name as programname,
+        $this->sql = "SELECT lpu.id,lp.id as programid,u.id as userid,u.*,lp.name as programname,
                             lpu.completion_status AS completionstatus,CONCAT(u.firstname,' ',u.lastname) as fullname, 
                             lpu.completiondate as completiondate, u.lastaccess";
         parent::select();
@@ -176,19 +176,17 @@ class report_programlevelcompletions extends reportbase implements report
                         $userlevelcomptl = $DB->get_record_sql($userlevelcmpltsql,
                             array('programid' => $class->programid, 'userid' => $programuser->userid, 'levelid' => $class->id));
                         $levelid = "level_$class->position";
-                        if($programuser->completionstatus == 0 && $mycompletedlevels && !empty($programuser->completiondate)){
+                       /*  if($programuser->completionstatus == 0 && $mycompletedlevels && !empty($programuser->completiondate)){
                             if (array_search($levelid, $mycompletedlevels) === false) {
                                 $programuser->completionstatus = 'Inprogress';
                             }
-                        }else if($programuser->completionstatus == 1){
+                        }else  */
+                        if($programuser->completionstatus == 1){
                             $programuser->completionstatus = 'Completed';
                         }else{
                             $programuser->completionstatus = 'Not Completed';
                         }
-                        /* if (array_search($levelid, $mycompletedlevels) !== false) {
-                            $programuser->completionstatus = 'Completed';
-                        }   */                     
-                        
+                    
                         if ( $userlevelcomptl && $userlevelcomptl != 0) {
                           $programuser->$levelid = "Completed";
                         }  else {

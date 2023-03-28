@@ -61,7 +61,7 @@ class report_learningpathcourseusers extends reportbase implements report
 
   function select()
   {
-    $this->sql = "SELECT concat(lcu.id,u.id,c.id) as uiiid, u.id as userid, u.firstname,u.lastname, u.phone2 as phone, u.email, u.idnumber, c.fullname as course, c.id as courseid ";
+    $this->sql = "SELECT concat(lcu.id,u.id,c.id) as uiiid, u.id as userid, u.*, u.phone2 as phone, c.fullname as course, c.id as courseid ";
     parent::select();
   }
 

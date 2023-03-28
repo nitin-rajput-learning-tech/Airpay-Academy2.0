@@ -45,7 +45,7 @@ class report_skill extends reportbase implements report {
         $this->sql = "SELECT COUNT(DISTINCT(cc.id)) ";
     }
     function select() {
-        $this->sql ="SELECT cc.id,u.id as userid,c.fullname as course,ls.name as skill,
+        $this->sql ="SELECT cc.id,u.id as userid,c.fullname as course,ls.name as skill,u.*,
                     cl.name as level,cc.timecompleted as achievedon, CONCAT(u.firstname,' ',u.lastname) AS fullname,u.open_employeeid as employeeid"; 
         parent::select();
     }
@@ -79,7 +79,7 @@ class report_skill extends reportbase implements report {
                 $ohs = $dhs = 1;
             }
         }
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_skillrepository\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='sk.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {

@@ -41,7 +41,7 @@ class report_feedbackcompletions extends reportbase implements report
         $this->components = array('columns', 'filters', 'permissions', 'orderable');
         $this->filters = array('organization', 'departments', 'subdepartments', 'level4department','feedbacks');
         $this->orderable = array('feedbackname');
-        $this->defaultcolumn = 'le.id';
+        $this->defaultcolumn = 'eu.id';
     }
     function init()
     {
@@ -54,7 +54,7 @@ class report_feedbackcompletions extends reportbase implements report
     function select()
     {
         $this->sql  = "SELECT eu.id,le.id as feedbackid,u.id as userid,le.name as feedbackname,CONCAT(u.firstname,' ',u.lastname) AS fullname,
-                       ec.timemodified AS completiondate,eu.status as completionstatus";
+                       ec.timemodified AS completiondate,eu.status as completionstatus,u.*";
         parent::select();
     }
     function from()

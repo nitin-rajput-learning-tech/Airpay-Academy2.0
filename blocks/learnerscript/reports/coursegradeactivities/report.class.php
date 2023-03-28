@@ -58,7 +58,7 @@ class report_coursegradeactivities extends reportbase implements report
 
   function select()
   {
-    $this->sql = "SELECT u.id as userid, c.id as courseid, CONCAT(u.firstname,' ',u.lastname) AS fullname,cc.timecompleted ";
+    $this->sql = "SELECT u.id as userid, c.id as courseid, CONCAT(u.firstname,' ',u.lastname) AS fullname,cc.timecompleted ,u.*";
 
     parent::select();
   }
@@ -90,9 +90,9 @@ class report_coursegradeactivities extends reportbase implements report
   function where()
   {
     global $USER, $DB;
-    $this->sql .= " WHERE c.id <> :siteid   ";
+    $this->sql .= " WHERE c.id <> :siteid AND c.open_coursetype = :type  ";
     $this->params['siteid'] = SITEID;
-
+    $this->params['type'] = 0;
     $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {

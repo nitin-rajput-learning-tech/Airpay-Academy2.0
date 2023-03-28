@@ -71,7 +71,7 @@ class plugin_feedbackfield extends pluginbase {
                 $feedbackrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
                 break;
             case 'feedbackdept':
-                if($feedbackrecord->departmentid){
+                if($ctr){
                     $feedbackrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
                 }else{
                    $feedbackrecord->{$data->column} = get_string('all'); 

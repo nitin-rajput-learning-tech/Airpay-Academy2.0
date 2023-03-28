@@ -53,7 +53,7 @@ class report_feedbackcourses extends reportbase implements report
     }
     function select()
     {
-        $this->sql = "SELECT ra.id as roleassignmentid, u.id as userid, CONCAT(u.firstname, ' ',u.lastname) AS employeename, 
+        $this->sql = "SELECT ra.id as roleassignmentid, u.id as userid, CONCAT(u.firstname, ' ',u.lastname) AS employeename, u.*,
                          u.open_employeeid as employeeid,  IF(u.suspended = 1, 'In-active','Active') as employeestatus,  u.open_supervisorid,
                          c.fullname as coursename ,c.id as courseid,FROM_UNIXTIME(ra.timemodified, '%d-%m-%Y') as enroldate,
                          FROM_UNIXTIME(cc.timecompleted, '%d-%m-%Y') AS completiondate, cc.timecompleted AS completionstatus, 

@@ -51,7 +51,7 @@ class report_trainermanhours extends reportbase implements report {
 
     function select() {
        
-        $this->sql  = "SELECT lc.id as classroomid,u.id as userid , lc.name,lc.startdate,CONCAT(u.firstname,' ',u.lastname) as fullname , u.email as email,u.open_employeeid ";
+        $this->sql  = "SELECT lc.id as classroomid,u.id as userid , lc.name,lc.startdate,CONCAT(u.firstname,' ',u.lastname) as fullname , u.email as email,u.* ";
         parent::select();                
     }
     function from() {

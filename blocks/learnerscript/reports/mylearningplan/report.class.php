@@ -89,11 +89,15 @@ class report_mylearningplan extends reportbase implements report {
             $this->sql .= " AND ll.id = :name ";
             $this->params['name'] = $this->params['filter_mylearningpathsscolumn']; 
         }
-        if ($this->params['filter_completionstatus'] == 0) {
-             $this->sql .= " AND lu.status IS NULL";
-        }elseif ($this->params['filter_completionstatus'] == 1){
-             $this->sql .= " AND lu.status";
+        if ((isset($this->params['filter_completionstatus'])) && ($this->params['filter_completionstatus'] != -1)) {
+            $lpid = $this->params['filter_completionstatus'];
+            if($lpid == 1){
+                $this->sql .= " AND lu.status = $lpid";
+            }else{
+                $this->sql .= " AND lu.status IS NULL";
+            }
         }
+     
     }
         function get_rows($mylearningplans){
             return $mylearningplans;
