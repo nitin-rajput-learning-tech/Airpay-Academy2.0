@@ -45,11 +45,12 @@ class plugin_orgusers extends pluginbase {
 
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB;
-       
+      
         switch ($data->column) {
             case 'assignedroles':
                 $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
                 $costcenterpath = $DB->get_field_sql("SELECT cc.path FROM {local_costcenter} AS cc WHERE cc.id=:organisationid ",array('organisationid'=>$row->costcenterid));
+             
                 $context = (new \local_assignroles\lib\accesslib())::get_module_context($costcenterpath);
                 $sql = " SELECT r.id, 
                             CASE
@@ -59,8 +60,9 @@ class plugin_orgusers extends pluginbase {
                             FROM {role_assignments} AS ra 
                             JOIN {user} AS u on u.id=ra.userid 
                             JOIN {role} r ON r.id = ra.roleid
-                            WHERE  ra.contextid=:contextid $condition ";
-                $userroles = $DB->get_records_sql_menu($sql, array('contextid' => $context->id)); 
+                            WHERE  ra.contextid=:contextid and u.id = :userid $condition ";
+                         
+                $userroles = $DB->get_records_sql_menu($sql, array('contextid' => $context->id,'userid' => $row->id)); 
                 
                 $row->{$data->column} = !empty($userroles) ? implode(', ', $userroles) : '--';
                 break;

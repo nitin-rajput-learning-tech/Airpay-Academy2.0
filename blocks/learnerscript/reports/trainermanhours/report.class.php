@@ -70,7 +70,7 @@ class report_trainermanhours extends reportbase implements report {
         $roleid = $DB->get_field('role', 'id', array('shortname' => 'trainer'));
         $this->sql .= " WHERE 1=1 AND ra.roleid=:roleid ";
         $this->params['roleid'] = $roleid;
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {

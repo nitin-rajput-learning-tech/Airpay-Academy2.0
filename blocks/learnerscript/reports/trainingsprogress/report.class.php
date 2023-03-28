@@ -114,7 +114,7 @@ class report_trainingsprogress extends reportbase implements report {
     function where(){
         global $USER, $DB;
         $this->sql .= " WHERE 1=1 ";
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
         $this->sql .= " AND (lc.status = 1 OR lc.status = 4) {$costcenterpathconcatsql} ";
         parent::where();
     }

@@ -61,7 +61,7 @@ class report_dailyuniquelogins extends reportbase implements report {
 
     function joins() {
         $this->sql .= " JOIN {user} u ON u.id = lsl.userid 
-                        JOIN {local_costcenter} lc ON SUBSTRING(u.open_path,2,1) = lc.id AND lc.parentid = 0 ";
+                        JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.parentid = 0 ";
         parent::joins();
     }
 

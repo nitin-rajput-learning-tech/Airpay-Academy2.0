@@ -94,7 +94,7 @@ class report_coursegradeactivities extends reportbase implements report
     $this->params['siteid'] = SITEID;
 
     $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-    $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
+    $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
       $this->sql .= "";
     } else {

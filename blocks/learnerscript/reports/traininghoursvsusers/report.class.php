@@ -98,7 +98,7 @@ class report_traininghoursvsusers extends reportbase implements report {
                 $ohs =  $dh = 1;
             }
         }
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
             $this->sql .= "";

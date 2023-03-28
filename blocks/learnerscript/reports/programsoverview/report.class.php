@@ -69,7 +69,7 @@ class report_programsoverview extends reportbase implements report {
         $this->sql .= " FROM {local_program} lp";
     }
     function joins() {
-        $this->sql .= "  JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid ";
+        $this->sql .= "  LEFT JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid ";
        //  $this->sql .= " JOIN {local_program_stream} ps ON ps.id = lp.stream";
           parent::joins();
     }
@@ -89,7 +89,7 @@ class report_programsoverview extends reportbase implements report {
                 $ohs = $dh = 1;
             }
         }
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {

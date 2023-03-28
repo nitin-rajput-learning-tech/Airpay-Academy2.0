@@ -82,7 +82,7 @@ class report_userwisecourseoverview extends reportbase {
         
         $this->sql .= " WHERE 1=1 AND u.id > 2 ";
         $this->sql .= " AND u.suspended = 0 AND u.deleted = 0 ";
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
             $this->sql .= "";

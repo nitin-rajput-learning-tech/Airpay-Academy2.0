@@ -63,10 +63,10 @@ class report_programcompletions extends reportbase implements report {
           parent::joins();
     }
     function where(){
-         global $USER, $DB;
+        global $USER, $DB;
         $this->sql .= " WHERE u.deleted = 0 AND u.suspended = 0 ";
         $this->params['siteid'] = SITEID;
-        $systemcontext = \context_system::instance();
+       
         // getscheduled report
         if (!is_siteadmin()) {
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
@@ -78,9 +78,8 @@ class report_programcompletions extends reportbase implements report {
                 $ohs = $dhs = 1;
             }
         }
-        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+        $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
+        if (is_siteadmin() ) {
           $this->sql .= "";
         } else {
           $this->sql .= $costcenterpathconcatsql;

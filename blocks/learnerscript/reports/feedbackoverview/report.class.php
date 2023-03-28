@@ -78,7 +78,7 @@ class report_feedbackoverview extends reportbase implements report {
                 $ohs = $dh = 1;
             }
         }
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path', null, 'lowerandsamepath');
        
         if (is_siteadmin()) {
             $this->sql .= "";

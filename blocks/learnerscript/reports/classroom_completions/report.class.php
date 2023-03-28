@@ -83,9 +83,15 @@ class report_classroom_completions extends reportbase implements report {
     function where() {
         global $USER, $DB;
 
+
         $systemcontext = context_system::instance();
         $this->sql .= " WHERE lc.status <> 0 "; //Not considering the new classrooms.
-        $this->sql .= (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');        
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else  {
+            $this->sql .= $costcenterpathconcatsql;
+        }
         parent::where();
     }
 

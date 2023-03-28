@@ -89,9 +89,8 @@ class report_programlevelcompletions extends reportbase implements report
                 $ohs = $dhs = 1;
             }
         }
-        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+        $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
+        if (is_siteadmin()) {
           $this->sql .= "";
         } else {
           $this->sql .= $costcenterpathconcatsql;
@@ -177,7 +176,7 @@ class report_programlevelcompletions extends reportbase implements report
                         $userlevelcomptl = $DB->get_record_sql($userlevelcmpltsql,
                             array('programid' => $class->programid, 'userid' => $programuser->userid, 'levelid' => $class->id));
                         $levelid = "level_$class->position";
-                        if($programuser->completionstatus == 0 && $mycompletedlevels){
+                        if($programuser->completionstatus == 0 && $mycompletedlevels && !empty($programuser->completiondate)){
                             if (array_search($levelid, $mycompletedlevels) === false) {
                                 $programuser->completionstatus = 'Inprogress';
                             }

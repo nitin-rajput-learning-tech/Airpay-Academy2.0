@@ -320,7 +320,7 @@ class querylib {
 
     	$sql = "SELECT c.id, c.fullname
             FROM {course} c
-            WHERE c.id > 1 ";
+            WHERE c.id > 1 AND c.open_coursetype = 0 ";
 
     	$systemcontext = \context_system::instance();
 
@@ -336,7 +336,7 @@ class querylib {
         } 
 	        
 	    $sql .= " ORDER BY c.fullname ASC "; 
-
+	
 	    $courses = $DB->get_records_sql($sql); 
 
 	    foreach ($courses as $c) {
