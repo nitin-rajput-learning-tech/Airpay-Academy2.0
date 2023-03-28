@@ -508,16 +508,35 @@ class dashboardheader implements renderable, templatable {
         return $data;
     }
 
-     public function get_dashboard_reportscount() {
-        global $DB;
+    public function get_dashboard_reportscount() {
+        global $DB, $USER;
         $role = $_SESSION['role'];
+
+
         if (!empty($role) && !is_siteadmin()) {
-            $getreports = $DB->get_records_sql("SELECT DISTINCT(subpagepattern) FROM {block_instances}
-                            WHERE pagetypepattern LIKE '%blocks-reportdashboard-dashboard-$role%' ");
+            $sql = "SELECT DISTINCT(subpagepattern) FROM {block_instances} WHERE pagetypepattern = 'blocks-reportdashboard-dashboard-$role' ORDER BY CASE subpagepattern
+                  WHEN 'Maindashboard' THEN 1
+                  WHEN 'Learnerdashboard' THEN 2
+                  WHEN 'Examdashboard' THEN 3
+                  WHEN 'Certification' THEN 4
+                  WHEN 'Compliances' THEN 5
+                  WHEN 'Dashboard' THEN 6
+                  WHEN 'Course' THEN 7
+                  ELSE 8
+               END";
         } else {
-            $getreports = $DB->get_records_sql("SELECT DISTINCT(subpagepattern) FROM {block_instances}
-                           WHERE pagetypepattern LIKE '%blocks-reportdashboard-dashboard%' ");
+            $sql = "SELECT DISTINCT(subpagepattern) FROM {block_instances} WHERE pagetypepattern = 'blocks-reportdashboard-dashboard' ORDER BY CASE subpagepattern
+                  WHEN 'Maindashboard' THEN 1
+                  WHEN 'Learnerdashboard' THEN 2
+                  WHEN 'Examdashboard' THEN 3
+                  WHEN 'Certification' THEN 4
+                  WHEN 'Compliances' THEN 5
+                  WHEN 'Dashboard' THEN 6
+                  WHEN 'Course' THEN 7
+                  ELSE 8
+               END";
         }
+        $getreports = $DB->get_records_sql($sql);
         $dashboardname = array();
         $i = 0;
         if (!empty($getreports)) {
@@ -528,21 +547,20 @@ class dashboardheader implements renderable, templatable {
             $dashboardname['Dashboard'] = 'Dashboard';
         }
         foreach ($dashboardname as $key => $value) {
-            if ($value != 'Dashboard' && !(new reportdashboard)->is_dashboardempty($key)) {
-                continue;
-            }
-            $concatsql = $DB->sql_like('subpagepattern', ':subpagepattern');
+            // if ($value != 'Dashboard' && !(new reportdashboard)->is_dashboardempty($key)) {
+            //     continue;
+            // }
+            // $concatsql = $DB->sql_like('subpagepattern', ':subpagepattern');
             $params = array();
             $params['subpagepattern'] = '%' . $key . '%';
             $getdashboardname[$i]['name'] = ucfirst($value);
             $getdashboardname[$i]['pagetypepattern'] = $value;
             $getdashboardname[$i]['random'] = $i;
-            // if ($value == 'Dashboard' || $value == 'Course') {
-            //     $getdashboardname[$i]['default'] = 0;
-            // } else {
-            //     $getdashboardname[$i]['default'] = 1;
-            // }
-            $getdashboardname[$i]['default'] = 1;
+            if ($value == 'Examdashboard' || $value == 'Learnerdashboard' || $value == 'Maindashboard' || $value == 'Certification' || $value == 'Compliances') {
+                $getdashboardname[$i]['default'] = 0;
+            } else {
+                $getdashboardname[$i]['default'] = 1;
+            }
             $i++;
         }
         return $getdashboardname;

@@ -71,7 +71,7 @@
                         <span class="edit_delete_icons">
                             <span class="inplaceeditable inplaceeditable-text" data-inplaceeditable="1" data-component="block_reportdashboard" data-itemtype="dashboardname" data-prevoiusdashboardname='{{name}}' data-pagetypepattern='{{pagetypepattern}}' data-value='{{name}}' data-editlabel="New name for Dashboard" data-type="text" data-options="" data-roleshortname= '{{dashboardrole}}'>
                             {{#default}}
-                                <img src={{config.wwwroot}}/pix/i/delete.png id="deleteimg" title="Delete" alt="delete" data-name ='{{name}}' onclick = "(function(e){ require('block_reportdashboard/reportdashboard').Deletedashboard({instance:'{{name}}',random:{{random}} }) }) (event)" />
+                             <!--    <img src={{config.wwwroot}}/pix/i/delete.png id="deleteimg" title="Delete" alt="delete" data-name ='{{name}}' onclick = "(function(e){ require('block_reportdashboard/reportdashboard').Deletedashboard({instance:'{{name}}',random:{{random}} }) }) (event)" /> -->
                                 <a href="#" class="quickeditlink" title="Edit title">
                                 <span class="quickediticon visibleifjs"><i class="icon fa fa-pencil fa-fw " aria-hidden="true" title="Edit title" aria-label="Edit title" onclick = '(function(e){ require("block_reportdashboard/reportdashboard").updatedashboard("{{name}}","{{dashboardrole}}") })(event)'></i></span>
                                 {{/default}}
