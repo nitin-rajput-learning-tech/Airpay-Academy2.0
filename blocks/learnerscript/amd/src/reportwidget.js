@@ -159,7 +159,7 @@ define(['jquery',
                     return results[1] || 0;
                 }
             }
-            // var dashboardurl = $.urlParam('dashboardurl');
+            var dashboardurl = $.urlParam('dashboardurl');
             // if (typeof filters['filter_departments'] == 'undefined') {
             //     var filter_departments = 1;
             //     if (filter_departments != null) {

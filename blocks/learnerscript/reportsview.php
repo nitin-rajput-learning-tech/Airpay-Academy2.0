@@ -35,7 +35,7 @@ $title = get_string('managereports', 'block_learnerscript');
 require_once($CFG->dirroot . '/blocks/learnerscript/lib.php');
 $params = get_reportdashboard();
 
-$reportdashboardurl = new moodle_url("/blocks/reportdashboard/dashboard.php"/* , $params*/);
+$reportdashboardurl = new moodle_url("/blocks/reportdashboard/dashboard.php" , $params);
 $PAGE->navbar->add(get_string('reportdashboard','block_learnerscript'), $reportdashboardurl);
 $PAGE->navbar->add(get_string('managereports','block_learnerscript'));
 $PAGE->navbar->ignore_active();

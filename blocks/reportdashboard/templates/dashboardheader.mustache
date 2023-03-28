@@ -100,7 +100,7 @@
                 {{# reportwidgetstatus }}
                     <span class="dropdown nav-item pull-right">
                         <a class="dropdown-toggle htitle" id="addwidgets{{reportinstance}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{#str}}addwidgettile, block_reportdashboard{{/str}}">
-                            <!--<span class="tooltiptext tooltip-top">{{#str}}addwidgettile, block_reportdashboard{{/str}}</span>-->
+                            <span class="tooltiptext tooltip-top">{{#str}}addwidgettile, block_reportdashboard{{/str}}</span>
                             <img src='{{config.wwwroot}}/blocks/learnerscript/pix/addwidget.png' id='addwidgets' class='addblocks-to-dashboard' >
                         </a>
                         <ul class="menu dropdown-menu  dropdown-menu-right dropdown-content" area-labelledby="addwidgets{{reportinstance}}">
@@ -118,7 +118,7 @@
                     </span>
                 {{/ reportwidgetstatus }}
             {{/ issiteadmin}}
-            <!-- <span class="dropdown nav-item pull-right">
+            <span class="dropdown nav-item pull-right">
                 <a class="dropdown-toggle htitle" id="switchdashboard{{reportinstance}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{#str}}switchdashboard, block_reportdashboard{{/str}}">
 
                     <img src={{config.wwwroot}}/blocks/learnerscript/pix/switchdashboard.png id='addwidgets' class='addblocks-to-dashboard'>
@@ -126,7 +126,7 @@
                 <ul  class="menu dropdown-menu  dropdown-menu-right dropdown-content" area-labelledby="switchdashboard{{reportinstance}}">
                                 {{#get_dashboardname}}
 
-        <li class="dashboardinstances">
+      <li class="dashboardinstances">
             {{#editingon}}
             <span class="edit_delete_icons">
                 <span class="inplaceeditable inplaceeditable-text" data-inplaceeditable="1" data-component="block_reportdashboard" data-itemtype="dashboardname" data-prevoiusdashboardname='{{name}}' data-pagetypepattern='{{pagetypepattern}}' data-value='{{name}}' data-editlabel="New name for Dashboard" data-type="text" data-options="" data-roleshortname= '{{dashboardrole}}'>
@@ -153,18 +153,18 @@
         </li>
             {{/get_dashboardname}}
                 </ul>
-            </span> -->
+            </span>
     </span>
     <span class="right_buttons">
-    <!-- {{#issiteadmin}}
+    {{#issiteadmin}}
         <span class ='span_adddashboard htitle'onclick = '(function(e){ require("block_reportdashboard/reportdashboard").addnewdashboard() })(event)' title="{{#str}}addnewdashboard, block_reportdashboard{{/str}}">
 
             <img src={{config.wwwroot}}/blocks/learnerscript/pix/adddashboard.png id='adddashboard' class='addblocks-to-dashboard'>
         </span>
-    {{/issiteadmin}} -->
+    {{/issiteadmin}}
     {{#issiteadmin}}
         <a class= 'htitle' href="{{config.wwwroot}}/blocks/learnerscript/reportsview.php" title="{{#str}}managereports, block_learnerscript{{/str}}">
-            <!--<span class="tooltiptext tooltip-top">{{#str}}managereports, block_learnerscript{{/str}}</span>-->
+            <span class="tooltiptext tooltip-top">{{#str}}managereports, block_learnerscript{{/str}}</span>
             <img src={{config.wwwroot}}/blocks/learnerscript/pix/managereport.png id='addreport' class="addblocks-to-dashboard">
         </a>
     {{/issiteadmin}}
