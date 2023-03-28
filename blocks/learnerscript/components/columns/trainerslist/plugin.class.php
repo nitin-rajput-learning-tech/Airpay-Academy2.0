@@ -91,7 +91,7 @@ class plugin_trainerslist extends pluginbase {
                 }     
             break;
             case 'userscovered':
-                $totalcountsql= "SELECT SUM((SELECT COUNT(id) FROM {local_classroom_users} where classroomid=cs.id)) as totaluserscovered
+                $totalcountsql= "SELECT SUM((SELECT COUNT(DISTINCT(id)) FROM {local_classroom_users} where classroomid=cs.id)) as totaluserscovered
                                     FROM {local_classroom} AS cs
                                     JOIN {local_classroom_trainers} AS ct ON ct.classroomid=cs.id
                                     WHERE ct.trainerid = :trainerid AND cs.status IN (1,4) ";

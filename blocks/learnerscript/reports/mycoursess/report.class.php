@@ -40,7 +40,7 @@ class report_mycoursess extends reportbase implements report
         $this->parent = true;
         $this->components = array('columns', 'permissions', 'filters');
         $this->columns = ['coursefield' => ['coursefield'], 'mycoursess' => ['coursename', 'coursetotal', 'completionstatus', 'completiondate']];
-        //$this->filters = ['mycoursescolumn'];
+        $this->filters = ['mycoursescolumn'];
         $this->orderable = array('coursename');
         $this->defaultcolumn = 'ue.id';
     }

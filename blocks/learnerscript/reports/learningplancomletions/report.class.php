@@ -67,7 +67,7 @@ class report_learningplancomletions extends reportbase implements report {
          $this->sql .= " WHERE u.deleted = 0 AND u.suspended = 0 ";
          $categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 
-        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {

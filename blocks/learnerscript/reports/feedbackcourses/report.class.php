@@ -53,7 +53,7 @@ class report_feedbackcourses extends reportbase implements report
     }
     function select()
     {
-        $this->sql = "SELECT ra.id as roleassignmentid, u.id as userid, CONCAT(u.firstname, ' ',u.lastname) AS employeename, 
+        $this->sql = "SELECT ra.id as roleassignmentid, u.id as userid, CONCAT(u.firstname, ' ',u.lastname) AS employeename, u.*,
                          u.open_employeeid as employeeid,  IF(u.suspended = 1, 'In-active','Active') as employeestatus,  u.open_supervisorid,
                          c.fullname as coursename ,c.id as courseid,FROM_UNIXTIME(ra.timemodified, '%d-%m-%Y') as enroldate,
                          FROM_UNIXTIME(cc.timecompleted, '%d-%m-%Y') AS completiondate, cc.timecompleted AS completionstatus, 
@@ -93,7 +93,7 @@ class report_feedbackcourses extends reportbase implements report
                 $ohs = $dhs = 1;
             }
         }
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'le.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'le.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
             $this->sql .= "";

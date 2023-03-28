@@ -120,9 +120,9 @@ class plugin_course extends pluginbase {
         }
         $request = array_merge($_POST, $_GET);
         $courseoptions = $this->filter_data(true, $request);  
-        if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($courseoptions) > 1) { 
+        /* if ((!$this->placeholder || $this->filtertype == 'basic') && COUNT($courseoptions) > 1) { 
             unset($courseoptions[0]);
-        }
+        } */
         $select = $mform->addElement('select', 'filter_course', null,
             $courseoptions,
             array('data-select2' => true,

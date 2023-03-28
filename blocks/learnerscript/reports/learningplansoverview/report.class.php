@@ -122,7 +122,7 @@ class report_learningplansoverview extends reportbase implements report {
         global $DB;
         $data = array();
         if($learningpaths){
-            $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
             $sql = "SELECT count(llu.id)
                     FROM {local_learningplan_user} as llu
                     JOIN {user} u ON u.id = llu.userid AND u.deleted = 0 AND u.suspended = 0

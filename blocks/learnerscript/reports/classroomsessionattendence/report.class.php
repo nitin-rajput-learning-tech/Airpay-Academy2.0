@@ -72,7 +72,7 @@ class report_classroomsessionattendence extends reportbase implements report {
 
     function where() {
         $this->sql .= " WHERE 1=1   ";
-        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
+        $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {

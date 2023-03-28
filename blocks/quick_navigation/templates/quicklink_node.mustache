@@ -14,40 +14,41 @@
     You should have received a copy of the GNU General Public License
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
-<div class="quick_nav_list manage_{{pluginname}} {{space_count}}_of_three_columns" >
-    <span class='anch_span'>
-        {{# plugin_icon_class}}
-            <i class="{{plugin_icon_class}}"></i>
-        {{/ plugin_icon_class}}
-<!--         {{^ plugin_icon_class}}
-            <span class='{{pluginname}}_icon_wrap'></span>
-        {{/ plugin_icon_class}} -->
-    </span>
-
-    <div class='w-100 pull-left'>
-        <div class='quick_navigation_detail'>
-            <div class='span_str'>{{{node_header_string}}}</div>
-            <span class='span_createlink'>
-                {{#create}}
-                    {{{create_element}}} |
-                {{/create}}
-                {{# view}}
-                <a href="{{viewlink_url}}" class='viewlink' title= "{{viewlink_title}}">
-                        {{#str}}view{{/str}}
-                    </a>
-                {{/ view}}
-            </span>
-        </div>
-     </div>
+<div class="quick_nav_list manage_{{pluginname}} {{space_count}}_of_three_columns d-flex justify-content-between flex-column align-items-center" >
+    <div class="quick_course d-flex align-items-center justify-content-between">
+        <span class='anch_span'>
+            {{# plugin_icon_class}}
+                <i class="{{plugin_icon_class}}"></i>
+            {{/ plugin_icon_class}}
+    <!--         {{^ plugin_icon_class}}
+                <span class='{{pluginname}}_icon_wrap'></span>
+            {{/ plugin_icon_class}} -->
+        </span>
+        <div class=' quick_nav content w-100 d-flex align-items-center justify-content-between'>
+            <div class='quick_navigation_detail'>
+                <div class='span_str'>{{{node_header_string}}}</div>
+                <span class='span_createlink'>
+                    {{#create}}
+                        {{{create_element}}} |
+                    {{/create}}
+                    {{# view}}
+                    <a href="{{viewlink_url}}" class='viewlink' title= "{{viewlink_title}}">
+                            {{#str}}view{{/str}}
+                        </a>
+                    {{/ view}}
+                </span>
+            </div>
+         </div>
+    </div>
     {{# displaystats}}
-        <div class="w-100 pull-left">
+        <div class="w-100 d-flex">
             {{# percentage}}
             <div class="progress mx-auto mt-3 mb-3">
                 <div class="progress-bar" role="progressbar" style="width: {{percentage}}%;" aria-valuenow="{{percentage}}" aria-valuemin="0" aria-valuemax="100">{{percentage}}%</div>
             </div>
             {{/ percentage}}
         </div>
-        <ul class="dashboard_count_list w-100 pull-left p-15">
+        <ul class="dashboard_count_list w-100 p-2 mt-auto">
             <li class="dashbaord_count_item"><span class="">
                 <span class="d-block dashboard_count_string">{{#str}}total,block_quick_navigation{{/str}}</span><span class="dashboard_count_value">
                 {{# view}}

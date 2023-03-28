@@ -115,11 +115,11 @@ class report_orgwiseskillachieved extends reportbase implements report {
                                                                     FROM {course} c
                                                                     JOIN {course_completions} cc on cc.course = c.id
                                                                     JOIN {user} u on cc.userid = u.id
-                                                                    WHERE c.open_skill = {$skill->id} and cc.timecompleted IS NOT NULL ");  
+                                                                    WHERE c.open_skill = {$skill->id} and c.open_coursetype = 0 and cc.timecompleted IS NOT NULL ");  
                 $progress  =  ROUND(($skill->usersachievedcount/$skill->totalusers)*100,0);
                
                 $skill->progress = '<div class="progress">
-                        <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$progress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$percentofcompletion.'%">
+                        <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$progress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$progress.'%">
                             <span class="progress_percentage ml-2">'.$progress.'%</span>
                         </div>
                     </div>';

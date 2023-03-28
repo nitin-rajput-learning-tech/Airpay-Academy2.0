@@ -57,7 +57,7 @@ class report_programlevelcompletions extends reportbase implements report
     }
     function select()
     {
-        $this->sql = "SELECT lpu.id,lp.id as programid,u.id as userid,lp.name as programname,
+        $this->sql = "SELECT lpu.id,lp.id as programid,u.id as userid,u.*,lp.name as programname,
                             lpu.completion_status AS completionstatus,CONCAT(u.firstname,' ',u.lastname) as fullname, 
                             lpu.completiondate as completiondate, u.lastaccess";
         parent::select();
@@ -89,9 +89,8 @@ class report_programlevelcompletions extends reportbase implements report
                 $ohs = $dhs = 1;
             }
         }
-        $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
-        if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
+        $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
+        if (is_siteadmin()) {
           $this->sql .= "";
         } else {
           $this->sql .= $costcenterpathconcatsql;
@@ -177,19 +176,17 @@ class report_programlevelcompletions extends reportbase implements report
                         $userlevelcomptl = $DB->get_record_sql($userlevelcmpltsql,
                             array('programid' => $class->programid, 'userid' => $programuser->userid, 'levelid' => $class->id));
                         $levelid = "level_$class->position";
-                        if($programuser->completionstatus == 0 && $mycompletedlevels){
+                       /*  if($programuser->completionstatus == 0 && $mycompletedlevels && !empty($programuser->completiondate)){
                             if (array_search($levelid, $mycompletedlevels) === false) {
                                 $programuser->completionstatus = 'Inprogress';
                             }
-                        }else if($programuser->completionstatus == 1){
+                        }else  */
+                        if($programuser->completionstatus == 1){
                             $programuser->completionstatus = 'Completed';
                         }else{
                             $programuser->completionstatus = 'Not Completed';
                         }
-                        /* if (array_search($levelid, $mycompletedlevels) !== false) {
-                            $programuser->completionstatus = 'Completed';
-                        }   */                     
-                        
+                    
                         if ( $userlevelcomptl && $userlevelcomptl != 0) {
                           $programuser->$levelid = "Completed";
                         }  else {

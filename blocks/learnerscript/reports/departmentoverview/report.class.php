@@ -61,7 +61,7 @@ class report_departmentoverview extends reportbase {
 
     function where() { 
         $this->sql .= " WHERE lc.depth = 2 ";        
-        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {

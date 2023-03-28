@@ -69,14 +69,12 @@ class report_users extends reportbase {
     function where() { 
         global $DB, $USER;
         $this->sql .= " WHERE u.confirmed = 1 AND u.deleted = 0 AND u.id > 2 ";
-
-
-      $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
-      if (is_siteadmin()) {
-          $this->sql .= "";
-      } else  {
-          $this->sql .= $costcenterpathconcatsql;
-      }
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else  {
+            $this->sql .= $costcenterpathconcatsql;
+        }
 
         if ($this->conditionsenabled) {
             $conditions = implode(',', $this->conditionfinalelements);

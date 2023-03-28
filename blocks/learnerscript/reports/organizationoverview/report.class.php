@@ -63,7 +63,19 @@ class report_organizationoverview extends reportbase implements report {
     }
     function where() {
         global $USER, $DB;
-        $this->sql .= " WHERE c.depth = 1";
+        $this->sql .= " WHERE c.depth = 1 ";
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.path'); 
+
+        // getscheduled report
+        if (is_siteadmin()) {
+            $this->sql .= "";
+        } else {
+            $this->sql .= $costcenterpathconcatsql;
+            /* $useropenpath = $DB->get_field_sql("SELECT open_path FROM {user} WHERE id = $USER->id",array());
+            $usercostcenter = explode('/', $useropenpath)[1];
+            $this->sql .= " AND c.id = $usercostcenter "; */
+        }   
+        
         parent::where();
     }
     function search() {

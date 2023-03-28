@@ -759,6 +759,7 @@ case 'usercourses':
 						JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
 						 WHERE u.id = $userid  AND c.visible = 1 ";
         $courses = $DB->get_records_sql_menu($sql);
+		
         if (!empty($courses)) {
             $return = array('0' => 'Select course') + $courses;
         } else {
@@ -1083,40 +1084,32 @@ case 'deplearningpath':
 case 'departmentcourses': 
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
 	if ($orgid > 0) { 
-        $orgsql .= " SELECT c.id FROM {course} c WHERE c.visible = 1 "; 
-        // if ($orgid > 0) {
-        //     $orgsql .= " AND c.open_costcenterid = " .$orgid;
-        // }
-        // if ($departmentid > 0) {
-        //     $orgsql .= " AND c.open_departmentid = " .$departmentid;
-        // } 
-        // if ($subdepartmentid > 0) {
-        //     $orgsql .= " AND c.open_subdepartment = " .$subdepartmentid;
-        // }
+		$pathdetails = new \stdClass();
+		$pathdetails->open_costcenterid = $orgid;
+		$pathdetails->open_department = $departmentid;
+		$pathdetails->open_subdepartment = $subdepartmentid;
+		$pathdetails->open_level4department = $currentl4depid;
+		
+		local_costcenter_get_costcenter_path($pathdetails);
+	
+        $orgsql .= " SELECT c.id,c.fullname FROM {course} c WHERE c.visible = 1 AND c.open_coursetype = 0 AND concat(c.open_path,'/') LIKE :costcenterpath"; 
+		
         $userssql = " ";
-        $userssql .= " SELECT c.id FROM {course} c 
+        $userssql .= " SELECT c.id,c.fullname FROM {course} c 
                     JOIN {enrol} e ON e.courseid = c.id AND e.status = 0 
                   JOIN {user_enrolments} ue on ue.enrolid = e.id AND ue.status = 0
                   JOIN {role_assignments}  ra ON ra.userid = ue.userid
                   JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
                   JOIN {context} ctx ON ctx.instanceid = c.id 
                   JOIN {user} AS u ON u.id = ue.userid 
-                  JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
-                  AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1 
-                  WHERE 1 = 1 ";
-        // if ($orgid > 0) {
-        //     $userssql .= " AND u.open_costcenterid = " .$orgid;
-        // }
-        // if ($departmentid > 0) {
-        //     $userssql .= " AND u.open_departmentid = " .$departmentid;
-        // }          
-        // if ($subdepartmentid > 0) {
-        //     $userssql .= " AND u.open_subdepartment = " .$subdepartmentid;
-        // }
+                  JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE :costcenterpath AND lc.depth = 1
+                  AND ra.contextid = ctx.id AND ctx.contextlevel = 50 AND c.visible = 1  
+                  WHERE 1 = 1 AND c.open_coursetype = 0 ";//LIKE concat('%/',lc.id,'/%')
+        
 
-        $orgcourses = $DB->get_records_sql($orgsql); 
-        $usercourses = $DB->get_records_sql($userssql); 
-
+        $orgcourses = $DB->get_records_sql($orgsql,array('costcenterpath'=>$pathdetails->open_path.'/%')); 
+		$usercourses = $DB->get_records_sql($userssql,array('costcenterpath'=>$pathdetails->open_path.'/')); 
+	
         if (empty($usercourses) && !empty($orgcourses)) {
             $totalcourses = $orgcourses; 
         } else if (!empty($usercourses) && empty($orgcourses)) {
@@ -1126,17 +1119,21 @@ case 'departmentcourses':
         } else if (!empty($usercourses) && !empty($orgcourses)) {
             $totalcourses = array();
         }
+		
         foreach ($totalcourses as $totalcourse) {
             $list[] = $totalcourse->id;
         } 
+
         $list = !empty($totalcourses) ? implode(',', array_unique($list)) : 0; 
         $sql = "SELECT c.id, c.fullname FROM {course} c WHERE c.id IN (" . $list . ")";
         $courses = $DB->get_records_sql_menu($sql);
+		
         if (!empty($courses)) {
             $return = array('0' => 'Select course') + $courses;
         } else {
             $return = array('' => 'Select course');
         }
+		
     } else {
         $return = array('' => 'Select Course');
     }

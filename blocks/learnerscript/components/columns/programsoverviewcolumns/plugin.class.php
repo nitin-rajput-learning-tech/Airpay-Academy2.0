@@ -44,8 +44,13 @@ class plugin_programsoverviewcolumns extends pluginbase {
     }
 
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
-        global $DB, $CFG;
-        
+        global $DB;
+        switch ($data->column) {            
+               case 'stream':
+                   $stream = $DB->get_field('local_custom_category','fullname',array('id'=>$row->catgid)) ;
+                   $row->{$data->column} = !empty($stream) ? $stream : '--';
+                   break;
+           }
         return (isset($row->{$data->column}))? $row->{$data->column} : ' -- ';
     }
 }

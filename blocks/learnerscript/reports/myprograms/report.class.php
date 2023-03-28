@@ -93,9 +93,11 @@ class report_myprograms extends reportbase implements report {
             $this->sql .= " AND lp.id = :programid ";
             $this->params['programid'] = $this->params['filter_myprogramscolumn'];
         }
-        if ($this->params['filter_completionstatus'] > 0) {
-            $this->sql .= " AND pu.completion_status = :status";
-            $this->params['status'] = $this->params['filter_completionstatus']; 
+    
+        if ((isset($this->params['filter_completionstatus'])) && ($this->params['filter_completionstatus'] != -1)) {
+           $this->sql .= " AND pu.completion_status = :status ";
+           $this->params['status']= $this->params['filter_completionstatus'];
+
         }
     }    
     function get_rows($myprograms){

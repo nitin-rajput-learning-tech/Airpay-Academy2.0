@@ -72,8 +72,9 @@ class report_myclassrooms extends reportbase
     if (!empty($this->params['filter_myclassroomscolumns'])) {
       $this->sql .= " AND lc.id = :classroomid ";
       $this->params['classroomid'] = $this->params['filter_myclassroomscolumns'];
-    }
-    if ($this->params['filter_completionstatus'] >= 0) {
+    } 
+
+    if ($this->params['filter_completionstatus'] > -1){
       $this->sql .= " AND cu.completion_status = :status ";
       $this->params['status'] = $this->params['filter_completionstatus'];
     }

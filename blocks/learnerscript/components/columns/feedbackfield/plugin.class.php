@@ -48,7 +48,7 @@ class plugin_feedbackfield extends pluginbase {
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB; 
         $feedbackrecord = $DB->get_record('local_evaluations',array('id'=>$row->feedbackid));
-
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$feedbackrecord->open_path);
         switch ($data->column) {
             case 'feedbackname':
                     $feedbackrecord->{$data->column} = $feedbackrecord->name;
@@ -68,11 +68,11 @@ class plugin_feedbackfield extends pluginbase {
                 }
                 break;
             case 'feedbackorg':
-                $feedbackrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$feedbackrecord->costcenterid));
+                $feedbackrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
                 break;
             case 'feedbackdept':
-                if($feedbackrecord->departmentid){
-                    $feedbackrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$feedbackrecord->departmentid));
+                if($ctr){
+                    $feedbackrecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
                 }else{
                    $feedbackrecord->{$data->column} = get_string('all'); 
                 }
