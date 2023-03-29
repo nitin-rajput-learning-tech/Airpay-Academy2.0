@@ -161,7 +161,23 @@ if ($dashboardurl == 'Maindashboard') {
 } else {
   $dashboardhname = $dashboardurl;
 }
-$heading = get_string('analytics', 'block_reportdashboard') . ' - ' . $dashboardhname;
+
+if($role){
+
+    if($role == 'user'){
+
+        $namerole='employee';
+
+    }else{
+        $namerole=$role;
+    }
+
+    $addnamerole=' - ' . ucfirst($namerole);
+}else{
+    $addnamerole='';
+}
+
+$heading = get_string('analytics', 'block_reportdashboard') . ' - ' . $dashboardhname .$addnamerole;
 $PAGE->set_heading($heading);
 $PAGE->navbar->ignore_active();
 // $navdashboardurl = new moodle_url($seturl);
@@ -252,7 +268,6 @@ echo html_writer::start_tag('div', array());
 if (!empty($role) || is_siteadmin()) {
     $configuredinstances = $DB->count_records('block_instances', array(
                                 'pagetypepattern' => $pagepattentype));
-
     $reports = $DB->get_records('block_learnerscript',array('visible'=>1,'global'=>1),'','id');
 
     $editingon = false;

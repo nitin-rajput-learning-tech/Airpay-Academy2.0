@@ -137,7 +137,7 @@ class report_courseparticipation extends reportbase {
 
         foreach($this->columns['courseparticipationcolumns'] as $key=>$column){
 
-            if($column == 'progress'){
+            if($column == 'progress' || $column == 'inprogress'){
 
                 continue;
             }
@@ -155,7 +155,9 @@ class report_courseparticipation extends reportbase {
 
         }
 
-        $data['progress'] = round(($data['completed']/$data['enrolled'])*100);
+        $data['inprogress'] = ($data['completed'] > 0 && $data['enrolled'] > 0) ? $data['enrolled']-$data['completed'] : 0 ;
+
+        $data['progress'] = ($data['completed'] > 0 && $data['enrolled'] > 0) ? round(($data['completed']/$data['enrolled'])*100) : 0 ;
 
         return array((object)$data);
 
