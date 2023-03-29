@@ -52,7 +52,7 @@ class report_dailyuniquelogins extends reportbase implements report {
     }
 
     function select() {      
-        $this->sql  = "SELECT COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, lc.fullname as costcentername,
+        $this->sql  = "SELECT (@cnt := @cnt + 1) AS rowNumber,COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, lc.fullname as costcentername,
         MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname,substring_index(substr(u.open_path,2),'/',1) ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
         parent::select();
     }
@@ -63,7 +63,8 @@ class report_dailyuniquelogins extends reportbase implements report {
 
     function joins() {
         $this->sql .= " JOIN {user} u ON u.id = lsl.userid 
-                        JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.parentid = 0 ";
+                        JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.parentid = 0 
+                        CROSS JOIN (SELECT @cnt := 0) AS dummy";
         parent::joins();
     }
 
