@@ -248,3 +248,10 @@ body.path-blocks-reporttiles #region-main {
     left: 486.75px;
     top: 519px;
 }
+
+.block_reporttiles div.tiles_information table tr .alert-info {
+    display: block;
+    background-color: white;
+    text-align: center;
+    width: 100%;
+}

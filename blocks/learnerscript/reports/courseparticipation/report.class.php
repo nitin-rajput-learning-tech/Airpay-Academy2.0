@@ -39,7 +39,7 @@ class report_courseparticipation extends reportbase {
     }
 
     function count() {
-      $this->sql  = " SELECT 1 ";
+      $this->sql  = " SELECT COUNT(DISTINCT u.id) ";
     }
 
     function select() {
