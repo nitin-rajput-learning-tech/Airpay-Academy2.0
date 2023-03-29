@@ -252,7 +252,6 @@ echo html_writer::start_tag('div', array());
 if (!empty($role) || is_siteadmin()) {
     $configuredinstances = $DB->count_records('block_instances', array(
                                 'pagetypepattern' => $pagepattentype));
-
     $reports = $DB->get_records('block_learnerscript',array('visible'=>1,'global'=>1),'','id');
 
     $editingon = false;
