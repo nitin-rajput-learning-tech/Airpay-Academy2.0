@@ -563,7 +563,7 @@ function get_reportdashboard(){
     } else {
         $sql .= " WHERE pagetypepattern = 'blocks-reportdashboard-dashboard'";
     } 
-    $sql .= " AND subpagepattern IN ('Maindashboard', 'Learnerdashboard', 'Examdashboard', 'Certification', 'Compliances', 'Dashboard', 'Course') ORDER BY CASE subpagepattern
+    $sql .= "  ORDER BY CASE subpagepattern
       WHEN 'Maindashboard' THEN 1
       WHEN 'Learnerdashboard' THEN 2
       WHEN 'Examdashboard' THEN 3
