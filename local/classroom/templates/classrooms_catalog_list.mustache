@@ -44,7 +44,7 @@
              {{# trainerslimit}}
                  {{# trainers }}
                      <div class="trainer_details">
-                        <span class="trainerimg pr-2 pull-left">
+                        <span class="trainerimg pr-2">
                             <img src="{{trainerpic}}" alt="Picture of {{trainername}}" title="Picture of {{trainername}}" class="trainer_img userpicture" width="30" height="30">
                         </span>
                         <span class="trainerdetails">
@@ -58,7 +58,7 @@
              {{^ trainerslimit }}
                  {{# moretrainers}}
                      <div class="trainer_details">
-                        <span class="trainerimg pull-left">{{{ classroomtrainerpic }}}</span>
+                        <span class="trainerimg">{{{ classroomtrainerpic }}}</span>
                             <span class="trainerdetails"><span class="trainername">{{ trainername }}</span><span class="trainerdesignation">{{ trainerdesignation }}</span></span>
                      </div>
                  {{/ moretrainers}}
@@ -69,16 +69,16 @@
               </td>
               
               <td> 
-               <ul class="crcourseslist pull-left m-0">
+               <ul class="crcourseslist m-0">
                   {{# courses }}
-                      <p class="contentlist pull-left">
+                      <p class="contentlist m-0">
                          <a href="{{ courseurl }}" title="{{ coursetitle }}"> {{ coursename }} </a>
                       </p>
                   {{/ courses }}
                </ul>
                 
                 {{^ courses }}
-                   <p class="text-center nocourses">{{# str }} noclassroomcourses, local_classroom {{/ str }}</p>
+                   <p class="text-center nocourses m-0">{{# str }} noclassroomcourses, local_classroom {{/ str }}</p>
                 {{/ courses }}
              </td>
         

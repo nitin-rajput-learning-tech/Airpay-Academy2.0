@@ -176,10 +176,13 @@ div#continue button > a, body button > a {
      color: var(--buttonbgcolor);
      border-color: var(--btnbordercolor);
 } */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,.dataTables_wrapper .dataTables_paginate .paginate_button:focus,
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover,
 .pagination .page-item.active .page-link, .page-item.active .page-link:focus, .page-item.active .page-link:hover {
-    background-color: var(--buttonbgcolor);
-    color:var(--btntextcolor);
-    border-color: transparent;
+    background-color: var(--buttonbgcolor) !important;
+    color:var(--btntextcolor) !important;
+    border-color: transparent !important;
+    background: none;
 }
 /*
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled{
@@ -199,10 +202,10 @@ div#continue button > a, body button > a {
      color: var(--btntextcolor);
      background-color: var(--buttonbgcolor);
 }
- body .dataTables_wrapper .dataTables_paginate .paginate_button {
+/* body .dataTables_wrapper .dataTables_paginate .paginate_button {
      background-color: var(--buttonbgcolor) !important;
      color: var(--btntextcolor) !important;
-}
+}*/
 /* .dataTables_wrapper .dataTables_paginate .paginate_button.next,
 .pagination .page-item.disabled, .page-item.disabled .page-link,
 .page-item:first-child .page-link, .page-item:last-child .page-link, 
@@ -925,4 +928,7 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
 }
 #page-local-search-allcourses #allcourses_section .CstripCnt{
     background-color: var(--hovercolor);
+}
+.block.block_userdashboard .userdashboardcontent_container{
+    background-color: #25467a2b;
 }

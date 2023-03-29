@@ -1815,3 +1815,6 @@ body#page-local-evaluation-complete .evaluation_form.ianonymous .col-md-3>label 
     padding-bottom: 0;
 }
 
+#page-local-evaluation-eval_view .dataTables_wrapper .dataTables_paginate{
+    margin-bottom: 1rem;
+}
