@@ -161,7 +161,23 @@ if ($dashboardurl == 'Maindashboard') {
 } else {
   $dashboardhname = $dashboardurl;
 }
-$heading = get_string('analytics', 'block_reportdashboard') . ' - ' . $dashboardhname;
+
+if($role){
+
+    if($role == 'user'){
+
+        $namerole='employee';
+
+    }else{
+        $namerole=$role;
+    }
+
+    $addnamerole=' - ' . ucfirst($namerole);
+}else{
+    $addnamerole='';
+}
+
+$heading = get_string('analytics', 'block_reportdashboard') . ' - ' . $dashboardhname .$addnamerole;
 $PAGE->set_heading($heading);
 $PAGE->navbar->ignore_active();
 // $navdashboardurl = new moodle_url($seturl);
