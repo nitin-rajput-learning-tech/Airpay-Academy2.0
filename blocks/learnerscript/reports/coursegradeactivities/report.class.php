@@ -72,13 +72,13 @@ class report_coursegradeactivities extends reportbase implements report
   {
     global $DB;
     $employeerole = $DB->get_field_sql("SELECT id FROM {role} WHERE shortname IN ('employee','student')");
-    $this->sql .=" JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
+    $this->sql .= " JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
                   JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}
                   JOIN {user} u ON ra.userid = u.id AND u.confirmed = 1
                                   AND u.deleted = 0 AND u.suspended = 0
                   JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
                   LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid ";
-/*     $this->sql .= "JOIN {enrol} as e ON c.id =e.courseid
+    /*     $this->sql .= "JOIN {enrol} as e ON c.id =e.courseid
                   JOIN {user_enrolments} ue ON ue.enrolid = e.id
                   JOIN {user} as u ON u.id = ue.userid
                   LEFT JOIN {course_completions} cc ON cc.course=e.courseid and ue.userid=cc.userid "; */
@@ -115,27 +115,27 @@ class report_coursegradeactivities extends reportbase implements report
   function filters()
   {
 
-    if ($this->params['filter_organization'] > 0) {
-        $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
-        $this->sql .= " AND concat(c.open_path,'/') like :orgpath ";
-        $this->params['orgpath'] = $orgpath.'/%';
-    }
-    if ($this->params['filter_departments'] > 0) {
-        $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
-        $this->sql .= " AND concat(c.open_path,'/') like :l2dept ";
-        $this->params['l2dept'] = $l2dept.'/%';
-    }
 
+    if ($this->params['filter_organization'] > 0) {
+      $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
+      $this->sql .= " AND concat(c.open_path,'/') like :orgpath ";
+      $this->params['orgpath'] = $orgpath . '%';
+    }
+    if ($this->params['filter_departments']  > 0) {
+      $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
+      $this->sql .= " AND concat(c.open_path,'/') like :l2dept ";
+      $this->params['l2dept'] = $l2dept . '%';
+    }
     if ($this->params['filter_subdepartments'] > 0) {
-        $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
-        $this->sql .= " AND concat(c.open_path,'/') like :l3dept ";
-        $this->params['l3dept'] = $l3dept.'/%';
+      $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
+      $this->sql .= " AND concat(c.open_path,'/') like :l3dept ";
+      $this->params['l3dept'] = $l3dept . '%';
     }
 
     if ($this->params['filter_level4department'] > 0) {
-        $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
-        $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
-        $this->params['l4dept'] = $l4dept.'/%';
+      $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
+      $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
+      $this->params['l4dept'] = $l4dept . '%';
     }
 
     if (isset($this->params['filter_course']) && $this->params['filter_course'] > 0) {

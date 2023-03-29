@@ -67,13 +67,32 @@ class plugin_organization extends pluginbase {
     }
 
     public function filter_data($selectoption = true, $request = false){
-        global $DB;
+        global $DB,$USER;
+        $sql = " SELECT lc.id,lc.fullname
+            FROM {local_costcenter} lc
+            WHERE lc.visible = 1 AND lc.parentid = 0  ";
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path'); 
 
-        $sql = " SELECT id,fullname
-                    FROM {local_costcenter} 
-                    WHERE visible = 1 AND parentid = 0 
-                    ORDER BY id ASC";
+        if (is_siteadmin()) {
+            $sql .= "";
+        } else  {
+            $sql .= $costcenterpathconcatsql;
+        }
 
+        $sql .= " ORDER BY id ASC";
+      /*   if(is_siteadmin()){
+            $sql = " SELECT id,fullname
+            FROM {local_costcenter} 
+            WHERE visible = 1 AND parentid = 0 
+            ORDER BY id ASC";
+        }else{
+            $sql = " SELECT lc.id,lc.fullname
+            FROM {local_costcenter} lc
+            JOIN {user} u ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
+            WHERE lc.visible = 1 AND lc.parentid = 0 AND u.id = $USER->id
+            ORDER BY id ASC";
+        } */
+       
         $organizations = $DB->get_records_sql_menu($sql);
         $organizations =array_replace(array(0=>'Select Organization'),$organizations);
         ksort($organizations);
@@ -112,6 +131,18 @@ class plugin_organization extends pluginbase {
             //                   'data-maximum-selection-length' => $this->maxlength,'onchange' =>'(function(e){ require("block_learnerscript/dependencyfilter").init({name:"organization"}) })(event)'));
             $select->setHiddenLabel(true);
             $mform->setType('filter_organization', PARAM_INT);
-        }
+        }/* else{
+            $request = array_merge($_POST, $_GET);
+            $organizations = $this->filter_data(false, $request);           
+        
+            $select = $mform->addElement('select', 'filter_organization', null,
+            $organizations,
+            array('data-select2' => true,
+                  'data-maximum-selection-length' => $this->maxlength,
+                  'data-action' => 'filterorganization',
+                  'data-instanceid' => $this->reportclass->config->id));
+            $select->setHiddenLabel(true);
+            $mform->setType('filter_organization', PARAM_INT);
+        } */
     }
 }
