@@ -42,7 +42,7 @@ class report_programlevelcompletions extends reportbase implements report
         $this->components = array('columns', 'permissions', 'calcs', 'plot', 'orderable');
         $this->columns =  ['progarmfield' => ['programfield'], 'userfield' => ['userfield'], 'programlevelscompletion' => ['programname', 'completionstatus', 'completiondate']];
         $this->parent = true;
-        $this->filters = array('organization','departments', 'subdepartments','level4department', 'programs','user');
+        $this->filters = array('organization','departments', 'subdepartments','level4department','user');
         $this->orderable = array('programname', 'lastaccess');
         $this->defaultcolumn = 'lpu.id';
         $this->basicparams = array(['name'=>'programs']);//['name' => 'user'],

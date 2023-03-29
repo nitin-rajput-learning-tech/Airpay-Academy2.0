@@ -632,7 +632,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     /* margin:0 !important; */
     
 }
-#page-local-search-allcourses #allcourses_section .d-md-block {
+#page-local-search-allcourses #allcourses_section .filter_section {
     border: 1px solid #dbdbdb;
     padding-left: 16px!important;
     margin-top: 25px;
@@ -979,4 +979,36 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 #page-local-search-coursedetails .crse_details li .category_type{
     min-width: 60%;
+}
+/* filters responsive issue */
+@media (max-width: 768px){
+    #page-local-search-allcourses #allcourses_section .filter_section{
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        max-width: 280px;
+        top: 40px;
+        height: 100%;
+        transition: all 1ms;
+        box-shadow: 17px 1px 16px 0 #00000038;
+    }
+    #page-local-search-allcourses #allcourses_section .filter_section.showfilters{
+        display: block !important;
+    }
+    #page-local-search-allcourses #filterviewdiv .btn-primary{
+        background-color: #fff;
+        border-color: #000;
+        padding: 10px;
+        border-radius: 0;
+    }
+    #page-local-search-allcourses #filterviewdiv .btn-primary img{
+        width: 20px;
+        height: 20px;
+    }
+    #page-local-search-allcourses .filter_section .close_btn {
+        background-color: #fff;
+        border:none;
+        color:#000;
+        padding: 6px 4px 4px 10px;
+    }
 }

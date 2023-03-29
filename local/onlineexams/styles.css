@@ -1092,3 +1092,50 @@ body#page-local-courses-userdashboard .card_list_view {
     width: 24px;
     height: 24px;
 }
+
+#page-local-onlineexams-userdashboard .course_container{
+    padding: 15px 0;
+}
+#page-local-onlineexams-userdashboard .course_container .courseimg_container{
+    width: 100%;
+    max-width: 200px;
+    padding: 0 15px;
+}
+#page-local-onlineexams-userdashboard .courseimg_container .courseimg {
+    border-radius: 10px;
+    height: 100%;
+    box-shadow: 0 0 6px 0 #0000003b;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+#page-local-onlineexams-userdashboard .course_container .coursecontent{
+   padding: 0 15px 0 0; 
+}
+#page-local-onlineexams-userdashboard .course_name a {
+    font-size: 17px;
+    word-break: break-word;
+    color: #000;
+    font-weight: 600;
+    text-decoration: none;
+}
+#page-local-onlineexams-userdashboard .coursecontent .progress{
+    border-radius: 10px !important;
+}
+#page-local-onlineexams-userdashboard .nav-tabs{
+    margin-bottom: 1rem;
+}
+@media(max-width:767px){
+    #page-local-onlineexams-userdashboard .course_container{
+        flex-direction: column;
+    }
+    #page-local-onlineexams-userdashboard .course_container .courseimg_container{
+        max-width: 100%;
+    }
+    #page-local-onlineexams-userdashboard .course_container .coursecontent{
+        padding: 0 15px;
+    }
+    #page-local-onlineexams-userdashboard .userdashboard_content .desc{
+        max-height: 100%;
+    }
+}

@@ -20,11 +20,13 @@
     Displays select box
 }}
 <div class='col-md-3 col-lg-3 col-xl-2 col-sm-3 pt-3 pl-0 d-none d-md-block bg-white border-right filter_section'>
-    <div>
-        <div class="icon-header float-left">
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="icon-header">
             <span class="icon_img"> <img src="pix/filters.png" alt=""> </span> {{#str}}filters,local_search{{/str}}
         </div>
-        <div class="clearfix"></div>
+        <button class="btn btn-danger d-block d-md-none close_btn " id="closefilters">
+             <i class="icon fa fa-times fa-fw"></i>
+        </button>
     </div>
     <hr>
     <div ng-repeat = 'cat1 in filteritemslist'>
@@ -61,3 +63,15 @@
         </section>
     </div>
 </div>
+{{#js}}
+
+    $(document).ready(function(){
+       $('#show_filters_btn').click(function(){
+            $('.filter_section').addClass('showfilters');
+       })
+       $('#closefilters').click(function(){
+        $('.filter_section').removeClass('showfilters');
+       });
+    });
+
+{{/js}}

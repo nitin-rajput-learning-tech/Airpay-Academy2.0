@@ -36,8 +36,9 @@ class report_dailyuniquelogins extends reportbase implements report {
         $this->columns = array('dailyuniquelogins' => array('costcentername','usercount','monthname','year'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
         $this->filters = array('organization');
-        $this->orderable = array('costcentername','usercount','monthname','year');
-        $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated)),SUBSTRING(u.open_path,2,1) ';
+        $this->orderable = array('costcentername','usercount','monthname','year');//SUBSTRING(u.open_path,2,1)
+        $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)),substring_index(substr(u.open_path,2),"/",1)
+                                ,MONTH(FROM_UNIXTIME(lsl.timecreated)),MONTHNAME(FROM_UNIXTIME(lsl.timecreated))';
         $this->sqlorder['column'] = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated))';       
        
     }
@@ -51,7 +52,8 @@ class report_dailyuniquelogins extends reportbase implements report {
     }
 
     function select() {      
-        $this->sql  = "SELECT lsl.userid,lc.fullname as costcentername, COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
+        $this->sql  = "SELECT (@cnt := @cnt + 1) AS rowNumber,COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, lc.fullname as costcentername,
+        MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname,substring_index(substr(u.open_path,2),'/',1) ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
         parent::select();
     }
 
@@ -61,7 +63,8 @@ class report_dailyuniquelogins extends reportbase implements report {
 
     function joins() {
         $this->sql .= " JOIN {user} u ON u.id = lsl.userid 
-                        JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.parentid = 0 ";
+                        JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.parentid = 0 
+                        CROSS JOIN (SELECT @cnt := 0) AS dummy";
         parent::joins();
     }
 
@@ -126,6 +129,7 @@ class report_dailyuniquelogins extends reportbase implements report {
      * @return [type]        [description]
      **/
     public function get_rows($data = array()) {
+
         return $data;
        /*  global $DB;
         $loginsdata = array();

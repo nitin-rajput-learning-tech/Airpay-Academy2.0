@@ -42,7 +42,7 @@ class report_coursegradeactivities extends reportbase implements report
     $columnsarray = array('coursefield' => ['coursefield'], 'userfield' => ['userfield'], 'coursegradeactivities' => $columns);
     $this->basicparams = array(['name' => 'course']);
     $this->columns = $columnsarray;
-    $this->filters = array('organization', 'departments', 'subdepartments', 'level4department','course');
+    $this->filters = array('organization', 'departments', 'subdepartments', 'level4department');
     $this->defaultcolumn = 'u.id';
   }
 
@@ -143,6 +143,7 @@ class report_coursegradeactivities extends reportbase implements report
       $this->sql .= " AND c.id = :courseid ";
       $this->params['courseid'] = $this->params['filter_course'];
     }
+    //print_object($this->params);die;
   }
 
   public function get_rows($courseusers)

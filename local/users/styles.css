@@ -1498,3 +1498,8 @@ body#page-local-users-index .userscontainer .userdetails_left .user_info_lable{
 body#page-local-users-index .userscontainer b{
     word-break: break-all !important;
 }
+
+
+#page-local-users-profile .usercourseslist{
+    margin-top: 1rem;
+}
