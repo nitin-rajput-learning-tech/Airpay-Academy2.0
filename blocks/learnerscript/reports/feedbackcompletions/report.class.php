@@ -53,7 +53,7 @@ class report_feedbackcompletions extends reportbase implements report
     }
     function select()
     {
-        $this->sql  = "SELECT eu.id,le.id as feedbackid,u.id as userid,le.name as feedbackname,CONCAT(u.firstname,' ',u.lastname) AS fullname,
+        $this->sql  = "SELECT (@cnt := @cnt + 1) AS rowNumber,eu.id,le.id as feedbackid,u.id as userid,le.name as feedbackname,CONCAT(u.firstname,' ',u.lastname) AS fullname,
                        ec.timemodified AS completiondate,eu.status as completionstatus,u.*";
         parent::select();
     }
@@ -65,7 +65,8 @@ class report_feedbackcompletions extends reportbase implements report
     {
         $this->sql .= "JOIN {local_evaluation_users} eu ON eu.evaluationid = le.id
                       LEFT JOIN {local_evaluation_completed} ec ON ec.evaluation = le.id AND ec.userid = eu.userid
-                    JOIN {user} u ON eu.userid = u.id AND u.deleted = 0 AND u.suspended = 0";
+                    JOIN {user} u ON eu.userid = u.id AND u.deleted = 0 AND u.suspended = 0
+                    CROSS JOIN (SELECT @cnt := 0) AS dummy ";
         parent::joins();
     }
     function where()
