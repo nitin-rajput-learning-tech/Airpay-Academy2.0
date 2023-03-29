@@ -37,7 +37,7 @@ class report_dailyuniquelogins extends reportbase implements report {
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
         $this->filters = array('organization');
         $this->orderable = array('costcentername','usercount','monthname','year');
-        $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated)),SUBSTRING(u.open_path,2,1) ';
+        $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated)) ';
         $this->sqlorder['column'] = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated))';       
        
     }
@@ -51,7 +51,7 @@ class report_dailyuniquelogins extends reportbase implements report {
     }
 
     function select() {      
-        $this->sql  = "SELECT lsl.userid,lc.fullname as costcentername, COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
+        $this->sql  = "SELECT lc.fullname as costcentername, COUNT(DISTINCT(lsl.userid)) as usercount, YEAR(FROM_UNIXTIME(lsl.timecreated)) AS year, MONTH(FROM_UNIXTIME(lsl.timecreated)) as month, MONTHNAME(FROM_UNIXTIME(lsl.timecreated)) AS monthname ";//, concat(u.firstname,' ', u.lastname) AS employeename, u.email
         parent::select();
     }
 
@@ -126,6 +126,7 @@ class report_dailyuniquelogins extends reportbase implements report {
      * @return [type]        [description]
      **/
     public function get_rows($data = array()) {
+
         return $data;
        /*  global $DB;
         $loginsdata = array();
