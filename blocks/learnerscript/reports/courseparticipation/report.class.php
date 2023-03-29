@@ -39,7 +39,14 @@ class report_courseparticipation extends reportbase {
     }
 
     function count() {
-      $this->sql  = " SELECT 1 ";
+      $this->sql  = " SELECT COUNT(DISTINCT (SELECT COUNT(DISTINCT c.id) AS enrolled
+                          FROM {user_enrolments} ue
+                          JOIN {enrol} e ON ue.enrolid = e.id
+                          JOIN {role_assignments} ra ON ra.userid = ue.userid
+                          JOIN {role} r ON r.id = ra.roleid AND r.shortname  IN ('employee','student')
+                          JOIN {context} AS ctx ON ctx.id = ra.contextid
+                          JOIN {course} c ON c.id = ctx.instanceid AND  c.visible = 1
+                          WHERE e.courseid = c.id AND  ue.userid=u.id)) ";
     }
 
     function select() {
