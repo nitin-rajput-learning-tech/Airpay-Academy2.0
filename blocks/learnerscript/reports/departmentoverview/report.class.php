@@ -84,12 +84,12 @@ class report_departmentoverview extends reportbase {
         if ($this->params['filter_organization'] > 0) {
             $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
             $this->sql .= " AND concat(lc.path,'/') like :orgpath ";
-            $this->params['orgpath'] = $orgpath.'%';
+            $this->params['orgpath'] = $orgpath.'/%';
         }
         if ($this->params['filter_departments']  > 0) {
             $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
             $this->sql .= " AND concat(lc.path,'/') like :l2dept ";
-            $this->params['l2dept'] = $l2dept.'%';
+            $this->params['l2dept'] = $l2dept.'/%';
         }    
     }
 

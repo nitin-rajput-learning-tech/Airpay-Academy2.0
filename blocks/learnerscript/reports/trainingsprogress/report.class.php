@@ -54,14 +54,14 @@ class report_trainingsprogress extends reportbase implements report {
         if ($this->params['filter_organization'] > 0) {
             $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
             if($orgpath){
-                $filterorgpath = $orgpath.'%';
+                $filterorgpath = $orgpath.'/%';
                 $filtersql .= " AND concat(c.open_path,'/') like '{$filterorgpath}' ";
             }
         }
         if ($this->params['filter_departments'] > 0) {
             $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
             if($l2dept){
-                $filterl2dept = $l2dept.'%';
+                $filterl2dept = $l2dept.'/%';
                 $filtersql .= " AND concat(c.open_path,'/') like '{$filterl2dept}' ";
             }
         }
@@ -69,21 +69,21 @@ class report_trainingsprogress extends reportbase implements report {
         if ($this->params['filter_subdepartments'] > 0) {
             $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
             if($l3dept){
-                $filterl3dept = $l3dept.'%';
+                $filterl3dept = $l3dept.'/%';
                 $filtersql .= " AND concat(c.open_path,'/') like '{$filterl3dept}' ";
             }
         }
         if ($this->params['filter_level4department'] > 0) {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             if($l4dept){
-                $filterl4dept = $l4dept.'%';
+                $filterl4dept = $l4dept.'/%';
                 $filtersql .= " AND concat(c.open_path,'/') like '{$filterl4dept}' ";
             }
         }
         if ($this->params['filter_level5department'] > 0) {
             $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
             if($l5dept){
-                $filterl5dept = $l5dept.'%';
+                $filterl5dept = $l5dept.'/%';
                 $filtersql .= " AND concat(c.open_path,'/') like '{$filterl5dept}' ";
             }
         }
@@ -126,28 +126,28 @@ class report_trainingsprogress extends reportbase implements report {
         if ($this->params['filter_organization'] > 0) {
             $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
             $this->sql .= " AND concat(lc.open_path,'/') like :orgpath ";
-            $this->params['orgpath'] = $orgpath.'%';
+            $this->params['orgpath'] = $orgpath.'/%';
         }
         if ($this->params['filter_departments'] > 0) {
             $l2dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_departments'], 'path');
             $this->sql .= " AND concat(lc.open_path,'/') like :l2dept ";
-            $this->params['l2dept'] = $l2dept.'%';
+            $this->params['l2dept'] = $l2dept.'/%';
         }
 
         if ($this->params['filter_subdepartments'] > 0) {
             $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
             $this->sql .= " AND concat(lc.open_path,'/') like :l3dept ";
-            $this->params['l3dept'] = $l3dept.'%';
+            $this->params['l3dept'] = $l3dept.'/%';
         }
         if ($this->params['filter_level4department'] > 0) {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             $this->sql .= " AND concat(lc.open_path,'/') like :l4dept ";
-            $this->params['l4dept'] = $l4dept.'%';
+            $this->params['l4dept'] = $l4dept.'/%';
         }
         if ($this->params['filter_level5department'] > 0) {
             $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
             $this->sql .= " AND concat(lc.open_path,'/') like :l5dept ";
-            $this->params['l5dept'] = $l5dept.'%';
+            $this->params['l5dept'] = $l5dept.'/%';
         }
         if ($this->ls_startdate > 0 && $this->ls_enddate) {
             $this->sql  .= " AND lc.startdate BETWEEN $this->ls_startdate AND $this->ls_enddate ";
