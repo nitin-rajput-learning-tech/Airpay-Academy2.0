@@ -190,7 +190,7 @@ body.path-blocks-reporttiles #region-main {
     display: flex;
     flex-flow: column;
     float: left;
-    margin: 0px 0px 0px 1%;
+    /* margin: 0px 0px 0px 1%; */
 }
 /*media query for only i pad*/
 @media only screen and (device-width: 768px) {

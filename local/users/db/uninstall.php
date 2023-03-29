@@ -88,7 +88,7 @@ function xmldb_local_users_uninstall() {
 
         $openbandfield = new xmldb_field('open_band');
         if ($dbman->field_exists($table, $openbandfield)) {
-            $    dbman->drop_field($table, $openbandfield);
+            $dbman->drop_field($table, $openbandfield);
         }
 
         $openhrmsrolefield = new xmldb_field('open_hrmsrole');

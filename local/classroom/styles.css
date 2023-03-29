@@ -16,12 +16,15 @@
 #page-local-classroom-index  .no_trainers,
 #page-local-classroom-index  .nocourses{
     text-align: left !important;
+    margin-bottom: 0;
 }
 #page-local-classroom-index ul.crcourseslist{
     padding:0;
+    float: none;
 }
 #page-local-classroom-index .trainer_details{
     display:flex;
+    align-items: center;
 }
 /*responsive*/
 @media only screen and (max-width: 768px){

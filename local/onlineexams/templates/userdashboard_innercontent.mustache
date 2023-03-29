@@ -17,55 +17,56 @@
 {{# onlineexams_view_count}}
 <div  class="userdashboard_content" >
     <div id="{{{subtab}}}" class="tab-pane divslider active active_subtab">
-    <div class="userdashboard_content userdashboard_ctype_elearning row d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap">
+    <div class="userdashboard_content userdashboard_ctype_elearning d-flex flex-row flex-{{#enableflow}}no{{/enableflow}}wrap">
         {{# moduledetails}}
             <div class="col-sm-6 col-12 tabs_cmn_class onlineexams_inprogress_slide {{{subtab}}} {{indexClass}} ctype_elearning d-flex" data-index="{{index}}">
-                <div class="course_container row w-100">
-                    <div class="courseimg_container col-md-5 col-12">
+                <div class="course_container d-flex w-100">
+                    <div class="courseimg_container">
                         <div alt="{{course_fullname}}" class="courseimg courseimg_bg" style="background-image:url('{{course_image_url}}')"> </div>
-
                     </div>
-                    <div class="col-md-7 col-12 coursecontent">
+                    <div class="coursecontent">
                         <div class="course_name">
                             <a href="{{course_url}}" title="{{{course_fullname}}}"> {{course_fullname}}</a>
                         </div>
                         {{# onlineexamsummary}} 
                             <div class="desc coursedesc">{{{onlineexamsummary}}} 
-                         {{/ onlineexamsummary}} 
-                         {{# fullonlineexamsummary}}<a href= "#" data-toggle="popover" title="{{ course_fullname }}" data-content="{{ fullonlineexamsummary }}">view more</a>{{/ fullonlineexamsummary }}
+                        {{/ onlineexamsummary}} 
+                        {{# fullonlineexamsummary}}
+                            <a href= "#" data-toggle="popover" title="{{ course_fullname }}" data-content="{{ fullonlineexamsummary }}">view more</a>
+                        {{/ fullonlineexamsummary }}
                         <!-- {{^ summary}}
-                            <div class="alert lert-info">no description provided</div>
+                                <div class="alert lert-info">no description provided</div>
                         {{/ summary}} -->
-
                         <!--<div class="w-full pull-left progress-container">-->
-                            <div class="w-full progress">
-                                <div class="progress-bar" role="progressbar" style="width: {{progress}}%" aria-valuenow="{{{progress}}}" aria-valuemin="0" aria-valuemax="100">{{progress}}%</div>
-                            </div>
-                        <!--</div>-->
-                        <div class="w-full mt-10 {{#rating_element}}w-full d-flex align-items-end justify-content-between flex-row flex-wrap{{/rating_element}}">
-                            <div class="star_icons">{{{rating_element}}}
-                                {{# element_tags}}
-                                <a href="javascript:void(0);" class="w-full text-left pl-md-1 mt-2 show_suggested_modules" title="{{#str}}suggonlineexams, block_userdashboard{{/str}}" data-moduletype = "local_onlineexams" data-show_suggestions = 0 data-tags = '{{element_tags}}' >{{#str}}sugonlineexams, block_userdashboard{{/str}}</a>
-                                {{/ element_tags}}
-                                
-                            </div>
-                            <div class="pull-right text-right launch_container">
-                                  {{#course_completedon}}
-                                <div class="pull-right mt-10">
-                                    <a href="{{{course_url}}}">
-                                         <button class="btn btn-primary launch_btn">{{#str}}completed_course, block_userdashboard{{/str}}</button>
-                                    </a>
+                        <div class="w-full progress mt-3">
+                            <div class="progress-bar" role="progressbar" style="width: {{progress}}%" aria-valuenow="{{{progress}}}" aria-valuemin="0" aria-valuemax="100">{{progress}}%</div>
+                        </div>
+                            <!--</div>-->
+                            <div class="w-full mt-2 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
+                                <div class="star_icons">{{{rating_element}}}
+                                    {{# element_tags}}
+                                    <a href="javascript:void(0);" class="w-full text-left pl-md-1 mt-2 show_suggested_modules" title="{{#str}}suggonlineexams, block_userdashboard{{/str}}" data-moduletype = "local_onlineexams" data-show_suggestions = 0 data-tags = '{{element_tags}}' >{{#str}}sugonlineexams, block_userdashboard{{/str}}</a>
+                                    {{/ element_tags}}
+                                    
                                 </div>
-                                 {{/course_completedon}}
-                                  {{^course_completedon}}
-                                <div class="pull-right mt-10">
-                                    <a href="{{{course_url}}}">
-                                         <button class="btn btn-primary launch_btn">{{label_name}}</button>
-                                    </a>
-                                </div>
-                                 {{/course_completedon}}
-                                <div class="clearboth pull-right mt-1">{{#str}}lastaccess, local_users{{/str}}
-                                    {{{lastaccessdate}}}
+                                <div class="text-right launch_container">
+                                      {{#course_completedon}}
+                                    <div class="mt-10">
+                                        <a href="{{{course_url}}}">
+                                             <button class="btn btn-primary launch_btn">{{#str}}completed_course, block_userdashboard{{/str}}</button>
+                                        </a>
+                                    </div>
+                                     {{/course_completedon}}
+                                      {{^course_completedon}}
+                                    <div class="mt-10">
+                                        <a href="{{{course_url}}}">
+                                             <button class="btn btn-primary launch_btn">{{label_name}}</button>
+                                        </a>
+                                    </div>
+                                     {{/course_completedon}}
+                                    <div class="clearboth mt-1">{{#str}}lastaccess, local_users{{/str}}
+                                        {{{lastaccessdate}}}
+                                    </div>
                                 </div>
                             </div>
                         </div>

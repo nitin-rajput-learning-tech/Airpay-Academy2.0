@@ -386,7 +386,7 @@ i.course-prev {
 
 .block.block_userdashboard .userdashboard_filter_container {
     float: right;
-    color: #fff
+    color: #2B354B
 }
 
 .userdashboard_filter_container>label {
@@ -1492,7 +1492,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
         overflow: hidden
     }
     .block.block_userdashboard .userdashboard_content .classroom_container .ub_classroomname a {
-        white-space: nowrap;
+        white-space: unset;
         text-overflow: ellipsis;
         overflow: hidden;
         width: -webkit-calc(100% - 30px);
@@ -1673,9 +1673,9 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 }
 /*css by kiran*/
 
-.block.block_userdashboard .count_info_list .inprogress_counts{
+/*.block.block_userdashboard .count_info_list .inprogress_counts{
 	margin: 0 1rem;
-}
+}*/
 .block.block_userdashboard .count_info_list .enrolled_counts,
 .block.block_userdashboard .count_info_list .inprogress_counts,
 .block.block_userdashboard .count_info_list .completed_counts{
@@ -1795,7 +1795,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     word-break: break-word;
 }
 .block.block_userdashboard .userdashboardcontent_container{
-	background-image: url("[[pix:block_userdashboard|userdashboardbg]]");
+/*	background-image: url("[[pix:block_userdashboard|userdashboardbg]]");*/
 	background-repeat: no-repeat;
     background-size: cover;
     min-height: 435px;
@@ -1823,17 +1823,17 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 .block.block_userdashboard .nav-tabs .nav-link.active, .block.block_userdashboard .nav-tabs .nav-link:hover
 .block.block_userdashboard .nav-tabs .nav-item.show .nav-link{
 	background-color: transparent;
-	color: #fff;
+	color: #2B354B;
 	border-color: inherit;
 	border: none;
-    border-bottom: 4px solid #fff;
+    border-bottom: 4px solid #2B354B;
 }
 .block.block_userdashboard .nav-tabs .nav-link{
-	color: #fff;
+	color: #2B354B;
 }
 .block.block_userdashboard .nav-tabs .nav-link:hover,
 .block.block_userdashboard .nav-tabs .nav-link:focus {
-	color: #fff;
+	color: #2B354B;
     border-top: none;
     border-left: none;
     border-right: none;
@@ -2105,7 +2105,9 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 .block.block_userdashboard .ctype_elearning:hover .course_progress_container .progress_status{
     font-size: 13px;
 }
-
+.block_userdashboard .card-body{
+    padding-bottom: 0 !important;
+}
 /* userdashboard responsive css*/
 
 @media (max-width: 1023px){
@@ -2145,22 +2147,25 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
     .block.block_userdashboard .count_info_container{
         position: static !important;
     }
+    .block.block_userdashboard .count_info_list li{
+        margin-right: 2px !important;
+    }
     .block.block_userdashboard .courseimg_bg{
         display:block !important;
     }
     .block.block_userdashboard .course_progress_container{
         display:flex !important;
     }
+    .block.block_userdashboard .titleinfo .count_info_container{
+        width: 100%;
+    }
     .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat .more{
         padding-left:24px !important;
     }
-    .block.block_userdashboard .count_info_list .enrolled_counts,
-    .block_userdashboard .count_info_list .inprogress_counts{
-        margin:15px;
-    }
-    .block.block_userdashboard .count_info_list .completed_counts{
-        margin-left: 1rem;
-        margin-top: 10px;
+    .block.block_userdashboard .count_info_list{
+        display: flex;
+        width: 100%;
+        justify-content: center;
     }
     .block.block_userdashboard .block_dashboard_tabslist .dashboard-stat .more{
         justify-content: flex-start !important;
@@ -2187,6 +2192,17 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
     }
     .block.block_userdashboard .courseimg{
         display: block;
+    }
+    #page-local-courses-userdashboard .nav{
+        display: block !important;
+    }
+    #page-local-courses-userdashboard  .generaltable thead th,
+    #page-local-courses-userdashboard  .generaltable td {
+        text-align:left;
+        vertical-align: middle;
+    }
+    #page-local-courses-userdashboard  .course_name a{
+        font-size: 14px;
     }
 }
 
@@ -2267,4 +2283,37 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
 }
 .block.block_userdashboard .portlet-body{
     padding: 15px 0;
+}
+
+.block.block_userdashboard .count_info_list li{
+    margin-top: 10px;
+    margin-right: 10px;
+}
+.block.block_userdashboard .dashboard-stat .more .browse_classroom_icon{
+    margin-right: 15px !important;
+}
+.block.block_userdashboard .nav-tabs .nav-link.active{
+    margin-bottom: 0 !important;
+}
+.block.block_userdashboard .nav-tabs{
+    padding-bottom: 2px;
+}
+@media(max-width:1023px){
+    .block.block_userdashboard .count_info_list .enrolled_counts .count_value,
+    .block.block_userdashboard .count_info_list .inprogress_counts .count_value,
+    .block.block_userdashboard .count_info_list .completed_counts .count_value{
+        width: 20px;
+        height: 20px;
+    }
+    .block.block_userdashboard .count_info_list .enrolled_counts .viewlink,
+    .block.block_userdashboard .count_info_list .inprogress_counts .viewlink,
+    .block.block_userdashboard .count_info_list .completed_counts .viewlink{
+        font-size: 11px;
+    }
+    .block.block_userdashboard .count_info_list .enrolled_counts .count_string,
+    .block.block_userdashboard .count_info_list .inprogress_counts .count_string,
+    .block.block_userdashboard .count_info_list .completed_counts .count_string{
+        padding: 0 2px;
+        font-size: 10px;
+    }
 }

@@ -670,7 +670,6 @@ body#page-my-index aside#block-region-layertwo_one .block .content {
     padding: 2px 7px !important;
     font-size: 12px;
     box-shadow: none;
-    border: 1px solid #ddd !important;
 }
 .dataTables_wrapper .dataTables_paginate .paginate_button.active, 
 .dataTables_wrapper .dataTables_paginate .paginate_button:active, 
@@ -3095,10 +3094,18 @@ body .que .info>div {
     width: 100%;
     margin-left: 20px;
 }
+.courseheader .course_heading{
+    margin-top:2rem;
+}
+
 .courseheader .progress-bar[aria-valuenow="0"]{
     width: 0 !important;
 }
-
+@media (max-width:767px){
+    .courseheader .course_heading{
+        margin-top:0;
+    }
+}
 .actionicons {
    position: relative;
 }
@@ -3239,7 +3246,7 @@ body .que .info>div {
     padding: 8px 14px !important;
     background-color: #F2F4FB;
     border: none;
-    color: #000;
+    color: #000 !important;
     box-shadow: none;
     border-radius: 3px;
     border: 1px solid #f2f2f2;
@@ -3283,7 +3290,9 @@ body .que .info>div {
 .pagination .ng-scope.active>a{
     border:1px solid #ddd;
 }
-
+.dataTables_wrapper .dataTables_paginate .paginate_button.next:hover{
+    color: #000 !important;
+}
 /*online quiz view page css*/
 #page-mod-quiz-view .activity-information .description-inner{
     display: flex;
@@ -3326,3 +3335,27 @@ table.generaltable{
     margin: 2% 0;
     width: 100%
 }
+
+
+/* message notifications css*/
+#page-message-notificationpreferences .userinitials.size-100{
+    width: 45px;
+    height: 45px;
+    font-size: 15px;
+}
+#page-message-notificationpreferences .page-context-header{
+    align-items: center;
+}
+#page-message-notificationpreferences .preferences-page-container .checkbox-container{
+    margin:10px;
+}
+#page-message-notificationpreferences .page-context-header .header-button-group {
+    margin-left: 6px;
+}
+
+@media (max-width:767px){
+    #page.drawers{
+        margin-top:0;
+    }
+}
+

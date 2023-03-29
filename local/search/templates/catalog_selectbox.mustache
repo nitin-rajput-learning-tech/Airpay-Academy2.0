@@ -23,10 +23,10 @@
 <div class="col-12 pull-left mt-10" id="avaliable_courses">
     <div id="filterviewdiv" class="border-bottom pb-2">
        <div class="row">
-            <div class="col-md-6">
+            <div class="col-6">
                 <h4 class="my-2">Search</h4>
             </div>
-            <div class="col-md-6" >
+            <div class="col-6" >
                 <div id="page-navbar" class="py-1" >
                     <nav aria-label="Navigation bar">
                         <ol class="breadcrumb justify-content-end mr-2" style="justify-content: end;margin-right: 10px;">
@@ -40,10 +40,16 @@
             </div>
 
             <div class="col-md-12 d-flex align-items-center ">
-                <div class="form-group my-3" id="searchinputformgroup">
-                    <span id="searchicon"><img src="pix/search.png" alt=""></span>
-                    <input id="search" ng-keyup="filterbyname(tab)" type="text" class="form-control" placeholder="{{#str}}search_for_courses,local_search{{/str}}" />
+                <div class="d-flex align-items-center my-3 w-100">
+                    <div class="form-group flex-grow-1" id="searchinputformgroup">
+                        <span id="searchicon"><img src="pix/search.png" alt=""></span>
+                        <input id="search" ng-keyup="filterbyname(tab)" type="text" class="form-control" placeholder="{{#str}}search_for_courses,local_search{{/str}}" />
+                    </div>
+                    <div class="d-block d-md-none">
+                        <button class="btn btn-primary" id="show_filters_btn"><img src="pix/filters.png" alt=""></button> 
+                    </div>
                 </div>
+                
             </div>
        </div>
     </div>
