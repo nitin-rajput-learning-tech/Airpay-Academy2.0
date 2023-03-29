@@ -6,6 +6,8 @@
   <exclude-pattern>admin/tool/componentlibrary/amd/src/lunr.js</exclude-pattern>
   <exclude-pattern>admin/tool/policy/amd/src/jquery-eu-cookie-law-popup.js</exclude-pattern>
   <exclude-pattern>auth/cas/CAS/</exclude-pattern>
+  <exclude-pattern>auth/saml2/.extlib/simplesamlphp/</exclude-pattern>
+  <exclude-pattern>auth/saml2/sp/metadata.php</exclude-pattern>
   <exclude-pattern>cache/stores/mongodb/MongoDB/</exclude-pattern>
   <exclude-pattern>enrol/lti/ims-blti/</exclude-pattern>
   <exclude-pattern>filter/algebra/AlgParser.pm</exclude-pattern>

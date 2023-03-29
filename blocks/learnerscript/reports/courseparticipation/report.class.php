@@ -155,11 +155,17 @@ class report_courseparticipation extends reportbase {
 
         }
 
-        $data['inprogress'] = ($data['completed'] > 0 && $data['enrolled'] > 0) ? $data['enrolled']-$data['completed'] : 0 ;
+        if(!empty($data)){
 
-        $data['progress'] = ($data['completed'] > 0 && $data['enrolled'] > 0) ? round(($data['completed']/$data['enrolled'])*100) : 0 ;
+            $data['inprogress'] = ($data['completed'] > 0 && $data['enrolled'] > 0) ? $data['enrolled']-$data['completed'] : 0 ;
 
-        return array((object)$data);
+            $data['progress'] = ($data['completed'] > 0 && $data['enrolled'] > 0) ? round(($data['completed']/$data['enrolled'])*100) : 0 ;
+
+            return array((object)$data);
+        }else{
+            return $data;
+        }
+
 
     }
 
@@ -172,7 +178,6 @@ class report_courseparticipation extends reportbase {
             return array();
 
         }
-
 
         $filteruserids = $userids;
 
