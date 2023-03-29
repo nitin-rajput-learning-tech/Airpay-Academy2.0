@@ -7,6 +7,8 @@ vendor/
 admin/tool/componentlibrary/amd/src/lunr.js
 admin/tool/policy/amd/src/jquery-eu-cookie-law-popup.js
 auth/cas/CAS/
+auth/saml2/.extlib/simplesamlphp/
+auth/saml2/sp/metadata.php
 cache/stores/mongodb/MongoDB/
 enrol/lti/ims-blti/
 filter/algebra/AlgParser.pm
