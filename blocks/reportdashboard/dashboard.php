@@ -249,10 +249,10 @@ echo $OUTPUT->header();
 echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 
 echo html_writer::start_tag('div', array());
-
 if (!empty($role) || is_siteadmin()) {
     $configuredinstances = $DB->count_records('block_instances', array(
-                                'pagetypepattern' => $pagepattentype, 'subpagepattern' => $subpagepatterntype));
+                                'pagetypepattern' => $pagepattentype));
+
     $reports = $DB->get_records('block_learnerscript',array('visible'=>1,'global'=>1),'','id');
 
     $editingon = false;
@@ -496,7 +496,7 @@ if (!empty($role) || is_siteadmin()) {
 	echo '<div class="reportslist" style="display:none;">';
         echo '</div>';
         echo '<div class="statistics_reportslist" style="display:none;">';
-        echo '</div>';    
+        echo '</div>';
 if($configuredinstances > 0){
         echo "<input type='hidden' name='ls_fstartdate' id='ls_fstartdate' value='0' />";
         echo "<input type='hidden' name='ls_fenddate' id='ls_fenddate' value='" . time() . "' />";
