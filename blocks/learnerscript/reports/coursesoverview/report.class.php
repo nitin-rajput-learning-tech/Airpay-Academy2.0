@@ -57,8 +57,7 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function joins() {
-        $this->sql .=" JOIN {local_custom_category} cat ON cat.id = c.open_categoryid ";
-
+        
         parent::joins();
     }
 

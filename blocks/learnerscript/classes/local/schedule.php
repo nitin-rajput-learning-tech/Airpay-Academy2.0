@@ -512,7 +512,8 @@ class schedule {
 			print_error('reportdoesnotexists', 'block_learnerscript');
 		}
 		$role = $DB->get_field('role', 'shortname', array('id' => $schedule->roleid));
-		$reportdata = $this->reportdata($reportid, $user, $role, $organizationid, $departmentid);
+		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/", $user->open_path);
+		$reportdata = $this->reportdata($reportid, $user, $role, $org);
 
 		$reportfilepathname = $this->scheduledreport_get_export_filename($report, $user, $schedule);
 
@@ -577,7 +578,7 @@ class schedule {
 	 * @return object Report data
 	*/
 
-	function reportdata($reportid, $user, $role, $organizationid, $departmentid) {
+	function reportdata($reportid, $user, $role, $organizationid, $departmentid=0) {
 		global $CFG, $DB;
 		if (!$report = $DB->get_record('block_learnerscript', array('id' => $reportid))) {
 			print_error('reportdoesnotexists', 'block_learnerscript');
