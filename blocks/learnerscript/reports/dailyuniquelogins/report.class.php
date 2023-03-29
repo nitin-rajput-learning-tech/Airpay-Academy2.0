@@ -37,7 +37,7 @@ class report_dailyuniquelogins extends reportbase implements report {
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
         $this->filters = array('organization');
         $this->orderable = array('costcentername','usercount','monthname','year');//SUBSTRING(u.open_path,2,1)
-        $this->groupcolumn = 'lc.fullname,YEAR(FROM_UNIXTIME(lsl.timecreated)),substring_index(substr(u.open_path,2),"/",1)
+        $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)),substring_index(substr(u.open_path,2),"/",1)
                                 ,MONTH(FROM_UNIXTIME(lsl.timecreated)),MONTHNAME(FROM_UNIXTIME(lsl.timecreated))';
         $this->sqlorder['column'] = 'YEAR(FROM_UNIXTIME(lsl.timecreated)), MONTH(FROM_UNIXTIME(lsl.timecreated))';       
        
