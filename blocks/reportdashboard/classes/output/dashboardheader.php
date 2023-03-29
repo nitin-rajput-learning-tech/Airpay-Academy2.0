@@ -511,25 +511,27 @@ class dashboardheader implements renderable, templatable {
     public function get_dashboard_reportscount() {
         global $DB, $USER;
         $role = $_SESSION['role'];
+
+
         if (!empty($role) && !is_siteadmin()) {
-            $sql = "SELECT DISTINCT(subpagepattern) FROM {block_instances} WHERE pagetypepattern = 'blocks-reportdashboard-dashboard-$role' AND subpagepattern IN ('Maindashboard', 'Learnerdashboard', 'Examdashboard', 'Certification', 'Compliances', 'Dashboard', 'Course') ORDER BY CASE subpagepattern
+            $sql = "SELECT DISTINCT(subpagepattern) FROM {block_instances} WHERE pagetypepattern = 'blocks-reportdashboard-dashboard-$role' ORDER BY CASE subpagepattern
                   WHEN 'Maindashboard' THEN 1
                   WHEN 'Learnerdashboard' THEN 2
                   WHEN 'Examdashboard' THEN 3
                   WHEN 'Certification' THEN 4
-                  WHEN 'Compliances' THEN 5 
-                  WHEN 'Dashboard' THEN 6 
+                  WHEN 'Compliances' THEN 5
+                  WHEN 'Dashboard' THEN 6
                   WHEN 'Course' THEN 7
-                  ELSE 8 
+                  ELSE 8
                END";
         } else {
-            $sql = "SELECT DISTINCT(subpagepattern) FROM {block_instances} WHERE pagetypepattern = 'blocks-reportdashboard-dashboard' AND subpagepattern IN ('Maindashboard', 'Learnerdashboard', 'Examdashboard', 'Certification', 'Compliances', 'Dashboard', 'Course') ORDER BY CASE subpagepattern
+            $sql = "SELECT DISTINCT(subpagepattern) FROM {block_instances} WHERE pagetypepattern = 'blocks-reportdashboard-dashboard' ORDER BY CASE subpagepattern
                   WHEN 'Maindashboard' THEN 1
                   WHEN 'Learnerdashboard' THEN 2
                   WHEN 'Examdashboard' THEN 3
-                  WHEN 'Certification' THEN 4 
+                  WHEN 'Certification' THEN 4
                   WHEN 'Compliances' THEN 5
-                  WHEN 'Dashboard' THEN 6 
+                  WHEN 'Dashboard' THEN 6
                   WHEN 'Course' THEN 7
                   ELSE 8
                END";
@@ -553,8 +555,8 @@ class dashboardheader implements renderable, templatable {
             $params['subpagepattern'] = '%' . $key . '%';
             $getdashboardname[$i]['name'] = ucfirst($value);
             $getdashboardname[$i]['pagetypepattern'] = $value;
-            $getdashboardname[$i]['random'] = $i; 
-            if ($value == 'Examdashboard' || $value == 'Learnerdashboard' || $value == 'Maindashboard' || $value == 'Certification' || $value == 'Compliances') { 
+            $getdashboardname[$i]['random'] = $i;
+            if ($value == 'Examdashboard' || $value == 'Learnerdashboard' || $value == 'Maindashboard' || $value == 'Certification' || $value == 'Compliances') {
                 $getdashboardname[$i]['default'] = 0;
             } else {
                 $getdashboardname[$i]['default'] = 1;

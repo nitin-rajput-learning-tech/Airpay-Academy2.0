@@ -25,7 +25,7 @@
                         <label for="seg-Clear" class="nav-link">{{#str}}all, block_reportdashboard{{/str}}</label>
                     </li>
                 </ul>
-                
+
             </div>
             <div class="col-md-3">
                 <div class="flatpickr mt-3 ml-2">
@@ -40,7 +40,7 @@
                         {{# reportwidgetstatus }}
                             <span class="dropdown nav-item pull-right">
                                 <a class="dropdown-toggle htitle" id="addwidgets{{reportinstance}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{#str}}addwidgettile, block_reportdashboard{{/str}}">
-                                    <!--<span class="tooltiptext tooltip-top">{{#str}}addwidgettile, block_reportdashboard{{/str}}</span>-->
+                                    <span class="tooltiptext tooltip-top">{{#str}}addwidgettile, block_reportdashboard{{/str}}</span>
                                     <img src='{{config.wwwroot}}/blocks/learnerscript/pix/addwidget.png' id='addwidgets' class='addblocks-to-dashboard' >
                                 </a>
                                 <ul class="menu dropdown-menu  dropdown-menu-right dropdown-content" area-labelledby="addwidgets{{reportinstance}}">
@@ -58,7 +58,7 @@
                             </span>
                         {{/ reportwidgetstatus }}
                         {{/ issiteadmin}}
-                        <!-- <span class="dropdown nav-item pull-right">
+                        <span class="dropdown nav-item pull-right">
                             <a class="dropdown-toggle htitle" id="switchdashboard{{reportinstance}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{#str}}switchdashboard, block_reportdashboard{{/str}}">
 
                                 <img src={{config.wwwroot}}/blocks/learnerscript/pix/switchdashboard.png id='addwidgets' class='addblocks-to-dashboard'>
@@ -71,7 +71,7 @@
                         <span class="edit_delete_icons">
                             <span class="inplaceeditable inplaceeditable-text" data-inplaceeditable="1" data-component="block_reportdashboard" data-itemtype="dashboardname" data-prevoiusdashboardname='{{name}}' data-pagetypepattern='{{pagetypepattern}}' data-value='{{name}}' data-editlabel="New name for Dashboard" data-type="text" data-options="" data-roleshortname= '{{dashboardrole}}'>
                             {{#default}}
-                                <img src={{config.wwwroot}}/pix/i/delete.png id="deleteimg" title="Delete" alt="delete" data-name ='{{name}}' onclick = "(function(e){ require('block_reportdashboard/reportdashboard').Deletedashboard({instance:'{{name}}',random:{{random}} }) }) (event)" />
+                             <!--    <img src={{config.wwwroot}}/pix/i/delete.png id="deleteimg" title="Delete" alt="delete" data-name ='{{name}}' onclick = "(function(e){ require('block_reportdashboard/reportdashboard').Deletedashboard({instance:'{{name}}',random:{{random}} }) }) (event)" /> -->
                                 <a href="#" class="quickeditlink" title="Edit title">
                                 <span class="quickediticon visibleifjs"><i class="icon fa fa-pencil fa-fw " aria-hidden="true" title="Edit title" aria-label="Edit title" onclick = '(function(e){ require("block_reportdashboard/reportdashboard").updatedashboard("{{name}}","{{dashboardrole}}") })(event)'></i></span>
                                 {{/default}}
@@ -93,18 +93,18 @@
                        </li>
                         {{/get_dashboardname}}
                             </ul>
-                        </span> -->
+                        </span>
                     </span>
                     <span class="right_buttons">
-                    <!-- {{#issiteadmin}}
+                    {{#issiteadmin}}
                         <span class ='span_adddashboard htitle'onclick = '(function(e){ require("block_reportdashboard/reportdashboard").addnewdashboard() })(event)' title="{{#str}}addnewdashboard, block_reportdashboard{{/str}}">
 
                             <img src={{config.wwwroot}}/blocks/learnerscript/pix/adddashboard.png id='adddashboard' class='addblocks-to-dashboard'>
                         </span>
-                    {{/issiteadmin}} -->
+                    {{/issiteadmin}}
                     {{#issiteadmin}}
                         <a class= 'htitle' href="{{config.wwwroot}}/blocks/learnerscript/reportsview.php" title="{{#str}}managereports, block_learnerscript{{/str}}">
-                            <!--<span class="tooltiptext tooltip-top">{{#str}}managereports, block_learnerscript{{/str}}</span>-->
+                            <span class="tooltiptext tooltip-top">{{#str}}managereports, block_learnerscript{{/str}}</span>
                             <img src={{config.wwwroot}}/blocks/learnerscript/pix/managereport.png id='addreport' class="addblocks-to-dashboard">
                         </a>
                     {{/issiteadmin}}
@@ -113,8 +113,8 @@
                 </span>
             </div>
         </div>
-    </div> 
-    <div class="mt-2 input_unit d-flex flex-wrap"> 
+    </div>
+    <div class="mt-2 input_unit d-flex flex-wrap">
     {{# enable_organization }}
         <div class="costcenterfilter mx-2 mb-2 ">
             <label class="d-inline-block mb-0"><b>{{#str}}organization, block_learnerscript{{/str}}</b></label>
@@ -170,7 +170,7 @@
         {{# courselist.0 }}
             <span class="coursefilter1">
                 <label class="d-inline-block">&nbsp;&nbsp;<b>{{#str}}course{{/str}} : </b></label>
-                <select name="filter_course" class = "dashboardcourses" data-select2="1" data-action = "filtercourses" id = "coursedashboardfilter" data-role="{{dashboardrole}}"> 
+                <select name="filter_course" class = "dashboardcourses" data-select2="1" data-action = "filtercourses" id = "coursedashboardfilter" data-role="{{dashboardrole}}">
                     {{# courselist }}
                         <option value = "{{id}}">{{fullname}}</option>
                     {{/ courselist }}
@@ -180,7 +180,7 @@
     {{/ coursedashboard }}
     {{# compliancedashboard }}
             <span class="compliancefilter">
-                <label class="d-inline-block">&nbsp;&nbsp;<b>Compliance Program 
+                <label class="d-inline-block">&nbsp;&nbsp;<b>Compliance Program
                 </b>
                 </label>
                <select name="filter_compliance" class = "dashboardcompliance" data-select2="1" id = "compliancedashboardfilter" data-action = "departmentcompliances" multiple data-role="{{dashboardrole}}">
@@ -191,7 +191,7 @@
             </span>
     {{/ compliancedashboard }}
     {{/ configuredinstances }}
-    
+
     <div id='internalbsm' style="display: none;">
         <div id='innerwrapper'>
             <div class='sidenav'>
