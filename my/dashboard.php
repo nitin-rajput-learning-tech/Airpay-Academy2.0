@@ -39,7 +39,13 @@ $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context()
 $path=(new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
 //$org_id=explode('/',$path[0])[1];
 $org_id=($path) ? explode('/',$path[0])[1] : null;
+
 $heading = $site->fullname;
+
+if($orgid > 0){
+    $costcentername = $DB->get_field('local_costcenter', 'fullname', array('id' => $orgid, 'parentid' => 0));
+    $heading = $costcentername. ' - ' .get_string('configdashboard', 'local_costcenter')  ;
+}
 if(is_siteadmin()){
     if($orgid){
         $categoryid = $DB->get_field('local_costcenter', 'category', array('id' => $orgid, 'parentid' => 0));
@@ -62,7 +68,10 @@ $PAGE->set_pagelayout('mydashboard');
 $PAGE->set_primary_active_tab('home');
 $PAGE->add_body_class('limitedwidth');
 $courserenderer = $PAGE->get_renderer('core', 'course');
-$PAGE->set_heading($heading);
+
+if($site->fullname != $heading){
+    $PAGE->set_heading($heading);
+}
 echo $OUTPUT->header();
 echo $OUTPUT->skip_link_target();
 //echo $content;
