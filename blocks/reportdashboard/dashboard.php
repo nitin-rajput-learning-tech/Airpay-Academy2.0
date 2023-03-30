@@ -192,12 +192,23 @@ if (!$dashboardurl) {
 } else {
     $PAGE->navbar->add($dashboardurl);
 }
-$PAGE->requires->jquery();
-//$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+$PAGE->requires->jquery_plugin('ui-css');
+$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts.js');
+$PAGE->requires->js('/blocks/learnerscript/js/highcharts/exporting.js');
+$PAGE->requires->js('/blocks/learnerscript/js/highcharts/highcharts-more.js');
+$PAGE->requires->js('/blocks/learnerscript/js/highcharts/treemap.js');
+$PAGE->requires->js('/blocks/learnerscript/js/highmaps/map.js');
+$PAGE->requires->js('/blocks/learnerscript/js/highmaps/world.js');
+$PAGE->requires->js('/blocks/learnerscript/js/highcharts/solid-gauge.js');
+$PAGE->requires->js('/blocks/reportdashboard/js/jquery.radios-to-slider.min.js');
 $PAGE->requires->js_call_amd('block_reportdashboard/reportdashboard', 'init');
 
-// $PAGE->requires->css('/blocks/reportdashboard/css/radios-to-slider.min.css');
-// $PAGE->requires->css('/blocks/reportdashboard/css/flatpickr.min.css');
+$PAGE->requires->css('/blocks/learnerscript/css/responsive.dataTables.min.css');
+$PAGE->requires->css('/blocks/learnerscript/css/jquery.dataTables.min.css');
+$PAGE->requires->css('/blocks/learnerscript/css/on-off-switch.css');
+$PAGE->requires->css('/blocks/reportdashboard/css/radios-to-slider.min.css');
+$PAGE->requires->css('/blocks/reportdashboard/css/flatpickr.min.css');
+$PAGE->requires->css('/blocks/learnerscript/css/select2.min.css');
 
 $output = $PAGE->get_renderer('block_reportdashboard');
 
@@ -262,12 +273,11 @@ if (!empty($data) && $dataaction == 'sendemails') {
     }
 }
 echo $OUTPUT->header();
-echo '<script src="'.$CFG->wwwroot . '/blocks/learnerscript/js/highcharts/highcharts.js"></script>';
 
 echo html_writer::start_tag('div', array());
 if (!empty($role) || is_siteadmin()) {
-    $configuredinstances = $DB->count_records('block_instances', array(
-                                'pagetypepattern' => $pagepattentype));
+   $configuredinstances = $DB->count_records('block_instances', array(
+                                'pagetypepattern' => $pagepattentype, 'subpagepattern' => $subpagepatterntype));
     $reports = $DB->get_records('block_learnerscript',array('visible'=>1,'global'=>1),'','id');
 
     $editingon = false;

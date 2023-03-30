@@ -104,7 +104,7 @@ class dashboardheader implements renderable, templatable {
 
         $data['issiteadmin'] = (is_siteadmin() || has_capability('block/learnerscript:managereports',$systemcontext)) ? true : false;
         $data['dashboardurl'] = $this->dashboardurl;
-        $data['configuredinstances'] = true;
+        $data['configuredinstances'] = $this->configuredinstances;
         $dashboardlist = $this->get_dashboard_reportscount();
         foreach ($dashboardlist as $dlist) {
 

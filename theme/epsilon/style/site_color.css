@@ -932,3 +932,9 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
 .block.block_userdashboard .userdashboardcontent_container{
     background-color: #25467a2b;
 }
+
+
+.block_reporttiles div.reporttile_title{
+    background-color: var(--primarycolor);
+    color: #fff;
+}

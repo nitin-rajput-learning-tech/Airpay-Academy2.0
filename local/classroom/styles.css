@@ -64,3 +64,8 @@
     /* display tooltip on hover */
     opacity: 1;
   }
+
+  #classroommodule.generaltable thead th,
+  #classroommodule.generaltable tbody td{
+  	vertical-align: middle;
+  }

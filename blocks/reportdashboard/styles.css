@@ -221,7 +221,7 @@ body.path-blocks-reportdashboard #reportbox_shadow {
     padding: 0 10px !important;
 
     /* height: 55px; */
-    /* overflow: hidden; */
+    /*overflow: hidden;*/
 }
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .costcenterfilter, 
 body.reportdashboard.path-blocks-reportdashboard div#dashboard-header .departmentfilter, 
@@ -3727,4 +3727,21 @@ body.path-blocks-reportdashboard .radios-to-slider.medium{
     display: flex;
     width: 100% !important;
     
+}
+/*course participation changes */
+.block_reporttiles div.reporttile_title{
+    background-color: #fff;
+}
+.block_reporttiles div.tiles_information table tr td:first-child,
+.block_reporttiles div.tiles_information table tr td:last-child,
+.tiles_information table{
+    background-color: #fff;
+}
+.tiles_information table{
+    border:1px solid #ddd;
+}
+.block_reporttiles div.tiles_information table tr td{
+    justify-content: space-between;
+    padding: 13px 1px;
+    border-right: 1px solid #ddd;
 }
