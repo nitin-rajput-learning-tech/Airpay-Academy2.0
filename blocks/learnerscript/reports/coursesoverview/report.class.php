@@ -30,7 +30,7 @@ class report_coursesoverview extends reportbase implements report {
     public function __construct($report, $reportproperties) {
         parent::__construct($report, $reportproperties);
         $this->components = array('columns','ordering', 'filters', 'permissions', 'plot');
-        $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions','notstarted','quizpassed','quizfail','traineduserpercent']);
+        $columns = array('coursefield'=>['coursefield'], 'coursesoverviewcolumns' => ['noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions']);
         $this->columns = $columns;
         $this->filters = array('organization','departments', 'subdepartments', 'level4department','course');
         $this->orderable = array('coursename', 'noofenrollments', 'noofcompletions','noofinprogress','percentofcompletions');
@@ -57,7 +57,7 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     function joins() {
-        
+        $this->sql .= " JOIN {local_costcenter} AS co ON co.path = c.open_path" ;
         parent::joins();
     }
 
@@ -133,6 +133,50 @@ class report_coursesoverview extends reportbase implements report {
                         JOIN {role} r ON r.id = ra.roleid
                         JOIN {user} u ON ra.userid = u.id
                         WHERE u.deleted = 0
+                            AND u.suspended = 0 AND r.shortname  IN ('employee','student')
+                            AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
+                                          
+            $completedsql = "SELECT COUNT(ra.id)
+                        FROM {role_assignments} ra
+                        JOIN {context} AS cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
+                        JOIN {role} r ON r.id = ra.roleid
+                        JOIN {user} u ON ra.userid = u.id
+                        JOIN {course_completions} cc ON cxt.instanceid = cc.course
+                            AND cc.userid = u.id AND cc.timecompleted IS NOT NULL
+                        WHERE u.deleted = 0
+                            AND u.suspended = 0 AND r.shortname IN ('employee','student')
+                            AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
+            if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+                $enrolsql .= " AND ra.timemodified > :ls_fstartdate ";
+                $completedsql .= " AND cc.timecompleted > :ls_fstartdate ";
+           
+                $enrolsql .= " AND ra.timemodified < :ls_fenddate ";
+                $completedsql .= " AND cc.timecompleted < :ls_fenddate ";
+            }
+            foreach ($courses as $course) {
+                $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
+
+                $course->noofcompletions = $DB->count_records_sql($completedsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
+                $percentofcompletions = round(($course->noofcompletions/$course->noofenrollments)*100);
+                $percentofcompletion = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
+                $course->percentofcompletions = '<div class="progress">
+                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$percentofcompletion.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$percentofcompletion.'%">
+                        <span class="progress_percentage ml-2">'.$percentofcompletion.'%</span>
+                    </div>
+                </div>';    
+                $data[] = $course;
+            }
+        }
+        return $data;
+
+       /*  if($courses){
+            $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path', null, 'lowerandsamepath');
+            $enrolsql = "SELECT COUNT(ra.id)
+                        FROM {role_assignments} ra
+                        JOIN {context} cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
+                        JOIN {role} r ON r.id = ra.roleid
+                        JOIN {user} u ON ra.userid = u.id
+                        WHERE u.deleted = 0
                             AND u.suspended = 0 AND r.shortname IN ('employee','student')
                             AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
 
@@ -143,24 +187,16 @@ class report_coursesoverview extends reportbase implements report {
                 AND ul.userid NOT IN(SELECT cc.userid FROM {course_completions} AS cc
                     WHERE cc.course = ul.courseid AND cc.userid = ul.userid AND cc.timecompleted IS NOT NULL)";
             $inprogress .= " AND ul.userid IN (SELECT ra.userid
-                        FROM mdl_role_assignments ra
-                        JOIN mdl_context cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
-                        JOIN mdl_role r ON r.id = ra.roleid
-                        JOIN mdl_user u ON ra.userid = u.id
+                        FROM {role_assignments} ra
+                        JOIN {context} cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
+                        JOIN {role} r ON r.id = ra.roleid
+                        JOIN {user} u ON ra.userid = u.id
                         WHERE u.deleted = 0
                             AND u.suspended = 0 AND r.shortname IN ('employee','student')
                             AND cxt.instanceid = ul.courseid)";
 
             $notstarted = "AND ra.userid NOT IN (SELECT ul.userid FROM {user_lastaccess} AS ul WHERE ul.courseid = cxt.instanceid)";
-
-            $quizpassgrade = "SELECT id, gradepass, iteminstance FROM {grade_items} WHERE itemmodule = 'quiz' AND courseid =:courseid";
-
-            $countquizparticipents = "SELECT count(id) FROM {quiz_grades} WHERE quiz =:quizeid";
-
-            $countpassed = " AND grade >=:passgrade";
-
-            $countfail = " AND grade <:passgrade";
-
+           
             foreach ($courses as $course) {
 
                 $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid));
@@ -173,27 +209,12 @@ class report_coursesoverview extends reportbase implements report {
                     <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$percentofcompletion.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$percentofcompletion.'%">
                         <span class="progress_percentage ml-2">'.$percentofcompletion.'%</span>
                     </div>
-                </div>';
-                $passgrade = $DB->get_record_sql($quizpassgrade,array('courseid' => $course->courseid));
+                </div>';           
 
-                $totalattemptsuser = $DB->count_records_sql($countquizparticipents, array('quizeid' => $passgrade->iteminstance));
-
-                $userpassed = $DB->count_records_sql($countquizparticipents.$countpassed, array('passgrade' => $passgrade->gradepass, 'quizeid' => $passgrade->iteminstance));
-                $course->quizpassed = $userpassed;
-
-                $userfail = $DB->count_records_sql($countquizparticipents.$countfail, array('passgrade' => $passgrade->gradepass, 'quizeid' => $passgrade->iteminstance));
-                $course->quizfail = $userfail;
-
-                $traineduser = round(($userpassed/$course->noofenrollments)*100);
-                $traineduserpercent = is_NAN($traineduser) ? 0 : $traineduser;
-                $course->traineduserpercent = '<div class="progress">
-                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$traineduserpercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$traineduserpercent.'%">
-                        <span class="progress_percentage ml-2">'.$traineduserpercent.'%</span>
-                    </div>
-                </div>';
                 $data[] = $course;
             }
-        }
-        return $data;
+        } */
+        
+     
     }
 }
