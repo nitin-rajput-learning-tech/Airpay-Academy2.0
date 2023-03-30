@@ -135,7 +135,7 @@
 }
 
 .block.block_userdashboard .nav-tabs .nav-link {
-    padding: 0.9rem 0rem;
+    /* padding: 0.9rem 0rem; */
     border-bottom: none;
     border-radius: .5rem .5rem 0 0
 }
@@ -1782,7 +1782,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 	border-radius: 18px;
 }
 .block.block_userdashboard .nav-tabs {
-    border-bottom: 1px solid #ffffffa3;
+    border-bottom: 1px solid #a3a3a3;
     padding-bottom: 3px;
 }
 .block.block_userdashboard .desc  {
@@ -1822,7 +1822,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 }
 .block.block_userdashboard .nav-tabs .nav-link.active, .block.block_userdashboard .nav-tabs .nav-link:hover
 .block.block_userdashboard .nav-tabs .nav-item.show .nav-link{
-	background-color: transparent;
+	/* background-color: transparent; */
 	color: #2B354B;
 	border-color: inherit;
 	border: none;
@@ -2286,7 +2286,7 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
 }
 
 .block.block_userdashboard .count_info_list li{
-    margin-top: 10px;
+    margin-top: 2px;
     margin-right: 10px;
 }
 .block.block_userdashboard .dashboard-stat .more .browse_classroom_icon{

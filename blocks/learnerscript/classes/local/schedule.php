@@ -31,6 +31,9 @@ use MoodleODSWorkbook;
 use MoodleODSWriter;
 use PHPExcel;
 use PHPExcel_IOFactory;
+use \block_learnerscript\Spout\Common\Type;
+use \block_learnerscript\Spout\Writer\WriterFactory;
+		
 use block_learnerscript\local\ls;
 require_once($CFG->dirroot . '/calendar/lib.php');
 
@@ -591,12 +594,13 @@ class schedule {
 		} else {
 			$context = context_course::instance($report->courseid);
 		}
-		$filterrequests = array('filter_organization' => $organizationid, 'filter_departments' => $departmentid);
+		//$filterrequests = array('filter_organization' => $organizationid, 'filter_departments' => $departmentid);
 		$report->userid = $user->id;
+		$report->reportid = $reportid;
 		$reportclassname = 'report_' . $report->type;
-		$reportclass = new $reportclassname($report, $properties);
+		$reportclass = new $reportclassname($report, $properties);		
 		$reportclass->courseid = $report->courseid; 
-		$reportclass->filters = $filterrequests;
+		//$reportclass->filters = $filterrequests;
 		$reportclass->userid = $user->id;
 		$reportclass->start = 0;
 		$reportclass->length = -1;
@@ -646,9 +650,13 @@ class schedule {
 	    }
 		$reportclass->role = $role;
 		$reportclass->scheduling = true;
+	/* echo $reportclass->check_permissions($user->id, $context);die;
 		if (!$reportclass->check_permissions($user->id, $context)) {
+			echo $user->id;die;
 			return array(array(), false);
-		}
+		} */
+
+	
 		$reportclass->create_report(null, $user->id, $cron=1); // to set userid for cli task
 		return array($reportclass->finalreport, true);
 	}

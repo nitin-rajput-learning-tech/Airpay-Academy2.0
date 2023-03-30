@@ -36,6 +36,7 @@ class report_coursescompletions extends reportbase implements report {
         $this->parent = true;
         $this->orderable = array('coursename');
         $this->defaultcolumn = 'ra.id';
+        $this->reportid = $report->reportid;
     }
 
     function init() {
@@ -81,15 +82,28 @@ class report_coursescompletions extends reportbase implements report {
     }
 
     function where() {
-        global $USER, $DB;
+        
+        global $USER, $DB;    
         $this->sql .= " WHERE c.id <> :siteid  AND c.open_coursetype = :type ";
         $this->params['siteid'] = SITEID;
         $this->params['type'] = 0;
+       
+        if (!is_siteadmin()) {  
+            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid' => $this->reportid, 'sendinguserid' => $USER->id], IGNORE_MULTIPLE);
+        }
         $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path', null, 'lowerandsamepath');
-
+ 
         if (is_siteadmin()) {
             $this->sql .= "";
-        } else  {
+        } else  if (!empty($scheduledreport)) {             
+            $usercostcenterpath = "SELECT cc.path FROM {role_assignments} AS ra
+                JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
+                JOIN {course_categories} AS cc ON cc.id = c.instanceid
+                JOIN {role} AS r ON r.id = ra.roleid
+                WHERE ra.userid =:userid";          
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',  $usercostcenterpath, 'lowerandsamepath');
+            $this->sql .= $costcenterpathconcatsql;
+        }else{
             $this->sql .= $costcenterpathconcatsql;
         }
         parent::where();
@@ -106,6 +120,7 @@ class report_coursescompletions extends reportbase implements report {
     }
 
     function filters() {
+
         if ($this->params['filter_organization'] > 0) {
             $orgpath = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_organization'], 'path');
             $this->sql .= " AND concat(c.open_path,'/') like :orgpath ";
@@ -128,7 +143,7 @@ class report_coursescompletions extends reportbase implements report {
             $this->sql .= " AND concat(c.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
         }    
-   
+
 
         if (!empty($this->params['filter_course'])) {
             $courseid = $this->params['filter_course'];
@@ -160,11 +175,10 @@ class report_coursescompletions extends reportbase implements report {
                 $this->sql .= " AND cc.timecompleted IS NULL ";
             }
         }
-/*          echo $this->sql;
-        print_r($this->params);exit; */
+
     }
 
-    public function get_rows($courseusers) {
+    public function get_rows($courseusers) {    
         global $DB;
         if($courseusers){
             foreach($courseusers AS $user){

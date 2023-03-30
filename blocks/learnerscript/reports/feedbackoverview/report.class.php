@@ -38,6 +38,7 @@ class report_feedbackoverview extends reportbase implements report {
         $this->filters = array('organization', 'departments', 'subdepartments', 'feedbacks');
         $this->orderable = array('feedbackname','enrolmentscount','completionscount');
         $this->defaultcolumn = 'le.id';
+        $this->reportid = $report->reportid;
     }
     function init() {
         parent::init();
@@ -65,24 +66,24 @@ class report_feedbackoverview extends reportbase implements report {
     }
     function where(){
         global $USER, $DB;
-         $this->sql .=  " WHERE le.instance = 0 AND le.deleted  = 0 ";
-      
-        // getscheduled report
-        if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-            } else {
-                $ohs = $dh = 1;
-            }
+        $this->sql .=  " WHERE le.instance = 0 AND le.deleted  = 0 ";
+
+        if (!is_siteadmin()) {  
+            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid' => $this->reportid, 'sendinguserid' => $USER->id], IGNORE_MULTIPLE);
         }
         $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path', null, 'lowerandsamepath');
-       
+ 
         if (is_siteadmin()) {
             $this->sql .= "";
-        } else {
+        } else  if (!empty($scheduledreport)) {             
+            $usercostcenterpath = "SELECT cc.path FROM {role_assignments} AS ra
+                JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
+                JOIN {course_categories} AS cc ON cc.id = c.instanceid
+                JOIN {role} AS r ON r.id = ra.roleid
+                WHERE ra.userid =:userid";          
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',  $usercostcenterpath, 'lowerandsamepath');
+            $this->sql .= $costcenterpathconcatsql;
+        }else{
             $this->sql .= $costcenterpathconcatsql;
         }
 
