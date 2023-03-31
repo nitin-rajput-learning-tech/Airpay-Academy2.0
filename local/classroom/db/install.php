@@ -68,20 +68,20 @@ function xmldb_local_classroom_install(){
         // $table->add_field('shortname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('moduleid', XMLDB_TYPE_TEXT, null, null, null, null, null);
         // courses
-        $table->add_field('reminderdays', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        $table->add_field('attach_certificate', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        $table->add_field('completiondays', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        $table->add_field('enable_cc', XMLDB_TYPE_INTEGER, '1', null, null, null, '0');
-        $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+        $table->add_field('reminderdays', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('attach_certificate', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('completiondays', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('enable_cc', XMLDB_TYPE_INTEGER, '1', null, null, null, 0);
+        $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 1);
         $table->add_field('subject', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('body', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, '0');
         $table->add_field('adminbody', XMLDB_TYPE_TEXT, null, null, null, null, '0');
         $table->add_field('attachment_filepath', XMLDB_TYPE_CHAR, null, null, null, null, '0');
 
-        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
@@ -103,22 +103,22 @@ function xmldb_local_classroom_install(){
         $table->add_field('moduleid', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
         $table->add_field('teammemberid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
         // courses
-        $table->add_field('reminderdays', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('enable_cc', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('reminderdays', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('enable_cc', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);
         $table->add_field('subject', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('emailbody', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, '0');
         $table->add_field('adminbody', XMLDB_TYPE_TEXT, null, null, null, null, '0');
         $table->add_field('attachment_filepath', XMLDB_TYPE_CHAR, null, null, null, null, '0');
-        $table->add_field('status', XMLDB_TYPE_INTEGER, 10, null, null, null, '0');
+        $table->add_field('status', XMLDB_TYPE_INTEGER, 10, null, null, null, 0);
         
-        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
 
-        $table->add_field('sent_date', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        $table->add_field('sent_by', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('sent_date', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('sent_by', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
 
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
@@ -132,10 +132,10 @@ function xmldb_local_classroom_install(){
         $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('module', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
         
-        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
-        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('usercreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
         // $table->add_field('pluginname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         // $table->add_key('primary', XMLDB_KEY_FOREIGN, array('id'));
