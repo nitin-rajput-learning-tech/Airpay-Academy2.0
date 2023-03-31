@@ -13,8 +13,13 @@ function xmldb_block_trending_modules_install(){
 		$table = new xmldb_table($key);
 		if($dbman->table_exists($table)){
 			$condition = '';
-			if($key == 'course')
-				$condition = ' id > 1 AND open_coursetype = 0 ';
+			if($key == 'course'){
+				$condition = ' id > 1 ';
+				$field = new xmldb_field('open_coursetype');
+				if($dbman->field_exists($table, $field)){
+					$condition .= ' AND open_coursetype = 0 ';
+				}
+			}
 			$records = $DB->get_fieldset_select($key, 'id', $condition, array());
 			foreach($records AS $record){
 				$lib->trending_modules_crud($record, $value);
