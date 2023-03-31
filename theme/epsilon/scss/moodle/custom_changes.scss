@@ -3358,4 +3358,18 @@ table.generaltable{
         margin-top:0;
     }
 }
-
+/*table css*/
+.generaltable th:not(:first-child, :last-child), 
+.generaltable td:not(:first-child, :last-child),
+table.flexible th:not(:first-child, :last-child),
+table.flexible td:not(:first-child, :last-child)
+{
+    text-align: center !important;
+} 
+.generaltable thead th,
+.generaltable tbody td {
+    vertical-align: middle;
+}
+#classroommodule.generaltable tbody td{
+    justify-content: center;
+}
