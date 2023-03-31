@@ -29,6 +29,7 @@ class report_coursescompletions extends reportbase implements report {
 
     public function __construct($report, $reportproperties) {
         global $DB;
+        
         parent::__construct($report, $reportproperties);
         $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','enddate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
@@ -37,6 +38,7 @@ class report_coursescompletions extends reportbase implements report {
         $this->orderable = array('coursename');
         $this->defaultcolumn = 'ra.id';
         $this->reportid = $report->reportid;
+        $this->scheduleflag = ($report->scheduling) ? true : false;
     }
 
     function init() {
@@ -87,25 +89,24 @@ class report_coursescompletions extends reportbase implements report {
         $this->sql .= " WHERE c.id <> :siteid  AND c.open_coursetype = :type ";
         $this->params['siteid'] = SITEID;
         $this->params['type'] = 0;
-       
-        if (!is_siteadmin()) {  
+ 
+        if (!is_siteadmin()  && $this->scheduleflag ) {  
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid' => $this->reportid, 'sendinguserid' => $USER->id], IGNORE_MULTIPLE);
         }
         $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path', null, 'lowerandsamepath');
- 
+        
         if (is_siteadmin()) {
-            $this->sql .= "";
-        } else  if (!empty($scheduledreport)) {             
-            $usercostcenterpath = "SELECT cc.path FROM {role_assignments} AS ra
+           $this->sql .= "";
+        } else  if (!empty($scheduledreport) &&  $this->scheduleflag ) {                      
+             $usercostcenterpath =  $DB->get_record_sql("SELECT cc.path FROM {role_assignments} AS ra
                 JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
                 JOIN {course_categories} AS cc ON cc.id = c.instanceid
                 JOIN {role} AS r ON r.id = ra.roleid
-                WHERE ra.userid =:userid";          
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',  $usercostcenterpath, 'lowerandsamepath');
-            $this->sql .= $costcenterpathconcatsql;
-        }else{
-            $this->sql .= $costcenterpathconcatsql;
+                WHERE ra.userid =:userid",array('userid' => $USER->id));   
+
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',  $usercostcenterpath, 'lowerandsamepath');
         }
+        $this->sql .= $costcenterpathconcatsql;
         parent::where();
     }
 

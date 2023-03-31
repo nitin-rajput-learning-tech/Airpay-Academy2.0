@@ -32,6 +32,7 @@ class report_feedbackoverview extends reportbase implements report {
      */
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
+      
         $this->parent = true;
         $this->columns = ['feedbackfield'=>['feedbackfield'],'feedbackoverviewcolumns' => ['enrolmentscount','completionscount']];
         $this->components = array('columns', 'filters', 'permissions','orderable','plot');
@@ -39,6 +40,7 @@ class report_feedbackoverview extends reportbase implements report {
         $this->orderable = array('feedbackname','enrolmentscount','completionscount');
         $this->defaultcolumn = 'le.id';
         $this->reportid = $report->reportid;
+        $this->scheduleflag = ($report->scheduling) ? true : false;
     }
     function init() {
         parent::init();
@@ -67,26 +69,24 @@ class report_feedbackoverview extends reportbase implements report {
     function where(){
         global $USER, $DB;
         $this->sql .=  " WHERE le.instance = 0 AND le.deleted  = 0 ";
-
-        if (!is_siteadmin()) {  
+        if (!is_siteadmin()  && $this->scheduleflag ) {  
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid' => $this->reportid, 'sendinguserid' => $USER->id], IGNORE_MULTIPLE);
         }
         $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path', null, 'lowerandsamepath');
  
         if (is_siteadmin()) {
-            $this->sql .= "";
-        } else  if (!empty($scheduledreport)) {             
-            $usercostcenterpath = "SELECT cc.path FROM {role_assignments} AS ra
+           $this->sql .= "";
+        } else  if (!empty($scheduledreport) &&  $this->scheduleflag ) {                      
+             $usercostcenterpath =  $DB->get_record_sql("SELECT cc.path FROM {role_assignments} AS ra
                 JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
                 JOIN {course_categories} AS cc ON cc.id = c.instanceid
                 JOIN {role} AS r ON r.id = ra.roleid
-                WHERE ra.userid =:userid";          
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',  $usercostcenterpath, 'lowerandsamepath');
-            $this->sql .= $costcenterpathconcatsql;
-        }else{
-            $this->sql .= $costcenterpathconcatsql;
-        }
+                WHERE ra.userid =:userid",array('userid' => $USER->id));   
 
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path',  $usercostcenterpath, 'lowerandsamepath');
+        }
+       
+        $this->sql .= $costcenterpathconcatsql;       
         parent::where();
     }
     function search() {  
