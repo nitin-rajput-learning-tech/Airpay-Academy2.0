@@ -98,7 +98,7 @@ class report_coursescompletions extends reportbase implements report {
         if (is_siteadmin()) {
            $this->sql .= "";
         } else  if (!empty($scheduledreport) &&  $this->scheduleflag ) {                      
-             $usercostcenterpath =  $DB->get_record_sql("SELECT cc.path FROM {role_assignments} AS ra
+             $usercostcenterpath =  $DB->get_field_sql("SELECT cc.path FROM {role_assignments} AS ra
                 JOIN {context} AS c ON c.id = ra.contextid AND c.contextlevel = 40
                 JOIN {course_categories} AS cc ON cc.id = c.instanceid
                 JOIN {role} AS r ON r.id = ra.roleid
