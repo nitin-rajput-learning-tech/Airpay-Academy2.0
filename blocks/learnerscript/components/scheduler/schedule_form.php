@@ -103,14 +103,6 @@ class scheduled_reports_form extends moodleform {
 		$mform->setType('role', PARAM_RAW);
 		$mform->addRule('role', get_string('PleaseSelectRole', 'block_learnerscript'), 'required', null, 'client'); 
 
-		$mform->addElement('hidden', 'filter_department', 0, array('id' => 'filter_department'));
-		$mform->setType('filter_department', PARAM_INT);
-
-
-		$mform->addElement('hidden', 'filter_subdepartment', 0, array('id' => 'filter_subdepartment'));
-		$mform->setType('filter_subdepartment', PARAM_INT);
-
-
 		foreach ($this->_customdata['reportfilters'] as $filter) {
 			if ($filter['name'] == 'organization') {
 				$organizations = $DB->get_records_sql("SELECT id, fullname FROM {local_costcenter} WHERE parentid = 0 AND depth = 1");
