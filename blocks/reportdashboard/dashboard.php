@@ -298,10 +298,10 @@ if (!empty($role) || is_siteadmin()) {
         // echo  $output->render($dashboardheader);
 
         echo html_writer::start_tag('div', array('class' => 'width-container'));
-        echo $OUTPUT->blocks('side-db-first', 'width-default width-3');
-        echo $OUTPUT->blocks('side-db-second', 'width-default width-3');
-        echo $OUTPUT->blocks('side-db-third', 'width-default width-3');
-        echo $OUTPUT->blocks('side-db-four', 'width-default width-3');
+        echo $OUTPUT->blocks('side-db-first', 'width-default width-12');
+        echo $OUTPUT->blocks('side-db-second', 'width-default width-12');
+        echo $OUTPUT->blocks('side-db-third', 'width-default width-12');
+        echo $OUTPUT->blocks('side-db-four', 'width-default width-12');
         echo html_writer::end_tag('div');
 
 
