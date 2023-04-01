@@ -168,6 +168,8 @@ class report_courseparticipation extends reportbase {
 
             $data['progress'] = ($data['completed'] > 0 && $data['enrolled'] > 0) ? round(($data['completed']/$data['enrolled'])*100) : 0 ;
 
+            $data['progress'] =$data['progress'].'%';
+
             return array((object)$data);
         }else{
             return $data;
