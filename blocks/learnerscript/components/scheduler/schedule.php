@@ -171,8 +171,9 @@ if ($mform->is_cancelled()) {
 	$fromform->frequency = $data->frequency;
 	$fromform->schedule = $data->schedule;
 	$fromform->userid = $USER->id; 
-	$fromform->organizationid = !empty($data->filter_organization) ? $data->filter_organization : NULL;
-	$fromform->departmentid = !empty($data->filter_departments) ? $data->filter_departments : NULL;
+	$fromform->costcenterid = !empty($data->filter_organization) ? $data->filter_organization : 0;
+	$fromform->departmentid = !empty($data->filter_departments) ? $data->filter_departments : 0;
+	$fromform->subdepartment = !empty($data->filter_subdepartment) ? $data->filter_subdepartment : 0;
 	if (empty($data->contextlevel) AND empty($fromform->contextlevel))
 	$fromform->contextlevel = CONTEXT_SYSTEM; // implicitly for BIZLMS
 	$fromform->nextschedule = $scheduling->next($fromform, null, false);

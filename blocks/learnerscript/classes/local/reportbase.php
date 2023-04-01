@@ -91,6 +91,11 @@ class reportbase {
     public $selectedcolumns;
     public $selectedfilters;
     public $conditionfinalelements = array();
+    public $orderable;
+    public $defaultcolumn;
+    public $reportid;
+    public $scheduleflag;
+
     function __construct($report, $properties = null) {
         global $DB, $CFG, $USER;
         // $user_costcenterid = explode('/',$USER->open_path)[1];

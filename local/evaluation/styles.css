@@ -1565,7 +1565,7 @@ body#page-local-evaluation-userdashboard .card_list_view {
     background: #ff6e22;  
     color: #fff;
     font-size: 12px;   
-    border-radius: 50px;
+    border-radius: 6px;
     padding: 3px 10px;
     margin-right: 8px; 
 
@@ -1575,7 +1575,7 @@ body#page-local-evaluation-userdashboard .card_list_view {
     background: #00651a;
     color: #fff;
     font-size: 12px;   
-    border-radius: 50px;
+    border-radius: 6px;
     padding: 3px 10px;
     margin-right: 8px; 
 }

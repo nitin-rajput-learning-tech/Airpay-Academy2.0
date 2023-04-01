@@ -1045,7 +1045,7 @@ body#page-local-courses-userdashboard .card_list_view {
 #page-local-onlineexams-index .courseimg_container .info_container.completed_info{
     color: #fff;
     font-size: 12px;
-    border-radius: 25px;
+    border-radius: 6px;
     padding: 1px 12px;
 }
 #page-local-onlineexams-index .courseimg_container .info_container.enrolment_info{

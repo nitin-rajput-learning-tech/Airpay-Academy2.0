@@ -3729,18 +3729,18 @@ body.path-blocks-reportdashboard .radios-to-slider.medium{
     
 }
 /*course participation changes */
-.block_reporttiles div.reporttile_title{
-    background-color: #fff;
+#page-blocks-reportdashboard-dashboard .block_reporttiles div.reporttile_title{
+    background-color: #fff !important;
 }
 .block_reporttiles div.tiles_information table tr td:first-child,
 .block_reporttiles div.tiles_information table tr td:last-child,
 .tiles_information table{
     background-color: #fff;
 }
-.tiles_information table{
-    border:1px solid #ddd;
+#page-blocks-reportdashboard-dashboard .tiles_information table{
+    border:1px solid #ddd !important;
 }
-.block_reporttiles div.tiles_information table tr td{
+#page-blocks-reportdashboard-dashboard .block_reporttiles div.tiles_information table tr td{
     justify-content: space-between;
     padding: 13px 1px;
     border-right: 1px solid #ddd;

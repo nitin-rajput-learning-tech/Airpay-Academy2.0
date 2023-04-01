@@ -597,6 +597,7 @@ class schedule {
 		//$filterrequests = array('filter_organization' => $organizationid, 'filter_departments' => $departmentid);
 		$report->userid = $user->id;
 		$report->reportid = $reportid;
+		$report->scheduling = true;
 		$reportclassname = 'report_' . $report->type;
 		$reportclass = new $reportclassname($report, $properties);		
 		$reportclass->courseid = $report->courseid; 
