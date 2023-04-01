@@ -219,7 +219,7 @@ define(
                     if(response.nodata){
                         return Templates.render(options.templateName, {response: response});
                     }else{
-						console.log('response'+JSON.stringify(response));
+						//console.log('response'+JSON.stringify(response));
 						var name=Str.get_string('no_data_available', 'local_costcenter');
 						if(options.targetID == 'manage_skills'){
 							name =Str.get_string('no_skills_data', 'local_costcenter');

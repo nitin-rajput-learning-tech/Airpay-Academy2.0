@@ -72,6 +72,8 @@ $courserenderer = $PAGE->get_renderer('core', 'course');
 if($site->fullname != $heading){
     $PAGE->set_heading($heading);
 }
+$PAGE->set_title($heading);
+
 echo $OUTPUT->header();
 echo $OUTPUT->skip_link_target();
 //echo $content;

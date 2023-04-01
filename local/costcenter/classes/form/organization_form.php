@@ -90,6 +90,8 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $mform->addElement('hidden',  'parentid', $parentid);
                 $mform->setType('parentid', PARAM_INT);
             }
+            local_costcenter_set_costcenter_path($this->_customdata, $prefix ='filter');
+            local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, false, 'local_users', $categorycontext, $multiple = true, $prefix = 'filter');
         }else{
             $mform->addElement('hidden', 'parentid', 0);
             $mform->setType('parentid', PARAM_INT);

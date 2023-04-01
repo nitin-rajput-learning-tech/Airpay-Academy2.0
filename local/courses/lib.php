@@ -1200,8 +1200,13 @@ function local_courses_leftmenunode(){
 
 function local_courses_quicklink_node(){
     global $CFG, $PAGE, $OUTPUT,$DB;
+
+    $orgid  = optional_param('orgid', 0, PARAM_INT);
+
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-    $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+
+    $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$orgid);
+
     $content = '';
     if (has_capability('local/courses:view', $categorycontext) || has_capability('local/courses:manage', $categorycontext) || is_siteadmin()){
         $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'load');
@@ -1213,7 +1218,7 @@ function local_courses_quicklink_node(){
             JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
             WHERE c.id > 1 AND c.open_coursetype=0 ";
             
-            if (is_siteadmin()) {
+            if (is_siteadmin() && $orgid ==0) {
                 $sql .= "";
             } else  {
                 //costcenterid concating

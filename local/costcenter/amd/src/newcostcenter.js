@@ -51,7 +51,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         if (editid) {
             self.costcenterid = editid;
         }
-        console.log(self);
+        //console.log(self);
 
         // if(self.costcenterid && self.parentid == 0){
         //    var head =  Str.get_string('editcostcen', 'local_costcenter');
@@ -223,7 +223,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
          * @return {modal}
         */
         costcenterStatus: function(args) {
-            console.log(args);
+            //console.log(args);
             return Str.get_strings([{
                 key: 'confirm',
                 component: 'local_costcenter',

@@ -77,7 +77,7 @@ define([
                             window.location.href = window.location.href;
                         }).fail(function(ex) {
                             // do something with the exception
-                             console.log(ex);
+                             //console.log(ex);
                         });
                     }.bind(this));
                     modal.show();

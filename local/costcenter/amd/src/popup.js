@@ -177,7 +177,7 @@ define(['local_costcenter/jquery.dataTables', 'jquery', 'core/str', 'core/modal_
                 modal.getRoot().on(ModalEvents.save, function(e) {
                     e.preventDefault();
                     args.confirm = true;
-                    console.log(args);
+                   // console.log(args);
                     var params = {};
                     params.contextid = args.contextid;
                     params.roleid = args.roleid;
@@ -192,7 +192,7 @@ define(['local_costcenter/jquery.dataTables', 'jquery', 'core/str', 'core/modal_
                         window.location.href = window.location.href;
                     }).fail(function(ex) {
                         // do something with the exception
-                         console.log(ex);
+                         //console.log(ex);
                     });
                 }.bind(this));
                 modal.show();
