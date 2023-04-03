@@ -294,6 +294,8 @@ function local_costcenter_output_fragment_new_costcenterform($args){
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
+
+    $formparams=array('id' => $args->id, 'formtype' => $args->formtype);
     if($args->id){
 
         $data = $DB->get_record('local_costcenter', array('id'=>$args->id));
@@ -304,8 +306,12 @@ function local_costcenter_output_fragment_new_costcenterform($args){
         $draftitemid = file_get_submitted_draft_itemid('costcenter_logo');
         file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_costcenter', 'costcenter_logo', $data->costcenter_logo, null);
         $data->costcenter_logo = $draftitemid;
+
+        $formparams['open_path'] = $data->path;
+        local_costcenter_set_costcenter_path($formparams);
     }
-    $mform = new local_costcenter\form\organization_form(null, array('id' => $args->id, 'formtype' => $args->formtype, 'parentid' => $data->parentid), 'post', '', null, true, $formdata);
+
+    $mform = new local_costcenter\form\organization_form(null,$formparams, 'post', '', null, true, $formdata);
 
     $mform->set_data($data);
  
@@ -637,14 +643,35 @@ function costcenter_insert_instance($costcenter){
         global $DB, $CFG, $USER;
        // require_once("$CFG->libdir/coursecatlib.php");
 
-         
 
-        if ($costcenter->parentid == 0) {
+        if($costcenter->formtype == 'department'){
+
+            $costcenter->parentid=$costcenter->open_costcenterid;
+            $costcenter->depth = 1;
+
+        }else if($costcenter->formtype == 'subdepartment'){
+
+            $costcenter->parentid=$costcenter->open_department;
+            $costcenter->depth = 2;
+
+        }else if($costcenter->formtype == 'subsubdepartment'){
+
+            $costcenter->parentid=$costcenter->open_subdepartment;
+            $costcenter->depth = 3;
+
+        }else if($costcenter->formtype == 'subsubsubdepartment'){
+
+            $costcenter->parentid=$costcenter->open_level4department;
+            $costcenter->depth = 4;
+
+        }else{
+
             $costcenter->depth = 1;
             $costcenter->path = '';
 
+        }
 
-        } else {
+        if ($costcenter->parentid > 0) {
             /* ---parent item must exist--- */
             $parent = $DB->get_record('local_costcenter', array('id' => $costcenter->parentid));
             $costcenter->depth = $parent->depth + 1;
