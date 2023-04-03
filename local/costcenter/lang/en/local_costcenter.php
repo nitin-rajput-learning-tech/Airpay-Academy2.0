@@ -396,3 +396,15 @@ $string['select_level5department'] = 'Select Territory';
 $string['hold'] = 'Hold';
 $string['territory_structure'] = 'Territory Structure';
 $string['onlineexams'] = 'Online Exams';
+$string['configdashboard'] = 'Config Dashboard';
+
+$string['open_costcenteridlocal_costcenter_help'] = 'Company of the Bussiness Unit';
+$string['open_departmentlocal_costcenter_help'] = 'Bussiness Unit of the Department';
+$string['open_subdepartmentlocal_costcenter_help'] = 'Department of the Sub Department';
+$string['open_level4departmentlocal_costcenter_help'] = 'Sub Department of the Sub Sub Department';
+$string['requiredopen_department'] = 'Please select a Bussiness Unit';
+
+$string['requiredopen_subdepartment'] = 'Please select a Department';
+$string['requiredopen_level4department'] = 'Please select a Sub Department';
+
+$string['requiredopen_level5department'] = 'Please select a Territory';

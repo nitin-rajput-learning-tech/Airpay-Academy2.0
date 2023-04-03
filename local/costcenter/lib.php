@@ -294,6 +294,8 @@ function local_costcenter_output_fragment_new_costcenterform($args){
         $serialiseddata = json_decode($args->jsonformdata);
         parse_str($serialiseddata, $formdata);
     }
+
+    $formparams=array('id' => $args->id, 'formtype' => $args->formtype);
     if($args->id){
 
         $data = $DB->get_record('local_costcenter', array('id'=>$args->id));
@@ -304,8 +306,13 @@ function local_costcenter_output_fragment_new_costcenterform($args){
         $draftitemid = file_get_submitted_draft_itemid('costcenter_logo');
         file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_costcenter', 'costcenter_logo', $data->costcenter_logo, null);
         $data->costcenter_logo = $draftitemid;
+
+        $formparams['open_path'] = $data->path;
     }
-    $mform = new local_costcenter\form\organization_form(null, array('id' => $args->id, 'formtype' => $args->formtype, 'parentid' => $data->parentid), 'post', '', null, true, $formdata);
+
+    local_costcenter_set_costcenter_path($formparams);
+
+    $mform = new local_costcenter\form\organization_form(null,$formparams, 'post', '', null, true, $formdata);
 
     $mform->set_data($data);
  
@@ -637,14 +644,35 @@ function costcenter_insert_instance($costcenter){
         global $DB, $CFG, $USER;
        // require_once("$CFG->libdir/coursecatlib.php");
 
-         
 
-        if ($costcenter->parentid == 0) {
+        if($costcenter->formtype == 'department'){
+
+            $costcenter->parentid=$costcenter->open_costcenterid;
+            $costcenter->depth = 1;
+
+        }else if($costcenter->formtype == 'subdepartment'){
+
+            $costcenter->parentid=$costcenter->open_department;
+            $costcenter->depth = 2;
+
+        }else if($costcenter->formtype == 'subsubdepartment'){
+
+            $costcenter->parentid=$costcenter->open_subdepartment;
+            $costcenter->depth = 3;
+
+        }else if($costcenter->formtype == 'subsubsubdepartment'){
+
+            $costcenter->parentid=$costcenter->open_level4department;
+            $costcenter->depth = 4;
+
+        }else{
+
             $costcenter->depth = 1;
             $costcenter->path = '';
 
+        }
 
-        } else {
+        if ($costcenter->parentid > 0) {
             /* ---parent item must exist--- */
             $parent = $DB->get_record('local_costcenter', array('id' => $costcenter->parentid));
             $costcenter->depth = $parent->depth + 1;
@@ -1097,4 +1125,88 @@ function local_costcenter_masterinfo(){
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }
     return array('1' => $content);
+}
+function local_costcenter_organization_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false, $prefix = '',$editmode=0){
+    global $DB, $USER;
+    $depth = $USER->useraccess['currentroleinfo']['depth'];
+    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
+    if(count($contextinfo) > 1){
+        $depth--;
+    }
+    if(is_siteadmin()){
+        $depth = 0;
+    }
+    $total_fields = 4;
+    $fields = local_costcenter_get_fields();
+    $prev_element = '';
+    if(empty($elements) || !is_array($elements)){
+        $elements = range(1, $total_fields);
+    }
+    $firstelement = true;
+
+    $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+
+
+    foreach($elements as $level){
+        $levelelementoptions = array(
+            'class' => $prefix.$fields[$level].'_select custom_form_field',
+            'id' => 'id_'.$prefix.$fields[$level].'_select',
+            'data-parentclass' => $prev_element,
+            'data-selectstring' => get_string('select'.$fields[$level], 'local_costcenter'),
+            'placeholder' => get_string('select'.$fields[$level], 'local_costcenter'),
+            'data-depth' => $level,
+            'data-class' => $prefix.$fields[$level].'_select',
+            'data-contextid' => $categorycontext->id,
+            'onchange' => '(function(e){ require("local_costcenter/newcostcenter").changeElement(event) })(event)',
+        );
+        $prev_element = $prefix.$fields[$level].'_select';
+        $fieldvalue = $ajaxformdata[$prefix.$fields[$level]] ? $ajaxformdata[$prefix.$fields[$level]] : $customdata[$prefix.$fields[$level]];
+        if($depth > $level){
+            $mform->addElement('hidden', $prefix.$fields[$level], null, $levelelementoptions);
+            $mform->setConstant($prefix.$fields[$level], $fieldvalue);
+        }else{
+            $enableallfield = ($USER->useraccess['currentroleinfo']['depth'] > $level) || (is_siteadmin()) ? false : $allenable;
+            $levelelementoptions['multiple'] = ($firstelement && $prefix == '') ? false : $multiple;
+            $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
+            $levelelementoptions['data-contextid'] = $context->id;
+            $levelelementoptions['data-action'] = 'costcenter_element_selector';
+            $prevfield = $prefix.$fields[$level-1];
+            $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
+            $levelelementoptions['data-options'] = json_encode(array('depth' => $level, 'parentid' => $parentid, 'enableallfield' => $enableallfield, 'prefix' => $prefix));
+            if($enableallfield){
+                $levelelements = [0 => get_string('all')];
+            }else{
+                $levelelements = [];
+            }
+            if($fieldvalue){
+                $levelelementids = is_array($fieldvalue) ? $fieldvalue : explode(',', $fieldvalue);
+                $levelelementids = array_filter($levelelementids);
+                $levelelements = [];
+                if($levelelementids){
+                    list($idsql, $idparams) = $DB->get_in_or_equal($levelelementids, SQL_PARAMS_NAMED, 'levelelements');
+                    $levelsql = "SELECT id, fullname FROM {local_costcenter} WHERE id {$idsql} ";
+                    $levelelements += $DB->get_records_sql_menu($levelsql, $idparams);
+                }
+            }
+
+            if($editmode > 0){
+
+                $mform->addElement('static', 'static'.$prefix.$fields[$level], get_string($fields[$level], 'local_costcenter'));
+
+                $mform->setConstant('static'.$prefix.$fields[$level], $levelelements[$fieldvalue]);
+
+                $mform->addElement('hidden', $prefix.$fields[$level], null, $levelelementoptions);
+                $mform->setConstant($prefix.$fields[$level], $fieldvalue);
+
+            }else{
+
+                $mform->addElement('autocomplete', $prefix.$fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
+                $mform->addHelpButton($prefix.$fields[$level], $fields[$level].$pluginname, $pluginname);
+                $mform->addRule($prefix.$fields[$level], get_string('required'.$fields[$level], 'local_costcenter'),  'required',  '', 'client');
+            }
+
+            $firstelement = false;
+        }
+        $mform->setType($prefix.$fields[$level], PARAM_RAW);
+    }
 }

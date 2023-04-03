@@ -51,7 +51,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         if (editid) {
             self.costcenterid = editid;
         }
-        console.log(self);
+        //console.log(self);
 
         // if(self.costcenterid && self.parentid == 0){
         //    var head =  Str.get_string('editcostcen', 'local_costcenter');
@@ -200,7 +200,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         },
         changeElement: function(event){
             var elemvalue = $(event.target).val();
-            // if(parseInt(elemvalue) > 0){
+
                 var depth = $(event.target).data('depth');
                 $.each($('[data-action="costcenter_element_selector"]'), function(index, value){
                     if($(value).data('depth') > depth){
@@ -213,7 +213,32 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                     value.html('');
                     value.parent().find('.form-autocomplete-selection').html(value.data('selectstring'));;
                 }
-            // }
+
+                if(parseInt(elemvalue) > 0){
+
+                    var params = {};
+
+                    params.accountid = elemvalue;
+                    params.contextid = $(event.target).data('contextid');
+                    params.actions = "accountselect";
+                    var promise = Ajax.call([{
+                        methodname: 'local_costcenter_generate_shortcode',
+                        args: params
+                    }]);
+                    promise[0].done(function(resp){
+                        $('.shortnamestatic').html(resp);
+                        $('#id_concatshortname').val(resp);
+
+                    });
+
+                }else{
+
+                    $('.shortnamestatic').html('');
+                    $('#id_concatshortname').val('');
+
+                }
+
+
         },
         /**
          * modal for course status.
@@ -223,7 +248,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
          * @return {modal}
         */
         costcenterStatus: function(args) {
-            console.log(args);
+            //console.log(args);
             return Str.get_strings([{
                 key: 'confirm',
                 component: 'local_costcenter',

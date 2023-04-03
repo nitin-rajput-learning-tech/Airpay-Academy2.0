@@ -870,6 +870,8 @@ class classroom {
 
     public function classrooms($stable, $request = false) {
         global $DB, $USER;
+
+        $orgid  = optional_param('orgid', 0, PARAM_INT);
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
 
         $params          = array();
@@ -897,12 +899,14 @@ class classroom {
             $concatsql .= " AND ($fields) ";
         }
         
-        if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
-            $condition = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
-             $statusarrays         = implode(',', $statusarray);
+        if (((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) || $orgid > 0) {
+
+            $condition =(new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$orgid);
+
+            $statusarrays         = implode(',', $statusarray);
             $concatsql .= " AND c.status in ($statusarrays) ";
             $concatsql .= $condition;
-            if (has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) {
+            if ((has_capability('local/classroom:trainer_viewclassroom', $categorycontext)) && $orgid ==0) {
                 $myclassrooms = $DB->get_records_menu('local_classroom_trainers', array(
                     'trainerid' => $USER->id
                 ), 'id', 'id, classroomid');

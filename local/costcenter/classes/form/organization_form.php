@@ -46,50 +46,30 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $formtype = $this->_customdata['formtype'];
         $headstring = $this->_customdata['headstring'];
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
 
-        $costcentersql = "SELECT lc.id, lc.fullname
-                    FROM {local_costcenter} AS lc WHERE 1=1 $costcenterpathconcatsql ";
         if($formtype != 'organization'){
+
+
             if($formtype == 'department'){
-                $parent_label = get_string('organization', 'local_costcenter');
-                $costcentersql.=" AND lc.depth = 1 ";
+
+                $range=range(1, 1);
+
             }else if($formtype == 'subdepartment'){
-                $parent_label = get_string('department', 'local_costcenter');
-                $costcentersql.=" AND lc.depth = 2 ";
+
+                $range=range(1,2);
+
             }else if($formtype == 'subsubdepartment'){
-                $parent_label = get_string('subdepartment', 'local_costcenter');
-                $costcentersql.=" AND lc.depth = 3 ";
+
+                $range=range(1,3);
+
             }else if($formtype == 'subsubsubdepartment'){
-                $parent_label = get_string('subsubdepartment', 'local_costcenter');
-                $costcentersql.=" AND lc.depth = 4 ";
+
+                $range=range(1,4);
             }
 
-            if($id){
-                $costcentersql .= " AND lc.id = $parentid ";
-            }
-            $options = $DB->get_records_sql_menu($costcentersql);
-            if(count($options) > 1){
-                $attributes = array(
-                    'data-contextid' => $categorycontext->id,
-                    'data-action' => 'local_account_selector',
-                    'data-options' => json_encode(array('id' => key($options))),
-                    'class' => 'accountnameselect',
-                    'data-class' => 'accountnameselect',
-                    'onchange' => '(function(e){ require("local_costcenter/costcenterdatatables").accountchange() })(event)'
-                );
 
-                $mform->addElement('select', 'parentid', $parent_label, $options,$attributes);
-                $mform->setType('parentid', PARAM_INT);
-                $mform->addRule('parentid', get_string('orgemptymsg', 'local_costcenter'), 'required', null, 'client');
-            }else{
-                $parentid = array_keys($options)[0];
-                $parentname = $options[$parentid];
-                // $parent = $DB->get_field('local_costcenter','fullname', array('id'=>$parentid));
-                $mform->addElement('static',  'parentname', $parent_label, $parentname);
-                $mform->addElement('hidden',  'parentid', $parentid);
-                $mform->setType('parentid', PARAM_INT);
-            }
+            local_costcenter_organization_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,$range, false, 'local_costcenter', $categorycontext, $multiple = false, $prefix = '',$id);
+
         }else{
             $mform->addElement('hidden', 'parentid', 0);
             $mform->setType('parentid', PARAM_INT);
