@@ -308,8 +308,9 @@ function local_costcenter_output_fragment_new_costcenterform($args){
         $data->costcenter_logo = $draftitemid;
 
         $formparams['open_path'] = $data->path;
-        local_costcenter_set_costcenter_path($formparams);
     }
+
+    local_costcenter_set_costcenter_path($formparams);
 
     $mform = new local_costcenter\form\organization_form(null,$formparams, 'post', '', null, true, $formdata);
 
@@ -1125,7 +1126,7 @@ function local_costcenter_masterinfo(){
     }
     return array('1' => $content);
 }
-function local_costcenter_organization_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false, $prefix = ''){
+function local_costcenter_organization_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false, $prefix = '',$editmode=0){
     global $DB, $USER;
     $depth = $USER->useraccess['currentroleinfo']['depth'];
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
@@ -1187,9 +1188,22 @@ function local_costcenter_organization_hierarchy_fields($mform, $ajaxformdata, $
                     $levelelements += $DB->get_records_sql_menu($levelsql, $idparams);
                 }
             }
-            $mform->addElement('autocomplete', $prefix.$fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
-            $mform->addHelpButton($prefix.$fields[$level], $fields[$level].$pluginname, $pluginname);
-            $mform->addRule($prefix.$fields[$level], get_string('required'.$fields[$level], 'local_costcenter'),  'required',  '', 'client');
+
+            if($editmode > 0){
+
+                $mform->addElement('static', 'static'.$prefix.$fields[$level], get_string($fields[$level], 'local_costcenter'));
+
+                $mform->setConstant('static'.$prefix.$fields[$level], $levelelements[$fieldvalue]);
+
+                $mform->addElement('hidden', $prefix.$fields[$level], null, $levelelementoptions);
+                $mform->setConstant($prefix.$fields[$level], $fieldvalue);
+
+            }else{
+
+                $mform->addElement('autocomplete', $prefix.$fields[$level], get_string($fields[$level], 'local_costcenter'), $levelelements, $levelelementoptions);
+                $mform->addHelpButton($prefix.$fields[$level], $fields[$level].$pluginname, $pluginname);
+                $mform->addRule($prefix.$fields[$level], get_string('required'.$fields[$level], 'local_costcenter'),  'required',  '', 'client');
+            }
 
             $firstelement = false;
         }

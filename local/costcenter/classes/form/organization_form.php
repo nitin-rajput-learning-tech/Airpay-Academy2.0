@@ -46,10 +46,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $formtype = $this->_customdata['formtype'];
         $headstring = $this->_customdata['headstring'];
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
-        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path');
 
-        $costcentersql = "SELECT lc.id, lc.fullname
-                    FROM {local_costcenter} AS lc WHERE 1=1 $costcenterpathconcatsql ";
         if($formtype != 'organization'){
 
 
@@ -70,7 +67,8 @@ class organization_form extends moodleform { /*costcenter creation form*/
                 $range=range(1,4);
             }
 
-            local_costcenter_organization_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,$range, false, 'local_costcenter', $categorycontext);
+
+            local_costcenter_organization_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,$range, false, 'local_costcenter', $categorycontext, $multiple = false, $prefix = '',$id);
 
         }else{
             $mform->addElement('hidden', 'parentid', 0);
