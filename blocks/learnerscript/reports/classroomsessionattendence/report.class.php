@@ -38,7 +38,7 @@ class report_classroomsessionattendence extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],
                                 'userfield'=>['userfield'],
                                 'classroomsessionattendencecolumns'=>['sessionname','trainer','attendendencestatus','timestart','timefinish']);
-        $this->filters = array('user','trainers');
+        $this->filters = array('user','trainers','classrooms');
         $this->basicparams = array(['name' => 'classrooms']);
         $this->defaultcolumn = 'rowNumber';
     }
@@ -65,13 +65,17 @@ class report_classroomsessionattendence extends reportbase implements report {
 
 
     function joins() {
-        $this->sql .=" JOIN {local_classroom_users} lcu ON  lcu.classroomid = lc.id JOIN  {user} u ON u.id = lcu.userid JOIN {local_classroom_sessions} lcs on lcs.classroomid = lcu.classroomid AND lcu.classroomid = lc.id LEFT JOIN {local_classroom_attendance} lca on lca.classroomid = lcu.classroomid AND lca.sessionid = lcs.id AND lca.userid = lcu.userid CROSS JOIN (SELECT @cnt := 0) AS dummy";
+        $this->sql .=" JOIN {local_classroom_users} lcu ON  lcu.classroomid = lc.id 
+                        JOIN  {user} u ON u.id = lcu.userid 
+                        JOIN {local_classroom_sessions} lcs on lcs.classroomid = lcu.classroomid AND lcu.classroomid = lc.id
+                        JOIN {local_classroom_attendance} lca on lca.classroomid = lc.id AND lca.sessionid = lcs.id AND lca.userid = lcu.userid 
+                        CROSS JOIN (SELECT @cnt := 0) AS dummy";
 
         parent::joins();
     }
 
     function where() {
-        $this->sql .= " WHERE 1=1   ";
+        $this->sql .= " WHERE 1=1 AND u.deleted = 0 AND u.suspended = 0 and u.confirmed = 1  ";
         $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
@@ -96,7 +100,11 @@ class report_classroomsessionattendence extends reportbase implements report {
             $this->sql .= " AND lc.id = :classroomid ";
             $this->params['classroomid'] = $this->params['filter_classrooms'];
         } else {
-            $this->sql .= " AND lc.id = 0 ";
+            if(is_siteadmin()){
+                $this->sql .= " AND lc.id = 0 ";        
+            }else{
+                $this->sql .= "";
+            }
         }
 
         if (!empty($this->params['filter_user']) && $this->params['filter_user'] > 0) {
@@ -121,11 +129,11 @@ class report_classroomsessionattendence extends reportbase implements report {
 
     /**
      * [get_rows description]
-     * @param  array  $classroomcompletion [description]
+     * @param  array  $sessionattendance [description]
      * @return [type] [description]
      **/
-    public function get_rows($classroomcompletion = array()) {
+    public function get_rows($sessionattendance = array()) {
        
-        return $classroomcompletion;
+        return $sessionattendance;
     }
 }

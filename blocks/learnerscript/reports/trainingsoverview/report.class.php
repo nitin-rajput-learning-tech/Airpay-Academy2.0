@@ -111,7 +111,7 @@ class report_trainingsoverview extends reportbase implements report {
             $this->params['l5dept'] = $l5dept.'/%';
         }
         if ($this->params['filter_classrooms'] > 0) {
-            $this->sql .= " AND lc.id = :classroomid ";
+            $this->sql .= " AND c.id = :classroomid ";
             $this->params['classroomid'] = $this->params['filter_classrooms'];
         }
 

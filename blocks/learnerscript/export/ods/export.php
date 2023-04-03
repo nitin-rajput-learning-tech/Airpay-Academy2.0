@@ -158,7 +158,7 @@ function export_reportdata($writer,$reportdata, $reportclass){
 	             case 'filter_skills':
 				 $skill = $DB->get_field('local_skill','name',array('id'=>$value));
 				 $skillfilter = array();
-	             $skillfilter[] = get_string('skil','block_learnerscript');
+	             $skillfilter[] = get_string('skill','block_learnerscript');
 	             $skillfilter[] = $skill ? $skill : '--';
 	             $writer->addRow($skillfilter);
 	             break;

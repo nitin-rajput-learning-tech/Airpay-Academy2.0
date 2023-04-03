@@ -42,11 +42,11 @@ class report_userwisecourseoverview extends reportbase {
     }
 
     function count() {
-        $this->sql = "SELECT COUNT(ue.id) ";
+        $this->sql = "SELECT COUNT(DISTINCT(cc.id))";
     }
 
     function select() {
-        $this->sql = " SELECT ue.id as enrolid ,e.enrol as enrol,u.id as userid, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*
+        $this->sql = " SELECT (@cnt := @cnt + 1) AS rowNumber,ue.id as enrolid ,e.enrol as enrol,u.id as userid, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*
                         , ue.timecreated as enrolledon
                         , c.startdate as startdate
                         , c.enddate as enddate
@@ -62,26 +62,20 @@ class report_userwisecourseoverview extends reportbase {
     }
 
     function joins() {   
-        /*       $this->sql .=" JOIN {course_categories} cat ON cat.id = c.category
-            JOIN {context} AS cxt ON cxt.contextlevel = 50 AND cxt.instanceid=c.id
-            JOIN {role_assignments} as ra ON cxt.id=ra.contextid AND ra.roleid = {$employeerole}
-            JOIN {user} u ON ra.userid = u.id AND u.confirmed = 1
-                            AND u.deleted = 0 AND u.suspended = 0
-            JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') AND lc.depth = 1
-            LEFT JOIN {course_completions} as cc ON cc.course = c.id AND u.id = cc.userid "; */   
+     
         $this->sql .= " JOIN {enrol} as e ON c.id =e.courseid
-                    JOIN {user_enrolments} ue ON ue.enrolid = e.id
-                    JOIN {user} as u ON u.id = ue.userid
-                    JOIN {role_assignments} ra ON ra.userid = ue.userid
-                    JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
-                    LEFT JOIN {course_completions} AS cc ON cc.course = c.id AND cc.userid = u.id  ";
+                        JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                        JOIN {user} as u ON u.id = ue.userid AND u.id > 2 AND u.suspended = 0 AND u.deleted = 0 
+                        JOIN {role_assignments} ra ON ra.userid = ue.userid
+                        JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('employee','student')
+                        LEFT JOIN {course_completions} AS cc ON cc.course = c.id AND cc.userid = u.id 
+                        CROSS JOIN (SELECT @cnt := 0) AS dummy ";
         parent::joins();
     }
 
     function where() {
         
-        $this->sql .= " WHERE 1=1 AND u.id > 2 ";
-        $this->sql .= " AND u.suspended = 0 AND u.deleted = 0 AND c.open_coursetype = 0";
+        $this->sql .= " WHERE 1=1 AND c.open_coursetype = 0";
         $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
@@ -116,7 +110,7 @@ class report_userwisecourseoverview extends reportbase {
     }
 
     public function get_rows($courseusers) {
-     
+
         return $courseusers;
     }
 

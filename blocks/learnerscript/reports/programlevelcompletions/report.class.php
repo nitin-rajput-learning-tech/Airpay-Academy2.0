@@ -75,20 +75,9 @@ class report_programlevelcompletions extends reportbase implements report
     function where()
     {
         global $USER, $DB;
-        $this->sql .= " WHERE u.deleted = 0 AND u.suspended = 0 ";
+        $this->sql .= " WHERE u.deleted = 0 AND u.suspended = 0 AND u.confirmed = 1";
         $this->params['siteid'] = SITEID;
-        
-        // getscheduled report
-        if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid' => $this->reportid, 'sendinguserid' => $USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-                $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-                $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid' => $scheduledreport->roleid, 'capability' => 'local/costcenter:manage_ownorganization']);
-                $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid' => $scheduledreport->roleid, 'capability' => 'local/costcenter:manage_owndepartments']);
-            } else {
-                $ohs = $dhs = 1;
-            }
-        }
+       
         $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'lp.open_path');
         if (is_siteadmin()) {
           $this->sql .= "";

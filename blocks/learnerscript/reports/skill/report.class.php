@@ -45,7 +45,7 @@ class report_skill extends reportbase implements report {
         $this->sql = "SELECT COUNT(DISTINCT(cc.id)) ";
     }
     function select() {
-        $this->sql ="SELECT cc.id,u.id as userid,c.fullname as course,ls.name as skill,u.*,
+        $this->sql ="SELECT (@cnt := @cnt + 1) AS rowNumber,cc.id,u.id as userid,c.fullname as course,ls.name as skill,u.*,
                     cl.name as level,cc.timecompleted as achievedon, CONCAT(u.firstname,' ',u.lastname) AS fullname,u.open_employeeid as employeeid"; 
         parent::select();
     }
@@ -56,7 +56,8 @@ class report_skill extends reportbase implements report {
          $this->sql .= "JOIN {course_completions} as cc ON u.id = cc.userid 
                         JOIN {course} as c ON c.id = cc.course 
                         JOIN {local_skill} as ls ON ls.id = c.open_skill 
-                        JOIN {local_course_levels} as cl ON c.open_level = cl.id";
+                        JOIN {local_course_levels} as cl ON c.open_level = cl.id
+                        CROSS JOIN (SELECT @cnt := 0) AS dummy";
           parent::joins();
     }
     function where(){

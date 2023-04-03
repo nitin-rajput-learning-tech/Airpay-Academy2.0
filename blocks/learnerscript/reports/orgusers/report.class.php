@@ -40,7 +40,7 @@ class report_orgusers extends reportbase implements report {
         $this->columns = array('orgusers' => array('employeename','assignedroles'));
         //$this->courselevel = true;
         $this->parent = true;
-        $this->filters = ['organization','user'];
+        $this->filters = ['organization','users'];
         $this->orderable = array('employeename');
         $this->defaultcolumn = 'u.id';
 
@@ -113,11 +113,12 @@ class report_orgusers extends reportbase implements report {
             $this->sql .= " AND ( " . implode(' OR ', $filter_subdepartments) . " ) ";
         }
 
-        if (!empty($this->params['filter_user'])) {
-            $userid = $this->params['filter_user'];
+        if (!empty($this->params['filter_users'])  && $this->params['filter_users'] > 0) {
+            $userid = $this->params['filter_users'];
             $this->sql .= " AND u.id = :userid ";
             $this->params['userid'] = $userid;
         }
+  
     }
     public function get_rows($users)
     {

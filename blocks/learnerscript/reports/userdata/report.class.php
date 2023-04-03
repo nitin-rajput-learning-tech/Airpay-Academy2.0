@@ -54,11 +54,12 @@ class report_userdata extends reportbase implements report {
         $this->sql .= " FROM {user} as u ";
     }
     function joins() {
+        $this->sql .= " JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') ";
         parent::joins();
     }
     function where(){
         global $USER, $DB;
-        $this->sql .=  " WHERE u.deleted = 0 ";
+        $this->sql .=  " WHERE u.confirmed = 1  AND u.deleted = 0 AND u.suspended = 0";
         // $categorycontext =  (new \local_users\lib\accesslib())::get_module_context();
         $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         if (is_siteadmin()) {
@@ -121,6 +122,7 @@ class report_userdata extends reportbase implements report {
         }
     }    
     function get_rows($userdata){
+      
       return $userdata;
     }
  }

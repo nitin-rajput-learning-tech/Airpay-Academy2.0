@@ -1019,18 +1019,14 @@ case 'depusergroups':
 // 	}
 // 	break;
 case 'depprograms': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
+	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
 	if ($orgid > 0) {
-		$sql = "SELECT p.id, p.name AS program
-                FROM {local_program} p
-                WHERE 1 = 1 AND p.costcenter = $orgid";
-		if ($departmentid > 0) {
-			$sql .= " AND p.department = $departmentid";
-		}
-		if ($subdepartmentid > 0) {
-			$sql .= " AND p.subdepartment = $subdepartmentid";
-		}		
-		$programs = $DB->get_records_sql_menu($sql, array());
+		$sql = "SELECT lp.id, lp.name 
+                FROM {local_learningplan} lp
+                WHERE 1 = 1 AND concat('/',lp.open_path,'/') LIKE :costcenterpath";
+				
+		$programs = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid, 'costcenterpath'=>'%'.$orgid.'%'));
+	
         if (!empty($programs)) {
             $return = array('0' => 'Select Program') + $programs;
         } else {
@@ -1040,28 +1036,28 @@ case 'depprograms':
 		$return = array('' => 'Select Program');
 	}
 	break;	
-case 'depclassrooms': 
-	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_costcenterid;
-	if ($orgid > 0) {
-		$sql = "SELECT lc.id, lc.name 
-                FROM {local_classroom} lc 
-                WHERE 1 = 1 AND lc.costcenter = $orgid";
-		if ($departmentid > 0) {
-			$sql .= " AND lc.department = $departmentid";
+	case 'depclassrooms': 
+		$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
+		if ($orgid > 0) {
+			$sql = "SELECT lc.id, lc.name 
+					FROM {local_classroom} lc 
+					WHERE 1 = 1  AND concat('/',lc.open_path,'/') LIKE :costcenterpath";
+			if ($departmentid > 0) {
+				$sql .= " AND lc.department = $departmentid";
+			}
+			if ($subdepartmentid > 0) {
+				$sql .= " AND lc.subdepartment = $subdepartmentid";
+			}		
+			$classrooms = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid, 'costcenterpath'=>'%'.$orgid.'%'));
+			if (!empty($classrooms)) {
+				$return = array('0' => 'Select Instructor-led Course') + $classrooms;
+			} else {
+				$return = array('-1' => 'Select Instructor-led Course');
+			}
+		} else {
+			$return = array('' => 'Select Instructor-led Course');
 		}
-		if ($subdepartmentid > 0) {
-			$sql .= " AND lc.subdepartment = $subdepartmentid";
-		}		
-		$classrooms = $DB->get_records_sql_menu($sql, array());
-        if (!empty($classrooms)) {
-            $return = array('0' => 'Select Instructor-led Course') + $classrooms;
-        } else {
-            $return = array('-1' => 'Select Instructor-led Course');
-        }
-	} else {
-		$return = array('' => 'Select Instructor-led Course');
-	}
-	break;
+		break;
 case 'deplearningpath': 
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
 	if ($orgid > 0) {

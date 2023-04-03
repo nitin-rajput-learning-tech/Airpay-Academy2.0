@@ -49,7 +49,7 @@ class report_programcompletions extends reportbase implements report {
         $this->sql = "SELECT COUNT(lpu.id)";
     }
     function select() {
-        $this->sql = "SELECT lpu.id,lp.id as programid,u.id as userid,u.*,lp.name as programname,
+        $this->sql = "SELECT (@cnt := @cnt + 1) AS rowNumber,lpu.id,lp.id as programid,u.id as userid,u.*,lp.name as programname,
                             lpu.completion_status AS completionstatus,CONCAT(u.firstname,' ',u.lastname) as fullname, 
                             lpu.completiondate as completiondate, u.lastaccess";
         parent::select();
@@ -59,7 +59,8 @@ class report_programcompletions extends reportbase implements report {
     }
     function joins() {
          $this->sql .= " JOIN {local_program_users} lpu ON lp.id = lpu.programid
-                         JOIN {user} u ON u.id = lpu.userid";//JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid
+                         JOIN {user} u ON u.id = lpu.userid 
+                         CROSS JOIN (SELECT @cnt := 0) AS dummy ";//JOIN {local_custom_category} cat ON cat.id = lp.open_categoryid
           parent::joins();
     }
     function where(){
