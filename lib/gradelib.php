@@ -1152,7 +1152,7 @@ function grade_regrade_final_grades($courseid, $userid=null, $updated_item=null,
     if ($userid) {
         // one raw grade updated for one user
         if (empty($updated_item)) {
-            print_error("cannotbenull", 'debug', '', "updated_item");
+            throw new \moodle_exception("cannotbenull", 'debug', '', "updated_item");
         }
         if ($course_item->needsupdate) {
             $updated_item->force_regrading();
@@ -1275,7 +1275,7 @@ function grade_regrade_final_grades($courseid, $userid=null, $updated_item=null,
             }
 
             // Let's update, calculate or aggregate.
-            $result = $grade_items[$gid]->regrade_final_grades($userid);
+            $result = $grade_items[$gid]->regrade_final_grades($userid, $progress);
 
             if ($result === true) {
 
@@ -1352,7 +1352,7 @@ function grade_grab_course_grades($courseid, $modname=null, $userid=0) {
     }
 
     if (!$mods = core_component::get_plugin_list('mod') ) {
-        print_error('nomodules', 'debug');
+        throw new \moodle_exception('nomodules', 'debug');
     }
 
     foreach ($mods as $mod => $fullmod) {

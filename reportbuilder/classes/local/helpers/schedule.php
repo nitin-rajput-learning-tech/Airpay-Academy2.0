@@ -19,7 +19,6 @@ declare(strict_types=1);
 namespace core_reportbuilder\local\helpers;
 
 use context_user;
-use core_plugin_manager;
 use core_user;
 use invalid_parameter_exception;
 use stdClass;
@@ -44,13 +43,14 @@ class schedule {
      * Create report schedule, calculate when it should be next sent
      *
      * @param stdClass $data
+     * @param int|null $timenow Time to use as comparison against current date (defaults to current time)
      * @return model
      */
-    public static function create_schedule(stdClass $data): model {
+    public static function create_schedule(stdClass $data, ?int $timenow = null): model {
         $data->name = trim($data->name);
 
         $schedule = (new model(0, $data));
-        $schedule->set('timenextsend', self::calculate_next_send_time($schedule));
+        $schedule->set('timenextsend', self::calculate_next_send_time($schedule, $timenow));
 
         return $schedule->create();
     }
@@ -229,7 +229,7 @@ class schedule {
      * returned value is after the current date
      *
      * @param model $schedule
-     * @param int|null $timenow Time to use for calculation (defaults to current time)
+     * @param int|null $timenow Time to use as comparison against current date (defaults to current time)
      * @return int
      */
     public static function calculate_next_send_time(model $schedule, ?int $timenow = null): int {
@@ -345,10 +345,10 @@ class schedule {
      * @return string[]
      */
     public static function get_format_options(): array {
-        $dataformats = core_plugin_manager::instance()->get_plugins_of_type('dataformat');
+        $dataformats = dataformat::get_enabled_plugins();
 
-        return array_map(static function(dataformat $dataformat): string {
-            return $dataformat->displayname;
+        return array_map(static function(string $pluginname): string {
+            return get_string('dataformat', 'dataformat_' . $pluginname);
         }, $dataformats);
     }
 

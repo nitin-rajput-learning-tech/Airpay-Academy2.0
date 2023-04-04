@@ -225,6 +225,22 @@ trait behat_session_trait {
     }
 
     /**
+     * Get a description of the selector and locator to use in an exception message.
+     *
+     * @param string $selector The type of locator
+     * @param mixed $locator The locator text
+     * @return string
+     */
+    protected function get_selector_description(string $selector, $locator): string {
+        if ($selector === 'NodeElement') {
+            $description = $locator->getText();
+            return "'{$description}' {$selector}";
+        }
+
+        return "'{$locator}' {$selector}";
+    }
+
+    /**
      * Send key presses straight to the currently active element.
      *
      * The `$keys` array contains a list of key values to send to the session as defined in the WebDriver and JsonWire
@@ -424,13 +440,12 @@ trait behat_session_trait {
         if ($containerselectortype === 'NodeElement' && is_a($containerelement, NodeElement::class)) {
             // Support a NodeElement being passed in for use in step chaining.
             $containernode = $containerelement;
-            $locatorexceptionmsg = $element;
         } else {
             // Gets the container, it will always be text based.
             $containernode = $this->get_text_selector_node($containerselectortype, $containerelement);
-            $locatorexceptionmsg = $element . '" in the "' . $containerelement. '" "' . $containerselectortype. '"';
         }
 
+        $locatorexceptionmsg = $element . '" in the "' . $this->get_selector_description($containerselectortype, $containerelement);
         $exception = new ElementNotFoundException($this->getSession(), $selectortype, null, $locatorexceptionmsg);
 
         return $this->find($selectortype, $element, $exception, $containernode);
@@ -925,7 +940,7 @@ EOF;
                         $msgs[] = $errnostring . ": " .$error['message'] . " at " . $error['file'] . ": " . $error['line'];
                     }
                     $msg = "PHP errors found:\n" . implode("\n", $msgs);
-                    throw new \Exception(htmlentities($msg));
+                    throw new \Exception(htmlentities($msg, ENT_COMPAT));
                 }
 
                 return;
@@ -963,7 +978,7 @@ EOF;
                 }
 
                 $msg = "Moodle exception: " . $errormsg->getText() . "\n" . $errorinfo;
-                throw new \Exception(html_entity_decode($msg));
+                throw new \Exception(html_entity_decode($msg, ENT_COMPAT));
             }
 
             // Debugging messages.
@@ -973,7 +988,7 @@ EOF;
                     $msgs[] = $this->get_debug_text($debuggingmessage->getHtml());
                 }
                 $msg = "debugging() message/s found:\n" . implode("\n", $msgs);
-                throw new \Exception(html_entity_decode($msg));
+                throw new \Exception(html_entity_decode($msg, ENT_COMPAT));
             }
 
             // PHP debug messages.
@@ -984,7 +999,7 @@ EOF;
                     $msgs[] = $this->get_debug_text($phpmessage->getHtml());
                 }
                 $msg = "PHP debug message/s found:\n" . implode("\n", $msgs);
-                throw new \Exception(html_entity_decode($msg));
+                throw new \Exception(html_entity_decode($msg, ENT_COMPAT));
             }
 
             // Any other backtrace.
@@ -998,7 +1013,7 @@ EOF;
                         $msgs[] = $backtrace . '()';
                     }
                     $msg = "Other backtraces found:\n" . implode("\n", $msgs);
-                    throw new \Exception(htmlentities($msg));
+                    throw new \Exception(htmlentities($msg, ENT_COMPAT));
                 }
             }
 
@@ -1679,5 +1694,31 @@ EOF;
         $matches = array_filter($tags, $callback);
 
         return !empty($matches);
+    }
+
+    /**
+     * Get the user id from an identifier.
+     *
+     * The user username and email fields are checked.
+     *
+     * @param string $identifier The user's username or email.
+     * @return int|null The user id or null if not found.
+     */
+    protected function get_user_id_by_identifier(string $identifier): ?int {
+        global $DB;
+
+        $sql = <<<EOF
+    SELECT id
+      FROM {user}
+     WHERE username = :username
+        OR email = :email
+EOF;
+
+        $result = $DB->get_field_sql($sql, [
+            'username' => $identifier,
+            'email' => $identifier,
+        ]);
+
+        return $result ?: null;
     }
 }

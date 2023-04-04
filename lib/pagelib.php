@@ -867,6 +867,8 @@ class moodle_page {
 
     /**
      * Returns the secondary navigation object
+     *
+     * @todo MDL-74939 Remove support for old 'local\views\secondary' class location
      * @return secondary
      */
     protected function magic_get_secondarynav() {
@@ -878,6 +880,9 @@ class moodle_page {
             } else if (class_exists("mod_{$this->activityname}\\local\\views\\secondary")) {
                 // For backwards compatibility, support the old location for this class (it was in a
                 // 'local' namespace which shouldn't be used for core APIs).
+                debugging("The class mod_{$this->activityname}}\\local\\views\\secondary uses a deprecated " .
+                        "namespace. Please move it to mod_{$this->activityname}\\navigation\\views\\secondary.",
+                        DEBUG_DEVELOPER);
                 $class = "mod_{$this->activityname}\\local\\views\\secondary";
             }
 
@@ -1792,7 +1797,7 @@ class moodle_page {
                 break;
 
                 case 'category':
-                    if (!empty($CFG->allowcategorythemes) && !$hascustomdevicetheme) {
+                    if (!empty($CFG->allowcategorythemes) && !empty($this->_course) && !$hascustomdevicetheme) {
                         $categories = $this->categories;
                         foreach ($categories as $category) {
                             if (!empty($category->theme)) {
@@ -1932,9 +1937,10 @@ class moodle_page {
 
         if (!empty($this->_cm)) {
             $this->add_body_class('cmid-' . $this->_cm->id);
+            $this->add_body_class('cm-type-' . $this->_cm->modname);
         }
 
-        if (!empty($CFG->allowcategorythemes)) {
+        if (!empty($CFG->allowcategorythemes) && !empty($this->_course)) {
             $this->ensure_category_loaded();
             foreach ($this->_categories as $catid => $notused) {
                 $this->add_body_class('category-' . $catid);

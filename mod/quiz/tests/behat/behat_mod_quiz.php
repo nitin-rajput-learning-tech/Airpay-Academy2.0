@@ -71,6 +71,7 @@ class behat_mod_quiz extends behat_question_base {
      * | Manual grading report | Quiz name                               | The manual grading report for a quiz         |
      * | Statistics report | Quiz name                                   | The statistics report for a quiz             |
      * | Attempt review    | Quiz name > username > [Attempt] attempt no | Review page for a given attempt (review.php) |
+     * | Question bank     | Quiz name                                   | The question bank page for a quiz            |
      *
      * @param string $type identifies which type of page this is, e.g. 'Attempt review'.
      * @param string $identifier identifies the particular page, e.g. 'Test quiz > student > Attempt 1'.
@@ -140,6 +141,12 @@ class behat_mod_quiz extends behat_question_base {
                 $attempt = $DB->get_record('quiz_attempts',
                         ['quiz' => $quiz->id, 'userid' => $user->id, 'attempt' => $attemptno], '*', MUST_EXIST);
                 return new moodle_url('/mod/quiz/review.php', ['attempt' => $attempt->id]);
+
+            case 'question bank':
+                return new moodle_url('/question/edit.php', [
+                    'cmid' => $this->get_cm_by_quiz_name($identifier)->id,
+                ]);
+
 
             default:
                 throw new Exception('Unrecognised quiz page type "' . $type . '."');
@@ -669,6 +676,10 @@ class behat_mod_quiz extends behat_question_base {
      * @param string $sectionheading the new heading to set.
      */
     public function i_set_the_section_heading_for($sectionname, $sectionheading) {
+        // Empty section headings will have a default names of "Untitled heading".
+        if (empty($sectionname)) {
+            $sectionname = get_string('sectionnoname', 'quiz');
+        }
         $this->execute('behat_general::click_link', $this->escape("Edit heading '{$sectionname}'"));
 
         $this->execute('behat_general::assert_page_contains_text', $this->escape(get_string('edittitleinstructions')));

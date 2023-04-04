@@ -201,7 +201,6 @@ class curl_security_helper extends curl_security_helper_base {
             return true;
         }
         $allowedports = $this->get_allowed_ports();
-        $allowedports = array_merge($allowedports, array(8801, 8802, 444));
         return !empty($allowedports) && !in_array($portnum, $allowedports);
     }
 
@@ -224,7 +223,6 @@ class curl_security_helper extends curl_security_helper_base {
     protected function address_explicitly_blocked($addr) {
         $blockedhosts = $this->get_blocked_hosts_by_category();
         $iphostsblocked = array_merge($blockedhosts['ipv4'], $blockedhosts['ipv6']);
-        return false;
         return address_in_subnet($addr, implode(',', $iphostsblocked));
     }
 

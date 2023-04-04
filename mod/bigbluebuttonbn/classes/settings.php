@@ -30,6 +30,7 @@ use cache_helper;
 use lang_string;
 use mod_bigbluebuttonbn\local\config;
 use mod_bigbluebuttonbn\local\helpers\roles;
+use mod_bigbluebuttonbn\local\proxy\bigbluebutton_proxy;
 
 /**
  * The mod_bigbluebuttonbn settings helper
@@ -84,8 +85,9 @@ class settings {
      * Add all settings.
      */
     public function add_all_settings(): void {
+        // Renders settings for welcome messages.
+        $this->add_defaultmessages_settings();
         // Evaluates if recordings are enabled for the Moodle site.
-
         // Renders settings for record feature.
         $this->add_record_settings();
         // Renders settings for import recordings.
@@ -134,6 +136,8 @@ class settings {
      * @throws \coding_exception
      */
     protected function add_general_settings(): admin_settingpage {
+        global $CFG;
+
         $settingsgeneral = new admin_settingpage(
             $this->section,
             get_string('config_general', 'bigbluebuttonbn'),
@@ -144,7 +148,17 @@ class settings {
             // Configuration for BigBlueButton.
             $item = new admin_setting_heading('bigbluebuttonbn_config_general',
                 '',
-                get_string('config_general_description', 'bigbluebuttonbn'));
+                get_string('config_general_description', 'bigbluebuttonbn')
+            );
+
+            if (empty($CFG->bigbluebuttonbn_default_dpa_accepted)) {
+                $settingsgeneral->add(new admin_setting_configcheckbox(
+                    'bigbluebuttonbn_default_dpa_accepted',
+                    get_string('acceptdpa', 'mod_bigbluebuttonbn'),
+                    get_string('enablingbigbluebuttondpainfo', 'mod_bigbluebuttonbn', config::DEFAULT_DPA_URL),
+                    0
+                ));
+            }
 
             $settingsgeneral->add($item);
             $item = new admin_setting_configtext(
@@ -187,13 +201,41 @@ class settings {
                 $item,
                 $settingsgeneral
             );
-            $settingsgeneral->add($item);
+            $item = new admin_setting_configtext(
+                'bigbluebuttonbn_poll_interval',
+                get_string('config_poll_interval', 'bigbluebuttonbn'),
+                get_string('config_poll_interval_description', 'bigbluebuttonbn'),
+                bigbluebutton_proxy::DEFAULT_POLL_INTERVAL,
+                PARAM_INT
+            );
+            $this->add_conditional_element(
+                'poll_interval',
+                $item,
+                $settingsgeneral
+            );
+        }
+        return $settingsgeneral;
+    }
+
+    /**
+     * Helper function renders default messages settings if the feature is enabled.
+     */
+    protected function add_defaultmessages_settings(): void {
+        // Configuration for 'default messages' feature.
+        $defaultmessagessetting = new admin_settingpage(
+            "{$this->sectionnameprefix}_default_messages",
+            get_string('config_default_messages', 'bigbluebuttonbn'),
+            'moodle/site:config',
+            !((boolean) setting_validator::section_default_messages_shown()) && ($this->moduleenabled)
+        );
+
+        if ($this->admin->fulltree) {
             $item = new admin_setting_heading(
                 'bigbluebuttonbn_config_default_messages',
-                get_string('config_default_messages', 'bigbluebuttonbn'),
+                '',
                 get_string('config_default_messages_description', 'bigbluebuttonbn')
             );
-            $settingsgeneral->add($item);
+            $defaultmessagessetting->add($item);
             $item = new admin_setting_configtextarea(
                 'bigbluebuttonbn_welcome_default',
                 get_string('config_welcome_default', 'bigbluebuttonbn'),
@@ -204,9 +246,8 @@ class settings {
             $this->add_conditional_element(
                 'welcome_default',
                 $item,
-                $settingsgeneral
+                $defaultmessagessetting
             );
-            $settingsgeneral->add($item);
             $item = new admin_setting_configcheckbox(
                 'bigbluebuttonbn_welcome_editable',
                 get_string('config_welcome_editable', 'bigbluebuttonbn'),
@@ -216,10 +257,11 @@ class settings {
             $this->add_conditional_element(
                 'welcome_editable',
                 $item,
-                $settingsgeneral
+                $defaultmessagessetting
             );
         }
-        return $settingsgeneral;
+        $this->admin->add($this->parent, $defaultmessagessetting);
+
     }
 
     /**
@@ -456,13 +498,13 @@ class settings {
                 $showrecordingsettings
             );
             $item = new admin_setting_configcheckbox(
-                'bigbluebuttonbn_recordings_sortorder',
-                get_string('config_recordings_sortorder', 'bigbluebuttonbn'),
-                get_string('config_recordings_sortorder_description', 'bigbluebuttonbn'),
+                'bigbluebuttonbn_recordings_asc_sort',
+                get_string('config_recordings_asc_sort', 'bigbluebuttonbn'),
+                get_string('config_recordings_asc_sort_description', 'bigbluebuttonbn'),
                 0
             );
             $this->add_conditional_element(
-                'recordings_sortorder',
+                'recordings_asc_sort',
                 $item,
                 $showrecordingsettings
             );
@@ -788,7 +830,6 @@ class settings {
             $this->add_lock_setting_from_name('disablepublicchat', $lockingsetting);
             $this->add_lock_setting_from_name('disablenote', $lockingsetting);
             $this->add_lock_setting_from_name('hideuserlist', $lockingsetting);
-            $this->add_lock_setting_from_name('lockonjoin', $lockingsetting);
         }
         $this->admin->add($this->parent, $lockingsetting);
     }
@@ -892,6 +933,18 @@ class settings {
             );
             $this->add_conditional_element(
                 'meetingevents_enabled',
+                $item,
+                $experimentalfeaturessetting
+            );
+            // UI for 'register meeting events' feature.
+            $item = new admin_setting_configcheckbox(
+                'bigbluebuttonbn_guestaccess_enabled',
+                get_string('config_guestaccess_enabled', 'bigbluebuttonbn'),
+                get_string('config_guestaccess_enabled_description', 'bigbluebuttonbn'),
+                0
+            );
+            $this->add_conditional_element(
+                'guestaccess_enabled',
                 $item,
                 $experimentalfeaturessetting
             );

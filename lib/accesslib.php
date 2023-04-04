@@ -1194,7 +1194,7 @@ function assign_legacy_capabilities($capability, $legacyperms) {
         }
 
         if (!array_key_exists($type, $archetypes)) {
-            print_error('invalidlegacy', '', '', $type);
+            throw new \moodle_exception('invalidlegacy', '', '', $type);
         }
 
         if ($roles = get_archetype_roles($type)) {
@@ -2385,7 +2385,8 @@ function capabilities_cleanup($component, $newcapdef = null) {
                 if ($roles = get_roles_with_capability($cachedcap->name)) {
                     foreach ($roles as $role) {
                         if (!unassign_capability($cachedcap->name, $role->id)) {
-                            print_error('cannotunassigncap', 'error', '', (object)array('cap'=>$cachedcap->name, 'role'=>$role->name));
+                            throw new \moodle_exception('cannotunassigncap', 'error', '',
+                                (object)array('cap' => $cachedcap->name, 'role' => $role->name));
                         }
                     }
                 }
@@ -2524,11 +2525,76 @@ function is_inside_frontpage(context $context) {
 function get_capability_info($capabilityname) {
     $caps = get_all_capabilities();
 
+    // Check for deprecated capability.
+    if ($deprecatedinfo = get_deprecated_capability_info($capabilityname)) {
+        if (!empty($deprecatedinfo['replacement'])) {
+            // Let's try again with this capability if it exists.
+            if (isset($caps[$deprecatedinfo['replacement']])) {
+                $capabilityname = $deprecatedinfo['replacement'];
+            } else {
+                debugging("Capability '{$capabilityname}' was supposed to be replaced with ".
+                    "'{$deprecatedinfo['replacement']}', which does not exist !");
+            }
+        }
+        $fullmessage = $deprecatedinfo['fullmessage'];
+        debugging($fullmessage, DEBUG_DEVELOPER);
+    }
     if (!isset($caps[$capabilityname])) {
         return null;
     }
 
     return (object) $caps[$capabilityname];
+}
+
+/**
+ * Returns deprecation info for this particular capabilty (cached)
+ *
+ * Do not use this function except in the get_capability_info
+ *
+ * @param string $capabilityname
+ * @return stdClass|null with deprecation message and potential replacement if not null
+ */
+function get_deprecated_capability_info($capabilityname) {
+    // Here if we do like get_all_capabilities, we run into performance issues as the full array is unserialised each time.
+    // We could have used an adhoc task but this also had performance issue. Last solution was to create a cache using
+    // the official caches.php file. The performance issue shows in test_permission_evaluation.
+    $cache = cache::make('core', 'deprecatedcapabilities');
+    // Cache has not be initialised.
+    if (!$cache->get('deprecated_capabilities_initialised')) {
+        // Look for deprecated capabilities in each components.
+        $allcaps = get_all_capabilities();
+        $components = [];
+        $alldeprecatedcaps = [];
+        foreach ($allcaps as $cap) {
+            if (!in_array($cap['component'], $components)) {
+                $components[] = $cap['component'];
+                $defpath = core_component::get_component_directory($cap['component']).'/db/access.php';
+                if (file_exists($defpath)) {
+                    $deprecatedcapabilities = [];
+                    require($defpath);
+                    if (!empty($deprecatedcapabilities)) {
+                        foreach ($deprecatedcapabilities as $cname => $cdef) {
+                            $cache->set($cname, $cdef);
+                        }
+                    }
+                }
+            }
+        }
+        $cache->set('deprecated_capabilities_initialised', true);
+    }
+    if (!$cache->has($capabilityname)) {
+        return null;
+    }
+    $deprecatedinfo = $cache->get($capabilityname);
+    $deprecatedinfo['fullmessage'] = "The capability '{$capabilityname}' is deprecated.";
+    if (!empty($deprecatedinfo['message'])) {
+        $deprecatedinfo['fullmessage'] .= $deprecatedinfo['message'];
+    }
+    if (!empty($deprecatedinfo['replacement'])) {
+        $deprecatedinfo['fullmessage'] .=
+            "It will be replaced by '{$deprecatedinfo['replacement']}'.";
+    }
+    return $deprecatedinfo;
 }
 
 /**
@@ -4134,6 +4200,11 @@ function get_user_capability_contexts(string $capability, bool $getcategories, $
         $userid = $USER->id;
     }
 
+    if (!$capinfo = get_capability_info($capability)) {
+        debugging('Capability "'.$capability.'" was not found! This has to be fixed in code.');
+        return [false, false];
+    }
+
     if ($doanything && is_siteadmin($userid)) {
         // If the user is a site admin and $doanything is enabled then there is no need to restrict
         // the list of courses.
@@ -4142,7 +4213,7 @@ function get_user_capability_contexts(string $capability, bool $getcategories, $
     } else {
         // Gets SQL to limit contexts ('x' table) to those where the user has this capability.
         list ($contextlimitsql, $contextlimitparams) = \core\access\get_user_capability_course_helper::get_sql(
-            $userid, $capability);
+            $userid, $capinfo->name);
         if (!$contextlimitsql) {
             // If the does not have this capability in any context, return false without querying.
             return [false, false];
@@ -4271,6 +4342,11 @@ function role_switch($roleid, context $context) {
 
     if (!isset($USER->access)) {
         load_all_capabilities();
+    }
+
+    // Make sure that course index is refreshed.
+    if ($coursecontext = $context->get_course_context()) {
+        core_courseformat\base::session_cache_reset(get_course($coursecontext->instanceid));
     }
 
     // Add the switch RA
@@ -4448,7 +4524,7 @@ function role_get_name(stdClass $role, $context = null, $rolenamedisplay = ROLEN
     }
 
     if ($rolenamedisplay == ROLENAME_ALIAS) {
-        if ($coursecontext and trim($role->coursealias) !== '') {
+        if ($coursecontext && $role->coursealias && trim($role->coursealias) !== '') {
             return format_string($role->coursealias, true, array('context'=>$coursecontext));
         } else {
             return $original;
@@ -4456,7 +4532,7 @@ function role_get_name(stdClass $role, $context = null, $rolenamedisplay = ROLEN
     }
 
     if ($rolenamedisplay == ROLENAME_BOTH) {
-        if ($coursecontext and trim($role->coursealias) !== '') {
+        if ($coursecontext && $role->coursealias && trim($role->coursealias) !== '') {
             return format_string($role->coursealias, true, array('context'=>$coursecontext)) . " ($original)";
         } else {
             return $original;
@@ -5216,7 +5292,7 @@ abstract class context extends stdClass implements IteratorAggregate {
      * Now we can convert context object to array using convert_to_array(),
      * and feed it properly to json_encode().
      */
-    public function getIterator() {
+    public function getIterator(): Traversable {
         $ret = array(
             'id'           => $this->id,
             'contextlevel' => $this->contextlevel,
@@ -6140,13 +6216,14 @@ class context_helper extends context {
     }
 
     /**
-     * Preloads context information from db record and strips the cached info.
+     * Preloads context cache with information from db record and strips the cached info.
      *
      * The db request has to contain all columns from context_helper::get_preload_record_columns().
      *
      * @static
      * @param stdClass $rec
-     * @return void (modifies $rec)
+     * @return void This is intentional. See MDL-37115. You will need to get the context
+     *      in the normal way, but it is now cached, so that will be fast.
      */
      public static function preload_from_record(stdClass $rec) {
          context::preload_from_record($rec);

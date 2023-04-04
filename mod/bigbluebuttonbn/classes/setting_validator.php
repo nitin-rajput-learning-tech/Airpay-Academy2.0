@@ -37,7 +37,19 @@ class setting_validator {
     public static function section_general_shown() {
         global $CFG;
         return (!isset($CFG->bigbluebuttonbn['server_url']) ||
-                !isset($CFG->bigbluebuttonbn['shared_secret']));
+                !isset($CFG->bigbluebuttonbn['shared_secret'])
+            );
+    }
+
+    /**
+     * Validate if default messages section will be shown.
+     *
+     * @return bool
+     */
+    public static function section_default_messages_shown() {
+        global $CFG;
+        return (!isset($CFG->bigbluebuttonbn['welcome_default']) ||
+                !isset($CFG->bigbluebuttonbn['welcome_editable']));
     }
 
     /**
@@ -227,17 +239,6 @@ class setting_validator {
     }
 
     /**
-     * Validate if lockonjoin section will be shown.
-     *
-     * @return bool
-     */
-    public static function section_lockonjoin_shown() {
-        global $CFG;
-        return (!isset($CFG->bigbluebuttonbn['lockonjoin_default']) ||
-            !isset($CFG->bigbluebuttonbn['lockonjoin_editable']));
-    }
-
-    /**
      * Validate that session lock settings is shown or not
      * @return bool
      */
@@ -248,7 +249,6 @@ class setting_validator {
                 self::section_disableprivatechat_shown() ||
                 self::section_disablepublicchat_shown() ||
                 self::section_disablenote_shown() ||
-                self::section_hideuserlist_shown() ||
-                self::section_lockonjoin_shown();
+                self::section_hideuserlist_shown();
     }
 }

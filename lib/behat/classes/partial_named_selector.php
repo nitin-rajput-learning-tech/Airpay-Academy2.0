@@ -86,6 +86,7 @@ class behat_partial_named_selector extends \Behat\Mink\Selector\PartialNamedSele
      */
     protected static $allowedselectors = array(
         'activity' => 'activity',
+        'actionmenu' => 'actionmenu',
         'badge' => 'badge',
         'block' => 'block',
         'button' => 'button',
@@ -138,6 +139,17 @@ class behat_partial_named_selector extends \Behat\Mink\Selector\PartialNamedSele
     protected static $moodleselectors = array(
         'activity' => <<<XPATH
 .//li[contains(concat(' ', normalize-space(@class), ' '), ' activity ')][descendant::*[contains(normalize-space(.), %locator%)]]
+XPATH
+        , 'actionmenu' => <<<XPATH
+.//*[
+    contains(concat(' ', normalize-space(@class), ' '), ' action-menu ')
+        and
+    descendant::*[
+        contains(concat(' ', normalize-space(@class), ' '), ' dropdown-toggle ')
+            and
+        (contains(normalize-space(.), %locator%) or descendant::*[%titleMatch%])
+    ]
+]
 XPATH
         , 'badge' => <<<XPATH
 .//span[(contains(@class, 'badge')) and text()[contains(., %locator%)]]
@@ -279,6 +291,11 @@ XPATH
             'date_time' => <<<XPATH
 .//fieldset[(%idMatch% or ./legend[%exactTagTextMatch%]) and (@data-fieldtype='date' or @data-fieldtype='date_time')]
 XPATH
+        ,
+            'select_menu' => <<<XPATH
+//*[@role='combobox'][@aria-labelledby = //label[contains(normalize-space(string(.)), %locator%)]/@id]
+XPATH
+        ,
         ],
     ];
 

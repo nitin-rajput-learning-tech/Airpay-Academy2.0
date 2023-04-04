@@ -83,7 +83,7 @@ function glossary_add_instance($glossary) {
     //Check displayformat is a valid one
     $formats = get_list_of_plugins('mod/glossary/formats','TEMPLATE');
     if (!in_array($glossary->displayformat, $formats)) {
-        print_error('unknowformat', '', '', $glossary->displayformat);
+        throw new \moodle_exception('unknowformat', '', '', $glossary->displayformat);
     }
 
     $returnid = $DB->insert_record("glossary", $glossary);
@@ -130,7 +130,7 @@ function glossary_update_instance($glossary) {
     //Check displayformat is a valid one
     $formats = get_list_of_plugins('mod/glossary/formats','TEMPLATE');
     if (!in_array($glossary->displayformat, $formats)) {
-        print_error('unknowformat', '', '', $glossary->displayformat);
+        throw new \moodle_exception('unknowformat', '', '', $glossary->displayformat);
     }
 
     $DB->update_record("glossary", $glossary);
@@ -1354,9 +1354,11 @@ function glossary_print_entry_icons($course, $cm, $glossary, $entry, $mode='',$h
  * @param object $hook
  * @param bool $printicons
  * @param bool $aliases
+ * @param bool $printseparator Whether to print a thematic break (separator) at the end of the lower section.
  * @return void
  */
-function  glossary_print_entry_lower_section($course, $cm, $glossary, $entry, $mode, $hook, $printicons, $aliases=true) {
+function glossary_print_entry_lower_section($course, $cm, $glossary, $entry, $mode, $hook, $printicons, $aliases = true,
+        $printseparator = true) {
     if ($aliases) {
         $aliases = glossary_print_entry_aliases($course, $cm, $glossary, $entry, $mode, $hook,'html');
     }
@@ -1381,7 +1383,10 @@ function  glossary_print_entry_lower_section($course, $cm, $glossary, $entry, $m
             echo '</td></tr>';
         }
         echo '</table>';
-        echo "<hr>\n";
+
+        if ($printseparator) {
+            echo "<hr>\n";
+        }
     }
 }
 
@@ -2189,13 +2194,13 @@ function glossary_print_dynaentry($courseid, $entries, $displayformat = -1) {
     if ( $entries ) {
         foreach ( $entries as $entry ) {
             if (! $glossary = $DB->get_record('glossary', array('id'=>$entry->glossaryid))) {
-                print_error('invalidid', 'glossary');
+                throw new \moodle_exception('invalidid', 'glossary');
             }
             if (! $course = $DB->get_record('course', array('id'=>$glossary->course))) {
-                print_error('coursemisconf');
+                throw new \moodle_exception('coursemisconf');
             }
             if (!$cm = get_coursemodule_from_instance('glossary', $entry->glossaryid, $glossary->course) ) {
-                print_error('invalidid', 'glossary');
+                throw new \moodle_exception('invalidid', 'glossary');
             }
 
             //If displayformat is present, override glossary->displayformat
@@ -4369,7 +4374,7 @@ function mod_glossary_delete_entry($entry, $glossary, $cm, $context, $course, $h
     // If it is an imported entry, just delete the relation.
     if ($entry->sourceglossaryid) {
         if (!$newcm = get_coursemodule_from_instance('glossary', $entry->sourceglossaryid)) {
-            print_error('invalidcoursemodule');
+            throw new \moodle_exception('invalidcoursemodule');
         }
         $newcontext = context_module::instance($newcm->id);
 

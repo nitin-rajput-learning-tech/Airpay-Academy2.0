@@ -1,4 +1,4 @@
-@core @core_user
+@core @core_user @javascript
 Feature: The student can navigate to their grades page and user grade report.
   In order to view my grades and the user grade report
   As a user
@@ -55,7 +55,6 @@ Feature: The student can navigate to their grades page and user grade report.
       | grade_mygrades_report  | external             |
       | gradereport_mygradeurl | /badges/mybadges.php |
     And I log in as "student1"
-    And I follow "Student 1"
     And I follow "Grades" in the user menu
     Then I should see "My badges from Acceptance test site web site"
 
@@ -76,8 +75,7 @@ Feature: The student can navigate to their grades page and user grade report.
     | moodle/user:viewuseractivitiesreport | 1 |
     | moodle/user:viewdetails | 1 |
     And I click on "Create this role" "button"
-    And I navigate to "Users > Accounts > Browse list of users" in site administration
-    And I follow "Student 1"
+    And I am on the "student1" "user > profile" page
     And I click on "Preferences" "link" in the ".profile_tree" "css_element"
     And I follow "Assign roles relative to this user"
     And I follow "Parent"

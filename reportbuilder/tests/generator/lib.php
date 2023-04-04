@@ -16,6 +16,7 @@
 
 declare(strict_types=1);
 
+use core_reportbuilder\manager;
 use core_reportbuilder\local\helpers\report as helper;
 use core_reportbuilder\local\helpers\schedule as schedule_helper;
 use core_reportbuilder\local\models\column;
@@ -53,7 +54,13 @@ class core_reportbuilder_generator extends component_generator_base {
         // Include default setup unless specifically disabled in passed record.
         $default = (bool) ($record['default'] ?? true);
 
-        return helper::create_report((object) $record, $default);
+        // If setting up default report, purge caches to ensure any default attributes are always loaded in tests.
+        $report = helper::create_report((object) $record, $default);
+        if ($default) {
+            manager::reset_caches();
+        }
+
+        return $report;
     }
 
     /**
@@ -73,7 +80,15 @@ class core_reportbuilder_generator extends component_generator_base {
             throw new coding_exception('Record must contain \'uniqueidentifier\' property');
         }
 
-        return helper::add_report_column($record['reportid'], $record['uniqueidentifier']);
+        $column = helper::add_report_column($record['reportid'], $record['uniqueidentifier']);
+
+        // Update additional record properties.
+        unset($record['reportid'], $record['uniqueidentifier']);
+        if ($properties = array_intersect_key($record, column::properties_definition())) {
+            $column->set_many($properties)->update();
+        }
+
+        return $column;
     }
 
     /**
@@ -93,7 +108,15 @@ class core_reportbuilder_generator extends component_generator_base {
             throw new coding_exception('Record must contain \'uniqueidentifier\' property');
         }
 
-        return helper::add_report_filter($record['reportid'], $record['uniqueidentifier']);
+        $filter = helper::add_report_filter($record['reportid'], $record['uniqueidentifier']);
+
+        // Update additional record properties.
+        unset($record['reportid'], $record['uniqueidentifier']);
+        if ($properties = array_intersect_key($record, filter::properties_definition())) {
+            $filter->set_many($properties)->update();
+        }
+
+        return $filter;
     }
 
     /**
@@ -113,7 +136,15 @@ class core_reportbuilder_generator extends component_generator_base {
             throw new coding_exception('Record must contain \'uniqueidentifier\' property');
         }
 
-        return helper::add_report_condition($record['reportid'], $record['uniqueidentifier']);
+        $condition = helper::add_report_condition($record['reportid'], $record['uniqueidentifier']);
+
+        // Update additional record properties.
+        unset($record['reportid'], $record['uniqueidentifier']);
+        if ($properties = array_intersect_key($record, filter::properties_definition())) {
+            $condition->set_many($properties)->update();
+        }
+
+        return $condition;
     }
 
     /**
@@ -174,6 +205,9 @@ class core_reportbuilder_generator extends component_generator_base {
             $record['timescheduled'] = usergetmidnight(time() + DAYSECS);
         }
 
-        return schedule_helper::create_schedule((object) $record);
+        // Time to use as comparison against current date (null means current time).
+        $timenow = $record['timenow'] ?? null;
+
+        return schedule_helper::create_schedule((object) $record, $timenow);
     }
 }

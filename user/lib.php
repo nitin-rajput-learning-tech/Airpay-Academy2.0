@@ -253,8 +253,7 @@ function user_get_default_fields() {
         'institution', 'interests', 'firstaccess', 'lastaccess', 'auth', 'confirmed',
         'idnumber', 'lang', 'theme', 'timezone', 'mailformat', 'description', 'descriptionformat',
         'city', 'country', 'profileimageurlsmall', 'profileimageurl', 'customfields',
-        'groups', 'roles', 'preferences', 'enrolledcourses', 'suspended', 'lastcourseaccess','open_path',
-        'open_states','open_district','open_subdistrict','open_village','open_supervisorid'
+        'groups', 'roles', 'preferences', 'enrolledcourses', 'suspended', 'lastcourseaccess'
     );
 }
 
@@ -281,6 +280,7 @@ function user_get_user_details($user, $course = null, array $userfields = array(
     if (empty($userfields)) {
         $userfields = $defaultfields;
     }
+
     foreach ($userfields as $thefield) {
         if (!in_array($thefield, $defaultfields)) {
             throw new moodle_exception('invaliduserfield', 'error', '', $thefield);
@@ -342,36 +342,6 @@ function user_get_user_details($user, $course = null, array $userfields = array(
     if (in_array('username', $userfields)) {
         if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
             $userdetails['username'] = $user->username;
-        }
-    }
-    if (in_array('open_path', $userfields)) {
-        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
-            $userdetails['open_path'] = $user->open_path;
-        }
-    }
-    if (in_array('open_states', $userfields)) {
-        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
-            $userdetails['open_states'] = $user->open_states;
-        }
-    }
-    if (in_array('open_district', $userfields)) {
-        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
-            $userdetails['open_district'] = $user->open_district;
-        }
-    }
-    if (in_array('open_subdistrict', $userfields)) {
-        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
-            $userdetails['open_subdistrict'] = $user->open_subdistrict;
-        }
-    }
-    if (in_array('open_village', $userfields)) {
-        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
-            $userdetails['open_village'] = $user->open_village;
-        }
-    }
-    if (in_array('open_supervisorid', $userfields)) {
-        if ($currentuser or has_capability('moodle/user:viewalldetails', $context)) {
-            $userdetails['open_supervisorid'] = $user->open_supervisorid;
         }
     }
     if ($isadmin or $canviewfullnames) {
@@ -613,10 +583,18 @@ function user_get_user_details($user, $course = null, array $userfields = array(
  * Tries to obtain user details, either recurring directly to the user's system profile
  * or through one of the user's course enrollments (course profile).
  *
+ * You can use the $userfields parameter to reduce the amount of a user record that is required by the method.
+ * The minimum user fields are:
+ *  * id
+ *  * deleted
+ *  * all potential fullname fields
+ *
  * @param stdClass $user The user.
+ * @param array $userfields An array of userfields to be returned, the values must be a
+ *                          subset of user_get_default_fields (optional)
  * @return array if unsuccessful or the allowed user details.
  */
-function user_get_user_details_courses($user) {
+function user_get_user_details_courses($user, array $userfields = []) {
     global $USER;
     $userdetails = null;
 
@@ -627,14 +605,14 @@ function user_get_user_details_courses($user) {
 
     // Try using system profile.
     if ($systemprofile) {
-        $userdetails = user_get_user_details($user, null);
+        $userdetails = user_get_user_details($user, null, $userfields);
     } else {
         // Try through course profile.
         // Get the courses that the user is enrolled in (only active).
         $courses = enrol_get_users_courses($user->id, true);
         foreach ($courses as $course) {
             if (user_can_view_profile($user, $course)) {
-                $userdetails = user_get_user_details($user, $course);
+                $userdetails = user_get_user_details($user, $course, $userfields);
             }
         }
     }

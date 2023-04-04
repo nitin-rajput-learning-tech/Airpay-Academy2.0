@@ -1472,9 +1472,18 @@ class question_attempt {
         if ($this->get_question(false) === $otherversion) {
             return $oldstep->get_all_data();
         } else {
+            // Update the data belonging to the question type by asking the question to do it.
             $attemptstatedata = $this->get_question(false)->update_attempt_state_data_for_new_version(
                     $oldstep, $otherversion);
-            return array_merge($attemptstatedata, $oldstep->get_behaviour_data());
+
+            // Then copy over all the behaviour and metadata variables.
+            // This terminology is explained in the class comment on {@see question_attempt_step}.
+            foreach ($oldstep->get_all_data() as $name => $value) {
+                if (substr($name, 0, 1) === '-' || substr($name, 0, 2) === ':_') {
+                    $attemptstatedata[$name] = $value;
+                }
+            }
+            return $attemptstatedata;
         }
     }
 
@@ -1814,36 +1823,39 @@ class question_attempt_step_iterator implements Iterator, ArrayAccess {
     }
 
     /** @return question_attempt_step */
+    #[\ReturnTypeWillChange]
     public function current() {
         return $this->offsetGet($this->i);
     }
     /** @return int */
+    #[\ReturnTypeWillChange]
     public function key() {
         return $this->i;
     }
-    public function next() {
+    public function next(): void {
         ++$this->i;
     }
-    public function rewind() {
+    public function rewind(): void {
         $this->i = 0;
     }
     /** @return bool */
-    public function valid() {
+    public function valid(): bool {
         return $this->offsetExists($this->i);
     }
 
     /** @return bool */
-    public function offsetExists($i) {
+    public function offsetExists($i): bool {
         return $i >= 0 && $i < $this->qa->get_num_steps();
     }
     /** @return question_attempt_step */
+    #[\ReturnTypeWillChange]
     public function offsetGet($i) {
         return $this->qa->get_step($i);
     }
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value): void {
         throw new coding_exception('You are only allowed read-only access to question_attempt::states through a question_attempt_step_iterator. Cannot set.');
     }
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset): void {
         throw new coding_exception('You are only allowed read-only access to question_attempt::states through a question_attempt_step_iterator. Cannot unset.');
     }
 }
@@ -1857,11 +1869,11 @@ class question_attempt_step_iterator implements Iterator, ArrayAccess {
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class question_attempt_reverse_step_iterator extends question_attempt_step_iterator {
-    public function next() {
+    public function next(): void {
         --$this->i;
     }
 
-    public function rewind() {
+    public function rewind(): void {
         $this->i = $this->qa->get_num_steps() - 1;
     }
 }
@@ -1933,21 +1945,23 @@ class question_attempt_steps_with_submitted_response_iterator extends question_a
     }
 
     /** @return question_attempt_step */
+    #[\ReturnTypeWillChange]
     public function current() {
         return $this->offsetGet($this->submittedresponseno);
     }
     /** @return int */
+    #[\ReturnTypeWillChange]
     public function key() {
         return $this->submittedresponseno;
     }
-    public function next() {
+    public function next(): void {
         ++$this->submittedresponseno;
     }
-    public function rewind() {
+    public function rewind(): void {
         $this->submittedresponseno = 1;
     }
     /** @return bool */
-    public function valid() {
+    public function valid(): bool {
         return $this->submittedresponseno >= 1 && $this->submittedresponseno <= count($this->stepswithsubmittedresponses);
     }
 
@@ -1955,7 +1969,7 @@ class question_attempt_steps_with_submitted_response_iterator extends question_a
      * @param int $submittedresponseno
      * @return bool
      */
-    public function offsetExists($submittedresponseno) {
+    public function offsetExists($submittedresponseno): bool {
         return $submittedresponseno >= 1;
     }
 
@@ -1963,6 +1977,7 @@ class question_attempt_steps_with_submitted_response_iterator extends question_a
      * @param int $submittedresponseno
      * @return question_attempt_step
      */
+    #[\ReturnTypeWillChange]
     public function offsetGet($submittedresponseno) {
         if ($submittedresponseno > count($this->stepswithsubmittedresponses)) {
             return null;
@@ -1974,7 +1989,7 @@ class question_attempt_steps_with_submitted_response_iterator extends question_a
     /**
      * @return int the count of steps with tries.
      */
-    public function count() {
+    public function count(): int {
         return count($this->stepswithsubmittedresponses);
     }
 
@@ -1993,11 +2008,11 @@ class question_attempt_steps_with_submitted_response_iterator extends question_a
         }
     }
 
-    public function offsetSet($offset, $value) {
+    public function offsetSet($offset, $value): void {
         throw new coding_exception('You are only allowed read-only access to question_attempt::states '.
                                    'through a question_attempt_step_iterator. Cannot set.');
     }
-    public function offsetUnset($offset) {
+    public function offsetUnset($offset): void {
         throw new coding_exception('You are only allowed read-only access to question_attempt::states '.
                                    'through a question_attempt_step_iterator. Cannot unset.');
     }

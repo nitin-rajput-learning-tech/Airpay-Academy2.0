@@ -59,7 +59,7 @@ class core_user_external extends external_api {
             'firstname' => new external_value(core_user::get_property_type('firstname'), 'The first name(s) of the user'),
             'lastname' => new external_value(core_user::get_property_type('lastname'), 'The family name of the user'),
             'email' => new external_value(core_user::get_property_type('email'), 'A valid and unique email address'),
-            'maildisplay' => new external_value(core_user::get_property_type('maildisplay'), 'Email display', VALUE_OPTIONAL),
+            'maildisplay' => new external_value(core_user::get_property_type('maildisplay'), 'Email visibility', VALUE_OPTIONAL),
             'city' => new external_value(core_user::get_property_type('city'), 'Home city of the user', VALUE_OPTIONAL),
             'country' => new external_value(core_user::get_property_type('country'),
                 'Home country code of the user, such as AU or CZ', VALUE_OPTIONAL),
@@ -486,7 +486,7 @@ class core_user_external extends external_api {
                 VALUE_OPTIONAL),
             'email' => new external_value(core_user::get_property_type('email'), 'A valid and unique email address', VALUE_OPTIONAL,
                 '', NULL_NOT_ALLOWED),
-            'maildisplay' => new external_value(core_user::get_property_type('maildisplay'), 'Email display', VALUE_OPTIONAL),
+            'maildisplay' => new external_value(core_user::get_property_type('maildisplay'), 'Email visibility', VALUE_OPTIONAL),
             'city' => new external_value(core_user::get_property_type('city'), 'Home city of the user', VALUE_OPTIONAL),
             'country' => new external_value(core_user::get_property_type('country'),
                 'Home country code of the user, such as AU or CZ', VALUE_OPTIONAL),
@@ -745,6 +745,7 @@ class core_user_external extends external_api {
     public static function get_users_by_field($field, $values) {
         global $CFG, $USER, $DB;
         require_once($CFG->dirroot . "/user/lib.php");
+
         $params = self::validate_parameters(self::get_users_by_field_parameters(),
                 array('field' => $field, 'values' => $values));
 
@@ -782,6 +783,7 @@ class core_user_external extends external_api {
 
         // Retrieve the users.
         $users = $DB->get_records_list('user', $field, $cleanedvalues, 'id');
+
         $context = context_system::instance();
         self::validate_context($context);
 
@@ -789,46 +791,14 @@ class core_user_external extends external_api {
         $returnedusers = array();
         foreach ($users as $user) {
             $userdetails = user_get_user_details_courses($user);
-            $userdetails['organization']='';
-            $userdetails['open_country']='';
-            $userdetails['commercial_unit']='';
-            $userdetails['commercial_area']='';
-            $userdetails['state']='';
-            $userdetails['district']='';
-            $userdetails['subdistrict']='';
-            $userdetails['village']='';
-            $userdetails['territory']='';
-            //$userdetails['supervisor']='';
-            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$userdetails['open_path']);
-			if($org)
-            {$userdetails['organization']= $DB->get_field('local_costcenter','fullname',array('id'=>$org));}
-            if($ctr)
-            {$userdetails['open_country']= $DB->get_field('local_costcenter','fullname',array('id'=>$ctr));}
-            if($bu)
-			{$userdetails['commercial_unit']= $DB->get_field('local_costcenter','fullname',array('id'=>$bu));}
-            if($cu)
-			{$userdetails['commercial_area']= $DB->get_field('local_costcenter','fullname',array('id'=>$cu));}
-            if($territory)
-			{$userdetails['territory']= $DB->get_field('local_costcenter','fullname',array('id'=>$territory));}
-            if($userdetails['open_states'])
-			{$userdetails['state']= $DB->get_field('local_states','states_name',array('id'=>$userdetails['open_states']));}
-            if($userdetails['open_district'])
-			{$userdetails['district']= $DB->get_field('local_district','district_name',array('id'=>$userdetails['open_district']));}
-            if($userdetails['open_subdistrict'])
-			{$userdetails['subdistrict']= $DB->get_field('local_subdistrict','subdistrict_name',array('id'=>$userdetails['open_subdistrict']));}
-            if($userdetails['open_village'])
-			{$userdetails['village']= $DB->get_field('local_village','village_name',array('id'=>$userdetails['open_village']));}
-            if($userdetails['open_supervisorid'])
-            {$sup_user = $DB->get_record('user', array('id' => $userdetails['open_supervisorid']));
-            $supeuserdetails = user_get_user_details_courses($sup_user);
-            $userdetails['supervisor']=	$supeuserdetails;}
 
             // Return the user only if the searched field is returned.
             // Otherwise it means that the $USER was not allowed to search the returned user.
-            if (!empty($userdetails) and !empty($userdetails[$field])) {                
+            if (!empty($userdetails) and !empty($userdetails[$field])) {
                 $returnedusers[] = $userdetails;
             }
         }
+
         return $returnedusers;
     }
 
@@ -1180,26 +1150,14 @@ class core_user_external extends external_api {
             'country'     => new external_value(core_user::get_property_type('country'), 'Home country code of the user, such as AU or CZ', VALUE_OPTIONAL),
             'profileimageurlsmall' => new external_value(PARAM_URL, 'User image profile URL - small version'),
             'profileimageurl' => new external_value(PARAM_URL, 'User image profile URL - big version'),
-            'organization'     => new external_value(PARAM_RAW, 'Organisation name', VALUE_OPTIONAL),
-            'open_country'     => new external_value(PARAM_RAW, 'users country', VALUE_OPTIONAL),
-            'commercial_unit'     => new external_value(PARAM_RAW, 'Commercial Unit', VALUE_OPTIONAL),
-            'commercial_area'     => new external_value(PARAM_RAW, 'Commercial Area', VALUE_OPTIONAL),
-            'territory'     => new external_value(PARAM_RAW, 'Territory Name', VALUE_OPTIONAL),
-            'state'     => new external_value(PARAM_RAW, 'User States', VALUE_OPTIONAL),
-            'district'     => new external_value(PARAM_RAW, 'User District', VALUE_OPTIONAL),
-            'subdistrict'     => new external_value(PARAM_RAW, 'User Subdistrict', VALUE_OPTIONAL),
-            'village'     => new external_value(PARAM_RAW, 'User Village', VALUE_OPTIONAL),
-            'supervisor' => 
+            'customfields' => new external_multiple_structure(
                 new external_single_structure(
                     array(
-                        'id'  => new external_value(PARAM_RAW, 'The type of the custom field - text field, checkbox...'),
-                        'email' => new external_value(PARAM_RAW, 'The value of the custom field'),
-                        'username' => new external_value(PARAM_RAW, 'The name of the custom field'),
-                        'fullname' => new external_value(PARAM_RAW, 'The shortname of the custom field - to be able to build the field class in the code'),
-                        'profileimageurl' => new external_value(PARAM_RAW, 'The shortname of the custom field - to be able to build the field class in the code'),
-                        'profileimageurlsmall' => new external_value(PARAM_RAW, 'The shortname of the custom field - to be able to build the field class in the code'),
-                        'idnumber' => new external_value(PARAM_RAW, 'The shortname of the custom field - to be able to build the field class in the code'),
-                    
+                        'type'  => new external_value(PARAM_ALPHANUMEXT, 'The type of the custom field - text field, checkbox...'),
+                        'value' => new external_value(PARAM_RAW, 'The value of the custom field'),
+                        'name' => new external_value(PARAM_RAW, 'The name of the custom field'),
+                        'shortname' => new external_value(PARAM_RAW, 'The shortname of the custom field - to be able to build the field class in the code'),
+                    )
                 ), 'User custom fields (also known as user profile fields)', VALUE_OPTIONAL),
             'preferences' => new external_multiple_structure(
                 new external_single_structure(
@@ -1233,6 +1191,7 @@ class core_user_external extends external_api {
      * Copy files from a draft area to users private files area.
      *
      * @throws invalid_parameter_exception
+     * @throws moodle_exception
      * @param int $draftid Id of a draft area containing files.
      * @return array An array of warnings
      * @since Moodle 2.6
@@ -1255,6 +1214,15 @@ class core_user_external extends external_api {
         if (has_capability('moodle/user:ignoreuserquota', $context)) {
             $maxbytes = USER_CAN_IGNORE_FILE_SIZE_LIMITS;
             $maxareabytes = FILE_AREA_MAX_BYTES_UNLIMITED;
+        } else {
+            // Get current used space for this user.
+            $usedspace = file_get_user_used_space();
+            // Get the total size of the new files we want to add to private files.
+            $newfilesinfo = file_get_draft_area_info($params['draftid']);
+
+            if (($newfilesinfo['filesize_without_references'] + $usedspace) > $maxareabytes) {
+                throw new moodle_exception('maxareabytes');
+            }
         }
 
         $options = array('subdirs' => 1,

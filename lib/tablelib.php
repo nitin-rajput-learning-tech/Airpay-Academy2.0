@@ -573,7 +573,7 @@ class flexible_table {
         global $SESSION;
         if (isset($SESSION->flextable[$uniqueid])) {
             $prefs = $SESSION->flextable[$uniqueid];
-        } else if (!$prefs = json_decode(get_user_preferences('flextable_' . $uniqueid), true)) {
+        } else if (!$prefs = json_decode(get_user_preferences("flextable_{$uniqueid}", ''), true)) {
             return '';
         }
 
@@ -601,9 +601,9 @@ class flexible_table {
                 $column = $DB->sql_order_by_text($column);
             }
             if ($order == SORT_ASC) {
-                $bits[] = $column . ' ASC';
+                $bits[] = $DB->sql_order_by_null($column);
             } else {
-                $bits[] = $column . ' DESC';
+                $bits[] = $DB->sql_order_by_null($column, SORT_DESC);
             }
         }
 
@@ -1143,6 +1143,12 @@ class flexible_table {
         foreach ($row as $index => $data) {
             $column = $colbyindex[$index];
 
+            $columnattributes = $this->columnsattributes[$column] ?? [];
+            if (isset($columnattributes['class'])) {
+                $this->column_class($column, $columnattributes['class']);
+                unset($columnattributes['class']);
+            }
+
             $attributes = [
                 'class' => "cell c{$index}" . $this->column_class[$column],
                 'id' => "{$rowid}_c{$index}",
@@ -1155,7 +1161,7 @@ class flexible_table {
                 $attributes['scope'] = 'row';
             }
 
-            $attributes += $this->columnsattributes[$column] ?? [];
+            $attributes += $columnattributes;
 
             if (empty($this->prefs['collapse'][$column])) {
                 if ($this->column_suppress[$column] && $suppresslastrow !== null && $suppresslastrow[$index] === $data) {
@@ -1232,20 +1238,26 @@ class flexible_table {
         $ariacontrols = trim($ariacontrols);
 
         if (!empty($this->prefs['collapse'][$column])) {
-            $linkattributes = array('title' => get_string('show') . ' ' . strip_tags($this->headers[$index]),
-                                    'aria-expanded' => 'false',
-                                    'aria-controls' => $ariacontrols,
-                                    'data-action' => 'show',
-                                    'data-column' => $column);
+            $linkattributes = [
+                'title' => get_string('show') . ' ' . strip_tags($this->headers[$index]),
+                'aria-expanded' => 'false',
+                'aria-controls' => $ariacontrols,
+                'data-action' => 'show',
+                'data-column' => $column,
+                'role' => 'button',
+            ];
             return html_writer::link($this->baseurl->out(false, array($this->request[TABLE_VAR_SHOW] => $column)),
                     $OUTPUT->pix_icon('t/switch_plus', null), $linkattributes);
 
         } else if ($this->headers[$index] !== NULL) {
-            $linkattributes = array('title' => get_string('hide') . ' ' . strip_tags($this->headers[$index]),
-                                    'aria-expanded' => 'true',
-                                    'aria-controls' => $ariacontrols,
-                                    'data-action' => 'hide',
-                                    'data-column' => $column);
+            $linkattributes = [
+                'title' => get_string('hide') . ' ' . strip_tags($this->headers[$index]),
+                'aria-expanded' => 'true',
+                'aria-controls' => $ariacontrols,
+                'data-action' => 'hide',
+                'data-column' => $column,
+                'role' => 'button',
+            ];
             return html_writer::link($this->baseurl->out(false, array($this->request[TABLE_VAR_HIDE] => $column)),
                     $OUTPUT->pix_icon('t/switch_minus', null), $linkattributes);
         }
@@ -1457,7 +1469,7 @@ class flexible_table {
 
         // Load any existing user preferences.
         if ($this->persistent) {
-            $this->prefs = json_decode(get_user_preferences('flextable_' . $this->uniqueid), true);
+            $this->prefs = json_decode(get_user_preferences("flextable_{$this->uniqueid}", ''), true);
             $oldprefs = $this->prefs;
         } else if (isset($SESSION->flextable[$this->uniqueid])) {
             $this->prefs = $SESSION->flextable[$this->uniqueid];
@@ -1664,6 +1676,7 @@ class flexible_table {
                     'data-sortable' => $this->is_sortable($column),
                     'data-sortby' => $column,
                     'data-sortorder' => $sortorder,
+                    'role' => 'button',
                 ]) . ' ' . $this->sort_icon($isprimary, $order);
     }
 
@@ -1861,7 +1874,7 @@ class flexible_table {
         $url = $this->baseurl->out(false, array($this->request[TABLE_VAR_RESET] => 1));
 
         $html  = html_writer::start_div('resettable mdl-right');
-        $html .= html_writer::link($url, get_string('resettable'));
+        $html .= html_writer::link($url, get_string('resettable'), ['role' => 'button']);
         $html .= html_writer::end_div();
 
         return $html;
@@ -2197,7 +2210,7 @@ class table_default_export_format_parent {
     function format_text($text, $format=FORMAT_MOODLE, $options=NULL, $courseid=NULL) {
         //use some whitespace to indicate where there was some line spacing.
         $text = str_replace(array('</p>', "\n", "\r"), '   ', $text);
-        return html_entity_decode(strip_tags($text));
+        return html_entity_decode(strip_tags($text), ENT_COMPAT);
     }
 
     /**
@@ -2339,4 +2352,3 @@ class table_dataformat_export_format extends table_default_export_format_parent 
         exit();
     }
 }
-

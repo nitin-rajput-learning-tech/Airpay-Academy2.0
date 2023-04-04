@@ -40,8 +40,7 @@ class message_output_email extends message_output {
         global $CFG, $DB;
 
         // skip any messaging suspended and deleted users
-        //Skip messaging if the email is not available.
-        if ($eventdata->userto->auth === 'nologin' or $eventdata->userto->suspended or $eventdata->userto->deleted || $eventdata->userto->email == '') {
+        if ($eventdata->userto->auth === 'nologin' or $eventdata->userto->suspended or $eventdata->userto->deleted) {
             return true;
         }
 

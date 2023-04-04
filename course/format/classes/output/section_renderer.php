@@ -200,10 +200,9 @@ abstract class section_renderer extends core_course_renderer {
      * @return String the course index HTML.
      */
     public function course_index_drawer(course_format $format): ?String {
-        global $OUTPUT;
         if ($format->uses_course_index()) {
             include_course_editor($format);
-            return $this->render_from_template('core_courseformat/local/courseindex/drawer', ['output' => $OUTPUT]);
+            return $this->render_from_template('core_courseformat/local/courseindex/drawer', []);
         }
         return '';
     }
@@ -907,7 +906,7 @@ abstract class section_renderer extends core_course_renderer {
         if (!($sectioninfo = $modinfo->get_section_info($displaysection)) || !$sectioninfo->uservisible) {
             // This section doesn't exist or is not available for the user.
             // We actually already check this in course/view.php but just in case exit from this function as well.
-            print_error(
+            throw new \moodle_exception(
                 'unknowncoursesection',
                 'error',
                 course_get_url($course),

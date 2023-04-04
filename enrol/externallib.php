@@ -407,14 +407,6 @@ class core_enrol_external extends external_api {
                     'timemodified' => $file->get_timemodified(),
                 );
             }
-            // Core changes for Displaying the certificate in mobile APP
-            $certification_plugin_exist = \core_component::get_plugin_directory('tool', 'certificate');
-            if($certification_plugin_exist){
-                $course->certificateid = $DB->get_field('tool_certificate_issues', 'code', array('userid' => $userid, 'moduletype' => 'course', 'moduleid' => $course->id));
-            }
-            if(!$course->certificateid){
-                $course->certificateid = null;
-            }
 
             $courseresult = [
                 'id' => $course->id,
@@ -444,7 +436,6 @@ class core_enrol_external extends external_api {
                 'showactivitydates' => $course->showactivitydates,
                 'showcompletionconditions' => $course->showcompletionconditions,
                 'timemodified' => $course->timemodified,
-                'certificateid' => $course->certificateid,
             ];
             if ($returnusercount) {
                 $courseresult['enrolledusercount'] = $enrolledusercount;
@@ -495,7 +486,6 @@ class core_enrol_external extends external_api {
                     'showcompletionconditions' => new external_value(PARAM_BOOL, 'Whether the activity completion conditions are shown or not'),
                     'timemodified' => new external_value(PARAM_INT, 'Last time course settings were updated (timestamp).',
                         VALUE_OPTIONAL),
-                    'certificateid' => new external_value(PARAM_RAW, 'Send certificate issue code if existed', VALUE_OPTIONAL),
                 )
             )
         );

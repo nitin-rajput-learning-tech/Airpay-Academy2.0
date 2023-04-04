@@ -40,7 +40,7 @@ class manager {
     /**
      * Return an instance of a report class from the given report persistent
      *
-     * We statically cache the list of loaded reports during request lifecycle, to allow this method to be called
+     * We statically cache the list of loaded reports per user during request lifecycle, to allow this method to be called
      * repeatedly without potential performance problems initialising the same report multiple times
      *
      * @param report $report
@@ -50,7 +50,11 @@ class manager {
      * @throws source_unavailable_exception
      */
     public static function get_report_from_persistent(report $report, array $parameters = []): base {
-        $instancekey = $report->get('id');
+        global $USER;
+
+        // Cached instance per report/user, to account for initialization dependent on current user.
+        $instancekey = $report->get('id') . ':' . ($USER->id ?? 0);
+
         if (!array_key_exists($instancekey, static::$instances)) {
             $source = $report->get('source');
 
@@ -151,5 +155,17 @@ class manager {
         });
 
         return $sources;
+    }
+
+    /**
+     * Configured site limit for number of custom reports threshold has been reached
+     *
+     * @return bool
+     */
+    public static function report_limit_reached(): bool {
+        global $CFG;
+
+        return (!empty($CFG->customreportslimit) &&
+            (int) $CFG->customreportslimit <= report::count_records(['type' => base::TYPE_CUSTOM_REPORT]));
     }
 }

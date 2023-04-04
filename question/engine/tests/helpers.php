@@ -1365,10 +1365,12 @@ class question_test_recordset extends moodle_recordset {
         $this->close();
     }
 
+    #[\ReturnTypeWillChange]
     public function current() {
         return (object) current($this->records);
     }
 
+    #[\ReturnTypeWillChange]
     public function key() {
         if (is_null(key($this->records))) {
             return false;
@@ -1377,34 +1379,15 @@ class question_test_recordset extends moodle_recordset {
         return reset($current);
     }
 
-    public function next() {
+    public function next(): void {
         next($this->records);
     }
 
-    public function valid() {
+    public function valid(): bool {
         return !is_null(key($this->records));
     }
 
     public function close() {
         $this->records = null;
-    }
-}
-
-/**
- * Helper class for tests that help to test core_question_renderer.
- *
- * @copyright  2018 Huong Nguyen <huongnv13@gmail.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class testable_core_question_renderer extends core_question_renderer {
-
-    /**
-     * Test the private number function.
-     *
-     * @param null|string $number
-     * @return HTML
-     */
-    public function number($number) {
-        return parent::number($number);
     }
 }

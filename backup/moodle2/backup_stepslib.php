@@ -341,7 +341,7 @@ class backup_module_structure_step extends backup_structure_step {
             'visibleold', 'groupmode', 'groupingid',
             'completion', 'completiongradeitemnumber', 'completionpassgrade',
             'completionview', 'completionexpected',
-            'availability', 'showdescription', 'downloadcontent'));
+            'availability', 'showdescription', 'downloadcontent', 'lang'));
 
         $tags = new backup_nested_element('tags');
         $tag = new backup_nested_element('tag', array('id'), array('name', 'rawname'));
@@ -546,9 +546,11 @@ class backup_course_structure_step extends backup_structure_step {
                                      backup_helper::is_sqlparam('course'),
                                      backup::VAR_PARENTID));
 
+        // Section level settings are dealt with in backup_section_structure_step.
+        // We only need to deal with course level (sectionid = 0) here.
         $courseformatoption->set_source_sql('SELECT id, format, sectionid, name, value
                                  FROM {course_format_options}
-                                 WHERE courseid = ?', [ backup::VAR_PARENTID ]);
+                                 WHERE courseid = ? AND sectionid = 0', [ backup::VAR_PARENTID ]);
 
         $handler = core_course\customfield\course_handler::create();
         $fieldsforbackup = $handler->get_instance_data_for_backup($this->task->get_courseid());
@@ -1284,7 +1286,6 @@ class backup_userscompletion_structure_step extends backup_structure_step {
     protected function define_structure() {
 
         // Define each element separated
-
         $completions = new backup_nested_element('completions');
 
         $completion = new backup_nested_element('completion', array('id'), array(
@@ -1302,8 +1303,22 @@ class backup_userscompletion_structure_step extends backup_structure_step {
 
         $completion->annotate_ids('user', 'userid');
 
-        // Return the root element (completions)
+        $completionviews = new backup_nested_element('completionviews');
+        $completionview = new backup_nested_element('completionview', ['id'], ['userid', 'timecreated']);
+
+        // Build the tree.
+        $completionviews->add_child($completionview);
+
+        // Define sources.
+        $completionview->set_source_table('course_modules_viewed', ['coursemoduleid' => backup::VAR_MODID]);
+
+        // Define id annotations.
+        $completionview->annotate_ids('user', 'userid');
+
+        $completions->add_child($completionviews);
+        // Return the root element (completions).
         return $completions;
+
     }
 }
 
@@ -1843,10 +1858,10 @@ class backup_activity_competencies_structure_step extends backup_structure_step 
         $wrapper->add_child($competencies);
 
         $competency = new backup_nested_element('competency', null, array('idnumber', 'ruleoutcome',
-            'sortorder', 'frameworkidnumber'));
+            'sortorder', 'frameworkidnumber', 'overridegrade'));
         $competencies->add_child($competency);
 
-        $sql = 'SELECT c.idnumber, cmc.ruleoutcome, cmc.sortorder, f.idnumber AS frameworkidnumber
+        $sql = 'SELECT c.idnumber, cmc.ruleoutcome, cmc.overridegrade, cmc.sortorder, f.idnumber AS frameworkidnumber
                   FROM {' . \core_competency\course_module_competency::TABLE . '} cmc
                   JOIN {' . \core_competency\competency::TABLE . '} c ON c.id = cmc.competencyid
                   JOIN {' . \core_competency\competency_framework::TABLE . '} f ON f.id = c.competencyframeworkid

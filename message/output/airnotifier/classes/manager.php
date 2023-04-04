@@ -85,7 +85,6 @@ class message_airnotifier_manager {
         // First, we look all the devices registered for this user in the Moodle core.
         // We are going to allow only ios devices (since these are the ones that supports PUSH notifications).
         $userdevices = $DB->get_records('user_devices', $params);
-
         foreach ($userdevices as $device) {
             if (core_text::strtolower($device->platform)) {
                 // Check if the device is known by airnotifier.

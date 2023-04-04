@@ -102,6 +102,16 @@ Feature: Perform basic calendar functionality
     Then I should not see "Really awesome event!"
 
   @javascript
+  Scenario: Create an event containing URL as location
+    Given I log in as "admin"
+    And I create a calendar event with form data:
+      | Type of event | site               |
+      | Event title   | Important webinar  |
+      | Location      | https://moodle.org |
+    When I click on "Important webinar" "link"
+    Then "https://moodle.org" "link" should exist in the "Important webinar" "dialogue"
+
+  @javascript
   Scenario: Delete an event
     Given I log in as "teacher1"
     And I create a calendar event with form data:
@@ -220,27 +230,37 @@ Feature: Perform basic calendar functionality
     And "Course 3" "autocomplete_suggestions" should exist
 
   @javascript
-  Scenario: Students can only see user event type by default.
+  Scenario: Students can not see event type field by default.
     Given I log in as "student1"
     And I am viewing site calendar
     When I click on "New event" "button"
-    Then I should see "User" in the "div#fitem_id_staticeventtype" "css_element"
-    And I am on "Course 1" course homepage
-    And I follow "Full calendar"
+    # Only "user" event type is available, so "Type of event" field should not be displayed.
+    Then "Type of event" "select" should not exist
+
+  @javascript
+  Scenario: "Student 2" has "manageentries" capability assigned but it's not enrolled in any course.
+    Given the following "permission overrides" exist:
+      | capability                    | permission | role    | contextlevel | reference |
+      | moodle/calendar:manageentries | Allow      | student | System       |           |
+    And I log in as "student2"
+    And I am viewing site calendar
     When I click on "New event" "button"
-    Then I should see "User" in the "div#fitem_id_staticeventtype" "css_element"
-    And I click on "Close" "button" in the "New event" "dialogue"
-    And I log out
-    Given I log in as "admin"
-    And I navigate to "Appearance > Calendar" in site administration
-    And I set the field "Admins see all" to "1"
-    And I press "Save changes"
-    And I log out
-    Given I log in as "student1"
-    And I am on "Course 1" course homepage
-    And I follow "Full calendar"
+    # Only "user" event type is available, so "Type of event" field should not be displayed.
+    Then "Type of event" "select" should not exist
+
+  @javascript
+  Scenario: "Student 1" has "manageentries" capability assigned and it's enrolled in a course.
+    Given the following "permission overrides" exist:
+      | capability                    | permission | role    | contextlevel | reference |
+      | moodle/calendar:manageentries | Allow      | student | System       |           |
+    And I log in as "student1"
+    And I am viewing site calendar
     When I click on "New event" "button"
-    Then I should see "User" in the "div#fitem_id_staticeventtype" "css_element"
+    # Student 1 is enrolled in a course and have the capability assigned.
+    # Then, the "Type of event" select box should be visible.
+    Then "Type of event" "select" should exist
+    And I should see "User" in the "Type of event" "select"
+    And I should see "Course" in the "Type of event" "select"
 
   @javascript @accessibility
   Scenario: The calendar page must be accessible
@@ -311,14 +331,14 @@ Feature: Perform basic calendar functionality
     And I click on "My own user event" "link"
     Then I should see "User event"
     And I should not see "Group 1"
-    And I click on "Edit" "button"
+    And I click on "Edit" "button" in the "My own user event" "dialogue"
     And I set the following fields to these values:
       | Event title | Site event |
       | Type of event | site |
     And I press "Save"
     And I click on "Site event" "link"
     And I should see "Site event"
-    And I click on "Edit" "button"
+    And I click on "Edit" "button" in the "Site event" "dialogue"
     And I set the following fields to these values:
       | Event title | Course 1 event |
       | Type of event | course |
@@ -327,10 +347,103 @@ Feature: Perform basic calendar functionality
     And I press "Save"
     And I click on "Course 1 event" "link"
     And I should see "Course event"
-    And I click on "Edit" "button"
+    And I click on "Edit" "button" in the "Course 1 event" "dialogue"
     And I set the following fields to these values:
       | Event title | Category event |
       | Type of event | category |
     And I press "Save"
     And I click on "Category event" "link"
+    And I should see "Category event"
+
+  @javascript
+  Scenario: Changing the event type from user to anything else should work
+    Given I log in as "teacher1"
+    # We need this so we can see the groups.
+    And the following "course enrolments" exist:
+      | user     | course | role           |
+      | teacher1 | C1     | editingteacher |
+    # We need this so we can make a category event.
+    And the following "categories" exist:
+      | name | category | idnumber |
+      | CatA | 0        | cata     |
+    And the following "role assigns" exist:
+      | user     | role    | contextlevel  | reference |
+      | teacher1 | manager | Category      | cata      |
+    And I am on "Course 1" course homepage
+    And I follow "Full calendar"
+    And I set the field "course" to "C1"
+    And I press "New event"
+    And I set the following fields to these values:
+      | Event title   | type change test event |
+      | Type of event | User                   |
+    And I press "Save"
+    And I am on "Course 1" course homepage
+    And I follow "Full calendar"
+    And I click on "type change test event" "link"
+    And I should see "User event"
+    When I click on "Edit" "button"
+    And I set the following fields to these values:
+      | Event title   | type change test event |
+      | Type of event | Course                 |
+    And I expand the "Course" autocomplete
+    And I click on "Course 1" item in the autocomplete list
+    And I press "Save"
+    And I click on "type change test event" "link"
+    Then I should see "Course event"
+    # Reset to user event
+    And I click on "Edit" "button"
+    And I set the following fields to these values:
+      | Event title   | type change test event |
+      | Type of event | User                   |
+    And I press "Save"
+    And I click on "type change test event" "link"
+    And I should see "User event"
+    # Now test changing from user to group event.
+    And I am on "Course 1" course homepage
+    And I follow "Full calendar"
+    And I click on "type change test event" "link"
+    And I click on "Edit" "button"
+    And I set the following fields to these values:
+      | Event title   | type change test event |
+      | Type of event | Group                  |
+    And I click on "#fitem_id_groupcourseid .form-autocomplete-downarrow" "css_element"
+    And I click on "Course 1" item in the autocomplete list
+    And I set the following fields to these values:
+      | Group | Group 1 |
+    And I press "Save"
+    And I click on "type change test event" "link"
+    And I should see "Group event"
+    # Reset to user event
+    And I click on "Edit" "button"
+    And I set the following fields to these values:
+      | Event title | type change test event |
+      | Type of event | User |
+    And I press "Save"
+    And I click on "type change test event" "link"
+    And I should see "User event"
+    # Now test changing from user to course event.
+    And I click on "Edit" "button"
+    And I set the following fields to these values:
+      | Event title   | Course 1 event |
+      | Type of event | Course         |
+    And I expand the "Course" autocomplete
+    And I click on "Course 1" item in the autocomplete list
+    And I press "Save"
+    And I click on "Course 1 event" "link"
+    And I should see "Course event"
+    # Reset to user event
+    And I click on "Edit" "button"
+    And I set the following fields to these values:
+      | Event title   | type change test event |
+      | Type of event | User                   |
+    And I press "Save"
+    And I click on "type change test event" "link"
+    And I should see "User event"
+    # Now test changing from user to category event.
+    And I click on "Edit" "button"
+    And I set the following fields to these values:
+      | Event title   | type change test event |
+      | Type of event | Category               |
+    And I press "Save"
+    And I click on "type change test event" "link"
     And I should see "Category event"

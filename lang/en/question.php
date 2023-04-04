@@ -247,7 +247,6 @@ $string['movingquestionsnofiles'] = 'Are you sure you want to move question(s) {
 $string['needtochoosecat'] = 'You need to choose a category to move this question to or press \'cancel\'.';
 $string['nocate'] = 'No such category {$a}!';
 $string['nopermissionadd'] = 'You don\'t have permission to add questions here.';
-$string['nopermissionmove'] = 'You don\'t have permission to move questions from here. You must save the question in this category or save it as a new question.';
 $string['nopermissionedit'] = 'You don\'t have permission to edit questions from here.';
 $string['noprobs'] = 'No problems found in your question database.';
 $string['noquestions'] = 'No questions were found that could be exported. Make sure that you have selected a category to export that contains questions.';
@@ -330,6 +329,7 @@ $string['action'] = 'Action';
 $string['addanotherhint'] = 'Add another hint';
 $string['answer'] = 'Answer';
 $string['answersaved'] = 'Answer saved';
+$string['answerx'] = 'Answer {$a}';
 $string['attemptfinished'] = 'Attempt finished';
 $string['attemptfinishedsubmitting'] = 'Attempt finished submitting: {$a}';
 $string['behaviourbeingused'] = 'Behaviour being used: {$a}';
@@ -357,6 +357,8 @@ $string['decimalplacesingrades'] = 'Decimal places in grades';
 $string['defaultmark'] = 'Default mark';
 $string['errorsavingflags'] = 'Error saving the flag state.';
 $string['feedback'] = 'Feedback';
+$string['fieldinquestion'] = '{$a->fieldname} {$a->questionindentifier}';
+$string['fieldinquestionpre'] = '{$a->questionindentifier} {$a->fieldname}';
 $string['fillincorrect'] = 'Fill in correct responses';
 $string['generalfeedback'] = 'General feedback';
 $string['generalfeedback_help'] = 'General feedback is shown to the student after they have completed the question. Unlike specific feedback, which depends on the question type and what response the student gave, the same general feedback text is shown to all students.
@@ -459,6 +461,9 @@ $string['showhidden'] = 'Also show old questions';
 $string['showmarkandmax'] = 'Show mark and max';
 $string['showmaxmarkonly'] = 'Show max mark only';
 $string['showquestiontext'] = 'Show question text in the question list';
+$string['showquestiontext_full'] = 'Full display';
+$string['showquestiontext_off'] = 'No';
+$string['showquestiontext_plain'] = 'Text only';
 $string['shown'] = 'Shown';
 $string['shownumpartscorrect'] = 'Show the number of correct responses';
 $string['shownumpartscorrectwhenfinished'] = 'Show the number of correct responses once the question has finished';
@@ -499,6 +504,11 @@ $string['yougotnright'] = 'You have correctly selected {$a->num}.';
 $string['qbanknotfound'] = 'The \'{$a}\' question bank plugin doesn\'t exist or is not recognised.';
 $string['noquestionbanks'] = 'No question bank plugin found.';
 $string['questionloaderror'] = 'Could not load the question options.';
+$string['version_selection'] = 'Version {$a->version}';
+$string['question_version'] = 'Question version';
 
 // Deprecated since Moodle 4.0.
 $string['notflagged'] = 'Not flagged';
+
+// Deprecated since Moodle 4.1.
+$string['nopermissionmove'] = 'You don\'t have permission to move questions from here. You must save the question in this category or save it as a new question.';

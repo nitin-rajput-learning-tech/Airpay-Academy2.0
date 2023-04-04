@@ -378,7 +378,6 @@ class format_singleactivity extends core_courseformat\base {
 
     /**
      * Checks if the activity type has multiple items in the activity chooser.
-     * This may happen as a result of defining callback modulename_get_shortcuts().
      *
      * @return bool|null (null if the check is not possible)
      */
@@ -480,7 +479,7 @@ class format_singleactivity extends core_courseformat\base {
                 // Activity is set but not visible to current user or does not have url.
                 // Display course page (either empty or with availability restriction info).
                 return;
-            }else {
+            } else {
                 // Everything is set up and accessible, redirect to the activity page!
                 redirect($cm->url);
             }

@@ -32,7 +32,7 @@ $overrideid = required_param('id', PARAM_INT);
 $confirm = optional_param('confirm', false, PARAM_BOOL);
 
 if (! $override = $DB->get_record('assign_overrides', array('id' => $overrideid))) {
-    print_error('invalidoverrideid', 'assign');
+    throw new \moodle_exception('invalidoverrideid', 'assign');
 }
 
 list($course, $cm) = get_course_and_cm_from_instance($override->assignid, 'assign');
@@ -46,11 +46,11 @@ require_capability('mod/assign:manageoverrides', $context);
 
 if ($override->groupid) {
     if (!groups_group_visible($override->groupid, $course, $cm)) {
-        print_error('invalidoverrideid', 'assign');
+        throw new \moodle_exception('invalidoverrideid', 'assign');
     }
 } else {
     if (!groups_user_groups_visible($course, $override->userid, $cm)) {
-        print_error('invalidoverrideid', 'assign');
+        throw new \moodle_exception('invalidoverrideid', 'assign');
     }
 }
 
@@ -94,7 +94,7 @@ echo $OUTPUT->header();
 
 if ($override->groupid) {
     $group = $DB->get_record('groups', array('id' => $override->groupid), 'id, name');
-    $confirmstr = get_string("overridedeletegroupsure", "assign", $group->name);
+    $confirmstr = get_string("overridedeletegroupsure", "assign", format_string($group->name, true, ['context' => $context]));
 } else {
     $userfieldsapi = \core_user\fields::for_name();
     $namefields = $userfieldsapi->get_sql('', false, '', '', false)->selects;

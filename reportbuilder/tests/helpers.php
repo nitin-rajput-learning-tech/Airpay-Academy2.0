@@ -19,6 +19,7 @@ declare(strict_types=1);
 use core_reportbuilder\manager;
 use core_reportbuilder\local\helpers\aggregation;
 use core_reportbuilder\local\helpers\report;
+use core_reportbuilder\local\helpers\user_filter_manager;
 use core_reportbuilder\table\custom_report_table_view;
 
 /**
@@ -35,10 +36,14 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
      *
      * @param int $reportid
      * @param int $pagesize
+     * @param array $filtervalues
      * @return array[]
      */
-    protected function get_custom_report_content(int $reportid, int $pagesize = 30): array {
+    protected function get_custom_report_content(int $reportid, int $pagesize = 30, array $filtervalues = []): array {
         $records = [];
+
+        // Apply filter values.
+        user_filter_manager::set($reportid, $filtervalues);
 
         // Create table instance.
         $table = custom_report_table_view::create($reportid);
@@ -56,7 +61,8 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
     }
 
     /**
-     * Stress test a report source by iterating over all it's columns and asserting we can create a report for each
+     * Stress test a report source by iterating over all it's columns, enabling sorting where possible and asserting we can
+     * create a report for each
      *
      * @param string $source
      */
@@ -69,9 +75,13 @@ abstract class core_reportbuilder_testcase extends advanced_testcase {
         $instance = manager::get_report_from_persistent($report);
 
         // Iterate over each available column, ensure each works correctly independent of any others.
-        $columnidentifiers = array_keys($instance->get_columns());
-        foreach ($columnidentifiers as $columnidentifier) {
+        foreach ($instance->get_columns() as $columnidentifier => $columninstance) {
             $column = report::add_report_column($report->get('id'), $columnidentifier);
+
+            // Enable sorting of the column where possible.
+            if ($columninstance->get_is_sortable()) {
+                report::toggle_report_column_sorting($report->get('id'), $column->get('id'), true, SORT_DESC);
+            }
 
             // We are only asserting the report returns content without errors, not the content itself.
             try {

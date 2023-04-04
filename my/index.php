@@ -33,8 +33,8 @@
  * @author     Olav Jordan <olav.jordan@remote-learner.net>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-require_once(__DIR__ . '/../config.php');
 
+require_once(__DIR__ . '/../config.php');
 require_once($CFG->dirroot . '/my/lib.php');
 
 redirect_if_major_upgrade_required();
@@ -42,10 +42,7 @@ redirect_if_major_upgrade_required();
 // TODO Add sesskey check to edit
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
-$fredirect  = optional_param('fredirect', true, PARAM_BOOL);
-if($fredirect){
-    redirect($CFG->wwwroot.'/my/dashboard.php');
-}
+
 require_login();
 
 $hassiteconfig = has_capability('moodle/site:config', context_system::instance());
@@ -89,8 +86,9 @@ if (isguestuser()) {  // Force them to see system default, no editing allowed
 
 // Get the My Moodle page info.  Should always return something unless the database is broken.
 if (!$currentpage = my_get_page($userid, MY_PAGE_PRIVATE)) {
-    print_error('mymoodlesetup');
+    throw new \moodle_exception('mymoodlesetup');
 }
+
 // Start setting up the page
 $params = array();
 $PAGE->set_context($context);
@@ -122,7 +120,7 @@ if (empty($CFG->forcedefaultmymoodle) && $PAGE->user_allowed_editing()) {
         if (!is_null($userid)) {
             require_sesskey();
             if (!$currentpage = my_reset_page($userid, MY_PAGE_PRIVATE)) {
-                print_error('reseterror', 'my');
+                throw new \moodle_exception('reseterror', 'my');
             }
             redirect(new moodle_url('/my'));
         }
@@ -139,7 +137,7 @@ if (empty($CFG->forcedefaultmymoodle) && $PAGE->user_allowed_editing()) {
             // For the page to display properly with the user context header the page blocks need to
             // be copied over to the user context.
             if (!$currentpage = my_copy_page($USER->id, MY_PAGE_PRIVATE)) {
-                print_error('mymoodlesetup');
+                throw new \moodle_exception('mymoodlesetup');
             }
             $context = context_user::instance($USER->id);
             $PAGE->set_context($context);

@@ -89,6 +89,11 @@ define('COMPLETION_COMPLETE_PASS', 2);
 define('COMPLETION_COMPLETE_FAIL', 3);
 
 /**
+ * Indicates that the user has received a failing grade for a hidden grade item.
+ */
+define('COMPLETION_COMPLETE_FAIL_HIDDEN', 4);
+
+/**
  * The effect of this change to completion status is unknown.
  * A completion effect changes (used only in update_state)
  */
@@ -360,7 +365,7 @@ class completion_info {
         if (empty($completions)) {
             return false;
         } elseif (count($completions) > 1) {
-            print_error('multipleselfcompletioncriteria', 'completion');
+            throw new \moodle_exception('multipleselfcompletioncriteria', 'completion');
         }
 
         return $completions[0];
@@ -784,7 +789,8 @@ class completion_info {
                 $this->internal_systemerror("Unexpected result: multiple grades for
                         item '{$item->id}', user '{$userid}'");
             }
-            return self::internal_get_grade_state($item, reset($grades));
+            $returnpassfail = !empty($cm->completionpassgrade);
+            return self::internal_get_grade_state($item, reset($grades), $returnpassfail);
         }
 
         return COMPLETION_INCOMPLETE;
@@ -1055,7 +1061,7 @@ class completion_info {
             if (!isset($this->course->cacherev)) {
                 $this->course = get_course($this->course_id);
             }
-            if ($cacheddata = $completioncache->get($key)) {
+            if ($cacheddata = ($completioncache->get($key) ?: [])) {
                 if ($cacheddata['cacherev'] != $this->course->cacherev) {
                     // Course structure has been changed since the last caching, forget the cache.
                     $cacheddata = array();
@@ -1091,13 +1097,16 @@ class completion_info {
         // If we're not caching the completion data, then just fetch the completion data for the user in this course module.
         if ($usecache && $wholecourse) {
             // Get whole course data for cache.
-            $alldatabycmc = $DB->get_records_sql("SELECT cm.id AS cmid, cmc.*
+            $alldatabycmc = $DB->get_records_sql("SELECT cm.id AS cmid, cmc.*,
+                                                         CASE WHEN cmv.id IS NULL THEN 0 ELSE 1 END AS viewed
                                                     FROM {course_modules} cm
-                                               LEFT JOIN {course_modules_completion} cmc ON cmc.coursemoduleid = cm.id
-                                                         AND cmc.userid = ?
+                                               LEFT JOIN {course_modules_completion} cmc
+                                                         ON cmc.coursemoduleid = cm.id  AND cmc.userid = ?
+                                               LEFT JOIN {course_modules_viewed} cmv
+                                                         ON cmv.coursemoduleid = cm.id  AND cmv.userid = ?
                                               INNER JOIN {modules} m ON m.id = cm.module
-                                                   WHERE m.visible = 1 AND cm.course = ?", [$userid, $this->course->id]);
-
+                                                   WHERE m.visible = 1 AND cm.course = ?",
+                [$userid, $userid, $this->course->id]);
             $cminfos = get_fast_modinfo($cm->course, $userid)->get_cms();
 
             // Reindex by course module id.
@@ -1110,6 +1119,9 @@ class completion_info {
 
                 if (empty($data->coursemoduleid)) {
                     $cacheddata[$data->cmid] = $defaultdata;
+                    if ($data->viewed) {
+                        $cacheddata[$data->cmid]['viewed'] = $data->viewed;
+                    }
                     $cacheddata[$data->cmid]['coursemoduleid'] = $data->cmid;
                 } else {
                     unset($data->cmid);
@@ -1125,14 +1137,7 @@ class completion_info {
             $data = $cacheddata[$cminfo->id];
         } else {
             // Get single record
-            $data = $DB->get_record('course_modules_completion', array('coursemoduleid' => $cminfo->id, 'userid' => $userid));
-            if ($data) {
-                $data = (array)$data;
-            } else {
-                // Row not present counts as 'not complete'.
-                $data = $defaultdata;
-            }
-
+            $data = $this->get_completion_data($cminfo->id, $userid, $defaultdata);
             // Put in cache.
             $cacheddata[$cminfo->id] = $data;
         }
@@ -1175,12 +1180,16 @@ class completion_info {
                     $newstate = COMPLETION_COMPLETE_PASS;
                 }
 
-                // The activity is using 'passing grade' criteria therefore fail indication should be on this criteria.
-                // The user has received a (failing) grade so 'completiongrade' should properly indicate this.
-                if ($newstate == COMPLETION_COMPLETE_FAIL) {
+                // No need to show failing status for the completiongrade condition when passing grade condition is set.
+                if (in_array($newstate, [COMPLETION_COMPLETE_FAIL, COMPLETION_COMPLETE_FAIL_HIDDEN])) {
                     $data['completiongrade'] = COMPLETION_COMPLETE;
-                }
 
+                    // If the grade received by the user is a failing grade for a hidden grade item,
+                    // the 'Require passing grade' criterion is considered incomplete.
+                    if ($newstate == COMPLETION_COMPLETE_FAIL_HIDDEN) {
+                        $newstate = COMPLETION_INCOMPLETE;
+                    }
+                }
                 $data['passgrade'] = $newstate;
             }
         }
@@ -1188,10 +1197,8 @@ class completion_info {
         // If view is required, try and fetch from the db. In some cases, cache can be invalid.
         if ($cm->completionview == COMPLETION_VIEW_REQUIRED) {
             $data['viewed'] = COMPLETION_INCOMPLETE;
-            $record = $DB->get_record('course_modules_completion', array('coursemoduleid' => $cm->id, 'userid' => $userid));
-            if ($record) {
-                $data['viewed'] = ($record->viewed == COMPLETION_VIEWED ? COMPLETION_COMPLETE : COMPLETION_INCOMPLETE);
-            }
+            $record = $DB->record_exists('course_modules_viewed', ['coursemoduleid' => $cm->id, 'userid' => $userid]);
+            $data['viewed'] = $record ? COMPLETION_COMPLETE : COMPLETION_INCOMPLETE;
         }
 
         return $data;
@@ -1264,6 +1271,19 @@ class completion_info {
         } else {
             // Has real (nonzero) id meaning that a database row exists, update
             $DB->update_record('course_modules_completion', $data);
+        }
+        $dataview = new stdClass();
+        $dataview->coursemoduleid = $data->coursemoduleid;
+        $dataview->userid = $data->userid;
+        $dataview->id = $DB->get_field('course_modules_viewed', 'id',
+            ['coursemoduleid' => $dataview->coursemoduleid, 'userid' => $dataview->userid]);
+        if (!$data->viewed && $dataview->id) {
+            $DB->delete_records('course_modules_viewed', ['id' => $dataview->id]);
+        }
+
+        if (!$dataview->id && $data->viewed) {
+            $dataview->timecreated = time();
+            $dataview->id = $DB->insert_record('course_modules_viewed', $dataview);
         }
         $transaction->allow_commit();
 
@@ -1417,13 +1437,14 @@ class completion_info {
         $fieldssql = $userfieldsapi->get_sql('u', true);
         $sql = 'SELECT u.id, u.idnumber ' . $fieldssql->selects;
         $sql .= ' FROM (' . $enrolledsql . ') eu JOIN {user} u ON u.id = eu.id';
-        $sql .= $fieldssql->joins;
-        $params = array_merge($params, $fieldssql->params);
 
         if ($where) {
             $sql .= " AND $where";
             $params = array_merge($params, $whereparams);
         }
+
+        $sql .= $fieldssql->joins;
+        $params = array_merge($params, $fieldssql->params);
 
         if ($sort) {
             $sql .= " ORDER BY $sort";
@@ -1539,9 +1560,10 @@ class completion_info {
      *
      * @param grade_item $item an instance of grade_item
      * @param grade_grade $grade an instance of grade_grade
+     * @param bool $returnpassfail If course module has pass grade completion criteria
      * @return int Completion state e.g. COMPLETION_INCOMPLETE
      */
-    public static function internal_get_grade_state($item, $grade) {
+    public static function internal_get_grade_state($item, $grade, bool $returnpassfail = false) {
         // If no grade is supplied or the grade doesn't have an actual value, then
         // this is not complete.
         if (!$grade || (is_null($grade->finalgrade) && is_null($grade->rawgrade))) {
@@ -1549,15 +1571,19 @@ class completion_info {
         }
 
         // Conditions to show pass/fail:
+        // a) Completion criteria to achieve pass grade is enabled
+        // or
         // a) Grade has pass mark (default is 0.00000 which is boolean true so be careful)
         // b) Grade is visible (neither hidden nor hidden-until)
-        if ($item->gradepass && $item->gradepass > 0.000009 && !$item->hidden) {
+        if ($item->gradepass && $item->gradepass > 0.000009 && ($returnpassfail || !$item->hidden)) {
             // Use final grade if set otherwise raw grade
             $score = !is_null($grade->finalgrade) ? $grade->finalgrade : $grade->rawgrade;
 
             // We are displaying and tracking pass/fail
             if ($score >= $item->gradepass) {
                 return COMPLETION_COMPLETE_PASS;
+            } else if ($item->hidden) {
+                return COMPLETION_COMPLETE_FAIL_HIDDEN;
             } else {
                 return COMPLETION_COMPLETE_FAIL;
             }
@@ -1601,6 +1627,49 @@ class completion_info {
         global $CFG;
         throw new moodle_exception('err_system','completion',
             $CFG->wwwroot.'/course/view.php?id='.$this->course->id,null,$error);
+    }
+
+    /**
+     * Get completion data include viewed field.
+     *
+     * @param int $coursemoduleid The course module id.
+     * @param int $userid The User ID.
+     * @param array $defaultdata Default data completion.
+     * @return array Data completion retrieved.
+     */
+    public function get_completion_data(int $coursemoduleid, int $userid, array $defaultdata): array {
+        global $DB;
+
+        // MySQL doesn't support FULL JOIN syntax, so we use UNION in the below SQL to help MySQL.
+        $sql = "SELECT cmc.*, cmv.coursemoduleid as cmvcoursemoduleid, cmv.userid as cmvuserid
+                  FROM {course_modules_completion} cmc
+             LEFT JOIN {course_modules_viewed} cmv ON cmc.coursemoduleid = cmv.coursemoduleid AND cmc.userid = cmv.userid
+                 WHERE cmc.coursemoduleid = :cmccoursemoduleid AND cmc.userid = :cmcuserid
+                UNION
+                SELECT cmc2.*, cmv2.coursemoduleid as cmvcoursemoduleid, cmv2.userid as cmvuserid
+                  FROM {course_modules_completion} cmc2
+            RIGHT JOIN {course_modules_viewed} cmv2
+                    ON cmc2.coursemoduleid = cmv2.coursemoduleid AND cmc2.userid = cmv2.userid
+                 WHERE cmv2.coursemoduleid = :cmvcoursemoduleid AND cmv2.userid = :cmvuserid";
+
+        $data = $DB->get_record_sql($sql, ['cmccoursemoduleid' => $coursemoduleid, 'cmcuserid' => $userid,
+            'cmvcoursemoduleid' => $coursemoduleid, 'cmvuserid' => $userid]);
+
+        if (!$data) {
+            $data = $defaultdata;
+        } else {
+            if (empty($data->coursemoduleid) && empty($data->userid)) {
+                $data->coursemoduleid = $data->cmvcoursemoduleid;
+                $data->userid = $data->cmvuserid;
+            }
+            unset($data->cmvcoursemoduleid);
+            unset($data->cmvuserid);
+
+            // When reseting all state in the completion, we need to keep current view state.
+            $data->viewed = 1;
+        }
+
+        return (array)$data;
     }
 }
 

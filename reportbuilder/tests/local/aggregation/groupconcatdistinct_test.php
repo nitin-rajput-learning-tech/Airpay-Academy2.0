@@ -20,6 +20,7 @@ namespace core_reportbuilder\local\aggregation;
 
 use core_reportbuilder_testcase;
 use core_reportbuilder_generator;
+use core_reportbuilder\local\report\column;
 use core_user\reportbuilder\datasource\users;
 
 defined('MOODLE_INTERNAL') || die();
@@ -44,9 +45,8 @@ class groupconcatdistinct_test extends core_reportbuilder_testcase {
     public function setUp(): void {
         global $DB;
 
-        $dbfamily = $DB->get_dbfamily();
-        if (!in_array($dbfamily, ['mysql', 'postgres'])) {
-            $this->markTestSkipped("Distinct group concatenation not supported in {$dbfamily}");
+        if (!groupconcatdistinct::compatible(column::TYPE_TEXT)) {
+            $this->markTestSkipped('Distinct group concatenation not supported in ' . $DB->get_dbfamily());
         }
     }
 
@@ -66,14 +66,14 @@ class groupconcatdistinct_test extends core_reportbuilder_testcase {
         $report = $generator->create_report(['name' => 'Users', 'source' => users::class, 'default' => 0]);
 
         // First column, sorted.
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:firstname'])
-            ->set('sortenabled', true)
-            ->update();
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:firstname', 'sortenabled' => 1]);
 
         // This is the column we'll aggregate.
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:lastname'])
-            ->set('aggregation', groupconcatdistinct::get_class_name())
-            ->update();
+        $generator->create_column([
+            'reportid' => $report->get('id'),
+            'uniqueidentifier' => 'user:lastname',
+            'aggregation' => groupconcatdistinct::get_class_name(),
+        ]);
 
         // Assert lastname column was aggregated, and sorted predictably.
         $content = $this->get_custom_report_content($report->get('id'));
@@ -87,6 +87,34 @@ class groupconcatdistinct_test extends core_reportbuilder_testcase {
                 'c1_lastname' => 'Apple, Banana',
             ],
         ], $content);
+    }
+
+    /**
+     * Test aggregation when applied to column with multiple fields
+     */
+    public function test_column_aggregation_multiple_fields(): void {
+        $this->resetAfterTest();
+
+        $user = $this->getDataGenerator()->create_user(['firstname' => 'Adam', 'lastname' => 'Apple']);
+
+        /** @var core_reportbuilder_generator $generator */
+        $generator = $this->getDataGenerator()->get_plugin_generator('core_reportbuilder');
+        $report = $generator->create_report(['name' => 'Users', 'source' => users::class, 'default' => 0]);
+
+        // This is the column we'll aggregate.
+        $generator->create_column([
+            'reportid' => $report->get('id'),
+            'uniqueidentifier' => 'user:fullnamewithlink',
+            'aggregation' => groupconcatdistinct::get_class_name(),
+        ]);
+
+        $content = $this->get_custom_report_content($report->get('id'));
+        $this->assertCount(1, $content);
+
+        // Ensure users are sorted predictably (Adam -> Admin).
+        [$userone, $usertwo] = explode(', ', reset($content[0]));
+        $this->assertStringContainsString(fullname($user, true), $userone);
+        $this->assertStringContainsString(fullname(get_admin(), true), $usertwo);
     }
 
     /**
@@ -105,14 +133,14 @@ class groupconcatdistinct_test extends core_reportbuilder_testcase {
         $report = $generator->create_report(['name' => 'Users', 'source' => users::class, 'default' => 0]);
 
         // First column, sorted.
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:firstname'])
-            ->set('sortenabled', true)
-            ->update();
+        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:firstname', 'sortenabled' => 1]);
 
         // This is the column we'll aggregate.
-        $generator->create_column(['reportid' => $report->get('id'), 'uniqueidentifier' => 'user:confirmed'])
-            ->set('aggregation', groupconcatdistinct::get_class_name())
-            ->update();
+        $generator->create_column([
+            'reportid' => $report->get('id'),
+            'uniqueidentifier' => 'user:confirmed',
+            'aggregation' => groupconcatdistinct::get_class_name(),
+        ]);
 
         // Assert confirmed column was aggregated, and sorted predictably with callback applied.
         $content = $this->get_custom_report_content($report->get('id'));

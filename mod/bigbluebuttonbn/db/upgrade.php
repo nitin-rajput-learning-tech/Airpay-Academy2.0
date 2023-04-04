@@ -351,9 +351,10 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
 
         $field = new xmldb_field('recording', XMLDB_TYPE_TEXT, null, null, null, null, null, 'state');
         // Launch rename field recording to remotedata.
-        $dbman->rename_field($table, $field, 'remotedata');
-
-        $field = new xmldb_field('remotedatatstamp', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'remotedata');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->rename_field($table, $field, 'remotedata');
+        }
+        $field = new xmldb_field('remotedatatstamp', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
         // Conditionally launch add field remotedatatstamp.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
@@ -362,8 +363,9 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         // State is already used on remote bigbluebutton entity and has not the same semantic.
         $field = new xmldb_field('state', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'imported');
         // Launch rename field state to status.
-        $dbman->rename_field($table, $field, 'status');
-
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->rename_field($table, $field, 'status');
+        }
         // Bigbluebuttonbn savepoint reached.
         upgrade_mod_savepoint(true, 2021072906, 'bigbluebuttonbn');
     }
@@ -378,8 +380,9 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
             $dbman->drop_field($table, $remotedatatstamp);
         }
         // Launch rename field importeddata.
-        $dbman->rename_field($table, $remotedata, 'importeddata');
-
+        if ($dbman->field_exists($table, $remotedata)) {
+            $dbman->rename_field($table, $remotedata, 'importeddata');
+        }
         // Bigbluebuttonbn savepoint reached.
         upgrade_mod_savepoint(true, 2021072907, 'bigbluebuttonbn');
     }
@@ -416,7 +419,7 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
     // Automatically generated Moodle v4.0.0 release upgrade line.
     // Put any upgrade step following this.
 
-    if ($oldversion < 2022041901) {
+    if ($oldversion < 2022050600) {
 
         set_config('bigbluebuttonbn_default_dpa_accepted', false);
 
@@ -433,8 +436,55 @@ function xmldb_bigbluebuttonbn_upgrade($oldversion = 0) {
         }
 
         // Bigbluebuttonbn savepoint reached.
-        upgrade_mod_savepoint(true, 2022041901, 'bigbluebuttonbn');
+        upgrade_mod_savepoint(true, 2022050600, 'bigbluebuttonbn');
     }
+    if ($oldversion < 2022080400) {
+
+        // Define field lockonjoin to be dropped from bigbluebuttonbn.
+        $table = new xmldb_table('bigbluebuttonbn');
+        $field = new xmldb_field('lockonjoin');
+        // Conditionally launch drop field lockonjoin.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+        $field = new xmldb_field('lockonjoinconfigurable');
+        // Conditionally launch drop field lockonjoinconfigurable.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+        // Bigbluebuttonbn savepoint reached.
+        upgrade_mod_savepoint(true, 2022080400, 'bigbluebuttonbn');
+    }
+    if ($oldversion < 2022101900) {
+        $table = new xmldb_table('bigbluebuttonbn');
+
+        $field = new xmldb_field('guestallowed', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'completionengagementemojis');
+        // Conditionally launch add field guestallowed.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('mustapproveuser', XMLDB_TYPE_INTEGER, '2', null, null, null, '1', 'guestallowed');
+        // Conditionally launch add field mustapproveuser.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('guestlinkuid', XMLDB_TYPE_CHAR, '1024', null, null, null, null, 'mustapproveuser');
+        // Conditionally launch add field guestlinkuid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('guestpassword', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'guestlinkuid');
+        // Conditionally launch add field guestpassword.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        upgrade_mod_savepoint(true, 2022101900, 'bigbluebuttonbn');
+    }
+    // Automatically generated Moodle v4.1.0 release upgrade line.
+    // Put any upgrade step following this.
 
     return true;
 }

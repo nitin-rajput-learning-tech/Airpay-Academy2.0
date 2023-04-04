@@ -113,7 +113,7 @@ function quiz_create_attempt(quiz $quizobj, $attemptnumber, $lastattempt, $timen
     } else {
         // Build on last attempt.
         if (empty($lastattempt)) {
-            print_error('cannotfindprevattempt', 'quiz');
+            throw new \moodle_exception('cannotfindprevattempt', 'quiz');
         }
         $attempt = $lastattempt;
     }
@@ -179,6 +179,9 @@ function quiz_start_new_attempt($quizobj, $quba, $attempt, $attemptnumber, $time
         $slot += 1;
         $maxmark[$slot] = $questiondata->maxmark;
         $page[$slot] = $questiondata->page;
+        if ($questiondata->status == \core_question\local\bank\question_version_status::QUESTION_STATUS_DRAFT) {
+            throw new moodle_exception('questiondraftonly', 'mod_quiz', '', $questiondata->name);
+        }
         if ($questiondata->qtype == 'random') {
             $randomfound = true;
             continue;
@@ -317,7 +320,11 @@ function quiz_start_attempt_built_on_last($quba, $attempt, $lastattempt) {
 
     $oldnumberstonew = array();
     foreach ($oldquba->get_attempt_iterator() as $oldslot => $oldqa) {
-        $newslot = $quba->add_question($oldqa->get_question(false), $oldqa->get_max_mark());
+        $question = $oldqa->get_question(false);
+        if ($question->status == \core_question\local\bank\question_version_status::QUESTION_STATUS_DRAFT) {
+            throw new moodle_exception('questiondraftonly', 'mod_quiz', '', $question->name);
+        }
+        $newslot = $quba->add_question($question, $oldqa->get_max_mark());
 
         $quba->start_question_based_on($newslot, $oldqa);
 
@@ -2243,7 +2250,7 @@ function quiz_question_tostring($question, $showicon = false, $showquestiontext 
     // Question text.
     if ($showquestiontext) {
         $questiontext = question_utils::to_plain_text($question->questiontext,
-                $question->questiontextformat, array('noclean' => true, 'para' => false));
+                $question->questiontextformat, ['noclean' => true, 'para' => false, 'filter' => false]);
         $questiontext = shorten_text($questiontext, 50);
         if ($questiontext) {
             $result .= ' ' . html_writer::span(s($questiontext), 'questiontext');
@@ -2266,12 +2273,17 @@ function quiz_require_question_use($questionid) {
 
 /**
  * Verify that the question exists, and the user has permission to use it.
+ *
+ * @deprecated in 4.1 use mod_quiz\structure::has_use_capability(...) instead.
+ *
  * @param object $quiz the quiz settings.
  * @param int $slot which question in the quiz to test.
  * @return bool whether the user can use this question.
  */
 function quiz_has_question_use($quiz, $slot) {
     global $DB;
+
+    debugging('Deprecated. Please use mod_quiz\structure::has_use_capability instead.');
 
     $sql = 'SELECT q.*
               FROM {quiz_slots} slot
