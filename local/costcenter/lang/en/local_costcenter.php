@@ -408,3 +408,7 @@ $string['requiredopen_subdepartment'] = 'Please select a Department';
 $string['requiredopen_level4department'] = 'Please select a Sub Department';
 
 $string['requiredopen_level5department'] = 'Please select a Territory';
+
+$string['allonlineexamcount'] = 'Total Onlineexams';
+$string['activeonlineexamcount'] = 'Active Onlineexams';
+$string['inactiveonlineexamcount'] = 'In-Active Onlineexams';

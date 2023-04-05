@@ -291,7 +291,11 @@ function local_costcenter_output_fragment_new_costcenterform($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        $serialiseddata = $args->jsonformdata;
+
+        $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
 
@@ -884,9 +888,14 @@ function local_costcenter_output_fragment_departmentview($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        $serialiseddata = $args->jsonformdata;
+
+        $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
+
     $mform = new local_costcenter\functions\costcenter(null, array(), 'post', '', null, true, $formdata);
  
     if (!empty($formdata)) {
@@ -950,7 +959,7 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
-function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false, $prefix = ''){
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname='local_costcenter',$context=1, $multiple = false, $prefix = ''){
     global $DB, $USER;
     $depth = $USER->useraccess['currentroleinfo']['depth'];
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];

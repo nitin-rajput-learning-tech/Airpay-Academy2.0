@@ -44,17 +44,18 @@ require_login();
 if(!has_capability('local/costcenter:view', $categorycontext)) {
     print_error('nopermissiontoviewpage');
 }
+if(!is_siteadmin()){
+    $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
 
-$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.path',$costcenterpath=null,$datatype='lowerandsamepath');
+    $costcentersql = "SELECT lc.id, lc.fullname,lc.parentid,lc.depth
+                        FROM {local_costcenter} AS lc WHERE 1=1 $costcenterpathconcatsql ";
 
-$costcentersql = "SELECT lc.id, lc.fullname,lc.parentid,lc.depth
-                    FROM {local_costcenter} AS lc WHERE 1=1 $costcenterpathconcatsql ";
+    $depart = $DB->get_record_sql($costcentersql);
 
-$depart = $DB->get_record_sql($costcentersql);
+    if (!$depart) {
 
-if (!((is_siteadmin()) || $depart)) {
-
-    print_error('invalidcostcenterid');
+        print_error('invalidcostcenterid');
+    }
 }
 
 $PAGE->set_pagelayout('standard');

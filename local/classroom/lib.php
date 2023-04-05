@@ -1113,7 +1113,7 @@ function local_classroom_quicklink_node()
 function costcenterwise_classroom_count($costcenter, $department = false, $subdepartment = false, $l4department=false, $l5department=false)
 {
     global $USER, $DB;
-    $newsql = $activesql = $cancelledsql = $completedsql = '';
+    $newsql = $activesql = $cancelledsql = $completedsql = $holdsql = '';
     $params = array();
     $params['costcenterpath'] = '%/'.$costcenter.'/%';
     $sql = "SELECT count(id) FROM {local_classroom} WHERE concat('/',open_path,'/') LIKE :costcenterpath";
