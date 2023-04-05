@@ -58,16 +58,16 @@ class local_users_renderer extends plugin_renderer_base {
                      FROM {user} u
                     WHERE u.id=:id ";
         $userOrg = $DB->get_record_sql($sql3, array('id' => $id));
-        $organisationdata = array_filter(explode('/', $userOrg->open_path));
+        $organisationdata = array_filter(explode('/', $userOrg->open_path ?? ''));
         $organisationnames = array_map(function($orgid){
             return \local_costcenter\lib\accesslib::get_costcenter_info($orgid, 'fullname');
         }, $organisationdata);
-
-        $usercostcenter = $organisationnames[1];
-        $userdepartment = $organisationnames[2];
-        $usersubdepartment = $organisationnames[3];
-        $usercu = $organisationnames[4];
-        $userterritory = $organisationnames[5];
+        
+        $usercostcenter = $organisationnames[1] ?? null;
+        $userdepartment = $organisationnames[2] ?? null;
+        $usersubdepartment = $organisationnames[3] ?? null;
+        $usercu = $organisationnames[4] ?? null;
+        $userterritory = $organisationnames[5] ?? null;
 
         if (!empty($userrecord->phone1)) {
                 $contact = $userrecord->phone1;
@@ -137,27 +137,32 @@ class local_users_renderer extends plugin_renderer_base {
          userid = :userid", array('userid' => $userrecord->id));
 
         $options = array('targetID' => 'display_modulesdata');
-        if($userrecord->gender == 0){
-            $gender = 'Male';
-        } else if($userrecord->gender == 1){
-            $gender = 'Female';
-        } else if($userrecord->gender == 2){
-            $gender = 'Other';
+        $gender = '';
+        if(isset($userrecord->gender)){
+            if($userrecord->gender == 0){
+                $gender = 'Male';
+            } else if($userrecord->gender == 1){
+                $gender = 'Female';
+            } else if($userrecord->gender == 2){
+                $gender = 'Other';
+            }
         }
-
-        if($userrecord->open_prefix == 1){
-            $prefix = 'Mr. ';
-        } else if($userrecord->open_prefix == 2){
-            $prefix = 'Mrs. ';
-        } else if($userrecord->open_prefix == 3){
-            $prefix = 'Ms. ';
+        $prefix = '';
+        if(isset($userrecord->open_prefix)){
+            if($userrecord->open_prefix == 1){
+                $prefix = 'Mr. ';
+            } else if($userrecord->open_prefix == 2){
+                $prefix = 'Mrs. ';
+            } else if($userrecord->open_prefix == 3){
+                $prefix = 'Ms. ';
+            }
         }
         $usersviewContext = [
             "userid" => $userrecord->id,
             "username" => fullname($userrecord),
             "userimage" => $user_image,
             "rolename" => $roleinfo,
-            "empid" => $userOrg->open_employeeid != null ? $userOrg->open_employeeid : 'N/A',
+            "empid" => (isset($userOrg->open_employeeid) && $userOrg->open_employeeid != null) ? $userOrg->open_employeeid : 'N/A',
             "user_email" => $userrecord->email,
             "organisation" => $usercostcenter ? $usercostcenter : 'N/A',
             "department" => $userdepartment ? $userdepartment : 'All',
@@ -166,18 +171,18 @@ class local_users_renderer extends plugin_renderer_base {
             "timezone" => core_date::get_user_timezone($userrecord->timezone),
             "address" => $userrecord->address != null ? $userrecord->address : 'N/A',
             "designation" => $userrecord->open_designation != null ? $userrecord->open_designation : 'N/A',
-            "client" => ! empty(trim($userrecord->open_client)) ? $userrecord->open_client : 'N/A',
-            "team" => ! empty(trim($userrecord->open_team)) ? $userrecord->open_team : 'N/A',
-            "grade" => ! empty(trim($userrecord->open_grade)) ? $userrecord->open_grade : 'N/A',
-            "hrmrole" => ! empty(trim($userrecord->open_hrmsrole)) ? $userrecord->open_hrmsrole : 'N/A',
-            "zone" => ! empty(trim($userrecord->open_zone)) ? $userrecord->open_zone : 'N/A',
-            "region" => ! empty(trim($userrecord->open_region)) ? $userrecord->open_region : 'N/A',
-            "level" => ! empty(trim($userrecord->open_level)) ? $userrecord->open_level : 'N/A',
-            "branch" => ! empty(trim($userrecord->open_branch)) ? $userrecord->open_branch : 'N/A',
-            "subbranch" => ! empty(trim($userrecord->open_subbranch)) ? $userrecord->open_subbranch : 'N/A',
-            "skilltype" => ! empty(trim($userrecord->open_skilltype)) ? $userrecord->open_skilltype : 'N/A',
-            "employment_type" => ! empty(trim($userrecord->open_employmenttype)) ? $userrecord->open_employmenttype : 'N/A',
-            "employment_status" => ! empty(trim($userrecord->open_employmentstatus)) ? $userrecord->open_employmentstatus : 'N/A',
+            "client" => (!empty($userrecord->open_client) && !empty(trim($userrecord->open_client))) ? $userrecord->open_client : 'N/A',
+            "team" => (!empty($userrecord->open_team) && !empty(trim($userrecord->open_team))) ? $userrecord->open_team : 'N/A',
+            "grade" => (!empty($userrecord->open_grade) && !empty(trim($userrecord->open_grade))) ? $userrecord->open_grade : 'N/A',
+            "hrmrole" => (!empty($userrecord->open_hrmsrole) && !empty(trim($userrecord->open_hrmsrole))) ? $userrecord->open_hrmsrole : 'N/A',
+            "zone" => (!empty($userrecord->open_zone) && !empty(trim($userrecord->open_zone))) ? $userrecord->open_zone : 'N/A',
+            "region" => (!empty($userrecord->open_region) && !empty(trim($userrecord->open_region))) ? $userrecord->open_region : 'N/A',
+            "level" => (!empty($userrecord->open_level) && !empty(trim($userrecord->open_level))) ? $userrecord->open_level : 'N/A',
+            "branch" => (!empty($userrecord->open_branch) && ! empty(trim($userrecord->open_branch))) ? $userrecord->open_branch : 'N/A',
+            "subbranch" => (!empty($userrecord->open_subbranch) && ! empty(trim($userrecord->open_subbranch))) ? $userrecord->open_subbranch : 'N/A',
+            "skilltype" => (!empty($userrecord->open_skilltype) && ! empty(trim($userrecord->open_skilltype))) ? $userrecord->open_skilltype : 'N/A',
+            "employment_type" => (!empty($userrecord->open_employmenttype) && ! empty(trim($userrecord->open_employmenttype))) ? $userrecord->open_employmenttype : 'N/A',
+            "employment_status" => (!empty($userrecord->open_employmentstatus) && ! empty(trim($userrecord->open_employmentstatus))) ? $userrecord->open_employmentstatus : 'N/A',
             "phnumber" => $contact,
             "badgesimg" => $OUTPUT->image_url('badgeicon', 'local_users'),
             "certimg" => $OUTPUT->image_url('certicon', 'local_users'),
@@ -191,8 +196,8 @@ class local_users_renderer extends plugin_renderer_base {
             "capabilityedit" => $capabilityedit,
             "loginasurl" => $loginasurl,
             "options" => $options,
-            "joindate"=> $userrecord->open_joindate > 0 ? date('d-M-Y', $userrecord->open_joindate) : 'N/A',
-            "dateofbirth"=> $userrecord->open_dateofbirth > 0 ? date('d-M-Y', $userrecord->open_dateofbirth) : 'N/A',
+            "joindate"=> (isset($userrecord->open_joindate) && $userrecord->open_joindate > 0) ? date('d-M-Y', $userrecord->open_joindate) : 'N/A',
+            "dateofbirth"=> (isset($userrecord->open_dateofbirth) &&  $userrecord->open_dateofbirth > 0) ? date('d-M-Y', $userrecord->open_dateofbirth) : 'N/A',
             "pluginslist" => $pluginarray,
             "userterritory" => $userterritory ? $userterritory : 'All',
             "usercu" => $usercu ? $usercu : 'All',

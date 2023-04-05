@@ -646,7 +646,7 @@ class local_users_external extends external_api {
         }
         return $returnvalue;
     }
-    public function deletesyncstatics_returns() {
+    public static function deletesyncstatics_returns() {
         return new external_value(PARAM_BOOL, 'returnvalue');
     }
 
