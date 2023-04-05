@@ -103,19 +103,9 @@ class local_evaluation_external extends external_api {
                 $validateddata->timeclose = $validateddata->timeclose;
             }
             if ($validateddata->id > 0) {
-                $validateddata->open_group = !empty($validateddata->open_group) ? implode(',', array_filter($validateddata->open_group)) : NULL;
-                if(!empty($validateddata->open_group)) {
-                $validateddata->open_group = $validateddata->open_group;
-                } else {
-                $validateddata->open_group = 0;
-                }
+                $validateddata->open_group = !empty($validateddata->open_group) ? implode(',', array_filter($validateddata->open_group)) : 0;             
 
-                $validateddata->open_designation = (!empty($validateddata->open_designation)) ? implode(',', array_filter($validateddata->open_designation)) : NULL;
-                if (!empty($validateddata->open_designation)) {
-                    $validateddata->open_designation = $validateddata->open_designation;
-                } else {
-                    $validateddata->open_designation = NULL;
-                }
+                $validateddata->open_designation = (!empty($validateddata->open_designation)) ? implode(',', array_filter($validateddata->open_designation)) : 0;
 
                 // $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));
                 // list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
@@ -131,17 +121,13 @@ class local_evaluation_external extends external_api {
             } else{
                 local_costcenter_get_costcenter_path($validateddata);
                 local_users_get_userprofile_datafields($validateddata,$data);
-                $validateddata->open_group = !empty($validateddata->open_group) ? implode(',', array_filter($validateddata->open_group)) : NULL;
-                if(!empty($validateddata->open_group)) {
-                $validateddata->open_group = $validateddata->open_group;
-                } else {
-                $validateddata->open_group = 0;
-                }
+                $validateddata->open_group = !empty($validateddata->open_group) ? implode(',', array_filter($validateddata->open_group)) : 0;
                 $validateddata->instance = $instance;
                 $validateddata->plugin = $plugin;
-                $validateddata->visible = 1;                
+                $validateddata->visible = 1;
+                $validateddata->open_designation=!empty($validateddata->open_designation) ? implode(',',$validateddata->open_designation) : 0;               
                 $validateddata->evaluationtype = ($evaluationtype) ? $evaluationtype: 0;
-               $evaluationid = evaluation_add_instance($validateddata);
+                $evaluationid = evaluation_add_instance($validateddata);
             }
         }
         else {

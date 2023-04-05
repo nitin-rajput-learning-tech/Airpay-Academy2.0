@@ -80,7 +80,9 @@ class evaluation_multichoicerated_form extends evaluation_item_form {
 
     public function set_data($item) {
         $info = $this->_customdata['info'];
-
+        if(!$item){
+            $item= (object) $item;
+        }
         $item->horizontal = $info->horizontal;
 
         $item->subtype = $info->subtype;
@@ -94,7 +96,6 @@ class evaluation_multichoicerated_form extends evaluation_item_form {
         if (!$item = parent::get_data()) {
             return false;
         }
-
         $itemobj = new evaluation_item_multichoicerated();
 
         $presentation = $itemobj->prepare_presentation_values_save(trim($item->values),
