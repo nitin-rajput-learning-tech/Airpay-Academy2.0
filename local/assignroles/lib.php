@@ -84,7 +84,10 @@ function local_assignroles_output_fragment_new_costcenterassignrole($args)
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        //$serialiseddata = json_decode($args->jsonformdata);
+        $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($args->jsonformdata, $formdata);
     }
     $users = array();
