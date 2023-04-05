@@ -153,6 +153,9 @@ class syncfunctionality
             foreach ($patharr as $path) {
                 list($zero[], $orgid[], $countryid[], $buid[], $cuid[], $territoryid[]) = explode('/', $path);
             }
+
+            $orgid[] = !empty($orgid) ? array_unique($orgid): $orgid;
+
             // To hold costcenterid.
             if (($this->orgcount == 0)) {
                 $this->costcenterid = $this->get_org_hierarchyid($user->company_code, $parent = 0, array_unique($orgid));
@@ -475,7 +478,7 @@ class syncfunctionality
         $strings->excel_line_number = $this->excel_line_number;
         $employee_status = $excel->employee_status;
         $this->deletestatus = 0;
-        if (array_key_exists('employee_status', $excel)) {
+        if (array_key_exists('employee_status',(array)$excel)) {
             if (strtolower($excel->employee_status) == 'active') {
                 $this->activestatus = 0;
             } else if (strtolower($excel->employee_status) == 'inactive') {
@@ -504,7 +507,7 @@ class syncfunctionality
         $strings = new stdClass;
         $strings->learner_id = $excel->employee_code;
         $strings->excel_line_number = $this->excel_line_number;
-        if (array_key_exists('gender', $excel)) {
+        if (array_key_exists('gender', (array)$excel)) {
             if (strtolower($excel->gender) == 'male') {
                 $this->usergender = 0;
             } else if (strtolower($excel->gender) == 'female') {
@@ -533,7 +536,7 @@ class syncfunctionality
         $strings = new stdClass;
         $strings->learner_id = $excel->employee_code;
         $strings->excel_line_number = $this->excel_line_number;
-        if (array_key_exists('prefix', $excel)) {
+        if (array_key_exists('prefix', (array)$excel)) {
             if (strtolower($excel->prefix) == 'mr') {
                 $this->prefix = 1;
             } else if (strtolower($excel->prefix) == 'mrs') {
@@ -890,10 +893,7 @@ class syncfunctionality
                     break;
                 case SAML2:
                     $user->auth = "saml2";
-                    break;
-                case ADwebservice:
-                    $user->auth = "adwebservice";
-                    break;
+                    break;               
                 case OTP_ENROLL:
                     $user->auth = "otp";
                     break;
