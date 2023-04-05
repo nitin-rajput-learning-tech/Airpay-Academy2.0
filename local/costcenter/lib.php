@@ -963,7 +963,8 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
     global $DB, $USER;
     $depth = $USER->useraccess['currentroleinfo']['depth'];
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
-    if(count($contextinfo) > 1){
+    $count = $contextinfo ? count($contextinfo) : 0;
+    if($count > 1){
         $depth--;
     }
     if(is_siteadmin()){

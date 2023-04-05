@@ -88,7 +88,6 @@ function evaluation_supports($feature) {
  */
 function local_evaluation_output_fragment_new_evaluation_form($args) {
     global $CFG, $DB;
-
     require_once($CFG->dirroot . '/local/evaluation/evaluation_form.php');
     $args = (object) $args;
     $id = $args->evalid;
@@ -97,8 +96,7 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
-        parse_str($serialiseddata, $formdata);
+        parse_str($args->jsonformdata, $formdata);
     }
     $data = new stdclass();
     if ($id > 0) {
@@ -110,12 +108,12 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
         local_costcenter_set_costcenter_path($customdata);
         local_users_set_userprofile_datafields($customdata,$data);
         $mform = new \evaluation_form(null, $customdata,'post', '', null, true, $formdata);
-    if (is_object($data)) {
+        if ($data->id > 0) {
 		$data->introeditor['text'] = $data->intro;
         $data->departmentid = explode(',',$data->departmentid);
         // Populate tags.
-        $data->tags = local_tags_tag::get_item_tags_array('local_evaluation', 'evaluation', $id);
-	$default_values = (array)$data;
+       // $data->tags = local_tags_tag::get_item_tags_array('local_evaluation', 'evaluation', $id);
+        $default_values = (array)$data;
 		$mform->data_preprocessing($default_values);
 	}
 	$mform->set_data($default_values);
@@ -128,7 +126,6 @@ function local_evaluation_output_fragment_new_evaluation_form($args) {
     $mform->display();
     $o .= ob_get_contents();
     ob_end_clean();
-
     return $o;
 }
 /**
@@ -2290,8 +2287,8 @@ function get_all_evaluations() {
     global $DB, $USER;
 
     // get evaluations
-    $sql = "SELECT * from {local_evaluations}";
-    $sql .= " where visible = 1";
+    $sql = "SELECT * FROM {local_evaluations}";
+    $sql .= " WHERE visible = 1";
     $evaluations = $DB->get_records_sql($sql);
 
     return $evaluations;

@@ -75,6 +75,9 @@ class evaluation_multichoice_form extends evaluation_item_form {
     }
 
     public function set_data($item) {
+        if(!$item){
+            $item= (object) $item;
+        }
         $info = $this->_customdata['info'];
 
         $item->horizontal = $info->horizontal;
