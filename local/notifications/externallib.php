@@ -92,8 +92,8 @@ class local_notifications_external extends external_api {
                 if($form_status == 0){
                     $validateddata->moduleid=$data['moduleid'];
                     $validateddata->body = $validateddata->body['text'];
-                    $insert = $lib->insert_update_record('local_notification_info', 'update', $validateddata);
-                    if ($validateddata->moduleid){
+                   
+                    if (is_array($validateddata->moduleid)){
                         $validateddata->moduleid = implode(',',$validateddata->moduleid);
                         $notif_type = $DB->get_field('local_notification_type', 'shortname', array('id'=>$validateddata->notificationid));
                         $notif_type_find=explode('_',$notif_type);
@@ -104,6 +104,7 @@ class local_notifications_external extends external_api {
                         $notif_type_find=explode('_',$notif_type);
                         $validateddata->moduletype = $notif_type_find[0];
                     }
+                    $insert = $lib->insert_update_record('local_notification_info', 'update', $validateddata);
                 }else{
                     $validateddata->adminbody = $validateddata->adminbody['text'];
                 }
@@ -112,8 +113,9 @@ class local_notifications_external extends external_api {
             } else if ($validateddata->id <= 0) {
                 $validateddata->moduleid=$data['moduleid'];
                 $validateddata->body = $validateddata->body['text'];
+               $notificationarr = (array)$validateddata->moduleid;
                 if ($validateddata->moduleid){
-                    $validateddata->moduleid = implode(',',$validateddata->moduleid);
+                    $validateddata->moduleid = implode(',',$notificationarr);
                     $notif_type = $DB->get_field('local_notification_type', 'shortname', array('id'=>$validateddata->notificationid));
                         $notif_type_find=explode('_',$notif_type);
                         $validateddata->moduletype = $notif_type_find[0];
