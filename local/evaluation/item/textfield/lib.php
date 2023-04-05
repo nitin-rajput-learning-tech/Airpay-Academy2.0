@@ -23,7 +23,9 @@ class evaluation_item_textfield extends evaluation_item_base {
     public function build_editform($item, $evaluation) {
         global $DB, $CFG;
         require_once('textfield_form.php');
-
+        if(!$item){
+            $item= (object) $item;
+        }
         //get the lastposition number of the evaluation_items
         $position = $item->position;
         $lastposition = $DB->count_records('local_evaluation_item', array('evaluation'=>$evaluation->id));
