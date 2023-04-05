@@ -494,12 +494,16 @@ class core_renderer extends \core_renderer {
      */
     public function should_display_navbar_logo() {
         global $USER, $DB;
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
-        if(!empty($org)){
-             $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$org));
-         }
-        if(!empty($costcenterid)){
-            $logopath = costcenter_logo($costcenterid);
+        $logopath ="";
+        if(!empty($USER->open_path)){
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path??"");
+        
+            if(!empty($org)){
+                $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$org));
+            }
+            if(!empty($costcenterid)){
+                $logopath = costcenter_logo($costcenterid);
+            }
         }
         //print_r($logopath); exit;
         if(empty($logopath)) {
@@ -519,14 +523,16 @@ class core_renderer extends \core_renderer {
     */
     public function get_custom_logo() {
         global $USER, $DB;
-        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
-        if(!empty($org)){
-             $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$org));
-         }
-         if(!empty($costcenterid)){
-             $logopath = costcenter_logo($costcenterid);
-         }
-
+        $logopath ="";
+        if(!empty($USER->open_path)){
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path??"");
+            if(!empty($org)){
+                $costcenterid = $DB->get_field('local_costcenter', 'costcenter_logo', array('id'=>$org));
+            }
+            if(!empty($costcenterid)){
+                $logopath = costcenter_logo($costcenterid);
+            }
+        }
          if(empty($logopath)) {
              $logopath = $this->get_compact_logo_url();
             //  if(empty($logopath)){
