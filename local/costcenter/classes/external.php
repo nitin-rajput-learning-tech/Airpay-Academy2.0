@@ -886,7 +886,7 @@ class local_costcenter_external extends external_api
      * @param [string] $jsonformdata 
      * @return costcenter form submits
      */
-    public function department_create($orgcode, $fullname, $departmentcode)
+    public static function department_create($orgcode, $fullname, $departmentcode)
     {
         global $PAGE, $CFG, $DB;
 
@@ -947,7 +947,7 @@ class local_costcenter_external extends external_api
 
     /*End of Department creation */
 
-    public function generate_shortcode_parameters()
+    public static function generate_shortcode_parameters()
     {
         return new external_function_parameters(
             array(
@@ -958,7 +958,7 @@ class local_costcenter_external extends external_api
             )
         );
     }
-    public function generate_shortcode($accountid, $contextid, $actions)
+    public static function generate_shortcode($accountid, $contextid, $actions)
     {
         $params = self::validate_parameters(
             self::generate_shortcode_parameters(),
@@ -984,7 +984,7 @@ class local_costcenter_external extends external_api
         }
         return $return;
     }
-    public function generate_shortcode_returns()
+    public static function generate_shortcode_returns()
     {
         return new external_value(PARAM_RAW, 'Data of account');
     }

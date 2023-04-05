@@ -97,7 +97,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
 
             }elseif($formtype == 'department' || $formtype == 'subdepartment' || $formtype == 'subsubdepartment' || $formtype == 'subsubsubdepartment'){
 
-                $shortnamestatic = $DB->get_field('local_costcenter', 'shortname', array('id' => key($options)));
+                $shortnamestatic = '';
 
                 $shortname = array();
                 $shortname[] = $mform->createElement('hidden',  'concatshortname',$shortnamestatic);

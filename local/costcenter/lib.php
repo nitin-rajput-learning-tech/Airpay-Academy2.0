@@ -884,7 +884,7 @@ function local_costcenter_output_fragment_departmentview($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
+        $serialiseddata = $args->jsonformdata;
         parse_str($serialiseddata, $formdata);
     }
     $mform = new local_costcenter\functions\costcenter(null, array(), 'post', '', null, true, $formdata);
@@ -1129,9 +1129,14 @@ function local_costcenter_organization_hierarchy_fields($mform, $ajaxformdata, $
     global $DB, $USER;
     $depth = $USER->useraccess['currentroleinfo']['depth'];
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
-    if(count($contextinfo) > 1){
-        $depth--;
+
+    if($contextinfo){
+
+        if(count($contextinfo) > 1){
+            $depth--;
+        }
     }
+
     if(is_siteadmin()){
         $depth = 0;
     }
