@@ -50,7 +50,7 @@ class local_costcenter_external extends external_api
      * @param [string] $jsonformdata 
      * @return costcenter form submits
      */
-    public function submit_costcenterform_form($contextid, $jsonformdata)
+    public static function submit_costcenterform_form($contextid, $jsonformdata)
     {
         global $PAGE, $CFG;
         require_once($CFG->dirroot . '/local/costcenter/lib.php');
@@ -62,7 +62,7 @@ class local_costcenter_external extends external_api
         $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
+        $serialiseddata = $params['jsonformdata'];
 
         $data = array();
 

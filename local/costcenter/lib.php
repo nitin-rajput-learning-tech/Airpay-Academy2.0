@@ -291,7 +291,7 @@ function local_costcenter_output_fragment_new_costcenterform($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
+        $serialiseddata = $args->jsonformdata;
         parse_str($serialiseddata, $formdata);
     }
 
@@ -309,7 +309,6 @@ function local_costcenter_output_fragment_new_costcenterform($args){
 
         $formparams['open_path'] = $data->path;
     }
-
     local_costcenter_set_costcenter_path($formparams);
 
     $mform = new local_costcenter\form\organization_form(null,$formparams, 'post', '', null, true, $formdata);
@@ -1076,7 +1075,7 @@ function local_costcenter_set_costcenter_path(&$data, $prefix = ''){
             }
         }
     }
-    if($pathnottracked){
+    if($pathnottracked && $contextinfo){
         $rolecontext = \local_costcenter\lib\accesslib::get_costcenterpath_context($contextinfo[0]['context']);
         $rolecontextids = explode('/',$rolecontext);
         if(count($contextinfo) > 1){
