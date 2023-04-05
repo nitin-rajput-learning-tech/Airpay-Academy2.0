@@ -76,10 +76,17 @@ class local_courses_external extends external_api {
 
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
 
         $data = array();
-        parse_str($serialiseddata, $data);
+
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
         if ($id) {
@@ -346,10 +353,17 @@ class local_courses_external extends external_api {
         $context = context::instance_by_id($params['contextid'], MUST_EXIST);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
 
         $data = array();
-        parse_str($serialiseddata, $data);
+
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
         $id = $data['id'];
@@ -426,10 +440,17 @@ class local_courses_external extends external_api {
 
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
 
         $data = array();
-        parse_str($serialiseddata, $data);
+
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
         if ($categoryid) {
@@ -1157,7 +1178,7 @@ class local_courses_external extends external_api {
             )
         );
     }
-    public function get_recently_enrolled_courses($source = 'mobile'){
+    public static function get_recently_enrolled_courses($source = 'mobile'){
         global $DB,$USER,$CFG;
         $result = array();
         $enrolledcourses = general_lib::enrolled_coursenames_formobile('', 0, 10, 'recentlyaccessed', $source);
@@ -1474,10 +1495,17 @@ class local_courses_external extends external_api {
 
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
 
         $data = array();
-        parse_str($serialiseddata, $data);
+
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $params = array(
             'courseid' => $data['courseid'],
@@ -1526,7 +1554,7 @@ class local_courses_external extends external_api {
         );
     }
 
-    public function submit_course_type_form($contextid, $jsonformdata)
+    public static function submit_course_type_form($contextid, $jsonformdata)
     {
         global $DB, $CFG, $USER;
         // We always must pass webservice params through validate_parameters.
@@ -1537,10 +1565,17 @@ class local_courses_external extends external_api {
 
         $context = context::instance_by_id($params['contextid'], MUST_EXIST);
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
         $data = array();
 
-        parse_str($serialiseddata, $data);
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
+
         $warnings = array();
 
         // The last param is the ajax submitted data.

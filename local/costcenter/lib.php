@@ -1061,7 +1061,7 @@ function local_costcenter_get_costcenter_path(&$data){
 function local_costcenter_set_costcenter_path(&$data, $prefix = ''){
     global $USER;
     $fields = local_costcenter_get_fields();
-    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
+    $contextinfo = (isset($USER->useraccess)) ? $USER->useraccess['currentroleinfo']['contextinfo'] : array();
     $pathnottracked = true;
     if($contextinfo){
         foreach($contextinfo AS $contextdata){
