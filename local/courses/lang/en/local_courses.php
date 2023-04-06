@@ -367,6 +367,7 @@ $string['subdepartment'] = 'Department';
 $string['summary'] = 'Summary';
 $string['format'] = 'Course Format';
 $string['selfenrol'] = 'Self Enrol';
+$string['approvalreqdcourse'] = 'Approval Course.';
 $string['approvalreqdcourse_help'] = 'Select.
 
 * Yes - If you would like to enforce manager or Company head approval while self enrolling to course
