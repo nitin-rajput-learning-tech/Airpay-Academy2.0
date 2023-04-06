@@ -353,9 +353,9 @@ class local_groups_renderer extends plugin_renderer_base  {
                 $line['actions'] = implode(' ', $buttons);
 
             
-                if (!$cohort->visible) {
-                    $row->attributes['class'] = 'dimmed_text';
-                }
+                // if (!$cohort->visible) {
+                //     $row->attributes['class'] = 'dimmed_text';
+                // }
                 $imagehtml = '';
                 
                 $group_images= $DB->get_records('cohort_members', array('cohortid'=>$cohort->id),$sort='id desc', $fields='*', $limitfrom=0, $limitnum=4);

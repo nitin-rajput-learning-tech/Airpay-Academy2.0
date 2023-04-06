@@ -2229,7 +2229,8 @@ class html_writer {
         }
 
         if (!empty($table->data)) {
-            $keys       = array_keys($table->data);
+            $data=(array)$table->data;
+            $keys       = array_keys($data);
             $lastrowkey = end($keys);
             $output .= html_writer::start_tag('tbody', array());
 

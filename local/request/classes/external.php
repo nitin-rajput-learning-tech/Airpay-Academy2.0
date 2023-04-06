@@ -25,7 +25,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once("$CFG->libdir/externallib.php");
 use local_request\api\requestapi;
 class local_request_external extends external_api {
-	public function view_availiable_request_parameters(){
+	public static function view_availiable_request_parameters(){
 		return new external_function_parameters([
                 'options' => new external_value(PARAM_RAW, 'The paging data for the service'),
                 'dataoptions' => new external_value(PARAM_RAW, 'The data for the service'),
@@ -104,7 +104,7 @@ class local_request_external extends external_api {
                           new external_single_structure(
                               array(
                                   'id' => new external_value(PARAM_RAW, 'id', VALUE_OPTIONAL),
-                                  'status' => new external_value(PARAM_RAW, 'status', PARAM_OPTIONAL),
+                                  'status' => new external_value(PARAM_RAW, 'status', VALUE_OPTIONAL),
                                   'enablebutton' => new external_value(PARAM_INT, 'enablebutton'),
                                   'approvestatus' => new external_value(PARAM_INT, 'approvestatus', VALUE_OPTIONAL),
                                   'rejectstatus' => new external_value(PARAM_INT, 'rejectstatus' , VALUE_OPTIONAL),
@@ -132,7 +132,7 @@ class local_request_external extends external_api {
       ]);
 	}
 
-  public function enrol_component_parameters(){
+  public static function enrol_component_parameters(){
     return new external_function_parameters([
                 'component' => new external_value(PARAM_RAW, 'component'),
                 'componentid' => new external_value(PARAM_INT, 'componentid'),
