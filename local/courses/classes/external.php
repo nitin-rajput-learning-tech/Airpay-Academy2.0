@@ -134,14 +134,28 @@ class local_courses_external extends external_api {
             $category_id=$data['category'];
 
             $categorycontext=(new \local_courses\lib\accesslib())::get_module_context($course->id);
-            if(is_siteadmin()){
-              $open_departmentid = implode(',',$data['open_departmentid']);
-            }else {
-              $open_departmentid = $data['open_departmentid'];
+
+            $open_departmentid =$open_subdepartment=0;
+
+            if(isset($data['open_departmentid'])){
+
+                if(is_siteadmin()){
+                  $open_departmentid = implode(',',$data['open_departmentid']);
+                }else {
+                  $open_departmentid = $data['open_departmentid'];
+                }
+
+                $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             }
-            $open_subdepartment = implode(',', $data['open_subdepartment']);
-            $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
-            $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
+
+            if(isset($data['open_subdepartment'])){
+
+              $open_subdepartment = implode(',', $data['open_subdepartment']);
+
+                $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
+
+            }
+
             if ($validateddata->id <= 0) {
                 $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 $validateddata->category = $category_id;

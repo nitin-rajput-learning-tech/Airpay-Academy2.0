@@ -80,8 +80,14 @@ class tags {
         if ($arrayflag == 1) {
             return $links;
         }
+        if(!empty($links)){
+
+            $list = implode(', ', $links);
+        }else{
+
+            $list ='';
+        }
         // send listed tags
-        $list = implode(', ', $links);
         return $list;
     }
 }

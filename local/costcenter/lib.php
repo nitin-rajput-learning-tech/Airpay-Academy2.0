@@ -961,8 +961,9 @@ function blocks_add_default_org_blocks($costcenterid) {
 }
 function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname='local_costcenter',$context=1, $multiple = false, $prefix = ''){
     global $DB, $USER;
-    $depth = $USER->useraccess['currentroleinfo']['depth'];
-    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
+
+    $depth = (isset($USER->useraccess)) ? $USER->useraccess['currentroleinfo']['depth'] : 0;
+    $contextinfo = (isset($USER->useraccess)) ? $USER->useraccess['currentroleinfo']['contextinfo'] : array() ;
     $count = $contextinfo ? count($contextinfo) : 0;
     if($count > 1){
         $depth--;

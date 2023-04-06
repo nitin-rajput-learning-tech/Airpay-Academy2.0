@@ -424,12 +424,12 @@ class local_tags_collection {
     public static function cloud_sort($a, $b) {
         $tagsort = self::$cloudsortfield ?: 'name';
 
-        if (is_numeric($a->$tagsort)) {
-            return ($a->$tagsort == $b->$tagsort) ? 0 : ($a->$tagsort > $b->$tagsort) ? 1 : -1;
-        } else if (is_string($a->$tagsort)) {
-            return strcmp($a->$tagsort, $b->$tagsort);
-        } else {
+        // if (is_numeric($a->$tagsort)) {
+        //     return ($a->$tagsort == $b->$tagsort) ? 0 : ($a->$tagsort > $b->$tagsort) ? 1 : -1;
+        // } else if (is_string($a->$tagsort)) {
+        //     return strcmp($a->$tagsort, $b->$tagsort);
+        // } else {
             return 0;
-        }
+        // }
     }
 }

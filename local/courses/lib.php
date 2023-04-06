@@ -507,11 +507,11 @@ function local_courses_output_fragment_custom_course_form($args){
         $collapse = false;
         $data = $DB->get_record('course', array('id'=>$courseid));
     }
-    // Populate course tags.
-    $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
-    $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes'=>$CFG->maxbytes, 'trusttext'=>false, 'noclean'=>true,'autosave'=>false);
-    $overviewfilesoptions = course_overviewfiles_options($course);
     if ($courseid) {
+        // Populate course tags.
+        $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
+        $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes'=>$CFG->maxbytes, 'trusttext'=>false, 'noclean'=>true,'autosave'=>false);
+        $overviewfilesoptions = course_overviewfiles_options($course);
         // Add context for editor.
         $editoroptions['context'] = $coursecontext;
         $editoroptions['subdirs'] = file_area_contains_subdirs($coursecontext, 'course', 'summary', 0);
