@@ -39,7 +39,7 @@ class local_skillrepository_external extends external_api {
         );
     }
 
-    public function submit_skill_repository_form_form($contextid, $jsonformdata){
+    public static function submit_skill_repository_form_form($contextid, $jsonformdata){
         global $PAGE, $CFG;
         require_once($CFG->dirroot . '/local/skillrepository/lib.php');
         // We always must pass webservice params through validate_parameters.
@@ -52,7 +52,6 @@ class local_skillrepository_external extends external_api {
         $data = array();
         parse_str($params['jsonformdata'], $data);
         $warnings = array();
-
         $mform = new local_skillrepository\form\skill_repository_form(null, array(), 'post', '', null, true, $data);
 
         $repositoryinsert  = new local_skillrepository\event\insertrepository();
@@ -97,7 +96,7 @@ class local_skillrepository_external extends external_api {
         );
     }
 
-    public function submit_skill_category($contextid, $jsonformdata){
+    public static function submit_skill_category($contextid, $jsonformdata){
         global $PAGE, $CFG;
         require_once($CFG->dirroot . '/local/skillrepository/lib.php');
         // We always must pass webservice params through validate_parameters.
@@ -210,7 +209,7 @@ class local_skillrepository_external extends external_api {
     }
 
 
-    public function submit_level_form($contextid, $jsonformdata){
+    public static function submit_level_form($contextid, $jsonformdata){
         global $PAGE, $CFG;
 
         // We always must pass webservice params through validate_parameters.
