@@ -1026,8 +1026,12 @@ function local_groups_output_fragment_new_groupsform($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
-        parse_str($serialiseddata, $formdata);
+    $serialiseddata = json_decode($args->jsonformdata);
+    if(is_object($serialiseddata)){
+        $serialiseddata = serialize($serialiseddata);
+    }
+    parse_str($serialiseddata, $formdata);
+        
     }
     $editoroptions = [
         'maxfiles' => EDITOR_UNLIMITED_FILES,

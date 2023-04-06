@@ -51,7 +51,7 @@ class local_groups_external extends external_api {
      * @param [string] $jsonformdata 
      * @return groups form submits
      */
-	public function submit_groupsform_form($id, $contextid, $jsonformdata){
+	public static function submit_groupsform_form($id, $contextid, $jsonformdata){
 		global $DB,$PAGE, $CFG;
 
 		require_once($CFG->dirroot . '/local/groups/lib.php');
@@ -59,13 +59,14 @@ class local_groups_external extends external_api {
 		$context = context::instance_by_id($contextid, MUST_EXIST);
         // We always must call validate_context in a webservice.
 		self::validate_context($context);
-		$serialiseddata = json_decode($jsonformdata);
-
-		$data = array();
-       
+        $data=array();
+        $serialiseddata = json_decode($jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $data);
-        $warnings = array();      
-        $mform = new \local_groups\form\edit_form(null,'', 'post', '', null, true, $data);
+        $warnings = array();   
+        $mform = new \local_groups\form\edit_form(null,array(), 'post', '', null, true, $data);
         $valdata = $mform->get_data();
         if($valdata){
             if($valdata->id>0){

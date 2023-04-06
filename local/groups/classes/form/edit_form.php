@@ -42,7 +42,6 @@ class edit_form extends moodleform {
         $mform = $this->_form;
         $editoroptions = $this->_customdata['editoroptions'];
         $cohort = $this->_customdata['data'];
-        
         $context = (new \local_groups\lib\accesslib())::get_module_context();
         local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_groups', $context, $multiple = false);
         $mform->addElement('text', 'name', get_string('name', 'local_groups'), 'maxlength="254" size="50"');
@@ -75,10 +74,7 @@ class edit_form extends moodleform {
 
     public function validation($data, $files) {
         global $DB;
-
-        $errors = parent::validation($data, $files);
-        
-
+        $errors = parent::validation($data, $files);       
         $idnumber = trim($data['idnumber']);
         if ($idnumber === '') {
             // Fine, empty is ok.
@@ -107,7 +103,6 @@ class edit_form extends moodleform {
                 $errors['idnumber'] = get_string('pleaseselectidnumber', 'local_groups');
             }
         }
-
         return $errors;
     }
 
