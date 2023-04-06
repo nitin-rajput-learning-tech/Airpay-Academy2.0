@@ -116,7 +116,14 @@ class accesslib extends \local_costcenter\lib\accesslib{
             }else{
                 $enrolledpercentage=0;
             }
-            $completedpercentage=($completedusercount / $enrolledusercount) * 100;
+            if($enrolledusercount > 0){
+
+                $completedpercentage=($completedusercount / $enrolledusercount) * 100;
+            }else{
+
+                $completedpercentage=0;
+
+            }
 
             if (!is_nan($completedpercentage)) {
 
