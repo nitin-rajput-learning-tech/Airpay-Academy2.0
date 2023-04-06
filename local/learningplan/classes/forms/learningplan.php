@@ -84,7 +84,28 @@ class learningplan extends moodleform {
 	        $mform->addElement('text', 'name', get_string('learning_plan_name', 'local_learningplan'));
 	        $mform->addRule('name', null, 'required', null, 'client');
 	        $mform->setType('name', PARAM_TEXT);
+            $mform->addElement('text', 'shortname', get_string('learningplan','local_learningplan'), 'maxlength="100" size="20"');
+			if($id < 0 || empty($id)){
+			$mform->addRule('shortname', get_string('missing_plan_learningplan', 'local_learningplan'), 'required', null, 'client');
+			}
+			if($id > 0){
+				$mform->disabledIf('shortname','id');
+			}
+	        $mform->setType('shortname', PARAM_TEXT);
 			
+
+          /*   if(!empty($id)){
+                $mform->addElement('static', 'shortname_static', get_string('learningplan','local_learningplan'), 'maxlength="100" size="20"');
+                $mform->addElement('hidden', 'shortname');    
+                $mform->setType('shortname', PARAM_TEXT);
+                $mform->setDefault('shortname', $open_costcenter);
+            }else{
+     
+                $mform->addElement('text', 'shortname', get_string('shortname','local_costcenter'), 'maxlength="100" size="20"');
+                $mform->addRule('shortname', get_string('shortnamecannotbeempty', 'local_costcenter'), 'required', null, 'client');    
+                $mform->setType('shortname', PARAM_TEXT);
+            } */
+	/* 		
 			$mform->addElement('text', 'shortname', get_string('learningplan','local_learningplan'), 'maxlength="100" size="20"');
 			if($id < 0 || empty($id)){
 			$mform->addRule('shortname', get_string('missing_plan_learningplan', 'local_learningplan'), 'required', null, 'client');
@@ -95,7 +116,8 @@ class learningplan extends moodleform {
                 $mform->addElement('hidden', 'shortname');
                 $mform->setType('shortname', PARAM_TEXT);
                 $mform->hardFreeze('shortname');
-            } 
+            }  */
+
         $parentsql = "SELECT lcc.id, lcc.fullname, lcc.parentid FROM {local_custom_category} AS lcc WHERE 1 = 1";
         if(!is_siteadmin()){
             $orgcond = [];

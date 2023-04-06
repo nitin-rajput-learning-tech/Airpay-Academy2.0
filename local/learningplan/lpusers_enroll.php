@@ -137,6 +137,8 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
     $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
     $location = !empty($filterdata->location) ? implode(',', $filterdata->location) : null;
   	$hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', $filterdata->hrmsrole) : null;
+    $designation = !empty($filterdata->designation) ? implode(',', $filterdata->designation) : null;
+    $empnumber = !empty($filterdata->empnumber) ? implode(',', $filterdata->empnumber) : null;
   }
    $options = array('context' => $systemcontext->id, 'planid' => $planid, 'organization' => $organization, 'department' => $department, 'subdepartment' => $subdepartment, 'department4level' => $department4level, 'department5level' => $department5level, 'states' => $states, 'district' => $district, 'subdistrict' => $subdistrict, 'village' => $village, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
 

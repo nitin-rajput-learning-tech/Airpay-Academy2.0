@@ -12,7 +12,7 @@ class local_learningplan_external extends external_api {
             )
         );
     }
-    public function submit_learningplan($id, $contextid, $jsonformdata, $form_status){
+    public static function submit_learningplan($id, $contextid, $jsonformdata, $form_status){
         global $DB, $CFG;
         require_once($CFG->dirroot.'/local/costcenter/lib.php');
 		$categorycontext  = (new \local_learningplan\lib\accesslib())::get_module_context($id);
@@ -411,7 +411,8 @@ class local_learningplan_external extends external_api {
             )
         );
     }
-        public static function get_upcominglps_parameters() {
+    
+    public static function get_upcominglps_parameters() {
         return new external_function_parameters(
             array(
             )

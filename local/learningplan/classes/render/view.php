@@ -69,7 +69,7 @@ class view extends plugin_renderer_base
 			}
 			$assign_users_sql = "SELECT id FROM {local_learningplan} l WHERE 1 = 1 ";
 			if ($filterdata) {
-				if (!empty(array_filter($filterdata->organizations))) {
+				if (!empty($filterdata->organizations) && !empty(array_filter($filterdata->organizations))) {
 					$selectedorganizations = implode(',', array_filter($filterdata->organizations));
 					$organizations = explode(',', $selectedorganizations);
 					$orgsql = [];
@@ -83,7 +83,7 @@ class view extends plugin_renderer_base
 						$assign_users_sql .= " AND ( " . implode(' OR ', $orgsql) . " ) ";
 					}
 				}
-				if (!empty(array_filter($filterdata->departments))) {
+				if (!empty($filterdata->departments) && !empty(array_filter($filterdata->departments))) {
 					$selecteddepts = implode(',', array_filter($filterdata->departments));
 					$depts = explode(',', $selecteddepts);
 					$deptsql = [];
@@ -97,7 +97,7 @@ class view extends plugin_renderer_base
 						$assign_users_sql .= " AND ( " . implode(' OR ', $deptsql) . " ) ";
 					}
 				}
-				if (!empty(array_filter($filterdata->subdepartment))) {
+				if (!empty($filterdata->subdepartment) && !empty(array_filter($filterdata->subdepartment))) {
 					$selectedsubdepts = implode(',', array_filter($filterdata->subdepartment));
 					$subdepts = explode(',', $selectedsubdepts);
 					$subdeptsql = [];
@@ -112,7 +112,7 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->department4level))) {
+				if (!empty($filterdata->department4level) &&  !empty(array_filter($filterdata->department4level))) {
 					$selecteddepts4 = implode(',', array_filter($filterdata->department4level));
 					$depts4 = explode(',', $selecteddepts4);
 					$depts4sql = [];
@@ -127,7 +127,7 @@ class view extends plugin_renderer_base
 					}
 				}
 
-				if (!empty(array_filter($filterdata->department5level))) {
+				if (!empty($filterdata->department5level) && !empty(array_filter($filterdata->department5level))) {
 					$selecteddepts5 = implode(',', array_filter($filterdata->department5level));
 					$depts5 = explode(',', $selecteddepts5);
 					$depts5sql = [];
@@ -246,8 +246,8 @@ class view extends plugin_renderer_base
 				$row = array();
 				$capability1 = $capability2 = $capability3 = false;
 				$actions = '';
-				$departmentcount = count(array_filter(explode(',', $learning_plan->department)));
-				$subdepartmentcount = count(array_filter(explode(',', $learning_plan->subdepartment)));
+				$departmentcount = isset($learning_plan->department) ? count(array_filter(explode(',', $learning_plan->department))) : 0;
+				//$subdepartmentcount = count(array_filter(explode(',', $learning_plan->subdepartment)));
 				$plan_url = new \moodle_url('/local/learningplan/plan_view.php', array('id' => $learning_plan->id));
 				$planview_url = new \moodle_url('/local/learningplan/lpathinfo.php', array('id' => $learning_plan->id));
 
@@ -349,10 +349,10 @@ class view extends plugin_renderer_base
         $learningplan_content['planterritory'] = $this->db->get_field('local_costcenter', 'fullname', array('id' => $territory));*/
 				$plandpt = $this->db->get_field('local_costcenter', 'fullname', array('id' => $ctr));
 				$learningplan_content['plandpt'] = $plandpt ? $plandpt : 'All';
-				$learningplan_content['plan_department'] = ($plan_department == '-1' || empty($plan_department)) ? 'All' : $plan_department;
+				$learningplan_content['plan_department'] = (empty($plan_department) || $plan_department == '-1') ? 'All' : $plan_department;
 				$learningplan_content['plan_shortname_string'] = $learning_plan->shortname ? $learning_plan->shortname : 'NA';
-				$learningplan_content['plan_department_string'] = ($plan_department_string == '-1' || empty($plan_department_string)) ? 'All' : $plan_department_string;
-				$learningplan_content['plan_subdepartment'] = $plan_subdepartment;
+				$learningplan_content['plan_department_string'] = ( empty($plan_department_string) || $plan_department_string == '-1') ? 'All' : $plan_department_string;
+				$learningplan_content['plan_subdepartment'] = empty($plan_subdepartment ) ? 'All' : $plan_subdepartment;
 				$learningplan_content['plan_url'] = $plan_url;
 				$learningplan_content['planview_url'] = $planview_url;
 				$learningplan_content['lpcoursespath'] = $pathcourses;
@@ -467,36 +467,36 @@ class view extends plugin_renderer_base
 					$filterlearningplan = implode(',', $filterdata->learningplan);
 				}
 
-				if ($filterdata->filteropen_level4department) {
+				if (isset($filterdata->filteropen_level4department) && $filterdata->filteropen_level4department) {
 					$filter4level = implode(',', $filterdata->filteropen_level4department);
 				}
 
-				if ($filterdata->filteropen_level5department) {
+				if (isset($filterdata->filteropen_level5department) && $filterdata->filteropen_level5department) {
 					$filter5level = implode(',', $filterdata->filteropen_level5department);
 				}
 
-				if ($filterdata->states) {
+				if (isset($filterdata->states) &&  $filterdata->states) {
 					$filterstates = implode(',', $filterdata->states);
 				}
 
-				if ($filterdata->district) {
+				if (isset($filterdata->district) && $filterdata->district) {
 					$filterdistrict = implode(',', $filterdata->district);
 				}
 
-				if ($filterdata->subdistrict) {
+				if (isset($filterdata->subdistrict) && $filterdata->subdistrict) {
 					$filtersubdistrict = implode(',', $filterdata->subdistrict);
 				}
 
-				if ($filterdata->village) {
+				if (isset($filterdata->village) && $filterdata->village) {
 					$filtervillage = implode(',', $filterdata->village);
 				}
 
-				if ($filterdata->status) {
+				if (isset($filterdata->status) && $filterdata->status) {
 					//print_r($filterdata->status);
 					$filterstatus = implode(',', $filterdata->status);
 				}
 
-				if ($filterdata->categories) {
+				if (isset($filterdata->categories) && $filterdata->categories) {
 					$filtercategories = implode(',', $filterdata->categories);
 				}
 			} else {
@@ -590,7 +590,10 @@ class view extends plugin_renderer_base
 		foreach ($total_completed_users as $completed_users) {
 			$cmpltd[] = $completed_users->id;
 		}
-		$percent = count($cmpltd)/$total_enroled_users->data * 100;
+		$percent = 0;
+		if(!empty($total_enroled_users) && $total_enroled_users->data!=0){
+			$percent = count($cmpltd)/$total_enroled_users->data * 100;
+		}
 		$total_requested_users = $this->db->count_records('local_learningplan_approval', array('planid' => $planid));
 		/*Count of the courses of LEP*/
 		$total_assigned_course = $this->db->count_records('local_learningplan_courses', array('planid' => $planid));
@@ -1241,8 +1244,8 @@ class view extends plugin_renderer_base
 	{
 		$users = $this->db->get_record('local_learningplan', array('id' => $planid));
 		$us = $users->open_band;
-		$array = explode(',', $us);
-		$list = implode("','", $array);
+	/* 	$array = explode(',', $us);
+		$list = implode("','", $array); */
 		$loginuser = $this->user;
 		$categorycontext = (new \local_learningplan\lib\accesslib())::get_module_context($planid);
 		$userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
@@ -1451,12 +1454,13 @@ class view extends plugin_renderer_base
 		$learningplan  = $DB->get_records('local_learningplan');
 		$lpuserexist = $DB->record_exists('local_learningplan_user',array('planid'=>$planid));
 		foreach ($learningplan as $plan)
-			$departmentcount = count(array_filter(explode(',', $plan->department)));
-		$subdepartmentcount = count(array_filter(explode(',', $plan->subdepartment)));
+			$departmentcount = isset($plan->department) ? count(array_filter(explode(',', $plan->department))) : 0;
+		$subdepartmentcount = isset($plan->subdepartment) ? count(array_filter(explode(',', $plan->subdepartment))) : 0;
 		$plan_name = $DB->get_field('local_learningplan', 'name', array('id' => $planid));
 		$learningplan_lib = new lib;
 		$userscount = $learningplan_lib->get_enrollable_users_count_to_learningplan($planid);
 		$return = '';
+		$add_learningplancourses = '';
 		if(!$lpuserexist){
 			$add_learningplancourses = '<ul class="course_extended_menu_list learningplan">
 				<li>
@@ -1734,6 +1738,7 @@ class view extends plugin_renderer_base
 							}
 						}
 					} else {
+						
 						/*Else condition Not for first and last record should have the both arrows*/
 						if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
 							$unassign_url = '';
@@ -2464,7 +2469,7 @@ class view extends plugin_renderer_base
 
 		$mandatarycourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'and');
 		$optionalcourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'or');
-		$lplanassignedcourses = lib::get_learningplan_assigned_courses($planid);
+		$lplanassignedcourses = (new lib)->get_learningplan_assigned_courses($planid);
 
 		// $catalogrenderer = $this->page->get_renderer('local_catalog');
 		$description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($lplan->description), array('overflowdiv' => false, 'noclean' => false, 'para' => false));

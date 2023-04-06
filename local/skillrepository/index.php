@@ -62,9 +62,9 @@ $repository = new local_skillrepository\event\insertrepository();
 
 if($id > 0) {
     $toform = $repository->skillrepository_opertaions('local_skill', 'fetch-single', '', 'id', $id);
-    $description= isset($toform->description);
-    $toform->description=array();
-    $toform->description['text'] = isset($description);
+    $description= isset($toform->description['text']);
+    // $toform->description=array();
+    // $toform->description['text'] = isset($description);
 } else {
     $fromform = new stdClass();
 }

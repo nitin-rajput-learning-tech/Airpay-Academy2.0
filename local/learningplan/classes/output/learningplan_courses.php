@@ -138,7 +138,7 @@ class learningplan_courses implements \renderable, \templatable {
                 $lastaccessstime= $DB->get_field('user_lastaccess', 'timeaccess', array('userid'=>$USER->id, 'courseid' => $inprogress_coursename->id));
 
                 /* get the courses of learning path added by rizwana */
-                $lplanassignedcourses = learninngplan_lib::get_learningplan_assigned_courses($inprogress_coursename->id);
+                $lplanassignedcourses = (new learninngplan_lib)->get_learningplan_assigned_courses($inprogress_coursename->id);
                 $coursescount = count($lplanassignedcourses);
                  $onerow ['pathcourses'] = array();
                 if(count($lplanassignedcourses)>=2) {
@@ -163,7 +163,7 @@ class learningplan_courses implements \renderable, \templatable {
                 $course_record = $DB->get_record('course', array('id' => $inprogress_coursename->id));
 
 
-                $onerow['plan_image_url'] = learninngplan_lib::get_learningplansummaryfile($inprogress_coursename->id);
+                $onerow['plan_image_url'] = (new learninngplan_lib)->get_learningplansummaryfile($inprogress_coursename->id);
 
                 //-------- get the course summary------------------------
                 $description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($inprogress_coursename->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
@@ -208,7 +208,7 @@ class learningplan_courses implements \renderable, \templatable {
         $data->nodata_string = get_string('nolearningplansavailable','block_userdashboard');
         return $data;
     } // end of export_for_template function.
-    public function planpercent($planid,$userid){
+    public static function planpercent($planid,$userid){
         global $DB,$USER;
         // $sql = "SELECT c.* FROM {local_learningplan_courses} as lpc inner join {course} as c on c.id= lpc.courseid where lpc.planid=:planid";
         // $params =array("planid"=>$planid);
@@ -291,7 +291,7 @@ class learningplan_courses implements \renderable, \templatable {
                 }
             } else
             if ($optional_completed) {
-				if (in_array("1", $optional_completed['completed'])) {
+				if (isset($optional_completed['completed']) && in_array("1", $optional_completed['completed'])) {
                     $percent = 100;
                 }else{
                     $percent = 0;
