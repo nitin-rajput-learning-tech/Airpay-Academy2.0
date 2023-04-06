@@ -185,6 +185,9 @@ function local_skillrepository_output_fragment_level_form($args){
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     if ($levelid > 0) {
