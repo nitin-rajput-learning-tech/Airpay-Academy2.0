@@ -46,9 +46,15 @@ class local_program_external extends external_api {
         global $PAGE, $DB, $CFG, $USER;
         $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
         self::validate_context($categorycontext);
-        $serialiseddata = json_decode($jsonformdata);
         $data = array();
-        parse_str($serialiseddata, $data);
+        if (!empty($jsonformdata)) {
+
+            $serialiseddata = json_decode($jsonformdata);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
 
@@ -342,9 +348,15 @@ class local_program_external extends external_api {
         global $PAGE, $DB, $CFG, $USER;
         $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
         self::validate_context($categorycontext);
-        $serialiseddata = json_decode($jsonformdata);
         $data = array();
-        parse_str($serialiseddata, $data);
+        if (!empty($jsonformdata)) {
+
+            $serialiseddata = json_decode($jsonformdata);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
         $program = new stdClass();
@@ -393,9 +405,15 @@ class local_program_external extends external_api {
         global $PAGE, $DB, $CFG, $USER;
         $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
         self::validate_context($categorycontext);
-        $serialiseddata = json_decode($jsonformdata);
         $data = array();
-        parse_str($serialiseddata, $data);
+        if (!empty($jsonformdata)) {
+
+            $serialiseddata = json_decode($jsonformdata);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
         $program = new stdClass();
@@ -538,12 +556,18 @@ class local_program_external extends external_api {
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($categorycontext);
-        $serialiseddata = json_decode($params['jsonformdata']);
         // throw new moodle_exception('Error in creation');
         // die;
         $data = array();
 
-        parse_str($serialiseddata, $data);
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
         $warnings = array();
          $mform = new local_program\form\catform(null, array(), 'post', '', null, true, $data);
         $category  = new local_program\event\category();
@@ -586,9 +610,15 @@ class local_program_external extends external_api {
         global $PAGE, $DB, $CFG, $USER;
         $categorycontext = context::instance_by_id($categorycontextid, MUST_EXIST);
         self::validate_context($categorycontext);
-        $serialiseddata = json_decode($jsonformdata);
         $data = array();
-        parse_str($serialiseddata, $data);
+        if (!empty($jsonformdata)) {
+
+            $serialiseddata = json_decode($jsonformdata);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
         $program = new stdClass();
@@ -1033,9 +1063,15 @@ class local_program_external extends external_api {
         global $DB;
         $context = context::instance_by_id($contextid, MUST_EXIST);
         self::validate_context($context);
-        $serialiseddata = json_decode($jsonformdata);
         $data = array();
-        parse_str($serialiseddata, $data);
+        if (!empty($jsonformdata)) {
+
+            $serialiseddata = json_decode($jsonformdata);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
 
@@ -1075,9 +1111,15 @@ class local_program_external extends external_api {
         global $DB;
         $context = context::instance_by_id($contextid, MUST_EXIST);
         self::validate_context($context);
-        $serialiseddata = json_decode($jsonformdata);
         $data = array();
-        parse_str($serialiseddata, $data);
+        if (!empty($jsonformdata)) {
+
+            $serialiseddata = json_decode($jsonformdata);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $warnings = array();
 

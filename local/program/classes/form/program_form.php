@@ -252,14 +252,17 @@ class program_form extends moodleform {
         if ($components->form_status == 0) {
             //populate tags
             // $data->tags = \local_tags_tag::get_item_tags_array('local_program', 'program', $components->id);
-            $data->cr_description = array();
-            $data->cr_description['text'] = $data->description;
-            $draftitemid = file_get_submitted_draft_itemid('programlogo');
+            if(!empty($data)){
 
-            file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_program', 'programlogo',
-                $data->programlogo, null);
+                $data->cr_description = array();
+                $data->cr_description['text'] = $data->description;
+                $draftitemid = file_get_submitted_draft_itemid('programlogo');
 
-            $data->programlogo = $draftitemid;
+                file_prepare_draft_area($draftitemid, $categorycontext->id, 'local_program', 'programlogo',
+                    $data->programlogo, null);
+
+                $data->programlogo = $draftitemid;
+            }
 
 
         }if($components->form_status == 1) {

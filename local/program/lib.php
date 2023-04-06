@@ -73,7 +73,11 @@ function local_program_output_fragment_program_form($args) {
     $renderer = $PAGE->get_renderer('local_program');
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $data = $DB->get_record('local_program', ['id' => $args->id]);
@@ -125,7 +129,11 @@ function local_program_output_fragment_level_completion_settings($args) {
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['id'] = $args->id;
@@ -164,7 +172,11 @@ function local_program_output_fragment_program_completion_settings($args){
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['id'] = $args->id;
@@ -203,7 +215,11 @@ function local_program_output_fragment_program_completion_form($args) {
     $return = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['id'] = $args->id;
@@ -235,7 +251,11 @@ function local_program_output_fragment_course_form($args) {
     $renderer = $PAGE->get_renderer('local_program');
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['bcid'] = $args->id;
@@ -364,7 +384,11 @@ function local_program_output_fragment_new_catform($args) {
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
 
@@ -478,7 +502,11 @@ function local_program_output_fragment_program_managelevel_form($args) {
     $renderer = $PAGE->get_renderer('local_program');
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['id'] = $args->id;

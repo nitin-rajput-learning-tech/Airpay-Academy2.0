@@ -157,14 +157,19 @@ echo $displaytype_div;
 
 echo $renderer->get_program_tabs($datasubmitted,$programid,$status,$formattype);
 
-$organization = !empty(array_filter($datasubmitted->filteropen_costcenterid)) ? implode(',', array_filter($datasubmitted->filteropen_costcenterid)) : '';
-$department = !empty(array_filter($datasubmitted->filteropen_department)) ? implode(',', array_filter($datasubmitted->filteropen_department)) : '';
-$subdepartment = !empty(array_filter($datasubmitted->filteropen_subdepartment)) ? implode(',', array_filter($datasubmitted->filteropen_subdepartment)) : '';
-$department4level = !empty(array_filter($datasubmitted->filteropen_level4department)) ? implode(',', array_filter($datasubmitted->filteropen_level4department)) : '';
-$department5level = !empty(array_filter($datasubmitted->filteropen_level5department)) ? implode(',', array_filter($datasubmitted->filteropen_level5department)) : '';
+$organization =$department =$subdepartment =$department4level =$department5level =$selectedstatus =$categories = '';
 
-$selectedstatus = !empty(array_filter($status)) ? implode(',', array_filter($status)) : '';
-$categories = !empty(array_filter($datasubmitted->categories)) ? implode(',', array_filter($datasubmitted->categories)) : '';
+if(!empty($datasubmitted)){
+
+    $organization = (is_array($datasubmitted->filteropen_costcenterid)) ? (!empty(array_filter($datasubmitted->filteropen_costcenterid)) ? implode(',', array_filter($datasubmitted->filteropen_costcenterid)) : '') : '';
+    $department = (is_array($datasubmitted->filteropen_department)) ? (!empty(array_filter($datasubmitted->filteropen_department)) ? implode(',', array_filter($datasubmitted->filteropen_department)) : '') : '';
+    $subdepartment = (is_array($datasubmitted->filteropen_subdepartment)) ?(!empty(array_filter($datasubmitted->filteropen_subdepartment)) ? implode(',', array_filter($datasubmitted->filteropen_subdepartment)) : ''): '';
+    $department4level = (is_array($datasubmitted->filteropen_level4department)) ? (!empty(array_filter($datasubmitted->filteropen_level4department)) ? implode(',', array_filter($datasubmitted->filteropen_level4department)) : ''): '';
+    $department5level = (is_array($datasubmitted->filteropen_level5department)) ? (!empty(array_filter($datasubmitted->filteropen_level5department)) ? implode(',', array_filter($datasubmitted->filteropen_level5department)) : ''): '';
+
+    $selectedstatus = (is_array($status)) ? (!empty(array_filter($status)) ? implode(',', array_filter($status)) : ''): '';
+    $categories = (is_array($datasubmitted->categories)) ? (!empty(array_filter($datasubmitted->categories)) ? implode(',', array_filter($datasubmitted->categories)) : ''): '';
+}
 
 $PAGE->requires->js_call_amd('local_program/program', 'programDatatable',
                     array(array('programstatus' => -1,'selectedcostcenterid' => $organization,'selecteddepartmentid' => $department,'selectedsubdepartmentid' => $subdepartment,'selectedl4department' => $department4level,'selectedl5department' => $department5level,'selectedprogram' => $programid ,'selectedstatus' => $selectedstatus,'formattype'=>$formattype,'selectedcategories'=>$categories)));
