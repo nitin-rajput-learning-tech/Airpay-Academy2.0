@@ -42,7 +42,11 @@ function local_users_output_fragment_new_create_user($args) {
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+        
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $editoroptions = [

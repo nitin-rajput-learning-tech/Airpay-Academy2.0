@@ -26,7 +26,7 @@ class local_assignroles_external extends external_api {
      * @param [string] $jsonformdata
      * @return assignrole form submits
      */
-    public function submit_assignrole_form($contextid, $roleid,$jsonformdata){
+    public static function submit_assignrole_form($contextid, $roleid,$jsonformdata){
         global $PAGE,$CFG, $USER,$DB;
 
         require_once($CFG->dirroot . '/local/assignroles/lib.php');
@@ -261,7 +261,7 @@ class local_assignroles_external extends external_api {
 
 
                         $depth = $USER->useraccess['currentroleinfo']['depth'];
-                        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+                        if(count((array)$USER->useraccess['currentroleinfo']['contextinfo']) > 1){
                             $depth--;
                         }
                         if(is_siteadmin()){
@@ -395,7 +395,7 @@ class local_assignroles_external extends external_api {
      * @param [string] $jsonformdata
      * @return assignrole form submits
      */
-    public function submit_assigncostcenterrole_form($contextid, $costcenterid, $formtype,$jsonformdata){
+    public static function submit_assigncostcenterrole_form($contextid, $costcenterid, $formtype,$jsonformdata){
         global $PAGE,$CFG, $USER,$DB;
 
         require_once($CFG->dirroot . '/local/assignroles/lib.php');

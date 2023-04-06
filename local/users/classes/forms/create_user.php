@@ -63,7 +63,7 @@ class create_user extends moodleform {
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,null, true, 'local_users', $categorycontext, $multiple = false);
 
 
-            $count = count($costcenters);
+            $count = count((array)$costcenters);
             $mform->addElement('hidden', 'count', $count);
             $mform->setType('count', PARAM_INT);
             $mform->addElement('text', 'username', get_string('username', 'local_users'));

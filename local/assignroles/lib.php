@@ -85,7 +85,10 @@ function local_assignroles_output_fragment_new_costcenterassignrole($args)
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
-        parse_str($serialiseddata, $formdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
+        parse_str($args->jsonformdata, $formdata);
     }
     $users = array();
    
@@ -226,7 +229,7 @@ function local_assignroles_output_fragment_costcenterroleusers_display($args)
 
 
     $depth = $USER->useraccess['currentroleinfo']['depth'];
-    if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+    if(count((array)$USER->useraccess['currentroleinfo']['contextinfo']) > 1){
         $depth--;
     }
     if(is_siteadmin()){

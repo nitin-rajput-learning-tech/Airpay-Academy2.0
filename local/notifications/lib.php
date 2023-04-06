@@ -41,8 +41,8 @@ function local_notifications_output_fragment_new_notification_form($args)
 
     $formdata = [];
     if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
-        parse_str($serialiseddata, $formdata);
+       
+        parse_str($args->jsonformdata, $formdata);
     }
     $data = new stdclass();
     if ($id > 0) {

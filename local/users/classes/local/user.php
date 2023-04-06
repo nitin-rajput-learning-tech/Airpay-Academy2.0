@@ -52,12 +52,12 @@ class user {
                      FROM {user} u
                     WHERE u.id=:id ";
         $userOrg = $DB->get_record_sql($sql3, array('id' => $id));
-        $organisationdata = array_filter(explode('/', $userOrg->open_path));
+        $organisationdata = array_filter(explode('/', $userOrg->open_path ?? ''));
         $organisationnames = array_map(function($orgid){
             return \local_costcenter\lib\accesslib::get_costcenter_info($orgid, 'fullname');
         }, $organisationdata);
-        $usercostcenter = $organisationnames[1];
-        $userdepartment = $organisationnames[2];
+        $usercostcenter = $organisationnames[1] ?? null;
+        $userdepartment = $organisationnames[2] ?? null;
         if (!empty($userrecord->phone1)) {
             $contact = $userrecord->phone1;
         } else {

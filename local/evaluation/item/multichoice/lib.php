@@ -29,8 +29,10 @@ class evaluation_item_multichoice extends evaluation_item_base {
     public function build_editform($item, $evaluation) {
         global $DB, $CFG;
         require_once('multichoice_form.php');
-
         //get the lastposition number of the evaluation_items
+        if(!$item){
+            $item= (object) $item;
+        }
         $position = $item->position;
         $lastposition = $DB->count_records('local_evaluation_item', array('evaluation'=>$evaluation->id));
         if ($position == -1) {
@@ -43,8 +45,10 @@ class evaluation_item_multichoice extends evaluation_item_base {
         }
         //the elements for position dropdownlist
         $positionlist = array_slice(range(0, $i_formselect_last), 1, $i_formselect_last, true);
-
-        $item->presentation = empty($item->presentation) ? '' : $item->presentation;
+        if(empty($item->presentation)){
+            $item->presentation= 0 ;
+        }
+        //$item->presentation = empty($item->presentation) ? '' : $item->presentation;
         $info = $this->get_info($item);
 
         $item->ignoreempty = $this->ignoreempty($item);

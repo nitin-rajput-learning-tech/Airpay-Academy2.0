@@ -291,7 +291,11 @@ function local_costcenter_output_fragment_new_costcenterform($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
 
@@ -309,7 +313,6 @@ function local_costcenter_output_fragment_new_costcenterform($args){
 
         $formparams['open_path'] = $data->path;
     }
-
     local_costcenter_set_costcenter_path($formparams);
 
     $mform = new local_costcenter\form\organization_form(null,$formparams, 'post', '', null, true, $formdata);
@@ -885,9 +888,14 @@ function local_costcenter_output_fragment_departmentview($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
+
     $mform = new local_costcenter\functions\costcenter(null, array(), 'post', '', null, true, $formdata);
  
     if (!empty($formdata)) {
@@ -951,11 +959,13 @@ function blocks_add_default_org_blocks($costcenterid) {
         $subpagepattern
     );
 }
-function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false, $prefix = ''){
+function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname='local_costcenter',$context= CONTEXT_SYSTEM, $multiple = false, $prefix = ''){
     global $DB, $USER;
-    $depth = $USER->useraccess['currentroleinfo']['depth'];
-    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
-    if(count($contextinfo) > 1){
+
+    $depth = (isset($USER->useraccess)) ? $USER->useraccess['currentroleinfo']['depth'] : 0;
+    $contextinfo = (isset($USER->useraccess)) ? $USER->useraccess['currentroleinfo']['contextinfo'] : array() ;
+    $count = $contextinfo ? count($contextinfo) : 0;
+    if($count > 1){
         $depth--;
     }
     if(is_siteadmin()){
@@ -1052,7 +1062,7 @@ function local_costcenter_get_costcenter_path(&$data){
 function local_costcenter_set_costcenter_path(&$data, $prefix = ''){
     global $USER;
     $fields = local_costcenter_get_fields();
-    $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
+    $contextinfo = (isset($USER->useraccess)) ? $USER->useraccess['currentroleinfo']['contextinfo'] : array();
     $pathnottracked = true;
     if($contextinfo){
         foreach($contextinfo AS $contextdata){
@@ -1076,7 +1086,7 @@ function local_costcenter_set_costcenter_path(&$data, $prefix = ''){
             }
         }
     }
-    if($pathnottracked){
+    if($pathnottracked && $contextinfo){
         $rolecontext = \local_costcenter\lib\accesslib::get_costcenterpath_context($contextinfo[0]['context']);
         $rolecontextids = explode('/',$rolecontext);
         if(count($contextinfo) > 1){
@@ -1126,13 +1136,18 @@ function local_costcenter_masterinfo(){
     }
     return array('1' => $content);
 }
-function local_costcenter_organization_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname, $context, $multiple = false, $prefix = '',$editmode=0){
+function local_costcenter_organization_hierarchy_fields($mform, $ajaxformdata, $customdata, $elements = null,$allenable = false, $pluginname='local_costcenter',$context=CONTEXT_SYSTEM, $multiple = false, $prefix = '',$editmode=0){
     global $DB, $USER;
     $depth = $USER->useraccess['currentroleinfo']['depth'];
     $contextinfo = $USER->useraccess['currentroleinfo']['contextinfo'];
-    if(count($contextinfo) > 1){
-        $depth--;
+
+    if($contextinfo){
+
+        if(count($contextinfo) > 1){
+            $depth--;
+        }
     }
+
     if(is_siteadmin()){
         $depth = 0;
     }

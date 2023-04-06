@@ -35,7 +35,9 @@ class evaluation_item_label extends evaluation_item_base {
     public function build_editform($item, $evaluation) {
         global $DB, $CFG;
         require_once('label_form.php');
-
+        if(!$item){
+            $item= (object) $item;
+        }
         //get the lastposition number of the evaluation_items
         $position = $item->position;
         $lastposition = $DB->count_records('local_evaluation_item', array('evaluation'=>$evaluation->id));

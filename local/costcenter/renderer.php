@@ -298,7 +298,7 @@ class local_costcenter_renderer extends plugin_renderer_base {
             'create_department' => $create_department,
             'create_sub_department' => $create_sub_department,
             'create_sub_sub_department' => $create_sub_sub_department,
-            'create_sub_sub_sub_department' => $create_sub_sub_sub_department
+            //'create_sub_sub_sub_department' => $create_sub_sub_sub_department
         );
 
        return $this->render_from_template('local_costcenter/viewbuttons', $buttons);
@@ -371,11 +371,34 @@ class local_costcenter_renderer extends plugin_renderer_base {
             }
 
             $path = explode('/',$dept->path);
-            $organisationid = $path[1];
-            $departmentid = $path[2];
-            $subdepartmentid = $path[3];
-            $l4departmentid = $path[4];
-            $l5departmentid = $path[5];
+
+            $organisationid =$departmentid=$subdepartmentid=$l4departmentid=$l5departmentid=0;
+
+            if(isset($path[1])){
+
+                $organisationid = $path[1];
+
+            }
+            if(isset($path[2])){
+
+                $departmentid = $path[2];
+
+            }
+            if(isset($path[3])){
+
+                $subdepartmentid = $path[3];
+
+            }
+            if(isset($path[4])){
+
+                $l4departmentid = $path[4];
+
+            }
+            if(isset($path[5])){
+
+                $l5departmentid = $path[5];
+
+            }
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
 
@@ -479,11 +502,36 @@ class local_costcenter_renderer extends plugin_renderer_base {
 
 
         $parentpath = explode('/',$DB->get_field('local_costcenter', 'path', array('id' => $id)));
-        $parentorgnization = $parentpath[1];
-        $parentdepartment = $parentpath[2];
-        $parentsubdepartment = $parentpath[3];
-        $parentl4department = $parentpath[4];
-        $parentl5department = $parentpath[5];
+
+
+        $parentorgnization =$parentdepartment=$parentsubdepartment=$parentl4department=$parentl5department=0;
+
+        if(isset($parentpath[1])){
+
+            $parentorgnization = $parentpath[1];
+
+        }
+        if(isset($parentpath[2])){
+
+            $parentdepartment = $parentpath[2];
+
+        }
+        if(isset($parentpath[3])){
+
+            $parentsubdepartment = $parentpath[3];
+
+        }
+        if(isset($parentpath[4])){
+
+            $parentl4department = $parentpath[4];
+
+        }
+        if(isset($parentpath[5])){
+
+            $parentl5department = $parentpath[5];
+
+        }
+
         $subdepartment_link = '';
         $subdepartment = '';
         $departments_sql="SELECT id,id AS id_val FROM {local_costcenter} WHERE parentid=:parent";
@@ -513,13 +561,36 @@ class local_costcenter_renderer extends plugin_renderer_base {
             else{
                 $odd = true;
             }
-            $path = explode('/',$dept->path);
-            $organisationid = $path[1];
-            $departmentid = $path[2];
-            $subdepartmentid = $path[3];
-            $l4departmentid = $path[4];
-            $l5departmentid = $path[5];
 
+            $path = explode('/',$dept->path);
+
+            $organisationid =$departmentid=$subdepartmentid=$l4departmentid=$l5departmentid=0;
+
+            if(isset($path[1])){
+
+                $organisationid = $path[1];
+
+            }
+            if(isset($path[2])){
+
+                $departmentid = $path[2];
+
+            }
+            if(isset($path[3])){
+
+                $subdepartmentid = $path[3];
+
+            }
+            if(isset($path[4])){
+
+                $l4departmentid = $path[4];
+
+            }
+            if(isset($path[5])){
+
+                $l5departmentid = $path[5];
+
+            }
             $departments_array = array();
             $subdepartments = $DB->get_records('local_costcenter', array('parentid' =>$dept->id));
 

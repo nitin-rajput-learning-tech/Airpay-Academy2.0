@@ -822,3 +822,4 @@ $string['user_status'] = 'Select Status';
 $string['select_email'] = 'Select Work Email';
 $string['idnumber_select'] = 'Select Employee Code';
 $string['skilltype_help'] = 'Enter the skill type of the user';
+$string['forum'] = 'Forum';

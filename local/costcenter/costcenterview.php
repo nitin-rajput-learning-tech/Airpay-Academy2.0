@@ -42,11 +42,15 @@ $costcentersql = "SELECT lc.id, lc.fullname,lc.parentid,lc.depth
 
 if (!$depart = $DB->get_record_sql($costcentersql)) {
     print_error('invalidcostcenterid');
+
 }
 
+if(!empty($depart) && isset($depart->path)){
 
-$categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context($depart->path);
-
+    $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context($depart->path);
+}else{
+    $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
+}
 
 if(!has_capability('local/costcenter:view', $categorycontext)) {
     print_error('nopermissiontoviewpage');

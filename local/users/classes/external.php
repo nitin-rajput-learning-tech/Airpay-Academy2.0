@@ -57,7 +57,7 @@ class local_users_external extends external_api {
      * @param  [string] $jsonformdata
      * @return void
      */
-    public function submit_create_user_form($id, $contextid, $jsonformdata, $form_status) {
+    public static function submit_create_user_form($id, $contextid, $jsonformdata, $form_status) {
         global $PAGE, $CFG, $DB;
         require_once($CFG->dirroot . '/local/users/lib.php');
         // We always must pass webservice params through validate_parameters.
@@ -133,7 +133,7 @@ class local_users_external extends external_api {
             )
         );
     }
-    public function delete_user($id, $contextid) {
+    public static function delete_user($id, $contextid) {
         global $DB;
 
         $user = $DB->get_record('user', array('id' => $id));
@@ -160,10 +160,10 @@ class local_users_external extends external_api {
         }
         return $return;
     }
-    public function delete_user_returns() {
+    public static function delete_user_returns() {
         return new external_value(PARAM_BOOL, 'return');
     }
-    public function suspend_local_user_parameters() {
+    public static function suspend_local_user_parameters() {
         return new external_function_parameters(
             array(
                 'id' => new external_value(PARAM_INT, 'userid', 0),
@@ -171,7 +171,7 @@ class local_users_external extends external_api {
             )
         );
     }
-    public function suspend_local_user($id, $contextid) {
+    public static function suspend_local_user($id, $contextid) {
         global $DB;
 
         $user = $DB->get_record('user', array('id' => $id));
@@ -201,10 +201,10 @@ class local_users_external extends external_api {
         }
         return $return;
     }
-    public function suspend_local_user_returns() {
+    public static function suspend_local_user_returns() {
         return new external_value(PARAM_BOOL, 'return');
     }
-    public function get_departments_list_parameters() {
+    public static function get_departments_list_parameters() {
         return new external_function_parameters(
             array(
                 'costcenterid' => new external_value(PARAM_INT, 'Organization id', 0),
@@ -212,7 +212,7 @@ class local_users_external extends external_api {
             )
         );
     }
-    public function get_departments_list($costcenterid, $contextid) {
+    public static function get_departments_list($costcenterid, $contextid) {
         $params = self::validate_parameters(self::get_departments_list_parameters(),
                                     ['costcenterid' => $costcenterid, 'contextid' => $contextid]);
         $context = \context::instance_by_id($params['contextid']);
@@ -232,10 +232,10 @@ class local_users_external extends external_api {
         }
         return json_encode($return);
     }
-    public function get_departments_list_returns() {
+    public static function get_departments_list_returns() {
         return new external_value(PARAM_RAW, 'Data of departments');
     }
-    public function get_supervisors_list_parameters() {
+    public static function get_supervisors_list_parameters() {
         return new external_function_parameters(
             array(
                 'costcenterid' => new external_value(PARAM_INT, 'Organization id', 0),
@@ -243,7 +243,7 @@ class local_users_external extends external_api {
             )
         );
     }
-    public function get_supervisors_list($costcenterid, $contextid) {
+    public static function get_supervisors_list($costcenterid, $contextid) {
         $params = self::validate_parameters(self::get_supervisors_list_parameters(),
                                     ['costcenterid' => $costcenterid, 'contextid' => $contextid]);
         $context = \context::instance_by_id($params['contextid']);
@@ -263,7 +263,7 @@ class local_users_external extends external_api {
         }
         return json_encode($return);
     }
-    public function get_supervisors_list_returns() {
+    public static function get_supervisors_list_returns() {
         return new external_value(PARAM_RAW, 'Data of supervisors');
     }
 
@@ -321,6 +321,7 @@ class local_users_external extends external_api {
                 'filterdata' => $filterdata
             ]
         );
+
         $offset = $params['offset'];
         $limit = $params['limit'];
         $decodedata = json_decode($params['dataoptions']);
@@ -332,15 +333,15 @@ class local_users_external extends external_api {
         $stable->status = $decodedata->status;
         $stable->costcenterid = $decodedata->costcenterid;
         $stable->departmentid = $decodedata->departmentid;
-        $stable->subdepartmentid = $decodedata->subdepartmentid;
+        $stable->subdepartmentid = $decodedata->subdepartmentid; 
         $totalusers = manage_users_count($stable, $filtervalues);
         $totalcount = $totalusers['totalusers'];
         $activeusercount = $totalusers['activeusercount'];
         $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
         if(is_siteadmin() || has_capability('local/users:manage',$categorycontext) ) {
-        $actionsicons = true;
+            $actionsicons = true;
         }
-       
+   
         $inactiveusercount = $totalusers['inactiveusercount'];
         $stable->thead = false;
         $data = manage_users_content($stable, $totalusers/*$filtervalues*/);
@@ -621,7 +622,7 @@ class local_users_external extends external_api {
         ]);
     }
 
-    public function deletesyncstatics_parameters() {
+    public static function deletesyncstatics_parameters() {
         return new external_function_parameters(
             array(
                 'ids' => new external_value(PARAM_RAW, 'The data from the delete selected sync, encoded as a json array', false),
@@ -629,7 +630,7 @@ class local_users_external extends external_api {
             )
         );
     }
-    public function deletesyncstatics($ids, $contextid) {
+    public static function deletesyncstatics($ids, $contextid) {
         global $DB;
         $data = json_decode($ids);
         $return = array();
@@ -645,7 +646,7 @@ class local_users_external extends external_api {
         }
         return $returnvalue;
     }
-    public function deletesyncstatics_returns() {
+    public static function deletesyncstatics_returns() {
         return new external_value(PARAM_BOOL, 'returnvalue');
     }
 
@@ -1316,7 +1317,7 @@ class local_users_external extends external_api {
         );
     }
 
-    public function get_positions_list_parameters() {
+    public static function get_positions_list_parameters() {
         return new external_function_parameters(
             array(
                 'costcenterid' => new external_value(PARAM_INT, 'Organization id', 0),
@@ -1326,7 +1327,7 @@ class local_users_external extends external_api {
             )
         );
     }
-    public function get_positions_list($costcenterid, $domain, $contextid) {
+    public static function get_positions_list($costcenterid, $domain, $contextid) {
         $params = self::validate_parameters(self::get_positions_list_parameters(),
                                     ['costcenterid' => $costcenterid, 'domain' => $domain, 'contextid' => $contextid]);
         $context = \context::instance_by_id($params['contextid']);
@@ -1359,11 +1360,11 @@ class local_users_external extends external_api {
         }
         return json_encode($return);
     }
-    public function get_positions_list_returns() {
+    public static function get_positions_list_returns() {
         return new external_value(PARAM_RAW, 'Data of positions');
     }
 
-    public function get_domains_list_parameters() {
+    public static function get_domains_list_parameters() {
         return new external_function_parameters(
             array(
                 'costcenterid' => new external_value(PARAM_INT, 'Organization id', 0),
@@ -1371,7 +1372,7 @@ class local_users_external extends external_api {
             )
         );
     }
-    public function get_domains_list($costcenterid, $contextid) {
+    public static function get_domains_list($costcenterid, $contextid) {
         $params = self::validate_parameters(self::get_domains_list_parameters(),
                                     ['costcenterid' => $costcenterid, 'contextid' => $contextid]);
         $context = \context::instance_by_id($params['contextid']);
@@ -1395,7 +1396,7 @@ class local_users_external extends external_api {
         }
         return json_encode($return);
     }
-    public function get_domains_list_returns() {
+    public static function get_domains_list_returns() {
         return new external_value(PARAM_RAW, 'Data of domains');
     }
 

@@ -50,7 +50,7 @@ class local_costcenter_external extends external_api
      * @param [string] $jsonformdata 
      * @return costcenter form submits
      */
-    public function submit_costcenterform_form($contextid, $jsonformdata)
+    public static function submit_costcenterform_form($contextid, $jsonformdata)
     {
         global $PAGE, $CFG;
         require_once($CFG->dirroot . '/local/costcenter/lib.php');
@@ -62,11 +62,18 @@ class local_costcenter_external extends external_api
         $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
 
         $data = array();
 
-        parse_str($serialiseddata, $data);
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
+
         $warnings = array();
         // $mform = new local_costcenter\form\costcenterform(null, array(), 'post', '', null, true, $data);
         $mform = new local_costcenter\form\organization_form(null, array('formtype' => $data['formtype']), 'post', '', null, true, $data);
@@ -297,9 +304,16 @@ class local_costcenter_external extends external_api
             ['jsonformdata' => $jsonformdata]
         );
 
-        $serialiseddata = json_decode($params['jsonformdata']);
         $data = array();
-        parse_str($serialiseddata, $data);
+
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
 
         $categorycontext = (new \local_costcenter\lib\accesslib())::get_module_context();
 
@@ -886,7 +900,7 @@ class local_costcenter_external extends external_api
      * @param [string] $jsonformdata 
      * @return costcenter form submits
      */
-    public function department_create($orgcode, $fullname, $departmentcode)
+    public static function department_create($orgcode, $fullname, $departmentcode)
     {
         global $PAGE, $CFG, $DB;
 
@@ -947,7 +961,7 @@ class local_costcenter_external extends external_api
 
     /*End of Department creation */
 
-    public function generate_shortcode_parameters()
+    public static function generate_shortcode_parameters()
     {
         return new external_function_parameters(
             array(
@@ -958,7 +972,7 @@ class local_costcenter_external extends external_api
             )
         );
     }
-    public function generate_shortcode($accountid, $contextid, $actions)
+    public static function generate_shortcode($accountid, $contextid, $actions)
     {
         $params = self::validate_parameters(
             self::generate_shortcode_parameters(),
@@ -984,7 +998,7 @@ class local_costcenter_external extends external_api
         }
         return $return;
     }
-    public function generate_shortcode_returns()
+    public static function generate_shortcode_returns()
     {
         return new external_value(PARAM_RAW, 'Data of account');
     }

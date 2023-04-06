@@ -485,10 +485,17 @@ function local_courses_output_fragment_custom_course_form($args){
         $category = $CFG->defaultrequestcategory;
     }
     $formdata = [];
+
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
+
+
     if(!empty($course) && empty($formdata)){
         $formdata = clone $course;
         $formdata = (array)$formdata;
@@ -500,11 +507,11 @@ function local_courses_output_fragment_custom_course_form($args){
         $collapse = false;
         $data = $DB->get_record('course', array('id'=>$courseid));
     }
-    // Populate course tags.
-    $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
-    $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes'=>$CFG->maxbytes, 'trusttext'=>false, 'noclean'=>true,'autosave'=>false);
-    $overviewfilesoptions = course_overviewfiles_options($course);
     if ($courseid) {
+        // Populate course tags.
+        $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
+        $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes'=>$CFG->maxbytes, 'trusttext'=>false, 'noclean'=>true,'autosave'=>false);
+        $overviewfilesoptions = course_overviewfiles_options($course);
         // Add context for editor.
         $editoroptions['context'] = $coursecontext;
         $editoroptions['subdirs'] = file_area_contains_subdirs($coursecontext, 'course', 'summary', 0);
@@ -583,7 +590,11 @@ function local_courses_output_fragment_deletecategory_form($args){
 
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
 
@@ -630,7 +641,11 @@ function local_courses_output_fragment_coursecategory_form($args){
 
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     if (empty($formdata) && $categoryid > 0) {
@@ -715,7 +730,11 @@ function local_courses_output_fragment_coursecategory_display($args){
 
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
 
@@ -2259,8 +2278,17 @@ function local_courses_output_fragment_custom_courseevidence_form($args){
         'courseid' => $args->courseid,
         'userid' => $args->userid,
     );
-    $serialiseddata = json_decode($args->jsonformdata);
-    parse_str($serialiseddata, $formdata);
+    $formdata = [];
+
+    if (!empty($args->jsonformdata)) {
+
+        $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
+        parse_str($serialiseddata, $formdata);
+    }
+
     $mform = new custom_courseevidence_form(null, $params, 'post', '', null, true,$formdata);
    
     ob_start();
@@ -2321,8 +2349,12 @@ function local_courses_output_fragment_course_type($args) {
     $formdata = [];
 
     $o = '';
-    if (isset($args->jsonformdata) && (!empty($args->jsonformdata))) {
+    if (!empty($args->jsonformdata)) {
+
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
 
