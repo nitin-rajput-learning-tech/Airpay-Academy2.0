@@ -34,6 +34,9 @@ function local_custom_category_output_fragment_new_custom_category_form($args){
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     if ($args->repositoryid > 0) {
@@ -42,13 +45,14 @@ function local_custom_category_output_fragment_new_custom_category_form($args){
     }
 
     $mform = new local_custom_category\form\custom_category_form(null, array('id' => $args->repositoryid, 'editoroptions' => $editoroptions, 'open_costcenterid' => $data->costcenterid, 'parentid' => $data->parentid), 'post', '', null, true, $formdata);
+    if($data){
+        $data->name = $data->fullname;
+        $data->parentid = $data->parentid ? $data->parentid:'Top';
+        $data->open_costcenterid = $data->costcenterid;
+        $mform->set_data($data);
+    }
 
-    $data->name = $data->fullname;
-    $data->parentid = $data->parentid ? $data->parentid:'Top';
-    $data->open_costcenterid = $data->costcenterid;
-    $mform->set_data($data);
-
-    if (!empty($formdata)) {
+    if (!empty($args->jsonformdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }

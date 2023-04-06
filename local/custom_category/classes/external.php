@@ -38,7 +38,7 @@ class local_custom_category_external extends external_api {
         );
     }
 
-    public function submit_custom_category_form($contextid, $jsonformdata){
+    public static function submit_custom_category_form($contextid, $jsonformdata){
         global $PAGE, $CFG;
 
         require_once($CFG->dirroot . '/local/custom_category/lib.php');
@@ -57,9 +57,9 @@ class local_custom_category_external extends external_api {
 
         $repositoryinsert  = new local_custom_category\lib();
         $valdata = $mform->get_data();
-        // print_r($data);die;
-        if($valdata){
-            $repositoryinsert->custom_category_opertaions($valdata);
+      
+         if($valdata){
+            $repositoryinsert->custom_category_operations($valdata);
         } else {
             // Generate a warning.
             throw new moodle_exception('Error in creation');
