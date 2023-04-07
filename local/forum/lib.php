@@ -61,10 +61,11 @@ function local_forum_output_fragment_custom_forum_form($args)
         $category = $CFG->defaultrequestcategory;
     }
     $formdata = [];
-    if (!empty($args->jsonformdata)) {
-        $serialiseddata = json_decode($args->jsonformdata);
-        parse_str($serialiseddata, $formdata);
+   $serialiseddata = json_decode($args->jsonformdata);
+    if(is_object($serialiseddata)){
+        $serialiseddata = serialize($serialiseddata);
     }
+    parse_str($serialiseddata, $formdata);
     $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
     if ($get_coursedetails->format == 'singleactivity') {
         $moduleinfoSql = "SELECT f.id,f.type, f.duedate,f.cutoffdate,f.maxbytes,f.maxattachments,f.displaywordcount,f.forcesubscribe,f.trackingtype,f.lockdiscussionafter,f.blockperiod
@@ -83,7 +84,7 @@ function local_forum_output_fragment_custom_forum_form($args)
         $course->blockperiod = $moduleinfo->blockperiod;
         // }else{
     }
-    if (!empty($course) && empty($formdata)) {
+    if (!empty($course) && empty(array_filter($formdata))) {
         $formdata = clone $course;
         $formdata = (array)$formdata;
     }
@@ -538,10 +539,10 @@ function get_listof_forum($stable, $filterdata,$options)
 
                 if($options->viewType=='table'){
                     $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => ''));
-                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-params' => $params, 'data-id' => $course->id));
+                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-id' => $USER->id, 'data-id' => $course->id));
                 }else{
                     $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
-                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-params' => $params, 'data-id' => $course->id));
+                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum',  'data-id' => $USER->id,'data-id' => $course->id));
                 }
                 if (!empty($autoenroll_plugin_exist)) {
                     $autoplugin = enrol_get_plugin('auto');

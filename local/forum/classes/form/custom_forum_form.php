@@ -167,8 +167,8 @@ class custom_forum_form extends moodleform {
 
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_forum', $categorycontext, $multiple = false);
 
-            $mform->addElement('hidden','category', null);
-            $mform->setConstant('category', $category);
+            // $mform->addElement('hidden','category', null);
+            // $mform->setConstant('category', $category);
 
 
             $parents[0] = 'Select Category';
