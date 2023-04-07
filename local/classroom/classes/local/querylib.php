@@ -88,7 +88,7 @@ class querylib {
             list($trainerslistsql, $trainerslistparams) = $DB->get_in_or_equal($trainers, SQL_PARAMS_NAMED, 'crtr');
             $params = array_merge($params, $trainerslistparams);
         }
-        if (!empty(array_filter($costcenters))) {
+        if (!empty(array_filter((array)$costcenters))) {
             $costcenters = implode(',', $costcenters);
             $concatsql .= " AND concat('/',u.open_path,'/') LIKE :costcenter ";
             $params['costcenter'] = '%'.$costcenters.'%';

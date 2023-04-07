@@ -792,7 +792,7 @@ class renderer extends plugin_renderer_base
     {
         global $DB,$USER;
         $usercostcenterpaths = $DB->get_records('local_userdata', array('userid' => $USER->id));
-        $userpathinfo = [];
+        // $userpathinfo = [];
         foreach ($usercostcenterpaths as $userpath) {
             $userpathinfo = $userpath->costcenterpath;
         }

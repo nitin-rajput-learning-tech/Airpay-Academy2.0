@@ -75,6 +75,9 @@ function local_classroom_output_fragment_classroom_form($args)
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $data = $DB->get_record('local_classroom', ['id' => $args->id]);
@@ -94,7 +97,6 @@ function local_classroom_output_fragment_classroom_form($args)
     $classroomdata->id = $args->id;
     $classroomdata->form_status = $args->form_status;
     $mform->set_data($classroomdata);
-
     if (!empty((array) $serialiseddata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
@@ -115,7 +117,6 @@ function local_classroom_output_fragment_classroom_form($args)
     $mform->display();
     $return .= ob_get_contents();
     ob_end_clean();
-
     return $return;
 }
 /**
@@ -423,6 +424,9 @@ function local_classroom_output_fragment_session_form($args)
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['id'] = $args->id;
@@ -453,8 +457,12 @@ function local_classroom_output_fragment_session_form($args)
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
+    if($mform->formstatus){
     $formheaders = array_keys($mform->formstatus);
+    }
+    if($args->form_status){
     $nextform = array_key_exists($args->form_status, $formheaders);
+    }
     if ($nextform === false) {
         return false;
     }
@@ -474,6 +482,9 @@ function local_classroom_output_fragment_classroom_completion_form($args)
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['id'] = $args->id;
@@ -509,8 +520,12 @@ function local_classroom_output_fragment_classroom_completion_form($args)
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
+    if($mform->formstatus){
     $formheaders = array_keys($mform->formstatus);
+    }
+    if($args->form_status){
     $nextform = array_key_exists($args->form_status, $formheaders);
+    }
     if ($nextform === false) {
         return false;
     }
@@ -531,6 +546,9 @@ function local_classroom_output_fragment_course_form($args)
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $formdata['cid'] = $args->id;
@@ -548,13 +566,17 @@ function local_classroom_output_fragment_course_form($args)
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
+    if($mform->formstatus){
     $formheaders = array_keys($mform->formstatus);
+    }
+    if($args->form_status){
     $nextform = array_key_exists($args->form_status, $formheaders);
+    }
     if ($nextform === false) {
         return false;
     }
     ob_start();
-    $formstatus = new \local_classroom\output\form_status(array_values($mform->formstatus));
+    $formstatus = new \local_classroom\output\form_status(array_values((array)$mform->formstatus));
     $return .= $renderer->render($formstatus);
     $mform->display();
     $return .= ob_get_contents();

@@ -32,6 +32,7 @@ require_once($CFG->libdir . '/completionlib.php');
 use local_classroom\local\querylib;
 use moodleform;
 use core_component;
+use stdClass;
 
 class classroom_form extends moodleform {
     public $formstatus;
@@ -111,7 +112,6 @@ class classroom_form extends moodleform {
                 get_string('need_self_enrol', 'local_classroom'),
                 array('&nbsp;&nbsp;'), false);
             $mform->addHelpButton('selfenrol', 'selfenrolclassroom', 'local_classroom');
-
 
            
 
@@ -386,11 +386,10 @@ class classroom_form extends moodleform {
         }elseif(isset($data['institute_type'])&&$data['institute_type']!=0&&$data['instituteid']!=0){
             $institutessql = "SELECT id
                                 FROM {local_location_institutes}
-                               WHERE institute_type = :institute_type and id=:instituteid";
+                               WHERE institute_type = :institute_type AND id IN (:instituteid)";
 
             $params['institute_type'] = $data['institute_type'];           
-            $params['instituteid'] = $data['instituteid'];  
-
+            $params['instituteid'] = !empty($data['instituteid']) ? implode(',', array_filter((array)$data['instituteid'])) : 0;  
             $institutes = $DB->record_exists_sql($institutessql, $params);
             if(!$institutes){
                 $errors['instituteid'] = get_string('vallocation','local_classroom');
@@ -472,7 +471,7 @@ class classroom_form extends moodleform {
         if ($components->form_status == 0) {
             $data = $DB->get_record('local_classroom', array('id' => $components->id));
             //populate tags
-            $data->tags = \local_tags_tag::get_item_tags_array('local_classroom', 'classroom', $components->id);
+            //$data->tags = \local_tags_tag::get_item_tags_array('local_classroom', 'classroom', $components->id);
             $params = array();
             $params['classroomid'] = $components->id;
 
@@ -481,11 +480,11 @@ class classroom_form extends moodleform {
                       JOIN {local_classroom_trainers} ct ON ct.classroomid = c.id
                      WHERE c.id = :classroomid";
             $trainers = $DB->get_records_sql_menu($sql, $params);
-            $data->trainers = $trainers;
-
-
-        } else if ($components->form_status == 1) {
-         
+            if(!$data){
+                $data=new stdClass();
+            }
+            $data->trainers =$trainers;
+            } else if ($components->form_status == 1) {
             $data = $DB->get_record_sql('SELECT id, institute_type, instituteid,
                 nomination_startdate, nomination_enddate,startdate,enddate,certificateid FROM {local_classroom}
                 WHERE id = ' . $components->id);
