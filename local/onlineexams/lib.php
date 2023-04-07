@@ -63,16 +63,18 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata) && !empty($serialiseddata)){
+        $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
-        if ($get_coursedetails->format == 'singleactivity') {
+    if ($get_coursedetails->format == 'singleactivity') {
             $moduleinfoSql = "SELECT q.id, q.attempts,q.timelimit,q.graceperiod,q.overduehandling,q.browsersecurity, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
                 FROM {quiz} as q 
                 JOIN {grade_items} as gi ON gi.iteminstance = q.id AND gi.itemtype ='mod' AND gi.itemmodule = 'quiz' 
                 WHERE q.course=:courseid ";
             $moduleinfo = $DB->get_record_sql($moduleinfoSql, array('courseid' => $courseid));
-            // print_r($moduleinfo);exit;
             $maxgrade = round($moduleinfo->grademax, 2);
             $gradepass = round($moduleinfo->gradepass, 2);
             $attempts = $moduleinfo->attempts;
@@ -84,20 +86,18 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
             $course->overduehandling =$moduleinfo->overduehandling;
             $course->graceperiod =$moduleinfo->graceperiod;
             $course->browsersecurity = $moduleinfo->browsersecurity;
-            // }else{
         }
-    if (!empty($course) && empty($formdata)) {
+    if (!empty($course) && empty(array_filter($formdata))) {        
         $formdata = clone $course;
         $formdata = (array)$formdata;
     }
-// print_r($formdata);die;
     if ($courseid > 0) {
         $heading = get_string('updatecourse', 'local_courses');
         $collapse = false;
         $data = $DB->get_record('course', array('id' => $courseid));
     }
     // Populate course tags.
-    $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
+   //$course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
     $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes' => $CFG->maxbytes, 'trusttext' => false, 'noclean' => true, 'autosave' => false);
     $overviewfilesoptions = course_overviewfiles_options($course);
     if ($courseid) {
@@ -123,7 +123,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     }
     $params = array(
         'course' => $course,
-        'category' => $category,
+        'category' => $category->id,
         'editoroptions' => $editoroptions,
         'returnto' => $returnto,
         'get_coursedetails' => $get_coursedetails,
@@ -153,7 +153,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     }
     $formstatusview = new \local_onlineexams\output\form_status($formstatus);
     $o .= $renderer->render($formstatusview);
-    // $o = $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'getCatlist');
+     //$o = $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'getCatlist');
     $mform->display();
     $o .= ob_get_contents();
     ob_end_clean();
