@@ -90,7 +90,7 @@ class custom_onlineexams_form extends moodleform {
         if (!empty($onlineexam->id)) {
           $onlineexamcontext = context_course::instance($onlineexam->id);
           $context = $onlineexamcontext;
-          $categorycontext = context_coursecat::instance($category->id);
+          $categorycontext = context_coursecat::instance($category);
         } else {
           $onlineexamcontext = null;
           $categorycontext = context_coursecat::instance($category);
@@ -164,11 +164,10 @@ class custom_onlineexams_form extends moodleform {
 
                 $parents = array();
             }
-
+            $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context();
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_onlineexams', $categorycontext, $multiple = false);
-
             $mform->addElement('hidden','category', null);
-            $mform->setConstant('category', $category);
+            $mform->setConstant('category', $category); 
 
 
             $parents[0] = 'Select Category';
@@ -192,7 +191,7 @@ class custom_onlineexams_form extends moodleform {
             $mform->addHelpButton('fullname', 'onlineexam_name','local_onlineexams');
 
 
-            if (!empty($onlineexam->id) and !has_capability('moodle/course:changefullname', $categorycontext)) {
+           if (!empty($onlineexam->id) and !has_capability('moodle/course:changefullname', $categorycontext)) {
                 $mform->hardFreeze('fullname');
                 $mform->setConstant('fullname', $onlineexam->fullname);
 

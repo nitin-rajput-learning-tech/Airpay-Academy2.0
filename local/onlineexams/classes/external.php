@@ -81,10 +81,12 @@ class local_onlineexams_external extends external_api
         $context = context::instance_by_id($params['contextid'], MUST_EXIST);
         // We always must call validate_context in a webservice.
         self::validate_context($context);
-        $serialiseddata = json_decode($params['jsonformdata']);
         $data = array();
+        $serialiseddata = json_decode($params['jsonformdata']);
+        if(is_object($serialiseddata)){
+        $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $data);
-
         $warnings = array();
         if ($id) {
             $exam = get_course($id);
@@ -132,11 +134,13 @@ class local_onlineexams_external extends external_api
             // print_r($quiz);
             $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($exam->id);
             if (is_siteadmin()) {
-                $open_departmentid = implode(',', $data['open_departmentid']);
+                $departmentarr=(array) $data['open_departmentid'];
+                $open_departmentid = implode(',', $departmentarr);
             } else {
                 $open_departmentid = $data['open_departmentid'];
             }
-            $open_subdepartment = implode(',', $data['open_subdepartment']);
+            $subdepartmentarr=(array) $data['open_departmentid'];
+            $open_subdepartment = implode(',', $subdepartmentarr);
             $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
             if ($validateddata->id <= 0) {
@@ -159,7 +163,7 @@ class local_onlineexams_external extends external_api
                     $validateddata->shortname = $validateddata->concatshortname.'_'.$validateddata->shortname;
                 }
                 $examid = create_course($validateddata, $editoroptions);
-                // Update course tags.
+               // Update course tags.
                 if (isset($validateddata->tags)) {
                     $coursecontext = context_course::instance($examid->id, MUST_EXIST);
                     local_tags_tag::set_item_tags('local_courses', 'courses', $examid->id, $coursecontext, $validateddata->tags, 0, $data['open_path'], $validateddata->open_departmentid);
@@ -171,6 +175,7 @@ class local_onlineexams_external extends external_api
                 //         $trendingclass->trending_modules_crud($examid->id, 'local_courses');
                 //     }
                 // }
+                $quiz= (object) $quiz;
                 $quiz->course = $examid->id;
                 $quiz->grademethod = $validateddata->grademethod;
                 $quiz->grade = $validateddata->gradepass;
@@ -201,7 +206,7 @@ class local_onlineexams_external extends external_api
                 $validateddata->open_coursetype = 1;
                 $coursedata = $DB->get_record('course', array('id' => $data['id']));
                 if ($form_status == 0) {
-                    $examid = new stdClass();
+                    $examid = (object) $examid;
                     $examid->id = $data['id'];
                     $validateddata->category = $category_id;
 
