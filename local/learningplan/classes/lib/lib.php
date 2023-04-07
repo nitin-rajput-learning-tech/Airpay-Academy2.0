@@ -25,12 +25,14 @@ class lib
 	function create_learning_plan($data)
 	{
 		global $DB, $USER;
+		$learningplan = new stdClass;
 		$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
 		// $data->description = $data->description['text'];
 		$data->usercreated =  $this->user->id;
 		$data->timecreated = time();
 		$data->visible = 1;
 		$learningplan->department = -1;
+		
 		if ($data->summaryfile) {
 
 			file_save_draft_area_files($data->summaryfile, $systemcontext->id, 'local_learningplan', 'summaryfile', $data->summaryfile);
@@ -79,7 +81,7 @@ class lib
 			} else {
 				$data->open_location = NULL;
 			}
-			if (in_array(-1, $data->department) || $data->department == -1) {
+			if (!empty($data->department) && (in_array(-1, $data->department) || $data->department == -1)) {
 				$data->department = -1;
 			} else {
 				if (is_array($data->department)) {
@@ -88,7 +90,7 @@ class lib
 					$data->department = !empty($data->department) ? $data->department : -1;
 				}
 			}
-			if (in_array(-1, $data->subdepartment) || $data->subdepartment == -1) {
+			if (!empty($data->subdepartment) &&  (in_array(-1, $data->subdepartment) || $data->subdepartment == -1)) {
 				$data->subdepartment = -1;
 			} else {
 				if (is_array($data->subdepartment)) {
@@ -202,26 +204,15 @@ class lib
 		global $DB, $USER;
 
 		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path'); 
-		// if (is_siteadmin()) {
-		// 	$siteadmin_sql .= "";
-		// } else  {
-			$siteadmin_sql .= " AND u.suspended = 0 AND u.deleted = 0 ".$costcenterpathconcatsql;
-		// }
+		$siteadmin_sql = " AND u.suspended = 0 AND u.deleted = 0 ".$costcenterpathconcatsql;
+	
 		$plan_info = $DB->get_record('local_learningplan', array('id' => $planid));
 
 		$sql = "SELECT count(u.id) FROM {user} AS u 
 	    		WHERE u.id > 2 $siteadmin_sql AND u.id not in ($USER->id) and u.open_path LIKE :pathvalue ";
 
 		$params = array('pathvalue'=> $plan_info->open_path.'%');
-		// if ($plan_info->department !== null && $plan_info->department !== '-1' && $plan_info->department !== 0 && !empty($plan_info->department)) {
-		// 	$params['dept'] = '%,' . $plan_info->department . ',%';
-		// 	$sql .= " AND :dept LIKE CONCAT('%,',u.open_departmentid,',%') ";
-		// }
-		// if ($plan_info->subdepartment !== null && $plan_info->subdepartment !== '-1' && $plan_info->subdepartment !== 0) {
-		// 	$params['subdept'] = '%,' . $plan_info->subdepartment . ',%';
-		// 	$sql .= " AND :subdept LIKE CONCAT('%,',u.open_subdepartment,',%') ";
-		// }
-
+	
 		// OL-1042 Add Target Audience to Classrooms//
 
 		if (!empty($plan_info->open_group)) {

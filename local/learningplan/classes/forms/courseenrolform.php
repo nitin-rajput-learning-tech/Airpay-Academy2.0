@@ -24,7 +24,7 @@ class courseenrolform extends moodleform {
         $sql = "SELECT courseid, planid FROM {local_learningplan_courses} WHERE planid = $planid";
         $existing_plan_courses = $DB->get_records_sql($sql);
 
-        $courses = lib::learningplan_courses_list($planid);
+        $courses = (new lib)->learningplan_courses_list($planid);
         $options = array();
         if(!empty($courses)){
             foreach ($courses as $key => $value) {

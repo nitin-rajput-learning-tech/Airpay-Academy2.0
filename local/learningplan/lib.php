@@ -31,6 +31,9 @@ function local_learningplan_output_fragment_new_learningplan($args){
     $formdata = [];
     if (!empty($args->jsonformdata)) {
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $editoroptions = [
@@ -64,7 +67,7 @@ function local_learningplan_output_fragment_new_learningplan($args){
             local_users_set_userprofile_datafields($customdata,$data);
 			$mform = new local_learningplan\forms\learningplan(null, $customdata, 'post', '', null, true, $formdata);
             // Populate tags.
-            $data->tags = local_tags_tag::get_item_tags_array('local_learningplan', 'learningplan', $data->id);
+            //$data->tags = local_tags_tag::get_item_tags_array('local_learningplan', 'learningplan', $data->id);
             if(!empty($data->certificateid)){
                 $data->map_certificate = 1;
             }else{
@@ -77,8 +80,7 @@ function local_learningplan_output_fragment_new_learningplan($args){
     else{
         $customdata = array('editoroptions' => $editoroptions, 'form_status' => $args->form_status);
         local_costcenter_set_costcenter_path($customdata);
-        // print_r($customdata);exit;
-    	$mform = new local_learningplan\forms\learningplan(null, $customdata, 'post', '', null, true, $formdata);
+        $mform = new local_learningplan\forms\learningplan(null, $customdata, 'post', '', null, true, $formdata);
     }
 
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata) >2) {
@@ -114,7 +116,11 @@ function local_learningplan_output_fragment_lpcourse_enrol($args){
     $o = '';
     $formdata = [];
     if (!empty($args->jsonformdata)) {
+        
         $serialiseddata = json_decode($args->jsonformdata);
+        if(is_object($serialiseddata)){
+            $serialiseddata = serialize($serialiseddata);
+        }
         parse_str($serialiseddata, $formdata);
     }
     $mform = new local_learningplan\forms\courseenrolform(null,array('planid' => $planid, 'condition' => 'manage'));
@@ -164,16 +170,7 @@ function learningplan_filter($mform){
     } else  {
         $sql .= $costcenterpathconcatsql;
     }
-   /* if(is_siteadmin()){
-        $sql = " SELECT id, name FROM {local_learningplan} WHERE 1 = 1 ";
-    }else if(has_capability('local/learningplan:manage', $categorycontext)){
-        $sql = " SELECT id, name FROM {local_learningplan} WHERE  costcenter = :costcenter ";
-        $learningplan_params['costcenter'] = $USER->open_costcenterid;
-    }else{
-        $sql = " SELECT id, name FROM {local_learningplan} WHERE  costcenter = :costcenter AND (department = :department OR department = -1) ";
-        $learningplan_params['costcenter'] = $USER->open_costcenterid;
-        $learningplan_params['department'] = $USER->open_departmentid;
-    }*/
+
     if ((has_capability('local/request:approverecord', $categorycontext) || is_siteadmin())) {
         $learningplanlist = $DB->get_records_sql_menu($sql, $learningplan_params);
     }
@@ -216,24 +213,6 @@ function local_learningplan_quicklink_node(){
     if (is_siteadmin() || has_capability('local/learningplan:view',$categorycontext)){
             //local learningplans content
         $PAGE->requires->js_call_amd('local_learningplan/lpcreate', 'load', array());
-        // $local_learningplans_content = $PAGE->requires->js_call_amd('local_learningplan/lpcreate', 'load', array());
-        // $local_learningplans_content .= "<span class='anch_span'><i class='fa fa-map' aria-hidden='true'></i></span>";
-        // $local_learningplans_content .= "<div class='quick_navigation_detail'>
-        //                                     <div class='span_str'>".get_string('manage_br_learningplan', 'local_learningplan')."</div>";
-        //         $display_line = false;
-        //     if(is_siteadmin() || (has_capability('local/learningplan:manage', $systemcontext) && has_capability('local/learningplan:create', $systemcontext))){
-        //     $local_learningplans_content .= "<span class='span_createlink'>
-        //                                         <a href='javascript:void(0);' class='quick_nav_link goto_local_learningplan' title='".get_string('create_learningplan', 'local_learningplan')."' data-action='createlpmodal' onclick ='(function(e){ require(\"local_learningplan/lpcreate\").init({selector:\"createlpmodal\", contextid:".$systemcontext->id.", planid:0,form_status:0}) })(event)'>".get_string('create')."</a>";
-        //         $display_line = true;
-        //     }  
-            
-        //     if($display_line) {
-        //         $local_learningplans_content .= " | ";
-        //     }
-        //         $local_learningplans_content .= " <a href='".$CFG->wwwroot."/local/learningplan/index.php' class='viewlink' title= '".get_string('view_learningplan', 'local_learningplan')." '>".get_string('view')."</a>
-        //                                     </span>";
-        // $local_learningplans_content .= "</div>";
-        // $local_learningplans = '<div class="quick_nav_list manage_learningplans one_of_three_columns" >'.$local_learningplans_content.'</div>';
         $learningplan = array();
         $learningplan['node_header_string'] = get_string('manage_br_learningplan', 'local_learningplan');
         $learningplan['pluginname'] = 'learningplans';
@@ -403,104 +382,7 @@ function orgsql($categorycontext){
         $costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
          $sql = $costcenterpathconcatsql;
      }
-    // } else if (has_capability('local/learningplan:manage', $categorycontext)) {
-    //     $sql = " AND  c.department = :department";
-    //     $params['department'] = $USER->open_departmentid;
-    // } else {
-    //     $sql .= " AND  c.costcenter = :costcenter";
-    //     $params['costcenter'] = $USER->open_costcenterid;
-    //     $sql .= " AND  ( c.department = :department OR c.department = '-1' ) ";
-    //     $params['department'] = $USER->open_departmentid;
-    //     // target audience
-    //     $gparams = array();
-    //     $group_list = $DB->get_records_sql_menu("select cm.id,cm.cohortid as groupid from {cohort_members} cm where cm.userid IN ({$USER->id})");
-    //     if (!empty($group_list)){
-    //          $groups_members = implode(',', $group_list);
-    //          if(!empty($group_list)){
-    //             $grouquery = array();
-    //             foreach ($group_list as $key => $group) {
-    //                 $grouquery[] = " CONCAT(',',c.open_group,',') LIKE CONCAT('%,',$group,',%') "; 
-    //             }
-    //             $groupqueeryparams =implode('OR',$grouquery);
-    //             $gparams[]= '('.$groupqueeryparams.')';
-    //          }
-    //     }
-
-    //     if(!empty($gparams))
-    //       $opengroup=implode('AND',$gparams);
-    //     else
-    //       $opengroup = '1 != 1';
-    //     $fparams = array();
-    //     $fparams[]= " 1 = CASE WHEN (c.open_group!='-1' AND c.open_group <> '')
-    //             THEN
-    //               CASE WHEN $opengroup
-    //                 THEN 1
-    //                 ELSE 0 END 
-    //             ELSE 1 END ";
-    //     if(!empty($USER->open_departmentid) && $USER->open_departmentid != ""){
-    //       $departmentlike = "'%,$USER->open_departmentid,%'";
-    //     }else{
-    //       $departmentlike = "''";
-    //     }
-    //     $fparams[]= " 1 = CASE WHEN c.department!='-1'
-    //       THEN 
-    //         CASE WHEN CONCAT(',',c.department,',') LIKE {$departmentlike}
-    //         THEN 1
-    //         ELSE 0 END
-    //       ELSE 1 END ";
-    //     if(!empty($USER->open_subdepartment) && $USER->open_subdepartment != ""){
-    //       $subdepartmentlike = "'%,$USER->open_subdepartment,%'";
-    //     }else{
-    //       $subdepartmentlike = "''";
-    //     }
-    //     $fparams[]= " 1 = CASE WHEN c.subdepartment!='-1'
-    //       THEN 
-    //         CASE WHEN CONCAT(',',c.subdepartment,',') LIKE {$subdepartmentlike}
-    //         THEN 1
-    //         ELSE 0 END
-    //       ELSE 1 END ";
-    //     if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
-    //       $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
-    //     }else{
-    //       $hrmsrolelike = "''";
-    //     }
-    //       $fparams[]= " 1 = CASE WHEN c.open_hrmsrole IS NOT NULL
-    //       THEN 
-    //         CASE WHEN CONCAT(',',c.open_hrmsrole,',') LIKE {$hrmsrolelike}
-    //         THEN 1
-    //         ELSE 0 END
-    //       ELSE 1 END ";
-    //     if(!empty($USER->open_designation) && $USER->open_designation != ""){
-    //       $designationlike = "'%,$USER->open_designation,%'";
-    //     }else{
-    //       $designationlike = "''";
-    //     }
-    //       $fparams[]= " 1 = CASE WHEN c.open_designation IS NOT NULL
-    //         THEN 
-    //           CASE WHEN CONCAT(',',c.open_designation,',') LIKE {$designationlike}
-    //             THEN 1
-    //             ELSE 0 END
-    //         ELSE 1 END  ";
-    //     if(!empty($USER->open_location) && $USER->open_location != ""){
-    //       $citylike = "'%,$USER->open_location,%'";
-    //     }else{
-    //       $citylike = "''";
-    //     }
-    //     $fparams[]= " 1 = CASE WHEN c.open_location IS NOT NULL
-    //       THEN 
-    //         CASE WHEN CONCAT(',',c.open_location,',') LIKE {$citylike}
-    //           THEN 1
-    //           ELSE 0 END
-    //       ELSE 1 END  ";
-
-    //     if(!empty($params)){
-    //       $finalparams=implode('AND',$fparams);
-    //     }else{
-    //       $finalparams= '1=1' ;
-    //     }
-
-    //     $sql .= " AND ($finalparams OR (c.open_hrmsrole IS NULL AND c.open_designation IS NULL AND c.open_location IS NULL AND c.open_group IS NULL AND c.department='-1' ) )  ";
-    // }
+    
     return compact('sql', 'params'); 
 }
 
