@@ -56,8 +56,9 @@ final class block_suggested_courses extends block_base {
         global $OUTPUT, $PAGE,$CFG, $COURSE,$DB,$USER;
 
         $systemcontext = context_system::instance();
-
-        $this->config->coursetype = 1;
+        $blockconfig = new \stdClass();
+        $blockconfig = get_config('block_suggested_courses');
+        $this->coursetype = 1;
         //$PAGE->requires->js_call_amd('local_catalog/courseinfo', 'load', array());
         $PAGE->requires->js_call_amd('local_search/courseinfo', 'load', array());
         $PAGE->requires->js_call_amd('local_skillrepository/skillsInterested', 'load', array());
