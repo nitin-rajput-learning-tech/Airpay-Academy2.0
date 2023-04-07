@@ -496,7 +496,7 @@ function local_courses_output_fragment_custom_course_form($args){
     }
 
 
-    if(!empty($course) && empty($formdata)){
+    if(!empty($course)){
         $formdata = clone $course;
         $formdata = (array)$formdata;
 
@@ -648,7 +648,7 @@ function local_courses_output_fragment_coursecategory_form($args){
         }
         parse_str($serialiseddata, $formdata);
     }
-    if (empty($formdata) && $categoryid > 0) {
+    if ($categoryid > 0) {
         // $heading = get_string('updatecourse', 'local_courses');
         // $collapse = false;
         $data = $DB->get_record('course_categories', array('id'=>$categoryid));
@@ -2358,7 +2358,7 @@ function local_courses_output_fragment_course_type($args) {
         parse_str($serialiseddata, $formdata);
     }
 
-    if (empty($formdata) && !empty($coursetypeid)) {
+    if (!empty($coursetypeid)) {
         $data = $DB->get_record('local_course_types', array('id'=>$coursetypeid));
         $formdata = new stdClass();
         $formdata->id = $data->id;

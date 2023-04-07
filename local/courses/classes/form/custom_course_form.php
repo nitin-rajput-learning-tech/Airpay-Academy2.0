@@ -177,7 +177,7 @@ class custom_course_form extends moodleform {
             );
 
             $mform->addElement('autocomplete', 'open_categoryid', get_string('category'), $parents, $categoryinfo);
-            //$mform->setType('open_categoryid', PARAM_INT);
+            $mform->setType('open_categoryid', PARAM_INT);
 
 
             $mform->addElement('text','fullname', get_string('course_name','local_courses'),'maxlength="254" size="50"');
