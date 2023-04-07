@@ -83,8 +83,10 @@ abstract class plugin {
             $allcoursecount = 0;
         }
         try {
-            $coursecount = $DB->get_records_sql($sql, $params);   
-            $allcoursecount=count($coursecount);  
+         if($coursecount === ''){
+                $coursecount = $DB->get_records_sql($sql, $params);   
+                $allcoursecount=count($coursecount);
+             }
         } catch (dml_exception $ex) {
             $allcoursecount = 0;
         }

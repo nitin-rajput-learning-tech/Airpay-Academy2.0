@@ -415,6 +415,8 @@ class querylib {
 	    	// 	$blockconfig = unserialize(base64_decode($blockinstance_config));
 	    	// }else{
 	    		// $blockconfig = get_config('block_trending_modules');
+    			$blockconfig = new \stdClass();
+		    	$blockconfig = get_config('block_trending_modules');
 		    	$blockconfig->modules_type = 'trending_modules';
 	    	// }
 	    	// print_object($blockconfig);

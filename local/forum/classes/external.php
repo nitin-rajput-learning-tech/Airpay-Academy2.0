@@ -129,13 +129,15 @@ class local_forum_external extends external_api
             $formheaders = array_keys($mform->formstatus);
             $category_id = $data['category'];
             // print_r($forum);
+            $deptarr = (array)$data['open_departmentid'];
+            $subdeptarr = (array)$data['open_subdepartment'];
             $categorycontext = (new \local_courses\lib\accesslib())::get_module_context($exam->id);
             if (is_siteadmin()) {
-                $open_departmentid = implode(',', $data['open_departmentid']);
+                $open_departmentid = implode(',', $deptarr);
             } else {
                 $open_departmentid = $data['open_departmentid'];
             }
-            $open_subdepartment = implode(',', $data['open_subdepartment']);
+            $open_subdepartment = implode(',', $subdeptarr);
             $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             $open_subdepartment = is_null($open_subdepartment) ? 0 : $open_subdepartment;
             if ($validateddata->id <= 0) {
