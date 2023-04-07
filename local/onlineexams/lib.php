@@ -708,7 +708,7 @@ function local_onlineexams_quicklink_node()
         $coursedata['plugin_icon_class'] = 'fa fa-desktop';
         if (is_siteadmin() || (has_capability('moodle/course:create', $categorycontext) && has_capability('moodle/course:update', $categorycontext) && has_capability('local/onlineexams:manage', $categorycontext))) {
             $coursedata['create'] = TRUE;
-            $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => '(function(e){ require("local_onlineexams/courseAjaxform").init({contextid:' . $categorycontext->id . ', component:"local_onlineexams", callback:"custom_course_form", form_status:0, plugintype: "local", pluginname: "onlineexams"}) })(event)'));
+            $coursedata['create_element'] = html_writer::link('javascript:void(0)', get_string('create'), array('onclick' => "(function(e){ require('local_onlineexams/onlineexamsAjaxform').init({contextid:1, component:'local_onlineexams', callback:'custom_onlineexams_form', form_status:0, plugintype: 'local', pluginname: 'onlineexams'}) })(event)"));
         }
         if (has_capability('local/onlineexams:view', $categorycontext) || has_capability('local/onlineexams:manage', $categorycontext)) {
             $coursedata['viewlink_url'] = $CFG->wwwroot . '/local/onlineexams/index.php';
