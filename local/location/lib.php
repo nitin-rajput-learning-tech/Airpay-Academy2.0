@@ -39,8 +39,11 @@ function local_location_output_fragment_new_instituteform($args) {
 	$formdata = [];
 	if (!empty($args->jsonformdata)) {
 		$serialiseddata = json_decode($args->jsonformdata);
-		parse_str($serialiseddata, $formdata);
-	}
+   		if(is_object($serialiseddata)){
+        $serialiseddata = serialize($serialiseddata);
+    	}
+    	parse_str($serialiseddata, $formdata);
+		}
 
 	if ($args->instituteid > 0) {
 		$heading = get_string('update_institute','local_location');
@@ -86,7 +89,11 @@ function local_location_output_fragment_new_roomform($args) {
 	$formdata = [];
 	if (!empty($args->jsonformdata)) {
 		$serialiseddata = json_decode($args->jsonformdata);
-		parse_str($serialiseddata, $formdata);
+   		if(is_object($serialiseddata)){
+        $serialiseddata = serialize($serialiseddata);
+    	}
+    	parse_str($serialiseddata, $formdata);
+		//}
 	}
 
 	if ($args->roomid > 0) {

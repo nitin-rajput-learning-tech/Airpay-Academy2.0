@@ -25,7 +25,7 @@ class local_location_external extends external_api {
      * @param [string] $jsonformdata
      * @return institute form submits
      */
-    public function submit_instituteform_form($contextid, $jsonformdata){
+    public static function submit_instituteform_form($contextid, $jsonformdata){
         global $PAGE, $CFG;
 
         require_once($CFG->dirroot . '/local/location/lib.php');
@@ -88,7 +88,7 @@ public static function submit_roomform_form_parameters() {
      * @param [string] $jsonformdata
      * @return institute form submits
      */
-    public function submit_roomform_form($contextid, $jsonformdata){
+    public static function submit_roomform_form($contextid, $jsonformdata){
         global $PAGE, $CFG;
 
         require_once($CFG->dirroot . '/local/location/lib.php');
