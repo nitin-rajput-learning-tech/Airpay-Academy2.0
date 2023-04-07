@@ -746,9 +746,8 @@ class local_courses_external extends external_api {
     $page=$params['page'];
     $perpage=$params['perpage'];
 
-    if (!empty($options)) {
-        $formoptions = json_decode($options);
-    }
+    $formoptions = (array)json_decode($options);
+
     if ($action) {
       $return = array();
       if($action === 'categories' || $action === 'elearning'){
@@ -827,8 +826,8 @@ class local_courses_external extends external_api {
     );
     $offset = $params['offset'];
     $limit = $params['limit'];
-    $decodedata = json_decode($params['dataoptions']);
-    $filtervalues = json_decode($filterdata);
+    $decodedata = (array)json_decode($params['dataoptions']);
+    $filtervalues = (array)json_decode($filterdata);
 
 
     $stable = new \stdClass();
@@ -959,8 +958,8 @@ class local_courses_external extends external_api {
     );
     $offset = $params['offset'];
     $limit = $params['limit'];
-    $filtervalues = json_decode($filterdata);
-    $filteroptions = json_decode($options);
+    $filtervalues = (array)json_decode($filterdata);
+    $filteroptions = (array)json_decode($options);
     if(is_array($filtervalues)){
         $filtervalues = (object)$filtervalues;
     }

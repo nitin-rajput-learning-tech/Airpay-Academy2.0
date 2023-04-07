@@ -204,7 +204,7 @@ if ($mform->is_cancelled()) {
     }
 }
 if(empty($filterdata) && !empty($jsonparam)){
-    $filterdata = json_decode($jsonparam);
+    $filterdata = (array)json_decode($jsonparam);
     foreach($thisfilters AS $filter){
         if(empty($filterdata->$filter)){
             unset($filterdata->$filter);

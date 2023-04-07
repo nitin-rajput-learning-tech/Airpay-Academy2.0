@@ -169,7 +169,7 @@ if ($course) {
   if ( $add AND confirm_sesskey()) {
 		$type = 'course_enrol';
     if($submit_value == "Add_All_Users"){
-			$options =json_decode($_REQUEST["options"],false);
+			$options =(array)json_decode($_REQUEST["options"],false);
       $userstoassign=array_flip(course_enrolled_users('add', $course_id, (array)$options, false, $offset1=-1, $perpage=-1));
     }else{
         $userstoassign =$add;
@@ -225,7 +225,7 @@ if ($course) {
   if ( $remove&& confirm_sesskey()) {
     $type = 'course_unenroll';
     if($submit_value=="Remove_All_Users"){
-			$options =json_decode($_REQUEST["options"],false);
+			$options =(array)json_decode($_REQUEST["options"],false);
       $userstounassign = array_flip(course_enrolled_users('remove',$course_id,(array)$options,false,$offset1=-1,$perpage=-1));
     } else {
       $userstounassign = $remove;

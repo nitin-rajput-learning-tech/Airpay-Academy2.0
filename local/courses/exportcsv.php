@@ -29,7 +29,7 @@ global $CFG, $USER,$PAGE,$OUTPUT,$DB;
 require_once($CFG->dirroot . '/local/courses/lib.php');
 require_once($CFG->dirroot . '/local/costcenter/lib.php');
 
-$filtervalues = json_decode($_REQUEST['formdata']);
+$filtervalues = (array)json_decode($_REQUEST['formdata']);
 $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 $PAGE->set_context($categorycontext);
 require_login(); 
