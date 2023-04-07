@@ -137,7 +137,7 @@ class local_courses_external extends external_api {
 
             $open_departmentid =$open_subdepartment=0;
 
-            if(isset($data['open_departmentid'])){
+            if(isset($data['open_departmentid']) && is_array($data['open_departmentid'])){
 
                 if(is_siteadmin()){
                   $open_departmentid = implode(',',$data['open_departmentid']);
@@ -148,7 +148,7 @@ class local_courses_external extends external_api {
                 $open_departmentid = is_null($open_departmentid) ? 0  : $open_departmentid;
             }
 
-            if(isset($data['open_subdepartment'])){
+            if(isset($data['open_subdepartment']) && is_array($data['open_subdepartment'])){
 
               $open_subdepartment = implode(',', $data['open_subdepartment']);
 

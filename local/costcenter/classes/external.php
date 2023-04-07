@@ -752,6 +752,11 @@ class local_costcenter_external extends external_api
                             }
                         }
                         foreach ($customcat as $key => $categorywise) {
+
+                            if(!is_string($categorywise)){
+                                continue;
+                            }
+
                             $explodepaths = explode('/', $categorywise);
 
                             $countcat = count($explodepaths);
