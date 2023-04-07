@@ -478,7 +478,7 @@ function local_courses_output_fragment_custom_course_form($args){
     if ($courseid) {
         $course = get_course($courseid);
         $course = course_get_format($course)->get_course();
-        $category = $DB->get_record('course_categories', array('id'=>$course->category), '*', MUST_EXIST);
+        $category = $course->category;
         $coursecontext = context_course::instance($course->id);
         //require_capability('moodle/course:update', $coursecontext);
     }else{
