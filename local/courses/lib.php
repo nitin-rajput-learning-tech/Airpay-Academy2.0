@@ -496,7 +496,7 @@ function local_courses_output_fragment_custom_course_form($args){
     }
 
 
-    if(!empty($course) && empty($formdata)){
+    if(!empty($course)){
         $formdata = clone $course;
         $formdata = (array)$formdata;
 
