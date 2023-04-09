@@ -105,7 +105,7 @@ class level_completion_form extends moodleform {
         global $CFG, $DB, $USER;
         $errors = parent::validation($data, $files);
         if (isset($data['coursetracking']) && ($data['coursetracking'] == "OR" || $data['coursetracking'] == "AND") && isset($data['courseids']) && empty($data['courseids'])) {
-            $errors['courseids'] = get_string('select_courses', 'local_certification');
+            $errors['courseids'] = get_string('select_courses', 'local_program');
         }
         return $errors;
     }

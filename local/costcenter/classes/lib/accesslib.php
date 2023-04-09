@@ -139,15 +139,18 @@ class accesslib
                     $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
                                     $categoryids = array_values(array_filter((explode('/', $role->path))));
                                     $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
-                                    if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
-                                        $depths['depth'][] = $role->depth.'_'.$categoryids[0];
-                                        $role->categoryname = $category;
-                                        $role->highest_catid = $categoryids[0];
-                                        return $role;
+                                    if(!empty($depths)){
+
+                                        if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
+                                            $depths['depth'][] = $role->depth.'_'.$categoryids[0];
+                                            $role->categoryname = $category;
+                                            $role->highest_catid = $categoryids[0];
+                                            return $role;
+                                        }
                                     }
                                 }, $roles)));
 
-                    if(is_array($user_ra_array)){
+                    if(!empty($user_ra_array) && is_array($user_ra_array)){
                         $highest_roleinfo = max($user_ra_array);
                     }else{
                         $highest_roleinfo = (object)['roleid' => 0, 'contextid' => SYSCONTEXTID];

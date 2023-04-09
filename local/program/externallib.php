@@ -546,7 +546,7 @@ class local_program_external extends external_api {
      * @param [string] $jsonformdata
      * @return institute form submits
      */
-    public function submit_catform_form($categorycontextid, $jsonformdata){
+    public static function submit_catform_form($categorycontextid, $jsonformdata){
         global $PAGE, $CFG;
 
         require_once($CFG->dirroot . '/local/program/lib.php');
@@ -860,7 +860,7 @@ class local_program_external extends external_api {
         );
         return new external_function_parameters($params);
     }
-    public function data_for_programs($filter, $filter_text='', $filter_offset = 0, $filter_limit = 0){
+    public static function data_for_programs($filter, $filter_text='', $filter_offset = 0, $filter_limit = 0){
         global $PAGE;
 
         $params = self::validate_parameters(self::data_for_programs_parameters(), array(
@@ -878,7 +878,7 @@ class local_program_external extends external_api {
 
         return $data;
     }
-    public function data_for_programs_returns(){
+    public static function data_for_programs_returns(){
         return new external_single_structure(array (
             'total' => new external_value(PARAM_INT, 'Number of enrolled courses.', VALUE_OPTIONAL),
             'inprogresscount'=>  new external_value(PARAM_INT, 'Number of inprogress course count.'),
@@ -1020,19 +1020,19 @@ class local_program_external extends external_api {
     public static function unenrol_user_returns(){
         return new external_value(PARAM_BOOL, 'return');
     }
-    public function get_program_info_parameters(){
+    public static function get_program_info_parameters(){
         return new external_function_parameters(
             array(
                 'id' => new external_value(PARAM_INT, 'The id of the module'),
             )
         );
     }
-    public function get_program_info($id){
+    public static function get_program_info($id){
         $params = self::validate_parameters(self::get_program_info_parameters(),
             ['id' => $id]);
         return (new \local_program\local\general_lib())->get_program_info($id);
     }
-    public function get_program_info_returns(){
+    public static function get_program_info_returns(){
        return new external_single_structure(array(
             'id' => new external_value(PARAM_INT, 'The id of the module'),
             'fullname' => new external_value(PARAM_TEXT, 'fullname'),

@@ -590,3 +590,4 @@ $string['extensionperiod_negative'] = 'Extension Period Days cannot be Negative'
 $string['taskauto_extension'] = 'Program Auto Extension Task';
 $string['programskill'] = 'Skill';
 $string['programlevel'] = 'Skill Level';
+$string['no_courses_assigned'] = 'No courses assigned';

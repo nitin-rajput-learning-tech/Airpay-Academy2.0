@@ -29,7 +29,7 @@ use local_program\program;
 $programid = required_param('bcid', PARAM_INT);
 $download = optional_param('download', 0, PARAM_INT);
 $type = optional_param('type', '', PARAM_RAW);
-$search = optional_param_array('search', '', PARAM_RAW);
+$search = optional_param_array('search',  array(), PARAM_RAW);
 require_login();
 $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
 $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');

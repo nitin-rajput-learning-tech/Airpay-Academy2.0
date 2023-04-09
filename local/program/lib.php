@@ -153,10 +153,13 @@ function local_program_output_fragment_level_completion_settings($args) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
-    $formheaders = array_keys($mform->formstatus);
-    $nextform = array_key_exists($args->form_status, $formheaders);
-    if ($nextform === false) {
-        return false;
+    if(!empty($mform->formstatus)){
+
+        $formheaders = array_keys($mform->formstatus);
+        $nextform = array_key_exists($args->form_status, $formheaders);
+        if ($nextform === false) {
+            return false;
+        }
     }
     ob_start();
     $mform->display();
@@ -196,10 +199,13 @@ function local_program_output_fragment_program_completion_settings($args){
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
-    $formheaders = array_keys($mform->formstatus);
-    $nextform = array_key_exists($args->form_status, $formheaders);
-    if ($nextform === false) {
-        return false;
+    if(!empty($mform->formstatus)){
+
+        $formheaders = array_keys($mform->formstatus);
+        $nextform = array_key_exists($args->form_status, $formheaders);
+        if ($nextform === false) {
+            return false;
+        }
     }
     ob_start();
     $mform->display();
@@ -271,14 +277,18 @@ function local_program_output_fragment_course_form($args) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
-    $formheaders = array_keys($mform->formstatus);
-    $nextform = array_key_exists($args->form_status, $formheaders);
-    if ($nextform === false) {
-        return false;
-    }
+
     ob_start();
-    $formstatus = new \local_program\output\form_status(array_values($mform->formstatus));
-    $return .= $renderer->render($formstatus);
+
+    if(!empty($mform->formstatus)){
+        $formheaders = array_keys($mform->formstatus);
+        $nextform = array_key_exists($args->form_status, $formheaders);
+        if ($nextform === false) {
+            return false;
+        }
+        $formstatus = new \local_program\output\form_status(array_values($mform->formstatus));
+        $return .= $renderer->render($formstatus);
+    }
     $mform->display();
     $return .= ob_get_contents();
     ob_end_clean();
@@ -529,17 +539,22 @@ function local_program_output_fragment_program_managelevel_form($args) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
-    $formheaders = array_keys($mform->formstatus);
-    $nextform = array_key_exists($args->form_status, $formheaders);
-    if ($nextform === false) {
-        return false;
-    }
+
     ob_start();
-    $formstatus = array();
-    foreach (array_values($mform->formstatus) as $k => $mformstatus) {
-        $activeclass = $k == $args->form_status ? 'active' : '';
-        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass);
+
+    if(!empty($mform->formstatus)){
+        $formheaders = array_keys($mform->formstatus);
+        $nextform = array_key_exists($args->form_status, $formheaders);
+        if ($nextform === false) {
+            return false;
+        }
+        $formstatus = array();
+        foreach (array_values($mform->formstatus) as $k => $mformstatus) {
+            $activeclass = $k == $args->form_status ? 'active' : '';
+            $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass);
+        }
     }
+
     $formstatusview = new \local_program\output\form_status($formstatus);
     $return .= $renderer->render($formstatusview);
     $mform->display();

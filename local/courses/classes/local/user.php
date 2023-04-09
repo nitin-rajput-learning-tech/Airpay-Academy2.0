@@ -46,7 +46,8 @@ class user{
             $coursesummary = \local_costcenter\lib::strip_tags_custom($coursesummary);
             $summarystring = strlen($coursesummary) > 120 ? substr($coursesummary, 0, 120)."..." : $coursesummary;
             $coursesarray["description"] = $summarystring;
-            $coursesarray["percentage"] = round($this->user_course_completion_progress($course->id,$userid));
+            $number=$this->user_course_completion_progress($course->id,$userid);
+            $coursesarray["percentage"] = (is_number($number)) ?round($number) : 0;
 
             require_once($CFG->dirroot.'/local/includes.php');
             $includes = new \user_course_details();
