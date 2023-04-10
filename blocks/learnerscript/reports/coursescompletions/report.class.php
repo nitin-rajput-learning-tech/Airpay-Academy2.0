@@ -31,14 +31,14 @@ class report_coursescompletions extends reportbase implements report {
         global $DB;
         
         parent::__construct($report, $reportproperties);
-        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','duration','enrolmentmethod', 'enrolledon','completion_percentage','completionstatus','completiondate','startdate','enddate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage']];
+        $this->columns = ['userfield' => ['userfield'], 'coursefield' => ['coursefield'], 'coursescompletionscolumns' => ['coursename','enrolledon','completion_percentage','completionstatus','completiondate','startdate','enddate','coursestartdate','completiondays','courseactivitiescount','activitycmplcount','activity_completion_percentage']];
         $this->components = array('columns', 'conditions', 'filters','permissions','orderable');
         $this->filters = array('organization', 'departments','subdepartments', 'level4department', 'course','user','completionstatus');
         $this->parent = true;
         $this->orderable = array('coursename');
         $this->defaultcolumn = 'ra.id';
-        $this->reportid = $report->reportid;
-        $this->scheduleflag = ($report->scheduling) ? true : false;
+        $this->reportid = isset($report->reportid) ? $report->reportid : 0;
+        $this->scheduleflag = isset($report->scheduling) ? true : false;
     }
 
     function init() {
@@ -52,10 +52,8 @@ class report_coursescompletions extends reportbase implements report {
     function select() {
         $this->sql = " SELECT ra.id as assignmentid ,u.id as userid, CONCAT(u.firstname,' ',u.lastname) AS fullname, u.*
                         , ra.timemodified as enrolledon
-                        , cc.timecompleted 
                         , c.startdate as startdate
                         , c.enddate as enddate
-                        , ra.timemodified as enrolstarted
                         , c.id as courseid 
                         , c.fullname as coursename
                         , c.open_coursecompletiondays as completiondays, cc.timecompleted as completiondate, c.open_path as course_open_path " ;
@@ -90,7 +88,7 @@ class report_coursescompletions extends reportbase implements report {
         $this->params['siteid'] = SITEID;
         $this->params['type'] = 0;
  
-        if (!is_siteadmin()  && $this->scheduleflag ) {  
+        if (!is_siteadmin()  && $this->scheduleflag && $this->reportid!=0 ) {  
             $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid' => $this->reportid, 'sendinguserid' => $USER->id], IGNORE_MULTIPLE);
         }
         $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path', null, 'lowerandsamepath');

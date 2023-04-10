@@ -92,7 +92,7 @@ class plugin_classrooms extends pluginbase {
         //         $params['departmentid'] = $USER->open_departmentid;
         //     }
         // }
-
+        $params = array();
       $sql = "SELECT lc.id, lc.name 
                  FROM {local_classroom} lc 
                  WHERE 1 = 1 ";

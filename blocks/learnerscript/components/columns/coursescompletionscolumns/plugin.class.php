@@ -111,7 +111,7 @@ class plugin_coursescompletionscolumns extends pluginbase{
             break;
             case 'activity_completion_percentage':
                  // number_format("1000.2262",2)."<br>";
-                $avtivitycomplete = intval(($activitycompletion / $activities) * 100);
+                $avtivitycomplete = ($activities != 0) ? intval(($activitycompletion / $activities) * 100) : 0;
                 $row->{$data->column} = '<div class="progress">
                     <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$avtivitycomplete.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$avtivitycomplete.'%">
                         <span class="progress_percentage ml-2">'.$avtivitycomplete.'% Complete</span>

@@ -1065,9 +1065,7 @@ case 'deplearningpath':
 		$sql = "SELECT lp.id, lp.name 
                 FROM {local_learningplan} lp
                 WHERE 1 = 1 AND concat('/',lp.open_path,'/') LIKE :costcenterpath";
-		if ($departmentid > 0) {
-			$sql .= " AND lp.department = $departmentid";
-		}
+	
 		$departments = $DB->get_records_sql_menu($sql, array('costcenterpath'=>'%'.$orgid.'%'));
         if (!empty($departments)) {
             $return = array('0' => 'Select Learning path') + $departments;
