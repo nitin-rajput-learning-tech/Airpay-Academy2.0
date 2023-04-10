@@ -61,7 +61,7 @@ if(!is_siteadmin()){
 $PAGE->set_pagelayout('standard');
 $PAGE->set_context($categorycontext);
 $PAGE->set_url('/local/costcenter/index.php');
-$PAGE->set_heading(get_string('orgmanage', 'local_costcenter'));
+$PAGE->set_heading('jgcjgcjcj');
 $PAGE->set_title(get_string('orgmanage', 'local_costcenter'));
 $PAGE->navbar->add(get_string('orgmanage', 'local_costcenter'));
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());

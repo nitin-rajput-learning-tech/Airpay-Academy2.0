@@ -1795,16 +1795,14 @@ class core_renderer extends \core_renderer {
         $rs->close();
 
         // share new role definitions
-        foreach ($newrdefs as $k=>$unused) {
-            if (!isset($ACCESSLIB_PRIVATE->rolepermissions[$k])) {
+        // foreach ($newrdefs as $k=>$unused) {
+        //     if (!isset($ACCESSLIB_PRIVATE->rolepermissions[$k])) {
 
-                if($newrdefs[$k] !=null){
+        //         $ACCESSLIB_PRIVATE->rolepermissions[$k] = $newrdefs[$k];
 
-                    $ACCESSLIB_PRIVATE->rolepermissions[$k] = $newrdefs[$k];
-                }
-            }
-            $accessdata['rdef'][$k] =& $ACCESSLIB_PRIVATE->rolepermissions[$k];
-        }
+        //     }
+        //     $accessdata['rdef'][$k] =& $ACCESSLIB_PRIVATE->rolepermissions[$k];
+        // }
         return true;
     }
     public function quickaccess_links() {
