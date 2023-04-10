@@ -747,13 +747,13 @@ function local_users_quicklink_node() {
         $count_inactiveusers = $DB->count_records_sql($sql.$suspendsql, $inactiveparams);
         $count_users = $DB->count_records_sql($sql, $params);
 
-    if($count_users > 0){
-        $percent = round(($count_activeusers / $count_users) * 100);
-    }else{
-        $percent = 0;
-    }
 
-        $percent = (int)$percent;
+        if ($count_activeusers == 0 || $count_users == 0) {
+                $percentage = 0;
+        } else {
+                $percent = round(($count_activeusers / $count_users) * 100);
+                $percent = (int)$percent;
+        }
 
         //local users count content
         $local_users = $PAGE->requires->js_call_amd('local_users/newuser', 'load', array());

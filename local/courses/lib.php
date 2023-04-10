@@ -1260,8 +1260,14 @@ function local_courses_quicklink_node(){
             $enrolcount = $DB->get_field_sql($enrolsql);
             $completioncount = $DB->get_field_sql($completioncount);
             $count_courses = $DB->count_records_sql($sql);
-            $percent = round(($completioncount / $enrolcount) * 100);
-            $percent = (int)$percent;
+
+            if ($completioncount == 0 || $enrolcount == 0) {
+                $percentage = 0;
+            } else {
+                $percent = round(($completioncount / $enrolcount) * 100);
+                $percent = (int)$percent;
+            }
+
         }
         $coursedata['node_header_string'] = get_string('manage_br_courses', 'local_courses');
         $coursedata['pluginname'] = 'courses';
