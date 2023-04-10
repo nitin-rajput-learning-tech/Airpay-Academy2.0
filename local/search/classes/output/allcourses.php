@@ -237,7 +237,7 @@ class allcourses {
   } // end of toset_nexttab_perpage_andstartlimit function 
 
    
-   public function get_available_catalogtypes($selectedfilter = null){
+   public static function get_available_catalogtypes($selectedfilter = null){
     global $DB;
 
     $othertagitems = array();

@@ -2904,7 +2904,7 @@ class view extends plugin_renderer_base
 		$lpimgurl = $learningplan_classes_lib->get_learningplansummaryfile($planid);
 		$mandatarycourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'and');
 		$optionalcourses_count = $learningplan_classes_lib->learningplancourses_count($planid, 'or');
-		$lplanassignedcourses = lib::get_learningplan_assigned_courses($planid);
+		$lplanassignedcourses = $learningplan_lib->get_learningplan_assigned_courses($planid);
 
 
 		$description = $lplan->description;

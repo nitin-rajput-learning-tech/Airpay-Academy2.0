@@ -22,6 +22,7 @@
  */
 namespace local_learningplan\output;
 require_once($CFG->dirroot.'/local/learningplan/lib.php');
+require_once($CFG->dirroot.'/local/search/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 use renderable;

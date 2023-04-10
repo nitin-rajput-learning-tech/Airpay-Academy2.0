@@ -53,6 +53,8 @@ $enrolledusersssql = " SELECT COUNT(u.id) as ccount
                                                 AND u.deleted = 0 AND u.suspended = 0
                                 WHERE c.id = :courseid AND ra.roleid = :employeerole";
 $enrolled_count =  $DB->count_records_sql($enrolledusersssql, $params);
+$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path',$costcenterpath=null,$datatype='lowerandsamepath');
+
 $completedusersssql = " SELECT COUNT(u.id) as ccount
                                 FROM {course} c
                                 JOIN {context} AS cot ON cot.instanceid = c.id AND cot.contextlevel = 50
