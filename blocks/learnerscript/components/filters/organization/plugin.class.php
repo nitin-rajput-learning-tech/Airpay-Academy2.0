@@ -90,7 +90,7 @@ class plugin_organization extends pluginbase {
     public function print_filter(&$mform) {
         global $USER;
         $depth = $USER->useraccess['currentroleinfo']['depth'];
-        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+        if(isset($USER->useraccess['currentroleinfo']['contextinfo']) && count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
             $depth--;
         }
 

@@ -185,6 +185,8 @@ if ($editform->is_cancelled()) {
 		$data->ownerid = $USER->id;
 		$data->courseid = $courseid;
 		$data->visible = 1;
+		$data->summary = !empty($data->summary) ? implode(',', array_filter($data->summary)) : '';
+		
 		if ($data->type == 'sql' && !has_capability('block/learnerscript:managesqlreports', $context)) {
 			print_error('nosqlpermissions');
 		}
@@ -192,7 +194,7 @@ if ($editform->is_cancelled()) {
 		$data->id = (new ls)->add_report($data,$context);
 		$reportclass = (new ls)->create_reportclass($data->id);
 
-		$data->enablestatistics = ($reportclass->enablestatistics == true) ? 1 : 0;
+		$data->enablestatistics = (isset($reportclass->enablestatistics) && $reportclass->enablestatistics == true) ? 1 : 0;
 		(new ls)->update_report($data,$context);
 
 	} else {

@@ -310,7 +310,7 @@ class querylib {
 								array('id' => 0, 'text' => get_string('select') . ' ' . get_string('course'));
 		}
 
-        if ($pluginclass->courseuserid > 0) {
+        if (isset($pluginclass->courseuserid) && $pluginclass->courseuserid > 0) {
             $userid = $pluginclass->courseuserid;
         } else {
            $userid = $USER->id;

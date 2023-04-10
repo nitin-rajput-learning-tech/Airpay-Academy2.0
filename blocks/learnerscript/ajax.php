@@ -594,8 +594,9 @@ case 'updatereport':
                 $comp[$c]['elements'][$k]['formdata'] = (object) $d['formdata'];
             }
         }
-        $comp['calculations']['elements'] = array_values($comp['calculations']['elements']);
-
+		if(isset($comp['calculations']['elements']) && !empty($comp['calculations']['elements'])){
+        	$comp['calculations']['elements'] = array_values($comp['calculations']['elements']);
+		}
 	}
 	$listofexports = $components['exports'];
 	$exportlist = array();
@@ -1591,6 +1592,7 @@ case 'configureplot':
 }
 
 $json = json_encode($return, JSON_NUMERIC_CHECK);
+
 if ($json) {
 	echo $json;
 } else {

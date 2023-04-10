@@ -128,8 +128,8 @@ class plugin_level4department extends pluginbase {
 
     public function print_filter(&$mform, $selectoption = true) {
         global $USER;
-        $depth = $USER->useraccess['currentroleinfo']['depth'];
-        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+        $depth = isset($USER->useraccess['currentroleinfo']['depth']) ? $USER->useraccess['currentroleinfo']['depth'] : 0;
+        if(isset($USER->useraccess['currentroleinfo']['contextinfo']) && count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
             $depth--;
         }
 

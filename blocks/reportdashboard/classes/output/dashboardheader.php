@@ -54,7 +54,7 @@ class dashboardheader implements renderable, templatable {
         $data = array();
         $systemcontext = context_system::instance(); 
         $userroleid = isset($USER->access['rsw']['/1']) ? $USER->access['rsw']['/1'] : 0; 
-        $user_costcenterid = explode('/', $USER->open_path)[1];
+        $user_costcenterid = (isset($USER->open_path) && !empty($USER->open_path)) ? explode('/', $USER->open_path)[1] : 0;
         $userrole = $DB->get_field_sql("SELECT shortname FROM {role} WHERE id = $userroleid");
         if (!empty($_SESSION['role'])) {
             $data['currentrole'] = $_SESSION['role'];
@@ -274,7 +274,7 @@ class dashboardheader implements renderable, templatable {
         // }
         $filtersarray = ['organization', 'departments', 'subdepartments', 'level4department', 'level5department'];
         $depth = $USER->useraccess['currentroleinfo']['depth'];
-        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+        if(isset($USER->useraccess['currentroleinfo']['contextinfo']) && count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
             $depth--;
         }
         $admin = is_siteadmin();
@@ -296,7 +296,7 @@ class dashboardheader implements renderable, templatable {
         // }
         $costcenterslist = array();
 
-        if($organization_options){
+        if(isset($organization_options) && !empty($organization_options)){
             foreach ($organization_options as $id => $value) {
                 $organisationlist[] = ['id' => $id, 'fullname' => $value, 'selected' => ''];
             }
@@ -325,7 +325,7 @@ class dashboardheader implements renderable, templatable {
                 $level5departmentlist[] = ['id' => $id, 'fullname' => $value, 'selected' => ''];
             }
         }
-        $coursedepartmentid = key($departments);        
+        //$coursedepartmentid = key($departments);        
 
         $data['departmentslist'] = $departmentslist;
         $data['costcenterslist'] = $organisationlist;

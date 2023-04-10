@@ -252,16 +252,20 @@ function block_learnerscript_plotforms_ajaxform($args) {
 
                 $existingcomponentsdata = $DB->get_field('block_learnerscript', 'components', array('id' => $args->reportid));
                 $componentsdata = (new block_learnerscript\local\ls)->cr_unserialize($existingcomponentsdata);
-                $componentsdata[$component] = isset($componentsdata[$component]) ? $componentsdata[$component] : array();
-                $componentelements = isset($componentsdata[$component]['elements']) ? $componentsdata[$component]['elements'] : array();
-                $componentsdata[$component]['elements'] = isset($componentelements) ?
-                                                            $componentelements : array();
+                if(!empty( $componentsdata))   {          
+                    $componentsdata[$component] = isset($componentsdata[$component]) ? $componentsdata[$component] : array();
+                    $componentelements = isset($componentsdata[$component]['elements']) ? $componentsdata[$component]['elements'] : array();
+                    $componentsdata[$component]['elements'] = isset($componentelements) ?
+                                                                $componentelements : array();
 
-                $cdata = array('id' => $uniqueid, 'formdata' => $validateddata,
-                                'pluginname' => $args->pname,
-                                'pluginfullname' => $pluginclass->fullname,
-                                'summary' => $pluginclass->summary($validateddata));
-                $componentsdata[$component]['elements'][] = $cdata;
+                    $cdata = array('id' => $uniqueid, 'formdata' => $validateddata,
+                                    'pluginname' => $args->pname,
+                                    'pluginfullname' => $pluginclass->fullname,
+                                    'summary' => $pluginclass->summary($validateddata));
+                    $componentsdata[$component]['elements'][] = $cdata;
+                }else{
+                    $componentsdata = array();
+                }
                 $report->components = (new block_learnerscript\local\ls)->cr_serialize($componentsdata);
             }
 

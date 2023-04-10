@@ -386,7 +386,7 @@ class ls {
 	 * @return [type]      [description]
 	 */
 	public function cr_unserialize($var) {
-		return (new self)->urldecode_recursive(unserialize($var));
+		return (!empty($var)) ? (new self)->urldecode_recursive(unserialize($var)) : '';
 	}
 	/**
 	 * [cr_check_report_permissions description]

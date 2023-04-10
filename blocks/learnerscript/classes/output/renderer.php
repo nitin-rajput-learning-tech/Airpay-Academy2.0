@@ -163,7 +163,7 @@ class renderer extends plugin_renderer_base {
 			// echo $this->render($plottabs);
 		}
 
-		$export = explode(',', $reportclass->config->export);
+		//$export = explode(',', $reportclass->config->export);
 		if($report->disabletable == 0){
 			echo '<div id="reportcontainer'.$report->id.'"></div>';
 		}

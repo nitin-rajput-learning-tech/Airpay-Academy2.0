@@ -98,7 +98,14 @@ class report_userwisecourseoverview extends reportbase {
     }
 
     function filters() {
-     
+      
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND ue.timecreated > :report_startdate ";
+            $this->params['report_startdate'] = $this->ls_startdate;
+      
+            $this->sql .= " AND ue.timecreated < :report_enddate ";
+            $this->params['report_enddate'] = $this->ls_enddate;
+        } 
         if (!empty($this->params['filter_user'])) {
             $userid = $this->params['filter_user'];
             $this->sql .= " AND u.id = :userid ";

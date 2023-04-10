@@ -45,7 +45,7 @@ class plugin_organizationoverviewcolumns extends pluginbase{
         // print_r($row);
         // $costcenterrecord = $DB->get_record('local_costcenter',array('depth' => 1));
 
-
+        $costcenterrecord = new stdClass();
         switch ($data->column) {
 
             case 'totaldepartment':

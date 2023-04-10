@@ -148,7 +148,7 @@ class plugin_departments extends pluginbase {
     public function print_filter(&$mform, $selectoption = true) {
         global $USER;
         $depth = $USER->useraccess['currentroleinfo']['depth'];
-        if(count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
+        if(isset($USER->useraccess['currentroleinfo']['contextinfo']) && count($USER->useraccess['currentroleinfo']['contextinfo']) > 1){
             $depth--;
         }
         if(is_siteadmin() || $depth < 3){

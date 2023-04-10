@@ -25,16 +25,16 @@
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 
-class report_dailyuniquelogins extends reportbase implements report {
+class report_dailyuniquelogins extends reportbase {
     /**
      * @param object $report Report object
      * @param object $reportproperties Report properties object
      */
     public function __construct($report, $reportproperties) {
         parent::__construct($report);
+        $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');        
         $this->parent = true;
         $this->columns = array('dailyuniquelogins' => array('costcentername','usercount','monthname','year'));
-        $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
         $this->filters = array('organization');
         $this->orderable = array('costcentername','usercount','monthname','year');//SUBSTRING(u.open_path,2,1)
         $this->groupcolumn = 'YEAR(FROM_UNIXTIME(lsl.timecreated)),substring_index(substr(u.open_path,2),"/",1)

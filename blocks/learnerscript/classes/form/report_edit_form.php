@@ -203,7 +203,7 @@ class report_edit_form extends moodleform {
 
         $errors = parent::validation($data, $files);
 
-        $sql = $data['querysql'];
+        $sql = (isset($data['querysql'])) ? $data['querysql'] : '';
         $sql = trim($sql);
 
 
