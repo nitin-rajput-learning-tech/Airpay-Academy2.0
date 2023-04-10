@@ -1297,7 +1297,7 @@ class core_renderer extends \core_renderer {
             $rolename = get_string('employee','theme_epsilon');
 
 
-            $depths = [];
+            // $depths = [];
             // var_dump($roles);exit;
             // array_values(array_filter(array_walk($roles, function(&$role, $rolekey)use(&$depths, &$roles){
             //     $categoryids = array_values(array_filter((explode('/', $role->path))));
@@ -1318,32 +1318,11 @@ class core_renderer extends \core_renderer {
             //     }
             // })));
 
-            // $user_ra_array = array_values(array_filter(array_map(function(&$role, $rolekey)use(&$depths, &$roles){
-            //                 $categoryids = array_values(array_filter((explode('/', $role->path))));
-            //                 $category = \local_costcenter\lib\accesslib::get_category_info(end($categoryids), 'name');
-            //                 if(!empty($depths)){
-
-            //                     if(!in_array($role->depth.'_'.$categoryids[0].'_'.$role->roleid, $depths['depth'])){
-            //                         $depths['depth'][$rolekey] = $role->depth.'_'.$categoryids[0].'_'.$role->roleid;
-            //                         $role->categoryname = $category;
-            //                         $role->highest_catid = $categoryids[0];
-            //                         $roles[$rolekey] = $role;
-            //                         return $role;
-            //                     }else{
-            //                         if($prevkey = array_search($role->depth.'_'.$categoryids[0].'_'.$role->roleid, $depths['depth'])){
-            //                             $prevrole = $roles[$prevkey];
-            //                             $prevrole->categoryname .= ", ".$category;
-            //                             $roles[$prevkey] = $prevrole;
-            //                             unset($roles[$rolekey]);
-            //                         }
-            //                     }
-            //                 }
-            //             }, $roles)));
-
+            $depths = [];
+            $depths['depth']=array();
             $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
                             $categoryids = array_values(array_filter((explode('/', $role->path))));
                             $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
-                            if(!empty($depths)){
 
                                 if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
                                     $depths['depth'][] = $role->depth.'_'.$categoryids[0];
@@ -1351,7 +1330,7 @@ class core_renderer extends \core_renderer {
                                     $role->highest_catid = $categoryids[0];
                                     return $role;
                                 }
-                            }
+
                         }, $roles)));
 
             if(!empty($user_ra_array) && is_array($user_ra_array)){
