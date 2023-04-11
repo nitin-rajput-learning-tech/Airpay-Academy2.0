@@ -22,7 +22,7 @@
  * @subpackage block_trainerdashboard
  */
 defined('MOODLE_INTERNAL') || die();
-
+define('SESSION_PRESENT', 1);
 
 class block_trainerdashboard_renderer extends plugin_renderer_base {
 
