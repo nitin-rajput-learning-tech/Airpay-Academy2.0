@@ -95,7 +95,7 @@ function local_forum_output_fragment_custom_forum_form($args)
         $data = $DB->get_record('course', array('id' => $courseid));
     }
     // Populate course tags.
-    $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
+   // $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
     $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes' => $CFG->maxbytes, 'trusttext' => false, 'noclean' => true, 'autosave' => false);
     $overviewfilesoptions = course_overviewfiles_options($course);
     if ($courseid) {

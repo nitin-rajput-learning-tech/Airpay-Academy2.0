@@ -390,7 +390,7 @@ class search implements renderable{
         }
         return $flag;
     } // end of get_enrollflag
-    public function get_enrollbtn($planinfo){
+    public static function get_enrollbtn($planinfo){
      global $DB,$USER;
         $planid = $planinfo->id;
         $planname =  $planinfo->name;
