@@ -68,7 +68,7 @@ class custom_category_form extends moodleform {
             }
         }
         $parents = $DB->get_records_sql_menu($parentsql);
-        $parents = [null => get_string('top', 'local_custom_category')] + $parents;
+        $parents = [0 => get_string('top', 'local_custom_category')] + $parents;
 
         $coursetype = array(
             'ajax' => 'local_costcenter/form-options-selector',
@@ -86,10 +86,12 @@ class custom_category_form extends moodleform {
             $mform->addElement('static','parentname', get_string('parent','local_costcenter'),$parentname);
             $mform->addElement('hidden','parentid');
         } else {
+    
             if(!is_siteadmin()){
                 $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents);
             } else {
-            $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents,$coursetype);
+                $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents,$coursetype);
+                $mform->setDefault('parentid', 0);
             }
         }
         $mform->setType('parentid', PARAM_INT);

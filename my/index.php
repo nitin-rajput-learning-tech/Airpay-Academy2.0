@@ -42,7 +42,10 @@ redirect_if_major_upgrade_required();
 // TODO Add sesskey check to edit
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
-
+$fredirect  = optional_param('fredirect', true, PARAM_BOOL);
+if($fredirect){
+    redirect($CFG->wwwroot.'/my/dashboard.php');
+}
 require_login();
 
 $hassiteconfig = has_capability('moodle/site:config', context_system::instance());

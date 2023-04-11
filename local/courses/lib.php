@@ -1395,8 +1395,10 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
 function get_listof_courses($stable, $filterdata,$options=array()) {
     global $CFG,$DB,$OUTPUT,$USER;
 
-    $options=(array)json_decode($options);
-
+    if(is_string($options)){
+        $options=json_decode($options);
+    }
+   
     $core_component = new core_component();
      //require_once($CFG->libdir. '/coursecatlib.php');
     require_once($CFG->dirroot.'/course/renderer.php');

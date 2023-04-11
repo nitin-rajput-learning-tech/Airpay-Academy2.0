@@ -336,9 +336,9 @@ define(
         // $("#fitem_id_acceptchallengedate_"+submitid+" .custom-select").attr("disabled", "disabled");
         // $("#fitem_id_challengeenddate_"+submitid+" .custom-select").attr("disabled", "disabled");
         $(".tag-info").html("");
-        $("div.form-autocomplete-selection span.mb-3").html("");
-        $("div.form-autocomplete-selection span.mb-3").removeClass("tag-info");
-        $("div.form-autocomplete-selection span.mb-3").removeClass("tag");
+        $("div.form-autocomplete-selection").html("");
+        $("div.form-autocomplete-selection").removeClass("tag-info");
+        $("div.form-autocomplete-selection").removeClass("tag");
     };
     return {
         reload: reload,

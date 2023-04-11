@@ -826,8 +826,8 @@ class local_courses_external extends external_api {
     );
     $offset = $params['offset'];
     $limit = $params['limit'];
-    $decodedata = (array)json_decode($params['dataoptions']);
-    $filtervalues = (array)json_decode($filterdata);
+    $decodedata = json_decode($params['dataoptions']);
+    $filtervalues = json_decode($filterdata);
 
 
     $stable = new \stdClass();

@@ -318,8 +318,7 @@ function local_costcenter_output_fragment_new_costcenterform($args){
     $mform = new local_costcenter\form\organization_form(null,$formparams, 'post', '', null, true, $formdata);
 
     $mform->set_data($data);
- 
-    if (!empty($formdata)) {
+    if (!empty($args->jsonformdata)&& strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
@@ -883,6 +882,7 @@ function learnerscript_costcenter_list(){
 
 
 function local_costcenter_output_fragment_departmentview($args){
+   
     global $CFG,$DB;
     $args = (object) $args;
     $o = '';
@@ -898,7 +898,7 @@ function local_costcenter_output_fragment_departmentview($args){
 
     $mform = new local_costcenter\functions\costcenter(null, array(), 'post', '', null, true, $formdata);
  
-    if (!empty($formdata)) {
+    if (!empty($args->jsonformdata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
