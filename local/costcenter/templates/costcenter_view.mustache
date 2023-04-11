@@ -39,17 +39,6 @@
                         <a class="dropdown-item text-dark" href="javascript:void(0)" title ="{{# str}} delete {{/str}}" onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ recordid }}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ delete_message }}}' }) })(event)"><i class="fa fa-trash fa-fw " aria-hidden="true" aria-label="Delete"></i> Delete</a>
                         {{/ delete}}
                         
-                       <!--  {{# assignroles}}
-                        <li>
-                            <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{recordid}},costcentername:'{{orgname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-plus"></i></a>
-
-                        </li>
-                        {{/ assignroles}} -->
-                        <!-- {{# contextid}}
-                            {{# managepermissions}}
-                            <a class="dropdown-item text-dark" href='{{config.wwwroot}}/admin/roles/permissions.php?contextid={{contextid}}' title="{{# str}}permissions,local_costcenter{{/ str}}"><i class="fa fa-cogs"></i>Permissions</a>
-                            {{/ managepermissions}}
-                        {{/ contextid}} -->
                     </div>
                 </div>
             </div>
