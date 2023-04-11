@@ -205,7 +205,6 @@ function email_filter($mform, $query='', $searchanywhere=false, $page=0, $perpag
     }
     if (isset($data->email)&&!empty(($data->email))) {
 
-        $implode = implode(',', $data->email);
         list($mailsql, $mailparam) = $DB->get_in_or_equal($data->email, SQL_PARAMS_NAMED);
         $userslist_sql .= " AND id $mailsql ";
         $userslistparams = $mailparam + $userslistparams;
