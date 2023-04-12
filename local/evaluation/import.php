@@ -70,7 +70,7 @@ if ($choosefile) {
     $xmlcontent = $mform->get_file_content('choosefile');
 
     if (!$xmldata = evaluation_load_xml_data($xmlcontent)) {
-        print_error('cannotloadxml', 'local_evaluation', 'edit.php?id='.$id);
+        throw new \moodle_exception('cannotloadxml', 'local_evaluation', 'edit.php?id='.$id);
     }
 
     $importerror = evaluation_import_loaded_data($xmldata, $evaluation->id);

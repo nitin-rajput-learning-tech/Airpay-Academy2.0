@@ -55,8 +55,8 @@ class plugin_organizationoverviewcolumns extends pluginbase{
 
             case 'totalcourses':
                 $path="'/$row->id%'";
-                $sql = "SELECT COUNT(c.id) FROM {course} c WHERE c.open_path LIKE $path";
-                $coursecount = $DB->count_records_sql($sql,array());
+                $sql = "SELECT COUNT(c.id) FROM {course} c WHERE c.open_path LIKE $path and c.open_coursetype = :type";
+                $coursecount = $DB->count_records_sql($sql,array('type' => 0));
                 $costcenterrecord->{$data->column} = $coursecount;
             break;
 

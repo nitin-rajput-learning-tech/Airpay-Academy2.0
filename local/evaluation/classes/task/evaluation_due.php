@@ -56,6 +56,7 @@ class evaluation_due extends \core\task\scheduled_task{
         foreach($globalduenotifications AS $notification){
         	$starttime = strtotime(date('d-m-Y', strtotime("+".$notification->reminderdays." day")));
         	$endtime = $starttime+86399;
+			$costcenterid=explode('/',$notification->open_path)[1];
 	    	$evaluationsql = "SELECT eu.*,u.id as user_id,e.id as evaluationid
 				FROM {local_evaluation_users} eu
 				JOIN {local_evaluations} e ON e.id = eu.evaluationid
@@ -64,7 +65,7 @@ class evaluation_due extends \core\task\scheduled_task{
 														FROM {local_evaluation_completed} AS uec 
 														WHERE uec.userid=u.id AND uec.evaluation=e.id) 
 				AND e.timeopen !=0 AND e.timeclose !=0 AND e.timeopen BETWEEN :timestart AND :timeend AND e.id NOT IN (:moduleid) AND e.costcenterid = :costcenterid ";
-			$params = array('timestart' => $starttime, 'timeend' => $endtime, 'moduleid' => $moduleids, 'costcenterid' => $notification->costcenterid);
+			$params = array('timestart' => $starttime, 'timeend' => $endtime, 'moduleid' => $moduleids, 'costcenterid' => $costcenterid);
 			$evaluationusers = $DB->get_records_sql($evaluationsql, $params);
 			foreach($evaluationusers AS $user){
 				$evaluationinstance = $DB->get_record('local_evaluations', array('id' => $user->evaluationid));

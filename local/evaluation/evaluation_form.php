@@ -47,7 +47,7 @@ class evaluation_form extends moodleform {
         if($instance!=0){
         local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_evaluation', $categorycontext, $multiple = false);
         }elseif($instance==0){
-        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,HIERARCHY_LEVELS), false, 'local_evaluation', $categorycontext, $multiple = false);
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,HIERARCHY_LEVELS), true, 'local_evaluation', $categorycontext, $multiple = false);
         }
         $mform->addElement('text', 'name', get_string('name', 'local_evaluation'), array('size'=>'64'));
         $mform->setType('name', PARAM_TEXT);
@@ -57,7 +57,7 @@ class evaluation_form extends moodleform {
             $type = array(null => get_string('selecttype', 'local_evaluation'),
                          '1'=>get_string('feedback', 'local_evaluation'),
                          '2'=>get_string('survey', 'local_evaluation'));
-            $mform->addElement('autocomplete', 'type', get_string('type', 'local_evaluation'), $type);
+            $mform->addElement('select', 'type', get_string('type', 'local_evaluation'), $type);
             $mform->addRule('type', null, 'required', null, 'client');
             
             if (is_siteadmin($USER->id) || has_capability('local/evaluation:evaluationmode',$categorycontext)) {
@@ -120,9 +120,11 @@ class evaluation_form extends moodleform {
         $mform->addElement('header', 'evaluationhdr', get_string('target_audiance','local_evaluation'));
       //  local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,HIERARCHY_LEVELS), true, 'local_evaluation', $categorycontext, $multiple = false);
             $functionname ='globaltargetaudience_elementlist';
-
             if(function_exists($functionname)) {
-                $mform->modulecostcenterpath = $customdata[$firstdepth];
+                $costcenterfields = local_costcenter_get_fields();
+                $firstdepth = current($costcenterfields);
+                $mform->modulecostcenterpath = $this->_customdata[$firstdepth];
+
                 $functionname($mform,array('group','designation'));
             }
         }

@@ -35,7 +35,7 @@ class report_learningplancomletions extends reportbase implements report {
         global $USER;
         parent::__construct($report);
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot','orderable');
-        $this->columns = ['learningpathfield'=>['learningpathfield'], 'userfield'=>['userfield'],'learningplancompletionscolumns'=>['learningpathname','completionstatus','completiondate','totalcourse','totalcoursecompleted','inprogresscourse','enrolldays']];
+        $this->columns = ['learningpathfield'=>['learningpathfield'], 'userfield'=>['userfield'],'learningplancompletionscolumns'=>['learningpathname','completionstatus','completiondate','totalcourse','totalcoursecompleted','inprogresscourse']];
         $this->parent = true;
         $this->filters = array('organization','departments', 'subdepartments', 'level4department', 'learningpath','user','completionstatus');
         $this->orderable = array('learningpathname');
