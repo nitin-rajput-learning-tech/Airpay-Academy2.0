@@ -67,30 +67,11 @@
                             {{# deptdelete}}
                             <a class="dropdown-item text-dark" href="javascript:void(0)" title ="{{# str}} delete {{/str}}"  onclick = "(function(e){ require('local_costcenter/costcenterdatatables').costcenterDelete({action:'deletecostcenter', id: {{{ deptid }}} ,confirm: {{{deptstatus}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{ deptdel_confirmationmsg }}}' }) })(event)"><i class="fa fa-trash fa-fw" aria-hidden="true" aria-label="Delete"></i>Delete</a>
                             {{/ deptdelete}}
-                         <!--  {{# depthide}}
-                            <li>
-                                <a href="javascript:void(0)" title ="{{# str}} inactive {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{deptid}}} ,confirm: {{{deptstatus}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{deptaction_message}}}' }) })(event)"><i class="fa fa-eye"></i></a>
-                            </li>  
-                            {{/ depthide}}  
-                              {{# deptshow}}
-                            <li>
-                                <a href="javascript:void(0)" title ="{{# str}} active {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{deptid}}} ,confirm: {{{deptstatus}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{deptaction_message}}}' }) })(event)"><i class="fa fa-eye-slash"></i></a>
-                            </li>
-                            {{/ deptshow}}    -->
+
                             {{# deptedit}}
                             <a class="dropdown-item text-dark" href="javascript:void(0)" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({selector:'createcostcentermodal', contextid:1, id:{{ deptid }}, formtype:'{{formtype}}', headstring:'{{headstring}}' }) })(event)"><i class="fa fa-pencil fa-fw"></i>Edit</a>
                             {{/ deptedit}}
-                            <!-- {{# assignroles}}
-                                <li>
-                                    <a href='javascript:void(0)' title="{{# str}}assignroleusers,local_assignroles{{/ str}}"  data-action='createcostcenterassignrolemodal' data-value='0' onclick ="(function(e){ require('local_assignroles/newcostcenterassignrole').init({selector:'createcostcenterassignrolemodal', contextid:1, costcenterid:{{deptid}},costcentername:'{{departmentfullname}}', formtype:'{{formtype}}'}) })(event)"><i class="fa fa-user-plus"></i></a>
 
-                                </li>
-                            {{/ assignroles}} -->
-                            <!-- {{# contextid}}
-                                {{# managepermissions}}
-                                <a class="dropdown-item text-dark" href='{{config.wwwroot}}/admin/roles/permissions.php?contextid={{deptcontextid}}' title="{{# str}}permissions,local_costcenter{{/ str}}"><i class="fa fa-cogs"></i>Permissions</a>
-                                {{/ managepermissions}}
-                            {{/ contextid}} -->
                             </div>
                         </div>
                     </div>
