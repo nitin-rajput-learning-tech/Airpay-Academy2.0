@@ -110,7 +110,7 @@ try{
         break;
         case 'programlastchildpopup':
             $stable = new stdClass();
-            $stable->search = $search['value'];
+            //$stable->search = $search['value'];
             $stable->start = $start;
             $stable->length = $length;
             if ($programmodulehead) {
