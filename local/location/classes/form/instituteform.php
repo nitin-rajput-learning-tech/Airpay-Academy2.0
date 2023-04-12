@@ -34,7 +34,7 @@ class instituteform extends moodleform {
 	function definition() {
 		global $DB,$USER;
 
-		$costcenterid = explode('/',$USER->open_path)[1];
+		$costcenterid = isset($USER->open_path) && !empty($USER->open_path) ? explode('/',$USER->open_path)[1] : 0;
 		// print_r($costcenterid); die;
 
 		$mform = &$this->_form;

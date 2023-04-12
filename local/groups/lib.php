@@ -750,7 +750,7 @@ function local_groups_edit_controls(context $context, moodle_url $currenturl) {
 * @param  integer $lastitem   [description]
 * @return [type]              [description]
 */
-function local_group_users($type = null, $groupid = 0, $params, $total=0, $offset1=-1, $perpage=-1, $lastitem=0){
+function local_group_users($type = null, $groupid = 0, $params = array(), $total=0, $offset1=-1, $perpage=-1, $lastitem=0){
     global $DB, $USER;
     $context =  (new \local_groups\lib\accesslib())::get_module_context();
     $group = $DB->get_record('cohort', array('id' => $groupid));

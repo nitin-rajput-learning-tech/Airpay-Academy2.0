@@ -949,7 +949,7 @@ class local_classroom_external extends external_api {
         $classroom = $DB->get_records('local_request_records', array('compname' => 'classroom' , 'componentid' => $decodeddataoptions->classroomid));
         $output = $PAGE->get_renderer('local_request');
         $component = 'classroom';
-        $data = (new classroom)->classroomrequestedusers($classroom,$component,'','',$decodeddataoptions->classroomid, $stable);
+        $data = (new classroom)->classroomrequestedusers($stable, $classroom,$component,'','',$decodeddataoptions->classroomid );
         $totalcount = $data['requestscount'];
         $data = (new classroom)->requestsdata($data['requestlist']);
 

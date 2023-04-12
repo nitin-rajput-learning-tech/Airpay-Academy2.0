@@ -95,7 +95,7 @@ if ($showall || is_siteadmin()) {
 }
 
 $count = '';
-if ($cohorts['allgroups'] > 0) {
+if (isset($cohorts['allgroups']) && $cohorts['allgroups'] > 0) {
     if ($searchquery === '') {
         $count = ' ('.$cohorts['allgroups'].')';
     } else {

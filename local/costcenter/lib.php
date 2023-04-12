@@ -990,18 +990,18 @@ function local_costcenter_get_hierarchy_fields($mform, $ajaxformdata, $customdat
             'onchange' => '(function(e){ require("local_costcenter/newcostcenter").changeElement(event) })(event)',
         );
         $prev_element = $prefix.$fields[$level].'_select';
-        $fieldvalue = $ajaxformdata[$prefix.$fields[$level]] ? $ajaxformdata[$prefix.$fields[$level]] : $customdata[$prefix.$fields[$level]];
+        $fieldvalue = (!empty($ajaxformdata) && $ajaxformdata[$prefix.$fields[$level]]) ? $ajaxformdata[$prefix.$fields[$level]]  ?? null : $customdata[$prefix.$fields[$level]]  ?? null;
         if($depth > $level){
             $mform->addElement('hidden', $prefix.$fields[$level], null, $levelelementoptions);
             $mform->setConstant($prefix.$fields[$level], $fieldvalue);
         }else{
-            $enableallfield = ($USER->useraccess['currentroleinfo']['depth'] > $level) || (is_siteadmin() && $level == 1) ? false : $allenable;
+            $enableallfield = (is_siteadmin() && $level == 1) || (!is_siteadmin() && ($USER->useraccess['currentroleinfo']['depth'] > $level))  ? false : $allenable;
             $levelelementoptions['multiple'] = ($firstelement && $prefix == '') ? false : $multiple;
             $levelelementoptions['ajax'] = 'local_costcenter/form-options-selector';
             $levelelementoptions['data-contextid'] = $context->id;
             $levelelementoptions['data-action'] = 'costcenter_element_selector';
             $prevfield = $prefix.$fields[$level-1];
-            $parentid = $ajaxformdata[$prevfield] ? $ajaxformdata[$prevfield] : $customdata[$prevfield];
+            $parentid = (!empty($ajaxformdata) && $ajaxformdata[$prevfield]) ? $ajaxformdata[$prevfield] ?? null : $customdata[$prevfield]  ?? null;
             $levelelementoptions['data-options'] = json_encode(array('depth' => $level, 'parentid' => $parentid, 'enableallfield' => $enableallfield, 'prefix' => $prefix));
             if($enableallfield){
                 $levelelements = [0 => get_string('all')];

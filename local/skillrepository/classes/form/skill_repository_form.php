@@ -43,7 +43,7 @@ class skill_repository_form extends moodleform {
        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1),false, 'local_skillrepository', $context, $multiple = false);
         $skillsoptions = array();
         $skillsoptions[null] = get_string('select');
-        $category = $this->_ajaxformdata['category'];
+        $category = !empty($this->_ajaxformdata['category']) ? $this->_ajaxformdata['category'] : null;
         if (!empty($category)) {
             $category_sql = "SELECT sc.id, sc.name
                 FROM {local_skill_categories} AS sc

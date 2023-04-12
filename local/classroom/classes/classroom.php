@@ -2248,7 +2248,7 @@ class classroom {
           return array('requestscount' =>$requestscount, 'requestlist' => $requestlist);
         }
     }
-    public function classroomrequestedusers($list=null, $component=null,$sorting=false,$tab=false,$componentid=false, $stable) {
+    public function classroomrequestedusers($stable, $list=null, $component=null,$sorting=false,$tab=false,$componentid=false ) {
         global $DB, $USER;
         $categorycontext = (new \local_classroom\lib\accesslib())::get_module_context();
         
@@ -2536,7 +2536,7 @@ class classroom {
             $DB->insert_record('local_classroom_categories', $formdata);
         }
     }
-    public function select_to_and_from_users($type = null, $clasroomid = 0, $params, $total = 0, $offset1 = -1, $perpage = -1, $lastitem = 0) {
+    public function select_to_and_from_users($type = null, $clasroomid = 0, $params = array(), $total = 0, $offset1 = -1, $perpage = -1, $lastitem = 0) {
         global $DB, $USER;
 
         $categorycontext =  (new \local_classroom\lib\accesslib())::get_module_context();
