@@ -73,6 +73,7 @@ class local_forum_renderer extends plugin_renderer_base {
       global $USER;
       $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
       $forum = optional_param('forum', '', PARAM_RAW);
+      $status = optional_param('status', '', PARAM_INT);
       $costcenterid = optional_param('costcenterid', '', PARAM_INT);
       $departmentid = optional_param('departmentid', '', PARAM_INT);
       $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);

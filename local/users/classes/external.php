@@ -125,7 +125,7 @@ class local_users_external extends external_api {
         ));
     }
 
-    public function delete_user_parameters() {
+    public static function delete_user_parameters() {
         return new external_function_parameters(
             array(
                 'id' => new external_value(PARAM_INT, 'userid', 0),

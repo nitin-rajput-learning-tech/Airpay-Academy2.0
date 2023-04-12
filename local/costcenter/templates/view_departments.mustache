@@ -39,13 +39,7 @@
                     <a href="{{ showurl }}" title ="{{# str}} active {{/str}}" onclick = "(function(e){ require('local_costcenter/newcostcenter').costcenterStatus({action:'updatecostcenter', id: {{{recordid}}} ,confirm: {{{status}}} ,actionstatus:'Confirmation', actionstatusmsg:'{{{action_message}}}' }) })(event)"><i class="fa fa-eye-slash"></i></a>
                 </li>
                 {{/ show}}
-                {{# edit}}
-                <li>
 
-                <a href="{{ hideurl }}" title="{{# str}} edit {{/str}}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({selector:'createcostcentermodal', contextid:1, costcenterid:{{ recordid }}, parentid:{{ parentid }} }) })(event)"><i class="fa fa-pencil fa-fw" title=""></i></a>
-                    <!--<img src="{{ editicon }}" title="{{# str}} edit {{/str}}" data-action= "createcostcentermodal" class="createcostcentermodal icon" data-value="{{ recordid }}" onclick="(function(e){ require('local_costcenter/newcostcenter').init({selector:'createcostcentermodal', contextid:1, costcenterid:{{ recordid }}, parentid:{{ parentid }} }) })(event)">-->
-                </li>
-                {{/ edit}}
                 </ul>
             </div>
 

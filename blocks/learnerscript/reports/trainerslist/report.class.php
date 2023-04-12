@@ -77,7 +77,7 @@ class report_trainerslist extends reportbase implements report {
    
     function search(){
         if (isset($this->search) && $this->search) {
-            $fields = array('c.fullname',"CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
+            $fields = array("CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
             $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
             $fields .= " LIKE '%" . $this->search . "%' ";
             $this->sql .= " AND ($fields) ";

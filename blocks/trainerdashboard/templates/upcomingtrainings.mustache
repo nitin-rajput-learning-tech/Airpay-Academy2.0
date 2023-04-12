@@ -57,7 +57,7 @@
 {{#js}}
     var search_interval = 100;
     var timer;
-    var searchval 
+    var searchval ;
     $(document).on('keyup', '#global_filter_upcomingtrainingsdashboards', function(){
 
         if (searchval===$(this).val()){
@@ -72,7 +72,7 @@
         var options = {targetID: 'upcomingtrainingsdashboards',
                     templateName: 'block_trainerdashboard/upcomingtrainings',
                     methodName: 'block_trainerdashboard_get_upcomingtrainings',
-                    perPage: 6,
+                    perPage: 10,
                     cardClass: 'col-xl-4 col-md-6 col-12',
                     viewType: 'card'};
 
@@ -96,7 +96,7 @@
         var options = {targetID: 'upcomingtrainingsdashboards',
                     templateName: 'block_trainerdashboard/upcomingtrainings',
                     methodName: 'block_trainerdashboard_get_upcomingtrainings',
-                    perPage: 6,
+                    perPage: 10,
                     cardClass: 'col-xl-4 col-md-6 col-12',
                     viewType: 'card'};
 

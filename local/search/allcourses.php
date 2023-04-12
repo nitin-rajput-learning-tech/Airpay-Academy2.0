@@ -36,7 +36,7 @@ if(!has_capability('local/search:viewcatalog', $systemcontext)){
 $PAGE->set_url('/local/search/allcourses.php');
 $PAGE->set_title(get_string('e_learning_courses','local_search'));
 $PAGE->set_heading(get_string('leftmenu_search', 'local_search'));
-$PAGE->set_pagelayout('context_image');
+$PAGE->set_pagelayout('standard');
 $PAGE->navbar->add(get_string('e_learning_courses','local_search'));
 
 $category = optional_param('category', -1, PARAM_INT);

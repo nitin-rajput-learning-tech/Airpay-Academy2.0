@@ -33,7 +33,7 @@ class local_location_renderer extends plugin_renderer_base {
     	global $DB, $CFG, $OUTPUT,$USER, $PAGE;
 
         $categorycontext = (new \local_location\lib\accesslib())::get_module_context();
-        $costcenterid = explode('/',$USER->open_path)[1];
+        $costcenterid = isset($USER->open_path) && !empty($USER->open_path) ? explode('/',$USER->open_path)[1] : 0;
         $params=array();
     	$sql = "SELECT * FROM {local_location_institutes} where 1=1 ";
         if ((has_capability('local/location:manageinstitute', $categorycontext) || has_capability('local/location:viewinstitute', $categorycontext)) && ( !is_siteadmin() ) ) {

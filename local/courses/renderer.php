@@ -25,7 +25,7 @@
 
 
 defined('MOODLE_INTERNAL') || die;
-use core_component;
+
 class local_courses_renderer extends plugin_renderer_base {
 
      /**

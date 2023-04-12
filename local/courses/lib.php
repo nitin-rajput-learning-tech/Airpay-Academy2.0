@@ -1034,7 +1034,7 @@ function print_filterform(){
 * @param  integer $lastitem   [description]
 * @return [type]              [description]
 */
-function course_enrolled_users($type = null, $course_id = 0, $params, $total=0, $offset=-1, $perpage=-1, $lastitem=0){
+function course_enrolled_users($type = null, $course_id = 0, $params= array(), $total=0, $offset=-1, $perpage=-1, $lastitem=0){
 
     global $DB, $USER;
 	$context = (new \local_courses\lib\accesslib())::get_module_context($course_id);
@@ -1262,7 +1262,7 @@ function local_courses_quicklink_node(){
             $count_courses = $DB->count_records_sql($sql);
 
             if ($completioncount == 0 || $enrolcount == 0) {
-                $percentage = 0;
+                $percent = 0;
             } else {
                 $percent = round(($completioncount / $enrolcount) * 100);
                 $percent = (int)$percent;
@@ -1395,8 +1395,10 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
 function get_listof_courses($stable, $filterdata,$options=array()) {
     global $CFG,$DB,$OUTPUT,$USER;
 
-    $options=(array)json_decode($options);
-
+    if(is_string($options)){
+        $options=json_decode($options);
+    }
+   
     $core_component = new core_component();
      //require_once($CFG->libdir. '/coursecatlib.php');
     require_once($CFG->dirroot.'/course/renderer.php');

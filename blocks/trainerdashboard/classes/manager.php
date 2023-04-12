@@ -103,7 +103,8 @@ class block_trainerdashboard_manager {
         $sql .= $concatsql;
 
         $time=time();
-        $sql .= " AND timefinish < $time";
+        //$sql .= " AND timefinish < $time";
+        $sql .= " AND timefinish <= DATEADD(MONTH,-3,GETDATE()) ";
 
         if (!empty($stable->search_query)) {
             $fields = array(
@@ -159,27 +160,49 @@ class block_trainerdashboard_manager {
         global $DB,$USER,$COURSE,$CFG;
         $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         try {
-             
-            // $trainermanhourscount = $DB->count_records_sql($sql, $params);
-        
-            // if ($stable->thead == false) {
+            $roleid = $DB->get_field('role', 'id', array('shortname' => 'trainer'));
+            $trainers = $DB->get_fieldset_sql(" SELECT u.id FROM {role_assignments} AS ra JOIN {user} AS u on u.id=ra.userid WHERE 1=1 AND ra.roleid=:roleid" , array('roleid' =>$roleid));
+            $trainerids = implode(',',$trainers);
+            $countsql   = "SELECT COUNT(cs.id) ";
+            $sql = "SELECT  cs.* ";
+            $fromsql =  " FROM {local_classroom_sessions} cs
+                            JOIN {user} AS u ON u.id = cs.trainerid
+                            JOIN {local_classroom} c ON cs.classroomid = c.id
+                            WHERE (c.status = 1 OR c.status = 4) AND cs.trainerid IN ($trainerids)";
+            if (!empty($stable->search_query)) {
+                $fields = array(
+                    0 => 'u.firstname',
+                    1 => 'u.lastname'
+                );
+                $fields = implode(" LIKE '%" . $stable->search_query . "%' OR ", $fields);
+                $fields .= " LIKE '%" . $stable->search_query . "%' ";
+                $fromsql .= " AND ($fields) ";
+            }
+            $fromsql .= (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
 
-            //     $trainermanhours = $DB->get_records_sql($sql, $params, $stable->start, $stable->length);
-               
-                
-            // }
-             $trainermanhours=array();
-             $trainermanhourscount = 0;
+            if(!is_siteadmin() &&has_capability('local/classroom:trainer_viewclassroom', $context)){
+                $fromsql.= " AND u.id = :trainerid ";
+                $params['trainerid'] = $USER->id;
+            }
+    
+            $fromsql .= " ORDER BY cs.timestart ASC";
+            $trainermanhours = $DB->get_records_sql($sql . $fromsql, $params, $stable->start, $stable->length);
+            $trainermanhourscount = $DB->count_records_sql($countsql. $fromsql, array());       
+           
+            //SUM(round(cs.duration/60, 2)) 
+            //$trainermanhours = $DB->get_records_sql($sql. $fromsql, array()); 
+            
         } catch (dml_exception $ex) {
         	 $trainermanhours=array();
              $trainermanhourscount = 0;
         }
+      
         return compact('trainermanhours', 'trainermanhourscount');
     }
     public static function upcomingtrainings($stable,$filtervalues){
         global $DB,$USER,$COURSE,$CFG;
         $context = (new \local_costcenter\lib\accesslib())::get_module_context();
- 
+
         $concatsql = '';
         if (!empty($stable->search)) {
             $fields = array(

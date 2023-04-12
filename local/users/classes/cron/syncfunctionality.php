@@ -429,7 +429,7 @@ class syncfunctionality
         $strings->parentid = $user->company_code;
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if (!in_array($datal->id, $orgid) && !empty(array_filter($orgid))) {
+            if (!empty($orgid) && !in_array($datal->id, $orgid) && !empty(array_filter($orgid))) {
                 echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
                 $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
                 $this->mfields[] = $bussiness_unit_code;

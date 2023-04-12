@@ -92,7 +92,7 @@ class report_skill extends reportbase implements report {
     }
    function search() {
        if (isset($this->search) && $this->search) {
-            $fields = array('ls.name',"CONCAT(u.firstname,' ',u.lastname)",'u.open_employeeid');
+            $fields = array('ls.name','c.fullname',"CONCAT(u.firstname,' ',u.lastname)",'u.open_employeeid');
             $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
             $fields .= " LIKE '%" . $this->search . "%' ";
             $this->sql .= " AND ($fields) ";
@@ -100,9 +100,9 @@ class report_skill extends reportbase implements report {
     }
     function filters() {    
        if (!empty($this->params['filter_skills'])) {
-            $skillname = $this->params['filter_skills'];
-            $this->sql .= " AND c.open_skill = :skillname";
-            $this->params['skillname'] = $skillname;
+            $skill = $this->params['filter_skills'];
+            $this->sql .= " AND ls.id = :skill";
+            $this->params['skill'] = $skill;
         }
         if($this->ls_startdate > 0 && $this->ls_enddate > 0){
             $this->sql .= " AND cc.timecompleted > :report_startdate ";
