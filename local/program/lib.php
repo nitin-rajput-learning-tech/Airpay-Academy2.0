@@ -139,7 +139,7 @@ function local_program_output_fragment_level_completion_settings($args) {
     $formdata['id'] = $args->id;
     $formdata['pid'] = $args->pid;
     $formdata['levelid'] = $args->levelid;
-    $mform = new \local_program\form\level_completion_form(null, array('id' => $args->id, 'pid' => $args->pid,'levelid' => $args->levelid, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
+    $mform = new \local_program\form\level_completion_form(null, array('id' => $args->id, 'pid' => $args->pid,'levelid' => $args->levelid), 'post', '', null, true, $formdata);
     if ($args->id > 0) {
         $section_completiondata = $DB->get_record('local_bcl_cmplt_criteria', array('id' => $args->id));
         $section_completiondata->form_status = $args->form_status;
@@ -148,7 +148,6 @@ function local_program_output_fragment_level_completion_settings($args) {
         }
         $mform->set_data($section_completiondata);
     }
-
     if (!empty((array) $serialiseddata)) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();

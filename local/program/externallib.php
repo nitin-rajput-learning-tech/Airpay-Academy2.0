@@ -199,7 +199,7 @@ class local_program_external extends external_api {
         ));
     }
 
-    public static function program_course_selector($query, $categorycontext, $includes = 'parents', $programid, $levelid, $classroomcourses) {
+    public static function program_course_selector($query, $categorycontext, $includes, $programid, $levelid, $classroomcourses) {
         global $CFG, $DB, $USER;
         $params = self::validate_parameters(self::program_course_selector_parameters(), array(
             'query' => $query,
@@ -929,7 +929,7 @@ class local_program_external extends external_api {
             'filterdata' => new external_value(PARAM_RAW, 'filters applied'),
         ]);
     }
-    public static function data_for_programs_paginated($options, $dataoptions, $offset = 0, $limit = 0, $categorycontextid, $filterdata){
+    public static function data_for_programs_paginated($options, $dataoptions, $offset, $limit, $categorycontextid, $filterdata){
         global $DB, $PAGE;
         require_login();
         $PAGE->set_context($categorycontextid);
@@ -1064,6 +1064,7 @@ class local_program_external extends external_api {
         $context = context::instance_by_id($contextid, MUST_EXIST);
         self::validate_context($context);
         $data = array();
+
         if (!empty($jsonformdata)) {
 
             $serialiseddata = json_decode($jsonformdata);
@@ -1072,13 +1073,12 @@ class local_program_external extends external_api {
             }
             parse_str($serialiseddata, $data);
         }
-
         $warnings = array();
 
         $program = new stdClass();
 
         // The last param is the ajax submitted data.
-        $mform = new \local_program\form\level_completion_form(null, array('id' => $data['id'], 'pid' => $data['programid'],'levelid' => $data['levelid'], 'form_status' => $data['form_status']), 'post', '', null, true, $data);
+        $mform = new \local_program\form\level_completion_form(null, array('id' => $data['id'], 'pid' => $data['programid'],'levelid' => $data['levelid']), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
         if ($validateddata) {
             $programid = $validateddata->programid;

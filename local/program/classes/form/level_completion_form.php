@@ -60,6 +60,11 @@ class level_completion_form extends moodleform {
             $mform->addElement('select', 'coursetracking', get_string('coursetracking', 'local_program'), $course_tracking, array());
             
 
+            if (isset($ajaxformdata['courseids']) && (!is_array($ajaxformdata['courseids']) ||
+                $this->_ajaxformdata['courseids'] == '_qf__force_multiselect_submission')) {
+                $this->_ajaxformdata['courseids']=array();
+            }
+
             $courses = array();
             $courses = $this->_ajaxformdata['courseids'];
             if (!empty($courses)) {
@@ -69,17 +74,17 @@ class level_completion_form extends moodleform {
                     array('id' => $id), 'id', 'id, courseids');
             }
 
-            if (!empty(array_filter($courses))) {
-                if(is_array($courses)){
-                    $courses=implode(',',$courses);
-                }
+            if (isset($courses) && (is_array($courses)) && !empty(array_filter($courses))) {
+
+                $courses=implode(',',$courses);
+
                 $courses_sql = " SELECT c.id,c.fullname as fullname 
                     FROM {course} as c 
                     JOIN {local_program_level_courses} as lplc ON lplc.courseid = c.id
                     JOIN {local_program_levels} as lpl on lpl.id=lplc.levelid 
                     WHERE lplc.programid = {$pid} and lpl.id = {$levelid} and c.id IN ({$courses}) ";
                 $courses = $DB->get_records_sql_menu($courses_sql);
-            }elseif (empty($courses)) {
+            }else{
                 $courses_sql = "SELECT c.id,c.fullname as fullname 
                     FROM {course} as c 
                     JOIN {local_program_level_courses} as lplc ON lplc.courseid = c.id
