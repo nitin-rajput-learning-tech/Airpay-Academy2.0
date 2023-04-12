@@ -184,7 +184,6 @@ function evaluation_add_instance($evaluation) {
             'context' => $context,
             'objectid' => $evaluation->id
         );
-
         $event = \local_evaluation\event\evaluation_created::create($params);
         $event->add_record_snapshot('local_evaluations', $evaluation);
         $event->trigger();
@@ -455,7 +454,7 @@ function evaluation_set_events($evaluation) {
             $calendarevent->update($event);
         } else {
             // Event doesn't exist so create one.
-            $event->courseid     = 0;
+            $event->courseid     = 1;
             $event->groupid      = 0;
             $event->userid       = 0;
             $event->modulename   = 0;
@@ -496,7 +495,7 @@ function evaluation_set_events($evaluation) {
             $calendarevent->update($event);
         } else {
             // Event doesn't exist so create one.
-            $event->courseid     = 0;
+            $event->courseid     = 1;
             $event->groupid      = 0;
             $event->userid       = 0;
             $event->modulename   = 0;
