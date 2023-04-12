@@ -139,10 +139,13 @@ class report_learningplansoverview extends reportbase implements report {
                 $completionscount .= " AND llu.completiondate < :ls_enddate ";
             }
             foreach ($learningpaths as $learningpath) {
+                $percentofcompletions = 0;
                 $learningpath->enrolledcount = $DB->count_records_sql($sql, array('planid' => $learningpath->learningpathid,'deleted' => 0, 'suspended' => 0, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
                 $learningpath->inprogresscount = $DB->count_records_sql($sql.$inprogresscount, array('planid' => $learningpath->learningpathid,'deleted' => 0,'suspended' => 0,'status' => 1, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
                 $learningpath->completedcount = $DB->count_records_sql($sql.$completionscount, array('planid' => $learningpath->learningpathid,'deleted' => 0,'suspended' => 0,'status' => 1, 'ls_startdate' => $this->ls_startdate, 'ls_enddate' => $this->ls_enddate));
-                $percentofcompletions = ($learningpath->completedcount/$learningpath->enrolledcount)*100;
+                if($learningpath->enrolledcount != 0 && $learningpath->enrolledcount >= $learningpath->completedcount ){
+                    $percentofcompletions = ($learningpath->completedcount/$learningpath->enrolledcount)*100;
+                }
                 $learningpath->percentofcompletions = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
                 $data[] = $learningpath;
             }

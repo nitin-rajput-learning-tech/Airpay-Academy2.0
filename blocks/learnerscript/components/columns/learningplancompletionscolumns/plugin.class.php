@@ -72,14 +72,14 @@ class plugin_learningplancompletionscolumns extends pluginbase {
                     $totalinprogresscourse = $DB->count_records_sql($completedcourse, array('userid' => $row->userid, 'lpid' => $row->learningpathid));
                     $row->{$data->column} = $totalinprogresscourse ? $totalinprogresscourse : 0;
                 break;
-                case 'enrolldays':
+    /*             case 'enrolldays':
                     $pdiffdays = date('d-m-Y', $row->timecreated);
                     $odiffdays = date('d-m-Y');
                     $newpdate = date_create("$pdiffdays");
                     $existingpdate = date_create("$odiffdays");
                     $diffdays = date_diff($newpdate, $existingpdate);
                     $row->{$data->column} = $diffdays->format("%a days");
-                break;
+                break; */
 
             }
             
