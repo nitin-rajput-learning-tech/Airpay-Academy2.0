@@ -445,7 +445,12 @@ class block_trainerdashboard_external extends external_api {
             'records' => new external_multiple_structure(
                             new external_single_structure(
                                 array(
-                                    'username' => new external_value(PARAM_RAW, 'name', VALUE_OPTIONAL)
+                                    'username' => new external_value(PARAM_RAW, 'name', VALUE_OPTIONAL),
+                                    'classroomname' => new external_value(PARAM_RAW, 'classroom name', VALUE_OPTIONAL),
+                                    'date' => new external_value(PARAM_RAW, 'session startdate'),
+                                    'starttime' => new external_value(PARAM_RAW, 'timelimit'),
+                                    'endtime' => new external_value(PARAM_RAW, 'timelimit'),                                    
+                                    'traininghrs' => new external_value(PARAM_RAW, 'trainer')
                                 )
                             )
             )

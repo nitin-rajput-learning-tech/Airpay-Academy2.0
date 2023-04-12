@@ -284,18 +284,34 @@ class block_trainerdashboard_renderer extends plugin_renderer_base {
         return array_values($row);
     }
     public function get_trainermanhours ($trainermanhours,$filterdata=null) {
-        global $USER;
+        global $OUTPUT, $CFG, $DB,$USER;
         $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         $formattedtrainermanhours=array_values($trainermanhours['trainermanhours']);
         $row = [];
-        foreach ($formattedtrainermanhours as $records) {
+       
+        foreach ($formattedtrainermanhours as $sdata) { 
             $record = array();
-            $record['username']='hi';
-         }
+            
+            if($sdata->trainerid){
+                $trainer = $DB->get_record('user', array('id' => $sdata->trainerid));
+                $trainer = fullname($trainer);
+                $record['username'] =  $trainer;
+           }else{
+                $record['username'] ="N/A";
+           }
+           $classroomid= $sdata->classroomid;
+           $record['classroomname'] = $DB->get_field('local_classroom','name',array('id'=>$classroomid));
+           $record['date'] = date("d/m/Y", $sdata->timestart);
+           $record['starttime'] = date("H:i:s", $sdata->timestart);
+           $record['endtime'] = date("H:i:s", $sdata->timefinish);
+           $record['traininghrs'] = (round($sdata->duration/60, 2)) ;
+           $row[] = $record;
+        }
         return array_values($row);
     }
     public function get_upcomingtrainings ($upcomingtrainings,$filterdata=null) {
         global $OUTPUT, $CFG, $DB,$USER;
+      
         $context = (new \local_costcenter\lib\accesslib())::get_module_context();
         $formattedupcomingtrainings=array_values($upcomingtrainings['upcomingtrainings']);
         $row = [];

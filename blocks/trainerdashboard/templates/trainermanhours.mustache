@@ -25,14 +25,20 @@
                     <thead>
                         <tr>
                             <th>{{#str}}username,block_trainerdashboard{{/str}}</th>
-
+                            <th>{{#str}}classroomname,local_classroom{{/str}}</th>
+                            <th>{{#str}}date{{/str}}</th>
+                            <th>{{#str}}time{{/str}}</th>
+                             <th>{{#str}}hours{{/str}}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{#records}}
                         <tr>
                             <td>{{username}}</td>
-
+                            {{#classroomname}}<td>{{classroomname}}</td>{{/classroomname}}                
+                            <td><i class="fa fa-calendar" aria-hidden="true"></i>{{date}}</td>
+                            <td><i class="fa fa-clock-o"></i>{{starttime}} <b>-</b>{{endtime}}</td>
+                            <td>{{traininghrs}}</td>
                         </tr>
                         {{/records}}
                     </tbody>
@@ -57,7 +63,7 @@
         var options = {targetID: 'trainermanhoursdashboards',
                     templateName: 'block_trainerdashboard/trainermanhours',
                     methodName: 'block_trainerdashboard_get_trainermanhours',
-                    perPage: 6,
+                    perPage: 10,
                     cardClass: 'col-xl-4 col-md-6 col-12',
                     viewType: 'card'};
 
@@ -81,7 +87,7 @@
         var options = {targetID: 'trainermanhoursdashboards',
                     templateName: 'block_trainerdashboard/trainermanhours',
                     methodName: 'block_trainerdashboard_get_trainermanhours',
-                    perPage: 6,
+                    perPage: 10,
                     cardClass: 'col-xl-4 col-md-6 col-12',
                     viewType: 'card'};
 
