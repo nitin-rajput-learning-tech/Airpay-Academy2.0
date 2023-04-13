@@ -1,49 +1,54 @@
 <div class="tab-content">
     {{# programlevel }}
-
-        {{# canaddcourse }}
-        <div class="pull-right mb-15">
-            <a href="javascript:void(0)" class="addcourse" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:{{ contextid }}, component:'local_program', callback:'course_form', form_status:0, plugintype: 'local_program', pluginname: 'course', id:0, bcid: {{ programid }}, levelid: {{levelid}} }) })(event)">{{#str}}assigncourses, local_program{{/str}}</a>
-        </div>
-        {{/ canaddcourse }}
         {{# userview}}
-        {{# mycompletionstatus }}
-            <span class="pull-right mt-15 mb-10 levelcomplition completed">{{# str}} levelcompleted, local_program {{/ str}}</span>
-        {{/ mycompletionstatus }}
-        {{# myinprogressstatus }}
-            <span class="pull-right mt-15 mb-10 levelcomplition inprogress">{{# str}} levelinprogress, local_program {{/ str}}</span>
-        {{/ myinprogressstatus }}
+            {{# mycompletionstatus }}
+                <span class="levelcomplition completed">{{# str}} levelcompleted, local_program {{/ str}}</span>
+            {{/ mycompletionstatus }}
+            {{# myinprogressstatus }}
+                <span class="levelcomplition inprogress">{{# str}} levelinprogress, local_program {{/ str}}</span>
+            {{/ myinprogressstatus }}
         {{/ userview}}
-            <div class="w-full pull-left level_description">{{{description}}}</div>
+            <div class="w-full level_description">{{{description}}}</div>
         {{#levelcompletioncriteria}}
-
-        <div class="w-full pull-left lpcourse_content pt-10 pb-10 pl-15 pr-15">
-
-            <div class='alert alert-info'>
-                            <b>{{#str}} completion_settings_tab, local_program{{/ str}} : </b> {{{tracking}}}
+        <div class="w-full lpcourse_content">
+            <div class='alert alert-info mb-0'>
+                <b>{{#str}} completion_settings_tab, local_program{{/ str}} : </b> {{{tracking}}}
             </div>
-
         </div>
         {{/levelcompletioncriteria}}
-        {{# programlevelcourses }}
-        <div class="w-full pull-left lpcourse_content pt-10 pb-10 pl-15 pr-15">
-            <div class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left p-0 levelcourse_list {{ coursecompletionstatus }} ">
-                <div class="col-lg-5 col-md-5 col-sm-12 col-12 pull-left levelcourse_left">
-                    <div class="w-full pull-left pl-0 pt-15 pb-15 pr-15">
-                        <h5 class="coursename">
-                            <span class="course_icon mr-15">
-                                <i class="fa fa-book" aria-hidden="true"></i>
-                            </span>
-                            {{{ course }}}
-                        </h5>
+        {{# canaddcourse }}
+        <div class="assign_course_btn text-right">
+            <a href="javascript:void(0)" class="addcourse mt-0" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:{{ contextid }}, component:'local_program', callback:'course_form', form_status:0, plugintype: 'local_program', pluginname: 'course', id:0, bcid: {{ programid }}, levelid: {{levelid}} }) })(event)">{{#str}}assigncourses, local_program{{/str}}</a>
+        </div>
+        {{/ canaddcourse }}
+        <div class="row mt-4">
+            {{# programlevelcourses }}
+            <div class="col-md-6 col-12 mb-5">
+                <div class="lpcourse_container d-flex">
+                    <div class="d-flex levelcourse_list {{ coursecompletionstatus }}">
+                        <div class="lvcimg_container">
+                            <div class="levelcourse_img"></div>
+                        </div>
+                        <div class="lvcdata_container p-2">
+                            <div class="w-full d-flex justify-content-between align-items-center">
+                                <h5 class="coursename">
+                                    {{{ course }}}
+                                </h5>
+                                {{> local_program/coursesessionblock }}
+                            </div>
+                            <div class="lvc_desc">Moodle can cache themes, javascript, language strings, filtered text, rss feeds and many other pieces of calculated data. Purging these caches will delete that data from the server and force browsers to refetch data, so that you can be sure you are seeing the most up-to-date values produced by the current code.</div>
+                            <div class="training_btns d-flex mt-3 justify-content-end">
+                                <a class="view_btn mr-2">View trainings</a>
+                                <a class="start_btn">Start course</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {{> local_program/coursesessionblock }}
             </div>
+            {{/ programlevelcourses }}
+            {{^ programlevelcourses }}
+                <div class="w-full pull-left alert alert-info text-center">{{#str}} noassignedcourses, local_program{{/str}}</div>
+            {{/ programlevelcourses }}
         </div>
-        {{/ programlevelcourses }}
-        {{^ programlevelcourses }}
-            <div class="w-full pull-left alert alert-info text-center">{{#str}} noassignedcourses, local_program{{/str}}</div>
-        {{/ programlevelcourses }}
     {{/ programlevel }}
 </div>

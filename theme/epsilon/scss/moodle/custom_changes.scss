@@ -3159,6 +3159,7 @@ body .que .info>div {
         min-width: auto;
         background-color: #fff;
         overflow: hidden;
+        border-radius: 5px;
         &::before{
             position: absolute;
             background-color: #0075a621;
@@ -3179,7 +3180,9 @@ body .que .info>div {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                
+                &.icon{
+                    margin: 0;
+                }
             }
         }
     }

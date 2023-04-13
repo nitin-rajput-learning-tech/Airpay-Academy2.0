@@ -1,55 +1,53 @@
-<div class="col-lg-12 col-md-12 col-12 pull-left p-0 programview_tabscontainer">
-    <div class="leveltabs_list">
-        <ul class="nav nav-tabs tabs-left sideways" role="tablist">
-            {{# programlevels}}
-                <li class="nav-item {{^ disabled }} programlevels {{/ disabled }}" role="presentation">
-                    {{# caneditlevel }}
-                        <div class="actionicons showoptions{{ id }}">
-                            <span  class="pull-right showoptions" data-action="showoptions{{ id }}" onmouseenter="(function(e){ require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{ id }}' }) })(event)" onmouseleave="(function(e){require('theme_epsilon/quickactions').quickactionsCall({ selector:'showoptions{{ id }}' }) })(event)"><i class="fa fa-ellipsis-h options"></i>
-                            </span>
-                            <ul class="col-lg-12 col-md-12 col-sm-12 col-12 pull-left p-0 options_container" id = "showoptions{{ id }}">
-                                {{# caneditlevel }}
-                                <li>
-                                    <a href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: {{id}}, programid:{{programid}}  }) })(event)">
-                                        <i class="fa fa-pencil fa-fw" aria-hidden="true" title="{{# str}} editlevel, local_program {{/ str}}"></i>
-                                    </a>
-                                </li>
-                                {{/ caneditlevel }}
-                                {{# candeletelevel}}
-                                <li>
-                                    <a  href="javascript:void(0)" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deletelevel', id: {{ id }}, programid: {{ programid }}}) })(event)">
-                                        <i class="fa fa-trash" aria-hidden="true" title="{{# str}} deletelevel, local_program {{/ str}}"></i>
-    				                </a>
-                                </li>
-                            {{/ candeletelevel}}
-                            {{# cansetlevelcompletioncriteria}}
-                                <li>
-                                    <a title='{{# str}} levelcompletion, local_program{{/ str}}' href="javascript:void(0)"  onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'level_completion_settings', form_status:0, plugintype: 'local_program', pluginname: 'level_completion_settings', id: {{levelcompletionid}}, pid: {{programid}},levelid: {{id}} }) })(event)"><i class="icon fa fa-tags fa-fw" aria-hidden="true" aria-label='' title = '{{# str}} levelcompletion, local_program {{/ str}}' ></i></a>
-                                </li>
-                                {{/ cansetlevelcompletioncriteria}}
-			    {{^ candeletelevel}}
-			    <!--<li>
-				<a href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
-				    title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'cannotdeletelevel', id: {{ id }}, programid: {{ programid }}}) })(event)">
-					<i class="fa fa-times" aria-hidden="true" title="{{# str}} deletelevel, local_program {{/ str}}"></i>
-				</a>
-                </li>-->
-			    {{/ candeletelevel}}
-                            </ul>
-                        </div>
-                        {{/ caneditlevel }}
-                    {{# disabled }}
-                        <span class="nav-link">{{{ level }}}</span>
-                    {{/ disabled}}
-                    {{^ disabled }}
-                        <a class="nav-link {{active}} {{#userview}}{{#mycompletionstatus}}{{mycompletionstatus}}{{/mycompletionstatus}}{{#myinprogressstatus}}{{myinprogressstatus}}{{/myinprogressstatus}}{{/userview}}" data-toggle="tab" href="javascript:void(0);" aria-controls="bclevel{{ id }}" data-level = "{{id}}" role="tab">{{{ level }}}</a>
-                    {{/ disabled }}
-                </li>
-            {{/ programlevels}}
-        </ul>
-    </div>
-    <div class="levetabscontent_container">
-        {{{ levelcourses }}}
+<div class="programview_tabscontainer">
+    <div class="row">
+        <div class="col-md-3 p-0">
+            <div class="leveltabs_list ">
+                <ul class="nav nav-tabs tabs-left sideways" role="tablist">
+                    {{# programlevels}}
+                        <li class="nav-item d-flex justify-content-between align-items-center {{^ disabled }} programlevels {{/ disabled }}" role="presentation">
+                            {{# disabled }}
+                                <span class="nav-link">{{{ level }}}</span>
+                            {{/ disabled}}
+                            {{^ disabled }}
+                                <a class="nav-link p-2 {{active}} {{#userview}}{{#mycompletionstatus}}{{mycompletionstatus}}{{/mycompletionstatus}}{{#myinprogressstatus}}{{myinprogressstatus}}{{/myinprogressstatus}}{{/userview}}" data-toggle="tab" href="javascript:void(0);" aria-controls="bclevel{{ id }}" data-level = "{{id}}" role="tab">{{{ level }}}</a>
+                            {{/ disabled }}
+                            {{# caneditlevel }}
+                                <div class="dropdown action_menu_dropdown ">
+                                    <span data-toggle="dropdown" aria-expanded="false"><i class="fa fa-ellipsis-h options"></i>
+                                    </span>
+                                    <div class="dropdown-menu dropdown-menu-right shadow-sm">
+                                        {{# caneditlevel }}
+                                        <a class="dropdown-item" href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: {{id}}, programid:{{programid}}  }) })(event)">
+                                                <i class="fa fa-pencil fa-fw" aria-hidden="true" title="{{# str}} editlevel, local_program {{/ str}}"></i>{{# str}} editlevel, local_program {{/ str}}
+                                        </a>
+                                        {{/ caneditlevel }}
+                                        {{# candeletelevel}}
+                                        <a  class="dropdown-item" href="javascript:void(0)" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deletelevel', id: {{ id }}, programid: {{ programid }}}) })(event)">
+                                                <i class="fa fa-trash" aria-hidden="true" title="{{# str}} deletelevel, local_program {{/ str}}"></i>{{# str}} deletelevel, local_program {{/ str}}
+                                            </a>
+                                    {{/ candeletelevel}}
+                                    {{# cansetlevelcompletioncriteria}}
+                                        <a class="dropdown-item" title='{{# str}} levelcompletion, local_program{{/ str}}' href="javascript:void(0)"  onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'level_completion_settings', form_status:0, plugintype: 'local_program', pluginname: 'level_completion_settings', id: {{levelcompletionid}}, pid: {{programid}},levelid: {{id}} }) })(event)"><i class="fa fa-tags fa-fw" aria-hidden="true" aria-label='' title = '{{# str}} levelcompletion, local_program {{/ str}}' ></i>{{# str}} levelcompletion, local_program {{/ str}}</a>
+                                        {{/ cansetlevelcompletioncriteria}}
+                                        {{^ candeletelevel}}
+                                        <!--<li>
+                                        <a href="javascript:void(0)" alt = "{{# str}} delete {{/ str}}"
+                                            title = "{{# str}} delete {{/ str}}" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'cannotdeletelevel', id: {{ id }}, programid: {{ programid }}}) })(event)">
+                                            <i class="fa fa-times" aria-hidden="true" title="{{# str}} deletelevel, local_program {{/ str}}"></i>
+                                        </a>
+                                        </li>-->
+                                        {{/ candeletelevel}}
+                                    </div>
+                                </div>
+                            {{/ caneditlevel }}
+                        </li>
+                    {{/ programlevels}}
+                </ul>
+            </div>
+        </div>
+        <div class="levetabscontent_container col-md-9">
+            {{{ levelcourses }}}
+        </div>
     </div>
 </div>
 {{#js}}
