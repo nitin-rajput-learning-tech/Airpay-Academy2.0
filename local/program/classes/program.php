@@ -1754,6 +1754,10 @@ class program {
             return $wheresql;
     }
     public function get_course_classrooms($courseid, $requestData){
+
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
+
+
         $classrooms = $this->get_classrooms_content($courseid, $requestData['start'], $requestData['length']);
         $totalclassrooms = $this->get_classrooms_count($courseid);
         $data = [];
@@ -1778,7 +1782,7 @@ class program {
             $info[] = userdate($classroom->enddate);
 
             $enrolled = $classroomsearch->get_the_enrollflag($classroom->id);
-            if($enrolled){
+            if($enrolled || has_capability('moodle/course:view', $categorycontext) || is_siteadmin()){
                 $info[] = \html_writer::link(new \moodle_url('/local/classroom/view.php', array('cid' => $classroom->id)), get_string('view'), array('class' => 'btn btn-primary'));
             }else{
                 $info[] = $classroomsearch->get_enrollbtn($classroom);
@@ -1878,5 +1882,108 @@ class program {
         $data[] = $list;
 
         return $data;
+    }
+    public function programlevels($programid) {
+        global $OUTPUT, $CFG, $DB, $USER;
+        $levels = $DB->get_records('local_program_levels', array('programid' => $programid));
+        return $levels;
+    }
+    public function levelcourses($programid, $levelid) {
+        global $CFG, $DB, $USER;
+        $levelcoursesssql = "SELECT bclc.id AS bclevelcourseid, bclc.programid,
+                                    bclc.levelid, c.*
+                                      FROM {local_program_level_courses} bclc
+                                      JOIN {course} c ON c.id = bclc.courseid
+                                     WHERE bclc.programid = :programid ";
+
+        if ($levelid) {
+          $levelcoursesssql .= " AND bclc.levelid = {$levelid}";
+        }
+        $programlevelcourses = $DB->get_records_sql($levelcoursesssql,
+                array('programid' => $programid));
+        foreach ($programlevelcourses as $programlevelcourse) {
+            //course image
+            if(file_exists($CFG->dirroot.'/local/includes.php')){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new \user_course_details();
+                $courseimage = $includes->course_summary_files($programlevelcourse);
+                if(is_object($courseimage)){
+                    $programlevelcourse->courseimage = $courseimage->out();
+                }else{
+                    $programlevelcourse->courseimage = $courseimage;
+                }
+            }
+
+        }
+        return $programlevelcourses;
+    }
+    public function myprogramstatus($programid) {
+        global $CFG, $DB, $USER;
+        $systemcontext = context_system::instance();
+        $params = array();
+        $params['programid'] = $programid;
+        $completedlevels = array();
+        $mycompletedlevels = $this->mycompletedlevels($programid, $USER->id);
+        if (!empty($mycompletedlevels)) {
+          $mycompletedlevelslist = implode(',', $mycompletedlevels);
+          $completedlevelssql = 'SELECT pl.* FROM {local_program_levels} pl
+                                WHERE pl.programid = :programid AND id IN (:mycompletedlevelslist)';
+          $params['mycompletedlevelslist'] = $mycompletedlevelslist;
+          $completedlevels = $DB->get_records_sql($completedlevelssql, $params);
+        }
+        $notcmptllevels = (new program)->mynextlevels($programid);
+        if (!empty($notcmptllevels)) {
+          $levelid = $notcmptllevels[0];
+        } else {
+          $level_sql = "SELECT id FROM {local_program_levels} WHERE programid = :programid ORDER BY id ASC ";
+          $levelid = $DB->get_field_sql($level_sql, array('programid' => $programid));
+        }
+        $programlevelcourses = $this->program_level_courses($programid, $levelid, true);
+        $bclevel = new stdClass();
+        $bclevel->programid = $programid;
+        $bclevel->levelid = $levelid;
+        $notcmptlcourses = (new program)->mynextlevelcourses($bclevel);
+
+        foreach ($programlevelcourses as $i => $bclevelcourse) {
+
+            $bclevelcourses = array();
+            if (array_search($bclevelcourse->bclevelcourseid, $notcmptlcourses) !== false) {
+                $bclevelcourse->completionstatus = 0;
+            } else {
+                $bclevelcourse->completionstatus = 1;
+            }
+
+          $programlevelcourses[$i] = $bclevelcourse;
+        }
+        $completion_status = $DB->get_field('local_program_users', 'completion_status', array('programid' => $programid, 'userid' => $USER->id));
+
+              $levels = $this->programlevels($programid);
+
+        foreach ($levels as $level) {
+            $level->completed = 0;
+
+            $bclevel = new stdClass();
+            $bclevel->programid = $programid;
+            $bclevel->levelid = $level->id;
+            $notcmptlcourses = (new program)->mynextlevelcourses($bclevel);
+
+            if (in_array($level->id, $mycompletedlevels)) {
+                $level->completed = 1;
+            }
+
+            $levelcourses = $this->program_level_courses($programid, $level->id, true);
+            foreach ($levelcourses as $levelcourse) {
+
+                if (array_search($levelcourse->bclevelcourseid, $notcmptlcourses) !== false) {
+                    $levelcourse->completionstatus = 0;
+                } else {
+                    $levelcourse->completionstatus = 1;
+                }
+            }
+
+            $level->courses = $levelcourses;
+        }
+
+        return array('completion_status' => $completion_status, 'levels' => $levels);
     }
 }

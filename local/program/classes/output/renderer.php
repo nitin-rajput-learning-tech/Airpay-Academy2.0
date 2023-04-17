@@ -179,6 +179,19 @@ class renderer extends plugin_renderer_base {
                     $line['description'] =  \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->description));
                     $line['descriptionstring'] = $decsriptionstring;
                     $line['isdescription'] = $isdescription;
+
+                    if(file_exists($CFG->dirroot.'/local/includes.php')){
+                        require_once($CFG->dirroot.'/local/includes.php');
+                        $includes = new \user_course_details();
+                    }
+                    $coursefileurl = (new \local_program\program)->program_logo($coursefileurl = $sdata->programlogo);
+                    if($coursefileurl == false){
+                        $coursefileurl = $includes->get_classes_summary_files($sdata);
+                    }
+
+                    $line['bannerimage'] = is_object($coursefileurl) ? $coursefileurl->out() : $coursefileurl;
+
+
                     $line['enrolled_users'] = $sdata->enrolled_users;
                     $line['completed_users'] = $sdata->completed_users;
                     $line['programid'] = $sdata->id;
@@ -323,7 +336,7 @@ class renderer extends plugin_renderer_base {
             foreach ($programlevels as $k => $programlevel) {
                 $activeclass = '';
                 $disabled = '';
-                $levelname = strlen($programlevel->level) > 11 ? substr($programlevel->level, 0, 11) ."<span class='levelrestrict'>..</span>": $programlevel->level;
+                $levelname = $programlevel->level;
 
                 $programlevel->level = "<span title='".$programlevel->level."'>".$levelname."</span>";
                 if ($programlevel->id == $levelid) {
@@ -476,6 +489,21 @@ class renderer extends plugin_renderer_base {
             $bclevelcourse->course = html_writer::link($courseurl, $courselink,
                     array('title' => $bclevelcourse->course));
 
+            $bclevelcourse->courseurl =$courseurl;
+
+            $bclevelcourse->coursesummary =\local_costcenter\lib::strip_tags_custom(html_entity_decode($bclevelcourse->summary));
+
+            //course image
+            if(file_exists($CFG->dirroot.'/local/includes.php')){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new user_course_details();
+                $courseimage = $includes->course_summary_files($bclevelcourse);
+                if(is_object($courseimage)){
+                    $bclevelcourse->courseimage = $courseimage->out();
+                }else{
+                    $bclevelcourse->courseimage = $courseimage;
+                }
+            }
 
             if ($userview) {
                 if (array_search($bclevelcourse->bclevelcourseid, $notcmptlcourses) !== false) {

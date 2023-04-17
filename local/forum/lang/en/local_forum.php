@@ -145,7 +145,7 @@ $string['grader'] = 'Grader';
 $string['activity'] = 'Activity';
 $string['forum'] = 'forum';
 $string['nocategories'] = 'No categories available';
-$string['nosameenddate'] = '"Close date" should not be less than "Open date"';
+$string['nosameenddate'] = '"Cut-off date" should not be less than "Due date"';
 $string['forummanual'] = 'Download sample Excel sheet and fill the field values in the format specified below.';
 $string['help_1'] = '<table border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;padding-left:50px;"><b>Mandatory Fields</b></td><tr>
@@ -452,3 +452,6 @@ $string['shortnametaken'] = 'Short name is already used for another forum ({$a})
 $string['subscribeusermsg'] = 'Are you sure, you want to Subscribe <b>{$a->name}</b> ?';
 $string['subscribeuser'] = 'Subscription confirmation';
 $string['typeforum'] ='Forum Event';
+$string['enablecourse'] = 'Are you sure, want Active Forum <b>\'{$a}\'</b>?';
+$string['disablecourse'] = 'Are you sure, want In-active Forum <b>\'{$a}\'</b>?';
+$string['courseconfirm'] = 'Confirm';

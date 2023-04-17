@@ -616,10 +616,10 @@ function local_groups_get_groups($contextid, $page = 0, $perpage = 10, $search =
         $sql .=" $costcenterpathconcatsql";
     $params = array('contextid' => $contextid);
     $order = " ORDER BY  g.id DESC";
-    if(isset($search)){
+    if(isset($search) && isset($search->search_query)){
        $sql .= " AND c.name LIKE '%".trim($search->search_query)."%'";
     } 
-
+    $allgroups = '';
     //$totalgroups = $allgroups = $DB->count_records('cohort', array('contextid' => $contextid));
    // if (!empty($search)) {
         $totalgroups = $DB->count_records_sql($countfields . $sql, $params);
@@ -720,7 +720,8 @@ function local_groups_edit_controls(context $context, moodle_url $currenturl) {
     if (($searchquery = $currenturl->get_param('search'))) {
         $viewurl->param('search', $searchquery);
     }
-    if ($context->contextlevel ==(new \local_groups\lib\accesslib())::get_module_context()) {
+  
+    if ($context->contextlevel ==(new \local_groups\lib\accesslib())::get_module_context()->contextlevel) {
         $tabs[] = new tabobject('view', new moodle_url($viewurl, array('showall' => 0)), get_string('cohorts', 'local_groups'));
     } else {
         $tabs[] = new tabobject('view', $viewurl, get_string('cohort', 'local_groups'));

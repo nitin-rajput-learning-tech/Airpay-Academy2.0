@@ -32,6 +32,7 @@ use \local_classroom\local\userdashboard_content as userdashboard_content;
 use \local_learningplan\local\userdashboard_content as learningplan;
 use \local_onlinetests\local\userdashboard_content as onlinetests;
 use \local_evaluation\local\userdashboard_content as evaluation;
+use \local_program\local\userdashboard_content as program;
 
 class local_users_external extends external_api {
 
@@ -905,6 +906,11 @@ class local_users_external extends external_api {
                 $completed = evaluation::completed_evaluations_count();
                 $inprogress = evaluation::inprogress_evaluations_count();
                 $enrolled = $completed + $inprogress;
+            break;
+            case 'program':
+            $completed = program::completed_programs_count();
+            $inprogress = program::inprogress_programs_count();
+            $enrolled = program::enrolled_programs_count();
             break;
             default: break;
         }

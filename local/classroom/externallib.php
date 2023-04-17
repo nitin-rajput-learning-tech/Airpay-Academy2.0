@@ -875,7 +875,8 @@ class local_classroom_external extends external_api {
                                     'district' => new external_value(PARAM_RAW, 'district'),
                                     'subdistrict' => new external_value(PARAM_RAW, 'subdistrict'),
                                     'village' => new external_value(PARAM_RAW, 'village'),
-                                    'groups' => new external_value(PARAM_RAW, 'groups',VALUE_OPTIONAL),
+                                    'designation' => new external_value(PARAM_RAW, 'designation'),
+                                    'group' => new external_value(PARAM_RAW, 'groups',VALUE_OPTIONAL),
                                     'classroomskill' => new external_value(PARAM_RAW, 'classroomskill',VALUE_OPTIONAL),
                                 )
                             )
@@ -1181,7 +1182,7 @@ class local_classroom_external extends external_api {
                     // $active=explode(',',$stringobj->active);
                     // $classroomwaitinglistno=array_search ($return, $active);
                     $stringobj = new stdClass();
-                    $stringobj->classroom = $classroomname;
+                    $stringobj->classroom = $DB->get_field('local_classroom','name',array('id' => $id));
                     $countsql = "SELECT COUNT(id) FROM {local_classroom_waitlist} WHERE classroomid = {$id} AND id <= {$return} ";
                     $stringobj->classroomwaitinglistno = $DB->count_records_sql($countsql);
                     // $stringobj->classroomwaitinglistno=($classroomwaitinglistno+1) ? ($classroomwaitinglistno+1) : $stringobj->classroomwaitinglistno ;
@@ -1817,7 +1818,7 @@ public static function submit_instituteform_form_parameters() {
      * @param [string] $jsonformdata
      * @return institute form submits
      */
-    public function submit_catform_form($categorycontextid, $jsonformdata){
+    public static function submit_catform_form($categorycontextid, $jsonformdata){
         global $PAGE, $CFG;
 
         require_once($CFG->dirroot . '/local/classroom/lib.php');
@@ -3068,19 +3069,19 @@ public static function submit_instituteform_form_parameters() {
             )
         );
     }
-    public function get_classroom_info_parameters(){
+    public static function get_classroom_info_parameters(){
         return new external_function_parameters(
             array(
                 'id' => new external_value(PARAM_INT, 'The id of the module'),
             )
         );
     }
-    public function get_classroom_info($id){
+    public static function get_classroom_info($id){
         $params = self::validate_parameters(self::get_classroom_info_parameters(),
             ['id' => $id]);
         return (new \local_classroom\local\general_lib())->get_classroom_info($id);
     }
-    public function get_classroom_info_returns(){
+    public static function get_classroom_info_returns(){
        return new external_single_structure(array(
             'id' => new external_value(PARAM_INT, 'The id of the module'),
             'fullname' => new external_value(PARAM_TEXT, 'fullname'),

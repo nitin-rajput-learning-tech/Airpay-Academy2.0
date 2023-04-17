@@ -3076,7 +3076,12 @@ class classroom {
             $classroomvillage =  get_string('all');
          }
        
-        
+        if ($classroom->open_designation == NULL || $classroom->open_designation == -1) {
+			$classroomdesignation = get_string('all');
+		} else {			
+			$classroomdesignation =  $classroom->open_designation;
+		}
+		
         
         $list['department'] = $classroomdepartment;
         $list['bussinessunit'] = $classroombu;
@@ -3086,10 +3091,11 @@ class classroom {
         $list['district'] = $classroomdistrict;
         $list['subdistrict'] = $classroomsubdistrict;
         $list['village'] = $classroomvillage;
-        if (empty($classroom->open_group)) {
+        $list['designation'] = $classroomdesignation;
+        if ($classroom->open_group == NULL || $classroom->open_group == -1) {
             $group = 'All';
         } else {
-            $groups = $DB->get_fieldset_sql("SELECT name FROM {cohort} WHERE id IN ($data->open_group)");
+            $groups = $DB->get_fieldset_sql("SSELECT id,name FROM {cohort} c JOIN {local_groups} g ON g.cohortid = c.id  WHERE g.id IN ($classroom->open_group)");
             $group  = implode(',', $groups);
         }
 

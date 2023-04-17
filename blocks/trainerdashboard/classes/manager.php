@@ -104,7 +104,7 @@ class block_trainerdashboard_manager {
 
         $time=time();
         //$sql .= " AND timefinish < $time";
-        $sql .= " AND timefinish <= DATEADD(MONTH,-3,GETDATE()) ";
+        $sql .= " AND timefinish < DATEADD(MONTH,-6,GETDATE()) ";
 
         if (!empty($stable->search_query)) {
             $fields = array(
@@ -223,7 +223,8 @@ class block_trainerdashboard_manager {
         $sql .= $concatsql;
 
         $time=time();
-        $sql .= " AND timefinish > $time";
+        //$sql .= " AND timefinish > $time";
+        $sql .= " AND timefinish > DATEADD(MONTH,+6,GETDATE()) ";
 
         if (!empty($stable->search_query)) {
             $fields = array(

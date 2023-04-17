@@ -999,7 +999,7 @@ function local_program_search_page_filter_element(&$filterelements){
     global $CFG;
     if(file_exists($CFG->dirroot.'/local/search/lib.php')){
         require_once($CFG->dirroot.'/local/search/lib.php');
-        $filterelements['program'] = ['code' => 'program', 'name' => 'Program Trainings', 'tagitemshortname' => 'program', 'count' => local_search_get_coursecount_for_modules([['type' => 'moduletype', 'values' => ['program']]])];
+        $filterelements['program'] = ['code' => 'program', 'name' => 'Programs', 'tagitemshortname' => 'program', 'count' => local_search_get_coursecount_for_modules([['type' => 'moduletype', 'values' => ['program']]])];
     }
 }
 function local_program_enabled_search(){

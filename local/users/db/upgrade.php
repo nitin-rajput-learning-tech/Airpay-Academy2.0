@@ -182,11 +182,6 @@ function xmldb_local_users_upgrade($oldversion)
     }
     if ($oldversion < 2022101800.12) {
         $table = new xmldb_table('user');
-        $field = new xmldb_field('open_subbranch');
-        $field->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
 
         $field1 = new xmldb_field('open_joindate');
         $field1->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
@@ -216,11 +211,6 @@ function xmldb_local_users_upgrade($oldversion)
             $dbman->add_field($table, $field2);
         }
 
-        $field3 = new xmldb_field('open_employmentstatus');
-        $field3->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
-        if (!$dbman->field_exists($table, $field3)) {
-            $dbman->add_field($table, $field3);
-        }
 
         upgrade_plugin_savepoint(true, 2022101800.13, 'local', 'users');
     }
@@ -231,12 +221,6 @@ function xmldb_local_users_upgrade($oldversion)
         $field->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
-        }
-
-        $field1 = new xmldb_field('open_skilltype');
-        $field1->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
-        if (!$dbman->field_exists($table, $field1)) {
-            $dbman->add_field($table, $field1);
         }
         upgrade_plugin_savepoint(true, 2022101800.14, 'local', 'users');
     }

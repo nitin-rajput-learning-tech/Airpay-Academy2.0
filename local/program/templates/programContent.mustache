@@ -19,20 +19,19 @@
         {{# assignusers}}
             <li>
                 <div class="courseedit course_extended_menu_itemcontainer">
-                    <a title="{{# str}} assignusers, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ assignusersurl }}"><i class="icon fa fa-user-plus fa-fw" aria-hidden="true" title ="{{# str}} assignusers, local_program {{/ str}}"></i></a>
+                    <a title="{{# str}} assignusers, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ assignusersurl }}"><i class="fa fa-user-plus fa-fw" aria-hidden="true" title ="{{# str}} assignusers, local_program {{/ str}}"></i></a>
                 </div>
-                
-            </li>
+             </li>
             <li>
                 <div class="courseedit course_extended_menu_itemcontainer">
-                    <a title="{{# str}} programusers, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ cfg.wwwroot }}/local/program/users.php?bcid={{programid}}"><i class="icon fa fa-user" aria-hidden="true"></i></a>
+                    <a title="{{# str}} programusers, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ cfg.wwwroot }}/local/program/users.php?bcid={{programid}}"><i class="fa fa-user" aria-hidden="true"></i></a>
                 </div>
             </li>
         {{/ assignusers}}
         {{# bulkenrollusers}}
             <li>
                 <div class="courseedit course_extended_menu_itemcontainer">
-                    <a title="{{# str}} bulk_enroll, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ cfg.wwwroot }}/local/program/mass_enroll.php?id={{programid}}"><i class="icon fa fa-users" aria-hidden="true"></i></a>
+                    <a title="{{# str}} bulk_enroll, local_program {{/ str}}" class="course_extended_menu_itemlink" href="{{ cfg.wwwroot }}/local/program/mass_enroll.php?id={{programid}}"><i class="fa fa-users" aria-hidden="true"></i></a>
                 </div>
             </li>
         {{/ bulkenrollusers}}
@@ -40,7 +39,7 @@
         {{# edit}}
             <li>
                 <div class="coursebackup course_extended_menu_itemcontainer">
-                    <a title="{{# str}} user_enrollments, local_program {{/ str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_form', form_status:0, plugintype: 'local', pluginname: 'program', id: {{ programid }} }) })(event)"><i class="icon fa fa-pencil fa-fw" aria-hidden="true"  title = "{{# str}} edit {{/str}}"></i>
+                    <a title="{{# str}} user_enrollments, local_program {{/ str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" title = "{{# str}} edit {{/str}}" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_form', form_status:0, plugintype: 'local', pluginname: 'program', id: {{ programid }} }) })(event)"><i class="fa fa-pencil fa-fw" aria-hidden="true"  title = "{{# str}} edit {{/str}}"></i>
                     </a>
                 </div>
             </li>
@@ -49,7 +48,7 @@
             <li>
                 <div class="pull-right">
                     <a title="{{#str}}addlevel, local_program{{/str}}" class="course_extended_menu_itemlink" href="javascript:void(0)" onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_managelevel_form', form_status:0, plugintype: 'local', pluginname: 'program_addlevel', id: 0, programid:{{programid}}  }) })(event)">
-                        <i class="icon fa fa-tags fa-fw" aria-hidden="true" title="{{#str}}addlevel, local_program{{/str}}"></i>
+                        <i class="fa fa-tags fa-fw" aria-hidden="true" title="{{#str}}addlevel, local_program{{/str}}"></i>
                     </a>
                 </div>
             </li>
@@ -58,7 +57,7 @@
 {{/ action}}
 {{# cansetprogramcompletioncriteria}}
     <li>
-        <a class="course_extended_menu_itemlink" title='{{# str}} programcompletion, local_program{{/ str}}' href="javascript:void(0)"  onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_completion_settings', form_status:0, plugintype: 'local_program', pluginname: 'program_completion_settings', id: {{programcompletionid}}, pid: {{programid}} }) })(event)"><i class="icon fa fa-clock-o" aria-hidden="true" aria-label='' title = '{{# str}} programcompletion, local_program {{/ str}}' ></i></a>
+        <a class="course_extended_menu_itemlink" title='{{# str}} programcompletion, local_program{{/ str}}' href="javascript:void(0)"  onclick="(function(e){ require('local_program/ajaxforms').init({contextid:1, component:'local_program', callback:'program_completion_settings', form_status:0, plugintype: 'local_program', pluginname: 'program_completion_settings', id: {{programcompletionid}}, pid: {{programid}} }) })(event)"><i class="fa fa-clock-o" aria-hidden="true" aria-label='' title = '{{# str}} programcompletion, local_program {{/ str}}' ></i></a>
     </li>
 {{/ cansetprogramcompletioncriteria}}
         {{{ challenge_element }}}
@@ -89,45 +88,48 @@
         <div class="program_view_content row mb-2">
             <div class="col-12 prgmimg_container">
                 <div style="background-image: url('{{ programlogoimg }}');" alt="{{ programname }}" title="{{ programname }}" class="classviewimg mb-2" > 
-                    <div class="program_data p-5 d-flex flex-column">
-                        <div class = "w-full target_audience header">
-                            <span><b class="px-2">{{# str}} target_audience_tab, local_program{{/ str}}</b></span>
-                        </div>
-                        <div class="d-flex program_skills flex-wrap mt-3">
-                            <div class="department_column px-2">
-                                <span class='column_definition'>{{#str}} department, local_program{{/ str}}</span>
-                                <span class = 'colon'>:</span>
-                                <span class='column_data'>{{ department }}</span>
+                    <div class="program_data px-5 d-flex flex-column">
+                        <div class="program_name">{{ programname }}</div>
+                        <div class="programdata_container pt-3">
+                            <div class = "w-full target_audience header">
+                                <span><b class="px-2">{{# str}} target_audience_tab, local_program{{/ str}}</b></span>
                             </div>
-                            <div class="border-right mx-2"></div>
-                            <div class="px-2">
-                                <span class='column_definition'>{{#str}} open_group, local_users{{/ str}}</span>
-                                <span class = 'colon'>:</span>
-                                <span class='column_data' title='{{open_group}}'>{{ open_group_str }}</span>
+                            <div class="d-flex program_skills flex-wrap mt-3">
+                                <div class="department_column px-2">
+                                    <span class='column_definition'>{{#str}} department, local_program{{/ str}}</span>
+                                    <span class = 'colon'>:</span>
+                                    <span class='column_data'>{{ department }}</span>
+                                </div>
+                                <div class="border-right mx-2"></div>
+                                <div class="px-2">
+                                    <span class='column_definition'>{{#str}} open_group, local_users{{/ str}}</span>
+                                    <span class = 'colon'>:</span>
+                                    <span class='column_data' title='{{open_group}}'>{{ open_group_str }}</span>
+                                </div>
+                                <div class="border-right mx-2"></div>
+                                <div class="px-2">
+                                    <span class='column_definition'>{{#str}} open_designation, local_users{{/ str}}</span>
+                                    <span class = 'colon'>:</span>
+                                    <span class='column_data' title='{{open_designation}}'>{{ open_designation_str }}</span>
+                                </div>
+                                <div class="border-right mx-2"></div>
+                                <div class="px-2">
+                                    <span class='column_definition'>{{#str}} programskill, local_program{{/ str}}</span>
+                                    <span class = 'colon'>:</span>
+                                    <span class='column_data'>{{ programskill }}</span>
+                                </div>
+                                <div class="border-right mx-2"></div>
+                                <div class="px-2">
+                                   <span class='column_definition'>{{#str}} programlevel, local_program{{/ str}}</span>
+                                    <span class = 'colon'>:</span>
+                                   <span class='column_data'>{{ programlevel }}</span>
+                                </div>
                             </div>
-                            <div class="border-right mx-2"></div>
-                            <div class="px-2">
-                                <span class='column_definition'>{{#str}} open_designation, local_users{{/ str}}</span>
-                                <span class = 'colon'>:</span>
-                                <span class='column_data' title='{{open_designation}}'>{{ open_designation_str }}</span>
+                            <div class="d-flex align-items-center flex-wrap"> 
+                                {{{display_ratings}}}
+                                {{{display_like}}}
+                                {{{display_review}}} 
                             </div>
-                            <div class="border-right mx-2"></div>
-                            <div class="px-2">
-                                <span class='column_definition'>{{#str}} programskill, local_program{{/ str}}</span>
-                                <span class = 'colon'>:</span>
-                                <span class='column_data'>{{ programskill }}</span>
-                            </div>
-                            <div class="border-right mx-2"></div>
-                            <div class="px-2">
-                               <span class='column_definition'>{{#str}} programlevel, local_program{{/ str}}</span>
-                                <span class = 'colon'>:</span>
-                               <span class='column_data'>{{ programlevel }}</span>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center flex-wrap mt-2"> 
-                            {{{display_ratings}}}
-                            {{{display_like}}}
-                            {{{display_review}}} 
                         </div>
                     </div>
                 </div>        

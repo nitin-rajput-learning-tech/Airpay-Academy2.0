@@ -956,7 +956,7 @@ function coursetype_filter($mform){
     $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $coursetypeql = "SELECT id, name FROM {local_course_types} ";
     $coursetypes =  $DB->get_records_sql_menu($coursetypeql, $coursetypeparams=null);
-    $select = $mform->addElement('autocomplete', 'coursetype', get_string('type','local_courses'), $coursetypes);
+    $select = $mform->addElement('autocomplete', 'coursetype', get_string('type','local_courses'), $coursetypes, array('placeholder' => get_string('course_type','local_courses')));
     $mform->setType('coursetype',PARAM_RAW);
     $select->setMultiple(true);
 }
@@ -1305,7 +1305,7 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
     global $USER, $DB,$CFG;
     $params = array();
     $params['costcenterpath'] = '%/'.$costcenter.'/%';
-    $countcoursesql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath";
+    $countcoursesql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath AND open_coursetype=0 ";
     if ($department) {
         $countcoursesql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
         $params['departmentpath'] = '%/'.$department.'/%';

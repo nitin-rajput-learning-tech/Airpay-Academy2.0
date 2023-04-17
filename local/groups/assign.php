@@ -78,8 +78,8 @@ $PAGE->set_title(get_string('assigncohorts', 'local_groups'));
 $PAGE->set_heading($COURSE->fullname);
 $PAGE->requires->jquery();
 $PAGE->requires->jquery_plugin('ui');
-$PAGE->requires->js('/local/classroom/js/jquery.bootstrap-duallistbox.js',true);
-$PAGE->requires->css('/local/classroom/css/bootstrap-duallistbox.css');
+// $PAGE->requires->js('/local/classroom/js/jquery.bootstrap-duallistbox.js',true);
+// $PAGE->requires->css('/local/classroom/css/bootstrap-duallistbox.css');
 if($view == 'ajax'){
   $options =(array)json_decode($_GET["options"],false);
   $select_from_users=local_group_users($type,$id,$options,false,$offset1=-1,$perpage=50,$lastitem);
@@ -119,19 +119,19 @@ if ($groups) {
         $collapse = true;
         $show = '';
     }
-    $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
-    $department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
-    $email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
-    $filtergroup = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
-    $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
-    $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
-    $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
-    $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', $filterdata->filteropen_level4department) : null;
-    $department5level = !empty($filterdata->filteropen_level5department) ? implode(',', $filterdata->filteropen_level5department) : null;
-    $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
-    $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
-    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
-    $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
+    $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', (array)$filterdata->filteropen_costcenterid) : null;
+    $department = !empty($filterdata->filteropen_department) ? implode(',', (array)$filterdata->filteropen_department) : null;
+    $email = !empty($filterdata->email) ? implode(',', (array)$filterdata->email) : null;
+    $filtergroup = !empty($filterdata->groups) ? implode(',', (array)$filterdata->groups) : null;
+    $idnumber = !empty($filterdata->idnumber) ? implode(',', (array)$filterdata->idnumber) : null;
+    $uname = !empty($filterdata->users) ? implode(',', (array)$filterdata->users) : null;
+    $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', (array)$filterdata->filteropen_subdepartment) : null;
+    $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', (array)$filterdata->filteropen_level4department) : null;
+    $department5level = !empty($filterdata->filteropen_level5department) ? implode(',', (array)$filterdata->filteropen_level5department) : null;
+    $states = !empty($filterdata->states) ? implode(',', (array)$filterdata->states) : null;
+    $district = !empty($filterdata->district) ? implode(',', (array)$filterdata->district) : null;
+    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', (array)$filterdata->subdistrict) : null;
+    $village = !empty($filterdata->village) ? implode(',', (array)$filterdata->village) : null;
   }
 
     // Create the user selector objects.

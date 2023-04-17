@@ -23,6 +23,7 @@
  */
 
 $string['pluginname'] = 'Classrooms';
+$string['classroom'] = 'Classroom';
 $string['browse_classrooms'] = 'Manage Classrooms';
 $string['my_classrooms'] = 'My Classrooms';
 $string['classrooms'] = 'View Classroom';
@@ -544,3 +545,4 @@ $string['clickhere'] = 'Click Here';
 $string['messagelinkrequired'] = 'Meeting link is required.';
 $string['face2face_type'] = 'Face-2-Face';
 $string['virtual_type'] = 'Virtual';
+$string['designation'] ='Designation';

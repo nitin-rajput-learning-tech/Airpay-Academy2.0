@@ -131,19 +131,12 @@ Password must have at least 1 non-alphanumeric character(s) such as as *, -, or 
 
 <tr><td>designation</td><td>Enter Designation for the user.</td></tr>
 <tr><td>employment_type</td><td>Enter employment type for the user.</td></tr>
-<tr><td>employment_status</td><td>Enter employment status for the user.</td></tr>
 <tr><td>region</td><td>Enter region for the user.</td></tr>
-<tr><td>branch</td><td>Enter branch for the user.</td></tr>
-<tr><td>subbranch</td><td>Enter sub branch for the user.</td></tr>
 <tr><td>grade</td><td>Enter grade for the user.</td></tr>
-<tr><td>level</td><td>Enter level for the user.</td></tr>
-<tr><td>skill_type</td><td>Enter skill type for the user.</td></tr>
 <tr><td>date_of_birth</td><td>Enter date of birth of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
 <tr><td>date_of_joining</td><td>Enter date of joining of the user. (Date format is \'dd-mm-yyyy\')</td></tr>
 <tr><td>force_password_change</td><td>Provide the value as 1 if need to enable force password or 0 to disable it..</td></tr>
 </table>';
-// <tr><td>language</td><td>Enter Language code for the user.</td></tr>
-// <tr><td>timezone</td><td>Enter timezone code. Refer dropdown for codes, avoid additional spaces. {$a->timezones}</td></tr>
 
 $string['help_1_orghead'] = '<table class="generaltable" border="1">
 <tr><td></td><td style="text-align:left;border-left:1px solid white;"><b class="pad-md-l-50 hlep1-oh">Mandatory Fields</b></td><tr>

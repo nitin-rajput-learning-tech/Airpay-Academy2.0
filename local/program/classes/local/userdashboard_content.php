@@ -16,7 +16,7 @@ class userdashboard_content extends \block_userdashboard\content{
 	}
 	public static function inprogress_programs($filter_text='', $offset, $limit) {
         global $DB, $USER;
-        $sql = "SELECT bc.id, bc.name AS fullname, bc.description
+        $sql = "SELECT bc.id, bc.name AS fullname, bc.shortname, bc.description
                   FROM {local_program} AS bc
                   JOIN {local_program_users} AS bcu ON bc.id = bcu.programid
                  WHERE bcu.userid = $USER->id AND bcu.programid NOT IN (SELECT programid
@@ -46,7 +46,7 @@ class userdashboard_content extends \block_userdashboard\content{
     }
     public static function completed_programs($filter_text='', $offset, $limit) {
         global $DB, $USER;
-        $sql = "SELECT bc.id, bc.name AS fullname, bc.description
+        $sql = "SELECT bc.id, bc.name AS fullname, bc.shortname, bc.description
                   FROM {local_program} as bc
                   JOIN {local_program_users} AS bcu ON bc.id = bcu.programid
                  WHERE bcu.completion_status = 1 AND bcu.completiondate > 0
@@ -82,7 +82,7 @@ class userdashboard_content extends \block_userdashboard\content{
     //enrolled programs
     public static function enrolled_programs($filter_text='', $offset, $limit) {
         global $DB, $USER;
-        $sql = "SELECT bc.id, bc.name AS fullname, bc.description
+        $sql = "SELECT bc.id, bc.name AS fullname, bc.shortname, bc.description
                   FROM {local_program} as bc
                   JOIN {local_program_users} AS bcu ON bc.id = bcu.programid
                  WHERE bcu.userid = {$USER->id} and bc.visible=1 ";

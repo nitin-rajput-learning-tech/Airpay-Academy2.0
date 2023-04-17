@@ -442,7 +442,6 @@ class local_costcenter_external extends external_api
         if ($action) {
 
             $return = array();
-
             switch ($action) {
                 case 'costcenter_organisation_selector':
                     $fields = array("fullname"/*, "shortname"*/);
@@ -501,7 +500,6 @@ class local_costcenter_external extends external_api
                             $lobssql .= ' AND visible = 1';
                         }
                         $sqlparams = array_merge($sqlparams, $organisationparams);
-
                         $departments = $allobjectarr + $DB->get_records_sql($fields . $lobssql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                         // if ($departments) {
                         //     $totaldepartments = count($departments);
@@ -822,9 +820,10 @@ class local_costcenter_external extends external_api
                             $sqlfields = implode(" OR ", $likesql);
                             $concatsql .= " AND ($sqlfields) ";
                         }
+                        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
                         $fields      = 'SELECT id, fullname';
                         $accountssql = " FROM {local_costcenter}
-                                         WHERE 1=1 $concatsql AND parentid {$parentsql} AND depth = :depth ";
+                                         WHERE 1=1 $concatsql AND parentid {$parentsql} $costcenterpathconcatsql AND depth = :depth ";
                         if ($formoptions->id == 0) {
                             $accountssql .= ' AND visible = 1';
                         }

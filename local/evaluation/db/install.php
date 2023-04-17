@@ -122,7 +122,7 @@ function xmldb_local_evaluation_install(){
     $notification_type_data = array(
     	array('name' => 'Feedback Enrollment','shortname' => 'feedback_enrollment','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'evaluation'),
         array('name' => 'Feedback Unenrollment','shortname' => 'feedback_unenrollment','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'evaluation'),
-        array('name' => 'Feedback Reminder','shortname' => 'feedback_due','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'evaluation')
+      //  array('name' => 'Feedback Reminder','shortname' => 'feedback_due','parent_module' => $parentid,'usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL, 'pluginname' => 'evaluation')
 	);
 	foreach($notification_type_data as $notification_type){
         unset($notification_type['timecreated']);

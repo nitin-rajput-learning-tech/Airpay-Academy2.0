@@ -490,10 +490,10 @@ class custom_forum_form extends moodleform {
         if (empty(trim($data['shortname'])) && $data['id'] == 0) {
             $errors['groupshortname'] = get_string('shortnamecannotbeempty', 'local_costcenter');
         }
-		 if (isset($data['timeopen']) && $data['timeopen']
-                && isset($data['timeclose']) && $data['timeclose']) {
-            if ($data['timeclose'] < $data['timeopen']) {
-                $errors['timeclose'] = get_string('nosameenddate', 'local_forum');
+		 if (isset($data['duedate']) && $data['duedate']
+                && isset($data['cutoffdate']) && $data['cutoffdate']) {
+            if ($data['cutoffdate'] <= $data['duedate']) {
+                $errors['cutoffdate'] = get_string('nosameenddate', 'local_forum');
             }
         }
         if ($data['map_certificate'] == 1 && empty($this->_ajaxformdata['open_certificateid'])){

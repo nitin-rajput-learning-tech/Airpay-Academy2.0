@@ -27,7 +27,7 @@
                 <div class="lpcourse_container d-flex">
                     <div class="d-flex levelcourse_list {{ coursecompletionstatus }}">
                         <div class="lvcimg_container">
-                            <div class="levelcourse_img"></div>
+                            <div class="levelcourse_img" style="background-image: url('{{ courseimage }}');" alt="{{course}}"></div>
                         </div>
                         <div class="lvcdata_container p-2">
                             <div class="w-full d-flex justify-content-between align-items-center">
@@ -36,10 +36,13 @@
                                 </h5>
                                 {{> local_program/coursesessionblock }}
                             </div>
-                            <div class="lvc_desc">Moodle can cache themes, javascript, language strings, filtered text, rss feeds and many other pieces of calculated data. Purging these caches will delete that data from the server and force browsers to refetch data, so that you can be sure you are seeing the most up-to-date values produced by the current code.</div>
+                            <div class="lvc_desc">{{{coursesummary}}}</div>
                             <div class="training_btns d-flex mt-3 justify-content-end">
-                                <a class="view_btn mr-2">View trainings</a>
-                                <a class="start_btn">Start course</a>
+                                {{# classroomcourse}}
+                                    <a class="view_btn mr-2"><span data-courseid='{{id}}' class="pull-right program_classroom_icon" title="{{# str}} listofclassrooms, local_program{{/ str}}">View trainings</span></a>
+                                {{/ classroomcourse}}
+                                <!-- <a class="view_btn mr-2">View trainings</a> -->
+                                <a class="start_btn" href="{{courseurl}}">{{#str}} start_course, local_program{{/str}}</a>
                             </div>
                         </div>
                     </div>

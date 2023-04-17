@@ -182,4 +182,48 @@ $functions = array(
         'capabilities' => '',
         'ajax'         => true,
     ),
+    'local_program_myprograms' => array(
+        'classname' => 'local_program_external',
+        'methodname' => 'myprograms',
+        'classpath' => 'local/program/externallib.php',
+        'description' => 'myprograms',
+        'ajax' => true,
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+    ),
+    'local_program_programlevels' => array(
+        'classname' => 'local_program_external',
+        'methodname' => 'programlevels',
+        'classpath' => 'local/program/externallib.php',
+        'description' => 'program levels',
+        'ajax' => true,
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+    ),
+    'local_program_levelcourses' => array(
+        'classname' => 'local_program_external',
+        'methodname' => 'levelcourses',
+        'classpath' => 'local/program/externallib.php',
+        'description' => 'level courses',
+        'ajax' => true,
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+    ),
+    'local_program_myprogramstatus' => array(
+        'classname' => 'local_program_external',
+        'methodname' => 'myprogramstatus',
+        'classpath' => 'local/program/externallib.php',
+        'description' => 'program status',
+        'ajax' => true,
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+    ),
+    'local_program_get_program_info' => array(
+        'classname' => 'local_program_external',
+        'methodname' => 'get_program_info',
+        'classpath' => 'local/program/externallib.php',
+        'description' => 'get program info',
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+    ),
 );

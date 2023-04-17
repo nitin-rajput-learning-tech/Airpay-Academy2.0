@@ -1026,7 +1026,6 @@ class cronfunctionality {
         $user->address = $excel->address ? $excel->address : ' ';
         $user->open_team = $excel->team ? $excel->team : null;
         $user->open_grade = $excel->grade ? $excel->grade : null;
-        $user->open_level = $excel->level ? $excel->level : null;
         $user->open_designation = $excel->role_designation ? $excel->role_designation : '';
         //----costcenter and department info -----
         $user->open_costcenterid = $this->open_costcenterid;

@@ -25,7 +25,7 @@
             <th>{{#str}}enrolled, local_forum{{/str}}</th>
             <!-- <th>{{#str}}points, local_forum{{/str}}</th> -->
             <th>{{#str}}completed, local_forum{{/str}}</th>
-            <th>{{#str}}coursetype, local_forum{{/str}}</th>
+            <!-- <th>{{#str}}coursetype, local_forum{{/str}}</th> -->
             <th>{{#str}}actions, local_forum{{/str}}</th>
         </tr>
     </thead>
@@ -41,7 +41,9 @@
                     <a href="{{ courseurl }}" title="{{ coursename }}">{{ coursenameCut }}</a>
                 {{/ coursenameCut}}
             </td>            
-            <td>{{shortname}}</td>
+            <td>{{ shortname }}
+                {{# shortname }} {{shortname}} {{/ shortname }} 
+            </td>
             <td>{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</td>
             <td>
                 {{# enrolled_count }} {{enrolled_count}} {{/ enrolled_count }} 
@@ -49,7 +51,7 @@
             </td>
             <!-- <td>{{points}}</td> -->
             <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</td>
-            <td>{{{coursetype}}}</td>
+            <!-- <td>{{{coursetype}}}</td> -->
             <td>
                 {{#update}}{{{ editcourse }}} {{/update}}
                 {{#enrol}}
@@ -67,12 +69,12 @@
                     {{/auto_enrol}}
                 {{/update}}
                 {{#update}} {{{update_status}}}{{/update}}
-                {{#grade_view}}                 
+                <!-- {{#grade_view}}                 
                        <a href="{{ grader }}" title= "{{#str}}grader, local_forum{{/str}}">
                            <i class="fa fa-pie-chart" aria-hidden="true"></i>
                        </a>
                    
-                {{/grade_view}}
+                {{/grade_view}} -->
                 {{#request_view}}            
                      <a href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
                          <i class="fa fa-share-square" aria-hidden="true"></i>

@@ -80,6 +80,12 @@ class report_trainingsoverview extends reportbase implements report {
     }
    
     function search(){
+        if (isset($this->search) && $this->search) {
+            $fields = array('c.name',"CONCAT(u.firstname,' ',u.lastname)");
+            $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
+            $fields .= " LIKE '%" . $this->search . "%' ";
+            $this->sql .= " AND ($fields) ";
+        }
     } 
     
     function filters(){

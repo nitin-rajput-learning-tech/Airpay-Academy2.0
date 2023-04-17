@@ -88,7 +88,7 @@ class custom_category_form extends moodleform {
         } else {
     
             if(!is_siteadmin()){
-                $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents);
+                $mform->addElement('select', 'parentid', get_string('parent','local_costcenter'), $parents);
             } else {
                 $mform->addElement('autocomplete', 'parentid', get_string('parent','local_costcenter'), $parents,$coursetype);
                 $mform->setDefault('parentid', 0);

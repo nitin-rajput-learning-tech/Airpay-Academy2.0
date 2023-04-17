@@ -591,3 +591,4 @@ $string['taskauto_extension'] = 'Program Auto Extension Task';
 $string['programskill'] = 'Skill';
 $string['programlevel'] = 'Skill Level';
 $string['no_courses_assigned'] = 'No courses assigned';
+$string['start_course'] = 'Start course';

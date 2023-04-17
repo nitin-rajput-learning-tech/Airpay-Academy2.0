@@ -48,13 +48,8 @@ $table->head[] = get_string('commercialarea', 'local_users');
 $table->head[] = get_string('phonenumber', 'local_users');
 $table->head[] = get_string('designation', 'local_users');
 $table->head[] = get_string('employmenttype', 'local_users');
-$table->head[] = get_string('employmentstatus', 'local_users');
 $table->head[] = get_string('region', 'local_users');
-$table->head[] = get_string('branch', 'local_users');
-$table->head[] = get_string('subbranch', 'local_users');
 $table->head[] = get_string('grade', 'local_users');
-$table->head[] = get_string('level', 'local_users');
-$table->head[] = get_string('skilltype', 'local_users');
 $table->head[] = get_string('supervisor', 'local_users');
 $table->head[] = get_string('dateofbirth', 'local_users');
 $table->head[] = get_string('joiningdate', 'local_users');
@@ -68,7 +63,7 @@ $data = [];
 foreach ($userdata as $user) {
     $data[] = [$user['prefix'],$user['fullname'], $user['username'], $user['gender'], $user['empid'], $user['email'], $user['orgstring'],$user['deptstring'],$user['commercialunit'],$user['commercialarea'],
         $user['phno'], $user['designationstring'],
-        $user['employmenttype'], $user['employmentstatus'], $user['region'], $user['branch'], $user['subbranch'],$user['grade'], $user['level'], $user['skilltype'],
+        $user['employmenttype'], $user['region'],$user['grade'],
             $user['supervisiorstring'],$user['dateofbirth'], $user['dateofjoining'], $user['lastaccess']];
 }
 $table->id = "users";

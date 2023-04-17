@@ -230,6 +230,9 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
             "aaSorting": false,
             "lengthMenu": [[10, 15, 25, 50, 100, -1], [10, 15, 25, 50, 100, "All"]],
             "aoColumnDefs": [{ 'bSortable': false, 'aTargets': [1] }],
+            "oLanguage": {
+              "sEmptyTable": "No data available",
+            },
             language: {
               search: "_INPUT_",
               searchPlaceholder: str[0],

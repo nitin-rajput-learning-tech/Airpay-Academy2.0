@@ -122,23 +122,23 @@ if(!empty($courses_plugin_exists)&&!$add&&!$remove){
   		$collapse = true;
       $show = '';
   	}
-  	$organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
-  	$department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
-    $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
-    $department4level = !empty($filterdata->filteropen_department4level) ? implode(',', $filterdata->filteropen_department4level) : null;
-    $department5level = !empty($filterdata->filteropen_department5level) ? implode(',', $filterdata->filteropen_department5level) : null;
-    $states = !empty($filterdata->states) ? implode(',', $filterdata->states) : null;
-    $district = !empty($filterdata->district) ? implode(',', $filterdata->district) : null;
-    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', $filterdata->subdistrict) : null;
-    $village = !empty($filterdata->village) ? implode(',', $filterdata->village) : null;
-  	$email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
-  	$idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
-  	$uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
-    $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
-    $location = !empty($filterdata->location) ? implode(',', $filterdata->location) : null;
-  	$hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', $filterdata->hrmsrole) : null;
-    $designation = !empty($filterdata->designation) ? implode(',', $filterdata->designation) : null;
-    $empnumber = !empty($filterdata->empnumber) ? implode(',', $filterdata->empnumber) : null;
+  	$organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', (array)$filterdata->filteropen_costcenterid) : null;
+  	$department = !empty($filterdata->filteropen_department) ? implode(',', (array)$filterdata->filteropen_department) : null;
+    $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', (array)$filterdata->filteropen_subdepartment) : null;
+    $department4level = !empty($filterdata->filteropen_department4level) ? implode(',', (array)$filterdata->filteropen_department4level) : null;
+    $department5level = !empty($filterdata->filteropen_department5level) ? implode(',', (array)$filterdata->filteropen_department5level) : null;
+    $states = !empty($filterdata->states) ? implode(',', (array)$filterdata->states) : null;
+    $district = !empty($filterdata->district) ? implode(',', (array)$filterdata->district) : null;
+    $subdistrict = !empty($filterdata->subdistrict) ? implode(',', (array)$filterdata->subdistrict) : null;
+    $village = !empty($filterdata->village) ? implode(',', (array)$filterdata->village) : null;
+  	$email = !empty($filterdata->email) ? implode(',', (array)$filterdata->email) : null;
+  	$idnumber = !empty($filterdata->idnumber) ? implode(',', (array)$filterdata->idnumber) : null;
+  	$uname = !empty($filterdata->users) ? implode(',', (array)$filterdata->users) : null;
+    $groups = !empty($filterdata->groups) ? implode(',', (array)$filterdata->groups) : null;
+    $location = !empty($filterdata->location) ? implode(',', (array)$filterdata->location) : null;
+  	$hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', (array)$filterdata->hrmsrole) : null;
+    $designation = !empty($filterdata->designation) ? implode(',', (array)$filterdata->designation) : null;
+    $empnumber = !empty($filterdata->empnumber) ? implode(',', (array)$filterdata->empnumber) : null;
   }
    $options = array('context' => $systemcontext->id, 'planid' => $planid, 'organization' => $organization, 'department' => $department, 'subdepartment' => $subdepartment, 'department4level' => $department4level, 'department5level' => $department5level, 'states' => $states, 'district' => $district, 'subdistrict' => $subdistrict, 'village' => $village, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);
 

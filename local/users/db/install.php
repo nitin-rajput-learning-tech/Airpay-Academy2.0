@@ -26,17 +26,10 @@ function xmldb_local_users_install(){
           $field7->set_attributes(XMLDB_TYPE_CHAR, '255', null, null, null, null);
           $dbman->add_field($table, $field7);
 
-          $field8 = new xmldb_field('open_level');
-          $field8->set_attributes(XMLDB_TYPE_CHAR, '255', null, null, null, null);
-          $dbman->add_field($table, $field8);
-
           $field11 = new xmldb_field('open_state');
           $field11->set_attributes(XMLDB_TYPE_CHAR, '200', null, null, null, null);
           $dbman->add_field($table, $field11);
 
-          $field12 = new xmldb_field('open_branch');
-          $field12->set_attributes(XMLDB_TYPE_CHAR, '200', null, null, null, null);
-          $dbman->add_field($table, $field12);
 
           $field13 = new xmldb_field('open_jobfunction');
           $field13->set_attributes(XMLDB_TYPE_CHAR, '200', null, null, null, null);
@@ -118,11 +111,6 @@ function xmldb_local_users_install(){
           if (!$dbman->field_exists($table, $field3)) {
               $dbman->add_field($table, $field3);
           }
-          $field4 = new xmldb_field('open_subbranch');
-          $field4->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
-          if (!$dbman->field_exists($table, $field4)) {
-              $dbman->add_field($table, $field4);
-          }
           $field5 = new xmldb_field('open_joindate');
           $field5->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
           if (!$dbman->field_exists($table, $field5)) {
@@ -143,20 +131,10 @@ function xmldb_local_users_install(){
           if (!$dbman->field_exists($table, $field8)) {
               $dbman->add_field($table, $field8);
           }
-          $field9 = new xmldb_field('open_employmentstatus');
-          $field9->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
-          if (!$dbman->field_exists($table, $field9)) {
-              $dbman->add_field($table, $field9);
-          }
           $prefix = new xmldb_field('open_prefix');
           $prefix->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
           if (!$dbman->field_exists($table, $prefix)) {
               $dbman->add_field($table, $prefix);
-          }
-          $skilltype = new xmldb_field('open_skilltype');
-          $skilltype->set_attributes(XMLDB_TYPE_CHAR, '512', null, null, null, null);
-          if (!$dbman->field_exists($table, $skilltype)) {
-              $dbman->add_field($table, $skilltype);
           }
           $orgactive = new xmldb_field('open_orgactive');
           $orgactive->set_attributes(XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 0);

@@ -63,17 +63,10 @@ class local_courses_renderer extends plugin_renderer_base {
         $subdepartmentid = optional_param('subdepartmentid', '', PARAM_INT);
         $l4department = optional_param('l4department', '', PARAM_INT);
         $l5department = optional_param('l5department', '', PARAM_INT);
-        // change the display according to moodle 3.6
-        // $stable = new stdClass();
-        // $stable->thead = true;
-        // $stable->start = 0;
-        // $stable->length = -1;
-        // $stable->search = '';
-        // $stable->pagetype ='page';
-
+      
         $templateName = 'local_courses/catalog';
         $cardClass = 'col-md-6 col-12';
-        $perpage = 10;
+        $perpage = 12;
         if($view_type=='table'){
             $templateName = 'local_courses/catalog_table';
             $cardClass = 'tableformat';

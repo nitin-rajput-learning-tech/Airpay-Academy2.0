@@ -239,7 +239,7 @@ class local_forum_external extends external_api
                             $data->open_certificateid = null;
                         }
                     }
-
+                    update_course($data);
                     // purge appropriate caches in case fix_course_sortorder() did not change anything
                     cache_helper::purge_by_event('changesincourse');
                     cache_helper::purge_by_event('changesincoursecat');
@@ -385,6 +385,7 @@ class local_forum_external extends external_api
                         new external_single_structure(
                             array(
                                 'coursename' => new external_value(PARAM_RAW, 'coursename'),
+                                'shortname' => new external_value(PARAM_RAW, 'shortname'),
                                 'coursenameCut' => new external_value(PARAM_RAW, 'coursenameCut', VALUE_OPTIONAL),
                                 'catname' => new external_value(PARAM_RAW, 'catname'),
                                 'catnamestring' => new external_value(PARAM_RAW, 'catnamestring'),

@@ -441,7 +441,7 @@ class custom_onlineexams_form extends moodleform {
 
 		 if (isset($data['timeopen']) && $data['timeopen']
                 && isset($data['timeclose']) && $data['timeclose']) {
-            if ($data['timeclose'] < $data['timeopen']) {
+            if ($data['timeclose'] <= $data['timeopen']) {
                 $errors['timeclose'] = get_string('nosameenddate', 'local_onlineexams');
             }
         }

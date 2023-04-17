@@ -663,16 +663,7 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
          $mform->addHelpButton('open_location', 'location', 'local_users');
         $selectlocation->setMultiple(true);
     }
-    if (in_array('branch', $elementlist)) {
-        $branch_details[null] = get_string('all');
-        $branch_sql = "SELECT u.open_branch,u.open_branch AS branchvalue FROM {user} AS u WHERE u.id > 2
-         $main_sql AND u.open_branch IS NOT NULL GROUP BY u.open_branch";
-        $branch_details += $DB->get_records_sql_menu($branch_sql, $params);
-        $selectbranch = $mform->addElement('autocomplete', 'open_branch', get_string('open_branch',
-         'local_users'), $branch_details);
-        $mform->setType('open_branch', PARAM_RAW);
-        $selectbranch->setMultiple(true);
-    }
+
     if (in_array('band', $elementlist)) {
         $band_details[null] = get_string('all');
         $band_sql = "SELECT u.open_band,u.open_band AS bandvalue FROM {user} AS u WHERE u.id > 2 $main_sql AND
@@ -1131,13 +1122,8 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
         }
 
         $list['employmenttype'] = $user->open_employmenttype ? $user->open_employmenttype : '--';
-        $list['employmentstatus'] = $user->open_employmentstatus ? $user->open_employmentstatus : '--';
         $list['region'] = $user->open_region ? $user->open_region : '--';
-        $list['branch'] = $user->open_branch ? $user->open_branch : '--';
-        $list['subbranch'] = $user->open_subbranch ? $user->open_subbranch : '--';
-        $list['level'] = $user->open_level ? $user->open_level : '--';
         $list['grade'] = $user->open_grade ? $user->open_grade : '--';
-        $list['skilltype'] = $user->open_skilltype ? $user->open_skilltype : '--';
         $list['phno'] = ($user->phone1) ? $user->phone1 : '--';
         $list['designation'] = $designation;
         $list['dateofbirth'] = $user->open_dateofbirth ? date('d-M-Y',$user->open_dateofbirth) : '';

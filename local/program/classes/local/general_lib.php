@@ -128,7 +128,7 @@ class general_lib{
             }else if($program->nomination_enddate > 0 && $program->nomination_enddate < time()){
                 $program->enrolment_status_message = 3;
             }
-            $program->coursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_program_courses} AS lcc ON lcc.courseid = c.id WHERE lcc.programid = :programid ", array('programid' => $program->id));
+            $program->coursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_program_level_courses} AS lcc ON lcc.courseid = c.id WHERE lcc.programid = :programid ", array('programid' => $program->id));
 
             $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $program->id, 'module_area' => 'local_learningplan'));
             if($ratinginfo){

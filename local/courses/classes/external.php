@@ -196,7 +196,6 @@ class local_courses_external extends external_api {
                       $courseid->id=$data['id'];
                       $validateddata->category = $category_id;
 
-
                     if($validateddata->open_costcenterid !=$org){
 
                          local_costcenter_get_costcenter_path($validateddata);
@@ -266,6 +265,8 @@ class local_courses_external extends external_api {
                          if($data->open_path){
                             $data->category = $DB->get_field('local_costcenter', 'category', array('path' => $data->open_path));
                          }
+                         $data->open_group=implode(',',(array)$data->open_group);
+                         $data->open_designation=implode(',',(array)$data->open_designation);
                     }else{
                         if($validateddata->map_certificate == 1){
 
@@ -277,8 +278,7 @@ class local_courses_external extends external_api {
 
                         }
                     }
-
-
+                 
                     update_course($data);
 
                    // purge appropriate caches in case fix_course_sortorder() did not change anything

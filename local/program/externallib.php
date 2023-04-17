@@ -28,6 +28,7 @@ require_once("$CFG->libdir/externallib.php");
 require_once($CFG->dirroot . '/local/program/lib.php');
 use \local_program\program as program;
 use \local_program\form\program_form as program_form;
+use local_program\local\userdashboard_content  as DashboardProgram;
 
 class local_program_external extends external_api {
 
@@ -1020,38 +1021,6 @@ class local_program_external extends external_api {
     public static function unenrol_user_returns(){
         return new external_value(PARAM_BOOL, 'return');
     }
-    public static function get_program_info_parameters(){
-        return new external_function_parameters(
-            array(
-                'id' => new external_value(PARAM_INT, 'The id of the module'),
-            )
-        );
-    }
-    public static function get_program_info($id){
-        $params = self::validate_parameters(self::get_program_info_parameters(),
-            ['id' => $id]);
-        return (new \local_program\local\general_lib())->get_program_info($id);
-    }
-    public static function get_program_info_returns(){
-       return new external_single_structure(array(
-            'id' => new external_value(PARAM_INT, 'The id of the module'),
-            'fullname' => new external_value(PARAM_TEXT, 'fullname'),
-            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
-            'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL, ''),
-            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
-            'points' => new external_value(PARAM_INT, 'points', VALUE_OPTIONAL, NULL),
-            'requeststatus' => new external_value(PARAM_INT, 'User request status to module', VALUE_OPTIONAL, 0),
-            'enrolment_status_message' => new external_value(PARAM_INT, 'Status message for enrollment', VALUE_OPTIONAL, 0),
-            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
-            'startdate' => new external_value(PARAM_INT, 'startdate'),
-            'enddate' => new external_value(PARAM_INT, 'enddate'),
-            'coursecount' => new external_value(PARAM_INT, 'coursecount', VALUE_OPTIONAL, 0),
-            'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL, ''),
-            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
-            'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
-        ));
-    }
     public static function level_completion_settings_parameters(){
         return new external_function_parameters([
             'contextid' => new external_value(PARAM_INT, 'contextid'),
@@ -1143,6 +1112,302 @@ class local_program_external extends external_api {
         return new external_single_structure(array(
             'id' => new external_value(PARAM_INT, 'Context id for the framework'),
             'form_status' => new external_value(PARAM_INT, 'form_status'),
+        ));
+    }
+    /**
+    * [data_for_program_courses_parameters description]
+     * @return parameters for data_for_program_courses
+     */
+    public static function myprograms_parameters() {
+        return new external_function_parameters(
+            array(
+                'status' => new external_value(PARAM_TEXT, 'status'),
+                'search' =>  new external_value(PARAM_TEXT, 'search', VALUE_OPTIONAL, ''),
+                'page' =>  new external_value(PARAM_INT, 'page', VALUE_OPTIONAL, 0),
+                'perpage' =>  new external_value(PARAM_INT, 'perpage', VALUE_OPTIONAL, 15)
+            )
+        );
+    }
+
+    public static function myprograms($status, $search = '', $page = 0, $perpage = 15) {
+        global $PAGE, $DB, $CFG;
+        require_once($CFG->dirroot . '/local/ratings/lib.php');
+        $params = self::validate_parameters(self::myprograms_parameters(), array(
+            'status' => $status, 'search' => $search, 'page' => $page, 'perpage' => $perpage
+        ));
+        if ($status == 'inprogress') {
+            $programs = DashboardProgram::inprogress_programs($search, $page, $perpage);
+        } else if ($status == 'completed') {
+            $programs = DashboardProgram::completed_programs($search, $page, $perpage);
+        } else {
+            $programs = DashboardProgram::enrolled_programs($search, $page, $perpage);
+        }
+        foreach($programs as $program) {
+
+            $programfileurl = (new \local_program\local\general_lib())->get_module_logo_url($program->id);
+            $modulerating = $DB->get_field('local_ratings_likes', 'module_rating', array('module_id' => $program->id, 'module_area' => 'local_program'));
+            if(!$modulerating){
+                 $modulerating = 0;
+            }
+            $program->rating = round($modulerating);
+            $likes = $DB->count_records('local_like', array('likearea' => 'local_program', 'itemid' => $program->id, 'likestatus' => '1'));
+            $dislikes = $DB->count_records('local_like', array('likearea' => 'local_program', 'itemid' => $program->id, 'likestatus' => '2'));
+            $avgratings = get_rating($program->id, 'local_program');
+            $avgrating = round($avgratings->avg);
+            $ratingusers = $avgratings->count;
+            $program->likes = $likes;
+            $program->dislikes = $dislikes;
+            $program->avgrating = $avgrating;
+            $program->ratingusers = $ratingusers;
+            $program->bannerimage =  is_object($programfileurl) ? $programfileurl->out() : $programfileurl;
+        }
+        return array('programs' => $programs);
+    }
+    public static function myprograms_returns() {
+        return new external_single_structure(array(
+                'programs' => new external_multiple_structure(
+                    new external_single_structure(
+                        array(
+                            'id' => new external_value(PARAM_INT, 'id'),
+                            'fullname' => new external_value(PARAM_RAW, 'fullname'),
+                            'shortname' => new external_value(PARAM_RAW, 'shortname'),
+                            'description' => new external_value(PARAM_RAW, 'description'),
+                            'rating' => new external_value(PARAM_INT, 'program Rating'),
+                            'likes' => new external_value(PARAM_INT, 'program Likes'),
+                            'dislikes' => new external_value(PARAM_INT, 'program Dislikes'),
+                            'avgrating' => new external_value(PARAM_FLOAT, 'program avgrating'),
+                            'ratingusers' => new external_value(PARAM_FLOAT, 'program users rating'),
+                            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
+                        )
+                    ), VALUE_DEFAULT, array()
+                )
+            )
+        );
+    }
+    /**
+    * [data for program levels}
+     * @return parameters for programlevels
+     */
+    public static function programlevels_parameters() {
+        return new external_function_parameters(
+            array('programid' => new external_value(PARAM_INT, 'programid')
+            )
+        );
+    }
+
+    public static function programlevels($programid) {
+        global $PAGE, $CFG;
+
+        $params = self::validate_parameters(self::programlevels_parameters(), array(
+            'programid' => $programid
+        ));
+
+        $PAGE->set_context(context_system::instance());
+
+        $program_levels = (new program)->programlevels($programid);
+        return array('levels' => $program_levels);
+    }
+
+    public static function programlevels_returns() {
+        return new external_single_structure(array (
+                'levels' => new external_multiple_structure(
+                     new external_single_structure(
+                        array(
+                            'id' => new external_value(PARAM_INT, 'id'),
+                            'programid' => new external_value(PARAM_INT, 'programid'),
+                            'level' => new external_value(PARAM_RAW, 'name'),
+                            'description' => new external_value(PARAM_RAW, 'description'),
+                            'status' => new external_value(PARAM_INT, 'status'),
+                            'totalcourses' => new external_value(PARAM_INT, 'totalcourses'),
+                            'position' => new external_value(PARAM_INT, 'position'),
+                            'totalusers' => new external_value(PARAM_INT, 'totalusers'),
+                            'activeusers' => new external_value(PARAM_INT, 'activeusers'),
+                            'usercreated' => new external_value(PARAM_RAW, 'usercreated'),
+                            'timecreated' => new external_value(PARAM_RAW, 'timecreated'),
+                            'usermodified' => new external_value(PARAM_RAW, 'usermodified'),
+                            'timemodified' => new external_value(PARAM_RAW, 'timemodified'),
+                        )
+                    ), VALUE_DEFAULT, array()
+                 )
+            )
+        );
+    }
+    /**
+    * [data for program courses}
+     * @return parameters for programlevels
+     */
+    public static function levelcourses_parameters() {
+        return new external_function_parameters(
+            array(
+                'programid' => new external_value(PARAM_INT, 'programid'),
+                'levelid' => new external_value(PARAM_INT, 'levelid', VALUE_OPTIONAL, 0)
+            )
+        );
+    }
+
+    public static function levelcourses($programid, $levelid = 0) {
+        global $PAGE, $CFG;
+
+        $params = self::validate_parameters(self::levelcourses_parameters(), array(
+            'programid' => $programid, 'levelid' => $levelid
+        ));
+
+        $programlevelcourses = (new program)->levelcourses($programid, $levelid);
+
+        return array('courses' => $programlevelcourses);
+    }
+
+    public static function levelcourses_returns() {
+        return new external_single_structure(array (
+                'courses' => new external_multiple_structure(
+                     new external_single_structure(
+                        array(
+                            'bclevelcourseid' => new external_value(PARAM_INT, 'program level course id'),
+                            'id' => new external_value(PARAM_INT, 'course id'),
+                            'shortname' => new external_value(PARAM_TEXT, 'course short name'),
+                            'category' => new external_value(PARAM_INT, 'category id'),
+                            'fullname' => new external_value(PARAM_TEXT, 'full name'),
+                            'idnumber' => new external_value(PARAM_RAW, 'id number', VALUE_OPTIONAL),
+                            'summary' => new external_value(PARAM_RAW, 'summary'),
+                            'summaryformat' => new external_format_value('summary'),
+                            'format' => new external_value(PARAM_PLUGIN,
+                                    'course format: weeks, topics, social, site,..'),
+                            'showgrades' => new external_value(PARAM_INT,
+                                    '1 if grades are shown, otherwise 0', VALUE_OPTIONAL),
+                            'newsitems' => new external_value(PARAM_INT,
+                                    'number of recent items appearing on the course page', VALUE_OPTIONAL),
+                            'startdate' => new external_value(PARAM_INT,
+                                    'timestamp when the course start'),
+                            'enddate' => new external_value(PARAM_INT,
+                                    'timestamp when the course end'),
+                            'maxbytes' => new external_value(PARAM_INT,
+                                    'largest size of file that can be uploaded into the course',
+                                    VALUE_OPTIONAL),
+                            'showreports' => new external_value(PARAM_INT,
+                                    'are activity report shown (yes = 1, no =0)', VALUE_OPTIONAL),
+                            'visible' => new external_value(PARAM_INT,
+                                    '1: available to student, 0:not available', VALUE_OPTIONAL),
+                            'groupmode' => new external_value(PARAM_INT, 'no group, separate, visible',
+                                    VALUE_OPTIONAL),
+                            'groupmodeforce' => new external_value(PARAM_INT, '1: yes, 0: no',
+                                    VALUE_OPTIONAL),
+                            'defaultgroupingid' => new external_value(PARAM_INT, 'default grouping id',
+                                    VALUE_OPTIONAL),
+                            'timecreated' => new external_value(PARAM_INT,
+                                    'timestamp when the course have been created', VALUE_OPTIONAL),
+                            'timemodified' => new external_value(PARAM_INT,
+                                    'timestamp when the course have been modified', VALUE_OPTIONAL),
+                            'enablecompletion' => new external_value(PARAM_INT,
+                                    'Enabled, control via completion and activity settings. Disbaled,
+                                        not shown in activity settings.',
+                                    VALUE_OPTIONAL),
+                            'completionnotify' => new external_value(PARAM_INT,
+                                    '1: yes 0: no', VALUE_OPTIONAL),
+                            'lang' => new external_value(PARAM_SAFEDIR,
+                                    'forced course language', VALUE_OPTIONAL),
+                            'levelid' => new external_value(PARAM_INT,
+                                    'levelid'),
+                            'courseimage' => new external_value(PARAM_RAW, 'courseimage'),
+
+                        )
+                    ), VALUE_DEFAULT, array()
+                 )
+            )
+        );
+    }
+     /**
+    * [data_for_program_courses_parameters description]
+     * @return parameters for data_for_program_courses
+     */
+    public static function myprogramstatus_parameters() {
+        return new external_function_parameters(
+            array(
+                'programid' => new external_value(PARAM_INT, 'programid')
+            )
+        );
+    }
+    public static function myprogramstatus($programid) {
+        global $PAGE;
+
+        $params = self::validate_parameters(self::myprogramstatus_parameters(), array('programid' => $programid));
+
+        $programstatus = (new program)->myprogramstatus($programid);
+        return $programstatus;
+    }
+    public static function myprogramstatus_returns() {
+        return new external_single_structure(
+            array(
+                'completion_status' =>  new external_value(PARAM_BOOL, 'completion_status'),
+                'levels' => new external_multiple_structure(
+                    new external_single_structure(
+                        array(
+                            'id' => new external_value(PARAM_INT, 'id'),
+                            'programid' => new external_value(PARAM_INT, 'programid'),
+                            'status' => new external_value(PARAM_INT, 'status'),
+                            'position' => new external_value(PARAM_INT, 'position'),
+                            'totalcourses' => new external_value(PARAM_INT, 'totalcourses'),
+                            'completed' => new external_value(PARAM_INT, 'completed'),
+                            'courses' => new external_multiple_structure(
+                                new external_single_structure(
+                                    array(
+                                        'id' => new external_value(PARAM_INT, 'id'),
+                                        'category' => new external_value(PARAM_INT, 'category'),
+                                        'programid' => new external_value(PARAM_INT, 'programid'),
+                                        'bclevelcourseid' =>  new external_value(PARAM_INT, 'bclevelcourseid'),
+                                        'completionstatus' =>  new external_value(PARAM_INT, 'completionstatus')
+                                    )
+                                ), VALUE_DEFAULT, array()
+                            ),
+                        )
+                    ), VALUE_DEFAULT, array()
+                ),
+                'levelcoursestatus' => new external_multiple_structure(
+                    new external_single_structure(
+                        array(
+                            'id' => new external_value(PARAM_INT, 'id'),
+                            'programid' => new external_value(PARAM_INT, 'programid'),
+                            'bclevelcourseid' =>  new external_value(PARAM_INT, 'bclevelcourseid'),
+                            'completionstatus' =>  new external_value(PARAM_INT, 'completionstatus'),
+                        )
+                    ), VALUE_DEFAULT, array()
+                ),
+            )
+        );
+    }
+    public static function get_program_info_parameters(){
+        return new external_function_parameters(
+            array(
+                'id' => new external_value(PARAM_INT, 'The id of the module'),
+            )
+        );
+    }
+    public static function get_program_info($id){
+        global $DB;
+        $params = self::validate_parameters(self::get_program_info_parameters(),
+            ['id' => $id]);
+        return (new \local_program\local\general_lib())->get_program_info($id);
+    }
+    public static function get_program_info_returns(){
+        return new external_single_structure(array(
+            'id' => new external_value(PARAM_INT, 'The id of the module'),
+            'name' => new external_value(PARAM_TEXT, 'name'),
+            'shortname' => new external_value(PARAM_TEXT, 'shortname'),
+            'summary' => new external_value(PARAM_RAW, 'summary', VALUE_OPTIONAL,
+                ''),
+            'category' => new external_value(PARAM_TEXT, 'category', VALUE_OPTIONAL,
+                ''),
+            'bannerimage' => new external_value(PARAM_RAW, 'bannerimage'),
+            'points' => new external_value(PARAM_INT, 'points', VALUE_OPTIONAL, 0),
+            'isenrolled' => new external_value(PARAM_BOOL, 'isenrolled'),
+            'startdate' => new external_value(PARAM_INT, 'startdate', VALUE_OPTIONAL, ''),
+            'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, ''),
+            'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
+            'rating' => new external_value(PARAM_FLOAT, 'rating', VALUE_OPTIONAL, 0),
+            'ratingusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
+            'likes' => new external_value(PARAM_INT, 'likes', VALUE_OPTIONAL, 0),
+            'dislikes' => new external_value(PARAM_INT, 'dislikes', VALUE_OPTIONAL, 0),
+            'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
+            'open_location' => new external_value(PARAM_RAW, 'open_location'),
         ));
     }
 }

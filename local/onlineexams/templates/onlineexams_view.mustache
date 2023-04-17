@@ -138,25 +138,25 @@
                                         {{/actions}} -->
                                     </div>
                                     <div class="coursedesc mb-2">
-                                        {{# coursesummary }}
-                                            <p class="desc" title = "Onlineexam Descripton" >{{ coursesummary }}</p>
-                                        {{/ coursesummary }}
-                                        {{^ coursesummary }}
+                                        {{#onlineexamsummary }}
+                                            <p class="desc" title = "Onlineexam Descripton" >{{ onlineexamsummary }}</p>
+                                        {{/onlineexamsummary }}
+                                        {{^onlineexamsummary }}
                                             <p class="alert alert-info text-center mt-1">{{#str}}noonlineexamdesc, local_onlineexams{{/str}}</p>
-                                        {{/ coursesummary }}
+                                        {{/onlineexamsummary }}
                                     </div>
                                     <!--<div class="d-flex mb-2">
                                         <span class="text-muted">{{#str}}category, local_onlineexams{{/str}} : </span> <span class="ml-1">{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</span>
                                     </div>-->
-                                    <div class="d-flex course_department ">
+                                    <!-- <div class="d-flex course_department ">
                                         <span class="text-muted">{{#str}}department, local_onlineexams{{/str}} : </span>
                                             <span class="ml-1">{{{}}}</span>
-                                    </div>
+                                    </div> -->
                                     <div class="courseinfo_container ">      
                                         <div class="info_container points_info">
                                             <div class="brain_icon mr-2"></div>
                                             <span class="info_title">{{#str}}maxgrade, local_onlineexams{{/str}} : </span> 
-                                            <span class="info_value">{{skillname}}  </span>
+                                            <span class="info_value">{{maxgrade}}  </span>
                                         </div> 
                                         <div class="info_container rating_info">
                                             <div class="star_icon">

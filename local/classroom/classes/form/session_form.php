@@ -90,7 +90,7 @@ class session_form extends moodleform {
         $mform->disabledIf('roomid', 'onlinesession', 'checked');
 
 //        $trainers = array();
-        $trainers = array(null => get_string('select_trainers', 'local_classroom'));
+        $trainers = array(0 => get_string('select_trainers', 'local_classroom'));
         $trainerid = $this->_ajaxformdata['trainerid'];
         if (!empty($trainerid)) {
             $trainerid = $trainerid;

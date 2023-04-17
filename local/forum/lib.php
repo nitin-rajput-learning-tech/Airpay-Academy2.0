@@ -539,10 +539,12 @@ function get_listof_forum($stable, $filterdata,$options)
 
                 if($options->viewType=='table'){
                     $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => ''));
-                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum', 'data-id' => $USER->id, 'data-id' => $course->id));
+                    $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
+                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum',  'data-params' => $params, 'data-id'=>$course->id));
                 }else{
                     $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')) . $title;
-                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum',  'data-id' => $USER->id,'data-id' => $course->id));
+                    $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
+                    $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image, array('class' => ' make_inactive dropdown-item', 'data-fg' => "d", 'data-method' => 'course_update_status', 'data-plugin' => 'local_forum',  'data-params' => $params, 'data-id'=>$course->id));
                 }
                 if (!empty($autoenroll_plugin_exist)) {
                     $autoplugin = enrol_get_plugin('auto');
@@ -862,7 +864,7 @@ function forum_filters_form($filterparams, $formdata = []) {
 
     $categorycontext=(new \local_users\lib\accesslib())::get_module_context();
     if (is_siteadmin()) {
-        $mform = new filters_form(null, array('filterlist' => array( 'hierarchy_fields',/*'geographyfields',*/ 'forum'), 'courseid' => 1,
+        $mform = new filters_form(null, array('filterlist' => array( 'hierarchy_fields',/*'geographyfields',*/ 'forum', 'status'), 'courseid' => 1,
              'enrolid' => 0, 'plugins' => array('forum', 'costcenter'), 'filterparams' => $filterparams)+$formdata);
     } else {
         $filters = array('hierarchy_fields',/* 'geographyfields',*/'forum', 'status');

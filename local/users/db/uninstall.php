@@ -46,19 +46,9 @@ function xmldb_local_users_uninstall() {
             $dbman->drop_field($table, $desigfield);
         }
 
-        $openlevelfield = new xmldb_field('open_level');
-        if ($dbman->field_exists($table, $openlevelfield)) {
-            $dbman->drop_field($table, $openlevelfield);
-        }
-
         $openstatefield = new xmldb_field('open_state');
         if ($dbman->field_exists($table, $openstatefield)) {
             $dbman->drop_field($table, $openstatefield);
-        }
-
-        $branchfield = new xmldb_field('open_branch');
-        if ($dbman->field_exists($table, $branchfield)) {
-            $dbman->drop_field($table, $branchfield);
         }
 
         $jobfnfield = new xmldb_field('open_jobfunction');
@@ -140,10 +130,7 @@ function xmldb_local_users_uninstall() {
         if ($dbman->field_exists($table, $field3)) {
             $dbman->drop_field($table, $field3);
         }
-        $field4 = new xmldb_field('open_subbranch');
-        if ($dbman->field_exists($table, $field4)) {
-            $dbman->drop_field($table, $field4);
-        }
+
         $field5 = new xmldb_field('open_joindate');
         if ($dbman->field_exists($table, $field5)) {
             $dbman->drop_field($table, $field5);
@@ -161,18 +148,12 @@ function xmldb_local_users_uninstall() {
         if ($dbman->field_exists($table, $field8)) {
             $dbman->drop_field($table, $field8);
         }
-        $field9 = new xmldb_field('open_employmentstatus');
-        if ($dbman->field_exists($table, $field9)) {
-            $dbman->drop_field($table, $field9);
-        }
+
         $prefix = new xmldb_field('open_prefix');
         if ($dbman->field_exists($table, $prefix)) {
             $dbman->drop_field($table, $prefix);
         }
-        $skilltype = new xmldb_field('open_skilltype');
-        if ($dbman->field_exists($table, $skilltype)) {
-            $dbman->drop_field($table, $skilltype);
-        }
+
     }
     return true;
 }

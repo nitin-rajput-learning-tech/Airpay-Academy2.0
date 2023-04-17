@@ -108,16 +108,16 @@ if ($evaluationid) {
             $collapse = true;
             $show = '';
         }
-        $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', $filterdata->filteropen_costcenterid) : null;
-        $department = !empty($filterdata->filteropen_department) ? implode(',', $filterdata->filteropen_department) : null;
-        $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', $filterdata->filteropen_subdepartment) : null;
-        $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', $filterdata->filteropen_level4department) : null;
-        $email = !empty($filterdata->email) ? implode(',', $filterdata->email) : null;
-        $idnumber = !empty($filterdata->idnumber) ? implode(',', $filterdata->idnumber) : null;
-        $uname = !empty($filterdata->users) ? implode(',', $filterdata->users) : null;
-        $groups = !empty($filterdata->groups) ? implode(',', $filterdata->groups) : null;
-        $location = !empty($filterdata->location) ? implode(',', $filterdata->location) : null;
-        $hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', $filterdata->hrmsrole) : null;
+        $organization = !empty($filterdata->filteropen_costcenterid) ? implode(',', (array)$filterdata->filteropen_costcenterid) : null;
+        $department = !empty($filterdata->filteropen_department) ? implode(',', (array)$filterdata->filteropen_department) : null;
+        $subdepartment = !empty($filterdata->filteropen_subdepartment) ? implode(',', (array)$filterdata->filteropen_subdepartment) : null;
+        $department4level = !empty($filterdata->filteropen_level4department) ? implode(',', (array)$filterdata->filteropen_level4department) : null;
+        $email = !empty($filterdata->email) ? implode(',', (array)$filterdata->email) : null;
+        $idnumber = !empty($filterdata->idnumber) ? implode(',', (array)$filterdata->idnumber) : null;
+        $uname = !empty($filterdata->users) ? implode(',', (array)$filterdata->users) : null;
+        $groups = !empty($filterdata->groups) ? implode(',', (array)$filterdata->groups) : null;
+        $location = !empty($filterdata->location) ? implode(',', (array)$filterdata->location) : null;
+        $hrmsrole = !empty($filterdata->hrmsrole) ? implode(',', (array)$filterdata->hrmsrole) : null;
       }
     // Create the user selector objects.
     $options = array('context' => $context->id, 'evaluationid' => $evaluationid, 'organization' => $organization, 'department' => $department,'subdepartment'=>$subdepartment,'department4level'=>$department4level, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'location' => $location, 'hrmsrole' => $hrmsrole);

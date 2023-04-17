@@ -41,4 +41,22 @@ $functions = array(
 		'type' => 'write',
 		'ajax' => true,
 	),
+	'local_location_locations' => array(
+		'classname' => 'local_location_external',
+		'methodname' => 'location_locations',
+		'classpath' => 'local/location/classes/external.php',
+		'description' => 'location_locations',
+		'type' => 'read',
+		'ajax' => true,
+		'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+	),
+	'local_location_rooms' => array(
+		'classname' => 'local_location_external',
+		'methodname' => 'location_rooms',
+		'classpath' => 'local/location/classes/external.php',
+		'description' => 'location_rooms',
+		'type' => 'read',
+		'ajax' => true,
+		'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE)
+	),
 );

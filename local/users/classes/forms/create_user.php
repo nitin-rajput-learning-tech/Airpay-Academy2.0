@@ -189,33 +189,16 @@ class create_user extends moodleform {
             $mform->setType('open_employmenttype', PARAM_RAW);
             $mform->addHelpButton('open_employmenttype', 'employmenttype', 'local_users');
 
-            $mform->addElement('text', 'open_employmentstatus', get_string('employmentstatus', 'local_users'));
-            $mform->setType('open_employmentstatus', PARAM_RAW);
-            $mform->addHelpButton('open_employmentstatus', 'employmentstatus', 'local_users');
 
             $mform->addElement('text', 'open_region', get_string('region', 'local_users'));
             $mform->setType('open_region', PARAM_RAW);
             $mform->addHelpButton('open_region', 'region', 'local_users');
 
-            $mform->addElement('text', 'open_branch', get_string('branch', 'local_users'));
-            $mform->setType('open_branch', PARAM_RAW);
-            $mform->addHelpButton('open_branch', 'branch', 'local_users');
-
-            $mform->addElement('text', 'open_subbranch', get_string('subbranch', 'local_users'));
-            $mform->setType('open_subbranch', PARAM_RAW);
-            $mform->addHelpButton('open_subbranch', 'subbranch', 'local_users');
 
             $mform->addElement('text', 'open_grade', get_string('grade', 'local_users'));
             $mform->setType('open_grade', PARAM_RAW);
             $mform->addHelpButton('open_grade', 'grade', 'local_users');
 
-            $mform->addElement('text', 'open_level', get_string('level', 'local_users'));
-            $mform->setType('open_level', PARAM_RAW);
-            $mform->addHelpButton('open_level', 'level', 'local_users');
-
-            $mform->addElement('text', 'open_skilltype', get_string('skilltype', 'local_users'));
-            $mform->setType('open_skilltype', PARAM_RAW);
-            $mform->addHelpButton('open_skilltype', 'skilltype', 'local_users');
 
             $mform->addElement('date_selector', 'open_dateofbirth',get_string('dateofbirth','local_users'),
             array('optional' => true));

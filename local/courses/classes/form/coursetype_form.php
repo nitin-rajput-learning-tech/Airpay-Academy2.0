@@ -64,7 +64,7 @@ class coursetype_form extends moodleform {
 		$mform->setDefault('name', $course_type);
 
 		$mform->addElement('text', 'shortname', get_string('course_type_shortname','local_courses'), 'maxlength="100" size="10"');
-        $mform->addRule('shortname', get_string('required'), 'required', null);
+        $mform->addRule('shortname', get_string('coderequired','local_courses'), 'required', null);
         $mform->setType('shortname', PARAM_RAW);
 		$mform->setDefault('shortname', $shortname);
 			

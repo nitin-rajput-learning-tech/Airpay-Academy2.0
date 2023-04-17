@@ -97,7 +97,8 @@ class organization_form extends moodleform { /*costcenter creation form*/
 
             }elseif($formtype == 'department' || $formtype == 'subdepartment' || $formtype == 'subsubdepartment' || $formtype == 'subsubsubdepartment'){
 
-                $shortnamestatic = '';
+
+                $shortnamestatic = (isset($this->_ajaxformdata['concatshortname'])) ? $this->_ajaxformdata['concatshortname'] : '';
 
                 $shortname = array();
                 $shortname[] = $mform->createElement('hidden',  'concatshortname',$shortnamestatic);

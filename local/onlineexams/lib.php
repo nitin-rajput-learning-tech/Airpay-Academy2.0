@@ -70,7 +70,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
     }
     $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
     if ($get_coursedetails->format == 'singleactivity') {
-            $moduleinfoSql = "SELECT q.id, q.attempts,q.timelimit,q.graceperiod,q.overduehandling,q.browsersecurity, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
+            $moduleinfoSql = "SELECT q.id, q.attempts,q.timelimit,q.graceperiod,q.overduehandling,q.browsersecurity,q.grademethod, gi.grademax, gi.gradepass ,q.timeopen,q.timeclose
                 FROM {quiz} as q 
                 JOIN {grade_items} as gi ON gi.iteminstance = q.id AND gi.itemtype ='mod' AND gi.itemmodule = 'quiz' 
                 WHERE q.course=:courseid ";
@@ -79,6 +79,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
             $gradepass = round($moduleinfo->gradepass, 2);
             $attempts = $moduleinfo->attempts;
             $course->gradepass = $gradepass;
+            $course->grademethod = $moduleinfo->grademethod;
             $course->attempts = $attempts;
             $course->timeopen = $moduleinfo->timeopen;
             $course->timeclose = $moduleinfo->timeclose;
@@ -601,8 +602,8 @@ function get_listof_onlineexams($stable, $filterdata,$options)
                 $grademax = $gradeitem->grademax;
             // echo $quiz->timeopen;
             // echo "<br/>";
-            $onlineexamslist[$count]["examfromdate"] =($quiz->timeopen > 0) ?  date('d-m-Y h:i:s', ($quiz->timeopen)) : 'N/A';
-            $onlineexamslist[$count]["examtodate"] = ($quiz->timeclose > 0) ? date('d-m-Y h:i:s', ($quiz->timeclose)) : 'N/A';
+            $onlineexamslist[$count]["examfromdate"] =($quiz->timeopen > 0) ?  date('d-m-Y h:i:s A', ($quiz->timeopen)) : 'N/A';
+            $onlineexamslist[$count]["examtodate"] = ($quiz->timeclose > 0) ? date('d-m-Y h:i:s A', ($quiz->timeclose)) : 'N/A';
             $onlineexamslist[$count]["passgrade"] = ($gradepass) ? round($gradepass, 2) : 'N/A';
             $onlineexamslist[$count]["maxgrade"] = ($grademax > 0) ? round($grademax,2) : 'N/A';
             $onlineexamslist[$count] = array_merge($onlineexamslist[$count], array(
@@ -800,7 +801,6 @@ function update_onlineexam_quiz($validateddata, $data, $formstatus)
     $quiz->generalfeedbackopen = 1;
     $quiz->rightansweropen = 1;
     $quiz->overallfeedbackopen = 1;
-    // print_r($validateddata);
     // print_r($quizobject);
     $quiz->id = $quizobject->id;
     $quiz->name = $validateddata->fullname;
@@ -827,7 +827,6 @@ function update_onlineexam_quiz($validateddata, $data, $formstatus)
         $quiz->grademethod = $quizobject->grademethod;
         $quiz->graceperiod = ($validateddata->graceperiod) ? $validateddata->graceperiod : 0;
     }
-    // print_r($quiz);
     return $quiz;
 }
 

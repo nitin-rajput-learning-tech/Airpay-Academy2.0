@@ -217,5 +217,9 @@ if($oldversion < 2022101800.06){
     }
     upgrade_plugin_savepoint(true, 2022101800.06, 'local', 'evaluation');
 }
+if($oldversion < 2022101800.07){
+    $DB->delete_records('local_notification_type', ['shortname' => 'feedback_due']);
+    upgrade_plugin_savepoint(true, 2022101800.07, 'local', 'evaluation');
+}
     return true;
 }

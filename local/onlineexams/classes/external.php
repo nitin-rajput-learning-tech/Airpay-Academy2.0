@@ -237,9 +237,7 @@ class local_onlineexams_external extends external_api
                     // $cm->completion = 2;
                     // $cm->completionusegrade = 1;
                     // $cm->completionpassgrade = 1;
-                    // print_r($quiz);
                     $updated = update_moduleinfo($cm, $quiz, $coursedata, null);
-                    // print_r($updated);
                     //  insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
                 } else {
 

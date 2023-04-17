@@ -156,6 +156,14 @@ class syncfunctionality
 
             $orgid[] = !empty($orgid) ? array_unique($orgid): $orgid;
 
+            $countryid[] = !empty($countryid) ? array_unique($countryid): array();
+
+            $buid[]= !empty($buid) ? array_unique($buid): array();
+
+            $cuid[] = !empty($cuid) ? array_unique($cuid): array();
+
+            $territoryid[] = !empty($territoryid) ? array_unique($territoryid): array();
+
             // To hold costcenterid.
             if (($this->orgcount == 0)) {
                 $this->costcenterid = $this->get_org_hierarchyid($user->company_code, $parent = 0, array_unique($orgid));
@@ -826,7 +834,6 @@ class syncfunctionality
         $user->open_joindate = strtotime($excel->date_of_joining);
         $user->idnumber = $excel->employee_code;
         $user->open_prefix = $this->prefix;
-        $user->open_skilltype = $excel->skill_type;
         $user->open_employeeid = $excel->employee_code;
         $user->username = strtolower($excel->username);
         $user->firstname = $excel->first_name;
@@ -840,7 +847,7 @@ class syncfunctionality
         $user->learner_status = $excel->employee_status;
         $user->open_location = $excel->location ? $excel->location : ' ';
         $user->open_employmenttype = $excel->employment_type ? $excel->employment_type : '';
-        $user->open_employmentstatus = $excel->employment_status ? $excel->employment_status : '';
+
         $user->open_state = $excel->state_name ? $excel->state_name : ' ';
         $user->city = $excel->location ? $excel->location : ' ';
         $user->location = $user->location;
@@ -848,10 +855,7 @@ class syncfunctionality
         $user->address = $excel->address ? $excel->address : ' ';
         $user->open_team = $excel->team ? $excel->team : null;
         $user->open_region = $excel->region ? $excel->region : null;
-        $user->open_branch = $excel->branch ? $excel->branch : null;
-        $user->open_subbranch = $excel->subbranch ? $excel->subbranch : null;
         $user->open_grade = $excel->grade ? $excel->grade : null;
-        $user->open_level = $excel->level ? $excel->level : null;
         $user->open_designation = $excel->designation ? $excel->designation : '';
         $user->open_costcenterid = $this->costcenterid;
         $user->open_departmentid = $this->countryid;
@@ -943,7 +947,6 @@ class syncfunctionality
                 }
             }
             $user->open_prefix = $this->prefix;
-            $user->open_skilltype = $excel->skill_type;
             $user->open_costcenterid = $this->costcenterid;
             $user->open_department = $this->countryid;
             $user->open_subdepartment = $this->level3_bussinessid;
@@ -964,10 +967,7 @@ class syncfunctionality
             $user->open_client = $excel->client;
             $user->open_team = $excel->team;
             $user->open_region = $excel->region ? $excel->region : null;
-            $user->open_branch = $excel->branch ? $excel->branch : null;
-            $user->open_subbranch = $excel->subbranch ? $excel->subbranch : null;
             $user->open_grade = $excel->grade ? $excel->grade : null;
-            $user->open_level = $excel->level ? $excel->level : null;
             $user->timezone = in_array($excel->timezone, $this->timezones) ? $excel->timezone : $CFG->forcetimezone;
             if (!empty($excel->password)) {
                 $user->password = hash_internal_user_password($excel->password);
