@@ -148,25 +148,27 @@ class syncfunctionality
             }
 
             $patharr = (new \local_costcenter\lib\accesslib())::get_user_role_switch_path();
+
             // echo $path =(new \local_costcenter\lib\accesslib())::get_user_roleswitch_path();
             // print_r($patharr); die;
             foreach ($patharr as $path) {
                 list($zero[], $orgid[], $countryid[], $buid[], $cuid[], $territoryid[]) = explode('/', $path);
             }
 
-            $orgid[] = !empty($orgid) ? array_unique($orgid): $orgid;
 
-            $countryid[] = !empty($countryid) ? array_unique($countryid): array();
+            $orgid = !empty($orgid) ? array_unique($orgid): $orgid;
 
-            $buid[]= !empty($buid) ? array_unique($buid): array();
+            $countryid = !empty($countryid) ? array_unique($countryid): $countryid;
 
-            $cuid[] = !empty($cuid) ? array_unique($cuid): array();
+            $buid= !empty($buid) ? array_unique($buid):  $buid;
 
-            $territoryid[] = !empty($territoryid) ? array_unique($territoryid): array();
+            $cuid = !empty($cuid) ? array_unique($cuid): $cuid;
+
+            $territoryid = !empty($territoryid) ? array_unique($territoryid): $territoryid;
 
             // To hold costcenterid.
             if (($this->orgcount == 0)) {
-                $this->costcenterid = $this->get_org_hierarchyid($user->company_code, $parent = 0, array_unique($orgid));
+                $this->costcenterid = $this->get_org_hierarchyid($user->company_code, $parent = 0, $orgid);
             }
             // To hold countryid.
             if ($user->bussiness_unit_code && ($this->orgcount == 0)) {
@@ -396,12 +398,16 @@ class syncfunctionality
         }
         $strings->line = $this->excel_line_number;
         if ($datal) {
-            if (!in_array($datal->id, $orgid) && !empty(array_filter($orgid))) {
-                echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
-                $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
-                $this->mfields[] = $fieldvalue;
-                $this->errorcount++;
-                $this->orgcount++;
+
+            if(is_array($orgid)){
+
+                if (!in_array($datal->id, $orgid) && !empty(array_filter($orgid))) {
+                    echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
+                    $this->errors[] = get_string('orgcheckwithdhoh', 'local_users', $strings);
+                    $this->mfields[] = $fieldvalue;
+                    $this->errorcount++;
+                    $this->orgcount++;
+                }
             }
             if ($this->orgcount == 0) {
                 if ($parent == $datal->parentid) {
@@ -661,11 +667,15 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if (!in_array($datal->id, $buid)  && !empty(array_filter($buid))) {
-                    echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
-                    $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
-                    $this->errorcount++;
-                    $this->orgcount++;
+
+                if(is_array($buid)){
+
+                    if (!in_array($datal->id, $buid)  && !empty(array_filter($buid))) {
+                        echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
+                        $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
+                        $this->errorcount++;
+                        $this->orgcount++;
+                    }
                 }
                 if ($parentid == $datal->parentid) {
                     return $datal->id;
@@ -696,11 +706,15 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if (!in_array($datal->id, $cuid) && !empty(array_filter($cuid))) {
-                    echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
-                    $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
-                    $this->errorcount++;
-                    $this->orgcount++;
+
+                if(is_array($cuid)){
+
+                    if (!in_array($datal->id, $cuid) && !empty(array_filter($cuid))) {
+                        echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
+                        $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
+                        $this->errorcount++;
+                        $this->orgcount++;
+                    }
                 }
                 if ($parentid == $datal->parentid) {
                     return $datal->id;
@@ -731,11 +745,14 @@ class syncfunctionality
         $strings->line = $this->excel_line_number;
         if ($this->orgcount == 0) {
             if ($datal) {
-                if (!in_array($datal->id, $terrid) && !empty(array_filter($terrid))) {
-                    echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
-                    $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
-                    $this->errorcount++;
-                    $this->orgcount++;
+                if(is_array($terrid)){
+
+                    if (!in_array($datal->id, $terrid) && !empty(array_filter($terrid))) {
+                        echo '<div class=local_users_sync_error>' . get_string('orgcheckwithdhoh', 'local_users', $strings) . '</div>';
+                        $this->errors[] = get_string('bucheckwithdhoh', 'local_users', $strings);
+                        $this->errorcount++;
+                        $this->orgcount++;
+                    }
                 }
                 if ($parentid == $datal->parentid) {
                     return $datal->id;

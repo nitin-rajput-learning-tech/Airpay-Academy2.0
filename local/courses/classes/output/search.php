@@ -64,8 +64,9 @@ class search implements renderable{
         if(!is_siteadmin()){
 
             $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            //$usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
             $paths = [];
-            foreach($usercostcenterpaths AS $userpath){
+            foreach($usercostcenterpaths AS $userpath){ 
                 $userpathinfo = $userpath;
                 $paths[] = $userpathinfo.'/%';
                 $paths[] = $userpathinfo;
@@ -89,7 +90,13 @@ class search implements renderable{
             //     }
             //     $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             // }
+
+            if(!empty($USER->open_designation) && $USER->open_designation != ""){                 
+                $wheresql .= " AND ( (concat(',',c.open_designation,',') LIKE '%,$USER->open_designation,%' ) OR c.open_designation = '-1' OR c.open_designation IS NULL)";
+            }          
+          
         }
+    
         foreach($filters AS $filtertype => $filtervalues){
             switch($filtertype){
                 case 'status':
@@ -141,10 +148,10 @@ class search implements renderable{
         if(searchlib::$search && searchlib::$search!='null'){
             $course_searchsql = " AND c.fullname LIKE '%$search%'";
         }
-        if($coursetype){
+     /*    if($coursetype){
             $types = implode(',',array_filter($coursetype,'is_numeric'));
             $wheresql .= " AND c.open_identifiedas IN ($types) ";
-        }
+        } */
 
         $wheresql .= " AND c.visible = 1 ";
 
@@ -158,7 +165,7 @@ class search implements renderable{
             $numberofrecords = sizeof($DB->get_records_sql($finalcountquery, $params));
 
         $finalsql = $selectsql.$fromsql.$wheresql.$course_searchsql.$groupby;
-        // var_dump($finalsql);
+        
         $finalsql .= "  ORDER by c.id DESC";
 
         $courseslist = $DB->get_records_sql($finalsql, $params, $startlimit, $perpage);

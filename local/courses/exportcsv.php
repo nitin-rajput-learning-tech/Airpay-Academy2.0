@@ -62,7 +62,7 @@ $data = [];
 foreach($coursedata['hascourses'] AS $course){
     //  local_costcenter_set_costcenter_path($course);
     //, $course['points'], $course['skillname'], $course['tagstringtotal']
-     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_department'], $course['open_subdepartment'], $course['open_level4department'], $course['open_level5department'], $course['catname'], $course['enrolled_count'], $course['completed_count'], $course['ratings_value'],$course['fullcoursesummary'],$course['format'],$course['selfenrol']];
+     $data[] = [$course['coursename'], $course['shortname'], $course['coursetype'], $course['open_department'], $course['open_subdepartment'], $course['open_level4department'], $course['catname'], $course['enrolled_count'], $course['completed_count'], $course['ratings_value'],$course['fullcoursesummary'],$course['format'],$course['selfenrol']];
 }
 $table->id = "users";
 $table->data = $data;

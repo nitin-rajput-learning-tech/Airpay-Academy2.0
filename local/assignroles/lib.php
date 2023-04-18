@@ -94,7 +94,7 @@ function local_assignroles_output_fragment_new_costcenterassignrole($args)
    
     $mform = new local_assignroles\form\assigncostcenterrole(null, array('costcenterid' => $costcenterid,'formtype' => $formtype,'hierarchyid' => $hierarchyid), 'post', '', null, true, $formdata);
     $mform->set_data($formdata);
-    if (!empty($formdata)) {
+    if (!empty($args->jsonformdata) && strlen($args->jsonformdata)>2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }

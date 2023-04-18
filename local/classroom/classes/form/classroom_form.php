@@ -177,12 +177,11 @@ class classroom_form extends moodleform {
                 'multiple' => true,
                 'data-contextid' => $categorycontext->id,
                 'data-action' => 'classroom_trainer_selector',
-                'data-options' => json_encode(array('id' => $id,'organizationselect' => 'organizationselect')),
+                'data-options' => json_encode(array('id' => $id,'organizationselect' => 'open_costcenterid_select')),
                 'class' => 'trainerselect',
                 'data-parentclass' => 'open_costcenterid_select',
-                'data-class' => 'idparentselect',
+                'data-class' => 'open_costcenterid_select',
             );
-             
             $mform->addElement('autocomplete', 'trainers', get_string('trainers', 'local_classroom'), $trainers, $options);
             $mform->addHelpButton('trainers','traning','local_classroom');
 

@@ -47,10 +47,10 @@
             <td>{{#catnamestring}}{{catnamestring}}{{/catnamestring}}{{^catnamestring}}N/A{{/catnamestring}}</td>
             <td>
                 {{# enrolled_count }} {{enrolled_count}} {{/ enrolled_count }} 
-                {{^ enrolled_count }} N/A {{/ enrolled_count }}
+                {{^ enrolled_count }} 0 {{/ enrolled_count }}
             </td>
             <!-- <td>{{points}}</td> -->
-            <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} N/A {{/ completed_count }}</td>
+            <td>{{# completed_count }} {{completed_count}} {{/ completed_count }} {{^ completed_count }} 0 {{/ completed_count }}</td>
             <!-- <td>{{{coursetype}}}</td> -->
             <td>
                 {{#update}}{{{ editcourse }}} {{/update}}

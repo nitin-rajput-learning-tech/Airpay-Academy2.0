@@ -16,16 +16,20 @@ require_once($CFG->dirroot.'/local/includes.php');
 
 $id  = required_param('id', PARAM_INT); // Course id
 
-$coursecontext = get_context_instance(CONTEXT_COURSE, $id);
+$coursecontext = context_course::instance($courseid);
 $PAGE->set_context($coursecontext);
 $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
 require_login();
 $PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_search'), 'callbacks' => array()));
 local_search_include_search_js();
-$course = $DB->get_record('course', array('id'=>$id));
+$course = get_course($id);
+if($USER->open_costcenterid != $course->open_costcenterid){
+	redirect($CFG->wwwroot.'/local/courses/courses.php');
+}
+/* $course = $DB->get_record('course', array('id'=>$id));
 if(!$course){
 	print_error('invalidcourseid');
-}
+} */
 
 $PAGE->set_title($course->fullname);
 $userrolecontext = local_costcenter\lib\accesslib::get_module_context();

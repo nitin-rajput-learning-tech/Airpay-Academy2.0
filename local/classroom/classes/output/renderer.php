@@ -453,9 +453,9 @@ class renderer extends plugin_renderer_base
                 $classroomid = $sdata->classroomid;
                 $line['classroomname'] = $DB->get_field('local_classroom', 'name', array('id' => $classroomid));
             }
-            $line['date'] = userdate($sdata->timestart, '%d/%m/%Y');
-            $line['starttime'] = userdate($sdata->timestart, "%d/%m/%Y %H:%M");
-            $line['endtime'] = userdate($sdata->timefinish, "%d/%m/%Y %H:%M");
+            $line['date'] = date('d-m-Y H:i a',$sdata->timestart);
+            $line['starttime'] = date("d-m-Y H:i a",$sdata->timestart);
+            $line['endtime'] = date("d-m-Y H:i a",$sdata->timefinish);
 
             // $link = get_string('pluginname', 'local_classroom');
             // if ($sdata->onlinesession == 1) {

@@ -64,7 +64,7 @@ define(['jquery', 'core/ajax', 'core/templates'], function($, Ajax, Templates) {
                     }
                 }else if (action === 'classroom_trainer_selector') {
                         organizationclass = formoptions.organizationselect;
-                        formoptions.parnetid = $("[data-class='" + organizationclass + "']").val();
+                        formoptions.parentid = $("[data-class='" + organizationclass + "']").val();
                    
                 }
                     //console.log(formoptions);

@@ -264,6 +264,7 @@ define(['jquery',
                 // fail: this.handleFormSubmissionFailure.bind(this, formData)
             }]);
              promise[0].done(function(resp){
+        
                 if (resp.nextstep) {
                     self.modal.destroy();
                     self.args.id = resp.id;
@@ -271,8 +272,8 @@ define(['jquery',
                     self.method = resp.method;
                 } else {
                     // self.modal.destroy();
-                    // window.location.reload();
-                self.handleFormSubmissionResponse(formData);
+                     //window.location.reload();
+                    self.handleFormSubmissionResponse(formData);
                 }
             }).fail(function(ex){
                 self.handleFormSubmissionFailure(formData);
@@ -309,11 +310,12 @@ define(['jquery',
          */
         Fragment.prototype.handleSubmissionResponse = function() {
             this.modal.destroy();
-            Notification.addNotification({
+           Notification.addNotification({
                 message: 'Success',
                 type: "success"
-            });
+            }); 
             if(this.method == 'evaluation_update_status' || this.method == 'course_update_status'){
+                window.location.reload();
                 $('form#filteringform.mform #id_filter_apply').trigger('click');
             }
         };

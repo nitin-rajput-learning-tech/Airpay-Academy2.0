@@ -40,9 +40,13 @@ $PAGE->set_title(get_string('classrooms', 'local_classroom'));
 $renderer = $PAGE->get_renderer('local_classroom');
 $PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'load', array());
 $classroom=$renderer->classroomview_check($classroomid);
-
+// print_r($classroom['classrooms']);exit;
+if(is_siteadmin() || has_capability('local/classroom:manageclassroom', $categorycontext))
+{
 $PAGE->navbar->add(get_string("pluginname", 'local_classroom'), new moodle_url('index.php'));
+
 $PAGE->navbar->add($classroom->name);
+}
 $PAGE->set_heading($classroom->name);
 
 $PAGE->requires->jquery_plugin('ui-css');
