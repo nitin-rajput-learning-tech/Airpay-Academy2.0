@@ -97,7 +97,7 @@ class classroom_completion_form extends moodleform {
         
         
         $course_tracking=array(NULL=>get_string('classroom_donotcoursecompletion','local_classroom'),
-                               'AND'=>get_string('classroom_allcoursescompletion', 'local_classroom'),
+                               //'AND'=>get_string('classroom_allcoursescompletion', 'local_classroom'),
                                 'OR'=>get_string('classroom_anycoursecompletion', 'local_classroom'));
                          
         $mform->addElement('select', 'coursetracking', get_string('coursetracking', 'local_classroom'), $course_tracking, array());

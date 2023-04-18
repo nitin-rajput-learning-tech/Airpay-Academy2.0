@@ -107,9 +107,10 @@ class accesslib extends \local_costcenter\lib\accesslib{
                                 WHERE c.id = :courseid AND ra.roleid = :employeerole AND cc.timecompleted IS NOT NULL $costcenterpathconcatsql";
 
             $completedusercount = $DB->count_records_sql($completedusersssql,$params);
-           
-            $enrolledpercentage=($enrolledusercount / $totaluserscount) * 100;
-
+            if($totaluserscount > 0){
+                $enrolledpercentage=($enrolledusercount / $totaluserscount) * 100;
+            }
+            
             if (!is_nan($enrolledpercentage)) {
 
                 $enrolledpercentage = floor($enrolledpercentage);

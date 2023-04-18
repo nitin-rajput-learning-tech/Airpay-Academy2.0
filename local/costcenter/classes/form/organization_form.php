@@ -100,6 +100,21 @@ class organization_form extends moodleform { /*costcenter creation form*/
 
                 $shortnamestatic = (isset($this->_ajaxformdata['concatshortname'])) ? $this->_ajaxformdata['concatshortname'] : '';
 
+
+                if ($this->_customdata['open_costcenterid'] > 0) {
+
+                    try {
+
+                        $shortnamestatic = $DB->get_field('local_costcenter', 'shortname', array('id' => $this->_customdata['open_costcenterid']));
+
+                    } catch (Exception $e) {
+
+                        $shortnamestatic = '';
+
+                    }
+
+                }
+
                 $shortname = array();
                 $shortname[] = $mform->createElement('hidden',  'concatshortname',$shortnamestatic);
                 $shortname[] = $mform->createElement('static',  'shortnamestatic','','<span class="shortnamestatic">'.$shortnamestatic.'</span>_');
