@@ -270,14 +270,15 @@ class local_skillrepository_renderer extends plugin_renderer_base {
             $skill_courses = "<span class = 'noskillcoursesmsg'>".get_string('nodata', 'local_skillrepository')."</span>";
         }
         $skilldata .= "<div class='skillcourses'><b>".get_string('skill_courses', 'local_skillrepository').': </b>'.$skill_courses."</div>";
-
+        $userpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $sql = "SELECT u.id, u.open_employeeid, c.fullname, u.firstname, u.lastname, cc.timecompleted
             FROM {course} c
             JOIN {course_completions} cc
             on cc.course = c.id
             JOIN {user} u
             on cc.userid = u.id
-            WHERE c.open_skill = $skillid and cc.timecompleted IS NOT NULL";
+            WHERE c.open_skill = $skillid and cc.timecompleted IS NOT NULL $userpathconcatsql $costcenterpathconcatsql";
 
         $skill_compl_courses = $DB->get_records_sql($sql);
 

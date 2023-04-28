@@ -133,8 +133,9 @@ class evaluation_courses implements \renderable, \templatable {
             $data->enableslider = 1;
         else    
             $data->enableslider = 0;
-
+        if($this->courseslist > 0){
         $courses_view_count = count($this->courseslist);
+    }
         $data->courses_view_count = $courses_view_count;
         if (!empty($this->courseslist)) 
             $data->inprogress_elearning_available = 1;

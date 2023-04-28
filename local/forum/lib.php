@@ -73,6 +73,7 @@ function local_forum_output_fragment_custom_forum_form($args)
                 WHERE f.course=:courseid ";
         $moduleinfo = $DB->get_record_sql($moduleinfoSql, array('courseid' => $courseid));
         $course->duedate = $moduleinfo->duedate;
+        $course->type = $moduleinfo->type;
         $course->cutoffdate = $moduleinfo->cutoffdate;
         $course->maxbytes = $moduleinfo->maxbytes;
         $course->maxattachments = $moduleinfo->maxattachments;
@@ -513,7 +514,7 @@ function get_listof_forum($stable, $filterdata,$options)
                 JOIN {enrol} e on e.id = ue.enrolid
                 WHERE e.courseid =:courseid AND ue.userid =:userid ";
             $params = array('courseid' => $course->id, 'userid' => $USER->id);
-            if (!$DB->record_exists_sql($sql, $params) && !is_siteadmin()) {
+            if (!$DB->record_exists_sql($sql, $params) && !is_siteadmin() && !has_capability('local/forum:manage', $context)) {
                 $subscribed =  false;
             } else {
                 $subscribed =  true;
@@ -789,14 +790,13 @@ function add_forum_forum($validateddata, $forumid)
 function update_forum_forum($validateddata, $data, $formstatus)
 {
     global $DB;
-
     //forum module
     $forum = new stdClass();
     $forum->modulename = 'forum';
     $forum->add = 'forum';
     $forum->module = $DB->get_field('modules', 'id', array('name' => 'forum'));
     $forum->showdescription = 0;
-    $forum->type = 'general';
+    $forum->type = $validateddata->type;
     $forum->duedate = $validateddata->duedate;
     $forum->cutoffdate = $validateddata->cutoffdate;
     $forum->maxbytes = $validateddata->maxbytes;
@@ -854,7 +854,6 @@ function update_forum_forum($validateddata, $data, $formstatus)
     $forum->completion = 2;
     $forum->completionusegrade = 1;
     $forum->completionpassgrade = 1;
-    // print_r($forum);
     return $forum;
 }
 function forum_filters_form($filterparams, $formdata = []) {

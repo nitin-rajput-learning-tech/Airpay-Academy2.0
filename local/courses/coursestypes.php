@@ -61,6 +61,10 @@ foreach($result as $res){
     }else{
         $show = true;
     }
+    $res->class = '';
+    if ($res->active == 0) {
+        $res->class = 'disabled';
+    }
     $res->display = $show;
     $res->identifiedas = $DB->get_field('course','open_identifiedas',array('open_identifiedas'=>$res->id));
     $organization = $DB->get_field('local_costcenter','fullname', array('id' => $res->orgid));

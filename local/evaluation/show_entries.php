@@ -117,7 +117,9 @@ navigation_node::override_active_url($baseurl);
 $PAGE->set_heading($evaluation->name);
 $PAGE->set_title($evaluation->name);
 if ($evaluation->instance == 0) {
+  if(is_siteadmin() || has_capability('local/evaluation:addinstance', $context)){
   $PAGE->navbar->add(get_string("manageevaluation", 'local_evaluation'), new moodle_url('index.php'));
+  }
 } else {
   if ($evaluation->plugin === "classroom")
   $PAGE->navbar->add(ucwords($evaluation->plugin), new moodle_url('/local/'.$evaluation->plugin.'/view.php?cid='.$evaluation->instance.''));
@@ -203,8 +205,9 @@ if (!$showcompleted) {
       else
       $path = new moodle_url('/local/evaluation/eval_view.php', array('id'=>$evaluation->id));
     }
-
+    if(is_siteadmin() || has_capability('local/evaluation:addinstance', $context)){
     echo html_writer::link($path, get_string('back'), array('class'=>'backurl btn btn-primary'));
+    }
 }
 
 // Finish the page.

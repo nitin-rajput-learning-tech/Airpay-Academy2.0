@@ -1786,6 +1786,15 @@ class local_users_external extends external_api {
 
                     $return = array_values(json_decode(json_encode(($userprofile)), true));
                 break;
+                case 'eval_group_selector':
+                   $parentpath= $formoptions->parentid ? '%/' . $formoptions->parentid . '%' : 0;
+                   $grouplist[0] =(object) array('id'=>0,'fullname'=>get_string('all')) ;
+                   $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='g.open_path',$costcenterpath);
+                          $grouplist += $DB->get_records_sql("SELECT c.id, c.name as fullname FROM {local_groups} g, {cohort} c
+                     WHERE c.visible = :visible AND c.id = g.cohortid AND g.open_path LIKE :parentpath $costcenterpathconcatsql ",
+                      array( 'visible' => 1,'parentpath'=>$parentpath));
+                    $return =array_values(json_decode(json_encode(($grouplist)),true));
+                break;
             }
         }
         return json_encode($return);

@@ -54,7 +54,11 @@ require_login();
 require_capability('local/classroom:manageclassroom', $categorycontext);
 require_capability('local/classroom:manageusers', $categorycontext);
 if($view=='ajax'){
-    $options =(array)json_decode($_GET["options"],false);
+    if(is_string($_GET["options"])){
+        $options = json_decode($_GET["options"], false);
+    }else{
+        $options = $_GET["options"];  
+    }
      $select_from_users=(new classroom)->select_to_and_from_users($type,$classroomid,$options,false,$offset1=-1,$perpage=50,$lastitem);
     echo json_encode($select_from_users);
     exit;
@@ -124,9 +128,7 @@ if ($classroomid) {
 
     // Create the user selector objects.
     $options = array('context' => $categorycontext->id, 'classroomid' => $classroomid, 'organization' => $organization, 'department' => $department,'subdepartment' => $subdepartment,'department4level' => $department4level,'department5level' => $department5level,'states' => $states,'district' => $district,'subdistrict' => $subdistrict,'village' => $village, 'email' => $email, 'idnumber' => $idnumber, 'uname' => $uname, 'groups' => $groups, 'hrmsrole' => $hrmsrole, 'location' => $location);
-    //$potentialuserselector = new local_classroom_potential_users('addselect', $options);
-    //$currentuserselector = new local_classroom_existing_users('removeselect', $options);
-
+  
     if ( $add&& confirm_sesskey()) {
 
         if($submit_value=="Add_All_Users"){
@@ -207,12 +209,12 @@ if ($classroomid) {
     }
 
    $content.='</select>';
-   $content.='</div><div class="box3 col-md-2 col-12 pull-left actions"><button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="'.get_string('remove_selected_users', 'local_classroom').'" name="submit_value" value="Remove Selected Users" id="user_unassign_all"/>
+   $content.='</div><div class="box3 col-md-2 col-12 pull-left actions"><button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="'.get_string('remove_users', 'local_classroom').'" name="submit_value" value="Remove Selected Users" id="user_unassign_all"/>
        '.get_string('remove_selected_users', 'local_classroom').'
         </button></form>
 
        ';
-   $content.='<form  method="post" name="form_name" id="user_un_assign" class="form_class" ><button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="'.get_string('add_selected_users', 'local_classroom').'" name="submit_value" value="Add Selected Users" id="user_assign_all" />
+   $content.='<form  method="post" name="form_name" id="user_un_assign" class="form_class" ><button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="'.get_string('add_users', 'local_classroom').'" name="submit_value" value="Add Selected Users" id="user_assign_all" />
        '.get_string('add_selected_users', 'local_classroom').'
         </button></div><div class="box1 col-md-5 col-12 pull-left">
     <input type="hidden" name="cid" value="'.$classroomid.'"/>
@@ -233,13 +235,8 @@ $PAGE->navbar->add(get_string("enrolusers", 'local_classroom'));
 //$PAGE->set_heading(get_string('assignusers_heading', 'local_classroom',$classroom->name));
 echo $OUTPUT->header();
 
-//// Print heading.
-//echo $OUTPUT->heading_with_help($classroom->name, 'addusers', 'local_classroom');
-
 if(!empty($courses_plugin_exists)){
-    // print_collapsible_region_start(' ', 'filters_form', ' '.' '.get_string('filters'), false, $collapse);
-    // $mform->display();
-    // print_collapsible_region_end();
+    
     echo '<a class="btn-link btn-sm" title="'.get_string('filter').'" href="javascript:void(0);" data-toggle="collapse" data-target="#local_classroomenrol-filter_collapse" aria-expanded="false" aria-controls="local_classroomenrol-filter_collapse">
             <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
           </a>';
@@ -310,7 +307,7 @@ $( document ).ready(function() {
         {
           $('.dual_select').bind('scroll', function()
             {
-              if($(this).scrollTop() + $(this).innerHeight()>=$(this)[0].scrollHeight)
+              if(Math.round($(this).scrollTop() + $(this).innerHeight())>=$(this)[0].scrollHeight)
               {
                 var get_id=$(this).attr('id');
                 if(get_id=='bootstrap-duallistbox-selected-list_duallistbox_classroom_users'){

@@ -73,24 +73,25 @@ abstract class plugin {
             $params = [];
             $sql = "SELECT c.id, c.fullname, c.visible, c.summary, c.open_identifiedas, c.selfenrol, c.open_skill
                 FROM {course} AS c
-                WHERE c.open_skill IN ($intskills) AND c.visible = 1 AND c.selfenrol = 1 AND c.id NOT IN ($imp_val)";
+                WHERE c.open_skill IN ($intskills) AND c.visible = 1 AND c.selfenrol = 1 AND c.id NOT IN ($imp_val) AND open_coursetype = 0";
 
             if(!empty($data_object->search_query)){
                 $sql .= " AND c.fullname LIKE '%$data_object->search_query%'";
             }
             $suggestedcourses = $DB->get_records_sql($sql, $params, $stable->start, $stable->length);
+            
         } else {
             $allcoursecount = 0;
         }
         try {
-         if($coursecount === ''){
-                $coursecount = $DB->get_records_sql($sql, $params);   
-                $allcoursecount=count($coursecount);
-             }
+            
+            $coursecount = $DB->get_records_sql($sql, $params);   
+            $allcoursecount=count($coursecount);
+        
         } catch (dml_exception $ex) {
             $allcoursecount = 0;
         }
-        // print_r($suggestedcourses);die;
+       
         return compact('suggestedcourses', 'allcoursecount');
     }
 }

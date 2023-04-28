@@ -455,48 +455,48 @@ class view extends plugin_renderer_base
 					$filtersubdepts = implode(',', $filterdata->filteropen_subdepartment);
 				}
 
-				if ($filterdata->filteropen_costcenterid) {
+				if (isset($filterdata->filteropen_costcenterid) && !empty($filterdata->filteropen_costcenterid && is_array($filterdata->filteropen_costcenterid))) {
 					$filterorganizations = implode(',', $filterdata->filteropen_costcenterid);
 				}
 
-				if ($filterdata->filteropen_department) {
+				if (isset($filterdata->filteropen_department) &&  !empty($filterdata->filteropen_department) && is_array($filterdata->filteropen_department)) {
 					$filterdepartments = implode(',', $filterdata->filteropen_department);
 				}
 
-				if ($filterdata->learningplan) {
+				if (isset($filterdata->learningplan) &&  !empty($filterdata->learningplan)  && is_array($filterdata->learningplan)) {
 					$filterlearningplan = implode(',', $filterdata->learningplan);
 				}
 
-				if (isset($filterdata->filteropen_level4department) && $filterdata->filteropen_level4department) {
+				if (isset($filterdata->filteropen_level4department) && !empty($filterdata->filteropen_level4department) && is_array($filterdata->filteropen_level4department)) {
 					$filter4level = implode(',', $filterdata->filteropen_level4department);
 				}
 
-				if (isset($filterdata->filteropen_level5department) && $filterdata->filteropen_level5department) {
+				if (isset($filterdata->filteropen_level5department) && !empty($filterdata->filteropen_level5department) && is_array($filterdata->filteropen_level5department)) {
 					$filter5level = implode(',', $filterdata->filteropen_level5department);
 				}
 
-				if (isset($filterdata->states) &&  $filterdata->states) {
+				if (isset($filterdata->states) &&  !empty($filterdata->states) && is_array($filterdata->states)) {
 					$filterstates = implode(',', $filterdata->states);
 				}
 
-				if (isset($filterdata->district) && $filterdata->district) {
+				if (isset($filterdata->district) && !empty($filterdata->district) && is_array($filterdata->district)) {
 					$filterdistrict = implode(',', $filterdata->district);
 				}
 
-				if (isset($filterdata->subdistrict) && $filterdata->subdistrict) {
+				if (isset($filterdata->subdistrict) && !empty($filterdata->subdistrict) && is_array($filterdata->subdistrict)) {
 					$filtersubdistrict = implode(',', $filterdata->subdistrict);
 				}
 
-				if (isset($filterdata->village) && $filterdata->village) {
+				if (isset($filterdata->village) && !empty($filterdata->village) && is_array($filterdata->village)) {
 					$filtervillage = implode(',', $filterdata->village);
 				}
 
-				if (isset($filterdata->status) && $filterdata->status) {
+				if (isset($filterdata->status) && !empty($filterdata->status)  && is_array($filterdata->status)) {
 					//print_r($filterdata->status);
 					$filterstatus = implode(',', $filterdata->status);
 				}
 
-				if (isset($filterdata->categories) && $filterdata->categories) {
+				if (isset($filterdata->categories) && !empty($filterdata->categories)  && is_array($filterdata->categories)) {
 					$filtercategories = implode(',', $filterdata->categories);
 				}
 			} else {
@@ -871,15 +871,21 @@ class view extends plugin_renderer_base
 			$commercial = get_string('audience_commercial', 'local_learningplan', $commercial_list);
 		}
 
-		// if ($territ == NULL) {
-		// 	$territory = get_string('audience_terriroty', 'local_learningplan', 'All');
-		// } else {
-		// 	$sql = "SELECT id,fullname FROM {local_costcenter} WHERE id IN ($territ)";
-		// 	$territorys = $DB->get_records_sql_menu($sql);
-		// 	$territory_list = implode(", ", $territorys);
-		// 	$territory = get_string('audience_terriroty', 'local_learningplan', $territory_list);
-		// }
+		if ($data->open_group == NULL || $data->open_group == -1) {
+			$group = get_string('audience_group', 'local_learningplan', 'All');
+		} else {
+			$sql = "SELECT id,name FROM {cohort} c JOIN {local_groups} g ON g.cohortid = c.id  WHERE g.id IN ($data->open_group)";
+			$groups = $DB->get_records_sql_menu($sql);
+			$group_list = implode(", ", $groups);
+			$group = get_string('audience_group', 'local_learningplan', $group_list);
+		}
 
+		if ($data->open_designation == NULL || $data->open_group == -1) {
+			$designation = get_string('audience_designation', 'local_learningplan', 'All');
+		} else {			
+			$designation = get_string('audience_designation', 'local_learningplan', $data->open_designation);
+		}
+		
 		// if($data->open_states > 0){
 		//     $sql = "SELECT id,states_name FROM {local_states} WHERE id IN ($data->open_states)";
 		//     $open_states = $DB->get_records_sql_menu($sql);
@@ -932,7 +938,7 @@ class view extends plugin_renderer_base
             $data->open_designation =(!empty($data->open_designation)) ? $designation=get_string('audience_designation','local_learningplan',$data->open_designation) :$designation=get_string('audience_designation','local_learningplan','All');
             
             $data->open_location =(!empty($data->open_location)) ? $location=get_string('audience_location','local_learningplan',$data->open_location) :$location=get_string('audience_location','local_learningplan','All');*/
-		return '<div class="tab-pane active mt-15 ml-15" id="plan_targetaudiences" role="tabpanel">' . $department . $subdepartment . $commercial. $state . $district . $subdistrict . $village . '</div>';
+		return '<div class="tab-pane active mt-15 ml-15" id="plan_targetaudiences" role="tabpanel">' . $department . $subdepartment . $commercial. $group . $designation . $subdistrict . $village . '</div>';
 	}
 	/**Function to tab view of bulk users uploads
 	$planid=LEP_id $curr_tab="tab name"
@@ -1184,7 +1190,8 @@ class view extends plugin_renderer_base
 			if (!empty($department5levelsql)) {
 				$sql .= " AND ( " . implode(' OR ', $department5levelsql) . " ) ";
 			}
-		}
+		} 
+		
 		if (!empty($params['states'])) {
 			$sql .= " AND u.open_states IN ({$params['states']}) ";
 		}
@@ -1230,7 +1237,7 @@ class view extends plugin_renderer_base
 			// $order.="LIMIT $perpage";
 		}
 		if ($total == 0) {
-			$users = $this->db->get_records_sql_menu($sql . $order, $params, '', $perpage);
+			$users = $this->db->get_records_sql_menu($sql . $order, $params, $offset1, $perpage);
 		} else {
 			$users = $this->db->count_records_sql($sql, $params);
 		}
@@ -1278,57 +1285,62 @@ class view extends plugin_renderer_base
 		if (!empty($params['organization'])) {
 			$organizations = explode(',', $params['organization']);
 			$orgsql = [];
-			foreach ($organizations as $organisation) {
+			foreach($organizations AS $organisation){
+				$organisationpath = $this->db->get_field("local_costcenter","path",array('id' => $organisation));
 				$orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
-				$params["organisationparam_{$organisation}"] = '%/' . $organisation . '/%';
+				$params["organisationparam_{$organisation}"] = '%'.$organisationpath.'/%';
 			}
-			if (!empty($orgsql)) {
-				$sql .= " AND ( " . implode(' OR ', $orgsql) . " ) ";
+			if(!empty($orgsql)){
+				$sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
 			}
 		}
 		if (!empty($params['department'])) {
 			$departments = explode(',', $params['department']);
 			$deptsql = [];
-			foreach ($departments as $department) {
+			foreach($departments AS $department){
+				$departmentpath = $this->db->get_field("local_costcenter","path",array('id' => $department));
 				$deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
-				$params["departmentparam_{$department}"] = '%/' . $department . '/%';
+				$params["departmentparam_{$department}"] = '%'.$departmentpath.'/%';
 			}
-			if (!empty($deptsql)) {
-				$sql .= " AND ( " . implode(' OR ', $deptsql) . " ) ";
+			if(!empty($deptsql)){
+				$sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
 			}
 		}
-
+	   
 		if (!empty($params['subdepartment'])) {
 			$subdepartments = explode(',', $params['subdepartment']);
 			$subdeptsql = [];
-			foreach ($subdepartments as $subdepartment) {
+			foreach($subdepartments AS $subdepartment){
+				$subdepartmentpath = $this->db->get_field("local_costcenter","path",array('id' => $subdepartment));
 				$subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
-				$params["subdepartmentparam_{$subdepartment}"] = '%/' . $subdepartment . '/%';
+				$params["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartmentpath.'/%';
 			}
-			if (!empty($subdeptsql)) {
-				$sql .= " AND ( " . implode(' OR ', $subdeptsql) . " ) ";
+			if(!empty($subdeptsql)){
+				$sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
 			}
 		}
 		if (!empty($params['department4level'])) {
-			$depart4level = explode(',', $params['department4level']);
-			$department4levelsql = [];
-			foreach ($depart4level as $department4level) {
-				$department4levelsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
-				$params["department4levelparam_{$department4level}"] = '%/' . $department4level . '/%';
+			$subdepartments = explode(',', $params['department4level']);
+			$subdeptsql = [];
+			foreach($subdepartments AS $department4level){
+				$department4levelpath = $this->db->get_field("local_costcenter","path",array('id' => $department4level));
+				$subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+				$params["department4levelparam_{$department4level}"] = '%'.$department4levelpath.'%';
 			}
-			if (!empty($department4levelsql)) {
-				$sql .= " AND ( " . implode(' OR ', $department4levelsql) . " ) ";
+			if(!empty($subdeptsql)){
+				$sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
 			}
 		}
 		if (!empty($params['department5level'])) {
-			$depart5level = explode(',', $params['department5level']);
-			$department5levelsql = [];
-			foreach ($depart5level as $department5level) {
-				$department5levelsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
-				$params["department5levelparam_{$department5level}"] = '%/' . $department5level . '/%';
+			$subdepartments = explode(',', $params['department5level']);
+			$subdeptsql = [];
+			foreach($subdepartments AS $department5level){
+				$department5levelpath = $this->db->get_field("local_costcenter","path",array('id' => $department5level));
+				$subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+				$params["department5levelparam_{$department5level}"] = '%'.$department5levelpath.'/%';
 			}
-			if (!empty($department5levelsql)) {
-				$sql .= " AND ( " . implode(' OR ', $department5levelsql) . " ) ";
+			if(!empty($subdeptsql)){
+				$sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
 			}
 		}
 		if (!empty($params['states'])) {
@@ -1381,7 +1393,7 @@ class view extends plugin_renderer_base
 			$limit = $perpage;
 		}
 		if ($total == 0) {
-			$users = $this->db->get_records_sql_menu($sql . $order, $params, '', $perpage);
+			$users = $this->db->get_records_sql_menu($sql . $order, $params, $offset1, $perpage);
 		} else {
 			$users = $this->db->count_records_sql($sql, $params);
 		}
@@ -1650,12 +1662,13 @@ class view extends plugin_renderer_base
 				$buttons = '';
 				/****buttons are select box****/
 
-
+				$unassign_url = '';
+				$unassign_link = '';
 				if (has_capability('local/learningplan:assigncourses', $categorycontext)) {
 
 					$learningplans = $DB->get_records('local_learningplan');
 					foreach ($learningplans as $learningplan)
-						$departmentcount = count(array_filter(explode(',', $learningplan->department)));
+						//$departmentcount = count(array_filter(explode(',', $learningplan->department)));
 
 					if (!(is_siteadmin() || has_capability('local/learningplan:manage', $categorycontext)) /*&& $departmentcount > 1*/) {
 						$unassign_url = '';
@@ -1796,6 +1809,7 @@ class view extends plugin_renderer_base
 				} else {
 					$user_completions = 0;
 				}
+				$ctime ='';
 				if($progress==100){
 					$cmpltd_class = 'course_completed';
 					$completeflag = true;
@@ -2613,6 +2627,16 @@ class view extends plugin_renderer_base
 			} else {
 				$userrole = null;
 			}
+
+			$unenrol_flag = false;
+			$selfenrolled = $DB->record_exists('local_learningplan_user', array('planid' => $planid, 'userid' => $USER->id, 'usercreated' => $USER->id));
+			if ($selfenrolled) {
+				$unenrol_flag = true;
+			}
+
+		
+
+
 			//            if(is_null($userrole) || $userrole == 'user'){
 			if (is_null($userrole) || $userrole == 'employee') {
 				$core_component = new \core_component();
@@ -2631,7 +2655,7 @@ class view extends plugin_renderer_base
 						if ($completed) {
 							$certificateid = $DB->get_field('tool_certificate_issues', 'code', array('moduleid' => $planid, 'userid' => $USER->id, 'moduletype' => 'learningplan'));
 							if($certificateid == 0){
-	                            			$certificate_exists = false;
+	                            $certificate_exists = false;
 							}
 							$certificate_download = true;
 						} else {
@@ -2664,6 +2688,7 @@ class view extends plugin_renderer_base
 		$lp_userview['display_like'] = $display_like;
 		$lp_userview['certificate_exists'] = $certificate_exists;
 		$lp_userview['certificate_download'] = $certificate_download;
+		$lp_userview['unenrol_flag'] = $unenrol_flag;
 		$lp_userview['certificateid'] = $certificateid;
 		$lp_userview['planpercent'] = isset($planpercent) ? $planpercent : 0;
 		$challenge_exist = \core_component::get_plugin_directory('local', 'challenge');

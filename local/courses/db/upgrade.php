@@ -147,7 +147,7 @@ function xmldb_local_courses_upgrade($oldversion)
             $dbman->create_table($table);
         }
 
-        if ($dbman->table_exists($table)) {
+      /*   if ($dbman->table_exists($table)) {
             $course_type_data = array(
 
                 array('name' => 'Class Room', 'active' => '1', 'shortname' => 'classroom', 'orgid' => '0', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL),
@@ -165,7 +165,7 @@ function xmldb_local_courses_upgrade($oldversion)
                     $DB->insert_record('local_course_types', $course_type);
                 }
             }
-        }
+        } */
         upgrade_plugin_savepoint(true, 2022101800.05, 'local', 'courses');
     }
     if ($oldversion < 2022101800.08) {
@@ -184,7 +184,7 @@ function xmldb_local_courses_upgrade($oldversion)
         }
         upgrade_plugin_savepoint(true, 2022101800.10, 'local', 'courses');
     }
-    if ($oldversion < 2022101800.17) {
+   /*  if ($oldversion < 2022101800.17) {
         $time = time();
 
         $table = new xmldb_table('local_course_types');
@@ -204,7 +204,7 @@ function xmldb_local_courses_upgrade($oldversion)
             }
         }
         upgrade_plugin_savepoint(true, 2022101800.17, 'local', 'courses');
-    }
+    } */
     if ($oldversion < 2022101800.18) {
         $table = new xmldb_table('course');
         $field1 = new xmldb_field('open_group');

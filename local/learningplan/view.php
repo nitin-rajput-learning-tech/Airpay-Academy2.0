@@ -63,7 +63,8 @@ $headerlink = $renderer->display_unenrol_button($id, $plan_record->name);
 $content = $renderer->learningplaninfo_for_employee($id);
 echo $OUTPUT->header();
     if($id){
-    	echo $headerlink;
     	echo $content;
+		//echo $headerlink;
+    	
     } 
 echo $OUTPUT->footer();

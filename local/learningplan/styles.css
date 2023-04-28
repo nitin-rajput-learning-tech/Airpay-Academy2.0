@@ -698,14 +698,14 @@ body#page-local-learningplan-plan_view .course_extended_menu_list {
     color: #000;  
 }
 
-#page-local-learningplan-view .planview_container .course_extended_menu_itemlink .icon {
+/* #page-local-learningplan-view .planview_container .course_extended_menu_itemlink .icon {
     border-radius: 0!important;
     background-color: transparent;
     border: none;
     box-shadow: none;
     color: #fff!important;
     font-size: 23px;
-}
+} */
 #page-local-learningplan-view .course_extended_menu_list {
     top: -34px;
     right: 50px;
@@ -923,8 +923,8 @@ body.path-local-learningplan ul.nav.nav-tabs li>a.nav-link.active{
 #page-local-learningplan-index #filters_form form #Country,
 #page-local-learningplan-index #filters_form form #Commercial\ Unit,
 #page-local-learningplan-index #filters_form form #Commercial\ Area,
-#page-local-learningplan-index #filters_form form #Territory,
-#page-local-learningplan-index #filters_form form #Category{
+#page-local-learningplan-index #filters_form form #Territory{
+/*#page-local-learningplan-index #filters_form form #Category*/
 	flex:0 0 100%;
 	max-width:100%;
 	display: flex;

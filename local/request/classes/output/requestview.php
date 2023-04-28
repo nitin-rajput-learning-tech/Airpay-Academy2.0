@@ -113,7 +113,7 @@ class requestview implements renderable, templatable {
       } // end of  get_specific_costcenter_requests
     public function get_requestdetails($stable,$filtervalues){
         global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
         $params=array();
 
         $systemcontext = (new \local_request\lib\accesslib())::get_module_context();

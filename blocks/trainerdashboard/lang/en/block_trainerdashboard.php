@@ -73,3 +73,4 @@ $string['upcomingtrainings'] = 'Upcoming Training for next 6 Months';
 $string['upcomingtrainingsdashboards'] = 'Upcoming Trainings Dashboards';
 $string['filters'] = 'Filters';
 $string['trainermanhoursdashboards'] = 'Trainer Manhours Dashboards';
+$string['hours'] = 'Hours';

@@ -246,6 +246,9 @@ class renderer extends plugin_renderer_base {
                        if($line['edit']){
                          $actions =  '<a href="javascript:void(0);" title = ' .get_string('edit','local_program'). ' onclick="(function(e){ require(\'local_program/ajaxforms\').init({ contextid:1,component:\'local_program\',callback:\'program_form\',plugintype:\'local\',pluginname:\'program\', id: '.$sdata->id.', form_status:0 }) })(event)" ><i class="fa fa-pencil fa-fw" aria-hidden="true"></i></a>' ;
                        }
+                        if($line['assignusers']){
+                            $actions .= '<a href="'.$line['assignusersurl'].'" title = ' .get_string('assignusers','local_program'). '><i class="fa fa-user-plus fa-fw" aria-hidden="true"></i></a>';
+                        }
                        if($line['hide_show']){
 
                          if($line['hide']){
@@ -260,7 +263,8 @@ class renderer extends plugin_renderer_base {
                        }
                        if($line['delete']){
                         $actions .= '<a href="javascript:void(0);" title = ' .get_string('delete','local_program'). ' onclick="(function(e){ require(\'local_program/program\').deleteConfirm({action:\'deleteprogram\', id: '.$sdata->id.',programid: '.$sdata->id.',programname:\''.$line['program'].'\'}) })(event)" ><i class="fa fa-trash fa-fw" aria-hidden="true"></i></a>';
-                     }
+                      }
+
                     }
                      if($view_type == 'card'){
                       $row[] = $this->render_from_template('local_program/browseprogram', $line);
@@ -337,6 +341,8 @@ class renderer extends plugin_renderer_base {
                 $activeclass = '';
                 $disabled = '';
                 $levelname = $programlevel->level;
+                $programlevel->levelname = $programlevel->level;
+
 
                 $programlevel->level = "<span title='".$programlevel->level."'>".$levelname."</span>";
                 if ($programlevel->id == $levelid) {
@@ -364,7 +370,8 @@ class renderer extends plugin_renderer_base {
                 // if($prev_levelid){
                 //     $level_completions = (new program)->levels_completion_status($programid, $prev_levelid) 
                 // }
-                if($can_delete_levels){
+                $programlevelcourses =(new program)->program_level_courses_count($programid, $programlevel->id);
+                if($can_delete_levels && $programlevelcourses == 0){
                     if (has_capability('local/program:deletelevel', $categorycontext)) {
                         $candeletelevel = true;
                     }
@@ -441,6 +448,9 @@ class renderer extends plugin_renderer_base {
         $bcuser = $DB->record_exists('local_program_users',
             array('programid' => $programid, 'userid' => $USER->id));
         $userview = $bcuser && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext) ? true : false;
+
+        $userserachview = $bcuser || is_siteadmin() || has_capability('local/program:createprogram', $categorycontext) ? true : false;
+
         $bclevel = new stdClass();
         $bclevel->programid = $programid;
         $bclevel->levelid = $levelid;
@@ -461,14 +471,18 @@ class renderer extends plugin_renderer_base {
         }
         $programlevel = $DB->get_record('local_program_levels', array('programid' => $programid, 'id' => $levelid));
 
-        $programlevel->mycompletionstatus = '';
-        if ($userview && array_search($programlevel->id, $mycompletedlevels) !== false) {
-            $programlevel->mycompletionstatus = 'Completed';
+        if($programlevel){
+
+            $programlevel->mycompletionstatus = '';
+            if ($userview && array_search($programlevel->id, $mycompletedlevels) !== false) {
+                $programlevel->mycompletionstatus = 'Completed';
+            }
+            $programlevel->myinprogressstatus = '';
+            if ($userview && array_search($programlevel->id, $mycompletedlevels) === false ) {
+                $programlevel->myinprogressstatus = 'Inprogress';
+            }
         }
-        $programlevel->myinprogressstatus = '';
-        if ($userview && array_search($programlevel->id, $mycompletedlevels) === false ) {
-            $programlevel->myinprogressstatus = 'Inprogress';
-        }
+
 
         foreach ($programlevelcourses as $i => $bclevelcourse) {
 
@@ -541,7 +555,8 @@ class renderer extends plugin_renderer_base {
             'levelid' => $levelid,
             'programlevel' => $programlevel,
             'userview' => $userview,
-            'programlevelcourses' => array_values($programlevelcourses),
+            'userserachview' => $userserachview,
+            'programlevelcourses' => (is_array($programlevelcourses)) ? array_values($programlevelcourses) : array(),
             'levelcompletioncriteria' => $this->viewlevelcompletion_settings_info($programid, $levelid),
         ];
         $return = $this->render_from_template('local_program/levelcoursescontent',
@@ -829,7 +844,7 @@ class renderer extends plugin_renderer_base {
             return null;
         }
         $categorycontext =(new \local_program\lib\accesslib())::get_module_context($programid);
-        $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_program/program\').unEnrolUser({programid: '.$programid.', userid:'.$USER->id.', programname:\''.$programname.'\', contextid:'.$categorycontext->id.'}) })(event)'));
+        $object = html_writer::link('javascript:void(0)', '<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title ="'.get_string('unenrol','local_program').'"></i>', array('class' => 'course_extended_menu_itemlink unenrolself_module', 'onclick' => '(function(e){ require(\'local_program/program\').unEnrolUser({programid: '.$programid.', userid:'.$USER->id.', programname:\''.$programname.'\', contextid:'.$categorycontext->id.'}) })(event)'));
         $container = html_writer::div($object, '', array('class' => 'course_extended_menu_itemcontainer text-xs-center'));
         $liTag = html_writer::tag('li', $container);
         return html_writer::tag('ul', $liTag, array('class' => 'course_extended_menu_list'));
@@ -960,9 +975,10 @@ class renderer extends plugin_renderer_base {
         $program = (new program)->programs($stable);
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
         $program_status = $DB->get_field('local_program', 'status', array('id' => $programid));
-        if (!has_capability('local/program:view_newprogramtab', $categorycontext) && $program_status== 0) {
+
+        if (!has_capability('local/program:manageprogram', $categorycontext) && $program_status== 0) {
             print_error("You don't have permissions to view this page.");
-        } else if (!has_capability('local/program:view_holdprogramtab', $categorycontext) &&
+        } else if (!has_capability('local/program:manageprogram', $categorycontext) &&
             $program_status == 2) {
             print_error("You don't have permissions to view this page.");
         }
@@ -1043,7 +1059,7 @@ class renderer extends plugin_renderer_base {
 
         $program_status = $DB->get_record('local_program', array('id' => $programid), 'id,name');
         if (is_array($program) && empty($program['programs'])) {
-            print_error("program Not Found!");
+             throw new \moodle_exception("program Not Found!");
         }
 
         return $program_status;

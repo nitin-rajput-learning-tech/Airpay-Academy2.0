@@ -65,7 +65,8 @@ class search implements renderable{
 
         $usercontext = context_user::instance($USER->id);
         if(!is_siteadmin()){
-            $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+           // $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
             $paths = [];
             foreach($usercostcenterpaths AS $userpath){
                 $userpathinfo = $userpath;
@@ -357,7 +358,8 @@ class search implements renderable{
         global $USER, $DB;
         $selectsql = "SELECT llp.id  from {local_learningplan} llp  ";
         $wheresql = " WHERE llp.id = :learningplanid and llp.visible=1  "; //AND llp.open_status <> 4
-        $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
         // $paths = [];
         // foreach($usercostcenterpaths AS $userpath){
         //     $userpathinfo = $userpath->costcenterpath;
@@ -402,7 +404,7 @@ class search implements renderable{
                     $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
                     $request = $DB->get_field_sql($sql,array('componentid' => $planid,'compname' => $component,'createdbyid'=>$USER->id));
                     if($request=='PENDING'){
-                    $enrollmentbtn = '<button class="cat_btn btn-primary catbtn_process viewmore_btn">Processing</button>';
+                    $enrollmentbtn = '<button class="cat_btn btn-primary catbtn_process viewmore_btn">'.get_string('requestprocessing', 'local_search').'</button>';
                     }else{
                     $enrollmentbtn =requestapi::get_requestbutton($componentid, $component, $planname);
                     }

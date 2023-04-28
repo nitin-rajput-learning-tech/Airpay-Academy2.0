@@ -605,6 +605,8 @@ $string['usernamealeadyexists'] = 'User with username {$a->username} already exi
 
 $string['employeeid_alreadyexists'] = 'User with employee code {$a->employee_id} already exist at line {$a->excel_line_number}.';
 
+$string['email_alreadyexists'] = 'User with email {$a->email} already exist at line {$a->excel_line_number}.';
+
 $string['empiddoesnotexists'] = 'User with employee code {$a->employee_id} does not exist at line  {$a->excel_line_number}.';
 $string['empfile_syncstatus'] = 'Learner file sync status';
 $string['multiple_user'] = 'Multiple user exists';
@@ -816,3 +818,5 @@ $string['select_email'] = 'Select Work Email';
 $string['idnumber_select'] = 'Select Employee Code';
 $string['skilltype_help'] = 'Enter the skill type of the user';
 $string['forum'] = 'Forum';
+$string['validdateofbirth'] =  'Invalid Date of birth {$a->date_of_birth} - User with employee code {$a->learner_id} at line {$a->excel_line_number}';
+$string['validdateofjoining'] =  'Invalid Date of joining {$a->date_of_joining} - User with employee code {$a->learner_id} at line {$a->excel_line_number}';

@@ -151,9 +151,9 @@ class create_user extends moodleform {
 
             $reportingmanger[0] =get_string('select_reportingto', 'local_users');
             if($id){
-                $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} WHERE id = (SELECT open_supervisorid FROM {user} WHERE id = :id) ", ['id' => $id]);
+                $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} WHERE id = (SELECT open_supervisorid FROM {user} WHERE id = :id) AND deleted = :deleted AND suspended = :suspended", ['id' => $id, 'deleted' => 0, 'suspended' => 0]);
             }else{
-                $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} ",[]);
+                $reportingmanger += $DB->get_records_sql_menu("SELECT id, concat(firstname,' ',lastname) FROM {user} WHERE  deleted = :deleted AND suspended = :suspended",['deleted' => 0, 'suspended' => 0]);
             }
             $supervisoroptions = array(
             'class' => 'supervisor_select',
@@ -166,6 +166,7 @@ class create_user extends moodleform {
             'multiple' => false,
             'ajax' => 'local_costcenter/form-options-selector',
             'data-action' => 'user_supervisor_selector',
+            'noselectionstring'=>get_string('noselection', 'form')
             );
             $select = $mform->addElement('autocomplete', 'open_supervisorid',
                     get_string('supervisor', 'local_users'),
@@ -366,17 +367,14 @@ class create_user extends moodleform {
                     $errors['username'] = get_string('unameexists', 'local_users');
                 }
             }
-            $userempsql = "SELECT u.id, u.open_path FROM {user} AS u WHERE u.open_employeeid = :open_employeeid AND concat('/',u.open_path,'/') LIKE :costcenterpathlike ";
+            $userempsql = "SELECT u.id, u.open_path FROM {user} AS u WHERE u.open_employeeid = :open_employeeid ";
             if ($user = $DB->get_record_sql($userempsql, array(
-                'open_employeeid' => $employeeid,
-                'costcenterpathlike' => '%'.$data['open_costcenterid'].'%'))) {
-                $usercostcenter = explode('/', $user->open_path)[1];
-                if ($usercostcenter == $data['open_costcenterid']) {
-                    if (!isset($data['id']) ||
+                'open_employeeid' => $employeeid))) {
+                if (!isset($data['id']) ||
                     $user->id != $data['id']) {
-                        $errors['open_employeeid'] = get_string('open_employeeidexist', 'local_users');
-                    }
+                    $errors['open_employeeid'] = get_string('open_employeeidexist', 'local_users');
                 }
+
             }
         }
         if ($form_status == 2) { // As these fields are in only form part 3(form_status=2).

@@ -88,7 +88,7 @@ class local_onlineexams_renderer extends plugin_renderer_base {
 
       $templateName = 'local_onlineexams/onlineexams_view';
       $cardClass = 'col-md-6 col-12';
-      $perpage = 10;
+      $perpage = 12;
       if($view_type=='table'){
           $templateName = 'local_onlineexams/onlineexams_view_table';
           $cardClass = 'tableformat';

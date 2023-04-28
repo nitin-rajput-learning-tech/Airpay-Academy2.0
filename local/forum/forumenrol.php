@@ -55,7 +55,12 @@ $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
 require_login();
 
 if ($view == 'ajax') {
-  $options = (array)json_decode($_GET["options"], false);
+ // $options = (array)json_decode($_GET["options"], false);
+  if(is_string($_GET["options"])){
+    $options = json_decode($_GET["options"], false);
+  }else{
+    $options = $_GET["options"];  
+  }
   $select_from_users = course_enrolled_users($type, $course_id, $options, false, $offset1 = -1, $perpage = 50, $lastitem);
   echo json_encode($select_from_users);
   exit;
@@ -298,52 +303,44 @@ if ($course) {
 
   $select_all_not_enrolled_users = '&nbsp&nbsp<button type="button" id="select_remove" name="select_all" value="Select All" title="' . get_string('select_all', 'local_forum') . '" class="btn btn-default"/>' . get_string('select_all', 'local_forum') . '</button>';
   $select_all_not_enrolled_users .= '&nbsp&nbsp<button type="button" id="remove_select" name="remove_all" value="Remove All" title="' . get_string('remove_all', 'local_forum') . '" class="btn btn-default"/>' . get_string('remove_all', 'local_forum') . '</button>';
-
-
   $content = '<div class="bootstrap-duallistbox-container">';
-  $encoded_options = json_encode($options);
-  $content .= '<form  method="post" name="form_name" id="user_assign" class="form_class" >
-              <div class="box2 col-12 col-md-5 pull-left">
-                <input type="hidden" name="id" value="' . $course_id . '"/>
-                <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
-                <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
-                <input type="hidden" name="options"  value=\'' . $encoded_options . '\' />
-                <label>' . get_string('enrolled_users', 'local_forum', $select_from_users_total) . '</label>' . $select_all_not_enrolled_users;
+
+  $content .= '<form  method="post" name="form_name" id="user_assign" class="form_class" ><div class="box2 col-md-5 col-12 pull-left">
+  <input type="hidden" name="id" value="' . $course_id . '"/>
+  <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
+  <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
+  <input type="hidden" name="options"  value=\'' . json_encode($options) . '\' />
+  <label>' . get_string('enrolled_users', 'local_forum', $select_from_users_total) . '</label>' . $select_all_not_enrolled_users;
   $content .= '<select multiple="multiple" name="remove[]" id="bootstrap-duallistbox-selected-list_duallistbox_courses_users" class="dual_select">';
   foreach ($select_from_users as $key => $select_from_user) {
     $content .= "<option value='$key'>$select_from_user</option>";
   }
-  $content .= '</select>
-          </div>';
 
-  $content .= '<div class="box3 col-12 col-md-2 actions pull-left">
-              <button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="Remove Selected Users" id="user_unassign_all">
-                ' . get_string('remove_selected_users', 'local_forum') . '
-              </button>
-            </form>';
-  $content .= '<form  method="post" name="form_name" id="user_un_assign" class="form_class" >
-              <button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="Add Selected Users" name="submit_value" value="Add Selected Users" id="user_assign_all" >
-                ' . get_string('add_selected_users', 'local_forum') . '
-              </button>
-            </div>';
-  $content .= '<div class="box1 col-12 col-md-5 pull-left">
-              <input type="hidden" name="id" value="' . $course_id . '"/>
-              <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
-              <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
-              <input type="hidden" name="options"  value=\'' . $encoded_options . '\' />
-              <label> ' . get_string('availablelist', 'local_forum', $select_to_users_total) . '</label>' . $select_all_enrolled_users;
+  $content .= '</select>';
+  $content .= '</div><div class="box3 col-md-2 col-12 pull-left actions"><button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="' . get_string('remove_users', 'local_forum') . '" name="submit_value" value="Remove Selected Users" id="user_unassign_all"/>
+  ' . get_string('remove_selected_users', 'local_forum') . '
+  </button></form>
+
+  ';
+
+  $content .= '<form  method="post" name="form_name" id="user_un_assign" class="form_class" ><button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="' . get_string('add_users', 'local_forum') . '" name="submit_value" value="Add Selected Users" id="user_assign_all" />
+  ' . get_string('add_selected_users', 'local_forum') . '
+  </button></div><div class="box1 col-md-5 col-12 pull-left">
+  <input type="hidden" name="id" value="' . $course_id . '"/>
+  <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
+  <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
+  <input type="hidden" name="options"  value=\'' . json_encode($options) . '\' />
+  <label> ' . get_string('availablelist', 'local_forum', $select_to_users_total) . '</label>' . $select_all_enrolled_users;
   $content .= '<select multiple="multiple" name="add[]" id="bootstrap-duallistbox-nonselected-list_duallistbox_courses_users" class="dual_select">';
   foreach ($select_to_users as $key => $select_to_user) {
     $content .= "<option value='$key'>$select_to_user</option>";
   }
   $content .= '</select>';
-  $content .= '</div>
-            </form>';
+  $content .= '</div></form>';
   $content .= '</div>';
+
 }
-// print_collapsible_region_start(' ', 'filters_form', ' '.' '.get_string('filters'), false, $collapse);
-// $mform->display();
-// print_collapsible_region_end();
+
 echo '<a class="btn-link btn-sm" title="' . get_string('filter') . '" href="javascript:void(0);" data-toggle="collapse" data-target="#local_forumenrol-filter_collapse" aria-expanded="false" aria-controls="local_forumenrol-filter_collapse">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
@@ -408,8 +405,8 @@ if ($course) {
         function($)
         {
           $('.dual_select').bind('scroll', function()
-            {
-              if($(this).scrollTop() + $(this).innerHeight()>=$(this)[0].scrollHeight)
+            {           
+              if(Math.round($(this).scrollTop() + $(this).innerHeight())>=$(this)[0].scrollHeight)
               {
                 var get_id=$(this).attr('id');
                 if(get_id=='bootstrap-duallistbox-selected-list_duallistbox_courses_users'){
@@ -425,11 +422,11 @@ if ($course) {
 
                 var lastValue = $('#'+get_id+' option:last-child').val();
 
-              if(count_selected_list<total_users){
+                if(count_selected_list<total_users){
                    //alert('end reached');
                     var selected_list_request = $.ajax({
                         method: 'GET',
-                        url: M.cfg.wwwroot + '/local/forum/courseenrol.php',
+                        url: M.cfg.wwwroot + '/local/forum/forumenrol.php',
                         data: {id:'$course_id',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue,enrolid:'$enrolid', options: $myJSON},
                         dataType: 'html'
                     });

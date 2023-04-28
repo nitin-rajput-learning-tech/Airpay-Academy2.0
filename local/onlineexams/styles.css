@@ -1139,3 +1139,7 @@ body#page-local-courses-userdashboard .card_list_view {
         max-height: 100%;
     }
 }
+
+#page-local-onlineexams-onlineexamsenrol .dual_select option {
+    padding: 5px;
+}

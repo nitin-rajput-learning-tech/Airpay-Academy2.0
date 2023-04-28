@@ -70,7 +70,7 @@ if (optional_param('cancel', false, PARAM_BOOL)) {
 }
 
 
-$PAGE->navbar->add(get_string('cohorts', 'local_groups'), new moodle_url('/local/groups/index.php', array('contextid' => $groups->contextid)));
+$PAGE->navbar->add(get_string('cohorts', 'local_groups'), new moodle_url('/local/groups/index.php'));
 $PAGE->navbar->add(get_string('assign', 'local_groups'));
 
 $PAGE->set_title(get_string('assigncohorts', 'local_groups'));

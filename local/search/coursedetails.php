@@ -16,7 +16,7 @@ require_once($CFG->dirroot.'/local/includes.php');
 
 $id  = required_param('id', PARAM_INT); // Course id
 
-$coursecontext = context_course::instance($courseid);
+$coursecontext = context_course::instance($id);
 $PAGE->set_context($coursecontext);
 $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
 require_login();

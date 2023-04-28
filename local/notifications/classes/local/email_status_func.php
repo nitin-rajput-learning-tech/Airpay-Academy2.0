@@ -74,8 +74,12 @@ class notification_master
 
     public function getALLOrganizationDetails() {
         global $DB;
-
-        $result = $DB->get_records_sql('SELECT id,fullname  FROM {local_costcenter} WHERE parentid=0 AND visible=1');
+        $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='path');
+        if (!is_siteadmin()){
+            $result = $DB->get_records_sql('SELECT id,fullname  FROM {local_costcenter} WHERE parentid=0 AND visible=1 '.$costcenterpathconcatsql);
+        } else {
+            $result = $DB->get_records_sql('SELECT id,fullname  FROM {local_costcenter} WHERE parentid=0 AND visible=1');
+        }
 
         return $result;
 

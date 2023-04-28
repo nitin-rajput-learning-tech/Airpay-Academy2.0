@@ -45,7 +45,7 @@ class evaluation_form extends moodleform {
         $plugin = $this->_customdata['plugin'];
         $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context();
         if($instance!=0){
-        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_evaluation', $categorycontext, $multiple = false);
+        local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), true, 'local_evaluation', $categorycontext, $multiple = false);
         }elseif($instance==0){
         local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,HIERARCHY_LEVELS), true, 'local_evaluation', $categorycontext, $multiple = false);
         }
@@ -119,7 +119,8 @@ class evaluation_form extends moodleform {
         {
         $mform->addElement('header', 'evaluationhdr', get_string('target_audiance','local_evaluation'));
       //  local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,HIERARCHY_LEVELS), true, 'local_evaluation', $categorycontext, $multiple = false);
-            $functionname ='globaltargetaudience_elementlist';
+      
+      $functionname ='globaltargetaudience_elementlist';
             if(function_exists($functionname)) {
                 $costcenterfields = local_costcenter_get_fields();
                 $firstdepth = current($costcenterfields);

@@ -239,13 +239,15 @@ function skill_details($tablelimits, $filtervalues){
         foreach ($records as $c) {
             $list=array();
             $id = $c->id;
+            $userpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
             $usercountsql = "SELECT count(DISTINCT(u.id))
                 FROM {course} c
                 JOIN {course_completions} cc
                 on cc.course = c.id
                 JOIN {user} u
                 on cc.userid = u.id
-                WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL ";
+                WHERE c.open_skill = {$id} and cc.timecompleted IS NOT NULL $userpathconcatsql $costcenterpathconcatsql";
             $usercount = $DB->count_records_sql($usercountsql);
             $skillmaped = $DB->record_exists('course',array('open_skill'=>$id));
             $skilname=$c->name;

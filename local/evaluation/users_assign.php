@@ -67,7 +67,11 @@ $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->js('/local/classroom/js/jquery.bootstrap-duallistbox.js',true);
 $PAGE->requires->css('/local/classroom/css/bootstrap-duallistbox.css');
 if($view == 'ajax'){
-  $options =(array)json_decode($_GET["options"],false);
+  if(is_string($_GET["options"])){
+    $options = json_decode($_GET["options"], false);
+  }else{
+      $options = $_GET["options"];  
+  }
   $selectfromusers=evaluation_enrolled_users($type,$evaluationid,$options,false,$offset1=-1,$perpage=50,$lastitem);
 	echo json_encode($selectfromusers);
 	exit;
@@ -124,7 +128,7 @@ if ($evaluationid) {
     if ( $add AND confirm_sesskey()) {
         
         if($submitvalue == "Add_All_Users"){
-					$options =json_decode($_REQUEST["options"],false);
+					$options = (array)json_decode($_REQUEST["options"],false);
               $userstoassign=array_flip(evaluation_enrolled_users('add',$evaluationid,(array)$options,false,$offset1=-1,$perpage=-1));
         }else{
             $userstoassign =$add;
@@ -205,7 +209,7 @@ if ($evaluationid) {
     if ( $remove && confirm_sesskey()) {
         
         if($submitvalue=="Remove_All_Users"){
-					$options =json_decode($_REQUEST["options"],false);
+					$options = (array)json_decode($_REQUEST["options"],false);
              $userstounassign = array_flip(evaluation_enrolled_users('remove',$evaluationid,(array)$options,false,$offset1=-1,$perpage=-1));
         }else{
             $userstounassign = $remove;
@@ -398,7 +402,7 @@ $( document ).ready(function() {
         {
           $('.dual_select').bind('scroll', function()
             {
-              if($(this).scrollTop() + $(this).innerHeight()>=$(this)[0].scrollHeight)
+              if(Math.round($(this).scrollTop() + $(this).innerHeight())>=$(this)[0].scrollHeight)
               {
                 var get_id=$(this).attr('id');
                 if(get_id=='bootstrap-duallistbox-selected-list_duallistbox_evaluation_users'){
@@ -417,8 +421,8 @@ $( document ).ready(function() {
               if(count_selected_list<total_users){  
                     var selected_list_request = $.ajax({
                         method: 'GET',
-                        url: M.cfg.wwwroot + '/local/evaluation/users_assign.php?options=$myJSON',
-                        data: {id:'$evaluationid',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue},
+                        url: M.cfg.wwwroot + '/local/evaluation/users_assign.php',
+                        data: {id:'$evaluationid',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue,enrolid:'$enrolid', options: $myJSON},
                         dataType: 'html'
                     });  
                     var appending_selected_list = '';

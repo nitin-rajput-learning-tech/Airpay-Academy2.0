@@ -66,6 +66,7 @@ class templates extends \external_api {
         $template = \tool_certificate\template::instance($params['id']);
         $context = $params['categoryid'] ? \context_coursecat::instance($params['categoryid']) : $template->get_context();
         $template->require_can_duplicate($context);
+
         $template->duplicate($context);
     }
 

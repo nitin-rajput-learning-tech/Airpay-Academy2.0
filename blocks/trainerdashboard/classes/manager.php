@@ -104,7 +104,7 @@ class block_trainerdashboard_manager {
 
         $time=time();
         //$sql .= " AND timefinish < $time";
-        $sql .= " AND timefinish < DATEADD(MONTH,-6,GETDATE()) ";
+        $sql .= " AND cs.timefinish < date_sub(now(), interval 6 month)  ";
 
         if (!empty($stable->search_query)) {
             $fields = array(
@@ -224,7 +224,7 @@ class block_trainerdashboard_manager {
 
         $time=time();
         //$sql .= " AND timefinish > $time";
-        $sql .= " AND timefinish > DATEADD(MONTH,+6,GETDATE()) ";
+        $sql .= " AND cs.timefinish > date_sub(now(), interval 6 month) ";
 
         if (!empty($stable->search_query)) {
             $fields = array(
@@ -242,9 +242,10 @@ class block_trainerdashboard_manager {
             $sql.= " AND u.id = :trainerid ";
             $params['trainerid'] = $USER->id;
         }
-        
+ 
         try {
             $upcomingtrainingscount = $DB->count_records_sql($countsql . $sql, $params);
+
             if ($stable->thead == false) {
                 $sql .= " ORDER BY cs.timestart ASC";
                 $upcomingtrainings = $DB->get_records_sql($fromsql . $sql, $params, $stable->start, $stable->length);

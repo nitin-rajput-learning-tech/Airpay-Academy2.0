@@ -687,11 +687,12 @@ class local_program_external extends external_api {
                 'id' => new external_value(PARAM_INT, 'ID of the record', 0),
                 'programid' => new external_value(PARAM_INT, 'ID of the record', 0),
                 'confirm' => new external_value(PARAM_BOOL, 'Confirm', false),
+                'levelname' => new external_value(PARAM_RAW, 'ID of the record', false),
             )
         );
     }
 
-    public static function delete_level_instance($action, $id, $programid, $confirm) {
+    public static function delete_level_instance($action, $id, $programid, $confirm,$levelname) {
         global $DB,$USER;
         try {
 

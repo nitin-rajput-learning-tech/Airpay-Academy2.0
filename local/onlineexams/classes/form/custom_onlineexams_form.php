@@ -101,7 +101,6 @@ class custom_onlineexams_form extends moodleform {
 
         $this->onlineexam  = $onlineexam;
         $this->context = $context;
-
         // Form definition with new onlineexam defaults.
         $mform->addElement('hidden', 'returnto', null);
         $mform->setType('returnto', PARAM_ALPHANUM);
@@ -276,10 +275,15 @@ class custom_onlineexams_form extends moodleform {
             // $mform->hideIf('sndtimelimit', 'examtype', 'eq', 0);
           
 
-            $mform->addElement('hidden', 'maxgrade');
-            $mform->setType('maxgrade', PARAM_INT);
-            $mform->setDefault('maxgrade', 10);
-
+            if (empty($onlineexam->maxgrade)) {
+                $max_grade=10;
+            }else{
+                $max_grade=$onlineexam->maxgrade;
+            }
+                $mform->addElement('hidden', 'maxgrade');
+                $mform->setType('maxgrade', PARAM_INT);
+                $mform->setDefault('maxgrade', $max_grade);
+           
             // $mform->addElement('text', 'maxgrade',get_string('maxgrade','local_onlineexams'), array('size'=>'20'));
             // $mform->addRule('maxgrade', get_string('missinggrade', 'local_onlineexams'), 'required', null, 'client');
             // $mform->setType('maxgrade', PARAM_FLOAT);
@@ -438,9 +442,13 @@ class custom_onlineexams_form extends moodleform {
         if (empty(trim($data['shortname'])) && $data['id'] == 0) {
             $errors['groupshortname'] = get_string('shortnamecannotbeempty', 'local_costcenter');
         }
-
-		 if (isset($data['timeopen']) && $data['timeopen']
-                && isset($data['timeclose']) && $data['timeclose']) {
+        if (empty(trim($data['fullname']))&& $data['form_status'] == 0) {
+            $errors['fullname'] = get_string('missingfullname','local_onlineexams');
+        }
+        if (
+            isset($data['timeopen']) && $data['timeopen']
+            && isset($data['timeclose']) && $data['timeclose']
+        ) {
             if ($data['timeclose'] <= $data['timeopen']) {
                 $errors['timeclose'] = get_string('nosameenddate', 'local_onlineexams');
             }

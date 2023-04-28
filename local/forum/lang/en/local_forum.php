@@ -30,7 +30,7 @@ $string['elearning'] = 'E-Learning';
 $string['learningplan'] = 'Learning Path';
 $string['type'] = 'Type';
 $string['category'] = 'Category';
-$string['enrolled'] = 'Enrollments';
+$string['enrolled'] = 'Subscribers';
 $string['completed'] = 'Completions';
 $string['manual_enrolment'] = 'Manual Enrollment';
 $string['add_users']='<< Add Users';
@@ -455,3 +455,5 @@ $string['typeforum'] ='Forum Event';
 $string['enablecourse'] = 'Are you sure, want Active Forum <b>\'{$a}\'</b>?';
 $string['disablecourse'] = 'Are you sure, want In-active Forum <b>\'{$a}\'</b>?';
 $string['courseconfirm'] = 'Confirm';
+$string['nocourseavailiable'] = 'No Forums Available';
+

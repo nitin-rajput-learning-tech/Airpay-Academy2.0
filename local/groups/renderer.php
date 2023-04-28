@@ -42,7 +42,7 @@ class local_groups_renderer extends plugin_renderer_base  {
 
         $templateName = 'local_groups/groupstab';
         $cardClass = 'col-md-4 col-sm-6 col-12 card_main';
-        $perpage = 10;
+        $perpage = 12;
         if($view_type=='table'){
             $templateName = 'local_groups/groups_catalog_list';
             $cardClass = 'tableformat';

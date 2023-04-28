@@ -32,7 +32,7 @@
     <tbody>
         {{#records}}
         {{# hascourses}}
-        <tr>
+        <tr class = {{visibleclass}}>
             <td>
                 {{^ coursenameCut}}
                     <a href="{{ courseurl }}" title="{{ coursename }}">{{ coursename }}</a>

@@ -921,7 +921,40 @@ class core_renderer extends \core_renderer {
             }
             $header=(object)array_merge((array)$header,$usercourseprogress);
             $header->display_ratings=$display_ratings;
-
+            if(!is_siteadmin()){
+                if(isset($COURSE->open_coursecompletiondays) && $COURSE->open_coursecompletiondays != 0)
+                {
+                    $today = date('Y-m-d');
+                    $userenroldate = $DB->get_field_sql("SELECT max(ue.timecreated) as enrolldate 
+                            FROM {course} course
+                            JOIN {enrol} e ON e.courseid = course.id 
+                            JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                            JOIN {user} u ON u.id = $USER->id AND course.id = $COURSE->id ");
+                      
+                    if(!empty($userenroldate)){
+                        $userenroldate = date('Y-m-d',$userenroldate);
+                        //$userenroldate = '2023-04-12';
+                        $difference = strtotime($userenroldate) - strtotime($today);
+                        $days = abs($difference/(60 * 60)/24);                       
+                       
+                        if($days != 0 && $days < $COURSE->open_coursecompletiondays){
+                            $duedays = 'Due In : ' .($COURSE->open_coursecompletiondays-$days). ' days';
+                        }else if($days != 0 && $days > $COURSE->open_coursecompletiondays){
+                            $duedays = 'Overdue by : ' .abs($COURSE->open_coursecompletiondays-$days). ' days';
+                        }
+                        if($duedays !=0 ){
+                            $display_duedays =' <div class="col-md-3 user_enrollment sdfsf d-flex">
+                                                    <i class="fa fa-calendar"></i>                                                  
+                                                    <div class="enroll_details d-flex">
+                                                        <span class="details_content text-nowrap"> </span>
+                                                        <span class="enroll_number">'.$duedays.'</span>
+                                                    </div>
+                                                </div> ';
+                        }                         
+                      
+                    }
+                 }
+            }
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
         }
@@ -935,6 +968,7 @@ class core_renderer extends \core_renderer {
         $header->coursebannerimage = $this->course_bannerimage();
         $header->pageheadingbutton = $this->page_heading_button();
         $header->courseheader = $this->course_header();
+        $header->display_duedays = !empty($display_duedays) ? $display_duedays : '';        
         $header->headeractions = $this->page->get_header_actions();
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
@@ -1321,9 +1355,10 @@ class core_renderer extends \core_renderer {
             $depths = [];
             $depths['depth']=array();
             $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
-                            $categoryids = array_values(array_filter((explode('/', $role->path))));
-                            $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
 
+                            $categoryids = array_values(array_filter((explode('/', $role->path))));
+                            $pathname=end($categoryids);
+                            $category = \local_costcenter\lib\accesslib::get_category_info($pathname, 'name');
                                 if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
                                     $depths['depth'][] = $role->depth.'_'.$categoryids[0];
                                     $role->categoryname = $category;

@@ -63,6 +63,13 @@ function local_users_output_fragment_new_create_user($args) {
         $collapse = false;
         $data = $DB->get_record('user', array('id' => $args->id));
         unset($data->password);
+
+        $reportingmanger= $DB->record_exists('user', ['id' => $data->open_supervisorid, 'deleted' => 0, 'suspended' => 0]);
+
+        if(!$reportingmanger){
+             unset($data->open_supervisorid);
+        }
+
         useredit_load_preferences($data);
         $customdata = array('editoroptions' => $editoroptions,
             'form_status' => $args->form_status, 'id' => $data->id,
@@ -598,9 +605,20 @@ function custom_filter($mform) {
  */
 function globaltargetaudience_elementlist($mform, $elementlist) {
     global $CFG, $DB, $USER;
-
     $context = (new \local_users\lib\accesslib())::get_module_context();
-
+  $element= $mform->_elements[15];
+ if($element->_attributes['name']=='evaluationhdr')
+ {
+$options = array(
+    'ajax' => 'local_users/form-options-selector',
+    'multiple' => true,
+    'data-contextid' => $context->id,
+    'data-action' => 'eval_group_selector',
+    'data-options' => json_encode(array('organizationselect' => 'open_costcenterid_select')),
+    'class' => 'trainerselect',
+    'data-parentclass' => 'open_costcenterid_select',
+    'data-class' => 'open_costcenterid_select',
+);  
     $params = array();
     $params['deleted'] = 0;
     $params['suspended'] = 0;
@@ -614,6 +632,19 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
         $main_sql = " AND u.suspended = :suspended AND u.deleted =:deleted $costcenterpathconcatsql ";
     }
     $dbman = $DB->get_manager();
+    $grouplist[0] = array('id'=>0,'fullname'=>get_string('all')) ;
+    $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='g.open_path',$costcenterpath);
+    $grouplist += $DB->get_records_sql_menu("SELECT c.id, c.name as fullname FROM {local_groups} g, {cohort} c
+    WHERE c.visible = :visible AND c.id = g.cohortid  $costcenterpathconcatsql ",
+     array( 'visible' => 1));
+    if (in_array('group', $elementlist)) {
+        $selectgroup = $mform->addElement('autocomplete', 'open_group', get_string('open_group', 'local_users')
+           , $grouplist ,$options);
+        $mform->setType('open_group', PARAM_RAW);
+        $mform->addHelpButton('open_group', 'groups', 'local_users');
+        $selectgroup->setMultiple(true);
+    }
+}else{
     if (in_array('group', $elementlist)) {
         $groupslist[null] = get_string('all');
 
@@ -630,6 +661,7 @@ function globaltargetaudience_elementlist($mform, $elementlist) {
         $mform->addHelpButton('open_group', 'groups', 'local_users');
         $selectgroup->setMultiple(true);
     }
+}
     if (in_array('hrmsrole', $elementlist)) {
         $hrmsrole_details[null] = get_string('all');
         $hrmsrole_sql = "SELECT u.open_hrmsrole, u.open_hrmsrole AS hrmsrolevalue FROM {user} AS u WHERE u.id
@@ -1514,7 +1546,6 @@ function local_users_set_userprofile_datafields(&$customdata,$data){
 
 
     $fields = (new \local_users\lib\accesslib())::get_userprofile_fields();
-
     foreach($fields as $field){
 
         if(isset($data->$field) && !empty($data->$field)){

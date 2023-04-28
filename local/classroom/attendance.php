@@ -101,7 +101,7 @@ if (!empty($attendancedata)) {
                 $record_exist=$DB->record_exists_sql("SELECT id  FROM {local_classroom_attendance}
                                                     where classroomid = :classroomid
                                                     and userid = :userid and sessionid = :sessionid",array('userid' => $decodeddata->userid,'sessionid' => $decodeddata->sessionid,'classroomid' => $decodeddata->classroomid));
-                if(!$record_exist){
+               if(!$record_exist){
                     $id=$DB->insert_record('local_classroom_attendance',  $userattendance);
                 }
 
@@ -114,11 +114,11 @@ if (!empty($attendancedata)) {
                 $event->add_record_snapshot('local_classroom', $decodeddata->classroomid);
                 $event->trigger();
             }
-            /* $attendedsessions = $DB->count_records('local_classroom_attendance',
+             $attendedsessions = $DB->count_records('local_classroom_attendance',
                 array('classroomid' => $decodeddata->classroomid,
-                    'userid' => $decodeddata->userid, 'status' => SESSION_PRESENT)); */
-            $attendedsessions = $DB->count_records('local_classroom_attendance',
-                array('classroomid' => $decodeddata->classroomid, 'sessionid' =>$decodeddata->sessionid, 'status' => SESSION_PRESENT));
+                    'userid' => $decodeddata->userid, 'status' => SESSION_PRESENT)); 
+            // $attendedsessions = $DB->count_records('local_classroom_attendance',
+            //     array('classroomid' => $decodeddata->classroomid, 'sessionid' =>$decodeddata->sessionid, 'status' => SESSION_PRESENT));
 
             $attendedsessions_hours=$DB->get_field_sql("SELECT ((sum(lcs.duration))/60) AS hours
                                         FROM {local_classroom_sessions} as lcs

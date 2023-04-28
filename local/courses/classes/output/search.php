@@ -63,8 +63,8 @@ class search implements renderable{
         $params = [];
         if(!is_siteadmin()){
 
-            $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
-            //$usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
+            //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
             $paths = [];
             foreach($usercostcenterpaths AS $userpath){ 
                 $userpathinfo = $userpath;
@@ -91,9 +91,9 @@ class search implements renderable{
             //     $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             // }
 
-            if(!empty($USER->open_designation) && $USER->open_designation != ""){                 
-                $wheresql .= " AND ( (concat(',',c.open_designation,',') LIKE '%,$USER->open_designation,%' ) OR c.open_designation = '-1' OR c.open_designation IS NULL)";
-            }          
+           /*  if(!empty($USER->open_designation) && $USER->open_designation != "" && $USER->open_designation != NULL){                 
+                $wheresql .= " AND ( concat(',',c.open_designation,',') LIKE '%,$USER->open_designation,%'  OR c.open_designation = '-1' OR c.open_designation IS NULL)";
+            }   */         
           
         }
     
@@ -345,6 +345,10 @@ class search implements renderable{
             }else{
                 $course->coursetype =  'N/A';
             }
+
+            $coursetype = $DB->get_field('local_course_types', 'name', array('id' => $course->open_identifiedas));
+            $course->learningtype = $coursetype;
+
             $coursecost=$DB->get_field('enrol','cost',array('courseid'=>$course->id,'status'=>0,'enrol'=>'stripepayment'));
             $course->stripepayment =$coursecost ? $coursecost : 0 ;
 
@@ -425,7 +429,8 @@ class search implements renderable{
         global $DB, $USER;
         $selectsql = " SELECT c.id FROM {course} c ";
         $wheresql = " WHERE c.id > 1 AND c.visible = 1 AND c.selfenrol = 1 AND c.id = :courseid";
-        $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
         // $paths = [];
         // foreach($usercostcenterpaths AS $userpath){
         //     $userpathinfo = $userpath->costcenterpath;
@@ -461,7 +466,7 @@ class search implements renderable{
                     $request = $DB->get_field_sql($sql,array('componentid' => $courseid,'compname' => $component,'createdbyid'=>$USER->id));
 
                     if($request=='PENDING'){
-                        $selfenrolbutton = '<button class="cat_btn btn-primary viewmore_btn">Processing</button>';
+                        $selfenrolbutton = '<button class="cat_btn btn-primary viewmore_btn">'.get_string('requestprocessing', 'local_search').' </button>';
                     }else{
                         $selfenrolbutton = requestapi::get_requestbutton($componentid, $component, $courseinfo->fullname);
                     }

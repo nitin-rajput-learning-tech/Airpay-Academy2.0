@@ -308,12 +308,15 @@ class lib
 	{
 		global $DB, $USER;
 		$open_path = $DB->get_field('local_learningplan', 'open_path', array('id' => $id));
-		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+		list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
+		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$org,'lowerandsamepath');
 		
 		$sql = "SELECT c.id as id, c.fullname FROM {course} as c WHERE c.id > 1 AND c.visible = 1 AND c.open_coursetype = 0 "; 
-	   if(is_siteadmin()){
-		$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$open_path,'lowerandsamepath');
-			}
+		/*$systemcontext = (new \local_learningplan\lib\accesslib())::get_module_context();
+		
+	    if(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext)){
+			$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+		}   */
 		$sql .= $costcenterpathconcatsql;
 	    $courses = $DB->get_records_sql_menu($sql);
 		return $courses;
@@ -468,6 +471,7 @@ class lib
 			$touser = \core_user::get_user($data->userid);
 			$fromuser = \core_user::get_user(2);
 			$learningplaninstance = $DB->get_record('local_learningplan', array('id' => $data->planid));
+			$learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path)[1];
 			$notification->learningplan_notification($type, $touser, $fromuser, $learningplaninstance);
 			if ($user) {
 				$approvalid = $this->db->get_record('local_learningplan_approval', array('planid' => $data->planid, 'userid' => $data->userid));

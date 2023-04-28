@@ -684,6 +684,22 @@ class local_costcenter_external extends external_api
                     }
                     break;
                 case 'costecenter_coursetype_selector':
+                    $fields = array("name"/*, "shortname"*/);
+
+                    $likesql = array();
+                    $i = 0;
+                    if ($query != '') {
+                        foreach ($fields as $field) {
+                            $i++;
+                            $likesql[] = $DB->sql_like($field, ":queryparam$i", false);
+                            $sqlparams["queryparam$i"] = "%$query%";
+                        }
+                        $sqlfields = implode(" OR ", $likesql);
+                        $concatsql = " AND ($sqlfields) ";
+                    } else {
+                        $sqlparams = [];
+                        $concatsql = " ";
+                    }
                     if ((is_array($formoptions->parentid) && !empty($formoptions->parentid)) ||
                         (!is_array($formoptions->parentid) && $formoptions->parentid > 0)
                     ) {
@@ -691,8 +707,11 @@ class local_costcenter_external extends external_api
 
                         $fields      = 'SELECT id, name as fullname';
                         $lobssql = " FROM {local_course_types}
-                                         WHERE  active = 1 AND orgid $organisationidssql OR orgid=0 ";
-                        $coursetypes = $DB->get_records_sql($fields . $lobssql, $organisationparams, ($page * $perpage) - 0, $perpage + 1);
+                                         WHERE  active = 1  $concatsql ";
+                                       
+                        $sqlparams = array_merge($sqlparams, $organisationparams);
+                 
+                        $coursetypes = $DB->get_records_sql($fields . $lobssql, $sqlparams, ($page * $perpage) - 0, $perpage + 1);
                         $return = array_values(json_decode(json_encode($coursetypes), true));
                     }
                     break;

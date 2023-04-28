@@ -55,7 +55,11 @@ require_login();
 require_capability('local/program:manageprogram', $categorycontext);
 require_capability('local/program:manageusers', $categorycontext);
 if ($view == 'ajax') {
-    $options = (array)json_decode($_GET["options"], false);
+    if(is_string($_GET["options"])){
+        $options = json_decode($_GET["options"], false);
+    }else{
+        $options = $_GET["options"];  
+    }
      $select_from_users = (new program)->select_to_and_from_users($type, $programid, $options,false, $offset1=-1, $perpage=50, $lastitem);
     echo json_encode($select_from_users);
     exit;
@@ -279,7 +283,7 @@ $( document ).ready(function() {
         {
           $('.dual_select').bind('scroll', function()
             {
-              if($(this).scrollTop() + $(this).innerHeight()>=$(this)[0].scrollHeight)
+              if(Math.round($(this).scrollTop() + $(this).innerHeight())>=$(this)[0].scrollHeight)
               {
                 var get_id=$(this).attr('id');
                 if(get_id=='bootstrap-duallistbox-selected-list_duallistbox_program_users'){

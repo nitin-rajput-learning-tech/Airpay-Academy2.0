@@ -90,7 +90,7 @@ class local_notifications_external extends external_api {
                 $validateddata->usermodified = $USER->id;
                 $validateddata->timemodified = time();
                 if($form_status == 0){
-                    $validateddata->moduleid=$data['moduleid'];
+                    $validateddata->moduleid=($data['moduleid'] === '_qf__force_multiselect_submission') ? 0 : $data['moduleid'] ;
                     $validateddata->body = $validateddata->body['text'];
                    
                     if (is_array($validateddata->moduleid)){
@@ -111,7 +111,7 @@ class local_notifications_external extends external_api {
               
                 $insert = $lib->insert_update_record('local_notification_info', 'update', $validateddata);
             } else if ($validateddata->id <= 0) {
-                $validateddata->moduleid=$data['moduleid'];
+                $validateddata->moduleid=($data['moduleid'] === '_qf__force_multiselect_submission') ? 0 : $data['moduleid'] ;
                 $validateddata->body = $validateddata->body['text'];
                $notificationarr = (array)$validateddata->moduleid;
                 if ($validateddata->moduleid){

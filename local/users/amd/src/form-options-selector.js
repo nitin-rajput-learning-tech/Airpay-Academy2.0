@@ -77,7 +77,23 @@
 
 
             }
+            if(action === 'eval_group_selector'){
 
+                $(document).on('change', '[data-action="eval_group_selector"]', function(){
+                        var depth = $(this).data('depth');
+
+                        $.each($('[data-action="eval_group_selector"]'), function(index, value){
+
+                            if($(value).data('depth') > depth){
+
+                                $(value).html('');
+                                $(value).parent().find('.form-autocomplete-selection').html($(value).data('selectstring'));
+                            }
+
+                        });
+                        organizationclass = formoptions.organizationselect;
+                        formoptions.parentid = $("[data-class='" + organizationclass + "']").val();
+                });
             formoptions = JSON.stringify(formoptions);
 
             promise = Ajax.call([{

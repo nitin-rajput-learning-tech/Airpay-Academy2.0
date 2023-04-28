@@ -17,7 +17,6 @@
 
 <div class="w-full  p-3 planview_container">
 	<ul class="course_extended_menu_list">
-		{{{challenge_element}}}
 		{{# certificate_exists }}
             {{# certificate_download }}
                     <li>
@@ -26,12 +25,20 @@
                     </li>
             {{/ certificate_download }}
             {{^ certificate_download }}
-                    <li>
+                   <li>
                         <a class="course_extended_menu_itemlink" title="{{# str}} unableto_download_msg, tool_certificate, Learning path {{/str}}" class="course_extended_menu_itemlink" href="javascript: void(0)"><i class="icon fa fa-download" aria-hidden="true"></i>
                         </a>
-                    </li>
+                    </li> 
             {{/ certificate_download }}
         {{/ certificate_exists }}
+		{{# unenrol_flag}}
+  					<li>
+						<a class="course_extended_menu_itemlink unenrolself_module" onclick="(function(e){ require('local_learningplan/courseenrol').unEnrolUser({planid:{{{planid}}}, userid:{{{userid}}}, planname:'{{{lpname}}}'}) })(event)" href="javascript:void(0)">
+							<i class="icon fa fa-user-times" aria-hidden="true" aria-label="" title="Unenrol"></i>
+						</a>
+					</li>
+		{{/ unenrol_flag}}
+
 	</ul>
 	<div class="  planview_topcontainer px-5">
 		<div class="border-top"></div>

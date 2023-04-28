@@ -1036,7 +1036,7 @@ class renderer extends plugin_renderer_base
             $pending = $DB->record_exists('local_request_records',array('createdbyid'=>$USER->id, 'componentid'=>$classroom->id,'status'=>'PENDING'));
             if ($classroom->approvalreqd == 1 && !$userenrolstatus && $return ) {
                 if($pending){
-                    $classroom->selfenrolmentcap = '<i title = '.get_string('processing', 'local_classroom').' class="" aria-hidden="true">' . get_string('processing', 'local_classroom').'</i>';
+                    $classroom->selfenrolmentcap = '<i title = '.get_string('requestprocessing', 'local_classroom').' class="" aria-hidden="true">' . get_string('requestprocessing', 'local_classroom').'</i>';
                 } else {
                     $classroom->selfenrolmentcap = '<a href="javascript:void(0);" class="" alt = ' . get_string('requestforenroll', 'local_classroom') . ' title = ' . get_string('requestforenroll', 'local_classroom') . ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$classroom->id.', component:\'classroom\',componentname:\''.$classroom->name .'\'}) })(event)" ><i class="fa fa-share" aria-hidden="true"></i>' . get_string('requestforenroll', 'local_classroom') . '</a>';
                 }

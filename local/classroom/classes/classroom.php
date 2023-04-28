@@ -102,17 +102,11 @@ class classroom {
                      local_costcenter_get_costcenter_path($classroom);
 
                 }
-                $classroom->open_group = (!empty($classroom->open_group)) ? implode(',', array_filter($classroom->open_group)) : NULL;
                 if (!empty($classroom->open_group)) {
-                    $classroom->open_group = $classroom->open_group;
-                } else {
-                    $classroom->open_group = NULL;
+                    $classroom->open_group = implode(',', array_filter($classroom->open_group));
                 }
-                $classroom->open_designation = (!empty($classroom->open_designation)) ? implode(',', array_filter($classroom->open_designation)) : NULL;
                 if (!empty($classroom->open_designation)) {
-                    $classroom->open_designation = $classroom->open_designation;
-                } else {
-                    $classroom->open_designation = NULL;
+                    $classroom->open_designation = implode(',', array_filter($classroom->open_designation));
                 }
                 $DB->update_record('local_classroom', $classroom);
                 // $this->classroom_set_events($classroom);
@@ -2592,69 +2586,63 @@ class classroom {
             $params = array_merge($params,$relatedidnumberparams);            
             $sql .= " AND u.id $relatedidnumbersql";
         }
-        if(!empty($params['organization'])){
-            $organizations = explode(',', $params['organization']);
-            $orgsql = [];
-            foreach($organizations AS $organisation){
+       
+        if (!empty($params['organization'])) {
+			$organizations = explode(',', $params['organization']);
+			$orgsql = [];
+			foreach($organizations AS $organisation){
                 $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
-                $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
-            }
-            if(!empty($orgsql)){
-                $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";               
-            }
-            // $sql .= " AND l.costcenter IN ($selectedorganizations) ";
-        }
-        if(!empty($params['department'])){
-            $depts = explode(',', $params['department']);
-            $deptsql = [];
-            foreach($depts AS $dept){
-                $deptsql[] = " concat('/',u.open_path,'/') LIKE :deptparam_{$dept}";
-                $params["deptparam_{$dept}"] = '%/'.$dept.'/%';
-            }
-            if(!empty($deptsql)){
-                $sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
-            }
-        }
-        // if(!empty(array_filter($filterdata->subdepartment))){
-        // 	$selectedsubdepts = implode(',', $filterdata->subdepartment);
-        // 	$sql .= " AND l.subdepartment IN ($selectedsubdepts) ";
-        // }
-        if(!empty($params['subdepartment'])){
-            $subdepts = explode(',', $params['subdepartment']);
-            $subdeptsql = [];
-            foreach($subdepts AS $subdept){
-                $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdeptparam_{$subdept}";
-                $params["subdeptparam_{$subdept}"] = '%/'.$subdept.'/%';
-            }
-            if(!empty($subdeptsql)){
-                $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
-            }
-            // $sql .= " AND l.costcenter IN ($selectedorganizations) ";
-        }
-
-        if(!empty($params['department4level'])){
-            $depts4 = explode(',', $params['department4level']);
-            $depts4sql = [];
-            foreach($depts4 AS $dept4){
-                $depts4sql[] = " concat('/',u.open_path,'/') LIKE :dept4param_{$dept4}";
-                $params["dept4param_{$dept4}"] = '%/'.$dept4.'/%';
-            }
-            if(!empty($depts4sql)){
-                $sql .= " AND ( ".implode(' OR ', $depts4sql)." ) ";
-            }
-        }
-
-        if(!empty($params['department5level'])){
-            $depts5 = explode(',', $params['department5level']);
-            $depts5sql = [];
-            foreach($depts5 AS $dept5){
-                $depts5sql[] = " concat('/',u.open_path,'/') LIKE :dept5param_{$dept5}";
-                $params["dept5param_{$dept5}"] = '%/'.$dept5.'/%';
-            }
-            if(!empty($depts5sql)){
-                $sql .= " AND ( ".implode(' OR ', $depts5sql)." ) ";
-            }
-        }
+				$params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
+			}
+			if(!empty($orgsql)){
+				$sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
+			}
+		}
+		if (!empty($params['department'])) {
+			$departments = explode(',', $params['department']);
+			$deptsql = [];
+			foreach($departments AS $department){
+				$deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
+				$params["departmentparam_{$department}"] = '%/'.$department.'/%';
+			}
+			if(!empty($deptsql)){
+				$sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
+			}
+		}
+	   
+		if (!empty($params['subdepartment'])) {
+			$subdepartments = explode(',', $params['subdepartment']);
+			$subdeptsql = [];
+			foreach($subdepartments AS $subdepartment){
+				$subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
+				$params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
+			}
+			if(!empty($subdeptsql)){
+				$sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+			}
+		}
+		if (!empty($params['department4level'])) {
+			$subdepartments = explode(',', $params['department4level']);
+			$subdeptsql = [];
+			foreach($subdepartments AS $department4level){
+				$subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
+				$params["department4levelparam_{$department4level}"] = '%/'.$department4level.'%';
+			}
+			if(!empty($subdeptsql)){
+				$sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+			}
+		}
+		if (!empty($params['department5level'])) {
+			$subdepartments = explode(',', $params['department5level']);
+			$subdeptsql = [];
+			foreach($subdepartments AS $department5level){
+				$subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
+				$params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
+			}
+			if(!empty($subdeptsql)){
+				$sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
+			}
+		}
         if(!empty($params['states'])){
             $states = explode(',', $params['states']);
             $statessql = [];
@@ -2717,15 +2705,10 @@ class classroom {
                                        FROM {local_classroom_trainers} AS lcu
                                        WHERE lcu.classroomid = $clasroomid)";
         $order = ' ORDER BY u.id ASC ';
-        // if ($perpage != -1) {
-        //     $order .= "LIMIT $perpage";
-        // }
 
         if ($total == 0) {
-            $availableusers = $DB->get_records_sql_menu($sql . $order, $params);
-        
-        // print_object($params);
-        // print_object($availableusers);exit;
+            $availableusers = $DB->get_records_sql_menu($sql . $order, $params, $offset1, $perpage);
+       
         } else {
             $availableusers = $DB->count_records_sql($sql, $params);
         }
@@ -2988,7 +2971,7 @@ class classroom {
 
         $list = array();
 
-        $classroom = $DB->get_record_sql('SELECT id, open_group, open_path,open_states,open_district,open_subdistrict,open_village,open_skill,open_level
+        $classroom = $DB->get_record_sql('SELECT id, open_group, open_path,open_states,open_district,open_subdistrict,open_village,open_skill,open_level,open_designation
              FROM {local_classroom} WHERE id = :classroomid',array('classroomid' => $classroomid));
          list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$classroom->open_path);
          if(!empty($ctr)){
@@ -3082,7 +3065,6 @@ class classroom {
 			$classroomdesignation =  $classroom->open_designation;
 		}
 		
-        
         $list['department'] = $classroomdepartment;
         $list['bussinessunit'] = $classroombu;
         $list['commercialunit'] = $classroomcu;
@@ -3095,10 +3077,9 @@ class classroom {
         if ($classroom->open_group == NULL || $classroom->open_group == -1) {
             $group = 'All';
         } else {
-            $groups = $DB->get_fieldset_sql("SSELECT id,name FROM {cohort} c JOIN {local_groups} g ON g.cohortid = c.id  WHERE g.id IN ($classroom->open_group)");
+            $groups = $DB->get_fieldset_sql("SELECT c.name,c.id FROM {cohort} c JOIN {local_groups} g ON g.cohortid = c.id  WHERE g.id IN ($classroom->open_group)");
             $group  = implode(',', $groups);
         }
-
         $list['group'] = $group;
 
         $array[] = $list;

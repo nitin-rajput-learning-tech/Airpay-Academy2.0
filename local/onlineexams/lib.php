@@ -80,6 +80,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
             $attempts = $moduleinfo->attempts;
             $course->gradepass = $gradepass;
             $course->grademethod = $moduleinfo->grademethod;
+            $course->maxgrade = $maxgrade;
             $course->attempts = $attempts;
             $course->timeopen = $moduleinfo->timeopen;
             $course->timeclose = $moduleinfo->timeclose;

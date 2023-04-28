@@ -203,6 +203,7 @@ class block_trainerdashboard_external extends external_api {
         $stable->search_query =$data_object->search_query;
         $stable->start = $offset;
         $stable->length = $limit;
+        $stable->thead = false;
         $conductedtrainings=block_trainerdashboard_manager::conductedtrainings($stable,$filtervalues);
         $totalcount=$conductedtrainings['conductedtrainingscount'];
     
@@ -517,6 +518,7 @@ class block_trainerdashboard_external extends external_api {
         $stable->search_query =$data_object->search_query;
         $stable->start = $offset;
         $stable->length = $limit;
+        $stable->thead = false;
         $upcomingtrainings=block_trainerdashboard_manager::upcomingtrainings($stable,$filtervalues);
         $totalcount=$upcomingtrainings['upcomingtrainingscount'];
      

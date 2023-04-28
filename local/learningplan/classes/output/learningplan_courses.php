@@ -281,7 +281,7 @@ class learningplan_courses implements \renderable, \templatable {
 				}
 			}
             if ($completed) {
-                $notcompletedcount = count($completed['notcompleted']);
+                $notcompletedcount = isset($completed['notcompleted']) ? count($completed['notcompleted']) : 0;
                  $completedcount = isset($completed['completed']) ? count($completed['completed']) : 0;
                  $totalcount = $notcompletedcount+$completedcount."count";
 				if ($notcompletedcount  == 0) {

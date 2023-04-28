@@ -3376,3 +3376,50 @@ table.flexible td:not(:first-child, :last-child)
 #classroommodule.generaltable tbody td{
     justify-content: center;
 }
+
+
+/*filter form*/
+#filteringform {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: #fff;
+     .form-autocomplete-downarrow{
+        right: 9px!important;
+        left: auto!important;
+        bottom: 3px!important;
+        top: auto; 
+     }
+     .form-inline.felement.col-md-9{
+         width: 100%;
+     }
+}
+#filters_form{
+    background-color: #fff !important;
+}
+@media(min-width:571px) and (max-width:767px){
+    #filteringform .form-autocomplete-downarrow{
+    top: -4px !important;
+    }
+    #filteringform .mr-md-2{
+    display: inline ;
+    }
+
+}
+@media(max-width:430px){
+    #filters_form .fitem.form-group {
+    max-width: 100%;
+    flex: 0 0 100%;
+    }
+    form#filteringform #fgroup_id_buttonar .fitem.form-submit{
+    flex:none;
+    }
+}
+@media (min-width: 431px) and (max-width: 1023px){
+    #filters_form .fitem.form-group {
+    max-width: 50%;
+    flex: 0 0 50%;
+    }
+    #filters_form .form-inline.felement{
+    flex-flow: row nowrap;
+    }
+}

@@ -400,7 +400,6 @@ class program {
             }else{
 
                 $concatsql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
-
             }
         } else if (!is_siteadmin()) {
             $myprograms = $DB->get_records_menu('local_program_users',
@@ -408,14 +407,6 @@ class program {
             if (isset($stable->programid) && !empty($stable->programid)) {
                 $userenrolstatus = $DB->record_exists('local_program_users',
                     array('programid' => $stable->programid, 'userid' => $USER->id));
-                $status = $DB->get_field('local_program', 'status',
-                    array('id' => $stable->programid));
-
-                   $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
-                    $programsql = "SELECT lp.*
-                                        FROM {local_program} AS lp WHERE lp.id = $stable->programid $costcenterpathconcatsql ";
-
-                    $program_costcenter = $DB->get_record_sql($programsql);
 
                 if ($userenrolstatus) {
 
@@ -427,7 +418,17 @@ class program {
                     }
                 }else {
 
-                    return compact('programs', 'programscount');
+
+                    $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
+                    $programsql = "SELECT lp.*
+                                        FROM {local_program} AS lp WHERE lp.id = $stable->programid $costcenterpathconcatsql ";
+
+                    $program_costcenter = $DB->get_record_sql($programsql);
+
+                    if (!$program_costcenter) {
+
+                        return compact('programs', 'programscount');
+                    }
 
                 }
             } else {
@@ -526,7 +527,11 @@ class program {
             $concatsql .= " AND bc.open_categoryid $filtercategoriessql";
         }
         if(!empty($status)){
-          $filterstatus = explode(',',$status);
+            if(is_array($status)){
+                 $filterstatus = $status;
+            }else{
+                 $filterstatus = explode(',',$status);
+            }
           if(!(in_array('active',$filterstatus) && in_array('inactive',$filterstatus))){
               if(in_array('active' ,$filterstatus)){
                   $concatsql .= " AND bc.visible = 1 ";
@@ -550,7 +555,6 @@ class program {
         $sql = " FROM {local_program} AS bc
                 WHERE 1 = 1 ";
         $sql .= $concatsql;
-
 
         if (isset($stable->programid) && $stable->programid > 0) {
 
@@ -894,6 +898,32 @@ class program {
                 $programcoursesssql .= " ORDER BY bclevelcourseid ASC";
             }
             $programlevelcourses = $DB->get_records_sql($programcoursesssql,
+                array('programid' => $programid));
+        }
+        return $programlevelcourses;
+    }
+        /**
+     * [program_courses description]
+     * @method program_courses
+     * @param  [type]            $programid [description]
+     * @return [type]                         [description]
+     */
+    public function program_level_courses_count($programid, $levelid, $userview = false) {
+        global $DB, $USER;
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
+        if ($levelid > 0) {
+            $params = array();
+            $programcourses = array();
+
+            $programcoursesssql = "SELECT COUNT(bclc.id)
+                                      FROM {local_program_level_courses} bclc
+                                      JOIN {course} c ON c.id = bclc.courseid
+                                     WHERE bclc.programid = :programid
+                                     AND bclc.levelid = {$levelid} ";
+            if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
+                $programcoursesssql .= " ORDER BY bclevelcourseid ASC";
+            }
+            $programlevelcourses = $DB->count_records_sql($programcoursesssql,
                 array('programid' => $programid));
         }
         return $programlevelcourses;

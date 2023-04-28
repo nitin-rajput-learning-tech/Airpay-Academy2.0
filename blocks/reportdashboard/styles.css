@@ -1790,9 +1790,8 @@ body.reportdashboard.path-blocks-reportdashboard #widgetaction img{
     /*padding: 3px;*/
     cursor: pointer;
     box-sizing: border-box;
-
-    width: 45px;
-    height: 45px;
+    width: 24px;
+    height: 24px;
     margin-top: 5px;
 }
 @media screen and (-webkit-min-device-pixel-ratio:0) {
@@ -3142,9 +3141,12 @@ body.reportdashboard.path-blocks-reportdashboard span.right_buttons #switchrole_
 
 body.reportdashboard.path-blocks-reportdashboard span#widgetaction .dropdown-toggle, body.reportdashboard.path-blocks-reportdashboard span.right_buttons>a,
 body.reportdashboard.path-blocks-reportdashboard span.right_buttons .span_adddashboard {
-    margin-right: 4px;
+    margin-right: 10px;
     cursor: pointer;
-    margin-left: 4px;
+    margin-left: 10px;
+    border: 1px solid #000;
+/*    padding: 6px;*/
+    padding: 1px 6px 6px;
 }
 body.reportdashboard.path-blocks-reportdashboard span#widgetaction #switchrole {
     margin-right: 0;

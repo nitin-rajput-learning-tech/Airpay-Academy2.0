@@ -54,6 +54,8 @@ function mass_enroll($cir, $course, $context, $data) {
     $courseid=$course->id;
     $roleid = $data->roleassign;
     $useridfield = $data->firstcolumn;
+    $coursecostcenter = $DB->get_field('course','open_path',array('id'=>$data->id));
+    $costcenter = explode('/',$coursecostcenter)[1];
 
     $enrollablecount = 0;
     $createdgroupscount = 0;
@@ -108,7 +110,7 @@ function mass_enroll($cir, $course, $context, $data) {
         // }
 
         /*First Condition To validate users*/
-        $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield='$fields[0]' ";
+        $sql="SELECT u.* from {user} u where u.deleted=0 and u.suspended=0 and u.$useridfield='$fields[0]' AND ((u.open_path LIKE '/$costcenter/%' OR u.open_path LIKE '/$costcenter'))";
         //$sql
         if(!(is_siteadmin())){
 
@@ -1067,7 +1069,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params= array(), $
         $orgsql = [];
         foreach($organizations AS $organisation){
             $orgsql[] = " concat('/',u.open_path,'/') LIKE :organisationparam_{$organisation}";
-            $params["organisationparam_{$organisation}"] = '%'.$organisation.'%';
+            $params["organisationparam_{$organisation}"] = '%/'.$organisation.'/%';
         }
         if(!empty($orgsql)){
             $sql .= " AND ( ".implode(' OR ', $orgsql)." ) ";
@@ -1078,18 +1080,19 @@ function course_enrolled_users($type = null, $course_id = 0, $params= array(), $
         $deptsql = [];
         foreach($departments AS $department){
             $deptsql[] = " concat('/',u.open_path,'/') LIKE :departmentparam_{$department}";
-            $params["departmentparam_{$department}"] = '%'.$department.'%';
+            $params["departmentparam_{$department}"] = '%/'.$department.'/%';
         }
         if(!empty($deptsql)){
             $sql .= " AND ( ".implode(' OR ', $deptsql)." ) ";
         }
     }
+   
     if (!empty($params['subdepartment'])) {
         $subdepartments = explode(',', $params['subdepartment']);
         $subdeptsql = [];
         foreach($subdepartments AS $subdepartment){
             $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :subdepartmentparam_{$subdepartment}";
-            $params["subdepartmentparam_{$subdepartment}"] = '%'.$subdepartment.'%';
+            $params["subdepartmentparam_{$subdepartment}"] = '%/'.$subdepartment.'/%';
         }
         if(!empty($subdeptsql)){
             $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -1100,7 +1103,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params= array(), $
         $subdeptsql = [];
         foreach($subdepartments AS $department4level){
             $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department4levelparam_{$department4level}";
-            $params["department4levelparam_{$department4level}"] = '%'.$department4level.'%';
+            $params["department4levelparam_{$department4level}"] = '%/'.$department4level.'%';
         }
         if(!empty($subdeptsql)){
             $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -1111,7 +1114,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params= array(), $
         $subdeptsql = [];
         foreach($subdepartments AS $department5level){
             $subdeptsql[] = " concat('/',u.open_path,'/') LIKE :department5levelparam_{$department5level}";
-            $params["department5levelparam_{$department5level}"] = '%'.$department5level.'%';
+            $params["department5levelparam_{$department5level}"] = '%/'.$department5level.'/%';
         }
         if(!empty($subdeptsql)){
             $sql .= " AND ( ".implode(' OR ', $subdeptsql)." ) ";
@@ -1179,7 +1182,7 @@ function course_enrolled_users($type = null, $course_id = 0, $params= array(), $
                              JOIN {enrol} e ON (e.id = ue.enrolid and e.courseid=$course_id and (e.enrol='manual' OR e.enrol='self')))";
     }
 
-    $order = " ORDER BY concat(u.firstname,' ',u.lastname) ASC ";
+    $order = " ORDER BY u.id ASC ";
 
     if($total==0){
         $availableusers = $DB->get_records_sql_menu($sql.$order, $params, $offset, $perpage);
@@ -1421,7 +1424,7 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
     $filtercategoriesparams= array();
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
-    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
+    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary,c.visible, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
@@ -1752,7 +1755,12 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
                 }else{
                     $icon = 't/show';
                     $string = get_string('make_inactive','local_courses');
-                   // $title = get_string('make_active','local_courses');
+                  
+                    // $title = get_string('make_active','local_courses');
+                }
+                $courseslist[$count]["visibleclass"]  = '';
+                if ($course->visible == 0) {
+                    $courseslist[$count]["visibleclass"]  = "disabled";
                 }
             }else{
                 if($course->visible){
@@ -1765,6 +1773,7 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
                     $title = get_string('make_active','local_courses');
                 }
             }
+          
                 $image = $OUTPUT->pix_icon($icon, $title, 'moodle', array('class' => 'iconsmall', 'title' => '')).$title;
                 $params = json_encode(array('coursename' => $coursename, 'coursestatus' => $course->visible));
                 $courseslist[$count]["update_status"] .= html_writer::link("javascript:void(0)", $image  , array('class'=>' make_inactive dropdown-item','data-fg'=>"d", 'data-method' => 'course_update_status','data-plugin' => 'local_courses', 'data-params' => $params, 'data-id'=>$course->id));
@@ -1872,7 +1881,7 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
         $exist_sql = "Select id from {local_certification_courses} where courseid = ?";
         if ($DB->record_exists_sql($exist_sql, array($course->id)))
         $candelete = false;
-    }
+    }   
     $coursesContext = array(
         "hascourses" => $courseslist,
         "nocourses" => $nocourse,

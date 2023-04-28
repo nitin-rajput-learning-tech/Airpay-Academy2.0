@@ -55,7 +55,12 @@ if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontex
 
 $learningplan_renderer = new local_learningplan\render\view();
 if($view=='ajax'){
-    $options =(array)json_decode($_GET["options"],false);
+    //$options =(array)json_decode($_GET["options"],false);
+    if(is_string($_GET["options"])){
+        $options = json_decode($_GET["options"], false);
+    }else{
+        $options = $_GET["options"];  
+    }
     if($type=='add'){
       $select_from_users=$learningplan_renderer->select_to_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$lastitem);
     }
@@ -182,9 +187,6 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
             foreach($userstoassign as $key=>$add_user){
               $progressbar->progress($progress);
               $progress++;
-              // $submitted->userid = $add_user;
-              // $submitted->planid = $planid;
-              // $submitted->usercreated = $USER->id;
               $record = new \stdClass();
               $record->planid = $planid;
               $record->userid = $add_user;
@@ -193,21 +195,9 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
               $record->timemodified = 0;
               $record->usermodified = 0;
               $create_record = $learningplan_lib->assign_users_to_learningplan($record);
-              // $exist = $DB->record_exists('local_learningplan_user',array('userid'=>$add_user,'planid'=>$planid));
-              // if(empty($exist)) {
-                // $insert = $DB->insert_record('local_learningplan_user',$submitted);
-                // // $lpcourseman = $DB->get_record('local_learningplan_courses', array('planid'=>$planid,'nextsetoperator'=>'and'),'sortorder,asc','*',0,1);
-                
-                // // $emaillogs = new learningplannotifications_emails();$emailtype, $touser, $fromuser,                 // $email_logs = $emaillogs->learningplan_emaillogs($type,$dataobj,$add_user,$fromuserid);
-                // $touser = \core_user::get_user($add_user);
-                // $emaillogs = new local_learningplan\notification();
-                // $logmail = $emaillogs->learningplan_notification($type, $touser, $USER, $learningplaninstance);
-        //       }else{
-				// $progress--;
-				// continue;
-			  // }
+   
             }
-			$progressbar->end_html();
+			      $progressbar->end_html();
             $result=new stdClass();
             $result->changecount=$progress;
             $result->learningplan=$learningplan->name; 
@@ -367,7 +357,7 @@ $( document ).ready(function() {
         {
           $('.dual_select').bind('scroll', function()
             {
-              if($(this).scrollTop() + $(this).innerHeight()>=$(this)[0].scrollHeight)
+              if(Math.round($(this).scrollTop() + $(this).innerHeight())>=$(this)[0].scrollHeight)
               {
                 var get_id=$(this).attr('id');
                 if(get_id=='bootstrap-duallistbox-selected-list_duallistbox_learningplan_users'){
@@ -422,5 +412,3 @@ $continue.='</div>';
 echo $continue;
 
 echo $OUTPUT->footer();
-
-?>

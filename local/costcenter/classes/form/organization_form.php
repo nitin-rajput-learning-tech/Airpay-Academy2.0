@@ -146,7 +146,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $mform->addElement('hidden', 'usermodified', $USER->id);
         $mform->setType('usermodified', PARAM_RAW);
 
-        if($formtype == 'organization'){
+        if($formtype == 'organization' || $formtype =='department'){
             $theme_epsilon_plugin_exist = $corecomponent::get_plugin_directory('theme', 'epsilon');
             if(!empty($theme_epsilon_plugin_exist)){ 
 
@@ -206,7 +206,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
             $costcenter = $DB->get_record('local_costcenter', array('shortname' => $shortname), '*', IGNORE_MULTIPLE);
             if (empty($data['id']) || $costcenter->id != $data['id']) {
                 if($data['parentid'] == 0){
-                    $errors['shortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
+                    $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
                 }else{
                     $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
                 }

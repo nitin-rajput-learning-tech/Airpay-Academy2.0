@@ -4344,8 +4344,8 @@ function role_switch($roleid, context $context) {
         load_all_capabilities();
     }
 
-    // Make sure that course index is refreshed.
-    if ($coursecontext = $context->get_course_context()) {
+    // Make sure that course index is refreshed.   
+    if ($coursecontext = $context->get_course_context(false)) {
         core_courseformat\base::session_cache_reset(get_course($coursecontext->instanceid));
     }
 

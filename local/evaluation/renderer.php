@@ -299,7 +299,7 @@ class local_evaluation_renderer extends plugin_renderer_base  {
 
        $templateName = 'local_evaluation/evaluations_list';
        $cardClass = 'col-lg-3 col-md-6 col-12';
-       $perpage = 10;
+       $perpage = 12;
         if($view_type=='table'){
             $templateName = 'local_evaluation/evaluations_catalog_list';
             $cardClass = 'tableformat';

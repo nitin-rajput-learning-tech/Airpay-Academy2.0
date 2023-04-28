@@ -37,13 +37,15 @@
                                 {{> local_program/coursesessionblock }}
                             </div>
                             <div class="lvc_desc">{{{coursesummary}}}</div>
+                            {{# userserachview}}
                             <div class="training_btns d-flex mt-3 justify-content-end">
                                 {{# classroomcourse}}
                                     <a class="view_btn mr-2"><span data-courseid='{{id}}' class="pull-right program_classroom_icon" title="{{# str}} listofclassrooms, local_program{{/ str}}">View trainings</span></a>
                                 {{/ classroomcourse}}
                                 <!-- <a class="view_btn mr-2">View trainings</a> -->
-                                <a class="start_btn" href="{{courseurl}}">{{#str}} start_course, local_program{{/str}}</a>
+                                <a class="start_btn" href="{{{courseurl}}}">{{#str}} start_course, local_program{{/str}}</a>
                             </div>
+                            {{/userserachview}}
                         </div>
                     </div>
                 </div>

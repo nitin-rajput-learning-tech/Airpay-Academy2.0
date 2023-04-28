@@ -200,7 +200,7 @@ class user{
     public function enrol_get_users_courses($userid, $count =false, $limityesno = false, $start = 0, $limit = 5, $source = false) {
         global $DB;
         $countsql = "SELECT count(DISTINCT(course.id)) ";
-        $coursessql = "SELECT course.id, course.fullname,course.shortname, course.summary,ue.timecreated as enrolldate , cc.timecompleted AS completiondate ";
+        $coursessql = "SELECT course.id, course.fullname as name,course.shortname as code, course.summary,ue.timecreated as enrolldate , cc.timecompleted AS completiondate ";
 
         // $fromsql = "FROM {course} AS course
         //             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol IN('self','manual','auto')
@@ -219,7 +219,7 @@ class user{
                     JOIN {context} AS cxt ON cxt.id=ra.contextid AND cxt.contextlevel = 50 AND cxt.instanceid=course.id
                     JOIN {role} as r ON r.id = ra.roleid AND r.shortname = 'employee'
                     LEFT JOIN {course_completions} as cc ON cc.course = course.id AND u.id = cc.userid
-                    WHERE course.id > 1 AND ue.userid = ? AND course.open_coursetype = 0 ";
+                    WHERE course.id > 1 AND ue.userid = ? AND course.open_coursetype = 0 AND course.visible=1 ";
         // if ($source) {
         //     $fromsql .= " AND course.open_securecourse != 1 ";
         // }
@@ -228,9 +228,23 @@ class user{
             $records = $DB->get_records_sql($coursessql.$fromsql.$ordersql, [$userid], $start, $limit);
         else
         $records = $DB->get_records_sql($coursessql.$fromsql.$ordersql, [$userid]);
+        foreach($records as $key=>$value){
+        $statusid = $DB->get_field_sql("SELECT cc.id FROM {course_completions} cc JOIN {user} u ON cc.userid = u.id WHERE cc.course =:courseid AND cc.userid =:userid AND cc.timecompleted > 0 AND cc.timecompleted is not null AND u.suspended = 0 AND u.deleted = 0 ",array('userid' => $userid ,'courseid' => $value->id ));
+        if($statusid){
+          $status = 'Completed';
+        }else{
+          $status = 'Not Completed';
+        }
+        $value->status = $status;
+        if(!empty($value->completiondate)){
+            $value->completiondate = \local_costcenter\lib::get_userdate('d/m/Y H:i',$value->completiondate);
+        }else{
+            $value->completiondate = 'NA';
+        }
+        $value->enrolldate = \local_costcenter\lib::get_userdate('d/m/Y H:i',$value->enrolldate);
 
+    }
         $total = $DB->count_records_sql($countsql.$fromsql, [$userid]);
-
         return array('data'=>$records, 'count'=>$total);
     }
 
