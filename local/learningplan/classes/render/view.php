@@ -1124,9 +1124,9 @@ class view extends plugin_renderer_base
 		$sql .= " FROM {user} u WHERE u.id >1 AND u.deleted=0 AND u.suspended=0 ";
 		$userpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path');
 		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'u.open_path');
-		if ($lastitem != 0) {
-			$sql .= " AND u.id > $lastitem";
-		}
+	/* 	if ($lastitem != 0) {
+			$sql .= " AND u.id > $lastitem ";
+		} */
 		if (is_siteadmin()) {
 			$sql .= "";
 		} else {
@@ -1232,12 +1232,12 @@ class view extends plugin_renderer_base
 
 			$sql .= " AND u.id IN (select cm.userid from {cohort_members} cm, {user} u where u.id = cm.userid AND u.deleted = 0 AND u.suspended = 0 AND cm.cohortid IN ({$params['groups']}))";
 		}
-		$order = ' ORDER BY u.id ASC ';
+		$order = ' ORDER BY u.firstname ASC ';
 		if ($perpage != -1) {
 			// $order.="LIMIT $perpage";
 		}
 		if ($total == 0) {
-			$users = $this->db->get_records_sql_menu($sql . $order, $params, $offset1, $perpage);
+			$users = $this->db->get_records_sql_menu($sql . $order, $params, $lastitem, $perpage);
 		} else {
 			$users = $this->db->count_records_sql($sql, $params);
 		}
@@ -1270,10 +1270,10 @@ class view extends plugin_renderer_base
 		$sql .= " FROM {user} u WHERE u.id >2 AND u.suspended =0
 								 AND u.deleted =0  $siteadmin_sql AND u.id not in ($loginuser->id) $userpathconcatsql";
 
-		if ($lastitem != 0) {
+	/* 	if ($lastitem != 0) {
 
-			$sql .= " AND u.id > $lastitem";
-		}
+			$sql .= " AND u.id > $lastitem ";
+		} */
 		$costcenterpathconcatsql = (new \local_learningplan\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'u.open_path');
 		if (is_siteadmin()) {
 			$sql .= "";
@@ -1387,13 +1387,13 @@ class view extends plugin_renderer_base
 
 		$sql .= " AND u.id not in(SELECT userid FROM {local_learningplan_user} WHERE planid=$planid)";
 
-		$order = ' ORDER BY u.id ASC ';
+		$order = ' ORDER BY u.firstname ASC ';
 		if ($perpage != -1) {
 			// $order.="LIMIT $perpage";
 			$limit = $perpage;
 		}
 		if ($total == 0) {
-			$users = $this->db->get_records_sql_menu($sql . $order, $params, $offset1, $perpage);
+			$users = $this->db->get_records_sql_menu($sql . $order, $params, $lastitem, $perpage);
 		} else {
 			$users = $this->db->count_records_sql($sql, $params);
 		}

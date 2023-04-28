@@ -1677,7 +1677,7 @@ class program {
         $currenttime = time();
         $countSql = "SELECT count(lc.id)
             FROM {local_classroom_courses} AS lcc
-            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4) ";
+            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1) ";
 
         $params=array('courseid' => $courseid, 'currenttime1' => $currenttime);
 
@@ -1693,7 +1693,7 @@ class program {
             JOIN {local_classroom} AS lc On lcc.classroomid = lc.id
             LEFT JOIN {local_classroom_trainers} AS lct ON lct.classroomid = lc.id
             LEFT JOIN {user} AS u ON u.id = lct.trainerid
-            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4) ";
+            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1) ";
         $courseSql .= $this->get_classroom_ta_query('lc');
         $courseSql .= " GROUP BY lc.id ";
 

@@ -1051,11 +1051,11 @@ function course_enrolled_users($type = null, $course_id = 0, $params= array(), $
         $sql = "SELECT count(u.id) as total";
     }
     $sql.=" FROM {user} AS u WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted ";
-    if($lastitem!=0){
-       $sql.=" AND u.id > $lastitem";
-    }
+    // if($lastitem!=0){
+    //    $sql.=" AND u.id > $lastitem ";
+    // }
     if (!is_siteadmin()) {
-        $sql.=$condition;
+        $sql .= $condition;
     }
     $sql .=" AND u.id <> $USER->id";
     if (!empty($params['email'])) {
@@ -1182,10 +1182,10 @@ function course_enrolled_users($type = null, $course_id = 0, $params= array(), $
                              JOIN {enrol} e ON (e.id = ue.enrolid and e.courseid=$course_id and (e.enrol='manual' OR e.enrol='self')))";
     }
 
-    $order = " ORDER BY u.id ASC ";
+    $order = " ORDER BY u.firstname  ASC ";
 
     if($total==0){
-        $availableusers = $DB->get_records_sql_menu($sql.$order, $params, $offset, $perpage);
+        $availableusers = $DB->get_records_sql_menu($sql.$order, $params, $lastitem, $perpage);
     }else{
         $availableusers = $DB->count_records_sql($sql, $params);
     }

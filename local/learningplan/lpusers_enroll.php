@@ -41,6 +41,7 @@ $remove=optional_param('remove',array(), PARAM_RAW);
 $view=optional_param('view','page', PARAM_RAW);
 $type=optional_param('type','', PARAM_RAW);
 $lastitem=optional_param('lastitem',0, PARAM_INT);
+$countval = optional_param('countval', 0, PARAM_INT);
 $sesskey=sesskey();
 $learningplan = $DB->get_record('local_learningplan',array('id' => $planid));
 if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext))){
@@ -62,10 +63,10 @@ if($view=='ajax'){
         $options = $_GET["options"];  
     }
     if($type=='add'){
-      $select_from_users=$learningplan_renderer->select_to_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$lastitem);
+      $select_from_users=$learningplan_renderer->select_to_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$countval);
     }
     if($type=='remove'){
-      $select_from_users=$learningplan_renderer->select_from_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$lastitem);
+      $select_from_users=$learningplan_renderer->select_from_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$countval);
     }
     echo json_encode($select_from_users);
     exit;
@@ -370,14 +371,14 @@ $( document ).ready(function() {
                     var total_users=".$select_to_users_total.";
                 }
                 var count_selected_list=$('#'+get_id+' option').length;
-               
+                var countval = $('#'+get_id+' option').length;
                 var lastValue = $('#'+get_id+' option:last-child').val();
               if(count_selected_list<total_users){  
                    //alert('end reached');
                     var selected_list_request = $.ajax({
                         method: 'GET',
                         url: M.cfg.wwwroot + '/local/learningplan/lpusers_enroll.php',
-                        data: {lpid:'$planid',type:type,view:'ajax',lastitem:lastValue, options: $myJSON},
+                        data: {lpid:'$planid',type:type,view:'ajax',countval:countval, options: $myJSON},
                         dataType: 'html'
                     });  
                     var appending_selected_list = '';

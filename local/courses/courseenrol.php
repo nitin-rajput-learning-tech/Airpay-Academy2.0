@@ -37,6 +37,7 @@ global $CFG, $DB, $USER, $PAGE, $OUTPUT, $SESSION;
 $view = optional_param('view', 'page', PARAM_RAW);
 $type = optional_param('type', '', PARAM_RAW);
 $lastitem = optional_param('lastitem', 0, PARAM_INT);
+$countval = optional_param('countval', 0, PARAM_INT);
 
 $enrolid      = required_param('enrolid', PARAM_INT);
 $course_id      = optional_param('id', 0, PARAM_INT);
@@ -61,7 +62,7 @@ if ($view == 'ajax') {
     $options = $_GET["options"];  
   }
 
-  $select_from_users = course_enrolled_users($type, $course_id, $options, false, $offset1 = -1, $perpage = 50, $lastitem);
+  $select_from_users = course_enrolled_users($type, $course_id, $options, false, $offset1 = -1, $perpage = 50, $countval);
   echo json_encode($select_from_users);
   exit;
 }
@@ -421,14 +422,16 @@ if ($course) {
                 }
                 var count_selected_list=$('#'+get_id+' option').length;
 
-                var lastValue = $('#'+get_id+' option:last-child').val();
-              
+                // var lastValue = $('#'+get_id+' option:last-child').val();
+               // console.log($('#'+get_id+' option'));
+                var countval = $('#'+get_id+' option').length;
+               
               if(count_selected_list<total_users){
                    //alert('end reached');
                     var selected_list_request = $.ajax({
                         method: 'GET',
                         url: M.cfg.wwwroot + '/local/courses/courseenrol.php',
-                        data: {id:'$course_id',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue,enrolid:'$enrolid', options: $myJSON},
+                        data: {id:'$course_id',sesskey:'$sesskey', type:type,view:'ajax',countval:countval,enrolid:'$enrolid', options: $myJSON},
                         dataType: 'html'
                     });
                     var appending_selected_list = '';
