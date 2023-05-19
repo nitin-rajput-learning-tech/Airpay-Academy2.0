@@ -851,3 +851,5 @@ $string['regisemailbody'] = 'Hi {$a->username}, Your registration successfully c
 $string['emailsubject'] = 'Confirmation';
 $string['organization_shortname'] = 'Organization Short Name';
 $string['activeregistration'] = 'Registration';
+$string['policystring'] = 'I have read and accept the ';
+$string['termsconditionstring'] = 'I have read and agree to the ';

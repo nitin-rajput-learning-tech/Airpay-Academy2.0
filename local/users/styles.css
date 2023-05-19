@@ -1503,3 +1503,15 @@ body#page-local-users-index .userscontainer b{
 #page-local-users-profile .usercourseslist{
     margin-top: 1rem;
 }
+
+#page-site-index .mform .signup_form .form-inline .form-control,
+#page-site-index .mform .signup_form .form-inline .custom-select{
+    flex-grow: 1;
+}
+#page-site-index .mform .signup_form .form-group .icon{
+    width: auto;
+    height: auto;
+}
+#page-site-index .mform .signup_form .form-group{
+    margin-bottom: 1.5rem;
+}
