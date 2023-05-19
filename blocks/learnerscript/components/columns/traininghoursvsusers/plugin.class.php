@@ -44,52 +44,83 @@ class plugin_traininghoursvsusers extends pluginbase {
     }
 
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
-        global $DB, $CFG;
-        // print_object($row);
-        // print_object($data);
-        // $trsql = "SELECT SUM(cs.duration) AS sessionsduration
-        //                 FROM {local_classroom_sessions} cs
-        //                 JOIN {local_classroom} c ON cs.classroomid = c.id
-        //                 WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = $row->year
-        //                 AND MONTH(FROM_UNIXTIME(cs.timestart)) = $row->month ";
+        global $DB, $CFG,$USER;
+        $costcenterpathconcatsql = '';
+        if(!is_siteadmin()){
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$org);               
+        }
+        switch ($data->column) {
+            case 'trainingdays':                
+                $query = "SELECT SUM(DATEDIFF(DATE(FROM_UNIXTIME(c.enddate)), DATE(FROM_UNIXTIME(c.startdate))))
+                            FROM {local_classroom} c 
+                            WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(c.startdate))
+                            AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(c.startdate)) AND (c.status = 1 OR c.status = 4) 
+                            AND YEAR(FROM_UNIXTIME(c.startdate)) =:cyear AND FROM_UNIXTIME(c.startdate, '%M') = :cmonth  $costcenterpathconcatsql ";
+                $params     = array('cyear'=>$row->year , 'cmonth' => $row->month);
+               
+                $trainingdays = $DB->get_field_sql($query, $params);
+                if ($trainingdays) {
+                    $row->{$data->column} = $trainingdays;
+                } else {
+                    $row->{$data->column} = 0;
+                }
+                break;     
+            case 'monthyear':
+                $row->{$data->column} = ($row->{$data->column}) ? ($row->{$data->column}) : '--';
+            break;
+            case 'month':
+                $row->{$data->column} = ($row->{$data->column}) ? ($row->{$data->column}) : '--';
+            break;
+            case 'year':
+                $row->{$data->column} = ($row->{$data->column}) ? ($row->{$data->column}) : '--';
+            break;
+            case 'totaltrainings':
+                $query = " SELECT count(id) 
+                            FROM {local_classroom} c 
+                            WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(c.startdate))
+                            AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(c.startdate)) AND (c.status = 1 OR c.status = 4)
+                            AND YEAR(FROM_UNIXTIME(c.startdate)) =:cyear AND FROM_UNIXTIME(c.startdate, '%M') = :cmonth  $costcenterpathconcatsql ";
+                $params     = array('cyear'=>$row->year , 'cmonth' => $row->month);
+            
+                $totaltrainings = $DB->get_field_sql($query, $params);
+               
+                $row->{$data->column} = ($totaltrainings) ? ($totaltrainings) : '--';
+            break;
+            case 'traininghours':
+                $query = "SELECT SUM(cs.duration) 
+                            FROM {local_classroom_sessions} cs
+                            JOIN {local_classroom} c ON cs.classroomid = c.id
+                            WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(c.startdate))
+                            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(c.startdate)) AND (c.status = 1 OR c.status = 4)
+                            AND YEAR(FROM_UNIXTIME(c.startdate)) =:cyear AND FROM_UNIXTIME(c.startdate, '%M') = :cmonth  $costcenterpathconcatsql ";
+                $params     = array('cyear'=>$row->year , 'cmonth' => $row->month);
+            
+                $totaltrainings = $DB->get_field_sql($query, $params);
+                // $totaltrainings = intdiv( $totaltrainings, 60).'H :'. ( $totaltrainings % 60) .'M';
+                $hours = floor($totaltrainings / 60);
+                $minutes = ($totaltrainings % 60);
+                $totaltrainings = sprintf("%d:%02d", $hours, $minutes);
+                $row->{$data->column} = ( $totaltrainings ) ? sprintf("%d:%02d", $hours, $minutes) : '--';
+            break;
+            case 'userscovered':
+                $query = "SELECT count(distinct cat.userid) 
+                            FROM {local_classroom_attendance} cat
+                            JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1
+                            JOIN {local_classroom} c ON cs.classroomid = c.id
+                            WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(c.startdate))
+                            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(c.startdate)) AND (c.status = 1 OR c.status = 4) 
+                            AND YEAR(FROM_UNIXTIME(c.startdate)) =:cyear AND FROM_UNIXTIME(c.startdate, '%M') = :cmonth  $costcenterpathconcatsql ";
+                $params     = array('cyear'=>$row->year , 'cmonth' => $row->month);
+            
+                $userscovered = $DB->get_field_sql($query, $params);
+                $row->{$data->column} = ($userscovered) ? ($userscovered) : '--';
+            break;
+            default:
+                return false;
+                break;          
+        }
 
-        // $trainginghrs = $DB->get_record_sql($trsql);
-        // $trhours = $trainginghrs->sessionsduration/60;
-
-        // $usrsql = "SELECT count(cat.id) as userscovered
-        //                 FROM {local_classroom_attendance} cat
-        //                 JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1
-        //                 JOIN {local_classroom} c ON cs.classroomid = c.id
-        //                 WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = $row->year
-        //                 AND MONTH(FROM_UNIXTIME(cs.timestart)) = $row->month";
-        // $trainedusers = $DB->get_record_sql($usrsql);
-
-        // switch ($data->column) {
-        //     case 'traininghours':
-        //     if ($trhours)             
-        //         $row->{$data->column} = round($trhours, 2);  
-        //         else                  
-        //         $row->{$data->column} = '--';                    
-        //     break;
-        //     case 'trainingdays':
-        //     if ($trhours)
-        //         $row->{$data->column} = round($trhours/8, 2);
-        //         else                  
-        //         $row->{$data->column} = '--'; 
-        //     break;
-        //     case 'userscovered':
-        //     if ($trainedusers)
-        //         $row->{$data->column} = $trainedusers->userscovered;
-        //         else                  
-        //         $row->{$data->column} = '--'; 
-        //     break;
-        //     case 'trmonth':                 
-        //         $row->{$data->column} = $row->month; 
-        //         break;
-        //     case 'tryear':                 
-        //         $row->{$data->column} = $row->year; 
-        //     break;   
-        // }
         return (isset($row->{$data->column}))? $row->{$data->column} : ' -- ';
     }
 }

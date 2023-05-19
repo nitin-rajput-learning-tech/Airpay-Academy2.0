@@ -1131,6 +1131,7 @@ function local_costcenter_masterinfo(){
         $templatedata['count'] = $org;
         $templatedata['link'] = $CFG->wwwroot.'/local/costcenter/index.php';
         $templatedata['stringname'] = get_string('originator','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-sitemap" aria-hidden="true" aria-label=""></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

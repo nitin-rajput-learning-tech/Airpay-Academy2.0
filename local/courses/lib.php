@@ -2478,6 +2478,7 @@ function local_courses_masterinfo(){
         $templatedata['count'] = $string;
         $templatedata['link'] = $CFG->wwwroot.'/local/courses/coursestypes.php';
         $templatedata['stringname'] = get_string('course','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-book" aria-hidden="true" aria-label=""></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

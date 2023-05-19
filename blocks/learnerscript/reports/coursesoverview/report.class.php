@@ -123,10 +123,14 @@ class report_coursesoverview extends reportbase implements report {
     }
 
     public function get_rows($courses) {
-        global $DB;
+        global $DB,$USER;
         $data = array();
+        if(!is_siteadmin()){
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql('u.open_path',$org);               
+        }
         if($courses){
-            $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
+            //$costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path', null, 'lowerandsamepath');
             $enrolsql = "SELECT COUNT(ra.id)
                         FROM {role_assignments} ra
                         JOIN {context} cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
@@ -157,7 +161,7 @@ class report_coursesoverview extends reportbase implements report {
                 $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
 
                 $course->noofcompletions = $DB->count_records_sql($completedsql, array('courseid' => $course->courseid, 'ls_fstartdate' => $this->ls_startdate, 'ls_fenddate' => $this->ls_enddate));
-                $percentofcompletions = round(($course->noofcompletions/$course->noofenrollments)*100);
+                $percentofcompletions = ($course->noofenrollments!=0 && $course->noofcompletions > $course->noofenrollments) ? round(($course->noofcompletions/$course->noofenrollments)*100) : 0;
                 $percentofcompletion = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
                 $course->percentofcompletions = '<div class="progress">
                     <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$percentofcompletion.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$percentofcompletion.'%">
@@ -168,53 +172,7 @@ class report_coursesoverview extends reportbase implements report {
             }
         }
         return $data;
-
-       /*  if($courses){
-            $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path', null, 'lowerandsamepath');
-            $enrolsql = "SELECT COUNT(ra.id)
-                        FROM {role_assignments} ra
-                        JOIN {context} cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {user} u ON ra.userid = u.id
-                        WHERE u.deleted = 0
-                            AND u.suspended = 0 AND r.shortname IN ('employee','student')
-                            AND cxt.instanceid = :courseid {$costcenterpathconcatsql} ";
-
-            $noofcompletions = "SELECT count(id) FROM {course_completions} WHERE course =:courseid and timecompleted IS NOT NULL";
-
-            $inprogress = "SELECT count(ul.id) FROM {user_lastaccess} AS ul
-                WHERE ul.courseid =:courseid AND ul.userid !=2
-                AND ul.userid NOT IN(SELECT cc.userid FROM {course_completions} AS cc
-                    WHERE cc.course = ul.courseid AND cc.userid = ul.userid AND cc.timecompleted IS NOT NULL)";
-            $inprogress .= " AND ul.userid IN (SELECT ra.userid
-                        FROM {role_assignments} ra
-                        JOIN {context} cxt ON cxt.id = ra.contextid AND cxt.contextlevel = 50
-                        JOIN {role} r ON r.id = ra.roleid
-                        JOIN {user} u ON ra.userid = u.id
-                        WHERE u.deleted = 0
-                            AND u.suspended = 0 AND r.shortname IN ('employee','student')
-                            AND cxt.instanceid = ul.courseid)";
-
-            $notstarted = "AND ra.userid NOT IN (SELECT ul.userid FROM {user_lastaccess} AS ul WHERE ul.courseid = cxt.instanceid)";
-           
-            foreach ($courses as $course) {
-
-                $course->noofenrollments = $DB->count_records_sql($enrolsql, array('courseid' => $course->courseid));
-                $course->noofinprogress = $DB->count_records_sql($inprogress, array('courseid' => $course->courseid));
-                $course->noofcompletions = $DB->count_records_sql($noofcompletions, array('courseid' => $course->courseid));
-                $course->notstarted = $DB->count_records_sql($enrolsql.$notstarted, array('courseid' => $course->courseid));
-                $percentofcompletions = round(($course->noofcompletions/$course->noofenrollments)*100);
-                $percentofcompletion = is_NAN($percentofcompletions) ? 0 : $percentofcompletions;
-                $course->percentofcompletions = '<div class="progress">
-                    <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$percentofcompletion.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$percentofcompletion.'%">
-                        <span class="progress_percentage ml-2">'.$percentofcompletion.'%</span>
-                    </div>
-                </div>';           
-
-                $data[] = $course;
-            }
-        } */
-        
+  
      
     }
 }

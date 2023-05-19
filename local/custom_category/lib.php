@@ -136,6 +136,7 @@ function local_custom_category_masterinfo(){
         $templatedata['count'] = $cat;
         $templatedata['link'] = $CFG->wwwroot.'/local/custom_category/index.php';
         $templatedata['stringname'] = get_string('category','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-cubes"></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

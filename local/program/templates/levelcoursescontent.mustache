@@ -23,13 +23,13 @@
         {{/ canaddcourse }}
         <div class="row mt-4">
             {{# programlevelcourses }}
-            <div class="col-md-6 col-12 mb-5">
+            <div class="col-md-4 col-12 mb-5">
                 <div class="lpcourse_container d-flex">
-                    <div class="d-flex levelcourse_list {{ coursecompletionstatus }}">
+                    <div class="d-flex levelcourse_list w-full flex-column {{ coursecompletionstatus }}">
                         <div class="lvcimg_container">
                             <div class="levelcourse_img" style="background-image: url('{{ courseimage }}');" alt="{{course}}"></div>
                         </div>
-                        <div class="lvcdata_container p-2">
+                        <div class="lvcdata_container p-3">
                             <div class="w-full d-flex justify-content-between align-items-center">
                                 <h5 class="coursename">
                                     {{{ course }}}

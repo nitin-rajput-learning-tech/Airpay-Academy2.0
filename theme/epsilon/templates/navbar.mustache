@@ -61,16 +61,21 @@
         <span class="navbar-toggler-icon"></span>
         <span class="sr-only">{{#str}}sidepanel, core{{/str}}</span>
     </button>
+    <div class="d-flex align-items-center">
+        <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 mr-4 p-0 aabtn">
 
-    <a href="{{{ config.homeurl }}}" class="navbar-brand d-none d-md-flex align-items-center m-0 mr-4 p-0 aabtn">
-
-        {{# output.should_display_navbar_logo }}
-            <img src="{{output.get_custom_logo}}" class="logo mr-1" alt="{{sitename}}">
-        {{/ output.should_display_navbar_logo }}
-        {{^ output.should_display_navbar_logo }}
-            {{{ sitename }}}
-        {{/ output.should_display_navbar_logo }}
-    </a>
+            {{# output.should_display_navbar_logo }}
+                <img src="{{output.get_custom_logo}}" class="logo mr-1" alt="{{sitename}}">
+            {{/ output.should_display_navbar_logo }}
+            {{^ output.should_display_navbar_logo }}
+                {{{ sitename }}}
+            {{/ output.should_display_navbar_logo }}
+        </a>
+        <div class="usermsg">
+            <h5 class="mb-0 d-flex align-items-center">Hello {{{output.loggedin_username}}}<span class="ml-1 hand_icon"></span></h5>
+            <span class="text-muted">"Don't wish for it work for it"</span>
+        </div>
+    </div>
     <!-- {{#primarymoremenu}}
         <div class="primary-navigation">
             {{> core/moremenu}}

@@ -36,7 +36,7 @@ class report_userwisecourseoverview extends reportbase {
         $this->components = array('columns', 'conditions', 'ordering', 'permissions', 'filters');
         $this->parent = true;
         $this->columns = array('coursefield' => ['coursefield'],'userfield' => array('userfield'),'coursescompletionscolumns' => ['coursename','startdate','enddate','enrolledon','completion_percentage','completionstatus','completiondate']);
-        $this->filters = array('organization','departments', 'subdepartments', 'level4department');
+        //$this->filters = array('organization','departments', 'subdepartments', 'level4department');
         $this->basicparams = array(['name' => 'user']);
         $this->defaultcolumn = 'u.id,c.id';      
 

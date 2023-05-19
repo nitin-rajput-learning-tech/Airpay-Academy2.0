@@ -109,7 +109,7 @@ class renderer extends plugin_renderer_base
         $cancelled_tab = true;
 
         $completed_tab = true;
-
+        $cardClass = 'col-md-6 col-12';
         if (is_siteadmin()) {
             $templateName = 'local_classroom/classrooms_list';
             $cardClass = 'col-md-6 col-12';

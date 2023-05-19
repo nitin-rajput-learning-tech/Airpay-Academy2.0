@@ -214,7 +214,7 @@ class custom_forum_form extends moodleform {
                 $shortnamestatic = 'fo';
                 $shortname = array();
                 $shortname[] = $mform->createElement('hidden',  'concatshortname', $shortnamestatic);
-                $shortname[] = $mform->createElement('static',  'shortnamestatic', '', '<span class="shortnamestatic">' . $shortnamestatic . '</span>_');
+                $shortname[] = $mform->createElement('static',  'shortnamestatic', '',$shortnamestatic . '_');
                 $shortname[] = $mform->createElement('text', 'shortname', 'local_costcenter', 'maxlength="100" size="20"');
                 $mform->addGroup($shortname,  'groupshortname',  get_string('shortname', 'local_costcenter'),  array(''),  false);
                 $mform->addRule('groupshortname', get_string('missingshortname', 'local_forums'), 'required', null, 'client');

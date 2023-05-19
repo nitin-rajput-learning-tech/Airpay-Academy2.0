@@ -34,10 +34,7 @@ class quick_links{
         $local_pluginlist = $core_component::get_plugin_list('local');
         $tool_pluginlist = $core_component::get_plugin_list('tool');
         $block_pluginlist = $core_component::get_plugin_list('block');
-
-        $out = html_writer::start_tag('table border="2px" class="generaltable"');
-        $out .= html_writer::start_tag('div class="row"');
-        $out .= html_writer::start_tag('div class="col-6" style="padding: left 49px;"');
+        $out = html_writer::start_tag('div class="master_info_block row"');
 
         $pluginnavs = array();
         foreach($local_pluginlist as $key => $local_pluginname){
@@ -84,15 +81,11 @@ class quick_links{
                 $data[] = $value;
             }
         }
-
-        $out .= $data[0].$data[1].$data[2].$data[3].$data[4];
-        $out .= html_writer::end_tag('div');
-        $out .= html_writer::start_tag('div class="col-6"');
+        
+        $out .= $data[0].$data[1].$data[2];
+        $out .= $data[3].$data[4];
         $out .= $data[5].$data[6].$data[7].$data[8];
         $out .= html_writer::end_tag('div');
-        $out .= html_writer::end_tag('div');
-        $out .= html_writer::end_tag('table');
-
-        return $out;
+      	return $out;
     }
 }

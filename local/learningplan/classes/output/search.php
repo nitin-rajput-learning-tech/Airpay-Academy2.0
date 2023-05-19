@@ -107,8 +107,7 @@ class search implements renderable{
             $groupqueeryparams =implode('OR',$grouquery);
             $params[]= '('.$groupqueeryparams.')';
 
-
-
+      
             if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
                 $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
             }else{
@@ -121,7 +120,7 @@ class search implements renderable{
                     ELSE 0 END
                 ELSE 1 END ";
 
-            if(!empty($USER->open_designation) && $USER->open_designation != ""){
+          /*   if(!empty($USER->open_designation) && $USER->open_designation != ""){
                 $designationlike = "'%,$USER->open_designation,%'";
             }else{
                 $designationlike = "''";
@@ -131,7 +130,7 @@ class search implements renderable{
                     CASE WHEN CONCAT(',',llp.open_designation,',') LIKE {$designationlike}
                         THEN 1
                         ELSE 0 END
-                ELSE 1 END ";
+                ELSE 1 END "; */
 
             if(!empty($USER->open_location) && $USER->open_location != ""){
                 $citylike = "'%,$USER->open_location,%'";
@@ -150,7 +149,11 @@ class search implements renderable{
             }else{
                 $finalparams= '1=1' ;
             }
-            $wheresql .= " AND ($finalparams)";
+            $wheresql .= " AND ($finalparams)"; 
+
+            if(!empty($USER->open_designation) && $USER->open_designation != "" && $USER->open_designation != NULL){                 
+                $wheresql .= " AND ( concat(',',llp.open_designation,',') LIKE '%,$USER->open_designation,%'  OR llp.open_designation = '-1' OR llp.open_designation = '' OR llp.open_designation IS NULL)";
+            }   
         }
         $sqlparams = [];
         foreach($filters AS $filtertype => $filtervalues){

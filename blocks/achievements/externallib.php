@@ -318,7 +318,50 @@ class block_achievements_external extends external_api {
     }
 
 
+    public static function get_user_certificates_parameters() {
+        return new external_function_parameters([
+            'userid' => new external_value(PARAM_INT, 'User id'),
+           
+        ]);
+    }
+    public static function get_user_certificates($userid) {
+        global $CFG,$PAGE;
+        require_once($CFG->dirroot . '/blocks/achievements/classes/local/lib.php');
+        $PAGE->set_context($contextid);        
+        
+        $result_certi = certification_details($stable,$filtervalues);
+        $totalcount = $result_certi['count'];
 
+        $data=$result_certi['data'];          
+        $arraylen = sizeof($data);
+        for ($i=0; $i < $arraylen; $i++) {
+            $data[$i]['certificate_download'] =  $CFG->wwwroot."/admin/tool/certificate/view.php?code=".$data[$i]['certificate_code'];
+        }
+       
+        return [
+            'totalcount' => $totalcount,
+            'records' =>$data,            
+        ];
+
+    }
+
+
+    public static function  get_user_certificates_returns() {
+        return new external_single_structure([
+            'totalcount' => new external_value(PARAM_INT, 'total number of skills in result set'),
+            'records' => new external_multiple_structure(
+                new external_single_structure(
+                    array(
+                        'module_id'=>new external_value(PARAM_RAW, 'module id ', VALUE_OPTIONAL),
+                        'module_type'=>new external_value(PARAM_RAW, 'module type ', VALUE_OPTIONAL),
+                        'certificate_code'=>new external_value(PARAM_RAW, 'certificate code', VALUE_OPTIONAL),
+                        'certificate_name'=>new external_value(PARAM_RAW, 'certificate name', VALUE_OPTIONAL),
+                        'certificate_download'=>new external_value(PARAM_RAW, 'certificate download url', VALUE_OPTIONAL),
+                    )
+                )
+            )
+        ]);
+    }
 
 
 

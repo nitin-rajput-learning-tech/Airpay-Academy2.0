@@ -69,3 +69,26 @@
   #classroommodule.generaltable tbody td{
   	vertical-align: middle;
   }
+
+
+/*newcss*/
+#page-local-classroom-view .classview_topcontainer .classroomview_image{
+	width: 100%;
+    min-height: 250px;
+    position: relative;
+}
+#page-local-classroom-view .classview_topcontainer .classroomview_image .classviewimg{
+	height:100%;
+	background-size: cover;
+}
+#page-local-classroom-view .classview_topcontainer .cr_status_icon.cr_status_band{
+    width: 100%;
+    right: 0;
+    bottom: 10px;
+    max-width: 250px;
+}
+#page-local-classroom-view .cr_status_icon.cr_status_band .cr_status_strip{
+	position: absolute;
+	right: 0;
+	bottom: 10px;
+}

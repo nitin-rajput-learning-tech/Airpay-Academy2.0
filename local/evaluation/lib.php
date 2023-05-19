@@ -2324,9 +2324,9 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
         $sql = "SELECT count(u.id) as total";
     }
      $sql.=" FROM {user} AS u WHERE  u.id > 2 AND u.suspended = :suspended AND u.deleted = :deleted $costcenterpathconcatsql";
-    if($lastitem!=0){
-        $sql.=" AND u.id > $lastitem";
-    }
+   /*  if($lastitem!=0){
+        $sql.=" AND u.id > $lastitem ";
+    } */
     $sql .=" AND u.id <> $USER->id";
     if (!empty($params['email'])) {
         $sql.=" AND u.id IN ({$params['email']})";
@@ -2419,10 +2419,10 @@ function evaluation_enrolled_users($type = null, $evaluationid = 0,$params, $tot
                                WHERE lcu.evaluationid = $evaluationid)";
     }
 
-    $order = ' ORDER BY u.id ASC ';
+    $order = ' ORDER BY u.firstname ASC ';
 
     if($total==0){
-        $availableusers = $DB->get_records_sql_menu($sql .$order,$params, $offset, $perpage);
+        $availableusers = $DB->get_records_sql_menu($sql .$order,$params, $lastitem, $perpage);
     }else{
         $availableusers = $DB->count_records_sql($sql,$params);
     }
@@ -2728,13 +2728,17 @@ function get_listof_evalautions($stable, $filtervalues){
     $context = (new \local_evaluation\lib\accesslib())::get_module_context($record->id);
 
         $line = array();
+        if(!is_siteadmin()){
+            $userpath = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+            }
         $localpath = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
-        $attendcount = $DB->count_records_sql('select count(ou.id) from {local_evaluation_users} ou, {user} u where u.id = ou.userid  AND u.deleted = 0 AND u.suspended = 0 AND ou.evaluationid=? '.$localpath, array($record->id));
+        $attendcount = $DB->count_records_sql('select count(ou.id) from {local_evaluation_users} ou, {user} u where u.id = ou.userid  AND u.deleted = 0 AND u.suspended = 0 AND ou.evaluationid=? '.$localpath.$userpath, array($record->id));
+       
         $completedevaluationcount = intval(evaluation_get_completeds_group_count($record));
         $buttons='';
 
         if (is_siteadmin() OR has_capability('local/evaluation:edititems', $maincheckcontext) ) {
-            if (has_capability('local/evaluation:edititems', $context) ) {
+            if (has_capability('local/evaluation:edititems', $context)&&has_capability('local/evaluation:addinstance', $context)  ) {
              $buttons .= '<li>'.html_writer::link( "javascript:void(0)",$OUTPUT->pix_icon('t/editinline', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('edit'), array('class'=>'dropdown-item','data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).'</li>';
            $edit_eval= html_writer::link( "javascript:void(0)",$OUTPUT->pix_icon('t/editinline', get_string('edit'), 'moodle', array('class' => 'iconsmall', 'title' => '')), array('data-action'=>"createevaluationmodal", 'data-value'=>$record->id));
             }
@@ -2742,7 +2746,7 @@ function get_listof_evalautions($stable, $filtervalues){
                 $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank')).get_string('assignusers', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
                 $eval_enrol=html_writer::link(new moodle_url('/local/evaluation/users_assign.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/assignroles', get_string('assignusers', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '', 'target'=>'_blank')));
             } 
-            if (has_capability('local/evaluation:edititems', $context) ) {
+            if (has_capability('local/evaluation:addinstance', $context)&& has_capability('local/evaluation:edititems', $context)) {
             if($record->visible){
                 $icon = 't/hide';
                 $string = get_string('le_inactive','local_evaluation');
@@ -2756,7 +2760,7 @@ function get_listof_evalautions($stable, $filtervalues){
             $buttons .= '<li>'.html_writer::link("javascript:void(0)", $image, array('class'=>'dropdown-item','data-fg'=>"d", 'data-method' => 'evaluation_update_status','data-plugin' => 'local_evaluation', 'data-params' => $params, 'data-id'=>$record->id)).'</li>';
             $eval_hideshow=html_writer::link("javascript:void(0)", $image1, array('data-fg'=>"d", 'data-method' => 'evaluation_update_status','data-plugin' => 'local_evaluation', 'data-params' => $params, 'data-id'=>$record->id));
         }
-            if (has_capability('local/evaluation:createpublictemplate', $context)) {
+            if (has_capability('local/evaluation:createpublictemplate', $context) && has_capability('local/evaluation:addinstance', $context)) {
                  $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#edit', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/questions', get_string('questions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('questions', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
 
                  $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/eval_view.php#tempaltes', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/copy', get_string('templates', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('templates', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
@@ -2767,7 +2771,7 @@ function get_listof_evalautions($stable, $filtervalues){
                 if (has_capability('local/evaluation:viewreports', $context)) 
             // $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/analysis.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/grades', get_string('overview', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
 
-            if (has_capability('local/evaluation:viewanalysepage', $context)){
+            if (has_capability('local/evaluation:viewanalysepage', $context)&& has_capability('local/evaluation:complete', $context)&&has_capability('local/evaluation:addinstance', $context)){
             $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/show_entries.php',  array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')).get_string('responses', 'local_evaluation'),array('class' => 'dropdown-item')).'</li>';
             $eval_analys=html_writer::link(new moodle_url('/local/evaluation/show_entries.php',  array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => '')));
             }
@@ -2803,9 +2807,9 @@ function get_listof_evalautions($stable, $filtervalues){
             else
             $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/complete.php', array('id' => $record->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('t/go', get_string('answerquestions', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
             $previewurl = new moodle_url('/local/evaluation/complete.php', array('id' => $record->id, 'sesskey' => sesskey()));
-            if ($showcompleted)
-            $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/show_entries.php', array('id' => $record->id,'userid'=>$USER->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
-            $completedurl = new moodle_url('/local/evaluation/show_entries.php', array('id' => $record->id,'userid'=>$USER->id, 'sesskey' => sesskey()));
+           if ($showcompleted)
+          $buttons .= '<li>'.html_writer::link(new moodle_url('/local/evaluation/show_entries.php', array('id' => $record->id,'userid'=>$USER->id, 'sesskey' => sesskey())), $OUTPUT->pix_icon('i/preview', get_string('responses', 'local_evaluation'), 'moodle', array('class' => 'iconsmall', 'title' => ''))).'</li>';
+        $completedurl = new moodle_url('/local/evaluation/show_entries.php', array('id' => $record->id,'userid'=>$USER->id, 'sesskey' => sesskey()));
         }
         if(!empty($buttons)){
             $buttons_container = '<div class="dropdown-menu dropdown-menu-right shadow-sm" id = "showoptions'.$record->id.'">

@@ -1404,7 +1404,7 @@ class local_program_external extends external_api {
             'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, ''),
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
             'rating' => new external_value(PARAM_FLOAT, 'rating', VALUE_OPTIONAL, 0),
-            'ratingusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
+            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
             'likes' => new external_value(PARAM_INT, 'likes', VALUE_OPTIONAL, 0),
             'dislikes' => new external_value(PARAM_INT, 'dislikes', VALUE_OPTIONAL, 0),
             'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),

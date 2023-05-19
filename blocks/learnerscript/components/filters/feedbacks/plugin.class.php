@@ -31,7 +31,7 @@ class plugin_feedbacks extends pluginbase {
         $this->singleselection = true;
         $this->placeholder = true;
         $this->maxlength = 0;
-        $this->fullname = get_string('filterfeedbacks', 'block_learnerscript');
+        $this->fullname = get_string('feedbacks', 'block_learnerscript');
         $this->reporttypes = array();
     }
 
@@ -56,48 +56,46 @@ class plugin_feedbacks extends pluginbase {
         return $finalelements;
     }
 
-    public function print_filter(&$mform, $selectoption = true) {
+    public function filter_data($selectoption = true, $request){
         global $DB, $USER;
 
         $sql = "SELECT le.id, le.name 
-                FROM {local_evaluations} le 
-                WHERE le.instance = 0 AND le.deleted  = 0 ";
+        FROM {local_evaluations} le 
+        WHERE le.instance = 0 AND le.deleted  = 0 ";
 
         $params = array();
-        // $systemcontext = \context_system::instance();
-        // if(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext)){
-        //     $sql .= " ";
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_ownorganization', $systemcontext)){
-        //     $sql .= " AND le.costcenterid = :costcenterid ";
-        //     $params['costcenterid'] = $USER->open_costcenterid; 
-        // }else if(!is_siteadmin() && has_capability('local/costcenter:manage_owndepartments', $systemcontext)){
-        //     $sql .= " AND le.costcenterid = :costcenterid 
-        //             AND le.departmentid = :departmentid ";
-        //     $params['costcenterid'] = $USER->open_costcenterid; 
-        //     $params['departmentid'] = $USER->open_departmentid; 
-        // }
-
-      $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context(); //context_system::instance();
-      $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path'); 
-      if (is_siteadmin()) {
-          $sql .= "";
-      } else  {
-          $sql .= $costcenterpathconcatsql;
-      }
-        $sql .= " ORDER BY le.name ASC ";
-
-        $feedbacks = $DB->get_records_sql_menu($sql, $params);
-
-        $selectfeedback = array();
-        if($selectoption){
-            $selectfeedback[null] = get_string('selectfeedback', 'block_learnerscript');
+        $categorycontext = (new \local_evaluation\lib\accesslib())::get_module_context(); //context_system::instance();
+        $costcenterpathconcatsql = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path'); 
+        if (is_siteadmin()) {
+            $sql .= "";
+        } else  {
+            $sql .= $costcenterpathconcatsql;
         }
+            $sql .= " ORDER BY le.name ASC ";
 
-        $feedbacklist = $selectfeedback + $feedbacks;
+            $feedbacks = $DB->get_records_sql_menu($sql, $params);
 
+            $selectfeedback = array();
+           
+            $selectfeedback[null] = get_string('selectfeedback', 'block_learnerscript');
+            $feedbacklist = $selectfeedback + $feedbacks;
+        return $feedbacklist;
+    }
+
+    public function selected_filter($selected, $request = array()) {
+        $filterdata = $this->filter_data(false, $request);
+        return $filterdata[$selected];
+    }
+
+    public function print_filter(&$mform, $selectoption = true) {
+        global $DB, $USER;
+        $request = array_merge($_POST, $_GET);
+        $feedbacklist = $this->filter_data(false, $request);
+   
         $array = array('data-select2'=>true,'data-maximum-selection-length' => $this->maxlength);
         $select = $mform->addElement('select', 'filter_feedbacks', null, $feedbacklist, $array);
 
         $mform->setType('filter_feedbacks', PARAM_INT);
+       
     }
 }

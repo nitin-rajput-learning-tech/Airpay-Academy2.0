@@ -233,6 +233,64 @@ function xmldb_local_users_upgrade($oldversion)
         }
         upgrade_plugin_savepoint(true, 2022101800.17, 'local', 'users');
     }
+    if ($oldversion < 2022101800.18) {
+        $table = new xmldb_table('user');
+        $educationlevel = new xmldb_field('open_educationlevel');
+        $educationlevel->set_attributes(XMLDB_TYPE_CHAR, '225', null, XMLDB_NOTNULL,null, 0);
+        if (!$dbman->field_exists($table, $educationlevel)) {
+            $dbman->add_field($table, $educationlevel);
+        }
+
+        $fieldwork = new xmldb_field('open_fieldwork');
+        $fieldwork->set_attributes(XMLDB_TYPE_CHAR, '225', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $fieldwork)) {
+            $dbman->add_field($table, $fieldwork);
+        }
+
+        $jobtitle = new xmldb_field('open_jobtitle');
+        $jobtitle->set_attributes(XMLDB_TYPE_CHAR, '225', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $jobtitle)) {
+            $dbman->add_field($table, $jobtitle);
+        }
+
+        $company = new xmldb_field('open_company');
+        $company->set_attributes(XMLDB_TYPE_CHAR, '225', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $company)) {
+            $dbman->add_field($table, $company);
+        }
+
+        $paymentinfo = new xmldb_field('open_paymentinfo');
+        $paymentinfo->set_attributes(XMLDB_TYPE_CHAR, '225', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $paymentinfo)) {
+            $dbman->add_field($table, $paymentinfo);
+        }
+
+        $privacypolicy = new xmldb_field('open_privacypolicy');
+        $privacypolicy->set_attributes(XMLDB_TYPE_INTEGER, '1', null, null, null, 0);
+        if (!$dbman->field_exists($table, $privacypolicy)) {
+            $dbman->add_field($table, $privacypolicy);
+        }
+
+        $termscondition = new xmldb_field('open_termscondition');
+        $termscondition->set_attributes(XMLDB_TYPE_INTEGER, '1', null, null, null, 0);
+        if (!$dbman->field_exists($table, $termscondition)) {
+            $dbman->add_field($table, $termscondition);
+        }
+
+        upgrade_plugin_savepoint(true, 2022101800.18, 'local', 'users');
+    }
+
+ if ($oldversion < 2022101800.19) {
+        $table = new xmldb_table('user');
+
+        $countryid = new xmldb_field('open_countryid');
+        $countryid->set_attributes(XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL, null, 0);
+        if (!$dbman->field_exists($table, $countryid)) {
+            $dbman->add_field($table, $countryid);
+        }
+
+        upgrade_plugin_savepoint(true, 2022101800.19, 'local', 'users');
+    }
 
     return true;
 }

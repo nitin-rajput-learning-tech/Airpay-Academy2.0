@@ -312,7 +312,7 @@ body .crse-s-desc {
     padding: 3px 24px !important;
 } */
 .block.block_suggested_courses .courseimg_container .courseimg{
-    height:200px !important;
+    height:150px !important;
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center;
@@ -325,8 +325,8 @@ body .crse-s-desc {
     font-size: 12px;
     border-radius:0 !important; 
     position: absolute ;
-    top: 11px;
-    right: 22px;
+    top: 7px;
+    right: 7px;
     padding: 3px 6px;
     border-style: solid!important;   
 }

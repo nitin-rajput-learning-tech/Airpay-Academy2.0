@@ -112,6 +112,7 @@ function certification_details($tablelimits, $filtervalues){
     if ($certirecived) {
         foreach ($certirecived as $certificate) {
             $list['module_id']=$certificate->moduleid;
+            $list['module_type']=$certificate->moduletype;
             $list['certificate_code']=$certificate->code;
           //  $list['certificate_name']= "{$certificate->name}(".ucfirst($certificate->moduletype)." - {$certificate->modulename})";
             $list['certificate_name']=ucfirst($certificate->moduletype)." ({$certificate->modulename})";

@@ -68,7 +68,7 @@ class block_trending_modules extends block_base {
         $enableviewmore = $total_modules > 3 ? True : False;
         $this->content->text = "<div class='pull-right text-right' id='trending_module_search'>
             <label class='search_module_label'>".get_string('search','block_trending_modules')." : </label>
-            <input id='filter_trending_modules' type='text' name='search_module' data-target='#trending_modules_content' data-navigator='.block_trending_modules_navigator'/>
+            <input id='filter_trending_modules' type='text' name='search_module' data-target='#trending_modules_content' aria-label='search_module' data-navigator='.block_trending_modules_navigator'/>
             </div>";
         $viewmore_link = (new moodle_url('/blocks/trending_modules/index.php', ['instanceid' => $this->instance->id]))->out();
     	$this->content->text .= $OUTPUT->render_from_template('block_trending_modules/block_content', array('records'=> $data, 'enableviewmore' => $enableviewmore, /*'checkbox' => $checkbox,*/ 'enableDesc' => False, 'left_arrow_enable' => False, 'right_arrow_enable' => $enableviewmore, 'total_modules' => $total_modules, 'viewmore_link' => $viewmore_link));

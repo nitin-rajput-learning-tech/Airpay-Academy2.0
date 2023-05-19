@@ -146,7 +146,9 @@ class users {
                                         'subdirs'        => 0,
                                         'maxfiles'       => 1,
                                         'accepted_types' => 'web_image');
-            core_user::update_picture($userdata, $filemanageroptions);
+            if ($userdata->imagefile) {
+                core_user::update_picture($userdata, $filemanageroptions);
+            }
         }
         // added for updating session variable $USER if updated the current user.
         if ($userdata->id) {

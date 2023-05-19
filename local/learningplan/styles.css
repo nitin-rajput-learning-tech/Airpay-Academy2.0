@@ -32,12 +32,12 @@ body#page-local-learningplan-userdashboard .card_list_view {
 
 #page-local-learningplan-plan_view .planview_container .courseimg_container{
 	width: 100%;
-    max-width: 160px;
+    max-width: 240px;
 }
-/*#page-local-learningplan-plan_view .planview_container .courseimg_container .lpimg_bg{
+#page-local-learningplan-plan_view .planview_container .courseimg_container .lpimg_bg{
 	height: 100%;
 	min-height: 200px;
-}*/
+}
 #page-local-learningplan-plan_view .planview_container .ratings_users i{
 	color: #fff !important;
 	font-size: 15px !important;

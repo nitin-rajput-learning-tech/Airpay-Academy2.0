@@ -442,6 +442,7 @@ function local_skillrepository_masterinfo(){
         $templatedata['count'] = $skill;
         $templatedata['link'] = $CFG->wwwroot.'/local/skillrepository/index.php';
         $templatedata['stringname'] = get_string('skill','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-hourglass-half" aria-hidden="true"></i>';
         $templatedata['show2'] = true;
         $templatedata['count2'] = $lev;
         $templatedata['link2'] = $CFG->wwwroot.'/local/skillrepository/level.php';

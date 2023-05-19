@@ -36,7 +36,7 @@ class report_userdata extends reportbase implements report {
         $this->parent = true;
         $this->components = array('columns', 'filters', 'permissions');
         $this->columns = ['userfield'=>['userfield','fullname','username','firstname','lastname','email']];
-        $this->filters = ['organization','departments', 'subdepartments', 'level4department', 'level5department', 'geostate', 'geodistrict', 'geosubdistrict', 'geovillage', 'user'];
+        $this->filters = ['organization','departments', 'subdepartments', 'level4department', 'level5department',  'user'];
         $this->defaultcolumn = 'u.id';
         $this->orderable = array('');
     }
@@ -44,7 +44,7 @@ class report_userdata extends reportbase implements report {
         parent::init();
     }
     function count() {
-        $this->sql = "SELECT count(u.id)";
+        $this->sql = "SELECT count(u.id))";
     }
     function select() {
         $this->sql = "SELECT u.id as userid,CONCAT(u.firstname, ' ', u.lastname) AS fullname,u.* ";
@@ -54,7 +54,7 @@ class report_userdata extends reportbase implements report {
         $this->sql .= " FROM {user} as u ";
     }
     function joins() {
-        $this->sql .= " JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('%/',lc.id,'/%') ";
+        $this->sql .= " JOIN {local_costcenter} lc ON concat('/',u.open_path,'/') LIKE concat('/',lc.path,'/') ";
         parent::joins();
     }
     function where(){
@@ -65,7 +65,10 @@ class report_userdata extends reportbase implements report {
         if (is_siteadmin()) {
           $this->sql .= "";
         } else  {
-          $this->sql .= $costcenterpathconcatsql;
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+            $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
+            $this->sql .= $costcenterpathconcatsql;
         }
         parent::where();
     }
@@ -108,21 +111,9 @@ class report_userdata extends reportbase implements report {
             $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
         }
-        if ($this->params['filter_geostate'] > 0) {
-            $this->sql .= " AND u.open_states = :filter_geostate ";
-        }
-        if ($this->params['filter_geodistrict'] > 0) {
-            $this->sql .= " AND u.open_district = :filter_geodistrict ";
-        }
-        if ($this->params['filter_geosubdistrict'] > 0) {
-            $this->sql .= " AND u.open_subdistrict = :filter_geosubdistrict ";
-        }
-        if ($this->params['filter_geovillage'] > 0) {
-            $this->sql .= " AND u.open_village = :filter_geovillage ";
-        }
+   
     }    
     function get_rows($userdata){
-      
       return $userdata;
     }
  }

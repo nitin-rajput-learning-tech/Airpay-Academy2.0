@@ -189,13 +189,13 @@ $string['value'] = "Value";
 $string['filter_clear'] = 'Clear';
 $string['filter_apply'] = 'Apply';
 $string['organization'] = 'Organization';
-$string['departments'] = "Country";
+$string['departments'] = "Business Unit";
 $string['completionstatus'] = "Completion Status";
 $string['classrooms'] = "Classroom";
 $string['select_classroom'] = "Select Classroom";
 
 
-$string['selectdept'] = 'Select Department';
+$string['selectdept'] = 'Select Commercial Report';
 
 $string['user'] = 'User';
 $string['filteruser'] = 'Current course user';
@@ -1214,7 +1214,8 @@ $string['examsinformation']  = 'Exams Data';
 $string['report_acclaimusers'] = 'Acclaim Users';
 $string['acclaimusercolumns'] = 'Acclaim User Columns';
 $string['selectsubdept'] = 'All';
-$string['subdepartments'] = 'Commercial Unit';
+$string['subdepartments'] = 'Department';
+$string['filter_departments'] = 'Business Unit';
 $string['filter_subdepartment'] = 'Sub departments';
 $string['report_learnerstatus'] = 'Learning by learner';
 $string['learnerstatus'] = 'Learning by learner';
@@ -1231,7 +1232,7 @@ $string['customcategories'] = 'Custom Categories';
 $string['filtercustomcategories'] = 'Select Category';
 $string['filtercustomcategories_summary'] = 'Filter courses by their any parent category';
 $string['calendar'] = 'Calendar';
-$string['level4department'] = 'Commercial Aria';
+$string['level4department'] = 'Sub Department';
 $string['level5department'] = 'Territory';
 $string['geostate'] = 'State';
 $string['geodistrict'] = 'District';

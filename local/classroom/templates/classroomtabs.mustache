@@ -26,7 +26,7 @@
              {{#reports}}
                <div class="dropdown-divider" role="presentation">
                  <span class="filler">&nbsp;</span></div>
-                    <a href="{{config.wwwroot}}/blocks/learnerscript/viewreport.php?id={{classroomid}}" class="dropdown-item menu-action" role="menuitem" data-title="{{name}}" aria-labelledby="{{name}}"target="_blank">
+                    <a href="{{config.wwwroot}}/blocks/learnerscript/viewreport.php?id={{classroomid}}" class="dropdown-item menu-action" role="menuitem" data-title="{{name}}" aria-label="{{name}}"target="_blank">
                      <span class="menu-action-text">{{name}}</span>
                  </a>
             {{/reports}}
@@ -152,7 +152,7 @@
             {{/ viewcardlist}}
                 <div data-region="new-count-container"></div>
                 <div class="global_filter_structure">
-                    <label>{{# str}}search{{/ str}} : </label>
+                    <label for="global_filter">{{# str}}search{{/ str}} : </label>
                     <input id="global_filter" class="global filter" type="text" name="search_query">
                 </div>
                 <div data-region="new-list-container" id ="newid"></div>

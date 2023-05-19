@@ -103,6 +103,7 @@
                 <div class="card login_bg">
                     <div class="card-body text-center">
                         <div class="card-title mb-0 text-center txt-container">
+                            <h6 class="text-muted">WELCOME TO</h6>
                         {{#logourl}}
                             <h2 class="card-header">
                                 <img src="{{logourl}}" title="{{sitename}}" alt="{{sitename}}"/>
@@ -152,6 +153,10 @@
                                 <div class="form-group col-12 d-inline-block mb-0">
                                     <button type="submit" class=" biz_login btn btn-primary btn-block mb-2" id="loginbtn">{{#str}}login{{/str}}</button>
                                      <p class='mb-1 '><a href="{{forgotpasswordurl}}">Forgot Password?</a></p>
+                                     {{#signupurl_custom}}
+                                      <p class='mb-1 '><a href="{{signupurl_custom}}"> Signup</a></p>
+                                      {{/signupurl_custom}}
+
                                       <div class="social_icons col-md-12 mt-4 p-0 col-12 pull-left">
                                         <!-- <p class="social-media mb-3">Follow us on Social Media.</p> -->
 

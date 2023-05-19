@@ -33,6 +33,8 @@ use \local_learningplan\local\userdashboard_content as learningplan;
 use \local_onlinetests\local\userdashboard_content as onlinetests;
 use \local_evaluation\local\userdashboard_content as evaluation;
 use \local_program\local\userdashboard_content as program;
+use local_onlineexams\local\general_lib as examslib;
+
 
 class local_users_external extends external_api {
 
@@ -892,10 +894,10 @@ class local_users_external extends external_api {
                 $inprogress = userdashboard_content::inprogress_classrooms_count();
                 $enrolled = userdashboard_content::gettotal_classrooms();
             break;
-            case 'onlinetests':
-                $completed = onlinetests::completed_onlinetests_count();
-                $inprogress = onlinetests::inprogress_onlinetests_count();
-                $enrolled = $completed + $inprogress;
+            case 'onlineexams':
+                $completed = examslib::completed_onlineexamnames_count('', $source);
+                $inprogress = examslib::inprogress_onlineexamnames_count('', $source);
+                $enrolled = examslib::enrolled_onlineexamnames_count('', $source);
             break;
             case 'learningpaths':
                 $completed = learningplan::completed_lepnames_count();
@@ -980,7 +982,7 @@ class local_users_external extends external_api {
         $funcparam = array('courses' => array());
         $hassystemcap = has_capability('moodle/calendar:manageentries', (new \local_users\lib\accesslib())::get_module_context());
         $warnings = array();
-        $mycourses = \local_courses\local\user::enrol_get_users_courses($USER->id, false, false, 0, 5, true);
+        $mycourses = (new \local_courses\local\user())->enrol_get_users_courses($USER->id, false, false, 0, 5, true);
         $mycourseids = array_keys($mycourses['data']);
         $funcparam['courses'] = $courses = $mycourseids;
 

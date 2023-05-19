@@ -180,10 +180,9 @@ body#page-local-program-userdashboard .card_list_view {
 	background-size: cover;
 	background-repeat: no-repeat;
 	width: 100%;
-	min-width: 150px;
-	display: inline-block;
 	height: 100%;
-	min-height: 180px;
+	display: inline-block;
+
 }
 #page-local-program-view .levetabscontent_container .lvcdata_container{
 	flex-grow: 1;
@@ -330,4 +329,11 @@ body#page-local-program-userdashboard .card_list_view {
     overflow: hidden;
     white-space: normal;
     width: 100%;
+}
+
+
+/*newcss*/
+#page-local-program-view .levetabscontent_container .lvcimg_container{
+	width:100%;
+	min-height:200px;
 }

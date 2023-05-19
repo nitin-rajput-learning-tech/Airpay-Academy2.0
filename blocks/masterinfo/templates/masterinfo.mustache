@@ -15,24 +15,34 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{#show}}
-    <div>
-        <a href = "{{link}}"> {{stringname}} </a>
-        {{#count}}
-            <span>{{count}}</span>
-        {{/count}}
-        {{^count}}
-            <span><i class="fa fa-times"></i></span>
-        {{/count}}
+    <div class="col-md-3">
+        <div class="info_detail d-flex align-items-center">
+            <div class="icon_img mr-2">{{{icon}}}</div>
+            <div class="py-2 flex-grow-1 d-flex flex-wrap info_data ml-1">
+                <a href = "{{link}}" class="mr-2"> {{stringname}} </a>
+                {{#count}}
+                    <span>{{count}}</span>
+                {{/count}}
+                {{^count}}
+                    <span><i class="fa fa-times"></i></span>
+                {{/count}}
+            </div>
+        </div>
     </div>
 {{/show}}
 {{#show2}}
-    <div>
-        <a href = "{{link2}}"> {{stringname2}} </a>
-        {{#count2}}
-            <span>{{count2}}</span>
-        {{/count2}}
-        {{^count2}}
-            <span><i class="fa fa-times"></i></span>
-        {{/count2}}
+    <div class="col-md-3">
+        <div class="info_detail d-flex align-items-center">
+            <div class="icon_img mr-2">{{{icon}}}</div>
+            <div class="py-2 flex-grow-1 d-flex flex-wrap info_data ml-1">
+                <a href = "{{link2}}" class="mr-2"> {{stringname2}} </a>
+                {{#count2}}
+                    <span>{{count2}}</span>
+                {{/count2}}
+                {{^count2}}
+                    <span><i class="fa fa-times"></i></span>
+                {{/count2}}
+            </div>
+        </div>
     </div>
 {{/show2}}

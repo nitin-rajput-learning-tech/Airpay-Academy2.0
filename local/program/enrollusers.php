@@ -40,7 +40,7 @@ $remove = optional_param_array('remove', array(), PARAM_RAW);
 $view = optional_param('view', 'page', PARAM_RAW);
 $type = optional_param('type', '', PARAM_RAW);
 $lastitem = optional_param('lastitem', 0, PARAM_INT);
-
+$countval = optional_param('countval', 0, PARAM_INT);
 $url = new moodle_url('/local/program/enrollusers.php', array('bcid' => $programid));
 $renderer = $PAGE->get_renderer('local_program');
 
@@ -60,7 +60,7 @@ if ($view == 'ajax') {
     }else{
         $options = $_GET["options"];  
     }
-     $select_from_users = (new program)->select_to_and_from_users($type, $programid, $options,false, $offset1=-1, $perpage=50, $lastitem);
+     $select_from_users = (new program)->select_to_and_from_users($type, $programid, $options,false, $offset1=-1, $perpage=50, $countval);
     echo json_encode($select_from_users);
     exit;
 }
@@ -298,13 +298,13 @@ $( document ).ready(function() {
                 var count_selected_list=$('#'+get_id+' option').length;
 
                 var lastValue = $('#'+get_id+' option:last-child').val();
-
-              if(count_selected_list<total_users){
+                var countval = $('#'+get_id+' option').length;
+                if(count_selected_list<total_users){
                    //alert('end reached');
                     var selected_list_request = $.ajax({
                         method: 'GET',
                         url: M.cfg.wwwroot + '/local/program/enrollusers.php',
-                        data: {bcid:'$programid',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue, options: $myJSON},
+                        data: {bcid:'$programid',sesskey:'$sesskey', type:type,view:'ajax',countval:countval, options: $myJSON},
                         dataType: 'html'
                     });
                     var appending_selected_list = '';

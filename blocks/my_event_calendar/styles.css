@@ -152,18 +152,27 @@ body#page-my-index .block.block_my_event_calendar .fc-basic-view .fc-body .fc-ro
 .block_my_event_calendar #eventInfo .dataTables_wrapper.no-footer{padding: 0px;}
 .block.block_my_event_calendar #eventInfo .dataTables_paginate {margin: 7px 0px 0px 0px;}
 .block.block_my_event_calendar .dataTables_wrapper .dataTable {margin: 0px;}
-.block_my_event_calendar .fc-row .fc-past.local_program {background-color: #3ab54a;color: #fff;}
-.block_my_event_calendar .fc-row .fc-past.local_onlinetests {background-color: #f7941d;color: #fff;}
-.block_my_event_calendar .fc-row .fc-past.local_classroom {background-color: #0071bc;color: #fff;}
-.block_my_event_calendar .fc-row .fc-past.local_certification {background-color: #28aae2;color: #fff;}
-.block_my_event_calendar .fc-row .fc-past.local_evaluation {background-color: #3f51b5;color: #fff;}
-.block_my_event_calendar .fc-row .fc-past.local_learningplan {background-color: #ec1b23;color: #fff;}
-.block_my_event_calendar .fc-row .fc-past.mod {background-color: #f26723;color: #fff;}
-.block.block_my_event_calendar .session_title.nodate {background-color: #fafafa;color: #555658;}
-.block_my_event_calendar .fc-row .fc-future.local_program {background-color: #3ab54a;color: #fff;}
-.block_my_event_calendar .fc-row .fc-future.local_onlinetests {background-color: #f7941d;color: #fff;}
-.block_my_event_calendar .fc-row .fc-future.local_classroom {background-color: #0071bc;color: #fff;}
-.block_my_event_calendar .fc-row .fc-future.local_certification {background-color: #28aae2;color: #fff;}
-.block_my_event_calendar .fc-row .fc-future.local_evaluation {background-color: #3f51b5;color: #fff;}
-.block_my_event_calendar .fc-row .fc-future.local_learningplan {background-color: #ec1b23;color: #fff;}
-.block_my_event_calendar .fc-row .fc-future.mod {background-color: #f26723;color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_program {background-color: #3ab54a !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_onlinetests {background-color: #f7941d !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_classroom {background-color: #0071bc !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_certification {background-color: #28aae2 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_evaluation {background-color: #3f51b5 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.local_learningplan {background-color: #ec1b23 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-past.mod {background-color: #f26723 !important; color: #fff;}
+.block.block_my_event_calendar .session_title.nodate {background-color: #fafafa !important; color: #555658;}
+.block_my_event_calendar .fc-row .fc-future.local_program {background-color: #3ab54a !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_onlinetests {background-color: #f7941d !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_classroom {background-color: #0071bc !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_certification {background-color: #28aae2 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_evaluation {background-color: #3f51b5 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.local_learningplan {background-color: #ec1b23 !important; color: #fff;}
+.block_my_event_calendar .fc-row .fc-future.mod {background-color: #f26723 !important; color: #fff;}
+
+
+.block_my_event_calendar div.fc-day-grid-container {
+    overflow: hidden !important;
+    height: 300px !important;
+}
+#page-blocks-stream-index #uploaded_videos_data tr:nth-child(odd) td, tr:nth-child(odd) td {
+    background: transparent !important;
+}

@@ -681,10 +681,17 @@ function local_forum_leftmenunode()
     global $DB, $USER;
     $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
-    if (has_capability('local/forum:view', $categorycontext) || has_capability('local/forum:manage', $categorycontext) || is_siteadmin()) {
+    if (has_capability('local/forum:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browsecourses', 'class' => 'pull-left user_nav_div browsecourses'));
         $courses_url = new moodle_url('/local/forum/index.php');
         $courses = html_writer::link($courses_url, '<i class="fa fa-comments-o"></i><span class="user_navigation_link_text">' . get_string('manage_forum', 'local_forum') . '</span>', array('class' => 'user_navigation_link'));
+        $coursecatnodes .= $courses;
+        $coursecatnodes .= html_writer::end_tag('li');
+    }
+    if (has_capability('local/forum:view', $categorycontext) && !is_siteadmin() && !has_capability('local/forum:manage', $categorycontext)) {
+        $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browsecourses', 'class' => 'pull-left user_nav_div browsecourses'));
+        $courses_url = new moodle_url('/local/forum/index.php');
+        $courses = html_writer::link($courses_url, '<i class="fa fa-comments-o"></i><span class="user_navigation_link_text">' . get_string('myforum', 'local_forum') . '</span>', array('class' => 'user_navigation_link'));
         $coursecatnodes .= $courses;
         $coursecatnodes .= html_writer::end_tag('li');
     }
@@ -805,7 +812,7 @@ function update_forum_forum($validateddata, $data, $formstatus)
     $forum->forcesubscribe = $validateddata->forcesubscribe;
     $forum->trackingtype = $validateddata->trackingtype;
     $forum->name = $validateddata->fullname;
-    $forum->lockdiscussionafter = $validateddata->lockdiscussionafter;
+    $forum->lockdiscussionafter = !empty($validateddata->lockdiscussionafter)?$validateddata->lockdiscussionafter:0;
     $forum->blockperiod = $validateddata->blockperiod;
     $courseid = is_object($data) ? $data->id  : $data['id'];
     $forumobject = $DB->get_record('forum', array('course' => $courseid));

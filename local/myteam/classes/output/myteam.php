@@ -102,7 +102,7 @@ class myteam{
 				
 				$badgecount = $DB->count_records_sql("SELECT count(id) FROM {badge_issued} WHERE userid = :userid",array('userid' => $teammember->id));
 				$costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',$costcenterid,'lowerandsamepath');
-				$totalbadgesql = "SELECT count(id) FROM {badge} WHERE 1=1 $costcenterpathconcatsql";
+				$totalbadgesql = "SELECT count(id) FROM {badge} WHERE 1=1 ";
 				$totalbadges = $DB->count_records_sql($totalbadgesql);
 
 				$badge_color = $teamstatus->get_colorcode_tm_dashboard($badgecount,$totalbadges);

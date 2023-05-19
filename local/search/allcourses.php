@@ -82,7 +82,7 @@ $content = "<div ng-app = 'catalog' class='' id='allcourses_section'>
                     "<div class='w-100 pull-left course_view_list_container'>
                         <div class='col-12 pull-left pl-15'>
                             <div ng-show='showLoader' class='loader_container'>
-                                <img src= ".$return['loader']." />
+                                <img src= ".$return['loader']." alt='img'/>
                             </div>
 
                             <div ng-if=\"numberofrecords > 0\" class=' clearfix row'>

@@ -507,9 +507,6 @@ class search implements renderable{
                     END
                 ELSE 1 END ";
 
-
-
-
         if(!empty($USER->open_designation) && $USER->open_designation != ""){
             $sqlparams[] = "%,$USER->open_designation,%";
         }else{
@@ -522,7 +519,7 @@ class search implements renderable{
                                 THEN 1
                                 ELSE 0
                         END
-                    ELSE 1 END ";
+                    ELSE 1 END "; 
 
 
         if(!empty($params)){
@@ -532,7 +529,7 @@ class search implements renderable{
         }
 
         $joinsql = " AND ($finalparams) ";
-        $wheresql .= $joinsql;
+        $wheresql .= $joinsql;  
         return $DB->record_exists_sql($selectsql.$wheresql, $sqlparams);
     }
     public function get_enrollbtn($classroominfo){

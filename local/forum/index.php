@@ -161,7 +161,7 @@ if($filterdata){
     $collapse = true;
     $show = '';
 }
-echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_forum-filter_collapse" aria-expanded="false" aria-controls="local_forum-filter_collapse">
+echo '<a class="btn-link btn-sm" data-toggle="collapse" data-target="#local_forum-filter_collapse" aria-expanded="false" aria-controls="local_forum-filter_collapse">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
 echo  '<div class="collapse '.$show.'" id="local_forum-filter_collapse">

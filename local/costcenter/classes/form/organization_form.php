@@ -166,16 +166,17 @@ class organization_form extends moodleform { /*costcenter creation form*/
             
 
          //brand_color
-           $mform->addElement('text', 'brand_color', 'Primary Color', 'local_costcenter');
+           $mform->addElement('html','<div class="brandcolor">');
+           $mform->addElement('colorpicker', 'brand_color', 'Primary Color', 'local_costcenter');
            $mform->setType('brand_color', PARAM_RAW);
 
          //button color
-           $mform->addElement('text', 'button_color','Secondary Color', 'local_costcenter');
+           $mform->addElement('colorpicker', 'button_color','Secondary Color', 'local_costcenter');
            $mform->setType('button_color', PARAM_RAW);
         //hover_color
-           $mform->addElement('text', 'hover_color','Hover_color', 'local_costcenter');
+           $mform->addElement('colorpicker', 'hover_color','Hover_color', 'local_costcenter');
            $mform->setType('hover_color', PARAM_RAW);
-
+           $mform->addElement('html','</div>');
             }
         }
         $submit = ($id > 0) ? get_string('update_costcenter', 'local_costcenter') : get_string('create', 'local_costcenter');

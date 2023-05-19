@@ -37,9 +37,9 @@ class local_location_renderer extends plugin_renderer_base {
         $params=array();
     	$sql = "SELECT * FROM {local_location_institutes} where 1=1 ";
         if ((has_capability('local/location:manageinstitute', $categorycontext) || has_capability('local/location:viewinstitute', $categorycontext)) && ( !is_siteadmin() ) ) {
-            $sql .= " AND (costcenter = :costcenter OR usercreated = :usercreated) ";
+            $sql .= " AND (costcenter = :costcenter)";
             $params['costcenter'] = $costcenterid;
-            $params['usercreated'] = $USER->id;
+           // $params['usercreated'] = $USER->id;
         }
         $sql .= " ORDER BY id DESC ";
         // print_r($sql);die;
@@ -114,14 +114,15 @@ class local_location_renderer extends plugin_renderer_base {
     	global $DB, $CFG, $OUTPUT,$USER, $PAGE;
 
         $categorycontext = (new \local_location\lib\accesslib())::get_module_context();
+        $costcenterid = isset($USER->open_path) && !empty($USER->open_path) ? explode('/',$USER->open_path)[1] : 0;
 
     	$params=array();
     	$sql = "SELECT lcr.*,lci.fullname FROM {local_location_room} as lcr
                 JOIN {local_location_institutes} as lci on lci.id=lcr.instituteid WHERE 1=1 ";
        if ((has_capability('local/location:manageroom', $categorycontext) || has_capability('local/location:viewroom', $categorycontext)) && ( !is_siteadmin() ) ) {
-            $sql .= " AND (lci.costcenter = :costcenter OR lci.usercreated = :usercreated) ";
-            $params['costcenter'] = $USER->open_costcenterid;
-            $params['usercreated'] = $USER->id;
+            $sql .= " AND (lci.costcenter = :costcenter)";
+            $params['costcenter'] = $costcenterid;
+            //$params['usercreated'] = $USER->id;
         }
         $sql .= " ORDER BY lcr.id DESC ";
     	$rooms = $DB->get_records_sql($sql,$params);

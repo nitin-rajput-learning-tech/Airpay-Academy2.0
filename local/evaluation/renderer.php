@@ -57,13 +57,13 @@ class local_evaluation_renderer extends plugin_renderer_base  {
       if(substr($PAGE->url->out_as_local_url(), 0, strpos($PAGE->url->out_as_local_url(), '?')) == '/local/evaluation/eval_view.php'){
         if(is_siteadmin() || has_capability('local/evaluation:edititems', $context)){
             $exporturl = new moodle_url('/local/evaluation/export.php?action=exportfile&id='.$id);
-            $backupimg = html_writer::tag('i', '', array('class' => 'icon fa fa-download'));
+            $backupimg = html_writer::tag('i', '', array('class' => 'icon fa fa-download','title' => 'download','role'=>'img','aria-label'=>'download'));
             $buttons[] = html_writer::start_tag('li', array('title' => get_string('export_questions', 'local_evaluation'))).
                 html_writer::link($exporturl, $backupimg, array('class' => 'course_extended_menu_itemlink')).
                 html_writer::end_tag('li');
             $importurl = new moodle_url('/local/evaluation/import.php', array('id'=>$id));
             
-            $importimg = html_writer::tag('i', '', array('class' => 'icon fa fa-upload'));
+            $importimg = html_writer::tag('i', '', array('class' => 'icon fa fa-upload','title' => 'upload','role'=>'img','aria-label'=>'upload'));
             $buttons[] = html_writer::start_tag('li', array('title' => get_string('import_questions', 'local_evaluation'))).
                     html_writer::link($importurl, $importimg, array('class' => 'course_extended_menu_itemlink')).
                     html_writer::end_tag('li');
@@ -71,7 +71,7 @@ class local_evaluation_renderer extends plugin_renderer_base  {
       }
     }
     if ( (is_siteadmin() OR has_capability('local/evaluation:edititems', $context) ) AND $record->instance == 0  ) {
-      $editimg = html_writer::tag('i', '', array('class' => 'icon fa fa-pencil'));
+      $editimg = html_writer::tag('i', '', array('class' => 'icon fa fa-pencil','title' => 'edit','role'=>'img','aria-label'=>'edit'));
       $buttons[] =  html_writer::start_tag('li', array('')).
           html_writer::link("javascript:void(0)",$editimg, array('class'=>'course_extended_menu_itemlink', 'data-action'=>"createevaluationmodal", 'data-value'=>$record->id)).
           html_writer::end_tag('li');

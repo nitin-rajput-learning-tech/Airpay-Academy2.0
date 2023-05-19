@@ -122,6 +122,7 @@ class report_courseparticipation extends reportbase {
             $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
             $this->params['l5dept'] = $l5dept.'/%';
         }
+     
 
     }
     public function get_rows($users) {

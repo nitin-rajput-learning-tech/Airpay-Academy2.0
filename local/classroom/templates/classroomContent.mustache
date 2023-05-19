@@ -61,14 +61,16 @@
 {{/ action}}
 {{# classroom}}
 <div class="classview_topcontainer">
-    <div class="w-100 pull-left classview_topcontent">
-        <div class="col-12 col-md-3 pull-left classview_topcontent_left p-0">
-            <div style="background-image: url('{{ classroomlogoimg }}');" alt="{{ classname }}" title="{{ classname }}" class="classviewimg" ></div>
-            {{# classroom_status}}
+    <div class="w-100 d-flex classview_topcontent">
+        <div class="col-12 col-md-3 d-flex  flex-wrap classview_topcontent_left p-0">
+            <div class="classroomview_image">
+                <div style="background-image: url('{{ classroomlogoimg }}');" alt="{{ classname }}" title="{{ classname }}" class="classviewimg" ></div>
+                {{# classroom_status}}
                 <div class="cr_status_icon cr_status_band">
                     <span class="status_{{classroom_status}} cr_status_strip" title="{{classroom_status}}" alt="{{classroom_status}}">{{classroom_status}}</span>&nbsp;
                 </div>
-            {{/ classroom_status }}
+                {{/ classroom_status }}
+            </div>
             <div class="classname_strip">
                 <span class="classname" title = "{{ classname }}">{{ classname_string }}</span>
                 <span class="start_end text-center">{{#userdate}} {{startdate}}, %d/%m/%Y %H:%M {{/userdate}}&nbsp;-&nbsp;{{#userdate}} {{enddate}}, %d/%m/%Y %H:%M {{/userdate}}</span>
@@ -82,7 +84,7 @@
             {{/ userenrolmentcap }}
             
         </div>
-        <div class="col-md-9 col-12 pull-left classview_topcontent_right">
+        <div class="col-md-9 col-12 d-flex  flex-column classview_topcontent_right">
             <h6><b>{{#str}}summary{{/str}}</b></h6>
             <div class="description">
                 {{# isdescription}}
@@ -98,7 +100,7 @@
                     <p class="alert alert-info text-center">{{#str}}nocoursedesc, local_classroom{{/str}}</p>
                 {{/ isdescription }}
             </div>
-            <div class="w-100 pull-left topcontent_right_middle mt-1">
+            <div class="w-100 d-flex flex-wrap topcontent_right_middle mt-1">
                 <div class="col-md-6 col-12 pull-left classdetails_left">
                     <p class="contentlist">
                         <span class="lable_name ">{{#str}}classroom_location, local_classroom{{/str}}</span>
@@ -127,7 +129,7 @@
                         <div class="col-md-5 col-6 pull-left">
                             <div class="pull-left">
                                 <span class="seats_icon pull-left mr-3">
-                                    <img src="{{seats_image}}" class="seat_img">
+                                    <img src="{{seats_image}}" alt="seatimg" class="seat_img">
                                 </span>
                             </div>
                             <span class="seats_count">{{allocatedseats}}/{{totalseats}}</span>

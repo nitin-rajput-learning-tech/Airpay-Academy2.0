@@ -39,6 +39,7 @@ $remove=optional_param('remove',array(), PARAM_RAW);
 $view=optional_param('view','page', PARAM_RAW);
 $type=optional_param('type','', PARAM_RAW);
 $lastitem=optional_param('lastitem',0, PARAM_INT);
+$countval = optional_param('countval', 0, PARAM_INT);
 $sesskey=sesskey();
 require_login();
 $url = new moodle_url('/local/evaluation/users_assign.php', array('id' => $evaluationid));
@@ -72,7 +73,7 @@ if($view == 'ajax'){
   }else{
       $options = $_GET["options"];  
   }
-  $selectfromusers=evaluation_enrolled_users($type,$evaluationid,$options,false,$offset1=-1,$perpage=50,$lastitem);
+  $selectfromusers=evaluation_enrolled_users($type,$evaluationid,$options,false,$offset1=-1,$perpage=50,$countval);
 	echo json_encode($selectfromusers);
 	exit;
 }
@@ -417,12 +418,12 @@ $( document ).ready(function() {
                 var count_selected_list=$('#'+get_id+' option').length;
                
                 var lastValue = $('#'+get_id+' option:last-child').val();
-             
+                var countval = $('#'+get_id+' option').length;
               if(count_selected_list<total_users){  
                     var selected_list_request = $.ajax({
                         method: 'GET',
                         url: M.cfg.wwwroot + '/local/evaluation/users_assign.php',
-                        data: {id:'$evaluationid',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue,enrolid:'$enrolid', options: $myJSON},
+                        data: {id:'$evaluationid',sesskey:'$sesskey', type:type,view:'ajax',countval:countval,enrolid:'$enrolid', options: $myJSON},
                         dataType: 'html'
                     });  
                     var appending_selected_list = '';

@@ -33,7 +33,7 @@ class learningplan {
      * @param  string $search [description]
      * @return [type]         [description]
      */
-    public function userlearningplans($status = 'inprogress', $search = '', $limit = '', $mobile = false, $page=0, $perpage=10) {
+    public static function userlearningplans($status = 'inprogress', $search = '', $limit = '', $mobile = false, $page=0, $perpage=10) {
         global $DB, $USER, $CFG;
         $coursesinfo = self::learningplancoursestypeinfo(true);
         $sqlquery = "SELECT llp.id, llp.name, llp.description, llp.learning_type,llp.certificateid ,IF(llp.learning_type = 1, 'Core Courses', 'Elective Courses') AS learningplantype, llp.open_points $coursesinfo ";
@@ -131,7 +131,7 @@ class learningplan {
         return $learningplancoursestypecount;
     }
 
-    public function learningplancoursestypeinfo($subquery = true, $selectedtype = ''){
+    public static function learningplancoursestypeinfo($subquery = true, $selectedtype = ''){
         global $DB;
         if (empty($selectedtype)) {
             $types = array('and', 'or');

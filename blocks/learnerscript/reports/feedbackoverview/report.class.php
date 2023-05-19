@@ -36,7 +36,7 @@ class report_feedbackoverview extends reportbase implements report {
         $this->parent = true;
         $this->columns = ['feedbackfield'=>['feedbackfield'],'feedbackoverviewcolumns' => ['enrolmentscount','completionscount']];
         $this->components = array('columns', 'filters', 'permissions','orderable','plot');
-        $this->filters = array('organization', 'departments', 'subdepartments', 'feedbacks');
+        $this->filters = array('organization', 'departments',  'feedbacks');
         $this->orderable = array('feedbackname','enrolmentscount','completionscount');
         $this->defaultcolumn = 'le.id';
         $this->reportid = $report->reportid;
@@ -49,15 +49,22 @@ class report_feedbackoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(le.id)";
     }
     function select() {
+        global $USER;
+        $costcenterpathconcatsql = "";
+        if(!is_siteadmin()){
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+        }
+       
         $this->sql = "SELECT le.id as feedbackid, le.name as feedbackname,
                             (SELECT COUNT(eu.id) 
                                 FROM {local_evaluation_users} as eu
                                 JOIN {user} as u ON u.id = eu.userid AND u.deleted = 0 AND u.suspended = 0
-                                WHERE eu.evaluationid = le.id) as enrolmentscount,
+                                WHERE eu.evaluationid = le.id  $costcenterpathconcatsql) as enrolmentscount,
                             (SELECT COUNT(ec.id) 
                                 FROM {local_evaluation_completed} as ec
                                 JOIN {user} as u ON u.id = ec.userid AND u.deleted = 0 AND u.suspended = 0
-                                WHERE ec.evaluation = le.id) as completionscount ";
+                                WHERE ec.evaluation = le.id  $costcenterpathconcatsql) as completionscount ";
         parent::select();
     }
     function from() {
@@ -108,7 +115,7 @@ class report_feedbackoverview extends reportbase implements report {
             $this->sql .= " AND concat(le.open_path,'/') like :l2dept ";
             $this->params['l2dept'] = $l2dept.'/%';
         }
-        if ($this->params['filter_subdepartments'] > 0) {
+       /*  if ($this->params['filter_subdepartments'] > 0) {
             $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
             $this->sql .= " AND concat(le.open_path,'/') like :l3dept ";
             $this->params['l3dept'] = $l3dept.'/%';
@@ -118,11 +125,17 @@ class report_feedbackoverview extends reportbase implements report {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             $this->sql .= " AND concat(le.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
-        }
+        } */
 
         if (!empty($this->params['filter_feedbacks'])) {
              $this->sql .= " AND le.id = :feedbackid ";
              $this->params['feedbackid']= $this->params['filter_feedbacks'];
+        }
+
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND ( le.timeopen > :ls_fstartdate AND le.timeclose < :ls_fenddate )";
+            $this->params['ls_fstartdate'] = $this->params['ls_fstartdate'];
+            $this->params['ls_fenddate'] = $this->params['ls_fenddate'];
         }
 
     }   

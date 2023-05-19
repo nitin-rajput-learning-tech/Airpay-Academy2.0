@@ -51,6 +51,7 @@ class general_lib{
 	public function get_classroom_info($id){
         global $DB, $USER, $CFG;
         require_once($CFG->dirroot.'/local/search/lib.php');
+        require_once($CFG->dirroot.'/local/ratings/lib.php');
         $classroom = $DB->get_record('local_classroom', array('id' => $id));
         if($classroom){
             $classroom->fullname = $classroom->name;
@@ -98,13 +99,28 @@ class general_lib{
             }
             $classroom->coursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_classroom_courses} AS lcc ON lcc.courseid = c.id WHERE lcc.classroomid = :classroomid ", array('classroomid' => $classroom->id));
 
-            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $classroom->id, 'module_area' => 'local_learningplan'));
+          /*   $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $classroom->id, 'module_area' => 'local_learningplan'));
             if($ratinginfo){
                 $classroom->avgrating = $ratinginfo->module_rating;
                 $classroom->ratedusers = $ratinginfo->module_rating_users;
                 // $classroom->likes = $ratinginfo->module_like;
                 // $classroom->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
             }
+            */
+            $modulerating = $DB->get_field('local_ratings_likes', 'module_rating', array('module_id' => $classroom->id, 'module_area' => 'local_classroom'));
+            if(!$modulerating){
+                 $modulerating = 0;
+            }
+            $classroom->rating = $modulerating;
+            $likes = $DB->count_records('local_like', array('likearea'=> 'local_classroom', 'itemid'=>$classroom->id, 'likestatus'=>'1'));
+            $dislikes = $DB->count_records('local_like', array('likearea'=> 'local_classroom', 'itemid'=>$classroom->id, 'likestatus'=>'2'));
+            $avgratings = get_rating($classroom->id, 'local_classroom');
+            $avgrating = $avgratings->avg;
+            $ratingusers = $avgratings->count;
+            $classroom->likes = $likes;
+            $classroom->dislikes = $dislikes;
+            $classroom->avgrating = $avgrating;
+            $classroom->ratedusers = $ratingusers;
             $classroom->module = 'local_classroom';
             return $classroom;
         }else{

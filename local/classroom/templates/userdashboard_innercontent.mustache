@@ -22,25 +22,35 @@
      {{> block_userdashboard/userdashboard_enable_slider}}  
 {{/enableslider}}
     {{#moduledetails}}
-    <div class="col-sm-6 col-12 pull-left tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_classroom" data-index="{{index}}">
-        <div class="classroom_container w-full pull-left">
-            <div class="w-full pull-left ub_classrooms">
-                <div class="w-full pull-left ub_classroomname pt-10 pr-15 pb-1 pl-15 mb-1">
+    <div class="col-sm-6 col-12 tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_classroom" data-index="{{index}}">
+        <div class="classroom_container w-full">
+            <div class="w-full ub_classrooms">
+                
+                <div class="w-full ub_classroomname p-2">
+                    <div class="classroom_icon mr-2">
+                        <span class="classicon"></span>
+                    </div>
                     <span class="userdashboard_employee_classroom_icon"></span>
                     <a href='{{classroom_url}}' alt="{{classroomFullname}}">{{displayClassroomFullname}}</a>
                 </div>
-                <div class="w-full pull-left pl-10 pr-10 pb-10">
-                    <div class="w-full pull-left pl-15 pr-15 coursecontent">
+                <div class="w-full p-2">
+                    <div class="w-full coursecontent">
                         <div class="desc coursedesc">{{{classroomSummary}}}</div>
-
-                        <span class="pull-left schedule"><i class="fa fa-calendar pr-10" aria-hidden="true"></i>{{{startdate}}} &nbsp;-&nbsp;{{{enddate}}}</span>
-                        <div class="pull-right mt-15 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
-                            <div class="pull-left">{{{rating_element}}}</div>
+                        <div class="schedule w-full d-flex justify-content-between my-3">    <div class="start_date d-flex align-items-center">
+                                <span class="start_icon mr-2"></span>
+                                {{{startdate}}}
+                            </div> 
+                            <div class="end_date d-flex align-items-center">
+                                <span class="end_icon mr-2"></span>
+                                {{{enddate}}}
+                            </div>
+                        </div>
+                        <div class="mt-2 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
+                            <div class="">{{{rating_element}}}</div>
                             <a href="{{classroom_url}}">
                                 <button class="btn btn-primary launch_btn">{{#str}}launch,block_userdashboard{{/str}}</button>
                             </a>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -49,7 +59,7 @@
         
     {{/moduledetails}}  
     {{# viewMoreCard}}
-        <div class="col-sm-6 col-12 pull-left view_more_data_card ctype_classroom d-flex justify-content-center align-items-center">
+        <div class="col-sm-6 col-12 view_more_data_card ctype_classroom d-flex justify-content-center align-items-center">
             <a class="center_elemet" href="{{{view_more_url}}}">{{#str}}viewmore{{/str}}</a>
         </div>
     {{/ viewMoreCard}}

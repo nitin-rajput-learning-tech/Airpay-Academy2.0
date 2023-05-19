@@ -202,7 +202,6 @@ class general_lib{
     /******Function to the show the enrolled course names in the E-learning Tab********/
     public static function enrolled_onlineexamnames($filter_text='', $offset = 0, $limit = 10, $source = '') {
         global $DB, $USER;
-
         $sqlquery = "SELECT course.*";
 
         $sql = " FROM {course} AS course

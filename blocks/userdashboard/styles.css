@@ -454,7 +454,7 @@ i.course-prev {
 
 .userdashboard_content .classroom_container .ub_classrooms {
     background-color: #fff;
-    border-radius: 18px;
+    border-radius: 8px;
     box-shadow: none;
     padding: 25px 30px;
 }
@@ -1018,7 +1018,6 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 }
 
 .userdashboard_content .bootcamp_container {
-    border: 1px solid #5297a0;
     background-color: #fff;
     border-radius: 8px;
     position: relative;
@@ -1065,12 +1064,6 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     display: block;
     clear: both
 }
-
-#page-local-courses-userdashboard .coursecontent {
-    padding-top: 5px;
-    padding-bottom: 5px
-}
-
 .bootcampicon_container {
     background-color: #297b77;
     border: none;
@@ -1779,13 +1772,15 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     color: #0000006e;
 }
 .block.block_userdashboard .course_container{
-	border-radius: 18px;
+	border-radius: 8px;
 }
 .block.block_userdashboard .nav-tabs {
     border-bottom: 1px solid #a3a3a3;
     padding-bottom: 3px;
 }
-.block.block_userdashboard .desc  {
+.block.block_userdashboard .desc,
+.userdashboard_content .bootcamp_container .desc.coursedesc,
+.userdashboard_content .desc.coursedesc{
     color: #2B354B;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1798,7 +1793,7 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
 /*	background-image: url("[[pix:block_userdashboard|userdashboardbg]]");*/
 	background-repeat: no-repeat;
     background-size: cover;
-    min-height: 435px;
+    min-height: 380px;
     background-position: center;
     padding-top: 20px;
     padding: 20px 15px;
@@ -2038,12 +2033,10 @@ body#page-blocks-userdashboard-userdashboard_courses .tab-pane {
     background-repeat: no-repeat;
     background-position: center center;
     background-color: #fff;
-    border-radius: 12px;
     box-shadow: 0 0 6px 0 #0000003b;
+    height: 100%;
 }
-#page-local-courses-userdashboard .course_container {
-    padding: 15px 0 15px 0px!important;
-}
+
 #page-local-courses-userdashboard  .course_name a{
     font-size: 18px;
     word-break: break-word;
@@ -2208,7 +2201,7 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
 
 /*userdashboard card design*/
 .userdashboard_content .lp_container{
-
+    height: 100%;
     border-bottom: 5px solid #0071bd;
     box-shadow: 0 0 5px 3px #ddd;
     border-radius: 0 !important;
@@ -2225,10 +2218,7 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
     display: flex;
     align-items: center;
 }
-.userdashboard_content .classroom_container .ub_classrooms>div{
-    padding-left: 15px;
-    padding-right: 15px;
-}
+
 .userdashboard_content  .ub_classrooms .rating_container i{
     margin-right: 3px;
 }
@@ -2240,16 +2230,12 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
 /*user dashboard course card design*/
 .courses_inprogress_slide .courseimg_container {
     width: 100%;
-    max-width: 180px;
-    padding: 15px;
+    height: 200px;
 }
 .courses_inprogress_slide .coursecontent {
     width: 100%;
-    padding: 15px !important;
  }
-#page-local-courses-userdashboard .course_container{
-    padding: 0 !important;
-}
+
 @media(max-width: 767px){
     #page-local-courses-userdashboard .course_container{
         flex-direction: column;
@@ -2316,4 +2302,95 @@ body .block.block_userdashboard .block_dashboard_tabslist .active_main_tab:after
         padding: 0 2px;
         font-size: 10px;
     }
+}
+
+/*userdashboard classroom new card design*/
+.block_userdashboard .userdashboard_ctype_classroom .schedule,
+#page-local-courses-userdashboard .userdashboard_ctype_classroom .schedule{
+    background-color: #e1edfe;
+    padding: 8px;
+    border-radius: 4px;
+}
+.block_userdashboard .userdashboard_ctype_classroom .schedule .start_date,
+.block_userdashboard .userdashboard_ctype_classroom .schedule .end_date{
+    color: #000;
+    font-size: 13px;
+    font-weight: 500;
+}
+.userdashboard_content .classroom_container .ub_classrooms .coursedesc{
+    color:#505050;
+}
+.block_userdashboard .userdashboard_ctype_classroom .schedule .start_icon,
+#page-local-courses-userdashboard .userdashboard_ctype_classroom .schedule .start_icon,
+.block_userdashboard .userdashboard_ctype_classroom .schedule .end_icon,
+#page-local-courses-userdashboard .userdashboard_ctype_classroom .schedule .end_icon{
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 22px;
+    height: 22px;
+    display: inline-block;
+}
+.block_userdashboard .userdashboard_ctype_classroom .schedule .start_icon,
+#page-local-courses-userdashboard .userdashboard_ctype_classroom .schedule .start_icon{
+    background-image: url('[[pix:local_classroom|startdate]]');
+}
+.block_userdashboard .userdashboard_ctype_classroom .schedule .end_icon,
+#page-local-courses-userdashboard .userdashboard_ctype_classroom .schedule .end_icon{
+    background-image: url('[[pix:local_classroom|enddate]]');
+}
+.userdashboard_content .classroom_container .ub_classrooms .desc{
+    -webkit-line-clamp: 3;
+    font-size: 14px;
+}
+.userdashboard_content .classroom_container .ub_classrooms .classicon{
+    background-image: url('[[pix:local_classroom|classroom]]');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+}
+.userdashboard_content .classroom_container .ub_classrooms .classroom_icon{
+    background-color: #1f67b7;
+    padding: 8px;
+    line-height: 10px;
+}
+.userdashboard_content .classroom_container .ub_classroomname a{
+    font-size: 18px;
+}
+.userdashboard_content .classroom_container .ub_classrooms{
+    box-shadow: 0 5px 6px #ddd;
+}
+
+/*userdashboard program card changes*/
+.block.block_userdashboard .program_container .course_container{
+    padding: 15px !important;
+} 
+.block.block_userdashboard .program_container .bootcamp_name,
+#page-local-program-userdashboard .programcontainer_top .bootcamp_name{
+    color: #2B354B;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 700;
+}
+.block.block_userdashboard .program_container .bootcampicon_container,
+#page-local-program-userdashboard .programcontainer_top .bootcampicon_container{
+    background-color: #1f67b7;
+    border: none;
+    padding: 8px;
+    border-radius: 0;
+}
+.block.block_userdashboard .program_container .bootcampicon_container img,
+#page-local-program-userdashboard .programcontainer_top .bootcampicon_container img{
+    width: 24px;
+    height: 24px;
+}
+.userdashboard_content .program_container{
+    border: none;
+    box-shadow: 0 5px 6px #ddd;
+}
+#page-local-courses-userdashboard .courses_inprogress_slide .course_container{
+    overflow: hidden;
 }

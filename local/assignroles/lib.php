@@ -337,6 +337,7 @@ function local_assignroles_masterinfo(){
         $templatedata['count'] = $trainer;
         $templatedata['link'] = '';
         $templatedata['stringname'] = get_string('trainer','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-user-circle" aria-hidden="true"></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

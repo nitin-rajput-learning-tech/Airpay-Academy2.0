@@ -76,7 +76,7 @@ class plugin_userparticipationcolumns extends pluginbase {
             case 'coursesprogress':
                 $enrolledcount = $this->course_enrolled($row->userid);
                 $completedcount = $this->course_completed($row->userid);
-                $coursesprogress = intval(($completedcount / $enrolledcount) * 100);              
+                $coursesprogress = ($enrolledcount!= 0 && $enrolledcount > $completedcount) ? intval(($completedcount / $enrolledcount) * 100) : 0;              
                
                 $row->{$data->column} ='<div class="progress">
                         <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$coursesprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$coursesprogress.'%">
@@ -115,7 +115,7 @@ class plugin_userparticipationcolumns extends pluginbase {
                */
                 $iltenrolledcount = $this->ilt_enrolled($row->userid);
                 $iltcompletedcount = $this->ilt_completed($row->userid);
-                $iltprogress = intval(($iltcompletedcount / $iltenrolledcount) * 100);
+                $iltprogress = ($iltenrolledcount!= 0 && $iltenrolledcount > $iltcompletedcount) ? intval(($iltcompletedcount / $iltenrolledcount) * 100) : 0;
                 //$iltprogress = is_NAN($iltprogress) ? 0 : $iltprogress;
                 $row->{$data->column} ='<div class="progress">
                             <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$iltprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$iltprogress.'%">
@@ -153,7 +153,7 @@ class plugin_userparticipationcolumns extends pluginbase {
                 $lpenrolledcount = $DB->count_records_sql("select count(lpu.id) from {local_learningplan_user} lpu "); */
                 $lpenrolledcount = $this->lp_enrolled($row->userid);
                 $lpcompletedcount = $this->lp_completed($row->userid);
-                $lpprogress = intval(($lpcompletedcount / $lpenrolledcount) * 100);               
+                $lpprogress = ($lpenrolledcount!= 0 && $lpenrolledcount > $lpcompletedcount) ? intval(($lpcompletedcount / $lpenrolledcount) * 100) : 0;               
                 $row->{$data->column} ='<div class="progress">
                         <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$lpprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$lpprogress.'%">
                             <span class="progress_percentage ml-2">'.$lpprogress.'% Complete</span>
@@ -189,7 +189,7 @@ class plugin_userparticipationcolumns extends pluginbase {
             case 'programprogress': 
                 $programenrolled = $this->program_enrolled($row->userid);              
                 $programcompleted = $this->program_completed($row->userid);
-                $programprogress = intval(($programcompleted / $programenrolled) * 100);               
+                $programprogress = ($programenrolled!= 0 && $programenrolled > $programcompleted) ?  intval(($programcompleted / $programenrolled) * 100) : 0;               
                 $row->{$data->column} ='<div class="progress">
                     <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$programprogress.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$programprogress.'%">
                         <span class="progress_percentage ml-2">'.$programprogress.'% Complete</span>

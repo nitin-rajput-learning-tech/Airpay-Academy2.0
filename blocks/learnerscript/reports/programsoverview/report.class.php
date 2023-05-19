@@ -48,7 +48,7 @@ class report_programsoverview extends reportbase implements report {
         $this->sql = "SELECT COUNT(lp.id)";
     }
     function select() {
-        $this->sql = "SELECT lp.id as programid, lp.name as programname,lp.open_categoryid as catgid,
+            $this->sql = "SELECT lp.id as programid, lp.name as programname,lp.open_categoryid as catgid,
                             (SELECT COUNT(pl.id)
                             FROM {local_program_levels} pl 
                             WHERE pl.programid = lp.id) AS levelscount,
@@ -132,6 +132,7 @@ class report_programsoverview extends reportbase implements report {
            $this->sql .= " AND lp.id = :program ";
            $this->params['program']= $this->params['filter_programs'];
         }
+
     }
     public function get_rows($programs) {
         return $programs;

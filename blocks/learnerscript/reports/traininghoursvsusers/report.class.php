@@ -35,7 +35,7 @@ class report_traininghoursvsusers extends reportbase implements report {
         $this->parent = true;
         $this->columns = array('traininghoursvsusers' => array('monthyear', 'totaltrainings', 'month','year','traininghours', 'trainingdays', 'userscovered'));
         $this->components = array('columns', 'filters', 'permissions', 'calcs', 'plot');
-        $this->filters = array('organization','departments', 'subdepartments');
+        //$this->filters = array('organization','departments', 'subdepartments');
         $this->sqlorder['column'] = 'year';
         $this->sqlorder['dir'] = 'desc';
         $this->orderable = array('monthyear','totaltrainings', 'month','year','traininghours', 'userscovered');
@@ -50,30 +50,29 @@ class report_traininghoursvsusers extends reportbase implements report {
         $this->sql = "SELECT COUNT( distinct MONTH(FROM_UNIXTIME(lc.startdate)))";
     }
     function select() {
-        
-        $this->sql  = "SELECT distinct concat(MONTH(FROM_UNIXTIME(lc.startdate)), '/', YEAR(FROM_UNIXTIME(lc.startdate))) as monthyear, FROM_UNIXTIME(lc.startdate, '%M') AS month,
-                    YEAR(FROM_UNIXTIME(lc.startdate)) AS year,
-        (SELECT count(id) 
-            FROM {local_classroom} c 
+        /*
+         (SELECT count(id)           
+            FROM {local_classroom} c       
             WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(lc.startdate))
             AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) )  as totaltrainings,
-        (SELECT SUM(round(cs.duration/60, 2)) 
-            FROM {local_classroom_sessions} cs
-            JOIN {local_classroom} c ON cs.classroomid = c.id
-            WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
-            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4)) as traininghours,
-        (SELECT SUM(DATEDIFF(DATE(FROM_UNIXTIME(c.enddate)), DATE(FROM_UNIXTIME(c.startdate))))
-            FROM {local_classroom} c 
-            WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(c.startdate))
-            AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(c.startdate)) AND (c.status = 1 OR c.status = 4) )  as  trainingdays,  
-        (SELECT count(distinct cat.userid) 
-            FROM {local_classroom_attendance} cat
-            JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1
-            JOIN {local_classroom} c ON cs.classroomid = c.id
-            WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
-            AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) )  as userscovered
+         (SELECT SUM(DATEDIFF(DATE(FROM_UNIXTIME(c.enddate)), DATE(FROM_UNIXTIME(c.startdate))))
+        FROM {local_classroom} c 
+        WHERE YEAR(FROM_UNIXTIME(c.startdate)) = YEAR(FROM_UNIXTIME(c.startdate))
+        AND MONTH(FROM_UNIXTIME(c.startdate)) = MONTH(FROM_UNIXTIME(c.startdate)) AND (c.status = 1 OR c.status = 4) )  as  trainingdays,   
+         (SELECT SUM(round(cs.duration/60, 2)) 
+        FROM {local_classroom_sessions} cs
+        JOIN {local_classroom} c ON cs.classroomid = c.id
+        WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
+        AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4)) as traininghours,   
+    (SELECT count(distinct cat.userid) 
+        FROM {local_classroom_attendance} cat
+        JOIN {local_classroom_sessions} cs  ON cat.sessionid = cs.id AND cat.status = 1
+        JOIN {local_classroom} c ON cs.classroomid = c.id
+        WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME(lc.startdate))
+        AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME(lc.startdate)) AND (c.status = 1 OR c.status = 4) )  as userscovered */
 
-                 "; 
+        $this->sql  = "SELECT distinct concat(MONTH(FROM_UNIXTIME(lc.startdate)), '/', YEAR(FROM_UNIXTIME(lc.startdate))) as monthyear, FROM_UNIXTIME(lc.startdate, '%M') AS month,
+                    YEAR(FROM_UNIXTIME(lc.startdate)) AS year "; 
         parent::select();
     }
     function from() {
@@ -85,24 +84,16 @@ class report_traininghoursvsusers extends reportbase implements report {
     function where(){
         global $USER, $DB;
         $this->sql .= " WHERE 1=1 ";
-        $this->sql .= " AND (lc.status = 1 OR lc.status = 4) ";
-       
-        // getscheduled report
-        if (!is_siteadmin()) {
-            $scheduledreport = $DB->get_record_sql('select id,roleid from {block_ls_schedule} where reportid =:reportid AND sendinguserid IN (:sendinguserid)', ['reportid'=>$this->reportid,'sendinguserid'=>$USER->id], IGNORE_MULTIPLE);
-            if (!empty($scheduledreport)) {
-            $compare_scale_clause = $DB->sql_compare_text('capability')  . ' = ' . $DB->sql_compare_text(':capability');
-            $ohs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_ownorganization']);
-            $dhs = $DB->record_exists_sql("select id from {role_capabilities} where roleid =:roleid AND $compare_scale_clause", ['roleid'=>$scheduledreport->roleid, 'capability'=>'local/costcenter:manage_owndepartments']);
-            } else {
-                $ohs =  $dh = 1;
-            }
-        }
+        $this->sql .= " AND (lc.status = 1 OR lc.status = 4) ";      
+    
         $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
 
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+            $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
             $this->sql .= $costcenterpathconcatsql;
         }
         parent::where();
@@ -111,10 +102,10 @@ class report_traininghoursvsusers extends reportbase implements report {
    
     function search(){
         if (isset($this->search) && $this->search) {
-            $fields = array("lc.name");
+            $fields = array("MONTH(FROM_UNIXTIME(lc.startdate))","YEAR(FROM_UNIXTIME(lc.startdate))","concat(MONTH(FROM_UNIXTIME(lc.startdate)), '/', YEAR(FROM_UNIXTIME(lc.startdate)))","FROM_UNIXTIME(lc.startdate, '%M')","YEAR(FROM_UNIXTIME(lc.startdate))");
             $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
             $fields .= " LIKE '%" . $this->search . "%' ";
-            $this->sql .= " AND ($fields) ";
+            $this->sql .= " AND ($fields) ";           
         }
     } 
 

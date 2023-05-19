@@ -78,23 +78,15 @@ class search implements renderable{
                     $paths[] = $userpathinfo;
                 }
             }
+  		if(!empty($USER->open_designation) && $USER->open_designation != "" && $USER->open_designation != NULL){                 
+                $wheresql .= " AND ( concat(',',c.open_designation,',') LIKE '%,$USER->open_designation,%'  OR c.open_designation = '-1' OR c.open_designation = '' OR c.open_designation IS NULL)";
+            } 
             if(!empty($paths)){
                 foreach($paths AS $path){
                     $pathsql[] = " c.open_path LIKE '{$path}' ";
                 }
                 $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
             }
-            // if(!empty($usercostcenterpaths)){
-            //     foreach($usercostcenterpaths AS $path){
-            //         $pathsql[] = " c.open_path LIKE '{$path}' ";
-            //     }
-            //     $wheresql .= " AND ( ".implode(' OR ', $pathsql).' ) ';
-            // }
-
-           /*  if(!empty($USER->open_designation) && $USER->open_designation != "" && $USER->open_designation != NULL){                 
-                $wheresql .= " AND ( concat(',',c.open_designation,',') LIKE '%,$USER->open_designation,%'  OR c.open_designation = '-1' OR c.open_designation IS NULL)";
-            }   */         
-          
         }
     
         foreach($filters AS $filtertype => $filtervalues){
@@ -146,7 +138,7 @@ class search implements renderable{
         }
         $course_searchsql = "";
         if(searchlib::$search && searchlib::$search!='null'){
-            $course_searchsql = " AND c.fullname LIKE '%$search%'";
+            $course_searchsql = " AND c.fullname LIKE '%$search%' ";
         }
      /*    if($coursetype){
             $types = implode(',',array_filter($coursetype,'is_numeric'));

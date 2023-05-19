@@ -456,4 +456,4 @@ $string['enablecourse'] = 'Are you sure, want Active Forum <b>\'{$a}\'</b>?';
 $string['disablecourse'] = 'Are you sure, want In-active Forum <b>\'{$a}\'</b>?';
 $string['courseconfirm'] = 'Confirm';
 $string['nocourseavailiable'] = 'No Forums Available';
-
+$string['myforum'] = 'Disscussion Forum';

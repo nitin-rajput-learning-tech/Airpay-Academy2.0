@@ -22,6 +22,7 @@
 }
 .block_achievements #achievements table {
     border: none;
+    box-shadow: none;
 }
 .block_achievements #achievementstable1 tbody td{
     position: relative;

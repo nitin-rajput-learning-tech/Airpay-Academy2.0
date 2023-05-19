@@ -44,6 +44,9 @@ $PAGE->navbar->add(get_string("pluginname", 'local_request'));
 $PAGE->set_heading($title);
 $PAGE->requires->js_call_amd('local_request/requestconfirm', 'load', array());
 
+/* if(!is_siteadmin() && !has_capability('local/request:approverecord', $sitecontext)){
+    redirect($CFG->wwwroot.'/my/dashboard.php');
+} */
 $output = $PAGE->get_renderer('local_request');
 if($courseid){
     if(!(is_siteadmin() || has_capability('local/request:approverecord', $sitecontext))){

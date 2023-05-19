@@ -609,6 +609,7 @@ function block_learnerscript_masterinfo(){
         $templatedata['count'] = $report;
         $templatedata['link'] = $CFG->wwwroot.'/blocks/learnerscript/reportsview.php';
         $templatedata['stringname'] = get_string('report','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-bar-chart"></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

@@ -882,7 +882,7 @@ class ls {
 		$reportlogo = get_config('block_learnerscript', 'logo');
 
 		$headerimgpath = get_reportheader_imagepath();
-		if (@getimagesize($headerimgpath)) {
+		if (!(empty($headerimgpath)) && @getimagesize($headerimgpath)) {
 			$headerimgpath = $headerimgpath;
 		}
 		if ($headerimgpath) {

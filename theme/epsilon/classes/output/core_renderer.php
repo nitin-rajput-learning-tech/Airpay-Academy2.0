@@ -805,8 +805,13 @@ class core_renderer extends \core_renderer {
      */
     public function render_login(\core_auth\output\login $form) {
         global $CFG, $SITE, $OUTPUT;
-
-        $context = $form->export_for_template($this);
+    $organization_shortname = get_config('local_users','organization_shortname');
+    $activeregistration = get_config('local_users','activeregistration');
+    $context = $form->export_for_template($this);
+        if(trim($organization_shortname != "") && $activeregistration == 1)
+        {
+            $context->signupurl_custom =new moodle_url('/local/users/signup.php');
+        }
 
         // Override because rendering is not supported in template yet.
         if ($CFG->rememberusername == 0) {
@@ -938,12 +943,12 @@ class core_renderer extends \core_renderer {
                         $days = abs($difference/(60 * 60)/24);                       
                        
                         if($days != 0 && $days < $COURSE->open_coursecompletiondays){
-                            $duedays = 'Due In : ' .($COURSE->open_coursecompletiondays-$days). ' days';
+                            $duedays = 'Due In : <strong>' .($COURSE->open_coursecompletiondays-$days). ' days </strong>';
                         }else if($days != 0 && $days > $COURSE->open_coursecompletiondays){
                             $duedays = 'Overdue by : ' .abs($COURSE->open_coursecompletiondays-$days). ' days';
                         }
                         if($duedays !=0 ){
-                            $display_duedays =' <div class="col-md-3 user_enrollment sdfsf d-flex">
+                            $display_duedays =' <div class="col-md-3 user_enrollment d-flex align-items-center ">
                                                     <i class="fa fa-calendar"></i>                                                  
                                                     <div class="enroll_details d-flex">
                                                         <span class="details_content text-nowrap"> </span>
@@ -1951,9 +1956,10 @@ class core_renderer extends \core_renderer {
         $theme = theme_config::load('epsilon');
         $primarycolor= $theme->settings->primarycolor;
         $costcentercolor = $this->get_costcenter_scheme_css();
-        if($costcentercolor && !empty($costcentercolor->button_color)){
-            $primarycolor = $costcentercolor->button_color;
+        if($costcentercolor && !empty($costcentercolor->brand_color)){
+            $primarycolor = $costcentercolor->brand_color;
         }
+        
         return $primarycolor;
     }
     public function get_secondarycolor() {
@@ -1962,8 +1968,8 @@ class core_renderer extends \core_renderer {
         $secondarycolor= $theme->settings->secondarycolor;
         $costcentercolor = $this->get_costcenter_scheme_css();
         // var_dump($costcentercolors); exit;
-        if($costcentercolor && !empty($costcentercolor->brand_color)){
-            $secondarycolor = $costcentercolor->brand_color;
+        if($costcentercolor && !empty($costcentercolor->button_color)){
+            $secondarycolor = $costcentercolor->button_color;
         }
         return $secondarycolor;
     }
@@ -2093,6 +2099,11 @@ class core_renderer extends \core_renderer {
             return $cm->url;
 
         }
+
+    }
+    public function loggedin_username() {
+        global $USER;
+        return ucwords($USER->username);
 
     }
 

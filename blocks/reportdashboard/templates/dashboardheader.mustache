@@ -29,7 +29,7 @@
             <div class="col-md-3">
                 <div class="flatpickr mt-3 ml-2">
                     <input type="text" name="customduration" value="" style="display: none;"
-                        id="customrange" placeholder="Start Date - End Date">
+                       aria-label="show_date" id="customrange" placeholder="Start Date - End Date">
                 </div>
             </div>
             <div class="col-md-4">
@@ -40,7 +40,7 @@
                             <span class="dropdown nav-item">
                                 <a class="dropdown-toggle htitle" id="addwidgets{{reportinstance}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{#str}}addwidgettile, block_reportdashboard{{/str}}">
                                     <span class="tooltiptext tooltip-top">{{#str}}addwidgettile, block_reportdashboard{{/str}}</span>
-                                    <img src='{{config.wwwroot}}/blocks/learnerscript/pix/addwidget.svg' id='addwidgets' class='addblocks-to-dashboard' >
+                                    <img src='{{config.wwwroot}}/blocks/learnerscript/pix/addwidget.svg' id='addwidgets' alt='addwidgets' class='addblocks-to-dashboard' >
                                 </a>
                                 <ul class="menu dropdown-menu  dropdown-menu-right dropdown-content" area-labelledby="addwidgets{{reportinstance}}">
                                     {{# reportdashboardstatus }}
@@ -60,7 +60,7 @@
                         <span class="dropdown nav-item">
                             <a class="dropdown-toggle htitle" id="switchdashboard{{reportinstance}}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="{{#str}}switchdashboard, block_reportdashboard{{/str}}">
 
-                                <img src={{config.wwwroot}}/blocks/learnerscript/pix/switchdashboard.svg id='addwidgets' class='addblocks-to-dashboard'>
+                                <img src={{config.wwwroot}}/blocks/learnerscript/pix/switchdashboard.svg id='addwidgets' alt='switchdashboard' class='addblocks-to-dashboard'>
                             </a>
                             <ul  class="menu dropdown-menu  dropdown-menu-right dropdown-content" area-labelledby="switchdashboard{{reportinstance}}">
                                             {{#get_dashboardname}}
@@ -98,13 +98,13 @@
                     {{#issiteadmin}}
                         <span class ='span_adddashboard htitle'onclick = '(function(e){ require("block_reportdashboard/reportdashboard").addnewdashboard() })(event)' title="{{#str}}addnewdashboard, block_reportdashboard{{/str}}">
 
-                            <img src={{config.wwwroot}}/blocks/learnerscript/pix/adddashboard.svg id='adddashboard' class='addblocks-to-dashboard'>
+                            <img src={{config.wwwroot}}/blocks/learnerscript/pix/adddashboard.svg id='adddashboard' alt='adddashboard' class='addblocks-to-dashboard'>
                         </span>
                     {{/issiteadmin}}
                     {{#issiteadmin}}
                         <a class= 'htitle' href="{{config.wwwroot}}/blocks/learnerscript/reportsview.php" title="{{#str}}managereports, block_learnerscript{{/str}}">
                             <span class="tooltiptext tooltip-top">{{#str}}managereports, block_learnerscript{{/str}}</span>
-                            <img src={{config.wwwroot}}/blocks/learnerscript/pix/managereport.svg id='addreport' class="addblocks-to-dashboard">
+                            <img src={{config.wwwroot}}/blocks/learnerscript/pix/managereport.svg id='addreport' alt='managereport' class="addblocks-to-dashboard">
                         </a>
                     {{/issiteadmin}}
                     {{> block_reportdashboard/switchrole }}
@@ -215,7 +215,7 @@
             </div>
             <div class="col-md-9 form-inline felement" data-fieldtype="text" >
                 <input type="hidden" name="role" value="{{dashboardrole}}" />
-                <input type="text" class="form-control form-control-danger" name="dashboardurl" id="id_dashboard" placeholder="Maximum 16 Characters" value="" size="20" maxlength="16">
+                <input type="text" class="form-control form-control-danger" name="dashboardurl" id="id_dashboard" aria-label="char_length" placeholder="Maximum 16 Characters" value="" size="20" maxlength="16">
                 <div class="form-control-feedback" id="id_error_dashboard" style="display: none;">{{# str}} dashboard_name, block_reportdashboard {{/ str}}</div>
                 <div class="form-control-feedback" id="id_error_dashboard_nospaces" style="display: none;">{{# str}} dashboardnospaces, block_reportdashboard {{/ str}}</div>
             </div>

@@ -2548,9 +2548,9 @@ class classroom {
         $sql .= " FROM {user} AS u
                                 WHERE  u.id > 2 AND u.suspended = :suspended
                                      AND u.deleted = :deleted ";
-        if ($lastitem != 0) {
-            $sql .= " AND u.id > $lastitem";
-        }
+     /*    if ($lastitem != 0) {
+            $sql .= " AND u.id > $lastitem ";
+        } */
         if ((has_capability('local/classroom:manageclassroom', $categorycontext)) && (!is_siteadmin())) {
             $sql .= (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
             $sql .= (new \local_users\lib\accesslib())::get_userprofilematch_concatsql($classroom);
@@ -2704,10 +2704,10 @@ class classroom {
         $sql .= " AND u.id NOT IN (SELECT lcu.trainerid as userid
                                        FROM {local_classroom_trainers} AS lcu
                                        WHERE lcu.classroomid = $clasroomid)";
-        $order = ' ORDER BY u.id ASC ';
+        $order = ' ORDER BY u.firstname ASC ';
 
         if ($total == 0) {
-            $availableusers = $DB->get_records_sql_menu($sql . $order, $params, $offset1, $perpage);
+            $availableusers = $DB->get_records_sql_menu($sql . $order, $params, $lastitem, $perpage);
        
         } else {
             $availableusers = $DB->count_records_sql($sql, $params);
@@ -2885,7 +2885,7 @@ class classroom {
         return $return;
     }
 
-    public function classroom_completion_settings_tab($classroomid) {
+    public static function classroom_completion_settings_tab($classroomid) {
         global $DB, $USER;
         $classroomcompletiondata = $DB->get_record('local_classroom_completion', array(
             'classroomid' => $classroomid

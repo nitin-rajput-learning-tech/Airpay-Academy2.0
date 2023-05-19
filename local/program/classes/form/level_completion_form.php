@@ -58,7 +58,7 @@ class level_completion_form extends moodleform {
                                     'OR'=>get_string('section_anycoursecompletion', 'local_program'));
                              
             $mform->addElement('select', 'coursetracking', get_string('coursetracking', 'local_program'), $course_tracking, array());
-            
+
 
             if (isset($ajaxformdata['courseids']) && (!is_array($ajaxformdata['courseids']) ||
                 $this->_ajaxformdata['courseids'] == '_qf__force_multiselect_submission')) {
@@ -101,7 +101,7 @@ class level_completion_form extends moodleform {
             );
             
             $mform->addElement('autocomplete', 'courseids', get_string('course_completion', 'local_program'), $courses, $options);
-            //$mform->disabledIf('courseids', 'coursetracking', 'neq','OR');
+            $mform->hideIf('courseids', 'coursetracking', 'eq','ALL');
         }
         $mform->disable_form_change_checker();
     }

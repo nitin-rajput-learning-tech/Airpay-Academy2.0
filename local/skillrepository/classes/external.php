@@ -248,7 +248,7 @@ class local_skillrepository_external extends external_api {
         return new external_value(PARAM_INT, 'level id');
     }
 
-    public function delete_skill_parameters(){
+    public static function delete_skill_parameters(){
         return new external_function_parameters(
             array(
                 'id' => new external_value(PARAM_INT, 'userid', 0),
@@ -256,12 +256,12 @@ class local_skillrepository_external extends external_api {
             )
         );
     }
-    public function delete_skill($id,$contextid){
+    public static function delete_skill($id,$contextid){
         global $DB;
         $return = $DB->delete_records('local_skill',  array('id' => $id));
         return $return;
     }
-    public function delete_skill_returns(){
+    public static function delete_skill_returns(){
         return new external_value(PARAM_BOOL, 'return');
     }
 

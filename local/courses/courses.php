@@ -111,7 +111,7 @@ $extended_menu_links .= '<div class="dropdown-menu dropdown-menu-right menu  ali
         $reports['name'] = $course->name;
         $reports_info[] = $reports;
         $extended_menu_links .= '<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>
-                                            <a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$course->id.' class="dropdown-item menu-action" role="menuitem" data-title="'.$course->name.'" aria-labelledby="'.$course->name.'"target="_blank">
+                                            <a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$course->id.' class="dropdown-item menu-action" role="menuitem" data-title="'.$course->name.'" aria-label="'.$course->name.'"target="_blank">
                                                 <span class="menu-action-text">
                                                     '.$course->name.'
                                                 </span>
@@ -230,7 +230,7 @@ if($filterdata){
     $show = '';
 }
 
-echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
+echo '<a class="btn-link btn-sm" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
 echo  '<div class="collapse '.$show.'" id="local_courses-filter_collapse">

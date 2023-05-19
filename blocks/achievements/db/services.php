@@ -53,6 +53,16 @@ $functions = array(
         'ajax' => true,
         'type' => 'read'
     ),
+    'block_achievements_get_user_certificates' => array(
+        'classname' => 'block_achievements_external',
+        'methodname' => 'get_user_certificates',
+        'classpath' => 'blocks/achievements/externallib.php',
+        'description' => 'get user certifications ',
+        'type' => 'read',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
+    )
+
+  
 
 );
 
