@@ -84,9 +84,11 @@ class registration_form extends moodleform {
         $mform->addElement('text', 'open_company', get_string('companyname', 'local_users'));
 
         if($policy){
-            $mform->addElement('html', '<a target="_blank" href='.$policy.'>');            
-            $mform->addElement('checkbox', 'open_privacypolicy', get_string('privacypolicy', 'local_users'));
-            $mform->addElement('html', '</a>');            
+            $policystring=get_string('termscondition', 'local_users');
+             $policy = '<a target="_blank" href='.$policy.'>'.$policystring.'</a>';          
+            
+            $mform->addElement('checkbox', 'open_privacypolicy', get_string('privacypolicy', 'local_users'), $policy);
+
             $mform->addRule('open_privacypolicy', get_string('privacypolicyrequired', 'local_users'), 'required', null, 'client');
 
         }else
@@ -100,9 +102,10 @@ class registration_form extends moodleform {
 
         if($termscondition)
         {
-            $mform->addElement('html', '<a  target="_blank" href='.$termscondition.'>');            
-            $mform->addElement('checkbox', 'open_termscondition', get_string('termscondition', 'local_users'));
-            $mform->addElement('html', '</a>');            
+            $termsstring=get_string('termscondition', 'local_users');
+             $termscondition = '<a target="_blank" href='.$termscondition.'>'.$termsstring.'</a>';          
+            $mform->addElement('checkbox', 'open_termscondition', get_string('termscondition', 'local_users'),$termscondition);
+            
             $mform->addRule('open_termscondition', get_string('termsconditionrequired', 'local_users'), 'required', null, 'client');
         }else
         {

@@ -53,7 +53,9 @@ if ($mform->is_cancelled()) {
 
 } else if ($user = $mform->get_data()) {
 
-$company = $DB->get_field('local_costcenter', 'id', array('parentid' => '0','shortname'=>'external_organization'));
+$organization_shortname = get_config('local_users','organization_shortname');
+
+$company = $DB->get_field('local_costcenter', 'id', array('parentid' => '0','shortname'=>$organization_shortname));
     if($company)
     {
         $user->open_costcenterid = $company;
