@@ -58,7 +58,7 @@ class registration_form extends moodleform {
         }
         $mform->addRule('country', get_string('countryrequired', 'local_users'), 'required', null, 'client');
 
-        $mform->addElement('date_selector', 'open_dateofbirth',get_string('dateofbirth','local_users'),array('optional' => true));
+        $mform->addElement('date_selector', 'open_dateofbirth',get_string('dateofbirth','local_users'));
         $mform->addRule('open_dateofbirth', get_string('dateofbirthrequired', 'local_users'), 'required', null, 'client');
 
         $mform->addElement('html','</div>

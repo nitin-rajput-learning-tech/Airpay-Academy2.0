@@ -46,7 +46,7 @@
     data-region="page-item"
     {{$attributes}}{{/attributes}}>
 
-    <a href="{{#url}}{{.}}{{/url}}{{^url}}#{{/url}}"
+    <a {{#url}} href="{{#url}}{{.}}{{/url}}{{^url}}#{{/url}}" {{/url}}
        class="page-link"
        data-region="page-link">
         {{$item-content}}
