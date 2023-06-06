@@ -144,7 +144,6 @@ class search implements renderable{
                             END
                         ELSE 1 END ";
 
-
             if(!empty($params)){
                 $finalparams = implode('AND',$params);
             }else{

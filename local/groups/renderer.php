@@ -123,7 +123,7 @@ class local_groups_renderer extends plugin_renderer_base  {
             $tmpl = new local_groups\output\cohortidnumber($cohort);
             $line[] = $OUTPUT->render_from_template('core/inplace_editable', $tmpl->export_for_template($OUTPUT));
             $description = format_text($cohort->description, $cohort->descriptionformat);
-            $descriptionstring = strlen($description) > 50 ? substr($description, 0, 50)."..." : $description;
+            $descriptionstring = strlen($description) > 50 ? clean_text(substr($description, 0, 50))."..." : $description;
             $descriptiontitle = $description;
             $tooltip=\local_costcenter\lib::strip_tags_custom($descriptiontitle);
             $line[] = '<span title="'.$tooltip.'">'.$descriptionstring.'</span>';
@@ -271,7 +271,7 @@ class local_groups_renderer extends plugin_renderer_base  {
                 $groupid  =$cohort->idnumber;
                 $visible = $cohort->visible;
                 if(strlen($groupid) >8){
-                     $groupid = substr($groupid, 0,8).'...';
+                     $groupid = clean_text(substr($groupid, 0,8)).'...';
                 }
                 $orgname = $DB->get_field_sql("SELECT cc.fullname FROM {local_costcenter} AS cc 
                 JOIN {local_groups} AS lg ON  concat('/',lg.open_path,'/') LIKE concat('%/',cc.id,'/%') AND cc.depth = 1 WHERE lg.cohortid=".$cohort->id);

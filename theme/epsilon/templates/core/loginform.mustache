@@ -148,13 +148,14 @@
                                         class="form-control"
                                         placeholder={{#quote}}{{#str}}password{{/str}}{{/quote}}
                                         >
+                                        <span class="show_pwd fa fa-eye text-muted" id="password-showhide"></span>
                                         <input type="hidden" name="hashpassword" id="hashpassword" size="150" value="">
                                 </div>
                                 <div class="form-group col-12 d-inline-block mb-0">
                                     <button type="submit" class=" biz_login btn btn-primary btn-block mb-2" id="loginbtn">{{#str}}login{{/str}}</button>
                                      <p class='mb-1 '><a href="{{forgotpasswordurl}}">Forgot Password?</a></p>
                                      {{#signupurl_custom}}
-                                      <p class='mb-1 '><a href="{{signupurl_custom}}"> Signup</a></p>
+                                      <p class='mb-1 '><a href="{{signupurl_custom}}">Register</a></p>
                                       {{/signupurl_custom}}
 
                                       <div class="social_icons col-md-12 mt-4 p-0 col-12 pull-left">
@@ -264,4 +265,14 @@
     {{#error}}
         document.getElementById('loginerrormessage').focus();
     {{/error}}
+    document.getElementById('password-showhide').onclick = function () {
+
+           $(this).toggleClass("fa-eye fa-eye-slash");
+          var input = $('#password');
+          if (input.attr("type") == "password") {
+            input.attr("type", "text");
+          } else {
+            input.attr("type", "password");
+          }
+    }
 {{/js}}

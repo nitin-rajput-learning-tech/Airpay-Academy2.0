@@ -303,7 +303,7 @@ class requestview implements renderable, templatable {
                         );
             $onerow['componenticonclass'] = $pluginshelper[$request->compname]['componenticonclass'];
             $onerow['customimage_required'] = $pluginshelper[$request->compname]['customimage_required'];
-            $onerow['componentname'] = strlen($request->actualcomponentname) > 20 ? substr($request->actualcomponentname, 0,20).'...' : $request->actualcomponentname;
+            $onerow['componentname'] = strlen($request->actualcomponentname) > 20 ? clean_text(substr($request->actualcomponentname, 0,20)).'...' : $request->actualcomponentname;
             if($deleted){
                 $onerow['responded'] = 1;
             }

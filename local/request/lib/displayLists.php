@@ -99,7 +99,7 @@ function local_request_display_admin_list($pendinglist, $includerightpanel, $inc
 
 				$latestComment = $record->message;
 				if (strlen($latestComment) > 55) {
-					$latestComment = substr($latestComment, 0, 55);
+					$latestComment = clean_text(substr($latestComment, 0, 55));
 					$pagename = basename($_SERVER['PHP_SELF']);
 
 					if ($pagename == 'module_manager.php') {

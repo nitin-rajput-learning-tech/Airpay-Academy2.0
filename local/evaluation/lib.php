@@ -2841,7 +2841,7 @@ function get_listof_evalautions($stable, $filtervalues){
             $current_feedback = false;
         }
         $eval_name = $record->name;
-        $evalname = strlen($eval_name) > 15 ? substr($eval_name, 0, 15)."..." : $eval_name;
+        $evalname = strlen($eval_name) > 15 ? clean_text(substr($eval_name, 0, 15))."..." : $eval_name;
         $evaltype = ($record->type == 1)? get_string('feedback', 'local_evaluation'):get_string('survey', 'local_evaluation');
         if (is_siteadmin() OR has_capability('local/evaluation:edititems', $maincheckcontext)) {
             $has_evalcap = true;
@@ -2891,7 +2891,7 @@ function get_listof_evalautions($stable, $filtervalues){
             }
             $line['not_yetstarted'] = $not_yetstarted;
             $line['has_evalcap'] = $has_evalcap;
-            $evalname = strlen($record->name) > 15 ? substr($record->name, 0, 15)."..." : $record->name;
+            $evalname = strlen($record->name) > 15 ? clean_text(substr($record->name, 0, 15))."..." : $record->name;
             $line['evalname'] = $evalname;
             $line['evalurl'] = false;
             $line['schedule'] = $dates;

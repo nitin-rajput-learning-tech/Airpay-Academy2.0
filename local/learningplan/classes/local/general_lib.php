@@ -96,19 +96,27 @@ class general_lib{
             }
 
             $learningplans->optional = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'or' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
-
             $learningplans->mandatory = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_learningplan_courses} AS lpc ON lpc.courseid = c.id WHERE lpc.nextsetoperator LIKE 'and' AND lpc.planid = :planid ", array('planid' => $learningplans->id));
-
             $learningplans->totalcourses = $learningplans->mandatory + $learningplans->optional;
-
             $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $learningplans->id, 'module_area' => 'local_learningplan'));
+           
+            $likecount = $DB->count_records('local_like', array('itemid' => $learningplans->id, 'likearea' => 'local_learningplan','likestatus'=>'1'));
+            $dislikecount = $DB->count_records('local_like', array('itemid' => $learningplans->id, 'likearea' => 'local_learningplan','likestatus'=>'2'));
+
             if($ratinginfo){
-                $learningplans->avgrating = $ratinginfo->module_rating;
-                $learningplans->ratedusers = $ratinginfo->module_rating_users;
-                // $learningplans->likes = $ratinginfo->module_like;
-                // $learningplans->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
-            }
+                $learningplans->avgrating = $ratinginfo->module_rating ? $ratinginfo->module_rating : 0;
+                $learningplans->ratingusers = $ratinginfo->module_rating_users ? $ratinginfo->module_rating_users : 0;
+                $learningplans->likes = $likecount ? $likecount : 0;
+                $learningplans->dislikes = $dislikecount ? $dislikecount : 0;
+            }else{
+				$learningplans->avgrating = 0;
+                $learningplans->ratingusers = 0;
+                $learningplans->likes = 0;
+                $learningplans->dislikes = 0;
+			}
             $learningplans->module = 'local_learningpath';
+            $likeinfo = ($DB->get_field('local_like','likestatus',array('itemid' => $learningplans->id,'likearea' => 'local_learningplan','userid'=>$USER->id))) ;
+			$learningplans->likedstatus =$likeinfo ? $likeinfo : '0';
             return $learningplans;
         }else{
             throw new \Exception("Learningplan Not found");

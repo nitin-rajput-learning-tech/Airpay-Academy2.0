@@ -152,7 +152,7 @@ class renderer extends plugin_renderer_base {
                     $programcontext = (new \local_program\lib\accesslib())::get_module_context($sdata->id);
                     $line = array();
                     $program = \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->name));
-                    $programname = strlen($program) > 19 ? substr($program, 0, 19) . "..." : $program;
+                    $programname = strlen($program) > 19 ? clean_text(substr($program, 0, 19)) . "..." : $program;
                     $description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->description));
 
                     $isdescription = '';
@@ -161,7 +161,7 @@ class renderer extends plugin_renderer_base {
                     } else {
                         $isdescription = true;
                         if (strlen($description) > 130) {
-                            $decsriptionCut = substr($description, 0, 130);
+                            $decsriptionCut = clean_text(substr($description, 0, 130));
                             $decsriptionstring = \local_costcenter\lib::strip_tags_custom(html_entity_decode($decsriptionCut));
                         } else{
                             $decsriptionstring = "";
@@ -499,7 +499,7 @@ class renderer extends plugin_renderer_base {
             }else{
                 $courseurl = new \moodle_url('/local/program/checkenrol.php', array('courseid' => $bclevelcourse->id, 'programid' => $programid, 'action' => 'courseuserenrol'));
             }
-            $courselink = strlen($bclevelcourse->course) > 25 ? substr($bclevelcourse->course, 0, 25) . "..." : $bclevelcourse->course;
+            $courselink = strlen($bclevelcourse->course) > 25 ? clean_text(substr($bclevelcourse->course, 0, 25)) . "..." : $bclevelcourse->course;
             $bclevelcourse->course = html_writer::link($courseurl, $courselink,
                     array('title' => $bclevelcourse->course));
 
@@ -630,11 +630,11 @@ class renderer extends plugin_renderer_base {
             JOIN {local_groups} AS lg ON lg.cohortid = mc.id 
             WHERE ',{$program->open_group},' LIKE concat('%,',lg.id,',%') ";
         $program->open_group = $program->open_group ? implode(', ', $DB->get_fieldset_sql($groups_sql)): get_string('all');
-        $program->open_group_str = strlen($program->open_group) > 15 ? substr($program->open_group, 0, 15).'...': $program->open_group;
+        $program->open_group_str = strlen($program->open_group) > 15 ? clean_text(substr($program->open_group, 0, 15)).'...': $program->open_group;
         // $program->open_hrmsrole = $program->open_hrmsrole ? $program->open_hrmsrole : get_string('all');
         // $program->open_hrmsrole_str = strlen($program->open_hrmsrole) > 15 ? substr($program->open_hrmsrole, 0, 15).'...': $program->open_hrmsrole;
         $program->open_designation = $program->open_designation ? $program->open_designation : get_string('all'); 
-        $program->open_designation_str = strlen($program->open_designation) > 15 ? substr($program->open_designation, 0, 15).'...': $program->open_designation;
+        $program->open_designation_str = strlen($program->open_designation) > 15 ? clean_text(substr($program->open_designation, 0, 15)).'...': $program->open_designation;
         // $program->open_location = $program->open_location ? $program->open_location : get_string('all');
         // $program->open_location_str = strlen($program->open_location) > 15 ? substr($program->open_location, 0, 15).'...': $program->open_location;
         $return = "";
@@ -705,7 +705,7 @@ class renderer extends plugin_renderer_base {
         } else {
             $isdescription = true;
             if (strlen($description) > 540) {
-                $decsriptionCut = substr($description, 0, 540);
+                $decsriptionCut = clean_text(substr($description, 0, 540));
                 $decsriptionstring = \local_costcenter\lib::strip_tags_custom(html_entity_decode($decsriptionCut));
             } else {
                 $decsriptionstring = "";
@@ -1028,7 +1028,7 @@ class renderer extends plugin_renderer_base {
         } else {
             $isdescription = true;
             if (strlen($description) > 250) {
-                $decsriptionCut = substr($description, 0, 250);
+                $decsriptionCut = clean_text(substr($description, 0, 250));
                 $decsriptionstring = \local_costcenter\lib::strip_tags_custom(html_entity_decode($decsriptionCut));
             } else {
                 $decsriptionstring = "";

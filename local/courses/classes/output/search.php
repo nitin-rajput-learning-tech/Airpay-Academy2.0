@@ -217,7 +217,7 @@ class search implements renderable{
             $course->course_fullname = searchlib::format_thestring($course->fullname);
             $iltname = searchlib::format_thestring($course->fullname);
             if (strlen($iltname)>57){
-                $iltname = substr($iltname, 0, 57)."...";
+                $iltname = clean_text(substr($iltname, 0, 57))."...";
                 $course->course_shortname = $iltname ;
             } else {
                 $course->course_shortname = searchlib::format_thestring($course->fullname);

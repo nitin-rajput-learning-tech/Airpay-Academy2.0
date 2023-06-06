@@ -167,7 +167,7 @@ class learningplan_courses implements \renderable, \templatable {
 
                 //-------- get the course summary------------------------
                 $description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($inprogress_coursename->description),array('overflowdiv' => false, 'noclean' => false, 'para' => false));
-                $description_string = strlen($description) > 220 ? substr($description, 0, 220)."..." : $description;
+                $description_string = strlen($description) > 220 ? clean_text(substr($description, 0, 220))."..." : $description;
                 $onerow['planSummary']= $description_string; //$this->get_coursesummary($inprogress_coursename);
 
 
@@ -303,7 +303,7 @@ class learningplan_courses implements \renderable, \templatable {
 
     private function get_coursesummary($course_record){
         $coursesummary = \local_costcenter\lib::strip_tags_custom($course_record->description);
-        $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100)."..." : $coursesummary;
+        $summarystring = strlen($coursesummary) > 100 ? clean_text(substr($coursesummary, 0, 100))."..." : $coursesummary;
         $coursesummary = $summarystring;
         if(empty($coursesummary)){
             $coursesummary = get_string('nodecscriptionprovided','block_userdashboard');
@@ -317,7 +317,7 @@ class learningplan_courses implements \renderable, \templatable {
 
         $course_fullname = $inprogress_coursename->fullname;
         if (strlen($course_fullname) >= 38) {
-            $inprogress_coursename_fullname = substr($inprogress_coursename->fullname, 0, 38) . '...';
+            $inprogress_coursename_fullname = clean_text(substr($inprogress_coursename->fullname, 0, 38)) . '...';
         } else {
             $inprogress_coursename_fullname = $inprogress_coursename->fullname;
         }

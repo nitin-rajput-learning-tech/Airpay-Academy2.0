@@ -35,7 +35,7 @@ class user{
             $programsarray['id'] = $program->id;
             $programsarray['name'] = $program->name;
             $programssummary = \local_costcenter\lib::strip_tags_custom($program->description);
-            $programssummary = strlen($programssummary) > 140 ? substr($programssummary, 0, 140)."..." : $programssummary;
+            $programssummary = strlen($programssummary) > 140 ? clean_text(substr($programssummary, 0, 140))."..." : $programssummary;
             $programsarray['description'] = $programssummary;
             $programsarray['percentage'] = '';
             $programsarray['url'] = '';

@@ -253,11 +253,16 @@ class core_renderer extends \core_renderer {
     protected function render_context_header(\context_header $contextheader) {
 
         // Generate the heading first and before everything else as we might have to do an early return.
+        $heading = "";
         if (!isset($contextheader->heading)) {
             $heading = $this->heading($this->page->heading, $contextheader->headinglevel, 'h2');
-        } else {
+        } else { 
+            if(strlen($contextheader->heading)>0){
             $heading = $this->heading($contextheader->heading, $contextheader->headinglevel, 'h2');
+            }
+            
         }
+
 
         // All the html stuff goes here.
         $html = html_writer::start_div('page-context-header');
@@ -2103,7 +2108,7 @@ class core_renderer extends \core_renderer {
     }
     public function loggedin_username() {
         global $USER;
-        return ucwords($USER->username);
+        return ucwords($USER->firstname);
 
     }
 

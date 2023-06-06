@@ -381,7 +381,27 @@ class local_learningplan_external extends external_api {
                         array('lpid' => $lpid, 'search' => $search, 'page' => $page, 'perpage' => $perpage, 'source' => $source));
         $lpname = $DB->get_field('local_learningplan', 'name', array('id' => $lpid));
         list($userlearningplans,$total) = \local_learningplan\learningplan::userlearningplancoursesInfo($lpid, $search, $page, $perpage, $source);
-        return array('lpcourses' => $userlearningplans, 'lpname' => $lpname, 'total' => $total);
+        $userlikeinfo = $DB->get_field('local_like','likestatus',array('id' => $lpid,'likearea' => 'local_learningplan','userid'=>$USER->id)) ;
+        $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $lpid, 'module_area' => 'local_learningplan'));
+        if($ratinginfo){
+                $avgrating = $ratinginfo->module_rating ? $ratinginfo->module_rating : 0;
+                $ratingusers = $ratinginfo->module_rating_users ? $ratinginfo->module_rating_users : 0;
+                $likes = $ratinginfo->module_like ? $ratinginfo->module_like : 0;
+                $dislikes = ($ratinginfo->module_like_users - $ratinginfo->module_like) > 0 ? $ratinginfo->module_like_users - $ratinginfo->module_like : 0;
+        }else{
+				$avgrating = 0;
+                $ratingusers = 0;
+                $likes = 0;
+                $dislikes = 0;
+		}
+        return array('lpcourses' => $userlearningplans, 
+        'lpname' => $lpname, 
+        'likes'=>$likes,
+        'dislikes'=>$dislikes,
+        'avgrating'=>$avgrating,
+        'ratingusers'=>$ratingusers,
+        'likedstatus'=>$userlikeinfo ? $userlikeinfo : '0', 
+        'total' => $total);
         // return $userlearningplans;
     }
 
@@ -409,11 +429,18 @@ class local_learningplan_external extends external_api {
                             'dislikes' => new external_value(PARAM_INT, 'LearningPath Dislikes'),
                             'avgrating' => new external_value(PARAM_FLOAT, 'Course Avg rating'),
                             'ratingusers' => new external_value(PARAM_INT, 'Course rating users'),
+                            'likedstatus' => new external_value(PARAM_RAW, 'userlikedstatus'),
                             'completedon' => new external_value(PARAM_RAW, 'Course copleted on'),
                             ), 'Learning Paths'
                         )
                 ),
                 'lpname' => new external_value(PARAM_RAW, 'LearningPath Name'),
+                'likes' => new external_value(PARAM_RAW, 'LearningPath likes'),
+                'dislikes' => new external_value(PARAM_RAW, 'LearningPath dislikes'),
+                'ratingusers' => new external_value(PARAM_RAW, 'LearningPath ratingusers'),
+                'likedstatus' => new external_value(PARAM_RAW, 'LearningPath current user like status'),
+                'avgrating' => new external_value(PARAM_FLOAT, 'LearningPath Avg rating'),
+                'ratingusers' => new external_value(PARAM_INT, 'LearningPath rating users'),
                 'total' => new external_value(PARAM_INT, 'Total'),
             )
         );
@@ -803,8 +830,12 @@ class local_learningplan_external extends external_api {
             'startdate' => new external_value(PARAM_INT, 'startdate', VALUE_OPTIONAL, ''),
             'enddate' => new external_value(PARAM_INT, 'enddate', VALUE_OPTIONAL, ''),
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
+            'ratingusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
+            'likes' => new external_value(PARAM_INT, 'likes', VALUE_OPTIONAL, 0),
+            'dislikes' => new external_value(PARAM_INT, 'dislikes', VALUE_OPTIONAL, 0),
             'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
+            'likedstatus' => new external_value(PARAM_RAW, 'userlikedstatus',VALUE_OPTIONAL,0),
+
         ));
     }
 }

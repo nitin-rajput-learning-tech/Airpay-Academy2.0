@@ -3454,3 +3454,11 @@ table.flexible td:not(:first-child, :last-child)
 .navbar .usermsg h5{
     color: #2a364a;
 }
+body#page-login-index .form-control#password{
+    position: relative;
+}
+body#page-login-index .form-group .show_pwd{
+    position: absolute;
+    top: 9px;
+    right: 28px;
+}

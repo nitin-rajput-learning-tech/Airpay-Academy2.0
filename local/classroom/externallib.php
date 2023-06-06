@@ -2215,6 +2215,8 @@ public static function submit_instituteform_form_parameters() {
             $sessiondata =  array();
             foreach($sessions as $key => $session){
                 $sessiondata[$key]['name'] = $session->name;
+                $sessiondata[$key]['recordinglink'] = $session->recordinglink ? $session->recordinglink : 'N/A';
+                $sessiondata[$key]['messagelink'] = $session->messagelink ? $session->messagelink : 'N/A';
                 $sessiondata[$key]['timestart'] = $session->timestart; // \local_costcenter\lib::get_userdate("d/m/Y H:i", $session->timestart);
                 $sessiondata[$key]['timefinish'] = $session->timefinish; // \local_costcenter\lib::get_userdate("d/m/Y H:i", $session->timefinish);
                 if($session->onlinesession == 0) {
@@ -2254,6 +2256,8 @@ public static function submit_instituteform_form_parameters() {
                                 'name' => new external_value(PARAM_RAW, 'Session name'),
                                 'timestart' => new external_value(PARAM_RAW, 'Session date'),
                                 'timefinish' => new external_value(PARAM_RAW, 'Session start and end date.'),
+                                'recordinglink' => new external_value(PARAM_RAW, 'recordinglink of the session.'),
+                                'messagelink' => new external_value(PARAM_RAW, 'messagelink of the session.'),
                                 'type' => new external_value(PARAM_RAW, 'Session type'),
                                 'room' => new external_value(PARAM_RAW, 'Session location'),
                                 'trainer' => new external_value(PARAM_RAW, 'Session Trainer'),
@@ -3004,7 +3008,9 @@ public static function submit_instituteform_form_parameters() {
         $daystart = strtotime(date("d-m-Y 00:00:01"));
         $dayend = strtotime(date("d-m-Y 23:59:59"));
 
-        $sessionsbydaytype = $DB->get_records_sql("SELECT lcs.id as sessionid, lb.id as classroomid,lb.name as classroomname, lcs.name, lcs.timestart, lcs.timefinish, lr.name as roomname, lr.building as roombuilding, lr.address as roomaddress, lcs.trainerid
+        $sessionsbydaytype = $DB->get_records_sql("SELECT lcs.id as sessionid, lb.id as classroomid,lb.name as classroomname, lcs.name
+        , lcs.timestart, lcs.timefinish, lr.name as roomname, lr.building as roombuilding, lr.address as roomaddress, lcs.trainerid
+        ,lcs.recordinglink as recordinglink,lcs.messagelink as messagelink 
                 FROM {local_classroom_users} as lbu
                 JOIN {local_classroom} as lb ON lbu.classroomid = lb.id
                 JOIN {local_classroom_sessions} as lcs ON lcs.classroomid = lbu.classroomid
@@ -3020,6 +3026,8 @@ public static function submit_instituteform_form_parameters() {
             $todays['sessiondate'] = \local_costcenter\lib::get_userdate('d/m/Y', $sessionbydaytype->timestart);
             $todays['timestart'] = $sessionbydaytype->timestart;
             $todays['timefinish'] = $sessionbydaytype->timefinish;
+            $todays['recordinglink'] = $sessionbydaytype->recordinglink ? $sessionbydaytype->recordinglink : 'N/A';
+            $todays['messagelink'] = $sessionbydaytype->messagelink ? $sessionbydaytype->messagelink : 'N/A';
             $todays['sessiontime'] = \local_costcenter\lib::get_userdate('H:i',$sessionbydaytype->timestart).' - '.date('H:i',$sessionbydaytype->timefinish);
             if ($sessionbydaytype->roomname) {
                 $todays['sessionroom'] = $sessionbydaytype->roomname.' '.$sessionbydaytype->roombuilding.' '.$sessionbydaytype->roomaddress;
@@ -3062,7 +3070,9 @@ public static function submit_instituteform_form_parameters() {
                             'sessiontrainer' => new external_value(PARAM_RAW, 'Session Trainer'),
                             'sessiontrainerprofile' => new external_value(PARAM_RAW, 'Session Trainer profile'),
                             'timestart' => new external_value(PARAM_INT, 'Time Start'),
-                            'timefinish' => new external_value(PARAM_INT, 'Time Finish')
+                            'timefinish' => new external_value(PARAM_INT, 'Time Finish'),
+                            'recordinglink' => new external_value(PARAM_RAW, 'Recordinglink for session'),
+                            'messagelink' => new external_value(PARAM_RAW, 'Messagelink for session'),
                         )
                     )
                 ),
@@ -3100,8 +3110,11 @@ public static function submit_instituteform_form_parameters() {
             'likes' => new external_value(PARAM_FLOAT, 'likes', VALUE_OPTIONAL, 0),
             'dislikes' => new external_value(PARAM_FLOAT, 'dislikes', VALUE_OPTIONAL, 0),
             'avgrating' => new external_value(PARAM_FLOAT, 'avgrating', VALUE_OPTIONAL, 0),
-            'ratedusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
+            'ratingusers' => new external_value(PARAM_INT, 'ratedusers', VALUE_OPTIONAL, 0),
             'certificateid' => new external_value(PARAM_RAW, 'certificateid', VALUE_OPTIONAL, 0),
+            'likedstatus' => new external_value(PARAM_RAW, 'userlikedstatus',VALUE_OPTIONAL,0),
+
+
         ));
     }
 }

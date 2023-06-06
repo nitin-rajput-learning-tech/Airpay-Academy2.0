@@ -67,6 +67,7 @@ class registration_form extends moodleform {
         $genderarray=array();
         $genderarray[] = $mform->createElement('radio', 'gender', '', get_string('male','local_users'), 0, $attributes);
         $genderarray[] = $mform->createElement('radio', 'gender', '', get_string('female','local_users'), 1, $attributes);
+        $genderarray[] = $mform->createElement('radio', 'gender', '', get_string('transgender', 'local_users'), 3, $attributes);
         $genderarray[] = $mform->createElement('radio', 'gender', '', get_string('other', 'local_users'), 2, $attributes);
         $mform->addGroup($genderarray, 'gender', get_string('gender', 'local_users'), array(' '), false);
         // $mform->addElement('text', 'gender', get_string('gender', 'local_users'));

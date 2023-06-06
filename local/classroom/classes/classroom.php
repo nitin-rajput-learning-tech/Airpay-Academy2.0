@@ -650,7 +650,7 @@ class classroom {
 
                             //-------data variables
                             $classname = $sdata->name;
-                            $classname_string = strlen($classname) > 40 ? substr($classname, 0, 40)."..." : $classname;
+                            $classname_string = strlen($classname) > 40 ? clean_text(substr($classname, 0, 40))."..." : $classname;
                             $usercreated = $sdata->usercreated;
                             //$user = $DB->get_record('user', array('id' => $usercreated));
                             //$createdBy = $user->firstname.'&nbsp;'.$user->lastname;
@@ -749,7 +749,7 @@ class classroom {
                             if (!empty($classroomcourses)) {
                                 foreach($classroomcourses as $classroomcourse) {
                                     $courseslimit = true;
-                                    $coursename = strlen($classroomcourse->fullname) > 15 ? substr($classroomcourse->fullname, 0, 15)."..." : $classroomcourse->fullname;
+                                    $coursename = strlen($classroomcourse->fullname) > 15 ? clean_text(substr($classroomcourse->fullname, 0, 15))."..." : $classroomcourse->fullname;
                                     $courseurl = new moodle_url('/course/view.php', array('id' => $classroomcourse->id));
                                     $courseurl = $courseurl->out();
                                     $line ['courses'][] = array('coursetitle' => $classroomcourse->fullname, 'coursename' => $coursename,'courseurl' => $courseurl);
@@ -775,7 +775,7 @@ class classroom {
                                 $trainerslimit = false;
                                 foreach($classroomtrainers as $classroomtrainer) {
                                     $trainerslimit = true;
-                                    $trainername = strlen(fullname($classroomtrainer)) > 8 ? substr(fullname($classroomtrainer), 0, 8)."..." : fullname($classroomtrainer);
+                                    $trainername = strlen(fullname($classroomtrainer)) > 8 ? clean_text(substr(fullname($classroomtrainer), 0, 8))."..." : fullname($classroomtrainer);
 
                                     $user_picture = new user_picture($classroomtrainer);
                                     $classroomtrainerpic = $user_picture->get_url($PAGE);
@@ -808,8 +808,7 @@ class classroom {
                             $line['delete'] = false;
                             $line['assignusers'] = false;
                             $line['assignusersurl'] = false;
-                            $line['fullonlineexamsummary'] = (strlen($description) > 40) ? $description : null;
-
+                            $line['fullonlineexamsummary'] = (strlen($description) > 40) ? clean_text($description) : null;
                             $mouse_overicon=false;
                             if ((has_capability('local/classroom:manageclassroom', $categorycontext) || is_siteadmin())) {
                                 $line['action'] = true;

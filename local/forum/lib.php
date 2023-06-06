@@ -368,11 +368,11 @@ function get_listof_forum($stable, $filterdata,$options)
             $format = $course->format;
 
             if (strlen($coursename) > 35) {
-                $coursenameCut = substr($coursename, 0, 35) . "...";
+                $coursenameCut = clean_text(substr($coursename, 0, 35)) . "...";
                 $courseslist[$count]["coursenameCut"] = \local_costcenter\lib::strip_tags_custom($coursenameCut);
             }
             $catname = $categoryname;
-            $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12) . "..." : $catname;
+            $catnamestring = strlen($catname) > 12 ? clean_text(substr($catname, 0, 12)) . "..." : $catname;
             $displayed_names = '<span class="pl-10 ' . $course->coursetype . '">' . $course->coursetype . '</span>';
 
             $courestypes_names = array('2' => get_string('classroom', 'local_courses'), '3' => get_string('elearning', 'local_courses'), '4' => get_string('learningplan', 'local_courses'), '5' => get_string('program', 'local_courses'), '6' => get_string('certification', 'local_courses'));
@@ -394,7 +394,7 @@ function get_listof_forum($stable, $filterdata,$options)
                 if ($tagstring == "") {
                     $tagstring = 'N/A';
                 } else {
-                    $tagstring = strlen($tagstring) > 35 ? substr($tagstring, 0, 35) . '...' : $tagstring;
+                    $tagstring = strlen($tagstring) > 35 ? clean_text(substr($tagstring, 0, 35)) . '...' : $tagstring;
                 }
                 $tagenable = True;
             } else {
@@ -439,7 +439,7 @@ function get_listof_forum($stable, $filterdata,$options)
                 $course_in_list,
                 array('overflowdiv' => false, 'noclean' => false, 'para' => false)
             ));
-            $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . "..." : $coursesummary;
+            $summarystring = strlen($coursesummary) > 100 ? clean_text(substr($coursesummary, 0, 100)) . "..." : $coursesummary;
             $courseslist[$count]["coursesummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
             $courseslist[$count]["fullcoursesummary"] = $coursesummary;
             $courseslist[$count]["format"] = $format;

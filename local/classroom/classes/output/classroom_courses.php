@@ -197,7 +197,7 @@ class classroom_courses implements renderable, templatable {
     private function get_coursesummary($course_record){   
 
         $coursesummary = \local_costcenter\lib::strip_tags_custom($course_record->description);
-        $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100)."..." : $coursesummary;
+        $summarystring = strlen($coursesummary) > 100 ? clean_text(substr($coursesummary, 0, 100))."..." : $coursesummary;
         $coursesummary = $summarystring;
         if(empty($coursesummary)){
             $coursesummary = '<span class="w-full pull-left">'.get_string('nodecscriptionprovided','block_userdashboard').'</span>';
@@ -211,7 +211,7 @@ class classroom_courses implements renderable, templatable {
 
         $course_fullname = $inprogress_coursename->fullname;
         if (strlen($course_fullname) >= 40) {
-            $inprogress_coursename_fullname = substr($inprogress_coursename->fullname, 0, 40) . '...';
+            $inprogress_coursename_fullname = clean_text(substr($inprogress_coursename->fullname, 0, 40)) . '...';
         } else {
             $inprogress_coursename_fullname = $inprogress_coursename->fullname;
         }

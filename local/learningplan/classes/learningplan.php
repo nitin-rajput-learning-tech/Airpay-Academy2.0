@@ -90,7 +90,7 @@ class learningplan {
      * @param  string $search [description]
      * @return [type]         [description]
      */
-    public function userlearningplancourses($lpid, $search = '', $page=0, $perpage=10, $source = '') {
+    public static function userlearningplancourses($lpid, $search = '', $page=0, $perpage=10, $source = '') {
         global $DB, $USER, $CFG;
         $query = "SELECT c.id, c.fullname, c.enablecompletion, c.summary, lc.sortorder, lc.id AS lepid, lc.nextsetoperator AS next, IF(lc.nextsetoperator = 'and', 'Mandatory', 'Optional') AS coursetype ";
         $sqlcount = "SELECT COUNT(c.id)";
@@ -165,7 +165,7 @@ class learningplan {
         }
         return $learningplancoursestypecountsql;
     }
-    public function userlearningplancoursesInfo($lpid, $search = '', $page=0, $perpage=10, $source = '') {
+    public static function userlearningplancoursesInfo($lpid, $search = '', $page=0, $perpage=10, $source = '') {
         global $DB, $USER, $CFG;
         require_once($CFG->dirroot.'/local/ratings/lib.php');
         $data = array();
@@ -196,8 +196,9 @@ class learningplan {
             }
             $ccompletion = $DB->get_field_sql('SELECT timecompleted FROM {course_completions} WHERE course=:courseid AND userid=:userid', array('courseid'=> $userlearningplancourse->id, 'userid'=>$USER->id));
             $completedon = $ccompletion ? $ccompletion: '';
-            $likes = $DB->count_records('local_like', array('likearea'=> 'local_learningplan', 'itemid'=>$userlearningplancourse->id, 'likestatus'=>'1'));
-            $dislikes = $DB->count_records('local_like', array('likearea'=> 'local_learningplan', 'itemid'=>$userlearningplancourse->id, 'likestatus'=>'2'));
+            $likes = $DB->count_records('local_like', array('likearea'=> 'local_courses', 'itemid'=>$userlearningplancourse->id, 'likestatus'=>'1'));
+            $dislikes = $DB->count_records('local_like', array('likearea'=> 'local_courses', 'itemid'=>$userlearningplancourse->id, 'likestatus'=>'2'));
+            $userlikeinfo = $DB->get_field('local_like','likestatus',array('id' => $userlearningplancourse->id,'likearea' => 'local_courses','userid'=>$USER->id)) ;
             $lpcourses['id'] = $userlearningplancourse->id;
             $lpcourses['fullname'] = $userlearningplancourse->fullname;
             $lpcourses['visible'] = $disable_class1;
@@ -216,6 +217,7 @@ class learningplan {
             $ratingusers = $avgratings->count;
             $lpcourses['avgrating'] = $avgrating;
             $lpcourses['ratingusers'] = $ratingusers;
+            $lpcourses['likedstatus'] = $userlikeinfo ? $userlikeinfo : '0';
             $data[] = $lpcourses;
         }
         return array($data,$count);

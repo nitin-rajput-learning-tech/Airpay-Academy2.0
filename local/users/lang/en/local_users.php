@@ -806,6 +806,7 @@ $string['grade_help'] = 'Enter the grade of the user';
 $string['region_help'] = 'Enter the region of the user';
 $string['joiningdate_help'] = 'Enter the joining date of the user';
 $string['other'] = 'Other';
+$string['transgender'] = 'Transgender';
 $string['employmenttype'] = 'Employment Type';
 $string['employmenttype_help'] = 'Enter the employment type of the user';
 $string['employmentstatus'] = 'Employment Status';

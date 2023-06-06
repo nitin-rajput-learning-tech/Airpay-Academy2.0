@@ -120,8 +120,12 @@ class general_lib{
             $classroom->likes = $likes;
             $classroom->dislikes = $dislikes;
             $classroom->avgrating = $avgrating;
-            $classroom->ratedusers = $ratingusers;
+            $classroom->ratingusers = $ratingusers;
             $classroom->module = 'local_classroom';
+            $likeinfo = ($DB->get_field('local_like','likestatus',array('itemid' => $classroom->id,'likearea' => 'local_classroom','userid'=>$USER->id))) ;
+			$classroom->likedstatus =$likeinfo ? $likeinfo : '0';
+
+            
             return $classroom;
         }else{
             throw new \Exception("Classroom Not found");

@@ -44,7 +44,7 @@ class user{
             $coursesarray["url"] = $urllink;
             $coursesummary = $course->summary;
             $coursesummary = \local_costcenter\lib::strip_tags_custom($coursesummary);
-            $summarystring = strlen($coursesummary) > 120 ? substr($coursesummary, 0, 120)."..." : $coursesummary;
+            $summarystring = strlen($coursesummary) > 120 ? clean_text(substr($coursesummary, 0, 120))."..." : $coursesummary;
             $coursesarray["description"] = $summarystring;
             $number=$this->user_course_completion_progress($course->id,$userid);
             $coursesarray["percentage"] = (is_number($number)) ?round($number) : 0;

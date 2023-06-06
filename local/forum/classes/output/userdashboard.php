@@ -239,7 +239,7 @@ class userdashboard implements renderable {
     private function get_forumummary($course_record){   
 
         $forumummary = \local_costcenter\lib::strip_tags_custom($course_record->summary);
-        $summarystring = strlen($forumummary) > 100 ? substr($forumummary, 0, 100)."..." : $forumummary;
+        $summarystring = strlen($forumummary) > 100 ? clean_text(substr($forumummary, 0, 100))."..." : $forumummary;
         $forumummary = $summarystring;
         if(empty($forumummary)){
             $forumummary = '<span class="w-full pull-left">'.get_string('nodecscriptionprovided','block_userdashboard').'</span>';
@@ -253,7 +253,7 @@ class userdashboard implements renderable {
 
         $course_fullname = $inprogress_coursename->fullname;
         if (strlen($course_fullname) >= 20) {
-            $inprogress_coursename_fullname = substr($inprogress_coursename->fullname, 0, 20) . '...';
+            $inprogress_coursename_fullname = clean_text(substr($inprogress_coursename->fullname, 0, 20)) . '...';
         } else {
             $inprogress_coursename_fullname = $inprogress_coursename->fullname;
         }

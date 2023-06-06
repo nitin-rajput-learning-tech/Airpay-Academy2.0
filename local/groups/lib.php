@@ -84,12 +84,12 @@ function manage_groups_count($stable,$filterdata){
                 $line = array();
                 $groupname = $cohort->name;
                 if(strlen($groupname) >15){
-                     $groupname = substr($groupname, 0,15).'...';
+                     $groupname = clean_text(substr($groupname, 0,15)).'...';
                 }
 
                 $groupid  =$cohort->idnumber;
                 if(strlen($groupid) >8){
-                     $groupid = substr($groupid, 0,8).'...';
+                     $groupid = clean_text(substr($groupid, 0,8)).'...';
                 }
         $cohortcontext =  (new \local_groups\lib\accesslib())::get_module_context();
 

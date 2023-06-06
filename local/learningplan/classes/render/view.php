@@ -318,7 +318,7 @@ class view extends plugin_renderer_base
 				}
 
 				$learningplan_content = array();
-				$learning_plan_name = strlen($learning_plan->name) > 34 ? substr($learning_plan->name, 0, 34) . "..." : $learning_plan->name;
+				$learning_plan_name = strlen($learning_plan->name) > 34 ? clean_text(substr($learning_plan->name, 0, 34)) . "..." : $learning_plan->name;
 				$hide_show_icon = $learning_plan->visible ? $this->output->image_url('i/hide') : $this->output->image_url('i/show');
 				$title_hide_show = $learning_plan->visible ? get_string('make_inactive', 'local_learningplan') : get_string('make_active', 'local_learningplan');
 				$learning_plan_pathname = addslashes($learning_plan_name);
@@ -647,7 +647,7 @@ class view extends plugin_renderer_base
 			$plan_location = $plan_record->open_group;
 			$str_len = strlen($plan_record->open_group);
 			if ($str_len > 32) {
-				$sub_str = substr($plan_record->open_group, 0, 32);
+				$sub_str = clean_text(substr($plan_record->open_group, 0, 32));
 			}
 		} else {
 			$plan_location =  get_string('statusna');
@@ -703,7 +703,7 @@ class view extends plugin_renderer_base
 			$pathcourses .= $this->render_from_template('local_learningplan/cousrespath', $coursespath_context);
 		}
 		$description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($plan_record->description), array('overflowdiv' => false, 'noclean' => false, 'para' => false));
-		$description_string = strlen($description) > 400 ? substr($description, 0, 400) . "..." : $description;
+		$description_string = strlen($description) > 400 ? clean_text(substr($description, 0, 400)) . "..." : $description;
 		$ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
 		if ($ratings_exist) {
 			require_once($CFG->dirroot . '/local/ratings/lib.php');
@@ -737,7 +737,7 @@ class view extends plugin_renderer_base
 
 		$planview_context['plan_department_string'] = ($plan_department == '-1' || empty($plan_department)) ? 'All' : $plan_department;
 
-		$plan_department = strlen($plan_department) > 23 ? substr($plan_department, 0, 23) . "..." : $plan_department;
+		$plan_department = strlen($plan_department) > 23 ? clean_text(substr($plan_department, 0, 23)) . "..." : $plan_department;
 		$planview_context['plan_department'] = ($plan_department == '-1' || empty($plan_department)) ? 'All' : $plan_department;
 		$planview_context['plan_subdepartment'] = $plan_subdepartment;
 		$planview_context['plan_location'] = $plan_location;
@@ -1642,7 +1642,7 @@ class view extends plugin_renderer_base
 				$startdiv = '<div class="lp_course_sortorder w-full pull-left" id="dat' . $course->id . '">';
 				$enddiv = '<div>';
 				$course_url = new \moodle_url('/course/view.php', array('id' => $course->id));
-				$course_link = strlen($course->fullname) > 25 ? substr($course->fullname, 0, 25) . "..." : $course->fullname;
+				$course_link = strlen($course->fullname) > 25 ? clean_text(substr($course->fullname, 0, 25)) . "..." : $course->fullname;
 				$course_view_link = html_writer::link($course_url, $course_link, array('title' => $course->fullname));
 				$course_summary_image_url = $includes->course_summary_files($course);
 
@@ -2487,7 +2487,7 @@ class view extends plugin_renderer_base
 
 		// $catalogrenderer = $this->page->get_renderer('local_catalog');
 		$description = \local_costcenter\lib::strip_tags_custom(html_entity_decode($lplan->description), array('overflowdiv' => false, 'noclean' => false, 'para' => false));
-		$description_string = strlen($description) > 220 ? substr($description, 0, 220) . "..." : $description;
+		$description_string = strlen($description) > 220 ? clean_text(substr($description, 0, 220)) . "..." : $description;
 
 		$lpinfo = '';
 		$condition = "view";
@@ -2717,7 +2717,7 @@ class view extends plugin_renderer_base
 				$coursesummary = \local_costcenter\lib::strip_tags_custom(html_entity_decode($assignedcourse->summary), array('overflowdiv' => false, 'noclean' => false, 'para' => false));
 				$course_summary = empty($coursesummary) ? get_string('coure_summary_not_provided', 'local_learningplan') : $coursesummary;
 
-				$course_summary_string = strlen($course_summary) > 125 ? substr($course_summary, 0, 125) . "..." : $course_summary;
+				$course_summary_string = strlen($course_summary) > 125 ? clean_text(substr($course_summary, 0, 125)) . "..." : $course_summary;
 				$c_category = $this->db->get_field('course_categories', 'name', array('id' => $assignedcourse->category));
 
 				$coursetypes = $this->db->get_field('local_coursedetails', 'identifiedas', array('courseid' => $assignedcourse->id));
@@ -3039,7 +3039,7 @@ class view extends plugin_renderer_base
 				$lp_userviewcoures = array();
 				$coursesummary = strip_tags(html_entity_decode($assignedcourse->summary), array('overflowdiv' => false, 'noclean' => false, 'para' => false));
 				$course_summary = empty($coursesummary) ? 'Course summary not provided' : $coursesummary;
-				$course_summary_string = strlen($course_summary) > 125 ? substr($course_summary, 0, 125) . "..." : $course_summary;
+				$course_summary_string = strlen($course_summary) > 125 ? clean_text(substr($course_summary, 0, 125)) . "..." : $course_summary;
 				if ($assignedcourse->next == 'and') {
 					$optional_or_mandtry = "<span class='mandatory' title = 'Mandatory'>M</span>";
 				} else {
@@ -3052,7 +3052,7 @@ class view extends plugin_renderer_base
 				} else {
 					$fullname = $rname;
 				}
-				$course_name_string = strlen($fullname) > 125 ? substr($fullname, 0, 125) . "..." : $fullname;
+				$course_name_string = strlen($fullname) > 125 ? clean_text(substr($fullname, 0, 125)) . "..." : $fullname;
 				$enroldisable_class1 = 'enrolled';
 				if (!is_siteadmin()) {
 					   $switchedrole = $USER->useraccess['currentroleinfo']['roleid'];

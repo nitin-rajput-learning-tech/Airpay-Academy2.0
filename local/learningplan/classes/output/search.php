@@ -231,7 +231,7 @@ class search implements renderable{
             $list->shortname = searchlib::format_thestring($list->shortname);
             $iltname = searchlib::format_thestring($list->name);
             if (strlen($iltname)>60){
-                $iltname = substr($iltname, 0, 60)."...";
+                $iltname = clean_text(substr($iltname, 0, 60))."...";
                 $list->iltformatname = searchlib::format_thestring($iltname) ;
             }else {
                 $list->iltformatname = searchlib::format_thestring($list->name);
