@@ -887,7 +887,7 @@ class core_renderer extends \core_renderer {
      */
     public function full_header() {
 
-        global $USER,$COURSE,$DB;
+        global $USER,$COURSE,$DB, $CFG;
 
         $data = $this->custom_secured_redirection();
         $pagetype = $this->page->pagetype;
@@ -923,6 +923,7 @@ class core_renderer extends \core_renderer {
             $show_course_header = true;
 
             $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);
+            require_once($CFG->dirroot.'/local/ratings/lib.php');
             $ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
             if ($ratings_exist) {
                 $display_ratings = display_rating($courseid, 'local_courses');
@@ -1007,7 +1008,9 @@ class core_renderer extends \core_renderer {
 
         $categorycontext = context_coursecat::instance($COURSE->category);
 
-
+        $admin_default_menu = $is_courseedit_icon = $course_reports = $course_complition = $coursebackup = false;
+        $allow_editing = false;
+        $editing_url = "";
          if(has_capability('moodle/course:create', $systemcontext) || is_siteadmin()) {
             $admin_default_menu = true;
             $manage = true;
@@ -1080,8 +1083,8 @@ class core_renderer extends \core_renderer {
             "course_reports" => $course_reports,
             "course_complition" => $course_complition,
             "coursebackup" => $coursebackup,
-            "enrolid" => $enrolid,
-            "userenrollment" => $userenrollment,
+            "enrolid" => $enrolid??0,
+            "userenrollment" => $userenrollment??false,
             "categorycontextid" =>$categorycontext->id,
             // "gamificationpage" => $gamificationpage,
             "challenge_element" => $challenge_element,
@@ -1091,7 +1094,7 @@ class core_renderer extends \core_renderer {
         ];
 
         if(!is_siteadmin()){
-            $switchedrole = $USER->access['rsw']['/1'];
+            $switchedrole = isset($USER->access['rsw']['/1'])?$USER->access['rsw']['/1']:"";
             if($switchedrole){
                 $userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
             }else{
