@@ -104,7 +104,6 @@ class local_evaluation_external extends external_api {
             }
             if ($validateddata->id > 0) {
                 $validateddata->open_group = !empty($validateddata->open_group) ? implode(',', array_filter($validateddata->open_group)) : 0;             
-
                 $validateddata->open_designation = (!empty($validateddata->open_designation)) ? implode(',', array_filter($validateddata->open_designation)) : 0;
 
                 // $open_path=$DB->get_field('local_evaluations', 'open_path', array('id' => $validateddata->id));

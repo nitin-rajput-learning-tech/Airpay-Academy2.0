@@ -45,9 +45,11 @@
 <div id="{{element.wrapperid}}" class="form-group row {{#error}}has-danger{{/error}} {{element.type}} fitem {{#element.emptylabel}}femptylabel{{/element.emptylabel}} {{#advanced}}advanced{{/advanced}} {{{element.extraclasses}}}" {{#element.groupname}}data-groupname="{{.}}"{{/element.groupname}}>
     <div class="col-md-3  {{label}}" id="{{label}}">
         {{^element.staticlabel}}
+        {{#label}}
         <label class="col-form-label d-inline {{#element.hiddenlabel}}sr-only{{/element.hiddenlabel}}" for="{{element.id}}">
             {{{label}}}
         </label>
+        {{/label}}
         {{/element.staticlabel}}
         {{#element.staticlabel}}
         <span class="col-form-label d-inline-block {{#element.hiddenlabel}}sr-only{{/element.hiddenlabel}}">

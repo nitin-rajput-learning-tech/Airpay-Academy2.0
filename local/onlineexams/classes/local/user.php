@@ -44,7 +44,7 @@ class user{
             $onlineexamsarray["url"] = $urllink;
             $onlineexamsummary = $onlineexam->summary;
             $onlineexamsummary = \local_costcenter\lib::strip_tags_custom($onlineexamsummary);
-            $summarystring = strlen($onlineexamsummary) > 120 ? substr($onlineexamsummary, 0, 120)."..." : $onlineexamsummary;
+            $summarystring = strlen($onlineexamsummary) > 120 ? clean_text(substr($onlineexamsummary, 0, 120))."..." : $onlineexamsummary;
             $onlineexamsarray["description"] = $summarystring;
             $onlineexamsarray["percentage"] = round($this->user_onlineexam_completion_progress($onlineexam->id,$userid));
 

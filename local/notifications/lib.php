@@ -848,6 +848,7 @@ function local_notifications_masterinfo(){
         $templatedata['count'] = $notification;
         $templatedata['link'] = $CFG->wwwroot.'/local/notifications/index.php';
         $templatedata['stringname'] = get_string('notificaton','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-bell-o"></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

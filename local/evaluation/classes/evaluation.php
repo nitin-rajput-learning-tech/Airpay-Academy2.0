@@ -21,7 +21,7 @@
  */
 namespace local_evaluation;
 class evaluation {
-    public function evaluations_by_status($status = 'inprogress', $mobile = false, $plugin = 'site', $search = '', $page = 0, $perpage = 10, $id = 0, $instance = false) {
+    public static function evaluations_by_status($status = 'inprogress', $mobile = false, $plugin = 'site', $search = '', $page = 0, $perpage = 10, $id = 0, $instance = false) {
         global $DB,$USER;
         if ($status == 'inprogress') {
             $sqlquery = "SELECT a.*, eu.creatorid, eu.timemodified as joinedate, 0 as completedon ";

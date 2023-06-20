@@ -80,20 +80,31 @@ class assigncostcenterrole extends moodleform {
             'data-options' => json_encode(array('id' => 0, 'costcenterid' => $costcenterid,'hierarchyid' => $hierarchyid,'formtype' => $formtype)),
         );
 
-		$users =array();
 
-        if($userids=$this->_ajaxformdata['users']){
-
-
-            list($relateduseridlistsql, $relateduseridlistparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'useridlist');
-
-
-            $sql = "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
-                        FROM {user} AS u WHERE u.id $relateduseridlistsql ";
-
-            $users = $DB->get_records_sql_menu($sql,$relateduseridlistparams);
-
+        if (isset($this->_ajaxformdata['users']) && (!is_array($this->_ajaxformdata['users']) ||
+            $this->_ajaxformdata['users'] == '_qf__force_multiselect_submission')) {
+            $this->_ajaxformdata['users']=array();
         }
+
+        $users = array();
+
+        if (!empty($this->_ajaxformdata['users'])) {
+
+            if($userids=$this->_ajaxformdata['users']){
+
+
+                list($relateduseridlistsql, $relateduseridlistparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED, 'useridlist');
+
+
+                $sql = "SELECT u.id, concat(u.firstname,' ',u.lastname) as fullname
+                            FROM {user} AS u WHERE u.id $relateduseridlistsql ";
+
+                $users = $DB->get_records_sql_menu($sql,$relateduseridlistparams);
+
+            }
+        }
+
+
         $mform->addElement('autocomplete', 'users', get_string('employees', 'local_users'), $users, $options);
         $mform->setType('users', PARAM_RAW);
 		$mform->addRule('users',  get_string('pleaseselectemployees', 'local_assignroles'), 'required', null, 'client');

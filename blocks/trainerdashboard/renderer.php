@@ -101,7 +101,7 @@ class block_trainerdashboard_renderer extends plugin_renderer_base {
         foreach ($formattedtrainerslist as $records) {
             $record = array();
             $record['userid']=$records->id;
-            $record['username']=$records->firstname.' '.$records->firstname;
+            $record['username']=$records->firstname.' '.$records->lastname;
             $viewmorestatus=json_encode(array('value'=>$record['username']));
 
 

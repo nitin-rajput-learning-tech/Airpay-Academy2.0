@@ -107,7 +107,7 @@ class local_myteam_external extends external_api {
             'totalcount' => $teammemberscount,
             'headers' =>$data['headers'],
             'teammembersexist' =>$data['teammembersexist'],
-            'records' =>$data['data'],
+            'records' =>$data['data'] ? $data['data'] : array(),
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata,
@@ -138,7 +138,7 @@ class local_myteam_external extends external_api {
                                     'badges' => new external_value(PARAM_RAW, 'user name', VALUE_OPTIONAL),
                                 )
                             ),
-            'teammembersexist' => new external_value(PARAM_INT, 'team exist or not'),
+            'teammembersexist' => new external_value(PARAM_RAW, 'team exist or not'),
             'records' => new external_multiple_structure(
                             new external_single_structure(
                                 array(
@@ -750,7 +750,6 @@ class local_myteam_external extends external_api {
         $filtervalues = json_decode($filterdata);
 
         $userclass = '\local_'.$decodedata->moduletype.'\local\user';
-        
         if(class_exists($userclass)){
             $pluginclass = new $userclass;
             $moduletype = $decodedata->moduletype;
@@ -775,11 +774,10 @@ class local_myteam_external extends external_api {
                 }
             }
         }
-
         return [
             'evaluation' => $moduletype == 'supervisorevaluation' ? TRUE : FALSE,
             'totalcount' => $usermodulecount['count'],
-            'records' =>$data->navdata,
+            'records' =>$usermodulecount['data'],
             'options' => $options,
             'dataoptions' => $dataoptions,
             'filterdata' => $filterdata,

@@ -25,20 +25,19 @@
     {{#moduledetails}}
     <div class="col-sm-4 col-12 tabs_cmn_class courses_inprogress_slide {{{subtab}}} ctype_program" data-index="{{index}}">
         <div class="program_container d-flex w-100">
-            <div class="course_container d-flex w-100">
-                <div class="classesimgContainer pull-left p-0">
-                    <span class="bootcampicon_container"><img src="{{ ProgramIcon }}" class="bootcampicon"></span>
-                </div>
-                <div class="w-full coursecontent">
-
-                    <div class="mb-10">
+            <div class="course_container w-100">
+                <div class="classesimgContainer d-flex align-items-center p-0">
+                    <span class="bootcampicon_container"><img src="{{ ProgramIcon }}" alt="bootcamp_img" class="bootcampicon"></span>
+                    <div>
                         <a href="{{{ProgramUrl}}}" title="{{{ProgramFullname}}}" class="bootcamp_name"> {{{DisplayProgramFullname}}}</a>
                     </div>
-                    <div class="desc coursedesc w-full pull-left">{{{ProgramDescription}}}</div>
-                    <div class="pull-right mt-15 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
-                        <div class="pull-left">{{{rating_element}}}</div>
+                </div>
+                <div class="w-full coursecontent">
+                    <div class="desc coursedesc w-full">{{{ProgramDescription}}}</div>
+                    <div class="mt-15 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
+                        <div class="rating_container">{{{rating_element}}}</div>
                         <a href="{{{ProgramUrl}}}">
-                             <button class="btn btn-primary launch_btn">{{#str}}launch, block_userdashboard{{/str}}</button>
+                            <button class="btn btn-primary launch_btn">{{#str}}launch, block_userdashboard{{/str}}</button>
                         </a>
                     </div>
                 </div>

@@ -166,6 +166,7 @@ function local_location_masterinfo(){
         $templatedata['count2'] = $room;
         $templatedata['link2'] = $CFG->wwwroot.'/local/location/room.php';
         $templatedata['stringname2'] = get_string('room','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-map"></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

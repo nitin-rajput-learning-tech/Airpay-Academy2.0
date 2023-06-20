@@ -103,40 +103,40 @@ class classroom_completion_form extends moodleform {
         $mform->addElement('select', 'coursetracking', get_string('coursetracking', 'local_classroom'), $course_tracking, array());
         
 
-        $courses = array();
-        $courses = $this->_ajaxformdata['courseids'];
-        if (!empty($courses)) {
-            $courses = $courses;
-        } else if ($id > 0) {
-            $courses = $DB->get_records_menu('local_classroom_completion',
-                array('id' => $id), 'id', 'id, courseids');
-        }
-        if (!empty($courses)) {
-                 if(is_array($courses)){
-                         $courses=implode(',',$courses);
-                 }else{
-                    $courses= null;
-                 }
-                 $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_classroom_courses} as lcc on lcc.courseid=c.id where lcc.classroomid= $cid  ";
-                 if($courses !== null){
-                    $courses_sql .= " and lcc.courseid in ($courses) ";
-                 }
-                $courses = $DB->get_records_sql_menu($courses_sql);
-        }elseif (empty($courses)) {
-            $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_classroom_courses} as lcc on lcc.courseid=c.id where lcc.classroomid= $cid ";
-            $courses = $DB->get_records_sql_menu($courses_sql);
-        }
+        // $courses = array();
+        // $courses = $this->_ajaxformdata['courseids'];
+        // if (!empty($courses)) {
+        //     $courses = $courses;
+        // } else if ($id > 0) {
+        //     $courses = $DB->get_records_menu('local_classroom_completion',
+        //         array('id' => $id), 'id', 'id, courseids');
+        // }
+        // if (!empty($courses)) {
+        //          if(is_array($courses)){
+        //                  $courses=implode(',',$courses);
+        //          }else{
+        //             $courses= null;
+        //          }
+        //          $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_classroom_courses} as lcc on lcc.courseid=c.id where lcc.classroomid= $cid  ";
+        //          if($courses !== null){
+        //             $courses_sql .= " and lcc.courseid in ($courses) ";
+        //          }
+        //         $courses = $DB->get_records_sql_menu($courses_sql);
+        // }elseif (empty($courses)) {
+        //     $courses_sql = "SELECT c.id,c.fullname as fullname FROM {course} as c JOIN {local_classroom_courses} as lcc on lcc.courseid=c.id where lcc.classroomid= $cid ";
+        //     $courses = $DB->get_records_sql_menu($courses_sql);
+        // }
    
-        $options = array(
-            'ajax' => 'local_classroom/form-options-selector',
-            'multiple' => true,
-            'data-contextid' => $categorycontext->id,
-            'data-action' => 'classroom_completions_courses_selector',
-            'data-options' => json_encode(array('id' => $id,'classroomid'=>$cid)),
-        );
+        // $options = array(
+        //     'ajax' => 'local_classroom/form-options-selector',
+        //     'multiple' => true,
+        //     'data-contextid' => $categorycontext->id,
+        //     'data-action' => 'classroom_completions_courses_selector',
+        //     'data-options' => json_encode(array('id' => $id,'classroomid'=>$cid)),
+        // );
         
-        $mform->addElement('autocomplete', 'courseids', get_string('course_completion', 'local_classroom'), $courses,$options);
-        $mform->hideIf('courseids', 'coursetracking', 'neq','OR');
+        // $mform->addElement('autocomplete', 'courseids', get_string('course_completion', 'local_classroom'), $courses,$options);
+        // $mform->hideIf('courseids', 'coursetracking', 'neq','OR');
 
 
         $mform->disable_form_change_checker();

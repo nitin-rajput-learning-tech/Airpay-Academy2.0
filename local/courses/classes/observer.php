@@ -42,7 +42,8 @@ class local_courses_observer extends \core\event\course_viewed {
         global $DB, $CFG, $USER, $COURSE;
         $canaccesscourse = \local_courses\courses::can_access_course($COURSE->id, $USER->id);
         if(!$canaccesscourse['status']){
-            redirect($CFG->wwwroot.'/my/dashboard.php', $message, null, NOTIFY_ERROR);
+            //redirect($CFG->wwwroot.'/my/dashboard.php', $message, null, NOTIFY_ERROR);
+            print_error('nopermissiontoviewpage');
             die;
         }
     }

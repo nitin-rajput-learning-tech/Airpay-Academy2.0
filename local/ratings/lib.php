@@ -300,7 +300,7 @@ function display_comment($itemid, $commentarea, $viewmore = true, $userid = null
     if($participate_info['enroll']){
         $usercomment = $DB->get_field('local_comment', 'comment', array('userid' => $userid, 'itemid' => $itemid, 'commentarea' => $commentarea));
         // $dialogdiv = html_writer::div('', '', array('id' => 'post_comment_'.$commentarea.'_'.$itemid));
-        $displaycomment = strlen($usercomment) > 50 ? substr($usercomment, 0, 50).'...': $usercomment;
+        $displaycomment = strlen($usercomment) > 50 ? clean_text(substr($usercomment, 0, 50)).'...': $usercomment;
         $mycomment_content = "<div class='comment_information'>
                 <span class='comment_label'>".get_string('my_review','local_ratings')."</span> 
                 <span class='comment_colon'>:</span> 

@@ -148,12 +148,16 @@ class report_classroomsoverview extends reportbase implements report {
                     $classroom->classroomstatus = 'Completed';
                 }
 
-                $classroom->trainerhrs = $DB->get_field_sql("SELECT SUM(round(cs.duration/60, 2)) 
+                $classroom->trainerhrs = $DB->get_field_sql("SELECT SUM(cs.duration) 
                             FROM {local_classroom_sessions} cs
                             JOIN {local_classroom} c ON cs.classroomid = c.id
                             WHERE YEAR(FROM_UNIXTIME(cs.timestart)) = YEAR(FROM_UNIXTIME($classroom->startdate))
                             AND MONTH(FROM_UNIXTIME(cs.timestart)) = MONTH(FROM_UNIXTIME($classroom->startdate)) AND (c.status = 1 OR c.status = 4) 
                             AND classroomid = :classroomid", array('classroomid' => $classroom->classroomid));
+                $hours = floor($classroom->trainerhrs/ 60);
+                $minutes = ($classroom->trainerhrs % 60);
+                $trainerhrs = ($hours) ? sprintf("%d:%02d", $hours, $minutes) : '';
+                $classroom->trainerhrs  = ( $trainerhrs ) ? $trainerhrs  : '--';       
                 $data[] = $classroom;
             }
         }

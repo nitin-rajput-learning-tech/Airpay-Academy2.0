@@ -122,7 +122,7 @@ if (!empty($coursespluginexist)) {
         $formdata->status = $status;
         $mform->set_data($formdata);
     }
-    echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle=
+    echo '<a class="btn-link btn-sm" data-toggle=
     "collapse" data-target="#local_users-filter_collapse" aria-expanded="false"
     aria-controls="local_users-filter_collapse">
             <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>

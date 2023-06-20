@@ -148,7 +148,7 @@ function local_program_output_fragment_level_completion_settings($args) {
         }
         $mform->set_data($section_completiondata);
     }
-    if (!empty((array) $serialiseddata)) {
+    if (!empty($args->jsonformdata)&& strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
@@ -194,7 +194,7 @@ function local_program_output_fragment_program_completion_settings($args){
         $mform->set_data($program_completiondata);
     }
 
-    if (!empty((array) $serialiseddata)) {
+    if (!empty($args->jsonformdata)&& strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
@@ -232,7 +232,7 @@ function local_program_output_fragment_program_completion_form($args) {
     $mform = new \local_program\form\program_completion_form(null, array('id' => $args->id,
         'bcid' => $args->cid, 'form_status' => $args->form_status), 'post', '', null, true, $formdata);
 
-    if (!empty((array) $serialiseddata)) {
+    if (!empty($args->jsonformdata)&& strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
@@ -272,7 +272,7 @@ function local_program_output_fragment_course_form($args) {
     $programdata->form_status = $args->form_status;
     $mform->set_data($programdata);
 
-    if (!empty((array) $serialiseddata)) {
+    if (!empty($args->jsonformdata)&& strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
@@ -534,7 +534,7 @@ function local_program_output_fragment_program_managelevel_form($args) {
     $bclevel->level_description['text'] = $bclevel->description;
     $mform->set_data($bclevel);
 
-    if (!empty((array) $serialiseddata)) {
+    if (!empty($args->jsonformdata)&& strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }

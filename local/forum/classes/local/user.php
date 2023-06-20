@@ -44,7 +44,7 @@ class user{
             $forumarray["url"] = $urllink;
             $forumummary = $forum->summary;
             $forumummary = \local_costcenter\lib::strip_tags_custom($forumummary);
-            $summarystring = strlen($forumummary) > 120 ? substr($forumummary, 0, 120)."..." : $forumummary;
+            $summarystring = strlen($forumummary) > 120 ? clean_text(substr($forumummary, 0, 120))."..." : $forumummary;
             $forumarray["description"] = $summarystring;
             $forumarray["percentage"] = round($this->user_forum_completion_progress($forum->id,$userid));
 

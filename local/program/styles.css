@@ -180,10 +180,9 @@ body#page-local-program-userdashboard .card_list_view {
 	background-size: cover;
 	background-repeat: no-repeat;
 	width: 100%;
-	min-width: 150px;
-	display: inline-block;
 	height: 100%;
-	min-height: 180px;
+	display: inline-block;
+
 }
 #page-local-program-view .levetabscontent_container .lvcdata_container{
 	flex-grow: 1;
@@ -246,8 +245,12 @@ body#page-local-program-userdashboard .card_list_view {
 #page-local-program-view .course_extended_menu_itemlink i{
 	color: #fff;
 }
+#page-local-program-view .course_extended_menu_list li{
+	margin:0 10px;
+}
 #page-local-program-view  .course_extended_menu_list{
 	top:14px;
+	right: 42px;
 }
 #page-local-program-view .program_data .program_name{
 	font-size: 21px;
@@ -326,4 +329,11 @@ body#page-local-program-userdashboard .card_list_view {
     overflow: hidden;
     white-space: normal;
     width: 100%;
+}
+
+
+/*newcss*/
+#page-local-program-view .levetabscontent_container .lvcimg_container{
+	width:100%;
+	min-height:200px;
 }

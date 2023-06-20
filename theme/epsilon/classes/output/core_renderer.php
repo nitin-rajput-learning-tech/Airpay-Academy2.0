@@ -253,11 +253,16 @@ class core_renderer extends \core_renderer {
     protected function render_context_header(\context_header $contextheader) {
 
         // Generate the heading first and before everything else as we might have to do an early return.
+        $heading = "";
         if (!isset($contextheader->heading)) {
             $heading = $this->heading($this->page->heading, $contextheader->headinglevel, 'h2');
-        } else {
+        } else { 
+            if(strlen($contextheader->heading)>0){
             $heading = $this->heading($contextheader->heading, $contextheader->headinglevel, 'h2');
+            }
+            
         }
+
 
         // All the html stuff goes here.
         $html = html_writer::start_div('page-context-header');
@@ -805,8 +810,13 @@ class core_renderer extends \core_renderer {
      */
     public function render_login(\core_auth\output\login $form) {
         global $CFG, $SITE, $OUTPUT;
-
-        $context = $form->export_for_template($this);
+    $organization_shortname = get_config('local_users','organization_shortname');
+    $activeregistration = get_config('local_users','activeregistration');
+    $context = $form->export_for_template($this);
+        if(trim($organization_shortname != "") && $activeregistration == 1)
+        {
+            $context->signupurl_custom =new moodle_url('/local/users/signup.php');
+        }
 
         // Override because rendering is not supported in template yet.
         if ($CFG->rememberusername == 0) {
@@ -877,7 +887,7 @@ class core_renderer extends \core_renderer {
      */
     public function full_header() {
 
-        global $USER,$COURSE,$DB;
+        global $USER,$COURSE,$DB, $CFG;
 
         $data = $this->custom_secured_redirection();
         $pagetype = $this->page->pagetype;
@@ -913,6 +923,7 @@ class core_renderer extends \core_renderer {
             $show_course_header = true;
 
             $usercourseprogress =  (new \local_courses\lib\accesslib())::get_user_course_progress_percentage($courseid,$USER->id);
+            require_once($CFG->dirroot.'/local/ratings/lib.php');
             $ratings_exist = \core_component::get_plugin_directory('local', 'ratings');
             if ($ratings_exist) {
                 $display_ratings = display_rating($courseid, 'local_courses');
@@ -921,7 +932,40 @@ class core_renderer extends \core_renderer {
             }
             $header=(object)array_merge((array)$header,$usercourseprogress);
             $header->display_ratings=$display_ratings;
-
+            if(!is_siteadmin()){
+                if(isset($COURSE->open_coursecompletiondays) && $COURSE->open_coursecompletiondays != 0)
+                {
+                    $today = date('Y-m-d');
+                    $userenroldate = $DB->get_field_sql("SELECT max(ue.timecreated) as enrolldate 
+                            FROM {course} course
+                            JOIN {enrol} e ON e.courseid = course.id 
+                            JOIN {user_enrolments} ue ON ue.enrolid = e.id
+                            JOIN {user} u ON u.id = $USER->id AND course.id = $COURSE->id ");
+                      
+                    if(!empty($userenroldate)){
+                        $userenroldate = date('Y-m-d',$userenroldate);
+                        //$userenroldate = '2023-04-12';
+                        $difference = strtotime($userenroldate) - strtotime($today);
+                        $days = abs($difference/(60 * 60)/24);                       
+                       
+                        if($days != 0 && $days < $COURSE->open_coursecompletiondays){
+                            $duedays = 'Due In : <strong>' .($COURSE->open_coursecompletiondays-$days). ' days </strong>';
+                        }else if($days != 0 && $days > $COURSE->open_coursecompletiondays){
+                            $duedays = 'Overdue by : ' .abs($COURSE->open_coursecompletiondays-$days). ' days';
+                        }
+                        if($duedays !=0 ){
+                            $display_duedays =' <div class="col-md-3 user_enrollment d-flex align-items-center ">
+                                                    <i class="fa fa-calendar"></i>                                                  
+                                                    <div class="enroll_details d-flex">
+                                                        <span class="details_content text-nowrap"> </span>
+                                                        <span class="enroll_number">'.$duedays.'</span>
+                                                    </div>
+                                                </div> ';
+                        }                         
+                      
+                    }
+                 }
+            }
         }else{
             $course_extended_menu = $this->context_header_settings_menu();
         }
@@ -935,6 +979,7 @@ class core_renderer extends \core_renderer {
         $header->coursebannerimage = $this->course_bannerimage();
         $header->pageheadingbutton = $this->page_heading_button();
         $header->courseheader = $this->course_header();
+        $header->display_duedays = !empty($display_duedays) ? $display_duedays : '';        
         $header->headeractions = $this->page->get_header_actions();
         if (!empty($pagetype) && !empty($homepagetype) && $pagetype == $homepagetype) {
             $header->welcomemessage = \core_user::welcome_message();
@@ -963,7 +1008,9 @@ class core_renderer extends \core_renderer {
 
         $categorycontext = context_coursecat::instance($COURSE->category);
 
-
+        $admin_default_menu = $is_courseedit_icon = $course_reports = $course_complition = $coursebackup = false;
+        $allow_editing = false;
+        $editing_url = "";
          if(has_capability('moodle/course:create', $systemcontext) || is_siteadmin()) {
             $admin_default_menu = true;
             $manage = true;
@@ -1036,8 +1083,8 @@ class core_renderer extends \core_renderer {
             "course_reports" => $course_reports,
             "course_complition" => $course_complition,
             "coursebackup" => $coursebackup,
-            "enrolid" => $enrolid,
-            "userenrollment" => $userenrollment,
+            "enrolid" => $enrolid??0,
+            "userenrollment" => $userenrollment??false,
             "categorycontextid" =>$categorycontext->id,
             // "gamificationpage" => $gamificationpage,
             "challenge_element" => $challenge_element,
@@ -1047,7 +1094,7 @@ class core_renderer extends \core_renderer {
         ];
 
         if(!is_siteadmin()){
-            $switchedrole = $USER->access['rsw']['/1'];
+            $switchedrole = isset($USER->access['rsw']['/1'])?$USER->access['rsw']['/1']:"";
             if($switchedrole){
                 $userrole = $DB->get_field('role', 'shortname', array('id' => $switchedrole));
             }else{
@@ -1321,9 +1368,10 @@ class core_renderer extends \core_renderer {
             $depths = [];
             $depths['depth']=array();
             $user_ra_array = array_values(array_filter(array_map(function($role)use(&$depths){
-                            $categoryids = array_values(array_filter((explode('/', $role->path))));
-                            $category = \local_costcenter\lib\accesslib::get_category_info($categoryids[0], 'name');
 
+                            $categoryids = array_values(array_filter((explode('/', $role->path))));
+                            $pathname=end($categoryids);
+                            $category = \local_costcenter\lib\accesslib::get_category_info($pathname, 'name');
                                 if(!in_array($role->depth.'_'.$categoryids[0], $depths['depth'])){
                                     $depths['depth'][] = $role->depth.'_'.$categoryids[0];
                                     $role->categoryname = $category;
@@ -1916,9 +1964,10 @@ class core_renderer extends \core_renderer {
         $theme = theme_config::load('epsilon');
         $primarycolor= $theme->settings->primarycolor;
         $costcentercolor = $this->get_costcenter_scheme_css();
-        if($costcentercolor && !empty($costcentercolor->button_color)){
-            $primarycolor = $costcentercolor->button_color;
+        if($costcentercolor && !empty($costcentercolor->brand_color)){
+            $primarycolor = $costcentercolor->brand_color;
         }
+        
         return $primarycolor;
     }
     public function get_secondarycolor() {
@@ -1927,8 +1976,8 @@ class core_renderer extends \core_renderer {
         $secondarycolor= $theme->settings->secondarycolor;
         $costcentercolor = $this->get_costcenter_scheme_css();
         // var_dump($costcentercolors); exit;
-        if($costcentercolor && !empty($costcentercolor->brand_color)){
-            $secondarycolor = $costcentercolor->brand_color;
+        if($costcentercolor && !empty($costcentercolor->button_color)){
+            $secondarycolor = $costcentercolor->button_color;
         }
         return $secondarycolor;
     }
@@ -2058,6 +2107,11 @@ class core_renderer extends \core_renderer {
             return $cm->url;
 
         }
+
+    }
+    public function loggedin_username() {
+        global $USER;
+        return ucwords($USER->firstname);
 
     }
 

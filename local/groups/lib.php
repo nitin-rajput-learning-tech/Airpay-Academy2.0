@@ -84,12 +84,12 @@ function manage_groups_count($stable,$filterdata){
                 $line = array();
                 $groupname = $cohort->name;
                 if(strlen($groupname) >15){
-                     $groupname = substr($groupname, 0,15).'...';
+                     $groupname = clean_text(substr($groupname, 0,15)).'...';
                 }
 
                 $groupid  =$cohort->idnumber;
                 if(strlen($groupid) >8){
-                     $groupid = substr($groupid, 0,8).'...';
+                     $groupid = clean_text(substr($groupid, 0,8)).'...';
                 }
         $cohortcontext =  (new \local_groups\lib\accesslib())::get_module_context();
 
@@ -720,7 +720,6 @@ function local_groups_edit_controls(context $context, moodle_url $currenturl) {
     if (($searchquery = $currenturl->get_param('search'))) {
         $viewurl->param('search', $searchquery);
     }
-  
     if ($context->contextlevel ==(new \local_groups\lib\accesslib())::get_module_context()->contextlevel) {
         $tabs[] = new tabobject('view', new moodle_url($viewurl, array('showall' => 0)), get_string('cohorts', 'local_groups'));
     } else {

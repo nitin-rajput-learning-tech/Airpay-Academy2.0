@@ -103,9 +103,9 @@ class block_suggested_courses_external  extends external_api{
         }
         $arraylen = sizeof($data);
         for ($i=0; $i < $arraylen; $i++) {
-            array_push($data[$i]['userid'] = $USER->id);
+            $data[$i]['userid'] = $USER->id;
         }
-        // print_r($data); die;
+   
         $nomycourselister=new \stdClass();
         return [
             'totalcount' => $totalcount,
@@ -141,7 +141,7 @@ class block_suggested_courses_external  extends external_api{
                                     'iconurl' => new external_value(PARAM_RAW, 'iconurl', VALUE_OPTIONAL),
                                     'iconalt' => new external_value(PARAM_RAW, 'iconalt', VALUE_OPTIONAL),
                                     'bookmarkurl' =>new external_value(PARAM_RAW, 'bookmarkurl',VALUE_OPTIONAL),
-                                    'userid' => new external_value(PARAM_RAW,'userid',VALUE_OPTIONAL),
+                                    'userid' => new external_value(PARAM_INT,'userid',VALUE_OPTIONAL),
                                     
                                
                                 )

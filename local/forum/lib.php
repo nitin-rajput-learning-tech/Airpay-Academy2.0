@@ -73,6 +73,7 @@ function local_forum_output_fragment_custom_forum_form($args)
                 WHERE f.course=:courseid ";
         $moduleinfo = $DB->get_record_sql($moduleinfoSql, array('courseid' => $courseid));
         $course->duedate = $moduleinfo->duedate;
+        $course->type = $moduleinfo->type;
         $course->cutoffdate = $moduleinfo->cutoffdate;
         $course->maxbytes = $moduleinfo->maxbytes;
         $course->maxattachments = $moduleinfo->maxattachments;
@@ -367,11 +368,11 @@ function get_listof_forum($stable, $filterdata,$options)
             $format = $course->format;
 
             if (strlen($coursename) > 35) {
-                $coursenameCut = substr($coursename, 0, 35) . "...";
+                $coursenameCut = clean_text(substr($coursename, 0, 35)) . "...";
                 $courseslist[$count]["coursenameCut"] = \local_costcenter\lib::strip_tags_custom($coursenameCut);
             }
             $catname = $categoryname;
-            $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12) . "..." : $catname;
+            $catnamestring = strlen($catname) > 12 ? clean_text(substr($catname, 0, 12)) . "..." : $catname;
             $displayed_names = '<span class="pl-10 ' . $course->coursetype . '">' . $course->coursetype . '</span>';
 
             $courestypes_names = array('2' => get_string('classroom', 'local_courses'), '3' => get_string('elearning', 'local_courses'), '4' => get_string('learningplan', 'local_courses'), '5' => get_string('program', 'local_courses'), '6' => get_string('certification', 'local_courses'));
@@ -393,7 +394,7 @@ function get_listof_forum($stable, $filterdata,$options)
                 if ($tagstring == "") {
                     $tagstring = 'N/A';
                 } else {
-                    $tagstring = strlen($tagstring) > 35 ? substr($tagstring, 0, 35) . '...' : $tagstring;
+                    $tagstring = strlen($tagstring) > 35 ? clean_text(substr($tagstring, 0, 35)) . '...' : $tagstring;
                 }
                 $tagenable = True;
             } else {
@@ -438,7 +439,7 @@ function get_listof_forum($stable, $filterdata,$options)
                 $course_in_list,
                 array('overflowdiv' => false, 'noclean' => false, 'para' => false)
             ));
-            $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . "..." : $coursesummary;
+            $summarystring = strlen($coursesummary) > 100 ? clean_text(substr($coursesummary, 0, 100)) . "..." : $coursesummary;
             $courseslist[$count]["coursesummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
             $courseslist[$count]["fullcoursesummary"] = $coursesummary;
             $courseslist[$count]["format"] = $format;
@@ -513,7 +514,7 @@ function get_listof_forum($stable, $filterdata,$options)
                 JOIN {enrol} e on e.id = ue.enrolid
                 WHERE e.courseid =:courseid AND ue.userid =:userid ";
             $params = array('courseid' => $course->id, 'userid' => $USER->id);
-            if (!$DB->record_exists_sql($sql, $params) && !is_siteadmin()) {
+            if (!$DB->record_exists_sql($sql, $params) && !is_siteadmin() && !has_capability('local/forum:manage', $context)) {
                 $subscribed =  false;
             } else {
                 $subscribed =  true;
@@ -680,10 +681,17 @@ function local_forum_leftmenunode()
     global $DB, $USER;
     $categorycontext = (new \local_forum\lib\accesslib())::get_module_context();
     $coursecatnodes = '';
-    if (has_capability('local/forum:view', $categorycontext) || has_capability('local/forum:manage', $categorycontext) || is_siteadmin()) {
+    if (has_capability('local/forum:manage', $categorycontext) || is_siteadmin()) {
         $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browsecourses', 'class' => 'pull-left user_nav_div browsecourses'));
         $courses_url = new moodle_url('/local/forum/index.php');
         $courses = html_writer::link($courses_url, '<i class="fa fa-comments-o"></i><span class="user_navigation_link_text">' . get_string('manage_forum', 'local_forum') . '</span>', array('class' => 'user_navigation_link'));
+        $coursecatnodes .= $courses;
+        $coursecatnodes .= html_writer::end_tag('li');
+    }
+    if (has_capability('local/forum:view', $categorycontext) && !is_siteadmin() && !has_capability('local/forum:manage', $categorycontext)) {
+        $coursecatnodes .= html_writer::start_tag('li', array('id' => 'id_leftmenu_browsecourses', 'class' => 'pull-left user_nav_div browsecourses'));
+        $courses_url = new moodle_url('/local/forum/index.php');
+        $courses = html_writer::link($courses_url, '<i class="fa fa-comments-o"></i><span class="user_navigation_link_text">' . get_string('myforum', 'local_forum') . '</span>', array('class' => 'user_navigation_link'));
         $coursecatnodes .= $courses;
         $coursecatnodes .= html_writer::end_tag('li');
     }
@@ -789,14 +797,13 @@ function add_forum_forum($validateddata, $forumid)
 function update_forum_forum($validateddata, $data, $formstatus)
 {
     global $DB;
-
     //forum module
     $forum = new stdClass();
     $forum->modulename = 'forum';
     $forum->add = 'forum';
     $forum->module = $DB->get_field('modules', 'id', array('name' => 'forum'));
     $forum->showdescription = 0;
-    $forum->type = 'general';
+    $forum->type = $validateddata->type;
     $forum->duedate = $validateddata->duedate;
     $forum->cutoffdate = $validateddata->cutoffdate;
     $forum->maxbytes = $validateddata->maxbytes;
@@ -805,7 +812,7 @@ function update_forum_forum($validateddata, $data, $formstatus)
     $forum->forcesubscribe = $validateddata->forcesubscribe;
     $forum->trackingtype = $validateddata->trackingtype;
     $forum->name = $validateddata->fullname;
-    $forum->lockdiscussionafter = $validateddata->lockdiscussionafter;
+    $forum->lockdiscussionafter = !empty($validateddata->lockdiscussionafter)?$validateddata->lockdiscussionafter:0;
     $forum->blockperiod = $validateddata->blockperiod;
     $courseid = is_object($data) ? $data->id  : $data['id'];
     $forumobject = $DB->get_record('forum', array('course' => $courseid));
@@ -854,7 +861,6 @@ function update_forum_forum($validateddata, $data, $formstatus)
     $forum->completion = 2;
     $forum->completionusegrade = 1;
     $forum->completionpassgrade = 1;
-    // print_r($forum);
     return $forum;
 }
 function forum_filters_form($filterparams, $formdata = []) {

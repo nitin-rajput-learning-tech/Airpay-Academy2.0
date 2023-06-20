@@ -74,7 +74,7 @@ class block_achievements_renderer extends plugin_renderer_base {
                         $out[]= "<span class='task-bell'><i class='fa fa-star gold'></i></span><span class='task-title-sp'>$course</span>";
                     }
 
-					$out[]= "<span class='points credits '>".$credit->open_points."&nbspPoints</span>";
+					$out[]= "<span class='points credits bold'>".$credit->open_points."&nbspPoints</span>";
 					$data[] = $out;
 				}
 				if(count($credits) > 5){

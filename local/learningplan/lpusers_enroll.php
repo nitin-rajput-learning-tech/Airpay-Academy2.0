@@ -41,6 +41,7 @@ $remove=optional_param('remove',array(), PARAM_RAW);
 $view=optional_param('view','page', PARAM_RAW);
 $type=optional_param('type','', PARAM_RAW);
 $lastitem=optional_param('lastitem',0, PARAM_INT);
+$countval = optional_param('countval', 0, PARAM_INT);
 $sesskey=sesskey();
 $learningplan = $DB->get_record('local_learningplan',array('id' => $planid));
 if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontext))){
@@ -55,12 +56,17 @@ if(!(is_siteadmin() || has_capability('local/learningplan:manage', $systemcontex
 
 $learningplan_renderer = new local_learningplan\render\view();
 if($view=='ajax'){
-    $options =(array)json_decode($_GET["options"],false);
+    //$options =(array)json_decode($_GET["options"],false);
+    if(is_string($_GET["options"])){
+        $options = json_decode($_GET["options"], false);
+    }else{
+        $options = $_GET["options"];  
+    }
     if($type=='add'){
-      $select_from_users=$learningplan_renderer->select_to_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$lastitem);
+      $select_from_users=$learningplan_renderer->select_to_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$countval);
     }
     if($type=='remove'){
-      $select_from_users=$learningplan_renderer->select_from_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$lastitem);
+      $select_from_users=$learningplan_renderer->select_from_users_of_learninplan($planid,$USER->id,$options,false,$offset=-1,$perpage=50,$countval);
     }
     echo json_encode($select_from_users);
     exit;
@@ -182,9 +188,6 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
             foreach($userstoassign as $key=>$add_user){
               $progressbar->progress($progress);
               $progress++;
-              // $submitted->userid = $add_user;
-              // $submitted->planid = $planid;
-              // $submitted->usercreated = $USER->id;
               $record = new \stdClass();
               $record->planid = $planid;
               $record->userid = $add_user;
@@ -193,21 +196,9 @@ $learningplaninstance->costcenter = explode('/',$learningplaninstance->open_path
               $record->timemodified = 0;
               $record->usermodified = 0;
               $create_record = $learningplan_lib->assign_users_to_learningplan($record);
-              // $exist = $DB->record_exists('local_learningplan_user',array('userid'=>$add_user,'planid'=>$planid));
-              // if(empty($exist)) {
-                // $insert = $DB->insert_record('local_learningplan_user',$submitted);
-                // // $lpcourseman = $DB->get_record('local_learningplan_courses', array('planid'=>$planid,'nextsetoperator'=>'and'),'sortorder,asc','*',0,1);
-                
-                // // $emaillogs = new learningplannotifications_emails();$emailtype, $touser, $fromuser,                 // $email_logs = $emaillogs->learningplan_emaillogs($type,$dataobj,$add_user,$fromuserid);
-                // $touser = \core_user::get_user($add_user);
-                // $emaillogs = new local_learningplan\notification();
-                // $logmail = $emaillogs->learningplan_notification($type, $touser, $USER, $learningplaninstance);
-        //       }else{
-				// $progress--;
-				// continue;
-			  // }
+   
             }
-			$progressbar->end_html();
+			      $progressbar->end_html();
             $result=new stdClass();
             $result->changecount=$progress;
             $result->learningplan=$learningplan->name; 
@@ -367,7 +358,7 @@ $( document ).ready(function() {
         {
           $('.dual_select').bind('scroll', function()
             {
-              if($(this).scrollTop() + $(this).innerHeight()>=$(this)[0].scrollHeight)
+              if(Math.round($(this).scrollTop() + $(this).innerHeight())>=$(this)[0].scrollHeight)
               {
                 var get_id=$(this).attr('id');
                 if(get_id=='bootstrap-duallistbox-selected-list_duallistbox_learningplan_users'){
@@ -380,14 +371,14 @@ $( document ).ready(function() {
                     var total_users=".$select_to_users_total.";
                 }
                 var count_selected_list=$('#'+get_id+' option').length;
-               
+                var countval = $('#'+get_id+' option').length;
                 var lastValue = $('#'+get_id+' option:last-child').val();
               if(count_selected_list<total_users){  
                    //alert('end reached');
                     var selected_list_request = $.ajax({
                         method: 'GET',
                         url: M.cfg.wwwroot + '/local/learningplan/lpusers_enroll.php',
-                        data: {lpid:'$planid',type:type,view:'ajax',lastitem:lastValue, options: $myJSON},
+                        data: {lpid:'$planid',type:type,view:'ajax',countval:countval, options: $myJSON},
                         dataType: 'html'
                     });  
                     var appending_selected_list = '';
@@ -422,5 +413,3 @@ $continue.='</div>';
 echo $continue;
 
 echo $OUTPUT->footer();
-
-?>

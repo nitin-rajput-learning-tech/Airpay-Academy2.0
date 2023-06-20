@@ -25,12 +25,12 @@
     <div class=" card-img-top courseimg_container p-0">
         <a ng-if="record.enroll == 0" title="<% record.fullname %>">
             <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class="courseimg_bg p-2">
-                <span class="CstripCnt"> <span class="elearning">{{# str}}course, local_courses{{/ str}}</span> </span>
+                <span class="CstripCnt"> <span class="elearning"><% record.learningtype %></span> </span>
             </div>
         </a>
         <a ng-if="record.enroll == 1" title="<% record.fullname %>">
             <div style="background-image: url('<% record.bannerimage %>')" alt="<% record.fullname %>" class="courseimg_bg p-2">
-                <span class="CstripCnt"> <span class="elearning">{{# str}}course, local_courses{{/ str}}</span> </span>
+                <span class="CstripCnt"> <span class="elearning"><% record.learningtype %></span> </span>
             </div>
         </a>
     </div>

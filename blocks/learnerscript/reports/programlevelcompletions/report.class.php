@@ -82,7 +82,10 @@ class report_programlevelcompletions extends reportbase implements report
         if (is_siteadmin()) {
           $this->sql .= "";
         } else {
-          $this->sql .= $costcenterpathconcatsql;
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+            $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
+            $this->sql .= $costcenterpathconcatsql;
         }
         parent::where();
     }

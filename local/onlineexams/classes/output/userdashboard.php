@@ -155,7 +155,7 @@ class userdashboard implements renderable {
                 //-------- get the course summary------------------------ 
                 $onerow['onlineexamsummary']= $this->get_onlineexamsummary($inprogress_coursename);
                 $onlineexamsfullsummary = \local_costcenter\lib::strip_tags_custom($course_record->summary);
-                $onerow['fullonlineexamsummary']=  strlen($onlineexamsfullsummary) > 100 ? $onlineexamsfullsummary : null;
+                $onerow['fullonlineexamsummary']=  strlen($onlineexamsfullsummary) > 100 ? clean_text($onlineexamsfullsummary) : null;
 
                 //------get progress bar and width value in the form of array
                 $progressbarvalues = $this->get_progress_value($inprogress_coursename); 
@@ -240,7 +240,7 @@ class userdashboard implements renderable {
     private function get_onlineexamsummary($course_record){   
 
         $onlineexamsummary = \local_costcenter\lib::strip_tags_custom($course_record->summary);
-        $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100)."..." : $onlineexamsummary;
+        $summarystring = strlen($onlineexamsummary) > 100 ? clean_text(substr($onlineexamsummary, 0, 100))."..." : $onlineexamsummary;
         $onlineexamsummary = $summarystring;
         if(empty($onlineexamsummary)){
             $onlineexamsummary = '<span class="w-full pull-left">'.get_string('nodecscriptionprovided','block_userdashboard').'</span>';
@@ -254,7 +254,7 @@ class userdashboard implements renderable {
 
         $course_fullname = $inprogress_coursename->fullname;
         if (strlen($course_fullname) >= 20) {
-            $inprogress_coursename_fullname = substr($inprogress_coursename->fullname, 0, 20) . '...';
+            $inprogress_coursename_fullname = clean_text(substr($inprogress_coursename->fullname, 0, 20)) . '...';
         } else {
             $inprogress_coursename_fullname = $inprogress_coursename->fullname;
         }

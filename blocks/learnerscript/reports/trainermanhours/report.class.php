@@ -68,7 +68,7 @@ class report_trainermanhours extends reportbase implements report {
     function where(){
         global $DB;
         $roleid = $DB->get_field('role', 'id', array('shortname' => 'trainer'));
-        $this->sql .= " WHERE 1=1 AND ra.roleid=:roleid ";
+        $this->sql .= " WHERE 1=1 AND ra.roleid=:roleid  AND lc.status NOT IN (3) ";
         $this->params['roleid'] = $roleid;
         $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
@@ -81,7 +81,7 @@ class report_trainermanhours extends reportbase implements report {
        
     function search(){
         if (isset($this->search) && $this->search) {
-            $fields = array('lc.fullname',"CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
+            $fields = array('lc.name',"CONCAT(u.firstname,' ',u.lastname)",'u.email','u.open_employeeid');
             $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
             $fields .= " LIKE '%" . $this->search . "%' ";
             $this->sql .= " AND ($fields) ";
@@ -109,6 +109,11 @@ class report_trainermanhours extends reportbase implements report {
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
+        }
+
+        if ($this->params['filter_classrooms'] > 0) {
+            $this->sql .= " AND lc.id = :classroomid ";
+            $this->params['classroomid'] = $this->params['filter_classrooms'];
         }
         if (isset($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
             $userid = $this->params['filter_trainers'];

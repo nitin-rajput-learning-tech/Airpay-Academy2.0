@@ -12,7 +12,7 @@ class user {
             $learningplanarray['id'] = $learniningplan->id;
             $learningplanarray['name'] = $learniningplan->name;
             $plan_summary = \local_costcenter\lib::strip_tags_custom($learniningplan->description);
-            $plan_summary = strlen($plan_summary) > 140 ? substr($plan_summary, 0, 140)."..." : $plan_summary;
+            $plan_summary = strlen($plan_summary) > 140 ? clean_text(substr($plan_summary, 0, 140))."..." : $plan_summary;
             $learningplanarray['description'] = $plan_summary;
             $learningplanarray['url'] = '';
             $learningplanarray['percentage'] = '';

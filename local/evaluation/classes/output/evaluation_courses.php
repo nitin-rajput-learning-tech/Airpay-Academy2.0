@@ -133,8 +133,9 @@ class evaluation_courses implements \renderable, \templatable {
             $data->enableslider = 1;
         else    
             $data->enableslider = 0;
-
+        if($this->courseslist > 0){
         $courses_view_count = count($this->courseslist);
+    }
         $data->courses_view_count = $courses_view_count;
         if (!empty($this->courseslist)) 
             $data->inprogress_elearning_available = 1;
@@ -189,7 +190,7 @@ class evaluation_courses implements \renderable, \templatable {
                     }
                     $evaltype = ($inprogress_coursename->type == 1)? get_string('feedback', 'local_evaluation'):get_string('survey', 'local_evaluation');
                     $eval_name = $inprogress_coursename->name;
-                    $evalname = strlen($eval_name) > 32 ? substr($eval_name, 0, 32)."..." : $eval_name;
+                    $evalname = strlen($eval_name) > 32 ? clean_text(substr($eval_name, 0, 32))."..." : $eval_name;
                     $enrolledon = \local_costcenter\lib::get_userdate("d/m/Y H:i", $inprogress_coursename->joinedate);
                     $onerow['eval_name'] = $eval_name;
                     $onerow['name'] = $evalname;

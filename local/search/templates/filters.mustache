@@ -22,9 +22,9 @@
 <div class='col-md-3 col-lg-3 col-xl-2 col-sm-3 pt-3 pl-0 d-none d-md-block bg-white border-right filter_section'>
     <div class="d-flex align-items-center justify-content-between">
         <div class="icon-header">
-            <span class="icon_img"> <img src="pix/filters.png" alt=""> </span> {{#str}}filters,local_search{{/str}}
+            <span class="icon_img"> <img src="pix/filters.png" alt="img"> </span> {{#str}}filters,local_search{{/str}}
         </div>
-        <button class="btn btn-danger d-block d-md-none close_btn " id="closefilters">
+        <button class="btn btn-danger d-block d-md-none close_btn"  aria-label="My button" id="closefilters">
              <i class="icon fa fa-times fa-fw"></i>
         </button>
     </div>
@@ -33,7 +33,7 @@
         <section ng-repeat = 'cat in cat1.categoriesall' class="module_filter_params" data-filtertype="<% cat.type %>">
             <div class="collapsed_settings_div" >
                 <div class="icon-header d-flex align-items-center" data-toggle="collapse" href="#list<% cat.type %>" role="button" aria-expanded="false" aria-controls="collapse">
-                    <span class="icon_img"> <img src="pix/select.png" alt=""> </span> <% cat.name %>
+                    <span class="icon_img"> <img src="pix/select.png" alt="img"> </span> <% cat.name %>
                     <span class="float-right collapseiconspan"><i class="collapseicon fa" aria-hidden="true"></i></span>
                 </div>
                 <div class="collapse show collapse_content px-1 py-2 mr-2 mt-3" id="list<% cat.name %>" >

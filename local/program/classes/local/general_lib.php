@@ -85,6 +85,7 @@ class general_lib{
 	 public function get_program_info($id){
         global $DB, $USER, $CFG;
         require_once($CFG->dirroot.'/local/search/lib.php');
+		require_once($CFG->dirroot.'/local/ratings/lib.php');
         $program = $DB->get_record('local_program', array('id' => $id));
         if($program){
             $program->fullname = $program->name;
@@ -130,13 +131,27 @@ class general_lib{
             }
             $program->coursecount = $DB->count_records_sql("SELECT count(c.id) FROM {course} AS c JOIN {local_program_level_courses} AS lcc ON lcc.courseid = c.id WHERE lcc.programid = :programid ", array('programid' => $program->id));
 
-            $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $program->id, 'module_area' => 'local_learningplan'));
+            /* $ratinginfo = $DB->get_record('local_ratings_likes', array('module_id' => $program->id, 'module_area' => 'local_learningplan'));
             if($ratinginfo){
                 $program->avgrating = $ratinginfo->module_rating;
                 $program->ratedusers = $ratinginfo->module_rating_users;
                 // $program->likes = $ratinginfo->module_like;
                 // $program->dislikes = $ratinginfo->module_like_users - $ratinginfo->module_like;
+            } */
+			$modulerating = $DB->get_field('local_ratings_likes', 'module_rating', array('module_id' => $program->id, 'module_area' => 'local_program'));
+            if(!$modulerating){
+                 $modulerating = 0;
             }
+            $program->rating = round($modulerating);
+            $likes = $DB->count_records('local_like', array('likearea' => 'local_program', 'itemid' => $program->id, 'likestatus' => '1'));
+            $dislikes = $DB->count_records('local_like', array('likearea' => 'local_program', 'itemid' => $program->id, 'likestatus' => '2'));
+            $avgratings = get_rating($program->id, 'local_program');
+            $avgrating = round($avgratings->avg);
+            $ratingusers = $avgratings->count;
+            $program->likes = $likes;
+            $program->dislikes = $dislikes;
+            $program->avgrating = $avgrating;
+            $program->ratedusers = $ratingusers;
             $program->module = 'local_program';
             return $program;
         }else{

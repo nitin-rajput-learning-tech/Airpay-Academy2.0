@@ -1098,7 +1098,7 @@ body#page-local-courses-userdashboard .card_list_view {
 }
 #page-local-onlineexams-userdashboard .course_container .courseimg_container{
     width: 100%;
-    max-width: 200px;
+    max-width: 175px;
     padding: 0 15px;
 }
 #page-local-onlineexams-userdashboard .courseimg_container .courseimg {
@@ -1111,6 +1111,7 @@ body#page-local-courses-userdashboard .card_list_view {
 }
 #page-local-onlineexams-userdashboard .course_container .coursecontent{
    padding: 0 15px 0 0; 
+   flex-grow: 1;
 }
 #page-local-onlineexams-userdashboard .course_name a {
     font-size: 17px;
@@ -1138,4 +1139,8 @@ body#page-local-courses-userdashboard .card_list_view {
     #page-local-onlineexams-userdashboard .userdashboard_content .desc{
         max-height: 100%;
     }
+}
+
+#page-local-onlineexams-onlineexamsenrol .dual_select option {
+    padding: 5px;
 }

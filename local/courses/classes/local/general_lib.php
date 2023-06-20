@@ -162,7 +162,7 @@ class general_lib{
         global $DB, $USER;
 
         $sqlquery = "SELECT cc.id as completionid,c.*";
-        $sql .= " FROM {course_completions} cc
+        $sql = " FROM {course_completions} cc
                 JOIN {course} c ON c.id = cc.course AND cc.userid = $USER->id
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid

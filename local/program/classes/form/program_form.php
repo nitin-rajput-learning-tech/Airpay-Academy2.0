@@ -118,12 +118,6 @@ class program_form extends moodleform {
             $selfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('no'), 0, $attributes);
             $mform->addGroup($selfenrol, 'selfenrol', get_string('selfenrol', 'local_program'), array('&nbsp;&nbsp;'), false);
             $mform->addHelpButton('selfenrol','selfenroll','local_program');
-
-            $manageapproval = array();
-            $manageapproval[] = $mform->createElement('radio', 'approvalreqd', '', get_string('yes'), 1, $attributes);
-            $manageapproval[] = $mform->createElement('radio', 'approvalreqd', '', get_string('no'), 0, $attributes);
-            $mform->addGroup($manageapproval, 'approvalreqd', get_string('need_manage_approval', 'local_program'), array('&nbsp;&nbsp;'), false);
-            $mform->hideIf('approvalreqd', 'selfenrol', 'neq', '1');
             
             // $mform->addElement('text', 'points', get_string('points','local_program'));
             // $mform->addHelpButton('points', 'open_pointsprogram', 'local_program');
@@ -190,7 +184,7 @@ class program_form extends moodleform {
             //skill related fields---------------------------------------------------------
             $skillselect = array(0 => get_string('select_skill','local_onlineexams'));
 
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->onlineexam->open_path);
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$open_path);
    
                $skillcostcentersql = "SELECT id,name FROM {local_skill}
                                    WHERE 1=1 $costcenterpathconcatsql ";

@@ -39,7 +39,7 @@ class report_feedbackcompletions extends reportbase implements report
         $this->parent = true;
         $this->columns = ['feedbackfield' => ['feedbackfield'], 'userfield' => ['userfield'], 'feedbackcompletionscolumns' => ['completionstatus', 'completiondate']];
         $this->components = array('columns', 'filters', 'permissions', 'orderable');
-        $this->filters = array('organization', 'departments', 'subdepartments', 'level4department','feedbacks');
+        $this->filters = array('organization', 'departments','feedbacks');
         $this->orderable = array('feedbackname');
         $this->defaultcolumn = 'eu.id';
     }
@@ -90,6 +90,9 @@ class report_feedbackcompletions extends reportbase implements report
         if (is_siteadmin()) {
             $this->sql .= "";
         } else {
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+            $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
             $this->sql .= $costcenterpathconcatsql;
         }
 
@@ -117,7 +120,7 @@ class report_feedbackcompletions extends reportbase implements report
             $this->sql .= " AND concat(le.open_path,'/') like :l2dept ";
             $this->params['l2dept'] = $l2dept.'/%';
         }
-        if ($this->params['filter_subdepartments'] > 0) {
+       /*  if ($this->params['filter_subdepartments'] > 0) {
             $l3dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_subdepartments'], 'path');
             $this->sql .= " AND concat(le.open_path,'/') like :l3dept ";
             $this->params['l3dept'] = $l3dept.'/%';
@@ -127,17 +130,19 @@ class report_feedbackcompletions extends reportbase implements report
             $l4dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level4department'], 'path');
             $this->sql .= " AND concat(le.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
-        }
+        } */
 
         if (!empty($this->params['filter_feedbacks'])) {
             $this->sql .= " AND le.id = :feedbackid ";
             $this->params['feedbackid'] = $this->params['filter_feedbacks'];
         }
 
-        if (!empty($this->params['filter_user'])) {
-            $this->sql .= " AND u.id = :userid ";
-            $this->params['userid'] = $this->params['filter_user'];
+        if($this->ls_startdate > 0 && $this->ls_enddate > 0){
+            $this->sql .= " AND ( ec.timemodified > :ls_fstartdate AND ec.timemodified < :ls_fenddate )";
+            $this->params['ls_fstartdate'] = $this->params['ls_fstartdate'];
+            $this->params['ls_fenddate'] = $this->params['ls_fenddate'];
         }
+
     }
     public function get_rows($feedbacks = array())
     {

@@ -94,11 +94,17 @@ class report_coursegradeactivities extends reportbase implements report
     $this->params['type'] = 0;
     $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
     $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'c.open_path');
+
     if (is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $categorycontext)) {
-      $this->sql .= "";
+        $this->sql .= "";
     } else {
-      $this->sql .= $costcenterpathconcatsql;
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+        $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+        $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
+        $this->sql .= $costcenterpathconcatsql ;
     }
+   
+    
     parent::where();
   }
 

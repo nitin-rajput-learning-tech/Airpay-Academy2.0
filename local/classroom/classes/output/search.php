@@ -56,7 +56,7 @@ class search implements renderable{
         $leftjoinsql = '';
         $today = time();
         // added condition for not displaying retired ILT's.
-        $wheresql = " WHERE lc.visible=1 AND lc.status NOT IN (0,2,3) AND lc.selfenrol = 1  ";
+        $wheresql = " WHERE lc.visible=1 AND lc.status NOT IN (0,2,3,4) AND lc.selfenrol = 1  ";
 
         $searchsql = '';
         if(searchlib::$search && searchlib::$search != 'null'){
@@ -65,7 +65,9 @@ class search implements renderable{
         $usercontext = context_user::instance($USER->id);
         $sqlparams = array();
         if(!is_siteadmin()){
-            $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
+            
             $paths = [];
             foreach($usercostcenterpaths AS $userpath){
                 $userpathinfo = $userpath;
@@ -142,7 +144,6 @@ class search implements renderable{
                             END
                         ELSE 1 END ";
 
-
             if(!empty($params)){
                 $finalparams = implode('AND',$params);
             }else{
@@ -173,9 +174,9 @@ class search implements renderable{
             }else{
                 $wheresql .= " AND lc.status in (1,3,4) ";
             }
-        }else{
+        }/* else{
             $wheresql .= " AND lc.status in (1,3,4) ";
-        }
+        } */
 
         foreach($filters AS $filtertype => $filtervalues){
             switch($filtertype){
@@ -198,8 +199,8 @@ class search implements renderable{
 
         $finalsql = $csql.$cfromsql.$leftjoinsql.$wheresql.$searchsql.$groupby;
         $finalsql .= " ORDER BY lc.id DESC ";
-        // echo $finalsql;
-        // print_r($params);die;
+/*         echo $finalsql;
+        print_r($params);die; */
         $classroomslist = $DB->get_records_sql($finalsql, $sqlparams, $startlimit,$perpage);
         if($return_noofrecords && !$returnobjectlist){
             return  array('numberofrecords'=>$numberofrecords);
@@ -450,7 +451,9 @@ class search implements renderable{
         $wheresql = " WHERE lc.visible=1 AND lc.status = 1 AND lc.selfenrol = 1 AND lc.id = ? ";
 
         $sqlparams = array($classroom->id);
-        $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
+            
         // $paths = [];
         // foreach($usercostcenterpaths AS $userpath){
         //     $userpathinfo = $userpath->costcenterpath;
@@ -503,9 +506,6 @@ class search implements renderable{
                     END
                 ELSE 1 END ";
 
-
-
-
         if(!empty($USER->open_designation) && $USER->open_designation != ""){
             $sqlparams[] = "%,$USER->open_designation,%";
         }else{
@@ -518,7 +518,7 @@ class search implements renderable{
                                 THEN 1
                                 ELSE 0
                         END
-                    ELSE 1 END ";
+                    ELSE 1 END "; 
 
 
         if(!empty($params)){
@@ -528,7 +528,7 @@ class search implements renderable{
         }
 
         $joinsql = " AND ($finalparams) ";
-        $wheresql .= $joinsql;
+        $wheresql .= $joinsql;  
         return $DB->record_exists_sql($selectsql.$wheresql, $sqlparams);
     }
     public function get_enrollbtn($classroominfo){
@@ -547,7 +547,7 @@ class search implements renderable{
                     $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
                     $request = $DB->get_field_sql($sql, array('componentid' => $classroomid,'compname' => $component,'createdbyid'=>$USER->id));
                     if($request=='PENDING'){
-                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Processing</button>';
+                        $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">'.get_string('requestprocessing', 'local_search').'</button>';
                     }else{
                         $enrollmentbtn =requestapi::get_requestbutton($componentid, $component, $classroomname);
                     }

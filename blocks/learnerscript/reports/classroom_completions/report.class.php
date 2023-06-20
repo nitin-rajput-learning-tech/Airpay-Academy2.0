@@ -22,7 +22,6 @@
  * @subpackage block_learnerscript
  */
 
-use block_learnerscript\local\querylib;
 use block_learnerscript\local\reportbase;
 use block_learnerscript\report;
 
@@ -81,17 +80,22 @@ class report_classroom_completions extends reportbase implements report {
     }
 
     function where() {
-        global $USER, $DB;
-
-
-        $systemcontext = context_system::instance();
+      
+        global $USER;
         $this->sql .= " WHERE lc.status <> 0 "; //Not considering the new classrooms.
-        $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');        
+        $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');            
+        
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {
-            $this->sql .= $costcenterpathconcatsql;
+           
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+            $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
+            $this->sql .= $costcenterpathconcatsql ;
         }
+       
+        
         parent::where();
     }
 
@@ -127,28 +131,11 @@ class report_classroom_completions extends reportbase implements report {
             $this->sql .= " AND concat(u.open_path,'/') like :l4dept ";
             $this->params['l4dept'] = $l4dept.'/%';
         }
-         /*  if ($this->params['filter_level5department'] > 0) {
-            $l5dept = \local_costcenter\lib\accesslib::get_costcenter_info($this->params['filter_level5department'], 'path');
-            $this->sql .= " AND concat(u.open_path,'/') like :l5dept ";
-            $this->params['l5dept'] = $l5dept.'/%';
-        }
-        if ($this->params['filter_geostate'] > 0) {
-            $this->sql .= " AND u.open_states = :filter_geostate ";
-        }
-        if ($this->params['filter_geodistrict'] > 0) {
-            $this->sql .= " AND u.open_district = :filter_geodistrict ";
-        }
-        if ($this->params['filter_geosubdistrict'] > 0) {
-            $this->sql .= " AND u.open_subdistrict = :filter_geosubdistrict ";
-        }
-        if ($this->params['filter_geovillage'] > 0) {
-            $this->sql .= " AND u.open_village = :filter_geovillage ";
-        } */
+   
         if($this->ls_startdate > 0 && $this->ls_enddate > 0){
             $this->sql .= " AND lcu.completiondate > :report_startdate ";
             $this->params['report_startdate'] = $this->ls_startdate;
-        // }
-        // if($this->ls_enddate > 0){
+       
             $this->sql .= " AND lcu.completiondate < :report_enddate ";
             $this->params['report_enddate'] = $this->ls_enddate;
         }

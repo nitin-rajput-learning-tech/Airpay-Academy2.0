@@ -64,7 +64,8 @@ class search implements renderable{
         $usercontext = context_user::instance($USER->id);
         $sqlparams = array();
         if(!is_siteadmin()){
-            $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
             $paths = [];
             foreach($usercostcenterpaths AS $userpath){
                 $userpathinfo = $userpath;
@@ -388,7 +389,8 @@ class search implements renderable{
         $wheresql = " WHERE lc.visible=1 AND lc.selfenrol = 1 AND lc.id = ? ";
 
         $sqlparams = array($program->id);
-        $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
         // $paths = [];
         // foreach($usercostcenterpaths AS $userpath){
         //     $userpathinfo = $userpath->costcenterpath;

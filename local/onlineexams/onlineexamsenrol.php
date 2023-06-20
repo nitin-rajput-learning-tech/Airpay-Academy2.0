@@ -37,7 +37,7 @@ global $CFG, $DB, $USER, $PAGE, $OUTPUT, $SESSION;
 $view = optional_param('view', 'page', PARAM_RAW);
 $type = optional_param('type', '', PARAM_RAW);
 $lastitem = optional_param('lastitem', 0, PARAM_INT);
-
+$countval = optional_param('countval', 0, PARAM_INT);
 $enrolid      = required_param('enrolid', PARAM_INT);
 $course_id      = optional_param('id', 0, PARAM_INT);
 $roleid       = optional_param('roleid', -1, PARAM_INT);
@@ -55,8 +55,12 @@ $categorycontext = (new \local_onlineexams\lib\accesslib())::get_module_context(
 require_login();
 
 if ($view == 'ajax') {
-  $options = (array)json_decode($_GET["options"], false);
-  $select_from_users = course_enrolled_users($type, $course_id, $options, false, $offset1 = -1, $perpage = 50, $lastitem);
+  if(is_string($_GET["options"])){
+    $options = json_decode($_GET["options"], false);
+  }else{
+    $options = $_GET["options"];  
+  }
+  $select_from_users = course_enrolled_users($type, $course_id, $options, false, $offset1 = -1, $perpage = 50, $countval);
   echo json_encode($select_from_users);
   exit;
 }
@@ -83,12 +87,6 @@ if (!$haveaccess) {
 if ($roleid < 0) {
   $roleid = $instance->roleid;
 }
-// $roles = get_assignable_roles($context);
-// $roles = array('0'=>get_string('none')) + $roles;
-// if (!isset($roles[$roleid])) {
-//     //Weird - security always first!
-//     $roleid = 0;
-// }
 
 if (!$enrol_manual = enrol_get_plugin('manual')) {
   throw new coding_exception('Can not instantiate enrol_manual');
@@ -170,7 +168,7 @@ if ($course) {
   if ($add and confirm_sesskey()) {
     $type = 'onlineexam_enrol';
     if ($submit_value == "Add_All_Users") {
-      $options = json_decode($_REQUEST["options"], false);
+      $options = (array)json_decode($_REQUEST["options"], false);
       $userstoassign = array_flip(course_enrolled_users('add', $course_id, (array)$options, false, $offset1 = -1, $perpage = -1));
     } else {
       $userstoassign = $add;
@@ -226,7 +224,7 @@ if ($course) {
   if ($remove && confirm_sesskey()) {
     $type = 'onlineexam_unenroll';
     if ($submit_value == "Remove_All_Users") {
-      $options = json_decode($_REQUEST["options"], false);
+      $options = (array)json_decode($_REQUEST["options"], false);
       $userstounassign = array_flip(course_enrolled_users('remove', $course_id, (array)$options, false, $offset1 = -1, $perpage = -1));
     } else {
       $userstounassign = $remove;
@@ -298,47 +296,41 @@ if ($course) {
   $select_all_not_enrolled_users = '&nbsp&nbsp<button type="button" id="select_remove" name="select_all" value="Select All" title="' . get_string('select_all', 'local_onlineexams') . '" class="btn btn-default"/>' . get_string('select_all', 'local_onlineexams') . '</button>';
   $select_all_not_enrolled_users .= '&nbsp&nbsp<button type="button" id="remove_select" name="remove_all" value="Remove All" title="' . get_string('remove_all', 'local_onlineexams') . '" class="btn btn-default"/>' . get_string('remove_all', 'local_onlineexams') . '</button>';
 
-
   $content = '<div class="bootstrap-duallistbox-container">';
-  $encoded_options = json_encode($options);
-  $content .= '<form  method="post" name="form_name" id="user_assign" class="form_class" >
-              <div class="box2 col-12 col-md-5 pull-left">
-                <input type="hidden" name="id" value="' . $course_id . '"/>
-                <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
-                <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
-                <input type="hidden" name="options"  value=\'' . $encoded_options . '\' />
-                <label>' . get_string('enrolled_users', 'local_onlineexams', $select_from_users_total) . '</label>' . $select_all_not_enrolled_users;
+  $content .= '<form  method="post" name="form_name" id="user_assign" class="form_class" ><div class="box2 col-md-5 col-12 pull-left">
+  <input type="hidden" name="id" value="' . $course_id . '"/>
+  <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
+  <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
+  <input type="hidden" name="options"  value=\'' . json_encode($options) . '\' />
+  <label>' . get_string('enrolled_users', 'local_onlineexams', $select_from_users_total) . '</label>' . $select_all_not_enrolled_users;
   $content .= '<select multiple="multiple" name="remove[]" id="bootstrap-duallistbox-selected-list_duallistbox_courses_users" class="dual_select">';
   foreach ($select_from_users as $key => $select_from_user) {
     $content .= "<option value='$key'>$select_from_user</option>";
   }
-  $content .= '</select>
-          </div>';
 
-  $content .= '<div class="box3 col-12 col-md-2 actions pull-left">
-              <button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="Remove Selected Users" id="user_unassign_all">
-                ' . get_string('remove_selected_users', 'local_onlineexams') . '
-              </button>
-            </form>';
-  $content .= '<form  method="post" name="form_name" id="user_un_assign" class="form_class" >
-              <button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="Add Selected Users" name="submit_value" value="Add Selected Users" id="user_assign_all" >
-                ' . get_string('add_selected_users', 'local_onlineexams') . '
-              </button>
-            </div>';
-  $content .= '<div class="box1 col-12 col-md-5 pull-left">
-              <input type="hidden" name="id" value="' . $course_id . '"/>
-              <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
-              <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
-              <input type="hidden" name="options"  value=\'' . $encoded_options . '\' />
-              <label> ' . get_string('availablelist', 'local_onlineexams', $select_to_users_total) . '</label>' . $select_all_enrolled_users;
+  $content .= '</select>';
+  $content .= '</div><div class="box3 col-md-2 col-12 pull-left actions"><button type="submit" class="custom_btn btn remove btn-default" disabled="disabled" title="' . get_string('remove_users', 'local_onlineexams') . '" name="submit_value" value="Remove Selected Users" id="user_unassign_all"/>
+  ' . get_string('remove_selected_users', 'local_onlineexams') . '
+  </button></form>
+
+  ';
+
+  $content .= '<form  method="post" name="form_name" id="user_un_assign" class="form_class" ><button type="submit" class="custom_btn btn move btn-default" disabled="disabled" title="' . get_string('add_users', 'local_onlineexams') . '" name="submit_value" value="Add Selected Users" id="user_assign_all" />
+  ' . get_string('add_selected_users', 'local_onlineexams') . '
+  </button></div><div class="box1 col-md-5 col-12 pull-left">
+  <input type="hidden" name="id" value="' . $course_id . '"/>
+  <input type="hidden" name="enrolid" value="' . $enrolid . '"/>
+  <input type="hidden" name="sesskey" value="' . sesskey() . '"/>
+  <input type="hidden" name="options"  value=\'' . json_encode($options) . '\' />
+  <label> ' . get_string('availablelist', 'local_onlineexams', $select_to_users_total) . '</label>' . $select_all_enrolled_users;
   $content .= '<select multiple="multiple" name="add[]" id="bootstrap-duallistbox-nonselected-list_duallistbox_courses_users" class="dual_select">';
   foreach ($select_to_users as $key => $select_to_user) {
     $content .= "<option value='$key'>$select_to_user</option>";
   }
   $content .= '</select>';
-  $content .= '</div>
-            </form>';
+  $content .= '</div></form>';
   $content .= '</div>';
+
 }
 // print_collapsible_region_start(' ', 'filters_form', ' '.' '.get_string('filters'), false, $collapse);
 // $mform->display();
@@ -408,7 +400,7 @@ if ($course) {
         {
           $('.dual_select').bind('scroll', function()
             {
-              if($(this).scrollTop() + $(this).innerHeight()>=$(this)[0].scrollHeight)
+              if(Math.round($(this).scrollTop() + $(this).innerHeight())>=$(this)[0].scrollHeight)
               {
                 var get_id=$(this).attr('id');
                 if(get_id=='bootstrap-duallistbox-selected-list_duallistbox_courses_users'){
@@ -423,13 +415,13 @@ if ($course) {
                 var count_selected_list=$('#'+get_id+' option').length;
 
                 var lastValue = $('#'+get_id+' option:last-child').val();
-
+                var countval = $('#'+get_id+' option').length;
               if(count_selected_list<total_users){
                    //alert('end reached');
                     var selected_list_request = $.ajax({
                         method: 'GET',
-                        url: M.cfg.wwwroot + '/local/onlineexams/courseenrol.php',
-                        data: {id:'$course_id',sesskey:'$sesskey', type:type,view:'ajax',lastitem:lastValue,enrolid:'$enrolid', options: $myJSON},
+                        url: M.cfg.wwwroot + '/local/onlineexams/onlineexamsenrol.php',
+                        data: {id:'$course_id',sesskey:'$sesskey', type:type,view:'ajax',countval:countval,enrolid:'$enrolid', options: $myJSON},
                         dataType: 'html'
                     });
                     var appending_selected_list = '';

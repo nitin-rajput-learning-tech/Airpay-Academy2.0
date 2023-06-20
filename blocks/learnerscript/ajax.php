@@ -1023,7 +1023,7 @@ case 'depprograms':
 	$orgid = isset($orgid) && $orgid > 0 ? $orgid : $USER->open_path;
 	if ($orgid > 0) {
 		$sql = "SELECT lp.id, lp.name 
-                FROM {local_learningplan} lp
+                FROM {local_program} lp
                 WHERE 1 = 1 AND concat('/',lp.open_path,'/') LIKE :costcenterpath";
 				
 		$programs = $DB->get_records_sql_menu($sql, array('parentid'=>$orgid, 'costcenterpath'=>'%'.$orgid.'%'));

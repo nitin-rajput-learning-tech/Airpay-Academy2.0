@@ -75,6 +75,7 @@ $renderer = $PAGE->get_renderer('local_program');
 $PAGE->navbar->add(get_string("pluginname", 'local_program'));
 echo $OUTPUT->header();
 
+
 // hide the program.
 if ($hide AND $id) {
 	$program = $DB->get_record('local_program', array('id'=>$id));
@@ -118,9 +119,30 @@ $formdata->filteropen_department = $departmentid;
 $formdata->filteropen_subdepartment = $subdepartmentid;
 $formdata->filteropen_level4department = $l4department;
 $formdata->filteropen_level5department = $l5department;
-$formdata->filteropen_level5department = $l5department;
+$formdata->status = $status;
 
 $datasubmitted = data_submitted() ? data_submitted() : $formdata;
+
+if ($datasubmitted->filteropen_costcenterid == '_qf__force_multiselect_submission') {
+    $datasubmitted->filteropen_costcenterid=array();
+}
+
+if ($datasubmitted->filteropen_department == '_qf__force_multiselect_submission') {
+    $datasubmitted->filteropen_department=array();
+}
+
+if ($datasubmitted->filteropen_subdepartment == '_qf__force_multiselect_submission') {
+    $datasubmitted->filteropen_subdepartment=array();
+}
+
+if ($datasubmitted->filteropen_level4department == '_qf__force_multiselect_submission') {
+    $datasubmitted->filteropen_level4department=array();
+}
+
+if ($datasubmitted->filteropen_level5department == '_qf__force_multiselect_submission') {
+    $datasubmitted->filteropen_level5department=array();
+}
+
 $mform = new filters_form(new moodle_url('/local/program/index.php',array('formattype'=>$formattype)), array('filterlist'=> $thisfilters)+(array)$datasubmitted);
 $filterdata = null;     
 if ($mform->is_cancelled()) {
@@ -137,7 +159,7 @@ if ($mform->is_cancelled()) {
 }
 $mform->set_data($datasubmitted);
 
-echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
+echo '<a class="btn-link btn-sm" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
 echo  '<div class="collapse '.$show.'" id="local_courses-filter_collapse">
@@ -161,14 +183,18 @@ $organization =$department =$subdepartment =$department4level =$department5level
 
 if(!empty($datasubmitted)){
 
-    $organization = (is_array($datasubmitted->filteropen_costcenterid)) ? (!empty(array_filter($datasubmitted->filteropen_costcenterid)) ? implode(',', array_filter($datasubmitted->filteropen_costcenterid)) : '') : '';
-    $department = (is_array($datasubmitted->filteropen_department)) ? (!empty(array_filter($datasubmitted->filteropen_department)) ? implode(',', array_filter($datasubmitted->filteropen_department)) : '') : '';
-    $subdepartment = (is_array($datasubmitted->filteropen_subdepartment)) ?(!empty(array_filter($datasubmitted->filteropen_subdepartment)) ? implode(',', array_filter($datasubmitted->filteropen_subdepartment)) : ''): '';
-    $department4level = (is_array($datasubmitted->filteropen_level4department)) ? (!empty(array_filter($datasubmitted->filteropen_level4department)) ? implode(',', array_filter($datasubmitted->filteropen_level4department)) : ''): '';
-    $department5level = (is_array($datasubmitted->filteropen_level5department)) ? (!empty(array_filter($datasubmitted->filteropen_level5department)) ? implode(',', array_filter($datasubmitted->filteropen_level5department)) : ''): '';
 
-    $selectedstatus = (is_array($status)) ? (!empty(array_filter($status)) ? implode(',', array_filter($status)) : ''): '';
-    $categories = (is_array($datasubmitted->categories)) ? (!empty(array_filter($datasubmitted->categories)) ? implode(',', array_filter($datasubmitted->categories)) : ''): '';
+
+    $organization = (is_array($datasubmitted->filteropen_costcenterid)) ? (!empty(array_filter($datasubmitted->filteropen_costcenterid)) ? implode(',', array_filter($datasubmitted->filteropen_costcenterid)) : '') : (!empty($datasubmitted->filteropen_costcenterid) ? $datasubmitted->filteropen_costcenterid : '');
+    $department = (is_array($datasubmitted->filteropen_department)) ? (!empty(array_filter($datasubmitted->filteropen_department)) ? implode(',', array_filter($datasubmitted->filteropen_department)) : '') : (!empty($datasubmitted->filteropen_department) ? $datasubmitted->filteropen_department : '');
+    $subdepartment = (is_array($datasubmitted->filteropen_subdepartment)) ?(!empty(array_filter($datasubmitted->filteropen_subdepartment)) ? implode(',', array_filter($datasubmitted->filteropen_subdepartment)) : ''): (!empty($datasubmitted->filteropen_subdepartment) ? $datasubmitted->filteropen_subdepartment : '');
+    $department4level = (is_array($datasubmitted->filteropen_level4department)) ? (!empty(array_filter($datasubmitted->filteropen_level4department)) ? implode(',', array_filter($datasubmitted->filteropen_level4department)) : ''): (!empty($datasubmitted->filteropen_level4department) ? $datasubmitted->filteropen_level4department : '');
+    $department5level = (is_array($datasubmitted->filteropen_level5department)) ? (!empty(array_filter($datasubmitted->filteropen_level5department)) ? implode(',', array_filter($datasubmitted->filteropen_level5department)) : ''): (!empty($datasubmitted->filteropen_level5department) ? $datasubmitted->filteropen_level5department : '');
+
+    $selectedstatus = (is_array($status)) ? (!empty(array_filter($status)) ? implode(',', array_filter($status)) : ''): (!empty($status) ? $status : '');
+
+    $categories = (is_array($datasubmitted->categories)) ? (!empty(array_filter($datasubmitted->categories)) ? implode(',', array_filter($datasubmitted->categories)) : ''): (!empty($datasubmitted->categories) ? $datasubmitted->categories : '');
+
 }
 
 $PAGE->requires->js_call_amd('local_program/program', 'programDatatable',

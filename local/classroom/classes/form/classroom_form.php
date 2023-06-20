@@ -288,7 +288,7 @@ class classroom_form extends moodleform {
                //skill related fields---------------------------------------------------------
                $skillselect = array(0 => get_string('select_skill','local_onlineexams'));
 
-               $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$this->onlineexam->open_path);
+               $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path',$costcenterpath=$open_path);
       
                   $skillcostcentersql = "SELECT id,name FROM {local_skill}
                                       WHERE 1=1 $costcenterpathconcatsql ";
@@ -302,7 +302,7 @@ class classroom_form extends moodleform {
                   }
       
                   $mform->addElement('select',  'open_skill', get_string('open_skillonlineexam','local_onlineexams'), $skillselect);
-                  $mform->addHelpButton('open_skill', 'open_skillonlineexam', 'local_onlineexams');
+                  $mform->addHelpButton('open_skill', 'open_skillonlineexam', 'local_classroom');
                   $mform->setType('open_skill', PARAM_INT);
       
                   $levelselect = array(0 => get_string('select_level','local_onlineexams'));
@@ -316,7 +316,7 @@ class classroom_form extends moodleform {
                       $levelselect = $levelselect+$levels;
                   }
                   $mform->addElement('select',  'open_level', get_string('open_levelonlineexam','local_onlineexams'), $levelselect);
-                  $mform->addHelpButton('open_level', 'open_levelonlineexam', 'local_onlineexams');
+                  $mform->addHelpButton('open_level', 'open_levelonlineexam', 'local_classroom');
                   $mform->setType('open_level', PARAM_INT);
                //skill related fields ends here---------------------------------------------------------
 
@@ -370,7 +370,7 @@ class classroom_form extends moodleform {
                 FROM {local_classroom} AS lc 
                 JOIN {local_classroom_trainers} AS lct ON lct.classroomid = lc.id
                 JOIN {user} as u ON u.id = lct.trainerid
-                WHERE u.id IN (:trainerids) AND lc.id != :classroomid AND ((lc.startdate BETWEEN :startdate AND :enddate OR lc.enddate BETWEEN :startdate1 AND :enddate1) OR ((lc.startdate < :startdate3 AND lc.enddate > :startdate4) OR (lc.startdate < :enddate3 AND lc.enddate > :enddate4))) ", array('trainerids' => implode(',', $data['trainers']), 'classroomid' => $data['id'], 'startdate' => $data['startdate'], 'enddate' => $data['enddate'], 'startdate1' => $data['startdate'], 'enddate1' => $data['enddate'], 'startdate3' => $data['startdate'], 'startdate4' => $data['startdate'], 'enddate3' => $data['enddate'], 'enddate4' => $data['enddate']));
+                WHERE u.id IN (:trainerids) AND lc.status NOT IN (3,4) AND lc.id != :classroomid AND ((lc.startdate BETWEEN :startdate AND :enddate OR lc.enddate BETWEEN :startdate1 AND :enddate1) OR ((lc.startdate < :startdate3 AND lc.enddate > :startdate4) OR (lc.startdate < :enddate3 AND lc.enddate > :enddate4))) ", array('trainerids' => implode(',', $data['trainers']), 'classroomid' => $data['id'], 'startdate' => $data['startdate'], 'enddate' => $data['enddate'], 'startdate1' => $data['startdate'], 'enddate1' => $data['enddate'], 'startdate3' => $data['startdate'], 'startdate4' => $data['startdate'], 'enddate3' => $data['enddate'], 'enddate4' => $data['enddate']));
             // print_r($trainernames);
             if(count($trainernames) > 0)
                 $errors['trainers'] = get_string('trainersoccupiedrequired','local_classroom', implode(',', $trainernames));

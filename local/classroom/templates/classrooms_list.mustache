@@ -21,7 +21,7 @@
     {{#viewtypeCard}}
         <div class="card-wrap  row m-0 w-100">
             {{#records}}
-                <div class="{{cardClass}} col-md-6">
+                <div class="{{cardClass}}">
                     <div class="classroom_container w-100  mt-3 mb-2 {{classroomstatusclass}}">
                         <div class="w-100 d-flex classroomname_status justify-content-between">
                             <div class="classroom_name_info">
@@ -111,8 +111,8 @@
                             </div>
                             <div class="classesimgContainer col-md-5 col-12  p-0">
                                 <div class="classesimgContainer">
-                                     <a href="{{ classroomurl }}" class="d-none d-md-block">
-                                        <div style="background-image: url('{{{ classesimg }}}');" alt="{{ classname }}" title="{{ classname }}" class="classesimg courseimg_bg" ></div>
+                                     <a href="{{ classroomurl }}" class="d-md-block d-none" aria-label="second link">
+                                        <div style="background-image: url('{{{ classesimg }}}');" alt="{{ classname }}" title="{{ classname }}" class="classesimg courseimg_bg" aria-hidden="true"></div>
                                     </a>
                                     <!--<img src="{{ classesimg }}" title ="{{ classname }}" class="classesimg" />-->
                                      <!--<div class="classname_strip">

@@ -466,3 +466,5 @@ $string['onlineexam_close'] = "Onlineexam closes";
 $string['enablecourse'] = 'Are you sure, want Active Onlineexam <b>\'{$a}\'</b>?';
 $string['disablecourse'] = 'Are you sure, want In-active Onlineexam <b>\'{$a}\'</b>?';
 $string['courseconfirm'] = 'Confirm';
+$string['remove_users'] = 'Remove Selected Users';
+$string['add_users'] = 'Add Selected Users';

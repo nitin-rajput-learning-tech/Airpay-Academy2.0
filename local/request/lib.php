@@ -90,7 +90,7 @@ function local_request_leftmenunode(){
     $systemcontext =(new \local_request\lib\accesslib())::get_module_context();
     
     $requestnode = '';
-    if((has_capability('local/request:approverecord', (new \local_request\lib\accesslib())::get_module_context())) || (is_siteadmin())) {
+    if(has_capability('local/request:viewrecord',$systemcontext) || (has_capability('local/request:approverecord',  $systemcontext )) || (is_siteadmin())) {
         $requestnode .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browserequests', 'class'=>'pull-left user_nav_div browserequests'));
             $requests_url = new moodle_url('/local/request/index.php');
             $requests = html_writer::link($requests_url, '<i class="fa fa-share-square"></i><span class="user_navigation_link_text">'.get_string('left_menu_requests','local_request').'</span>',array('class'=>'user_navigation_link'));

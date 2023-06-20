@@ -881,6 +881,7 @@ class local_courses_external extends external_api {
                                   'courseurl' => new external_value(PARAM_RAW, 'courseurl',VALUE_OPTIONAL),
                                   'enrollusers' => new external_value(PARAM_RAW, 'enrollusers', VALUE_OPTIONAL),
                                   'editcourse' => new external_value(PARAM_RAW, 'editcourse', VALUE_OPTIONAL),
+                                  'visibleclass' => new external_value(PARAM_RAW, 'visibleclass', VALUE_OPTIONAL),
                                   'update_status' => new external_value(PARAM_RAW, 'update_status', VALUE_OPTIONAL),
                                   'course_class' => new external_value(PARAM_TEXT, 'course_status', VALUE_OPTIONAL),
                                   'deleteaction' => new external_value(PARAM_RAW, 'designation', VALUE_OPTIONAL),

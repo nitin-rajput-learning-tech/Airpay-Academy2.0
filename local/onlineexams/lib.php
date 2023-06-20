@@ -80,6 +80,7 @@ function local_onlineexams_output_fragment_custom_onlineexams_form($args)
             $attempts = $moduleinfo->attempts;
             $course->gradepass = $gradepass;
             $course->grademethod = $moduleinfo->grademethod;
+            $course->maxgrade = $maxgrade;
             $course->attempts = $attempts;
             $course->timeopen = $moduleinfo->timeopen;
             $course->timeclose = $moduleinfo->timeclose;
@@ -371,11 +372,11 @@ function get_listof_onlineexams($stable, $filterdata,$options)
             $format = $course->format;
 
             if (strlen($coursename) > 35) {
-                $coursenameCut = substr($coursename, 0, 35) . "...";
+                $coursenameCut = clean_text(substr($coursename, 0, 35)) . "...";
                 $onlineexamslist[$count]["coursenameCut"] = \local_costcenter\lib::strip_tags_custom($coursenameCut);
             }
             $catname = $categoryname;
-            $catnamestring = strlen($catname) > 12 ? substr($catname, 0, 12) . "..." : $catname;
+            $catnamestring = strlen($catname) > 12 ? clean_text(substr($catname, 0, 12)) . "..." : $catname;
             $displayed_names = '<span class="pl-10 ' . $course->coursetype . '">' . $course->coursetype . '</span>';
 
             $courestypes_names = array('2' => get_string('classroom', 'local_onlineexams'), '3' => get_string('elearning', 'local_onlineexams'), '4' => get_string('learningplan', 'local_onlineexams'), '5' => get_string('program', 'local_onlineexams'), '6' => get_string('certification', 'local_onlineexams'));
@@ -397,7 +398,7 @@ function get_listof_onlineexams($stable, $filterdata,$options)
                 if ($tagstring == "") {
                     $tagstring = 'N/A';
                 } else {
-                    $tagstring = strlen($tagstring) > 35 ? substr($tagstring, 0, 35) . '...' : $tagstring;
+                    $tagstring = strlen($tagstring) > 35 ? clean_text(substr($tagstring, 0, 35)) . '...' : $tagstring;
                 }
                 $tagenable = True;
             } else {
@@ -445,7 +446,7 @@ function get_listof_onlineexams($stable, $filterdata,$options)
             $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100) . "..." : $onlineexamsummary;
             // $summarystring = strlen($onlineexamsummary) > 100 ? substr($onlineexamsummary, 0, 100)."<span id='dots'>...</span><span id='more' style='display: none;'>".substr($onlineexamsummary, 100,strlen($onlineexamsummary)).'</span> <a onclick="myFunction()" id="myBtn">Read more</a>' : $onlineexamsummary;
             $onlineexamslist[$count]["onlineexamsummary"] = \local_costcenter\lib::strip_tags_custom($summarystring);
-            $onlineexamslist[$count]["fullonlineexamsummary"] = strlen($onlineexamsummary) > 100 ? $onlineexamsummary : null;
+            $onlineexamslist[$count]["fullonlineexamsummary"] = strlen($onlineexamsummary) > 100 ? clean_text($onlineexamsummary) : null;
             $onlineexamslist[$count]["format"] = $format;
 
 

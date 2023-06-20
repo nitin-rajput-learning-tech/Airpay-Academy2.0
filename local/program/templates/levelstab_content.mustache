@@ -22,7 +22,7 @@
                                         </a>
                                         {{/ caneditlevel }}
                                         {{# candeletelevel}}
-                                        <a  class="dropdown-item" href="javascript:void(0)" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deletelevel', id: {{ id }}, programid: {{ programid }}}) })(event)">
+                                        <a  class="dropdown-item" href="javascript:void(0)" onclick="(function(e){ require('local_program/program').deleteConfirm({action:'deletelevel', id: {{ id }}, levelname:'{{ levelname }}', programid: {{ programid }}}) })(event)">
                                                 <i class="fa fa-trash" aria-hidden="true" title="{{# str}} deletelevel, local_program {{/ str}}"></i>{{# str}} deletelevel, local_program {{/ str}}
                                             </a>
                                     {{/ candeletelevel}}

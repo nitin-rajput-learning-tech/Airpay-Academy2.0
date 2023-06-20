@@ -91,7 +91,6 @@ function local_assignroles_output_fragment_new_costcenterassignrole($args)
         parse_str($args->jsonformdata, $formdata);
     }
     $users = array();
-   
     $mform = new local_assignroles\form\assigncostcenterrole(null, array('costcenterid' => $costcenterid,'formtype' => $formtype,'hierarchyid' => $hierarchyid), 'post', '', null, true, $formdata);
     $mform->set_data($formdata);
     if (!empty($args->jsonformdata) && strlen($args->jsonformdata)>2) {
@@ -338,6 +337,7 @@ function local_assignroles_masterinfo(){
         $templatedata['count'] = $trainer;
         $templatedata['link'] = '';
         $templatedata['stringname'] = get_string('trainer','block_masterinfo');
+        $templatedata['icon'] = '<i class="fa fa-user-circle" aria-hidden="true"></i>';
 
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }

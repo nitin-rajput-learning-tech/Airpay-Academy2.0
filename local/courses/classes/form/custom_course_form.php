@@ -352,7 +352,7 @@ class custom_course_form extends moodleform {
              array());
             $mform->addHelpButton('startdate', 'startdate');
 		
-			$mform->addElement('date_time_selector', 'enddate', get_string('enddate','local_courses'), array('optional' => false));
+			$mform->addElement('date_time_selector', 'enddate', get_string('enddate','local_courses'), array('optional' => true));
             $mform->addHelpButton('enddate', 'enddate');
 
             $certificate_plugin_exist = $core_component::get_plugin_directory('tool', 'certificate');
@@ -444,7 +444,9 @@ class custom_course_form extends moodleform {
                 $errors['enddate'] = get_string('nosameenddate', 'local_courses');
             }
         }
-
+        if (empty(trim($data['fullname']))&& $data['form_status'] == 0) {
+            $errors['fullname'] = get_string('missingfullname','local_courses');
+        }
         // if (isset($data['category']) && $data['form_status'] == 0){
         //     if(empty($data['category'])){
         //         $errors['category'] = get_string('err_category', 'local_courses');

@@ -81,9 +81,11 @@ if(!($DB->record_exists_sql($usersql, $paramsuser) || $DB->record_exists_sql($su
 
 if ($evaluation->instance == 0) {
   if($evaluation->evaluationmode =='SP'){
-    $PAGE->navbar->add(get_string('le_myteam', 'local_evaluation'), new moodle_url('/local/users/team.php'));
+    $PAGE->navbar->add(get_string('le_myteam', 'local_evaluation'), new moodle_url('/local/myteam/team.php'));
   }else{
+    if(is_siteadmin() || has_capability('local/evaluation:addinstance', $context)){
     $PAGE->navbar->add(get_string('manageevaluation', 'local_evaluation'), new moodle_url('index.php'));
+  }
   }
 } else {
   if ($evaluation->plugin === "classroom")
@@ -117,8 +119,10 @@ if (!$evaluationcompletion->is_open()) {
   } elseif (empty($evaluation->timeopen) AND !empty($evaluation->timeclose)) {
     $dates = \local_costcenter\lib::get_userdate('d/m/Y H:i', $evaluation->timeclose);
     echo $OUTPUT->notification(get_string('evaluation_is_not_open_closed_on', 'local_evaluation'). ' <b>'.$dates.'</b>');
-  }    
+  }  
+  if(is_siteadmin() || has_capability('local/evaluation:addinstance', $context)){  
   echo $OUTPUT->continue_button($backurl);
+  }
   echo $OUTPUT->box_end();
   echo $OUTPUT->footer();
   exit;
@@ -133,7 +137,7 @@ if (!$evaluationcompletion->is_empty() && $cansubmit) {
   // Process the page via the form.
   $urltogo = $evaluationcompletion->process_page($gopage, $gopreviouspage,$classid,$teamuserid);
   if ($urltogo !== null) {
-      redirect($urltogo);
+      redirect(new moodle_url('/local/evaluation/userdashboard.php?tab=enrolled'));
   }
 }
 
@@ -145,7 +149,10 @@ if ($evaluationcompletion->is_empty()) {
   echo $OUTPUT->box_start('generalbox boxaligncenter');
   echo $OUTPUT->notification(get_string('no_items_available_yet', 'local_evaluation'));
   $backurl = evaluation_return_url($evaluation->plugin, $evaluation);  
-  echo $OUTPUT->continue_button($backurl);
+  if(is_siteadmin() || has_capability('local/evaluation:addinstance', $context)){
+    echo $OUTPUT->continue_button($backurl);
+    }
+  //echo $OUTPUT->continue_button($backurl);
   echo $OUTPUT->box_end();
 } else if ($cansubmit) {
   if ($evaluationcompletion->just_completed()) {
@@ -165,7 +172,10 @@ if ($evaluationcompletion->is_empty()) {
     if ($evaluation->site_after_submit) {
         $url = evaluation_encode_target_url($evaluation->site_after_submit);
     } 
-    echo $OUTPUT->continue_button($url);
+    if(is_siteadmin() || has_capability('local/evaluation:addinstance', $context)){
+      echo $OUTPUT->continue_button($backurl);
+      }
+    //echo $OUTPUT->continue_button($url);
   } else {
     // Display the form with the questions.
     if((!$DB->record_exists('local_evaluation_completed',  array ('userid' => $teamuserid, 'evaluation' => $id)))){
@@ -180,7 +190,9 @@ if ($evaluationcompletion->is_empty()) {
   echo $OUTPUT->box_start('generalbox boxaligncenter');
   echo $OUTPUT->notification(get_string('this_evaluation_is_already_submitted', 'local_evaluation'));
   $backurl = evaluation_return_url($evaluation->plugin, $evaluation);
+  if(is_siteadmin() || has_capability('local/evaluation:addinstance', $context)){
   echo $OUTPUT->continue_button($backurl);
+  }
   echo $OUTPUT->box_end();
 }
 

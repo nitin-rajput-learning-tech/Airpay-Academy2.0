@@ -955,6 +955,7 @@ body#page-local-courses-userdashboard .card_list_view {
     width: 100%;
     max-width: 220px;
     padding: 15px ;
+    flex-shrink: 0;
 }
 #page-local-forum-index .course_container .coursecontent{
     padding: 10px;
@@ -1007,4 +1008,9 @@ body#page-local-courses-userdashboard .card_list_view {
 }
 .admin_default_menu .action-menu-trigger .dropdown .dropdown-item:hover a{
     text-decoration: none;
+}
+
+
+#page-local-forum-forumenrol .dual_select option {
+    padding: 5px;
 }

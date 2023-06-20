@@ -159,7 +159,8 @@ define([
             },
             {
                 key: 'deleteallconfirm',
-                component: 'local_program'
+                component: 'local_program',
+                param: args.levelname,
             },
             {
                 key: 'yes'

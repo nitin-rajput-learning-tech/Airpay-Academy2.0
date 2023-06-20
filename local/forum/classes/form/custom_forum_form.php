@@ -214,7 +214,7 @@ class custom_forum_form extends moodleform {
                 $shortnamestatic = 'fo';
                 $shortname = array();
                 $shortname[] = $mform->createElement('hidden',  'concatshortname', $shortnamestatic);
-                $shortname[] = $mform->createElement('static',  'shortnamestatic', '', '<span class="shortnamestatic">' . $shortnamestatic . '</span>_');
+                $shortname[] = $mform->createElement('static',  'shortnamestatic', '',$shortnamestatic . '_');
                 $shortname[] = $mform->createElement('text', 'shortname', 'local_costcenter', 'maxlength="100" size="20"');
                 $mform->addGroup($shortname,  'groupshortname',  get_string('shortname', 'local_costcenter'),  array(''),  false);
                 $mform->addRule('groupshortname', get_string('missingshortname', 'local_forums'), 'required', null, 'client');
@@ -489,6 +489,9 @@ class custom_forum_form extends moodleform {
 
         if (empty(trim($data['shortname'])) && $data['id'] == 0) {
             $errors['groupshortname'] = get_string('shortnamecannotbeempty', 'local_costcenter');
+        }
+        if (empty(trim($data['fullname']))&& $data['form_status'] == 0) {
+            $errors['fullname'] = get_string('missingfullname','local_forum');
         }
 		 if (isset($data['duedate']) && $data['duedate']
                 && isset($data['cutoffdate']) && $data['cutoffdate']) {

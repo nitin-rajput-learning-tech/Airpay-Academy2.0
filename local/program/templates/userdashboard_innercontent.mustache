@@ -18,20 +18,21 @@
 {{# program_view_count}}
 <div class="userdashboard_content userdashboard_ctype_program d-flex flex-row flex-{{# enableflow}}no{{/enableflow}}wrap">
     {{#moduledetails}}
-    <div class="col-sm-6 col-12 pull-left tabs_cmn_class courses_inprogress_slide ctype_program" data-index="{{index}}">
-        <div class="bootcamp_container w-full pull-left" >
-            <div class="w-full pull-left pt-1 pb-1 pl-15 pr-15 programcontainer_top">
-                <div class="w-full pull-left">
-                    <div class="classesimgContainer pull-left p-0">
-                        <span class="bootcampicon_container"><img src="{{ ProgramIcon }}" class="bootcampicon"></span>
-                    </div>
-                    <div class="w-full coursecontent">
-                        
-                        <div class="mb-10">
+    <div class="col-sm-6 col-12 tabs_cmn_class courses_inprogress_slide ctype_program" data-index="{{index}}">
+        <div class="bootcamp_container w-full p-0" >
+            <div class="w-full programcontainer_top p-3">
+                <div class="w-full">
+                    <div class="d-flex align-items-center">
+                        <div class="classesimgContainer p-0">
+                            <span class="bootcampicon_container"><img src="{{ ProgramIcon }}" alt="bootcamp_img" class="bootcampicon"></span>
+                        </div>
+                        <div>
                             <a href="{{{ProgramUrl}}}" title="{{{ProgramFullname}}}" class="bootcamp_name"> {{{DisplayProgramFullname}}}</a>
                         </div>
-                        <div class="desc coursedesc w-full pull-left">{{{ProgramDescription}}}</div>
-                        <div class="pull-right mt-15 {{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
+                    </div>
+                    <div class="w-full coursecontent">
+                        <div class="desc coursedesc w-full">{{{ProgramDescription}}}</div>
+                        <div class="{{#rating_element}}w-full d-flex align-items-center justify-content-between flex-row flex-wrap{{/rating_element}}">
                             <div class="pull-left">{{{rating_element}}}</div>
                             <a href="{{{ProgramUrl}}}">
                                  <button class="btn btn-primary launch_btn">{{#str}}launch, block_userdashboard{{/str}}</button>

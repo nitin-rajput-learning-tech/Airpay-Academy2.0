@@ -79,7 +79,7 @@ $string['nomination_enddate'] = 'Nomination End date';
 $string['type'] = 'Type';
 $string['select_category'] = '--Select Category--';
 $string['deleteconfirm'] = 'Are you sure you want to delete this "<b>{$a}</b>" program?';
-$string['deleteallconfirm'] = 'Are you sure you want to delete?';
+$string['deleteallconfirm'] = 'Are you sure you want to delete this "<b>{$a}</b>" level?';
 $string['deletecourseconfirm'] = 'Are you sure you want to un-assign?';
 $string['createprogram'] = '<i class="fa fa-graduation-cap" aria-hidden="true"></i> Create Program <div class="popupstring">Here you will create programs based upon the Stream </div>';
 $string['updateprogram']= '<i class="fa fa-graduation-cap" aria-hidden="true"></i> Update program <div class="popupstring">Here you will update programs based upon the Stream </div>';
@@ -270,7 +270,7 @@ $string['program_allcoursescompletion'] = 'Program is complete when ALL courses 
 $string['program_completion_settings'] = 'Program completion settings';
 $string['sessiontracking'] = 'Program completion sessions requirements';
 $string['session_completion'] = 'Sessions completion';
-$string['coursetracking'] = 'Program completion courses requirements';
+$string['coursetracking'] = 'Level completion courses requirements';
 $string['course_completion'] = 'Courses completion';
 $string['program_donotsessioncompletion'] = 'Do not indicate sessions program completion';
 $string['program_donotcoursecompletion'] = 'Do not indicate courses program completion';
@@ -322,15 +322,20 @@ $string['target_audience_tab'] = 'Target Audience';
 $string['requested_users_tab'] = 'Requested Users';
 $string['program_completion_tab_info'] = 'No program criteria found.';
 
-$string['program_completion_tab_info_alllevels'] = 'This program will completed when the below listed <b> all levels </b> should be completed.';
+$string['program_completion_tab_info_levelsall'] = 'This program will completed when the below listed <b> all levels </b> should be completed.';
 
-$string['program_completion_tab_info_anylevels'] = 'This program will completed when the below listed <b> any levels </b> should be completed.';
+$string['program_completion_tab_info_alllevels'] = 'This program will completed when this "<b> {$a} </b>" listed <b> all levels </b> should be completed.';
+
+$string['program_completion_tab_info_anylevels'] = 'This program will completed when this "<b> {$a} </b>" listed <b> any levels </b> should be completed.';
 
 $string['program_level_completion_tab_info'] = 'No level criteria found.';
 
-$string['program_level_completion_tab_info_allcourses'] = 'This level will completed when the below listed <b> all courses </b> should be completed.';
+$string['program_level_completion_tab_info_coursesall'] = 'This program will completed when the below listed <b> all courses </b> should be completed.';
 
-$string['program_level_completion_tab_info_anycourses'] = 'This level will completed when the below listed <b> any courses </b> should be completed.';
+$string['program_level_completion_tab_info_allcourses'] = 'This level will completed when this "<b> {$a} </b>" listed <b> all courses </b> should be completed.';
+
+$string['program_level_completion_tab_info_anycourses'] = 'This level will completed when this "<b> {$a} </b>" listed <b> any courses </b> should be completed.';
+
 $string['audience_department'] = '<p>This program will eligible below-listed target audience.</p>
 <p> <b>Bussiness Units :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';
@@ -592,3 +597,4 @@ $string['programskill'] = 'Skill';
 $string['programlevel'] = 'Skill Level';
 $string['no_courses_assigned'] = 'No courses assigned';
 $string['start_course'] = 'Start course';
+$string['unenrol'] = 'Unenrol';

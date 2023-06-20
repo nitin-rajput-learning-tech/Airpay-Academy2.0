@@ -146,7 +146,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
         $mform->addElement('hidden', 'usermodified', $USER->id);
         $mform->setType('usermodified', PARAM_RAW);
 
-        if($formtype == 'organization'){
+        if($formtype == 'organization' || $formtype =='department'){
             $theme_epsilon_plugin_exist = $corecomponent::get_plugin_directory('theme', 'epsilon');
             if(!empty($theme_epsilon_plugin_exist)){ 
 
@@ -166,16 +166,17 @@ class organization_form extends moodleform { /*costcenter creation form*/
             
 
          //brand_color
-           $mform->addElement('text', 'brand_color', 'Primary Color', 'local_costcenter');
+           $mform->addElement('html','<div class="brandcolor">');
+           $mform->addElement('colorpicker', 'brand_color', 'Primary Color', 'local_costcenter');
            $mform->setType('brand_color', PARAM_RAW);
 
          //button color
-           $mform->addElement('text', 'button_color','Secondary Color', 'local_costcenter');
+           $mform->addElement('colorpicker', 'button_color','Secondary Color', 'local_costcenter');
            $mform->setType('button_color', PARAM_RAW);
         //hover_color
-           $mform->addElement('text', 'hover_color','Hover_color', 'local_costcenter');
+           $mform->addElement('colorpicker', 'hover_color','Hover_color', 'local_costcenter');
            $mform->setType('hover_color', PARAM_RAW);
-
+           $mform->addElement('html','</div>');
             }
         }
         $submit = ($id > 0) ? get_string('update_costcenter', 'local_costcenter') : get_string('create', 'local_costcenter');
@@ -206,7 +207,7 @@ class organization_form extends moodleform { /*costcenter creation form*/
             $costcenter = $DB->get_record('local_costcenter', array('shortname' => $shortname), '*', IGNORE_MULTIPLE);
             if (empty($data['id']) || $costcenter->id != $data['id']) {
                 if($data['parentid'] == 0){
-                    $errors['shortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
+                    $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
                 }else{
                     $errors['groupshortname'] = get_string('shortnametakenlp', 'local_costcenter', $costcenter->shortname);
                 }

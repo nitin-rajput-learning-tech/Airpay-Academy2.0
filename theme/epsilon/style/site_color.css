@@ -178,6 +178,7 @@ div#continue button > a, body button > a {
 } */
 .dataTables_wrapper .dataTables_paginate .paginate_button.current,.dataTables_wrapper .dataTables_paginate .paginate_button:focus,
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover,
+.pagination .ng-scope.active>a,
 .pagination .page-item.active .page-link, .page-item.active .page-link:focus, .page-item.active .page-link:hover {
     background-color: var(--buttonbgcolor) !important;
     color:var(--btntextcolor) !important;
@@ -465,7 +466,7 @@ body#page-course-view-tabtopics .course_stat_label{color: var(--btntextcolor);}*
 }
 .quick_nav .quick_nav_list .anch_span i.fa{color: var(--btntextcolor);opacity: 0.3;}
 .quick_nav_list .progress-chart-container .progress-doughnut .progress-indicator svg .circle{stroke: var(--sitehighlight);}
-.quick_nav .quick_nav_list .span_str{font-weight: inherit;font-size: inherit;background: transparent;text-shadow: none;color: #fff;}
+.quick_nav .quick_nav_list .span_str{background: transparent;text-shadow: none;color: #fff;}
 .quick_nav_list .dashboard_count_list .dashbaord_count_item .dashboard_count_string,
 .block.block_quick_navigation .quick_nav .quick_nav_list,
 .block.block_quick_navigation .quick_navigation_detail a, .block.block_quick_navigation .quick_nav .quick_nav_list .span_createlink a{color: #fff;}

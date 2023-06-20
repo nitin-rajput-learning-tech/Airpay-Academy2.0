@@ -44,14 +44,14 @@ $functions = array(
         'ajax' => true,
         'type' => 'write'
     ),
-    'local_onlineexams_form_option_selector' => array(
-        'classname' => 'local_onlineexams_external',
-        'methodname' => 'global_filters_form_option_selector',
-        'classpath' => 'local/onlineexams/classes/external.php',
-        'description' => 'All global filters forms event handling',
-        'ajax' => true,
-        'type' => 'read',
-    ), 
+    // 'local_onlineexams_form_option_selector' => array(
+    //     'classname' => 'local_onlineexams_external',
+    //     'methodname' => 'global_filters_form_option_selector',
+    //     'classpath' => 'local/onlineexams/classes/external.php',
+    //     'description' => 'All global filters forms event handling',
+    //     'ajax' => true,
+    //     'type' => 'read',
+    // ),
     'local_onlineexams_onlineexams_view' => array(
         'classname' => 'local_onlineexams_external',
         'methodname' => 'onlineexams_view',
@@ -82,6 +82,15 @@ $functions = array(
         'methodname'   => 'data_for_onlineexams_paginated',
         'classpath'    => 'local/onlineexams/classes/external.php',
         'description'  => 'Load the data for the elearning onlineexams in Userdashboard.',
+        'type'         => 'read',
+        'capabilities' => '',
+        'ajax'         => true,
+    ),
+    'local_onlineexams_get_users_onlineexams_information' => array(
+        'classname'    => 'local_onlineexams_external',
+        'methodname'   => 'get_users_onlineexams_information',
+        'classpath'    => 'local/onlineexams/classes/external.php',
+        'description'  => 'Load the data for the user with status in Userdashboard.',
         'type'         => 'read',
         'capabilities' => '',
         'ajax'         => true,

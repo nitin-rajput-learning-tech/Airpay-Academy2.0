@@ -81,6 +81,7 @@ class program_completion_form extends moodleform {
                 'data-contextid' => $categorycontext->id,
             );
             $mform->addElement('autocomplete', 'levelids', get_string('level_completion', 'local_program'), $levels,$options);
+            $mform->hideIf('levelids', 'leveltracking', 'eq','ALL');
         }
         $mform->disable_form_change_checker();
     }

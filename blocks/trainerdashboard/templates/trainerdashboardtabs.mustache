@@ -38,8 +38,8 @@
                         {{> block_trainerdashboard/trainerdashboardfilters}}
                     </div>
                     <div class="global_filter_structure">
-                    <label>{{# str}}search{{/ str}} : </label>
-                    <input id="global_filter_{{ type }}" class="global filter" type="text" name="search_query">
+                    <label for="global_filter_{{ type }}">{{# str}}search{{/ str}} : </label>
+                    <input id="global_filter_{{ type }}" class="global filter" type="text" name="search_query" aria-labelledby="global_filter_{{ type }}">
                     </div> 
                      <div id="{{ type }}" data-region="{{ type }}-preview-container" class="viewtrainerdashboards">
                           <div data-region="{{ type }}-count-container"></div>

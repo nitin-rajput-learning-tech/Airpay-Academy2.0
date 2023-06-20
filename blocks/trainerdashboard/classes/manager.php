@@ -104,7 +104,10 @@ class block_trainerdashboard_manager {
 
         $time=time();
         //$sql .= " AND timefinish < $time";
-        $sql .= " AND timefinish < DATEADD(MONTH,-6,GETDATE()) ";
+        //$sql .= " AND cs.timefinish < date_sub(now(), interval 6 month)  ";
+        //$sql .= " FROM_UNIXTIME(cs.timefinish,'%Y-%m-%d') > DATE_SUB(CURDATE(), INTERVAL 6 Month) ";
+        $enddate = strtotime("-6 months", strtotime(date('Y-m-d')));
+        $sql .= " AND cs.timefinish BETWEEN $enddate AND " .time(). " ";
 
         if (!empty($stable->search_query)) {
             $fields = array(
@@ -224,7 +227,10 @@ class block_trainerdashboard_manager {
 
         $time=time();
         //$sql .= " AND timefinish > $time";
-        $sql .= " AND timefinish > DATEADD(MONTH,+6,GETDATE()) ";
+        //$sql .= " AND cs.timestart > date_sub(now(), interval 6 month) ";
+       //$sql .= " AND FROM_UNIXTIME(cs.timestart,'%Y-%m-%d') BETWEEN CURDATE() AND  DATE_ADD(CURDATE(), interval 6 month) ";
+        $enddate = strtotime("+6 months", strtotime(date('Y-m-d')));
+        $sql .= " AND cs.timestart BETWEEN " .time(). " AND $enddate  ";
 
         if (!empty($stable->search_query)) {
             $fields = array(
@@ -242,9 +248,10 @@ class block_trainerdashboard_manager {
             $sql.= " AND u.id = :trainerid ";
             $params['trainerid'] = $USER->id;
         }
-        
+ 
         try {
             $upcomingtrainingscount = $DB->count_records_sql($countsql . $sql, $params);
+
             if ($stable->thead == false) {
                 $sql .= " ORDER BY cs.timestart ASC";
                 $upcomingtrainings = $DB->get_records_sql($fromsql . $sql, $params, $stable->start, $stable->length);

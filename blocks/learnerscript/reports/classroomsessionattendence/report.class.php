@@ -38,7 +38,7 @@ class report_classroomsessionattendence extends reportbase implements report {
         $this->columns = array('classroomfield'=>['classroomfield'],
                                 'userfield'=>['userfield'],
                                 'classroomsessionattendencecolumns'=>['sessionname','trainer','attendendencestatus','timestart','timefinish']);
-        $this->filters = array('user','trainers','classrooms');
+        $this->filters = array('user');
         $this->basicparams = array(['name' => 'classrooms']);
         $this->defaultcolumn = 'rowNumber';
     }
@@ -75,14 +75,18 @@ class report_classroomsessionattendence extends reportbase implements report {
     }
 
     function where() {
+        global $USER;
         $this->sql .= " WHERE 1=1 AND u.deleted = 0 AND u.suspended = 0 and u.confirmed = 1  ";
         $costcenterpathconcatsql = (new \local_classroom\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lc.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
         } else  {
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+            $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
             $this->sql .= $costcenterpathconcatsql;
-        }
-
+        }        
+        
         parent::where();
     }
 
@@ -96,7 +100,7 @@ class report_classroomsessionattendence extends reportbase implements report {
     }
 
     function filters() {
-        if (!empty($this->params['filter_classrooms']) && $this->params['filter_classrooms'] > 0) {
+       /*  if (!empty($this->params['filter_classrooms']) && $this->params['filter_classrooms'] > 0) {
             $this->sql .= " AND lc.id = :classroomid ";
             $this->params['classroomid'] = $this->params['filter_classrooms'];
         } else {
@@ -105,17 +109,17 @@ class report_classroomsessionattendence extends reportbase implements report {
             }else{
                 $this->sql .= "";
             }
-        }
+        } */
 
         if (!empty($this->params['filter_user']) && $this->params['filter_user'] > 0) {
             $this->sql .= " AND u.id = :userid ";
             $this->params['userid'] = $this->params['filter_user'];
         }
 
-        if (!empty($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
+        /* if (!empty($this->params['filter_trainers']) && $this->params['filter_trainers'] > 0) {
             $this->sql .= " AND lcs.trainerid = :userid ";
             $this->params['userid'] = $this->params['filter_trainers'];
-        }
+        } */
 
         if($this->ls_startdate > 0 && $this->ls_enddate > 0){
             $this->sql .= " AND lc.startdate > :report_startdate ";

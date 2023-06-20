@@ -31,6 +31,7 @@ use html_table;
 use html_writer;
 use core_component;
 use \local_courses\action\insert as insert;
+use local_classroom\classroom as clroom;
 
 require_once($CFG->dirroot . '/local/program/lib.php');
 if (file_exists($CFG->dirroot . '/local/lib.php')) {
@@ -273,7 +274,7 @@ class program {
         }
 
         if(!isset($validateddata->coursetracking) || empty($validateddata->coursetracking)){
-          $completions->coursetracking = 'AND';
+          $completions->coursetracking = 'ALL';
         }else{
           $completions->coursetracking = $validateddata->coursetracking;
         }
@@ -400,7 +401,6 @@ class program {
             }else{
 
                 $concatsql .= (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='bc.open_path');
-
             }
         } else if (!is_siteadmin()) {
             $myprograms = $DB->get_records_menu('local_program_users',
@@ -408,14 +408,6 @@ class program {
             if (isset($stable->programid) && !empty($stable->programid)) {
                 $userenrolstatus = $DB->record_exists('local_program_users',
                     array('programid' => $stable->programid, 'userid' => $USER->id));
-                $status = $DB->get_field('local_program', 'status',
-                    array('id' => $stable->programid));
-
-                   $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
-                    $programsql = "SELECT lp.*
-                                        FROM {local_program} AS lp WHERE lp.id = $stable->programid $costcenterpathconcatsql ";
-
-                    $program_costcenter = $DB->get_record_sql($programsql);
 
                 if ($userenrolstatus) {
 
@@ -427,7 +419,17 @@ class program {
                     }
                 }else {
 
-                    return compact('programs', 'programscount');
+
+                    $costcenterpathconcatsql = (new \local_program\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='lp.open_path');
+                    $programsql = "SELECT lp.*
+                                        FROM {local_program} AS lp WHERE lp.id = $stable->programid $costcenterpathconcatsql ";
+
+                    $program_costcenter = $DB->get_record_sql($programsql);
+
+                    if (!$program_costcenter) {
+
+                        return compact('programs', 'programscount');
+                    }
 
                 }
             } else {
@@ -454,9 +456,9 @@ class program {
 
           $concatsql .= " AND bc.id IN ($program) ";
         }
-        if(!empty($stable->costcenterid)){
+        if(!empty($stable->costcenterid) || !empty($stable->filteropen_costcenterid)){
 
-            $organizations = explode(',', $stable->costcenterid);
+            $organizations = !empty($stable->costcenterid) ? explode(',', $stable->costcenterid) : (!empty($stable->filteropen_costcenterid) ?  (array)$stable->filteropen_costcenterid : array());
             $orgsql = [];
             foreach($organizations AS $organisation){
                 $orgsql[] = " concat('/',bc.open_path,'/') LIKE :organisationparam_{$organisation}";
@@ -526,7 +528,11 @@ class program {
             $concatsql .= " AND bc.open_categoryid $filtercategoriessql";
         }
         if(!empty($status)){
-          $filterstatus = explode(',',$status);
+            if(is_array($status)){
+                 $filterstatus = $status;
+            }else{
+                 $filterstatus = explode(',',$status);
+            }
           if(!(in_array('active',$filterstatus) && in_array('inactive',$filterstatus))){
               if(in_array('active' ,$filterstatus)){
                   $concatsql .= " AND bc.visible = 1 ";
@@ -550,7 +556,6 @@ class program {
         $sql = " FROM {local_program} AS bc
                 WHERE 1 = 1 ";
         $sql .= $concatsql;
-
 
         if (isset($stable->programid) && $stable->programid > 0) {
 
@@ -826,7 +831,7 @@ class program {
             $event->add_record_snapshot('local_program_level_courses', $programcourse);
             $event->trigger();
 
-            $this->manage_program_level_completions($courses->programid, $courses->levelid);
+
         }
         $totalcourses = $DB->count_records('local_program_level_courses',
             array('programid' => $courses->programid, 'levelid' => $courses->levelid));
@@ -894,6 +899,32 @@ class program {
                 $programcoursesssql .= " ORDER BY bclevelcourseid ASC";
             }
             $programlevelcourses = $DB->get_records_sql($programcoursesssql,
+                array('programid' => $programid));
+        }
+        return $programlevelcourses;
+    }
+        /**
+     * [program_courses description]
+     * @method program_courses
+     * @param  [type]            $programid [description]
+     * @return [type]                         [description]
+     */
+    public function program_level_courses_count($programid, $levelid, $userview = false) {
+        global $DB, $USER;
+        $categorycontext = (new \local_program\lib\accesslib())::get_module_context($programid);
+        if ($levelid > 0) {
+            $params = array();
+            $programcourses = array();
+
+            $programcoursesssql = "SELECT COUNT(bclc.id)
+                                      FROM {local_program_level_courses} bclc
+                                      JOIN {course} c ON c.id = bclc.courseid
+                                     WHERE bclc.programid = :programid
+                                     AND bclc.levelid = {$levelid} ";
+            if ($userview && !is_siteadmin() && !has_capability('local/program:createprogram', $categorycontext)) {
+                $programcoursesssql .= " ORDER BY bclevelcourseid ASC";
+            }
+            $programlevelcourses = $DB->count_records_sql($programcoursesssql,
                 array('programid' => $programid));
         }
         return $programlevelcourses;
@@ -1008,6 +1039,9 @@ class program {
         $programusers = $DB->get_records_sql($programuserssql);
 
 
+        $program_completiondata = $DB->get_record('local_program_completion',
+            array('programid' => $programid));
+
         $programcoursessql = "SELECT c.*
                                   FROM {course} AS c
                                   JOIN {enrol} AS en on en.courseid=c.id
@@ -1043,13 +1077,25 @@ class program {
                         $programuser->completion_status = 0;
                     }
                 }else{
+
                     $programuser->completion_status = 0;
 
-                    if ($program_completiondata->coursetracking=="AND") {
+                    if (count($usercousrecompletionstatus) == count($programcourses) &&
+                        $program_completiondata->coursetracking == "AND") {
+
+                        $programuser->completion_status = 1;
+
+                    }elseif ($program_completiondata->coursetracking=="AND") {
+
                         $programuser->completion_status = 0;
                     }
 
-                    if($program_completiondata->coursetracking == "OR") {
+                   if (count($usercousrecompletionstatus) <= count($programcourses) &&
+                    count($usercousrecompletionstatus) !=0 && $program_completiondata->coursetracking == "OR") {
+
+                        $programuser->completion_status = 1;
+
+                    }else if($program_completiondata->coursetracking == "OR") {
                         $programuser->completion_status = 0;
                     }
                 }
@@ -1105,9 +1151,9 @@ class program {
         $sql .= " FROM {user} AS u
                  WHERE  u.id > 2 AND u.suspended = :suspended
                                      AND u.deleted = :deleted ";
-        if ($lastitem != 0) {
-            $sql.=" AND u.id > $lastitem";
-        }
+      /*   if ($lastitem != 0) {
+            $sql.=" AND u.id > $lastitem ";
+        } */
 
         if(is_siteadmin()){
 
@@ -1259,7 +1305,7 @@ class program {
                                        FROM {local_program_trainers} AS lcu
                                        WHERE lcu.programid = $programid)";
 
-        $order = ' ORDER BY u.id ASC ';
+        $order = ' ORDER BY u.firstname ASC ';
         if ($perpage != -1) {
             // $order .= "LIMIT $perpage";
           $limitnumber = $perpage;
@@ -1268,7 +1314,7 @@ class program {
         }
 
         if ($total == 0) {
-            $availableusers = $DB->get_records_sql_menu($sql . $order, $params, 0, $limitnumber);
+            $availableusers = $DB->get_records_sql_menu($sql . $order, $params, $lastitem, $limitnumber);
         } else {
             $availableusers = $DB->count_records_sql($sql, $params);
         }
@@ -1647,9 +1693,28 @@ class program {
         $currenttime = time();
         $countSql = "SELECT count(lc.id)
             FROM {local_classroom_courses} AS lcc
-            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4) ";
+            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1) ";
 
         $params=array('courseid' => $courseid, 'currenttime1' => $currenttime);
+
+        $countSql.=$this->get_classroom_ta_query('lc');
+
+        return $DB->count_records_sql($countSql,$params);
+    }
+    public function get_enrolledclassrooms_count($courseid){
+
+        global $DB, $USER;
+
+        $currenttime = time();
+
+        $countSql = "SELECT count(lc.id)
+                    FROM {local_classroom_courses} AS lcc
+                    JOIN {local_classroom} AS lc On lcc.classroomid = lc.id
+                    JOIN {local_classroom_users} AS lcu ON lcu.classroomid = lc.id
+                    JOIN {user} AS u ON u.id = lcu.userid
+                    WHERE lcc.courseid = :courseid AND lc.status in (1,4) AND lcu.userid=:userid AND lc.startdate <= :currenttime1";
+
+        $params=array('courseid' => $courseid,'userid'=>$USER->id ,'currenttime1' => $currenttime);
 
         $countSql.=$this->get_classroom_ta_query('lc');
 
@@ -1663,11 +1728,28 @@ class program {
             JOIN {local_classroom} AS lc On lcc.classroomid = lc.id
             LEFT JOIN {local_classroom_trainers} AS lct ON lct.classroomid = lc.id
             LEFT JOIN {user} AS u ON u.id = lct.trainerid
-            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1,3,4) ";
+            WHERE lcc.courseid = :courseid AND lc.startdate > :currenttime1 AND lc.status in (1) ";
         $courseSql .= $this->get_classroom_ta_query('lc');
         $courseSql .= " GROUP BY lc.id ";
 
-        return $DB->get_records_sql($courseSql, array('courseid' => $courseid, 'currenttime1' => $currenttime, 'currenttime2' => $currenttime), $offset, $limit);
+        return $DB->get_records_sql($courseSql, array('courseid' => $courseid, 'currenttime1' => $currenttime), $offset, $limit);
+    }
+    public function get_enrolledclassrooms_content($courseid, $offset = 0, $limit = 10){
+
+        global $DB, $USER;
+
+        $currenttime = time();
+
+        $courseSql = "SELECT lc.*, group_concat(concat(u.firstname,' ', u.lastname)) as learners
+            FROM {local_classroom_courses} AS lcc
+            JOIN {local_classroom} AS lc On lcc.classroomid = lc.id
+            JOIN {local_classroom_users} AS lcu ON lcu.classroomid = lc.id
+            JOIN {user} AS u ON u.id = lcu.userid
+            WHERE lcc.courseid = :courseid AND lc.status in (1,4) AND lcu.userid=:userid AND lc.startdate <= :currenttime1";
+        $courseSql .= $this->get_classroom_ta_query('lc');
+        $courseSql .= " GROUP BY lc.id ";
+
+        return $DB->get_records_sql($courseSql, array('courseid' => $courseid,'userid'=>$USER->id, 'currenttime1' => $currenttime), $offset, $limit);
     }
     public function get_classroom_ta_query($prefix = 'lc'){
         global $USER, $DB;
@@ -1757,7 +1839,6 @@ class program {
 
         $categorycontext = (new \local_program\lib\accesslib())::get_module_context();
 
-
         $classrooms = $this->get_classrooms_content($courseid, $requestData['start'], $requestData['length']);
         $totalclassrooms = $this->get_classrooms_count($courseid);
         $data = [];
@@ -1782,13 +1863,61 @@ class program {
             $info[] = userdate($classroom->enddate);
 
             $enrolled = $classroomsearch->get_the_enrollflag($classroom->id);
-            if($enrolled || has_capability('moodle/course:view', $categorycontext) || is_siteadmin()){
-                $info[] = \html_writer::link(new \moodle_url('/local/classroom/view.php', array('cid' => $classroom->id)), get_string('view'), array('class' => 'btn btn-primary'));
+
+
+            $classroom_capacity_check=(new clroom)->classroom_capacity_check( $classroom->id);
+
+            if($classroom_capacity_check && !$enrolled &&  $classroom->allow_waitinglistusers==0){
+
+                $info[] = get_string('alert_capacity_check', 'local_classroom');
+
             }else{
-                $info[] = $classroomsearch->get_enrollbtn($classroom);
+
+                if($enrolled || has_capability('moodle/course:view', $categorycontext) || is_siteadmin()){
+
+                    $info[] = \html_writer::link(new \moodle_url('/local/classroom/view.php', array('cid' => $classroom->id)), get_string('view'), array('class' => 'btn btn-primary'));
+                }else{
+
+                    $info[] = $classroomsearch->get_enrollbtn($classroom);
+
+                }
+
             }
+
             $data[] = $info;
         }
+
+        $enrolledclassrooms = $this->get_enrolledclassrooms_content($courseid, $requestData['start'], $requestData['length']);
+        $totalclassrooms = $totalclassrooms+$this->get_enrolledclassrooms_count($courseid);
+
+        foreach($enrolledclassrooms AS $classroom){
+            $info = [];
+            $info[] = $classroom->name;
+            if(!empty($classroom->trainers)){
+                $classroom->trainers = explode(',', str_replace(',', '</li>,<li>', $classroom->trainers));
+                $showless = $showmore = '';
+                if(isset($classroom->trainers[2])){
+                    $showless = '<span class="hidden show_less togglebutton">';
+                    $showmore = '<a href = "javascript:void(0)"> '.get_string('showless', 'local_learningplan').'</a></span><a href = "javascript:void(0)" class="show_more togglebutton">'.get_string('showmore', 'local_learningplan').'</a>';
+                    $classroom->trainers[2] = $showless.$classroom->trainers[2];
+                }
+
+                $info[] = '<ul class="trainerslist"><li>'.implode('', $classroom->trainers).'</li>'.$showmore.'</ul>';
+            }else{
+                $info[] = 'N/A';
+            }
+            $info[] = userdate($classroom->startdate);
+            $info[] = userdate($classroom->enddate);
+
+            $info[] = \html_writer::link(new \moodle_url('/local/classroom/view.php', array('cid' => $classroom->id)), get_string('view'), array('class' => 'btn btn-primary'));
+
+            $data[$classroom->id] = $info;
+        }
+
+        krsort($data);
+
+        $data=array_values($data);
+
         return [
             "sEcho" => intval($requestData['sEcho']),
             "iTotalRecords" => $totalclassrooms,
@@ -1803,9 +1932,11 @@ class program {
         ));
         $levelssql = "SELECT id,level FROM {local_program_levels}
                                             WHERE programid = $programid ";
-        if (!empty($programcompletiondata) && $programcompletiondata->leveltracking == "OR" && $programcompletiondata->levelids != null) {
-            $levelssql .= " AND id in ($programcompletiondata->levelids)";
+
+        if(!empty($programcompletiondata)&&($programcompletiondata->leveltracking=="OR" || $programcompletiondata->leveltracking=="AND") && !($programcompletiondata->levelids == null || $programcompletiondata->leveltracking == 'ALL')){
+            $levelssql .=" AND id in ($programcompletiondata->levelids)";
         }
+
         $levels            = $DB->get_records_sql_menu($levelssql);
         $return           = "";
         $data = array();
@@ -1828,7 +1959,12 @@ class program {
             $leveltracking = "_anylevels";
         }
 
-        $list['tracking'] = get_string('program_completion_tab_info' . $leveltracking . '', 'local_program');
+        if(empty($leveltracking)&& !empty($levels)){
+            $leveltracking= "_levelsall";
+        }
+
+
+        $list['tracking'] = get_string('program_completion_tab_info' . $leveltracking . '', 'local_program',$level);
         $data[] = $list;
 
         return $data;
@@ -1848,12 +1984,10 @@ class program {
         $params['levelid'] = $levelid;
 
 
-        if (!empty($classroomcompletiondata) && $classroomcompletiondata->coursetracking == "OR" && $classroomcompletiondata->courseids != null) {
-            $courseidsda = explode(',',$classroomcompletiondata->courseids);
-            list($relatedcourseidsql, $relatedcourseidparams) = $DB->get_in_or_equal($courseidsda, SQL_PARAMS_NAMED, 'courseids');
-            $params = array_merge($params,$relatedcourseidparams);
-            $levelcoursessql .= " AND lc.courseid $relatedcourseidsql";
+        if(($levelcompletiondata->coursetracking == "OR" || $levelcompletiondata->coursetracking=="AND") && !($levelcompletiondata->coursetracking == 'ALL' || $levelcompletiondata->courseids == null)){
+            $levelcoursessql.=" AND lc.courseid in ($levelcompletiondata->courseids)";
         }
+
         $levelcourses = $DB->get_records_sql_menu($levelcoursessql,$params);
         $return           = "";
         $data = array();
@@ -1878,7 +2012,11 @@ class program {
             $coursetracking = "_anycourses";
         }
 
-        $list['tracking'] = get_string('program_level_completion_tab_info' . $coursetracking . '', 'local_program');
+        if(empty($coursetracking)&& !empty($levelcourses)){
+            $coursetracking= "_coursesall";
+        }
+
+        $list['tracking'] = get_string('program_level_completion_tab_info' . $coursetracking . '', 'local_program',$course);
         $data[] = $list;
 
         return $data;

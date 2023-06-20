@@ -65,7 +65,8 @@ class search implements renderable{
 
         $usercontext = context_user::instance($USER->id);
         if(!is_siteadmin()){
-            $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+           // $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+            $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
             $paths = [];
             foreach($usercostcenterpaths AS $userpath){
                 $userpathinfo = $userpath;
@@ -106,8 +107,7 @@ class search implements renderable{
             $groupqueeryparams =implode('OR',$grouquery);
             $params[]= '('.$groupqueeryparams.')';
 
-
-
+      
             if(!empty($USER->open_hrmsrole) && $USER->open_hrmsrole != ""){
                 $hrmsrolelike = "'%,$USER->open_hrmsrole,%'";
             }else{
@@ -120,7 +120,7 @@ class search implements renderable{
                     ELSE 0 END
                 ELSE 1 END ";
 
-            if(!empty($USER->open_designation) && $USER->open_designation != ""){
+          /*   if(!empty($USER->open_designation) && $USER->open_designation != ""){
                 $designationlike = "'%,$USER->open_designation,%'";
             }else{
                 $designationlike = "''";
@@ -130,7 +130,7 @@ class search implements renderable{
                     CASE WHEN CONCAT(',',llp.open_designation,',') LIKE {$designationlike}
                         THEN 1
                         ELSE 0 END
-                ELSE 1 END ";
+                ELSE 1 END "; */
 
             if(!empty($USER->open_location) && $USER->open_location != ""){
                 $citylike = "'%,$USER->open_location,%'";
@@ -149,7 +149,11 @@ class search implements renderable{
             }else{
                 $finalparams= '1=1' ;
             }
-            $wheresql .= " AND ($finalparams)";
+            $wheresql .= " AND ($finalparams)"; 
+
+            if(!empty($USER->open_designation) && $USER->open_designation != "" && $USER->open_designation != NULL){                 
+                $wheresql .= " AND ( concat(',',llp.open_designation,',') LIKE '%,$USER->open_designation,%'  OR llp.open_designation = '-1' OR llp.open_designation = '' OR llp.open_designation IS NULL)";
+            }   
         }
         $sqlparams = [];
         foreach($filters AS $filtertype => $filtervalues){
@@ -227,7 +231,7 @@ class search implements renderable{
             $list->shortname = searchlib::format_thestring($list->shortname);
             $iltname = searchlib::format_thestring($list->name);
             if (strlen($iltname)>60){
-                $iltname = substr($iltname, 0, 60)."...";
+                $iltname = clean_text(substr($iltname, 0, 60))."...";
                 $list->iltformatname = searchlib::format_thestring($iltname) ;
             }else {
                 $list->iltformatname = searchlib::format_thestring($list->name);
@@ -357,7 +361,8 @@ class search implements renderable{
         global $USER, $DB;
         $selectsql = "SELECT llp.id  from {local_learningplan} llp  ";
         $wheresql = " WHERE llp.id = :learningplanid and llp.visible=1  "; //AND llp.open_status <> 4
-        $usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        //$usercostcenterpaths = $DB->get_records_menu('local_userdata', array('userid' => $USER->id), '', 'id, costcenterpath');
+        $usercostcenterpaths = $DB->get_records_menu('user', array('id' => $USER->id), '', 'id, open_path');
         // $paths = [];
         // foreach($usercostcenterpaths AS $userpath){
         //     $userpathinfo = $userpath->costcenterpath;
@@ -402,7 +407,7 @@ class search implements renderable{
                     $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
                     $request = $DB->get_field_sql($sql,array('componentid' => $planid,'compname' => $component,'createdbyid'=>$USER->id));
                     if($request=='PENDING'){
-                    $enrollmentbtn = '<button class="cat_btn btn-primary catbtn_process viewmore_btn">Processing</button>';
+                    $enrollmentbtn = '<button class="cat_btn btn-primary catbtn_process viewmore_btn">'.get_string('requestprocessing', 'local_search').'</button>';
                     }else{
                     $enrollmentbtn =requestapi::get_requestbutton($componentid, $component, $planname);
                     }

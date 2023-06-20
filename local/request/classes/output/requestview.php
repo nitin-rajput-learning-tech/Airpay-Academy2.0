@@ -112,8 +112,10 @@ class requestview implements renderable, templatable {
         return $requestlist;
       } // end of  get_specific_costcenter_requests
     public function get_requestdetails($stable,$filtervalues){
+      
         global $DB, $PAGE,$USER,$CFG,$OUTPUT;
-        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
+        list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);           
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
         $params=array();
 
         $systemcontext = (new \local_request\lib\accesslib())::get_module_context();
@@ -142,19 +144,23 @@ class requestview implements renderable, templatable {
            $sql = " FROM {local_request_records} AS req 
             JOIN {user} AS u ON u.id=req.createdbyid 
             WHERE 1=1";
-        }
-else{
+        }else{
+           
             $sql = " FROM {local_request_records} AS req
                 JOIN {user} AS u ON u.id=req.createdbyid
-                WHERE 1=1 $costcenterpathconcatsql";
-                // CASE WHEN req.compname LIKE 'certification'
-                  // THEN JOIN (local_certification) AS requesttable
+                WHERE 1=1 $costcenterpathconcatsql ";
         }
         $sql .= " AND u.deleted = 0 AND u.suspended = 0 {$wheredependency_sql} ";
-        
+
+        $sitecontext =(new \local_request\lib\accesslib())::get_module_context();
+        if(!is_siteadmin() && !has_capability('local/request:approverecord', $sitecontext)){
+           $sql .= " AND u.id = $USER->id ";
+        }
+
         if($filtervalues->courseid>1){
             $sql .= " AND req.componentid={$filtervalues->courseid} ";
         }
+       
         if($sql){
           if($filtervalues->courses){
             if(is_array($filtervalues->courses)){
@@ -297,7 +303,7 @@ else{
                         );
             $onerow['componenticonclass'] = $pluginshelper[$request->compname]['componenticonclass'];
             $onerow['customimage_required'] = $pluginshelper[$request->compname]['customimage_required'];
-            $onerow['componentname'] = strlen($request->actualcomponentname) > 20 ? substr($request->actualcomponentname, 0,20).'...' : $request->actualcomponentname;
+            $onerow['componentname'] = strlen($request->actualcomponentname) > 20 ? clean_text(substr($request->actualcomponentname, 0,20)).'...' : $request->actualcomponentname;
             if($deleted){
                 $onerow['responded'] = 1;
             }

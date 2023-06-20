@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die;
 
 use \local_onlineexams\form\custom_onlineexams_form as custom_onlineexam_form;
 use \local_courses\action\insert as insert;
-use \local_courses\local\general_lib as general_lib;
+use \local_onlineexams\local\general_lib as general_lib;
 use \local_courses\form\custom_courseevidence_form as custom_courseevidence_form;
 
 
@@ -806,5 +806,195 @@ class local_onlineexams_external extends external_api
                 )
             )
         ]);
+    }
+    public static function get_users_onlineexams_information_parameters() {
+        return new external_function_parameters(
+            array('status' => new external_value(PARAM_RAW, 'status of course', true),
+                'searchterm' => new external_value(PARAM_RAW, 'searchterm', VALUE_OPTIONAL),
+                'page' => new external_value(PARAM_INT, 'page', VALUE_OPTIONAL, 0),
+                'perpage' => new external_value(PARAM_INT, 'perpage', VALUE_OPTIONAL, 15),
+                'source' => new external_value(PARAM_TEXT, 'Parameter to validate the mobile ', VALUE_OPTIONAL,'mobile')
+            )
+        );
+    }
+    public static function get_users_onlineexams_information($status, $searchterm = '', $page = 0, $perpage = 15, $source = 'mobile') {
+        global $USER, $DB,$CFG;
+        require_once($CFG->dirroot.'/local/ratings/lib.php');
+        $result = array();
+        if ($status == 'completed') {
+            $user_course_info = general_lib::completed_onlineexamnames($searchterm, $page * $perpage, $perpage, $source);
+            $total = general_lib::completed_onlineexamnames_count($searchterm, $source);
+        } else if ($status == 'inprogress') {
+            $user_course_info = general_lib::inprogress_onlineexamnames($searchterm, $page * $perpage, $perpage, $source);
+            $total = general_lib::inprogress_onlineexamnames_count($searchterm, $source);
+        } else if($status == 'enrolled') {
+            if ($page == -1) {
+                $page = 0;
+                $perpage = 0;
+            }
+            $user_course_info = general_lib::enrolled_onlineexamnames($searchterm, $page * $perpage, $perpage, $source);
+            $total = general_lib::enrolled_onlineexamnames_count($searchterm, $source);
+        }
+
+        foreach ($user_course_info as $userinfo) {
+            //course image
+            if(file_exists($CFG->dirroot.'/local/includes.php')){
+                require_once($CFG->dirroot.'/local/includes.php');
+                $includes = new user_course_details();
+                $courseimage = $includes->course_summary_files($userinfo);                
+                if(is_object($courseimage)){
+                    $courseimage = $courseimage->out();                    
+                }else{
+                    $courseimage = $courseimage;
+                }                
+            } 
+           // print_r($userinfo);exit;
+            $module = $DB->get_record('quiz', array('course'=>$userinfo->id));
+            $cm = get_coursemodule_from_instance('quiz', $module->id, 0, false, MUST_EXIST);
+            $gradeitem = $DB->get_record('grade_items', array('iteminstance'=>$module->id, 'itemmodule'=>'quiz', 'courseid'=>$userinfo->id));
+            $sql="SELECT * FROM {quiz_attempts} where id=(SELECT max(id) id from {quiz_attempts} where userid={$USER->id} and quiz={$module->id})";
+            $userattempt = $DB->get_record_sql($sql);
+            $attempts = ($userattempt->attempt) ? $userattempt->attempt : 0;
+            $grademax = ($gradeitem->grademax) ? round($gradeitem->grademax): '-';
+            $gradepass = ($gradeitem->gradepass) ? round($gradeitem->gradepass): '-';
+            if ($gradeitem->id)
+            $usergrade = $DB->get_record_sql("select * from {grade_grades} where itemid = $gradeitem->id AND userid = $USER->id");
+            if ($usergrade) {
+                $mygrade = round($usergrade->finalgrade, 2);
+                if ($usergrade->finalgrade >= $gradepass) {
+                    $completedon = date("j M 'Y", $usergrade->timemodified);
+                    $status = 'Completed';
+                    $can_review = 1;
+                } else {
+                    $status = 'Incomplete';
+                    $completedon = '-';
+                }
+
+            } else {
+                $mygrade = 0;
+                $status = 'Pending';
+                $completedon = '-';
+                $attempts = 0;
+            }
+            $context = context_course::instance($userinfo->id, IGNORE_MISSING);
+            list($userinfo->summary,$userinfo->summaryformat) =
+                external_format_text($userinfo->summary ,$userinfo->summaryformat , $context->id, 'course', 'summary', null);
+                $progress = null;
+            // Return only private information if the user should be able to see it.
+            if ($userinfo->enablecompletion) {
+                $progress = \core_completion\progress::get_course_progress_percentage($userinfo, $userid);
+            }
+            $modulerating = $DB->get_field('local_ratings_likes', 'module_rating', array('module_id' => $userinfo->id, 'module_area' => 'local_courses'));
+            if(!$modulerating){
+                 $modulerating = 0;
+            }
+            $likes = $DB->count_records('local_like', array('likearea'=> 'local_courses', 'itemid'=>$userinfo->id, 'likestatus'=>'1'));
+            $dislikes = $DB->count_records('local_like', array('likearea'=> 'local_courses', 'itemid'=>$userinfo->id, 'likestatus'=>'2'));
+            $avgratings = get_rating($userinfo->id, 'local_courses');
+            $avgrating = $avgratings->avg;
+            $ratingusers = $avgratings->count;
+            $certificateid = $DB->get_field('tool_certificate_issues', 'code', array('userid' => $USER->id, 'moduletype' => 'course', 'moduleid' => $userinfo->id));
+            if(!$certificateid){
+                $certificateid = null;
+            }
+            $result[] = array(
+                'id' => $userinfo->id,
+                'fullname' => $userinfo->fullname,
+                'shortname' => $userinfo->shortname,
+                'summary' => $userinfo->summary,
+                'summaryformat' => $userinfo->summaryformat,
+                'startdate' => $userinfo->startdate,
+                'enddate' => $userinfo->enddate,
+                'timecreated' => $userinfo->timecreated,
+                'timemodified' => $userinfo->timemodified,
+                'visible' => $userinfo->visible,
+                'idnumber' => $userinfo->idnumber,
+                'format' => $userinfo->format,
+                'showgrades' => $userinfo->showgrades,
+                'modname' => 'quiz',
+                'modplural' => 'Quizzes',
+                'maxgrade' => $grademax,
+                'enrolledon' => $enrolledon,
+                'completedon' => $completedon,
+                'status' =>$status,
+                'canreview' => $can_review,
+                'timeopen' => $userinfo->timeopen,
+                'timeclose' =>$userinfo->timeclose,
+                'userattemptid'=> $userattempt->id,
+                'url' => $CFG->wwwroot .'/mod/quiz/view.php?id='. $cm->id .'',
+                'passgrade' => $gradepass,
+                'mygrade' => $mygrade,
+                'attempts' => $attempts,
+                'lang' => clean_param($userinfo->lang,PARAM_LANG),
+                'enablecompletion' => $userinfo->enablecompletion,
+                'category' => $userinfo->category,
+                'progress' => $progress,
+                'rating' => $modulerating,
+                'avgrating' => $avgrating,
+                'ratingusers' => $ratingusers,
+                'likes' => $likes,
+                'dislikes' => $dislikes,
+                'certificateid' => $certificateid,
+                'examimage' => $courseimage
+            );
+        }
+        if ($total > $perpage) {
+            $maxPages = ceil($total/$perpage);
+        } else {
+            $maxPages = 1;
+        }
+        //print_r($result);exit;
+        return array('modules' => $result, 'total' => $total);
+    }
+    public static function get_users_onlineexams_information_returns(){
+        return new external_single_structure(
+            array(
+                'modules' => new external_multiple_structure(
+                    new external_single_structure(
+                        array(
+                            'id'=> new external_value(PARAM_INT, 'id of course'),
+                            'fullname'=> new external_value(PARAM_RAW, 'fullname of course'),
+                            'shortname' => new external_value(PARAM_RAW, 'short name of course'),
+                            'summary' => new external_value(PARAM_RAW, 'course summary'),
+                            'summaryformat' => new external_value(PARAM_RAW, 'course summary format'),
+                            'startdate' => new external_value(PARAM_RAW, 'startdate of course'),
+                            'enddate' => new external_value(PARAM_RAW, 'enddate of course'),
+                            'timecreated' => new external_value(PARAM_RAW, 'course create time'),
+                            'timemodified' => new external_value(PARAM_RAW, 'course modified time'),
+                            'visible' => new external_value(PARAM_RAW, 'course status'),
+                            'idnumber' => new external_value(PARAM_RAW, 'course idnumber'),
+                            //'format' => new external_value(PARAM_RAW, 'course format'),
+                            'modname' => new external_value(PARAM_RAW, 'activity module type'),
+                            'modplural' => new external_value(PARAM_RAW, 'activity module plural name'),
+                            'maxgrade' => new external_value(PARAM_RAW, 'activity max grade'),
+                            // 'enrolledon' => new external_value(PARAM_RAW, 'course idnumber'),
+                            // 'completedon' => new external_value(PARAM_RAW, 'course idnumber'),
+                            'status' =>new external_value(PARAM_RAW, 'activity status'),
+                            'canreview' => new external_value(PARAM_RAW, 'activity review'),
+                            // 'timeopen' => new external_value(PARAM_RAW, 'course idnumber'),
+                            // 'timeclose' =>new external_value(PARAM_RAW, 'course idnumber'),
+                            'userattemptid'=> new external_value(PARAM_RAW, 'activity attempt id'),
+                            'url' => new external_value(PARAM_RAW, 'module url'),
+                            'passgrade' =>new external_value(PARAM_RAW, 'activity pass grade'),
+                            'mygrade' => new external_value(PARAM_RAW, 'activity user grade'),
+                            'attempts' => new external_value(PARAM_RAW, 'activity attempts'),
+                            'showgrades' => new external_value(PARAM_RAW, 'course grade status'),
+                            'lang' => new external_value(PARAM_RAW, 'course language'),
+                            'enablecompletion' => new external_value(PARAM_RAW, 'course completion'),
+                            'category' => new external_value(PARAM_RAW, 'course category'),
+                            'progress' => new external_value(PARAM_FLOAT, 'Progress percentage'),
+                            'rating' => new external_value(PARAM_RAW, 'Course rating'),
+                            'avgrating' => new external_value(PARAM_FLOAT, 'Course Avg rating'),
+                            'ratingusers' => new external_value(PARAM_INT, 'Course rating users'),
+                            'likes' => new external_value(PARAM_INT, 'Course Likes'),
+                            'dislikes' => new external_value(PARAM_INT, 'Course Dislikes'),
+                            'certificateid' => new external_value(PARAM_RAW, 'Certifictate Code', VALUE_OPTIONAL),
+                            'examimage' => new external_value(PARAM_RAW, 'Courseimage', VALUE_OPTIONAL),
+                        )
+                    )
+                ),
+                'total' => new external_value(PARAM_INT, 'Total Pages')
+            )
+        );
     }
 }

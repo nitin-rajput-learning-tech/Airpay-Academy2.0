@@ -46,22 +46,24 @@ class notification {
         if($notification = $this->get_existing_notification($learningplaninstance, $emailtype)){
             $this->send_learningplan_notification($learningplaninstance, $touser, $fromuser, $emailtype, $notification);
         }
-    }
+   }
     public function get_existing_notification($learningplaninstance, $emailtype){
+        
     	$corecomponent = new \core_component();
         $costcenterexist = $corecomponent::get_plugin_directory('local','costcenter');
         $params = array();
         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$learningplaninstance->open_path);
-        $notification_typesql = "SELECT lni.* FROM {local_notification_info} AS lni 
+        $notification_typesql = "SELECT lni.* FROM {local_notification_info} AS lni
             JOIN {local_notification_type} AS lnt ON lnt.id=lni.notificationid
-            WHERE concat(',',lni.moduleid,',') LIKE concat('%',:moduleid,'%') AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
+            WHERE concat(',',lni.moduleid,',') LIKE concat('%,',:moduleid,',%') AND lnt.shortname LIKE :emailtype AND lni.active=1 ";
         $params['moduleid'] = $learningplaninstance->id;
         $params['emailtype'] = $emailtype;
         if($costcenterexist){
             $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE :costcenter ";
-            $params['costcenter'] = "%".$org."%";
+            $params['costcenter'] = "%".$learningplaninstance->costcenter."%";
         }
         $notification = $this->db->get_record_sql($notification_typesql, $params);
+      
         if(empty($notification)){ // sends the default notification for the type.
             $params = array();
             $notification_typesql = "SELECT lni.* FROM {local_notification_info} AS lni 
@@ -71,10 +73,11 @@ class notification {
             $params['emailtype'] = $emailtype;
             if($costcenterexist){
                 $notification_typesql .= " AND concat('/',lni.open_path,'/') LIKE  concat('%',:costcenter,'%') ";
-                $params['costcenter'] = "%".$org."%";
+                $params['costcenter'] = "%".$learningplaninstance->costcenter."%";
             }
             $notification = $this->db->get_record_sql($notification_typesql, $params);
         }
+      
         if(empty($notification)){
             return false;
         }else{
@@ -195,4 +198,5 @@ class notification {
         }
         return $this->db->get_field_sql($sql ,$params);
     }
+    
 }

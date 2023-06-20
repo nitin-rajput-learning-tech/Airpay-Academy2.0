@@ -109,7 +109,7 @@ class renderer extends plugin_renderer_base
         $cancelled_tab = true;
 
         $completed_tab = true;
-
+        $cardClass = 'col-md-6 col-12';
         if (is_siteadmin()) {
             $templateName = 'local_classroom/classrooms_list';
             $cardClass = 'col-md-6 col-12';
@@ -232,7 +232,7 @@ class renderer extends plugin_renderer_base
 
                     //-------data variables
                     $classname = $sdata->name;
-                    $classname_string = strlen($classname) > 48 ? substr($classname, 0, 48) . "..." : $classname;
+                    $classname_string = strlen($classname) > 48 ? clean_text(substr($classname, 0, 48)) . "..." : $classname;
                     $usercreated = $sdata->usercreated;
 
                     // $startdate = \local_costcenter\lib::get_userdate("d/m/Y", $sdata->startdate);
@@ -248,7 +248,7 @@ class renderer extends plugin_renderer_base
                     } else {
                         $isdescription = true;
                         if (strlen($description) > 75) {
-                            $decsriptionCut = substr($description, 0, 75);
+                            $decsriptionCut = clean_text(substr($description, 0, 75));
                             $decsriptionstring = \local_costcenter\lib::strip_tags_custom(html_entity_decode($decsriptionCut), array('overflowdiv' => false, 'noclean' => false, 'para' => false));
                         } else {
                             $decsriptionstring = "";
@@ -305,8 +305,8 @@ class renderer extends plugin_renderer_base
                     $line['usercreated'] = fullname($user);
                     $line['startdate'] = $startdate;
                     $line['enddate'] = $enddate;
-                    $line['description'] =  \local_costcenter\lib::strip_tags_custom(html_entity_decode($sdata->description));
-                    $line['descriptionstring'] = $decsriptionstring;
+                    $line['description'] =  \local_costcenter\lib::strip_tags_custom(html_entity_decode(clean_text($sdata->description)));
+                    $line['descriptionstring'] = clean_text($decsriptionstring);
                     $line['isdescription'] = $isdescription;
                     $line['classroom_actionstatus'] = array_values(($classroom_actionstatus));
                     $classroomcoursessql = "SELECT c.id, c.fullname
@@ -319,7 +319,7 @@ class renderer extends plugin_renderer_base
                     if (!empty($classroomcourses)) {
                         foreach ($classroomcourses as $classroomcourse) {
                             $courseslimit = true;
-                            $coursename = strlen($classroomcourse->fullname) > 15 ? substr($classroomcourse->fullname, 0, 15) . "..." : $classroomcourse->fullname;
+                            $coursename = strlen($classroomcourse->fullname) > 15 ? clean_text(substr($classroomcourse->fullname, 0, 15)) . "..." : $classroomcourse->fullname;
                             $line['courses'][] = array('coursesdata' => '<a href="' . $CFG->wwwroot . '/course/view.php?id=' . $classroomcourse->id . '" title="' . $classroomcourse->fullname . '">' . $coursename . '</a>');
                         }
                     }
@@ -339,7 +339,7 @@ class renderer extends plugin_renderer_base
                         $trainerslimit = false;
                         foreach ($classroomtrainers as $classroomtrainer) {
                             $trainerslimit = true;
-                            $trainername = strlen(fullname($classroomtrainer)) > 8 ? substr(fullname($classroomtrainer), 0, 8) . "..." : fullname($classroomtrainer);
+                            $trainername = strlen(fullname($classroomtrainer)) > 8 ? clean_text(substr(fullname($classroomtrainer), 0, 8)) . "..." : fullname($classroomtrainer);
                             $classroomtrainerpic = $OUTPUT->user_picture($classroomtrainer, array('size' => 35, 'class' => 'trainer_img', 'link' => false));
                             $line['trainers'][] = array('classroomtrainerpic' => $classroomtrainerpic, 'trainername' => $trainername, 'trainerdesignation' => '');
                         }
@@ -1008,7 +1008,7 @@ class renderer extends plugin_renderer_base
         if (!empty($classroomtrainers)) {
             foreach ($classroomtrainers as $classroomtrainer) {
                 $classroomtrainerpic = $OUTPUT->user_picture($classroomtrainer, array('size' => 50, 'class' => 'trainerimg', 'link' => false));
-                $classroomtrainername = strlen(fullname($classroomtrainer)) > 10 ? substr(fullname($classroomtrainer), 0, 10) . "..." : fullname($classroomtrainer);
+                $classroomtrainername = strlen(fullname($classroomtrainer)) > 10 ? clean_text(substr(fullname($classroomtrainer), 0, 10)) . "..." : fullname($classroomtrainer);
                 $classroom->trainers[] = array('classroomtrainerpic' => $classroomtrainerpic, 'trainername' => $classroomtrainername, 'trainerdesignation' => 'Trainer', 'traineremail' => $classroomtrainer->email);
             }
         }
@@ -1036,7 +1036,7 @@ class renderer extends plugin_renderer_base
             $pending = $DB->record_exists('local_request_records',array('createdbyid'=>$USER->id, 'componentid'=>$classroom->id,'status'=>'PENDING'));
             if ($classroom->approvalreqd == 1 && !$userenrolstatus && $return ) {
                 if($pending){
-                    $classroom->selfenrolmentcap = '<i title = '.get_string('processing', 'local_classroom').' class="" aria-hidden="true">' . get_string('processing', 'local_classroom').'</i>';
+                    $classroom->selfenrolmentcap = '<i title = '.get_string('requestprocessing', 'local_classroom').' class="" aria-hidden="true">' . get_string('requestprocessing', 'local_classroom').'</i>';
                 } else {
                     $classroom->selfenrolmentcap = '<a href="javascript:void(0);" class="" alt = ' . get_string('requestforenroll', 'local_classroom') . ' title = ' . get_string('requestforenroll', 'local_classroom') . ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$classroom->id.', component:\'classroom\',componentname:\''.$classroom->name .'\'}) })(event)" ><i class="fa fa-share" aria-hidden="true"></i>' . get_string('requestforenroll', 'local_classroom') . '</a>';
                 }
@@ -1149,7 +1149,7 @@ class renderer extends plugin_renderer_base
         } else {
             $isdescription = true;
             if (strlen($description) > 270) {
-                $decsriptionCut = substr($description, 0, 270);
+                $decsriptionCut = clean_text(substr($description, 0, 270));
                 $decsriptionstring =  \local_costcenter\lib::strip_tags_custom(html_entity_decode($decsriptionCut));
             } else {
                 $decsriptionstring = "";
@@ -1283,7 +1283,7 @@ class renderer extends plugin_renderer_base
             'isdescription' => $isdescription,
             'seats_progress' => $seats_progress,
             'completion_seats_progress' => $completion_seats_progress,
-            'feedback_tab' => false,//$feedback_tab,
+            'feedback_tab' => $feedback_tab,
             'completion_settings_tab' => $classroomcompletion,
             'target_audience_tab' => true,
             'requested_users_tab' => $requested_users_tab,
@@ -1666,7 +1666,7 @@ class renderer extends plugin_renderer_base
         } else {
             $isdescription = true;
             if (strlen($description) > 250) {
-                $decsriptionCut = substr($description, 0, 250);
+                $decsriptionCut = clean_text(substr($description, 0, 250));
                 $decsriptionstring =  \local_costcenter\lib::strip_tags_custom(html_entity_decode($decsriptionCut), array('overflowdiv' => false, 'noclean' => false, 'para' => false));;
             } else {
                 $decsriptionstring = "";

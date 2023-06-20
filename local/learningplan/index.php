@@ -117,7 +117,7 @@ if(is_siteadmin() ||(
             $reports['id'] = $learningplan->id;
             $reports['name'] = $learningplan->name;
             // $reports_info[] = $reports;
-            $reports_info[] = '<a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$learningplan->id.' class="dropdown-item menu-action" role="menuitem" data-title="'.$learningplan->name.'" aria-labelledby="'.$learningplan->name.'"target="_blank">
+            $reports_info[] = '<a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$learningplan->id.' class="dropdown-item menu-action" role="menuitem" data-title="'.$learningplan->name.'" aria-label="'.$learningplan->name.'"target="_blank">
                 <span class="menu-action-text">
                     '.$learningplan->name.'
                 </span>
@@ -213,7 +213,7 @@ if($filterdata){
     $show = '';
 }
 
-echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
+echo '<a class="btn-link btn-sm" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
 echo  '<div class="collapse '.$show.'" id="local_courses-filter_collapse">

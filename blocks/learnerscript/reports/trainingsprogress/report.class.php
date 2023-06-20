@@ -120,7 +120,15 @@ class report_trainingsprogress extends reportbase implements report {
     }
    
     function search(){
+        if (isset($this->search) && $this->search) {
+            $fields = array("MONTH(FROM_UNIXTIME(lc.startdate))","YEAR(FROM_UNIXTIME(lc.startdate))","concat(MONTH(FROM_UNIXTIME(lc.startdate)), '/', YEAR(FROM_UNIXTIME(lc.startdate)))","FROM_UNIXTIME(lc.startdate, '%M')","YEAR(FROM_UNIXTIME(lc.startdate))");
+            $fields = implode(" LIKE '%" . $this->search . "%' OR ", $fields);
+            $fields .= " LIKE '%" . $this->search . "%' ";
+            $this->sql .= " AND ($fields) ";           
+        }
     } 
+
+
     function filters(){
 
         if ($this->params['filter_organization'] > 0) {

@@ -343,10 +343,11 @@ class local_evaluation_responses_table extends table_sql {
         if ($sort = $this->get_sql_sort()) {
             $sort = "ORDER BY $sort";
         }
+       $localpath = (new \local_evaluation\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='le.open_path');
         $sql = "SELECT
                 {$this->sql->fields}
-                FROM {$this->sql->from}
-                WHERE {$this->sql->where}
+                FROM {$this->sql->from} JOIN {local_evaluations} le ON le.id=c.evaluation  
+                WHERE {$this->sql->where} $localpath
                 {$sort}";
 
         if (!$this->is_downloading()) {

@@ -54,23 +54,25 @@ define(['jquery', 'core/ajax', 'core/templates'], function ($, Ajax, Templates) 
             if (action === 'role_costcenterusers') {
 
 
-                if (formoptions.roleid){
+                // if (formoptions.roleid){
 
-                    formoptions.roleid = formoptions.roleid;
+                //     formoptions.roleid = formoptions.roleid;
 
-                }else{
+                // }else{
+
+                //     console.log($("#id_roleid").val());
 
                     formoptions.roleid = $("#id_roleid").val();
-                }
+                // }
 
-                if (formoptions.formtype){
+                // if (formoptions.formtype){
 
-                    formoptions.formtype = formoptions.formtype;
+                //     formoptions.formtype = formoptions.formtype;
                     
-                }else{
+                // }else{
 
                     formoptions.formtype = $("#id_formtype").val();
-                }
+                // }
 
             }
 

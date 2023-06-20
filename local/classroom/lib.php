@@ -97,7 +97,8 @@ function local_classroom_output_fragment_classroom_form($args)
     $classroomdata->id = $args->id;
     $classroomdata->form_status = $args->form_status;
     $mform->set_data($classroomdata);
-    if (!empty((array) $serialiseddata)) {
+    
+    if (!empty($args->jsonformdata) && strlen($args->jsonformdata) >2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }

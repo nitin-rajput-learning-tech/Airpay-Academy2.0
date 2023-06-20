@@ -29,7 +29,7 @@ $format = optional_param('format', '', PARAM_ALPHA);
 
 if ($format) {
     $fields = array(
-        'email' => 'email',
+        'employee_code' => 'employee_code',
     );
 
     switch ($format) {

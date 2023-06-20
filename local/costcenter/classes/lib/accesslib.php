@@ -220,14 +220,14 @@ class accesslib
         $coursecat = $coursecatrecordcache->get($categoryid);
         if ($coursecat === false) {
             $coursecat = $DB->get_record('course_categories', array('id' => $categoryid));
-        }else{
-
-            if(is_null($value)){
-                return $coursecat;
-            }else{
-                return $coursecat->$value;
-            }
         }
+
+        if(is_null($value)){
+            return $coursecat;
+        }else{
+            return $coursecat->$value;
+        }
+
     }
     public static function get_costcenter_info($costcenterid, $value = null){
         global $DB;
@@ -274,7 +274,8 @@ class accesslib
 
         }
 
-        if(!empty($sqlarray)){
+
+        if(!empty(array_filter($sqlarray))){
 
             $concatsql="AND (".implode(" OR ", $sqlarray).")";
         }

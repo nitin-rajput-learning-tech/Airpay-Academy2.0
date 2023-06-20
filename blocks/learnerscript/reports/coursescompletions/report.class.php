@@ -103,8 +103,14 @@ class report_coursescompletions extends reportbase implements report {
                 WHERE ra.userid =:userid",array('userid' => $USER->id));   
 
             $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',  $usercostcenterpath, 'lowerandsamepath');
+            $this->sql .= $costcenterpathconcatsql;
+        }else{
+            list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
+            $usercostcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path',$org);
+            $costcenterpathconcatsql  = $costcenterpathconcatsql  . $usercostcenterpathconcatsql  ; 
+            $this->sql .= $costcenterpathconcatsql;
+       
         }
-        $this->sql .= $costcenterpathconcatsql;
         parent::where();
     }
 

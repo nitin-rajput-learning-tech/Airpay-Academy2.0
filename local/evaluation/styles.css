@@ -1560,7 +1560,7 @@ body#page-local-evaluation-userdashboard .card_list_view {
     font-family: Georgia, serif;
     text-decoration: none;
 }
-#page-local-evaluation-index .eval_container .enroll_strip{
+#page-local-evaluation-index .eval_container .enrolled_strip{
     border: 1px solid #ff6e22;
     background: #ff6e22;  
     color: #fff;

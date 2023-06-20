@@ -41,7 +41,6 @@ if ($preview) {
 } else {
     $issue = \tool_certificate\template::get_issue_from_code($issuecode);
     $context = \context_course::instance($issue->courseid, IGNORE_MISSING) ?: null;
-
     $template = $issue ? \tool_certificate\template::instance($issue->templateid) : null;
     if ($template && (\tool_certificate\permission::can_verify() ||
             \tool_certificate\permission::can_view_issue($template, $issue, $context))) {

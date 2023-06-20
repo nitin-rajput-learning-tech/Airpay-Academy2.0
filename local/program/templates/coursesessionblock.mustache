@@ -1,11 +1,11 @@
 <div class="levelcourse_right ">
     <div class="course_actions">
         {{# canremovecourse }}
-            <a class="course_delete" id="unassign_course_{{bclevelcourseid}}" onclick="(function(e){ require('local_program/program').unassignCourses({action:'unassign_course', bclcid:{{bclevelcourseid}}, levelid:{{levelid}}, bcid:{{programid}} }) })(event)" href="javascript:void(0)"><i class="icon fa fa-trash fa-fw" aria-hidden="true" title="Un-assign" aria-label="Delete"></i></a>
+            <a class="course_delete" id="unassign_course_{{bclevelcourseid}}" onclick="(function(e){ require('local_program/program').unassignCourses({action:'unassign_course', bclcid:{{bclevelcourseid}}, levelid:{{levelid}}, bcid:{{programid}} }) })(event)" ><i class="icon fa fa-trash fa-fw" aria-hidden="true" title="Un-assign" aria-label="Delete"></i></a>
         {{/ canremovecourse }}
 
         {{# cannotremovecourse }}
-            <a class="course_delete" id="unassign_course_{{bclevelcourseid}}" onclick="(function(e){ require('local_program/program').unassignCourses({action:'cannotunassign_course', bclcid:{{bclevelcourseid}}, levelid:{{levelid}}, bcid:{{programid}} }) })(event)" href="javascript:void(0)"><i class="icon fa fa-trash fa-fw" aria-hidden="true" title="Un-assign" aria-label="Delete"></i></a>
+            <a class="course_delete" id="unassign_course_{{bclevelcourseid}}" onclick="(function(e){ require('local_program/program').unassignCourses({action:'cannotunassign_course', bclcid:{{bclevelcourseid}}, levelid:{{levelid}}, bcid:{{programid}} }) })(event)" ><i class="icon fa fa-trash fa-fw" aria-hidden="true" title="Un-assign" aria-label="Delete"></i></a>
         {{/ cannotremovecourse }}
     </div>
     {{^ canremovecourse }}

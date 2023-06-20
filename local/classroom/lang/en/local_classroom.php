@@ -350,25 +350,25 @@ $string['requested_users_tab'] = 'Requested Users';
 $string['waitinglist_users_tab'] = 'Waiting List Users';
 
 
-$string['classroom_completion_tab_info'] = 'No classroom criteria found.';
+$string['classroom_completion_tab_info'] = 'No classroom completion criteria found.';
 
-$string['classroom_completion_tab_info_allsessions'] = 'This classroom will completed when the below listed <b> all sessions </b> should be completed.';
+$string['classroom_completion_tab_info_allsessions'] = 'This classroom will be complete when all the below listed <b> all sessions </b> are attended by the user.';
 
-$string['classroom_completion_tab_info_anysessions'] = 'This classroom will completed when the below listed <b> any sessions </b> should be completed.';
+$string['classroom_completion_tab_info_anysessions'] = 'This classroom will be complete when any of the below listed <b> any sessions </b> are attended by the user.';
 
-$string['classroom_completion_tab_info_allsessions_allcourses'] =  'This classroom will completed when the below listed <b>all courses </b> and <b> all sessions </b> should be completed.';
+$string['classroom_completion_tab_info_allsessions_allcourses'] =  'This classroom will be complete when the below listed <b>all courses </b> and <b> all sessions </b> are attended/completed by the user.';
 
-$string['classroom_completion_tab_info_allsessions_anycourses'] =  'This classroom will completed when the below listed <b>any courses </b> and <b> all sessions </b> should be completed.';
+$string['classroom_completion_tab_info_allsessions_anycourses'] =  'This classroom will be complete when the below listed <b>any courses </b> and <b> all sessions </b> are completed/attended by the user.';
 
-$string['classroom_completion_tab_info_anysessions_allcourses'] =  'This classroom will completed when the below listed <b>all courses </b> and <b> any sessions </b> should be completed.';
+$string['classroom_completion_tab_info_anysessions_allcourses'] =  'This classroom will be complete when the below listed <b>all courses </b> and <b> any sessions </b> are completed/attended by the user.';
 
-$string['classroom_completion_tab_info_anysessions_anycourses'] =  'This classroom will completed when the below listed <b>any courses </b> and <b> any sessions </b> should be completed.';
+$string['classroom_completion_tab_info_anysessions_anycourses'] =  'This classroom will be complete when the below listed <b>any courses </b> and <b> any sessions </b> are completed/attended by the user.';
 
-$string['classroom_completion_tab_info_allcourses'] = 'This classroom will completed when the below listed <b> all courses </b> should be completed.';
+$string['classroom_completion_tab_info_allcourses'] = 'This classroom will be complete when the below listed <b> all courses </b> are completed by the user.';
 
-$string['classroom_completion_tab_info_anycourses'] = 'This classroom will completed when the below listed <b> any courses </b> should be completed.';
+$string['classroom_completion_tab_info_anycourses'] = 'This classroom will be complete when the below listed <b> any courses </b> are completed by the user.';
 
-$string['audience_department'] = '<p>This classroom will eligible below-listed target audience.</p>
+$string['audience_department'] = '<p>This classroom is eligible for enrollment by the users matching the below target audience criteria.</p>
 <p> <b>Bussiness Units :</b> {$a}</p>';
 $string['audience_group'] = '<p> <b>Groups :</b> {$a}</p>';
 $string['audience_hrmsrole'] = '<p> <b>Hrms Role :</b> {$a}</p>';
@@ -381,37 +381,36 @@ $string['nocoursedesc'] = 'No description provided';
 $string['enrolluserssuccess'] = '<b>{$a->changecount}</b> Employee(s) successfully enrolled to this <b>"{$a->classroom}"</b> classroom .';
 $string['unenrolluserssuccess'] = '<b>{$a->changecount}</b> Employee(s) successfully un enrolled from this <b>"{$a->classroom}"</b> classroom .';
 
-$string['enrollusers'] = 'Classroom <b>"{$a}"</b> enrollment is in process...';
+$string['enrollusers'] = 'Classroom <b>"{$a}"</b> enrollment is in-progress...';
 
-$string['un_enrollusers'] = 'Classroom <b>"{$a}"</b> un enrollment is in process...';
+$string['un_enrollusers'] = 'Classroom <b>"{$a}"</b> un enrollment is in-progress...';
 $string['click_continue'] = 'Click on continue';
 $string['manage_br_classrooms'] = 'Manage <br/> classrooms';
 $string['noclassroomsavailiable'] = 'No Classrooms Availiable';
 $string['employeerolestring'] = 'Employee';
 $string['trainerrolestring'] = 'Trainer';
 $string['taskclassroomreminder'] = 'Classroom Reminder';
-$string['unenrollclassroom'] = 'Are you sure you want to un enroll this "<b>{$a}</b>" classroom?';
+$string['unenrollclassroom'] = 'Are you sure you want to unenroll yourself from  "<b>{$a}</b>" classroom?';
 $string['unenroll'] = 'Un Enroll';
 $string['eventclassroomusers_waitingcreated'] = 'Local classroom users waiting list added';
 $string['sortorder'] = 'Waiting Order';
 $string['enroltype'] = 'Type';
 $string['waitingtime'] = 'Date And Time';
 $string['allow_waitinglistusers'] = 'Allow Users Waiting List';
-$string['allowuserswaitinglist_help'] ='Allow users to join waiting list post the set the capacity for the Classroom training is full.';
+$string['allowuserswaitinglist_help'] ='Allow users to join waiting list post the set capacity for the Classroom training is full.';
 $string['classroom:viewwaitinglist_userstab'] = 'Allow Users Waiting List';
-$string['classroomwaitlistinfo'] = '<div class="p-2 text-center"><b>This "{$a->classroom}" classroom is presently reserved</b>. <br/><br/>Thank you for your application request. You are placed on waiting list with order "{$a->classroomwaitinglistno}" and will be reported via email in case enrols to classroom when availiable.</div>';
-$string['otherclassroomwaitlistinfo'] = '<div class="p-2 text-center"><b>This "{$a->classroom}" classroom is presently reserved</b>. <br/><br/>Thank you for your application request.<b>"{$a->username}"</b> is placed on waiting list with order "{$a->classroomwaitinglistno}" and will be reported via email in case user enrols to classroom when availiable.</div>';
-$string['capacity_waiting_check'] = 'Capacity is required to allow a users waiting list.';
+$string['classroomwaitlistinfo'] = '<div class="p-2 text-center"><b>This "{$a->classroom}" classroom is presently reserved</b>. <br/><br/>Thank you for your enrollment request. You are placed on the waiting list with order "{$a->classroomwaitinglistno}" and you will be enrolled and updated via email in case the capacity of the classroom becomes available.</div>';
+$string['otherclassroomwaitlistinfo'] = '<div class="p-2 text-center"><b>This "{$a->classroom}" classroom is presently reserved</b>. <br/><br/>Thank you for your enrollment request.<b>"{$a->username}"</b> is placed on the waiting list with order "{$a->classroomwaitinglistno}" and will be enrolled and notfied of your enrollment via email in case the capacity of the classroom becomes available.</div>';
+$string['capacity_waiting_check'] = 'Capacity is required to enable users waiting list.';
 $string['submit'] = 'Submit';
 $string['capacity_check'] ='capacity check';
 $string['allowuserswaitinglist'] = 'allow users waiting list';
 $string['traning'] = 'traning';
 $string['classroom_locationtype'] = 'classroom_locationtype';
 $string['bannerimage'] = 'bannerimage';
-
 $string['messageprovider:classroomenrolment'] = 'Classroom Enrolment';
 $string['classroomenrolmentsub'] = 'Classroom Enrolment';
-$string['classroomenrolment'] = '<p>You have been enrolled to the classroom "{$a->name}"!</p>
+$string['classroomenrolment'] = '<p>You have been enrolled into the classroom "{$a->name}"!</p>
 <p>You can view more information on "{$a->classroomurl}" page.</p>';
 $string['tagarea_classroom'] = 'Classroom';
 $string['enrolled'] = 'Enrolled';
@@ -420,8 +419,8 @@ $string['points'] = 'Points';
 $string['open_pointsclassroom'] = 'points';
 $string['open_pointsclassroom_help'] = 'Points for the Classroom default(0)';
 $string['enrolusers'] = 'Enroll Users';
-$string['enableplugin'] = 'Currently Classroom enrolment method is disabled.<a href="{$a}" target="_blank"> <u>Click here</u></a> to enable the Enrolment method';
-$string['manageplugincapability'] = 'Currently Classroom enrolment method is disabled. Please contact the Site administrator.';
+$string['enableplugin'] = 'Currently classroom enrolment method is disabled.<a href="{$a}" target="_blank"> <u>Click here</u></a> to enable the enrolment method';
+$string['manageplugincapability'] = 'Currently classroom enrolment method is disabled. Please contact the Site administrator.';
 $string['attendance'] = 'Attendance';
 $string['add_certificate'] = 'Add Certificate';
 $string['add_certificate_help'] = 'If you want to issue a certificate when user completes this classroom, please enable here and select the template in next field (Certificate template)';
@@ -460,8 +459,8 @@ $string['information'] = 'Information';
 /* Strings added by Pallavi Veerla */
 
 $string['remove_all'] = 'Remove All'; 
-$string['remove_selected_users'] = 'Remove Selected Users'; 
-$string['add_selected_users'] = 'Add Selected Users'; 
+$string['remove_users'] = 'Remove Selected Users'; 
+$string['add_users'] = 'Add Selected Users'; 
 $string['scheduled_date'] = 'Scheduled date';
 $string['code'] = 'Code';
 $string['enrolledusers'] = 'Enrolled Users'; 
@@ -487,13 +486,12 @@ $string['locations'] = 'Locations';
 $string['name'] = 'Name'; 
 $string['session_timings'] = 'Session Timings'; 
 $string['duration'] = 'Duration';
-$string['trainersoccupiedrequired'] = 'Trainer(s) {$a} already added to another classroom in this duration';
+$string['trainersoccupiedrequired'] = 'Trainer(s) {$a} are already occupied with other session during this time';
 $string['search'] = 'Search';
 $string['create_session'] = 'Create a Session';
 $string['location'] = 'Location';
 $string['classroom_reports'] = 'Classroom Reports';
 $string['pleaseselectorganization'] = 'Please Select Company';
-
 $string['viewmore'] = 'View More';
 $string['need_self_enrol'] = 'Need Self Enrol';
 $string['enrolled_classroom'] = 'My Classroom';
@@ -529,15 +527,15 @@ $string['open_subdistrict_help'] = 'Search and select an available or existing s
 $string['open_village_help'] = 'Search and select an available or existing village as target audience';
 $string['processing'] = 'Processing';
 $string['selfenrolclassroom_help'] = 'Check yes if required self enrollment to the classroom';
-$string['sessionsexistingbeforestartdate'] = 'Sessions are existing before this date Please delete the sessions to alter it.';
-$string['sessionsexistingafterenddate'] = 'Sessions are existing after this date Please delete the sessions to alter it.';
+$string['sessionsexistingbeforestartdate'] = 'There are sessions created with a date before this date. Please delete the sessions first to alter this date.';
+$string['sessionsexistingafterenddate'] = 'There are sessions created with a date after this date Please delete the sessions first to alter this date.';
 $string['subdepartment'] = "Sub Department";
 $string['classroomskill'] = 'Skill';
 $string['classroomlevel'] = 'Skill Level';
 $string['recordinglink'] = 'Recording Link';
-$string['recordinglink_err'] = 'Please enter proper format.';
+$string['recordinglink_err'] = 'Please enter the link in a proper format.';
 $string['messagelink'] = 'Meeting Link';
-$string['messagelink_err'] = 'Please enter proper format.';
+$string['messagelink_err'] = 'Please enter the link in a proper format.';
 $string['messagelink_help'] = 'If online session is unchecked, Meeting link is Mandatory/Required.';
 $string['location_room_form'] = 'F-2-F Classroom';
 $string['readmore'] = 'Read More'; 
@@ -546,3 +544,6 @@ $string['messagelinkrequired'] = 'Meeting link is required.';
 $string['face2face_type'] = 'Face-2-Face';
 $string['virtual_type'] = 'Virtual';
 $string['designation'] ='Designation';
+$string['open_skillonlineexam_help'] ='Skill achieved on completion of classroom';
+$string['open_levelonlineexam_help'] ='Level achieved on completion of classroom';
+$string['group'] ='Group';

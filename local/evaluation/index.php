@@ -59,7 +59,7 @@ if ($formattype == 'card') {
 require_login();
 
 $context =(new \local_evaluation\lib\accesslib())::get_module_context();
-if (!has_capability('local/evaluation:view', $context) ) {
+if (!has_capability('local/evaluation:addinstance', $context) ) {
     print_error("You dont have permission to view this page.");
 }
 $PAGE->set_url('/local/evaluation/index.php');
@@ -74,8 +74,8 @@ if (is_siteadmin() OR has_capability('local/evaluation:edititems', $context)) {
 $PAGE->requires->jquery();
 $PAGE->requires->js_call_amd('local_costcenter/fragment', 'init', array());
 $PAGE->requires->js_call_amd('local_evaluation/evaluation', 'load', array());
+$PAGE->requires->js_call_amd('local_costcenter/newcostcenter', 'downloadtrigger',array());
 $PAGE->requires->css('/local/evaluation/css/jquery.dataTables.css');
-
 $core_component = new core_component();
 $epsilon_plugin_exist = $core_component::get_plugin_directory('theme', 'epsilon');
 if(!empty($epsilon_plugin_exist)){
@@ -181,7 +181,7 @@ if(is_siteadmin() ||(
             $reports['name'] = $feedback->name;
             $reports_info[] = $reports;
             $out .= '<div class="dropdown-divider" role="presentation"><span class="filler">&nbsp;</span></div>
-                                                <a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$feedback->id.'class="dropdown-item menu-action" role="menuitem" data-title="'.$feedback->name.'" aria-labelledby="'.$feedback->name.'" target="_blank"> 
+                                                <a href='.$CFG->wwwroot.'/blocks/learnerscript/viewreport.php?id='.$feedback->id.'class="dropdown-item menu-action" role="menuitem" data-title="'.$feedback->name.'" aria-label="'.$feedback->name.'" target="_blank"> 
                                                     <span class="menu-action-text">
                                                         '.$feedback->name.'
                                                     </span>
@@ -204,7 +204,7 @@ if(has_capability('local/evaluation:addinstance', $context)){
 }
 echo '</ul>';
 if(has_capability('local/evaluation:addinstance', $context)){
-echo '<a class="btn-link btn-sm" href="javascript:void(0);" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse" title="Filters">
+echo '<a class="btn-link btn-sm" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse" title="Filters">
         <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
       </a>';
 }

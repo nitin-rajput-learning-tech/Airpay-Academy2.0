@@ -3296,6 +3296,24 @@ body .que .info>div {
 .dataTables_wrapper .dataTables_paginate .paginate_button.next:hover{
     color: #000 !important;
 }
+.pagination.ng-scope [ng-if="boundaryLinks"]{
+    display: none;
+}
+#page-local-search-allcourses .pagination{
+    align-items: center;
+}
+#page-local-search-allcourses .pagination .ng-scope.disabled{
+    opacity: 1 !important;
+}
+.pagination.ng-scope [ng-if="directionLinks"] a{
+    background-color: transparent;
+    border:none;
+    font-size: 25px;
+    color: #000 !important;
+}
+#page-local-search-allcourses .pagination .ng-scope .ng-binding{
+    background-color: #fff;
+}
 /*online quiz view page css*/
 #page-mod-quiz-view .activity-information .description-inner{
     display: flex;
@@ -3375,4 +3393,72 @@ table.flexible td:not(:first-child, :last-child)
 }
 #classroommodule.generaltable tbody td{
     justify-content: center;
+}
+
+
+/*filter form*/
+#filteringform {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: #fff;
+     .form-autocomplete-downarrow{
+        right: 9px!important;
+        left: auto!important;
+        bottom: 3px!important;
+        top: auto; 
+     }
+     .form-inline.felement.col-md-9{
+         width: 100%;
+     }
+}
+#filters_form{
+    background-color: #fff !important;
+}
+@media(min-width:571px) and (max-width:767px){
+    #filteringform .form-autocomplete-downarrow{
+    top: -4px !important;
+    }
+    #filteringform .mr-md-2{
+    display: inline ;
+    }
+
+}
+@media(max-width:430px){
+    #filters_form .fitem.form-group {
+    max-width: 100%;
+    flex: 0 0 100%;
+    }
+    form#filteringform #fgroup_id_buttonar .fitem.form-submit{
+    flex:none;
+    }
+}
+@media (min-width: 431px) and (max-width: 1023px){
+    #filters_form .fitem.form-group {
+    max-width: 50%;
+    flex: 0 0 50%;
+    }
+    #filters_form .form-inline.felement{
+    flex-flow: row nowrap;
+    }
+}
+
+.navbar .usermsg .hand_icon{
+    background-image: url('[[pix:theme_epsilon|hand]]');
+    width: 30px;
+    height: 30px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: inline-block;
+}
+.navbar .usermsg h5{
+    color: #2a364a;
+}
+body#page-login-index .form-control#password{
+    position: relative;
+}
+body#page-login-index .form-group .show_pwd{
+    position: absolute;
+    top: 9px;
+    right: 28px;
 }
