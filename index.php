@@ -6,7 +6,106 @@
     $pageTitle = "Airpay Payment Services - India’s first integrated omnichannel financial services platform";$pageDesc = "Accept 140+ payment instruments across all sales points. A dynamic and versatile payment gateway enabling you to accept various payment instruments like Credit Cards, Debit Cards, Net Banking, RTGS/IMPS/NEFT, Bharat QR, UPI, Cash, Corporate Cards, Loyalty Cards, Wallets, and Prepaid Cards across multiple sales channels. Airpay is among top payment gateway solutions providers in India. We offer online payment processing services, ecommerce payment solutions &amp; credit card processing options with no hidden charges &amp; no setup cost.";$pageKeywords = "airpay, payment, gateway, wallet, credit card, debit card, airpay, airpay payment gateway service, airpay payment service, online payment gateway in india, payment processing services india, payment gateway solutions providers, airpay online payment processing service, credit card processing options, payment solutions for ecommerce, EDC, POS, ";include 'layout/header.php';?>
 </head>
 <body class="homepage">
-<?php include 'layout/menu.php';?>
+<?php 
+
+include 'layout/menu.php';
+
+if (!file_exists('./config.php')) {
+    header('Location: install.php');
+    die;
+}
+
+require_once('config.php');
+require_once($CFG->dirroot .'/course/lib.php');
+require_once($CFG->libdir .'/filelib.php');
+
+redirect_if_major_upgrade_required();
+
+$urlparams = array();
+if (!empty($CFG->defaulthomepage) &&
+        ($CFG->defaulthomepage == HOMEPAGE_MY || $CFG->defaulthomepage == HOMEPAGE_MYCOURSES) &&
+        optional_param('redirect', 1, PARAM_BOOL) === 0
+) {
+    $urlparams['redirect'] = 0;
+}
+$PAGE->set_url('/', $urlparams);
+$PAGE->set_pagelayout('frontpage');
+$PAGE->add_body_class('limitedwidth');
+$PAGE->set_other_editing_capability('moodle/course:update');
+$PAGE->set_other_editing_capability('moodle/course:manageactivities');
+$PAGE->set_other_editing_capability('moodle/course:activityvisibility');
+
+// Prevent caching of this page to stop confusion when changing page after making AJAX changes.
+$PAGE->set_cacheable(false);
+
+require_course_login($SITE);
+
+$hasmaintenanceaccess = has_capability('moodle/site:maintenanceaccess', context_system::instance());
+
+// If the site is currently under maintenance, then print a message.
+if (!empty($CFG->maintenance_enabled) and !$hasmaintenanceaccess) {
+    print_maintenance_message();
+}
+
+$hassiteconfig = has_capability('moodle/site:config', context_system::instance());
+
+if ($hassiteconfig && moodle_needs_upgrading()) {
+    redirect($CFG->wwwroot .'/'. $CFG->admin .'/index.php');
+}
+
+// If site registration needs updating, redirect.
+\core\hub\registration::registration_reminder('/index.php');
+if (get_home_page() != HOMEPAGE_SITE) {
+    // Redirect logged-in users to My Moodle overview if required.
+    $redirect = optional_param('redirect', 1, PARAM_BOOL);
+    if (optional_param('setdefaulthome', false, PARAM_BOOL)) {
+        set_user_preference('user_home_page_preference', HOMEPAGE_SITE);
+    } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MY) && $redirect === 1) {
+        // At this point, dashboard is enabled so we don't need to check for it (otherwise, get_home_page() won't return it).
+        redirect($CFG->wwwroot .'/my/');
+    } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_MYCOURSES) && $redirect === 1) {
+        redirect($CFG->wwwroot .'/my/courses.php');
+    } else if (!empty($CFG->defaulthomepage) && ($CFG->defaulthomepage == HOMEPAGE_USER)) {
+        $frontpagenode = $PAGE->settingsnav->find('frontpage', null);
+        if ($frontpagenode) {
+            $frontpagenode->add(
+                get_string('makethismyhome'),
+                new moodle_url('/', array('setdefaulthome' => true)),
+                navigation_node::TYPE_SETTING);
+        } else {
+            $frontpagenode = $PAGE->settingsnav->add(get_string('frontpagesettings'), null, navigation_node::TYPE_SETTING, null);
+            $frontpagenode->force_open();
+            $frontpagenode->add(get_string('makethismyhome'),
+                new moodle_url('/', array('setdefaulthome' => true)),
+                navigation_node::TYPE_SETTING);
+        }
+    }
+}
+
+// Trigger event.
+course_view(context_course::instance(SITEID));
+
+$PAGE->set_pagetype('site-index');
+$PAGE->set_docs_path('');
+$editing = $PAGE->user_is_editing();
+$PAGE->set_title($SITE->fullname);
+$PAGE->set_heading($SITE->fullname);
+$PAGE->set_secondary_active_tab('coursehome');
+
+$courserenderer = $PAGE->get_renderer('core', 'course');
+
+if ($hassiteconfig) {
+    $editurl = new moodle_url('/course/view.php', ['id' => SITEID, 'sesskey' => sesskey()]);
+    $editbutton = $OUTPUT->edit_button($editurl);
+    $PAGE->set_button($editbutton);
+}
+
+echo $OUTPUT->header();
+
+$siteformatoptions = course_get_format($SITE)->get_format_options();
+$modinfo = get_fast_modinfo($SITE);
+$modnamesused = $modinfo->get_used_module_names();
+?>
 <div class="wrap">
 	<div class="loader"></div>
 
