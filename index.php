@@ -130,6 +130,9 @@ if (!empty($CFG->customfrontpageinclude)) {
 
 } else if ($siteformatoptions['numsections'] > 0) {
     echo $courserenderer->frontpage_section1();
+}else {
+	  redirect($CFG->wwwroot .'/airpayacademy.php');
+
 }
 // Include course AJAX.
 include_course_ajax($SITE, $modnamesused);
