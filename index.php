@@ -29,7 +29,6 @@ if (!empty($CFG->defaulthomepage) &&
     $urlparams['redirect'] = 0;
 }
 $PAGE->set_url('/', $urlparams);
-$PAGE->set_pagelayout('frontpage');
 $PAGE->add_body_class('limitedwidth');
 $PAGE->set_other_editing_capability('moodle/course:update');
 $PAGE->set_other_editing_capability('moodle/course:manageactivities');
@@ -83,28 +82,7 @@ if (get_home_page() != HOMEPAGE_SITE) {
 }
 
 // Trigger event.
-course_view(context_course::instance(SITEID));
 
-$PAGE->set_pagetype('site-index');
-$PAGE->set_docs_path('');
-$editing = $PAGE->user_is_editing();
-$PAGE->set_title($SITE->fullname);
-$PAGE->set_heading($SITE->fullname);
-$PAGE->set_secondary_active_tab('coursehome');
-
-$courserenderer = $PAGE->get_renderer('core', 'course');
-
-if ($hassiteconfig) {
-    $editurl = new moodle_url('/course/view.php', ['id' => SITEID, 'sesskey' => sesskey()]);
-    $editbutton = $OUTPUT->edit_button($editurl);
-    $PAGE->set_button($editbutton);
-}
-
-echo $OUTPUT->header();
-
-$siteformatoptions = course_get_format($SITE)->get_format_options();
-$modinfo = get_fast_modinfo($SITE);
-$modnamesused = $modinfo->get_used_module_names();
 ?>
 <div class="wrap">
 	<div class="loader"></div>
