@@ -6539,6 +6539,7 @@ function send_password_change_confirmation_email($user, $resetrecord) {
     $data->firstname = $user->firstname;
     $data->lastname  = $user->lastname;
     $data->username  = $user->username;
+    $data->supportemail  = 'academy@airpay.co.in';
     $data->sitename  = format_string($site->fullname);
     $data->link      = $CFG->wwwroot .'/login/forgot_password.php?token='. $resetrecord->token;
     $data->admin     = generate_email_signoff();

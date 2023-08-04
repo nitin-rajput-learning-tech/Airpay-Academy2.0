@@ -848,7 +848,17 @@ $string['backtohome'] = 'Click here to Continue';
 $string['phoneexists'] = 'Phone number already exists.';
 $string['privacypolicyrequired'] = 'Please Check the Polices.';
 $string['termsconditionrequired'] = 'Please Check the Terms & Conditions.';
-$string['regisemailbody'] = 'Hi {$a->username}, Your registration successfully completed.';
+$string['regisemailbody'] = 'Subject: Welcome to {$a->sitename}!
+
+    Dear {$a->username},
+
+    Welcome to {$a->sitename}! We are thrilled to have you on board. You\'ve taken the first step towards an exciting learning journey.
+
+    In this course, you\'ll find valuable content and engaging materials that will help you expand your knowledge and skills. We are confident that you\'ll find it both enjoyable and rewarding.
+
+    If you have any questions or need assistance at any point during your learning experience, don\'t hesitate to reach out to our support team at {$a->supportemail} .
+
+    Thank you once again for joining us. Let\'s embark on this learning adventure together!';
 $string['emailsubject'] = 'Confirmation';
 $string['organization_shortname'] = 'Organization Short Name';
 $string['activeregistration'] = 'Registration';
