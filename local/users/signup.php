@@ -71,6 +71,8 @@ $company = $DB->get_field('local_costcenter', 'id', array('parentid' => '0','sho
     {
         $a = new \stdClass();
         $a->username = $user->username;        
+        $a->sitename = 'AirPay';        
+        $a->supportemail = 'academy@airpay.co.in';        
         $messagetext = get_string('regisemailbody', 'local_users', $a);
         $messagehtml = text_to_html($messagetext, null, false, true);
         $subject = get_string('emailsubject', 'local_users');
