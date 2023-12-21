@@ -61,7 +61,7 @@ $stable->length = 0;
 $userdata = manage_users_content($stable, $totalusers);
 $data = [];
 foreach ($userdata as $user) {
-    $data[] = [$user['prefix'],$user['fullname'], $user['username'], $user['gender'], "'".$user['empid']."'", $user['wemail'], $user['orgstring'],$user['deptstring'],$user['commercialunit'],$user['commercialarea'],
+    $data[] = [$user['prefix'],$user['fullname'], $user['username'], $user['gender'], $user['empid'], $user['wemail'], $user['orgstring'],$user['deptstring'],$user['commercialunit'],$user['commercialarea'],
         $user['phno'], $user['designationstring'],
         $user['employmenttype'], $user['region'],$user['grade'],
             $user['supervisiorstring'],$user['dateofbirth'], $user['dateofjoining'], $user['lastaccess']];
