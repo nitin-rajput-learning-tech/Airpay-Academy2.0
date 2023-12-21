@@ -1108,6 +1108,7 @@ function manage_users_content($stable, $users/*,$filterdata*/) {
             $useremail = substr($useremail, 0, 24).'...';
         }
         $list['email'] = !empty($useremail) ? $useremail : 'N/A';
+        $list['wemail'] = !empty($user->email) ? $user->email : 'N/A';
         $organisationdata = array_filter(explode('/', $user->open_path));
         $organisationnames = array_map(function($orgid){
             return \local_costcenter\lib\accesslib::get_costcenter_info($orgid, 'fullname');
