@@ -24,12 +24,18 @@
 use block_learnerscript\local\pluginbase;
 use block_learnerscript\local\reportbase;
 class plugin_coursefield extends pluginbase {
+    public $courseslist = [];
 
     public function init() {
+        global $DB;
         $this->fullname = get_string('coursefield', 'block_learnerscript');
         $this->type = 'advanced';
         $this->form = true;
         $this->reporttypes = array();
+        $this->costcenterarray = array();
+        $this->costcenterarray = $DB->get_records_menu('local_costcenter',array());
+        $this->coursecategory = $DB->get_records_menu('local_custom_category',array());
+        $this->coursetypes = $DB->get_records_menu('local_course_types',array());
     }
 
     public function summary($data) {
@@ -47,7 +53,13 @@ class plugin_coursefield extends pluginbase {
     // Row -> Complet course row c->id, c->fullname, etc...
     public function execute($data, $row, $user, $courseid, $starttime = 0, $endtime = 0) {
         global $DB, $CFG; 
-        $courserecord = $DB->get_record('course',array('id'=>$row->courseid)); 
+        // $courserecord = $DB->get_record('course',array('id'=>$row->courseid)); 
+        if (!isset($this->courseslist[$row->courseid])) {
+            $courserecord = $DB->get_record('course',array('id'=>$row->courseid));
+            $this->courseslist[$row->courseid] = $courserecord;
+        } else {
+            $courserecord = $this->courseslist[$row->courseid];
+        }
         list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$courserecord->open_path);
         $coursereportid = $DB->get_field('block_learnerscript', 'id', array('type'=>'courseprofile'), IGNORE_MULTIPLE);
         switch ($data->column) { 
@@ -66,7 +78,7 @@ class plugin_coursefield extends pluginbase {
                 $courserecord->{$data->column} = $courserecord->shortname;
                 break;
             case 'coursecategory':
-                $coursecategory = $DB->get_field('local_custom_category', 'fullname', array('id' =>$courserecord->open_categoryid));
+                $coursecategory = $this->coursecategory[$courserecord->open_categoryid]; //$DB->get_field('local_custom_category', 'fullname', array('id' =>$courserecord->open_categoryid));
                 $courserecord->{$data->column} = $coursecategory ? $coursecategory: 'NA';
             break;
             case 'coursevisible':
@@ -75,32 +87,42 @@ class plugin_coursefield extends pluginbase {
                                             '<span class="label label-warning">' . get_string('inactive'). '</span';
             break;                
             case 'courseorg':
-                $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
+                $courseorg = $this->costcenterarray[$org];
+                $courserecord->{$data->column} = $courseorg ? $courseorg: 'NA';
+                // $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$org));
                 break;
             case 'coursedept':
                 if($ctr){
-                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
+                    $coursedept = $this->costcenterarray[$ctr];
+                    $courserecord->{$data->column} = $coursedept ? $coursedept: 'NA';
+                    // $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$ctr));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }
                 break;
             case 'course_subdept':
                 if($bu){
-                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$bu));
+                    $course_subdept = $this->costcenterarray[$bu];
+                    $courserecord->{$data->column} = $course_subdept ? $course_subdept: 'NA';
+                    // $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$bu));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }
                 break;
             case 'course_commercialarea':
                 if($cu){
-                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$cu));
+                    $course_commercialarea = $this->costcenterarray[$cu];
+                    $courserecord->{$data->column} = $course_commercialarea ? $course_commercialarea: 'NA';
+                    // $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$cu));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }
                 break;
             case 'course_territory':
                 if($territory){
-                    $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$territory));
+                    $course_territory = $this->costcenterarray[$territory];
+                    $courserecord->{$data->column} = $course_territory ? $course_territory: 'NA';
+                    // $courserecord->{$data->column} = $DB->get_field('local_costcenter', 'fullname', array('id' =>$territory));
                 }else{
                    $courserecord->{$data->column} = get_string('all'); 
                 }
@@ -126,7 +148,8 @@ class plugin_coursefield extends pluginbase {
                 break;
             case 'coursetype':
                 if($courserecord->open_identifiedas){
-                    $coursetype = $DB->get_field('local_course_types', 'name', array('id' =>$courserecord->open_identifiedas));
+                    $coursetype = $this->coursetypes[$courserecord->open_identifiedas];
+                    // $coursetype = $DB->get_field('local_course_types', 'name', array('id' =>$courserecord->open_identifiedas));
                 }else{
                     $coursetype = 'NA';
                 }
