@@ -87,7 +87,34 @@ class plugin_coursescompletionscolumns extends pluginbase{
             	}
                 break;
             case 'completion_percentage':
-                $fullcourse = get_course($row->courseid);
+                if(!is_null($row->completiondate)){
+                    $courseprogresspercent = 100;
+                        $row->{$data->column} = '<div class="progress">
+                            <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$courseprogresspercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$courseprogresspercent.'%">
+                                 <span class="progress_percentage ml-2">'.$courseprogresspercent.'% Complete</span>
+                            </div>
+                         </div>';
+                }else{
+                    $total_activity_count = $this->total_course_activities($row->courseid);
+                    $completed_activity_count = $this->user_course_completed_activities($row->courseid, $row->userid);
+                    if($total_activity_count>0 && $completed_activity_count>0){
+                        $courseprogresspercent = round($completed_activity_count/$total_activity_count*100);
+                        $row->{$data->column} = '<div class="progress">
+                            <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$courseprogresspercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$courseprogresspercent.'%">
+                                 <span class="progress_percentage ml-2">'.$courseprogresspercent.'% Complete</span>
+                            </div>
+                         </div>';
+                    }else{
+                        $courseprogresspercent = 0;
+                        $row->{$data->column} = '<div class="progress">
+                            <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$courseprogresspercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$courseprogresspercent.'%">
+                                 <span class="progress_percentage ml-2">'.$courseprogresspercent.'% Complete</span>
+                            </div>
+                         </div>';
+                    }
+                }
+
+               /* $fullcourse = get_course($row->courseid);
                 $progress = \core_completion\progress::get_course_progress_percentage($fullcourse, $row->userid);
                 $coursehasprogress = $progress !== null;
                 $courseprogresspercent = $coursehasprogress ? $progress : 0;
@@ -99,7 +126,7 @@ class plugin_coursescompletionscolumns extends pluginbase{
                      </div>';
                 }else{
                     $row->{$data->column} = 0;
-                }
+                }*/
             break;
 
             case 'courseactivitiescount':
@@ -171,5 +198,30 @@ class plugin_coursescompletionscolumns extends pluginbase{
 
 
         return array('passinggrade' => $gradepass, 'gradeachieved' => $gradeachieved, 'finalgrade' => $finalgrade);
+    }
+
+    public function total_course_activities($courseid) {
+    global $DB, $USER, $CFG;
+    if(empty($courseid)){
+        return false;
+    }
+    $sql="SELECT COUNT(cm.id) as totalactivities FROM {course_modules} cm JOIN {course_completion_criteria} as ccc on cm.id = ccc.moduleinstance WHERE cm.course = ? AND cm.visible = 1 AND cm.deletioninprogress = 0 AND cm.course = ccc.course ";
+
+    $totalactivitycount = $DB->get_record_sql($sql, [$courseid]);
+    $out = $totalactivitycount->totalactivities;
+    return $out;
+    }
+    public function user_course_completed_activities($courseid, $userid) {
+        global $DB, $USER, $CFG;
+        if(empty($courseid) || empty($userid)){
+            return false;
+        }
+        $sql="SELECT count(cc.id) as completedact from {course_completion_criteria} ccc 
+                    JOIN {course_modules_completion} cc ON cc.coursemoduleid = ccc.moduleinstance 
+                    JOIN {course_modules} cm ON cm.id = ccc.moduleinstance
+                    where ccc.course = ? and cc.userid= ? and cc.completionstate = 1 AND cm.visible = 1 ";
+        $completioncount = $DB->get_record_sql($sql, [$courseid, $userid]);
+        $out = $completioncount->completedact;
+        return $out;
     }
 }
