@@ -87,7 +87,7 @@ class plugin_coursescompletionscolumns extends pluginbase{
             	}
                 break;
             case 'completion_percentage':
-                if(!is_null($row->completiondate)){
+                if(!is_null($row->completiondate) && ($row->completiondate != 'NA')){
                     $courseprogresspercent = 100;
                         $row->{$data->column} = '<div class="progress">
                             <div class="progress-bar text-center" role="progressbar" aria-valuenow="'.$courseprogresspercent.'" aria-valuemin="0" aria-valuemax="100" style="width:'.$courseprogresspercent.'%">
