@@ -70,8 +70,8 @@ $company = $DB->get_field('local_costcenter', 'id', array('parentid' => '0','sho
     if($res)
     {
         $a = new \stdClass();
-        $a->username = $user->username;        
-        $a->sitename = 'AirPay';        
+        $a->username = $user->firstname.' '.$user->lastname;        
+        $a->sitename = 'Airpay';        
         $a->supportemail = 'academy@airpay.co.in';        
         $messagetext = get_string('regisemailbody', 'local_users', $a);
         $messagehtml = text_to_html($messagetext, null, false, true);
