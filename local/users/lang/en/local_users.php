@@ -859,7 +859,7 @@ $string['regisemailbody'] = 'Subject: Welcome to {$a->sitename}!
     If you have any questions or need assistance at any point during your learning experience, don\'t hesitate to reach out to our support team at {$a->supportemail} .
 
     Thank you once again for joining us. Let\'s embark on this learning adventure together!';
-$string['emailsubject'] = 'Confirmation';
+$string['emailsubject'] = 'Successfully registered';
 $string['organization_shortname'] = 'Organization Short Name';
 $string['activeregistration'] = 'Registration';
 $string['policystring'] = 'I have read and accept the ';
