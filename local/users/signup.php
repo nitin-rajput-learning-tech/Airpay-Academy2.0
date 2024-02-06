@@ -71,9 +71,10 @@ $company = $DB->get_field('local_costcenter', 'id', array('parentid' => '0','sho
     {
         $a = new \stdClass();
         $a->username = $user->firstname.' '.$user->lastname;        
-        $a->sitename = 'Airpay';        
+        $a->sitename = 'Airpay Academy';        
         $a->supportemail = 'academy@airpay.co.in';        
-        $messagetext = get_string('regisemailbody', 'local_users', $a);
+        $messagetext  = get_string('regisemailbody', 'local_users', $a);
+        $messagetext .= '<br><br><img src="'.$CFG->wwwroot.'/theme/epsilon/pix/academylogo.jpg"  width="332" height="192"/>';
         $messagehtml = text_to_html($messagetext, null, false, true);
         $subject = get_string('emailsubject', 'local_users');
         $from = new stdClass();

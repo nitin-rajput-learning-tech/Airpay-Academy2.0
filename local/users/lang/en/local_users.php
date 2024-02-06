@@ -848,17 +848,27 @@ $string['backtohome'] = 'Click here to Continue';
 $string['phoneexists'] = 'Phone number already exists.';
 $string['privacypolicyrequired'] = 'Please Check the Polices.';
 $string['termsconditionrequired'] = 'Please Check the Terms & Conditions.';
-$string['regisemailbody'] = 'Subject: Welcome to {$a->sitename}!
+$string['regisemailbody'] = 'Subject: Welcome to {$a->sitename} - Your Learning Journey Begins!
 
-    Dear {$a->username},
+    Hi {$a->username},
 
-    Welcome to {$a->sitename}! We are thrilled to have you on board. You\'ve taken the first step towards an exciting learning journey.
+    Exciting news – you\'ve officially joined {$a->sitename}, and we\'re delighted to welcome you to our learning community!
 
-    In this course, you\'ll find valuable content and engaging materials that will help you expand your knowledge and skills. We are confident that you\'ll find it both enjoyable and rewarding.
+    Here, learning isn\'t a task; it\'s an adventure designed around you. Forget the traditional lecture setup – we\'re all about engaging content that makes your learning experience enjoyable.
 
-    If you have any questions or need assistance at any point during your learning experience, don\'t hesitate to reach out to our support team at {$a->supportemail} .
+    Got questions or need a helping hand? Our support team is just an email away at academy@airpay.co.in. Consider them your friendly guides through this educational journey.
 
-    Thank you once again for joining us. Let\'s embark on this learning adventure together!';
+    Now, a sneak peek into Airpay Academy – think of us as your co-pilot in the financial exploration. Our mission is simple: enhance your skills without the overwhelm.
+	Quick View of Airpay Academy:
+
+	Mission: Simplifying Learning
+
+	{$a->sitename} is your gateway to a top-notch training program. Our goal is to demystify the world of Employability and Entrepreneurial Skills, Business Training, and Financial Education, making it not just understandable but downright enjoyable.
+
+	Your learning journey is more than a course; it\'s a personalized expedition into the world of knowledge. Ready to kick off this adventure?
+
+	Thanks for choosing {$a->sitename}! Get ready for a seamless learning experience that\'s all about you.';
+	
 $string['emailsubject'] = 'Successfully registered';
 $string['organization_shortname'] = 'Organization Short Name';
 $string['activeregistration'] = 'Registration';
