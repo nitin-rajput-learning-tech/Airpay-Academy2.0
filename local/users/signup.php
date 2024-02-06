@@ -71,16 +71,18 @@ $company = $DB->get_field('local_costcenter', 'id', array('parentid' => '0','sho
     {
         $a = new \stdClass();
         $a->username = $user->firstname.' '.$user->lastname;        
-        $a->sitename = 'Airpay';        
+        $a->sitename = 'Airpay Academy';        
         $a->supportemail = 'academy@airpay.co.in';        
-        $messagetext = get_string('regisemailbody', 'local_users', $a);
+        $messagetext  = get_string('regisemailbody', 'local_users', $a);
         $messagehtml = text_to_html($messagetext, null, false, true);
         $subject = get_string('emailsubject', 'local_users');
+        $attachment = "$CFG->dirroot/theme/epsilon/pix/academylogo.jpg";
+        $attachname = "academylogo.jpg";
         $from = new stdClass();
         $from = get_admin();
         $baseurl = new moodle_url('/local/users/signup.php', array('success' => '1'));
 
-        email_to_user($user, $from, $subject, $messagetext, $messagehtml);
+        email_to_user($user, $from, $subject, $messagetext, $messagehtml, $attachment , $attachname);
 
         redirect($baseurl, get_string('registraionsuccess', 'local_users'), null, \core\output\notification::NOTIFY_SUCCESS);
         exit;
