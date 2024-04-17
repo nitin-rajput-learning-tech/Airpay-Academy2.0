@@ -325,7 +325,7 @@ class create_user extends moodleform {
                 if (!validate_email($data['email'])) {
                     $errors['email'] = get_string('emailerror', 'local_users');
                 }
-                if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $data['email'])) {
+                if (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,10}$/ix", $data['email'])) {
                     $errors['email'] = get_string('invalidemail', 'local_users');
                 }
                 if ($data['email'] != strtolower($data['email'])) {
