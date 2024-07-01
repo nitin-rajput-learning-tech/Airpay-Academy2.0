@@ -3,7 +3,11 @@
 <head>
 <?php 
     
-    $pageTitle = "Airpay Payment Services - India’s first integrated omnichannel financial services platform";$pageDesc = "Accept 140+ payment instruments across all sales points. A dynamic and versatile payment gateway enabling you to accept various payment instruments like Credit Cards, Debit Cards, Net Banking, RTGS/IMPS/NEFT, Bharat QR, UPI, Cash, Corporate Cards, Loyalty Cards, Wallets, and Prepaid Cards across multiple sales channels. Airpay is among top payment gateway solutions providers in India. We offer online payment processing services, ecommerce payment solutions &amp; credit card processing options with no hidden charges &amp; no setup cost.";$pageKeywords = "airpay, payment, gateway, wallet, credit card, debit card, airpay, airpay payment gateway service, airpay payment service, online payment gateway in india, payment processing services india, payment gateway solutions providers, airpay online payment processing service, credit card processing options, payment solutions for ecommerce, EDC, POS, ";include 'layout/header.php';?>
+    $pageTitle = "airpay academy - a comprehensive & hybrid learning platform";
+    $pageDesc = "airpay academy is an extensive training & development programme designed to improve your abilities in the financial services sector";
+    $pageKeywords = "airpay, payment, gateway, wallet, credit card, debit card, airpay, airpay payment gateway service, airpay payment service, online payment gateway in india, payment processing services india, payment gateway solutions providers, airpay online payment processing service, credit card processing options, payment solutions for ecommerce, EDC, POS, ";
+    include 'layout/header.php';
+    ?>
 </head>
 <body class="homepage">
 <?php 
