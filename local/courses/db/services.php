@@ -174,6 +174,14 @@ $functions = array(
         'description' => 'get course info',
         'type' => 'read',
         'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE),
-    )
+    ),
+    'local_courses_submit_adddashboardcourses_form' => array(
+        'classname' => 'local_courses_external',
+        'methodname' => 'adddashboardcourses',
+        'classpath' => 'local/courses/classes/external.php',
+        'description' => 'List all courses in card view for guest',
+        'ajax' => true,
+        'type' => 'read',
+    ),
 );
 

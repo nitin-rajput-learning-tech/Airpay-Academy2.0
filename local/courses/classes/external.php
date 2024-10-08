@@ -1758,4 +1758,81 @@ class local_courses_external extends external_api {
             'level' => new external_value(PARAM_TEXT, 'level', VALUE_OPTIONAL, ''),
         ));
     }
+    /** Describes the parameters for adddashboard_course webservice.
+   * @return external_function_parameters
+  */
+  public static function adddashboardcourses_parameters() {
+    return new external_function_parameters(
+      array(
+        'contextid' => new external_value(PARAM_INT, 'The context id for the course'),
+        'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create course form, encoded as a json array')
+      )
+    );
+  }
+
+  /**
+   * adddashboard_course 
+   *
+   * @param int $contextid
+   * @param string $jsonformdata
+   * @return array  success.
+   */
+  public static function adddashboardcourses($contextid, $jsonformdata) {
+    global $DB;
+    $params = self::validate_parameters(self::adddashboardcourses_parameters(),
+                                            ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
+    $context = context::instance_by_id($params['contextid'], MUST_EXIST);
+    // We always must call validate_context in a webservice.
+    self::validate_context($context);
+        $data = array();
+
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
+
+        $mform = new local_courses\form\adddashboardcourse_form(null, array(
+         'courseids' => $data['courseids']), 'post', '', null, true, $data);
+        $validateddata = $mform->get_data();
+        if(empty($validateddata->courseids)){
+            $validateddata->courseids = 0;
+        }else{
+            $validateddata->courseids = implode(',',$validateddata->courseids);
+        }
+        if($validateddata){
+            if($validateddata->id > 0){
+                $DB->update_record('local_dashboardcourses',$validateddata);
+            } else{
+                $DB->insert_record('local_dashboardcourses',$validateddata);
+            }
+        $resp = true;
+        if($data['courseids'] != '_qf__force_multiselect_submission') 
+        $success = get_string('success_message','local_courses');
+        }else {
+        new moodle_exception('deleteerror', 'local_courses');
+        $resp = false;
+        $success = get_string('fail_message','local_courses');
+    }
+    $return = [
+       'return' => $resp,
+       'success' => $success,
+    ]; 
+    return $return; 
+  }
+
+  /**
+   * Returns description of adddashboardcourses  value
+   * @return external_description
+   */
+
+  public static function adddashboardcourses_returns() {
+      return new external_single_structure([
+            'return' => new external_value(PARAM_INT, 'return'),
+            'success' => new external_value(PARAM_TEXT, 'success'),
+        ]);
+  }
 }

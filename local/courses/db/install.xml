@@ -56,5 +56,14 @@
         <INDEX NAME="orgid" UNIQUE="false" FIELDS="orgid"/>
       </INDEXES>
     </TABLE>  
+    <TABLE NAME="local_dashboardcourses" COMMENT="dashboard_courses for user" > 
+            <FIELDS> 
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" /> 
+                <FIELD NAME="courseids" TYPE="char" LENGTH="225" NOTNULL="false" SEQUENCE="false" /> 
+            </FIELDS> 
+            <KEYS> 
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/> 
+            </KEYS> 
+        </TABLE> 
   </TABLES>
 </XMLDB>

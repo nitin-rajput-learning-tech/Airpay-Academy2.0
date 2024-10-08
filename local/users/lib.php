@@ -1605,3 +1605,34 @@ function local_users_output_fragment_userrole_display($args)
     $output = $OUTPUT->render_from_template('local_users/roledetails', $templatedata);
     return $output;
 }
+
+/**
+ * Update excel row data
+ *
+ * @param  $userdata updated status fields related data
+ *
+ **/
+function local_user_status_update($userdata) {
+    global $DB;
+    $updateuser = new stdClass();
+    $updateuser->id = $userdata->id;
+
+    if (strtolower($userdata->status) == 'active') {
+        $updateuser->suspended = 0;
+    } elseif (strtolower($userdata->status) == 'inactive') {
+        $updateuser->suspended = 1;
+    } elseif (strtolower($userdata->status) == 'delete') {
+        $updateuser->deleted = 1;
+    }
+
+    $DB->update_record('user', $updateuser);
+
+    $core_component = new \core_component();
+    $localclassroom_plugin_exist = $core_component::get_plugin_directory('local', 'classroom');
+    if (!empty($localclassroom_plugin_exist)) {
+        if (method_exists(new \local_classroom\classroom(), 'delete_suspend_user_remove_classrooms')) {
+            (new \local_classroom\classroom)->delete_suspend_user_remove_classrooms($updateuser->id);
+        }
+    }
+    return true;
+}

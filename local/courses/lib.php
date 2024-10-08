@@ -31,6 +31,7 @@ if(file_exists($CFG->dirroot.'/local/costcenter/lib.php')){
 require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/completion/completion_completion.php');
+use \local_courses\form\adddashboardcourse_form as adddashboardcourse_form;
 use \local_courses\form\custom_course_form as custom_course_form;
 use \local_courses\form\custom_courseevidence_form as custom_courseevidence_form;
 
@@ -2483,4 +2484,38 @@ function local_courses_masterinfo(){
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }
     return array('2' => $content);
+}
+function local_courses_output_fragment_adddashboardcourse_form($args){
+    global $CFG, $DB;
+    $args = (object) $args;
+    $o = '';
+    $formdata = [];
+    $params = [];
+    $id = $args->id;
+    if (!empty($args->jsonformdata)) {
+
+        $serialiseddata = json_decode($args->jsonformdata);
+        if (is_object($serialiseddata)) {
+            $serialiseddata = serialize($serialiseddata);
+        }
+        parse_str($serialiseddata, $formdata);
+    }
+    $formdata['id'] = $id;
+    if ($id > 0) {
+        $courseids = $DB->get_field('local_dashboardcourses', 'courseids', ['id' => $id]);
+        $courseidss = explode(',', $courseids);
+        $formdata['courseids'] = $courseidss;
+    }
+    $mform = new adddashboardcourse_form(null, $params, 'post', '', null, true, $formdata);
+    $mform->set_data($formdata);
+    if (!empty($args->jsonformdata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
 }

@@ -219,5 +219,16 @@ function xmldb_local_courses_upgrade($oldversion)
         }
         upgrade_plugin_savepoint(true, 2022101800.18, 'local', 'courses');
     }
+     if ($oldversion < 2022101800.19) {
+        $time = time();
+        $table = new xmldb_table('local_dashboardcourses');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('courseids', XMLDB_TYPE_CHAR,  '255', null, null, null, null);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.19, 'local', 'courses');
+    }
     return true;
 }

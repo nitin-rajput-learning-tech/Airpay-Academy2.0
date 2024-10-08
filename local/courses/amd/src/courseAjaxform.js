@@ -55,7 +55,9 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
                     var head =  {key:'editcourse', component:'local_courses'};
                 }
             }
-        }else{
+        } else if (args.callback == 'adddashboardcourse_form') {
+                var head = { key: 'addcoursetodashboard', component: 'local_courses', param: args.coursename };
+            } else{
            var head = {key:'createnewcourse', component:'local_courses'};
         }
         customstrings = Str.get_strings([head, {
@@ -73,6 +75,10 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
             {
                 key: 'cancel',
                 component: 'moodle'
+            },
+            {
+                key: 'save',
+                component: 'local_courses'
             }]);
         return customstrings.then(function(strings) {
             // Create the modal.
@@ -86,12 +92,6 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
             // Keep a reference to the modal.
             this.modal = modal;
             
-            // this.getFooter().then(function(s){
-            //     // this.modal.footer = s;
-            //     this.modal.setFooter(s);
-            //     // console.log(this.modal.footer);
-            // }.bind(this));
-            // this.modal.showFooter();
             if (args.callback !='custom_selfcompletion_form') {
                 // Forms are big, we want a big modal.
                 this.modal.setLarge();
@@ -107,15 +107,6 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
                     this.modal.setBody('');
                 }.bind(this));
             }
-
-            // // We want to hide the submit buttons every time it is opened.
-            // this.modal.getRoot().on(ModalEvents.shown, function() {
-            //     this.modal.getRoot().append('<style>[data-fieldtype=submit] { display: none ! important; }</style>');
-            // }.bind(this));
-
-            // We catch the modal save event, and use it to submit the form inside the modal.
-            // Triggering a form submission will give JS validation scripts a chance to check for errors.
-            // this.modal.getRoot().on(ModalEvents.save, this.submitForm.bind(this));
          
             if (args.callback =='custom_selfcompletion_form') {
                 this.modal.getFooter().find('[data-action="save"]').on('click', function() {
@@ -172,15 +163,18 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
                                 }
                             });
                             modal.setBody(data);
-                            // if(self.args.form_status==0){
-                            //     $('[data-action="skip"]').css('display', 'none');
-                            //     $('[data-action="previous"]').css('display', 'none');
-                            // }else{
-                            //     $('[data-action="skip"]').css('display', 'block');
-                            //     $('[data-action="previous"]').css('display', 'block');
-                            // }
                         }
                     });
+                }
+                if (self.args.callback == 'adddashboardcourse_form') {
+                    var data = self.getBody();
+                    data.then(function (html, js) {
+                        if (html === false) {
+                            // window.location.reload();
+                            self.handleFormSubmissionResponse();
+                        }
+                    });
+                     modal.setBody(data);
                 }
 
             this.modal.getRoot().on('submit', 'form', function(form) {
@@ -211,36 +205,15 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
      * @return {Promise}
      */
     courseAjaxform.prototype.getFooter = function(customstrings) {
-        // return Str.get_strings([{
-        //         key: 'yes',
-        //         component: 'customfield'
-        //     },
-        //     {
-        //         key: 'no',
-        //         component: 'customfield'
-        //     },
-        //     {
-        //         key: 'saveandcontinue',
-        //         component: 'local_courses'
-        //     },
-        //     {
-        //         key: 'cancel'
-        //     }]).then(function(s) {
                 var footer = '';
                 if (this.args.callback==='custom_selfcompletion_form') {
                     footer += '<button type="button" class="btn btn-primary" data-action="save">'+customstrings[1]+'</button>&nbsp;';
-                    // if(this.args.form_status == 0) {
-                    //     $style = 'style="display:none;"';
-                    //     $footer += '<button type="button" class="btn btn-secondary" data-action="skip" ' + $style + '>Skip</button>&nbsp;';
-                    // }
                     footer += '<button type="button" class="btn btn-secondary" data-action="cancel">'+customstrings[2]+'</button>';
-                }
-                else if(this.args.viewtype!='userview'){
+                }else if (this.args.callback === 'adddashboardcourse_form') {
+                    footer += '<button type="button" class="btn btn-primary" data-action="save">' + customstrings[5] + '</button>&nbsp;';
+                    footer += '<button type="button" class="btn btn-secondary" data-action="cancel">' + customstrings[4] + '</button>';
+            }else if(this.args.viewtype!='userview'){
                     footer+= '<button type="button" class="btn btn-primary" data-action="save">'+customstrings[3]+'</button>&nbsp;';
-                    // if(this.args.form_status == 0) {
-                    //     $style = 'style="display:none;"';
-                    //     $footer += '<button type="button" class="btn btn-secondary" data-action="skip" ' + $style + '>Skip</button>&nbsp;';
-                    // }
                     footer += '<button type="button" class="btn btn-secondary" data-action="cancel">'+customstrings[4]+'</button>';
                 }
             return footer;
@@ -274,11 +247,20 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
 
         if (args.userid) {
              this.modal.hide();
-        }else{
+        }else if(args.return){
+                this.modal.hide();
+                Notification.addNotification({
+                message: args.success,
+                type: "success"
+            }); 
+             setTimeout(function () {
+                                window.location.reload();
+                            }, 2000);
+        } else{
             return Str.get_strings([{
                 key: 'courseoverview',
                 component: 'local_courses'
-            }]).then(function(s) {
+        }]).then(function(s) {
                 
                 // This will be the context for our template. So {{name}} in the template will resolve to "Tweety bird".
                 var context = { courseid: args.courseid, configpath: M.cfg.wwwroot, enrolid: args.enrolid, contextid:args.contextid};
@@ -297,9 +279,6 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
                     modal.getRoot().addClass('openLMStransition');
                     modal.show();
                     modal.getRoot().animate({"right":"0%"}, 500);
-                    // modal.getRoot().on(ModalEvents.hidden, function() {
-                    //     modal.hide();
-                    // });
                     modal.getRoot().on(ModalEvents.hidden, function() {
                         modal.destroy();
                     }.bind(this));
@@ -350,6 +329,8 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
 
         if (args.userid) {
              var methodname = args.plugintype + '_' + args.pluginname + '_submit_evidence_course_form';
+        }else if (self.args.callback == 'adddashboardcourse_form'){
+                var methodname = args.plugintype + '_' + args.pluginname + '_submit_adddashboardcourses_form';
         }else{
             var methodname = args.plugintype + '_' + args.pluginname + '_submit_create_course_form';
         }
@@ -367,7 +348,11 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
         promise[0].done(function(resp){
             self.args.courseid = resp.courseid;
             self.args.enrolid = resp.enrolid;
-            if(resp.form_status !== -1 && resp.form_status !== false) {
+            if(resp.return == 1){
+                    self.args.return = resp.return;
+                    self.args.success = resp.success;
+                    self.handleFormSubmissionResponse(self.args);
+            }else if(resp.form_status !== -1 && resp.form_status !== false) {
                 self.args.form_status = resp.form_status;
                 self.handleFormSubmissionFailure();
             } else {

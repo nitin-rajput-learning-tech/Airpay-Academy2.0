@@ -70,6 +70,13 @@ $capabilities = array(
         'archetypes' => array(
              'manager' => CAP_ALLOW,
         )
+    ),
+    'local/users:bulkstatuschange' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSECAT,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW,
+        )
     )
 
 );
