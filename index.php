@@ -108,7 +108,14 @@ if (get_home_page() != HOMEPAGE_SITE) {
 				<!--<img src="resources/images/bannertop.png">-->
 			</div>
         </div>
-		
+
+<?php
+
+	$renderer = $PAGE->get_renderer('local_courses');
+	echo $renderer->render_courses_index();
+
+?>
+
 		<div class="section sec-hsec2">
 			<div class="container">		
 				<h2 class="sec-th text-center">Three Pillars of Learning and Empowerment</h2>
