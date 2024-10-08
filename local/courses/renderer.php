@@ -513,6 +513,7 @@ class local_courses_renderer extends plugin_renderer_base {
             // Clean up course summary
             $coursesummary = strip_tags(format_text($course->summary));
             $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . " ..." : $coursesummary;
+            $coursetype = $DB->get_field('local_course_types', 'name', ['id' => $course->open_identifiedas]);
 
             // Check for course image
             $img = '';
@@ -531,6 +532,7 @@ class local_courses_renderer extends plugin_renderer_base {
             $courseData = [
                 'name' => format_string($course->fullname),
                 'summary' => $summarystring,
+                'coursetype' => $coursetype,
                 'courseimage' => $img,
                 'viewmoreurl' => new moodle_url('local/search/coursedetails.php', ['id' => $course->id])
 
