@@ -1,6 +1,5 @@
 <?php
-
-/*
+/**
  * This file is part of eAbyas
  *
  * Copyright eAbyas Info Solutons Pvt Ltd, India
@@ -17,15 +16,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ * @package   local
+ * @subpackage  classroom
  * @author eabyas  <info@eabyas.in>
- * @package BizLMS
- * @subpackage local_users
- */
-
-defined('MOODLE_INTERNAL') || die;
-
-$plugin->version = 2022101800.21;
-$plugin->maturity = MATURITY_STABLE;
-$plugin->release = 2.7;
-$plugin->component = 'local_users';
+**/
+$messageproviders = array(
+    'users_welcome_email' => array(
+        'defaults' => [
+            'popup' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
+            'email' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_LOGGEDIN + MESSAGE_DEFAULT_LOGGEDOFF,
+            'airnotifier' => MESSAGE_PERMITTED + MESSAGE_DEFAULT_ENABLED,
+        ]
+    )
+);

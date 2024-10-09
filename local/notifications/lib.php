@@ -405,6 +405,10 @@ class notifications
                 [onlineexams_description], [onlineexams_url],
                 [enroluser_fullname], [enroluser_email]";
                 break;
+            case 'users_welcome_email':
+                $strings = "[employee_name], [employee_email],
+                [employee_username], [employee_password]";
+                break;
         }
         return $strings;
     }

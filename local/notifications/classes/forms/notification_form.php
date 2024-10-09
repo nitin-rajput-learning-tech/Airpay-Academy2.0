@@ -141,7 +141,7 @@ class notification_form extends moodleform {
 				$mform->setType('moduleid', PARAM_RAW);
 				$courseselect->setMultiple(true);
 
-				$nonmodulenotifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE parent_module IN (SELECT lnti.id FROM {local_notification_type} AS lnti WHERE shortname IN ('certification', 'request', 'challenge'))");
+				$nonmodulenotifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE parent_module IN (SELECT lnti.id FROM {local_notification_type} AS lnti WHERE shortname IN ('certification', 'request', 'challenge', 'users'))");
 	    		$mform->hideIf('moduleid', 'notificationid', 'in', $nonmodulenotifications);
 				$mform->hideIf('moduleid', 'notificationid', 'eq', NULL);
 		   	}
