@@ -298,9 +298,14 @@ class custom_course_form extends moodleform {
               $summaryfields .= ',overviewfiles_filemanager';
             }
 
-        } elseif($formstatus == 1){
-
-            // $pointsArr = array();
+            $mform->addElement('advcheckbox', 'price_status', get_string('course_price_set', 'local_courses'),
+            null, null, [0, 1]);
+            $mform->addElement('text', 'courseprice', get_string('courseprice', 'local_courses'), 'maxlength="100" size="20"');
+            $mform->addHelpButton('courseprice', 'courseprice', 'local_courses');
+            $mform->setType('courseprice', PARAM_INT);
+            $mform->hideIf('courseprice', 'price_status', 'neq', '1');
+            } elseif($formstatus == 1){
+	// $pointsArr = array();
             // $pointsArr[] = $mform->createElement('text',  'open_points',  '',  get_string('points','local_courses'));
             // $pointsArr[] = $mform->createElement('advcheckbox', 'open_enablepoints',  '',  '', 0);
             // $mform->hideIf('open_points', 'open_enablepoints', 'neq', 1);

@@ -47,13 +47,13 @@ $PAGE->requires->jquery();
 
 $PAGE->requires->js('/local/search/js/angular.min.js');
 $PAGE->requires->js('/local/search/js/custom.js');
+$PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'load');
 $PAGE->requires->js('/local/search/js/dirPagination.js');
 $PAGE->requires->js_call_amd('local_search/courseinfo', 'load', array());
 $renderer = $PAGE->get_renderer('local_search');
 
 local_search_include_search_js();
 $plugininfo = local_search_get_enabled_searchplugin_info();
-
 
 use local_search\output\searchlib;
 

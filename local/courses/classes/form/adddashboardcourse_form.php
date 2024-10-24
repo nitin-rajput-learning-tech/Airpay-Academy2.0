@@ -20,7 +20,7 @@ namespace local_courses\form;
  * Class adddashboardcourse
  *
  * @package    local_courses
- * @copyright  2024 YOUR NAME <your@email.com>
+ * @copyright  2024 Sachin W <sachin.waghmare@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 namespace local_courses\form;
@@ -36,24 +36,25 @@ class adddashboardcourse_form extends moodleform {
 		$mform = & $this->_form;
 		$courseids = $this->_ajaxformdata['courseids'];
 		$context = $this->_customdata['context'];
-		$id = $DB->get_field_sql('SELECT id FROM {local_dashboardcourses} WHERE id > 0');
+		$dashboardcourserecord = $DB->get_record('local_dashboardcourses', []);
+		$id = $dashboardcourserecord->id;
         $categorycontext =  (new \local_courses\lib\accesslib())::get_module_context();
 		//later using set_data
 
-		$courses_sql = "SELECT id, fullname as fullname
-                        FROM {course} WHERE open_module IS NULL AND id > 1";
+		$courses_sql = " SELECT id, fullname
+                        FROM {course} WHERE open_module IS NULL AND id > 1 ";
     	if(!is_siteadmin()){
 			$costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='open_path');
 			$courses_sql .= $costcenterpathconcatsql;
 		}
 				$courses = $DB->get_records_sql_menu($courses_sql);
                  $coursesarr = [];
-                foreach($courses as $k => $v){
-					$course = $DB->get_record('course',['id'=>$k]);
+                foreach($courses as $key => $value){
+					$course = $DB->get_record('course',['id'=>$key]);
 					$course=(array)$course;
             		local_costcenter_set_costcenter_path($course);
 					$costcentername = $DB->get_field('local_costcenter','fullname',['id'=>$course['open_costcenterid']]);
-                        $coursesarr[$k] = format_string($v).'('.format_string($costcentername ).')';
+                        $coursesarr[$key] = format_string($value).'('.format_string($costcentername ).')';
                     }
             $options = array(
                 'multiple' => true,
@@ -61,14 +62,8 @@ class adddashboardcourse_form extends moodleform {
             );
 		
             $mform->addElement('autocomplete', 'courseids', get_string('courses', 'local_courses'), $coursesarr,$options);
-        	//$mform->addRule('courseids', null, 'required', null, 'client');
 			$mform->setType('courseids', PARAM_RAW);
 			$mform->addElement('hidden', 'id',$id);
 			$mform->setType('id', PARAM_INT);
-	}
-
-	function validation($data, $files) {
-		$errors = parent :: validation($data, $files);
-		return $errors;
 	}
 }

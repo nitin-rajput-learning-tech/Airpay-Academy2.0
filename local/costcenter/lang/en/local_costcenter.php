@@ -411,7 +411,7 @@ $string['requiredopen_level5department'] = 'Please select a Territory';
 
 $string['allonlineexamcount'] = 'Total Onlineexams';
 $string['activeonlineexamcount'] = 'Active Onlineexams';
-$string['inactiveonlineexamcount'] = 'In-Active Onlineexams';
+$string['inactiveonlineexamcount'] = 'Inactive Onlineexams';
 //Bulk users status change help.
 $string['statuschangehelp'] = '<div class="helpmanual_table"><table class="generaltable" border="1">
 <tr>

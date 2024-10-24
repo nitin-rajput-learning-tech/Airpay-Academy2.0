@@ -1,0 +1,94 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_biz_cart/biz_cart_item
+
+    This template will render the biz_cart items.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * All data attributes are required
+
+    Context variables required for this template:
+    * userid the logged in user id
+    * urls The URLs for the popover
+
+    Example context (json):
+    {
+        "itemid": 3,
+        "userid":3588,
+        "componentname": "mod_booking",
+        "area": "main",
+        "price": 133,
+        "expirationdate": 1642155164,
+        "itemname": "Tenniscourse",
+        "currency": "EUR",
+        "iscashier": false,
+        "nodelete": false
+    }
+
+}}
+
+<li id="item-{{componentname}}-{{area}}-{{itemid}}"
+    class="clearfix"
+    data-price='{{price}}'
+    data-name='{{itemname}}'
+    data-component='{{componentname}}'
+    data-area='{{area}}'
+    data-itemid='{{itemid}}'
+    data-item="biz_cart_item"
+    data-currency='{{currency}}'
+    data-userid='{{userid}}'>
+
+    <span class="item-name">
+        {{#imageurl}}
+            <img alt="Image of cart item: {{itemname}}" class="sc-cart-item-image" src="{{.}}">
+        {{/imageurl}}
+        {{^imageurl}}
+            <img alt="Image of cart item: {{itemname}}" class="sc-cart-item-image" src="{{wwwroot}}/local/biz_cart/pix/cart.png">
+        {{/imageurl}}
+    </span>
+    <span class="itemname">
+        {{itemname}}
+    </span>
+    {{#iscashier}}
+        <span class="item-button pull-right">
+            <i class="shoppingcart-discount-icon fa fa-fw fa-percent pl-2" aria-hidden="true"
+            data-item="biz_cart_item" data-component="{{componentname}}" data-area="{{area}}"
+            data-itemid="{{itemid}}" data-action="discount" data-userid="{{userid}}"></i>
+        </span>
+    {{/iscashier}}
+    {{^nodelete}}
+    <span class="item-button pull-right">
+        <i class="fa fa-fw fa-trash-o pl-2" aria-hidden="true"
+        data-item="biz_cart_item" data-itemid="{{itemid}}" data-component="{{componentname}}"
+        data-area="{{area}}" data-action="delete" data-userid="{{userid}}"></i>
+    </span>
+    {{/nodelete}}
+    {{#nodelete}}
+    <!-- This is only to fix indentation -->
+    <span class="pull-right">
+        <i class="fa fa-fw pl-2" aria-hidden="true"></i>
+    </span>
+    {{/nodelete}}
+    <div class="pull-right">
+        {{> local_biz_cart/item_price }}
+    </div>
+    <div class="item-description">{{{description}}}</div>
+</li>

@@ -129,8 +129,8 @@ $extended_menu_links .= '<div class="dropdown-menu dropdown-menu-right menu  ali
 }
 $extended_menu_links .= '</div></div></li>';
 if(is_siteadmin()){
- $id = $DB->get_field_sql('SELECT id FROM {local_dashboardcourses} WHERE id > 0');
- if(!$id){ $id = 0;}
+ $dashboardcourserecord = $DB->get_record('local_dashboardcourses', []);
+ $id = !empty($dashboardcourserecord) ? $dashboardcourserecord->id : 0;
  $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
                                     <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('add_coursestodashboard','local_courses').'" data-action="createcoursemodal" onclick="(function(e){ require(\'local_courses/courseAjaxform\').init({id :'. $id .',contextid:'.$categorycontext->id.', component:\'local_courses\', callback:\'adddashboardcourse_form\', plugintype: \'local\', pluginname: \'courses\'}) })(event)">
                                         <span class="createicon">

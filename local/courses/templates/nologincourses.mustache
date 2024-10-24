@@ -15,7 +15,13 @@
                             <h5 class="card-title fs-6" style="width: 320px; height: 30px;"><b>{{name}}</b></h5>
                             <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
                             <div class="d-flex justify-content-center">
-                                <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                               {{#price_status}}
+                                    <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
+                                {{/price_status}}
+                                {{^price_status}}
+                                    <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{/price_status}}
                             </div>
                         </div>
                     </div>
@@ -31,7 +37,13 @@
                             <h5 class="card-title fs-6" style="width: 320px; height: 30px;"><b>{{name}}</b></h5>
                             <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
                             <div class="d-flex justify-content-center">
-                                <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{#price_status}}
+                                    <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
+                                {{/price_status}}
+                                {{^price_status}}
+                                    <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{/price_status}}
                             </div>
                         </div>
                     </div>
@@ -46,7 +58,13 @@
                             <h5 class="card-title fs-6" style="width: 320px; height: 30px;"><b>{{name}}</b></h5>
                             <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
                             <div class="d-flex justify-content-center">
-                                <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{#price_status}}
+                                    <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
+                                {{/price_status}}
+                                {{^price_status}}
+                                    <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{/price_status}}
                             </div>
                         </div>
                     </div>

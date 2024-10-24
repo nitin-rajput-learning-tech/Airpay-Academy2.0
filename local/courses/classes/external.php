@@ -183,10 +183,10 @@ class local_courses_external extends external_api {
                         $trendingclass->trending_modules_crud($courseid->id, 'local_courses');
                     }
                 }
-                //$coursedata = $courseid;
+                $coursedata = $courseid;
                 $enrol_status = $validateddata->selfenrol;
                // insert::add_enrol_method_tocourse($coursedata,$enrol_status);
-
+                add_enrolon_payment_method_tocourse($coursedata);
             } elseif($validateddata->id > 0) {
                 $open_path=$DB->get_field('course', 'open_path', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
@@ -226,7 +226,7 @@ class local_courses_external extends external_api {
                     }
                    //  $coursedata = $DB->get_record('course',array('id' => $data['id']));
                    //  insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
-
+                    add_enrolon_payment_method_tocourse($validateddata);
                 }else{
                     $data = (object)$data;
 					if($data->open_enablepoints == 1){
@@ -1813,7 +1813,7 @@ class local_courses_external extends external_api {
         if($data['courseids'] != '_qf__force_multiselect_submission') 
         $success = get_string('success_message','local_courses');
         }else {
-        new moodle_exception('deleteerror', 'local_courses');
+            new moodle_exception('deleteerror', 'local_courses');
         $resp = false;
         $success = get_string('fail_message','local_courses');
     }
@@ -1831,8 +1831,8 @@ class local_courses_external extends external_api {
 
   public static function adddashboardcourses_returns() {
       return new external_single_structure([
-            'return' => new external_value(PARAM_INT, 'return'),
-            'success' => new external_value(PARAM_TEXT, 'success'),
+            'return' => new external_value(PARAM_BOOL, 'return'),
+            'success' => new external_value(PARAM_RAW, 'success'),
         ]);
   }
 }

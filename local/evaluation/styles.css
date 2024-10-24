@@ -1544,7 +1544,7 @@ body#page-local-evaluation-userdashboard .card_list_view {
     padding: 15px 15px 0 15px;
 }
 #page-local-evaluation-index .eval_container .eval_image{
-    background-image: url('https://energyresourcing.com/wp-content/uploads/2022/07/giving-constructive-feedback.jpg');
+    background-image: url([[pix:local_evaluation|eval_image]]);
     background-repeat: no-repeat;
     background-position: 100%;
     background-size: cover;
@@ -1630,7 +1630,7 @@ body#page-local-evaluation-userdashboard .card_list_view {
 /*evaluation feedback view page css*/
 body#page-local-evaluation-eval_view .evalview_topcontainer{
     content:"";
-    background-image: url('https://energyresourcing.com/wp-content/uploads/2022/07/giving-constructive-feedback.jpg');
+    background-image: url([[pix:local_evaluation|eval_image]]);
     width: 100%;
     height: 100%;
     position: relative;

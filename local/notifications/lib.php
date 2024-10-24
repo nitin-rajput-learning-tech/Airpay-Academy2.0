@@ -116,7 +116,7 @@ class notifications
                 $strings = "[course_title], [course_enrolstartdate],
                             [course_enrolenddate], [course_department],
                             [course_description], [course_url],
-                            [enroluser_fullname], [enroluser_email]";
+                            [enroluser_fullname], [enroluser_email], [enroluser_payment]";
                 break;
             case 'course_complete':
                 $strings = "[course_title], [course_enrolstartdate],

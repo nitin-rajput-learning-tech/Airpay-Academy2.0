@@ -527,13 +527,18 @@ class local_courses_renderer extends plugin_renderer_base {
                     $img = $courseimage;
                 }
             }
-
+            if($course->price_status == 1){
+                  $addtocart = new moodle_url('login/index.php', []);
+                }
             // Build the current course data
             $courseData = [
                 'name' => format_string($course->fullname),
                 'summary' => $summarystring,
                 'coursetype' => $coursetype,
                 'courseimage' => $img,
+                'addtocart' => $addtocart,
+                'price_status' => $course->price_status == 1 ? TRUE : FALSE,
+                'buy' => $addtocart,
                 'viewmoreurl' => new moodle_url('local/search/coursedetails.php', ['id' => $course->id])
 
             ];
