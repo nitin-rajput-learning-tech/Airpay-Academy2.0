@@ -116,7 +116,7 @@ class notifications
                 $strings = "[course_title], [course_enrolstartdate],
                             [course_enrolenddate], [course_department],
                             [course_description], [course_url],
-                            [enroluser_fullname], [enroluser_email]";
+                            [enroluser_fullname], [enroluser_email], [enroluser_payment]";
                 break;
             case 'course_complete':
                 $strings = "[course_title], [course_enrolstartdate],
@@ -404,6 +404,10 @@ class notifications
                 [onlineexams_enrolenddate], [onlineexams_department],
                 [onlineexams_description], [onlineexams_url],
                 [enroluser_fullname], [enroluser_email]";
+                break;
+            case 'users_welcome_email':
+                $strings = "[employee_name], [employee_email],
+                [employee_username], [employee_password]";
                 break;
         }
         return $strings;

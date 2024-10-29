@@ -280,7 +280,7 @@ function xmldb_local_users_upgrade($oldversion)
         upgrade_plugin_savepoint(true, 2022101800.18, 'local', 'users');
     }
 
- if ($oldversion < 2022101800.19) {
+    if ($oldversion < 2022101800.19) {
         $table = new xmldb_table('user');
 
         $countryid = new xmldb_field('open_countryid');
@@ -290,6 +290,44 @@ function xmldb_local_users_upgrade($oldversion)
         }
 
         upgrade_plugin_savepoint(true, 2022101800.19, 'local', 'users');
+    }
+
+    if ($oldversion < 2022101800.21) {
+
+        $time = time();
+        $initcontent = array('name' => 'Users','shortname' => 'users', 'parent_module' => '0', 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL, 'pluginname' => 'users');
+        $parentid = $DB->get_field('local_notification_type', 'id', array('shortname' => 'users'));
+        if(!$parentid){
+            $parentid = $DB->insert_record('local_notification_type', $initcontent);
+        }
+
+        $notification_type = array('name' => 'User Welcome Email', 'shortname' => 'users_welcome_email', 'parent_module' => $parentid, 'usercreated' => '2', 'timecreated' => $time, 'usermodified' => 2, 'timemodified' => NULL, 'pluginname' => 'users');
+
+        unset($notification_type['timecreated']);
+        if(!$DB->record_exists('local_notification_type',  $notification_type)){
+            $notification_type['timecreated'] = $time;
+            $DB->insert_record('local_notification_type', $notification_type);
+        }
+            
+
+
+        //Adding unenroldate string//
+        $strings = array(
+            array('name' => '[employee_name]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[employee_email]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[employee_username]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+            array('name' => '[employee_password]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL)
+        );
+        foreach($strings as $string){
+            unset($string['timecreated']);
+            if(!$DB->record_exists('local_notification_strings', $string)){
+                $string_obj = (object)$string;
+                $string_obj->timecreated = $time;
+                $DB->insert_record('local_notification_strings', $string_obj);
+            }
+        }
+        
+        upgrade_plugin_savepoint(true, 2022101800.21, 'local', 'users');
     }
 
     return true;

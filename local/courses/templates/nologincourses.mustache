@@ -1,0 +1,77 @@
+
+
+<div id="cardCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="3000">
+    <div class="carousel-inner">
+        {{#courses}}
+            <div class="carousel-item {{active}}">
+                <div class="d-flex justify-content-center">
+                    {{#courseone}}
+                    <div class="card me-2" style="width: 380px; height: 490px;">
+                        <div class="position-relative">
+                            <img src="{{courseimage}}" class="card-img-top" alt="courseimage" style="width: 320px; height: 200px;">
+                            <span class="badge bg-dark position-absolute" style="top: 10px; right: 10px; font-size: 0.65rem; padding: 5px 7px;">{{coursetype}}</span>
+                        </div>
+                        <div class="card-body p-2">
+                            <h5 class="card-title fs-6" style="width: 320px; height: 30px;"><b>{{name}}</b></h5>
+                            <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
+                            <div class="d-flex justify-content-center">
+                               {{#price_status}}
+                                    <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
+                                {{/price_status}}
+                                {{^price_status}}
+                                    <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{/price_status}}
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    {{/courseone}}
+                    {{#coursetwo}}
+                    <div class="card me-2" style="width: 380px; height: 490px;">
+                        <div class="position-relative">
+                            <img src="{{courseimage}}" class="card-img-top" alt="courseimage" style="width: 320px; height: 200px;">
+                            <span class="badge bg-dark position-absolute" style="top: 10px; right: 10px; font-size: 0.65rem; padding: 5px 7px;">{{coursetype}}</span>
+                        </div>
+                        <div class="card-body p-2">
+                            <h5 class="card-title fs-6" style="width: 320px; height: 30px;"><b>{{name}}</b></h5>
+                            <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
+                            <div class="d-flex justify-content-center">
+                                {{#price_status}}
+                                    <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
+                                {{/price_status}}
+                                {{^price_status}}
+                                    <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{/price_status}}
+                            </div>
+                        </div>
+                    </div>
+                    {{/coursetwo}}
+                    {{#coursethree}}
+                    <div class="card" style="width: 380px; height: 490px;">
+                        <div class="position-relative">
+                            <img src="{{courseimage}}" class="card-img-top" alt="courseimage" style="width: 320px; height: 200px;">
+                            <span class="badge bg-dark position-absolute" style="top: 10px; right: 10px; font-size: 0.65rem; padding: 5px 7px;">{{coursetype}}</span>
+                        </div>
+                        <div class="card-body p-2">
+                            <h5 class="card-title fs-6" style="width: 320px; height: 30px;"><b>{{name}}</b></h5>
+                            <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
+                            <div class="d-flex justify-content-center">
+                                {{#price_status}}
+                                    <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
+                                {{/price_status}}
+                                {{^price_status}}
+                                    <a href="{{viewmoreurl}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem;"><b>View Dtails</b></a>
+                                {{/price_status}}
+                            </div>
+                        </div>
+                    </div>
+
+                    {{/coursethree}}
+                </div>
+            </div>
+        {{/courses}}
+    </div>
+</div>

@@ -88,3 +88,4 @@ $string['form_learning_paths'] = 'Learning Paths';
 $string['form_certifications'] = 'Certifications'; 
 $string['form_actions'] = 'Actions'; 
 $string['onlineexam']= 'Onlineexam';
+$string['notificationexist']= 'Notification \'User Welcome Email\' exist for Comapny \'{$a}\'';

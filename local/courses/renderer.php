@@ -492,4 +492,84 @@ class local_courses_renderer extends plugin_renderer_base {
         $data = $page->export_for_template($this);
         return parent::render_from_template('local_courses/selfcompletion', $data);
     }
+
+    public function render_courses_index() {
+        global $DB, $OUTPUT, $CFG;
+
+        // Fetch visible courses with the 'topics' format from the database
+        
+        $sql = "SELECT c.* FROM {course} c
+                  JOIN {local_dashboardcourses} ldc 
+                       ON FIND_IN_SET(c.id, ldc.courseids) > 0
+              ORDER BY c.id DESC";
+        $courses = $DB->get_records_sql($sql);
+
+        $coursesdata = [];
+        $tempCourses = [];
+        $active = 'active'; // The 'active' class for the first carousel item
+
+        // Loop through courses and group them in sets of three
+        foreach ($courses as $course) {
+            // Clean up course summary
+            $coursesummary = strip_tags(format_text($course->summary));
+            $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . " ..." : $coursesummary;
+            $coursetype = $DB->get_field('local_course_types', 'name', ['id' => $course->open_identifiedas]);
+
+            // Check for course image
+            $img = '';
+            if (file_exists($CFG->dirroot . '/local/includes.php')) {
+                require_once($CFG->dirroot . '/local/includes.php');
+                $includes = new user_course_details();
+                $courseimage = $includes->course_summary_files($course);
+                if (is_object($courseimage)) {
+                    $img = $courseimage->out();
+                } else {
+                    $img = $courseimage;
+                }
+            }
+            if($course->price_status == 1){
+                  $addtocart = new moodle_url('login/index.php', []);
+                }
+            // Build the current course data
+            $courseData = [
+                'name' => format_string($course->fullname),
+                'summary' => $summarystring,
+                'coursetype' => $coursetype,
+                'courseimage' => $img,
+                'addtocart' => $addtocart,
+                'price_status' => $course->price_status == 1 ? TRUE : FALSE,
+                'buy' => $addtocart,
+                'viewmoreurl' => new moodle_url('local/search/coursedetails.php', ['id' => $course->id])
+
+            ];
+
+            // Assign to courseone, coursetwo, or coursethree
+            if (empty($tempCourses['courseone'])) {
+                $tempCourses['courseone'] = $courseData; // Add first course to 'courseone'
+            } elseif (empty($tempCourses['coursetwo'])) {
+                $tempCourses['coursetwo'] = $courseData; // Add second course to 'coursetwo'
+            } else {
+                $tempCourses['coursethree'] = $courseData; // Add third course to 'coursethree'
+                $tempCourses['active'] = $active; // Set active class for the first group
+                $coursesdata[] = $tempCourses; // Push the group of three to $coursesdata
+                $tempCourses = []; // Reset for the next group
+                $active = null; // Remove 'active' class after the first set
+            }
+
+        }
+
+        // If there are leftover courses (less than 3), add them
+        if (!empty($tempCourses)) {
+            $tempCourses['active'] = $active; // Ensure the active class is applied if it's the first set
+            $coursesdata[] = $tempCourses;
+        }
+
+        // Pass data to the Mustache template
+        $context = [
+            'courses' => $coursesdata
+        ];
+
+        return $OUTPUT->render_from_template('local_courses/nologincourses', $context);
+    }
+
 }

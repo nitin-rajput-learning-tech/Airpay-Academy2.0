@@ -31,10 +31,21 @@ if(file_exists($CFG->dirroot.'/local/costcenter/lib.php')){
 require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/completion/completion_completion.php');
+use \local_courses\form\adddashboardcourse_form as adddashboardcourse_form;
 use \local_courses\form\custom_course_form as custom_course_form;
 use \local_courses\form\custom_courseevidence_form as custom_courseevidence_form;
+// Define booking status parameters.
+define('LOCAL_COURSES_BOOKING_STATUSPARAM_BOOKED', 0);
+define('LOCAL_COURSES_STATUSPARAM_WAITINGLIST', 1);
+define('LOCAL_COURSES_STATUSPARAM_RESERVED', 2);
+define('LOCAL_COURSES_STATUSPARAM_NOTIFYMELIST', 3); // Get message when place is open.
+define('LOCAL_COURSES_STATUSPARAM_NOTBOOKED', 4);
+define('LOCAL_COURSES_STATUSPARAM_DELETED', 5);
 
-
+// Define status for booking & subbooking options.
+define('LOCAL_COURSES_UNVERIFIED', 0);
+define('LOCAL_COURSES_PENDING', 1);
+define('LOCAL_COURSES_VERIFIED', 2);
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -1424,7 +1435,7 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
     $filtercategoriesparams= array();
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
-    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary,c.visible, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
+    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary,c.visible, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid,c.courseprice,c.price_status FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
@@ -1659,6 +1670,14 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
             $courseslist[$count]["courseid"] = $course->id;
             $courseslist[$count]["completed_count"] = $completed_count;
             $courseslist[$count]["points"] = $course->open_points != NULL ? $course->open_points: 0;
+           
+            if($course->courseprice > 0 ){
+                $courseslist[$count]["addtocart"] = true;
+            }else{
+                $courseslist[$count]["addtocart"] = false;
+            }
+            $courseslist[$count]["userid"] = $USER->id;
+            $courseslist[$count]["courseprice"] = $course->courseprice;            
             $courseslist[$count]["coursetype"] = \local_costcenter\lib::strip_tags_custom($displayed_names);
             $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
             $courseslist[$count]["grade_view"] = ((has_capability('local/courses:grade_view',
@@ -1717,7 +1736,7 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
                 $includes = new user_course_details();
                 $courseimage = $includes->course_summary_files($course);                
                 if(is_object($courseimage)){
-                    $courseslist[$count]["courseimage"] = $courseimage->out();                    
+                    $courseslist[$count]["courseimage"] = $courseimage->out();  
                 }else{
                     $courseslist[$count]["courseimage"] = $courseimage;
                 }                
@@ -2483,4 +2502,67 @@ function local_courses_masterinfo(){
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }
     return array('2' => $content);
+}
+function local_courses_output_fragment_adddashboardcourse_form($args){
+    global $CFG, $DB;
+    $args = (object) $args;
+    $o = '';
+    $formdata = [];
+    $params = [];
+    $id = $args->id;
+    if (!empty($args->jsonformdata)) {
+
+        $serialiseddata = json_decode($args->jsonformdata);
+        if (is_object($serialiseddata)) {
+            $serialiseddata = serialize($serialiseddata);
+        }
+        parse_str($serialiseddata, $formdata);
+    }
+    $formdata['id'] = $id;
+    if ($id > 0) {
+        $courseids = $DB->get_field('local_dashboardcourses', 'courseids', ['id' => $id]);
+        $courseidss = explode(',', $courseids);
+        $formdata['courseids'] = $courseidss;
+    }
+    $mform = new adddashboardcourse_form(null, $params, 'post', '', null, true, $formdata);
+    $mform->set_data($formdata);
+    if (!empty($args->jsonformdata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
+}
+function add_enrolon_payment_method_tocourse($course){
+    global $DB;
+    $instance = $DB->get_record('enrol', array('courseid' => $course->id, 'enrol' => 'fee'));
+    $roleid      = $DB->get_field('role', 'id', array('shortname' => 'student'));
+    if (empty($instance)) {
+       if ($course->id == SITEID) {
+            throw new coding_exception('Invalid request to add enrol instance to frontpage.');
+        }
+
+        $instance = new stdClass();
+        $instance->enrol          = 'fee';
+        $instance->status         = ENROL_INSTANCE_ENABLED;
+        $instance->courseid       = $course->id;
+        $instance->enrolstartdate = 0;
+        $instance->enrolenddate   = 0;
+        $instance->cost = $course->courseprice;
+        $instance->currency = 'INR';
+        $instance->roleid = $roleid;
+        $instance->customint1 = 1;
+        $instance->timemodified   = time();
+        $instance->timecreated    = $instance->timemodified;
+        $instance->sortorder      = $DB->get_field('enrol', 'COALESCE(MAX(sortorder), -1) + 1', array('courseid'=>$course->id));
+        $instance->id = $DB->insert_record('enrol', $instance);
+    }else{
+        $instance->cost = $course->courseprice;
+        $DB->update_record('enrol',$instance);
+    } 
+
 }

@@ -216,44 +216,49 @@ class search implements renderable{
             $course->coursename = $course->fullname;
             $course->course_fullname = searchlib::format_thestring($course->fullname);
             $iltname = searchlib::format_thestring($course->fullname);
-            if (strlen($iltname)>57){
-                $iltname = clean_text(substr($iltname, 0, 57))."...";
-                $course->course_shortname = $iltname ;
+            if (strlen($iltname) > 57) {
+                $iltname = clean_text(substr($iltname, 0, 57)) . "...";
+                $course->course_shortname = $iltname;
             } else {
                 $course->course_shortname = searchlib::format_thestring($course->fullname);
             }
             $course->categoryname = $course_category;
             $course->formattedcategoryname = searchlib::format_thestring($categoryname);
             $course->summary = searchlib::format_thesummary($course->summary);
-            $courseurl = new moodle_url('/local/search/courseinfo.php', array('id'=> $course->id));
-            $courselink = html_writer::link($courseurl, $course_fullname, array('style'=>'color:#000;font-weight: 300;cursor:pointer;', 'title'=>$course->fullname, 'class'=>'available_course_link'));
-            $course->course_url = $CFG->wwwroot.'/course/view.php?id='.$course->id;
+            $courseurl = new moodle_url('/local/search/courseinfo.php', array('id' => $course->id));
+            $courselink = html_writer::link($courseurl, $course_fullname, array('style' => 'color:#000;font-weight: 300;cursor:pointer;', 'title' => $course->fullname, 'class' => 'available_course_link'));
+            $course->course_url = $CFG->wwwroot . '/course/view.php?id=' . $course->id;
             $course->courselink = $courselink;
             $course->coursecompletiondays = $this->get_coursecompletiondays_format($course->duration);
 
-            $coursecontext   = context_course::instance($course->id);
-            $enroll=is_enrolled($coursecontext, $USER->id, '', true);
+            $coursecontext = context_course::instance($course->id);
+            $enroll = is_enrolled($coursecontext, $USER->id, '', true);
             $course->enroll = $enroll;
             $course->isenrolled = $enroll;
-            if($enroll){
+            if ($enroll) {
                 $course->requeststatus = MODULE_ENROLLED;
-            }else{
+            } else {
                 $course->requeststatus = MODULE_NOT_ENROLLED;
-                if($course->approvalreqd == 1){
+                if ($course->approvalreqd == 1) {
                     $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                    $requeststatus = $DB->get_field_sql($sql, array('componentid' => $course->id,'compname' => 'elearning', 'createdbyid'=>$USER->id));
-                    if($requeststatus == 'PENDING'){
+                    $requeststatus = $DB->get_field_sql($sql, array('componentid' => $course->id, 'compname' => 'elearning', 'createdbyid' => $USER->id));
+                    if ($requeststatus == 'PENDING') {
                         $course->requeststatus = MODULE_ENROLMENT_PENDING;
                     }
                 }
             }
 
-            if($course->approvalreqd == 1){
+            if ($course->approvalreqd == 1) {
                 $course->enrolmethods[] = 'request';
-            }else if($course->selfenrol == 1){
+            } else if ($course->selfenrol == 1) {
                 $course->enrolmethods[] = 'self';
             }
             $course->selfenrol = $this->get_enrollbutton($enroll, $course);
+            if ($course->price_status == 1) {
+                $course->addtocart = $this->get_add_to_cart_button($enroll, $course);
+            } else {
+                $course->addtocart = '';
+            }
 
             $course->rating_element = '';
             $course->avgrating = 0;
@@ -383,30 +388,30 @@ class search implements renderable{
         if(is_enrolled(context_course::instance($moduleid, $USER->id))){
             throw new \Exception("Already enrolled");
         }
-        switch($enrolmethod){
+        switch ($enrolmethod) {
             case 'request':
-                if($course->approvalreqd != 1){
+                if ($course->approvalreqd != 1) {
                     throw new \Exception("Enrollment method inactive");
-                }else{
+                } else {
                     \local_request\api\requestapi::create('elearning', $moduleid);
                 }
             break;
             case 'self':
                 $sql = "SELECT * from {enrol} where courseid = {$moduleid} and enrol = 'self' AND status = 0 ";
                 $instance = $DB->get_record_sql($sql);
-                if($course->approvalreqd == 1 || $course->selfenrol != 1 || empty($instance)){
+                if ($course->approvalreqd == 1 || $course->selfenrol != 1 || empty($instance)) {
                     throw new \Exception("Enrollment method inactive");
-                }else{
+                } else {
                     $self = enrol_get_plugin('self');
                     $type = 'course_enrol';
                     $dataobj = $id;
                     $fromuserid = 2;
 
-                    if($instance){
-                        $test =  $self->enrol_user($instance,$USER->id,$instance->roleid);
+                    if ($instance) {
+                        $test = $self->enrol_user($instance, $USER->id, $instance->roleid);
                         $emaillogs = new \local_courses\notification();
                         $notificationdata = $emaillogs->get_existing_notification($course, $type);
-                        if($notificationdata){
+                        if ($notificationdata) {
                             $emaillogs->send_course_email($course, $USER, $type, $notificationdata);
                         }
                     }
@@ -444,61 +449,92 @@ class search implements renderable{
         return $DB->record_exists_sql($selectsql.$wheresql, ['courseid' => $course->id]);
     }
     public function get_enrollbutton($enroll, $courseinfo){
-        global $DB,$CFG,$USER;
+        global $DB, $CFG, $USER;
         $courseid = $courseinfo->id;
-        $coursename = $courseinfo->coursename;
-        if(!is_siteadmin()){
-            if($enroll){
-                $selfenrolbutton = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$courseid.'" class="cat_btn viewmore_btn btn">'.get_string('start_now','local_search').'</a>';
-            }else{
-                if($courseinfo->approvalreqd==1){
-                    $componentid =$courseid;
+        if (!is_siteadmin()) {
+            if ($enroll) {
+                $selfenrolbutton = '<a href="' . $CFG->wwwroot . '/course/view.php?id=' . $courseid . '" class="cat_btn viewmore_btn btn">' . get_string('start_now', 'local_search') . '</a>';
+            } else {
+                if ($courseinfo->approvalreqd == 1 && $courseinfo->price_status == 0 && $courseinfo->selfenrol == 1) {
+                    $componentid = $courseid;
                     $component = 'elearning';
                     $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
-                    $request = $DB->get_field_sql($sql,array('componentid' => $courseid,'compname' => $component,'createdbyid'=>$USER->id));
+                    $request = $DB->get_field_sql($sql, array('componentid' => $courseid, 'compname' => $component, 'createdbyid' => $USER->id));
 
-                    if($request=='PENDING'){
-                        $selfenrolbutton = '<button class="cat_btn btn-primary viewmore_btn">'.get_string('requestprocessing', 'local_search').' </button>';
-                    }else{
+                    if ($request == 'PENDING') {
+                        $selfenrolbutton = '<button class="cat_btn btn-primary viewmore_btn">' . get_string('requestprocessing', 'local_search') . ' </button>';
+                    } else {
                         $selfenrolbutton = requestapi::get_requestbutton($componentid, $component, $courseinfo->fullname);
                     }
-                } else if($courseinfo->selfenrol == 1){
-                    $currenttime = time();
-                    $stripepayment=$DB->record_exists('enrol',array('courseid'=>$courseid,'status'=>0,'enrol'=>'stripepayment'));
-                    if($stripepayment){
-                       $string = get_string('buy','local_search');
-                    }else{
-                       $string = get_string('selfenrol','local_search');
+                } else if ($courseinfo->selfenrol == 1 && $courseinfo->price_status == 0) {
+                         $string = get_string('selfenrol', 'local_search');
+                        $selfenrolbutton = '<a data-action="courseselfenrol' . $courseid . '" class="courseselfenrol btn btn-block cat_btn viewmore_btn  enrolled' . $courseid . '" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol' . $courseid . '\', courseid:' . $courseid . ', enroll:1, coursename: \'' . $courseinfo->fullname . '\' }) })(event)">' . $string . '</a>';
+                }else if ($courseinfo->price_status == 1){
+                    $airpaypayment = $DB->get_record('enrol', array('courseid' => $courseid, 'status' => 0, 'enrol' => 'fee'));
+                    if ($airpaypayment) {
+                        $string = get_string('buy', 'local_search');
+                        $selfenrolbutton = '<button class="btn btn-block cat_btn" type="button"  data-action="core_payment/triggerPayment" data-component="enrol_fee" data-paymentarea="fee" data-itemid="' . $airpaypayment->id . '" data-cost="' . $courseinfo->courseprice . '" data-successurl="http://localhost/moodle44/course/view.php?id=' . $courseid . '" data-description="Enrolment in course">' . $string . '</button>';
                     }
-                    $selfenrolbutton = '<a data-action="courseselfenrol'.$courseid.'" class="courseselfenrol btn btn-block cat_btn viewmore_btn  enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1, coursename: \''.$courseinfo->fullname.'\' }) })(event)">'.$string.'</a>';
-                } else {
+                }else{
                     $selfenrolbutton = '';
                 }
             }
-        }else{
+        } else {
             $selfenrolbutton = '';
         }
         return $selfenrolbutton;
     } // end of get_enrollbutton function
-    private function get_coursecompletiondays_format($duration){
 
-        if(!empty($duration)){
-            if($duration >= 60 ){
+    public function get_add_to_cart_button($enroll, $courseinfo)
+    {
+        global $DB, $USER;
+        $addtocartbutton = '';
+        $cache = biz_cart::local_biz_cart_get_cache_data($USER->id);
+        $count = 0;
+        foreach ($cache['items'] as $item) {
+            if ($item['itemid'] == $courseinfo->id) {
+                $count++;
+            }
+        }
+        $courseid = $courseinfo->id;
+        if (empty($enroll) && !is_siteadmin()) {
+            $airpaypayment = $DB->get_record('enrol', array('courseid' => $courseid, 'status' => 0, 'enrol' => 'fee'));
+            if ($airpaypayment) {
+                if ($count == 0) {
+                    $addtocartbutton = '<div class="btn btn-block cat_btn" onclick="(function(e){ require(\'local_courses/courseAjaxform\').courseaddtocart({itemid:' . $courseid . ',userid:' . $USER->id . ', component: \'local_courses\', area : \'option\'  }) })(event) " >
+                                                <i class="fa fa-cart-plus" aria-hidden="true"></i>
+                                                <span class="addtocartstring">'.get_string('addtocart', 'local_courses').'</span>
+                                            </div>';
+                } else {
+                    $addtocartbutton = '<div class="btn btn-block cat_btn disabled">
+                                                <i class="fa fa-cart-plus" aria-hidden="true"></i>
+                                                <span class="addtocartstring">'.get_string('addtocart', 'local_courses').'</span>
+                                            </div>';
+                }
+            }
+        }
+        return $addtocartbutton;
+    }
+    private function get_coursecompletiondays_format($duration)
+    {
+
+        if (!empty($duration)) {
+            if ($duration >= 60) {
                 $hours = floor($duration / 60);
                 $minutes = ($duration % 60);
-                $hformat = $hours > 1 ? $hformat = '%01shrs': $hformat = '%01shr';
-                if($minutes == NULL){
+                $hformat = $hours > 1 ? $hformat = '%01shrs' : $hformat = '%01shr';
+                if ($minutes == null) {
                     $mformat = '';
-                }else{
-                    $mformat = $minutes > 1 ? $mformat = '%01smins': $mformat = '%01smin';
+                } else {
+                    $mformat = $minutes > 1 ? $mformat = '%01smins' : $mformat = '%01smin';
                 }
                 $format = $hformat . ' ' . $mformat;
                 $coursecompletiondays = sprintf($format, $hours, $minutes);
-            }else{
+            } else {
                 $minutes = $duration;
-                $coursecompletiondays = $duration > 1 ? $duration.'mins' : $duration.'min';
+                $coursecompletiondays = $duration > 1 ? $duration . 'mins' : $duration . 'min';
             }
-        }else{
+        } else {
             $coursecompletiondays = 'N/A';
         }
 
@@ -506,7 +542,3 @@ class search implements renderable{
 
     } // end of get_coursecompletiondays_format function
 } // end of class
-
-
-
-

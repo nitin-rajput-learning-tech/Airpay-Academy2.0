@@ -212,8 +212,12 @@ class local_users_renderer extends plugin_renderer_base {
     public function user_page_top_action_buttons() {
         global $CFG;
         $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
-
-        return $this->render_from_template('local_users/usertopactions', array('contextid' => $categorycontext->id));
+        if (has_capability('local/users:bulkstatuschange', $categorycontext)) {
+            $bulkstatusupdate = true;
+        } else {
+            $bulkstatusupdate = false;
+        }
+        return $this->render_from_template('local_users/usertopactions', array('contextid' => $categorycontext->id, 'bulkstatusupdate' => $bulkstatusupdate));
     }
     /**
      * [render_form_status description]

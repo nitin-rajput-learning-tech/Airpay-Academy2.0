@@ -19,7 +19,7 @@ $id  = required_param('id', PARAM_INT); // Course id
 $coursecontext = context_course::instance($id);
 $PAGE->set_context($coursecontext);
 $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
-require_login();
+// require_login();
 $PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_search'), 'callbacks' => array()));
 local_search_include_search_js();
 $course = get_course($id);
@@ -201,7 +201,15 @@ echo '<div class="content_era_left">';
     	<div class="Course_content p-0">';
 
     	$managecoursecap = has_capability('local/courses:manage', $coursecontext);
-        if($enrolled || is_siteadmin() || $managecoursecap){
+    	if (!isloggedin()) {
+    		echo '<div class="start_course p-2">
+	    		<a href="'.$CFG->wwwroot.'/login/index.php">
+	                <button type="button" class="crs_content btn btn-lg btn-primary w-full ng-binding">
+	                   Login
+	                </button>
+	            </a>
+    		</div>';
+    	} else if($enrolled || is_siteadmin() || $managecoursecap){
         	echo '<div class="start_course p-2">
 		    		<a href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'">
 		                <button type="button" class="crs_content btn btn-lg btn-primary w-full ng-binding">

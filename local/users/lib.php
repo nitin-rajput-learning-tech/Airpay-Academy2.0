@@ -645,22 +645,40 @@ $options = array(
         $selectgroup->setMultiple(true);
     }
 }else{
-    if (in_array('group', $elementlist)) {
-        $groupslist[null] = get_string('all');
-
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='g.open_path',$costcenterpath);
-
-
-            $groupslist += $DB->get_records_sql_menu("SELECT c.id, c.name FROM {local_groups} g, {cohort} c
+   if (in_array('group', $elementlist)) {
+           
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'g.open_path', $costcenterpath);
+            if (is_siteadmin()) {
+                $costcenterpathconcatsql = "AND ( (  g.open_path LIKE '/" . $costcenter . "/%'  OR  g.open_path LIKE '/" . $costcenter . "'  ) )";
+            }
+            $groups = $DB->get_records_sql_menu(
+                "SELECT c.id, c.name FROM {local_groups} g, {cohort} c
               WHERE c.visible = :visible AND c.id = g.cohortid $costcenterpathconcatsql ",
-               array( 'visible' => 1));
+                array('visible' => 1)
+            );
 
-        $selectgroup = $mform->addElement('autocomplete', 'open_group', get_string('open_group', 'local_users')
-            , $groupslist);
-        $mform->setType('open_group', PARAM_RAW);
-        $mform->addHelpButton('open_group', 'groups', 'local_users');
-        $selectgroup->setMultiple(true);
-    }
+            $groupslist = [-1 => get_string('all')] + $groups;
+            $grouptype = array(
+                'ajax' => 'local_costcenter/form-options-selector',
+                'data-contextid' => (\local_costcenter\lib\accesslib::get_module_context())->id,
+                'data-action' => 'costcenter_group_selector',
+                'data-options' => json_encode(array('id' => $mform->id, 'parentid' => $costcenter,'costcenterid' => $costcenter)),
+                'class' => 'groupselect',
+                'data-parentclass' => 'open_costcenterid_select',
+                'data-class' => 'groupselect',
+            );
+
+            $selectgroup = $mform->addElement(
+                'autocomplete',
+                'open_group',
+                get_string('open_group', 'local_users'),
+                $groupslist,$grouptype
+            );
+            $mform->setType('open_group', PARAM_RAW);
+            $mform->addHelpButton('open_group', 'groups', 'local_users');
+            $mform->setDefault('open_group', ['-1']);
+            $selectgroup->setMultiple(true);
+        }
 }
     if (in_array('hrmsrole', $elementlist)) {
         $hrmsrole_details[null] = get_string('all');
@@ -674,13 +692,28 @@ $options = array(
         $selecthrmsrole->setMultiple(true);
     }
     if (in_array('designation', $elementlist)) {
-        $designation_details[null] = get_string('all');
+        if (!empty($costcenter)) {
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'u.open_path', $costcenterpath);
+            if (is_siteadmin()) {
+                $costcenterpathconcatsql = "AND ( (  u.open_path LIKE '/" . $costcenter . "/%'  OR  u.open_path LIKE '/" . $costcenter . "'  ) )";
+            }
+        } else {
+            $costcenterpathconcatsql = '';
+        }
+
+        $designation_details['-1'] = get_string('all');
         $designation_sql = "SELECT u.open_designation,u.open_designation AS designationvalue FROM {user} AS
-         u WHERE u.id > 2 $main_sql AND u.open_designation IS NOT NULL GROUP BY u.open_designation";
+         u WHERE u.id > 2 $main_sql AND u.open_designation IS NOT NULL AND u.open_designation !='' $costcenterpathconcatsql ";
+
         $designation_details += $DB->get_records_sql_menu($designation_sql, $params);
-        $selectdesignation = $mform->addElement('autocomplete', 'open_designation',
-         get_string('open_designation', 'local_users'), $designation_details);
+        $selectdesignation = $mform->addElement(
+            'autocomplete',
+            'open_designation',
+            get_string('open_designation', 'local_users'),
+            $designation_details
+        );
         $mform->setType('open_designation', PARAM_RAW);
+        $mform->setDefault('open_designation', ['-1']);
         $mform->addHelpButton('open_designation', 'designation', 'local_users');
         $selectdesignation->setMultiple(true);
     }
@@ -1604,4 +1637,35 @@ function local_users_output_fragment_userrole_display($args)
     }
     $output = $OUTPUT->render_from_template('local_users/roledetails', $templatedata);
     return $output;
+}
+
+/**
+ * Update excel row data
+ *
+ * @param  $userdata updated status fields related data
+ *
+ **/
+function local_user_status_update($userdata) {
+    global $DB;
+    $updateuser = new stdClass();
+    $updateuser->id = $userdata->id;
+
+    if (strtolower($userdata->status) == 'active') {
+        $updateuser->suspended = 0;
+    } elseif (strtolower($userdata->status) == 'inactive') {
+        $updateuser->suspended = 1;
+    } elseif (strtolower($userdata->status) == 'delete') {
+        $updateuser->deleted = 1;
+    }
+
+    $DB->update_record('user', $updateuser);
+
+    $core_component = new \core_component();
+    $localclassroom_plugin_exist = $core_component::get_plugin_directory('local', 'classroom');
+    if (!empty($localclassroom_plugin_exist)) {
+        if (method_exists(new \local_classroom\classroom(), 'delete_suspend_user_remove_classrooms')) {
+            (new \local_classroom\classroom)->delete_suspend_user_remove_classrooms($updateuser->id);
+        }
+    }
+    return true;
 }

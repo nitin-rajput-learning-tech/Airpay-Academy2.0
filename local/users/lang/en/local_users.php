@@ -874,3 +874,13 @@ $string['organization_shortname'] = 'Organization Short Name';
 $string['activeregistration'] = 'Registration';
 $string['policystring'] = 'I have read and accept the ';
 $string['termsconditionstring'] = 'I have read and agree to the ';
+// Employee bulk exit strings.
+$string['employeeid_notexists'] = 'User with employee code {$a->learner_id} at line \'{$a->line}\' ';
+$string['invalidstatus'] = 'User having invalid status at line \'{$a->line}\' ';
+$string['bulkstatuschange'] = 'Bulk Status Change';
+$string['useralreadydeleted'] = 'User already deleted, you can not update at line \'{$a->line}\' ';
+$string['changebulkuserstatus'] = "Bulk Status Change";
+$string['back_upload_userstatus'] = "Back to Change User Status";
+$string['bulkusersstatuschange'] = "Bulk Users Status Change";
+$string['users:bulkstatuschange'] = "Bulk Users Status Change";
+// Employee bulk exit strings ends here.

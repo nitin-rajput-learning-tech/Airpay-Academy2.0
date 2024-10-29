@@ -81,12 +81,19 @@
                     </div>
                 </div> -->
             </div>
-            <div class="action_div d-flex">
-                
+            <div class="action_div d-flex" ng-if="record.addtocart">
+                <div ng-bind-html="record.addtocart | unsafe" class="ng-scope enrolled<% record.id %>"></div>  
+                <div ng-bind-html="record.selfenrol | unsafe" class="ng-scope enrolled<% record.id %>"></div>
+            </div>
+             <div class="action_div d-flex" ng-if="!record.addtocart">
                 <div ng-bind-html="record.selfenrol | unsafe" class="ng-scope enrolled<% record.id %>"></div>
                 <div ng-bind-html="record.redirect | unsafe" ></div>
-                
             </div>
         </div>
     </div>
 </div>
+{{#js}}
+    require(['core_payment/gateways_modal'], function(modal) {
+        modal.init();
+    });
+{{/js}}

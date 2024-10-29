@@ -44,7 +44,7 @@ $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and of
 $reset  = optional_param('reset', null, PARAM_BOOL);
 $fredirect  = optional_param('fredirect', true, PARAM_BOOL);
 if($fredirect){
-    redirect($CFG->wwwroot.'/my/dashboard.php');
+    redirect($CFG->wwwroot.'/local/search/allcourses.php');
 }
 require_login();
 

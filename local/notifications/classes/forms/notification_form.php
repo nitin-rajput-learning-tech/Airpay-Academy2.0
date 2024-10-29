@@ -141,7 +141,7 @@ class notification_form extends moodleform {
 				$mform->setType('moduleid', PARAM_RAW);
 				$courseselect->setMultiple(true);
 
-				$nonmodulenotifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE parent_module IN (SELECT lnti.id FROM {local_notification_type} AS lnti WHERE shortname IN ('certification', 'request', 'challenge'))");
+				$nonmodulenotifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE parent_module IN (SELECT lnti.id FROM {local_notification_type} AS lnti WHERE shortname IN ('certification', 'request', 'challenge', 'users'))");
 	    		$mform->hideIf('moduleid', 'notificationid', 'in', $nonmodulenotifications);
 				$mform->hideIf('moduleid', 'notificationid', 'eq', NULL);
 		   	}
@@ -318,8 +318,19 @@ class notification_form extends moodleform {
                 	}
                 }
             }
-		}
-         //}
+		}	
+			$sql = "SELECT lni.id, lnt.shortname, lc.fullname
+					  FROM {local_notification_info} lni
+					  JOIN {local_notification_type} lnt ON lni.notificationid = lnt.id
+					  JOIN {local_costcenter} lc ON lni.open_path LIKE CONCAT('/', lc.id)
+					 WHERE lni.open_path = :open_path
+					 	   AND lni.notificationid = :notificationid ";
+			$notification = $DB->get_record_sql($sql, ['open_path' => '/'.$data['open_costcenterid'], 'notificationid' => $data['notificationid']]);
+
+			if ((empty($id) || $id != $notification->id) && $notification->shortname == 'users_welcome_email') {
+				$errors['open_costcenterid'] = get_string('notificationexist', 'local_notifications', $notification->fullname);
+			}
+        
 		$course_reminder_id = $DB->get_field('local_notification_type', 'id', array('shortname' => 'course_reminder'));
 		if($data['notificationid'] == $course_reminder_id){
 			if(empty($data['completiondays']) && ($data['completiondays']=="" || $data['completiondays'] == 0)){
@@ -333,19 +344,15 @@ class notification_form extends moodleform {
 
 		}
         
-			// if(empty($data['course'])){
-			// 	$errors['course'] = get_string('selectcourse', 'local_notifications'); 
-			// }
-			$notifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE shortname IN ('course_reminder','classroom_reminder','onlinetest_reminder','program_reminder','program_session_reminder','certification_reminder', 'feedback_due')");
-			
-			if (in_array($data['notificationid'], $notifications))  {
-				if(empty($data['reminderdays'])){
-					$errors['reminderdays'] = get_string('reminderdaysrequired', 'local_notifications'); 
-				} elseif ($data['reminderdays'] < 0) {
-					$errors['reminderdays'] = get_string('reminderdaysnumeric', 'local_notifications');
-				}
+		$notifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE shortname IN ('course_reminder','classroom_reminder','onlinetest_reminder','program_reminder','program_session_reminder','certification_reminder', 'feedback_due')");
+		
+		if (in_array($data['notificationid'], $notifications))  {
+			if(empty($data['reminderdays'])){
+				$errors['reminderdays'] = get_string('reminderdaysrequired', 'local_notifications'); 
+			} elseif ($data['reminderdays'] < 0) {
+				$errors['reminderdays'] = get_string('reminderdaysnumeric', 'local_notifications');
 			}
-			
+		}			
         
         return $errors;
     }
