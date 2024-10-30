@@ -87,13 +87,18 @@ function xmldb_local_courses_install(){
         }
         $field16 = new xmldb_field('price_status');
         $field16->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null);
-        if (!$dbman->field_exists($table, $field15)) {
-            $dbman->add_field($table, $field15);
+        if (!$dbman->field_exists($table, $field16)) {
+            $dbman->add_field($table, $field16);
         }
         $field17 = new xmldb_field('courseprice');
         $field17->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
-        if (!$dbman->field_exists($table, $field15)) {
-            $dbman->add_field($table, $field15);
+        if (!$dbman->field_exists($table, $field17)) {
+            $dbman->add_field($table, $field17);
+        }
+        $field19 = new xmldb_field('open_identifiedas');
+        $field19->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field19)) {
+            $dbman->add_field($table, $field19);
         }
 	}
     /*notifictaions content*/

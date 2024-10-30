@@ -261,7 +261,15 @@ class custom_course_form extends moodleform {
             $mform->addElement('text', 'open_coursecompletiondays', get_string('coursecompday','local_courses'));
             $mform->setType('open_coursecompletiondays', PARAM_TEXT);
             $mform->addRule('open_coursecompletiondays', get_string('numeric','local_users'), 'numeric', 'numeric', 'client');
-	    
+
+	        $mform->addElement('advcheckbox', 'price_status', get_string('course_price_set', 'local_courses'),
+            null, null, [0, 1]);
+
+            $mform->addElement('text', 'courseprice', get_string('courseprice', 'local_courses'), 'maxlength="100" size="20"');
+            $mform->addHelpButton('courseprice', 'courseprice', 'local_courses');
+            $mform->setType('courseprice', PARAM_INT);
+            $mform->hideIf('courseprice', 'price_status', 'neq', '1');
+
             $manageselfenrol = array();
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('yes'), 1, $attributes);
             $manageselfenrol[] = $mform->createElement('radio', 'selfenrol', '', get_string('no'), 0, $attributes);
@@ -269,7 +277,7 @@ class custom_course_form extends moodleform {
                 get_string('need_self_enrol', 'local_courses'),
                 array('&nbsp;&nbsp;'), false);
             $mform->addHelpButton('selfenrol', 'selfenrolcourse', 'local_courses');
-
+            $mform->hideIf('selfenrol', 'price_status', 'eq', '1');
   			$manageapproval = array();
   			$manageapproval[] = $mform->createElement('radio', 'approvalreqd', '', get_string('yes'), 1, $attributes);
   			$manageapproval[] = $mform->createElement('radio', 'approvalreqd', '', get_string('no'), 0, $attributes);
@@ -278,7 +286,6 @@ class custom_course_form extends moodleform {
   				array('&nbsp;&nbsp;'), false);
             $mform->addHelpButton('approvalreqd', 'approvalreqdcourse', 'local_courses');
             $mform->hideIf('approvalreqd', 'selfenrol', 'neq', '1');
-
             // Completion tracking.
   			$mform->addElement('hidden', 'enablecompletion');
   			$mform->setType('enablecompletion', PARAM_INT);
@@ -298,12 +305,6 @@ class custom_course_form extends moodleform {
               $summaryfields .= ',overviewfiles_filemanager';
             }
 
-            $mform->addElement('advcheckbox', 'price_status', get_string('course_price_set', 'local_courses'),
-            null, null, [0, 1]);
-            $mform->addElement('text', 'courseprice', get_string('courseprice', 'local_courses'), 'maxlength="100" size="20"');
-            $mform->addHelpButton('courseprice', 'courseprice', 'local_courses');
-            $mform->setType('courseprice', PARAM_INT);
-            $mform->hideIf('courseprice', 'price_status', 'neq', '1');
             } elseif($formstatus == 1){
 	// $pointsArr = array();
             // $pointsArr[] = $mform->createElement('text',  'open_points',  '',  get_string('points','local_courses'));

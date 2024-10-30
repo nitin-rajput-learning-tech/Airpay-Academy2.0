@@ -166,7 +166,9 @@ class local_courses_external extends external_api {
                 if($validateddata->open_path){
                     $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                 }
-
+                if($validateddata->price_status == 1) {
+                    $validateddata->selfenrol = 1;
+                }
                 $validateddata->startdate=time();
                 $validateddata->enddate=0;
 
@@ -204,7 +206,9 @@ class local_courses_external extends external_api {
                             $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                          }
                     }
-
+                    if($validateddata->price_status == 1) {
+                        $validateddata->selfenrol = 1;
+                    }
                     update_course($validateddata, $editoroptions);
 
                     // purge appropriate caches in case fix_course_sortorder() did not change anything
@@ -1798,29 +1802,32 @@ class local_courses_external extends external_api {
         $mform = new local_courses\form\adddashboardcourse_form(null, array(
          'courseids' => $data['courseids']), 'post', '', null, true, $data);
         $validateddata = $mform->get_data();
-        if(empty($validateddata->courseids)){
-            $validateddata->courseids = 0;
-        }else{
-            $validateddata->courseids = implode(',',$validateddata->courseids);
-        }
+         
         if($validateddata){
+           if(empty($validateddata->courseids)){
+                $validateddata->courseids = 0;
+            } else {
+                $validateddata->courseids = implode(',',$validateddata->courseids);
+            }
             if($validateddata->id > 0){
                 $DB->update_record('local_dashboardcourses',$validateddata);
             } else{
                 $DB->insert_record('local_dashboardcourses',$validateddata);
             }
-        $resp = true;
-        if($data['courseids'] != '_qf__force_multiselect_submission') 
-        $success = get_string('success_message','local_courses');
-        }else {
-            new moodle_exception('deleteerror', 'local_courses');
-        $resp = false;
-        $success = get_string('fail_message','local_courses');
-    }
+            $resp = true;
+          if($data['courseids'] != '_qf__force_multiselect_submission') 
+            $success = get_string('success_message','local_courses');
+        } else {
+            throw new moodle_exception('Error in submission');
+            // $resp = false;
+            // $success = get_string('fail_message','local_courses');
+        }
     $return = [
        'return' => $resp,
        'success' => $success,
-    ]; 
+       // 'courseid' => 0,
+       // 'enrolid' => 0,
+    ];
     return $return; 
   }
 
@@ -1833,6 +1840,8 @@ class local_courses_external extends external_api {
       return new external_single_structure([
             'return' => new external_value(PARAM_BOOL, 'return'),
             'success' => new external_value(PARAM_RAW, 'success'),
+            // 'courseid' => new external_value(PARAM_INT, 'courseid'),
+            // 'enrolid' => new external_value(PARAM_RAW, 'enrolid'),
         ]);
   }
 }

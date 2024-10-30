@@ -34,6 +34,7 @@ use context_system;
 use context_course;
 use context_user;
 use html_writer;
+use local_biz_cart\biz_cart;
 use core_component;
 use local_search\output\searchlib;
 use local_request\api\requestapi;

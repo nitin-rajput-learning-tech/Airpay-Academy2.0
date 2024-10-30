@@ -7,8 +7,8 @@
  * @copyright  2018 Sreenivas
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later 
  */
-define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/fragment', 'core/ajax', 'core/yui', 'core/templates'],
-        function(dataTable, $, Str, ModalFactory, ModalEvents, Fragment, Ajax, Y, Templates) {
+define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/fragment', 'core/ajax', 'core/yui', 'core/templates','core/notification'],
+        function(dataTable, $, Str, ModalFactory, ModalEvents, Fragment, Ajax, Y, Templates,Notification) {
 
     /**
      * Constructor
@@ -338,7 +338,9 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
         var params = {};
         params.contextid = this.contextid;
         params.jsonformdata = JSON.stringify(formData);
-        params.form_status = args.form_status;
+        if(args.form_status) {
+            params.form_status = args.form_status;
+        }
         // params.id = args.id;
 
         var promise = Ajax.call([{
@@ -348,15 +350,18 @@ define(['local_courses/jquery.dataTables', 'jquery', 'core/str', 'core/modal_fac
         promise[0].done(function(resp){
             self.args.courseid = resp.courseid;
             self.args.enrolid = resp.enrolid;
+            console.log(resp.return);
             if(resp.return == 1){
                     self.args.return = resp.return;
                     self.args.success = resp.success;
                     self.handleFormSubmissionResponse(self.args);
-            }else if(resp.form_status !== -1 && resp.form_status !== false) {
+            }else if(resp.form_status === null && typeof resp.form_status === 'undefined' && resp.form_status !== -1 && resp.form_status !== false) {
                 self.args.form_status = resp.form_status;
                 self.handleFormSubmissionFailure();
             } else {
-                self.handleFormSubmissionResponse(self.args);
+                if(self.args.callback !== 'adddashboardcourse_form'){
+                    self.handleFormSubmissionResponse(self.args);
+                }
             }
             // if(args.form_status > 0) {
                 // $('[data-action="skip"]').css('display', 'inline-block');

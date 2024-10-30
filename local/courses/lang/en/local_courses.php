@@ -466,3 +466,5 @@ $string['cachedef_electivebookingorder'] = 'Elective booking order (Cache)';
 $string['cachedef_customformuserdata'] = 'Custom form user data (Cache)';
 $string['cachedef_eventlogtable'] = 'Event log table (Cache)';
 $string['addtocart'] = '&nbsp;Add to Cart';
+$string['maxcoursesadded'] = 'Can not add more than 6 courses to Dashboard';
+
