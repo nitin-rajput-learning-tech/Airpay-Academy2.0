@@ -43,8 +43,10 @@ redirect_if_major_upgrade_required();
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
 $fredirect  = optional_param('fredirect', true, PARAM_BOOL);
-if($fredirect){
+if(!is_siteadmin() && $fredirect){
     redirect($CFG->wwwroot.'/local/search/allcourses.php');
+} else {
+    redirect($CFG->wwwroot.'/my/dashboard.php');
 }
 require_login();
 
