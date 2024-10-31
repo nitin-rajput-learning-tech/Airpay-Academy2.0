@@ -62,6 +62,7 @@ $PAGE->set_title(get_string('courses'));
 $PAGE->set_heading(get_string('manage_courses','local_courses'));
 $PAGE->requires->jquery();
 $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'load');
+$PAGE->requires->js_call_amd('local_courses/coursesdynamicforms', 'init', []);
 $PAGE->requires->js_call_amd('theme_epsilon/quickactions', 'quickactionsCall');
 $PAGE->requires->js_call_amd('local_costcenter/fragment', 'init', array());
 $PAGE->requires->js_call_amd('local_courses/courses', 'load', array());
@@ -131,8 +132,8 @@ $extended_menu_links .= '</div></div></li>';
 if(is_siteadmin()){
  $dashboardcourserecord = $DB->get_record('local_dashboardcourses', []);
  $id = !empty($dashboardcourserecord) ? $dashboardcourserecord->id : 0;
- $extended_menu_links .= '<li><div class="courseedit course_extended_menu_itemcontainer">
-                                    <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('add_coursestodashboard','local_courses').'" data-action="createcoursemodal" onclick="(function(e){ require(\'local_courses/courseAjaxform\').init({id :'. $id .',contextid:'.$categorycontext->id.', component:\'local_courses\', callback:\'adddashboardcourse_form\', plugintype: \'local\', pluginname: \'courses\'}) })(event)">
+ $extended_menu_links .= '<li><div class="adddashboardcourse course_extended_menu_itemcontainer">
+                                    <a id="extended_menu_createcourses" class="pull-right course_extended_menu_itemlink" title = "'.get_string('add_coursestodashboard','local_courses').'" data-action="adddashboardcourse" data-id = '. $id .'  data-contextid = '.$categorycontext->id.' data-headstring ="'.get_string('addcoursetodashboard', 'local_courses').'" >
                                         <span class="createicon">
                                         <i class="icon fa fa-dashboard"></i>
                                         <i class="fa fa-plus createiconchild" aria-hidden="true"></i>

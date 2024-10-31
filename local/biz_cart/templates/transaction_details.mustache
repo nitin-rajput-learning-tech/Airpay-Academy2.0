@@ -28,6 +28,7 @@
             </thead>
             <tbody>
                 {{#records}}
+                    {{#data}}
                     <tr>
                         <td>{{#coursename}}{{coursename}}{{/coursename}}{{^coursename}}N/A{{/coursename}}</td>
                         <td>{{#transactioncode}}{{transactioncode}}{{/transactioncode}}{{^transactioncode}}N/A{{/transactioncode}}</td>
@@ -35,6 +36,10 @@
                         <td>{{#amount}}{{amount}}{{/amount}}{{^amount}}N/A{{/amount}}</td>
                         <td>{{status}}</td>
                     </tr>
+                    {{/data}}
+                    {{#nodata}}
+                    <div class='w-full pull-left text-center alert alert-info'>{{#str}}notransactions, local_biz_cart{{/str}}.</div>
+                    {{/nodata}}
                 {{/records}}
             </tbody>
         </table>
