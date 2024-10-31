@@ -448,6 +448,7 @@ $string['public_courses'] = 'Available Courses';
 $string['add_selected_users'] = 'Add Selected Users'; */
 $string['course_price_set'] = 'Set price for course';
 $string['courseprice'] = 'Course Price';
+$string['courseprice_help'] = 'Enter the Course price';
 //caches
 $string['cachedef_bookedusertable'] = 'Booked users table (cache)';
 $string['cachedef_bookingoptions'] = 'Booking options (cache)';
