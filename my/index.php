@@ -43,10 +43,12 @@ redirect_if_major_upgrade_required();
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
 $fredirect  = optional_param('fredirect', true, PARAM_BOOL);
-if(!is_siteadmin() && $fredirect){
-    redirect($CFG->wwwroot.'/local/search/allcourses.php');
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+if ((has_capability('local/users:manage', $categorycontext) || has_capability('local/users:view',
+      $categorycontext) || is_siteadmin()) && $fredirect) {
+    redirect($CFG->wwwroot.'/my/dashboard.php');    
 } else {
-    redirect($CFG->wwwroot.'/my/dashboard.php');
+    redirect($CFG->wwwroot.'/local/search/allcourses.php');
 }
 require_login();
 
