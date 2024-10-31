@@ -50,7 +50,7 @@ class local_notifications_external extends external_api {
                 'id' => new external_value(PARAM_INT, 'id', 0),
                 'contextid' => new external_value(PARAM_INT, 'The context id for the onlinetests'),
                 'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create group form, encoded as a json array'),
-                'form_status' => new external_value(PARAM_INT, 'Form position', 0)
+                // 'form_status' => new external_value(PARAM_INT, 'Form position', 0)
             )
         );
     }
@@ -62,13 +62,13 @@ class local_notifications_external extends external_api {
      * @param string $jsonformdata The data from the form, encoded as a json array.
      * @return int new group id.
     */
-    public static function submit_create_notification_form($id, $contextid, $jsonformdata, $form_status) {
+    public static function submit_create_notification_form($id, $contextid, $jsonformdata) {
         global $DB, $CFG, $USER;
         require_once($CFG->dirroot . '/local/notifications/lib.php');
  
         // We always must pass webservice params through validate_parameters.
         $params = self::validate_parameters(self::submit_create_notification_form_parameters(),
-                                            ['id' => $id, 'contextid' => $contextid, 'jsonformdata' => $jsonformdata, 'form_status' => $form_status]);
+                                            ['id' => $id, 'contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
  
         $context = context::instance_by_id($params['contextid'], MUST_EXIST);
  
@@ -81,7 +81,7 @@ class local_notifications_external extends external_api {
         $warnings = array();
         // print_r($data);
         // The last param is the ajax submitted data.
-        $mform = new local_notifications\forms\notification_form(null, array('form_status' => $form_status,'id' => $data['id'],'org'=>$data['costcenterid'],'moduleid'=>$data['moduleid']), 'post', '', null, true, $data);
+        $mform = new local_notifications\forms\notification_form(null, array('id' => $data['id'],'org'=>$data['costcenterid'],'moduleid'=>$data['moduleid']), 'post', '', null, true, $data);
         
         $validateddata = $mform->get_data();
         $lib = new \notifications();
@@ -89,7 +89,7 @@ class local_notifications_external extends external_api {
             if ($validateddata->id > 0) {
                 $validateddata->usermodified = $USER->id;
                 $validateddata->timemodified = time();
-                if($form_status == 0){
+                // if($form_status == 0){
                     $validateddata->moduleid=($data['moduleid'] === '_qf__force_multiselect_submission') ? 0 : $data['moduleid'] ;
                     $validateddata->body = $validateddata->body['text'];
                    
@@ -105,9 +105,9 @@ class local_notifications_external extends external_api {
                         $validateddata->moduletype = $notif_type_find[0];
                     }
                     $insert = $lib->insert_update_record('local_notification_info', 'update', $validateddata);
-                }else{
-                    $validateddata->adminbody = $validateddata->adminbody['text'];
-                }
+                // }else{
+                //     $validateddata->adminbody = $validateddata->adminbody['text'];
+                // }
               
                 $insert = $lib->insert_update_record('local_notification_info', 'update', $validateddata);
             } else if ($validateddata->id <= 0) {
@@ -129,16 +129,16 @@ class local_notifications_external extends external_api {
                 $validateddata->timemodified = time();
                 $insert = $lib->insert_update_record('local_notification_info', 'insert', $validateddata);
             }
-            $formheaders = array_keys($mform->formstatus);
-            $next = $form_status + 1;
-            $nextform = array_key_exists($next, $formheaders);
-            if ($nextform !== false/*&& end($formheaders) !== $form_status*/) {
-                $form_status = $next;
-                $error = false;
-            } else {
-                $form_status = -1;
-                $error = true;
-            }
+            // $formheaders = array_keys($mform->formstatus);
+            // $next = $form_status + 1;
+            // $nextform = array_key_exists($next, $formheaders);
+            // if ($nextform !== false/*&& end($formheaders) !== $form_status*/) {
+            //     $form_status = $next;
+            //     $error = false;
+            // } else {
+            //     $form_status = -1;
+            //     $error = true;
+            // }
 
         } else {
             // Generate a warning.
@@ -148,7 +148,8 @@ class local_notifications_external extends external_api {
         $return = array(
             // 'error' => $error,
             'id' => $insert,
-            'form_status' => $form_status);
+            // 'form_status' => $form_status
+        );
  
         return $return;
     }
@@ -162,7 +163,7 @@ class local_notifications_external extends external_api {
     public static function submit_create_notification_form_returns() {
         return new external_single_structure(array(
             'id' => new external_value(PARAM_INT, 'notificationid'),
-            'form_status' => new external_value(PARAM_INT, 'form_status'),
+            // 'form_status' => new external_value(PARAM_INT, 'form_status'),
         ));
     }
 

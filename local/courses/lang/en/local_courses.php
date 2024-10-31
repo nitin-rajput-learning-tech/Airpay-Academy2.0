@@ -439,7 +439,7 @@ $string['helpshow_beforelogin'] = 'Dashboard Course';
 $string['helpshow_beforelogin_help'] = 'If yes is selected then this course will appear on before login dashboard page.';
 $string['addcoursetodashboard'] = 'Add Dashboard Courses';
 $string['save'] = 'Save';
-$string['success_message'] = 'Dashboard courses created successfully.';
+$string['success_message'] = 'Dashboard courses added successfully.';
 $string['fail_message'] = 'Failed to add courses.';
 $string['add_coursestodashboard'] = 'Add courses to dashboard.';
 $string['adddashboardcourses'] = 'Please select courses to add to dashboard';
@@ -448,6 +448,7 @@ $string['public_courses'] = 'Available Courses';
 $string['add_selected_users'] = 'Add Selected Users'; */
 $string['course_price_set'] = 'Set price for course';
 $string['courseprice'] = 'Course Price';
+$string['courseprice_help'] = 'Enter the Course price';
 //caches
 $string['cachedef_bookedusertable'] = 'Booked users table (cache)';
 $string['cachedef_bookingoptions'] = 'Booking options (cache)';

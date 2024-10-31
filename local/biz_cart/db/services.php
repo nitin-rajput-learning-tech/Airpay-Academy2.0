@@ -139,8 +139,16 @@ $functions = [
     'local_biz_cart_transactions_view' => [
         'classname'   => 'local_biz_cart_external',
         'methodname'  => 'transactions_view',
-        'classpath'   => 'local/biz_cart/externallib.php',
-        'description' => 'To get the transaction history',
+        'classpath'   => 'local/biz_cart/classes/external.php',
+        'description' => 'To get the transaction history for user',
+        'type'        => 'read',
+        'ajax' => true,
+    ],
+    'local_biz_cart_transactions_view_for_admin' => [
+        'classname'   => 'local_biz_cart_external',
+        'methodname'  => 'transactions_view_for_admin',
+        'classpath'   => 'local/biz_cart/classes/external.php',
+        'description' => 'To get the transaction history for user',
         'type'        => 'read',
         'ajax' => true,
     ],

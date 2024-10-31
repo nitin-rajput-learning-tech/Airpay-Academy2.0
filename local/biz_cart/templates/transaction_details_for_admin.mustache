@@ -16,10 +16,13 @@
 }}
 {{#response}}
     {{#viewtypeCard}}
-        <table class="generaltable" id = 'manage_transactions'>
+        <table id = 'manage_transactions_foradmin' class = 'generaltable' >
             <thead>
-                <tr>
+                <tr><th>Course id</th>
                     <th>Course Name</th>
+                    <th>User ID</th>
+                    <th>User Fullname</th>
+                    <th>Order ID</th>
                     <th>Transaction Code</th>
                     <th>Invoice Date</th>
                     <th>Amount</th>
@@ -28,20 +31,37 @@
             </thead>
             <tbody>
                 {{#records}}
-                    {{#data}}
                     <tr>
+                        <td>{{#courseid}}{{courseid}}{{/courseid}}{{^courseid}}N/A{{/courseid}}</td>
                         <td>{{#coursename}}{{coursename}}{{/coursename}}{{^coursename}}N/A{{/coursename}}</td>
+                        <td>{{#userid}}{{userid}}{{/userid}}{{^userid}}N/A{{/userid}}</td>
+                        <td>{{#userfullname}}{{userfullname}}{{/userfullname}}{{^userfullname}}N/A{{/userfullname}}</td>
+                        <td>{{#orderid}}{{orderid}}{{/orderid}}{{^orderid}}N/A{{/orderid}}</td>
                         <td>{{#transactioncode}}{{transactioncode}}{{/transactioncode}}{{^transactioncode}}N/A{{/transactioncode}}</td>
                         <td>{{invoicedate}}</td>
                         <td>{{#amount}}{{amount}}{{/amount}}{{^amount}}N/A{{/amount}}</td>
                         <td>{{status}}</td>
                     </tr>
-                    {{/data}}
-                    {{#nodata}}
-                    <div class='w-full pull-left text-center alert alert-info'>{{#str}}notransactions, local_biz_cart{{/str}}.</div>
-                    {{/nodata}}
                 {{/records}}
             </tbody>
         </table>
     {{/viewtypeCard}}
 {{/response}}
+
+{{! <script>
+window.onload = function() {
+        // Check if jQuery is loaded
+        if (typeof jQuery !== 'undefined') {
+            $('#airpay_transactions').DataTable({
+            // Enable filtering
+                searching: true,
+                // Add other options as needed
+                paging: true,    // Enable pagination
+                ordering: true,  // Enable column ordering
+                info: true   
+            });          
+        } else {
+            console.error('jQuery is not loaded');
+        }
+    };
+</script> }}

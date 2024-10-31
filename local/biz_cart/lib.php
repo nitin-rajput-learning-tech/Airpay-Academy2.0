@@ -190,6 +190,12 @@ function local_biz_cart_leftmenunode(){
             $transactions = html_writer::link($page_url, '<i class="fa fa-money"></i><span class="user_navigation_link_text">'.get_string('view_transactions','local_biz_cart').'</span>',array('class'=>'user_navigation_link'));
             $transactionnodes .= $transactions;
         $transactionnodes .= html_writer::end_tag('li');
+    } else {
+        $transactionnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsecourses', 'class'=>'pull-left user_nav_div browsecourses'));
+            $page_url = new moodle_url('/local/biz_cart/view_transactions_for_admin.php');
+            $transactions = html_writer::link($page_url, '<i class="fa fa-money"></i><span class="user_navigation_link_text">'.get_string('view_transactions','local_biz_cart').'</span>',array('class'=>'user_navigation_link'));
+            $transactionnodes .= $transactions;
+        $transactionnodes .= html_writer::end_tag('li');
     }
 
     return array('6' => $transactionnodes);
@@ -199,32 +205,79 @@ function local_biz_cart_leftmenunode(){
         global $USER, $DB;
         $count = $DB->count_records_sql("SELECT COUNT(id) FROM {paygw_airpay} WHERE  userid = $USER->id AND  status = 2" ,[]);
         $transactions = $DB->get_records_sql("SELECT * FROM {paygw_airpay} WHERE  userid = $USER->id AND  status = 2" ,[],$tablelimits->start, $tablelimits->length);
+        $data = array();
+        if(!empty($transactions)) {
+            foreach ($transactions as $transaction) {
+                if($transaction->component == 'local_biz_cart'){
+                    $carthistory = $DB->get_records('local_biz_cart_history',['identifier' => $transaction->itemid]);
+                        foreach($carthistory as $cartitem){
+                            $coursedetails = [];
+                            $coursedetails['courseid'] = $cartitem->itemid;
+                            $coursedetails['coursename'] = $cartitem->itemname;
+                            $coursedetails['transactioncode'] = $transaction->paymentid;
+                            $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
+                            $coursedetails['amount'] = $cartitem->price .' INR';
+                            $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Not Completed';
+                            $data[] = $coursedetails;
+                     } 
+                }else{
+                    $enrolinstance = $DB->get_record('enrol', ['id' => $transaction->itemid]);
+                    $coursename = $DB->get_field('course', 'fullname', ['id' => $enrolinstance->courseid]);
+                    $coursedetails = [];
+                    $coursedetails['courseid'] = $enrolinstance->coursid;
+                    $coursedetails['coursename'] = $coursename;
+                    $coursedetails['transactioncode'] = $transaction->paymentid;
+                    $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);;
+                    $coursedetails['amount'] = number_format($enrolinstance->cost, 2) .' INR';
+                    $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Not Completed';
+                    $data[] = $coursedetails;
+                }
+            }
+        } else {
+            $nodata = true;
+            $pagination = false;
+        }
+        return ['count' => $count, 'nodata' => $nodata, 'data' => $data];
+    }
+
+    function get_user_transactions_for_admin($tablelimits, $filtervalues){
+        global $DB, $OUTPUT;
+        $count = $DB->count_records_sql("SELECT COUNT(id) FROM {paygw_airpay}" ,[]);
+        $transactions = $DB->get_records_sql("SELECT * FROM {paygw_airpay}"  ,[],$tablelimits->start, $tablelimits->length);
+        $data = array();
         foreach ($transactions as $transaction){
+            $user = \core_user::get_user($transaction->userid);
+            $userfullname = $user->firstname . ' ' . $user->lastname;
             if($transaction->component == 'local_biz_cart'){
                 $carthistory = $DB->get_records('local_biz_cart_history',['identifier' => $transaction->itemid]);
                     foreach($carthistory as $cartitem){
                         $coursedetails = [];
                         $coursedetails['courseid'] = $cartitem->itemid;
                         $coursedetails['coursename'] = $cartitem->itemname;
+                        $coursedetails['userid'] = $cartitem->userid;
+                        $coursedetails['userfullname'] = $userfullname;
+                        $coursedetails['orderid'] = $transaction->ap_orderid;
                         $coursedetails['transactioncode'] = $transaction->paymentid;
                         $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
                         $coursedetails['amount'] = $cartitem->price .' INR';
-                        $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Not Completed';
+                        $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
                         $data[] = $coursedetails;
                  } 
             }else{
                 $enrolinstance = $DB->get_record('enrol', ['id' => $transaction->itemid]);
                 $coursename = $DB->get_field('course', 'fullname', ['id' => $enrolinstance->courseid]);
                 $coursedetails = [];
-                $coursedetails['courseid'] = $enrolinstance->coursid;
+                $coursedetails['courseid'] = $enrolinstance->courseid;
                 $coursedetails['coursename'] = $coursename;
+                $coursedetails['orderid'] = $transaction->ap_orderid;
                 $coursedetails['transactioncode'] = $transaction->paymentid;
+                $coursedetails['userid'] = $transaction->userid;
+                $coursedetails['userfullname'] = $userfullname;
                 $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);;
                 $coursedetails['amount'] = number_format($enrolinstance->cost, 2) .' INR';
-                $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Not Completed';
+                $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
                 $data[] = $coursedetails;
         }
     }
-    
     return ['count' => $count, 'data' => $data];
     }

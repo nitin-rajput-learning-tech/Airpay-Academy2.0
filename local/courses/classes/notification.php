@@ -101,6 +101,7 @@ class notification{
         $datamailobj->enroluser_fullname = $user->firstname.' '.$user->lastname;
 	    $datamailobj->enroluser_email = $user->email;
 		$datamailobj->course_reminderdays = $notification->reminderdays;
+		$datamailobj->enroluser_payment = $notification->courseprice;
 	    $datamailobj->adminbody = NULL;
 	    $datamailobj->body = $notification->body;
 	    $datamailobj->subject = $notification->subject;
