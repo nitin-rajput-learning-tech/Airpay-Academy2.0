@@ -190,6 +190,12 @@ function local_biz_cart_leftmenunode(){
             $transactions = html_writer::link($page_url, '<i class="fa fa-money"></i><span class="user_navigation_link_text">'.get_string('view_transactions','local_biz_cart').'</span>',array('class'=>'user_navigation_link'));
             $transactionnodes .= $transactions;
         $transactionnodes .= html_writer::end_tag('li');
+    } else {
+        $transactionnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsecourses', 'class'=>'pull-left user_nav_div browsecourses'));
+            $page_url = new moodle_url('/local/biz_cart/view_transactions_for_admin.php');
+            $transactions = html_writer::link($page_url, '<i class="fa fa-money"></i><span class="user_navigation_link_text">'.get_string('view_transactions','local_biz_cart').'</span>',array('class'=>'user_navigation_link'));
+            $transactionnodes .= $transactions;
+        $transactionnodes .= html_writer::end_tag('li');
     }
 
     return array('6' => $transactionnodes);
@@ -238,6 +244,7 @@ function local_biz_cart_leftmenunode(){
         global $DB, $OUTPUT;
         $count = $DB->count_records_sql("SELECT COUNT(id) FROM {paygw_airpay}" ,[]);
         $transactions = $DB->get_records_sql("SELECT * FROM {paygw_airpay}"  ,[],$tablelimits->start, $tablelimits->length);
+        $data = array();
         foreach ($transactions as $transaction){
             $user = \core_user::get_user($transaction->userid);
             $userfullname = $user->firstname . ' ' . $user->lastname;
