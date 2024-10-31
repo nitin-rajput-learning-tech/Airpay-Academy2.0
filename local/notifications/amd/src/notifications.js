@@ -76,8 +76,8 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
             }
             var strings = Str.get_strings([head
             , {
-                key: 'save_continue',
-                component: 'local_users'
+                key: 'save',
+                component: 'moodle'
             }, {
                 key: 'cancel',
                 component: 'moodle'
@@ -126,7 +126,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                 });
 
                 this.modal.getFooter().find('[data-action="skip"]').on('click', function() {
-                    self.args.form_status = self.args.form_status + 1;
+                    // self.args.form_status = self.args.form_status + 1;
                     var data = self.getBody();
                     data.then(function(html, js) {
                         if(html === false) {
@@ -140,7 +140,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
                     $(document).on('click', '.custom_notification_form_redirect', function(){
                         var instanceid = $("#notificationid").val();
                         if(instanceid > 0){
-                            self.args.form_status = $(this).data('value');
+                            // self.args.form_status = $(this).data('value');
                             var data = self.getBody();
                             data.then(function(html, js) {
                                 if (html === false) {
@@ -278,7 +278,7 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
         var params = {};
         params.contextid = this.contextid;
         params.jsonformdata = JSON.stringify(formData);
-        params.form_status = args.form_status;
+        // params.form_status = args.form_status;
 
         var promise = Ajax.call([{
             methodname: methodname,
@@ -287,19 +287,19 @@ define(['jquery', 'core/str', 'core/modal_factory', 'core/modal_events', 'core/f
 
          promise[0].done(function(resp){
             // alert(resp.form_status);
-            if(resp.form_status !== -1 && resp.form_status !== false) {
-                self.args.form_status = resp.form_status;
+            // if(resp.form_status !== -1 && resp.form_status !== false) {
+            //     self.args.form_status = resp.form_status;
                 self.args.id = resp.id;
                 self.handleFormSubmissionFailure();
-            } else {
+            // } else {
                 // self.handleFormSubmissionResponse(self.args);
                 // alert('here');
                 self.modal.hide();
                 window.location.reload();
-            }
-            if(args.form_status > 0) {
-                $('[data-action="skip"]').css('display', 'inline-block');
-            }
+            // }
+            // if(args.form_status > 0) {
+            //     $('[data-action="skip"]').css('display', 'inline-block');
+            // }
         }).fail(function(ex){
             self.handleFormSubmissionFailure(formData);
         })
