@@ -51,7 +51,7 @@ $PAGE->navbar->add(get_string('changebulkuserstatus', 'local_users'));
 $returnurl = new moodle_url('/local/users/index.php');
 
 $STD_FIELDS = array(
-    'employee_code' => 'employee_code',
+    'email' => 'email',
     'status' => 'status'
     );
 

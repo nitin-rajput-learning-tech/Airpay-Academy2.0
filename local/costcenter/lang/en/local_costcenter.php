@@ -416,7 +416,7 @@ $string['inactiveonlineexamcount'] = 'Inactive Onlineexams';
 $string['statuschangehelp'] = '<div class="helpmanual_table"><table class="generaltable" border="1">
 <tr>
 <th>Field</th><th>Restriction</th>
-<tr><td>employee_code</td><td>Enter the employee code, avoid additional spaces.</td></tr>
+<tr><td>email</td><td>Enter valid email.</td></tr>
 <tr><td>status</td><td>Enter employee status as either \'Active\' or \'Inactive\' or \'Delete\', avoid additional spaces.</td></tr>
 </table>';
 //Bulk users status change help .
