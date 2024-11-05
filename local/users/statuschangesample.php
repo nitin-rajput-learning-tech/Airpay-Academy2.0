@@ -32,7 +32,7 @@ if (!has_capability('local/users:bulkstatuschange', $categorycontext)) {
 }
 if ($format) {
     $fields = array(
-    'employee_code' => 'employee_code',
+    'email' => 'email',
     'status' => 'status',
     );
 

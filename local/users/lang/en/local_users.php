@@ -876,7 +876,11 @@ $string['policystring'] = 'I have read and accept the ';
 $string['termsconditionstring'] = 'I have read and agree to the ';
 // Employee bulk exit strings.
 $string['employeeid_notexists'] = 'User with employee code {$a->learner_id} at line \'{$a->line}\' ';
+$string['email_notexists'] = 'User with email {$a->email} at line \'{$a->line}\' does not exists';
+
+$string['email_empty'] = 'email at line \'{$a->line}\' can not be empty';
 $string['invalidstatus'] = 'User having invalid status at line \'{$a->line}\' ';
+$string['status_empty'] = 'status at line \'{$a->line}\' can not be empty';
 $string['bulkstatuschange'] = 'Bulk Status Change';
 $string['useralreadydeleted'] = 'User already deleted, you can not update at line \'{$a->line}\' ';
 $string['changebulkuserstatus'] = "Bulk Status Change";

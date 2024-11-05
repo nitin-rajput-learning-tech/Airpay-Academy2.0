@@ -88,7 +88,7 @@ class bulkstatuschange {
         $linenum = 1;
         $corecomponent = new \core_component();
         $mandatoryfields = [
-            'employee_code',
+            'email',
             'status'
         ];
         $this->mandatoryfieldcount = 0;
@@ -151,11 +151,11 @@ class bulkstatuschange {
     public function employee_status_validation($excel) {
         global $DB;
         $strings = new stdClass;
-        $strings->learner_id = $excel->employee_code;
+        $strings->email = $excel->email;
         $strings->line = $this->excellinenumber;
         $strings->status = $excel->status;
 
-        $userdelete = $DB->get_field('user', 'deleted', ['open_employeeid' => $excel->employee_code]);
+        $userdelete = $DB->get_field('user', 'deleted', ['email' => $excel->email]);
 
         if ($userdelete) {
             $returndata = "<div class='local_users_sync_error'>"
@@ -172,6 +172,14 @@ class bulkstatuschange {
             $this->mfields[] = "status";
             $this->errorcount++;
         }
+        if(!$excel->status) {
+            $returndata = "<div class='local_users_sync_error'>"
+                            .get_string('status_empty', 'local_users', $strings).
+                          "</div>";
+            $this->errors[] = get_string('status_empty', 'local_users', $strings);
+            $this->mfields[] = "status";
+            $this->errorcount++;
+        }
         return $returndata;
     } // end of  employee_status_validation method
 
@@ -183,31 +191,39 @@ class bulkstatuschange {
     public function empid_validation($excel) {
         global $DB;
         $strings = new stdClass();
-        $strings->learner_id = $excel->employee_code;
+        $strings->email = $excel->email;
         $strings->line = $this->excellinenumber;
-        $this->learnerid = $excel->employee_code;
+        $this->email = $excel->email;
 
         $condition = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'open_path');
 
 
-        $empidsql = "SELECT *
+        $emailsql = "SELECT *
                        FROM {user} 
-                       WHERE open_employeeid = :learnerid $condition";
-        $params['learnerid'] = $strings->learner_id;
-        $existsempid = $DB->get_record_sql($empidsql, $params);
+                       WHERE email = :email $condition";
+        $params['email'] = $strings->email;
+        $existsemail = $DB->get_record_sql($emailsql, $params);
 
-        if (!$existsempid) {
+        if (!$existsemail) {
             $returndata = '<div class="local_users_sync_error">' 
-                    . get_string('employeeid_notexists', 'local_users', $strings) .
+                    . get_string('email_notexists', 'local_users', $strings) .
                  '</div>';
-            $this->errors[] = get_string('employeeid_notexists', 'local_users', $strings);
-            $this->mfields[] = "useremployeeid";
+            $this->errors[] = get_string('email_notexists', 'local_users', $strings);
+            $this->mfields[] = "useremail";
+            $this->errorcount++;
+        }
+        if(!$excel->email) {
+            $returndata = '<div class="local_users_sync_error">' 
+                    . get_string('email_empty', 'local_users', $strings) .
+                 '</div>';
+            $this->errors[] = get_string('email_empty', 'local_users', $strings);
+            $this->mfields[] = "useremail";
             $this->errorcount++;
         }
         return $returndata;
     }
     /**
-     * User validation using employeecode and returns user data.
+     * User validation using email and returns user data.
      * @param $excel having excel row data
      * @param $formdata having uploading form data
      * 
@@ -216,7 +232,7 @@ class bulkstatuschange {
         global $USER, $DB, $CFG;
         $user = new \stdclass();       
         $user->suspended = $excel->status;
-        $user->open_employeeid = $excel->employee_code;
+        $user->email = $excel->email;
         $result = preg_grep("/profile_field_/", array_keys((array)$excel));
         if (count($result) > 0) {
             foreach ($result as $key => $val) {
@@ -226,7 +242,7 @@ class bulkstatuschange {
         return $user;
     } // end of  preparing_users_object method
     /**
-     * User validation using employeecode and returns user data.
+     * User validation using email and returns user data.
      * @param $excel having excel row data
      * @param $user1 having uploading user data
      * @param $formdata having uploading form data
@@ -234,7 +250,7 @@ class bulkstatuschange {
      **/
     public function update_row($excel, $user1, $formdata) {
         global $USER, $DB, $CFG;
-        $userid = $DB->get_field('user', 'id', ['open_employeeid' => $excel->employee_code]);
+        $userid = $DB->get_field('user', 'id', ['email' => $excel->email]);
         if ($userid) {
             $user = clone $user1;
             $user->id = $userid;
@@ -244,7 +260,7 @@ class bulkstatuschange {
         }
     } // end of  update_row method
     /**
-     * User validation using employeecode and returns user data.
+     * User validation using email and returns user data.
      * @param $user having uploading user data
      * @param $field having fieldname
      * 
