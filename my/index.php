@@ -47,7 +47,7 @@ $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
 if ((has_capability('local/users:manage', $categorycontext) && has_capability('local/users:view',
       $categorycontext) || is_siteadmin()) && $fredirect) {
     redirect($CFG->wwwroot.'/my/dashboard.php');    
-} else if (!is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext) && !has_capability('local/costcenter:view', $systemcontext) && !has_capability('local/costcenter:manage', $systemcontext) && !has_capability('local/classroom:manageclassroom', $systemcontext) && $fredirect) {
+} else if (!is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext) && !has_capability('local/costcenter:view', $systemcontext) && !has_capability('local/costcenter:manage', $systemcontext) && !has_capability('local/classroom:manageclassroom', $systemcontext)  && has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext) && $fredirect) {
     redirect($CFG->wwwroot . '/blocks/trainerdashboard/dashboard.php');
 } else {
     redirect($CFG->wwwroot.'/local/search/allcourses.php');
