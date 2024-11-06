@@ -123,7 +123,12 @@ class adddashboardcourse_form extends dynamic_form {
      * @return mixed
      */
     public function process_dynamic_submission() {
+        global $DB;
         $data = $this->get_data();
+        // Convert the courseids array into a comma-separated string
+        if (isset($data->courseids) && is_array($data->courseids)) {
+            $data->courseids = implode(',', $data->courseids);
+        }
         if($data->id > 0){
             $DB->update_record('local_dashboardcourses', $data);
         } else{
