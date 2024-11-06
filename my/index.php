@@ -38,7 +38,7 @@ require_once(__DIR__ . '/../config.php');
 require_once($CFG->dirroot . '/my/lib.php');
 
 redirect_if_major_upgrade_required();
-
+require_login();
 // TODO Add sesskey check to edit
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
@@ -52,7 +52,7 @@ if ((has_capability('local/users:manage', $categorycontext) && has_capability('l
 } else {
     redirect($CFG->wwwroot.'/local/search/allcourses.php');
 }
-require_login();
+
 
 $hassiteconfig = has_capability('moodle/site:config', context_system::instance());
 if ($hassiteconfig && moodle_needs_upgrading()) {
