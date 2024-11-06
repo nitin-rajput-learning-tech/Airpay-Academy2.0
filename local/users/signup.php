@@ -46,7 +46,7 @@ $mform = new local_users\forms\registration_form();
 
 if(isloggedin())
 {
-    redirect($CFG->wwwroot.'/my/dashboard.php');
+     redirect($CFG->wwwroot.'/local/search/allcourses.php');
 }
 if ($mform->is_cancelled()) {
     redirect(get_login_url());

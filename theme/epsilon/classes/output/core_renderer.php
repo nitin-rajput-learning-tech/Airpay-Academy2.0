@@ -1644,6 +1644,17 @@ class core_renderer extends \core_renderer {
         if($newpageurl == $CFG->wwwroot.'/course/index.php' || $newpageurl == $CFG->wwwroot.'/course'){
             redirect($CFG->wwwroot."/local/courses/courses.php");
         }
+        $systemcontext = \local_costcenter\lib\accesslib::get_module_context();
+        if (
+            !is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext)
+            && !has_capability('local/costcenter:view', $systemcontext)
+            && !has_capability('local/costcenter:manage', $systemcontext)
+            && !has_capability('local/classroom:manageclassroom', $systemcontext) 
+            && has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext)
+            && $newpageurl == $CFG->wwwroot . '/my/dashboard.php'
+        ) {
+            redirect($CFG->wwwroot . '/blocks/trainerdashboard/dashboard.php');
+        }
         $systemcontext = \context_system::instance();
         if(!(is_siteadmin() || has_capability('local/costcenter:manage_multiorganizations', $systemcontext))){
             $is_oh = has_capability('local/costcenter:manage_ownorganization', $systemcontext);
