@@ -75,8 +75,7 @@ if ($hassiteconfig) {
 
     // Currency dropdown.
     $currenciesobjects = biz_cart::get_possible_currencies();
-
-    $currencies = ['EUR' => 'Euro (EUR)'];
+    $currencies = ['INR' => 'Indian Rupee (INR)'];
 
     foreach ($currenciesobjects as $currenciesobject) {
         $currencyidentifier = $currenciesobject->get_identifier();
@@ -88,7 +87,7 @@ if ($hassiteconfig) {
             $componentname . '/globalcurrency',
             get_string('globalcurrency', $componentname),
             get_string('globalcurrencydesc', $componentname),
-            'EUR', $currencies));
+            'INR', $currencies));
 
     // Max items in cart.
     $settings->add(
