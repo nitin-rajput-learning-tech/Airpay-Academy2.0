@@ -191,6 +191,7 @@ class local_courses_external extends external_api {
                 add_enrolon_payment_method_tocourse($coursedata);
             } elseif($validateddata->id > 0) {
                 $open_path=$DB->get_field('course', 'open_path', array('id' => $validateddata->id));
+                $coursedata = $DB->get_record('course', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
                 $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 if($form_status == 0){
@@ -214,7 +215,13 @@ class local_courses_external extends external_api {
                     // purge appropriate caches in case fix_course_sortorder() did not change anything
                     cache_helper::purge_by_event('changesincourse');
                     cache_helper::purge_by_event('changesincoursecat');
-
+                    if($coursedata->price_status !== $validateddata->price_status || $coursedata->courseprice !== $validateddata->courseprice || $coursedata->fullname !== $validateddata->fullname || $coursedata->summary !== $validateddata->summary){
+                        rebuild_cart_cache_for_course($validateddata->id);
+                    }
+                   
+                   if($coursedata->price_status !== $validateddata->price_status || $validateddata->price_status == 0) {
+                        remove_course_from_all_user_carts($validateddata->id);
+                   }
 
                     if(class_exists('\block_trending_modules\lib')){
                         $trendingclass = new \block_trending_modules\lib();

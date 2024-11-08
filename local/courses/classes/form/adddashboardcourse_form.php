@@ -69,7 +69,7 @@ class adddashboardcourse_form extends dynamic_form {
         $external_costcenterpath = $DB->get_field('local_costcenter', 'path', array('shortname' => 'external'));
         $params = [];
         $courses_sql = " SELECT id, fullname
-                        FROM {course} WHERE open_module IS NULL AND id > 1 ";
+                        FROM {course} WHERE open_module IS NULL AND id > 1 AND visible > 0";
 
         $courses_sql .= " AND open_path = :external_costcenterpath ";
         $params['external_costcenterpath'] = $external_costcenterpath;

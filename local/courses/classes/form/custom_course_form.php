@@ -286,6 +286,7 @@ class custom_course_form extends moodleform {
   				array('&nbsp;&nbsp;'), false);
             $mform->addHelpButton('approvalreqd', 'approvalreqdcourse', 'local_courses');
             $mform->hideIf('approvalreqd', 'selfenrol', 'neq', '1');
+            $mform->hideIf('approvalreqd', 'price_status', 'eq', '1');
             // Completion tracking.
   			$mform->addElement('hidden', 'enablecompletion');
   			$mform->setType('enablecompletion', PARAM_INT);

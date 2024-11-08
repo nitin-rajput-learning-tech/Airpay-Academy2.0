@@ -90,7 +90,7 @@ class local_biz_cart_external extends external_api{
         
         return [
             'totalcount' => $totalcount,
-            'records' =>$result_skill,
+            'records' =>$data,
         ];
 
     }
@@ -100,25 +100,24 @@ class local_biz_cart_external extends external_api{
      */ 
     public static function  transactions_view_returns() {
         return new external_single_structure([
-            'totalcount' => new external_value(PARAM_INT, 'total number of skills in result set'),
-            'records' => new external_single_structure(
-                array(
-                    'data' => new external_multiple_structure(
-                        new external_single_structure(
-                            array(
-                                'courseid'=>new external_value(PARAM_INT, 'course id', VALUE_OPTIONAL),
-                                'coursename'=>new external_value(PARAM_RAW, 'course name', VALUE_OPTIONAL),
-                                'transactioncode' => new external_value(PARAM_RAW, 'airpay response transactionid', VALUE_OPTIONAL),
-                                'invoicedate' => new external_value(PARAM_RAW, 'order date', VALUE_OPTIONAL),
-                                'amount' => new external_value(PARAM_RAW, 'order cost', VALUE_OPTIONAL),
-                                'status' => new external_value(PARAM_RAW, 'status of order', VALUE_OPTIONAL),
-                                
-                            ), 'individual records', VALUE_OPTIONAL
-                        ), 'records info', VALUE_OPTIONAL
-                    ),
-                    'nodata' => new external_value(PARAM_BOOL, 'nodata', VALUE_OPTIONAL),
-                )
-            )
+            'totalcount' => new external_value(PARAM_INT, 'total number of records in result set'),
+            'records' => new external_multiple_structure(
+                            new external_single_structure(
+                                array(
+                                    
+                                    'courseid'=>new external_value(PARAM_INT, 'courseid of order', VALUE_OPTIONAL),
+                                    'coursename'=>new external_value(PARAM_RAW, 'coursename', VALUE_OPTIONAL),
+                                    'userid'=>new external_value(PARAM_INT, 'user id', VALUE_OPTIONAL),
+                                    'userfullname'=>new external_value(PARAM_RAW, 'user fullname', VALUE_OPTIONAL),
+                                    'transactioncode' => new external_value(PARAM_RAW, 'airpay transactionid', VALUE_OPTIONAL),
+                                    'orderid'=>new external_value(PARAM_RAW, 'order id', VALUE_OPTIONAL),
+                                    'invoicedate' => new external_value(PARAM_RAW, 'order date', VALUE_OPTIONAL),
+                                    'amount' => new external_value(PARAM_RAW, 'order amount', VALUE_OPTIONAL),
+                                    'status' => new external_value(PARAM_RAW, 'order status', VALUE_OPTIONAL),
+                                    
+                                ), 'individual records', VALUE_OPTIONAL
+                            ), 'records info', VALUE_OPTIONAL
+                        )
         ]);
     }
 

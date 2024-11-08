@@ -117,7 +117,7 @@ class general_lib{
                 JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid ";
 
-        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 AND course.open_coursetype = 0";
+        $sql .= " WHERE ue.userid = {$USER->id} AND course.id <> 1 AND course.visible=1 ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -143,7 +143,7 @@ class general_lib{
             JOIN {enrol} AS e ON course.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
             JOIN {user_enrolments} ue ON e.id = ue.enrolid
             WHERE ue.userid = {$USER->id}
-            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) AND course.open_coursetype = 0 ";
+            AND course.id <> 1 AND course.visible = 1 AND course.id NOT IN(SELECT course FROM {course_completions} WHERE course = course.id AND userid = {$USER->id} AND timecompleted IS NOT NULL) ";
         if($source == 'mobile'){
             $sql .= " AND course.open_securecourse != 1 ";
         }
@@ -167,7 +167,7 @@ class general_lib{
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 WHERE ue.userid = {$USER->id}
-                AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 AND c.open_coursetype = 0";
+                AND cc.timecompleted IS NOT NULL AND c.visible = 1 AND c.id > 1 ";
         if($source == 'mobile'){
            $sql .= " AND c.open_securecourse != 1 ";
         }
@@ -191,7 +191,7 @@ class general_lib{
                 JOIN {enrol} e ON c.id = e.courseid AND e.enrol NOT IN ('classroom', 'program', 'learningplan')
                 JOIN {user_enrolments} ue ON e.id = ue.enrolid
                 WHERE ue.userid = {$USER->id} AND c.visible = 1 AND c.id > 1
-                AND cc.timecompleted IS NOT NULL AND c.open_coursetype = 0 ";
+                AND cc.timecompleted IS NOT NULL ";
 
         if($source == 'mobile'){
             $sql .= " AND c.open_securecourse != 1 ";
