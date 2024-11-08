@@ -501,6 +501,7 @@ class local_courses_renderer extends plugin_renderer_base {
         $sql = "SELECT c.* FROM {course} c
                   JOIN {local_dashboardcourses} ldc 
                        ON FIND_IN_SET(c.id, ldc.courseids) > 0
+                    WHERE c.visible > 0
               ORDER BY c.id DESC";
         $courses = $DB->get_records_sql($sql);
 
