@@ -2566,3 +2566,161 @@ function add_enrolon_payment_method_tocourse($course){
     } 
 
 }
+// /**
+//  * Rebuilds cart cache for a specific course to reflect updated price.
+//  * @author Rizwana <rizwana.madire@moodle.com>
+//  * @param int $courseid The course ID.
+//  */
+// function rebuild_cart_cache_for_course(int $courseid): void {
+//     global $DB;
+//     // Fetch the updated course price.
+//     $coursedata = $DB->get_record('course', ['id' => $courseid]);
+//     $cache = \cache::make('local_biz_cart', 'cacheshopping');
+    
+//     // Get all user cache keys who might have added this course to their cart.
+//     $userids = $DB->get_records_sql("
+//         SELECT DISTINCT u.id
+//         FROM {user} u
+//         JOIN {local_biz_cart_history} ch ON u.id = ch.userid
+//         WHERE ch.itemid = :courseid
+//     ", ['courseid' => $courseid]);
+
+//     // Update each user's cart data if they have the course.
+//     foreach ($userids as $userid => $user) {
+//         $cachekey = "{$userid}_biz_cart";
+//         $cartdata = $cache->get($cachekey);
+
+//         // Check if the course is in the cart and update its price if needed.
+//         foreach ($cartdata['items'] as $itemkey => &$item) {
+//             if ($item['itemid'] == $courseid) {
+//                 $item['price'] = $coursedata->courseprice;
+//                 $item['itemname'] = $coursedata->fullname;
+//                 $item['description'] = $coursedata->summary;
+//             }
+//         }
+
+//         // Update cache with modified cart data.
+//         $cache->set($cachekey, $cartdata);
+//     }
+// }
+/**
+ * Remove a course from all user carts when it is inactivated or deleted.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param int $courseid The ID of the course to remove from all user carts.
+ */
+// function remove_course_from_all_user_carts($courseid) {
+//     global $DB;
+
+//     // Get all user cache keys who might have added this course to their cart.
+//     $userids = $DB->get_records_sql("
+//         SELECT DISTINCT u.id
+//         FROM {user} u
+//         JOIN {local_biz_cart_history} ch ON u.id = ch.userid
+//         WHERE ch.itemid = :courseid
+//     ", ['courseid' => $courseid]);
+
+//     $cache = \cache::make('local_biz_cart', 'cacheshopping');
+//     foreach ($userids as $userid => $user) {
+//         $cachekey = $userid . '_biz_cart';
+//         $cartdata = $cache->get($cachekey);
+
+//         // Check if the target course exists in the cart.
+//         if ($cartdata && isset($cartdata['items'])) {
+//             foreach ($cartdata['items'] as $cacheitemkey => $item) {
+//                 if ($item['itemid'] == $courseid) {
+//                     // Use delete_item_from_cart to remove the course from this user's cart.
+//                     biz_cart::delete_item_from_cart('local_courses', 'option', $courseid, $userid);
+//                     // break; // Exit inner loop once the item is removed.
+//                 }
+//             }
+//         }
+//     }
+// }
+
+/**
+ * Rebuilds cart cache for a specific course to reflect updated price.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param int $courseid The course ID.
+ */
+function rebuild_cart_cache_for_course(int $courseid): void {
+    global $DB;
+    
+    // Fetch the updated course price.
+    $coursedata = $DB->get_record('course', ['id' => $courseid]);
+    $cache = \cache::make('local_biz_cart', 'cacheshopping');
+    
+    // Retrieve user IDs from logstore_standard_log who have added the course.
+    $userids = $DB->get_records_sql("
+        SELECT DISTINCT userid
+        FROM {logstore_standard_log}
+        WHERE action = 'added'
+          AND target = 'item'
+          AND component = 'local_biz_cart'
+          AND other LIKE :courseidpattern
+          AND other LIKE :componentpattern
+    ", [
+        'courseidpattern' => '%"itemid":'.$courseid.'%',
+        'componentpattern' => '%"component":"local_courses"%'
+    ]);
+    // Update each user's cart data if they have the course.
+    foreach ($userids as $userid => $user) {
+        $cachekey = "{$userid}_biz_cart";
+        $cartdata = $cache->get($cachekey);
+
+        if ($cartdata && isset($cartdata['items'])) {
+            // Check if the course is in the cart and update its price if needed.
+            foreach ($cartdata['items'] as $itemkey => &$item) {
+                if ($item['itemid'] == $courseid) {
+                    $item['price'] = $coursedata->courseprice;
+                    $item['itemname'] = $coursedata->fullname;
+                    $item['description'] = $coursedata->summary;
+                }
+            }
+
+            // Update cache with modified cart data.
+            $cache->set($cachekey, $cartdata);
+        }
+    }
+}
+
+/**
+ * Remove a course from all user carts when it is inactivated or deleted.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param int $courseid The ID of the course to remove from all user carts.
+ */
+function remove_course_from_all_user_carts(int $courseid): void {
+    global $DB;
+
+    // Retrieve user IDs from logstore_standard_log with matching itemid and component.
+    $userids = $DB->get_records_sql("
+        SELECT DISTINCT userid
+        FROM {logstore_standard_log}
+        WHERE action = 'added'
+          AND target = 'item'
+          AND component = 'local_biz_cart'
+          AND other LIKE :courseidpattern
+          AND other LIKE :componentpattern
+    ", [
+        'courseidpattern' => '%"itemid":'.$courseid.'%',
+        'componentpattern' => '%"component":"local_courses"%'
+    ]);
+
+    $cache = \cache::make('local_biz_cart', 'cacheshopping');
+    
+    // Loop through each user and delete the course from their cart.
+    foreach ($userids as $userid => $user) {
+        $cachekey = "{$userid}_biz_cart";
+        $cartdata = $cache->get($cachekey);
+
+        if ($cartdata && isset($cartdata['items'])) {
+            // Check if the target course exists in the cart.
+            foreach ($cartdata['items'] as $cacheitemkey => $item) {
+                if ($item['itemid'] == $courseid) {
+                    // Use delete_item_from_cart to remove the course from this user's cart.
+                    biz_cart::delete_item_from_cart('local_courses', 'option', $courseid, $userid);
+                    break; // Exit inner loop once the item is removed.
+                }
+            }
+        }
+    }
+}
