@@ -23,8 +23,10 @@
                             
                             <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
                             <div class="d-flex justify-content-center">
-                               {{#price_status}}
+                              {{#price_status}}
+                                     <!--<a href="javascript:void(0)" data-action="core_payment/triggerPayment" data-paymentarea="fee" data-component="enrol_fee" data-itemid="{{airpaypaymentid}}" data-cost= "{{courseprice}}" data-successurl = "{{successurl}}" data-description="Enrolment in course" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>-->
                                     <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <!--<a href="javascript:void(0)" onclick="(function(e){ require('local_courses/courseAjaxform').courseaddtocart({itemid:{{courseid}}, userid: 0, component: 'local_courses', area:'option'}) })(event)" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>-->
                                     <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
                                 {{/price_status}}
                                 {{^price_status}}
@@ -51,8 +53,10 @@
                             </p>
                             <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
                             <div class="d-flex justify-content-center">
-                                {{#price_status}}
+                               {{#price_status}}
+                                    <!--<a href="javascript:void(0)" data-action="core_payment/triggerPayment" data-paymentarea="fee" data-component="enrol_fee" data-itemid="{{airpaypaymentid}}" data-cost= "{{courseprice}}" data-successurl = "{{successurl}}" data-description="Enrolment in course" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>-->
                                     <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <!--<a href="javascript:void(0)" onclick="(function(e){ require('local_courses/courseAjaxform').courseaddtocart({itemid:{{courseid}}, userid: 0, component: 'local_courses', area:'option'}) })(event)" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>-->
                                     <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
                                 {{/price_status}}
                                 {{^price_status}}
@@ -79,7 +83,9 @@
                             <p class="card-text small" style="width: 320px; height: 90px;">{{summary}}</p>
                             <div class="d-flex justify-content-center">
                                 {{#price_status}}
+                                    <!--<a href="javascript:void(0)" data-action="core_payment/triggerPayment" data-paymentarea="fee" data-component="enrol_fee" data-itemid="{{airpaypaymentid}}" data-cost= "{{courseprice}}" data-successurl = "{{successurl}}" data-description="Enrolment in course" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>-->
                                     <a href="{{buy}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Buy</b></a>
+                                    <!--<a href="javascript:void(0)" onclick="(function(e){ require('local_courses/courseAjaxform').courseaddtocart({itemid:{{courseid}}, userid: 0, component: 'local_courses', area:'option'}) })(event)" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>-->
                                     <a href="{{addtocart}}" class="btn btn-sm" style="background-color: black; color: white; padding: 7px 20px; font-size: 0.75rem; margin-right: 10px"><b>Add to cart</b></a>
                                 {{/price_status}}
                                 {{^price_status}}
