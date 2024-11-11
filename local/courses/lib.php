@@ -482,8 +482,8 @@ function categorylist($requiredcapability = '', $excludeid = 0, $separator = ' /
  * @param array $args List of named arguments for the fragment loader.
  * @return string
  */
-function local_courses_output_fragment_custom_course_form($args){
-    global $DB,$CFG,$PAGE;
+function local_courses_output_fragment_custom_course_form($args) {
+    global $DB, $CFG, $PAGE;
     $args = (object) $args;
     $context = $args->context;
     $renderer = $PAGE->get_renderer('local_courses');
@@ -494,8 +494,7 @@ function local_courses_output_fragment_custom_course_form($args){
         $course = course_get_format($course)->get_course();
         $category = $course->category;
         $coursecontext = context_course::instance($course->id);
-        //require_capability('moodle/course:update', $coursecontext);
-    }else{
+    } else {
         $category = $CFG->defaultrequestcategory;
     }
     $formdata = [];
@@ -503,29 +502,35 @@ function local_courses_output_fragment_custom_course_form($args){
     if (!empty($args->jsonformdata)) {
 
         $serialiseddata = json_decode($args->jsonformdata);
-        if(is_object($serialiseddata)){
-            $serialiseddata = serialize($serialiseddata);
+        if (is_object($serialiseddata)) {
+            $formdata = (array)$serialiseddata;
+        } else {
+            parse_str($serialiseddata, $formdata);
         }
-        parse_str($serialiseddata, $formdata);
     }
 
-
-    if(!empty($course)){
+    if (!empty($course) && empty($formdata)) {
         $formdata = clone $course;
         $formdata = (array)$formdata;
-
     }
 
     if ($courseid > 0) {
         $heading = get_string('updatecourse', 'local_courses');
         $collapse = false;
-        $data = $DB->get_record('course', array('id'=>$courseid));
+        $data = $DB->get_record('course', array('id' => $courseid));
+        // $categories = $DB->get_records('local_custom_fields_mapped', array('moduletype' => 'course', 'moduleid' => $courseid));
+        // if ($categories) {
+        //     foreach ($categories as $parentcat) {
+        //         $formdata['customfield_' . $parentcat->parentid] = $parentcat->category;
+        //     }
+        // }
     }
+    $overviewfilesoptions = course_overviewfiles_options($course);
     if ($courseid) {
         // Populate course tags.
         $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
-        $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes'=>$CFG->maxbytes, 'trusttext'=>false, 'noclean'=>true,'autosave'=>false);
-        $overviewfilesoptions = course_overviewfiles_options($course);
+        $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes' => $CFG->maxbytes, 'trusttext' => false, 'noclean' => true, 'autosave' => false);
+
         // Add context for editor.
         $editoroptions['context'] = $coursecontext;
         $editoroptions['subdirs'] = file_area_contains_subdirs($coursecontext, 'course', 'summary', 0);
@@ -533,40 +538,42 @@ function local_courses_output_fragment_custom_course_form($args){
         if ($overviewfilesoptions) {
             file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, $coursecontext, 'course', 'overviewfiles', 0);
         }
-        $get_coursedetails=$DB->get_record('course',array('id'=>$course->id));
+        $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
     } else {
         // Editor should respect category context if course context is not set.
-        $editoroptions['context'] = $catcontext;
+        $editoroptions['context'] = $context;
         $editoroptions['subdirs'] = 0;
+        $editoroptions['autosave'] = 0;
+        $editoroptions['cache'] = false;
         $course = file_prepare_standard_editor($course, 'summary', $editoroptions, null, 'course', 'summary', null);
         if ($overviewfilesoptions) {
             file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, null, 'course', 'overviewfiles', 0);
         }
     }
-    if($formdata['open_points'] > 0){
-        $formdata['open_enablepoints'] = true;
-    }
-    // Format `courseprice` if it exists
-    if (isset($formdata['courseprice'])) {
-        // Check if it's a whole number and format accordingly
-        $formdata['courseprice'] = (fmod($formdata['courseprice'], 1) == 0) ? intval($formdata['courseprice']) : number_format($formdata['courseprice'], 2);
+
+    $formdata['open_points'] = (!empty($formdata['open_points'])) ? $formdata['open_points'] : 0;
+    $plugin_exists = \core_component::get_plugin_directory('local', 'custom_matrix');
+    if ($plugin_exists && !empty($formdata['performancecatid'])) {
+        $performanceparentid = $DB->get_field('local_custom_category', 'parentid', array('id' => $formdata['performancecatid']));
+        $formdata['performanceparentid'] = $performanceparentid;
     }
     $params = array(
         'course' => $course,
         'category' => $category,
         'editoroptions' => $editoroptions,
         'returnto' => $returnto,
-        'get_coursedetails'=>$get_coursedetails,
+        'get_coursedetails' => $get_coursedetails,
         'form_status' => $args->form_status,
         'costcenterid' => $data->open_path,
     );
     local_costcenter_set_costcenter_path($formdata);
+
     $mform = new custom_course_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
 
     $mform->set_data($formdata);
 
-    if (!empty($args->jsonformdata) && strlen($args->jsonformdata)>2) {
+    if (!empty($args->jsonformdata) && strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
@@ -583,7 +590,6 @@ function local_courses_output_fragment_custom_course_form($args){
     }
     $formstatusview = new \local_courses\output\form_status($formstatus);
     $o .= $renderer->render($formstatusview);
-    // $o = $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'getCatlist');
     $mform->display();
     $o .= ob_get_contents();
     ob_end_clean();

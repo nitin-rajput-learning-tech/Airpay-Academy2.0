@@ -87,7 +87,6 @@ class local_courses_external extends external_api {
             }
             parse_str($serialiseddata, $data);
         }
-
         $warnings = array();
         if ($id) {
             $course = get_course($id);
