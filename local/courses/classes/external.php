@@ -218,8 +218,7 @@ class local_courses_external extends external_api {
                     if($coursedata->price_status !== $validateddata->price_status || $coursedata->courseprice !== $validateddata->courseprice || $coursedata->fullname !== $validateddata->fullname || $coursedata->summary !== $validateddata->summary){
                         rebuild_cart_cache_for_course($validateddata->id);
                     }
-                   
-                   if($coursedata->price_status !== $validateddata->price_status || $validateddata->price_status == 0) {
+                   if($coursedata->price_status !== $validateddata->price_status || $validateddata->price_status == 0 || $org !== $validateddata->open_costcenterid) {
                         remove_course_from_all_user_carts($validateddata->id);
                    }
 
@@ -670,6 +669,7 @@ class local_courses_external extends external_api {
             }
             $category->coursecount = $category->coursecount-1;
             $DB->update_record('course_categories',$category);
+            remove_course_from_all_user_carts($id);
             $return = true;
         } else {
             $return = false;
