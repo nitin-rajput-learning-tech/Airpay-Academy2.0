@@ -26,7 +26,10 @@ require('../../config.php');
 
 require_login();
 
-$url = new moodle_url('/local/biz_cart/view_transactions.php', []);
+$PAGE->requires->css('/local/notifications/css/jquery.dataTables.min.css', true);
+$PAGE->requires->js(new moodle_url('/local/notifications/js/jquery.dataTables.min.js'),true);
+echo $OUTPUT->header();
+$url = new moodle_url('/local/biz_cart/view_transactions_for_admin.php', []);
 $PAGE->set_url($url);
 $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(!has_capability('local/courses:view', $categorycontext) && !has_capability('local/courses:manage', $categorycontext) ){
@@ -34,9 +37,6 @@ if(!has_capability('local/courses:view', $categorycontext) && !has_capability('l
 }
 $PAGE->set_context($categorycontext);
 $PAGE->set_heading('All Transactions');
-$PAGE->requires->css('/local/notifications/css/jquery.dataTables.min.css', true);
-$PAGE->requires->js(new moodle_url('/local/notifications/js/jquery.dataTables.min.js'),true);
-echo $OUTPUT->header();
 $renderer = $PAGE->get_renderer('local_biz_cart');
 echo $renderer->view_user_transactions_for_admin();
 echo $OUTPUT->footer();
