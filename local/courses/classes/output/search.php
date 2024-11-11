@@ -238,7 +238,9 @@ class search implements renderable{
             $course->isenrolled = $enroll;
             if ($enroll) {
                 $course->requeststatus = MODULE_ENROLLED;
+                $course->url = $CFG->wwwroot . '/course/view.php?id=' . $course->id;
             } else {
+                $course->url = $CFG->wwwroot . '/local/search/coursedetails.php?id=' . $course->id;
                 $course->requeststatus = MODULE_NOT_ENROLLED;
                 if ($course->approvalreqd == 1) {
                     $sql = "SELECT status FROM {local_request_records} WHERE componentid=:componentid AND compname LIKE :compname AND createdbyid = :createdbyid ORDER BY id desc ";
@@ -257,8 +259,10 @@ class search implements renderable{
             $course->selfenrol = $this->get_enrollbutton($enroll, $course);
             if ($course->price_status == 1) {
                 $course->addtocart = $this->get_add_to_cart_button($enroll, $course);
+                $course->courseprice = $course->courseprice;
             } else {
                 $course->addtocart = '';
+                $course->courseprice = '';
             }
 
             $course->rating_element = '';
