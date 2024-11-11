@@ -66,7 +66,7 @@ class service_provider implements \local_biz_cart\local\callback\service_provide
             'INR',
             'local_courses',
             'option',
-            $course->description ?? '',
+            $course->summary ?? '',
             $course->imageurl ?? '',
             $course->canceluntil,
             $serviceperiodstart,
@@ -75,7 +75,6 @@ class service_provider implements \local_biz_cart\local\callback\service_provide
             0,
             $costcenter
         );
-        //print_r($cartitem);exit;
         return ['cartitem' => $cartitem];
     }
 
@@ -322,7 +321,7 @@ class service_provider implements \local_biz_cart\local\callback\service_provide
                 $course->currency ?? '',
                 'local_courses',
                 'option',
-                $course->description ?? '',
+                $course->summary ?? '',
                 $course->imageurl ?? '',
                 $course->canceluntil,
                 $course->startdate,
