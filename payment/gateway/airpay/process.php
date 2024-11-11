@@ -25,7 +25,7 @@
 require('../../../config.php');
 
 require_login();
-
+use local_biz_cart\biz_cart;
 $url = new moodle_url('/payment/gateway/airpay/process3.php', []);
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
@@ -126,6 +126,15 @@ if($transactionstatus == 200){
 			$cartitem->paymentstatus = 2;
 			$cartitem->timemodified = time();
 			$DB->update_record('local_biz_cart_history',$cartitem);
+			// Course Enrol Notification.
+			$type = 'course_enrol';
+			$notification = new \local_courses\notification();
+			$user = core_user::get_user($cartitem->userid);
+        	$course = $DB->get_record('course', array('id' => $cartitem->itemid));
+        	$notificationdata = $notification->get_existing_notification($course, $type);
+        	if ($notificationdata){
+          		$notification->send_course_email($course, $user, $type, $notificationdata);
+			}
 		}
 		$redirecturl = new moodle_url('/local/biz_cart/checkout.php', array('success' => TRUE, 'identifier' => $order->itemid));
 		redirect($redirecturl);
@@ -133,8 +142,19 @@ if($transactionstatus == 200){
 			// Get enrol instance for course.	
 			$enrolplugin = enrol_get_plugin('fee');
     		$instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$order->itemid));
+    		biz_cart::delete_item_from_cart('local_courses', 'option', $instance->courseid, $order->userid);
     		// Enrol user.
     		$enrolplugin->enrol_user($instance, $order->userid, $role->id);
+				// Course Enrol Notification.
+			$type = 'course_enrol';
+			$notification = new \local_courses\notification();
+			$user = core_user::get_user($order->userid);
+        	$course = $DB->get_record('course', array('id' => $instance->courseid));
+        	$notificationdata = $notification->get_existing_notification($course, $type);
+        	if ($notificationdata){
+          		$notification->send_course_email($course, $user, $type, $notificationdata);
+			}
+
 			echo $OUTPUT->render_from_template('local_biz_cart/checkout_success', $request);
 			// $redirecturl = new moodle_url('/my/dashboard.php', []);
 			// redirect($redirecturl);

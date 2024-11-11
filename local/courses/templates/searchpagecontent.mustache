@@ -40,12 +40,12 @@
                 <span class="CstripCntLt" ng-if="record.open_learningformat==2 && record.open_status != 2 && record.open_status" >
                     <span class="elearning"><% record.statusstring %></span> 
                 </span>
-                <a ng-if="record.enroll == 0" class="d-block C_titile link text-decoration-none" title="<% record.fullname %>">
+                <a ng-if="record.enroll == 0" href = "<% record.url %>" class="d-block link text-decoration-none" title="<% record.fullname %>">
                     <h4 class="course_name m-y-1 card-title course-title">
                         <% record.course_shortname %>
                     </h4>
                 </a>
-                <a ng-if="record.enroll == 1" class="d-block C_titile link text-decoration-none" title="<% record.fullname %>">
+                <a ng-if="record.enroll == 1" href = "<% record.url %>" class="d-block link text-decoration-none" title="<% record.fullname %>">
                     <h4 class="course_name m-y-1 card-title course-title">
                         <% record.course_shortname %>
                     </h4>
@@ -63,6 +63,16 @@
                 </div>
             </div>
 
+        </div>
+        <div class=" w-full mt-auto">
+            <div class="d-flex justify-content-between">
+                <div ng-if="record.courseprice">
+                    <span class="text-primary font-weight-bold"><span class="mr-1"><i class="fa fa-inr" aria-hidden="true"></i></span><span><% record.courseprice %></span></span>
+                </div>
+                <div>
+                    <span class="text-muted"><span class="mr-1">{{#str}}category, local_courses{{/str}}:</span><span title="<% record.categoryname %>"><% record.categoryname %></span></span>
+                </div>
+            </div>
         </div>
      
         <div class=" w-full mt-auto">

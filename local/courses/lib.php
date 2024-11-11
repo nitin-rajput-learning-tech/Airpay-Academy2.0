@@ -34,6 +34,7 @@ require_once($CFG->dirroot.'/completion/completion_completion.php');
 use \local_courses\form\adddashboardcourse_form as adddashboardcourse_form;
 use \local_courses\form\custom_course_form as custom_course_form;
 use \local_courses\form\custom_courseevidence_form as custom_courseevidence_form;
+use local_biz_cart\biz_cart;
 // Define booking status parameters.
 define('LOCAL_COURSES_BOOKING_STATUSPARAM_BOOKED', 0);
 define('LOCAL_COURSES_STATUSPARAM_WAITINGLIST', 1);
