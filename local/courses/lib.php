@@ -550,8 +550,18 @@ function local_courses_output_fragment_custom_course_form($args) {
             file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, null, 'course', 'overviewfiles', 0);
         }
     }
+    if($formdata['open_points'] > 0){
+        $formdata['open_enablepoints'] = true;
+    }
+    // Format `courseprice` if it exists
+    if (isset($formdata['courseprice'])) {
+        // Check if it's a whole number and format accordingly
+        $formdata['courseprice'] = (fmod($formdata['courseprice'], 1) == 0) ? intval($formdata['courseprice']) : number_format($formdata['courseprice'], 2);
+    }
 
-    $formdata['open_points'] = (!empty($formdata['open_points'])) ? $formdata['open_points'] : 0;
+
+
+
     $plugin_exists = \core_component::get_plugin_directory('local', 'custom_matrix');
     if ($plugin_exists && !empty($formdata['performancecatid'])) {
         $performanceparentid = $DB->get_field('local_custom_category', 'parentid', array('id' => $formdata['performancecatid']));

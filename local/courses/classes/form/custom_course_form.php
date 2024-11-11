@@ -436,6 +436,7 @@ class custom_course_form extends moodleform {
      */
     function validation($data, $files) {
         global $DB;
+
         $errors = parent::validation($data, $files);
 		$form_data = data_submitted();
         // Add field validation check for duplicate shortname.
@@ -492,13 +493,14 @@ class custom_course_form extends moodleform {
             $intvalue = (int)$value;
   
             if(!("$intvalue" === "$value") || $intvalue < 0){
-              $errors['open_coursecompletiondays'] = get_string('numeric', 'local_classroom'); 
+              $errors['open_coursecompletiondays'] = get_string('numeric', 'local_users'); 
             }
             
           }
-        if ($data['price_status'] == 1 && isset($data['courseprice'])) {
-            if (!is_numeric($data['courseprice']) || empty($data['courseprice']) || $data['courseprice'] == 0) {
-                $errors['courseprice'] = get_string('positive_numeric', 'local_courses');
+
+        if (!empty($data['price_status']) && isset($data['courseprice'])) {
+            if (!is_numeric($data['courseprice']) || $data['courseprice'] <= 0) {
+                $errors['courseprice'] = get_string('numeric', 'local_users');
             }
         }
 
