@@ -91,7 +91,7 @@ function xmldb_local_courses_install(){
             $dbman->add_field($table, $field16);
         }
         $field17 = new xmldb_field('courseprice');
-        $field17->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $field17->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, null);
         if (!$dbman->field_exists($table, $field17)) {
             $dbman->add_field($table, $field17);
         }

@@ -545,7 +545,11 @@ function local_courses_output_fragment_custom_course_form($args){
     if($formdata['open_points'] > 0){
         $formdata['open_enablepoints'] = true;
     }
-
+    // Format `courseprice` if it exists
+    if (isset($formdata['courseprice'])) {
+        // Check if it's a whole number and format accordingly
+        $formdata['courseprice'] = (fmod($formdata['courseprice'], 1) == 0) ? intval($formdata['courseprice']) : number_format($formdata['courseprice'], 2);
+    }
     $params = array(
         'course' => $course,
         'category' => $category,
