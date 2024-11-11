@@ -240,30 +240,56 @@ function local_biz_cart_leftmenunode(){
         return ['count' => $count, 'nodata' => $nodata, 'data' => $data];
     }
 
-    function get_user_transactions_for_admin($tablelimits, $filtervalues){
-        global $DB, $OUTPUT;
-        $count = $DB->count_records_sql("SELECT COUNT(id) FROM {paygw_airpay}" ,[]);
-        $transactions = $DB->get_records_sql("SELECT * FROM {paygw_airpay}"  ,[],$tablelimits->start, $tablelimits->length);
+    function get_user_transactions_for_admin($tablelimits, $filtervalues) {
+        global $DB, $OUTPUT, $USER;
+        
+        $categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+        $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='u.open_path');
+        $countsql = "SELECT COUNT(p.id)";
+        $selectsql = "SELECT p.*, u.firstname, u.lastname";
+        $fromsql = " FROM {paygw_airpay} p JOIN {user} u ON u.id = p.userid";
+        $wheresql = " WHERE 1=1 ";
+        $params = [];
+
+        if (!is_siteadmin($USER)) {
+            $wheresql .= $costcenterpathconcatsql;
+        }
+
+        // Additional filter example for search query.
+        if (!empty($filtervalues->search_query)) {
+            $wheresql .= " AND (u.username LIKE :searchquery OR CONCAT(u.firstname, ' ', u.lastname) LIKE :searchquery)";
+            $params['searchquery'] = '%' . $filtervalues->search_query . '%';
+        }
+
+        // Pagination
+        $limitfrom = $tablelimits->start;
+        $limitnum = $tablelimits->length;
+
+        // Get the count of filtered records.
+        $count = $DB->count_records_sql($countsql . $fromsql . $wheresql, $params);
+
+        // Retrieve the transaction records.
+        $transactions = $DB->get_records_sql($selectsql . $fromsql . $wheresql, $params, $limitfrom, $limitnum);
         $data = array();
-        foreach ($transactions as $transaction){
+        foreach ($transactions as $transaction) {
             $user = \core_user::get_user($transaction->userid);
             $userfullname = $user->firstname . ' ' . $user->lastname;
             if($transaction->component == 'local_biz_cart'){
                 $carthistory = $DB->get_records('local_biz_cart_history',['identifier' => $transaction->itemid]);
-                    foreach($carthistory as $cartitem){
-                        $coursedetails = [];
-                        $coursedetails['courseid'] = $cartitem->itemid;
-                        $coursedetails['coursename'] = $cartitem->itemname;
-                        $coursedetails['userid'] = $cartitem->userid;
-                        $coursedetails['userfullname'] = $userfullname;
-                        $coursedetails['orderid'] = $transaction->ap_orderid;
-                        $coursedetails['transactioncode'] = $transaction->paymentid;
-                        $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
-                        $coursedetails['amount'] = $cartitem->price .' INR';
-                        $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
-                        $data[] = $coursedetails;
-                 } 
-            }else{
+                foreach($carthistory as $cartitem){
+                    $coursedetails = [];
+                    $coursedetails['courseid'] = $cartitem->itemid;
+                    $coursedetails['coursename'] = $cartitem->itemname;
+                    $coursedetails['userid'] = $cartitem->userid;
+                    $coursedetails['userfullname'] = $userfullname;
+                    $coursedetails['orderid'] = $transaction->ap_orderid;
+                    $coursedetails['transactioncode'] = $transaction->paymentid;
+                    $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
+                    $coursedetails['amount'] = $cartitem->price .' INR';
+                    $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
+                    $data[] = $coursedetails;
+                } 
+            } else {
                 $enrolinstance = $DB->get_record('enrol', ['id' => $transaction->itemid]);
                 $coursename = $DB->get_field('course', 'fullname', ['id' => $enrolinstance->courseid]);
                 $coursedetails = [];
@@ -277,7 +303,9 @@ function local_biz_cart_leftmenunode(){
                 $coursedetails['amount'] = number_format($enrolinstance->cost, 2) .' INR';
                 $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
                 $data[] = $coursedetails;
+            }
         }
+        return ['count' => $count, 'data' => $data];
     }
-    return ['count' => $count, 'data' => $data];
-    }
+
+
