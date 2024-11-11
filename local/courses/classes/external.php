@@ -1191,6 +1191,7 @@ class local_courses_external extends external_api {
 			$dataobject->costcenterid = $costcenterid;
             $class = (new \block_trending_modules\lib())->trending_modules_crud($dataobject, 'local_courses');
         }
+        remove_course_from_all_user_carts($id);
         return $return;
     }
     public static function course_update_status_returns(){
