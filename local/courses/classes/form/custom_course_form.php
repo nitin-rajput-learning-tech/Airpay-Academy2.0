@@ -267,7 +267,8 @@ class custom_course_form extends moodleform {
 
             $mform->addElement('text', 'courseprice', get_string('courseprice', 'local_courses'), 'maxlength="100" size="20"');
             $mform->addHelpButton('courseprice', 'courseprice', 'local_courses');
-            $mform->setType('courseprice', PARAM_INT);
+            $mform->setType('courseprice', PARAM_TEXT);
+            $mform->addRule('courseprice', get_string('numeric','local_users'), 'numeric', 'numeric', 'client');
             $mform->hideIf('courseprice', 'price_status', 'neq', '1');
 
             $manageselfenrol = array();
@@ -498,7 +499,13 @@ class custom_course_form extends moodleform {
             
           }
 
-        // if(isset($data['open_cost']) && $data['open_cost']){
+        if (!empty($data['price_status']) && isset($data['courseprice'])) {
+            if (!is_numeric($data['courseprice']) || $data['courseprice'] <= 0) {
+                $errors['courseprice'] = get_string('positive_numeric', 'local_courses');
+            }
+        }
+
+        // if(isset($data['open_cost']) &&$data['open_cost']){
         //     $value = $data['open_cost'];
         //     $intvalue = (int)$value;
   
