@@ -566,3 +566,5 @@ $string['privacy:metadata:local_biz_cart_invoices:identifier'] = 'Reference to l
 $string['privacy:metadata:local_biz_cart_invoices:timecreated'] = 'Timestamp when the record was created';
 $string['privacy:metadata:local_biz_cart_invoices:invoiceid'] = 'Invoice ID from the invoicing platform';
 $string['view_transactions'] = 'View Transactions';
+$string['confirm_item_delete'] = 'Are you sure you want to remove item from cart ?';
+$string['confirm_delete'] =  'Confirm Remove';

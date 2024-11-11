@@ -495,7 +495,6 @@ class local_courses_renderer extends plugin_renderer_base {
 
     public function render_courses_index() {
         global $DB, $OUTPUT, $CFG;
-
         // Fetch visible courses with the 'topics' format from the database
         
         $sql = "SELECT c.* FROM {course} c

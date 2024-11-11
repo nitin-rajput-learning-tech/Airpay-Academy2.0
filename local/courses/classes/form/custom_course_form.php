@@ -267,7 +267,6 @@ class custom_course_form extends moodleform {
 
             $mform->addElement('text', 'courseprice', get_string('courseprice', 'local_courses'), 'maxlength="100" size="20"');
             $mform->addHelpButton('courseprice', 'courseprice', 'local_courses');
-            $mform->setType('courseprice', PARAM_TEXT);
             $mform->addRule('courseprice', get_string('numeric','local_users'), 'numeric', 'numeric', 'client');
             $mform->hideIf('courseprice', 'price_status', 'neq', '1');
 
@@ -437,7 +436,6 @@ class custom_course_form extends moodleform {
      */
     function validation($data, $files) {
         global $DB;
-
         $errors = parent::validation($data, $files);
 		$form_data = data_submitted();
         // Add field validation check for duplicate shortname.
@@ -498,9 +496,8 @@ class custom_course_form extends moodleform {
             }
             
           }
-
-        if (!empty($data['price_status']) && isset($data['courseprice'])) {
-            if (!is_numeric($data['courseprice']) || $data['courseprice'] <= 0) {
+        if ($data['price_status'] == 1 && isset($data['courseprice'])) {
+            if (!is_numeric($data['courseprice']) || empty($data['courseprice']) || $data['courseprice'] == 0) {
                 $errors['courseprice'] = get_string('positive_numeric', 'local_courses');
             }
         }

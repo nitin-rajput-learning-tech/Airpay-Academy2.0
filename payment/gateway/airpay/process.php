@@ -111,7 +111,7 @@ if($transactionstatus == 200){
 	$DB->update_record('paygw_airpay', $order);
 	// get enrol plugin.
 	$enrolplugin = enrol_get_plugin('manual');
-	$role = $DB->get_record('role', array('shortname' => 'student'), '*', MUST_EXIST);
+	$role = $DB->get_record('role', array('shortname' => 'employee'), '*', MUST_EXIST);
 	if($order->paymentarea == 'cart'){
 		//Checking cart history for payment and enrolling user.
 		$cart_history_items = $DB->get_records('local_biz_cart_history',['identifier' => $order->itemid, 'userid' => $order->userid]);
@@ -172,7 +172,7 @@ if($transactionstatus == 200){
 	// 		<tr><td>CUSTOMVAR:</td><td> '.$customvar.'</td></tr>
 	// 	</table>';
 }else{
-if($error_msg){
+	if($error_msg){
 	// echo '<table><font color="red"><b>ERROR:</b> '.$error_msg.'</font></table>';
 	// echo '<table>
 	// 		<tr><td><b>Variable Name</b></td><td><b> Value</b></td></tr>
@@ -182,11 +182,14 @@ if($error_msg){
 	// 		<tr><td>TRANSACTIONSTATUS:</td><td> '.$transactionstatus.'</td></tr>
 	// 		<tr><td>CUSTOMVAR:</td><td> '.$customvar.'</td></tr>
 	// 	</table>';
-	$order->status = 1;
-	$DB->update_record('paygw_airpay', $order);
+	if($order){
+		$order->status = 1;
+		$DB->update_record('paygw_airpay', $order);
+	}
+	
 	$error = new stdClass();
 	$error->error = $error_msg;
-	$error->airpay_id = $order->id;
+	$error->airpay_id = $order->id ? $order->id : -1;
 	$error->timecreated = time();
 	$DB->insert_record('paygw_airpay_errorlog', $error);
 	echo $OUTPUT->render_from_template('local_biz_cart/checkout_failed', $request);

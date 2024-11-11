@@ -297,46 +297,68 @@ export const deleteAllItems = (userid = 0) => {
 };
 
 export const deleteItem = (itemid, component, area, userid) => {
+  userid = transformUserIdForCashier(userid);
 
-    userid = transformUserIdForCashier(userid);
+  // Fetch the confirmation message for deletion
+  getString("confirm_item_delete", "local_biz_cart").then((message) => {
+    // Create the modal with buttons and set the body
+    ModalFactory.create({
+      title: "Confirm",
+      type: ModalFactory.types.SAVE_CANCEL,
+      body: getString("confirm_item_delete", "local_biz_cart"),
+    }).done(
+      function (modal) {
+        this.modal = modal;
+        modal.setSaveButtonText("Yes");
+        modal.getRoot().on(
+          ModalEvents.save,
+          function (e) {
+            e.preventDefault();
+            var promise = Ajax.call([
+              {
+                methodname: "local_biz_cart_delete_item",
+                args: {
+                  itemid: itemid,
+                  component: component,
+                  area: area,
+                  userid: userid,
+                },
+              },
+            ]);
+            promise[0]
+              .done(function (resp) {
+                getString("item_deleted", "local_biz_cart", resp.itemname)
+                  .then((message) => {
+                    showNotification(message, "success");
+                    return;
+                  })
+                  .catch((e) => {
+                    // eslint-disable-next-line no-console
+                    console.log(e);
+                  });
 
-    Ajax.call([{
-        methodname: "local_biz_cart_delete_item",
-        args: {
-            'itemid': itemid,
-            'component': component,
-            'area': area,
-            'userid': userid
-        },
-        done: function(data) {
+                window.location.reload();
 
-            getString('item_deleted', 'local_biz_cart', data.itemname).then(message => {
-                showNotification(message, 'success');
-                return;
-            }).catch(e => {
-                // eslint-disable-next-line no-console
-                console.log(e);
-            });
-
-            window.location.reload();
-
-            import('local_wunderbyte_table/reload')
-                // eslint-disable-next-line promise/always-return
-                .then(wbt => {
+                import("local_wunderbyte_table/reload")
+                  // eslint-disable-next-line promise/always-return
+                  .then((wbt) => {
                     wbt.reloadAllTables();
-                })
-                .catch(err => {
+                  })
+                  .catch((err) => {
                     // Handle any errors, including if the module doesn't exist
                     // eslint-disable-next-line no-console
                     console.log(err);
-            });
-
-        },
-        fail: function() {
-
-            reinit(userid);
-        },
-    }]);
+                  });
+              })
+              .fail(function (ex) {
+                // do something with the exception
+              });
+          }.bind(this)
+        );
+        modal.show();
+      }.bind(this)
+    );
+  });
 };
 
 export const addItem = (itemid, component, area) => {
