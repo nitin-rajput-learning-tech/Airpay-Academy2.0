@@ -7,7 +7,7 @@ $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js_call_amd('local_classroom/classroom', 'load');
 $PAGE->requires->js_call_amd('local_search/courseinfo', 'load');
-
+$PAGE->requires->js_call_amd('core_payment/gateways_modal', 'init');
 require_once $CFG->libdir.'/gradelib.php';
 require_once $CFG->dirroot.'/local/search/lib.php';
 require_once $CFG->dirroot.'/grade/lib.php';
@@ -223,6 +223,7 @@ echo '<div class="content_era_left">';
         	$coursesearchlib = new \local_courses\output\search();
         	if(!$switchedrole){
         		echo $coursesearchlib->get_enrollbutton(false,$course);
+				echo $coursesearchlib->get_add_to_cart_button(false,$course);
         	}
 	  	  	   // echo '<div class="content_era_right">
 			// 	<div class="enrol">
