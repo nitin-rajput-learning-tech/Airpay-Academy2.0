@@ -110,7 +110,7 @@ if($transactionstatus == 200){
 	$order->status = 2;
 	$DB->update_record('paygw_airpay', $order);
 	// get enrol plugin.
-	$enrolplugin = enrol_get_plugin('manual');
+	$enrolplugin = enrol_get_plugin('fee');
 	$role = $DB->get_record('role', array('shortname' => 'employee'), '*', MUST_EXIST);
 	if($order->paymentarea == 'cart'){
 		//Checking cart history for payment and enrolling user.
@@ -119,7 +119,7 @@ if($transactionstatus == 200){
 		foreach($cart_history_items as $cartitem){
 
 			// Get enrol instance for course.	
-    		$instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'courseid'=>$cartitem->itemid, 'enrol'=> 'manual'));
+    		$instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'courseid'=>$cartitem->itemid, 'enrol'=> 'fee'));
 
     		// Enrol user.
     		$enrolplugin->enrol_user($instance, $cartitem->userid, $role->id);
