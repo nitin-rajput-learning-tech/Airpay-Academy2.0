@@ -248,7 +248,7 @@ function local_biz_cart_leftmenunode(){
         $countsql = "SELECT COUNT(p.id)";
         $selectsql = "SELECT p.*, u.firstname, u.lastname";
         $fromsql = " FROM {paygw_airpay} p JOIN {user} u ON u.id = p.userid";
-        $wheresql = " WHERE 1=1 ORDER BY p.id DESC";
+        $wheresql = " WHERE 1=1 ";
         $params = [];
 
         if (!is_siteadmin($USER)) {
@@ -260,7 +260,7 @@ function local_biz_cart_leftmenunode(){
             $wheresql .= " AND (u.username LIKE :searchquery OR CONCAT(u.firstname, ' ', u.lastname) LIKE :searchquery)";
             $params['searchquery'] = '%' . $filtervalues->search_query . '%';
         }
-
+        $orderbysql = " ORDER BY p.id DESC ";
         // Pagination
         $limitfrom = $tablelimits->start;
         $limitnum = $tablelimits->length;
@@ -269,7 +269,7 @@ function local_biz_cart_leftmenunode(){
         $count = $DB->count_records_sql($countsql . $fromsql . $wheresql, $params);
 
         // Retrieve the transaction records.
-        $transactions = $DB->get_records_sql($selectsql . $fromsql . $wheresql, $params, $limitfrom, $limitnum);
+        $transactions = $DB->get_records_sql($selectsql . $fromsql . $wheresql . $orderbysql, $params, $limitfrom, $limitnum);
         $data = array();
         foreach ($transactions as $transaction) {
             $user = \core_user::get_user($transaction->userid);
