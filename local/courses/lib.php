@@ -2561,7 +2561,7 @@ function local_courses_output_fragment_adddashboardcourse_form($args){
 function add_enrolon_payment_method_tocourse($course){
     global $DB;
     $instance = $DB->get_record('enrol', array('courseid' => $course->id, 'enrol' => 'fee'));
-    $roleid      = $DB->get_field('role', 'id', array('shortname' => 'student'));
+    $roleid      = $DB->get_field('role', 'id', array('shortname' => 'employee'));
     if (empty($instance)) {
        if ($course->id == SITEID) {
             throw new coding_exception('Invalid request to add enrol instance to frontpage.');
@@ -2583,6 +2583,7 @@ function add_enrolon_payment_method_tocourse($course){
         $instance->id = $DB->insert_record('enrol', $instance);
     }else{
         $instance->cost = $course->courseprice;
+        $instance->roleid = $roleid;
         $DB->update_record('enrol',$instance);
     } 
 
