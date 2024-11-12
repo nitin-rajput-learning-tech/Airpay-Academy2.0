@@ -147,7 +147,7 @@
          <div class="shopping-cart-checkout-items-container">
             {{> local_biz_cart/biz_cart_items }}
         </div>
-
+        {{#hasitems}}
         <div class="sc_price_label" data-userid="{{userid}}">
             {{> local_biz_cart/price_label }}
         </div>
@@ -169,6 +169,7 @@
         <div>
             {{> local_biz_cart/payment_region }}
         </div>
+        {{/hasitems}}
    </div>
 </div>
 {{/finished}}

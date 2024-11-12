@@ -723,6 +723,7 @@ class biz_cart
             // If not, we save the cache right away.
             $cache->set($cachekey, $data);
         }
+        $data['hasitems'] = count($data['items']) == 0 ? false : true;
         return $data;
     }
 

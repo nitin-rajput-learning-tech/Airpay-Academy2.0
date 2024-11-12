@@ -139,7 +139,9 @@
     <div class="shopping-cart-items-container text-dark">
         {{> local_biz_cart/biz_cart_items }}
     </div>
+    {{#hasitems}}
     {{> local_biz_cart/checkout_button }}
+    {{/hasitems}}
     {{/content}}
 {{/ core/popover_region }}
 
