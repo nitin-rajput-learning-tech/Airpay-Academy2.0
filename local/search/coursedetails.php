@@ -36,7 +36,7 @@ $userrolecontext = local_costcenter\lib\accesslib::get_module_context();
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
 if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switch_path()) || in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true))){
 	$switchedrole = false;
-	$PAGE->navbar->add(get_string('e_learning_courses','local_search'), $catalogurl);
+	$PAGE->navbar->add(get_string('pluginname','local_search'), $catalogurl);
 }else{
 	$switchedrole = true;
 	if(has_capability('local/courses:manage', $userrolecontext) || is_siteadmin()){
