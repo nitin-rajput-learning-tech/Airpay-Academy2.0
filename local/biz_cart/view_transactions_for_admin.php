@@ -28,15 +28,16 @@ require_login();
 
 $PAGE->requires->css('/local/notifications/css/jquery.dataTables.min.css', true);
 $PAGE->requires->js(new moodle_url('/local/notifications/js/jquery.dataTables.min.js'),true);
-echo $OUTPUT->header();
+$PAGE->set_context($categorycontext);
+$PAGE->set_heading('All Transactions');
 $url = new moodle_url('/local/biz_cart/view_transactions_for_admin.php', []);
 $PAGE->set_url($url);
+echo $OUTPUT->header();
 $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(!has_capability('local/courses:view', $categorycontext) && !has_capability('local/courses:manage', $categorycontext) ){
     print_error("You don't have permissions to view this page.");
 }
-$PAGE->set_context($categorycontext);
-$PAGE->set_heading('All Transactions');
+
 $renderer = $PAGE->get_renderer('local_biz_cart');
 echo $renderer->view_user_transactions_for_admin();
 echo $OUTPUT->footer();
