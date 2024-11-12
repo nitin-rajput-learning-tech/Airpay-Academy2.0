@@ -478,7 +478,7 @@ class search implements renderable{
                     $airpaypayment = $DB->get_record('enrol', array('courseid' => $courseid, 'status' => 0, 'enrol' => 'fee'));
                     if ($airpaypayment) {
                         $string = get_string('buy', 'local_search');
-                        $selfenrolbutton = '<button class="btn btn-block cat_btn" type="button"  data-action="core_payment/triggerPayment" data-component="enrol_fee" data-paymentarea="fee" data-itemid="' . $airpaypayment->courseid . '" data-cost="' . $courseinfo->courseprice . '" data-successurl="/course/view.php?id=' . $courseid . '" data-description="Enrolment in course">' . $string . '</button>';
+                        $selfenrolbutton = '<button class="btn btn-block cat_btn" type="button"  data-action="core_payment/triggerPayment" data-component="enrol_fee" data-paymentarea="fee" data-itemid="' . $airpaypayment->id . '" data-cost="' . $courseinfo->courseprice . '" data-successurl="http://localhost/moodle44/course/view.php?id=' . $courseid . '" data-description="Enrolment in course">' . $string . '</button>';
                     }
                 }else{
                     $selfenrolbutton = '';
