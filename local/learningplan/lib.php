@@ -447,9 +447,9 @@ function get_learningplan_details($lpid) {
         
         if (!empty($record)) {
             if ($lpinfo->approvalreqd == 0) {
-                $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('enroll','local_learningplan'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_learningplan/courseenrol\').enrolUser({ planid: '.$lpinfo->id.', userid:'.$USER->id.'}) })(event)" ><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_classroom').'</button></a>';
+                $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('enroll','local_learningplan'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_learningplan/courseenrol\').enrolUser({ planid: '.$lpinfo->id.', userid:'.$USER->id.'}) })(event)" ><button class="cat_btn viewmore_btn btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_classroom').'</button></a>';
             } else {
-                $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$lpinfo->id.', component:\'learningplan\',componentname:\''.$lpinfo->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
+                $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$lpinfo->id.', component:\'learningplan\',componentname:\''.$lpinfo->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
             }
         } else {
             $enrollmentbtn ='-';

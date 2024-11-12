@@ -170,14 +170,16 @@ a.btn,
 .btn {
 	background-color:#333;
     color: #fff;
-    font-size: 15px;
+    /* font-size: 15px; */
     border: 0px solid #49b2d0;
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0);
-    min-width:90px;
-    padding:10px 25px;
+    /* min-width:90px; */
+    /* padding:10px 25px; */
     -webkit-border-radius:5px;
     -moz-border-radius:5px;
     border-radius:5px;
+    padding: 7px 20px;
+    font-size: 0.75rem;
 /*     -webkit-box-shadow: 0px 5px 6px 0px rgba(50, 50, 50, 0.3);
     -moz-box-shadow: 0px 5px 6px 0px rgba(50, 50, 50, 0.3);
     box-shadow: 0px 5px 6px 0px rgba(50, 50, 50, 0.3); */
@@ -204,14 +206,15 @@ a.btn:focus,
 
 a.btn-primary,
 .btn-primary {
-    background-color: #f59f1f;
+    background-color: #0066a7 !important;
     color: #fff;
+    border-color: #0066a7;
 }
 
 a.btn-primary:hover,
 .btn-primary:hover,
 .btn-primary:active {
-    background-color: #ea9415;
+    background-color: #034b83;
     color: #fff;
 }
 
@@ -1131,12 +1134,12 @@ margin:15px 0;
 
 @media (min-width:768px) {
 		
-	a.btn,
+	/* a.btn,
 	.btn {
 		font-size:16px;
 		min-width:100px;
 		padding: 10px 30px;
-	}
+	} */
     .rowbar-md {
         -webkit-box-orient: horizontal !important;
         -webkit-box-direction: reverse !important;
@@ -1804,3 +1807,25 @@ margin:15px 0;
 }
 
 @media all and (max-width:360px) {}
+
+.homepage #cardCarousel .card h5.card-title.course_name b{
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient:vertical;
+    overflow: hidden;
+    -webkit-line-clamp: 1;
+    line-height: 2;
+}
+.homepage #cardCarousel .card .view_btn{
+    background-color: #333333 !important;
+    color: white; 
+    padding: 7px 20px; 
+    font-size: 0.75rem; 
+    margin-right: 10px;    
+}
+.homepage #cardCarousel .card .badge{
+    top: 10px; 
+    right: 10px; 
+    font-size: 0.65rem; 
+    padding: 5px 7px;
+}
