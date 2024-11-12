@@ -47,7 +47,7 @@
     }
 
 }}
-<div class="biz_cart_payment_region text-center">
+<div class="biz_cart_payment_region text-center col-12 p-0 mt-3">
     {{#isguestuser}}
         <div class="mdl-align">
             <p>{{#str}} paymentrequired {{/str}}</p>
@@ -57,7 +57,7 @@
     {{/isguestuser}}
     {{^isguestuser}}
         <button
-            class="btn btn-primary pull-right mr-3"
+            class="btn-primary pull-right p-3 w-100"
             type="button"
             id="gateways-modal-trigger-33"
             data-action="core_payment/triggerPayment"
