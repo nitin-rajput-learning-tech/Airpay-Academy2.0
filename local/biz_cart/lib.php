@@ -187,7 +187,7 @@ function local_biz_cart_leftmenunode(){
     if(!has_capability('local/courses:create', $categorycontext)) {
         $transactionnodes .= html_writer::start_tag('li', array('id'=> 'id_leftmenu_browsecourses', 'class'=>'pull-left user_nav_div browsecourses'));
             $page_url = new moodle_url('/local/biz_cart/view_transactions.php');
-            $transactions = html_writer::link($page_url, '<i class="fa fa-money"></i><span class="user_navigation_link_text">'.get_string('view_transactions','local_biz_cart').'</span>',array('class'=>'user_navigation_link'));
+            $transactions = html_writer::link($page_url, '<i class="fa fa-money"></i><span class="user_navigation_link_text">'.get_string('my_transactions','local_biz_cart').'</span>',array('class'=>'user_navigation_link'));
             $transactionnodes .= $transactions;
         $transactionnodes .= html_writer::end_tag('li');
     } else {
@@ -248,7 +248,7 @@ function local_biz_cart_leftmenunode(){
         $countsql = "SELECT COUNT(p.id)";
         $selectsql = "SELECT p.*, u.firstname, u.lastname";
         $fromsql = " FROM {paygw_airpay} p JOIN {user} u ON u.id = p.userid";
-        $wheresql = " WHERE 1=1 ";
+        $wheresql = " WHERE 1=1 ORDER BY p.id DESC";
         $params = [];
 
         if (!is_siteadmin($USER)) {

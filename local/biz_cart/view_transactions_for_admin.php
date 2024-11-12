@@ -29,7 +29,7 @@ require_login();
 $PAGE->requires->css('/local/notifications/css/jquery.dataTables.min.css', true);
 $PAGE->requires->js(new moodle_url('/local/notifications/js/jquery.dataTables.min.js'),true);
 $PAGE->set_context($categorycontext);
-$PAGE->set_heading('All Transactions');
+$PAGE->set_heading(get_string('view_transactions', 'local_biz_cart'));
 $url = new moodle_url('/local/biz_cart/view_transactions_for_admin.php', []);
 $PAGE->set_url($url);
 echo $OUTPUT->header();
