@@ -91,7 +91,7 @@ $content = "<div ng-app = 'catalog' class='' id='allcourses_section'>
                                             <div ng-if=\" tab == 6\">";
                                         foreach($plugininfo AS $plugindata){
                                             $content .= "<div ng-if='record.type == ".$plugindata['type']."'>
-                                                    <div class=\"w-full pull-left cr_courses\">".$OUTPUT->render_from_template($plugindata['templatename'], $return)."
+                                                    <div class=\"w-full pull-left cr_courses h-100\">".$OUTPUT->render_from_template($plugindata['templatename'], $return)."
                                                     </div>
                                                 </div>";
                                         }

@@ -1829,3 +1829,9 @@ margin:15px 0;
     font-size: 0.65rem; 
     padding: 5px 7px;
 }
+.homepage #cardCarousel .card .card-img-top {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  height: 100%;
+  min-height: 250px;
+}
