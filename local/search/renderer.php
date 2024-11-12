@@ -658,7 +658,7 @@ class local_search_renderer extends plugin_renderer_base {
                 $url = new moodle_url('/local/program/view.php', array('bcid' =>$programid,'action' => 'selfenrol'));
 
 
-                     $program->selfenrolmentcap='<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$program->id.', programid:'.$program->id.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$program->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_program').'</button></a>';
+                     $program->selfenrolmentcap='<a href="javascript:void(0);" class="btn cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$program->id.', programid:'.$program->id.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$program->name.'\'}) })(event)" ><button class="cat_btn viewmore_btn" ><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_program').'</button></a>';
 
          }
         $program_capacity_check=(new program)->program_capacity_check($programid);

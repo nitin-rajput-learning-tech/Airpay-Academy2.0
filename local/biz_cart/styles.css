@@ -410,3 +410,26 @@ li[data-area="bookingfee"] img {
 #page-local-biz_cart-checkout .shopping-cart-items li[data-area="option"] img {
     max-width: 200px;
 }
+table#manage_transactions_foradmin {
+    box-shadow: none;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-radius: 10px;
+}
+#page-local-biz_cart-checkout .shopping_cart .payment_icon:before{
+    content: none;
+}
+#page-local-biz_cart-checkout .shopping_cart .payment_icon:after{
+    content: "";
+    background-image: url('[[pix:local_biz_cart|payment]]');
+    width: 70px;
+    height: 70px;
+    display: inline-block;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+}
+#page-local-biz_cart-checkout .shopping_cart .payment_status{
+    font-weight: 600;
+}

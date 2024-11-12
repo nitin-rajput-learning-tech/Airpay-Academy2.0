@@ -296,10 +296,10 @@ class search implements renderable{
                 }
             }
             if($list->enroll == 1){
-                $list->redirect='<a class="cat_btn viewmore_btn" href ="'.$CFG->wwwroot.'/local/learningplan/view.php?id='.$list->id.'" >'.get_string('start_now','local_search').'</a>';
+                $list->redirect='<a class="cat_btn viewmore_btn btn" href ="'.$CFG->wwwroot.'/local/learningplan/view.php?id='.$list->id.'" >'.get_string('start_now','local_search').'</a>';
             }else{
                 // $list->redirect='<span data-action="learningplan'.$list->id.'" class="learningplaninfo d-block" onclick ="(function(e){ require(\'local_search/courseinfo\').learningplaninfo({selector:\'learningplan'.$list->id.'\', learningplanid:'.$list->id.'}) })(event)"><span>'.get_string('viewmore','local_search').'</span></span>';
-                $list->redirect='<a class="cat_btn viewmore_btn" href ="'.$CFG->wwwroot.'/local/learningplan/lpathinfo.php?id='.$list->id.'" >'.get_string('gotolpath','local_search').'</a>';
+                $list->redirect='<a class="cat_btn viewmore_btn btn" href ="'.$CFG->wwwroot.'/local/learningplan/lpathinfo.php?id='.$list->id.'" >'.get_string('gotolpath','local_search').'</a>';
             }
             $list->copylink = '';
             if(is_siteadmin() || has_capability('local/learningplan:manage', $context)){

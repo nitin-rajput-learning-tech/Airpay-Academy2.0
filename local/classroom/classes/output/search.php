@@ -378,7 +378,7 @@ class search implements renderable{
             // classroom view link
             $list->classroomlink= $CFG->wwwroot.'/local/classroom/view.php?cid='.$list->id;
             if (!$userenrolstatus){
-              $list->redirect = '<a href="'.$list->classroomlink.'" class="classroominfo cat_btn viewmore_btn" >'.get_string('viewmore','local_search').'</a>';
+              $list->redirect = '<a href="'.$list->classroomlink.'" class="classroominfo btn cat_btn viewmore_btn" >'.get_string('viewmore','local_search').'</a>';
             } else {
                 $list->redirect = '';
               // $list->redirect = '<a href="'.$list->classroomlink.'" class="classroominfo" ><button class="cat_btn viewmore_btn">'.get_string('start_now','local_classroom').'</button></a>';
@@ -557,7 +557,7 @@ class search implements renderable{
                 if($waitlist > 0){
                         $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Waiting</button>';
                 }else{
-                     $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_classroom'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_classroom/classroom\').ManageclassroomStatus({action:\'selfenrol\', id: '.$classroomid.', classroomid:'.$classroomid.',actionstatusmsg:\'classroom_self_enrolment\',classroomname:\''.$classroomname.'\'}) })(event)" >'.get_string('enroll','local_classroom').'</a>';
+                     $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn btn" alt = ' . get_string('enroll','local_classroom'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_classroom/classroom\').ManageclassroomStatus({action:\'selfenrol\', id: '.$classroomid.', classroomid:'.$classroomid.',actionstatusmsg:\'classroom_self_enrolment\',classroomname:\''.$classroomname.'\'}) })(event)" >'.get_string('enroll','local_classroom').'</a>';
                 }
             }
         }

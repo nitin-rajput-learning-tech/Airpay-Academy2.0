@@ -60,7 +60,7 @@ body::-webkit-scrollbar-thumb {
     color: #fff;
 }
 .progress-bar {
-    background-color: var(--hovercolor);
+    background-color: var(--secondarycolor);
 }
 a, .btn-link {
      color: var(--linkcolor);
@@ -922,13 +922,13 @@ body.path-blocks-reportdashboard table.dataTable tr th.header {
     border-color: var(--primarycolor);
 }
 #page-local-courses-courses .courseimg_container .course_type{
-    background-color: var(--hovercolor);
+    background-color: var(--secondarycolor);
 }
 #filters_form{
     background-color: #e7ebfa;
 }
 #page-local-search-allcourses #allcourses_section .CstripCnt{
-    background-color: var(--hovercolor);
+    background-color: var(--secondarycolor);
 }
 .block.block_userdashboard .userdashboardcontent_container{
     background-color: #25467a2b;

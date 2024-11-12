@@ -479,7 +479,7 @@ class search implements renderable{
         if(!is_siteadmin()){
 
 
-         $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$programid.', programid:'.$programid.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$programname.'\'}) })(event)" >'.get_string('enroll','local_program').'</a>';
+         $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn btn" alt = ' . get_string('enroll','local_program'). ' title = ' .get_string('enroll','local_program'). ' onclick="(function(e){ require(\'local_program/program\').ManageprogramStatus({action:\'selfenrol\', id: '.$programid.', programid:'.$programid.',actionstatusmsg:\'program_self_enrolment\',programname:\''.$programname.'\'}) })(event)" >'.get_string('enroll','local_program').'</a>';
 
     }
 
