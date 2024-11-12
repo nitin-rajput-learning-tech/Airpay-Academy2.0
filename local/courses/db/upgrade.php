@@ -254,5 +254,14 @@ function xmldb_local_courses_upgrade($oldversion)
         }     
         upgrade_plugin_savepoint(true, 2023060600.23, 'local', 'courses');
     }
+    if ($oldversion < 2023060600.24) {
+        $table = new xmldb_table('course');
+        $field = new xmldb_field('open_coursetype');
+        if ($dbman->field_exists($table, $field)) {
+            $field->set_attributes(XMLDB_TYPE_INTEGER, '1', null, null, null, 0);
+            $dbman->change_field_type($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2023060600.24, 'local', 'courses');
+    }
     return true;
 }

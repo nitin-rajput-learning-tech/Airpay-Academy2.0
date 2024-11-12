@@ -966,7 +966,7 @@ function local_courses_output_fragment_coursestatus_display($args){
 function courses_filter($mform){
     global $DB,$USER;
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 AND open_coursetype = 0 ";
+    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 AND (open_coursetype = 0 AND open_coursetype IS NULL) ";
 
     if(is_siteadmin()){
        $courseslist = $DB->get_records_sql_menu($sql);
@@ -1270,7 +1270,7 @@ function local_courses_quicklink_node(){
             JOIN {local_costcenter} AS co ON co.path = c.open_path
             JOIN {course_categories} AS cc ON cc.id = c.category
             JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
-            WHERE c.id > 1 AND c.open_coursetype=0 ";
+            WHERE c.id > 1 AND (c.open_coursetype=0 OR c.open_coursetype IS NULL) ";
             
             if (is_siteadmin() && $orgid ==0) {
                 $sql .= "";
@@ -1286,12 +1286,12 @@ function local_courses_quicklink_node(){
                     JOIN {enrol} e ON e.id = ue.enrolid
                     JOIN {course} c ON  e.courseid = c.id 
                     WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0 
-                    AND ue.status = 0 AND c.open_coursetype=0 $open_path";
+                    AND ue.status = 0 AND (c.open_coursetype=0 OR c.open_coursetype IS NULL) $open_path";
             $completioncount="SELECT count(u.id) FROM {course_completions} AS cp 
                                 JOIN {course} AS c ON cp.course = c.id 
                                 JOIN {user} AS u ON cp.userid = u.id 
                                 WHERE c.enablecompletion = 1 
-                                AND c.open_coursetype=0 $open_path";   
+                                AND (c.open_coursetype=0 OR c.open_coursetype IS NULL) $open_path";   
             $enrolcount = $DB->get_field_sql($enrolsql);
             $completioncount = $DB->get_field_sql($completioncount);
             $count_courses = $DB->count_records_sql($sql);
@@ -1340,7 +1340,7 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
     global $USER, $DB,$CFG;
     $params = array();
     $params['costcenterpath'] = '%/'.$costcenter.'/%';
-    $countcoursesql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath AND open_coursetype=0 ";
+    $countcoursesql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath AND (open_coursetype = 0 OR open_coursetype IS NULL) ";
     if ($department) {
         $countcoursesql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
         $params['departmentpath'] = '%/'.$department.'/%';
