@@ -414,7 +414,7 @@ li[data-area="bookingfee"] img {
 }
 
 #page-local-biz_cart-checkout .shopping-cart-items li[data-area="option"] img {
-    max-width: 150px;
+    max-width: 120px;
 }
 table#manage_transactions_foradmin {
     box-shadow: none;
