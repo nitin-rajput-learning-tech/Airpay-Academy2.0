@@ -38,58 +38,58 @@
                                 <div dir-paginate='record in courseinfo | filter:q | itemsPerPage: 8' total-items=numberofrecords class='list-item col-md-3 col-sm-6 col-12 pull-left pl-0 course_view_list' >
                                     <div ng-if="record.id >=1">
                                         <div class='course-body'>
-                                            <div ng-if=" tab == 1">
+                                            <div ng-if=" tab == 1" class="h-100">
                                                {{> local_search/elearning }}
                                             </div>
 
-                                            <div ng-if=" tab == 2">
-                                                <div class="w-full pull-left cr_courses">
+                                            <div ng-if=" tab == 2" class="h-100">
+                                                <div class="w-full pull-left cr_courses h-100">
                                                     {{> local_search/classroom }}
                                                 </div>
                                             </div>
 
-                                            <div ng-if=" tab == 3">
-                                                <div class="w-full pull-left cr_courses">
+                                            <div ng-if=" tab == 3" class="h-100">
+                                                <div class="w-full pull-left cr_courses h-100">
                                                     {{> local_search/program }}
                                                 </div>
                                             </div>
 
-                                            <div ng-if=" tab == 4">
-                                                <div class="w-full pull-left cr_courses">
+                                            <div ng-if=" tab == 4" class="h-100">
+                                                <div class="w-full pull-left cr_courses h-100">
                                                     {{> local_search/certification }}
                                                 </div>
                                             </div>
 
-                                            <div ng-if=" tab == 5">
-                                                <div class="w-full pull-left cr_courses">
+                                            <div ng-if=" tab == 5" class="h-100">
+                                                <div class="w-full pull-left cr_courses h-100">
                                                     {{> local_search/learningplan }}
                                                 </div>
                                             </div>
 
-                                            <div ng-if=" tab == 6">
+                                            <div ng-if=" tab == 6" class="h-100">
                                                 <div ng-if='record.type == 1'>
                                                     {{> local_search/elearning }}
                                                 </div>
                                                 <div ng-if='record.type == 2'>
-                                                    <div class="w-full pull-left cr_courses">
+                                                    <div class="w-full pull-left cr_courses h-100">
                                                         {{> local_search/classroom }}
                                                     </div>
                                                 </div>
 
                                                 <div ng-if='record.type == 3'>
-                                                    <div class="w-full pull-left cr_courses">
+                                                    <div class="w-full pull-left cr_courses h-100">
                                                         {{> local_search/program }}
                                                     </div>
                                                 </div>
 
                                                 <div ng-if='record.type == 4'>
-                                                    <div class="w-full pull-left cr_courses">
+                                                    <div class="w-full pull-left cr_courses h-100">
                                                         {{> local_search/certification }}
                                                     </div>
                                                 </div>
 
                                                 <div ng-if='record.type == 5'>
-                                                    <div class="w-full pull-left cr_courses">
+                                                    <div class="w-full pull-left cr_courses h-100">
                                                         {{> local_search/learningplan }}
                                                     </div>
                                                 </div>

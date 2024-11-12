@@ -504,6 +504,7 @@ body#page-local-search-allcourses .loader_container img {
 }
 body#page-local-search-allcourses .coursecard_container{
     margin:0 !important;
+    height: 100%;
 }
 body#page-local-search-allcourses .courseimg_bg {
     height: 100%;
@@ -698,6 +699,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     border-color: var(--btnbordercolor);
     border-radius: 0.25rem;
     border-style: solid !important;
+    height: max-content;
 }
 #page-local-search-allcourses .coursecontent .btn-primary{
     background-color: var(--primarycolor);
@@ -1027,4 +1029,8 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 body#page-local-search-allcourses .coursecard_container:hover .card-img-top .courseimg_bg {
     background-size: 110%;
+}
+#page-local-search-allcourses #allcourses_section .catcourses_list .coursecard > .ng-scope, 
+#page-local-search-allcourses #allcourses_section .catcourses_list .coursecard .ng-scope .ng-scope{
+    height: 100%;
 }

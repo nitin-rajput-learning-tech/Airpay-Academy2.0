@@ -57,6 +57,7 @@
     {{^items}}
         <div class="text-center">{{#str}} cartisempty, local_biz_cart {{/str}}</div>
     {{/items}}
+    {{#hasitems}}
     <li class="sc_initialtotal">
 
         {{! price have tax info}}
@@ -104,4 +105,5 @@
             </div>
         {{/taxesenabled}}
     </li>
+    {{/hasitems}}
 </ul>

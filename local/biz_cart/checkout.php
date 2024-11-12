@@ -146,6 +146,7 @@ if (isset($success)) {
 
     $data['identifier'] = $scdata['identifier'];
     $data['wwwroot'] = $CFG->wwwroot;
+    $data['hasitems'] = !empty($items) ? true : false;
 
     if (empty($data['currency'])) {
         $data['currency'] = $scdata['currency'] ?? '';
