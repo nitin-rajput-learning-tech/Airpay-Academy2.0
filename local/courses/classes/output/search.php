@@ -473,7 +473,7 @@ class search implements renderable{
                     }
                 } else if ($courseinfo->selfenrol == 1 && $courseinfo->price_status == 0) {
                          $string = get_string('selfenrol', 'local_search');
-                        $selfenrolbutton = '<a data-action="courseselfenrol' . $courseid . '" class="courseselfenrol btn btn-block cat_btn viewmore_btn  enrolled' . $courseid . '" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol' . $courseid . '\', courseid:' . $courseid . ', enroll:1, coursename: \'' . $courseinfo->fullname . '\' }) })(event)">' . $string . '</a>';
+                        $selfenrolbutton = '<a data-action="courseselfenrol' . $courseid . '" class="courseselfenrol btn btn-block cat_btn viewmore_btn btn-primary enrolled' . $courseid . '" onclick ="(function(e){ require(\'local_search/courseinfo\').coursetest({selector:\'courseselfenrol' . $courseid . '\', courseid:' . $courseid . ', enroll:1, coursename: \'' . $courseinfo->fullname . '\' }) })(event)">' . $string . '</a>';
                 }else if ($courseinfo->price_status == 1){
                     $airpaypayment = $DB->get_record('enrol', array('courseid' => $courseid, 'status' => 0, 'enrol' => 'fee'));
                     if ($airpaypayment) {

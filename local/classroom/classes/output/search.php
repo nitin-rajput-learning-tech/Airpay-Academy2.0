@@ -557,7 +557,7 @@ class search implements renderable{
                 if($waitlist > 0){
                         $enrollmentbtn = '<button class="cat_btn btn-primary viewmore_btn">Waiting</button>';
                 }else{
-                     $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn viewmore_btn btn" alt = ' . get_string('enroll','local_classroom'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_classroom/classroom\').ManageclassroomStatus({action:\'selfenrol\', id: '.$classroomid.', classroomid:'.$classroomid.',actionstatusmsg:\'classroom_self_enrolment\',classroomname:\''.$classroomname.'\'}) })(event)" >'.get_string('enroll','local_classroom').'</a>';
+                     $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn btn-primary viewmore_btn btn" alt = ' . get_string('enroll','local_classroom'). ' title = ' .get_string('enroll','local_classroom'). ' onclick="(function(e){ require(\'local_classroom/classroom\').ManageclassroomStatus({action:\'selfenrol\', id: '.$classroomid.', classroomid:'.$classroomid.',actionstatusmsg:\'classroom_self_enrolment\',classroomname:\''.$classroomname.'\'}) })(event)" >'.get_string('enroll','local_classroom').'</a>';
                 }
             }
         }

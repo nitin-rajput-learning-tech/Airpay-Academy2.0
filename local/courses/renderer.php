@@ -299,7 +299,7 @@ class local_courses_renderer extends plugin_renderer_base {
     $sql = " FROM {course} c
             JOIN {course_categories} cat ON cat.id = c.category
             JOIN {enrol} e ON e.courseid = c.id AND 
-                        (e.enrol = 'manual' OR e.enrol = 'self' OR e.enrol = 'classroom' OR e.enrol = 'learningplan')
+                        (e.enrol = 'manual' OR e.enrol = 'self' OR e.enrol = 'classroom' OR e.enrol = 'learningplan' OR e.enrol = 'fee' OR e.enrol = 'auto')
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             JOIN {user} u ON u.id = ue.userid AND u.deleted = 0 AND u.suspended=0
             JOIN {local_costcenter} lc ON lc.path = u.open_path

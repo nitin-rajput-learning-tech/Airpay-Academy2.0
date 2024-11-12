@@ -147,29 +147,35 @@
          <div class="shopping-cart-checkout-items-container">
             {{> local_biz_cart/biz_cart_items }}
         </div>
-        {{#hasitems}}
-        <div class="sc_price_label" data-userid="{{userid}}">
-            {{> local_biz_cart/price_label }}
-        </div>
-        {{#termsandconditions}}
-        <div class="form_termsandconditions mt-2 d-flex justify-content-end">
-            <div class="form-group">
-                <div class="text-muted border p-2 bg-light rounded">
-                    {{{termsandconditions}}}
+        <div class="row cart_total">
+            <div class="col-8"></div>
+{{#hasitems}}
+            <div class="col-4 p-0">
+                <h5>Cart totals</h5>
+                <div class="sc_price_label" data-userid="{{userid}}">
+                    {{> local_biz_cart/price_label }}
                 </div>
-                <div class="mt-2 ml-4">
-                <input class="form-check-input" id="accepttermsnandconditions" name="accepttermsnandconditions" type="checkbox" value="" required>
-                <label class="form-check-label" for="accepttermsnandconditions">
-                    {{#str}} confirmterms, local_biz_cart {{/str}}
-                </label>
+                {{#termsandconditions}}
+                <div class="form_termsandconditions mt-2 d-flex justify-content-end">
+                    <div class="form-group">
+                        <div class="text-muted border p-2 bg-light rounded">
+                            {{{termsandconditions}}}
+                        </div>
+                        <div class="mt-2 ml-4">
+                        <input class="form-check-input" id="accepttermsnandconditions" name="accepttermsnandconditions" type="checkbox" value="" required>
+                        <label class="form-check-label" for="accepttermsnandconditions">
+                            {{#str}} confirmterms, local_biz_cart {{/str}}
+                        </label>
+                        </div>
+                    </div>
                 </div>
+                {{/termsandconditions}}
+                <div>
+                    {{> local_biz_cart/payment_region }}
+                </div>
+{{/hasitems}}
             </div>
         </div>
-        {{/termsandconditions}}
-        <div>
-            {{> local_biz_cart/payment_region }}
-        </div>
-        {{/hasitems}}
    </div>
 </div>
 {{/finished}}

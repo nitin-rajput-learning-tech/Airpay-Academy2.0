@@ -155,7 +155,7 @@ $string['selectuserfirst'] = 'Wähle zuerst eine Nutzerin.';
 $string['notenoughcredits'] = 'Nicht genügend Guthaben vorhanden.';
 
 // Cart.
-$string['total'] = 'Gesamt:';
+$string['total'] = 'Gesamt';
 $string['total_net'] = 'Gesamt Netto:';
 $string['total_gross'] = 'Gesamt Brutto:';
 $string['paymentsuccessful'] = 'Zahlung erfolgreich!';
@@ -170,7 +170,7 @@ $string['failure'] = 'Fehler.';
 $string['alreadyincart'] = 'Das gewählte Item ist bereits im Warenkorb.';
 $string['cartisfull'] = 'Ihr Warenkorb ist voll.';
 $string['cartisempty'] = 'Ihr Warenkorb ist leer.';
-$string['yourcart'] = 'Ihr Warenkorb';
+$string['yourcart'] = 'Warenkorb';
 $string['addedtocart'] = '{$a} wurde in den Warenkorb gelegt.';
 $string['creditnotmatchbalance'] = 'Summe der Guthaben in Tabelle local_biz_cart_credits stimmt nicht mit dem letzten Saldo (balance) überein!
 Möglicherweise haben Sie doppelte oder fehlerhafte Einträge in der credits-Tabelle für den User mit userid {$a}.';
