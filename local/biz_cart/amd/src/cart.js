@@ -299,8 +299,6 @@ export const deleteAllItems = (userid = 0) => {
 export const deleteItem = (itemid, component, area, userid) => {
   userid = transformUserIdForCashier(userid);
 
-  // Fetch the confirmation message for deletion
-  getString("confirm_item_delete", "local_biz_cart").then((message) => {
     // Create the modal with buttons and set the body
     ModalFactory.create({
       title: "Confirm",
@@ -330,14 +328,16 @@ export const deleteItem = (itemid, component, area, userid) => {
                 getString("item_deleted", "local_biz_cart", resp.itemname)
                   .then((message) => {
                     showNotification(message, "success");
-                    return;
+                    console.log("Notification should show now");
                   })
                   .catch((e) => {
-                    // eslint-disable-next-line no-console
                     console.log(e);
                   });
 
-                window.location.reload();
+                // Delay the page reload to allow notification to show
+                setTimeout(() => {
+                  window.location.reload(); // Reload the page after delay
+                }, 1000);
 
                 import("local_wunderbyte_table/reload")
                   // eslint-disable-next-line promise/always-return
@@ -358,7 +358,6 @@ export const deleteItem = (itemid, component, area, userid) => {
         modal.show();
       }.bind(this)
     );
-  });
 };
 
 export const addItem = (itemid, component, area) => {
