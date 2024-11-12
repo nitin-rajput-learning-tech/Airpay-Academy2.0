@@ -327,12 +327,12 @@ class search implements renderable{
                 // $course->redirect = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'" class="viewmore_btn">'.get_string('resume','local_search').'</a>';
                 $course->redirect = '';
             }else{
-                $course->redirect='<a href="'.$CFG->wwwroot.'/local/search/coursedetails.php?id='.$course->id.'" class="viewmore_btn">'.get_string('view_details','local_search').'</a>';
+                $course->redirect='<a href="'.$CFG->wwwroot.'/local/search/coursedetails.php?id='.$course->id.'" class="viewmore_btn btn btn-block">'.get_string('view_details','local_search').'</a>';
             }
 
             $course->copylink = '';
             if(is_siteadmin()){
-                $course->copylink = '<a data-action="courseinfo'.$course->id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').copy_url({module:\'course\', moduleid:'.$course->id.'}) })(event)" class="cat_btn viewmore_btn">'.get_string('copyurl', 'local_search').'</a>';
+                $course->copylink = '<a data-action="courseinfo'.$course->id.'" onclick ="(function(e){ require(\'local_search/courseinfo\').copy_url({module:\'course\', moduleid:'.$course->id.'}) })(event)" class="cat_btn viewmore_btn btn">'.get_string('copyurl', 'local_search').'</a>';
             }
 
             $course->type = elearning;
@@ -506,12 +506,12 @@ class search implements renderable{
             $airpaypayment = $DB->get_record('enrol', array('courseid' => $courseid, 'status' => 0, 'enrol' => 'fee'));
             if ($airpaypayment) {
                 if ($count == 0) {
-                    $addtocartbutton = '<div class="btn btn-block cat_btn" onclick="(function(e){ require(\'local_courses/courseAjaxform\').courseaddtocart({itemid:' . $courseid . ',userid:' . $USER->id . ', component: \'local_courses\', area : \'option\'  }) })(event) " >
+                    $addtocartbutton = '<div class="btn btn-block cat_btn btn-primary" onclick="(function(e){ require(\'local_courses/courseAjaxform\').courseaddtocart({itemid:' . $courseid . ',userid:' . $USER->id . ', component: \'local_courses\', area : \'option\'  }) })(event) " >
                                                 <i class="fa fa-cart-plus" aria-hidden="true"></i>
                                                 <span class="addtocartstring">'.get_string('addtocart', 'local_courses').'</span>
                                             </div>';
                 } else {
-                    $addtocartbutton = '<div class="btn btn-block cat_btn disabled">
+                    $addtocartbutton = '<div class="btn btn-block cat_btn btn-primary disabled">
                                                 <i class="fa fa-cart-plus" aria-hidden="true"></i>
                                                 <span class="addtocartstring">'.get_string('addtocart', 'local_courses').'</span>
                                             </div>';

@@ -690,7 +690,6 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 /*search page button allignments*/
 #page-local-search-allcourses .coursecontent .viewmore_btn,
 #page-local-search-allcourses .coursecontent .cat_btn{
-    padding: 4px 0 !important;
     margin: 0 10px 10px 0 !important;
     min-width: 120px;
     font-weight: 500 !important;
@@ -700,7 +699,12 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     border-radius: 0.25rem;
     border-style: solid !important;
 }
-
+#page-local-search-allcourses .coursecontent .btn-primary{
+    background-color: var(--primarycolor);
+    border-color: var(--primarycolor);
+    color: var(--btntextcolor);
+    border: 1px solid var(--primarycolor);
+}
 #page-local-search-allcourses .coursecontent .coursedesc .desc{
     text-overflow: ellipsis;
     overflow: hidden;
@@ -774,7 +778,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 #page-local-search-allcourses .coursecontent .viewmore_btn,
 #page-local-search-allcourses .coursecontent .cat_btn{
-    padding: 4px 12px!important;
+    padding: 6px 12px!important;
     flex-shrink: 0;
     white-space: nowrap;
     width: calc( 100% - 10px );

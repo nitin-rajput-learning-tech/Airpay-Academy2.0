@@ -550,8 +550,18 @@ function local_courses_output_fragment_custom_course_form($args) {
             file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, null, 'course', 'overviewfiles', 0);
         }
     }
+    if($formdata['open_points'] > 0){
+        $formdata['open_enablepoints'] = true;
+    }
+    // Format `courseprice` if it exists
+    if (isset($formdata['courseprice']) && is_numeric($formdata['courseprice'])) {
+        // Check if it's a whole number and format accordingly
+        $formdata['courseprice'] = (fmod($formdata['courseprice'], 1) == 0) ? intval($formdata['courseprice']) : number_format($formdata['courseprice'], 2);
+    }
 
-    $formdata['open_points'] = (!empty($formdata['open_points'])) ? $formdata['open_points'] : 0;
+
+
+
     $plugin_exists = \core_component::get_plugin_directory('local', 'custom_matrix');
     if ($plugin_exists && !empty($formdata['performancecatid'])) {
         $performanceparentid = $DB->get_field('local_custom_category', 'parentid', array('id' => $formdata['performancecatid']));
@@ -2233,9 +2243,9 @@ function get_course_details($courseid) {
         $wheresql = " where 1 = 1 AND c.id = ? ";
         $courserecord = $DB->get_record_sql($selectsql.$fromsql.$joinsql.$wheresql, [$USER->id, $courseid], IGNORE_MULTIPLE);
         if ($courserecord->selfenrol == 1 && $courserecord->approvalreqd == 0) {
-            $enrollmentbtn = '<a href="javascript:void(0);" data-action="courseselfenrol'.$courseid.'" class="courseselfenrol enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_catalog/courseinfo\').test({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1}) })(event)"><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_catalog').'</button></a>';
+            $enrollmentbtn = '<a href="javascript:void(0);" data-action="courseselfenrol'.$courseid.'" class="courseselfenrol enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_catalog/courseinfo\').test({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1}) })(event)"><button class="cat_btn viewmore_btn btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_catalog').'</button></a>';
         } elseif ($courserecord->selfenrol == 1 && $courserecord->approvalreqd == 1) {
-            $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('requestforenroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$courserecord->id.', component:\'elearning\',componentname:\''.$courserecord->fullname.'\'}) })(event)" ><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
+            $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('requestforenroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$courserecord->id.', component:\'elearning\',componentname:\''.$courserecord->fullname.'\'}) })(event)" ><button class="cat_btn viewmore_btn btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
         } else {
             $enrollmentbtn ='-';
         }

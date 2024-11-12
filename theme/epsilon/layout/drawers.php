@@ -105,6 +105,7 @@ $templatecontext = [
     'hasregionmainsettingsmenu' => !empty($regionmainsettingsmenu),
     'overflow' => $overflow,
     'headercontent' => $headercontent,
+    'isloggedin' => isloggedin(),
     'addblockbutton' => $addblockbutton
 ];
 

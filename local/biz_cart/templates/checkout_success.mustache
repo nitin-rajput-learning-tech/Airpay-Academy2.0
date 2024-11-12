@@ -63,13 +63,13 @@
     }
 
 }}
-<div class="row">
-    <div class="col-md-12 mx-auto mt-5 text-center">
-        <i class="fa fa-check-circle fa-5x text-info"  aria-hidden="true"></i>
+<div class="row shopping_cart">
+    <div class="col-md-12 mx-auto mt-6 text-center">
+        <i class="fa fa-check-circle payment_icon"  aria-hidden="true"></i>
     </div>
-    <div class="col-md-12 mx-auto mt-5 text-center">
-        <h1>{{#str}} paymentsuccessful, local_biz_cart {{/str}}</h1>
-        <p>{{#str}} paymentsuccessfultext, local_biz_cart {{/str}}</p>
+    <div class="col-md-12 mx-auto mt-3 text-center">
+        <div><h6 class="payment_status">{{#str}} paymentsuccessful, local_biz_cart {{/str}}</h6></div>
+        <p class="text-muted">{{#str}} paymentsuccessfultext, local_biz_cart {{/str}}</p>
          <a href="{{config.wwwroot}}/my" class="btn btn-info">{{#str}} backtohome, local_biz_cart {{/str}}</a>
     </div>
 </div>
