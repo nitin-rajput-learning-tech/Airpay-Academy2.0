@@ -26,7 +26,7 @@ require('../../../config.php');
 
 require_login();
 use local_biz_cart\biz_cart;
-$url = new moodle_url('/payment/gateway/airpay/process3.php', []);
+$url = new moodle_url('/payment/gateway/airpay/process.php', []);
 $PAGE->set_url($url);
 $PAGE->set_context(context_system::instance());
 date_default_timezone_set('Asia/Kolkata');
