@@ -528,7 +528,7 @@ class local_courses_renderer extends plugin_renderer_base {
                 }
             }
             if($course->price_status == 1){
-                $addtocart = new moodle_url('login/index.php', []);
+                $addtocart = new moodle_url('local/search/coursedetails.php', ['id' => $course->id]);
                 $courseprice = $course->courseprice;
             }
             $categoryname = $DB->get_field('course_categories','name',array('id'=>$course->category));
