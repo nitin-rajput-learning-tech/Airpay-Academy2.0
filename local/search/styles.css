@@ -813,7 +813,13 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     color:#fff;
 }
 #page-local-search-coursedetails .CourseDetails_content .course_title{
-    font-size: 21px;
+    font-size: 20px;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    line-height: 1.8;
 }
 #page-local-search-coursedetails .coursebrieflist .crs_detail_head {
     padding: 1rem;
@@ -1033,4 +1039,23 @@ body#page-local-search-allcourses .coursecard_container:hover .card-img-top .cou
 #page-local-search-allcourses #allcourses_section .catcourses_list .coursecard > .ng-scope, 
 #page-local-search-allcourses #allcourses_section .catcourses_list .coursecard .ng-scope .ng-scope{
     height: 100%;
+}
+#page-local-search-coursedetails #page-header ol .breadcrumb-item span {
+  color: #fff;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  -webkit-line-clamp: 1;
+  width: 200px;
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+}
+.popover-region-content .shopping-cart-items .item_details{
+    align-items: center !important;
+}
+div.shopping-cart-items-container img.sc-cart-item-image{
+    width: 50px;
+    height: 100%;
+    min-height: 50px;
 }
