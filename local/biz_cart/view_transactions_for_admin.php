@@ -37,8 +37,7 @@ $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(!has_capability('local/courses:view', $categorycontext) && !has_capability('local/courses:manage', $categorycontext) ){
     print_error("You don't have permissions to view this page.");
 }
-$PAGE->set_context($categorycontext);
-$PAGE->set_heading('All Transactions');
+
 $formattype = 'list';
 $renderer = $PAGE->get_renderer('local_biz_cart');
 $filterparams = $renderer->view_user_transactions_for_admin(true,$formattype);

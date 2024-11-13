@@ -141,7 +141,7 @@ if($transactionstatus == 200){
 			// Get enrol instance for course.	
 			$enrolplugin = enrol_get_plugin('fee');
     		$instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$order->itemid));
-    		//biz_cart::delete_item_from_cart('local_courses', 'option', $instance->courseid, $order->userid);
+    		biz_cart::delete_item_from_cart('local_courses', 'option', $instance->courseid, $order->userid);
     		// Enrol user.
     		$enrolplugin->enrol_user($instance, $order->userid, $role->id);
 				// Course Enrol Notification.
