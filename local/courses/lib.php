@@ -2746,3 +2746,19 @@ function remove_course_from_all_user_carts(int $courseid): void {
         }
     }
 }
+/**
+ * Remove a course from all user carts when it is inactivated or deleted.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param string | text $description the description text to be cleaned 
+ * @return string | text $description cleaned description without additional/unneccessary p and <br> tags
+ */
+function clean_description($description) {
+    $formateddescription = strip_tags(format_text($description, FORMAT_HTML,  ['noclean' => false, 'trusted' => false]));
+    // Remove empty <p> tags
+    $formateddescription = preg_replace('/<p[^>]*>\s*<\/p>/', '', $formateddescription);
+
+    // Remove standalone <br> tags or multiple consecutive <br> tags
+    $formateddescription = preg_replace('/(<br\s*\/?>\s*)+/', '', $formateddescription);
+
+    return $formateddescription;
+}

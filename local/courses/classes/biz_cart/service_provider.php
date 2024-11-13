@@ -66,7 +66,7 @@ class service_provider implements \local_biz_cart\local\callback\service_provide
             'INR',
             'local_courses',
             'option',
-            $course->summary ?? '',
+            clean_description($course->summary) ?? '',
             $course->imageurl ?? '',
             $course->canceluntil,
             $serviceperiodstart,
