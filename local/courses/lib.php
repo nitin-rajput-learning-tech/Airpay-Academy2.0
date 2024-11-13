@@ -2243,9 +2243,9 @@ function get_course_details($courseid) {
         $wheresql = " where 1 = 1 AND c.id = ? ";
         $courserecord = $DB->get_record_sql($selectsql.$fromsql.$joinsql.$wheresql, [$USER->id, $courseid], IGNORE_MULTIPLE);
         if ($courserecord->selfenrol == 1 && $courserecord->approvalreqd == 0) {
-            $enrollmentbtn = '<a href="javascript:void(0);" data-action="courseselfenrol'.$courseid.'" class="courseselfenrol enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_catalog/courseinfo\').test({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1}) })(event)"><button class="cat_btn viewmore_btn btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_catalog').'</button></a>';
+            $enrollmentbtn = '<a href="javascript:void(0);" data-action="courseselfenrol'.$courseid.'" class="courseselfenrol enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_catalog/courseinfo\').test({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1}) })(event)"><button class="cat_btn viewmore_btn btn-primary"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_catalog').'</button></a>';
         } elseif ($courserecord->selfenrol == 1 && $courserecord->approvalreqd == 1) {
-            $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('requestforenroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$courserecord->id.', component:\'elearning\',componentname:\''.$courserecord->fullname.'\'}) })(event)" ><button class="cat_btn viewmore_btn btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
+            $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('requestforenroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$courserecord->id.', component:\'elearning\',componentname:\''.$courserecord->fullname.'\'}) })(event)" ><button class="cat_btn viewmore_btn btn btn-primary"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
         } else {
             $enrollmentbtn ='-';
         }
@@ -2745,4 +2745,20 @@ function remove_course_from_all_user_carts(int $courseid): void {
             }
         }
     }
+}
+/**
+ * Remove a course from all user carts when it is inactivated or deleted.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param string | text $description the description text to be cleaned 
+ * @return string | text $description cleaned description without additional/unneccessary p and <br> tags
+ */
+function clean_description($description) {
+    $formateddescription = strip_tags(format_text($description, FORMAT_HTML,  ['noclean' => false, 'trusted' => false]));
+    // Remove empty <p> tags
+    $formateddescription = preg_replace('/<p[^>]*>\s*<\/p>/', '', $formateddescription);
+
+    // Remove standalone <br> tags or multiple consecutive <br> tags
+    $formateddescription = preg_replace('/(<br\s*\/?>\s*)+/', '', $formateddescription);
+
+    return $formateddescription;
 }

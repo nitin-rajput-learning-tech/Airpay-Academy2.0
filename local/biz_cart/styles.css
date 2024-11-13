@@ -129,17 +129,17 @@
 .checkout .shopping-cart-items li {
     padding-bottom: 5px;
     list-style-type: none;
-    max-width: 90%;
-    margin: auto;
+    max-width: 80%;
+    margin: 15px auto !important;
 }
 .checkout .shopping-cart-items #litotalprice {
     border-top: 1px #333 dashed;
 }
 
-.checkout .shopping-cart-items {
+/*.checkout .shopping-cart-items {
     border: 1px solid rgba(0, 0, 0, .125);
     padding: 5px;
-}
+}*/
 
 @media print {
     body#page-local-biz_cart-checkout {
@@ -317,14 +317,17 @@ li:not(li[data-area=bookingfee]) li:not(li[data-area=rebookingcredit]) .sc-cart-
 }
 
 #page-local-biz_cart-checkout .shopping-cart-checkout-items-container .shopping-cart-items li {
-    padding: 20px;
+    padding: 15px;
     margin: 20px;
-    border: 1px dashed black;
+    background-color: #f8f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
 }
 
 /* The price in the list of items should not be displayed on the checkout page. */
 #page-local-biz_cart-checkout .shopping-cart-checkout-items-container .sc_initialtotal {
-    display: none;
+    display: none !important;
 }
 
 /* Even when a user is cashier, he should not see cashier elements on checkout page */
@@ -334,7 +337,7 @@ li:not(li[data-area=bookingfee]) li:not(li[data-area=rebookingcredit]) .sc-cart-
 
 /* The payment button checkout must be a little bit below. */
 #page-local-biz_cart-checkout div.biz_cart_payment_region {
-    padding-top: 50px;
+    padding-top: 15px;
     padding-bottom: 50px;
 }
 
@@ -404,11 +407,14 @@ li[data-area="bookingfee"] img {
 #page-local-biz_cart-cashier #biz_cart-cashiers-section #checkout .shopping-cart-items li {
     padding: 10px;
     margin-bottom: 10px;
-    border: 1px dashed #ccc;
+    background-color: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
 }
 
 #page-local-biz_cart-checkout .shopping-cart-items li[data-area="option"] img {
-    max-width: 200px;
+    max-width: 120px;
 }
 table#manage_transactions_foradmin {
     box-shadow: none;
@@ -432,4 +438,38 @@ table#manage_transactions_foradmin {
 }
 #page-local-biz_cart-checkout .shopping_cart .payment_status{
     font-weight: 600;
+}
+#page-local-biz_cart-checkout .shopping-cart-items li[data-area="option"] .item-description{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    white-space: wrap;
+}
+#page-local-biz_cart-checkout  .sc_price_label .total_price{
+    background-color: #e3e3e3 !important;
+}
+#page-local-biz_cart-checkout  .sc_price_label .sub_totprice{
+    background-color: #f5f2f2 !important;
+}
+#page-local-biz_cart-checkout  .sc_price_label .text-muted {
+    color: #595959 !important;
+    font-weight: 500;
+}
+#page-local-biz_cart-checkout  .cart_total{
+    margin: 20px auto;
+    width: 80%;
+}
+#page-local-biz_cart-checkout .shoppingcart_header{
+    background-color: transparent !important;
+}
+#page-local-biz_cart-checkout .shoppingcart_header{
+    max-width: 80%;
+    margin: auto;
+    color: #595959;
+}
+#page-local-biz_cart-checkout div.biz_cart_payment_region .btn-primary{
+    border-style: solid;
+    border-radius: 0;
 }

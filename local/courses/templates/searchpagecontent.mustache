@@ -65,9 +65,10 @@
 
         </div>
         <div class=" w-full mt-auto">
-            <div class="d-flex justify-content-between">
+            <div class="d-flex align-items-center">
                 <div ng-if="record.courseprice">
                     <span class="text-primary font-weight-bold"><span class="mr-1"><i class="fa fa-inr" aria-hidden="true"></i></span><span><% record.courseprice %></span></span>
+                    <span class="border mx-3 h-100"></span>
                 </div>
                 <div>
                     <span class="text-muted"><span class="mr-1">{{#str}}category, local_courses{{/str}}:</span><span title="<% record.categoryname %>"><% record.categoryname %></span></span>

@@ -81,10 +81,13 @@
 
     {{! prices without tax information }}
     {{^taxesenabled}}
-
-        <div class="text-right mt-1 mr-3">
-            <span><b>{{#str}} total, local_biz_cart {{/str}}</b></span>
-            <span class="sc_totalprice text-success"><b>{{price}} {{currency}}</b></span>
+        <div class="p-3 sub_totprice row m-0">
+            <span class="text-muted col-3">Subtotal</span>
+            <span class="sc_totalprice text-dark col-9"><b>{{price}} {{currency}}</b></span>
+        </div>
+        <div class="p-3 total_price row m-0">
+            <span class="text-muted col-3">{{#str}} total, local_biz_cart {{/str}}</span>
+            <span class="sc_totalprice text-dark col-9"><b>{{price}} {{currency}}</b></span>
         </div>
     {{/taxesenabled}}
 </div>

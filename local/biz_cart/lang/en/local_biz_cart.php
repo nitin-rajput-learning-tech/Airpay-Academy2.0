@@ -45,7 +45,7 @@ $string['nolimit'] = 'No limit';
 $string['optioncancelled'] = 'Booking option cancelled';
 $string['rebooking'] = 'Rebooking';
 $string['rebookingcredit'] = 'Rebooking credit';
-$string['sendpaymentbutton'] = 'Checkout';
+$string['sendpaymentbutton'] = 'Proceed To Checkout';
 $string['showorderid'] = 'Show Order-ID...';
 
 // Settings.
@@ -154,7 +154,7 @@ $string['selectuserfirst'] = 'Select user first';
 $string['notenoughcredits'] = 'Not enough credits available.';
 
 // Cart.
-$string['total'] = 'Total:';
+$string['total'] = 'Total';
 $string['total_net'] = 'Total Net:';
 $string['total_gross'] = 'Total Gross:';
 $string['paymentsuccessful'] = 'Payment successful!';
@@ -169,7 +169,7 @@ $string['failure'] = 'Failure';
 $string['alreadyincart'] = 'The item is already in your cart.';
 $string['cartisfull'] = 'Your shopping cart is full.';
 $string['cartisempty'] = 'Your shopping cart is empty.';
-$string['yourcart'] = 'Your shopping cart';
+$string['yourcart'] = 'Cart';
 $string['addedtocart'] = '{$a} was added to your cart.';
 $string['creditnotmatchbalance'] = 'Sum of credits in table local_biz_cart_credits does not match with latest balance!
                                     There might be duplicate entries or corrupted records in the credits table for userid {$a}';
