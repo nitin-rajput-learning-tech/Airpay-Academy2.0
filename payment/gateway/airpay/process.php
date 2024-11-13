@@ -24,7 +24,7 @@
 
 require('../../../config.php');
 
-require_login();
+//require_login();
 use local_biz_cart\biz_cart;
 $url = new moodle_url('/payment/gateway/airpay/process.php', []);
 $PAGE->set_url($url);
@@ -74,14 +74,6 @@ if(empty($transactionid) || empty($aptransactionid) || empty($amount) || empty($
 	}
 	$error_msg .= '<tr><td>Variable(s) '. $error_msg.' is/are empty.</td></tr>';
 }
-
-//THIS IS ADDITIONAL VALIDATION, YOU MAY USE IT.
-//$SYSTEM_AMOUNT is amount you will fetch from your database/system against $transactionid
-//if( $amount != $SYSTEM_AMOUNT){
-// Reponse has been compromised. So treat this transaction as failed.
-//$error_msg .= '<tr><td>Amount mismatch in the system.</td></tr>';
-//exit();
-//}
 
 // Generating Secure Hash
 // $mercid = 	Merchant Id, $username = username
@@ -135,6 +127,13 @@ if($transactionstatus == 200){
         	if ($notificationdata){
           		$notification->send_course_email($course, $user, $type, $notificationdata);
 			}
+			$courserecord = $DB->get_record('paygw_course_enrolmentlog',['courseid' => $cartitem->itemid, 'ap_orderid' => $transactionid, 'userid'=>$user->id]);
+			$courserecord->transactionid = $aptransactionid;
+			$courserecord->ap_orderid = $transactionid;
+			$courserecord->amount = $cartitem->price;
+			$courserecord->status = 2;
+			$courserecord->timecreated = time();
+			$DB->update_record('paygw_course_enrolmentlog', $courserecord);
 		}
 		$redirecturl = new moodle_url('/local/biz_cart/checkout.php', array('success' => TRUE, 'identifier' => $order->itemid));
 		redirect($redirecturl);
@@ -142,7 +141,7 @@ if($transactionstatus == 200){
 			// Get enrol instance for course.	
 			$enrolplugin = enrol_get_plugin('fee');
     		$instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$order->itemid));
-    		biz_cart::delete_item_from_cart('local_courses', 'option', $instance->courseid, $order->userid);
+    		//biz_cart::delete_item_from_cart('local_courses', 'option', $instance->courseid, $order->userid);
     		// Enrol user.
     		$enrolplugin->enrol_user($instance, $order->userid, $role->id);
 				// Course Enrol Notification.
@@ -154,38 +153,22 @@ if($transactionstatus == 200){
         	if ($notificationdata){
           		$notification->send_course_email($course, $user, $type, $notificationdata);
 			}
-
-			echo $OUTPUT->render_from_template('local_biz_cart/checkout_success', $request);
-			// $redirecturl = new moodle_url('/my/dashboard.php', []);
-			// redirect($redirecturl);
-			
+			$coursename = $DB->get_field('course', 'fullname' , ['id' => $instance->courseid]);
+			$courserecord = $DB->get_record('paygw_course_enrolmentlog',['courseid' => $instance->courseid, 'ap_orderid' => $transactionid, 'userid'=>$user->id]);
+			$courserecord->transactionid = $aptransactionid;
+			$courserecord->ap_orderid = $transactionid;
+			$courserecord->amount = $instance->cost;
+			$courserecord->status = 2;
+			$courserecord->timecreated = time();
+			$DB->update_record('paygw_course_enrolmentlog', $courserecord);
+			echo $OUTPUT->render_from_template('local_biz_cart/checkout_success', $request);		
 	}
-
-	// echo '<table><font color="green"><tr><td class="tdsuccess"><b>SUCCESS TRANSACTION</b></td></tr></font></table>
-	// 	<table>
-	// 		<tr><td><b>Variable Name</b></td><td><b>Value</b></td></tr>
-	// 		<tr><td>TRANSACTIONID:</td><td> '.$transactionid.'</td></tr>
-	// 		<tr><td>APTRANSACTIONID:</td><td> '.$aptransactionid.'</td></tr>
-	// 		<tr><td>AMOUNT:</td><td> '.$amount.'</td></tr>
-	// 		<tr><td>TRANSACTIONSTATUS:</td><td> '.$transactionstatus.'</td></tr>
-	// 		<tr><td>MESSAGE:</td><td> '.$message.'</td></tr>
-	// 		<tr><td>CUSTOMVAR:</td><td> '.$customvar.'</td></tr>
-	// 	</table>';
 }else{
 	if($error_msg){
-	// echo '<table><font color="red"><b>ERROR:</b> '.$error_msg.'</font></table>';
-	// echo '<table>
-	// 		<tr><td><b>Variable Name</b></td><td><b> Value</b></td></tr>
-	// 		<tr><td>TRANSACTIONID:</td><td> '.$transactionid.'</td></tr>
-	// 		<tr><td>APTRANSACTIONID:</td><td> '.$aptransactionid.'</td></tr>
-	// 		<tr><td>AMOUNT:</td><td> '.$amount.'</td></tr>
-	// 		<tr><td>TRANSACTIONSTATUS:</td><td> '.$transactionstatus.'</td></tr>
-	// 		<tr><td>CUSTOMVAR:</td><td> '.$customvar.'</td></tr>
-	// 	</table>';
-	if($order){
-		$order->status = 1;
-		$DB->update_record('paygw_airpay', $order);
-	}
+		if($order){
+			$order->status = 1;
+			$DB->update_record('paygw_airpay', $order);
+		}
 	
 	$error = new stdClass();
 	$error->error = $error_msg;
@@ -195,17 +178,5 @@ if($transactionstatus == 200){
 	echo $OUTPUT->render_from_template('local_biz_cart/checkout_failed', $request);
 
 }
-
-		// Process Failed Transaction
-		// echo '<table><font color="red"><tr><td class="tdfail"><b>FAILED TRANSACTION</b></td></tr></font></table>
-		// <table>
-		// 	<tr><td><b>Variable Name</b></td><td><b>Value</b></td></tr>
-		// 	<tr><td>TRANSACTIONID:</td><td> '.$transactionid.'</td></tr>
-		// 	<tr><td>APTRANSACTIONID:</td><td> '.$aptransactionid.'</td></tr>
-		// 	<tr><td>AMOUNT:</td><td> '.$amount.'</td></tr>
-		// 	<tr><td>TRANSACTIONSTATUS:</td><td> '.$transactionstatus.'</td></tr>
-		// 	<tr><td>MESSAGE:</td><td> '.$message.'</td></tr>
-		// 	<tr><td>CUSTOMVAR:</td><td> '.$customvar.'</td></tr>
-		// </table>';
 }
 echo $OUTPUT->footer();

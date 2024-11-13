@@ -90,10 +90,7 @@ class renderer extends plugin_renderer_base
     }
     public function view_user_transactions_for_admin($filter = false){
         global $USER;
-
-          $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
-          
-
+        $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
         $options = array('targetID' => 'manage_transactions_foradmin','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
         $options['methodName']='local_biz_cart_transactions_view_for_admin';
         $options['templateName']='local_biz_cart/transaction_details_for_admin'; 
@@ -101,8 +98,7 @@ class renderer extends plugin_renderer_base
         $options = json_encode($options);
 
         $dataoptions = json_encode(array('userid' =>$USER->id,'contextid' => $systemcontext->id));
-        $filterdata = json_encode(array());
-
+        $filterdata = json_encode(array($filter));
         $context = [
                 'targetID' => 'manage_transactions_foradmin',
                 'options' => $options,
