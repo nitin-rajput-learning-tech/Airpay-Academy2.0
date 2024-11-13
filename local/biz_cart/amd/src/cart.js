@@ -48,7 +48,7 @@ const CASHIERUSER = -1;
 const SELECTORS = {
     biz_cart_ITEM: '[data-item="biz_cart_item"]',
     NAVBARCONTAINER: '#nav-biz_cart-popover-container .shopping-cart-items-container',
-    TRASHCLASS: 'fa-trash-o',
+    TRASHCLASS: 'cart_course_delete',
     DISCOUNTCLASS: 'shoppingcart-discount-icon',
     BADGECOUNT: '#nav-biz_cart-popover-container div.count-container',
     COUNTDOWN: '#nav-biz_cart-popover-container span.expirationdate',

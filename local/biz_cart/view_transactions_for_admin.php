@@ -37,7 +37,52 @@ $categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
 if(!has_capability('local/courses:view', $categorycontext) && !has_capability('local/courses:manage', $categorycontext) ){
     print_error("You don't have permissions to view this page.");
 }
-
+$PAGE->set_context($categorycontext);
+$PAGE->set_heading('All Transactions');
+$formattype = 'list';
+$renderer = $PAGE->get_renderer('local_biz_cart');
+$filterparams = $renderer->view_user_transactions_for_admin(true,$formattype);
+// for filtering users we are providing form
+$formdata = new stdClass();
+$mform = transaction_filters_form($filterparams, (array)$formdata);
+     
+if ($mform->is_cancelled()) {
+    redirect($CFG->wwwroot . '/local/courses/courses.php');
+} else{
+    $filterdata =  $mform->get_data();
+    if($filterdata){
+        $collapse = false;
+    } else{
+        $collapse = true;
+    }
+}
+if(empty($filterdata) && !empty($jsonparam)){
+    $filterdata = (array)json_decode($jsonparam);
+    foreach($thisfilters AS $filter){
+        if(empty($filterdata->$filter)){
+            unset($filterdata->$filter);
+        }
+    }
+    $mform->set_data($filterdata);
+}
+if($filterdata){
+    $collapse = false;
+    $show = 'show';
+} else{
+    $collapse = true;
+    $show = '';
+}
+echo '<a class="btn-link btn-sm" data-toggle="collapse" data-target="#local_courses-filter_collapse" aria-expanded="false" aria-controls="local_courses-filter_collapse">
+        <i class="m-0 fa fa-sliders fa-2x" aria-hidden="true"></i>
+      </a>';
+echo  '<div class="collapse '.$show.'" id="local_courses-filter_collapse">
+            <div id="filters_form" class="card card-body p-2">';
+                $mform->display();
+echo        '</div>
+        </div>';
+$filterparams['submitid'] = 'form#filteringform';
+$filterparams['filterdata'] = json_encode($formdata);
+echo $OUTPUT->render_from_template('local_costcenter/global_filter', $filterparams);
 $renderer = $PAGE->get_renderer('local_biz_cart');
 echo $renderer->view_user_transactions_for_admin();
 echo $OUTPUT->footer();

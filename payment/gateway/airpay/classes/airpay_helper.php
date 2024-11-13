@@ -98,7 +98,39 @@ class airpay_helper
 
         $id = $DB->insert_record('paygw_airpay', $neworder);
         $neworder->id = $id;
-
+	    $role = $DB->get_record('role', array('shortname' => 'employee'), '*', MUST_EXIST);
+        if($neworder->paymentarea == 'cart'){
+            $cart_history_items = $DB->get_records('local_biz_cart_history',['identifier' => $neworder->itemid, 'userid' => $neworder->userid]);
+		    foreach($cart_history_items as $cartitem){
+                $user = \core_user::get_user($cartitem->userid);
+                $course = new \stdClass();
+			    $course->courseid = $cartitem->itemid;
+			    $course->coursename = $cartitem->itemname;
+			    $course->userid = $cartitem->userid;
+			    $course->username = $user->firstname . ' ' . $user->lastname;
+			    $course->transactionid = 0;
+			    $course->ap_orderid = $neworder->ap_orderid;
+			    $course->amount = $cartitem->price;
+			    $course->status = 1;
+			    $course->timecreated = time();
+			    $DB->insert_record('paygw_course_enrolmentlog', $course);
+            } 
+        }else{
+            $instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$neworder->itemid));
+            $user = \core_user::get_user($neworder->userid);
+			$coursename = $DB->get_field('course', 'fullname' , ['id' => $instance->courseid]);
+            $course = new \stdClass();
+			$course->courseid = $instance->courseid;
+			$course->coursename = $coursename;
+			$course->userid = $neworder->userid;
+			$course->username = $user->firstname . ' ' . $user->lastname;
+			$course->transactionid = 0;
+			$course->ap_orderid = $neworder->ap_orderid;
+			$course->amount = $instance->cost;
+			$course->status = 1;
+			$course->timecreated = time();
+			$DB->insert_record('paygw_course_enrolmentlog', $course);
+        }    
         return $neworder;
     }
 

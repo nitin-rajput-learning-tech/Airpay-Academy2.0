@@ -570,3 +570,4 @@ $string['confirm_item_delete'] = 'Are you sure you want to remove course from ca
 $string['confirm_delete'] =  'Confirm Remove';
 $string['deletefromcart'] =  'Remove Course From Cart';
 $string['my_transactions'] = 'My Transactions';
+$string['failed'] = 'Failed';
