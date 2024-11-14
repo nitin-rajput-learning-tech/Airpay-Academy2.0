@@ -1051,11 +1051,3 @@ body#page-local-search-allcourses .coursecard_container:hover .card-img-top .cou
   white-space: normal;
   -webkit-box-orient: vertical;
 }
-.popover-region-content .shopping-cart-items .item_details{
-    align-items: center !important;
-}
-div.shopping-cart-items-container img.sc-cart-item-image{
-    width: 50px;
-    height: 100%;
-    min-height: 50px;
-}
