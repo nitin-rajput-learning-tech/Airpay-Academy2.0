@@ -99,9 +99,20 @@ define(['jquery',
          */
         init: function() {
 
+            // var methods = {};
             var container = $('.userdashboard_module_content');
-   
-            $(document).on('mouseenter', '.userdashboard_menu_link', function(){
+
+            // methods.local_courses = 'local_courses_userdashboard_content';
+            // methods.local_classroom = 'local_classroom_userdashboard_classrooms';
+            // methods.local_certification = 'local_certification_userdashboard_certification';
+            // methods.local_program = 'local_program_userdashboard_program';
+            // methods.local_learningplan = 'local_learningplan_userdashboard_learningplans';
+            // methods.local_evaluation = 'local_evaluation_userdashboard_evaluations';
+            // methods.local_onlinetests = 'local_onlinetests_userdashboard_onlinetests';
+
+            
+            
+            $(document).on('click', '.userdashboard_menu_link', function(){
                 var active = $(this).parent('.dashboard-stat').hasClass('active_main_tab');
                 // console.log(active);
                 if(!active){
