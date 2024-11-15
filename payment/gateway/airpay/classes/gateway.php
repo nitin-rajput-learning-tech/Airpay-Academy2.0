@@ -72,6 +72,10 @@ class gateway extends \core_payment\gateway
         $mform->setType('mercid', PARAM_TEXT);
         $mform->addHelpButton('mercid', 'mercid', 'paygw_airpay');
 
+        $mform->addElement('text', 'merdom', get_string('merdom', 'paygw_airpay'));
+        $mform->setType('merdom', PARAM_TEXT);
+        $mform->addHelpButton('merdom', 'merdom', 'paygw_airpay');
+
         $options = [
             'live' => get_string('live', 'paygw_airpay'),
             'sandbox' => get_string('sandbox', 'paygw_airpay'),
