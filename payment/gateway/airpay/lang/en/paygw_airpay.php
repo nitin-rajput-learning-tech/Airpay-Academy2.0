@@ -50,4 +50,4 @@ $string['terminalId_help'] = 'The terminalId that airpay generated for your appl
 $string['username'] = 'Username';
 $string['mercid'] = 'Mercid';
 $string['merdom'] = 'Merdom';
-$string['merdom_help'] = 'The Merdom that the domain for your application.';
+$string['merdom_help'] = 'The Merdom is that the domain for your application.';
