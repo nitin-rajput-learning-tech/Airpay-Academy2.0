@@ -419,7 +419,7 @@ class biz_cart
             }
         }
 
-        if (isset($response) && isset($response['success']) && $response['success'] == 1) {
+        if (isset($response) && isset($response['success'])) {
 
             $context = context_system::instance();
             // Trigger item deleted event.
