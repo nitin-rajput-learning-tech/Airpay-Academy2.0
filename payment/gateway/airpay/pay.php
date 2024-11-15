@@ -120,8 +120,7 @@ echo '
                 <input type="hidden" name="checksum" value="' . $checksum . '">
                 <input type="hidden" name="buyerState" value="' . $buyerState . '">';
                 if(!empty($merdom)) {
-
-                    echo '<input type="hidden" name="mer_dom" value="'. $merdom .'">';
+                    echo '<input type="hidden" name="mer_dom" value="'. base64_encode($merdom) .'">';
                 }
 
 echo '</form>
