@@ -49,3 +49,4 @@ $string['terminalId'] = 'Terminal Id';
 $string['terminalId_help'] = 'The terminalId that airpay generated for your application.';
 $string['username'] = 'Username';
 $string['mercid'] = 'Mercid';
+$string['merdom'] = 'Merdom';
