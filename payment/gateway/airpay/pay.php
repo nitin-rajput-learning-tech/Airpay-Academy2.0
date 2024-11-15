@@ -44,6 +44,9 @@ $username = $config->username;
 $password = $config->password;
 $secret = $config->secret;
 $mercid = $config->mercid;
+if(!empty($config->merdom)) {
+    $merdom = $config->merdom;
+}
 $buyerEmail = trim($USER->email);
 $buyerPhone = trim($USER->phone1);
 $buyerFirstName = trim($USER->firstname);
@@ -116,6 +119,9 @@ echo '
                 <input type="hidden" name="buyerCountry" value="' . $buyerCountry . '">
                 <input type="hidden" name="checksum" value="' . $checksum . '">
                 <input type="hidden" name="buyerState" value="' . $buyerState . '">';
+                if(!empty($merdom)) {
+                    echo '<input type="hidden" name="mer_dom" value="' . $merdom . '">';
+                }
 echo '</form>
         </td>
 
