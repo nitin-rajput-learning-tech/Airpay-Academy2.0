@@ -222,8 +222,11 @@ echo '<div class="content_era_left">';
         	// $enrol = $DB->get_record('enrol', array('courseid'=>$id, 'enrol'=>'self'));
         	$coursesearchlib = new \local_courses\output\search();
         	if(!$switchedrole){
-        		echo $coursesearchlib->get_enrollbutton(false,$course);
-				echo $coursesearchlib->get_add_to_cart_button(false,$course);
+        		$enroll = is_enrolled($coursecontext, $USER->id, '', true);
+        		echo $coursesearchlib->get_enrollbutton($enroll,$course);
+        		if($course->price_status == 1){
+					echo $coursesearchlib->get_add_to_cart_button($enroll,$course);
+        		}
         	}
 	  	  	   // echo '<div class="content_era_right">
 			// 	<div class="enrol">
