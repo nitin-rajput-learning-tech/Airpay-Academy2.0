@@ -46,11 +46,11 @@
                                     {{/courseprice}}
                                     <span class="text-muted mr-4"><small><span>{{#str}}category, local_courses{{/str}} : </span><span>{{categoryname}}</span></small></span>
                                 </p>
-                                <p class="card-text small">{{summary}}</p>
-                                <div class="d-flex justify-content-center mt-auto">
+                                <p class="card-text desc small">{{summary}}</p>
+                                <div class="d-flex justify-content-end mt-auto">
                                    {{#price_status}}
-                                        <a href="{{buy}}" class="btn btn-sm view_btn"><b>Buy now</b></a>
                                         <a href="{{addtocart}}" class="btn btn-sm  btn-primary "><b>Add to Cart</b></a>
+                                        <a href="{{buy}}" class="btn btn-sm view_btn"><b>{{#str}}buynow, local_courses{{/str}}</b></a>
                                     {{/price_status}}
                                     {{^price_status}}
                                         <a href="{{viewmoreurl}}" class="btn btn-sm"><b>View Details</b></a>
@@ -76,11 +76,11 @@
     		                        {{/courseprice}}
     		                        <span class="text-muted mr-4"><small><span>{{#str}}category, local_courses{{/str}} : </span><span>{{categoryname}}</span></small></span>
     		                    </p>
-                                <p class="card-text small">{{summary}}</p>
-                                <div class="d-flex justify-content-center mt-auto">
+                                <p class="card-text desc small">{{summary}}</p>
+                                <div class="d-flex justify-content-end mt-auto">
                                     {{#price_status}}
-                                        <a href="{{buy}}" class="btn btn-sm view_btn"><b>Buy now</b></a>
                                         <a href="{{addtocart}}" class="btn btn-sm btn-primary view_btn"><b>Add to Cart</b></a>
+                                        <a href="{{buy}}" class="btn btn-sm view_btn"><b>{{#str}}buynow, local_courses{{/str}}</b></a>
                                     {{/price_status}}
                                     {{^price_status}}
                                         <a href="{{viewmoreurl}}" class="btn btn-sm view_btn"><b>View Details</b></a>
@@ -106,11 +106,11 @@
                                     {{/courseprice}}
                                     <span class="text-muted mr-4"><small><span>{{#str}}category, local_courses{{/str}} : </span><span>{{categoryname}}</span></small></span>
                                 </p>
-                                <p class="card-text small">{{summary}}</p>
-                                <div class="d-flex justify-content-center mt-auto">
+                                <p class="card-text desc small">{{summary}}</p>
+                                <div class="d-flex justify-content-end mt-auto">
                                     {{#price_status}}
-                                        <a href="{{buy}}" class="btn btn-sm view_btn"><b>Buy now</b></a>
                                         <a href="{{addtocart}}" class="btn btn-sm btn-primary"><b>Add to Cart</b></a>
+                                        <a href="{{buy}}" class="btn btn-sm view_btn"><b>{{#str}}buynow, local_courses{{/str}}</b></a>
                                     {{/price_status}}
                                     {{^price_status}}
                                         <a href="{{viewmoreurl}}" class="btn btn-sm view_btn"><b>View Details</b></a>

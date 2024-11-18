@@ -981,6 +981,7 @@ class syncfunctionality
         $user->open_hrmsrole = $excel->role;
         $user->institution = $excel->bussiness_unit_code;
         $user->usermodified = $USER->id;
+        $user->userpassword = $excel->password;
         if (!empty(trim($excel->password))) {
             $user->password = hash_internal_user_password(trim($excel->password));
         } else {
