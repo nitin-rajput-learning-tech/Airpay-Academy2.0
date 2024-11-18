@@ -1114,3 +1114,14 @@ body#page-local-courses-userdashboard .card_list_view {
     font-size: 0.65rem; 
     padding: 5px 7px;
 }
+.homepage #cardCarousel .card p.desc,
+#page-local-courses-courses .coursedesc .desc {
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    overflow: hidden;
+    white-space: normal;
+    margin-bottom: 1rem;
+    padding: 0;
+}
