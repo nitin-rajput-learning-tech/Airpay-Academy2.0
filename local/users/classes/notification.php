@@ -69,7 +69,7 @@ class notification{
         $datamailobject->employee_name = fullname($touser);
         $datamailobject->employee_email = $touser->email;
         $datamailobject->employee_username = $touser->username;
-        $datamailobject->employee_password = $touser->emailpassword;
+        $datamailobject->employee_password = $touser->userpassword;
         if(!empty($notification->adminbody) && !empty($touser->open_supervisorid) && $emailtype != 'request_add'){
             $superuser = \core_user::get_user($touser->open_supervisorid);
         }else{
