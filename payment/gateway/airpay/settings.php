@@ -37,4 +37,8 @@ if ($ADMIN->fulltree) {
             get_string('mercid', 'paygw_airpay'),
             get_string('mercid', 'paygw_airpay'),
             '', PARAM_RAW ));
+     $settings->add(new admin_setting_configtext('paygw_airpay/merdom',
+            get_string('merdom', 'paygw_airpay'),
+            get_string('merdom', 'paygw_airpay'),
+            '', PARAM_RAW ));
 }

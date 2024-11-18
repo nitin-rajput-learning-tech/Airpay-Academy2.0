@@ -76,6 +76,7 @@
 
 .shopping-cart-price.item-price {
     line-height: 1;
+    white-space: nowrap;
 }
 
 .shopping-cart-price.item-price b {
@@ -478,20 +479,21 @@ table#manage_transactions_foradmin {
 #page-local-biz_cart-checkout .checkout .shopping-cart-items li:first-child{
     margin-top: 10px !important;
 }
-#page-local-biz_cart-checkout li .item_details{
-    flex: 0 0 90%;
-    max-width: 90%;
+#page-local-biz_cart-checkout li .item_details,
+#page-local-biz_cart-checkout .popover-region-content li .item_details{
+    flex-basis: auto;
 }
 #page-local-biz_cart-checkout li .item_price{
-    flex:0 0 10%;
-    max-width: 10%;
     text-align: right;
 }
-#page-local-biz_cart-checkout .popover-region-content li .item_details{
-    flex:0 0 80%;
-    max-width: 80%;
-}
 #page-local-biz_cart-checkout .popover-region-content li .item_price{
-    flex:0 0 20%;
-    max-width: 20%;
+    white-space: nowrap;
+}
+.popover-region-content .shopping-cart-items .item_details{
+    align-items: center !important;
+}
+div.shopping-cart-items-container img.sc-cart-item-image{
+    width: 50px;
+    height: 100%;
+    min-height: 50px;
 }

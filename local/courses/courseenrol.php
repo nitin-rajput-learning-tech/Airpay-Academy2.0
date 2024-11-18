@@ -25,6 +25,7 @@
 
 ini_set('memory_limit', '-1');
 define('NO_OUTPUT_BUFFERING', true);
+use local_biz_cart\biz_cart;
 require('../../config.php');
 require_once($CFG->dirroot . '/local/courses/lib.php');
 require_once($CFG->dirroot . '/local/courses/filters_form.php');
@@ -204,6 +205,8 @@ if ($course) {
         $timestart = 0;
 
         $enrol_manual->enrol_user($instance, $adduser, $roleid, $timestart, $timeend);
+
+        biz_cart::delete_item_from_cart('local_courses', 'option', $instance->courseid, $adduser);
         $notification = new \local_courses\notification();
         $course = $DB->get_record('course', array('id' => $dataobj));
         $user = core_user::get_user($adduser);

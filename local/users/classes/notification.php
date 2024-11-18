@@ -70,19 +70,19 @@ class notification{
         $datamailobject->employee_email = $touser->email;
         $datamailobject->employee_username = $touser->username;
         $datamailobject->employee_password = $touser->userpassword;
-        if(!empty($notification->adminbody) && !empty($touser->open_supervisorid) && $emailtype != 'request_add'){
-            $superuser = \core_user::get_user($touser->open_supervisorid);
-        }else{
-            $superuser = false;
-        }
+        // if(!empty($notification->adminbody) && !empty($touser->open_supervisorid) && $emailtype != 'request_add'){
+        //     $superuser = \core_user::get_user($touser->open_supervisorid);
+        // }else{
+        //     $superuser = false;
+        // }
         if($touser->suspended==0){
         $this->log_email_notification($touser, $fromuser, $datamailobject);}
-        if($superuser && $superuser->suspended==0){
-            $datamailobject->body = $notification->adminbody;
-            $datamailobject->touserid = $superuser->id;
-            $datamailobject->teammemberid = $touser->id;
-            $this->log_email_notification($superuser, $fromuser, $datamailobject);
-        }
+        // if($superuser && $superuser->suspended==0){
+        //     $datamailobject->body = $notification->adminbody;
+        //     $datamailobject->touserid = $superuser->id;
+        //     $datamailobject->teammemberid = $touser->id;
+        //     $this->log_email_notification($superuser, $fromuser, $datamailobject);
+        // }
 	}
 	public function log_email_notification($touser, $fromuser, $datamailobj){
 		$dataobject = clone $datamailobj;
