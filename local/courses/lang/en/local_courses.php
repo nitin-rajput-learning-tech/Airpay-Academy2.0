@@ -467,6 +467,7 @@ $string['cachedef_electivebookingorder'] = 'Elective booking order (Cache)';
 $string['cachedef_customformuserdata'] = 'Custom form user data (Cache)';
 $string['cachedef_eventlogtable'] = 'Event log table (Cache)';
 $string['addtocart'] = '&nbsp;Add to Cart';
+$string['buynow'] = 'Buy Now';
 $string['maxcoursesadded'] = 'Can not add more than 6 courses to Dashboard';
 $string['positive_numeric'] = 'Please enter only positive numeric values';
 $string['positive_integer_required'] = 'The course price must be a positive integer.';
