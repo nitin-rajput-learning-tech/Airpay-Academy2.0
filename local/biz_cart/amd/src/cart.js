@@ -325,6 +325,7 @@ export const deleteItem = (itemid, component, area, userid) => {
             ]);
             promise[0]
               .done(function (resp) {
+                modal.hide();
                 getString("item_deleted", "local_biz_cart", resp.itemname)
                   .then((message) => {
                     showNotification(message, "success");
