@@ -33,10 +33,12 @@ if(!$course){
 
 $PAGE->set_title($course->fullname);
 $userrolecontext = local_costcenter\lib\accesslib::get_module_context();
+list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$USER->open_path);
+$usermainpath = $DB->get_field('local_costcenter', 'path', array('id' => $org_id));
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
 if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switch_path()) || in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true))){
 	$switchedrole = false;
-	if($USER->open_path != $course->open_path){
+	if($usermainpath != $course->open_path){
 		print_error("You do not have permission to view/access this page");
 	}
 	$PAGE->navbar->add(get_string('pluginname','local_search'), $catalogurl);
