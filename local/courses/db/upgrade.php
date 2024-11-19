@@ -239,7 +239,7 @@ function xmldb_local_courses_upgrade($oldversion)
             $dbman->add_field($table, $field1);
         }
         $field2 = new xmldb_field('courseprice');
-        $field2->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, 0);
+        $field2->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, null);
         if (!$dbman->field_exists($table, $field2)) {
             $dbman->add_field($table, $field2);
         }        
@@ -248,7 +248,7 @@ function xmldb_local_courses_upgrade($oldversion)
     if ($oldversion <  2023060600.23) {
         $table = new xmldb_table('course');
         $field1 = new xmldb_field('courseprice');
-        $field1->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, 0);
+        $field1->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, null);
         if ($dbman->field_exists($table, $field1)) {
             $dbman->change_field_type($table, $field1);
         }     
