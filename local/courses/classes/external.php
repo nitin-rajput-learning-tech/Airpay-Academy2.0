@@ -209,6 +209,9 @@ class local_courses_external extends external_api {
                     if($validateddata->price_status == 1) {
                         $validateddata->selfenrol = 1;
                     }
+                    if($validateddata->price_status == 0) {
+                        $validateddata->courseprice = '';
+                    }
                     update_course($validateddata, $editoroptions);
 
                     // purge appropriate caches in case fix_course_sortorder() did not change anything

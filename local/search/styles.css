@@ -1051,3 +1051,6 @@ body#page-local-search-allcourses .coursecard_container:hover .card-img-top .cou
   white-space: normal;
   -webkit-box-orient: vertical;
 }
+body#page-local-search-coursedetails [data-rel="fatalerror"] {
+    margin-top: 70px;
+}
