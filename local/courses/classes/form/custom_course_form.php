@@ -499,8 +499,17 @@ class custom_course_form extends moodleform {
           }
 
         if (!empty($data['price_status']) && isset($data['courseprice'])) {
-            if (!is_numeric($data['courseprice']) || $data['courseprice'] <= 0) {
-                $errors['courseprice'] = get_string('numeric', 'local_users');
+            if(empty(trim($data['courseprice']))){
+                $errors['courseprice'] = get_string('courseprice_notempty', 'local_courses');
+            }
+            if (!empty(trim($data['courseprice'])) && !is_numeric($data['courseprice'])) {
+                $errors['courseprice'] = get_string('positive_numeric', 'local_courses');
+            }
+            if(is_numeric($data['courseprice']) && $data['courseprice'] == 0) {
+                $errors['courseprice'] = get_string('courseprice_notzero', 'local_courses');
+            }
+            if(is_numeric($data['courseprice']) && $data['courseprice'] < 0) {
+                $errors['courseprice'] = get_string('positive_numeric', 'local_courses');
             }
         }
 
