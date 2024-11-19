@@ -512,7 +512,8 @@ class local_courses_renderer extends plugin_renderer_base {
         foreach ($courses as $course) {
             // Clean up course summary
             $coursesummary = strip_tags(format_text($course->summary));
-            $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . " ..." : $coursesummary;
+            // $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . " ..." : $coursesummary;
+                $summarystring = $coursesummary;
             $coursetype = $DB->get_field('local_course_types', 'name', ['id' => $course->open_identifiedas]);
 
             // Check for course image

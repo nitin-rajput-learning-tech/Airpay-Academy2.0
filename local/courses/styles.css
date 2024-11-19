@@ -1102,15 +1102,27 @@ body#page-local-courses-userdashboard .card_list_view {
     -webkit-line-clamp: 1;
 }
 .homepage #cardCarousel .card .view_btn{
-    background-color: #333333 !important;
     color: white; 
     padding: 7px 20px; 
-    font-size: 0.75rem; 
-    margin-right: 10px;    
+    font-size: 0.75rem;    
 }
 .homepage #cardCarousel .card .badge{
     top: 10px; 
     right: 10px; 
     font-size: 0.65rem; 
     padding: 5px 7px;
+}
+.homepage #cardCarousel .card p.desc,
+#page-local-courses-courses .coursedesc .desc {
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    overflow: hidden;
+    white-space: normal;
+    margin-bottom: 1rem;
+    padding: 0;
+}
+.homepage #cardCarousel .card .buttons{
+    gap: 16px;
 }
