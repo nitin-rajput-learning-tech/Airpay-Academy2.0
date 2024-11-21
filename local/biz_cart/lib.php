@@ -399,7 +399,7 @@ function get_course_transaction_log($tablelimits, $filtervalues) {
                     $coursedetails['orderid'] = $transaction->airpay_id;
                     $coursedetails['order_state'] = $transaction->order_state;
                     $coursedetails['paymentarea'] = $transaction->paymentarea == 'fee' ? 'Buy Now' : ($transaction->paymentarea == 'cart' ? 'Cart' : '');
-                    $coursedetails['orderdate'] = date('d/m/Y',$transaction->timecreated);
+                    $coursedetails['orderdate'] = date('d/m/Y H:i:s',$transaction->timecreated);
                     $data[] = $coursedetails;
         }
         return ['count' => $count, 'data' => $data];
@@ -409,7 +409,7 @@ function get_course_transaction_log($tablelimits, $filtervalues) {
         global $DB, $USER;
         $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $countsql = "SELECT COUNT(l.id)";
-        $selectsql = "SELECT l.id, l.eventname, l.timecreated, l.userid, l.action, l.target, l.courseid, u.firstname, u.lastname, c.fullname AS course_name,l.other";
+        $selectsql = "SELECT l.id, l.eventname, l.timecreated, l.userid,l.relateduserid, l.action, l.target, l.courseid, u.firstname, u.lastname, c.fullname AS course_name,l.other";
         $fromsql = " FROM {logstore_standard_log} l";
         $joinsql = " LEFT JOIN {course} c ON c.id = l.courseid
                     JOIN {user} u ON u.id = l.userid ";
@@ -443,17 +443,36 @@ function get_course_transaction_log($tablelimits, $filtervalues) {
         $transactions = $DB->get_records_sql($selectsql . $fromsql . $joinsql . $wheresql . $orderbysql, $params, $limitfrom, $limitnum);
         $data = array();
         foreach ($transactions as $transaction) {
+            $other = json_decode($transaction->other);
+            if($transaction->target . '_' .  $transaction->action == 'item_added'){
+                        $data['itemid'] = $other->itemid;
+                        $data['component'] = $other->component;
+                    $message = get_string('useraddeditem', 'local_biz_cart', $data);
+            }elseif($transaction->target . '_' .  $transaction->action == 'payment_added'){
+                            $data = [
+                            'userid' => $transaction->userid,
+                            'relateduserid' => $transaction->relateduserid,
+                            'itemid' => $other->itemid,
+                            'component' => $other->component,
+                            'identifier' => $other->identifier,
+                            ];
+                $message = get_string('payment_added_log', 'local_biz_cart', $data);
+            }elseif($transaction->target . '_' .  $transaction->action == 'checkout_completed'){
+                 $data['identifier'] = $other->identifier;
+                $message =  get_string('checkout_completed_desc', 'local_biz_cart', $data);
+            }
                     $coursedetails = [];
                     $coursedetails['courseid'] = $transaction->courseid;
                     $coursedetails['coursename'] = $transaction->course_name;
-                    $coursedetails['eventname'] = $transaction->eventname;
+                    $coursedetails['eventname'] = get_string($transaction->target . '_' .  $transaction->action, 'local_biz_cart');;
                     $coursedetails['userid'] = $transaction->userid;
                     $coursedetails['userfullname'] = $transaction->firstname. ' '. $transaction->lastname;
-                    $coursedetails['action'] = $transaction->target . ' ' .  $transaction->action;
-                    $coursedetails['eventdate'] = date('d/m/Y',$transaction->timecreated);
-                    $data[] = $coursedetails;
+                    $coursedetails['action'] = $transaction->target . '_' .  $transaction->action;
+                    $coursedetails['message'] = $message;
+                    $coursedetails['eventdate'] = date('d/m/Y h:i:s',$transaction->timecreated);
+                    $logdata[] = $coursedetails;
         }
-        return ['count' => $count, 'data' => $data];
+        return ['count' => $count, 'data' => $logdata];
     }
 
     function logs_filters_form($filterparams, $ajaxformdata = null){
