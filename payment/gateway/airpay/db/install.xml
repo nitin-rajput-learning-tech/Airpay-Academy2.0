@@ -46,8 +46,8 @@
         <FIELD NAME="coursename" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" />
         <FIELD NAME="username" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" />
-        <FIELD NAME="transactionid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" />
-        <FIELD NAME="ap_orderid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" />
+        <FIELD NAME="transactionid" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0" />
+        <FIELD NAME="ap_orderid" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT="0" />
         <FIELD NAME="amount" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" />
         <FIELD NAME="status" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" />
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" />
