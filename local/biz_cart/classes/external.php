@@ -114,6 +114,7 @@ class local_biz_cart_external extends external_api{
                                     'invoicedate' => new external_value(PARAM_RAW, 'order date', VALUE_OPTIONAL),
                                     'amount' => new external_value(PARAM_RAW, 'order amount', VALUE_OPTIONAL),
                                     'status' => new external_value(PARAM_RAW, 'order status', VALUE_OPTIONAL),
+                                    'completed' => new external_value(PARAM_RAW, 'order completed status', VALUE_OPTIONAL),
                                     
                                 ), 'individual records', VALUE_OPTIONAL
                             ), 'records info', VALUE_OPTIONAL
@@ -210,6 +211,7 @@ class local_biz_cart_external extends external_api{
                                     'invoicedate' => new external_value(PARAM_RAW, 'order date', VALUE_OPTIONAL),
                                     'amount' => new external_value(PARAM_RAW, 'order amount', VALUE_OPTIONAL),
                                     'status' => new external_value(PARAM_RAW, 'order status', VALUE_OPTIONAL),
+                                    'completed' => new external_value(PARAM_RAW, 'order completed status', VALUE_OPTIONAL),
                                     
                                 ), 'individual records', VALUE_OPTIONAL
                             ), 'records info', VALUE_OPTIONAL
