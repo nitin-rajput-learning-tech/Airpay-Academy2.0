@@ -231,7 +231,7 @@ function local_biz_cart_leftmenunode(){
                     $coursedetails['orderid'] = $transaction->ap_orderid;
                     $coursedetails['transactioncode'] = $transaction->transactionid;
                     $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
-                    $coursedetails['amount'] = $transaction->amount ;
+                    $coursedetails['amount'] = number_format($transaction->amount);
                     $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
                     $data[] = $coursedetails;
         }
@@ -297,7 +297,7 @@ function local_biz_cart_leftmenunode(){
                     $coursedetails['orderid'] = $transaction->ap_orderid;
                     $coursedetails['transactioncode'] = $transaction->transactionid;
                     $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
-                    $coursedetails['amount'] = $transaction->amount;
+                    $coursedetails['amount'] = number_format($transaction->amount);
                     $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
                     $data[] = $coursedetails;
         }

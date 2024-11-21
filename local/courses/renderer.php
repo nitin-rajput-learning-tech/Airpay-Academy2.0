@@ -530,7 +530,7 @@ class local_courses_renderer extends plugin_renderer_base {
             }
             if($course->price_status == 1){
                 $addtocart = new moodle_url('local/search/coursedetails.php', ['id' => $course->id]);
-                $courseprice = $course->courseprice;
+                $courseprice = number_format($course->courseprice, 2);
             } else {
                 $courseprice = '';
             }
