@@ -77,7 +77,12 @@
                      <a href="{{ requestlink }}" title= "{{#str}}request, local_request{{/str}}">
                          <i class="fa fa-share-square" aria-hidden="true"></i>
                      </a>             
-                {{/request_view}}      
+                {{/request_view}}   
+                  {{#viewpaymentlog}}            
+                     <a href="{{ viewpaymentlog }}" title= "{{#str}}viewpaymentlog, local_courses{{/str}}">
+                         <i class="fa fa-history" aria-hidden="true"></i>
+                     </a>             
+                {{/viewpaymentlog}}     
                 {{{ copyaction }}}
                 {{#delete}}{{{ deleteaction }}}{{/delete}}
             </td>

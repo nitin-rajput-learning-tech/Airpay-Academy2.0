@@ -571,3 +571,5 @@ $string['confirm_delete'] =  'Confirm Remove';
 $string['deletefromcart'] =  'Remove Course From Cart';
 $string['my_transactions'] = 'My Transactions';
 $string['failed'] = 'Failed';
+$string['view_payment_log'] = 'View Payment Log';
+$string['view_standard_log'] = 'View Standard Log';

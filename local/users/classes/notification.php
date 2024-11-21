@@ -57,6 +57,8 @@ class notification{
         }
 	}
 	public function send_users_notification($emailtype, $touser, $notification){
+        global $DB;
+        $userorganization = $DB->get_field('local_costcenter', 'fullname', ['id' => $touser->open_costcenterid]);
         $fromuser = get_admin();
         $datamailobject = new \stdClass();
 		$datamailobject->body = $notification->body;
@@ -70,6 +72,7 @@ class notification{
         $datamailobject->employee_email = $touser->email;
         $datamailobject->employee_username = $touser->username;
         $datamailobject->employee_password = $touser->userpassword;
+        $datamailobject->employee_organization = $userorganization;
         // if(!empty($notification->adminbody) && !empty($touser->open_supervisorid) && $emailtype != 'request_add'){
         //     $superuser = \core_user::get_user($touser->open_supervisorid);
         // }else{
@@ -86,6 +89,7 @@ class notification{
 	}
 	public function log_email_notification($touser, $fromuser, $datamailobj){
 		$dataobject = clone $datamailobj;
+
         $dataobject->subject = $this->replace_strings($datamailobj, $datamailobj->subject);
         $dataobject->emailbody = $this->replace_strings($datamailobj, $datamailobj->body);
         $dataobject->from_emailid = $fromuser->email;
@@ -96,7 +100,6 @@ class notification{
         $dataobject->sentdate = 0;
         $dataobject->sent_by = $fromuser->id;
         $dataobject->moduleid = $datamailobj->componentid;
-        
         if($logid = $this->check_pending_mail_exists($touser, $fromuser, $datamailobj)){
             $dataobject->id = $logid;
             $dataobject->timemodified = time();

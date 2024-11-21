@@ -1768,6 +1768,9 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
             if(has_capability('local/courses:enrol',$maincheckcontext)&&has_capability('local/courses:manage', $maincheckcontext)){
                 $courseslist[$count]["enrollusers"] = $CFG->wwwroot."/local/courses/courseenrol.php?id=".$course->id."&enrolid=".$enrolid;
             }
+            if(has_capability('local/courses:enrol',$maincheckcontext)&&has_capability('local/courses:manage', $maincheckcontext) && $course->price_status == 1){
+                $courseslist[$count]["viewpaymentlog"] = $CFG->wwwroot."/local/biz_cart/log_report.php?courseid=".$course->id;
+            }
             if(has_capability('moodle/course:view', $context) || is_enrolled($context)){
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
             }else{

@@ -28,7 +28,7 @@ use local_biz_cart\biz_cart_bookingfee;
 use local_biz_cart\biz_cart_history;
 use local_biz_cart\output\shoppingcart_history_list;
 use local_biz_cart\payment\service_provider;
-
+use local_biz_cart\event\checkout_completed;
 require_once dirname(dirname(dirname(__FILE__))) . '/config.php';
 require_once $CFG->dirroot . '/local/biz_cart/lib.php';
 
@@ -82,6 +82,19 @@ if (isset($identifier)) {
         foreach ($records as $record) {
             if (LOCAL_BIZCART_PAYMENT_SUCCESS == $record->paymentstatus) {
                 $success = true;
+                $context = \context_system::instance();
+                $event = checkout_completed::create([
+                'context' => $context,
+                'userid' => $record->usermodified,
+                'courseid' => $record->itemid,
+                'relateduserid' => $record->userid,
+                'other' => [
+                            'identifier' => $record->identifier,
+                            'itemid' => $record->itemid,
+                            'component' => $record->componentname,
+                ],
+            ]);
+            $event->trigger();
             } else {
                 $success = false;
             }
@@ -95,7 +108,6 @@ if (isset($success)) {
     if ($success) {
         $data['success'] = 1;
         $data['finished'] = 1;
-
         // After successful checkout, remove all items from cart.
         $PAGE->requires->js_call_amd(
             'local_biz_cart/cart',

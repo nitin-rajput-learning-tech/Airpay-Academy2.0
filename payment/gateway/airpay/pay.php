@@ -67,6 +67,35 @@ $privatekey = $classchecksum->encrypt($username . ":|:" . $password, $secret);
 $keySha256 = $classchecksum->encryptSha256($username . "~:~" . $password);
 $checksum = $classchecksum->calculateChecksumSha256($alldata . date('Y-m-d'), $keySha256);
 $hiddenmod = "";
+if(!empty($order)){
+    if($order->paymentarea == 'cart'){
+		$cart_history_items = $DB->get_records('local_biz_cart_history',['identifier' => $order->itemid, 'userid' => $order->userid]);
+		foreach($cart_history_items as $cartitem){
+                $error = new \stdClass();
+	            $error->error = 'Payment request sent to airpay for order id -"'.$order->ap_orderid.'" for course "('.$cartitem->itemid.')" by user with userid "('.$order->userid.')".';
+	            $error->airpay_id = $order->ap_orderid;
+				$error->courseid = $cartitem->itemid;
+                $error->order_state = 'Order Initiated';
+                $error->paymentarea = 'cart';
+                $error->userid = $order->userid;
+	            $error->timecreated = time();
+	            $DB->insert_record('paygw_airpay_errorlog', $error);
+            }
+		}else if ($order->paymentarea == 'fee'){
+	            $role = $DB->get_record('role', array('shortname' => 'employee'), '*', MUST_EXIST);
+                $enrolplugin = enrol_get_plugin('fee');
+    		    $instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$order->itemid));
+                $error = new \stdClass();
+	            $error->error = 'Payment request sent to airpay for order id -"'. $order->ap_orderid.'" for course "('.$instance->courseid.')" by user with userid "('.$order->userid.')".';
+	            $error->airpay_id = $order->ap_orderid;
+				$error->courseid = $instance->courseid;
+                $error->order_state = 'Order Initiated';
+                $error->paymentarea = 'fee';
+                $error->userid = $order->userid;
+	            $error->timecreated = time();
+	            $DB->insert_record('paygw_airpay_errorlog', $error);
+	}
+}
 // $request = [
 //     "privatekey" => $privatekey,
 //     "mercid" => $mercid,

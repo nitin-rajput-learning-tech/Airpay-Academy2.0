@@ -255,7 +255,8 @@ function xmldb_local_users_install(){
         array('name' => '[employee_name]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[employee_email]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
         array('name' => '[employee_username]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
-        array('name' => '[employee_password]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL)
+        array('name' => '[employee_password]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL),
+        array('name' => '[employee_organization]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL)
     );
     foreach($strings as $string){
         unset($string['timecreated']);

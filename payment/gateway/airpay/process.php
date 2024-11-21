@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * TODO describe file process3
+ * TODO describe file process
  *
  * @package    paygw_airpay
  * @copyright  2024 Moodle India <support@moodle.com>
@@ -58,19 +58,19 @@ $error_msg = '';
 if(empty($transactionid) || empty($aptransactionid) || empty($amount) || empty($transactionstatus) || empty($ap_SecureHash)){
 // Reponse has been compromised. So treat this transaction as failed.
 	if(empty($transactionid)){
-		 $error_msg = 'TRANSACTIONID '; 
+		 $error_msg = 'Payment Failed - TRANSACTIONID is Empty. /n'; 
 	} 
 	if(empty($aptransactionid)){
-		 $error_msg .=  ' APTRANSACTIONID'; 
+		 $error_msg .=  'Payment Failed - APTRANSACTIONID is Empty. /n'; 
 	}
 	if(empty($amount)){
-		 $error_msg .=  ' AMOUNT'; 
+		 $error_msg .=  'Payment Failed - AMOUNT is Empty. /n'; 
 	}
 	if(empty($transactionstatus)){
-		 $error_msg .=  ' TRANSACTIONSTATUS'; 
+		 $error_msg .=  'Payment Failed - TRANSACTIONSTATUS is Empty. /n'; 
 	}
 	if(empty($ap_SecureHash)){
-		 $error_msg .=  ' ap_SecureHash'; 
+		 $error_msg .=  'Payment Failed - ap_SecureHash is Empty. /n'; 
 	}
 	$error_msg .= '<tr><td>Variable(s) '. $error_msg.' is/are empty.</td></tr>';
 }
@@ -101,10 +101,12 @@ if($transactionstatus == 200){
 	$order->cost = $amount;
 	$order->status = 2;
 	$DB->update_record('paygw_airpay', $order);
+	
 	// get enrol plugin.
 	$enrolplugin = enrol_get_plugin('fee');
 	$role = $DB->get_record('role', array('shortname' => 'employee'), '*', MUST_EXIST);
 	if($order->paymentarea == 'cart'){
+		
 		//Checking cart history for payment and enrolling user.
 		$cart_history_items = $DB->get_records('local_biz_cart_history',['identifier' => $order->itemid, 'userid' => $order->userid]);
 	
@@ -118,6 +120,7 @@ if($transactionstatus == 200){
 			$cartitem->paymentstatus = 2;
 			$cartitem->timemodified = time();
 			$DB->update_record('local_biz_cart_history',$cartitem);
+			
 			// Course Enrol Notification.
 			$type = 'course_enrol';
 			$notification = new \local_courses\notification();
@@ -127,24 +130,44 @@ if($transactionstatus == 200){
         	if ($notificationdata){
           		$notification->send_course_email($course, $user, $type, $notificationdata);
 			}
+			
+			// Update course record after payment.
 			$courserecord = $DB->get_record('paygw_course_enrolmentlog',['courseid' => $cartitem->itemid, 'ap_orderid' => $transactionid, 'userid'=>$user->id]);
 			$courserecord->transactionid = $aptransactionid;
 			$courserecord->ap_orderid = $transactionid;
 			$courserecord->amount = $cartitem->price;
 			$courserecord->status = 2;
 			$courserecord->timecreated = time();
-			$DB->update_record('paygw_course_enrolmentlog', $courserecord);
+			$course_payment = $DB->update_record('paygw_course_enrolmentlog', $courserecord);
+			
+			// Update error/success log for the course after payment.
+			if(!empty($course_payment)){
+                $error = new \stdClass();
+	            $error->error = 'Order id -"'.$transactionid.'" for course "('.$cartitem->itemid.')" by user with userid "('.$user->id.')" is successfull.';
+	            $error->airpay_id = $transactionid;
+				$error->courseid = $cartitem->itemid;
+				$error->order_state = 'Order Successfull';
+				$error->paymentarea = 'cart';
+                $error->userid = $user->id;
+	            $error->timecreated = time();
+	            $DB->insert_record('paygw_airpay_errorlog', $error);
+            }
 		}
+
+		// Redirect after payment.
 		$redirecturl = new moodle_url('/local/biz_cart/checkout.php', array('success' => TRUE, 'identifier' => $order->itemid));
 		redirect($redirecturl);
 	}else if ($order->paymentarea == 'fee'){
+			
 			// Get enrol instance for course.	
 			$enrolplugin = enrol_get_plugin('fee');
     		$instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$order->itemid));
     		biz_cart::delete_item_from_cart('local_courses', 'option', $instance->courseid, $order->userid);
-    		// Enrol user.
+    		
+			// Enrol user.
     		$enrolplugin->enrol_user($instance, $order->userid, $role->id);
-				// Course Enrol Notification.
+			
+			// Course Enrol Notification.
 			$type = 'course_enrol';
 			$notification = new \local_courses\notification();
 			$user = core_user::get_user($order->userid);
@@ -154,29 +177,48 @@ if($transactionstatus == 200){
           		$notification->send_course_email($course, $user, $type, $notificationdata);
 			}
 			$coursename = $DB->get_field('course', 'fullname' , ['id' => $instance->courseid]);
+			
+			// Update course record after payment.
 			$courserecord = $DB->get_record('paygw_course_enrolmentlog',['courseid' => $instance->courseid, 'ap_orderid' => $transactionid, 'userid'=>$user->id]);
 			$courserecord->transactionid = $aptransactionid;
 			$courserecord->ap_orderid = $transactionid;
 			$courserecord->amount = $instance->cost;
 			$courserecord->status = 2;
 			$courserecord->timecreated = time();
-			$DB->update_record('paygw_course_enrolmentlog', $courserecord);
+			$course_payment = $DB->update_record('paygw_course_enrolmentlog', $courserecord);
+			
+			// Update error/success log for the course after payment.
+			if(!empty($course_payment)){
+                $error = new \stdClass();
+	            $error->error = 'Order id -"'.$transactionid.'" for course "('.$instance->courseid.')" by user with userid "('.$user->id.')" is successfull.';
+	            $error->airpay_id = $transactionid;
+				$error->courseid = $instance->courseid;
+				$error->order_state = 'Order Successfull';
+				$error->paymentarea = 'fee';
+                $error->userid = $user->id;
+	            $error->timecreated = time();
+	            $DB->insert_record('paygw_airpay_errorlog', $error);
+            }
 			echo $OUTPUT->render_from_template('local_biz_cart/checkout_success', $request);		
 	}
 }else{
+	// Update payment status after failed payment.
+	if($order){
+		$order->status = 1;
+		$DB->update_record('paygw_airpay', $order);
+	}
+
+	// If error log then update the error log.
 	if($error_msg){
-		if($order){
-			$order->status = 1;
-			$DB->update_record('paygw_airpay', $order);
-		}
-	
-	$error = new stdClass();
-	$error->error = $error_msg;
-	$error->airpay_id = $order->id ? $order->id : -1;
-	$error->timecreated = time();
-	$DB->insert_record('paygw_airpay_errorlog', $error);
+		$error = new stdClass();
+		$error->error = $error_msg;
+		$error->airpay_id = $order->id ? $order->id : -1;
+		$error->timecreated = time();
+		$DB->insert_record('paygw_airpay_errorlog', $error);
+	}
+
+	// Redirection after failed payment.
 	echo $OUTPUT->render_from_template('local_biz_cart/checkout_failed', $request);
 
-}
 }
 echo $OUTPUT->footer();

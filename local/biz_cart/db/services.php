@@ -152,4 +152,21 @@ $functions = [
         'type'        => 'read',
         'ajax' => true,
     ],
+     'local_biz_cart_view_course_transaction_log' => [
+        'classname'   => 'local_biz_cart_external',
+        'methodname'  => 'view_course_transaction_log',
+        'classpath'   => 'local/biz_cart/classes/external.php',
+        'description' => 'To get the transaction history for user',
+        'type'        => 'read',
+        'ajax' => true,
+    ],
+
+     'local_biz_cart_view_course_standard_log' => [
+        'classname'   => 'local_biz_cart_external',
+        'methodname'  => 'view_course_standard_log',
+        'classpath'   => 'local/biz_cart/classes/external.php',
+        'description' => 'To get the transaction history for user',
+        'type'        => 'read',
+        'ajax' => true,
+    ],
 ];
