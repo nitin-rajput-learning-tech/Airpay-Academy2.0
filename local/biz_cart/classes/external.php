@@ -401,6 +401,7 @@ class local_biz_cart_external extends external_api{
                                     'userid'=>new external_value(PARAM_INT, 'user id', VALUE_OPTIONAL),
                                     'userfullname'=>new external_value(PARAM_RAW, 'user fullname', VALUE_OPTIONAL),
                                     'action'=>new external_value(PARAM_RAW, 'order id', VALUE_OPTIONAL),
+                                    'message'=>new external_value(PARAM_RAW, 'message', VALUE_OPTIONAL),
                                     'eventdate' => new external_value(PARAM_RAW, 'order date', VALUE_OPTIONAL),
                                     
                                 ), 'individual records', VALUE_OPTIONAL
