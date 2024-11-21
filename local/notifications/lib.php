@@ -406,7 +406,7 @@ class notifications
                 [enroluser_fullname], [enroluser_email]";
                 break;
             case 'users_welcome_email':
-                $strings = "[employee_name], [employee_email],
+                $strings = "[employee_organization], [employee_name], [employee_email],
                 [employee_username], [employee_password]";
                 break;
         }

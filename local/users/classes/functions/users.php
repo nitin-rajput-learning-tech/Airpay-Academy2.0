@@ -57,7 +57,7 @@ class users {
             $userdata->open_supervisorempid = $DB->get_field('user', 'open_employeeid', array('id' =>
              $userdata->open_supervisorid));
         }
-        $userdata->emailpassword = $userdata->password;
+        $userdata->userpassword = $userdata->password;
         $userdata->password = hash_internal_user_password($userdata->password);
         $createpassword = $userdata->createpassword;
         $data = user_create_user($userdata, false);

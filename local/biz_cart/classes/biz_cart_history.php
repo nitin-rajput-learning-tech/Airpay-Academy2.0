@@ -295,6 +295,7 @@ class biz_cart_history
                     $event = payment_added::create([
                         'context' => $context,
                         'userid' => $USER->id,
+                        'courseid' => $data->itemid,
                         'relateduserid' => $data->userid,
                         'objectid' => $id,
                         'other' => [

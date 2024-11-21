@@ -26,8 +26,12 @@
     <TABLE NAME="paygw_airpay_errorlog" COMMENT="Stores airpay payment error log">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
-        <FIELD NAME="airpay_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="airpay_id" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="error" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="error log"/>
+        <FIELD NAME="order_state" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="state of order"/>
+        <FIELD NAME="paymentarea" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="paymentarea"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

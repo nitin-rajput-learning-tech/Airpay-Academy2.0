@@ -80,6 +80,11 @@
                                                 {{#deleteaction}}
                                                     {{{ deleteaction }}}
                                                 {{/deleteaction}}
+                                                {{#viewpaymentlog}}
+                                                   <a class="dropdown-item" href="{{ viewpaymentlog }}" title= "{{#str}}viewpaymentlog, local_courses{{/str}}">
+                                                        <i class="fa fa-history" aria-hidden="true"></i>{{#str}}viewpaymentlog, local_courses{{/str}}
+                                                    </a>
+                                                {{/viewpaymentlog}}
                                                 </div>
                                         </div>
                                         {{/actions}}

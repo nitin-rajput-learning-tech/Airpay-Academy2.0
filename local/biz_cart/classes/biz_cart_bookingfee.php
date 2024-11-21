@@ -29,9 +29,9 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once __DIR__ . '/../lib.php';
 
-define('local_biz_cart_BOOKINGFEE_ANY', 0);
-define('local_biz_cart_BOOKINGFEE_EACHPURCHASE', 1);
-define('local_biz_cart_BOOKINGFEE_ONLYONCE', 2);
+define('LOCAL_BIZCART_BOOKINGFEE_ANY', 0);
+define('LOCAL_BIZCART_BOOKINGFEE_EACHPURCHASE', 1);
+define('LOCAL_BIZCART_BOOKINGFEE_ONLYONCE', 2);
 
 /**
  * Class biz_cart
@@ -81,9 +81,9 @@ class biz_cart_bookingfee
                     return false;
                 }
             }
-            $itemid = local_biz_cart_BOOKINGFEE_ONLYONCE;
+            $itemid = LOCAL_BIZCART_BOOKINGFEE_ONLYONCE;
         } else {
-            $itemid = local_biz_cart_BOOKINGFEE_EACHPURCHASE;
+            $itemid = LOCAL_BIZCART_BOOKINGFEE_EACHPURCHASE;
         }
 
         // See if we are about to rebook, we don't add the booking fee.
@@ -103,18 +103,18 @@ class biz_cart_bookingfee
      * @param int $bookingfeetype
      * @return bool
      */
-    private static function user_has_paid_fee(int $userid, int $bookingfeetype = local_biz_cart_BOOKINGFEE_ANY)
+    private static function user_has_paid_fee(int $userid, int $bookingfeetype = LOCAL_BIZCART_BOOKINGFEE_ANY)
     {
 
-        if ($bookingfeetype === local_biz_cart_BOOKINGFEE_ANY) {
+        if ($bookingfeetype === LOCAL_BIZCART_BOOKINGFEE_ANY) {
             // Any booking fee type. So look for all of them and merge.
             $records1 = biz_cart_history::return_items_from_history(
-                local_biz_cart_BOOKINGFEE_ONLYONCE,
+                LOCAL_BIZCART_BOOKINGFEE_ONLYONCE,
                 'local_biz_cart',
                 'bookingfee',
                 $userid);
             $records2 = biz_cart_history::return_items_from_history(
-                local_biz_cart_BOOKINGFEE_EACHPURCHASE,
+                LOCAL_BIZCART_BOOKINGFEE_EACHPURCHASE,
                 'local_biz_cart',
                 'bookingfee',
                 $userid);

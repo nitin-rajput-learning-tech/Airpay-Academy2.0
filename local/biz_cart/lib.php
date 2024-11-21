@@ -351,4 +351,120 @@ function paymentcourses_filter($mform){
     $select->setMultiple(true);
 } 
 
+function get_course_transaction_log($tablelimits, $filtervalues) {
+        global $DB, $USER;
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+        $countsql = "SELECT COUNT(ae.id)";
+        $selectsql = "SELECT ae.*,c.fullname as coursename,CONCAT(u.firstname, ' ', u.lastname) as username";
+        $fromsql = " FROM {paygw_airpay_errorlog} ae";
+        $joinsql = " LEFT JOIN {course} c ON c.id = ae.courseid
+                     LEFT JOIN {user} u ON u.id = ae.userid ";
+        $wheresql = " WHERE 1=1 ";
+        $params = [];
+
+        if (!is_siteadmin($USER)) {
+            $wheresql .= $costcenterpathconcatsql;
+        }
+        // Additional filter example for search query.
+        if (!empty($filtervalues->search_query)) {
+            $wheresql .= " AND (u.username LIKE :searchquery1 OR CONCAT(u.firstname, ' ', u.lastname) LIKE :searchquery2 OR c.fullname LIKE :searchquery3) ";
+            $params['searchquery1'] = '%' . $filtervalues->search_query . '%';
+            $params['searchquery2'] = '%' . $filtervalues->search_query . '%';
+            $params['searchquery3'] = '%' . $filtervalues->search_query . '%';
+        }
+        if(!empty($filtervalues->courses)){
+            $filtercourses = explode(',', $filtervalues->courses);
+            list($filtercoursessql, $filtercoursesparams) = $DB->get_in_or_equal($filtercourses, SQL_PARAMS_NAMED, 'courses', true, false);
+            $params = array_merge($params, $filtercoursesparams);
+            $wheresql .= " AND (ae.courseid $filtercoursessql) ";
+        }
+        
+        $orderbysql = " ORDER BY ae.id DESC ";
+        // Pagination
+        $limitfrom = $tablelimits->start;
+        $limitnum = $tablelimits->length;
+        // Get the count of filtered records.
+        $count = $DB->count_records_sql($countsql . $fromsql . $joinsql . $wheresql, $params);
+
+        // Retrieve the transaction records.
+        $transactions = $DB->get_records_sql($selectsql . $fromsql . $joinsql . $wheresql . $orderbysql, $params, $limitfrom, $limitnum);
+        $data = array();
+        foreach ($transactions as $transaction) {
+                    $coursedetails = [];
+                    $coursedetails['courseid'] = $transaction->courseid;
+                    $coursedetails['coursename'] = $transaction->coursename;
+                    $coursedetails['message'] = $transaction->error;
+                    $coursedetails['userid'] = $transaction->userid;
+                    $coursedetails['userfullname'] = $transaction->username;
+                    $coursedetails['orderid'] = $transaction->airpay_id;
+                    $coursedetails['order_state'] = $transaction->order_state;
+                    $coursedetails['paymentarea'] = $transaction->paymentarea == 'fee' ? 'Buy Now' : ($transaction->paymentarea == 'cart' ? 'Cart' : '');
+                    $coursedetails['orderdate'] = date('d/m/Y',$transaction->timecreated);
+                    $data[] = $coursedetails;
+        }
+        return ['count' => $count, 'data' => $data];
+    }
+
+    function get_course_standard_log($tablelimits, $filtervalues) {
+        global $DB, $USER;
+        $costcenterpathconcatsql = (new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
+        $countsql = "SELECT COUNT(l.id)";
+        $selectsql = "SELECT l.id, l.eventname, l.timecreated, l.userid, l.action, l.target, l.courseid, u.firstname, u.lastname, c.fullname AS course_name,l.other";
+        $fromsql = " FROM {logstore_standard_log} l";
+        $joinsql = " LEFT JOIN {course} c ON c.id = l.courseid
+                    JOIN {user} u ON u.id = l.userid ";
+        $wheresql = " WHERE component = 'local_biz_cart' ";
+        $params = [];
+
+        if (!is_siteadmin($USER)) {
+            $wheresql .= $costcenterpathconcatsql;
+        }
+        // Additional filter example for search query.
+        if (!empty($filtervalues->search_query)) {
+            $wheresql .= " AND (u.username LIKE :searchquery1 OR CONCAT(u.firstname, ' ', u.lastname) LIKE :searchquery2 OR c.fullname LIKE :searchquery3) ";
+            $params['searchquery1'] = '%' . $filtervalues->search_query . '%';
+            $params['searchquery2'] = '%' . $filtervalues->search_query . '%';
+            $params['searchquery3'] = '%' . $filtervalues->search_query . '%';
+        }
+        if(!empty($filtervalues->courses)){
+            $filtercourses = explode(',', $filtervalues->courses);
+            list($filtercoursessql, $filtercoursesparams) = $DB->get_in_or_equal($filtercourses, SQL_PARAMS_NAMED, 'courses', true, false);
+            $params = array_merge($params, $filtercoursesparams);
+            $wheresql .= " AND (l.courseid $filtercoursessql) ";
+        }
+        
+        $orderbysql = " ORDER BY l.id DESC ";
+        // Pagination
+        $limitfrom = $tablelimits->start;
+        $limitnum = $tablelimits->length;
+        // Get the count of filtered records.
+        $count = $DB->count_records_sql($countsql . $fromsql . $joinsql . $wheresql, $params);
+        // Retrieve the event records.
+        $transactions = $DB->get_records_sql($selectsql . $fromsql . $joinsql . $wheresql . $orderbysql, $params, $limitfrom, $limitnum);
+        $data = array();
+        foreach ($transactions as $transaction) {
+                    $coursedetails = [];
+                    $coursedetails['courseid'] = $transaction->courseid;
+                    $coursedetails['coursename'] = $transaction->course_name;
+                    $coursedetails['eventname'] = $transaction->eventname;
+                    $coursedetails['userid'] = $transaction->userid;
+                    $coursedetails['userfullname'] = $transaction->firstname. ' '. $transaction->lastname;
+                    $coursedetails['action'] = $transaction->target . ' ' .  $transaction->action;
+                    $coursedetails['eventdate'] = date('d/m/Y',$transaction->timecreated);
+                    $data[] = $coursedetails;
+        }
+        return ['count' => $count, 'data' => $data];
+    }
+
+    function logs_filters_form($filterparams, $ajaxformdata = null){
+
+    global $CFG, $PAGE,$USER;
+
+    require_once($CFG->dirroot . '/local/courses/filters_form.php');
+
+    $action = isset($filterparams['action']) ? $filterparams['action'] : '';
+    $fields =array('paymentcourses');
+    $mform = new filters_form(null, array('filterlist'=> $fields, 'filterparams' => $filterparams, 'action' => $action), 'post', '', null, true, $ajaxformdata);
+    return $mform;
+}
 

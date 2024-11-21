@@ -274,6 +274,7 @@ class biz_cart
                     $event = item_added::create([
                         'context' => $context,
                         'userid' => $USER->id,
+                        'courseid' => $itemid,
                         'relateduserid' => $userid,
                         'other' => [
                             'itemid' => $itemid,

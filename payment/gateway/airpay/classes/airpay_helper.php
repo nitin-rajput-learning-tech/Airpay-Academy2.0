@@ -113,7 +113,18 @@ class airpay_helper
 			    $course->amount = $cartitem->price;
 			    $course->status = 1;
 			    $course->timecreated = time();
-			    $DB->insert_record('paygw_course_enrolmentlog', $course);
+			    $id = $DB->insert_record('paygw_course_enrolmentlog', $course);
+                if($id){
+                    $error = new \stdClass();
+	                $error->error = 'Order id -"'.$neworder->ap_orderid.'" created for course "('.$course->courseid.')" by user with userid "('.$course->userid.')".';
+	                $error->airpay_id = $neworder->ap_orderid;
+                    $error->courseid = $course->courseid;
+                    $error->userid = $course->userid;
+                    $error->order_state = 'Order Created';
+                    $error->paymentarea = 'cart';
+	                $error->timecreated = time();
+	                $DB->insert_record('paygw_airpay_errorlog', $error);
+                }
             } 
         }else{
             $instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$neworder->itemid));
@@ -129,7 +140,18 @@ class airpay_helper
 			$course->amount = $instance->cost;
 			$course->status = 1;
 			$course->timecreated = time();
-			$DB->insert_record('paygw_course_enrolmentlog', $course);
+			$id = $DB->insert_record('paygw_course_enrolmentlog', $course);
+            if($id){
+                $error = new \stdClass();
+	            $error->error = 'Order id -"'.$neworder->ap_orderid.'" created for course "('.$course->courseid.')" by user with userid "('.$course->userid.')".';
+	            $error->airpay_id = $neworder->ap_orderid;
+                $error->courseid = $course->courseid;
+                $error->userid = $course->userid;
+                $error->order_state = 'Order Created';
+                $error->paymentarea = 'fee';
+	            $error->timecreated = time();
+	            $DB->insert_record('paygw_airpay_errorlog', $error);
+            }
         }    
         return $neworder;
     }

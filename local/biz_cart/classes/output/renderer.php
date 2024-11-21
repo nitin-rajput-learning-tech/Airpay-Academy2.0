@@ -112,45 +112,54 @@ class renderer extends plugin_renderer_base
             return  $this->render_from_template('local_costcenter/cardPaginate', $context);
         }
     }
-    // function get_user_transactions_for_admin(){
-    //     global $DB, $OUTPUT;
-    //     $transactions = $DB->get_records('paygw_airpay' ,[]);
-    //     foreach ($transactions as $transaction){
-    //         $user = \core_user::get_user($transaction->userid);
-    //         $userfullname = $user->firstname . ' ' . $user->lastname;
-    //         if($transaction->component == 'local_biz_cart'){
-    //             $carthistory = $DB->get_records('local_biz_cart_history',['identifier' => $transaction->itemid]);
-    //                 foreach($carthistory as $cartitem){
-    //                     $coursedetails = [];
-    //                     $coursedetails['courseid'] = $cartitem->itemid;
-    //                     $coursedetails['coursename'] = $cartitem->itemname;
-    //                     $coursedetails['userid'] = $cartitem->userid;
-    //                     $coursedetails['userfullname'] = $userfullname;
-    //                     $coursedetails['orderid'] = $transaction->ap_orderid;
-    //                     $coursedetails['transactioncode'] = $transaction->paymentid;
-    //                     $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
-    //                     $coursedetails['amount'] = $cartitem->price .' INR';
-    //                     $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
-    //                     $data[] = $coursedetails;
-    //              } 
-    //         }else{
-    //             $enrolinstance = $DB->get_record('enrol', ['id' => $transaction->itemid]);
-    //             $coursename = $DB->get_field('course', 'fullname', ['id' => $enrolinstance->courseid]);
-    //             $coursedetails = [];
-    //             $coursedetails['courseid'] = $enrolinstance->courseid;
-    //             $coursedetails['coursename'] = $coursename;
-    //             $coursedetails['orderid'] = $transaction->ap_orderid;
-    //             $coursedetails['transactioncode'] = $transaction->paymentid;
-    //             $coursedetails['userid'] = $transaction->userid;
-    //             $coursedetails['userfullname'] = $userfullname;
-    //             $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);;
-    //             $coursedetails['amount'] = number_format($enrolinstance->cost, 2) .' INR';
-    //             $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
-    //             $data[] = $coursedetails;
-    //     }
-    // }
-    // $records['records'] = $data;
-    // echo $OUTPUT->render_from_template('local_biz_cart/transaction_details_for_admin', $records);
-    // }
+    public function view_course_transaction_log($filter = false, $formattype){
+        global $USER;
+        $courses = optional_param('courseid', '', PARAM_RAW);
+        $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
+        $options = array('targetID' => 'view_course_transaction_log','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
+        $options['methodName']='local_biz_cart_view_course_transaction_log';
+        $options['templateName']='local_biz_cart/log_report'; 
+       
+        $options = json_encode($options);
 
+        $dataoptions = json_encode(array('userid' =>$USER->id,'contextid' => $systemcontext->id, 'courses' => $courses));
+        $filterdata = json_encode(array('courses' => $courses));
+        $context = [
+                'targetID' => 'view_course_transaction_log',
+                'options' => $options,
+                'dataoptions' => $dataoptions,
+                'filterdata' => $filterdata
+        ];
+
+        if($filter){
+            return  $context;
+        }else{
+            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
+        }
+    }
+    public function view_course_standard_log($filter = false, $formattype){
+        global $USER;
+        $courses = optional_param('courseid', '', PARAM_RAW);
+        $systemcontext =(new \local_notifications\lib\accesslib())::get_module_context();
+        $options = array('targetID' => 'view_course_standard_log','perPage' => 10, 'cardClass' => 'w_oneintwo', 'viewType' => 'table');
+        $options['methodName']='local_biz_cart_view_course_standard_log';
+        $options['templateName']='local_biz_cart/standard_log_report'; 
+       
+        $options = json_encode($options);
+
+        $dataoptions = json_encode(array('userid' =>$USER->id,'contextid' => $systemcontext->id, 'courses' => $courses));
+        $filterdata = json_encode(array('courses' => $courses));
+        $context = [
+                'targetID' => 'view_course_standard_log',
+                'options' => $options,
+                'dataoptions' => $dataoptions,
+                'filterdata' => $filterdata
+        ];
+
+        if($filter){
+            return  $context;
+        }else{
+            return  $this->render_from_template('local_costcenter/cardPaginate', $context);
+        }
+    }
 }

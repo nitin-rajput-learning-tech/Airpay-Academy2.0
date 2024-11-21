@@ -901,6 +901,7 @@ class local_courses_external extends external_api {
                                   'grader' => new external_value(PARAM_RAW, 'grader', VALUE_OPTIONAL),
                                   'activity' => new external_value(PARAM_RAW, 'activity', VALUE_OPTIONAL),
                                   'requestlink' => new external_value(PARAM_RAW, 'requestlink', VALUE_OPTIONAL),
+                                  'viewpaymentlog' => new external_value(PARAM_RAW, 'requestlink', VALUE_OPTIONAL),
                                   'skillname' => new external_value(PARAM_RAW, 'skillname', VALUE_OPTIONAL),
                                   'ratings_value' => new external_value(PARAM_RAW, 'ratings_value', VALUE_OPTIONAL),
                                   'ratingenable' => new external_value(PARAM_BOOL, 'ratingenable', VALUE_OPTIONAL),

@@ -329,6 +329,17 @@ function xmldb_local_users_upgrade($oldversion)
         
         upgrade_plugin_savepoint(true, 2022101800.21, 'local', 'users');
     }
+    
+    if ($oldversion < 2022101800.22) {
+
+        $string = array('name' => '[employee_organization]','module' => 'users','usercreated' => '2','timecreated' => $time,'usermodified' => 2,'timemodified' => NULL);
+            if(!$DB->record_exists('local_notification_strings', $string)){
+                $string_obj = (object)$string;
+                $string_obj->timecreated = time();
+                $DB->insert_record('local_notification_strings', $string_obj);
+            }
+        upgrade_plugin_savepoint(true, 2022101800.22, 'local', 'users');
+    }
 
     return true;
 }
