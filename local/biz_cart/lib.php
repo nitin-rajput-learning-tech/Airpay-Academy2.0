@@ -441,25 +441,28 @@ function get_course_transaction_log($tablelimits, $filtervalues) {
         $count = $DB->count_records_sql($countsql . $fromsql . $joinsql . $wheresql, $params);
         // Retrieve the event records.
         $transactions = $DB->get_records_sql($selectsql . $fromsql . $joinsql . $wheresql . $orderbysql, $params, $limitfrom, $limitnum);
-        $data = array();
         foreach ($transactions as $transaction) {
+            $data = [];
             $other = json_decode($transaction->other);
             if($transaction->target . '_' .  $transaction->action == 'item_added'){
                         $data['itemid'] = $other->itemid;
                         $data['component'] = $other->component;
-                    $message = get_string('useraddeditem', 'local_biz_cart', $data);
+                        $data['relateduserid'] =  $transaction->relateduserid;
+                        $data['userid'] =  $transaction->userid;
+                        $message = get_string('useraddeditem', 'local_biz_cart', $data);
             }elseif($transaction->target . '_' .  $transaction->action == 'payment_added'){
-                            $data = [
+                        $data = [
                             'userid' => $transaction->userid,
                             'relateduserid' => $transaction->relateduserid,
                             'itemid' => $other->itemid,
                             'component' => $other->component,
                             'identifier' => $other->identifier,
-                            ];
-                $message = get_string('payment_added_log', 'local_biz_cart', $data);
+                        ];
+                        $message = get_string('payment_added_log', 'local_biz_cart', $data);
             }elseif($transaction->target . '_' .  $transaction->action == 'checkout_completed'){
-                 $data['identifier'] = $other->identifier;
-                $message =  get_string('checkout_completed_desc', 'local_biz_cart', $data);
+                        $data['userid'] =  $transaction->userid;
+                        $data['identifier'] = $other->identifier;
+                        $message =  get_string('checkout_completed_desc', 'local_biz_cart', $data);
             }
                     $coursedetails = [];
                     $coursedetails['courseid'] = $transaction->courseid;
