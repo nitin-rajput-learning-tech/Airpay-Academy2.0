@@ -40,7 +40,8 @@
                         <td>{{#transactioncode}}{{transactioncode}}{{/transactioncode}}{{^transactioncode}}N/A{{/transactioncode}}</td>
                         <td>{{invoicedate}}</td>
                         <td>{{#amount}}<i class="fa fa-inr mr-1"></i>{{ amount }}{{/amount}}{{^amount}}N/A{{/amount}}</td>
-                        <td>{{status}}</td>
+                        <td>{{#completed}}<span class="text-success">{{#str}}timemodified, local_biz_cart{{/str}}</span>{{/completed}}
+                            {{^completed}}<span class="text-danger">{{#str}}failed, local_biz_cart{{/str}}</span>{{/completed}}</td>
                     </tr>
                 {{/records}}
             </tbody>

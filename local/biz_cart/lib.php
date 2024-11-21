@@ -232,7 +232,12 @@ function local_biz_cart_leftmenunode(){
                     $coursedetails['transactioncode'] = $transaction->transactionid;
                     $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
                     $coursedetails['amount'] = number_format($transaction->amount);
-                    $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
+                    if($transaction->status == 2) {
+                        $coursedetails['completed'] = true;
+                    } else {
+                        $coursedetails['completed'] = false;
+                    }
+                    $coursedetails['status'] = $transaction->status == 2 ? get_string('timemodified', 'local_biz_cart') : get_string('failed', 'local_biz_cart');
                     $data[] = $coursedetails;
         }
         } else {
@@ -298,7 +303,12 @@ function local_biz_cart_leftmenunode(){
                     $coursedetails['transactioncode'] = $transaction->transactionid;
                     $coursedetails['invoicedate'] = date('d/m/Y',$transaction->timecreated);
                     $coursedetails['amount'] = number_format($transaction->amount);
-                    $coursedetails['status'] = $transaction->status == 2 ? 'Completed' : 'Failed';
+                    if($transaction->status == 2) {
+                        $coursedetails['completed'] = true;
+                    } else {
+                        $coursedetails['completed'] = false;
+                    }
+                    $coursedetails['status'] = $transaction->status == 2 ? get_string('timemodified', 'local_biz_cart') : get_string('failed', 'local_biz_cart');
                     $data[] = $coursedetails;
         }
         return ['count' => $count, 'data' => $data];
