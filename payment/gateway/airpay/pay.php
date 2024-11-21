@@ -23,6 +23,7 @@
  */
 use core_payment\helper;
 use paygw_airpay\airpay_helper;
+use local_biz_cart\event\payment_added;
 require_once __DIR__ . '/../../../config.php';
 require_once $CFG->libdir . '/filelib.php';
 global $DB, $USER, $PAGE, $CFG, $OUTPUT;
@@ -82,6 +83,7 @@ if(!empty($order)){
 	            $DB->insert_record('paygw_airpay_errorlog', $error);
             }
 		}else if ($order->paymentarea == 'fee'){
+                $context = context_system::instance();
 	            $role = $DB->get_record('role', array('shortname' => 'employee'), '*', MUST_EXIST);
                 $enrolplugin = enrol_get_plugin('fee');
     		    $instance = $DB->get_record('enrol', array('roleid'=>$role->id, 'id'=>$order->itemid));
@@ -94,6 +96,20 @@ if(!empty($order)){
                 $error->userid = $order->userid;
 	            $error->timecreated = time();
 	            $DB->insert_record('paygw_airpay_errorlog', $error);
+                $event = payment_added::create([
+                        'context' => $context,
+                        'userid' => $order->userid,
+                        'courseid' => $instance->courseid,
+                        'relateduserid' => $order->userid,
+                        'objectid' => $order->id,
+                        'other' => [
+                            'identifier' => $order->id,
+                            'itemid' => $instance->courseid,
+                            'component' => $component,
+                        ],
+                    ]);
+
+                    $event->trigger();
 	}
 }
 // $request = [
