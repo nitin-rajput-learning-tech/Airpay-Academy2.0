@@ -500,3 +500,24 @@ div.shopping-cart-items-container img.sc-cart-item-image{
 .popover-region-biz_carts#nav-biz_cart-popover-container .popover-region-content-container {
     max-height: 400px;
 }
+#page-local-biz_cart-checkout .shopping_cart ,
+#page-payment-gateway-airpay-process .shopping_cart{
+    background-color: #f5fafe;
+    margin: auto;
+    width: 50%;
+    margin-top: 6rem;
+    padding: 2rem;
+}
+#page-local-biz_cart-checkout .shopping_cart .text-muted,
+#page-payment-gateway-airpay-process .shopping_cart .text-muted{
+    font-weight: 500;
+    font-size: 14px;
+    color: #858585 !important;
+}
+#page-local-biz_cart-checkout .shopping_cart .btn-info,
+#page-payment-gateway-airpay-process .shopping_cart .btn-info{
+    min-width: 250px;
+    border-radius: 0;
+    padding: 4px;
+    margin-bottom: 0.5rem;
+}

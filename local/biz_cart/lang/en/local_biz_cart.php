@@ -157,10 +157,10 @@ $string['notenoughcredits'] = 'Not enough credits available.';
 $string['total'] = 'Total';
 $string['total_net'] = 'Total Net:';
 $string['total_gross'] = 'Total Gross:';
-$string['paymentsuccessful'] = 'Payment successful!';
+$string['paymentsuccessful'] = 'Thankyou for your payment';
 $string['paymentdenied'] = 'Payment denied!';
 $string['paymentsuccessfultext'] = 'Your payment provider has confirmed the payment. Thank you for your purchase.';
-$string['backtohome'] = 'Back to home.';
+$string['continue'] = 'Continue';
 
 $string['success'] = 'Success';
 $string['pending'] = 'Pending';
