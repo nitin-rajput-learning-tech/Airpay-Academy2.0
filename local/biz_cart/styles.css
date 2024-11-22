@@ -497,3 +497,6 @@ div.shopping-cart-items-container img.sc-cart-item-image{
     height: 100%;
     min-height: 50px;
 }
+.popover-region-biz_carts#nav-biz_cart-popover-container .popover-region-content-container {
+    max-height: 400px;
+}
