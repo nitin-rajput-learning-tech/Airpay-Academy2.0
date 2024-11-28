@@ -70,7 +70,7 @@ class report_dailyuniquelogins extends reportbase {
 
     function where(){
        
-        $this->sql .= " WHERE lsl.action LIKE '%loggedin%' and lsl.userid > 2 ";
+        $this->sql .= " WHERE lsl.action LIKE '%loggedin%' and lsl.userid > 2 AND u.deleted=0 AND u.suspended=0 ";
         $costcenterpathconcatsql = (new \local_users\lib\accesslib())::get_costcenter_path_field_concatsql($columnname = 'u.open_path', null, 'lowerandsamepath');
         if (is_siteadmin()) {
             $this->sql .= "";
