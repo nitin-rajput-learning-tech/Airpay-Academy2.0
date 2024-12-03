@@ -474,3 +474,5 @@ $string['courseprice_notempty'] = 'The course price can not be empty';
 $string['courseprice_notzero'] = 'The course price can not be 0';
 $string['positive_integer_required'] = 'The course price must be a positive numeric value.';
 $string['viewpaymentlog'] = 'View Payment Log';
+$string['viewdetails'] = 'View Details';
+$string['price'] = 'Price';

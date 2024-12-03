@@ -19,28 +19,21 @@ $id  = required_param('id', PARAM_INT); // Course id
 $coursecontext = context_course::instance($id);
 $PAGE->set_context($coursecontext);
 $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
-require_login();
 $PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_search'), 'callbacks' => array()));
 local_search_include_search_js();
 $course = get_course($id);
 if($USER->open_costcenterid != $course->open_costcenterid){
 	redirect($CFG->wwwroot.'/local/courses/courses.php');
 }
-/* $course = $DB->get_record('course', array('id'=>$id));
 if(!$course){
 	print_error('invalidcourseid');
-} */
+}
 
 $PAGE->set_title($course->fullname);
 $userrolecontext = local_costcenter\lib\accesslib::get_module_context();
-list($zero, $org_id, $ctr_id, $bu, $cu, $territory) = explode("/",$USER->open_path);
-$usermainpath = $DB->get_field('local_costcenter', 'path', array('id' => $org_id));
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
 if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switch_path()) || in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true))){
 	$switchedrole = false;
-	if($usermainpath != $course->open_path){
-		print_error("You do not have permission to view/access this page");
-	}
 	$PAGE->navbar->add(get_string('pluginname','local_search'), $catalogurl);
 }else{
 	$switchedrole = true;
@@ -255,8 +248,17 @@ echo '<div class="content_era_left">';
         echo '<div class="crs_detail_head">
         <p>Course Information</p>
         </div>';
-    	  echo'<ul class="crse_details">
-				<li class="my-1 incentives__text d-flex align-items-center">
+    	  echo'<ul class="crse_details">';
+	    	   	if($course->price_status == 1 && $course->courseprice > 0 ){
+	    	   		echo'<li class="my-1 incentives__text d-flex align-items-center">
+						<div class="category_type d-flex align-items-center">
+							<span class="tag_icon coursedetailsicon"><i class="fa fa-tags faicon" aria-hidden="true"></i></span>
+							<span>'.get_string('price', 'local_courses').'</span>
+						</div>
+						<b class="iteminfo ml-2">'.$course->courseprice.'</b>
+					</li>';
+	    	   	}
+			echo'<li class="my-1 incentives__text d-flex align-items-center">
 					<div class="category_type d-flex align-items-center">
 						<span class="career_icon"></span>
 						<span>'.get_string('category', 'local_courses').'</span>

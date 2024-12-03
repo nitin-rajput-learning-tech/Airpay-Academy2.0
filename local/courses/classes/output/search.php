@@ -467,7 +467,7 @@ class search implements renderable{
                     $request = $DB->get_field_sql($sql, array('componentid' => $courseid, 'compname' => $component, 'createdbyid' => $USER->id));
 
                     if ($request == 'PENDING') {
-                        $selfenrolbutton = '<button class="cat_btn btn-primary viewmore_btn">' . get_string('requestprocessing', 'local_search') . ' </button>';
+                        $selfenrolbutton = '<button class="cat_btn btn btn-block btn-primary viewmore_btn">' . get_string('requestprocessing', 'local_search') . ' </button>';
                     } else {
                         $selfenrolbutton = requestapi::get_requestbutton($componentid, $component, $courseinfo->fullname);
                     }
