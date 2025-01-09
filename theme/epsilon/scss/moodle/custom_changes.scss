@@ -71,9 +71,9 @@ body .nav-tabs.inner_tabs .nav-link.active{
 .usermenu .userbutton .usertext{
     text-transform: capitalize;
 }
-table {
-    border:1px solid #ddd;
-}
+// table {
+//     border:1px solid #ddd;
+// }
 p, table tbody tr td{
     font-size: 12px;
 }
@@ -2407,7 +2407,7 @@ i.icon {
 [data-region=right-hand-drawer].drawer {
     z-index: 1020;
     position: fixed;
-    top: 120px;
+    // top: 120px;
     right: 0;
     height: calc(100% - 50px);
     width: 320px;
@@ -3338,9 +3338,9 @@ body .que .info>div {
     margin-bottom: 0;
     font-size: 15px;
 }
-table.generaltable{
-    box-shadow: 0px 4px 11px 3px #00000036;
-}
+// table.generaltable{
+//     box-shadow: 0px 4px 11px 3px #00000036;
+// }
 
 .ui-widget {
     font-family: inherit !important;
@@ -3461,4 +3461,22 @@ body#page-login-index .form-group .show_pwd{
     position: absolute;
     top: 9px;
     right: 28px;
+}
+table { 
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    border-collapse: separate;
+    border-spacing: 0;
+    thead{
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+        th{
+            &:first-child{
+                border-top-left-radius: 10px;
+            }
+            &:last-child{
+                border-top-right-radius: 10px;
+            }
+        }
+    }
 }

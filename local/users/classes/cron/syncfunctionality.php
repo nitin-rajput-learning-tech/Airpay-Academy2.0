@@ -120,7 +120,6 @@ class syncfunctionality
                 $this->mandatory_field_validation($user, $field);
                 $this->mandatory_field_count++;
             }
-
             // To check for existing user record.
             $sql = "SELECT u.id,u.username,u.open_path, u.email FROM {user} u WHERE ((u.email = :email) OR (u.open_employeeid = :open_employeeid) OR (u.username = :username)) AND u.deleted = 0";
             $params = array();
@@ -982,6 +981,7 @@ class syncfunctionality
         $user->open_hrmsrole = $excel->role;
         $user->institution = $excel->bussiness_unit_code;
         $user->usermodified = $USER->id;
+        $user->userpassword = $excel->password;
         if (!empty(trim($excel->password))) {
             $user->password = hash_internal_user_password(trim($excel->password));
         } else {
@@ -1020,6 +1020,10 @@ class syncfunctionality
         local_costcenter_get_costcenter_path($userobject);
 
         $insertnewuserfromcsv = user_create_user($userobject, false);
+        $userobject->id = $insertnewuserfromcsv;
+        $notification = new \local_users\notification();
+        $type = 'users_welcome_email';
+        $notification->users_notification($type, $userobject);
         $userobject = (object)$userobject;
         $userobject->id = $insertnewuserfromcsv;
         if ($userobject->force_password_change == 1) {

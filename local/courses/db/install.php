@@ -33,10 +33,6 @@ function xmldb_local_courses_install(){
         $field2 = new xmldb_field('open_categoryid');
         $field2->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
         $dbman->add_field($table, $field2);
-
-        $field3 = new xmldb_field('open_identifiedas');
-        $field3->set_attributes(XMLDB_TYPE_CHAR, '255',null, null, null, null);
-        $dbman->add_field($table, $field3);
 		
 		$field4 = new xmldb_field('open_points');
         $field4->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, 0);
@@ -88,6 +84,21 @@ function xmldb_local_courses_install(){
         $field15->set_attributes(XMLDB_TYPE_CHAR, '255', null, null, null, null);
         if (!$dbman->field_exists($table, $field15)) {
             $dbman->add_field($table, $field15);
+        }
+        $field16 = new xmldb_field('price_status');
+        $field16->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, null);
+        if (!$dbman->field_exists($table, $field16)) {
+            $dbman->add_field($table, $field16);
+        }
+        $field17 = new xmldb_field('courseprice');
+        $field17->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, null);
+        if (!$dbman->field_exists($table, $field17)) {
+            $dbman->add_field($table, $field17);
+        }
+        $field19 = new xmldb_field('open_identifiedas');
+        $field19->set_attributes(XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        if (!$dbman->field_exists($table, $field19)) {
+            $dbman->add_field($table, $field19);
         }
 	}
     /*notifictaions content*/
@@ -171,9 +182,6 @@ function xmldb_local_courses_install(){
         $table->add_field('sent_by', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
         $table->add_field('status', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('costcenterid'));
-        // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('notificationid'));
-        // $table->add_key('foreign', XMLDB_KEY_FOREIGN, array('notificationid'));
         $result = $dbman->create_table($table);
     }
     $table = new xmldb_table('local_notification_strings');
@@ -186,9 +194,7 @@ function xmldb_local_courses_install(){
         $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
         $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
-        // $table->add_field('pluginname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, '0');
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-        // $table->add_key('primary', XMLDB_KEY_FOREIGN, array('id'));
         $result = $dbman->create_table($table);
     }
     // data insertion.

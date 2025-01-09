@@ -22,6 +22,15 @@
             </a>
         </div>
     </li>
+     {{# bulkstatusupdate}}
+    <li>
+        <div class='coursebackup course_extended_menu_itemcontainer'>
+            <a id='extended_menu_syncusers' title='{{# str}}bulkstatuschange, local_users{{/ str}}' class='course_extended_menu_itemlink' href='{{config.wwwroot}}/local/users/sync/changestatus.php'>
+                <i class='icon fa fa-user-times fa-fw' aria-hidden='true' aria-label=''></i>
+            </a>
+        </div>
+    </li>
+    {{/ bulkstatusupdate}}
     <li>
         <div class='coursebackup course_extended_menu_itemcontainer'>
             <a id='extended_menu_syncusers' title='{{# str}}bulkuploadusers, local_users{{/ str}}' class='course_extended_menu_itemlink' href='{{config.wwwroot}}/local/users/sync/hrms_async.php'>

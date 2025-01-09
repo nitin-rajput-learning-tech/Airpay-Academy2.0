@@ -299,7 +299,7 @@ class local_courses_renderer extends plugin_renderer_base {
     $sql = " FROM {course} c
             JOIN {course_categories} cat ON cat.id = c.category
             JOIN {enrol} e ON e.courseid = c.id AND 
-                        (e.enrol = 'manual' OR e.enrol = 'self' OR e.enrol = 'classroom' OR e.enrol = 'learningplan')
+                        (e.enrol = 'manual' OR e.enrol = 'self' OR e.enrol = 'classroom' OR e.enrol = 'learningplan' OR e.enrol = 'fee' OR e.enrol = 'auto')
             JOIN {user_enrolments} ue ON ue.enrolid = e.id
             JOIN {user} u ON u.id = ue.userid AND u.deleted = 0 AND u.suspended=0
             JOIN {local_costcenter} lc ON lc.path = u.open_path
@@ -491,5 +491,90 @@ class local_courses_renderer extends plugin_renderer_base {
     protected function render_selfcompletion(\local_courses\output\selfcompletion $page) {
         $data = $page->export_for_template($this);
         return parent::render_from_template('local_courses/selfcompletion', $data);
+    }
+
+    public function render_courses_index() {
+        global $DB, $OUTPUT, $CFG;
+        // Fetch visible courses with the 'topics' format from the database
+        
+        $sql = "SELECT c.* FROM {course} c
+                  JOIN {local_dashboardcourses} ldc 
+                       ON FIND_IN_SET(c.id, ldc.courseids) > 0
+                    WHERE c.visible > 0
+              ORDER BY c.id DESC";
+        $courses = $DB->get_records_sql($sql);
+
+        $coursesdata = [];
+        $tempCourses = [];
+        $active = 'active'; // The 'active' class for the first carousel item
+
+        // Loop through courses and group them in sets of three
+        foreach ($courses as $course) {
+            // Clean up course summary
+            $coursesummary = strip_tags(format_text($course->summary));
+            // $summarystring = strlen($coursesummary) > 100 ? substr($coursesummary, 0, 100) . " ..." : $coursesummary;
+                $summarystring = $coursesummary;
+            $coursetype = $DB->get_field('local_course_types', 'name', ['id' => $course->open_identifiedas]);
+
+            // Check for course image
+            $img = '';
+            if (file_exists($CFG->dirroot . '/local/includes.php')) {
+                require_once($CFG->dirroot . '/local/includes.php');
+                $includes = new user_course_details();
+                $courseimage = $includes->course_summary_files($course);
+                if (is_object($courseimage)) {
+                    $img = $courseimage->out();
+                } else {
+                    $img = $courseimage;
+                }
+            }
+            if($course->price_status == 1){
+                $addtocart = new moodle_url('local/search/coursedetails.php', ['id' => $course->id]);
+                $courseprice = number_format($course->courseprice, 2);
+            } else {
+                $courseprice = '';
+            }
+            $categoryname = $DB->get_field('course_categories','name',array('id'=>$course->category));
+            // Build the current course data
+            $courseData = [
+                'name' => format_string($course->fullname),
+                'summary' => $summarystring,
+                'coursetype' => $coursetype,
+                'courseimage' => $img,
+                'addtocart' => $addtocart,
+                'courseprice' => $courseprice,
+                'categoryname' => $categoryname,
+                'price_status' => $course->price_status == 1 ? TRUE : FALSE,
+                'buy' => $addtocart,
+                'viewmoreurl' => new moodle_url('local/search/coursedetails.php', ['id' => $course->id])
+
+            ];
+            // Assign to courseone, coursetwo, or coursethree
+            if (empty($tempCourses['courseone'])) {
+                $tempCourses['courseone'] = $courseData; // Add first course to 'courseone'
+            } elseif (empty($tempCourses['coursetwo'])) {
+                $tempCourses['coursetwo'] = $courseData; // Add second course to 'coursetwo'
+            } else {
+                $tempCourses['coursethree'] = $courseData; // Add third course to 'coursethree'
+                $tempCourses['active'] = $active; // Set active class for the first group
+                $coursesdata[] = $tempCourses; // Push the group of three to $coursesdata
+                $tempCourses = []; // Reset for the next group
+                $active = null; // Remove 'active' class after the first set
+            }
+
+        }
+
+        // If there are leftover courses (less than 3), add them
+        if (!empty($tempCourses)) {
+            $tempCourses['active'] = $active; // Ensure the active class is applied if it's the first set
+            $coursesdata[] = $tempCourses;
+        }
+
+        // Pass data to the Mustache template
+        $context = [
+            'courses' => $coursesdata
+        ];
+
+        return $OUTPUT->render_from_template('local_courses/nologincourses', $context);
     }
 }

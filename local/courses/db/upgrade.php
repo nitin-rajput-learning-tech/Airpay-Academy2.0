@@ -219,5 +219,49 @@ function xmldb_local_courses_upgrade($oldversion)
         }
         upgrade_plugin_savepoint(true, 2022101800.18, 'local', 'courses');
     }
+     if ($oldversion < 2022101800.19) {
+        $time = time();
+        $table = new xmldb_table('local_dashboardcourses');
+        if (!$dbman->table_exists($table)) {
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('courseids', XMLDB_TYPE_CHAR,  '255', null, null, null, null);
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+            $dbman->create_table($table);
+        }
+        upgrade_plugin_savepoint(true, 2022101800.19, 'local', 'courses');
+    }
+
+    if ($oldversion <  2023060600.16) {
+        $table = new xmldb_table('course');
+        $field1 = new xmldb_field('price_status');
+        $field1->set_attributes(XMLDB_TYPE_INTEGER, '2', null, null, null, 0);
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+        $field2 = new xmldb_field('courseprice');
+        $field2->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, null);
+        if (!$dbman->field_exists($table, $field2)) {
+            $dbman->add_field($table, $field2);
+        }        
+        upgrade_plugin_savepoint(true, 2023060600.16, 'local', 'courses');
+    }
+    if ($oldversion <  2023060600.23) {
+        $table = new xmldb_table('course');
+        $field1 = new xmldb_field('courseprice');
+        $field1->set_attributes(XMLDB_TYPE_FLOAT, '20,2', null, null, null, null);
+        if ($dbman->field_exists($table, $field1)) {
+            $dbman->change_field_type($table, $field1);
+        }     
+        upgrade_plugin_savepoint(true, 2023060600.23, 'local', 'courses');
+    }
+    if ($oldversion < 2023060600.24) {
+        $table = new xmldb_table('course');
+        $field = new xmldb_field('open_coursetype');
+        if ($dbman->field_exists($table, $field)) {
+            $field->set_attributes(XMLDB_TYPE_INTEGER, '1', null, null, null, 0);
+            $dbman->change_field_type($table, $field);
+        }
+        upgrade_plugin_savepoint(true, 2023060600.24, 'local', 'courses');
+    }
     return true;
 }

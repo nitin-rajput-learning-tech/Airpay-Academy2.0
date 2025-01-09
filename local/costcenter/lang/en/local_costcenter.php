@@ -411,4 +411,12 @@ $string['requiredopen_level5department'] = 'Please select a Territory';
 
 $string['allonlineexamcount'] = 'Total Onlineexams';
 $string['activeonlineexamcount'] = 'Active Onlineexams';
-$string['inactiveonlineexamcount'] = 'In-Active Onlineexams';
+$string['inactiveonlineexamcount'] = 'Inactive Onlineexams';
+//Bulk users status change help.
+$string['statuschangehelp'] = '<div class="helpmanual_table"><table class="generaltable" border="1">
+<tr>
+<th>Field</th><th>Restriction</th>
+<tr><td>email</td><td>Enter valid email.</td></tr>
+<tr><td>status</td><td>Enter employee status as either \'Active\' or \'Inactive\' or \'Delete\', avoid additional spaces.</td></tr>
+</table>';
+//Bulk users status change help .

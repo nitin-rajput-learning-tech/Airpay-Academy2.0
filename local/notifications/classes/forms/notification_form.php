@@ -27,13 +27,13 @@ require_once($CFG->dirroot .'/local/costcenter/lib.php');
 use moodleform;
 use stdClass;
 class notification_form extends moodleform {
-    public $formstatus;
+    // public $formstatus;
     public function __construct($action = null, $customdata = null, $method = 'post', $target = '', $attributes = null, $editable = true, $formdata = null) {
 
-        $this->formstatus = array(
-            'generaldetails' => get_string('generaldetails', 'local_users'),
-            'otherdetails' => get_string('otherdetails', 'local_users'),
-            );
+        // $this->formstatus = array(
+        //     'generaldetails' => get_string('generaldetails', 'local_users'),
+        //     'otherdetails' => get_string('otherdetails', 'local_users'),
+        //     );
         parent::__construct($action, $customdata, $method, $target, $attributes, $editable, $formdata);
     }
 
@@ -41,7 +41,7 @@ class notification_form extends moodleform {
         global $DB, $PAGE, $USER, $OUTPUT;
         $mform = $this->_form;
         $lib = new \notifications();
-        $form_status = $this->_customdata['form_status'];
+        // $form_status = $this->_customdata['form_status'];
         $org = $this->_customdata['open_costcenterid'];
         $id = $this->_customdata['id'] > 0 ? $this->_customdata['id'] : 0;
 		$context =(new \local_notifications\lib\accesslib())::get_module_context();
@@ -53,7 +53,7 @@ class notification_form extends moodleform {
 			$formdata = new stdClass();
 		}
 		$categorycontext = (new \local_notifications\lib\accesslib())::get_module_context();
-        if($form_status == 0){          
+        // if($form_status == 0){          
             local_costcenter_get_hierarchy_fields($mform, $this->_ajaxformdata, $this->_customdata,range(1,1), false, 'local_users', $categorycontext, $multiple = false);
             $notification_type = array();
             $select = array();
@@ -141,7 +141,7 @@ class notification_form extends moodleform {
 				$mform->setType('moduleid', PARAM_RAW);
 				$courseselect->setMultiple(true);
 
-				$nonmodulenotifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE parent_module IN (SELECT lnti.id FROM {local_notification_type} AS lnti WHERE shortname IN ('certification', 'request', 'challenge'))");
+				$nonmodulenotifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE parent_module IN (SELECT lnti.id FROM {local_notification_type} AS lnti WHERE shortname IN ('certification', 'request', 'challenge', 'users'))");
 	    		$mform->hideIf('moduleid', 'notificationid', 'in', $nonmodulenotifications);
 				$mform->hideIf('moduleid', 'notificationid', 'eq', NULL);
 		   	}
@@ -168,16 +168,16 @@ class notification_form extends moodleform {
 
             $mform->addElement('editor', 'body', get_string('emp_body', 'local_notifications'), array(), array('autosave'=>false));
             $mform->setType('body', PARAM_RAW);
-        }// end of form status = 0 condition    
-        else if($form_status ==1){
-        	$notifytypesql = "SELECT lnt.shortname FROM {local_notification_type} AS lnt
-        		JOIN {local_notification_info} AS lni ON lni.notificationid=lnt.id WHERE lni.id=:id";
-        	$notif_type = $DB->get_field_sql($notifytypesql, array('id'=>$id));
-			$strings = $lib->get_string_identifiers($notif_type);
-        	$mform->addElement('static', 'string_identifiers', get_string('string_identifiers', 'local_notifications'),  $strings);
-            $mform->addElement('editor', 'adminbody', get_string('admin_body', 'local_notifications'), array(), array('autosave'=>false));
-            $mform->setType('adminbody', PARAM_RAW);
-        }// end of form status = 1 condition
+        // }// end of form status = 0 condition    
+        // else if($form_status ==1){
+        // 	$notifytypesql = "SELECT lnt.shortname FROM {local_notification_type} AS lnt
+        // 		JOIN {local_notification_info} AS lni ON lni.notificationid=lnt.id WHERE lni.id=:id";
+        // 	$notif_type = $DB->get_field_sql($notifytypesql, array('id'=>$id));
+		// 	$strings = $lib->get_string_identifiers($notif_type);
+        // 	$mform->addElement('static', 'string_identifiers', get_string('string_identifiers', 'local_notifications'),  $strings);
+        //     $mform->addElement('editor', 'adminbody', get_string('admin_body', 'local_notifications'), array(), array('autosave'=>false));
+        //     $mform->setType('adminbody', PARAM_RAW);
+        // }// end of form status = 1 condition
         
         $mform->addElement('hidden', 'id', $id, array('id' => 'notificationid'));
         $mform->setType('id', PARAM_INT);
@@ -318,8 +318,19 @@ class notification_form extends moodleform {
                 	}
                 }
             }
-		}
-         //}
+		}	
+			$sql = "SELECT lni.id, lnt.shortname, lc.fullname
+					  FROM {local_notification_info} lni
+					  JOIN {local_notification_type} lnt ON lni.notificationid = lnt.id
+					  JOIN {local_costcenter} lc ON lni.open_path LIKE CONCAT('/', lc.id)
+					 WHERE lni.open_path = :open_path
+					 	   AND lni.notificationid = :notificationid ";
+			$notification = $DB->get_record_sql($sql, ['open_path' => '/'.$data['open_costcenterid'], 'notificationid' => $data['notificationid']]);
+
+			if ((empty($id) || $id != $notification->id) && $notification->shortname == 'users_welcome_email') {
+				$errors['open_costcenterid'] = get_string('notificationexist', 'local_notifications', $notification->fullname);
+			}
+        
 		$course_reminder_id = $DB->get_field('local_notification_type', 'id', array('shortname' => 'course_reminder'));
 		if($data['notificationid'] == $course_reminder_id){
 			if(empty($data['completiondays']) && ($data['completiondays']=="" || $data['completiondays'] == 0)){
@@ -333,19 +344,15 @@ class notification_form extends moodleform {
 
 		}
         
-			// if(empty($data['course'])){
-			// 	$errors['course'] = get_string('selectcourse', 'local_notifications'); 
-			// }
-			$notifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE shortname IN ('course_reminder','classroom_reminder','onlinetest_reminder','program_reminder','program_session_reminder','certification_reminder', 'feedback_due')");
-			
-			if (in_array($data['notificationid'], $notifications))  {
-				if(empty($data['reminderdays'])){
-					$errors['reminderdays'] = get_string('reminderdaysrequired', 'local_notifications'); 
-				} elseif ($data['reminderdays'] < 0) {
-					$errors['reminderdays'] = get_string('reminderdaysnumeric', 'local_notifications');
-				}
+		$notifications = $DB->get_records_sql_menu("SELECT id, id as nid FROM {local_notification_type} WHERE shortname IN ('course_reminder','classroom_reminder','onlinetest_reminder','program_reminder','program_session_reminder','certification_reminder', 'feedback_due')");
+		
+		if (in_array($data['notificationid'], $notifications))  {
+			if(empty($data['reminderdays'])){
+				$errors['reminderdays'] = get_string('reminderdaysrequired', 'local_notifications'); 
+			} elseif ($data['reminderdays'] < 0) {
+				$errors['reminderdays'] = get_string('reminderdaysnumeric', 'local_notifications');
 			}
-			
+		}			
         
         return $errors;
     }

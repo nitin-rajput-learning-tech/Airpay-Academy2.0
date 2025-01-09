@@ -7,7 +7,7 @@ $PAGE->requires->jquery_plugin('ui');
 $PAGE->requires->jquery_plugin('ui-css');
 $PAGE->requires->js_call_amd('local_classroom/classroom', 'load');
 $PAGE->requires->js_call_amd('local_search/courseinfo', 'load');
-
+$PAGE->requires->js_call_amd('core_payment/gateways_modal', 'init');
 require_once $CFG->libdir.'/gradelib.php';
 require_once $CFG->dirroot.'/local/search/lib.php';
 require_once $CFG->dirroot.'/grade/lib.php';
@@ -19,24 +19,22 @@ $id  = required_param('id', PARAM_INT); // Course id
 $coursecontext = context_course::instance($id);
 $PAGE->set_context($coursecontext);
 $PAGE->set_url('/local/search/coursedetails.php', array('id' =>$id));
-require_login();
 $PAGE->requires->event_handler('#usernotcompleted_sessionprereq', 'click', 'M.util.show_confirm_dialog', array('message' => get_string('usernotcompleted_prereq', 'local_search'), 'callbacks' => array()));
 local_search_include_search_js();
 $course = get_course($id);
 if($USER->open_costcenterid != $course->open_costcenterid){
 	redirect($CFG->wwwroot.'/local/courses/courses.php');
 }
-/* $course = $DB->get_record('course', array('id'=>$id));
 if(!$course){
 	print_error('invalidcourseid');
-} */
+}
 
 $PAGE->set_title($course->fullname);
 $userrolecontext = local_costcenter\lib\accesslib::get_module_context();
 $catalogurl = new moodle_url('/local/search/allcourses.php', array());
 if(!is_siteadmin() && (empty(local_costcenter\lib\accesslib::get_user_role_switch_path()) || in_array(0, local_costcenter\lib\accesslib::get_user_role_switch_path(), true))){
 	$switchedrole = false;
-	$PAGE->navbar->add(get_string('e_learning_courses','local_search'), $catalogurl);
+	$PAGE->navbar->add(get_string('pluginname','local_search'), $catalogurl);
 }else{
 	$switchedrole = true;
 	if(has_capability('local/courses:manage', $userrolecontext) || is_siteadmin()){
@@ -201,7 +199,15 @@ echo '<div class="content_era_left">';
     	<div class="Course_content p-0">';
 
     	$managecoursecap = has_capability('local/courses:manage', $coursecontext);
-        if($enrolled || is_siteadmin() || $managecoursecap){
+    	if (!isloggedin()) {
+    		echo '<div class="start_course p-2">
+	    		<a href="'.$CFG->wwwroot.'/login/index.php">
+	                <button type="button" class="crs_content btn btn-lg btn-primary w-full ng-binding">
+	                   Login
+	                </button>
+	            </a>
+    		</div>';
+    	} else if($enrolled || is_siteadmin() || $managecoursecap){
         	echo '<div class="start_course p-2">
 		    		<a href="'.$CFG->wwwroot.'/course/view.php?id='.$course->id.'">
 		                <button type="button" class="crs_content btn btn-lg btn-primary w-full ng-binding">
@@ -214,7 +220,11 @@ echo '<div class="content_era_left">';
         	// $enrol = $DB->get_record('enrol', array('courseid'=>$id, 'enrol'=>'self'));
         	$coursesearchlib = new \local_courses\output\search();
         	if(!$switchedrole){
-        		echo $coursesearchlib->get_enrollbutton(false,$course);
+        		$enroll = is_enrolled($coursecontext, $USER->id, '', true);
+        		echo $coursesearchlib->get_enrollbutton($enroll,$course);
+        		if($course->price_status == 1){
+					echo $coursesearchlib->get_add_to_cart_button($enroll,$course);
+        		}
         	}
 	  	  	   // echo '<div class="content_era_right">
 			// 	<div class="enrol">
@@ -238,8 +248,17 @@ echo '<div class="content_era_left">';
         echo '<div class="crs_detail_head">
         <p>Course Information</p>
         </div>';
-    	  echo'<ul class="crse_details">
-				<li class="my-1 incentives__text d-flex align-items-center">
+    	  echo'<ul class="crse_details">';
+	    	   	if($course->price_status == 1 && $course->courseprice > 0 ){
+	    	   		echo'<li class="my-1 incentives__text d-flex align-items-center">
+						<div class="category_type d-flex align-items-center">
+							<span class="tag_icon coursedetailsicon"><i class="fa fa-tags faicon" aria-hidden="true"></i></span>
+							<span>'.get_string('price', 'local_courses').'</span>
+						</div>
+						<b class="iteminfo ml-2">'.$course->courseprice.'</b>
+					</li>';
+	    	   	}
+			echo'<li class="my-1 incentives__text d-flex align-items-center">
 					<div class="category_type d-flex align-items-center">
 						<span class="career_icon"></span>
 						<span>'.get_string('category', 'local_courses').'</span>

@@ -50,26 +50,26 @@ function local_notifications_output_fragment_new_notification_form($args)
     $data = new stdclass();
     if ($id > 0) {
         $data = $DB->get_record('local_notification_info', array('id' => $id));
-        if ($args->form_status == 0) {
+        // if ($args->form_status == 0) {
             if ($data->courses)
                 $data->course = explode(',', $data->courses);
             $data->body =       array('text' => $data->body, 'format' => 1);
-        } else {
-            $data->adminbody =       array('text' => $data->adminbody, 'format' => 1);
-        }
+        // } else {
+        //     $data->adminbody =       array('text' => $data->adminbody, 'format' => 1);
+        // }
         if (!empty($data->moduleid)) {
             $args->moduleid = explode(',', $data->moduleid);
         }
         if (!empty($formdata)) {
             $args->moduleid = $formdata['moduleid'];
         }
-        $customdata = array('form_status' => $args->form_status, 'id' => $id, 'org' => $data->costcenterid, 'notificationid' => $args->notificationid, 'moduleid' => $args->moduleid, 'open_path' => $data->open_path);
+        $customdata = array('id' => $id, 'org' => $data->costcenterid, 'notificationid' => $args->notificationid, 'moduleid' => $args->moduleid, 'open_path' => $data->open_path);
         local_costcenter_set_costcenter_path($customdata);
         //print_object($formdata);
         $mform = new \local_notifications\forms\notification_form(null, $customdata, 'post', '', null, true, $formdata);
         $mform->set_data($data);
     } else {
-        $params = array('form_status' => $args->form_status, 'id' => $id, 'org' => $formdata['open_costcenterid'], 'notificationid' => $formdata['notificationid'], 'moduleid' => $formdata['moduleid']);
+        $params = array('id' => $id, 'org' => $formdata['open_costcenterid'], 'notificationid' => $formdata['notificationid'], 'moduleid' => $formdata['moduleid']);
         local_costcenter_set_costcenter_path($params);
         $mform = new \local_notifications\forms\notification_form(null, $params, 'post', '', null, true, $formdata);
     }
@@ -79,20 +79,20 @@ function local_notifications_output_fragment_new_notification_form($args)
         $mform->is_validated();
     }
 
-    $formheaders = array_keys($mform->formstatus);
-    $nextform = array_key_exists($args->form_status, $formheaders);
-    if ($nextform === false) {
-        return false;
-    }
-    $renderer = $PAGE->get_renderer('local_notifications');
+    // $formheaders = array_keys($mform->formstatus);
+    // $nextform = array_key_exists($args->form_status, $formheaders);
+    // if ($nextform === false) {
+    //     return false;
+    // }
+    // $renderer = $PAGE->get_renderer('local_notifications');
     ob_start();
-    $formstatus = array();
-    foreach (array_values($mform->formstatus) as $k => $mformstatus) {
-        $activeclass = $k == $args->form_status ? 'active' : '';
-        $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass, 'form-status' => $k);
-    }
-    $formstatusview = new \local_notifications\output\form_status($formstatus);
-    $o .= $renderer->render($formstatusview);
+    // $formstatus = array();
+    // foreach (array_values($mform->formstatus) as $k => $mformstatus) {
+    //     $activeclass = $k == $args->form_status ? 'active' : '';
+    //     $formstatus[] = array('name' => $mformstatus, 'activeclass' => $activeclass, 'form-status' => $k);
+    // }
+    // $formstatusview = new \local_notifications\output\form_status($formstatus);
+    // $o .= $renderer->render($formstatusview);
     $mform->display();
     $o .= ob_get_contents();
     ob_end_clean();
@@ -116,7 +116,7 @@ class notifications
                 $strings = "[course_title], [course_enrolstartdate],
                             [course_enrolenddate], [course_department],
                             [course_description], [course_url],
-                            [enroluser_fullname], [enroluser_email]";
+                            [enroluser_fullname], [enroluser_email], [enroluser_payment]";
                 break;
             case 'course_complete':
                 $strings = "[course_title], [course_enrolstartdate],
@@ -404,6 +404,10 @@ class notifications
                 [onlineexams_enrolenddate], [onlineexams_department],
                 [onlineexams_description], [onlineexams_url],
                 [enroluser_fullname], [enroluser_email]";
+                break;
+            case 'users_welcome_email':
+                $strings = "[employee_organization], [employee_name], [employee_email],
+                [employee_username], [employee_password]";
                 break;
         }
         return $strings;

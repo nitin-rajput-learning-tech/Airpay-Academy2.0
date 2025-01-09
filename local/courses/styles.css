@@ -127,13 +127,14 @@ body#page-local-courses-courseenrol img#image.content-img {
 #page-local-courses-courses .course_container {
     background-color: #fff;
     color: #000;
-    box-shadow: 7px 7px 30px #0000005C;
+    /* box-shadow: 7px 7px 30px #0000005C; */
     min-height: 215px !important;
     border-radius: 0;
     height: 100%;
     max-width: 430px;
     margin: 0 auto;
     overflow: hidden;
+    border:1px solid #dee2e6 !important
 }
 
 .courseimg {
@@ -1089,6 +1090,52 @@ body#page-local-courses-userdashboard .card_list_view {
     font-size: 18px;
     color: #ff721c;
 }
-#page-local-courses-courses .course_name a{
+/* #page-local-courses-courses .course_name a{
     font-family: Georgia,serif;
+} */
+/*homepage changes*/
+.homepage #cardCarousel .card h5.card-title.course_name b{
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient:vertical;
+    overflow: hidden;
+    -webkit-line-clamp: 1;
+}
+.homepage #cardCarousel .card .view_btn{
+    color: white; 
+    padding: 7px 20px; 
+    font-size: 0.75rem;    
+}
+.homepage #cardCarousel .card .badge{
+    top: 10px; 
+    right: 10px; 
+    font-size: 0.65rem; 
+    padding: 5px 7px;
+}
+.homepage #cardCarousel .card p.desc,
+#page-local-courses-courses .coursedesc .desc {
+    text-overflow: ellipsis;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    overflow: hidden;
+    white-space: normal;
+    margin-bottom: 1rem;
+    padding: 0;
+}
+.homepage #cardCarousel .card .buttons{
+    gap: 16px;
+}
+#page-local-search-coursedetails .crse_details .coursedetailsicon {
+    width: 25px;
+    height: 25px;
+    display: inline-block;
+    margin-right: 12px;
+}
+#page-local-search-coursedetails .crse_details .coursedetailsicon .faicon{
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    font-size: 16px;
 }

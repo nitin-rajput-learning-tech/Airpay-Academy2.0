@@ -43,8 +43,15 @@ redirect_if_major_upgrade_required();
 $edit   = optional_param('edit', null, PARAM_BOOL);    // Turn editing on and off
 $reset  = optional_param('reset', null, PARAM_BOOL);
 $fredirect  = optional_param('fredirect', true, PARAM_BOOL);
-if($fredirect){
-    redirect($CFG->wwwroot.'/my/dashboard.php');
+$categorycontext = (new \local_users\lib\accesslib())::get_module_context();
+$systemcontext = \local_costcenter\lib\accesslib::get_module_context();
+if ((has_capability('local/users:manage', $categorycontext) && has_capability('local/users:view',
+      $categorycontext) || is_siteadmin()) && $fredirect) {
+    redirect($CFG->wwwroot.'/my/dashboard.php');    
+} else if (!is_siteadmin() && !has_capability('local/costcenter:manage_multiorganizations', $systemcontext) && !has_capability('local/costcenter:view', $systemcontext) && !has_capability('local/costcenter:manage', $systemcontext) && !has_capability('local/classroom:manageclassroom', $systemcontext)  && has_capability('block/trainerdashboard:viewtrainerslist', $systemcontext) && $fredirect) {
+    redirect($CFG->wwwroot . '/blocks/trainerdashboard/dashboard.php');
+} else {
+    redirect($CFG->wwwroot.'/local/search/allcourses.php');
 }
 require_login();
 

@@ -87,7 +87,6 @@ class local_courses_external extends external_api {
             }
             parse_str($serialiseddata, $data);
         }
-
         $warnings = array();
         if ($id) {
             $course = get_course($id);
@@ -166,7 +165,9 @@ class local_courses_external extends external_api {
                 if($validateddata->open_path){
                     $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                 }
-
+                if($validateddata->price_status == 1) {
+                    $validateddata->selfenrol = 1;
+                }
                 $validateddata->startdate=time();
                 $validateddata->enddate=0;
 
@@ -183,12 +184,13 @@ class local_courses_external extends external_api {
                         $trendingclass->trending_modules_crud($courseid->id, 'local_courses');
                     }
                 }
-                //$coursedata = $courseid;
+                $coursedata = $courseid;
                 $enrol_status = $validateddata->selfenrol;
                // insert::add_enrol_method_tocourse($coursedata,$enrol_status);
-
+                add_enrolon_payment_method_tocourse($coursedata);
             } elseif($validateddata->id > 0) {
                 $open_path=$DB->get_field('course', 'open_path', array('id' => $validateddata->id));
+                $coursedata = $DB->get_record('course', array('id' => $validateddata->id));
                 list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$open_path);
                 $validateddata->open_identifiedas=$validateddata->identifiedtype;
                 if($form_status == 0){
@@ -204,13 +206,23 @@ class local_courses_external extends external_api {
                             $validateddata->category = $DB->get_field('local_costcenter', 'category', array('path' => $validateddata->open_path));
                          }
                     }
-
+                    if($validateddata->price_status == 1) {
+                        $validateddata->selfenrol = 1;
+                    }
+                    if($validateddata->price_status == 0) {
+                        $validateddata->courseprice = '';
+                    }
                     update_course($validateddata, $editoroptions);
 
                     // purge appropriate caches in case fix_course_sortorder() did not change anything
                     cache_helper::purge_by_event('changesincourse');
                     cache_helper::purge_by_event('changesincoursecat');
-
+                    if($coursedata->price_status !== $validateddata->price_status || $coursedata->courseprice !== $validateddata->courseprice || $coursedata->fullname !== $validateddata->fullname || $coursedata->summary !== $validateddata->summary){
+                        rebuild_cart_cache_for_course($validateddata->id);
+                    }
+                   if($coursedata->price_status !== $validateddata->price_status || $validateddata->price_status == 0 || $org !== $validateddata->open_costcenterid) {
+                        remove_course_from_all_user_carts($validateddata->id);
+                   }
 
                     if(class_exists('\block_trending_modules\lib')){
                         $trendingclass = new \block_trending_modules\lib();
@@ -226,7 +238,7 @@ class local_courses_external extends external_api {
                     }
                    //  $coursedata = $DB->get_record('course',array('id' => $data['id']));
                    //  insert::add_enrol_method_tocourse($coursedata, $coursedata->selfenrol);
-
+                    add_enrolon_payment_method_tocourse($validateddata);
                 }else{
                     $data = (object)$data;
 					if($data->open_enablepoints == 1){
@@ -659,6 +671,7 @@ class local_courses_external extends external_api {
             }
             $category->coursecount = $category->coursecount-1;
             $DB->update_record('course_categories',$category);
+            remove_course_from_all_user_carts($id);
             $return = true;
         } else {
             $return = false;
@@ -888,6 +901,7 @@ class local_courses_external extends external_api {
                                   'grader' => new external_value(PARAM_RAW, 'grader', VALUE_OPTIONAL),
                                   'activity' => new external_value(PARAM_RAW, 'activity', VALUE_OPTIONAL),
                                   'requestlink' => new external_value(PARAM_RAW, 'requestlink', VALUE_OPTIONAL),
+                                  'viewpaymentlog' => new external_value(PARAM_RAW, 'requestlink', VALUE_OPTIONAL),
                                   'skillname' => new external_value(PARAM_RAW, 'skillname', VALUE_OPTIONAL),
                                   'ratings_value' => new external_value(PARAM_RAW, 'ratings_value', VALUE_OPTIONAL),
                                   'ratingenable' => new external_value(PARAM_BOOL, 'ratingenable', VALUE_OPTIONAL),
@@ -1180,6 +1194,7 @@ class local_courses_external extends external_api {
 			$dataobject->costcenterid = $costcenterid;
             $class = (new \block_trending_modules\lib())->trending_modules_crud($dataobject, 'local_courses');
         }
+        remove_course_from_all_user_carts($id);
         return $return;
     }
     public static function course_update_status_returns(){
@@ -1758,4 +1773,86 @@ class local_courses_external extends external_api {
             'level' => new external_value(PARAM_TEXT, 'level', VALUE_OPTIONAL, ''),
         ));
     }
+    /** Describes the parameters for adddashboard_course webservice.
+   * @return external_function_parameters
+  */
+  public static function adddashboardcourses_parameters() {
+    return new external_function_parameters(
+      array(
+        'contextid' => new external_value(PARAM_INT, 'The context id for the course'),
+        'jsonformdata' => new external_value(PARAM_RAW, 'The data from the create course form, encoded as a json array')
+      )
+    );
+  }
+
+  /**
+   * adddashboard_course 
+   *
+   * @param int $contextid
+   * @param string $jsonformdata
+   * @return array  success.
+   */
+  public static function adddashboardcourses($contextid, $jsonformdata) {
+    global $DB;
+    $params = self::validate_parameters(self::adddashboardcourses_parameters(),
+                                            ['contextid' => $contextid, 'jsonformdata' => $jsonformdata]);
+    $context = context::instance_by_id($params['contextid'], MUST_EXIST);
+    // We always must call validate_context in a webservice.
+    self::validate_context($context);
+        $data = array();
+
+        if (!empty($params['jsonformdata'])) {
+
+            $serialiseddata = json_decode($params['jsonformdata']);
+            if(is_object($serialiseddata)){
+                $serialiseddata = serialize($serialiseddata);
+            }
+            parse_str($serialiseddata, $data);
+        }
+
+        $mform = new local_courses\form\adddashboardcourse_form(null, array(
+         'courseids' => $data['courseids']), 'post', '', null, true, $data);
+        $validateddata = $mform->get_data();
+         
+        if($validateddata){
+           if(empty($validateddata->courseids)){
+                $validateddata->courseids = 0;
+            } else {
+                $validateddata->courseids = implode(',',$validateddata->courseids);
+            }
+            if($validateddata->id > 0){
+                $DB->update_record('local_dashboardcourses',$validateddata);
+            } else{
+                $DB->insert_record('local_dashboardcourses',$validateddata);
+            }
+            $resp = true;
+          if($data['courseids'] != '_qf__force_multiselect_submission') 
+            $success = get_string('success_message','local_courses');
+        } else {
+            throw new moodle_exception('Error in submission');
+            // $resp = false;
+            // $success = get_string('fail_message','local_courses');
+        }
+    $return = [
+       'return' => $resp,
+       'success' => $success,
+       // 'courseid' => 0,
+       // 'enrolid' => 0,
+    ];
+    return $return; 
+  }
+
+  /**
+   * Returns description of adddashboardcourses  value
+   * @return external_description
+   */
+
+  public static function adddashboardcourses_returns() {
+      return new external_single_structure([
+            'return' => new external_value(PARAM_BOOL, 'return'),
+            'success' => new external_value(PARAM_RAW, 'success'),
+            // 'courseid' => new external_value(PARAM_INT, 'courseid'),
+            // 'enrolid' => new external_value(PARAM_RAW, 'enrolid'),
+        ]);
+  }
 }

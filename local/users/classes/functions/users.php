@@ -57,6 +57,7 @@ class users {
             $userdata->open_supervisorempid = $DB->get_field('user', 'open_employeeid', array('id' =>
              $userdata->open_supervisorid));
         }
+        $userdata->userpassword = $userdata->password;
         $userdata->password = hash_internal_user_password($userdata->password);
         $createpassword = $userdata->createpassword;
         $data = user_create_user($userdata, false);
@@ -68,6 +69,10 @@ class users {
 
         } else if ($form_status == 0) {
             $userdata->id = $data;
+            $notification = new \local_users\notification();
+            $type = 'users_welcome_email';
+            $logmail = $notification->users_notification($type, $userdata);
+
             set_user_preference('auth_forcepasswordchange', $userdata->preference_auth_forcepasswordchange, $userdata);
 
             if(isset($userdata->open_path)){

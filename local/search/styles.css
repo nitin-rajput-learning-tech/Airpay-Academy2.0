@@ -504,6 +504,7 @@ body#page-local-search-allcourses .loader_container img {
 }
 body#page-local-search-allcourses .coursecard_container{
     margin:0 !important;
+    height: 100%;
 }
 body#page-local-search-allcourses .courseimg_bg {
     height: 100%;
@@ -690,7 +691,6 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 /*search page button allignments*/
 #page-local-search-allcourses .coursecontent .viewmore_btn,
 #page-local-search-allcourses .coursecontent .cat_btn{
-    padding: 4px 0 !important;
     margin: 0 10px 10px 0 !important;
     min-width: 120px;
     font-weight: 500 !important;
@@ -699,8 +699,14 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     border-color: var(--btnbordercolor);
     border-radius: 0.25rem;
     border-style: solid !important;
+    height: max-content;
 }
-
+#page-local-search-allcourses .coursecontent .btn-primary{
+    background-color: var(--primarycolor);
+    border-color: var(--primarycolor);
+    color: var(--btntextcolor);
+    border: 1px solid var(--primarycolor);
+}
 #page-local-search-allcourses .coursecontent .coursedesc .desc{
     text-overflow: ellipsis;
     overflow: hidden;
@@ -774,7 +780,7 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 #page-local-search-allcourses .coursecontent .viewmore_btn,
 #page-local-search-allcourses .coursecontent .cat_btn{
-    padding: 4px 12px!important;
+    padding: 6px 12px!important;
     flex-shrink: 0;
     white-space: nowrap;
     width: calc( 100% - 10px );
@@ -807,7 +813,13 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
     color:#fff;
 }
 #page-local-search-coursedetails .CourseDetails_content .course_title{
-    font-size: 21px;
+    font-size: 20px;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    white-space: normal;
+    line-height: 1.8;
 }
 #page-local-search-coursedetails .coursebrieflist .crs_detail_head {
     padding: 1rem;
@@ -1023,4 +1035,22 @@ body#page-local-search-allcourses .card-img-top.courseimg_container{
 }
 body#page-local-search-allcourses .coursecard_container:hover .card-img-top .courseimg_bg {
     background-size: 110%;
+}
+#page-local-search-allcourses #allcourses_section .catcourses_list .coursecard > .ng-scope, 
+#page-local-search-allcourses #allcourses_section .catcourses_list .coursecard .ng-scope .ng-scope{
+    height: 100%;
+}
+#page-local-search-coursedetails #page-header ol .breadcrumb-item span {
+  color: #fff;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  -webkit-line-clamp: 1;
+  width: 200px;
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+}
+body#page-local-search-coursedetails [data-rel="fatalerror"] {
+    margin-top: 70px;
 }

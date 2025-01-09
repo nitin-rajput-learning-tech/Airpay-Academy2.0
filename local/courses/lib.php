@@ -31,10 +31,22 @@ if(file_exists($CFG->dirroot.'/local/costcenter/lib.php')){
 require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->libdir.'/completionlib.php');
 require_once($CFG->dirroot.'/completion/completion_completion.php');
+use \local_courses\form\adddashboardcourse_form as adddashboardcourse_form;
 use \local_courses\form\custom_course_form as custom_course_form;
 use \local_courses\form\custom_courseevidence_form as custom_courseevidence_form;
+use local_biz_cart\biz_cart;
+// Define booking status parameters.
+define('LOCAL_COURSES_BOOKING_STATUSPARAM_BOOKED', 0);
+define('LOCAL_COURSES_STATUSPARAM_WAITINGLIST', 1);
+define('LOCAL_COURSES_STATUSPARAM_RESERVED', 2);
+define('LOCAL_COURSES_STATUSPARAM_NOTIFYMELIST', 3); // Get message when place is open.
+define('LOCAL_COURSES_STATUSPARAM_NOTBOOKED', 4);
+define('LOCAL_COURSES_STATUSPARAM_DELETED', 5);
 
-
+// Define status for booking & subbooking options.
+define('LOCAL_COURSES_UNVERIFIED', 0);
+define('LOCAL_COURSES_PENDING', 1);
+define('LOCAL_COURSES_VERIFIED', 2);
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -470,8 +482,8 @@ function categorylist($requiredcapability = '', $excludeid = 0, $separator = ' /
  * @param array $args List of named arguments for the fragment loader.
  * @return string
  */
-function local_courses_output_fragment_custom_course_form($args){
-    global $DB,$CFG,$PAGE;
+function local_courses_output_fragment_custom_course_form($args) {
+    global $DB, $CFG, $PAGE;
     $args = (object) $args;
     $context = $args->context;
     $renderer = $PAGE->get_renderer('local_courses');
@@ -482,8 +494,7 @@ function local_courses_output_fragment_custom_course_form($args){
         $course = course_get_format($course)->get_course();
         $category = $course->category;
         $coursecontext = context_course::instance($course->id);
-        //require_capability('moodle/course:update', $coursecontext);
-    }else{
+    } else {
         $category = $CFG->defaultrequestcategory;
     }
     $formdata = [];
@@ -491,29 +502,35 @@ function local_courses_output_fragment_custom_course_form($args){
     if (!empty($args->jsonformdata)) {
 
         $serialiseddata = json_decode($args->jsonformdata);
-        if(is_object($serialiseddata)){
-            $serialiseddata = serialize($serialiseddata);
+        if (is_object($serialiseddata)) {
+            $formdata = (array)$serialiseddata;
+        } else {
+            parse_str($serialiseddata, $formdata);
         }
-        parse_str($serialiseddata, $formdata);
     }
 
-
-    if(!empty($course)){
+    if (!empty($course) && empty($formdata)) {
         $formdata = clone $course;
         $formdata = (array)$formdata;
-
     }
 
     if ($courseid > 0) {
         $heading = get_string('updatecourse', 'local_courses');
         $collapse = false;
-        $data = $DB->get_record('course', array('id'=>$courseid));
+        $data = $DB->get_record('course', array('id' => $courseid));
+        // $categories = $DB->get_records('local_custom_fields_mapped', array('moduletype' => 'course', 'moduleid' => $courseid));
+        // if ($categories) {
+        //     foreach ($categories as $parentcat) {
+        //         $formdata['customfield_' . $parentcat->parentid] = $parentcat->category;
+        //     }
+        // }
     }
+    $overviewfilesoptions = course_overviewfiles_options($course);
     if ($courseid) {
         // Populate course tags.
         $course->tags = local_tags_tag::get_item_tags_array('local_courses', 'courses', $course->id);
-        $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes'=>$CFG->maxbytes, 'trusttext'=>false, 'noclean'=>true,'autosave'=>false);
-        $overviewfilesoptions = course_overviewfiles_options($course);
+        $editoroptions = array('maxfiles' => EDITOR_UNLIMITED_FILES, 'maxbytes' => $CFG->maxbytes, 'trusttext' => false, 'noclean' => true, 'autosave' => false);
+
         // Add context for editor.
         $editoroptions['context'] = $coursecontext;
         $editoroptions['subdirs'] = file_area_contains_subdirs($coursecontext, 'course', 'summary', 0);
@@ -521,11 +538,13 @@ function local_courses_output_fragment_custom_course_form($args){
         if ($overviewfilesoptions) {
             file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, $coursecontext, 'course', 'overviewfiles', 0);
         }
-        $get_coursedetails=$DB->get_record('course',array('id'=>$course->id));
+        $get_coursedetails = $DB->get_record('course', array('id' => $course->id));
     } else {
         // Editor should respect category context if course context is not set.
-        $editoroptions['context'] = $catcontext;
+        $editoroptions['context'] = $context;
         $editoroptions['subdirs'] = 0;
+        $editoroptions['autosave'] = 0;
+        $editoroptions['cache'] = false;
         $course = file_prepare_standard_editor($course, 'summary', $editoroptions, null, 'course', 'summary', null);
         if ($overviewfilesoptions) {
             file_prepare_standard_filemanager($course, 'overviewfiles', $overviewfilesoptions, null, 'course', 'overviewfiles', 0);
@@ -534,23 +553,37 @@ function local_courses_output_fragment_custom_course_form($args){
     if($formdata['open_points'] > 0){
         $formdata['open_enablepoints'] = true;
     }
+    // // Format `courseprice` if it exists
+    // if (isset($formdata['courseprice']) && is_numeric($formdata['courseprice'])) {
+    //     // Check if it's a whole number and format accordingly
+    //     $formdata['courseprice'] = (fmod($formdata['courseprice'], 1) == 0) ? intval($formdata['courseprice']) : number_format($formdata['courseprice'], 2);
+    // }
 
+
+
+
+    $plugin_exists = \core_component::get_plugin_directory('local', 'custom_matrix');
+    if ($plugin_exists && !empty($formdata['performancecatid'])) {
+        $performanceparentid = $DB->get_field('local_custom_category', 'parentid', array('id' => $formdata['performancecatid']));
+        $formdata['performanceparentid'] = $performanceparentid;
+    }
     $params = array(
         'course' => $course,
         'category' => $category,
         'editoroptions' => $editoroptions,
         'returnto' => $returnto,
-        'get_coursedetails'=>$get_coursedetails,
+        'get_coursedetails' => $get_coursedetails,
         'form_status' => $args->form_status,
         'costcenterid' => $data->open_path,
     );
     local_costcenter_set_costcenter_path($formdata);
+
     $mform = new custom_course_form(null, $params, 'post', '', null, true, $formdata);
     // Used to set the courseid.
 
     $mform->set_data($formdata);
 
-    if (!empty($args->jsonformdata) && strlen($args->jsonformdata)>2) {
+    if (!empty($args->jsonformdata) && strlen($args->jsonformdata) > 2) {
         // If we were passed non-empty form data we want the mform to call validation functions and show errors.
         $mform->is_validated();
     }
@@ -567,7 +600,6 @@ function local_courses_output_fragment_custom_course_form($args){
     }
     $formstatusview = new \local_courses\output\form_status($formstatus);
     $o .= $renderer->render($formstatusview);
-    // $o = $PAGE->requires->js_call_amd('local_courses/courseAjaxform', 'getCatlist');
     $mform->display();
     $o .= ob_get_contents();
     ob_end_clean();
@@ -934,7 +966,7 @@ function local_courses_output_fragment_coursestatus_display($args){
 function courses_filter($mform){
     global $DB,$USER;
 	$categorycontext = (new \local_courses\lib\accesslib())::get_module_context();
-    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 AND open_coursetype = 0 ";
+    $sql = "SELECT id, fullname FROM {course} WHERE id > 1 AND (open_coursetype = 0 AND open_coursetype IS NULL) ";
 
     if(is_siteadmin()){
        $courseslist = $DB->get_records_sql_menu($sql);
@@ -1238,7 +1270,7 @@ function local_courses_quicklink_node(){
             JOIN {local_costcenter} AS co ON co.path = c.open_path
             JOIN {course_categories} AS cc ON cc.id = c.category
             JOIN {local_course_types} As ct ON ct.id = c.open_identifiedas
-            WHERE c.id > 1 AND c.open_coursetype=0 ";
+            WHERE c.id > 1 AND (c.open_coursetype=0 OR c.open_coursetype IS NULL) ";
             
             if (is_siteadmin() && $orgid ==0) {
                 $sql .= "";
@@ -1254,12 +1286,12 @@ function local_courses_quicklink_node(){
                     JOIN {enrol} e ON e.id = ue.enrolid
                     JOIN {course} c ON  e.courseid = c.id 
                     WHERE e.status = 0 AND u.suspended = 0 AND u.deleted = 0 
-                    AND ue.status = 0 AND c.open_coursetype=0 $open_path";
+                    AND ue.status = 0 AND (c.open_coursetype=0 OR c.open_coursetype IS NULL) $open_path";
             $completioncount="SELECT count(u.id) FROM {course_completions} AS cp 
                                 JOIN {course} AS c ON cp.course = c.id 
                                 JOIN {user} AS u ON cp.userid = u.id 
                                 WHERE c.enablecompletion = 1 
-                                AND c.open_coursetype=0 $open_path";   
+                                AND (c.open_coursetype=0 OR c.open_coursetype IS NULL) $open_path";   
             $enrolcount = $DB->get_field_sql($enrolsql);
             $completioncount = $DB->get_field_sql($completioncount);
             $count_courses = $DB->count_records_sql($sql);
@@ -1308,7 +1340,7 @@ function costcenterwise_courses_count($costcenter,$department = false,$subdepart
     global $USER, $DB,$CFG;
     $params = array();
     $params['costcenterpath'] = '%/'.$costcenter.'/%';
-    $countcoursesql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath AND open_coursetype=0 ";
+    $countcoursesql = "SELECT count(id) FROM {course} WHERE concat('/',open_path,'/') LIKE :costcenterpath AND (open_coursetype = 0 OR open_coursetype IS NULL) ";
     if ($department) {
         $countcoursesql .= "  AND concat('/',open_path,'/') LIKE :departmentpath  ";
         $params['departmentpath'] = '%/'.$department.'/%';
@@ -1424,7 +1456,7 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
     $filtercategoriesparams= array();
     $filtercoursesparams = array();
     $chelper = new coursecat_helper();
-    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary,c.visible, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid FROM {course} AS c";
+    $selectsql = "SELECT c.id, ct.name as coursetype ,c.fullname, c.shortname, c.category, c.summary,c.visible, c.format ,c.selfenrol,c.open_points,c.open_path, c.open_identifiedas, c.visible, c.open_skill,c.open_categoryid,c.courseprice,c.price_status FROM {course} AS c";
     $countsql  = "SELECT count(c.id) FROM {course} AS c ";
         $open_path=(new \local_courses\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path');
         $formsql = " JOIN {local_costcenter} AS co ON co.path = c.open_path
@@ -1659,6 +1691,14 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
             $courseslist[$count]["courseid"] = $course->id;
             $courseslist[$count]["completed_count"] = $completed_count;
             $courseslist[$count]["points"] = $course->open_points != NULL ? $course->open_points: 0;
+           
+            if($course->courseprice > 0 ){
+                $courseslist[$count]["addtocart"] = true;
+            }else{
+                $courseslist[$count]["addtocart"] = false;
+            }
+            $courseslist[$count]["userid"] = $USER->id;
+            $courseslist[$count]["courseprice"] = $course->courseprice;            
             $courseslist[$count]["coursetype"] = \local_costcenter\lib::strip_tags_custom($displayed_names);
             $courseslist[$count]["course_class"] = $course->visible ? 'active' : 'inactive';
             $courseslist[$count]["grade_view"] = ((has_capability('local/courses:grade_view',
@@ -1717,7 +1757,7 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
                 $includes = new user_course_details();
                 $courseimage = $includes->course_summary_files($course);                
                 if(is_object($courseimage)){
-                    $courseslist[$count]["courseimage"] = $courseimage->out();                    
+                    $courseslist[$count]["courseimage"] = $courseimage->out();  
                 }else{
                     $courseslist[$count]["courseimage"] = $courseimage;
                 }                
@@ -1727,6 +1767,9 @@ function get_listof_courses($stable, $filterdata,$options=array()) {
             
             if(has_capability('local/courses:enrol',$maincheckcontext)&&has_capability('local/courses:manage', $maincheckcontext)){
                 $courseslist[$count]["enrollusers"] = $CFG->wwwroot."/local/courses/courseenrol.php?id=".$course->id."&enrolid=".$enrolid;
+            }
+            if(has_capability('local/courses:enrol',$maincheckcontext)&&has_capability('local/courses:manage', $maincheckcontext) && $course->price_status == 1){
+                $courseslist[$count]["viewpaymentlog"] = $CFG->wwwroot."/local/biz_cart/log_report.php?courseid=".$course->id;
             }
             if(has_capability('moodle/course:view', $context) || is_enrolled($context)){
                 $courseslist[$count]["courseurl"] = $CFG->wwwroot."/course/view.php?id=".$course->id;
@@ -2203,9 +2246,9 @@ function get_course_details($courseid) {
         $wheresql = " where 1 = 1 AND c.id = ? ";
         $courserecord = $DB->get_record_sql($selectsql.$fromsql.$joinsql.$wheresql, [$USER->id, $courseid], IGNORE_MULTIPLE);
         if ($courserecord->selfenrol == 1 && $courserecord->approvalreqd == 0) {
-            $enrollmentbtn = '<a href="javascript:void(0);" data-action="courseselfenrol'.$courseid.'" class="courseselfenrol enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_catalog/courseinfo\').test({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1}) })(event)"><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_catalog').'</button></a>';
+            $enrollmentbtn = '<a href="javascript:void(0);" data-action="courseselfenrol'.$courseid.'" class="courseselfenrol enrolled'.$courseid.'" onclick ="(function(e){ require(\'local_catalog/courseinfo\').test({selector:\'courseselfenrol'.$courseid.'\', courseid:'.$courseid.', enroll:1}) })(event)"><button class="cat_btn viewmore_btn btn-primary"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('enroll','local_catalog').'</button></a>';
         } elseif ($courserecord->selfenrol == 1 && $courserecord->approvalreqd == 1) {
-            $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('requestforenroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$courserecord->id.', component:\'elearning\',componentname:\''.$courserecord->fullname.'\'}) })(event)" ><button class="cat_btn viewmore_btn"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
+            $enrollmentbtn = '<a href="javascript:void(0);" class="cat_btn" alt = ' . get_string('requestforenroll','local_classroom'). ' title = ' .get_string('requestforenroll','local_classroom'). ' onclick="(function(e){ require(\'local_request/requestconfirm\').init({action:\'add\', componentid: '.$courserecord->id.', component:\'elearning\',componentname:\''.$courserecord->fullname.'\'}) })(event)" ><button class="cat_btn viewmore_btn btn btn-primary"><i class="fa fa-pencil-square-o" aria-hidden="true"></i>'.get_string('requestforenroll','local_classroom').'</button></a>';
         } else {
             $enrollmentbtn ='-';
         }
@@ -2483,4 +2526,242 @@ function local_courses_masterinfo(){
         $content = $OUTPUT->render_from_template('block_masterinfo/masterinfo', $templatedata);
     }
     return array('2' => $content);
+}
+function local_courses_output_fragment_adddashboardcourse_form($args){
+    global $CFG, $DB;
+    $args = (object) $args;
+    $o = '';
+    $formdata = [];
+    $params = [];
+    $id = $args->id;
+    if (!empty($args->jsonformdata)) {
+
+        $serialiseddata = json_decode($args->jsonformdata);
+        if (is_object($serialiseddata)) {
+            $serialiseddata = serialize($serialiseddata);
+        }
+        parse_str($serialiseddata, $formdata);
+    }
+    $formdata['id'] = $id;
+    if ($id > 0) {
+        $courseids = $DB->get_field('local_dashboardcourses', 'courseids', ['id' => $id]);
+        $courseidss = explode(',', $courseids);
+        $formdata['courseids'] = $courseidss;
+    }
+    $mform = new adddashboardcourse_form(null, $params, 'post', '', null, true, $formdata);
+    $mform->set_data($formdata);
+    if (!empty($args->jsonformdata)) {
+        // If we were passed non-empty form data we want the mform to call validation functions and show errors.
+        $mform->is_validated();
+    }
+
+    ob_start();
+    $mform->display();
+    $o .= ob_get_contents();
+    ob_end_clean();
+    return $o;
+}
+function add_enrolon_payment_method_tocourse($course){
+    global $DB;
+    $instance = $DB->get_record('enrol', array('courseid' => $course->id, 'enrol' => 'fee'));
+    $roleid      = $DB->get_field('role', 'id', array('shortname' => 'employee'));
+    if (empty($instance)) {
+       if ($course->id == SITEID) {
+            throw new coding_exception('Invalid request to add enrol instance to frontpage.');
+        }
+
+        $instance = new stdClass();
+        $instance->enrol          = 'fee';
+        $instance->status         = ENROL_INSTANCE_ENABLED;
+        $instance->courseid       = $course->id;
+        $instance->enrolstartdate = 0;
+        $instance->enrolenddate   = 0;
+        $instance->cost = $course->courseprice;
+        $instance->currency = 'INR';
+        $instance->roleid = $roleid;
+        $instance->customint1 = 1;
+        $instance->timemodified   = time();
+        $instance->timecreated    = $instance->timemodified;
+        $instance->sortorder      = $DB->get_field('enrol', 'COALESCE(MAX(sortorder), -1) + 1', array('courseid'=>$course->id));
+        $instance->id = $DB->insert_record('enrol', $instance);
+    }else{
+        $instance->cost = $course->courseprice;
+        $instance->roleid = $roleid;
+        $DB->update_record('enrol',$instance);
+    } 
+
+}
+// /**
+//  * Rebuilds cart cache for a specific course to reflect updated price.
+//  * @author Rizwana <rizwana.madire@moodle.com>
+//  * @param int $courseid The course ID.
+//  */
+// function rebuild_cart_cache_for_course(int $courseid): void {
+//     global $DB;
+//     // Fetch the updated course price.
+//     $coursedata = $DB->get_record('course', ['id' => $courseid]);
+//     $cache = \cache::make('local_biz_cart', 'cacheshopping');
+    
+//     // Get all user cache keys who might have added this course to their cart.
+//     $userids = $DB->get_records_sql("
+//         SELECT DISTINCT u.id
+//         FROM {user} u
+//         JOIN {local_biz_cart_history} ch ON u.id = ch.userid
+//         WHERE ch.itemid = :courseid
+//     ", ['courseid' => $courseid]);
+
+//     // Update each user's cart data if they have the course.
+//     foreach ($userids as $userid => $user) {
+//         $cachekey = "{$userid}_biz_cart";
+//         $cartdata = $cache->get($cachekey);
+
+//         // Check if the course is in the cart and update its price if needed.
+//         foreach ($cartdata['items'] as $itemkey => &$item) {
+//             if ($item['itemid'] == $courseid) {
+//                 $item['price'] = $coursedata->courseprice;
+//                 $item['itemname'] = $coursedata->fullname;
+//                 $item['description'] = $coursedata->summary;
+//             }
+//         }
+
+//         // Update cache with modified cart data.
+//         $cache->set($cachekey, $cartdata);
+//     }
+// }
+/**
+ * Remove a course from all user carts when it is inactivated or deleted.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param int $courseid The ID of the course to remove from all user carts.
+ */
+// function remove_course_from_all_user_carts($courseid) {
+//     global $DB;
+
+//     // Get all user cache keys who might have added this course to their cart.
+//     $userids = $DB->get_records_sql("
+//         SELECT DISTINCT u.id
+//         FROM {user} u
+//         JOIN {local_biz_cart_history} ch ON u.id = ch.userid
+//         WHERE ch.itemid = :courseid
+//     ", ['courseid' => $courseid]);
+
+//     $cache = \cache::make('local_biz_cart', 'cacheshopping');
+//     foreach ($userids as $userid => $user) {
+//         $cachekey = $userid . '_biz_cart';
+//         $cartdata = $cache->get($cachekey);
+
+//         // Check if the target course exists in the cart.
+//         if ($cartdata && isset($cartdata['items'])) {
+//             foreach ($cartdata['items'] as $cacheitemkey => $item) {
+//                 if ($item['itemid'] == $courseid) {
+//                     // Use delete_item_from_cart to remove the course from this user's cart.
+//                     biz_cart::delete_item_from_cart('local_courses', 'option', $courseid, $userid);
+//                     // break; // Exit inner loop once the item is removed.
+//                 }
+//             }
+//         }
+//     }
+// }
+
+/**
+ * Rebuilds cart cache for a specific course to reflect updated price.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param int $courseid The course ID.
+ */
+function rebuild_cart_cache_for_course(int $courseid): void {
+    global $DB;
+    
+    // Fetch the updated course price.
+    $coursedata = $DB->get_record('course', ['id' => $courseid]);
+    $cache = \cache::make('local_biz_cart', 'cacheshopping');
+    
+    // Retrieve user IDs from logstore_standard_log who have added the course.
+    $userids = $DB->get_records_sql("
+        SELECT DISTINCT userid
+        FROM {logstore_standard_log}
+        WHERE action = 'added'
+          AND target = 'item'
+          AND component = 'local_biz_cart'
+          AND other LIKE :courseidpattern
+          AND other LIKE :componentpattern
+    ", [
+        'courseidpattern' => '%"itemid":'.$courseid.'%',
+        'componentpattern' => '%"component":"local_courses"%'
+    ]);
+    // Update each user's cart data if they have the course.
+    foreach ($userids as $userid => $user) {
+        $cachekey = "{$userid}_biz_cart";
+        $cartdata = $cache->get($cachekey);
+
+        if ($cartdata && isset($cartdata['items'])) {
+            // Check if the course is in the cart and update its price if needed.
+            foreach ($cartdata['items'] as $itemkey => &$item) {
+                if ($item['itemid'] == $courseid) {
+                    $item['price'] = $coursedata->courseprice;
+                    $item['itemname'] = $coursedata->fullname;
+                    $item['description'] = $coursedata->summary;
+                }
+            }
+
+            // Update cache with modified cart data.
+            $cache->set($cachekey, $cartdata);
+        }
+    }
+}
+
+/**
+ * Remove a course from all user carts when it is inactivated or deleted.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param int $courseid The ID of the course to remove from all user carts.
+ */
+function remove_course_from_all_user_carts(int $courseid): void {
+    global $DB;
+
+    // Retrieve user IDs from logstore_standard_log with matching itemid and component.
+    $userids = $DB->get_records_sql("
+        SELECT DISTINCT userid
+        FROM {logstore_standard_log}
+        WHERE action = 'added'
+          AND target = 'item'
+          AND component = 'local_biz_cart'
+          AND other LIKE :courseidpattern
+          AND other LIKE :componentpattern
+    ", [
+        'courseidpattern' => '%"itemid":'.$courseid.'%',
+        'componentpattern' => '%"component":"local_courses"%'
+    ]);
+
+    $cache = \cache::make('local_biz_cart', 'cacheshopping');
+    
+    // Loop through each user and delete the course from their cart.
+    foreach ($userids as $userid => $user) {
+        $cachekey = "{$userid}_biz_cart";
+        $cartdata = $cache->get($cachekey);
+
+        if ($cartdata && isset($cartdata['items'])) {
+            // Check if the target course exists in the cart.
+            foreach ($cartdata['items'] as $cacheitemkey => $item) {
+                if ($item['itemid'] == $courseid) {
+                    // Use delete_item_from_cart to remove the course from this user's cart.
+                    biz_cart::delete_item_from_cart('local_courses', 'option', $courseid, $userid);
+                    break; // Exit inner loop once the item is removed.
+                }
+            }
+        }
+    }
+}
+/**
+ * Remove a course from all user carts when it is inactivated or deleted.
+ * @author Rizwana <rizwana.madire@moodle.com>
+ * @param string | text $description the description text to be cleaned 
+ * @return string | text $description cleaned description without additional/unneccessary p and <br> tags
+ */
+function clean_description($description) {
+    $formateddescription = strip_tags(format_text($description, FORMAT_HTML,  ['noclean' => false, 'trusted' => false]));
+    // Remove empty <p> tags
+    $formateddescription = preg_replace('/<p[^>]*>\s*<\/p>/', '', $formateddescription);
+
+    // Remove standalone <br> tags or multiple consecutive <br> tags
+    $formateddescription = preg_replace('/(<br\s*\/?>\s*)+/', '', $formateddescription);
+
+    return $formateddescription;
 }
