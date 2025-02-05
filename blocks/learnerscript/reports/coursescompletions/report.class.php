@@ -102,7 +102,7 @@ class report_coursescompletions extends reportbase implements report {
                 JOIN {role} AS r ON r.id = ra.roleid
                 WHERE ra.userid =:userid",array('userid' => $USER->id));   
 
-            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',  $usercostcenterpath, 'lowerandsamepath');
+            $costcenterpathconcatsql = (new \local_costcenter\lib\accesslib())::get_costcenter_path_field_concatsql($columnname='c.open_path',  $USER->open_path);
             $this->sql .= $costcenterpathconcatsql;
         }else{
             list($zero, $org, $ctr, $bu, $cu, $territory) = explode("/",$USER->open_path);
