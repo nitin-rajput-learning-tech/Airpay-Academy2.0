@@ -209,9 +209,9 @@ class create_user extends moodleform {
         } else if ($form_status == 2) {
 
             $mform->addElement('text', 'phone1', get_string('contactno', 'local_users'));
-            $mform->addRule('phone1', get_string('numeric', 'local_users'), 'numeric', null, 'client');
+            // $mform->addRule('phone1', get_string('numeric', 'local_users'), 'numeric', null, 'client');
             $mform->addRule('phone1', get_string('phoneminimum', 'local_users'), 'minlength', 10, 'client');
-            $mform->addRule('phone1', get_string('phonemaximum', 'local_users'), 'maxlength', 10, 'client');
+            $mform->addRule('phone1', get_string('phonemaximum', 'local_users'), 'maxlength', 16, 'client');
             $mform->setType('phone1', PARAM_RAW);
 
 
@@ -380,13 +380,13 @@ class create_user extends moodleform {
         }
         if ($form_status == 2) { // As these fields are in only form part 3(form_status=2).
             $phone = $data['phone1'];
-            if ($phone) {
+           /* if ($phone) {
                 if (!is_numeric($phone)) {
                     $errors['phone1'] = get_string('numeric', 'local_users');
                 } else if ($phone < 1000000000 && $phone) {
                     $errors['phone1'] = get_string('phonenumvalidate', 'local_users');
                 }
-            }
+            }*/
         }
         return $errors;
     }
