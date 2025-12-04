@@ -39,6 +39,9 @@ class registration_form extends moodleform {
         $mform->addElement('passwordunmask', 'password', get_string('password'), 'size="20"');
         $mform->setType('password', PARAM_RAW);
 
+        $mform->addElement('html','</div>
+            <div class="col-md-6 px-5">');
+
         $mform->addElement('text', 'email', get_string('email', 'local_users'));
         $mform->addRule('email', get_string('erroremail', 'local_users'), 'required', null, 'client');
         $mform->setType('email', PARAM_RAW);
@@ -49,7 +52,7 @@ class registration_form extends moodleform {
         $mform->addRule('phone1', get_string('phonemaximum', 'local_users'), 'maxlength', 10, 'client');
         $mform->addRule('phone1', get_string('errorphoneno', 'local_users'), 'required', null, 'client');
         $mform->setType('phone1', PARAM_RAW);
-
+	/*
         $choices = get_string_manager()->get_list_of_countries();
         $choices = array('' => get_string('selectacountry') . '...') + $choices;
         $mform->addElement('select', 'country', get_string('selectacountry'), $choices);
@@ -83,6 +86,7 @@ class registration_form extends moodleform {
         $mform->addElement('text', 'open_jobtitle', get_string('jobtitle', 'local_users'));
 
         $mform->addElement('text', 'open_company', get_string('companyname', 'local_users'));
+	*/
 
         if($policy){
             $policystring=get_string('privacypolicy', 'local_users');
@@ -166,10 +170,12 @@ class registration_form extends moodleform {
                 }
             }
 
-            if($data['country'] == 0)
+            /*
+	    if($data['country'] == 0)
             {
                 $errors['country'] = get_string('countryrequired', 'local_users');
             }
+	    */
 
             $auths = \core_component::get_plugin_list('auth');
             $cannotchangepass = [];
