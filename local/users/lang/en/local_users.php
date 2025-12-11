@@ -885,7 +885,7 @@ $string['regisemailbody1'] = 'Subject: Welcome to {$a->sitename} - Your Learning
 
 	Thanks for choosing {$a->sitename}! Get ready for a seamless learning experience that\'s all about you.';
 	
-$string['emailsubject'] = 'Welcome to Airpay Academy - Your Learning Journey Begins!';
+$string['emailsubject'] = 'Welcome to airpay academy - Your Learning Journey Begins!';
 $string['organization_shortname'] = 'Organization Short Name';
 $string['activeregistration'] = 'Registration';
 $string['policystring'] = 'I have read and accept the ';
