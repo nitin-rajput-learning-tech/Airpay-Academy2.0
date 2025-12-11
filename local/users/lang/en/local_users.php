@@ -848,7 +848,21 @@ $string['backtohome'] = 'Click here to Continue';
 $string['phoneexists'] = 'Phone number already exists.';
 $string['privacypolicyrequired'] = 'Please Check the Polices.';
 $string['termsconditionrequired'] = 'Please Check the Terms & Conditions.';
+
 $string['regisemailbody'] = 'Subject: Welcome to {$a->sitename} - Your Learning Journey Begins!
+
+    Hi {$a->username},
+
+    Welcome to {$a->sitename}. Your registration is confirmed, and your learning journey begins today.
+ 
+	At airpay academy, we focus on practical, easy-to-understand training designed to enhance your employability, entrepreneurial capabilities, 
+	and financial skills. Our content is structured to ensure a smooth, engaging learning experience from start to finish.
+	 
+	If you have any questions or need support, please reach out to us at <b> academy@airpay.co.in </b>.
+	 
+	Thank you for choosing {$a->sitename}. We look forward to supporting your growth.';
+
+$string['regisemailbody1'] = 'Subject: Welcome to {$a->sitename} - Your Learning Journey Begins!
 
     Hi {$a->username},
 
