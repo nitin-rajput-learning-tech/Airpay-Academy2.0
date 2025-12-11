@@ -849,19 +849,21 @@ $string['phoneexists'] = 'Phone number already exists.';
 $string['privacypolicyrequired'] = 'Please Check the Polices.';
 $string['termsconditionrequired'] = 'Please Check the Terms & Conditions.';
 
-$string['regisemailbody'] = 'Subject: Welcome to {$a->sitename} - Your Learning Journey Begins!
+$string['regisemailbody'] = 'Hi {$a->username},
 
-    Hi {$a->username},
-
-    Welcome to {$a->sitename}. Your registration is confirmed, and your learning journey begins today.
- 
+	Welcome to airpay academy. Your registration is confirmed, and your learning journey begins today.
+	 
 	At airpay academy, we focus on practical, easy-to-understand training designed to enhance your employability, entrepreneurial capabilities, 
 	and financial skills. Our content is structured to ensure a smooth, engaging learning experience from start to finish.
 	 
-	If you have any questions or need support, please reach out to us at <b> academy@airpay.co.in </b>.
+	If you have any questions or need support, please reach out to us at academy@airpay.co.in.
 	 
-	Thank you for choosing {$a->sitename}. We look forward to supporting your growth.';
+	Thank you for choosing airpay academy. We look forward to supporting your growth.
 
+	Warm Regards,
+	airpay academy
+	<a href="https://www.airpay.academy">https://www.airpay.academy</a>	';
+	
 $string['regisemailbody1'] = 'Subject: Welcome to {$a->sitename} - Your Learning Journey Begins!
 
     Hi {$a->username},
@@ -883,7 +885,7 @@ $string['regisemailbody1'] = 'Subject: Welcome to {$a->sitename} - Your Learning
 
 	Thanks for choosing {$a->sitename}! Get ready for a seamless learning experience that\'s all about you.';
 	
-$string['emailsubject'] = 'Successfully registered';
+$string['emailsubject'] = 'Welcome to Airpay Academy - Your Learning Journey Begins!';
 $string['organization_shortname'] = 'Organization Short Name';
 $string['activeregistration'] = 'Registration';
 $string['policystring'] = 'I have read and accept the ';
